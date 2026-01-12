@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Vista de Facturación/Cajero</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom scrollbar hide for cleaner mobile look */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-[#111318] dark:text-white overflow-hidden">
+<!-- Mobile Container -->
+<div class="relative mx-auto flex h-screen w-full max-w-md flex-col overflow-hidden bg-background-light dark:bg-background-dark shadow-xl ring-1 ring-black/5">
+<!-- Header -->
+<header class="flex items-center justify-between bg-white dark:bg-[#1A202C] p-4 shadow-sm z-10 shrink-0">
+<button class="flex size-10 items-center justify-center rounded-full text-[#111318] dark:text-white hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<div class="flex flex-col items-center">
+<h2 class="text-lg font-bold leading-tight tracking-[-0.015em]">Venta #10234</h2>
+<span class="text-xs text-gray-500 dark:text-gray-400">Cajero: Ana M.</span>
+</div>
+<button class="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
+<span class="material-symbols-outlined">barcode_scanner</span>
+</button>
+</header>
+<!-- Product List (Scrollable Area) -->
+<main class="flex-1 overflow-y-auto no-scrollbar p-4 space-y-3 pb-32">
+<!-- Item 1 -->
+<div class="group flex flex-col gap-3 rounded-xl bg-white dark:bg-[#1A202C] p-3 shadow-sm transition-all hover:shadow-md">
+<div class="flex items-start gap-3">
+<div class="relative aspect-square size-16 shrink-0 overflow-hidden rounded-lg bg-gray-100" data-alt="Bottle of soda" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCyC5wIrUmPmejQcEli_cw55paImmVbPM58v172DpZm5vogaMiBfN00QkkXbxuPwvj19hZrGc52xLa7CyJkgE0-PFHpAvehI8Tc58sACLrYKdjDlu6MvU84z5y4W87Q6VKYWlDqSlTvlM9JmCOLQLqQsRJ4I_9ybOdLmVbhnVZF8oHfJrBTuHLUSf9XYXE1utzQFHFvPiV-B_BHHp2L4Zl2NsrwdoBg0zVapXKcP79LL43KrV33uZEehDvG9wd_SMKwb5-P7_JLUYpj"); background-size: cover; background-position: center;'></div>
+<div class="flex flex-1 flex-col justify-between self-stretch">
+<div class="flex justify-between items-start">
+<div>
+<p class="text-base font-semibold leading-tight line-clamp-1">Coca-Cola 600ml</p>
+<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">SKU: 8847291</p>
+</div>
+<p class="text-base font-bold text-primary">$30.00</p>
+</div>
+<div class="flex items-end justify-between mt-2">
+<p class="text-xs font-medium text-gray-400">$15.00 c/u</p>
+<div class="flex items-center gap-3 rounded-lg bg-background-light dark:bg-black/20 p-1">
+<button class="flex size-6 items-center justify-center rounded-md bg-white dark:bg-[#2D3748] shadow-sm text-gray-600 dark:text-gray-300 hover:text-primary">
+<span class="material-symbols-outlined text-[16px]">remove</span>
+</button>
+<span class="w-4 text-center text-sm font-semibold">2</span>
+<button class="flex size-6 items-center justify-center rounded-md bg-white dark:bg-[#2D3748] shadow-sm text-gray-600 dark:text-gray-300 hover:text-primary">
+<span class="material-symbols-outlined text-[16px]">add</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="group flex flex-col gap-3 rounded-xl bg-white dark:bg-[#1A202C] p-3 shadow-sm transition-all hover:shadow-md">
+<div class="flex items-start gap-3">
+<div class="relative aspect-square size-16 shrink-0 overflow-hidden rounded-lg bg-gray-100" data-alt="Bag of chips" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuD3Zr4XF_z8UZL_PzS4lqRqZFjtzIKJmz_0pe08j2J25ySl9CGiVC5zkXFB71FOlj4wcd0wFke7PUNbwWVwJpu2bq68Adr5dnlGy_EBKxoJvl57gkSxHIla4RcBhXZH_KWBlnGGmqid_3YPfP_x-_ZBGX5B2IEZGdZyIyP6YhCpE4juSO2n4ifjsSPJY__oFpX6zPuVPJ0Nd-O3jBAWYABTHeFAplgJ7ELM1pPC3xFYcmo3sfaTaD58Q0z2xYmosb_JF5W1MWtAA-hw"); background-size: cover; background-position: center;'></div>
+<div class="flex flex-1 flex-col justify-between self-stretch">
+<div class="flex justify-between items-start">
+<div>
+<p class="text-base font-semibold leading-tight line-clamp-1">Sabritas Sal</p>
+<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">SKU: 1230094</p>
+</div>
+<p class="text-base font-bold text-primary">$12.00</p>
+</div>
+<div class="flex items-end justify-between mt-2">
+<p class="text-xs font-medium text-gray-400">$12.00 c/u</p>
+<div class="flex items-center gap-3 rounded-lg bg-background-light dark:bg-black/20 p-1">
+<button class="flex size-6 items-center justify-center rounded-md bg-white dark:bg-[#2D3748] shadow-sm text-gray-600 dark:text-gray-300 hover:text-primary">
+<span class="material-symbols-outlined text-[16px]">remove</span>
+</button>
+<span class="w-4 text-center text-sm font-semibold">1</span>
+<button class="flex size-6 items-center justify-center rounded-md bg-white dark:bg-[#2D3748] shadow-sm text-gray-600 dark:text-gray-300 hover:text-primary">
+<span class="material-symbols-outlined text-[16px]">add</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="group flex flex-col gap-3 rounded-xl bg-white dark:bg-[#1A202C] p-3 shadow-sm transition-all hover:shadow-md">
+<div class="flex items-start gap-3">
+<div class="relative aspect-square size-16 shrink-0 overflow-hidden rounded-lg bg-gray-100" data-alt="Bottle of water" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDTmvkVh_gFv9Ziw6dc3ag8QcrZ0OUSnE4yByeqNG28GP7sNaQHahbSEwtJ2pOdzu3faz6f_Bf-jeNk0eoyvH9Mm5T6oSNbQqc_eB0gp0BIx7l-hYsrlrCek5-oELoj8q-wyL59pns2udiA3o6icI-kHqtO8eRU-dXRgG5KNok2lKbsOz8cySZn-4xl6oKGrgE0lJ53x_Nj6vTlaKHJ2RDMXuCjY-87-ZfJS4IgmgPzz-YWfObhVUCGo0pmHtc6qikN6ZTvs2zxG4xE"); background-size: cover; background-position: center;'></div>
+<div class="flex flex-1 flex-col justify-between self-stretch">
+<div class="flex justify-between items-start">
+<div>
+<p class="text-base font-semibold leading-tight line-clamp-1">Agua Mineral</p>
+<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">SKU: 5543210</p>
+</div>
+<p class="text-base font-bold text-primary">$30.00</p>
+</div>
+<div class="flex items-end justify-between mt-2">
+<p class="text-xs font-medium text-gray-400">$10.00 c/u</p>
+<div class="flex items-center gap-3 rounded-lg bg-background-light dark:bg-black/20 p-1">
+<button class="flex size-6 items-center justify-center rounded-md bg-white dark:bg-[#2D3748] shadow-sm text-gray-600 dark:text-gray-300 hover:text-primary">
+<span class="material-symbols-outlined text-[16px]">remove</span>
+</button>
+<span class="w-4 text-center text-sm font-semibold">3</span>
+<button class="flex size-6 items-center justify-center rounded-md bg-white dark:bg-[#2D3748] shadow-sm text-gray-600 dark:text-gray-300 hover:text-primary">
+<span class="material-symbols-outlined text-[16px]">add</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Add Product Placeholder -->
+<button class="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 py-4 text-gray-500 hover:bg-white/50 dark:hover:bg-white/5 transition-colors">
+<span class="material-symbols-outlined">add_circle</span>
+<span class="text-sm font-medium">Agregar Producto Manualmente</span>
+</button>
+</main>
+<!-- Bottom Action Sheet -->
+<div class="absolute bottom-0 left-0 right-0 z-20 flex flex-col bg-white dark:bg-[#1A202C] shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.1)] rounded-t-2xl">
+<!-- Handle for visual cue -->
+<div class="mx-auto mt-2 h-1 w-10 rounded-full bg-gray-300 dark:bg-gray-600"></div>
+<!-- Payment Methods -->
+<div class="px-5 pt-4 pb-2">
+<p class="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">Método de Pago</p>
+<div class="flex gap-3 overflow-x-auto no-scrollbar pb-2">
+<button class="flex shrink-0 items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white shadow-md shadow-primary/30 ring-2 ring-primary ring-offset-1 ring-offset-white dark:ring-offset-[#1A202C]">
+<span class="material-symbols-outlined text-[20px]">payments</span>
+                        Efectivo
+                    </button>
+<button class="flex shrink-0 items-center gap-2 rounded-lg bg-gray-100 dark:bg-gray-800 px-4 py-2 text-sm font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+<span class="material-symbols-outlined text-[20px]">credit_card</span>
+                        Tarjeta
+                    </button>
+<button class="flex shrink-0 items-center gap-2 rounded-lg bg-gray-100 dark:bg-gray-800 px-4 py-2 text-sm font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+<span class="material-symbols-outlined text-[20px]">qr_code_2</span>
+                        Transferencia
+                    </button>
+</div>
+</div>
+<!-- Invoice Toggle -->
+<div class="px-5 flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+<div class="flex items-center gap-2">
+<div class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/30 text-primary">
+<span class="material-symbols-outlined text-[18px]">receipt_long</span>
+</div>
+<span class="text-sm font-medium">Requerir Factura</span>
+</div>
+<label class="relative inline-flex cursor-pointer items-center">
+<input class="peer sr-only" type="checkbox" value=""/>
+<div class="peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none dark:bg-gray-700"></div>
+</label>
+</div>
+<!-- Totals & Actions -->
+<div class="flex flex-col gap-1 p-5 pt-3">
+<div class="flex justify-between text-sm text-gray-500 dark:text-gray-400">
+<span>Subtotal</span>
+<span>$100.00</span>
+</div>
+<div class="flex justify-between text-sm text-gray-500 dark:text-gray-400 mb-2">
+<span>IVA (16%)</span>
+<span>$16.00</span>
+</div>
+<div class="mt-2 flex items-center gap-3">
+<div class="flex flex-col">
+<span class="text-xs text-gray-500 dark:text-gray-400">Total a Pagar</span>
+<span class="text-2xl font-extrabold text-[#111318] dark:text-white">$116.00</span>
+</div>
+<button class="flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary h-12 text-base font-bold text-white shadow-lg shadow-primary/20 hover:bg-blue-700 active:scale-[0.98] transition-all">
+<span>Cobrar</span>
+<span class="material-symbols-outlined">check_circle</span>
+</button>
+</div>
+</div>
+<!-- Safe Area Spacer for iOS Home Indicator -->
+<div class="h-6 w-full bg-white dark:bg-[#1A202C]"></div>
+</div>
+</div>
+</body></html>

@@ -1,0 +1,449 @@
+/* POS View Styles */
+.pos-panel {
+    display: flex;
+    gap: 2rem;
+    height: calc(100vh - 100px);
+    /* Adjust based on header */
+    overflow: hidden;
+}
+
+.product-grid-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.pos-header {
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pos-header input {
+    padding: 0.5rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--loy-border);
+    width: 250px;
+}
+
+.products-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.product-card {
+    background: var(--loy-surface);
+    border: 1px solid var(--loy-border);
+    border-radius: var(--radius-lg);
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 120px;
+}
+
+.product-card:hover {
+    border-color: var(--loy-primary);
+    transform: translateY(-2px);
+    box-shadow: var(--loy-shadow);
+}
+
+.product-card.out-of-stock {
+    opacity: 0.6;
+    background: #eee;
+    cursor: not-allowed;
+}
+
+.prod-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.prod-price {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--loy-primary);
+    margin-top: auto;
+}
+
+.prod-stock {
+    font-size: 0.8rem;
+    color: var(--theme-text-muted);
+}
+
+.cart-panel {
+    width: 350px;
+    background: var(--loy-surface);
+    border-left: 1px solid var(--loy-border);
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.05);
+}
+
+.cart-items-list {
+    flex: 1;
+    overflow-y: auto;
+    margin: 1rem 0;
+    border-top: 1px solid var(--loy-border);
+    border-bottom: 1px solid var(--loy-border);
+}
+
+.cart-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.cart-item-name {
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.cart-item-price {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.cart-item-total {
+    font-weight: 600;
+}
+
+.btn-remove {
+    background: none;
+    border: none;
+    color: #ff4d4f;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 0 0.5rem;
+}
+
+.cart-summary {
+    margin-bottom: 1rem;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.summary-row.total {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--loy-text);
+    border-top: 2px solid var(--loy-border);
+    padding-top: 0.5rem;
+}
+
+.btn-checkout {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.btn-checkout:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+
+/* Reuse variables from themes-enhanced.css if available, else fallback */
+:root {
+    --loy-bg: var(--theme-bg, #f5f7fa);
+    --loy-surface: var(--theme-surface, #ffffff);
+    --loy-text: var(--theme-text, #1e293b);
+    --loy-primary: var(--theme-primary, #3b82f6);
+    --loy-primary-hover: var(--theme-primary-hover, #2563eb);
+    --loy-border: var(--theme-border, #e2e8f0);
+    --loy-shadow: var(--theme-shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1));
+}
+
+#loyverse-app {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: var(--loy-bg);
+    color: var(--loy-text);
+    min-height: 100vh;
+}
+
+.loy-layout {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+/* Navigation */
+.loy-nav {
+    background: var(--loy-surface);
+    border-bottom: 1px solid var(--loy-border);
+    padding: 0.6rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--theme-shadow, 0 1px 3px rgba(0, 0, 0, 0.1));
+    z-index: 10;
+    min-height: 56px;
+}
+
+.loy-brand {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--loy-primary);
+    letter-spacing: -0.5px;
+}
+
+.loy-user-info {
+    font-weight: 500;
+    color: var(--theme-text-secondary, #64748b);
+}
+
+.loy-btn-logout {
+    background: transparent;
+    color: var(--theme-error, #ef4444);
+    border: 1px solid var(--theme-error, #ef4444);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md, 0.375rem);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.875rem;
+}
+
+.loy-btn-logout:hover {
+    background: var(--theme-error, #ef4444);
+    color: white;
+}
+
+.loy-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 2rem;
+    position: relative;
+}
+
+/* Login View */
+.loy-login-container {
+    max-width: 400px;
+    margin: 4rem auto;
+    background: var(--loy-surface);
+    padding: 3rem 2rem;
+    border-radius: var(--radius-xl, 1rem);
+    box-shadow: var(--loy-shadow);
+    text-align: center;
+    animation: slideUp 0.5s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.loy-login-container h2 {
+    margin-bottom: 0.5rem;
+    font-size: 1.875rem;
+    color: var(--loy-text);
+}
+
+.loy-login-subtitle {
+    color: var(--theme-text-secondary, #64748b);
+    margin-bottom: 2rem;
+    font-size: 0.95rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--loy-text);
+    font-size: 0.9rem;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--loy-border);
+    border-radius: var(--radius-lg, 0.5rem);
+    background: var(--theme-bg);
+    color: var(--loy-text);
+    font-size: 1rem;
+    transition: all 0.2s;
+    box-sizing: border-box;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--loy-primary);
+    box-shadow: 0 0 0 3px var(--theme-primary-light, rgba(59, 130, 246, 0.1));
+}
+
+.loy-btn-primary {
+    width: 100%;
+    padding: 0.875rem;
+    background: #1e40af;
+    /* Deeper blue (Tailwind blue-800) */
+    color: white;
+    border: none;
+    border-radius: var(--radius-lg, 0.5rem);
+    font-size: 1rem;
+    font-weight: 800;
+    /* Extra bold for force */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 1rem;
+    box-shadow: 0 4px 6px -1px rgba(30, 64, 175, 0.4);
+}
+
+.loy-btn-primary:hover {
+    background: #1e3a8a;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 15px -3px rgba(30, 64, 175, 0.5);
+}
+
+.loy-btn-primary:active {
+    transform: scale(0.98);
+}
+
+.error-msg {
+    margin-top: 1rem;
+    color: var(--theme-error, #dc2626);
+    font-size: 0.9rem;
+    min-height: 1.2em;
+}
+
+/* Dashboard / Admin Layouts */
+.admin-panel,
+.manager-panel,
+.pos-panel,
+.warehouse-panel {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.admin-actions {
+    margin: 2rem 0;
+    display: flex;
+    gap: 1rem;
+}
+
+.admin-actions button {
+    padding: 0.75rem 1.5rem;
+    background: var(--loy-primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md, 0.375rem);
+    cursor: pointer;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: opacity 0.2s;
+}
+
+.admin-actions button:hover {
+    opacity: 0.9;
+}
+
+.data-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 2rem;
+}
+
+.stores-section,
+.users-section {
+    background: var(--loy-surface);
+    padding: 1.5rem;
+    border-radius: var(--radius-lg, 0.75rem);
+    box-shadow: var(--theme-shadow, 0 1px 2px rgba(0, 0, 0, 0.05));
+    border: 1px solid var(--loy-border);
+}
+
+.list-group {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.list-item {
+    padding: 1rem;
+    border-bottom: 1px solid var(--loy-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.list-item:last-child {
+    border-bottom: none;
+}
+
+/* Manager Tabs & Catalog */
+.manager-header {
+    background: var(--loy-surface);
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--loy-border);
+}
+
+.loy-btn-tab {
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    color: var(--theme-text-secondary, #64748b);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.loy-btn-tab:hover {
+    color: var(--loy-primary);
+}
+
+.loy-btn-tab.active {
+    color: var(--loy-primary);
+    border-bottom-color: var(--loy-primary);
+}
+
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.85rem;
+}
+
+.loading-badge {
+    background: #f0f0f0;
+    padding: 2px 8px;
+    border-radius: 10px;
+    color: #999;
+    font-size: 0.8em;
+}

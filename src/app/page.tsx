@@ -1,0 +1,1204 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useAuthStore, useCartStore, useUIStore } from '@/store';
+import { useRouter } from 'next/navigation';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { supabase } from '@/lib/supabaseClient';
+import {
+  Package,
+  ShoppingCart,
+  BarChart3,
+  Settings,
+  LogOut,
+  Menu,
+  X,
+  Search,
+  Plus,
+  Minus,
+  Trash2,
+  DollarSign,
+  CreditCard,
+  Check,
+  Download,
+  Upload,
+  Filter,
+  Bell,
+  TrendingUp,
+  TrendingDown,
+  Eye,
+  Edit,
+  ArrowUpRight,
+  ArrowDownRight,
+  Sun,
+  Moon,
+  Warehouse,
+  Receipt,
+  Users,
+  Building,
+  History,
+  Target,
+  Shield,
+} from 'lucide-react';
+import type {
+  UserRole,
+  Product,
+  CartItem,
+  Transaction,
+  PaymentMethod,
+  DiscountType,
+  DashboardKPIs,
+  SalesSummary,
+} from '@/types';
+import WarehouseView from '@/components/WarehouseView';
+
+export default function HomePage() {
+  const router = useRouter();
+  useSupabaseAuth(); // Sync Supabase session with store
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
+  const { sidebarOpen, darkMode, toggleSidebar, toggleDarkMode } = useUIStore();
+  const { items, addItem, removeItem, updateQuantity, clearCart, setDiscount, getTotal, getSubtotal, getItemCount } = useCartStore();
+
+  const [currentView, setCurrentView] = useState('dashboard');
+  const [showCart, setShowCart] = useState(false);
+
+  // Mock data
+  const [products] = useState<Product[]>([
+    {
+      id: '1',
+      name: 'Laptop Pro 15"',
+      description: 'Laptop de alta gama con M3 Pro',
+      sku: 'LAP-001',
+      price: 1299.99,
+      cost_price: 899.99,
+      image_url: null,
+      category: 'Electrónica',
+      unit_of_measure: 'unidad',
+      supplier: 'TechSupply Inc.',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      stock_current: 45,
+      cost_average: 899.99,
+      min_stock: 10,
+      store_id: '1',
+    },
+    {
+      id: '2',
+      name: 'Monitor 27" 4K',
+      description: 'Monitor IPS 27 pulgadas 4K UHD',
+      sku: 'MON-002',
+      price: 449.99,
+      cost_price: 299.99,
+      image_url: null,
+      category: 'Electrónica',
+      unit_of_measure: 'unidad',
+      supplier: 'DisplayMax',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      stock_current: 23,
+      cost_average: 299.99,
+      min_stock: 5,
+      store_id: '1',
+    },
+    {
+      id: '3',
+      name: 'Teclado Mecánico RGB',
+      description: 'Teclado mecánico con iluminación RGB',
+      sku: 'TEC-003',
+      price: 89.99,
+      cost_price: 49.99,
+      image_url: null,
+      category: 'Accesorios',
+      unit_of_measure: 'unidad',
+      supplier: 'KeyTech',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      stock_current: 8,
+      cost_average: 49.99,
+      min_stock: 15,
+      store_id: '1',
+    },
+    {
+      id: '4',
+      name: 'Mouse Gamer Pro',
+      description: 'Mouse inalámbrico de alta precisión',
+      sku: 'MOU-004',
+      price: 59.99,
+      cost_price: 34.99,
+      image_url: null,
+      category: 'Accesorios',
+      unit_of_measure: 'unidad',
+      supplier: 'MouseMaster',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      stock_current: 67,
+      cost_average: 34.99,
+      min_stock: 10,
+      store_id: '1',
+    },
+    {
+      id: '5',
+      name: 'Auriculares Noise Cancelling',
+      description: 'Auriculares con cancelación de ruido activa',
+      sku: 'AUR-005',
+      price: 199.99,
+      cost_price: 129.99,
+      image_url: null,
+      category: 'Audio',
+      unit_of_measure: 'unidad',
+      supplier: 'SoundTech',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      stock_current: 18,
+      cost_average: 129.99,
+      min_stock: 8,
+      store_id: '1',
+    },
+  ]);
+
+  const [transactions] = useState<Transaction[]>([
+    {
+      id: 'TXN-001',
+      store_id: '1',
+      seller_id: '3',
+      total_amount: 1899.97,
+      status: 'completed',
+      created_at: new Date(Date.now() - 3600000).toISOString(),
+      updated_at: new Date(Date.now() - 3600000).toISOString(),
+      completed_at: new Date(Date.now() - 3600000).toISOString(),
+      cancelled_at: null,
+      void_reason: null,
+      payment_method: 'cash',
+      discount_type: 'fixed',
+      discount_value: 0,
+      subtotal: 1899.97,
+      idempotency_key: null,
+    },
+    {
+      id: 'TXN-002',
+      store_id: '1',
+      seller_id: '3',
+      total_amount: 539.98,
+      status: 'completed',
+      created_at: new Date(Date.now() - 7200000).toISOString(),
+      updated_at: new Date(Date.now() - 7200000).toISOString(),
+      completed_at: new Date(Date.now() - 7200000).toISOString(),
+      cancelled_at: null,
+      void_reason: null,
+      payment_method: 'transfer',
+      discount_type: 'percentage',
+      discount_value: 10,
+      subtotal: 599.98,
+      idempotency_key: null,
+    },
+  ]);
+
+  const [dashboardKPIs] = useState<DashboardKPIs>({
+    gross_sales: 12450.00,
+    cost_of_goods: 8200.00,
+    profit: 4250.00,
+  });
+
+  const [salesSummary] = useState<SalesSummary>({
+    total_billed: 12450.00,
+    transaction_count: 47,
+    average_ticket: 264.89,
+    total_cash: 8200.00,
+    total_transfer: 4250.00,
+  });
+
+  // States for views
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [stockAdjustment, setStockAdjustment] = useState({ quantity: 0, reason: '' });
+  const [receiptForm, setReceiptForm] = useState({ supplier: '', reference: '' });
+  const [localDiscount, setLocalDiscount] = useState({ type: 'fixed' as DiscountType, value: 0 });
+  const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>('cash');
+
+  // Check authentication
+  useEffect(() => {
+    if (!user) {
+      router.push('/login');
+    }
+  }, [user, router]);
+
+  if (!user) {
+    return null;
+  }
+
+  const handleLogout = async () => {
+    // Sign out from Supabase Auth
+    await supabase.auth.signOut();
+    // Clear local store
+    logout();
+    router.push('/login');
+  };
+
+  const addToCart = (product: Product) => {
+    const cartItem: CartItem = {
+      product_id: product.id,
+      variant_id: null,
+      product,
+      variant: null,
+      quantity: 1,
+      price: product.price,
+      cost: product.cost_price,
+      subtotal: product.price,
+    };
+    addItem(cartItem);
+    setShowCart(true);
+  };
+
+  const handleCheckout = () => {
+    setDiscount(localDiscount);
+    alert('¡Venta procesada exitosamente!');
+    clearCart();
+    setShowCart(false);
+    setLocalDiscount({ type: 'fixed', value: 0 });
+  };
+
+  const handleStockAdjustment = (product: Product) => {
+    if (!stockAdjustment.reason) {
+      alert('Por favor especifica un motivo para el ajuste');
+      return;
+    }
+    alert(`Ajuste de stock aplicado: ${stockAdjustment.quantity} unidades - Motivo: ${stockAdjustment.reason}`);
+    setStockAdjustment({ quantity: 0, reason: '' });
+    setSelectedProduct(null);
+  };
+
+  const handleReceiptSubmit = () => {
+    alert('Recepción creada exitosamente');
+    setReceiptForm({ supplier: '', reference: '' });
+  };
+
+  // Get role-specific navigation
+  const getNavigationItems = () => {
+    const role = user.role;
+    const items = [
+      { id: 'dashboard', icon: BarChart3, label: 'Dashboard', roles: ['admin', 'manager', 'clerk'] },
+      { id: 'pos', icon: ShoppingCart, label: 'Punto de Venta', roles: ['clerk', 'manager', 'admin'] },
+      { id: 'inventory', icon: Package, label: 'Inventario', roles: ['admin', 'manager', 'warehouse'] },
+      { id: 'recepcion', icon: Warehouse, label: 'Recepciones', roles: ['warehouse', 'manager'] },
+      { id: 'sales', icon: Receipt, label: 'Mis Ventas', roles: ['clerk', 'manager'] },
+      { id: 'catalog', icon: Package, label: 'Catálogo', roles: ['manager', 'admin'] },
+      { id: 'history', icon: History, label: 'Historial', roles: ['manager', 'admin'] },
+      { id: 'audit', icon: Shield, label: 'Auditoría', roles: ['manager', 'admin'] },
+      { id: 'cash', icon: DollarSign, label: 'Cierre Caja', roles: ['manager', 'admin'] },
+      { id: 'users', icon: Users, label: 'Usuarios', roles: ['admin'] },
+      { id: 'stores', icon: Building, label: 'Tiendas', roles: ['admin'] },
+      { id: 'settings', icon: Settings, label: 'Configuración', roles: ['admin', 'manager'] },
+    ];
+
+    return items.filter(item => item.roles.includes(role));
+  };
+
+  const navigationItems = getNavigationItems();
+  const filteredProducts = products.filter(p =>
+    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (p.category && p.category.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  // ==================== VIEWS ====================
+
+  const renderDashboard = () => (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold">Dashboard</h2>
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="neu-card">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm text-muted-foreground">Ventas Totales</span>
+            <TrendingUp className="w-5 h-5 text-success" />
+          </div>
+          <div className="text-3xl font-bold">${dashboardKPIs.gross_sales.toFixed(2)}</div>
+          <div className="text-sm text-muted-foreground mt-1">Hoy</div>
+        </div>
+
+        <div className="neu-card">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm text-muted-foreground">Costo de Ventas</span>
+            <Target className="w-5 h-5 text-warning" />
+          </div>
+          <div className="text-3xl font-bold">${dashboardKPIs.cost_of_goods.toFixed(2)}</div>
+          <div className="text-sm text-muted-foreground mt-1">Hoy</div>
+        </div>
+
+        <div className="neu-card">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm text-muted-foreground">Utilidad</span>
+            <TrendingUp className="w-5 h-5 text-success" />
+          </div>
+          <div className="text-3xl font-bold text-success">${dashboardKPIs.profit.toFixed(2)}</div>
+          <div className="text-sm text-muted-foreground mt-1">Hoy</div>
+        </div>
+      </div>
+
+      {/* Additional Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="neu-card">
+          <h3 className="font-semibold mb-4">Resumen de Ventas</h3>
+          <div className="space-y-4">
+            <div className="flex justify-between">
+              <span>Transacciones:</span>
+              <span className="font-bold">{salesSummary.transaction_count}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Ticket Promedio:</span>
+              <span className="font-bold">${salesSummary.average_ticket.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Efectivo:</span>
+              <span className="font-bold text-success">${salesSummary.total_cash.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Transferencias:</span>
+              <span className="font-bold text-primary">${salesSummary.total_transfer.toFixed(2)}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="neu-card">
+          <h3 className="font-semibold mb-4">Alertas de Stock</h3>
+          <div className="space-y-3">
+            {products.filter(p => p.stock_current <= p.min_stock).map(product => (
+              <div key={product.id} className="neu-raised-sm p-3">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <div className="font-medium">{product.name}</div>
+                    <div className="text-sm text-muted-foreground">{product.sku}</div>
+                  </div>
+                  <div className="text-danger font-bold">{product.stock_current} uds</div>
+                </div>
+              </div>
+            ))}
+            {products.filter(p => p.stock_current <= p.min_stock).length === 0 && (
+              <p className="text-sm text-muted-foreground">No hay alertas de stock bajo</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderPOS = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Punto de Venta</h2>
+        <button
+          onClick={() => setShowCart(!showCart)}
+          className="neu-btn neu-btn-primary flex items-center gap-2 relative"
+        >
+          <ShoppingCart className="w-5 h-5" />
+          <span>Carrito</span>
+          {getItemCount() > 0 && (
+            <span className="neu-badge absolute -top-2 -right-2">
+              {getItemCount()}
+            </span>
+          )}
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Product Grid */}
+        <div className="lg:col-span-2">
+          <div className="neu-raised-sm p-4 mb-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="neu-input w-full pl-10"
+                placeholder="Buscar productos..."
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {filteredProducts.map(product => (
+              <div
+                key={product.id}
+                className="neu-card p-4 cursor-pointer hover:scale-105 transition-transform"
+                onClick={() => addToCart(product)}
+              >
+                <div className="neu-raised-sm w-16 h-16 mx-auto mb-3 flex items-center justify-center">
+                  <Package className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <h3 className="font-semibold text-sm mb-1 text-center">{product.name}</h3>
+                <div className="text-xs text-muted-foreground text-center mb-2">{product.sku}</div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-primary">${product.price.toFixed(2)}</div>
+                  <div className="text-xs text-muted-foreground">Stock: {product.stock_current}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Cart Panel */}
+        {showCart && (
+          <div className="neu-card h-fit sticky top-4">
+            <h3 className="font-semibold mb-4 flex items-center gap-2">
+              <ShoppingCart className="w-5 h-5" />
+              Carrito de Compras
+            </h3>
+
+            {items.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <ShoppingCart className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p>El carrito está vacío</p>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-3 max-h-64 overflow-y-auto mb-4">
+                  {items.map(item => (
+                    <div key={`${item.product_id}-${item.variant_id}`} className="neu-raised-sm p-3">
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex-1">
+                          <div className="font-medium text-sm">{item.product.name}</div>
+                          <div className="text-xs text-muted-foreground">${item.price.toFixed(2)} / ud</div>
+                        </div>
+                        <button
+                          onClick={() => removeItem(item.product_id, item.variant_id)}
+                          className="text-danger hover:text-red-600"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => updateQuantity(item.product_id, item.variant_id, item.quantity - 1)}
+                            className="neu-raised-sm w-8 h-8 flex items-center justify-center hover:bg-accent"
+                          >
+                            <Minus className="w-4 h-4" />
+                          </button>
+                          <span className="w-8 text-center font-medium">{item.quantity}</span>
+                          <button
+                            onClick={() => updateQuantity(item.product_id, item.variant_id, item.quantity + 1)}
+                            className="neu-raised-sm w-8 h-8 flex items-center justify-center hover:bg-accent"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <span className="font-bold">${item.subtotal.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Discount */}
+                <div className="neu-inset-sm p-3 mb-4">
+                  <div className="flex gap-2 mb-2">
+                    <button
+                      onClick={() => setLocalDiscount({ ...localDiscount, type: 'fixed' })}
+                      className={`flex-1 p-2 text-sm rounded ${localDiscount.type === 'fixed' ? 'neu-raised-sm bg-accent' : ''}`}
+                    >
+                      Fijo
+                    </button>
+                    <button
+                      onClick={() => setLocalDiscount({ ...localDiscount, type: 'percentage' })}
+                      className={`flex-1 p-2 text-sm rounded ${localDiscount.type === 'percentage' ? 'neu-raised-sm bg-accent' : ''}`}
+                    >
+                      %
+                    </button>
+                  </div>
+                  <input
+                    type="number"
+                    value={localDiscount.value || ''}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value) || 0;
+                      setLocalDiscount({ ...localDiscount, value: val });
+                    }}
+                    className="neu-input w-full text-sm"
+                    placeholder={localDiscount.type === 'fixed' ? 'Descuento fijo' : 'Porcentaje'}
+                  />
+                  <button
+                    onClick={() => setLocalDiscount({ type: 'fixed', value: 0 })}
+                    className="w-full mt-2 text-xs text-muted-foreground hover:text-danger"
+                  >
+                    Limpiar descuento
+                  </button>
+                </div>
+
+                {/* Totals */}
+                <div className="space-y-2 mb-4">
+                  <div className="flex justify-between text-sm">
+                    <span>Subtotal:</span>
+                    <span>${getSubtotal().toFixed(2)}</span>
+                  </div>
+                  {localDiscount.value > 0 && (
+                    <div className="flex justify-between text-sm text-success">
+                      <span>Descuento:</span>
+                      <span>-${localDiscount.type === 'fixed' ? localDiscount.value.toFixed(2) : localDiscount.value + '%'}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between font-bold text-lg pt-2 border-t border-border">
+                    <span>Total:</span>
+                    <span>${getTotal().toFixed(2)}</span>
+                  </div>
+                </div>
+
+                {/* Payment Method */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-2">Método de Pago</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => setSelectedPayment('cash')}
+                      className={`neu-raised-sm p-3 flex items-center justify-center gap-2 ${selectedPayment === 'cash' ? 'bg-accent' : ''}`}
+                    >
+                      <DollarSign className="w-4 h-4" />
+                      <span className="text-sm">Efectivo</span>
+                    </button>
+                    <button
+                      onClick={() => setSelectedPayment('transfer')}
+                      className={`neu-raised-sm p-3 flex items-center justify-center gap-2 ${selectedPayment === 'transfer' ? 'bg-accent' : ''}`}
+                    >
+                      <CreditCard className="w-4 h-4" />
+                      <span className="text-sm">Transferencia</span>
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleCheckout}
+                  className="neu-btn neu-btn-success w-full flex items-center justify-center gap-2"
+                >
+                  <Check className="w-5 h-5" />
+                  Procesar Venta
+                </button>
+
+                <button
+                  onClick={() => {
+                    clearCart();
+                    setShowCart(false);
+                  }}
+                  className="neu-btn w-full mt-2"
+                >
+                  Cancelar
+                </button>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+
+
+  const renderRecepcion = () => (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold">Recepción de Productos</h2>
+
+      <div className="neu-card">
+        <h3 className="font-semibold mb-4">Nueva Recepción</h3>
+
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Proveedor</label>
+              <input
+                type="text"
+                value={receiptForm.supplier}
+                onChange={(e) => setReceiptForm({ ...receiptForm, supplier: e.target.value })}
+                className="neu-input w-full"
+                placeholder="Nombre del proveedor"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Referencia de Factura</label>
+              <input
+                type="text"
+                value={receiptForm.reference}
+                onChange={(e) => setReceiptForm({ ...receiptForm, reference: e.target.value })}
+                className="neu-input w-full"
+                placeholder="Número de factura"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">Productos</label>
+            <div className="neu-raised-sm p-4 text-center text-muted-foreground">
+              <Package className="w-12 h-12 mx-auto mb-2 opacity-50" />
+              <p>Haz clic en los productos para agregarlos a la recepción</p>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              onClick={handleReceiptSubmit}
+              className="neu-btn neu-btn-primary flex-1"
+            >
+              Crear Recepción
+            </button>
+            <button
+              onClick={() => setReceiptForm({ supplier: '', reference: '' })}
+              className="neu-btn flex-1"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderSales = () => (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold">Mis Ventas</h2>
+
+      <div className="neu-raised-sm p-4">
+        <div className="flex gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              className="neu-input w-full pl-10"
+              placeholder="Buscar por ID, monto..."
+            />
+          </div>
+          <select className="neu-input">
+            <option value="">Todos los estados</option>
+            <option value="completed">Completada</option>
+            <option value="pending">Pendiente</option>
+            <option value="voided">Anulada</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="table-to-cards">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-border">
+              <th className="p-4 text-left">ID</th>
+              <th className="p-4 text-left">Fecha</th>
+              <th className="p-4 text-left">Método</th>
+              <th className="p-4 text-right">Total</th>
+              <th className="p-4 text-center">Estado</th>
+              <th className="p-4 text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {transactions.map(txn => (
+              <tr key={txn.id}>
+                <td data-label="ID" className="p-4 font-medium">{txn.id}</td>
+                <td data-label="Fecha" className="p-4">
+                  {new Date(txn.created_at).toLocaleString()}
+                </td>
+                <td data-label="Método" className="p-4">
+                  {txn.payment_method === 'cash' ? 'Efectivo' : 'Transferencia'}
+                </td>
+                <td data-label="Total" className="p-4 text-right font-bold">
+                  ${txn.total_amount.toFixed(2)}
+                </td>
+                <td data-label="Estado" className="p-4 text-center">
+                  <span className={`neu-badge ${txn.status === 'completed' ? 'text-success' :
+                    txn.status === 'pending' ? 'text-warning' : 'text-danger'
+                    }`}>
+                    {txn.status}
+                  </span>
+                </td>
+                <td data-label="Acciones" className="p-4">
+                  <div className="flex justify-center gap-2">
+                    <button className="neu-raised-sm w-8 h-8 flex items-center justify-center hover:bg-accent">
+                      <Eye className="w-4 h-4" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
+  const renderCatalog = () => (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold">Catálogo de Productos</h2>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredProducts.map(product => (
+          <div key={product.id} className="neu-card">
+            <div className="neu-raised-sm w-full h-32 mb-4 flex items-center justify-center">
+              <Package className="w-16 h-16 text-muted-foreground" />
+            </div>
+
+            <h3 className="font-semibold mb-1">{product.name}</h3>
+            <p className="text-sm text-muted-foreground mb-2">{product.description}</p>
+            <div className="text-xs text-muted-foreground mb-3">
+              SKU: {product.sku} | {product.category}
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 mb-4 text-sm">
+              <div className="neu-inset-sm p-2 text-center">
+                <div className="text-xs text-muted-foreground">Costo</div>
+                <div className="font-medium">${product.cost_price.toFixed(2)}</div>
+              </div>
+              <div className="neu-inset-sm p-2 text-center">
+                <div className="text-xs text-muted-foreground">Venta</div>
+                <div className="font-medium text-primary">${product.price.toFixed(2)}</div>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <button className="neu-btn neu-raised-sm flex-1 text-sm">
+                <Edit className="w-4 h-4" />
+              </button>
+              <button className="neu-btn neu-raised-sm flex-1 text-sm">
+                <ArrowUpRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderHistory = () => (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold">Historial de Inventario</h2>
+
+      <div className="space-y-4">
+        {products.slice(0, 3).map(product => (
+          <div key={product.id} className="neu-card">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="neu-raised-sm w-12 h-12 flex items-center justify-center">
+                <Package className="w-6 h-6 text-muted-foreground" />
+              </div>
+              <div>
+                <h3 className="font-semibold">{product.name}</h3>
+                <div className="text-sm text-muted-foreground">{product.sku}</div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="neu-raised-sm p-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <ArrowDownRight className="w-4 h-4 text-success" />
+                  <span className="text-sm">Entrada - Recepción</span>
+                </div>
+                <div className="text-sm">
+                  <span className="text-success">+50</span>
+                  <span className="text-muted-foreground ml-2">
+                    {new Date().toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
+
+              <div className="neu-raised-sm p-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <ArrowUpRight className="w-4 h-4 text-danger" />
+                  <span className="text-sm">Salida - Venta</span>
+                </div>
+                <div className="text-sm">
+                  <span className="text-danger">-2</span>
+                  <span className="text-muted-foreground ml-2">
+                    {new Date(Date.now() - 86400000).toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderAudit = () => (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold">Auditoría del Sistema</h2>
+
+      <div className="table-to-cards">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-border">
+              <th className="p-4 text-left">Fecha</th>
+              <th className="p-4 text-left">Usuario</th>
+              <th className="p-4 text-left">Acción</th>
+              <th className="p-4 text-left">Tabla</th>
+              <th className="p-4 text-left">Detalles</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[
+              { action: 'CREATE', table: 'products', user: 'Pedro Almacén', date: new Date() },
+              { action: 'UPDATE', table: 'inventory', user: 'María Cajera', date: new Date(Date.now() - 3600000) },
+              { action: 'DELETE', table: 'receipts', user: 'Juan Encargado', date: new Date(Date.now() - 7200000) },
+              { action: 'INSERT', table: 'transactions', user: 'María Cajera', date: new Date(Date.now() - 10800000) },
+            ].map((log, i) => (
+              <tr key={i}>
+                <td data-label="Fecha" className="p-4">{log.date.toLocaleString()}</td>
+                <td data-label="Usuario" className="p-4">{log.user}</td>
+                <td data-label="Acción" className="p-4">
+                  <span className={`neu-badge ${log.action === 'CREATE' || log.action === 'INSERT' ? 'text-success' :
+                    log.action === 'UPDATE' ? 'text-warning' : 'text-danger'
+                    }`}>
+                    {log.action}
+                  </span>
+                </td>
+                <td data-label="Tabla" className="p-4 font-medium">{log.table}</td>
+                <td data-label="Detalles" className="p-4 text-sm text-muted-foreground">
+                  Registro modificado exitosamente
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
+  const renderCash = () => (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold">Cierre de Caja</h2>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="neu-card">
+          <h3 className="font-semibold mb-4">Declaración de Cajero</h3>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Efectivo Declarado</label>
+              <input type="number" className="neu-input w-full" placeholder="0.00" />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Vales/Transferencias Declarados</label>
+              <input type="number" className="neu-input w-full" placeholder="0.00" />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Notas</label>
+              <textarea className="neu-input w-full h-20" placeholder="Observaciones..." />
+            </div>
+          </div>
+        </div>
+
+        <div className="neu-card">
+          <h3 className="font-semibold mb-4">Resumen del Sistema</h3>
+
+          <div className="space-y-3">
+            <div className="flex justify-between p-3 neu-inset-sm">
+              <span>Total Esperado (Sistema)</span>
+              <span className="font-bold">${salesSummary.total_billed.toFixed(2)}</span>
+            </div>
+
+            <div className="flex justify-between p-3 neu-inset-sm">
+              <span className="text-success">Efectivo</span>
+              <span>${salesSummary.total_cash.toFixed(2)}</span>
+            </div>
+
+            <div className="flex justify-between p-3 neu-inset-sm">
+              <span className="text-primary">Transferencias</span>
+              <span>${salesSummary.total_transfer.toFixed(2)}</span>
+            </div>
+
+            <div className="flex justify-between p-3 neu-raised-sm">
+              <span className="font-semibold">Diferencia</span>
+              <span className={`font-bold ${salesSummary.total_billed > salesSummary.total_billed ? 'text-success' : 'text-danger'
+                }`}>
+                $0.00
+              </span>
+            </div>
+          </div>
+
+          <button className="neu-btn neu-btn-primary w-full mt-4">
+            Procesar Cierre de Caja
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderUsers = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Gestión de Usuarios</h2>
+        <button className="neu-btn neu-btn-primary flex items-center gap-2">
+          <Plus className="w-4 h-4" />
+          Nuevo Usuario
+        </button>
+      </div>
+
+      <div className="table-to-cards">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-border">
+              <th className="p-4 text-left">Usuario</th>
+              <th className="p-4 text-left">Email</th>
+              <th className="p-4 text-left">Rol</th>
+              <th className="p-4 text-center">Estado</th>
+              <th className="p-4 text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {[
+              { name: 'Administrador Principal', email: 'admin@demo.com', role: 'admin', active: true },
+              { name: 'Juan Encargado', email: 'encargado@demo.com', role: 'manager', active: true },
+              { name: 'María Cajera', email: 'cajero@demo.com', role: 'clerk', active: true },
+              { name: 'Pedro Almacén', email: 'almacen@demo.com', role: 'warehouse', active: true },
+            ].map((user, i) => (
+              <tr key={i}>
+                <td data-label="Usuario" className="p-4 font-medium">{user.name}</td>
+                <td data-label="Email" className="p-4">{user.email}</td>
+                <td data-label="Rol" className="p-4">
+                  <span className={`neu-badge ${user.role === 'admin' ? 'text-primary' :
+                    user.role === 'manager' ? 'text-secondary' :
+                      user.role === 'clerk' ? 'text-success' : 'text-warning'
+                    }`}>
+                    {user.role}
+                  </span>
+                </td>
+                <td data-label="Estado" className="p-4 text-center">
+                  <span className={`neu-badge ${user.active ? 'text-success' : 'text-danger'}`}>
+                    {user.active ? 'Activo' : 'Inactivo'}
+                  </span>
+                </td>
+                <td data-label="Acciones" className="p-4">
+                  <div className="flex justify-center gap-2">
+                    <button className="neu-raised-sm w-8 h-8 flex items-center justify-center hover:bg-accent">
+                      <Edit className="w-4 h-4" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
+  const renderStores = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Gestión de Tiendas</h2>
+        <button className="neu-btn neu-btn-primary flex items-center gap-2">
+          <Plus className="w-4 h-4" />
+          Nueva Tienda
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[
+          { name: 'Tienda Central', address: 'Av. Principal #123', active: true },
+          { name: 'Sucursal Norte', address: 'Calle Norte #456', active: true },
+          { name: 'Sucursal Sur', address: 'Boulevard Sur #789', active: false },
+        ].map((store, i) => (
+          <div key={i} className="neu-card">
+            <div className="flex items-start justify-between mb-4">
+              <div className="neu-raised-sm w-12 h-12 flex items-center justify-center">
+                <Building className="w-6 h-6 text-muted-foreground" />
+              </div>
+              <span className={`neu-badge ${store.active ? 'text-success' : 'text-danger'}`}>
+                {store.active ? 'Activa' : 'Inactiva'}
+              </span>
+            </div>
+
+            <h3 className="font-semibold mb-1">{store.name}</h3>
+            <p className="text-sm text-muted-foreground mb-4">{store.address}</p>
+
+            <div className="flex gap-2">
+              <button className="neu-btn neu-raised-sm flex-1 text-sm">
+                <Edit className="w-4 h-4" />
+              </button>
+              <button className="neu-btn neu-raised-sm flex-1 text-sm text-danger">
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderSettings = () => (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold">Configuración</h2>
+
+      <div className="space-y-6">
+        <div className="neu-card">
+          <h3 className="font-semibold mb-4">Apariencia</h3>
+
+          <div className="flex items-center justify-between p-4 neu-raised-sm">
+            <div>
+              <div className="font-medium">Modo Oscuro</div>
+              <div className="text-sm text-muted-foreground">Cambiar tema de la aplicación</div>
+            </div>
+            <button
+              onClick={toggleDarkMode}
+              className="neu-raised-sm w-12 h-12 flex items-center justify-center hover:bg-accent"
+            >
+              {darkMode ? <Sun className="w-6 h-6 text-warning" /> : <Moon className="w-6 h-6 text-primary" />}
+            </button>
+          </div>
+        </div>
+
+        <div className="neu-card">
+          <h3 className="font-semibold mb-4">Notificaciones</h3>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between p-4 neu-raised-sm">
+              <div>
+                <div className="font-medium">Alertas de Stock Bajo</div>
+                <div className="text-sm text-muted-foreground">Notificar cuando el stock esté bajo</div>
+              </div>
+              <div className="neu-badge text-success">Activo</div>
+            </div>
+
+            <div className="flex items-center justify-between p-4 neu-raised-sm">
+              <div>
+                <div className="font-medium">Notificaciones de Ventas</div>
+                <div className="text-sm text-muted-foreground">Alertas en tiempo real</div>
+              </div>
+              <div className="neu-badge text-success">Activo</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderView = () => {
+    switch (currentView) {
+      case 'dashboard': return renderDashboard();
+      case 'pos': return renderPOS();
+      case 'inventory': return <WarehouseView />;
+      case 'recepcion': return renderRecepcion();
+      case 'sales': return renderSales();
+      case 'catalog': return renderCatalog();
+      case 'history': return renderHistory();
+      case 'audit': return renderAudit();
+      case 'cash': return renderCash();
+      case 'users': return renderUsers();
+      case 'stores': return renderStores();
+      case 'settings': return renderSettings();
+      default: return renderDashboard();
+    }
+  };
+
+  const getRoleLabel = (role: UserRole) => {
+    const labels: Record<UserRole, string> = {
+      admin: 'Administrador',
+      manager: 'Encargado',
+      clerk: 'Cajero',
+      warehouse: 'Almacén',
+    };
+    return labels[role];
+  };
+
+  return (
+    <div className="min-h-screen flex">
+      {/* Sidebar */}
+      <aside className={`${sidebarOpen ? 'w-64' : 'w-0'} lg:w-64 fixed lg:sticky top-0 h-screen z-40 transition-all duration-300 overflow-hidden ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="neu-raised h-full flex flex-col">
+          {/* Logo */}
+          <div className="p-4 border-b border-border">
+            <div className="flex items-center gap-3">
+              <div className="neu-raised-sm w-10 h-10 flex items-center justify-center">
+                <Package className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <h1 className="font-bold">POS Enterprise</h1>
+                <p className="text-xs text-muted-foreground">v1.0.0</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 overflow-y-auto p-4">
+            <div className="space-y-2">
+              {navigationItems.map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => setCurrentView(item.id)}
+                  className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${currentView === item.id ? 'bg-accent' : 'hover:bg-accent'
+                    }`}
+                >
+                  <item.icon className="w-5 h-5" />
+                  <span>{item.label}</span>
+                </button>
+              ))}
+            </div>
+          </nav>
+
+          {/* User Info */}
+          <div className="p-4 border-t border-border">
+            <div className="neu-raised-sm p-3">
+              <div className="font-medium text-sm">{user?.full_name}</div>
+              <div className="text-xs text-muted-foreground">{getRoleLabel(user?.role || 'clerk')}</div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 min-h-screen">
+        {/* Header */}
+        <header className="neu-raised-sm p-4 sticky top-0 z-30">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={toggleSidebar}
+                className="neu-raised-sm w-10 h-10 flex items-center justify-center hover:bg-accent lg:hidden"
+              >
+                {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+              <div>
+                <h1 className="text-xl font-bold capitalize">
+                  {navigationItems.find(i => i.id === currentView)?.label || 'Dashboard'}
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  Bienvenido, {user?.full_name}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={toggleDarkMode}
+                className="neu-raised-sm w-10 h-10 flex items-center justify-center hover:bg-accent"
+              >
+                {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              </button>
+
+              <button className="neu-raised-sm w-10 h-10 flex items-center justify-center hover:bg-accent relative">
+                <Bell className="w-5 h-5" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-danger rounded-full" />
+              </button>
+
+              <button
+                onClick={handleLogout}
+                className="neu-btn neu-btn-danger flex items-center gap-2"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="hidden sm:inline">Salir</span>
+              </button>
+            </div>
+          </div>
+        </header>
+
+        {/* Content */}
+        <div className="p-4 md:p-6 pb-20">
+          {renderView()}
+        </div>
+      </main>
+
+      {/* Sidebar Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+          onClick={toggleSidebar}
+        />
+      )}
+    </div>
+  );
+}

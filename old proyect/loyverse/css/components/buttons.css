@@ -1,0 +1,75 @@
+/**
+ * Component: Buttons
+ * SaaS Enterprise style.
+ */
+
+.btn-ent {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-2);
+    height: 44px;
+    padding: 0 var(--sp-6);
+    border-radius: var(--rad-md);
+    font-weight: 600;
+    font-size: var(--fz-sm);
+    cursor: pointer;
+    transition: all var(--trans-fast);
+    border: 1px solid transparent;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.btn-ent--primary {
+    background: var(--clr-primary);
+    color: white;
+}
+
+.btn-ent--primary:hover {
+    background: var(--clr-primary-dark);
+    transform: translateY(-1px);
+}
+
+.btn-ent--secondary {
+    background: var(--clr-surface);
+    color: var(--clr-text);
+    border-color: var(--clr-border);
+}
+
+.btn-ent--secondary:hover {
+    background: var(--clr-bg);
+    border-color: var(--clr-text-light);
+}
+
+.btn-ent--danger {
+    background: var(--clr-danger-light);
+    color: var(--clr-danger-dark);
+    border-color: var(--clr-danger);
+}
+
+.btn-ent--danger:hover {
+    background: var(--clr-danger);
+    color: white;
+}
+
+.btn-ent:active {
+    transform: translateY(0);
+}
+
+.btn-ent:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Icons in buttons */
+.btn-ent i {
+    font-size: 1.1em;
+}
+
+/* Sm Version */
+.btn-ent--sm {
+    height: 32px;
+    padding: 0 var(--sp-3);
+    font-size: var(--fz-xs);
+}

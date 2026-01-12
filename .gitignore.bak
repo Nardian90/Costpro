@@ -1,0 +1,14 @@
+node_modules 
+.next/ 
+*.db 
+db/ 
+__MACOSX/ 
+.DS_Store 
+.env* 
+NODE_ENV 
+server.log 
+dev.log 
+__MACOSX/ 
+.DS_Store 
+db/*.db 
+NODE_ENV 

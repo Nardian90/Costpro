@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Vista de Gerencia - POS</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1c2433",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Manrope', sans-serif;
+        }
+        /* Custom scrollbar hide for horizontal scrolling */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-gray-900 dark:text-gray-100 min-h-screen pb-24">
+<!-- Top App Bar -->
+<header class="sticky top-0 z-20 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md px-4 pt-12 pb-2">
+<div class="flex items-center justify-between h-12">
+<h1 class="text-[32px] font-extrabold leading-tight tracking-tight text-gray-900 dark:text-white">Gerencia</h1>
+<button class="flex items-center justify-center w-10 h-10 rounded-full bg-gray-200 dark:bg-surface-dark text-gray-900 dark:text-white active:scale-95 transition-transform">
+<span class="material-symbols-outlined">lock</span>
+</button>
+</div>
+</header>
+<!-- Segmented Control (Time Filter) -->
+<div class="px-4 py-3">
+<div class="flex h-10 w-full items-center justify-center rounded-lg bg-gray-200 dark:bg-surface-dark p-1">
+<label class="flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-md px-2 has-[:checked]:bg-white dark:has-[:checked]:bg-primary has-[:checked]:shadow-sm has-[:checked]:text-primary dark:has-[:checked]:text-white text-gray-500 dark:text-gray-400 transition-all">
+<span class="truncate text-sm font-semibold">Diario</span>
+<input checked="" class="invisible w-0 absolute" name="period" type="radio" value="Diario"/>
+</label>
+<label class="flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-md px-2 has-[:checked]:bg-white dark:has-[:checked]:bg-primary has-[:checked]:shadow-sm has-[:checked]:text-primary dark:has-[:checked]:text-white text-gray-500 dark:text-gray-400 transition-all">
+<span class="truncate text-sm font-semibold">Semanal</span>
+<input class="invisible w-0 absolute" name="period" type="radio" value="Semanal"/>
+</label>
+<label class="flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-md px-2 has-[:checked]:bg-white dark:has-[:checked]:bg-primary has-[:checked]:shadow-sm has-[:checked]:text-primary dark:has-[:checked]:text-white text-gray-500 dark:text-gray-400 transition-all">
+<span class="truncate text-sm font-semibold">Mensual</span>
+<input class="invisible w-0 absolute" name="period" type="radio" value="Mensual"/>
+</label>
+</div>
+</div>
+<!-- Main Chart Section -->
+<div class="px-4 py-2">
+<div class="bg-surface-light dark:bg-surface-dark rounded-2xl p-5 shadow-sm">
+<div class="flex justify-between items-start mb-2">
+<div>
+<p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Ingresos Totales</p>
+<h2 class="text-3xl font-extrabold text-gray-900 dark:text-white mt-1">$1,240.50</h2>
+</div>
+<div class="flex items-center gap-1 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded-full">
+<span class="material-symbols-outlined text-green-600 dark:text-green-400 text-sm">trending_up</span>
+<span class="text-green-700 dark:text-green-400 text-xs font-bold">+5.2%</span>
+</div>
+</div>
+<!-- Simplified Chart SVG -->
+<div class="relative h-32 w-full mt-4">
+<svg class="w-full h-full overflow-visible" preserveaspectratio="none" viewbox="0 0 300 100">
+<defs>
+<lineargradient id="chartGradient" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#135bec" stop-opacity="0.2"></stop>
+<stop offset="100%" stop-color="#135bec" stop-opacity="0"></stop>
+</lineargradient>
+</defs>
+<path d="M0 80 C 40 80, 50 30, 90 40 S 150 70, 200 30 S 260 10, 300 40 V 100 H 0 Z" fill="url(#chartGradient)"></path>
+<path d="M0 80 C 40 80, 50 30, 90 40 S 150 70, 200 30 S 260 10, 300 40" fill="none" stroke="#135bec" stroke-linecap="round" stroke-width="3"></path>
+<!-- Chart Points -->
+<circle class="fill-surface-light dark:fill-surface-dark stroke-primary stroke-2" cx="200" cy="30" r="4"></circle>
+</svg>
+</div>
+<div class="flex justify-between mt-2 px-1">
+<span class="text-xs text-gray-400 font-medium">09:00</span>
+<span class="text-xs text-gray-400 font-medium">13:00</span>
+<span class="text-xs text-gray-400 font-medium">17:00</span>
+<span class="text-xs text-gray-400 font-medium">21:00</span>
+</div>
+</div>
+</div>
+<!-- Secondary Stats Carousel -->
+<div class="flex overflow-x-auto no-scrollbar gap-3 px-4 py-2 pb-4">
+<!-- Stat Card 1 -->
+<div class="min-w-[140px] flex-1 bg-surface-light dark:bg-surface-dark rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-800">
+<div class="flex items-center gap-2 mb-2">
+<div class="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-600 dark:text-orange-400">
+<span class="material-symbols-outlined text-lg">shopping_cart</span>
+</div>
+<span class="text-xs font-semibold text-gray-500 dark:text-gray-400">Pedidos</span>
+</div>
+<p class="text-xl font-bold text-gray-900 dark:text-white">42</p>
+<p class="text-xs font-medium text-green-600 dark:text-green-400 mt-1">+2 hoy</p>
+</div>
+<!-- Stat Card 2 -->
+<div class="min-w-[140px] flex-1 bg-surface-light dark:bg-surface-dark rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-800">
+<div class="flex items-center gap-2 mb-2">
+<div class="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
+<span class="material-symbols-outlined text-lg">group</span>
+</div>
+<span class="text-xs font-semibold text-gray-500 dark:text-gray-400">Turno</span>
+</div>
+<p class="text-xl font-bold text-gray-900 dark:text-white">3</p>
+<p class="text-xs font-medium text-gray-500 dark:text-gray-400 mt-1">Activos ahora</p>
+</div>
+<!-- Stat Card 3 -->
+<div class="min-w-[140px] flex-1 bg-surface-light dark:bg-surface-dark rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-800">
+<div class="flex items-center gap-2 mb-2">
+<div class="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400">
+<span class="material-symbols-outlined text-lg">receipt_long</span>
+</div>
+<span class="text-xs font-semibold text-gray-500 dark:text-gray-400">Ticket</span>
+</div>
+<p class="text-xl font-bold text-gray-900 dark:text-white">$29.50</p>
+<p class="text-xs font-medium text-gray-500 dark:text-gray-400 mt-1">Promedio</p>
+</div>
+</div>
+<!-- Quick Actions Grid -->
+<div class="px-4 pt-2 pb-4">
+<h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Acciones Rápidas</h3>
+<div class="grid grid-cols-2 gap-3">
+<button class="flex flex-col items-start justify-center gap-3 p-4 bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">badge</span>
+</div>
+<div class="text-left">
+<p class="font-bold text-gray-900 dark:text-white text-sm">Empleados</p>
+<p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Gestión de turnos</p>
+</div>
+</button>
+<button class="flex flex-col items-start justify-center gap-3 p-4 bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">inventory_2</span>
+</div>
+<div class="text-left">
+<p class="font-bold text-gray-900 dark:text-white text-sm">Inventario</p>
+<p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Stock y alertas</p>
+</div>
+</button>
+<button class="flex flex-col items-start justify-center gap-3 p-4 bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">point_of_sale</span>
+</div>
+<div class="text-left">
+<p class="font-bold text-gray-900 dark:text-white text-sm">Cierre de Caja</p>
+<p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Conciliar día</p>
+</div>
+</button>
+<button class="flex flex-col items-start justify-center gap-3 p-4 bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">settings</span>
+</div>
+<div class="text-left">
+<p class="font-bold text-gray-900 dark:text-white text-sm">Configuración</p>
+<p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">General y pagos</p>
+</div>
+</button>
+</div>
+</div>
+<!-- Recent Activity List (Simplified) -->
+<div class="px-4 pb-6">
+<h3 class="text-lg font-bold text-gray-900 dark:text-white mb-3">Actividad Reciente</h3>
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800">
+<!-- Item 1 -->
+<div class="flex items-center gap-3 p-3 border-b border-gray-100 dark:border-gray-700/50">
+<div class="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-red-600 dark:text-red-400 text-sm">remove_shopping_cart</span>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-sm font-semibold text-gray-900 dark:text-white truncate">Devolución #4921</p>
+<p class="text-xs text-gray-500 dark:text-gray-400 truncate">Autorizado por Admin</p>
+</div>
+<span class="text-sm font-bold text-gray-900 dark:text-white">-$45.00</span>
+</div>
+<!-- Item 2 -->
+<div class="flex items-center gap-3 p-3 border-b border-gray-100 dark:border-gray-700/50">
+<div class="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-green-600 dark:text-green-400 text-sm">payments</span>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-sm font-semibold text-gray-900 dark:text-white truncate">Venta Mayorista</p>
+<p class="text-xs text-gray-500 dark:text-gray-400 truncate">Cliente VIP</p>
+</div>
+<span class="text-sm font-bold text-gray-900 dark:text-white">+$320.00</span>
+</div>
+<!-- Item 3 -->
+<div class="flex items-center gap-3 p-3">
+<div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-blue-600 dark:text-blue-400 text-sm">login</span>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-sm font-semibold text-gray-900 dark:text-white truncate">Inicio de Turno</p>
+<p class="text-xs text-gray-500 dark:text-gray-400 truncate">Carlos M.</p>
+</div>
+<span class="text-xs font-medium text-gray-500 dark:text-gray-400">Hace 2h</span>
+</div>
+</div>
+</div>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full bg-surface-light dark:bg-surface-dark border-t border-gray-200 dark:border-gray-800 pb-safe pt-2 px-2 z-30">
+<div class="flex justify-around items-end h-16 pb-2">
+<button class="flex flex-col items-center justify-center w-full gap-1 text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[24px]">storefront</span>
+<span class="text-[10px] font-medium">Ventas</span>
+</button>
+<button class="flex flex-col items-center justify-center w-full gap-1 text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[24px]">receipt</span>
+<span class="text-[10px] font-medium">Pedidos</span>
+</button>
+<button class="flex flex-col items-center justify-center w-full gap-1 text-primary">
+<span class="material-symbols-outlined text-[24px] fill-current">grid_view</span>
+<span class="text-[10px] font-bold">Gerencia</span>
+</button>
+<button class="flex flex-col items-center justify-center w-full gap-1 text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[24px]">notifications</span>
+<span class="text-[10px] font-medium">Alertas</span>
+</button>
+</div>
+</nav>
+<!-- Safe area spacing for bottom nav -->
+<div class="h-6"></div>
+</body></html>

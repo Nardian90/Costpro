@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Vista de Almacén</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#135bec",
+              "background-light": "#f6f6f8",
+              "background-dark": "#101622",
+              "surface-light": "#ffffff",
+              "surface-dark": "#1c2433",
+            },
+            fontFamily: {
+              "display": ["Manrope", "sans-serif"]
+            },
+            borderRadius: {
+                "DEFAULT": "0.5rem", 
+                "lg": "0.75rem", 
+                "xl": "1rem", 
+                "full": "9999px"
+            },
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom scrollbar for horizontal chip list */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-gray-900 dark:text-white transition-colors duration-200">
+<div class="relative flex h-full min-h-screen w-full flex-col max-w-md mx-auto bg-surface-light dark:bg-background-dark shadow-2xl overflow-hidden">
+<!-- Header -->
+<header class="flex items-center px-4 py-4 pt-12 pb-2 justify-between bg-surface-light dark:bg-surface-dark sticky top-0 z-20 border-b border-gray-100 dark:border-gray-800">
+<h2 class="text-2xl font-bold leading-tight tracking-[-0.015em] flex-1">Almacén</h2>
+<div class="flex items-center justify-end">
+<button class="flex items-center justify-center rounded-full size-10 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined">barcode_scanner</span>
+</button>
+</div>
+</header>
+<!-- Search & Filters -->
+<div class="sticky top-[80px] z-10 bg-surface-light dark:bg-surface-dark pb-2 border-b border-gray-100 dark:border-gray-800 shadow-sm">
+<!-- Search Bar -->
+<div class="px-4 py-3">
+<label class="flex flex-col w-full">
+<div class="relative flex w-full items-center rounded-xl bg-background-light dark:bg-gray-800 h-12">
+<div class="absolute left-4 flex items-center justify-center text-gray-400">
+<span class="material-symbols-outlined">search</span>
+</div>
+<input class="w-full h-full bg-transparent border-none focus:ring-2 focus:ring-primary/50 rounded-xl pl-12 pr-4 text-base font-medium placeholder:text-gray-400 text-gray-900 dark:text-white" placeholder="Buscar por nombre o SKU" value=""/>
+<div class="absolute right-4 flex items-center justify-center text-gray-400">
+<span class="material-symbols-outlined text-[20px]">tune</span>
+</div>
+</div>
+</label>
+</div>
+<!-- Chips -->
+<div class="flex gap-2 px-4 pb-2 overflow-x-auto hide-scrollbar">
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-primary text-white px-5 transition-transform active:scale-95">
+<span class="text-sm font-semibold">Todos</span>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-5 transition-colors">
+<span class="text-sm font-medium text-gray-600 dark:text-gray-300">Bajo stock</span>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-5 transition-colors">
+<span class="text-sm font-medium text-gray-600 dark:text-gray-300">Sin stock</span>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-5 transition-colors">
+<span class="text-sm font-medium text-gray-600 dark:text-gray-300">Más vendidos</span>
+</button>
+</div>
+</div>
+<!-- Inventory List -->
+<div class="flex-1 overflow-y-auto pb-24 bg-background-light dark:bg-background-dark">
+<div class="p-4 space-y-3">
+<!-- Item 1: Normal Stock -->
+<div class="group flex gap-3 bg-surface-light dark:bg-surface-dark p-3 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 active:scale-[0.99] transition-all duration-200">
+<div class="relative shrink-0">
+<div class="bg-center bg-no-repeat bg-cover rounded-lg size-[72px] bg-gray-200" data-alt="Bottle of soda with red label" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDVqn9tWdmJtUrhGJZUOpJ2_OcS3r_C7iaTbp0t4WF2MbFr2y5mwjmsDbMlA6Zp-3RoLaoYUgvmGVPlXEOvQ6Bm2XjGEtrGZSFvo-8sUJzWjh9bQdi8OzYdm46ByNpoPyfxPV6oanKGAWLknHfpbU69cFXkwzLQPGqcnIY4FYbUmAslGSvpWSe4qHrR2FVd1IKWqso4zX-pEoqVXCS5hLmh0RsneAaLHm3C64xTccLyCC1aiAZa7QMm2ybSq56Tqj6atImuyKrMwC73");'></div>
+<span class="absolute -top-1 -left-1 flex size-4 items-center justify-center rounded-full bg-green-500 ring-2 ring-white dark:ring-surface-dark"></span>
+</div>
+<div class="flex flex-1 flex-col justify-center min-w-0">
+<div class="flex justify-between items-start mb-1">
+<p class="text-gray-900 dark:text-white text-base font-bold truncate pr-2">Coca-Cola Original 600ml</p>
+<button class="text-gray-400 hover:text-primary dark:hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+<div class="flex justify-between items-end">
+<div>
+<p class="text-gray-500 dark:text-gray-400 text-xs font-medium">SKU: 10023 • Bebidas</p>
+<p class="text-primary font-bold text-sm mt-0.5">$18.00 MXN</p>
+</div>
+<div class="text-right">
+<p class="text-2xl font-extrabold text-gray-900 dark:text-white leading-none">145</p>
+<p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Pzas</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Item 2: Low Stock -->
+<div class="group flex gap-3 bg-surface-light dark:bg-surface-dark p-3 rounded-xl shadow-sm border border-orange-100 dark:border-orange-900/30 active:scale-[0.99] transition-all duration-200">
+<div class="relative shrink-0">
+<div class="bg-center bg-no-repeat bg-cover rounded-lg size-[72px] bg-gray-200" data-alt="Bag of potato chips" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAsxSyeR14ZF7LC2XhfjFvT-YnWr-qM0dVfG5NvWnclE_ZzUCZQ7B1Ky3HX3P1jRpHFddDeH8FEKnxyauPTGZS-aM2nVUNLCpQXThs5UvGO7gNKM_8RxxNhTEvIEd3ccvJbCY06QK-9ET_ghRtrzx7ULlfMDCpI5KUsi4WHDvxyTdONCP19_5i2NpW83dQJzz861G601OFEab2zK1RMZdWxFivDrDIdUiPlueEsLAsxqYPtyI8Bb_eumaQvd1BzVsZKKcMpxQpyeGY8");'></div>
+<span class="absolute -top-1 -left-1 flex size-4 items-center justify-center rounded-full bg-orange-500 ring-2 ring-white dark:ring-surface-dark animate-pulse"></span>
+</div>
+<div class="flex flex-1 flex-col justify-center min-w-0">
+<div class="flex justify-between items-start mb-1">
+<p class="text-gray-900 dark:text-white text-base font-bold truncate pr-2">Sabritas Sal 45g</p>
+<button class="text-gray-400 hover:text-primary dark:hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+<div class="flex justify-between items-end">
+<div>
+<p class="text-gray-500 dark:text-gray-400 text-xs font-medium">SKU: 20044 • Snacks</p>
+<p class="text-orange-600 dark:text-orange-400 font-bold text-xs mt-1 bg-orange-50 dark:bg-orange-900/20 px-1.5 py-0.5 rounded w-fit">Stock Bajo</p>
+</div>
+<div class="text-right">
+<p class="text-2xl font-extrabold text-orange-600 dark:text-orange-400 leading-none">12</p>
+<p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Pzas</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="group flex gap-3 bg-surface-light dark:bg-surface-dark p-3 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 active:scale-[0.99] transition-all duration-200">
+<div class="relative shrink-0">
+<div class="bg-center bg-no-repeat bg-cover rounded-lg size-[72px] bg-gray-200" data-alt="Bottle of water" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDP88_BUpYj3oi6QXwdZMpS9424l5oPUlBEb39HA0l9e9Co0BtZo0VijPHNtHA4BgI4yOjjDQl2g11OJr5AXP8fLmRRTePbUsG0GecuPv2AVVigLi80t9VfdD5jxguHF92sb1cnZ-mYBWqLqC_5QzPXc0svFEXTm03pt4mKUHeQnKySt03K05NYUJktcRMqOfcez0qn3Pbx4PEel3iB2X9MpGSNuCUhT3JHxxzbkMfEAThzfzsQQFlwLuR0qkZsLNw3Bt1GnN-5aIzv");'></div>
+<span class="absolute -top-1 -left-1 flex size-4 items-center justify-center rounded-full bg-green-500 ring-2 ring-white dark:ring-surface-dark"></span>
+</div>
+<div class="flex flex-1 flex-col justify-center min-w-0">
+<div class="flex justify-between items-start mb-1">
+<p class="text-gray-900 dark:text-white text-base font-bold truncate pr-2">Agua Ciel 1L</p>
+<button class="text-gray-400 hover:text-primary dark:hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+<div class="flex justify-between items-end">
+<div>
+<p class="text-gray-500 dark:text-gray-400 text-xs font-medium">SKU: 10055 • Bebidas</p>
+<p class="text-primary font-bold text-sm mt-0.5">$12.00 MXN</p>
+</div>
+<div class="text-right">
+<p class="text-2xl font-extrabold text-gray-900 dark:text-white leading-none">50</p>
+<p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Pzas</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Item 4 -->
+<div class="group flex gap-3 bg-surface-light dark:bg-surface-dark p-3 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 active:scale-[0.99] transition-all duration-200">
+<div class="relative shrink-0">
+<div class="bg-center bg-no-repeat bg-cover rounded-lg size-[72px] bg-gray-200" data-alt="Pack of cookies" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBcvLK0ovmUM55zYmhzcFb0KNoqso2ABfFA4WmaiyD0My6ueD9UPqToiHqM6QVGzP_7HXW95Ve3NwFKP7s0fOVglJxT3y_BX8i2rrB9yuYR7J02OHrX10IMAs33C1bZbmJyifihnK-5aUYVEwEDBU-0LqUMOhCt6NS7T5dG6fn0cUl4QOESz32jaccWoqd7lrBfHAYoXpaBlSTmjq-DOxd43qbc3jAoIQmcNwlxfqkzVbeMavJzoot481mw7a3UJDrRUwqPYigZxc1T");'></div>
+<span class="absolute -top-1 -left-1 flex size-4 items-center justify-center rounded-full bg-green-500 ring-2 ring-white dark:ring-surface-dark"></span>
+</div>
+<div class="flex flex-1 flex-col justify-center min-w-0">
+<div class="flex justify-between items-start mb-1">
+<p class="text-gray-900 dark:text-white text-base font-bold truncate pr-2">Emperador Chocolate</p>
+<button class="text-gray-400 hover:text-primary dark:hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+<div class="flex justify-between items-end">
+<div>
+<p class="text-gray-500 dark:text-gray-400 text-xs font-medium">SKU: 30012 • Galletas</p>
+<p class="text-primary font-bold text-sm mt-0.5">$22.50 MXN</p>
+</div>
+<div class="text-right">
+<p class="text-2xl font-extrabold text-gray-900 dark:text-white leading-none">84</p>
+<p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Pzas</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Item 5: No Stock -->
+<div class="group flex gap-3 bg-surface-light dark:bg-surface-dark p-3 rounded-xl shadow-sm border border-red-100 dark:border-red-900/30 opacity-75 active:scale-[0.99] transition-all duration-200 grayscale-[0.5]">
+<div class="relative shrink-0">
+<div class="bg-center bg-no-repeat bg-cover rounded-lg size-[72px] bg-gray-200" data-alt="Can of energy drink" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAFh5qJ2hxL887zzm7KZ2nDSIlr56TNvebA-09KTS_-pp5ylxtdj0KurB9Qpvizoy3wX5j-M5Dj_0Ple9XrZtjGrH0Xiy-1DUKjLcqOx688nVC5auJUo6PkNSi1dHFddBV-FWC-PDHN6tvK3n1ou1AmU4cik35HmMw41ho447UNL_guk2OzmWa4rv3O0HxdqMnM4aWBNAcvZ_M6ThEunNziRJE7PxZcOl7hYtb21vHrlQbbAypEocnLGZwrq2ppIm-p5gYFS-UjFR51");'></div>
+<span class="absolute -top-1 -left-1 flex size-4 items-center justify-center rounded-full bg-red-500 ring-2 ring-white dark:ring-surface-dark"></span>
+</div>
+<div class="flex flex-1 flex-col justify-center min-w-0">
+<div class="flex justify-between items-start mb-1">
+<p class="text-gray-900 dark:text-white text-base font-bold truncate pr-2">Monster Energy 473ml</p>
+<button class="text-gray-400 hover:text-primary dark:hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+<div class="flex justify-between items-end">
+<div>
+<p class="text-gray-500 dark:text-gray-400 text-xs font-medium">SKU: 10099 • Bebidas</p>
+<p class="text-red-600 dark:text-red-400 font-bold text-xs mt-1 bg-red-50 dark:bg-red-900/20 px-1.5 py-0.5 rounded w-fit">Agotado</p>
+</div>
+<div class="text-right">
+<p class="text-2xl font-extrabold text-red-600 dark:text-red-400 leading-none">0</p>
+<p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Pzas</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Action Bar (Sticky) -->
+<div class="absolute bottom-6 left-4 right-4 z-30">
+<div class="flex gap-3 w-full bg-surface-light dark:bg-surface-dark p-1.5 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800">
+<button class="flex-1 flex items-center justify-center gap-2 h-14 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-xl transition-all active:scale-95 group">
+<div class="bg-surface-light dark:bg-surface-dark rounded-full p-1 shadow-sm group-hover:bg-white">
+<span class="material-symbols-outlined text-green-600" style="font-size: 20px;">arrow_downward</span>
+</div>
+<span class="font-bold text-sm">Entrada</span>
+</button>
+<button class="flex-1 flex items-center justify-center gap-2 h-14 bg-primary text-white rounded-xl shadow-lg shadow-blue-500/30 transition-all active:scale-95 group">
+<div class="bg-white/20 rounded-full p-1 group-hover:bg-white/30">
+<span class="material-symbols-outlined text-white" style="font-size: 20px;">arrow_upward</span>
+</div>
+<span class="font-bold text-sm">Salida</span>
+</button>
+</div>
+</div>
+<!-- Gradient overlay at bottom for smooth scroll fade -->
+<div class="pointer-events-none absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background-light dark:from-background-dark to-transparent z-10"></div>
+</div>
+</body></html>

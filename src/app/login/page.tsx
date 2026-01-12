@@ -1,0 +1,211 @@
+'use client';
+
+import { useState } from 'react';
+import { useAuthStore } from '@/store';
+import { useRouter } from 'next/navigation';
+import { Package2, Eye, EyeOff, LogIn } from 'lucide-react';
+import { supabase } from '@/lib/supabaseClient';
+import { toast } from 'sonner';
+
+export default function LoginPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const login = useAuthStore((state) => state.login);
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      if (!email || !password) {
+        throw new Error('Por favor completa todos los campos');
+      }
+
+      // 1. Authenticate with Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: email.toLowerCase().trim(),
+        password: password,
+      });
+
+      if (authError) {
+        throw new Error(authError.message === 'Invalid login credentials'
+          ? 'Credenciales inválidas'
+          : authError.message);
+      }
+
+      if (!authData.user) {
+        throw new Error('Error al obtener datos del usuario');
+      }
+
+      // 2. Fetch user profile from profiles table
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', authData.user.id)
+        .single();
+
+      if (profileError || !profileData) {
+        throw new Error('Error al cargar el perfil del usuario');
+      }
+
+      // Check if user is active
+      if (!profileData.is_active) {
+        await supabase.auth.signOut();
+        throw new Error('Usuario inactivo. Contacte al administrador.');
+      }
+
+      // 3. Update Zustand store with complete user data
+      const userData = {
+        id: profileData.id,
+        email: profileData.email,
+        full_name: profileData.full_name,
+        role: profileData.role,
+        store_id: profileData.store_id,
+        is_active: profileData.is_active,
+        created_at: profileData.created_at,
+        updated_at: profileData.updated_at,
+      };
+
+      login(userData, authData.session.access_token);
+
+      toast.success(`¡Bienvenido, ${userData.full_name}!`);
+      router.push('/');
+    } catch (err: any) {
+      console.error('Login error:', err);
+      setError(err.message || 'Error al iniciar sesión');
+      toast.error(err.message || 'Error al iniciar sesión');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const demoAccounts = [
+    { email: 'admin@demo.com', role: 'Admin' },
+    { email: 'encargado@demo.com', role: 'Encargado' },
+    { email: 'cajero@demo.com', role: 'Cajero' },
+    { email: 'almacen@demo.com', role: 'Almacén' },
+  ];
+
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <div className="neu-raised neu-pulse w-20 h-20 mx-auto flex items-center justify-center mb-4">
+            <Package2 className="w-12 h-12 text-primary" />
+          </div>
+          <h1 className="text-3xl font-bold mb-2">POS Enterprise</h1>
+          <p className="text-muted-foreground">
+            Plataforma de Gestión Integral
+          </p>
+        </div>
+
+        <div className="neu-card">
+          <h2 className="text-xl font-semibold mb-6 text-center">
+            Iniciar Sesión
+          </h2>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Correo Electrónico
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="neu-input w-full"
+                placeholder="tu@email.com"
+                autoComplete="email"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Contraseña
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="neu-input w-full pr-12"
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {error && (
+              <div className="neu-raised-sm p-3 text-danger text-sm">
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="neu-btn neu-btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {loading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Cargando...
+                </>
+              ) : (
+                <>
+                  <LogIn className="w-5 h-5" />
+                  Iniciar Sesión
+                </>
+              )}
+            </button>
+          </form>
+
+          <div className="mt-6 pt-6 border-t border-border">
+            <p className="text-xs text-muted-foreground mb-3 text-center">
+              Cuentas de Demo (contraseña: demo123)
+            </p>
+            <div className="space-y-2">
+              {demoAccounts.map((account) => (
+                <button
+                  key={account.email}
+                  type="button"
+                  onClick={() => {
+                    setEmail(account.email);
+                    setPassword('demo123');
+                  }}
+                  className="neu-raised-sm w-full text-left p-2 hover:bg-accent transition-colors text-sm"
+                >
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">{account.email}</span>
+                    <span className="neu-badge">{account.role}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <p className="text-center text-sm text-muted-foreground mt-6">
+          © 2024 POS Enterprise. Todos los derechos reservados.
+        </p>
+      </div>
+    </div>
+  );
+}
