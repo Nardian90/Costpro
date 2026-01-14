@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
@@ -10,41 +10,48 @@ import { useRouter } from 'next/navigation';
 export function useSupabaseAuth() {
     const { login, logout, user } = useAuthStore();
     const router = useRouter();
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         // Check active session on mount
         const checkSession = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
 
-            if (session?.user) {
-                // Fetch profile data
-                const { data: profileData } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', session.user.id)
-                    .single();
+                if (session?.user) {
+                    // Fetch profile data
+                    const { data: profileData } = await supabase
+                        .from('profiles')
+                        .select('*')
+                        .eq('id', session.user.id)
+                        .single();
 
-                if (profileData && profileData.is_active) {
-                    const userData = {
-                        id: profileData.id,
-                        email: profileData.email,
-                        full_name: profileData.full_name,
-                        role: profileData.role,
-                        store_id: profileData.store_id,
-                        is_active: profileData.is_active,
-                        created_at: profileData.created_at,
-                        updated_at: profileData.updated_at,
-                    };
+                    if (profileData && profileData.is_active) {
+                        const userData = {
+                            id: profileData.id,
+                            email: profileData.email,
+                            full_name: profileData.full_name,
+                            role: profileData.role,
+                            store_id: profileData.store_id,
+                            is_active: profileData.is_active,
+                            created_at: profileData.created_at,
+                            updated_at: profileData.updated_at,
+                        };
 
-                    login(userData, session.access_token);
-                } else {
-                    // User inactive or profile not found
-                    await supabase.auth.signOut();
+                        login(userData, session.access_token);
+                    } else {
+                        // User inactive or profile not found
+                        await supabase.auth.signOut();
+                        logout();
+                    }
+                } else if (user) {
+                    // No session but user in store - clear it
                     logout();
                 }
-            } else if (user) {
-                // No session but user in store - clear it
-                logout();
+            } catch (error) {
+                console.error("Session check error", error);
+            } finally {
+                setLoading(false);
             }
         };
 
@@ -77,14 +84,19 @@ export function useSupabaseAuth() {
 
                         login(userData, session.access_token);
                     }
+                    setLoading(false);
                 } else if (event === 'SIGNED_OUT') {
                     logout();
+                    setLoading(false);
                     router.push('/login');
                 } else if (event === 'TOKEN_REFRESHED' && session) {
                     // Update token in store
                     if (user) {
                         login(user, session.access_token);
                     }
+                    setLoading(false);
+                } else {
+                    setLoading(false);
                 }
             }
         );
@@ -94,5 +106,5 @@ export function useSupabaseAuth() {
         };
     }, []);
 
-    return { user };
+    return { user, loading };
 }
