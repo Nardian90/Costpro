@@ -121,6 +121,7 @@ export interface InventoryMovement {
   reference_id: string | null;
   user_id: string | null;
   balance_after: number | null;
+  unit_cost?: number;
 }
 
 export interface InventoryBatch {
@@ -144,6 +145,9 @@ export interface StockMovement {
   movement_date: string;
   created_by: string | null;
   created_at: string;
+  unit_cost?: number;
+  unit_price?: number;
+  balance_after?: number;
 }
 
 // ============================================

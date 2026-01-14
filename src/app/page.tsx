@@ -54,13 +54,11 @@ import WarehouseView from '@/components/WarehouseView';
 
 export default function HomePage() {
   const router = useRouter();
-  useSupabaseAuth(); // Sync Supabase session with store
-  const user = useAuthStore((state) => state.user);
+  const { user, loading } = useSupabaseAuth(); // Sync Supabase session with store
   const logout = useAuthStore((state) => state.logout);
-  const { sidebarOpen, darkMode, toggleSidebar, toggleDarkMode } = useUIStore();
+  const { sidebarOpen, darkMode, toggleSidebar, toggleDarkMode, currentView, setCurrentView } = useUIStore();
   const { items, addItem, removeItem, updateQuantity, clearCart, setDiscount, getTotal, getSubtotal, getItemCount } = useCartStore();
 
-  const [currentView, setCurrentView] = useState('dashboard');
   const [showCart, setShowCart] = useState(false);
 
   // Mock data
@@ -218,59 +216,33 @@ export default function HomePage() {
 
   // Check authentication
   useEffect(() => {
-    if (!user) {
+    if (!loading && !user) {
       router.push('/login');
     }
-  }, [user, router]);
+  }, [user, loading, router]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   if (!user) {
     return null;
   }
 
   const handleLogout = async () => {
-    // Sign out from Supabase Auth
-    await supabase.auth.signOut();
-    // Clear local store
-    logout();
-    router.push('/login');
-  };
-
-  const addToCart = (product: Product) => {
-    const cartItem: CartItem = {
-      product_id: product.id,
-      variant_id: null,
-      product,
-      variant: null,
-      quantity: 1,
-      price: product.price,
-      cost: product.cost_price,
-      subtotal: product.price,
-    };
-    addItem(cartItem);
-    setShowCart(true);
-  };
-
-  const handleCheckout = () => {
-    setDiscount(localDiscount);
-    alert('¡Venta procesada exitosamente!');
-    clearCart();
-    setShowCart(false);
-    setLocalDiscount({ type: 'fixed', value: 0 });
-  };
-
-  const handleStockAdjustment = (product: Product) => {
-    if (!stockAdjustment.reason) {
-      alert('Por favor especifica un motivo para el ajuste');
-      return;
+    try {
+      await supabase.auth.signOut();
+      logout();
+      router.replace('/login');
+    } catch (error) {
+      console.error('Error logging out:', error);
+      logout();
+      router.replace('/login');
     }
-    alert(`Ajuste de stock aplicado: ${stockAdjustment.quantity} unidades - Motivo: ${stockAdjustment.reason}`);
-    setStockAdjustment({ quantity: 0, reason: '' });
-    setSelectedProduct(null);
-  };
-
-  const handleReceiptSubmit = () => {
-    alert('Recepción creada exitosamente');
-    setReceiptForm({ supplier: '', reference: '' });
   };
 
   // Get role-specific navigation
@@ -1071,8 +1043,8 @@ export default function HomePage() {
     switch (currentView) {
       case 'dashboard': return renderDashboard();
       case 'pos': return renderPOS();
-      case 'inventory': return <WarehouseView />;
-      case 'recepcion': return renderRecepcion();
+      case 'inventory': return <WarehouseView key="inventory" />;
+      case 'recepcion': return <WarehouseView initialView="history" key="history" />;
       case 'sales': return renderSales();
       case 'catalog': return renderCatalog();
       case 'history': return renderHistory();

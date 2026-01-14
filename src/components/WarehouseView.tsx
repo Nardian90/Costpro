@@ -12,15 +12,37 @@ import {
     Upload,
     Filter,
     X,
+    Save,
+    FileText,
+    Calendar,
+    Building2,
+    Hash,
+    Shield,
+    History,
+    FileDown,
+    Printer,
+    ArrowUpDown,
+    ArrowDownLeft,
+    ArrowUpRight,
 } from 'lucide-react';
 import type { Product, Receipt, ReceiptItem } from '@/types';
 import { ROLE_PERMISSIONS } from '@/types';
 import { toast } from 'sonner';
 
-export default function WarehouseView() {
+interface WarehouseViewProps {
+    initialView?: 'inventory' | 'history' | 'reception';
+}
+
+export default function WarehouseView({ initialView = 'inventory' }: WarehouseViewProps) {
     const user = useAuthStore((state) => state.user);
     const { addItem } = useCartStore();
-    const canReceiveProducts = user?.role ? ROLE_PERMISSIONS[user.role]?.canReceiveProducts : false;
+
+    // 1. Validación estricta de permisos por rol
+    const permissions = user?.role ? ROLE_PERMISSIONS[user.role] : null;
+    const canViewInventory = permissions?.canViewInventory || false;
+    const canReceiveProducts = permissions?.canReceiveProducts || false;
+    const canAdjustStock = permissions?.canAdjustStock || false;
+
     const [products, setProducts] = useState<Product[]>([]);
     const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -31,6 +53,7 @@ export default function WarehouseView() {
     const [stockAdjustment, setStockAdjustment] = useState({
         quantity: 0,
         reason: '',
+        cost: 0 // Representa el Ajuste de Monto al Costo Total (+/-)
     });
 
     // Estados para MODO RECEPCIÓN (Bulk)
@@ -46,9 +69,27 @@ export default function WarehouseView() {
     });
     const [showReceptionMeta, setShowReceptionMeta] = useState(false);
 
+    // Estados para CREACIÓN DE PRODUCTO
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [newProductData, setNewProductData] = useState({
+        name: '',
+        sku: '',
+        category: '',
+        initial_quantity: 1,
+        cost_price: 0,
+        min_stock: 5
+    });
+
     // Nuevos estados para Historial y Sesión
     const [recentReceptions, setRecentReceptions] = useState<any[]>([]);
     const [isSessionChecking, setIsSessionChecking] = useState(true);
+
+    // Estados para KARDEX
+    const [isKardexOpen, setIsKardexOpen] = useState(false);
+    const [selectedKardexProduct, setSelectedKardexProduct] = useState<Product | null>(null);
+    const [kardexMovements, setKardexMovements] = useState<any[]>([]);
+    const [kardexLoading, setKardexLoading] = useState(false);
+    const [kardexViewMode, setKardexViewMode] = useState<'quantity' | 'amount'>('quantity');
 
     // Chequeo de sesión para evitar flash de login/error
     useEffect(() => {
@@ -89,22 +130,26 @@ export default function WarehouseView() {
         if (!product.image_url) return null;
         if (product.image_url.startsWith('http')) return product.image_url;
 
-        // Asumimos bucket 'products' si es un path relativo
-        const { data } = supabase.storage.from('products').getPublicUrl(product.image_url);
+        // Limpiar el path si tuviera prefijo repetido del bucket
+        const path = product.image_url.startsWith('products/')
+            ? product.image_url.replace('products/', '')
+            : product.image_url;
+
+        const { data } = supabase.storage.from('product-images').getPublicUrl(path);
         return data.publicUrl;
     };
 
     const fetchRecentReceptions = async () => {
         if (!user?.store_id) return;
+        setLoading(true);
         try {
-            // Unimos con products para obtener nombre y proveedor
+            // Unimos con products y con receipts (vía reference_id)
             const { data, error } = await supabase
                 .from('stock_movements')
                 .select(`
                     *,
                     product:products (
                         name,
-                        supplier, 
                         image_url
                     )
                 `)
@@ -114,9 +159,211 @@ export default function WarehouseView() {
                 .limit(10);
 
             if (error) throw error;
-            setRecentReceptions(data || []);
+
+            // Enriquecemos los movimientos con datos de la tabla receipts si es posible
+            // (Ya que stock_movements.reference_id contiene el ID del receipt)
+            const enrichedData = await Promise.all((data || []).map(async (mov: any) => {
+                if (mov.reference_id && mov.movement_type === 'purchase') {
+                    const { data: receiptData } = await supabase
+                        .from('receipts')
+                        .select('supplier, reference_doc')
+                        .eq('id', mov.reference_id)
+                        .single();
+
+                    if (receiptData) {
+                        return {
+                            ...mov,
+                            supplier: receiptData.supplier,
+                            reference_doc: receiptData.reference_doc || mov.reference_doc
+                        };
+                    }
+                }
+                return mov;
+            }));
+
+            setRecentReceptions(enrichedData);
         } catch (error) {
             console.error('Error fetching recent receptions:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchProductKardex = async (product: Product) => {
+        if (!user?.store_id) return;
+        setKardexLoading(true);
+        setSelectedKardexProduct(product);
+        setIsKardexOpen(true);
+
+        try {
+            const { data, error } = await supabase
+                .from('stock_movements')
+                .select('*')
+                .eq('product_id', product.id)
+                .eq('store_id', user.store_id)
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+            setKardexMovements(data || []);
+        } catch (error: any) {
+            toast.error('Error al cargar movimientos: ' + error.message);
+        } finally {
+            setKardexLoading(false);
+        }
+    };
+
+    const handlePrintReceipt = async (receiptId: string) => {
+        if (!receiptId) return;
+        const toastId = toast.loading('Preparando reporte...');
+        try {
+            // Obtener el receipt y sus items
+            const { data: receipt, error: rError } = await supabase
+                .from('receipts')
+                .select('*')
+                .eq('id', receiptId)
+                .single();
+
+            if (rError) throw rError;
+
+            const { data: items, error: iError } = await supabase
+                .from('receipt_items')
+                .select(`
+                    *,
+                    product:products (name, sku)
+                `)
+                .eq('receipt_id', receiptId);
+
+            if (iError) throw iError;
+
+            // Generar vista de impresión
+            const printWindow = window.open('', '_blank');
+            if (!printWindow) return;
+
+            const html = `
+                <html>
+                <head>
+                    <title>Reporte de Recepción - ${receipt.reference_doc}</title>
+                    <style>
+                        body { font-family: sans-serif; padding: 40px; color: #333; }
+                        .header { display: flex; justify-between: space-between; border-bottom: 2px solid #333; padding-bottom: 20px; }
+                        .title { font-size: 24px; font-bold: bold; }
+                        .details { margin: 20px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 30px; }
+                        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+                        th { bg-color: #f5f5f5; }
+                        .footer { margin-top: 50px; display: grid; grid-template-columns: 1fr 1fr; gap: 100px; text-align: center; }
+                        .sign-line { border-top: 1px solid #333; margin-top: 40px; padding-top: 10px; }
+                        @media print { .no-print { display: none; } }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <div>
+                            <div class="title">REPORTE DE RECEPCIÓN</div>
+                            <div>Folio/Factura: <strong>${receipt.reference_doc}</strong></div>
+                        </div>
+                        <div style="text-align: right">
+                            <div>Fecha: ${new Date(receipt.created_at).toLocaleDateString()}</div>
+                            <div>Estado: ${receipt.status.toUpperCase()}</div>
+                        </div>
+                    </div>
+
+                    <div class="details">
+                        <div>
+                            <strong>Proveedor:</strong><br>${receipt.notes || 'N/A'}
+                        </div>
+                        <div>
+                            <strong>Tienda:</strong><br>${user?.store_id || 'Principal'}
+                        </div>
+                    </div>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>SKU</th>
+                                <th>Cantidad</th>
+                                <th>Costo Unit.</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${items.map((item: any) => `
+                                <tr>
+                                    <td>${item.product?.name}</td>
+                                    <td>${item.product?.sku || '-'}</td>
+                                    <td>${item.quantity}</td>
+                                    <td>$${item.unit_cost.toFixed(2)}</td>
+                                    <td>$${(item.quantity * item.unit_cost).toFixed(2)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan="4" style="text-align: right">TOTAL GENERAL:</th>
+                                <th>$${receipt.total_cost.toFixed(2)}</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    <div class="footer">
+                        <div>
+                            <div class="sign-line">Firma Entregado (Proveedor)</div>
+                        </div>
+                        <div>
+                            <div class="sign-line">Firma Recibido (Almacén)</div>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `;
+
+            printWindow.document.write(html);
+            printWindow.document.close();
+            setTimeout(() => {
+                printWindow.print();
+                toast.success('Reporte generado', { id: toastId });
+            }, 500);
+
+        } catch (err: any) {
+            toast.error('Error al generar PDF: ' + err.message, { id: toastId });
+        }
+    };
+
+    // --- LÓGICA DE IMÁGENES CON VALIDACIÓN (HALLAZGO AUDITORÍA) ---
+    const handleImageUpdate = async (productId: string, file: File) => {
+        // Validación de tamaño (2MB máximo)
+        if (file.size > 2 * 1024 * 1024) {
+            toast.error('La imagen no debe superar los 2MB');
+            return;
+        }
+
+        const toastId = toast.loading('Subiendo imagen...');
+        try {
+            setLoading(true);
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${productId}-${Math.random()}.${fileExt}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('product-images')
+                .upload(fileName, file);
+
+            if (uploadError) throw uploadError;
+
+            const { error: updateError } = await supabase
+                .from('products')
+                .update({ image_url: fileName })
+                .eq('id', productId);
+
+            if (updateError) throw updateError;
+
+            toast.success('Imagen actualizada correctamente', { id: toastId });
+            fetchProducts();
+        } catch (error: any) {
+            console.error('Error uploading image:', error);
+            toast.error(error.message || 'Error al subir imagen', { id: toastId });
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -204,37 +451,44 @@ export default function WarehouseView() {
     };
 
     const handleExport = () => {
-        if (!products.length) return;
+        if (!products.length) {
+            toast.error('No hay productos para exportar');
+            return;
+        }
+        const toastId = toast.loading('Generando reporte CSV...');
+        try {
+            const headers = ['Producto', 'SKU', 'Categoría', 'Stock Actual', 'Costo', 'Precio', 'Valor Total'];
+            const csvContent = [
+                headers.join(','),
+                ...filteredProducts.map(p => [
+                    `"${p.name.replace(/"/g, '""')}"`,
+                    `"${p.sku || ''}"`,
+                    `"${p.category || ''}"`,
+                    p.stock_current,
+                    p.cost_price || 0,
+                    p.price,
+                    ((p.stock_current || 0) * (p.cost_price || 0)).toFixed(2)
+                ].join(','))
+            ].join('\n');
 
-        const headers = ['Producto', 'SKU', 'Categoría', 'Stock Actual', 'Costo', 'Precio', 'Valor Total'];
-        const csvContent = [
-            headers.join(','),
-            ...filteredProducts.map(p => [
-                `"${p.name.replace(/"/g, '""')}"`,
-                `"${p.sku || ''}"`,
-                `"${p.category || ''}"`,
-                p.stock_current,
-                p.cost_price || 0,
-                p.price,
-                ((p.stock_current || 0) * (p.cost_price || 0)).toFixed(2)
-            ].join(','))
-        ].join('\n');
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', `inventario_${new Date().toISOString().split('T')[0]}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast.success('Exportación completada');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `inventario_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            toast.success('Exportación completada', { id: toastId });
+        } catch (err) {
+            toast.error('Error al exportar datos', { id: toastId });
+        }
     };
 
     // --- LÓGICA DE AJUSTE INDIVIDUAL ---
     const handleStockAdjustment = async (product: Product) => {
-        if (!stockAdjustment.quantity || !stockAdjustment.reason) {
-            toast.error('Por favor complete todos los campos');
+        if (!stockAdjustment.reason) {
+            toast.error('Por favor indique un motivo');
             return;
         }
 
@@ -243,8 +497,9 @@ export default function WarehouseView() {
             return;
         }
 
+        const toastId = toast.loading('Procesando ajuste de inventario...');
         try {
-            // Usar RPC atómico para ajustar inventario y registrar movimiento
+            // Usar RPC atómico con lógica de Costo Promedio Ponderado
             const payload = {
                 p_store_id: user.store_id,
                 p_product_id: product.id,
@@ -252,22 +507,20 @@ export default function WarehouseView() {
                 p_quantity_change: stockAdjustment.quantity,
                 p_movement_type: 'adjustment',
                 p_reference_doc: stockAdjustment.reason,
-                p_created_by: user.id
+                p_created_by: user.id,
+                p_cost_value_change: stockAdjustment.cost
             };
 
             const { data, error } = await supabase.rpc('register_stock_movement', payload);
             if (error) throw error;
 
-            // Actualizar vista optimista consultando inventario de nuevo
-            await fetchProducts();
-
-            toast.success('Stock actualizado correctamente');
+            toast.success('Ajuste de Stock y Costo procesado', { id: toastId });
             setSelectedProduct(null);
-            setStockAdjustment({ quantity: 0, reason: '' });
-        } catch (error) {
+            setStockAdjustment({ quantity: 0, reason: '', cost: 0 });
+            await fetchProducts();
+        } catch (error: any) {
             console.error('Error updating stock:', error);
-            toast.error('Error al actualizar stock');
-            fetchProducts();
+            toast.error(error.message || 'Error al actualizar stock', { id: toastId });
         }
     };
 
@@ -277,10 +530,17 @@ export default function WarehouseView() {
             toast.error('No tienes permisos para hacer recepciones');
             return;
         }
-        setIsReceptionMode(!isReceptionMode);
-        setReceptionItems(new Map());
-        setShowReceptionSummary(false);
-        setShowReceptionMeta(false);
+
+        const newMode = !isReceptionMode;
+        setIsReceptionMode(newMode);
+
+        if (newMode) {
+            setReceptionItems(new Map());
+            setShowReceptionSummary(true); // Siempre mostrar el panel si entramos en el modo
+        } else {
+            setShowReceptionSummary(false);
+        }
+
         setReceptionDetails({
             supplier: '',
             invoiceNumber: '',
@@ -343,6 +603,7 @@ export default function WarehouseView() {
             unit_cost: newCost
         }));
 
+        const toastId = toast.loading('Registrando recepción...');
         setLoading(true);
         try {
             const { data, error } = await supabase.rpc('register_reception', {
@@ -356,65 +617,198 @@ export default function WarehouseView() {
 
             if (error) throw error;
 
-            toast.success(`Recepción registrada: ${data}`);
+            toast.success(`Recepción registrada: #${data.receipt_id?.split('-')[0]}`, { id: toastId });
             setReceptionItems(new Map());
             setIsReceptionMode(false);
-            fetchProducts();
-            fetchRecentReceptions();
-        } catch (err) {
+            await Promise.all([fetchProducts(), fetchRecentReceptions()]);
+        } catch (err: any) {
             console.error('Error processing reception (RPC):', err);
-            toast.error(err?.message || 'Error al procesar la recepción');
+            toast.error(err.message || 'Error al procesar la recepción', { id: toastId });
         } finally {
             setLoading(false);
         }
     };
 
-    const addToCart = (product: Product) => {
-        const cartItem = {
-            product_id: product.id,
-            variant_id: null,
-            product: product,
-            variant: null,
-            quantity: 1,
-            price: product.price,
-            cost: product.cost_price || 0,
-            subtotal: product.price
-        };
-        addItem(cartItem);
-        toast.success('Producto agregado al carrito');
+    const handleCreateProduct = async () => {
+        if (!newProductData.name) {
+            toast.error('El nombre del producto es obligatorio');
+            return;
+        }
+
+        try {
+            setLoading(true);
+            const { data, error } = await supabase
+                .from('products')
+                .insert([{
+                    name: newProductData.name,
+                    sku: newProductData.sku || null,
+                    category: newProductData.category || 'General',
+                    price: 0, // En vista almacén no se define el precio
+                    cost_price: newProductData.cost_price,
+                    min_stock: newProductData.min_stock
+                }])
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            toast.success('Producto creado y añadido a la lista');
+
+            // Refrescar lista y añadir a la recepción automáticamente
+            await fetchProducts();
+
+            if (data) {
+                // Mapear el nuevo producto con la cantidad inicial especificada
+                const mappedProduct: Product = {
+                    ...data,
+                    stock_current: 0,
+                    store_id: user?.store_id
+                };
+
+                // Añadir a la recepción con la cantidad indicada en el modal
+                const itemsMap = new Map(receptionItems);
+                itemsMap.set(data.id, {
+                    product: mappedProduct,
+                    quantityToAdd: newProductData.initial_quantity || 1,
+                    newCost: newProductData.cost_price || 0
+                });
+                setReceptionItems(itemsMap);
+                setShowReceptionSummary(true);
+            }
+
+            setIsCreateModalOpen(false);
+            setNewProductData({
+                name: '',
+                sku: '',
+                category: '',
+                initial_quantity: 1,
+                cost_price: 0,
+                min_stock: 5
+            });
+        } catch (error: any) {
+            console.error('Error creating product:', error);
+            toast.error(error.message || 'Error al crear producto');
+        } finally {
+            setLoading(false);
+        }
     };
 
-    // Estado de carga inicial (verificación de sesión)
-    if (isSessionChecking) {
-        return <div className="p-8 text-center animate-pulse">Verificando sesión...</div>;
-    }
+    // --- ELIMINADO EL ADDTOCART POR SOLICITUD DE USUARIO ---
 
-    if (loading && products.length === 0) {
-        return <div className="p-8 text-center">Cargando inventario...</div>;
+    // Bloqueo de vista por permisos
+    if (!canViewInventory) {
+        return (
+            <div className="flex flex-col items-center justify-center p-12 text-center h-full">
+                <Shield className="w-16 h-16 text-red-500 mb-4 opacity-50" />
+                <h3 className="text-xl font-bold text-red-600">Acceso Denegado</h3>
+                <p className="text-muted-foreground mt-2 max-w-md">
+                    No tienes los permisos necesarios para ver el inventario. Contacta a tu administrador.
+                </p>
+            </div>
+        );
     }
 
     if (!user?.store_id) {
         return <div className="p-8 text-center text-red-500">Error: Usuario no asignado a una tienda.</div>;
     }
 
+    if (initialView === 'history') {
+        return (
+            <div className="space-y-6 h-full flex flex-col">
+                <div className="flex items-center justify-between shrink-0">
+                    <h2 className="text-2xl font-bold">Historial de Recepciones</h2>
+                </div>
+
+                <div className="flex-1 overflow-auto bg-white dark:bg-slate-900 rounded-xl border border-border">
+                    <div className="p-6">
+                        <div className="space-y-4">
+                            {recentReceptions.length > 0 ? (
+                                recentReceptions.map((mov: any) => (
+                                    <div key={mov.id} className="flex items-center justify-between p-4 neu-raised-sm rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center overflow-hidden">
+                                                {mov.product?.image_url ? (
+                                                    <img src={getProductImageUrl(mov.product) || ''} alt={mov.product?.name} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <Package className="w-6 h-6 text-slate-400" />
+                                                )}
+                                            </div>
+                                            <div>
+                                                <div className="font-semibold text-slate-900 dark:text-white">{mov.product?.name}</div>
+                                                <div className="text-sm text-slate-500 flex items-center gap-2">
+                                                    <Calendar className="w-3 h-3" />
+                                                    {new Date(mov.created_at).toLocaleDateString()}
+                                                    <Building2 className="w-3 h-3 ml-2" />
+                                                    {mov.supplier || 'Proveedor N/A'}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="text-right">
+                                                <div className="font-bold text-blue-600 dark:text-blue-400">+{mov.quantity_change} un.</div>
+                                                <div className="text-xs text-slate-400 mt-1">Ref: {mov.reference_doc || 'N/A'}</div>
+                                            </div>
+                                            {mov.reference_id && (
+                                                <button
+                                                    onClick={() => handlePrintReceipt(mov.reference_id)}
+                                                    className="neu-btn neu-raised-sm bg-slate-900 !text-white hover:bg-slate-800 flex items-center gap-2 px-3 py-1.5 text-xs shadow-sm border-none"
+                                                    title="Previsualizar Recepción"
+                                                >
+                                                    <FileText className="w-4 h-4" />
+                                                    <span>Previsualizar</span>
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="text-center py-12 text-muted-foreground">
+                                    No se encontraron recepciones procesadas.
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div className="space-y-6 h-full flex flex-col">
+        <div className="space-y-6 h-full flex flex-col relative">
+            {loading && (
+                <div className="fixed top-4 right-4 z-[100] flex items-center gap-3 bg-white/90 backdrop-blur-sm border border-slate-200 px-4 py-2 rounded-full shadow-lg">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-slate-900"></div>
+                    <p className="text-[10px] font-bold text-slate-700 uppercase tracking-widest">Sincronizando</p>
+                </div>
+            )}
             {/* Header */}
             <div className="flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-4">
-                    <h2 className="text-2xl font-bold">
+                    <h2 className="text-2xl font-bold text-slate-900 border-l-4 border-slate-900 pl-4">
                         {isReceptionMode ? 'Recepción de Mercancía' : 'Gestión de Inventario'}
                     </h2>
                     {isReceptionMode && (
-                        <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded border border-yellow-400">
+                        <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded border border-amber-200 uppercase tracking-tight">
                             Modo Recepción Activo
                         </span>
                     )}
                 </div>
                 <div className="flex gap-2">
+                    {isReceptionMode && (
+                        <button
+                            onClick={() => setIsCreateModalOpen(true)}
+                            className="neu-btn neu-raised-sm bg-emerald-600 !text-white hover:bg-emerald-700 flex items-center gap-2 px-4 shadow-sm border-none"
+                        >
+                            <Plus className="w-4 h-4" />
+                            <span className="font-bold">Nuevo Producto</span>
+                        </button>
+                    )}
                     <button
                         onClick={toggleReceptionMode}
-                        className={`neu-btn ${isReceptionMode ? 'bg-yellow-500 text-white hover:bg-yellow-600' : 'neu-raised-sm'} flex items-center gap-2`}
+                        className={`neu-btn flex items-center gap-2 px-4 shadow-sm font-bold transition-all border-none ${isReceptionMode
+                            ? 'bg-amber-600 !text-white hover:bg-amber-700'
+                            : 'neu-raised-sm bg-slate-900 !text-white hover:bg-slate-800'
+                            }`}
                     >
                         {isReceptionMode ? <X className="w-4 h-4" /> : <Download className="w-4 h-4" />}
                         {isReceptionMode ? 'Cancelar Recepción' : 'Nueva Recepción'}
@@ -471,7 +865,14 @@ export default function WarehouseView() {
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredProducts.map(product => {
+                            {products.length === 0 && !loading ? (
+                                <tr>
+                                    <td colSpan={7} className="p-12 text-center text-muted-foreground">
+                                        <Package className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                                        <p>No se encontraron productos en el inventario.</p>
+                                    </td>
+                                </tr>
+                            ) : filteredProducts.map(product => {
                                 const imgUrl = getProductImageUrl(product);
                                 const isInReception = receptionItems.has(product.id);
 
@@ -479,7 +880,7 @@ export default function WarehouseView() {
                                     <tr key={product.id} className={isInReception ? 'bg-blue-50/50' : ''}>
                                         <td data-label="Producto" className="p-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="neu-raised-sm w-12 h-12 flex items-center justify-center overflow-hidden bg-gray-50 shrink-0">
+                                                <div className="neu-raised-sm w-12 h-12 flex items-center justify-center overflow-hidden bg-gray-50 shrink-0 relative group">
                                                     {imgUrl ? (
                                                         <img
                                                             src={imgUrl}
@@ -492,6 +893,20 @@ export default function WarehouseView() {
                                                         />
                                                     ) : null}
                                                     <Package className={`w-6 h-6 text-muted-foreground ${imgUrl ? 'hidden' : ''}`} />
+
+                                                    {/* Botón rápido para subir imagen */}
+                                                    <label className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
+                                                        <Upload className="w-4 h-4" />
+                                                        <input
+                                                            type="file"
+                                                            className="hidden"
+                                                            accept="image/*"
+                                                            onChange={(e) => {
+                                                                const file = e.target.files?.[0];
+                                                                if (file) handleImageUpdate(product.id, file);
+                                                            }}
+                                                        />
+                                                    </label>
                                                 </div>
                                                 <div>
                                                     <div className="font-medium">{product.name}</div>
@@ -530,18 +945,19 @@ export default function WarehouseView() {
                                                 ) : (
                                                     <>
                                                         <button
+                                                            onClick={() => fetchProductKardex(product)}
+                                                            className="neu-raised-sm w-8 h-8 flex items-center justify-center hover:bg-accent text-blue-600"
+                                                            title="Ver Kardex / Movimientos"
+                                                        >
+                                                            <History className="w-4 h-4" />
+                                                        </button>
+                                                        <button
                                                             onClick={() => setSelectedProduct(product)}
-                                                            className="neu-raised-sm w-8 h-8 flex items-center justify-center hover:bg-accent"
+                                                            className="neu-raised-sm flex-1 px-3 py-2 flex items-center justify-center gap-2 hover:bg-accent"
                                                             title="Ajuste Rápido"
                                                         >
                                                             <Edit className="w-4 h-4" />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => addToCart(product)}
-                                                            className="neu-raised-sm w-8 h-8 flex items-center justify-center hover:bg-accent"
-                                                            title="Vender"
-                                                        >
-                                                            <Plus className="w-4 h-4" />
+                                                            <span className="text-sm">Ajustar</span>
                                                         </button>
                                                     </>
                                                 )}
@@ -579,21 +995,21 @@ export default function WarehouseView() {
                                     </div>
                                     <div className="grid grid-cols-2 gap-2">
                                         <div>
-                                            <label className="text-xs text-muted-foreground">Fecha <span className="text-red-500">*</span></label>
+                                            <label className="text-xs font-bold text-slate-700">Fecha <span className="text-red-500">*</span></label>
                                             <input
                                                 type="date"
                                                 value={receptionDetails.receptionDate}
                                                 onChange={(e) => setReceptionDetails({ ...receptionDetails, receptionDate: e.target.value })}
-                                                className="neu-input w-full mt-1"
+                                                className="neu-input w-full mt-1 bg-slate-50 border-slate-200"
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-xs text-muted-foreground">Ref. / Factura <span className="text-red-500">*</span></label>
+                                            <label className="text-xs font-bold text-slate-700">Ref. / Factura <span className="text-red-500">*</span></label>
                                             <input
                                                 type="text"
                                                 value={receptionDetails.invoiceNumber}
                                                 onChange={(e) => setReceptionDetails({ ...receptionDetails, invoiceNumber: e.target.value })}
-                                                className="neu-input w-full mt-1"
+                                                className="neu-input w-full mt-1 bg-slate-50 border-slate-200"
                                                 placeholder="Ej. FAC-001"
                                             />
                                         </div>
@@ -614,10 +1030,9 @@ export default function WarehouseView() {
 
                                     <div className="font-medium text-sm pr-6 mb-2">{product.name}</div>
 
-                                    {/* Stacked Inputs (Flex Column) */}
                                     <div className="flex flex-col gap-3">
                                         <div>
-                                            <label className="text-[10px] uppercase font-bold text-muted-foreground block mb-1">Cant. a Agregar</label>
+                                            <label className="text-[10px] uppercase font-bold text-slate-600 block mb-1">Cant. a Agregar</label>
                                             <input
                                                 type="number"
                                                 min="1"
@@ -656,7 +1071,7 @@ export default function WarehouseView() {
                                 onClick={processReception}
                                 disabled={receptionItems.size === 0 || loading}
                                 // Updated to match "Nueva Recepción" style: neu-raised-sm instead of neu-btn-primary
-                                className="neu-btn neu-raised-sm w-full disabled:opacity-50 disabled:cursor-not-allowed text-sm py-3 flex items-center justify-center gap-2"
+                                className="neu-btn w-full disabled:opacity-50 disabled:cursor-not-allowed text-sm py-4 flex items-center justify-center gap-2 bg-slate-900 text-white font-bold hover:bg-slate-800 transition-colors shadow-lg border-none"
                             >
                                 <Download className="w-4 h-4" />
                                 <span>{loading ? 'Procesando...' : 'Confirmar Recepción'}</span>
@@ -680,13 +1095,14 @@ export default function WarehouseView() {
                                     <th className="pb-2 text-right">Cantidad</th>
                                     <th className="pb-2 text-right">Fecha</th>
                                     <th className="pb-2 text-center">Estado</th>
+                                    <th className="pb-2 text-center">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {recentReceptions.map((tx) => (
                                     <tr key={tx.id} className="border-b last:border-0 hover:bg-gray-50/50">
                                         <td className="py-3 font-medium">{tx.product?.name || 'Producto desconocido'}</td>
-                                        <td className="py-3 text-muted-foreground">{tx.product?.supplier || '-'}</td>
+                                        <td className="py-3 text-muted-foreground">{tx.supplier || tx.product?.supplier || '-'}</td>
                                         <td className="py-3 text-muted-foreground">{tx.reference_doc || '-'}</td>
                                         <td className="py-3 text-right font-bold text-success">+{tx.quantity_change}</td>
                                         <td className="py-3 text-right text-muted-foreground">
@@ -694,6 +1110,18 @@ export default function WarehouseView() {
                                         </td>
                                         <td className="py-3 text-center">
                                             <span className="neu-badge text-success text-xs px-2 py-1">Completado</span>
+                                        </td>
+                                        <td className="py-3 text-center">
+                                            {tx.reference_id && (
+                                                <button
+                                                    onClick={() => handlePrintReceipt(tx.reference_id)}
+                                                    className="neu-btn neu-raised-sm bg-slate-900 !text-white hover:bg-slate-800 flex items-center gap-2 px-3 py-1.5 text-[10px] shadow-sm border-none mx-auto"
+                                                    title="Previsualizar Recepción"
+                                                >
+                                                    <FileText className="w-3 h-3" />
+                                                    <span>Previsualizar</span>
+                                                </button>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}
@@ -718,35 +1146,299 @@ export default function WarehouseView() {
                                 <div className="text-sm">Stock actual: {selectedProduct.stock_current}</div>
                             </div>
                             <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="text-xs font-medium text-muted-foreground block mb-1">Cant. Ent/Sal (+/-)</label>
+                                        <input
+                                            type="number"
+                                            value={stockAdjustment.quantity}
+                                            onChange={(e) => setStockAdjustment({ ...stockAdjustment, quantity: parseInt(e.target.value) || 0 })}
+                                            className="neu-input w-full font-bold"
+                                            placeholder="Ej: 10 o -5"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-medium text-muted-foreground block mb-1">Motivo</label>
+                                        <select
+                                            value={stockAdjustment.reason}
+                                            onChange={(e) => setStockAdjustment({ ...stockAdjustment, reason: e.target.value })}
+                                            className="neu-input w-full"
+                                        >
+                                            <option value="">Seleccionar...</option>
+                                            <option value="correccion">Corrección</option>
+                                            <option value="merma">Merma</option>
+                                            <option value="inventario">Inventario Físico</option>
+                                            <option value="otro">Otro</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="bg-blue-50/50 p-4 rounded-lg border border-blue-100">
+                                    <label className="text-xs font-bold text-blue-700 block mb-2 uppercase tracking-wide">Ajuste de Importe al Costo Total (+/-)</label>
+                                    <div className="flex items-center gap-3">
+                                        <div className="text-2xl font-bold text-blue-800">$</div>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            value={stockAdjustment.cost || ''}
+                                            onChange={(e) => setStockAdjustment({ ...stockAdjustment, cost: parseFloat(e.target.value) || 0 })}
+                                            className="neu-input flex-1 font-bold text-lg border-blue-200 focus:border-blue-500"
+                                            placeholder="0.00"
+                                        />
+                                    </div>
+                                    <p className="text-[10px] text-blue-600 mt-2 italic">
+                                        * Este valor suma o resta directamente al valor total del inventario. El costo unitario se recalculará automáticamente.
+                                    </p>
+                                </div>
+
+                                <button
+                                    onClick={() => handleStockAdjustment(selectedProduct)}
+                                    className="neu-btn w-full bg-slate-900 text-white mt-4 h-12 text-base font-bold shadow-lg hover:bg-slate-800 border-none transition-colors"
+                                >
+                                    Confirmar Ajuste de Inventario
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Modal de Creación de Producto */}
+            {isCreateModalOpen && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+                    <div className="neu-card w-full max-w-md overflow-hidden bg-white shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="p-6 border-b border-border flex justify-between items-center bg-slate-50">
+                            <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                                <Plus className="w-5 h-5 text-green-600" />
+                                Nuevo Producto
+                            </h3>
+                            <button onClick={() => setIsCreateModalOpen(false)} className="p-1 hover:bg-slate-200 rounded-full transition-colors text-slate-500">
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-5">
+                            <div>
+                                <label className="text-sm font-bold mb-1.5 block text-slate-700 uppercase tracking-tight">Nombre del Producto <span className="text-red-500">*</span></label>
+                                <input
+                                    type="text"
+                                    value={newProductData.name}
+                                    onChange={(e) => setNewProductData({ ...newProductData, name: e.target.value })}
+                                    className="neu-input w-full bg-slate-50 border-slate-200 text-slate-900 focus:bg-white transition-all"
+                                    placeholder="Ej. Coca Cola 1.5L"
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-sm font-medium">Cantidad (+ entrada, - salida)</label>
+                                    <label className="text-sm font-bold mb-1.5 block text-slate-700 uppercase tracking-tight">SKU / Código</label>
                                     <input
-                                        type="number"
-                                        value={stockAdjustment.quantity}
-                                        onChange={(e) => setStockAdjustment({ ...stockAdjustment, quantity: parseInt(e.target.value) || 0 })}
-                                        className="neu-input w-full"
+                                        type="text"
+                                        value={newProductData.sku}
+                                        onChange={(e) => setNewProductData({ ...newProductData, sku: e.target.value })}
+                                        className="neu-input w-full bg-slate-50 border-slate-200"
+                                        placeholder="Opcional"
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-sm font-medium">Motivo</label>
-                                    <select
-                                        value={stockAdjustment.reason}
-                                        onChange={(e) => setStockAdjustment({ ...stockAdjustment, reason: e.target.value })}
-                                        className="neu-input w-full"
-                                    >
-                                        <option value="">Seleccionar...</option>
-                                        <option value="correccion">Corrección</option>
-                                        <option value="merma">Merma</option>
-                                        <option value="otro">Otro</option>
-                                    </select>
+                                    <label className="text-sm font-bold mb-1.5 block text-slate-700 uppercase tracking-tight">Categoría</label>
+                                    <input
+                                        type="text"
+                                        value={newProductData.category}
+                                        onChange={(e) => setNewProductData({ ...newProductData, category: e.target.value })}
+                                        className="neu-input w-full bg-slate-50 border-slate-200"
+                                        placeholder="Ej. Bebidas"
+                                    />
                                 </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-sm font-bold mb-1.5 block text-slate-700 uppercase tracking-tight text-blue-700">Cantidad Inicial</label>
+                                    <input
+                                        type="number"
+                                        value={newProductData.initial_quantity || ''}
+                                        onChange={(e) => setNewProductData({ ...newProductData, initial_quantity: parseInt(e.target.value) || 0 })}
+                                        className="neu-input w-full bg-blue-50 border-blue-100 font-bold"
+                                        placeholder="1"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-sm font-bold mb-1.5 block text-slate-700 uppercase tracking-tight">Costo Inicial</label>
+                                    <input
+                                        type="number"
+                                        value={newProductData.cost_price || ''}
+                                        onChange={(e) => setNewProductData({ ...newProductData, cost_price: parseFloat(e.target.value) || 0 })}
+                                        className="neu-input w-full bg-slate-50 border-slate-200"
+                                        step="0.01"
+                                        placeholder="0.00"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="p-6 pt-0 flex gap-4 bg-slate-50/50">
+                            <button
+                                onClick={() => setIsCreateModalOpen(false)}
+                                className="neu-btn flex-1 bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 font-bold py-3 transition-colors shadow-sm"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleCreateProduct}
+                                disabled={loading}
+                                className="neu-btn flex-1 bg-slate-900 !text-white hover:bg-slate-800 flex items-center justify-center gap-2 font-bold py-3 shadow-lg disabled:opacity-50 border-none"
+                            >
+                                <Save className="w-4 h-4" />
+                                {loading ? 'Creando...' : 'Crear Producto'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* MODAL KARDEX / MOVIMIENTOS */}
+            {isKardexOpen && selectedKardexProduct && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="neu-card w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden bg-white dark:bg-slate-900">
+                        <div className="p-6 border-b border-border flex flex-col lg:flex-row justify-between lg:items-center shrink-0 gap-4">
+                            <div className="flex items-center gap-4">
+                                <div className="neu-raised-sm w-12 h-12 flex items-center justify-center overflow-hidden bg-gray-50">
+                                    {selectedKardexProduct.image_url ? (
+                                        <img src={getProductImageUrl(selectedKardexProduct) || ''} alt="" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <Package className="w-6 h-6 text-muted-foreground" />
+                                    )}
+                                </div>
+                                <div className="text-left">
+                                    <h3 className="text-xl font-bold leading-tight">{selectedKardexProduct.name}</h3>
+                                    <p className="text-xs text-muted-foreground font-mono mb-2">SKU: {selectedKardexProduct.sku || 'N/A'}</p>
+
+                                    <div className="flex flex-wrap items-center gap-3">
+                                        <div className="bg-slate-50 dark:bg-slate-800 px-2 py-1 rounded border border-slate-200 dark:border-slate-700">
+                                            <span className="text-[9px] uppercase font-bold text-muted-foreground block leading-none mb-1">Existencia</span>
+                                            <span className="text-xs font-bold">{selectedKardexProduct.stock_current} und.</span>
+                                        </div>
+                                        <div className="bg-slate-50 dark:bg-slate-800 px-2 py-1 rounded border border-slate-200 dark:border-slate-700">
+                                            <span className="text-[9px] uppercase font-bold text-muted-foreground block leading-none mb-1">Costo Unit.</span>
+                                            <span className="text-xs font-bold">${selectedKardexProduct.cost_price?.toLocaleString() || '0.00'}</span>
+                                        </div>
+                                        <div className="bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded border border-blue-100 dark:border-blue-800">
+                                            <span className="text-[9px] uppercase font-bold text-blue-600 block leading-none mb-1">Valor Total (Stock)</span>
+                                            <span className="text-xs font-bold text-blue-700 dark:text-blue-400">
+                                                ${(selectedKardexProduct.stock_current * (selectedKardexProduct.cost_price || 0)).toLocaleString()}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg self-start">
                                 <button
-                                    onClick={() => handleStockAdjustment(selectedProduct)}
-                                    className="neu-btn neu-btn-primary w-full"
+                                    onClick={() => setKardexViewMode('quantity')}
+                                    className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${kardexViewMode === 'quantity' ? 'bg-white shadow-sm text-primary' : 'text-muted-foreground hover:text-primary'}`}
                                 >
-                                    Guardar Ajuste
+                                    CANTIDADES
+                                </button>
+                                <button
+                                    onClick={() => setKardexViewMode('amount')}
+                                    className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${kardexViewMode === 'amount' ? 'bg-white shadow-sm text-primary' : 'text-muted-foreground hover:text-primary'}`}
+                                >
+                                    IMPORTE (COSTO)
                                 </button>
                             </div>
+
+                            <div className="flex items-center gap-2">
+                                <button onClick={() => setIsKardexOpen(false)} className="neu-raised-sm p-2 hover:bg-accent lg:flex hidden">
+                                    <X className="w-5 h-5" />
+                                </button>
+                                <button onClick={() => setIsKardexOpen(false)} className="neu-raised-sm p-2 hover:bg-accent flex lg:hidden">
+                                    <ArrowDownLeft className="w-5 h-5 rotate-45" />
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="flex-1 overflow-auto p-6">
+                            {kardexLoading ? (
+                                <div className="flex flex-col items-center justify-center py-20 gap-3">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                                    <p className="text-sm text-muted-foreground">Cargando movimientos...</p>
+                                </div>
+                            ) : kardexMovements.length > 0 ? (
+                                <div className="space-y-4">
+                                    <div className="hidden lg:grid grid-cols-6 gap-4 px-4 py-2 bg-slate-50 dark:bg-slate-800 rounded-lg text-[10px] font-bold uppercase tracking-wider text-muted-foreground border border-slate-100">
+                                        <span>Fecha / Hora</span>
+                                        <span>Tipo Mov.</span>
+                                        <span className="text-right">Variación</span>
+                                        <span className="text-right">{kardexViewMode === 'quantity' ? 'Stock Final' : 'Costo Unit.'}</span>
+                                        <span>Referencia</span>
+                                        <span>Ref. Doc</span>
+                                    </div>
+                                    <div className="space-y-2">
+                                        {(() => {
+                                            return kardexMovements.map((mov: any) => {
+                                                const isPositive = mov.quantity_change > 0;
+                                                const cost = mov.unit_cost || selectedKardexProduct.cost_price || 0;
+                                                const amount = mov.quantity_change * cost;
+
+                                                return (
+                                                    <div key={mov.id} className="grid grid-cols-1 lg:grid-cols-6 gap-4 p-4 neu-raised-sm rounded-lg items-center relative overflow-hidden group hover:bg-gray-50/50">
+                                                        <div className={`absolute left-0 top-0 bottom-0 w-1 ${isPositive ? 'bg-green-500' : 'bg-red-500'}`} />
+
+                                                        <div className="text-sm">
+                                                            <div className="font-medium">{new Date(mov.created_at).toLocaleDateString()}</div>
+                                                            <div className="text-[10px] text-muted-foreground">{new Date(mov.created_at).toLocaleTimeString()}</div>
+                                                        </div>
+
+                                                        <div>
+                                                            <span className={`text-[10px] py-0.5 px-2 rounded font-bold uppercase ${mov.movement_type === 'purchase' ? 'bg-blue-100 text-blue-700' :
+                                                                mov.movement_type === 'sale' ? 'bg-green-100 text-green-700' :
+                                                                    'bg-slate-100 text-slate-700'
+                                                                }`}>
+                                                                {mov.movement_type}
+                                                            </span>
+                                                        </div>
+
+                                                        <div className={`text-right font-bold ${isPositive ? 'text-green-600' : 'text-red-700'}`}>
+                                                            {kardexViewMode === 'quantity' ? (
+                                                                <>{isPositive ? '+' : ''}{mov.quantity_change}</>
+                                                            ) : (
+                                                                <>{isPositive ? '+' : '-'}${Math.abs(amount).toLocaleString()}</>
+                                                            )}
+                                                        </div>
+
+                                                        <div className="text-right font-bold text-slate-900 border-l border-slate-200 pl-4 bg-slate-100/50 py-1.5 rounded-lg flex flex-col items-end justify-center">
+                                                            {kardexViewMode === 'quantity' ? (
+                                                                <>
+                                                                    <span className="text-[9px] uppercase text-muted-foreground block leading-none mb-1">Stock Final</span>
+                                                                    <span className="font-mono text-base">{mov.balance_after ?? '-'}</span>
+                                                                </>
+                                                            ) : (
+                                                                <span className="text-xs text-muted-foreground font-medium">
+                                                                    @{cost.toLocaleString()}
+                                                                </span>
+                                                            )}
+                                                        </div>
+
+                                                        <div className="text-xs text-muted-foreground truncate" title={mov.reference_id}>
+                                                            ID: {mov.reference_id?.split('-')[0] || '-'}
+                                                        </div>
+
+                                                        <div className="text-xs font-medium truncate">
+                                                            {mov.reference_doc || '-'}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            });
+                                        })()}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="text-center py-20 text-muted-foreground">
+                                    <ArrowUpDown className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                                    <p>No hay registros de movimientos para este producto.</p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="p-6 border-t border-border shrink-0 bg-slate-50">
+                            <button onClick={() => setIsKardexOpen(false)} className="neu-btn w-full lg:w-40 bg-slate-900 !text-white hover:bg-slate-800 font-bold py-3 shadow-lg border-none transition-all">
+                                Cerrar Kardex
+                            </button>
                         </div>
                     </div>
                 </div>
