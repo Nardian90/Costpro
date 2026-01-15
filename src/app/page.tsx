@@ -288,10 +288,10 @@ export default function HomePage() {
         p_store_id: user.store_id,
         p_seller_id: user.id,
         p_payment_method: selectedPayment,
-        p_total_amount: getTotal(),
-        p_subtotal: getSubtotal(),
-        p_discount_type: discount?.type || 'fixed',
-        p_discount_value: discount?.value || 0,
+        p_total_amount: Number(getTotal().toFixed(2)),
+        p_subtotal: Number(getSubtotal().toFixed(2)),
+        p_discount_type: (discount?.type || 'fixed') as string,
+        p_discount_value: Number(discount?.value || 0),
         p_items: saleItems
       });
 
@@ -564,13 +564,14 @@ export default function HomePage() {
                   </div>
                   <input
                     type="number"
-                    value={localDiscount.value || ''}
+                    min="0"
+                    value={localDiscount.value === 0 ? '' : localDiscount.value}
                     onChange={(e) => {
-                      const val = parseFloat(e.target.value) || 0;
-                      setLocalDiscount({ ...localDiscount, value: val });
+                      const val = e.target.value === '' ? 0 : parseFloat(e.target.value);
+                      setLocalDiscount({ ...localDiscount, value: isNaN(val) ? 0 : val });
                     }}
                     className="neu-input w-full text-sm"
-                    placeholder={localDiscount.type === 'fixed' ? 'Descuento fijo' : 'Porcentaje'}
+                    placeholder="0"
                   />
                   <button
                     onClick={() => setLocalDiscount({ type: 'fixed', value: 0 })}
@@ -603,18 +604,28 @@ export default function HomePage() {
                   <label className="block text-sm font-medium mb-2">Método de Pago</label>
                   <div className="grid grid-cols-2 gap-2">
                     <button
+                      type="button"
                       onClick={() => setSelectedPayment('cash')}
-                      className={`neu-raised-sm p-3 flex items-center justify-center gap-2 ${selectedPayment === 'cash' ? 'bg-accent' : ''}`}
+                      className={`neu-raised-sm p-3 flex items-center justify-center gap-2 transition-all ${
+                        selectedPayment === 'cash'
+                        ? 'bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2'
+                        : 'hover:bg-accent'
+                      }`}
                     >
                       <DollarSign className="w-4 h-4" />
-                      <span className="text-sm">Efectivo</span>
+                      <span className="text-sm font-bold">Efectivo</span>
                     </button>
                     <button
+                      type="button"
                       onClick={() => setSelectedPayment('transfer')}
-                      className={`neu-raised-sm p-3 flex items-center justify-center gap-2 ${selectedPayment === 'transfer' ? 'bg-accent' : ''}`}
+                      className={`neu-raised-sm p-3 flex items-center justify-center gap-2 transition-all ${
+                        selectedPayment === 'transfer'
+                        ? 'bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2'
+                        : 'hover:bg-accent'
+                      }`}
                     >
                       <CreditCard className="w-4 h-4" />
-                      <span className="text-sm">Transferencia</span>
+                      <span className="text-sm font-bold">Transferencia</span>
                     </button>
                   </div>
                 </div>

@@ -37,7 +37,7 @@ BEGIN
       INSERT INTO public.stock_movements(
         store_id, product_id, variant_id, quantity_change, movement_type, reference_doc, movement_date, created_by, created_at
       ) VALUES (
-        p_store_id, p_product_id, p_variant_id, p_quantity_change, p_movement_type, p_reference_doc, now(), p_created_by, now()
+        p_store_id, p_product_id, p_variant_id, p_quantity_change, p_movement_type::public.movement_type, p_reference_doc, now(), p_created_by, now()
       );
 
       -- Upsert inventario: si existe fila, sumar quantity_change; si no, crear nueva
