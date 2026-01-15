@@ -325,6 +325,16 @@ export interface SalesSummary {
   total_transfer: number;
 }
 
+export interface SalesKPIs {
+    total_sales: number;
+    total_cost: number;
+    total_profit: number;
+    transaction_count: number;
+    avg_ticket: number;
+    total_cash: number;
+    total_card: number;
+}
+
 export interface InventoryReport {
   product_id: string;
   product_name: string;
