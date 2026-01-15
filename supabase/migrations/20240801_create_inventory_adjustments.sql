@@ -12,7 +12,7 @@ CREATE TABLE public.inventory_adjustments (
     status TEXT NOT NULL DEFAULT 'PENDING', -- PENDING, COMPLETED, CANCELLED
     notes TEXT,
     CONSTRAINT fk_store FOREIGN KEY (store_id) REFERENCES stores(id),
-    CONSTRAINT fk_created_by FOREIGN KEY (created_by) REFERENCES users(id)
+    CONSTRAINT fk_created_by FOREIGN KEY (created_by) REFERENCES profiles(id)
 );
 
 COMMENT ON TABLE public.inventory_adjustments IS 'Records a full or partial inventory count session.';
