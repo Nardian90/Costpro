@@ -1,0 +1,84 @@
+import { NextResponse, type NextRequest } from "next/server";
+import { supabase } from "@/lib/supabaseClient";
+import { AdjustInventoryResponse } from "@/types/inventory";
+
+export async function POST(request: NextRequest) {
+  const { data: sessionData, error: sessionError } =
+    await supabase.auth.getSession();
+
+  if (sessionError || !sessionData.session) {
+    return NextResponse.json(
+      { error: "Unauthorized", message: "No active session" },
+      { status: 401 }
+    );
+  }
+
+  const userId = sessionData.session.user.id;
+
+  const { productId, quantity, movementType, version, storeId, reason } =
+    await request.json();
+
+  if (!productId || !storeId || !version) {
+    return NextResponse.json(
+      { error: "Bad Request", message: "Missing required fields." },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const { data, error } = await supabase.rpc("register_stock_movement", {
+      p_store_id: storeId,
+      p_product_id: productId,
+      p_quantity_change: quantity,
+      p_movement_type: movementType,
+      p_inventory_version: version,
+      p_reference_doc: reason,
+      p_created_by: userId,
+    });
+
+    if (error) {
+      if (error.message.includes("Concurrency error")) {
+        const { data: currentInventory } = await supabase
+          .from("inventory")
+          .select("quantity, version")
+          .eq("product_id", productId)
+          .eq("store_id", storeId)
+          .single();
+
+        return NextResponse.json(
+          {
+            error: "Conflict",
+            message: "Inventory version mismatch.",
+            serverVersion: currentInventory?.version,
+            currentQuantity: currentInventory?.quantity,
+          },
+          { status: 409 }
+        );
+      }
+      if (error.message.includes("ERR_INSUFFICIENT_STOCK")) {
+        return NextResponse.json(
+          { error: "Bad Request", message: "Negative stock is not allowed." },
+          { status: 400 }
+        );
+      }
+      return NextResponse.json(
+        { error: "Internal Server Error", message: error.message },
+        { status: 500 }
+      );
+    }
+
+    const response: AdjustInventoryResponse = {
+      productId: productId,
+      newQuantity: data.new_quantity,
+      newVersion: data.new_version,
+    };
+
+    return NextResponse.json(response);
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json(
+      { error: "Internal Server Error", message: errorMessage },
+      { status: 500 }
+    );
+  }
+}
