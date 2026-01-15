@@ -37,10 +37,10 @@ BEGIN
     p_seller_id,
     p_total_amount,
     p_subtotal,
-    p_discount_type::discount_type_enum,
+    p_discount_type::public.discount_type_enum,
     p_discount_value,
-    p_payment_method::payment_method_enum,
-    'completed'::transaction_status
+    p_payment_method::public.payment_method_enum,
+    'completed'::public.transaction_status
   )
   RETURNING id INTO v_transaction_id;
 
