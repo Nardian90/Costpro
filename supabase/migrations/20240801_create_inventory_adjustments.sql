@@ -1,7 +1,43 @@
--- Migration: Create inventory adjustments infrastructure
--- Date: 2024-08-01
+-- Migration: Create missing functions
+-- Date: 2024-08-02
 
 BEGIN;
+
+-- 1. Create the get_current_user_store_id function
+CREATE OR REPLACE FUNCTION public.get_current_user_store_id()
+RETURNS uuid AS $$
+BEGIN
+  RETURN (SELECT store_id FROM public.profiles WHERE id = auth.uid());
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 2. Create the get_dashboard_kpis function
+CREATE OR REPLACE FUNCTION public.get_dashboard_kpis(p_store_id uuid DEFAULT NULL)
+RETURNS TABLE(
+    total_sales numeric,
+    total_cost numeric,
+    total_profit numeric,
+    transaction_count bigint,
+    avg_ticket numeric,
+    total_cash numeric,
+    total_card numeric
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    COALESCE(SUM(total_amount), 0) AS total_sales,
+    COALESCE(SUM(subtotal - total_amount), 0) AS total_cost,
+    COALESCE(SUM(total_amount - (subtotal - total_amount)), 0) AS total_profit,
+    COUNT(*) AS transaction_count,
+    COALESCE(AVG(total_amount), 0) AS avg_ticket,
+    COALESCE(SUM(CASE WHEN payment_method = 'cash' THEN total_amount ELSE 0 END), 0) AS total_cash,
+    COALESCE(SUM(CASE WHEN payment_method = 'transfer' THEN total_amount ELSE 0 END), 0) AS total_card
+  FROM public.transactions
+  WHERE (p_store_id IS NULL OR store_id = p_store_id);
+END;
+$$ LANGUAGE plpgsql;
+-- Migration: Create inventory adjustments infrastructure
+-- Date: 2024-08-01
 
 -- 1. Create the inventory_adjustments table
 CREATE TABLE public.inventory_adjustments (
