@@ -56,7 +56,7 @@ BEGIN
 
         -- Insert movimiento de stock
         INSERT INTO public.stock_movements(id, store_id, product_id, variant_id, quantity_change, movement_type, reference_id, reference_doc, movement_date, created_by, created_at)
-        VALUES (gen_random_uuid(), p_store_id, v_product_id, NULL, v_qty, 'purchase', v_receipt_id::text, p_invoice_number, now(), p_user_id, now());
+        VALUES (gen_random_uuid(), p_store_id, v_product_id, NULL, v_qty, 'purchase'::public.movement_type, v_receipt_id::text, p_invoice_number, now(), p_user_id, now());
 
         -- Upsert inventory
         INSERT INTO public.inventory (id, store_id, product_id, quantity, updated_at)
