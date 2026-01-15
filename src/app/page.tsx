@@ -216,10 +216,10 @@ export default function HomePage() {
     if (!user) return;
 
     try {
-      let query = supabase.rpc('get_sales_kpis', {});
+      let query = supabase.rpc('get_dashboard_kpis', {});
 
       if (user.role !== 'admin' && user.store_id) {
-        query = supabase.rpc('get_sales_kpis', { p_store_id: user.store_id });
+        query = supabase.rpc('get_dashboard_kpis', { p_store_id: user.store_id });
       }
 
       const { data, error } = await query;
