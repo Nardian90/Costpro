@@ -46,6 +46,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
     const [products, setProducts] = useState<Product[]>([]);
     const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState<string>('');
     const [loading, setLoading] = useState(true);
 
     // Estados para Edición Rápida de Stock (Single Item)
@@ -110,21 +111,24 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
     }, []);
 
     useEffect(() => {
-        if (user?.store_id) {
+        if (user) {
             fetchProducts();
             fetchRecentReceptions();
         }
-    }, [user?.store_id]);
+    }, [user]);
 
     useEffect(() => {
         const lowerTerm = searchTerm.toLowerCase();
-        const filtered = products.filter(product =>
-            product.name.toLowerCase().includes(lowerTerm) ||
-            product.sku?.toLowerCase().includes(lowerTerm) ||
-            product.category?.toLowerCase().includes(lowerTerm)
-        );
+        const filtered = products.filter(product => {
+            const matchesSearch =
+                product.name.toLowerCase().includes(lowerTerm) ||
+                product.sku?.toLowerCase().includes(lowerTerm);
+            const matchesCategory =
+                !selectedCategory || product.category === selectedCategory;
+            return matchesSearch && matchesCategory;
+        });
         setFilteredProducts(filtered);
-    }, [searchTerm, products]);
+    }, [searchTerm, selectedCategory, products]);
 
     const getProductImageUrl = (product: Product) => {
         if (!product.image_url) return null;
@@ -140,11 +144,10 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
     };
 
     const fetchRecentReceptions = async () => {
-        if (!user?.store_id) return;
+        if (!user) return;
         setLoading(true);
         try {
-            // Unimos con products y con receipts (vía reference_id)
-            const { data, error } = await supabase
+            let query = supabase
                 .from('stock_movements')
                 .select(`
                     *,
@@ -153,11 +156,21 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                         image_url
                     )
                 `)
-                .eq('store_id', user.store_id)
                 .eq('movement_type', 'purchase')
                 .order('created_at', { ascending: false })
                 .limit(10);
 
+            // Apply store filter only if user is not an admin
+            if (user.role !== 'admin') {
+                if (!user.store_id) {
+                    toast.error('Usuario no asignado a una tienda.');
+                    setLoading(false);
+                    return;
+                }
+                query = query.eq('store_id', user.store_id);
+            }
+
+            const { data, error } = await query;
             if (error) throw error;
 
             // Enriquecemos los movimientos con datos de la tabla receipts si es posible
@@ -190,19 +203,28 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
     };
 
     const fetchProductKardex = async (product: Product) => {
-        if (!user?.store_id) return;
+        if (!user) return;
         setKardexLoading(true);
         setSelectedKardexProduct(product);
         setIsKardexOpen(true);
 
         try {
-            const { data, error } = await supabase
+            let query = supabase
                 .from('stock_movements')
                 .select('*')
                 .eq('product_id', product.id)
-                .eq('store_id', user.store_id)
                 .order('created_at', { ascending: false });
 
+            // Apply store filter only if user is not an admin
+            if (user.role !== 'admin') {
+                if (!user.store_id) {
+                    toast.error('Usuario no asignado a una tienda.');
+                    setKardexLoading(false);
+                    return;
+                }
+                query = query.eq('store_id', user.store_id);
+            }
+            const { data, error } = await query;
             if (error) throw error;
             setKardexMovements(data || []);
         } catch (error: any) {
@@ -368,6 +390,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
     };
 
     const fetchProducts = async () => {
+        if (!user) return;
         try {
             setLoading(true);
             const { data, error } = await supabase
@@ -381,19 +404,34 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
             if (error) throw error;
 
             const mappedProducts: Product[] = data?.map((item: any) => {
-                const storeInventory = item.inventory?.find(
-                    (inv: any) => inv.store_id === user?.store_id
-                );
+                let stock_current = 0;
+                let store_id = null;
+
+                if (user.role === 'admin') {
+                    // Admin: Sum stock from all stores
+                    stock_current = item.inventory?.reduce(
+                        (acc: number, inv: any) => acc + inv.quantity,
+                        0
+                    ) || 0;
+                    store_id = null; // Admin view is not tied to one store
+                } else {
+                    // Encargado/Manager: Find stock for their specific store
+                    const storeInventory = item.inventory?.find(
+                        (inv: any) => inv.store_id === user.store_id
+                    );
+                    stock_current = storeInventory ? storeInventory.quantity : 0;
+                    store_id = user.store_id;
+                }
 
                 return {
                     ...item,
-                    stock_current: storeInventory ? storeInventory.quantity : 0,
-                    store_id: user?.store_id
+                    stock_current,
+                    store_id,
                 };
             }) || [];
 
             setProducts(mappedProducts);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error fetching products:', error);
             toast.error('Error al cargar productos');
         } finally {
@@ -708,7 +746,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
         );
     }
 
-    if (!user?.store_id) {
+    if (user.role !== 'admin' && !user.store_id) {
         return <div className="p-8 text-center text-red-500">Error: Usuario no asignado a una tienda.</div>;
     }
 
@@ -842,8 +880,21 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="neu-input w-full pl-10"
-                            placeholder="Buscar por nombre, SKU, categoría..."
+                            placeholder="Buscar por nombre, SKU..."
                         />
+                    </div>
+                    <div className="relative">
+                        <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                        <select
+                            value={selectedCategory}
+                            onChange={(e) => setSelectedCategory(e.target.value)}
+                            className="neu-input w-full pl-10"
+                        >
+                            <option value="">Todas las categorías</option>
+                            {[...new Set(products.map(p => p.category))].map(category => (
+                                <option key={category} value={category || ''}>{category}</option>
+                            ))}
+                        </select>
                     </div>
                 </div>
             </div>
