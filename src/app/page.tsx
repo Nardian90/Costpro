@@ -49,7 +49,9 @@ import type {
   DiscountType,
   DashboardKPIs,
   SalesSummary,
+  AuditLog,
 } from '@/types';
+import { toast } from 'sonner';
 import WarehouseView from '@/components/WarehouseView';
 
 export default function HomePage() {
@@ -57,140 +59,15 @@ export default function HomePage() {
   const { user, loading } = useSupabaseAuth(); // Sync Supabase session with store
   const logout = useAuthStore((state) => state.logout);
   const { sidebarOpen, darkMode, toggleSidebar, toggleDarkMode, currentView, setCurrentView } = useUIStore();
-  const { items, addItem, removeItem, updateQuantity, clearCart, setDiscount, getTotal, getSubtotal, getItemCount } = useCartStore();
+  const { items, addItem, removeItem, updateQuantity, clearCart, setDiscount, getTotal, getSubtotal, getItemCount, discount } = useCartStore();
 
   const [showCart, setShowCart] = useState(false);
 
-  // Mock data
-  const [products] = useState<Product[]>([
-    {
-      id: '1',
-      name: 'Laptop Pro 15"',
-      description: 'Laptop de alta gama con M3 Pro',
-      sku: 'LAP-001',
-      price: 1299.99,
-      cost_price: 899.99,
-      image_url: null,
-      category: 'Electrónica',
-      unit_of_measure: 'unidad',
-      supplier: 'TechSupply Inc.',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      stock_current: 45,
-      cost_average: 899.99,
-      min_stock: 10,
-      store_id: '1',
-    },
-    {
-      id: '2',
-      name: 'Monitor 27" 4K',
-      description: 'Monitor IPS 27 pulgadas 4K UHD',
-      sku: 'MON-002',
-      price: 449.99,
-      cost_price: 299.99,
-      image_url: null,
-      category: 'Electrónica',
-      unit_of_measure: 'unidad',
-      supplier: 'DisplayMax',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      stock_current: 23,
-      cost_average: 299.99,
-      min_stock: 5,
-      store_id: '1',
-    },
-    {
-      id: '3',
-      name: 'Teclado Mecánico RGB',
-      description: 'Teclado mecánico con iluminación RGB',
-      sku: 'TEC-003',
-      price: 89.99,
-      cost_price: 49.99,
-      image_url: null,
-      category: 'Accesorios',
-      unit_of_measure: 'unidad',
-      supplier: 'KeyTech',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      stock_current: 8,
-      cost_average: 49.99,
-      min_stock: 15,
-      store_id: '1',
-    },
-    {
-      id: '4',
-      name: 'Mouse Gamer Pro',
-      description: 'Mouse inalámbrico de alta precisión',
-      sku: 'MOU-004',
-      price: 59.99,
-      cost_price: 34.99,
-      image_url: null,
-      category: 'Accesorios',
-      unit_of_measure: 'unidad',
-      supplier: 'MouseMaster',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      stock_current: 67,
-      cost_average: 34.99,
-      min_stock: 10,
-      store_id: '1',
-    },
-    {
-      id: '5',
-      name: 'Auriculares Noise Cancelling',
-      description: 'Auriculares con cancelación de ruido activa',
-      sku: 'AUR-005',
-      price: 199.99,
-      cost_price: 129.99,
-      image_url: null,
-      category: 'Audio',
-      unit_of_measure: 'unidad',
-      supplier: 'SoundTech',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      stock_current: 18,
-      cost_average: 129.99,
-      min_stock: 8,
-      store_id: '1',
-    },
-  ]);
-
-  const [transactions] = useState<Transaction[]>([
-    {
-      id: 'TXN-001',
-      store_id: '1',
-      seller_id: '3',
-      total_amount: 1899.97,
-      status: 'completed',
-      created_at: new Date(Date.now() - 3600000).toISOString(),
-      updated_at: new Date(Date.now() - 3600000).toISOString(),
-      completed_at: new Date(Date.now() - 3600000).toISOString(),
-      cancelled_at: null,
-      void_reason: null,
-      payment_method: 'cash',
-      discount_type: 'fixed',
-      discount_value: 0,
-      subtotal: 1899.97,
-      idempotency_key: null,
-    },
-    {
-      id: 'TXN-002',
-      store_id: '1',
-      seller_id: '3',
-      total_amount: 539.98,
-      status: 'completed',
-      created_at: new Date(Date.now() - 7200000).toISOString(),
-      updated_at: new Date(Date.now() - 7200000).toISOString(),
-      completed_at: new Date(Date.now() - 7200000).toISOString(),
-      cancelled_at: null,
-      void_reason: null,
-      payment_method: 'transfer',
-      discount_type: 'percentage',
-      discount_value: 10,
-      subtotal: 599.98,
-      idempotency_key: null,
-    },
-  ]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [dateRange, setDateRange] = useState({ from: '', to: '' });
 
   const [dashboardKPIs, setDashboardKPIs] = useState<DashboardKPIs>({
     gross_sales: 0,
@@ -209,8 +86,106 @@ export default function HomePage() {
   useEffect(() => {
     if (user) {
       fetchDashboardData();
+      fetchProducts();
+      fetchTransactions();
+      fetchUsers();
+      fetchAuditLogs();
     }
   }, [user]);
+
+  const fetchProducts = async () => {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          inventory(*)
+        `)
+        .order('name');
+
+      if (error) throw error;
+
+      const mappedProducts: Product[] = data?.map((item: any) => {
+        let stock_current = 0;
+        let store_id = null;
+
+        if (user.role === 'admin') {
+          stock_current = item.inventory?.reduce(
+            (acc: number, inv: any) => acc + inv.quantity,
+            0
+          ) || 0;
+        } else {
+          const storeInventory = item.inventory?.find(
+            (inv: any) => inv.store_id === user.store_id
+          );
+          stock_current = storeInventory ? storeInventory.quantity : 0;
+          store_id = user.store_id;
+        }
+
+        return {
+          ...item,
+          stock_current,
+          store_id,
+        };
+      }) || [];
+
+      setProducts(mappedProducts);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    }
+  };
+
+  const fetchTransactions = async () => {
+    if (!user) return;
+    try {
+      let query = supabase
+        .from('transactions')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (user.role !== 'admin' && user.store_id) {
+        query = query.eq('store_id', user.store_id);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      setTransactions(data || []);
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+    }
+  };
+
+  const fetchUsers = async () => {
+    if (!user || user.role !== 'admin') return;
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('full_name');
+
+      if (error) throw error;
+      setUsers(data || []);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  };
+
+  const fetchAuditLogs = async () => {
+    if (!user || (user.role !== 'admin' && user.role !== 'manager')) return;
+    try {
+      const { data, error } = await supabase
+        .from('audit_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+      setAuditLogs(data || []);
+    } catch (error) {
+      console.error('Error fetching audit logs:', error);
+    }
+  };
 
   const fetchDashboardData = async () => {
     if (!user) return;
@@ -260,6 +235,11 @@ export default function HomePage() {
     }
   }, [user, loading, router]);
 
+  // Sync local discount with store
+  useEffect(() => {
+    setDiscount(localDiscount.value > 0 ? localDiscount : null);
+  }, [localDiscount, setDiscount]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -271,6 +251,70 @@ export default function HomePage() {
   if (!user) {
     return null;
   }
+
+  const addToCart = (product: Product) => {
+    addItem({
+      product_id: product.id,
+      variant_id: null,
+      product: product,
+      variant: null,
+      quantity: 1,
+      price: product.price,
+      cost: product.cost_price,
+      subtotal: product.price,
+    });
+    setShowCart(true);
+    toast.success(`${product.name} agregado al carrito`);
+  };
+
+  const handleCheckout = async () => {
+    if (items.length === 0) return;
+    if (!user || !user.store_id) {
+      toast.error('No se pudo identificar la tienda del usuario');
+      return;
+    }
+
+    const toastId = toast.loading('Procesando venta...');
+    try {
+      const saleItems = items.map(item => ({
+        product_id: item.product_id,
+        variant_id: item.variant_id,
+        quantity: item.quantity,
+        price: item.price,
+        cost: item.cost
+      }));
+
+      const { data: transactionId, error } = await supabase.rpc('create_sale', {
+        p_store_id: user.store_id,
+        p_seller_id: user.id,
+        p_payment_method: selectedPayment,
+        p_total_amount: getTotal(),
+        p_subtotal: getSubtotal(),
+        p_discount_type: discount?.type || 'fixed',
+        p_discount_value: discount?.value || 0,
+        p_items: saleItems
+      });
+
+      if (error) throw error;
+
+      toast.success('Venta realizada con éxito', { id: toastId });
+      clearCart();
+      setShowCart(false);
+
+      // Refresh data
+      fetchProducts();
+      fetchTransactions();
+      fetchDashboardData();
+    } catch (error: any) {
+      console.error('Error en checkout:', error);
+      toast.error(error.message || 'Error al procesar la venta', { id: toastId });
+    }
+  };
+
+  const handleReceiptSubmit = () => {
+    toast.info('Para registrar recepciones, use la sección de Inventario');
+    setCurrentView('inventory');
+  };
 
   const handleLogout = async () => {
     try {
@@ -998,21 +1042,21 @@ export default function HomePage() {
             </tr>
           </thead>
           <tbody>
-            {users.map((user) => (
-              <tr key={user.id}>
-                <td data-label="Usuario" className="p-4 font-medium">{user.raw_user_meta_data?.full_name}</td>
-                <td data-label="Email" className="p-4">{user.email}</td>
+            {users.map((u) => (
+              <tr key={u.id}>
+                <td data-label="Usuario" className="p-4 font-medium">{u.full_name}</td>
+                <td data-label="Email" className="p-4">{u.email}</td>
                 <td data-label="Rol" className="p-4">
-                  <span className={`neu-badge ${user.role === 'admin' ? 'text-primary' :
-                    user.role === 'manager' ? 'text-secondary' :
-                      user.role === 'clerk' ? 'text-success' : 'text-warning'
+                  <span className={`neu-badge ${u.role === 'admin' ? 'text-primary' :
+                    u.role === 'manager' ? 'text-secondary' :
+                      u.role === 'clerk' ? 'text-success' : 'text-warning'
                     }`}>
-                    {user.role}
+                    {u.role}
                   </span>
                 </td>
                 <td data-label="Estado" className="p-4 text-center">
-                  <span className={`neu-badge ${user.email_confirmed_at ? 'text-success' : 'text-danger'}`}>
-                    {user.email_confirmed_at ? 'Activo' : 'Inactivo'}
+                  <span className={`neu-badge ${u.is_active ? 'text-success' : 'text-danger'}`}>
+                    {u.is_active ? 'Activo' : 'Inactivo'}
                   </span>
                 </td>
                 <td data-label="Acciones" className="p-4">
