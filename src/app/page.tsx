@@ -192,20 +192,59 @@ export default function HomePage() {
     },
   ]);
 
-  const [dashboardKPIs] = useState<DashboardKPIs>({
-    gross_sales: 12450.00,
-    cost_of_goods: 8200.00,
-    profit: 4250.00,
+  const [dashboardKPIs, setDashboardKPIs] = useState<DashboardKPIs>({
+    gross_sales: 0,
+    cost_of_goods: 0,
+    profit: 0,
   });
 
-  const [salesSummary] = useState<SalesSummary>({
-    total_billed: 12450.00,
-    transaction_count: 47,
-    average_ticket: 264.89,
-    total_cash: 8200.00,
-    total_transfer: 4250.00,
+  const [salesSummary, setSalesSummary] = useState<SalesSummary>({
+    total_billed: 0,
+    transaction_count: 0,
+    average_ticket: 0,
+    total_cash: 0,
+    total_transfer: 0,
   });
 
+  useEffect(() => {
+    if (user) {
+      fetchDashboardData();
+    }
+  }, [user]);
+
+  const fetchDashboardData = async () => {
+    if (!user) return;
+
+    try {
+      let query = supabase.rpc('get_sales_kpis', {});
+
+      if (user.role !== 'admin' && user.store_id) {
+        query = supabase.rpc('get_sales_kpis', { p_store_id: user.store_id });
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const kpis = data[0];
+        setDashboardKPIs({
+          gross_sales: kpis.total_sales || 0,
+          cost_of_goods: kpis.total_cost || 0,
+          profit: kpis.total_profit || 0,
+        });
+        setSalesSummary({
+          total_billed: kpis.total_sales || 0,
+          transaction_count: kpis.transaction_count || 0,
+          average_ticket: kpis.avg_ticket || 0,
+          total_cash: kpis.total_cash || 0,
+          total_transfer: kpis.total_card || 0,
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    }
+  };
   // States for views
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -734,99 +773,146 @@ export default function HomePage() {
     </div>
   );
 
-  const renderHistory = () => (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Historial de Inventario</h2>
+  const renderHistory = () => {
+    const filteredHistory = filteredProducts.filter(product => {
+        const productDate = new Date(product.created_at);
+        const fromDate = dateRange.from ? new Date(dateRange.from) : null;
+        const toDate = dateRange.to ? new Date(dateRange.to) : null;
 
-      <div className="space-y-4">
-        {products.slice(0, 3).map(product => (
-          <div key={product.id} className="neu-card">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="neu-raised-sm w-12 h-12 flex items-center justify-center">
-                <Package className="w-6 h-6 text-muted-foreground" />
-              </div>
-              <div>
-                <h3 className="font-semibold">{product.name}</h3>
-                <div className="text-sm text-muted-foreground">{product.sku}</div>
-              </div>
+        if (fromDate && productDate < fromDate) return false;
+        if (toDate && productDate > toDate) return false;
+        return true;
+    });
+
+    return (
+        <div className="space-y-6">
+            <h2 className="text-2xl font-bold">Historial de Inventario</h2>
+            <div className="neu-raised-sm p-4">
+                <div className="flex gap-4">
+                    <div className="relative flex-1">
+                        <input
+                            type="date"
+                            className="neu-input w-full"
+                            placeholder="Fecha de inicio"
+                            value={dateRange.from}
+                            onChange={e => setDateRange({ ...dateRange, from: e.target.value })}
+                        />
+                    </div>
+                    <div className="relative flex-1">
+                        <input
+                            type="date"
+                            className="neu-input w-full"
+                            placeholder="Fecha de fin"
+                            value={dateRange.to}
+                            onChange={e => setDateRange({ ...dateRange, to: e.target.value })}
+                        />
+                    </div>
+                </div>
             </div>
-
-            <div className="space-y-2">
-              <div className="neu-raised-sm p-3 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <ArrowDownRight className="w-4 h-4 text-success" />
-                  <span className="text-sm">Entrada - Recepción</span>
-                </div>
-                <div className="text-sm">
-                  <span className="text-success">+50</span>
-                  <span className="text-muted-foreground ml-2">
-                    {new Date().toLocaleDateString()}
-                  </span>
-                </div>
-              </div>
-
-              <div className="neu-raised-sm p-3 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <ArrowUpRight className="w-4 h-4 text-danger" />
-                  <span className="text-sm">Salida - Venta</span>
-                </div>
-                <div className="text-sm">
-                  <span className="text-danger">-2</span>
-                  <span className="text-muted-foreground ml-2">
-                    {new Date(Date.now() - 86400000).toLocaleDateString()}
-                  </span>
-                </div>
-              </div>
+            <div className="space-y-4">
+                {filteredHistory.map(product => (
+                    <div key={product.id} className="neu-card">
+                        <div className="flex items-center gap-4 mb-4">
+                            <div className="neu-raised-sm w-12 h-12 flex items-center justify-center">
+                                <Package className="w-6 h-6 text-muted-foreground" />
+                            </div>
+                            <div>
+                                <h3 className="font-semibold">{product.name}</h3>
+                                <div className="text-sm text-muted-foreground">{product.sku}</div>
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <div className="neu-raised-sm p-3 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <ArrowDownRight className="w-4 h-4 text-success" />
+                                    <span className="text-sm">Entrada - Recepción</span>
+                                </div>
+                                <div className="text-sm">
+                                    <span className="text-success">+{product.stock_current}</span>
+                                    <span className="text-muted-foreground ml-2">
+                                        {new Date(product.created_at).toLocaleDateString()}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ))}
             </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+        </div>
+    );
+};
 
-  const renderAudit = () => (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Auditoría del Sistema</h2>
+  const renderAudit = () => {
+    const filteredLogs = auditLogs.filter(log => {
+        const logDate = new Date(log.created_at);
+        const fromDate = dateRange.from ? new Date(dateRange.from) : null;
+        const toDate = dateRange.to ? new Date(dateRange.to) : null;
 
-      <div className="table-to-cards">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-border">
-              <th className="p-4 text-left">Fecha</th>
-              <th className="p-4 text-left">Usuario</th>
-              <th className="p-4 text-left">Acción</th>
-              <th className="p-4 text-left">Tabla</th>
-              <th className="p-4 text-left">Detalles</th>
-            </tr>
-          </thead>
-          <tbody>
-            {[
-              { action: 'CREATE', table: 'products', user: 'Pedro Almacén', date: new Date() },
-              { action: 'UPDATE', table: 'inventory', user: 'María Cajera', date: new Date(Date.now() - 3600000) },
-              { action: 'DELETE', table: 'receipts', user: 'Juan Encargado', date: new Date(Date.now() - 7200000) },
-              { action: 'INSERT', table: 'transactions', user: 'María Cajera', date: new Date(Date.now() - 10800000) },
-            ].map((log, i) => (
-              <tr key={i}>
-                <td data-label="Fecha" className="p-4">{log.date.toLocaleString()}</td>
-                <td data-label="Usuario" className="p-4">{log.user}</td>
-                <td data-label="Acción" className="p-4">
-                  <span className={`neu-badge ${log.action === 'CREATE' || log.action === 'INSERT' ? 'text-success' :
-                    log.action === 'UPDATE' ? 'text-warning' : 'text-danger'
-                    }`}>
-                    {log.action}
-                  </span>
-                </td>
-                <td data-label="Tabla" className="p-4 font-medium">{log.table}</td>
-                <td data-label="Detalles" className="p-4 text-sm text-muted-foreground">
-                  Registro modificado exitosamente
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
+        if (fromDate && logDate < fromDate) return false;
+        if (toDate && logDate > toDate) return false;
+        return true;
+    });
+
+    return (
+        <div className="space-y-6">
+            <h2 className="text-2xl font-bold">Auditoría del Sistema</h2>
+            <div className="neu-raised-sm p-4">
+                <div className="flex gap-4">
+                    <div className="relative flex-1">
+                        <input
+                            type="date"
+                            className="neu-input w-full"
+                            placeholder="Fecha de inicio"
+                            value={dateRange.from}
+                            onChange={e => setDateRange({ ...dateRange, from: e.target.value })}
+                        />
+                    </div>
+                    <div className="relative flex-1">
+                        <input
+                            type="date"
+                            className="neu-input w-full"
+                            placeholder="Fecha de fin"
+                            value={dateRange.to}
+                            onChange={e => setDateRange({ ...dateRange, to: e.target.value })}
+                        />
+                    </div>
+                </div>
+            </div>
+            <div className="table-to-cards">
+                <table className="w-full">
+                    <thead>
+                        <tr className="border-b border-border">
+                            <th className="p-4 text-left">Fecha</th>
+                            <th className="p-4 text-left">Usuario</th>
+                            <th className="p-4 text-left">Acción</th>
+                            <th className="p-4 text-left">Tabla</th>
+                            <th className="p-4 text-left">Detalles</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {filteredLogs.map((log) => (
+                            <tr key={log.id}>
+                                <td data-label="Fecha" className="p-4">{new Date(log.created_at).toLocaleString()}</td>
+                                <td data-label="Usuario" className="p-4">{log.user_id}</td>
+                                <td data-label="Acción" className="p-4">
+                                    <span className={`neu-badge ${log.action === 'INSERT' ? 'text-success' :
+                                        log.action === 'UPDATE' ? 'text-warning' : 'text-danger'
+                                        }`}>
+                                        {log.action}
+                                    </span>
+                                </td>
+                                <td data-label="Tabla" className="p-4 font-medium">{log.table_name}</td>
+                                <td data-label="Detalles" className="p-4 text-sm text-muted-foreground">
+                                    {log.record_id}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+};
 
   const renderCash = () => (
     <div className="space-y-6">
@@ -912,14 +998,9 @@ export default function HomePage() {
             </tr>
           </thead>
           <tbody>
-            {[
-              { name: 'Administrador Principal', email: 'admin@demo.com', role: 'admin', active: true },
-              { name: 'Juan Encargado', email: 'encargado@demo.com', role: 'manager', active: true },
-              { name: 'María Cajera', email: 'cajero@demo.com', role: 'clerk', active: true },
-              { name: 'Pedro Almacén', email: 'almacen@demo.com', role: 'warehouse', active: true },
-            ].map((user, i) => (
-              <tr key={i}>
-                <td data-label="Usuario" className="p-4 font-medium">{user.name}</td>
+            {users.map((user) => (
+              <tr key={user.id}>
+                <td data-label="Usuario" className="p-4 font-medium">{user.raw_user_meta_data?.full_name}</td>
                 <td data-label="Email" className="p-4">{user.email}</td>
                 <td data-label="Rol" className="p-4">
                   <span className={`neu-badge ${user.role === 'admin' ? 'text-primary' :
@@ -930,8 +1011,8 @@ export default function HomePage() {
                   </span>
                 </td>
                 <td data-label="Estado" className="p-4 text-center">
-                  <span className={`neu-badge ${user.active ? 'text-success' : 'text-danger'}`}>
-                    {user.active ? 'Activo' : 'Inactivo'}
+                  <span className={`neu-badge ${user.email_confirmed_at ? 'text-success' : 'text-danger'}`}>
+                    {user.email_confirmed_at ? 'Activo' : 'Inactivo'}
                   </span>
                 </td>
                 <td data-label="Acciones" className="p-4">
