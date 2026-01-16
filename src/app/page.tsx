@@ -45,6 +45,7 @@ import type {
   Product,
   CartItem,
   Transaction,
+  TransactionItem,
   PaymentMethod,
   DiscountType,
   DashboardKPIs,
@@ -228,6 +229,32 @@ export default function HomePage() {
   const [localDiscount, setLocalDiscount] = useState({ type: 'fixed' as DiscountType, value: 0 });
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>('cash');
 
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [transactionItems, setTransactionItems] = useState<(TransactionItem & { product?: { name: string } })[]>([]);
+  const [loadingItems, setLoadingItems] = useState(false);
+
+  const fetchTransactionItems = async (txn: Transaction) => {
+    setSelectedTransaction(txn);
+    setLoadingItems(true);
+    try {
+      const { data, error } = await supabase
+        .from('transaction_items')
+        .select(`
+          *,
+          product:products(name)
+        `)
+        .eq('transaction_id', txn.id);
+
+      if (error) throw error;
+      setTransactionItems(data || []);
+    } catch (error) {
+      console.error('Error fetching transaction items:', error);
+      toast.error('Error al cargar los detalles del ticket');
+    } finally {
+      setLoadingItems(false);
+    }
+  };
+
   // Check authentication
   useEffect(() => {
     if (!loading && !user) {
@@ -251,6 +278,13 @@ export default function HomePage() {
   if (!user) {
     return null;
   }
+
+  const navigationItems = getNavigationItems();
+  const filteredProducts = products.filter(p =>
+    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (p.category && p.category.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
 
   const addToCart = (product: Product) => {
     addItem({
@@ -349,13 +383,6 @@ export default function HomePage() {
     return items.filter(item => item.roles.includes(role));
   };
 
-  const navigationItems = getNavigationItems();
-  const filteredProducts = products.filter(p =>
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (p.category && p.category.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
-
   // ==================== VIEWS ====================
 
   const renderDashboard = () => (
@@ -363,7 +390,7 @@ export default function HomePage() {
       <h2 className="text-2xl font-bold">Dashboard</h2>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className={`grid grid-cols-1 ${user?.role !== 'clerk' ? 'md:grid-cols-3' : ''} gap-6`}>
         <div className="neu-card">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-muted-foreground">Ventas Totales</span>
@@ -373,23 +400,27 @@ export default function HomePage() {
           <div className="text-sm text-muted-foreground mt-1">Hoy</div>
         </div>
 
-        <div className="neu-card">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-muted-foreground">Costo de Ventas</span>
-            <Target className="w-5 h-5 text-warning" />
-          </div>
-          <div className="text-3xl font-bold">${dashboardKPIs.cost_of_goods.toFixed(2)}</div>
-          <div className="text-sm text-muted-foreground mt-1">Hoy</div>
-        </div>
+        {user?.role !== 'clerk' && (
+          <>
+            <div className="neu-card">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-muted-foreground">Costo de Ventas</span>
+                <Target className="w-5 h-5 text-warning" />
+              </div>
+              <div className="text-3xl font-bold">${dashboardKPIs.cost_of_goods.toFixed(2)}</div>
+              <div className="text-sm text-muted-foreground mt-1">Hoy</div>
+            </div>
 
-        <div className="neu-card">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-muted-foreground">Utilidad</span>
-            <TrendingUp className="w-5 h-5 text-success" />
-          </div>
-          <div className="text-3xl font-bold text-success">${dashboardKPIs.profit.toFixed(2)}</div>
-          <div className="text-sm text-muted-foreground mt-1">Hoy</div>
-        </div>
+            <div className="neu-card">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-muted-foreground">Utilidad</span>
+                <TrendingUp className="w-5 h-5 text-success" />
+              </div>
+              <div className="text-3xl font-bold text-success">${dashboardKPIs.profit.toFixed(2)}</div>
+              <div className="text-sm text-muted-foreground mt-1">Hoy</div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Additional Stats */}
@@ -773,7 +804,10 @@ export default function HomePage() {
                 </td>
                 <td data-label="Acciones" className="p-4">
                   <div className="flex justify-center gap-2">
-                    <button className="neu-raised-sm w-8 h-8 flex items-center justify-center hover:bg-accent">
+                    <button
+                      onClick={() => fetchTransactionItems(txn)}
+                      className="neu-raised-sm w-8 h-8 flex items-center justify-center hover:bg-accent"
+                    >
                       <Eye className="w-4 h-4" />
                     </button>
                   </div>
@@ -783,6 +817,90 @@ export default function HomePage() {
           </tbody>
         </table>
       </div>
+
+      {/* Transaction Details Modal */}
+      {selectedTransaction && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="neu-card max-w-2xl w-full max-h-[90vh] flex flex-col">
+            <div className="flex justify-between items-center mb-4 p-4 border-b">
+              <div>
+                <h3 className="text-lg font-bold">Detalles del Ticket</h3>
+                <p className="text-sm text-muted-foreground">ID: {selectedTransaction.id}</p>
+              </div>
+              <button onClick={() => setSelectedTransaction(null)}>
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4">
+              {loadingItems ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div className="neu-inset-sm p-3">
+                      <div className="text-xs text-muted-foreground">Fecha</div>
+                      <div className="font-medium">{new Date(selectedTransaction.created_at).toLocaleString()}</div>
+                    </div>
+                    <div className="neu-inset-sm p-3">
+                      <div className="text-xs text-muted-foreground">Método de Pago</div>
+                      <div className="font-medium capitalize">{selectedTransaction.payment_method === 'cash' ? 'Efectivo' : 'Transferencia'}</div>
+                    </div>
+                  </div>
+
+                  <table className="w-full">
+                    <thead>
+                      <tr className="text-left text-sm text-muted-foreground border-b">
+                        <th className="pb-2">Producto</th>
+                        <th className="pb-2 text-center">Cant.</th>
+                        <th className="pb-2 text-right">Precio</th>
+                        <th className="pb-2 text-right">Subtotal</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {transactionItems.map((item) => (
+                        <tr key={item.id} className="text-sm">
+                          <td className="py-3">{item.product?.name || 'Producto desconocido'}</td>
+                          <td className="py-3 text-center">{item.quantity}</td>
+                          <td className="py-3 text-right">${item.price_at_sale.toFixed(2)}</td>
+                          <td className="py-3 text-right font-medium">
+                            ${(item.quantity * item.price_at_sale).toFixed(2)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 border-t bg-muted/50">
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Subtotal:</span>
+                  <span>${selectedTransaction.subtotal.toFixed(2)}</span>
+                </div>
+                {selectedTransaction.discount_value > 0 && (
+                  <div className="flex justify-between text-sm text-success">
+                    <span>Descuento:</span>
+                    <span>
+                      -${selectedTransaction.discount_type === 'fixed'
+                        ? selectedTransaction.discount_value.toFixed(2)
+                        : selectedTransaction.discount_value + '%'}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between font-bold text-lg pt-2 border-t">
+                  <span>Total:</span>
+                  <span>${selectedTransaction.total_amount.toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 
