@@ -149,12 +149,17 @@ interface UIStore {
   darkMode: boolean;
   loading: boolean;
   currentView: string;
+  notifications: {
+    lowStock: boolean;
+    salesAlerts: boolean;
+  };
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
   toggleDarkMode: () => void;
   setDarkMode: (dark: boolean) => void;
   setLoading: (loading: boolean) => void;
   setCurrentView: (view: string) => void;
+  setNotifications: (prefs: Partial<UIStore['notifications']>) => void;
 }
 
 export const useUIStore = create<UIStore>()(
@@ -164,6 +169,10 @@ export const useUIStore = create<UIStore>()(
       darkMode: false,
       loading: false,
       currentView: 'dashboard',
+      notifications: {
+        lowStock: true,
+        salesAlerts: true,
+      },
 
       toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
@@ -186,6 +195,9 @@ export const useUIStore = create<UIStore>()(
       }),
       setLoading: (loading) => set({ loading }),
       setCurrentView: (view) => set({ currentView: view }),
+      setNotifications: (prefs) => set((state) => ({
+        notifications: { ...state.notifications, ...prefs }
+      })),
     }),
     {
       name: 'ui-storage',
