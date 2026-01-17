@@ -579,19 +579,8 @@ export default function HomePage() {
   };
 
   // Get role-specific navigation
-  const getProductImageUrl = (product: Product) => {
-    if (!product.image_url) return null;
-    if (product.image_url.startsWith('http')) return product.image_url;
-
-    const path = product.image_url.startsWith('products/')
-      ? product.image_url.replace('products/', '')
-      : product.image_url;
-
-    const { data } = supabase.storage.from('product-images').getPublicUrl(path);
-    return data.publicUrl;
-  };
-
-  const getNavigationItems = () => {
+  function getNavigationItems() {
+    if (!user) return [];
     const role = user.role;
     const items = [
       { id: 'dashboard', icon: BarChart3, label: 'Dashboard', roles: ['admin', 'manager', 'clerk'] },
@@ -1042,7 +1031,7 @@ export default function HomePage() {
                   <div className="flex justify-center gap-2">
                     <button
                       type="button"
-                      onClick={() => fetchTransactionItems(txn)}
+                      onClick={() => fetchTransactionDetails(txn)}
                       className="neu-raised-sm w-8 h-8 flex items-center justify-center hover:bg-accent transition-transform active:scale-95"
                       title="Ver Detalle"
                     >
