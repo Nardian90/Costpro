@@ -752,7 +752,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
         );
     }
 
-    if (user.role !== 'admin' && !user.store_id) {
+    if (user?.role !== 'admin' && !user?.store_id) {
         return <div className="p-8 text-center text-red-500">Error: Usuario no asignado a una tienda.</div>;
     }
 
