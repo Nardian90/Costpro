@@ -16,3 +16,7 @@ main
 ## 2026-01-20
 - Learning: Internal API routes using a global Supabase client with an anon key will fail if RLS is enabled on the target tables (e.g., `profiles`), as the user context is missing.
 - Action: Updated `getServerSession` to return the access token and introduced `getSupabaseAuthClient` to create authenticated Supabase clients in server-side routes.
+
+## 2026-01-21 - Multi-store Stock Reliability
+**Learning:** In a multi-store system where products are shared, a single `stock_current` column in the `products` table becomes unreliable if updated by triggers from different stores. The API must explicitly join and map stock from the `inventory` table based on the store context of the authenticated user.
+**Action:** Refactored `/api/inventory/products` to fetch and map stock from the `inventory` table, ensuring cashiers see accurate stock for their specific store.
