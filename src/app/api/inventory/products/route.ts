@@ -1,11 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { supabase } from "@/lib/supabaseClient";
+import { getSupabaseAuthClient } from "@/lib/supabaseClient";
 import { getServerSession } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
   const session = await getServerSession(request);
 
-  if (!session) {
+  if (!session || !session.token) {
     return NextResponse.json(
       { error: "Unauthorized", message: "No active session" },
       { status: 401 }
@@ -13,8 +13,10 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const authClient = getSupabaseAuthClient(session.token);
+
     // Get storeId and role from user profile
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: profileError } = await authClient
       .from("profiles")
       .select("store_id, role")
       .eq("id", session.user.id)
@@ -35,7 +37,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    let query = supabase
+    let query = authClient
       .from("products")
       .select(`
         *,
