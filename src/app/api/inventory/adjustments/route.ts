@@ -24,22 +24,35 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { data, error } = await supabase.rpc("process_inventory_adjustment", {
+    const { data: saleId, error: rpcError } = await supabase.rpc("process_inventory_adjustment", {
       p_store_id: storeId,
       p_cashier_id: userId,
       p_items: items,
     });
 
-    if (error) {
+    if (rpcError) {
       return NextResponse.json(
-        { error: "Internal Server Error", message: error.message },
+        { error: "Internal Server Error", message: rpcError.message },
+        { status: 500 }
+      );
+    }
+
+    const { data: saleItems, error: itemsError } = await supabase
+      .from("sale_items")
+      .select("*")
+      .eq("sale_id", saleId);
+
+    if (itemsError) {
+      return NextResponse.json(
+        { error: "Internal Server Error", message: itemsError.message },
         { status: 500 }
       );
     }
 
     return NextResponse.json({
       message: "Inventory adjustment processed successfully",
-      adjustmentId: data,
+      saleId,
+      saleItems,
     });
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : "Unknown error";

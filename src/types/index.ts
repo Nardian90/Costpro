@@ -154,6 +154,17 @@ export interface StockMovement {
 // Transacciones y Ventas
 // ============================================
 
+export interface SaleItem {
+  id: string;
+  sale_id: string;
+  product_id: string;
+  variant_id: string | null;
+  quantity: number;
+  unit_price_sold: number;
+  cost_at_sale: number;
+  created_at: string;
+}
+
 export interface Transaction {
   id: string;
   store_id: string;
