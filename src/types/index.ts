@@ -404,6 +404,7 @@ export interface RolePermissions {
   canManageUsers: boolean;
   canManageStores: boolean;
   canViewAudits: boolean;
+  canPerformInventoryCount: boolean;
 }
 
 export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
@@ -423,6 +424,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canManageUsers: true,
     canManageStores: true,
     canViewAudits: true,
+    canPerformInventoryCount: true,
   },
   manager: {
     canCreateProducts: true,
@@ -440,6 +442,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canManageUsers: false,
     canManageStores: false,
     canViewAudits: true,
+    canPerformInventoryCount: true,
   },
   clerk: {
     canCreateProducts: false,
@@ -457,6 +460,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canManageUsers: false,
     canManageStores: false,
     canViewAudits: false,
+    canPerformInventoryCount: true,
   },
   warehouse: {
     canCreateProducts: true,
@@ -474,5 +478,6 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canManageUsers: false,
     canManageStores: false,
     canViewAudits: false,
+    canPerformInventoryCount: true,
   },
 };

@@ -405,7 +405,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
 
             const mappedProducts: Product[] = data?.map((item: any) => {
                 let stock_current = 0;
-                let store_id = null;
+                let store_id: string | null = null;
 
                 if (user.role === 'admin') {
                     // Admin: Sum stock from all stores
@@ -881,6 +881,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="neu-input w-full pl-10"
                             placeholder="Buscar por nombre, SKU..."
+                            aria-label="Buscar productos por nombre o SKU"
                         />
                     </div>
                     <div className="relative">
