@@ -39,6 +39,7 @@ import {
   History,
   Target,
   Shield,
+  ClipboardList,
 } from 'lucide-react';
 import type {
   UserRole,
@@ -53,6 +54,7 @@ import type {
 } from '@/types';
 import { toast } from 'sonner';
 import WarehouseView from '@/components/WarehouseView';
+import InventoryCountView from '@/components/InventoryCountView';
 
 export default function HomePage() {
   const router = useRouter();
@@ -108,7 +110,7 @@ export default function HomePage() {
 
       const mappedProducts: Product[] = data?.map((item: any) => {
         let stock_current = 0;
-        let store_id = null;
+        let store_id: string | null = null;
 
         if (user.role === 'admin') {
           stock_current = item.inventory?.reduce(
@@ -337,6 +339,7 @@ export default function HomePage() {
       { id: 'inventory', icon: Package, label: 'Inventario', roles: ['admin', 'manager', 'warehouse'] },
       { id: 'recepcion', icon: Warehouse, label: 'Recepciones', roles: ['warehouse', 'manager'] },
       { id: 'sales', icon: Receipt, label: 'Mis Ventas', roles: ['clerk', 'manager'] },
+      { id: 'inventory_count', icon: ClipboardList, label: 'Conteo Inventario', roles: ['clerk', 'manager', 'admin'] },
       { id: 'catalog', icon: Package, label: 'Catálogo', roles: ['manager', 'admin'] },
       { id: 'history', icon: History, label: 'Historial', roles: ['manager', 'admin'] },
       { id: 'audit', icon: Shield, label: 'Auditoría', roles: ['manager', 'admin'] },
@@ -1189,6 +1192,7 @@ export default function HomePage() {
       case 'inventory': return <WarehouseView key="inventory" />;
       case 'recepcion': return <WarehouseView initialView="history" key="history" />;
       case 'sales': return renderSales();
+      case 'inventory_count': return <InventoryCountView />;
       case 'catalog': return renderCatalog();
       case 'history': return renderHistory();
       case 'audit': return renderAudit();
