@@ -20,3 +20,7 @@ main
 ## 2026-01-21 - Multi-store Stock Reliability
 **Learning:** In a multi-store system where products are shared, a single `stock_current` column in the `products` table becomes unreliable if updated by triggers from different stores. The API must explicitly join and map stock from the `inventory` table based on the store context of the authenticated user.
 **Action:** Refactored `/api/inventory/products` to fetch and map stock from the `inventory` table, ensuring cashiers see accurate stock for their specific store.
+
+## 2026-01-22 - POS Micro-UX and Accessibility
+**Learning:** For high-traffic interfaces like a POS, visual cues (product images) and immediate interaction feedback (loading states on buttons) significantly reduce cognitive load and prevent accidental duplicate transactions. Clear search buttons and explicit ARIA labels on icon-only buttons are essential for a professional, accessible tool.
+**Action:** Implemented product images in the POS grid, loading/disabled states for the checkout button, a clear search button, and added missing ARIA labels to historical views.
