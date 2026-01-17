@@ -1,19 +1,19 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { supabase } from "@/lib/supabaseClient";
 import { AdjustInventoryResponse } from "@/types/inventory";
+import { getServerSession } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
-  const { data: sessionData, error: sessionError } =
-    await supabase.auth.getSession();
+  const session = await getServerSession(request);
 
-  if (sessionError || !sessionData.session) {
+  if (!session) {
     return NextResponse.json(
       { error: "Unauthorized", message: "No active session" },
       { status: 401 }
     );
   }
 
-  const userId = sessionData.session.user.id;
+  const userId = session.user.id;
 
   const { productId, quantity, movementType, version, storeId, reason } =
     await request.json();

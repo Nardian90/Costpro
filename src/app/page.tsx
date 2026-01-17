@@ -263,6 +263,18 @@ export default function HomePage() {
     }
   };
 
+  const getProductImageUrl = (product: Product) => {
+    if (!product.image_url) return null;
+    if (product.image_url.startsWith('http')) return product.image_url;
+
+    const path = product.image_url.startsWith('products/')
+      ? product.image_url.replace('products/', '')
+      : product.image_url;
+
+    const { data } = supabase.storage.from('product-images').getPublicUrl(path);
+    return data.publicUrl;
+  };
+
   const fetchDashboardData = async () => {
     if (!user) return;
 

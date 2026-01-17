@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Product, ProductVariant } from "@/types";
+import { useAuthStore } from "@/store";
 
 interface Difference {
   productId: string;
@@ -18,6 +19,7 @@ interface Difference {
 }
 
 export default function CloseSessionPage() {
+  const { user, token } = useAuthStore();
   const [products, setProducts] = useState<(Product & { product_variants: ProductVariant[] })[]>([]);
   const [countedQuantities, setCountedQuantities] = useState<{ [key: string]: number }>({});
   const [differences, setDifferences] = useState<Difference[]>([]);
@@ -26,8 +28,13 @@ export default function CloseSessionPage() {
 
   useEffect(() => {
     const fetchProducts = async () => {
+      if (!token) return;
       try {
-        const response = await fetch("/api/inventory/products");
+        const response = await fetch("/api/inventory/products", {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         if (!response.ok) throw new Error("Failed to fetch products");
         const data = await response.json();
         setProducts(data);
@@ -82,6 +89,8 @@ export default function CloseSessionPage() {
   };
 
   const handleFinalSubmit = async () => {
+    if (!user?.store_id) return;
+
     const itemsToSubmit = differences.map(d => ({
       product_id: d.productId,
       expected_quantity: d.expected,
@@ -92,13 +101,15 @@ export default function CloseSessionPage() {
       }))
     }));
 
-    // TODO: Get storeId from session or context
-    const storeId = "your_store_id";
+    const storeId = user.store_id;
 
     try {
       const response = await fetch("/api/inventory/adjustments", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({ storeId, items: itemsToSubmit }),
       });
 

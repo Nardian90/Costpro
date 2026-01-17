@@ -1,11 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { supabase } from "@/lib/supabaseClient";
+import { getServerSession } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
-  const { data: sessionData, error: sessionError } =
-    await supabase.auth.getSession();
+  const session = await getServerSession(request);
 
-  if (sessionError || !sessionData.session) {
+  if (!session) {
     return NextResponse.json(
       { error: "Unauthorized", message: "No active session" },
       { status: 401 }
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("store_id")
-      .eq("id", sessionData.session.user.id)
+      .eq("id", session.user.id)
       .single();
 
     if (profileError || !profile?.store_id) {
