@@ -14,7 +14,7 @@ export async function getServerSession(request: NextRequest) {
     const { data: { user }, error } = await supabase.auth.getUser(token);
 
     if (!error && user) {
-      return { user };
+      return { user, token };
     }
   }
 
@@ -22,7 +22,7 @@ export async function getServerSession(request: NextRequest) {
   const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
   if (!sessionError && session?.user) {
-    return { user: session.user };
+    return { user: session.user, token: session.access_token };
   }
 
   return null;
