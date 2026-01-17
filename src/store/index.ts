@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { persist } from 'zustand/middleware';
 import type { User, UserRole, CartItem, Discount } from '@/types';
 
 // ============================================
@@ -61,84 +62,91 @@ interface CartStore {
   getItemCount: () => number;
 }
 
-export const useCartStore = create<CartStore>((set, get) => ({
-  items: [],
-  discount: null,
+export const useCartStore = create<CartStore>()(
+  persist(
+    (set, get) => ({
+      items: [],
+      discount: null,
 
-  addItem: (item) =>
-    set((state) => {
-      const existingIndex = state.items.findIndex(
-        (i) => i.product_id === item.product_id && i.variant_id === item.variant_id
-      );
+      addItem: (item) =>
+        set((state) => {
+          const existingIndex = state.items.findIndex(
+            (i) => i.product_id === item.product_id && i.variant_id === item.variant_id
+          );
 
-      if (existingIndex >= 0) {
-        const updatedItems = [...state.items];
-        updatedItems[existingIndex] = {
-          ...updatedItems[existingIndex],
-          quantity: updatedItems[existingIndex].quantity + item.quantity,
-          subtotal:
-            (updatedItems[existingIndex].quantity + item.quantity) *
-            updatedItems[existingIndex].price,
-        };
-        return { items: updatedItems };
-      }
+          if (existingIndex >= 0) {
+            const updatedItems = [...state.items];
+            updatedItems[existingIndex] = {
+              ...updatedItems[existingIndex],
+              quantity: updatedItems[existingIndex].quantity + item.quantity,
+              subtotal:
+                (updatedItems[existingIndex].quantity + item.quantity) *
+                updatedItems[existingIndex].price,
+            };
+            return { items: updatedItems };
+          }
 
-      return { items: [...state.items, item] };
-    }),
+          return { items: [...state.items, item] };
+        }),
 
-  removeItem: (productId, variantId) =>
-    set((state) => ({
-      items: state.items.filter(
-        (i) => !(i.product_id === productId && i.variant_id === variantId)
-      ),
-    })),
-
-  updateQuantity: (productId, variantId, quantity) =>
-    set((state) => {
-      if (quantity <= 0) {
-        return {
+      removeItem: (productId, variantId) =>
+        set((state) => ({
           items: state.items.filter(
             (i) => !(i.product_id === productId && i.variant_id === variantId)
           ),
-        };
-      }
+        })),
 
-      const updatedItems = state.items.map((item) =>
-        item.product_id === productId && item.variant_id === variantId
-          ? { ...item, quantity, subtotal: quantity * item.price }
-          : item
-      );
+      updateQuantity: (productId, variantId, quantity) =>
+        set((state) => {
+          if (quantity <= 0) {
+            return {
+              items: state.items.filter(
+                (i) => !(i.product_id === productId && i.variant_id === variantId)
+              ),
+            };
+          }
 
-      return { items: updatedItems };
+          const updatedItems = state.items.map((item) =>
+            item.product_id === productId && item.variant_id === variantId
+              ? { ...item, quantity, subtotal: quantity * item.price }
+              : item
+          );
+
+          return { items: updatedItems };
+        }),
+
+      clearCart: () => set({ items: [], discount: null }),
+
+      setDiscount: (discount) => set({ discount }),
+
+      getSubtotal: () => {
+        const state = get();
+        return state.items.reduce((sum, item) => sum + item.subtotal, 0);
+      },
+
+      getTotal: () => {
+        const state = get();
+        const subtotal = state.items.reduce((sum, item) => sum + item.subtotal, 0);
+
+        if (!state.discount) return subtotal;
+
+        if (state.discount.type === 'percentage') {
+          return subtotal * (1 - state.discount.value / 100);
+        }
+
+        return Math.max(0, subtotal - state.discount.value);
+      },
+
+      getItemCount: () => {
+        const state = get();
+        return state.items.reduce((sum, item) => sum + item.quantity, 0);
+      },
     }),
-
-  clearCart: () => set({ items: [], discount: null }),
-
-  setDiscount: (discount) => set({ discount }),
-
-  getSubtotal: () => {
-    const state = get();
-    return state.items.reduce((sum, item) => sum + item.subtotal, 0);
-  },
-
-  getTotal: () => {
-    const state = get();
-    const subtotal = state.items.reduce((sum, item) => sum + item.subtotal, 0);
-
-    if (!state.discount) return subtotal;
-
-    if (state.discount.type === 'percentage') {
-      return subtotal * (1 - state.discount.value / 100);
+    {
+      name: 'cart-storage',
     }
-
-    return Math.max(0, subtotal - state.discount.value);
-  },
-
-  getItemCount: () => {
-    const state = get();
-    return state.items.reduce((sum, item) => sum + item.quantity, 0);
-  },
-}));
+  )
+);
 
 // ============================================
 // Store de UI
