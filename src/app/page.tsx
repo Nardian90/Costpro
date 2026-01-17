@@ -46,6 +46,7 @@ import type {
   Product,
   CartItem,
   Transaction,
+  TransactionItem,
   PaymentMethod,
   DiscountType,
   DashboardKPIs,
@@ -259,6 +260,13 @@ export default function HomePage() {
     return null;
   }
 
+  const navigationItems = getNavigationItems();
+  const filteredProducts = products.filter(p =>
+    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (p.category && p.category.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
   const addToCart = (product: Product) => {
     addItem({
       product_id: product.id,
@@ -382,13 +390,6 @@ export default function HomePage() {
     return items.filter(item => item.roles.includes(role));
   };
 
-  const navigationItems = getNavigationItems();
-  const filteredProducts = products.filter(p =>
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (p.category && p.category.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
-
   // ==================== VIEWS ====================
 
   const renderDashboard = () => (
@@ -396,7 +397,7 @@ export default function HomePage() {
       <h2 className="text-2xl font-bold">Dashboard</h2>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className={`grid grid-cols-1 ${user?.role !== 'clerk' ? 'md:grid-cols-3' : ''} gap-6`}>
         <div className="neu-card">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-muted-foreground">Ventas Totales</span>
@@ -406,23 +407,27 @@ export default function HomePage() {
           <div className="text-sm text-muted-foreground mt-1">Hoy</div>
         </div>
 
-        <div className="neu-card">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-muted-foreground">Costo de Ventas</span>
-            <Target className="w-5 h-5 text-warning" />
-          </div>
-          <div className="text-3xl font-bold">${dashboardKPIs.cost_of_goods.toFixed(2)}</div>
-          <div className="text-sm text-muted-foreground mt-1">Hoy</div>
-        </div>
+        {user?.role !== 'clerk' && (
+          <>
+            <div className="neu-card">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-muted-foreground">Costo de Ventas</span>
+                <Target className="w-5 h-5 text-warning" />
+              </div>
+              <div className="text-3xl font-bold">${dashboardKPIs.cost_of_goods.toFixed(2)}</div>
+              <div className="text-sm text-muted-foreground mt-1">Hoy</div>
+            </div>
 
-        <div className="neu-card">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-muted-foreground">Utilidad</span>
-            <TrendingUp className="w-5 h-5 text-success" />
-          </div>
-          <div className="text-3xl font-bold text-success">${dashboardKPIs.profit.toFixed(2)}</div>
-          <div className="text-sm text-muted-foreground mt-1">Hoy</div>
-        </div>
+            <div className="neu-card">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-muted-foreground">Utilidad</span>
+                <TrendingUp className="w-5 h-5 text-success" />
+              </div>
+              <div className="text-3xl font-bold text-success">${dashboardKPIs.profit.toFixed(2)}</div>
+              <div className="text-sm text-muted-foreground mt-1">Hoy</div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Additional Stats */}
@@ -814,8 +819,10 @@ export default function HomePage() {
                 <td data-label="Acciones" className="p-4">
                   <div className="flex justify-center gap-2">
                     <button
-                      onClick={() => fetchTransactionDetails(txn)}
-                      className="neu-raised-sm w-8 h-8 flex items-center justify-center hover:bg-accent"
+                      type="button"
+                      onClick={() => fetchTransactionItems(txn)}
+                      className="neu-raised-sm w-8 h-8 flex items-center justify-center hover:bg-accent transition-transform active:scale-95"
+                      title="Ver Detalle"
                     >
                       <Eye className="w-4 h-4" />
                     </button>
@@ -1349,6 +1356,110 @@ export default function HomePage() {
           {renderView()}
         </div>
       </main>
+
+      {/* Transaction Details Modal */}
+      {selectedTransaction && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
+          <div className="neu-card max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl scale-in-95 animate-in duration-200">
+            <div className="flex justify-between items-center mb-4 p-4 border-b">
+              <div>
+                <h3 className="text-lg font-bold">Detalles del Ticket</h3>
+                <p className="text-sm text-muted-foreground font-mono">ID: {selectedTransaction.id}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedTransaction(null)}
+                className="neu-raised-sm p-2 hover:bg-accent transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4">
+              {loadingItems ? (
+                <div className="flex flex-col items-center justify-center py-12 gap-3">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+                  <p className="text-sm text-muted-foreground">Consultando productos...</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="neu-inset-sm p-3">
+                      <div className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Fecha y Hora</div>
+                      <div className="font-medium text-sm">{new Date(selectedTransaction.created_at).toLocaleString()}</div>
+                    </div>
+                    <div className="neu-inset-sm p-3">
+                      <div className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Método de Pago</div>
+                      <div className="font-medium text-sm capitalize">{selectedTransaction.payment_method === 'cash' ? 'Efectivo' : 'Transferencia'}</div>
+                    </div>
+                  </div>
+
+                  <div className="neu-raised-sm overflow-hidden">
+                    <table className="w-full">
+                      <thead className="bg-muted/50">
+                        <tr className="text-left text-[10px] uppercase font-bold text-muted-foreground border-b">
+                          <th className="p-3">Producto</th>
+                          <th className="p-3 text-center">Cant.</th>
+                          <th className="p-3 text-right">Precio</th>
+                          <th className="p-3 text-right">Subtotal</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {transactionItems.length === 0 ? (
+                          <tr>
+                            <td colSpan={4} className="p-8 text-center text-muted-foreground italic">
+                              No se encontraron items para este ticket.
+                            </td>
+                          </tr>
+                        ) : transactionItems.map((item) => (
+                          <tr key={item.id} className="text-sm hover:bg-accent/50 transition-colors">
+                            <td className="p-3 font-medium">{item.product?.name || 'Producto desconocido'}</td>
+                            <td className="p-3 text-center">{item.quantity}</td>
+                            <td className="p-3 text-right font-mono">${item.price_at_sale.toFixed(2)}</td>
+                            <td className="p-3 text-right font-bold font-mono">
+                              ${(item.quantity * item.price_at_sale).toFixed(2)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 border-t bg-muted/30">
+              <div className="space-y-3 max-w-xs ml-auto">
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>Subtotal:</span>
+                  <span className="font-mono">${selectedTransaction.subtotal.toFixed(2)}</span>
+                </div>
+                {selectedTransaction.discount_value > 0 && (
+                  <div className="flex justify-between text-sm text-success">
+                    <span>Descuento:</span>
+                    <span className="font-mono">
+                      -${selectedTransaction.discount_type === 'fixed'
+                        ? selectedTransaction.discount_value.toFixed(2)
+                        : selectedTransaction.discount_value + '%'}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between font-bold text-xl pt-3 border-t border-border">
+                  <span>Total:</span>
+                  <span className="text-primary font-mono">${selectedTransaction.total_amount.toFixed(2)}</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedTransaction(null)}
+                className="neu-btn w-full mt-6 bg-slate-900 !text-white hover:bg-slate-800"
+              >
+                Cerrar Ticket
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Sidebar Overlay */}
       {sidebarOpen && (
