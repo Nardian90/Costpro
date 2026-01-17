@@ -228,6 +228,11 @@ export default function HomePage() {
   const [localDiscount, setLocalDiscount] = useState({ type: 'fixed' as DiscountType, value: 0 });
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>('cash');
 
+  // Transaction details state
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [transactionItems, setTransactionItems] = useState<any[]>([]);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+
   // Check authentication
   useEffect(() => {
     if (!loading && !user) {
@@ -325,6 +330,31 @@ export default function HomePage() {
       console.error('Error logging out:', error);
       logout();
       router.replace('/login');
+    }
+  };
+
+  const fetchTransactionDetails = async (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setLoadingDetails(true);
+    try {
+      const { data, error } = await supabase
+        .from('transaction_items')
+        .select(`
+          *,
+          products (
+            name,
+            sku
+          )
+        `)
+        .eq('transaction_id', transaction.id);
+
+      if (error) throw error;
+      setTransactionItems(data || []);
+    } catch (error) {
+      console.error('Error fetching transaction items:', error);
+      toast.error('Error al cargar los detalles de la venta');
+    } finally {
+      setLoadingDetails(false);
     }
   };
 
@@ -773,7 +803,10 @@ export default function HomePage() {
                 </td>
                 <td data-label="Acciones" className="p-4">
                   <div className="flex justify-center gap-2">
-                    <button className="neu-raised-sm w-8 h-8 flex items-center justify-center hover:bg-accent">
+                    <button
+                      onClick={() => fetchTransactionDetails(txn)}
+                      className="neu-raised-sm w-8 h-8 flex items-center justify-center hover:bg-accent"
+                    >
                       <Eye className="w-4 h-4" />
                     </button>
                   </div>
@@ -1306,6 +1339,140 @@ export default function HomePage() {
           className="fixed inset-0 bg-black/50 z-30 lg:hidden"
           onClick={toggleSidebar}
         />
+      )}
+
+      {/* Transaction Details Modal */}
+      {selectedTransaction && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="neu-card max-w-2xl w-full max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-4 p-4 border-b">
+              <div>
+                <h3 className="text-lg font-bold">Detalle de Venta</h3>
+                <p className="text-xs text-muted-foreground font-mono">{selectedTransaction.id}</p>
+              </div>
+              <button
+                onClick={() => setSelectedTransaction(null)}
+                className="neu-raised-sm w-10 h-10 flex items-center justify-center hover:bg-accent"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="p-4 overflow-y-auto flex-1">
+              {/* Transaction Summary */}
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                <div className="neu-inset-sm p-3">
+                  <div className="text-xs text-muted-foreground uppercase font-bold mb-1">Fecha</div>
+                  <div className="font-medium text-sm">
+                    {new Date(selectedTransaction.created_at).toLocaleString()}
+                  </div>
+                </div>
+                <div className="neu-inset-sm p-3">
+                  <div className="text-xs text-muted-foreground uppercase font-bold mb-1">Método de Pago</div>
+                  <div className="font-medium text-sm capitalize">
+                    {selectedTransaction.payment_method === 'cash' ? 'Efectivo' :
+                     selectedTransaction.payment_method === 'card' ? 'Tarjeta' :
+                     selectedTransaction.payment_method === 'transfer' ? 'Transferencia' : 'Otro'}
+                  </div>
+                </div>
+                <div className="neu-inset-sm p-3">
+                  <div className="text-xs text-muted-foreground uppercase font-bold mb-1">Estado</div>
+                  <div className="font-medium text-sm">
+                    <span className={`neu-badge ${selectedTransaction.status === 'completed' ? 'text-success' :
+                      selectedTransaction.status === 'pending' ? 'text-warning' : 'text-danger'
+                      }`}>
+                      {selectedTransaction.status === 'completed' ? 'Completada' :
+                       selectedTransaction.status === 'pending' ? 'Pendiente' :
+                       selectedTransaction.status === 'voided' ? 'Anulada' :
+                       selectedTransaction.status === 'cancelled' ? 'Cancelada' :
+                       selectedTransaction.status}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Items Table */}
+              <div className="space-y-3">
+                <h4 className="font-bold text-sm border-b pb-2 uppercase tracking-wide text-muted-foreground">Productos vendidos</h4>
+                {loadingDetails ? (
+                  <div className="flex flex-col items-center justify-center py-12 gap-3">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <p className="text-sm text-muted-foreground">Cargando artículos...</p>
+                  </div>
+                ) : (
+                  <div className="table-to-cards">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b text-muted-foreground text-left">
+                          <th className="pb-2">Producto</th>
+                          <th className="pb-2 text-center">Cant.</th>
+                          <th className="pb-2 text-right">Precio</th>
+                          <th className="pb-2 text-right">Subtotal</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {transactionItems.length === 0 ? (
+                          <tr>
+                            <td colSpan={4} className="py-8 text-center text-muted-foreground">
+                              No se encontraron artículos para esta venta.
+                            </td>
+                          </tr>
+                        ) : (
+                          transactionItems.map((item) => (
+                            <tr key={item.id} className="border-b last:border-0 hover:bg-slate-50/50">
+                              <td className="py-3" data-label="Producto">
+                                <div className="font-medium">{item.products?.name || 'Producto desconocido'}</div>
+                                <div className="text-xs text-muted-foreground">{item.products?.sku || '-'}</div>
+                              </td>
+                              <td className="py-3 text-center" data-label="Cant.">{item.quantity}</td>
+                              <td className="py-3 text-right" data-label="Precio">${item.price_at_sale.toFixed(2)}</td>
+                              <td className="py-3 text-right font-bold" data-label="Subtotal">
+                                ${(item.quantity * item.price_at_sale).toFixed(2)}
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              {/* Totals */}
+              {!loadingDetails && (
+                <div className="mt-6 space-y-2 border-t pt-4 max-w-[280px] ml-auto">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Subtotal:</span>
+                    <span className="font-medium">${selectedTransaction.subtotal.toFixed(2)}</span>
+                  </div>
+                  {selectedTransaction.discount_value > 0 && (
+                    <div className="flex justify-between text-sm text-success font-bold">
+                      <span>Descuento:</span>
+                      <span>
+                        -{selectedTransaction.discount_type === 'fixed' ? '$' : ''}
+                        {selectedTransaction.discount_value}
+                        {selectedTransaction.discount_type === 'percentage' ? '%' : ''}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex justify-between font-bold text-xl pt-2 border-t border-border text-primary">
+                    <span>Total:</span>
+                    <span>${selectedTransaction.total_amount.toFixed(2)}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 border-t bg-slate-50 flex justify-end">
+              <button
+                onClick={() => setSelectedTransaction(null)}
+                className="neu-btn neu-btn-primary px-8 font-bold"
+              >
+                Cerrar Detalle
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
