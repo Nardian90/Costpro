@@ -12,3 +12,17 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+/**
+ * Creates an authenticated Supabase client for use in server-side routes.
+ * @param token The user's access token (JWT)
+ */
+export const getSupabaseAuthClient = (token: string) => {
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+};

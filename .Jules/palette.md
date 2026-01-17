@@ -12,3 +12,7 @@
 **Learning:** Cashiers need an intuitive way to reconcile physical vs system stock, especially for products sold in multiple formats (e.g., boxes vs units). A guided "decomposition" modal helps them convert shortages into equivalent saleable units without complex calculations.
 **Action:** Implemented `InventoryCountView` with an editable variant decomposition modal that allows manual adjustment of suggested quantities before final confirmation.
 main
+
+## 2026-01-20
+- Learning: Internal API routes using a global Supabase client with an anon key will fail if RLS is enabled on the target tables (e.g., `profiles`), as the user context is missing.
+- Action: Updated `getServerSession` to return the access token and introduced `getSupabaseAuthClient` to create authenticated Supabase clients in server-side routes.
