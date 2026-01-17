@@ -1832,6 +1832,173 @@ export default function HomePage() {
           </div>
         </div>
       )}
+
+      {/* Edit Product Modal */}
+      <Dialog open={isEditProductModalOpen} onOpenChange={setIsEditProductModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar Producto</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Nombre del Producto</label>
+              <input
+                type="text"
+                value={editingProduct?.name || ''}
+                onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
+                className="neu-input w-full"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Imagen del Producto</label>
+              <div className="flex flex-col items-center gap-4">
+                <div className="neu-raised-sm w-32 h-32 flex items-center justify-center overflow-hidden">
+                  {editingProduct?.image_url ? (
+                    <img
+                      src={getProductImageUrl(editingProduct) || ''}
+                      alt={editingProduct.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <Package className="w-16 h-16 text-muted-foreground" />
+                  )}
+                </div>
+                <input
+                  type="file"
+                  id="product-image-upload"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleUpdateImage(file);
+                  }}
+                />
+                <label
+                  htmlFor="product-image-upload"
+                  className="neu-btn text-sm cursor-pointer"
+                >
+                  Cambiar Imagen
+                </label>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => setIsEditProductModalOpen(false)}
+              className="neu-btn"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleUpdateProduct}
+              className="neu-btn neu-btn-primary"
+            >
+              Guardar Cambios
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Product Variants Modal */}
+      <Dialog open={isVariantsModalOpen} onOpenChange={setIsVariantsModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Variantes de Precio - {editingProduct?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6 py-4">
+            {/* Existing Variants */}
+            <div>
+              <h4 className="font-bold text-sm uppercase mb-3 text-muted-foreground">Variantes Registradas</h4>
+              <div className="space-y-2">
+                {editingProduct?.product_variants?.length > 0 ? (
+                  editingProduct.product_variants.map((v: any) => (
+                    <div key={v.id} className="neu-raised-sm p-3 flex justify-between items-center">
+                      <div>
+                        <div className="font-bold">{v.name}</div>
+                        <div className="text-xs text-muted-foreground">Factor: x{v.conversion_factor}</div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="font-bold text-primary">${v.price.toFixed(2)}</div>
+                        <button
+                          onClick={() => handleDeleteVariant(v.id)}
+                          className="text-danger hover:scale-110 transition-transform"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-center py-4 text-sm text-muted-foreground italic">
+                    No hay variantes adicionales registradas.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Add New Variant */}
+            <div className="neu-inset-sm p-4 rounded-xl">
+              <h4 className="font-bold text-sm uppercase mb-3">Agregar Nueva Variante</h4>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-xs font-bold mb-1 uppercase">Nombre</label>
+                  <input
+                    type="text"
+                    value={newVariantForm.name}
+                    onChange={(e) => setNewVariantForm({ ...newVariantForm, name: e.target.value })}
+                    className="neu-input w-full text-sm"
+                    placeholder="Ej. Pack x6"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold mb-1 uppercase">Factor</label>
+                  <input
+                    type="number"
+                    value={newVariantForm.conversion_factor}
+                    onChange={(e) => setNewVariantForm({ ...newVariantForm, conversion_factor: parseInt(e.target.value) || 1 })}
+                    className="neu-input w-full text-sm"
+                    placeholder="1"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-bold mb-1 uppercase">Precio de Venta</label>
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <input
+                    type="number"
+                    value={newVariantForm.price || ''}
+                    onChange={(e) => setNewVariantForm({ ...newVariantForm, price: parseFloat(e.target.value) || 0 })}
+                    className="neu-input w-full pl-10"
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  if (!newVariantForm.name || !newVariantForm.price) {
+                    toast.error('Complete el nombre y el precio');
+                    return;
+                  }
+                  handleAddVariant(newVariantForm);
+                  setNewVariantForm({ name: '', price: 0, conversion_factor: 1 });
+                }}
+                className="neu-btn neu-btn-success w-full mt-4 flex items-center justify-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Agregar Variante
+              </button>
+            </div>
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => setIsVariantsModalOpen(false)}
+              className="neu-btn w-full"
+            >
+              Cerrar
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

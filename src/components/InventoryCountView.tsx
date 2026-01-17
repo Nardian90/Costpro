@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { useAuthStore } from '@/store';
+import { useAuthStore, useCartStore, useUIStore } from '@/store';
 import {
   Package,
   Search,
@@ -185,36 +185,77 @@ export default function InventoryCountView() {
     const toastId = toast.loading('Procesando ajuste...');
 
     try {
-      const itemsToSubmit = differences.map(d => ({
-        product_id: d.productId,
-        expected_quantity: d.expected,
-        counted_quantity: d.counted,
-        decomposition: d.decomposition.map(dec => ({
-          variant_id: dec.variantId,
-          quantity: dec.quantity
-        }))
-      }));
+      // 1. Separate shortages and surpluses
+      const shortages = differences.filter(d => d.diff < 0);
+      const surpluses = differences.filter(d => d.diff > 0);
 
-      const response = await fetch('/api/inventory/adjustments', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          storeId: user.store_id,
-          items: itemsToSubmit
-        }),
-      });
+      // 2. Handle shortages: Add to cart
+      if (shortages.length > 0) {
+        shortages.forEach(d => {
+          // Find the full product object
+          const product = products.find(p => p.id === d.productId);
+          if (!product) return;
 
-      if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.message || 'Error al procesar el ajuste');
+          d.decomposition.forEach(dec => {
+            if (dec.quantity <= 0) return;
+
+            const variant = product.product_variants.find(v => v.id === dec.variantId);
+
+            useCartStore.getState().addItem({
+              product_id: product.id,
+              variant_id: dec.variantId,
+              product: product,
+              variant: variant || null,
+              quantity: dec.quantity,
+              price: variant ? variant.price : product.price,
+              cost: product.cost_price,
+              subtotal: (variant ? variant.price : product.price) * dec.quantity,
+            });
+          });
+        });
+
+        toast.info(`${shortages.length} productos faltantes agregados al carrito`);
       }
 
-      toast.success('Inventario ajustado correctamente', { id: toastId });
+      // 3. Handle surpluses: Process as adjustments
+      if (surpluses.length > 0) {
+        const itemsToSubmit = surpluses.map(d => ({
+          product_id: d.productId,
+          expected_quantity: d.expected,
+          counted_quantity: d.counted,
+          decomposition: []
+        }));
+
+        const response = await fetch('/api/inventory/adjustments', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            storeId: user.store_id,
+            items: itemsToSubmit
+          }),
+        });
+
+        if (!response.ok) {
+          const errData = await response.json();
+          throw new Error(errData.message || 'Error al procesar el ajuste de sobrantes');
+        }
+
+        toast.success('Sobrantes ajustados correctamente', { id: toastId });
+      } else {
+        toast.dismiss(toastId);
+      }
+
       setIsModalOpen(false);
-      fetchProducts(); // Refresh list
+
+      if (shortages.length > 0) {
+        useUIStore.getState().setCurrentView('pos');
+      } else {
+        fetchProducts(); // Refresh list if no redirect
+      }
+
     } catch (error: any) {
       console.error('Error in final submit:', error);
       toast.error(error.message || 'Error al procesar el ajuste', { id: toastId });
