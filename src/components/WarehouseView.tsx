@@ -175,26 +175,47 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
         if (!user) return;
         setLoading(true);
         try {
+            // First fetch the receipts
             let query = supabase
                 .from('receipts')
-                .select(`
-                    *,
-                    profile:profiles!inner (
-                        full_name,
-                        store_id
-                    )
-                `)
+                .select('*')
                 .order('created_at', { ascending: false });
 
             if (user.role !== 'admin') {
-                // Filter by receipts.store_id for better performance and reliability
-                // since we ensured it is populated via migration and RPC
                 query = query.eq('store_id', user.store_id);
             }
 
-            const { data, error } = await query;
-            if (error) throw error;
-            setReceiptsHistory(data || []);
+            const { data: receipts, error: receiptsError } = await query;
+            if (receiptsError) throw receiptsError;
+
+            if (!receipts || receipts.length === 0) {
+                setReceiptsHistory([]);
+                return;
+            }
+
+            // Then fetch profiles separately to avoid join relationship errors (PGRST200)
+            const userIds = Array.from(new Set(receipts.map(r => r.user_id).filter(Boolean)));
+
+            if (userIds.length > 0) {
+                const { data: profiles, error: profilesError } = await supabase
+                    .from('profiles')
+                    .select('id, full_name, store_id')
+                    .in('id', userIds);
+
+                if (profilesError) {
+                    console.warn('Could not fetch profiles for receipts:', profilesError);
+                    setReceiptsHistory(receipts);
+                } else {
+                    const profilesMap = Object.fromEntries(profiles.map(p => [p.id, p]));
+                    const receiptsWithProfiles = receipts.map(r => ({
+                        ...r,
+                        profile: r.user_id ? profilesMap[r.user_id] : null
+                    }));
+                    setReceiptsHistory(receiptsWithProfiles);
+                }
+            } else {
+                setReceiptsHistory(receipts);
+            }
         } catch (error) {
             console.error('Error fetching receipts history:', error);
         } finally {
