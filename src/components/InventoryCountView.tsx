@@ -15,7 +15,7 @@ import {
   ArrowRight,
   Save,
 } from 'lucide-react';
-import { Product, ProductVariant } from '@/types';
+import { Product, ProductVariant, CartItem } from '@/types';
 import { toast } from 'sonner';
 
 interface ExtendedProduct extends Product {
@@ -185,68 +185,82 @@ export default function InventoryCountView() {
     const toastId = toast.loading('Procesando ajuste...');
 
     try {
+      // Este proceso se encarga de finalizar el conteo de inventario.
+      // Las diferencias se separan en dos grupos:
+      // 1. Faltantes (shortages): Productos con diferencia negativa. Se añaden al carrito del TPV
+      //    para ser procesados como una venta consolidada. Esto permite que el ajuste de inventario
+      //    quede registrado como una venta, simplificando el cuadre de caja.
+      // 2. Sobrantes (surpluses): Productos con diferencia positiva. Se registran a través de una
+      //    llamada a la API para ajustar el stock hacia arriba. Además, se genera un evento de
+      //    auditoría para que el administrador pueda revisarlo.
+
       // 1. Separate shortages and surpluses
       const shortages = differences.filter(d => d.diff < 0);
       const surpluses = differences.filter(d => d.diff > 0);
 
       // 2. Handle shortages: Add to cart
       if (shortages.length > 0) {
+        const addItemToCart = useCartStore.getState().addItem;
         shortages.forEach(d => {
-          // Find the full product object
           const product = products.find(p => p.id === d.productId);
           if (!product) return;
 
+          // The decomposition logic calculates the most appropriate variants for the shortage.
+          // We add each of these items to the cart.
           d.decomposition.forEach(dec => {
             if (dec.quantity <= 0) return;
 
             const variant = product.product_variants.find(v => v.id === dec.variantId);
+            const price = variant ? variant.price : product.price;
 
-            useCartStore.getState().addItem({
+            const cartItem: CartItem = {
               product_id: product.id,
-              variant_id: dec.variantId,
+              variant_id: variant ? variant.id : null,
               product: product,
               variant: variant || null,
               quantity: dec.quantity,
-              price: variant ? variant.price : product.price,
-              cost: product.cost_price,
-              subtotal: (variant ? variant.price : product.price) * dec.quantity,
-            });
+              price: price,
+              cost: product.cost_price || 0,
+              subtotal: price * dec.quantity,
+            };
+            addItemToCart(cartItem);
           });
         });
 
-        toast.info(`${shortages.length} productos faltantes agregados al carrito`);
+        toast.info(`${shortages.length} producto(s) con faltantes fueron agregados al carrito.`);
       }
 
-      // 3. Handle surpluses: Process as adjustments
+      // 3. Handle surpluses: Log for audit
       if (surpluses.length > 0) {
-        const itemsToSubmit = surpluses.map(d => ({
-          product_id: d.productId,
-          expected_quantity: d.expected,
-          counted_quantity: d.counted,
-          decomposition: []
-        }));
+        try {
+          const response = await fetch('/api/inventory/log-surplus', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              surpluses: surpluses,
+              storeId: user.store_id,
+            }),
+          });
 
-        const response = await fetch('/api/inventory/adjustments', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            storeId: user.store_id,
-            items: itemsToSubmit
-          }),
-        });
-
-        if (!response.ok) {
-          const errData = await response.json();
-          throw new Error(errData.message || 'Error al procesar el ajuste de sobrantes');
+          if (!response.ok) {
+            // Even if logging fails, we don't want to block the main flow.
+            // We log the error and notify the user, but proceed.
+            const errData = await response.json();
+            console.error("Failed to log surpluses:", errData);
+            toast.error('No se pudo registrar el sobrante para auditoría, pero el conteo ha finalizado.');
+          } else {
+            toast.success(`${surpluses.length} producto(s) con sobrante registrados para auditoría.`);
+          }
+        } catch (apiError) {
+          console.error("API call to log surpluses failed:", apiError);
+          toast.error('Error de red al registrar sobrantes.');
         }
-
-        toast.success('Sobrantes ajustados correctamente', { id: toastId });
-      } else {
-        toast.dismiss(toastId);
       }
+
+      toast.dismiss(toastId);
 
       setIsModalOpen(false);
 
