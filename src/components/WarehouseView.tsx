@@ -83,7 +83,6 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
 
     // Nuevos estados para Historial y Sesión
     const [recentReceptions, setRecentReceptions] = useState<any[]>([]);
-    const [receiptsHistory, setReceiptsHistory] = useState<any[]>([]);
     const [isSessionChecking, setIsSessionChecking] = useState(true);
 
     // Estados para KARDEX
@@ -115,7 +114,6 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
         if (user) {
             fetchProducts();
             fetchRecentReceptions();
-            fetchReceiptsHistory();
         }
     }, [user]);
 
@@ -145,8 +143,9 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
         return data.publicUrl;
     };
 
-    const fetchRecentReceptions = async () => {
+    async function fetchRecentReceptions() {
         if (!user) return;
+        setLoading(true);
         try {
             let query = supabase
                 .from('stock_movements')
@@ -159,50 +158,51 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                 `)
                 .eq('movement_type', 'purchase')
                 .order('created_at', { ascending: false })
-                .limit(5);
+                .limit(10);
 
-            if (user.role !== 'admin' && user.store_id) {
+            // Apply store filter only if user is not an admin
+            if (user.role !== 'admin') {
+                if (!user.store_id) {
+                    toast.error('Usuario no asignado a una tienda.');
+                    setLoading(false);
+                    return;
+                }
                 query = query.eq('store_id', user.store_id);
             }
 
             const { data, error } = await query;
             if (error) throw error;
-            setRecentReceptions(data || []);
+
+            // Enriquecemos los movimientos con datos de la tabla receipts si es posible
+            // (Ya que stock_movements.reference_id contiene el ID del receipt)
+            const enrichedData = await Promise.all((data || []).map(async (mov: any) => {
+                if (mov.reference_id && mov.movement_type === 'purchase') {
+                    const { data: receiptData } = await supabase
+                        .from('receipts')
+                        .select('supplier, reference_doc')
+                        .eq('id', mov.reference_id)
+                        .single();
+
+                    if (receiptData) {
+                        return {
+                            ...mov,
+                            supplier: receiptData.supplier,
+                            reference_doc: receiptData.reference_doc || mov.reference_doc
+                        };
+                    }
+                }
+                return mov;
+            }));
+
+            setRecentReceptions(enrichedData);
         } catch (error) {
             console.error('Error fetching recent receptions:', error);
-        }
-    };
-
-    const fetchReceiptsHistory = async () => {
-        if (!user) return;
-        setLoading(true);
-        try {
-            let query = supabase
-                .from('receipts')
-                .select(`
-                    *,
-                    profile:profiles!inner (
-                        full_name,
-                        store_id
-                    )
-                `)
-                .order('created_at', { ascending: false });
-
-            if (user.role !== 'admin') {
-                query = query.eq('profiles.store_id', user.store_id);
-            }
-
-            const { data, error } = await query;
-            if (error) throw error;
-            setReceiptsHistory(data || []);
-        } catch (error) {
-            console.error('Error fetching receipts history:', error);
         } finally {
             setLoading(false);
         }
     };
 
-    const fetchProductKardex = async (product: Product) => {
+    async function fetchProductKardex(product: Product) {
         if (!user) return;
         setKardexLoading(true);
         setSelectedKardexProduct(product);
@@ -389,11 +389,10 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
         }
     };
 
-    const fetchProducts = async () => {
+    async function fetchProducts() {
         if (!user) return;
         try {
             setLoading(true);
-            console.log('Fetching products for store:', user.store_id);
             const { data, error } = await supabase
                 .from('products')
                 .select(`
@@ -402,12 +401,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                 `)
                 .order('name');
 
-            if (error) {
-                console.error('Supabase error fetching products:', error);
-                throw error;
-            }
-
-            console.log('Products fetched:', data?.length || 0);
+            if (error) throw error;
 
             const mappedProducts: Product[] = data?.map((item: any) => {
                 let stock_current = 0;
@@ -760,73 +754,57 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
         return (
             <div className="space-y-6 h-full flex flex-col">
                 <div className="flex items-center justify-between shrink-0">
-                    <h2 className="text-2xl font-bold text-slate-900 border-l-4 border-slate-900 pl-4">Historial de Recepciones (Documentos)</h2>
-                    <button
-                        onClick={fetchReceiptsHistory}
-                        className="neu-btn neu-raised-sm text-xs font-bold"
-                    >
-                        Actualizar
-                    </button>
+                    <h2 className="text-2xl font-bold">Historial de Recepciones</h2>
                 </div>
 
                 <div className="flex-1 overflow-auto bg-white dark:bg-slate-900 rounded-xl border border-border">
-                    <div className="p-0">
-                        <table className="w-full text-sm">
-                            <thead className="sticky top-0 bg-slate-50 dark:bg-slate-800 z-10 border-b">
-                                <tr className="text-left text-muted-foreground uppercase text-[10px] font-bold">
-                                    <th className="p-4">Fecha</th>
-                                    <th className="p-4">Referencia / Factura</th>
-                                    <th className="p-4">Usuario</th>
-                                    <th className="p-4 text-right">Total Costo</th>
-                                    <th className="p-4 text-center">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {receiptsHistory.length > 0 ? (
-                                    receiptsHistory.map((receipt: any) => (
-                                        <tr key={receipt.id} className="border-b last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                                            <td className="p-4">
-                                                <div className="font-medium">{new Date(receipt.created_at).toLocaleDateString()}</div>
-                                                <div className="text-[10px] text-muted-foreground">{new Date(receipt.created_at).toLocaleTimeString()}</div>
-                                            </td>
-                                            <td className="p-4">
-                                                <div className="font-bold text-slate-700 dark:text-slate-300">{receipt.reference_doc}</div>
-                                                <div className="text-xs text-muted-foreground">{receipt.notes || 'Sin notas'}</div>
-                                            </td>
-                                            <td className="p-4">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-bold">
-                                                        {receipt.profile?.full_name?.charAt(0)}
-                                                    </div>
-                                                    <span>{receipt.profile?.full_name}</span>
+                    <div className="p-6">
+                        <div className="space-y-4">
+                            {recentReceptions.length > 0 ? (
+                                recentReceptions.map((mov: any) => (
+                                    <div key={mov.id} className="flex items-center justify-between p-4 neu-raised-sm rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center overflow-hidden">
+                                                {mov.product?.image_url ? (
+                                                    <img src={getProductImageUrl(mov.product) || ''} alt={mov.product?.name} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <Package className="w-6 h-6 text-slate-400" />
+                                                )}
+                                            </div>
+                                            <div>
+                                                <div className="font-semibold text-slate-900 dark:text-white">{mov.product?.name}</div>
+                                                <div className="text-sm text-slate-500 flex items-center gap-2">
+                                                    <Calendar className="w-3 h-3" />
+                                                    {new Date(mov.created_at).toLocaleDateString()}
+                                                    <Building2 className="w-3 h-3 ml-2" />
+                                                    {mov.supplier || 'Proveedor N/A'}
                                                 </div>
-                                            </td>
-                                            <td className="p-4 text-right">
-                                                <div className="font-bold text-slate-900 dark:text-white">${receipt.total_cost.toFixed(2)}</div>
-                                            </td>
-                                            <td className="p-4">
-                                                <div className="flex justify-center">
-                                                    <button
-                                                        onClick={() => handlePrintReceipt(receipt.id)}
-                                                        className="neu-btn neu-raised-sm bg-slate-900 !text-white hover:bg-slate-800 flex items-center gap-2 px-4 py-2 text-xs shadow-sm border-none"
-                                                    >
-                                                        <FileText className="w-4 h-4" />
-                                                        <span>Ver Detalle / Imprimir</span>
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td colSpan={5} className="text-center py-20 text-muted-foreground">
-                                            <FileText className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                                            <p>No hay documentos de recepción registrados.</p>
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="text-right">
+                                                <div className="font-bold text-blue-600 dark:text-blue-400">+{mov.quantity_change} un.</div>
+                                                <div className="text-xs text-slate-400 mt-1">Ref: {mov.reference_doc || 'N/A'}</div>
+                                            </div>
+                                            {mov.reference_id && (
+                                                <button
+                                                    onClick={() => handlePrintReceipt(mov.reference_id)}
+                                                    className="neu-btn neu-raised-sm bg-slate-900 !text-white hover:bg-slate-800 flex items-center gap-2 px-3 py-1.5 text-xs shadow-sm border-none"
+                                                    title="Previsualizar Recepción"
+                                                >
+                                                    <FileText className="w-4 h-4" />
+                                                    <span>Previsualizar</span>
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="text-center py-12 text-muted-foreground">
+                                    No se encontraron recepciones procesadas.
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>

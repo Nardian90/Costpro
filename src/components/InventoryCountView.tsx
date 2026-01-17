@@ -60,7 +60,7 @@ export default function InventoryCountView() {
     setFilteredProducts(filtered);
   }, [searchTerm, products]);
 
-  const fetchProducts = async () => {
+  async function fetchProducts() {
     setLoading(true);
     try {
       const response = await fetch('/api/inventory/products');

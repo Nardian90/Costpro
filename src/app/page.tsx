@@ -41,13 +41,6 @@ import {
   Shield,
   ClipboardList,
 } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import type {
   UserRole,
   Product,
@@ -68,26 +61,15 @@ export default function HomePage() {
   const router = useRouter();
   const { user, loading } = useSupabaseAuth(); // Sync Supabase session with store
   const logout = useAuthStore((state) => state.logout);
-  const {
-    sidebarOpen,
-    darkMode,
-    toggleSidebar,
-    toggleDarkMode,
-    currentView,
-    setCurrentView,
-    notifications,
-    setNotifications
-  } = useUIStore();
+  const { sidebarOpen, darkMode, toggleSidebar, toggleDarkMode, currentView, setCurrentView } = useUIStore();
   const { items, addItem, removeItem, updateQuantity, clearCart, setDiscount, getTotal, getSubtotal, getItemCount, discount } = useCartStore();
 
   const [showCart, setShowCart] = useState(false);
 
-  const [products, setProducts] = useState<(Product & { product_variants?: any[] })[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
-  const [movements, setMovements] = useState<any[]>([]);
-  const [cashClosures, setCashClosures] = useState<any[]>([]);
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
 
   const [dashboardKPIs, setDashboardKPIs] = useState<DashboardKPIs>({
@@ -104,27 +86,14 @@ export default function HomePage() {
     total_transfer: 0,
   });
 
-  useEffect(() => {
-    if (user) {
-      fetchDashboardData();
-      fetchProducts();
-      fetchTransactions();
-      fetchUsers();
-      fetchAuditLogs();
-      fetchMovements();
-      fetchCashClosures();
-    }
-  }, [user]);
-
-  const fetchProducts = async () => {
+  async function fetchProducts() {
     if (!user) return;
     try {
       const { data, error } = await supabase
         .from('products')
         .select(`
           *,
-          inventory(*),
-          product_variants(*)
+          inventory(*)
         `)
         .order('name');
 
@@ -160,7 +129,7 @@ export default function HomePage() {
     }
   };
 
-  const fetchTransactions = async () => {
+  async function fetchTransactions() {
     if (!user) return;
     try {
       let query = supabase
@@ -180,7 +149,7 @@ export default function HomePage() {
     }
   };
 
-  const fetchUsers = async () => {
+  async function fetchUsers() {
     if (!user || user.role !== 'admin') return;
     try {
       const { data, error } = await supabase
@@ -195,15 +164,12 @@ export default function HomePage() {
     }
   };
 
-  const fetchAuditLogs = async () => {
+  async function fetchAuditLogs() {
     if (!user || (user.role !== 'admin' && user.role !== 'manager')) return;
     try {
       const { data, error } = await supabase
         .from('audit_logs')
-        .select(`
-          *,
-          profile:profiles (full_name)
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(100);
 
@@ -214,55 +180,7 @@ export default function HomePage() {
     }
   };
 
-  const fetchMovements = async () => {
-    if (!user) return;
-    try {
-      let query = supabase
-        .from('stock_movements')
-        .select(`
-          *,
-          product:products (name, sku)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(100);
-
-      if (user.role !== 'admin' && user.store_id) {
-        query = query.eq('store_id', user.store_id);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      setMovements(data || []);
-    } catch (error) {
-      console.error('Error fetching movements:', error);
-    }
-  };
-
-  const fetchCashClosures = async () => {
-    if (!user) return;
-    try {
-      let query = supabase
-        .from('cash_closures')
-        .select(`
-          *,
-          profile:profiles (full_name)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (user.role !== 'admin' && user.store_id) {
-        query = query.eq('store_id', user.store_id);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      setCashClosures(data || []);
-    } catch (error) {
-      console.error('Error fetching cash closures:', error);
-    }
-  };
-
-  const fetchDashboardData = async () => {
+  async function fetchDashboardData() {
     if (!user) return;
 
     try {
@@ -295,14 +213,20 @@ export default function HomePage() {
       console.error('Error fetching dashboard data:', error);
     }
   };
+
+  useEffect(() => {
+    if (user) {
+      fetchDashboardData();
+      fetchProducts();
+      fetchTransactions();
+      fetchUsers();
+      fetchAuditLogs();
+    }
+  }, [user]);
+
   // States for views
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [isVariantsModalOpen, setIsVariantsModalOpen] = useState(false);
-  const [isEditProductModalOpen, setIsEditProductModalOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<any>(null);
-  const [newVariantForm, setNewVariantForm] = useState({ name: '', price: 0, conversion_factor: 1 });
-
   const [stockAdjustment, setStockAdjustment] = useState({ quantity: 0, reason: '' });
   const [receiptForm, setReceiptForm] = useState({ supplier: '', reference: '' });
   const [localDiscount, setLocalDiscount] = useState({ type: 'fixed' as DiscountType, value: 0 });
@@ -408,107 +332,6 @@ export default function HomePage() {
     setCurrentView('inventory');
   };
 
-  const handleUpdateProduct = async () => {
-    if (!editingProduct || !editingProduct.name) {
-      toast.error('El nombre es obligatorio');
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('products')
-        .update({ name: editingProduct.name })
-        .eq('id', editingProduct.id);
-
-      if (error) throw error;
-      toast.success('Producto actualizado');
-      setIsEditProductModalOpen(false);
-      fetchProducts();
-    } catch (error: any) {
-      toast.error(error.message || 'Error al actualizar producto');
-    }
-  };
-
-  const handleUpdateImage = async (file: File) => {
-    if (!editingProduct) return;
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error('La imagen no debe superar los 2MB');
-      return;
-    }
-
-    const toastId = toast.loading('Subiendo imagen...');
-    try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${editingProduct.id}-${Math.random()}.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('product-images')
-        .upload(fileName, file);
-
-      if (uploadError) throw uploadError;
-
-      const { error: updateError } = await supabase
-        .from('products')
-        .update({ image_url: fileName })
-        .eq('id', editingProduct.id);
-
-      if (updateError) throw updateError;
-
-      toast.success('Imagen actualizada', { id: toastId });
-      setEditingProduct({ ...editingProduct, image_url: fileName });
-      fetchProducts();
-    } catch (error: any) {
-      toast.error(error.message || 'Error al subir imagen', { id: toastId });
-    }
-  };
-
-  const handleAddVariant = async (newVariant: any) => {
-    if (!editingProduct) return;
-    try {
-      const { error } = await supabase
-        .from('product_variants')
-        .insert([{
-          product_id: editingProduct.id,
-          name: newVariant.name,
-          price: newVariant.price,
-          conversion_factor: newVariant.conversion_factor || 1
-        }]);
-
-      if (error) throw error;
-      toast.success('Variante agregada');
-      fetchProducts();
-      // Refresh editing product variants
-      const { data } = await supabase
-        .from('product_variants')
-        .select('*')
-        .eq('product_id', editingProduct.id);
-      setEditingProduct({ ...editingProduct, product_variants: data || [] });
-    } catch (error: any) {
-      toast.error(error.message || 'Error al agregar variante');
-    }
-  };
-
-  const handleDeleteVariant = async (variantId: string) => {
-    try {
-      const { error } = await supabase
-        .from('product_variants')
-        .delete()
-        .eq('id', variantId);
-
-      if (error) throw error;
-      toast.success('Variante eliminada');
-      fetchProducts();
-      // Refresh editing product variants
-      const { data } = await supabase
-        .from('product_variants')
-        .select('*')
-        .eq('product_id', editingProduct.id);
-      setEditingProduct({ ...editingProduct, product_variants: data || [] });
-    } catch (error: any) {
-      toast.error(error.message || 'Error al eliminar variante');
-    }
-  };
-
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
@@ -521,7 +344,7 @@ export default function HomePage() {
     }
   };
 
-  const fetchTransactionDetails = async (transaction: Transaction) => {
+  async function fetchTransactionDetails(transaction: Transaction) {
     setSelectedTransaction(transaction);
     setLoadingDetails(true);
     try {
@@ -571,7 +394,7 @@ export default function HomePage() {
 
   // ==================== VIEWS ====================
 
-  const renderDashboard = () => (
+  function renderDashboard() { return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Dashboard</h2>
 
@@ -654,9 +477,9 @@ export default function HomePage() {
         </div>
       </div>
     </div>
-  );
+  ); }
 
-  const renderPOS = () => (
+  function renderPOS() { return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Punto de Venta</h2>
@@ -876,11 +699,11 @@ export default function HomePage() {
         )}
       </div>
     </div>
-  );
+  ); }
 
 
 
-  const renderRecepcion = () => (
+  function renderRecepcion() { return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Recepción de Productos</h2>
 
@@ -937,9 +760,9 @@ export default function HomePage() {
         </div>
       </div>
     </div>
-  );
+  ); }
 
-  const renderSales = () => (
+  function renderSales() { return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Mis Ventas</h2>
 
@@ -1013,21 +836,17 @@ export default function HomePage() {
         </table>
       </div>
     </div>
-  );
+  ); }
 
-  const renderCatalog = () => (
+  function renderCatalog() { return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Catálogo de Productos</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredProducts.map(product => (
           <div key={product.id} className="neu-card">
-            <div className="neu-raised-sm w-full h-32 mb-4 flex items-center justify-center overflow-hidden">
-              {product.image_url ? (
-                <img src={getProductImageUrl(product) || ''} alt={product.name} className="w-full h-full object-cover" />
-              ) : (
-                <Package className="w-16 h-16 text-muted-foreground" />
-              )}
+            <div className="neu-raised-sm w-full h-32 mb-4 flex items-center justify-center">
+              <Package className="w-16 h-16 text-muted-foreground" />
             </div>
 
             <h3 className="font-semibold mb-1">{product.name}</h3>
@@ -1048,138 +867,89 @@ export default function HomePage() {
             </div>
 
             <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  setEditingProduct(product);
-                  setIsEditProductModalOpen(true);
-                }}
-                className="neu-btn neu-raised-sm flex-1 text-sm flex items-center justify-center gap-1"
-                title="Editar nombre e imagen"
-              >
+              <button className="neu-btn neu-raised-sm flex-1 text-sm">
                 <Edit className="w-4 h-4" />
-                <span>Editar</span>
               </button>
-              <button
-                onClick={() => {
-                  setEditingProduct(product);
-                  setIsVariantsModalOpen(true);
-                }}
-                className="neu-btn neu-raised-sm flex-1 text-sm flex items-center justify-center gap-1"
-                title="Variantes de precio"
-              >
-                <DollarSign className="w-4 h-4" />
-                <span>Precios</span>
+              <button className="neu-btn neu-raised-sm flex-1 text-sm">
+                <ArrowUpRight className="w-4 h-4" />
               </button>
             </div>
           </div>
         ))}
       </div>
     </div>
-  );
+  ); }
 
-  const renderHistory = () => {
-    const filteredMovements = movements.filter(mov => {
-      const movDate = new Date(mov.created_at);
-      const fromDate = dateRange.from ? new Date(dateRange.from) : null;
-      const toDate = dateRange.to ? new Date(dateRange.to) : null;
+  function renderHistory() {
+    const filteredHistory = filteredProducts.filter(product => {
+        const productDate = new Date(product.created_at);
+        const fromDate = dateRange.from ? new Date(dateRange.from) : null;
+        const toDate = dateRange.to ? new Date(dateRange.to) : null;
 
-      if (fromDate && movDate < fromDate) return false;
-      if (toDate && movDate > toDate) return false;
-      return true;
+        if (fromDate && productDate < fromDate) return false;
+        if (toDate && productDate > toDate) return false;
+        return true;
     });
 
-    const getMovementBadge = (type: string) => {
-      switch (type) {
-        case 'sale': return 'text-primary bg-primary/10';
-        case 'purchase': return 'text-success bg-success/10';
-        case 'adjustment': return 'text-warning bg-warning/10';
-        default: return 'text-muted-foreground bg-accent';
-      }
-    };
-
-    const getMovementLabel = (type: string) => {
-      switch (type) {
-        case 'sale': return 'Venta';
-        case 'purchase': return 'Recepción';
-        case 'adjustment': return 'Ajuste';
-        default: return type;
-      }
-    };
-
     return (
-      <div className="space-y-6">
-        <h2 className="text-2xl font-bold">Historial General de Movimientos</h2>
-        <div className="neu-raised-sm p-4">
-          <div className="flex gap-4">
-            <div className="relative flex-1">
-              <label className="text-[10px] font-bold mb-1 block uppercase">Desde</label>
-              <input
-                type="date"
-                className="neu-input w-full"
-                value={dateRange.from}
-                onChange={e => setDateRange({ ...dateRange, from: e.target.value })}
-              />
+        <div className="space-y-6">
+            <h2 className="text-2xl font-bold">Historial de Inventario</h2>
+            <div className="neu-raised-sm p-4">
+                <div className="flex gap-4">
+                    <div className="relative flex-1">
+                        <input
+                            type="date"
+                            className="neu-input w-full"
+                            placeholder="Fecha de inicio"
+                            value={dateRange.from}
+                            onChange={e => setDateRange({ ...dateRange, from: e.target.value })}
+                        />
+                    </div>
+                    <div className="relative flex-1">
+                        <input
+                            type="date"
+                            className="neu-input w-full"
+                            placeholder="Fecha de fin"
+                            value={dateRange.to}
+                            onChange={e => setDateRange({ ...dateRange, to: e.target.value })}
+                        />
+                    </div>
+                </div>
             </div>
-            <div className="relative flex-1">
-              <label className="text-[10px] font-bold mb-1 block uppercase">Hasta</label>
-              <input
-                type="date"
-                className="neu-input w-full"
-                value={dateRange.to}
-                onChange={e => setDateRange({ ...dateRange, to: e.target.value })}
-              />
+            <div className="space-y-4">
+                {filteredHistory.map(product => (
+                    <div key={product.id} className="neu-card">
+                        <div className="flex items-center gap-4 mb-4">
+                            <div className="neu-raised-sm w-12 h-12 flex items-center justify-center">
+                                <Package className="w-6 h-6 text-muted-foreground" />
+                            </div>
+                            <div>
+                                <h3 className="font-semibold">{product.name}</h3>
+                                <div className="text-sm text-muted-foreground">{product.sku}</div>
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <div className="neu-raised-sm p-3 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <ArrowDownRight className="w-4 h-4 text-success" />
+                                    <span className="text-sm">Entrada - Recepción</span>
+                                </div>
+                                <div className="text-sm">
+                                    <span className="text-success">+{product.stock_current}</span>
+                                    <span className="text-muted-foreground ml-2">
+                                        {new Date(product.created_at).toLocaleDateString()}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ))}
             </div>
-            <button
-              onClick={fetchMovements}
-              className="neu-btn self-end"
-            >
-              Refrescar
-            </button>
-          </div>
         </div>
-        <div className="space-y-3">
-          {filteredMovements.map(mov => (
-            <div key={mov.id} className="neu-card flex items-center justify-between hover:scale-[1.01] transition-transform">
-              <div className="flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${getMovementBadge(mov.movement_type)}`}>
-                  {mov.movement_type === 'sale' ? <ArrowUpRight className="w-6 h-6" /> :
-                   mov.movement_type === 'purchase' ? <ArrowDownRight className="w-6 h-6" /> :
-                   <ArrowUpDown className="w-6 h-6" />}
-                </div>
-                <div>
-                  <div className="font-bold">{mov.product?.name}</div>
-                  <div className="text-xs text-muted-foreground flex items-center gap-2">
-                    <span className="font-mono">{mov.product?.sku}</span>
-                    <span>•</span>
-                    <span className="font-medium">{getMovementLabel(mov.movement_type)}</span>
-                  </div>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className={`text-lg font-bold ${mov.quantity_change > 0 ? 'text-success' : 'text-danger'}`}>
-                  {mov.quantity_change > 0 ? '+' : ''}{mov.quantity_change} und.
-                </div>
-                <div className="text-[10px] text-muted-foreground uppercase font-bold">
-                  {new Date(mov.created_at).toLocaleString()}
-                </div>
-                <div className="text-xs italic text-muted-foreground">
-                  Ref: {mov.reference_doc || 'N/A'}
-                </div>
-              </div>
-            </div>
-          ))}
-          {filteredMovements.length === 0 && (
-            <div className="text-center py-20 text-muted-foreground">
-              <History className="w-12 h-12 mx-auto mb-3 opacity-20" />
-              <p>No se encontraron movimientos en el periodo seleccionado.</p>
-            </div>
-          )}
-        </div>
-      </div>
     );
-  };
+};
 
-  const renderAudit = () => {
+  function renderAudit() {
     const filteredLogs = auditLogs.filter(log => {
         const logDate = new Date(log.created_at);
         const fromDate = dateRange.from ? new Date(dateRange.from) : null;
@@ -1229,20 +999,11 @@ export default function HomePage() {
                     <tbody>
                         {filteredLogs.map((log) => (
                             <tr key={log.id}>
-                                <td data-label="Fecha" className="p-4">
-                                  <div className="text-sm">{new Date(log.created_at).toLocaleDateString()}</div>
-                                  <div className="text-[10px] text-muted-foreground">{new Date(log.created_at).toLocaleTimeString()}</div>
-                                </td>
-                                <td data-label="Usuario" className="p-4">
-                                  <div className="font-medium">{(log as any).profile?.full_name || 'Sistema'}</div>
-                                  <div className="text-[10px] text-muted-foreground font-mono truncate w-24" title={log.user_id || ''}>
-                                    {log.user_id?.split('-')[0]}
-                                  </div>
-                                </td>
+                                <td data-label="Fecha" className="p-4">{new Date(log.created_at).toLocaleString()}</td>
+                                <td data-label="Usuario" className="p-4">{log.user_id}</td>
                                 <td data-label="Acción" className="p-4">
-                                    <span className={`neu-badge ${
-                                        ['INSERT', 'CREATE', 'ADD'].includes(log.action) ? 'text-success' :
-                                        ['UPDATE', 'EDIT'].includes(log.action) ? 'text-warning' : 'text-danger'
+                                    <span className={`neu-badge ${log.action === 'INSERT' ? 'text-success' :
+                                        log.action === 'UPDATE' ? 'text-warning' : 'text-danger'
                                         }`}>
                                         {log.action}
                                     </span>
@@ -1260,7 +1021,7 @@ export default function HomePage() {
     );
 };
 
-  const renderCash = () => (
+  function renderCash() { return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Cierre de Caja</h2>
 
@@ -1314,71 +1075,15 @@ export default function HomePage() {
             </div>
           </div>
 
-          <button
-            onClick={() => toast.info('Funcionalidad de procesar cierre en desarrollo')}
-            className="neu-btn neu-btn-primary w-full mt-4"
-          >
+          <button className="neu-btn neu-btn-primary w-full mt-4">
             Procesar Cierre de Caja
           </button>
         </div>
       </div>
-
-      {/* Historial de Cierres */}
-      <div className="neu-card">
-        <h3 className="font-semibold mb-4 flex items-center gap-2">
-          <History className="w-5 h-5" />
-          Historial de Cierres de Caja
-        </h3>
-
-        <div className="table-to-cards">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border">
-                <th className="p-4 text-left">Fecha</th>
-                <th className="p-4 text-left">Cajero</th>
-                <th className="p-4 text-right">Total Sistema</th>
-                <th className="p-4 text-right">Diferencia</th>
-                <th className="p-4 text-center">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {cashClosures.map((closure) => (
-                <tr key={closure.id}>
-                  <td data-label="Fecha" className="p-4">
-                    <div className="text-sm">{new Date(closure.created_at).toLocaleDateString()}</div>
-                    <div className="text-[10px] text-muted-foreground">{new Date(closure.created_at).toLocaleTimeString()}</div>
-                  </td>
-                  <td data-label="Cajero" className="p-4 font-medium">{closure.profile?.full_name}</td>
-                  <td data-label="Total Sistema" className="p-4 text-right font-bold">${closure.system_expected_total?.toFixed(2) || closure.system_total?.toFixed(2)}</td>
-                  <td data-label="Diferencia" className="p-4 text-right">
-                    <span className={`font-bold ${closure.difference < 0 ? 'text-danger' : 'text-success'}`}>
-                      ${closure.difference?.toFixed(2)}
-                    </span>
-                  </td>
-                  <td data-label="Acciones" className="p-4">
-                    <div className="flex justify-center">
-                      <button className="neu-raised-sm w-8 h-8 flex items-center justify-center hover:bg-accent">
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {cashClosures.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="p-12 text-center text-muted-foreground italic">
-                    No hay cierres de caja registrados.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
     </div>
-  );
+  ); }
 
-  const renderUsers = () => (
+  function renderUsers() { return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Gestión de Usuarios</h2>
@@ -1430,9 +1135,9 @@ export default function HomePage() {
         </table>
       </div>
     </div>
-  );
+  ); }
 
-  const renderStores = () => (
+  function renderStores() { return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Gestión de Tiendas</h2>
@@ -1473,9 +1178,9 @@ export default function HomePage() {
         ))}
       </div>
     </div>
-  );
+  ); }
 
-  const renderSettings = () => (
+  function renderSettings() { return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Configuración</h2>
 
@@ -1506,12 +1211,7 @@ export default function HomePage() {
                 <div className="font-medium">Alertas de Stock Bajo</div>
                 <div className="text-sm text-muted-foreground">Notificar cuando el stock esté bajo</div>
               </div>
-              <button
-                onClick={() => setNotifications({ lowStock: !notifications.lowStock })}
-                className={`neu-badge cursor-pointer transition-colors ${notifications.lowStock ? 'text-success' : 'text-muted-foreground bg-accent'}`}
-              >
-                {notifications.lowStock ? 'Activo' : 'Inactivo'}
-              </button>
+              <div className="neu-badge text-success">Activo</div>
             </div>
 
             <div className="flex items-center justify-between p-4 neu-raised-sm">
@@ -1519,20 +1219,15 @@ export default function HomePage() {
                 <div className="font-medium">Notificaciones de Ventas</div>
                 <div className="text-sm text-muted-foreground">Alertas en tiempo real</div>
               </div>
-              <button
-                onClick={() => setNotifications({ salesAlerts: !notifications.salesAlerts })}
-                className={`neu-badge cursor-pointer transition-colors ${notifications.salesAlerts ? 'text-success' : 'text-muted-foreground bg-accent'}`}
-              >
-                {notifications.salesAlerts ? 'Activo' : 'Inactivo'}
-              </button>
+              <div className="neu-badge text-success">Activo</div>
             </div>
           </div>
         </div>
       </div>
     </div>
-  );
+  ); }
 
-  const renderView = () => {
+  function renderView() {
     switch (currentView) {
       case 'dashboard': return renderDashboard();
       case 'pos': return renderPOS();
@@ -1551,7 +1246,7 @@ export default function HomePage() {
     }
   };
 
-  const getRoleLabel = (role: UserRole) => {
+  function getRoleLabel(role: UserRole) {
     const labels: Record<UserRole, string> = {
       admin: 'Administrador',
       manager: 'Encargado',
@@ -1559,7 +1254,7 @@ export default function HomePage() {
       warehouse: 'Almacén',
     };
     return labels[role];
-  };
+  }
 
   return (
     <div className="min-h-screen flex">
