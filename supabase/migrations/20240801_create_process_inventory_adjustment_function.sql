@@ -114,7 +114,7 @@ BEGIN
   SET status = 'COMPLETED'
   WHERE id = v_adjustment_id;
 
-  RETURN v_adjustment_id;
+  RETURN v_sale_id;
 END;
 $$;
 

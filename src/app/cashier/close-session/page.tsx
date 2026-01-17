@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Product, ProductVariant } from "@/types";
 import { useAuthStore } from "@/store";
+import { useCartStore } from "@/store/cart";
+import { useRouter } from "next/navigation";
 
 interface Difference {
   productId: string;
@@ -20,11 +22,14 @@ interface Difference {
 
 export default function CloseSessionPage() {
   const { user, token } = useAuthStore();
+  const router = useRouter();
+  const setCart = useCartStore((state) => state.setCart);
   const [products, setProducts] = useState<(Product & { product_variants: ProductVariant[] })[]>([]);
   const [countedQuantities, setCountedQuantities] = useState<{ [key: string]: number }>({});
   const [differences, setDifferences] = useState<Difference[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -90,6 +95,7 @@ export default function CloseSessionPage() {
 
   const handleFinalSubmit = async () => {
     if (!user?.store_id) return;
+    setIsSubmitting(true);
 
     const itemsToSubmit = differences.map(d => ({
       product_id: d.productId,
@@ -116,13 +122,14 @@ export default function CloseSessionPage() {
       if (!response.ok) throw new Error("Failed to submit adjustment");
 
       const result = await response.json();
-      console.log("Adjustment successful:", result);
-      // TODO: Show success message and reset state
-      setIsModalOpen(false);
+      setCart(result.saleId, result.saleItems);
+      router.push("/cashier");
 
     } catch (error) {
       console.error(error);
       // TODO: Show error message to user
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -176,7 +183,9 @@ export default function CloseSessionPage() {
           ))}
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
-            <Button onClick={handleFinalSubmit}>Confirmar Ajuste Final</Button>
+            <Button onClick={handleFinalSubmit} disabled={isSubmitting}>
+              {isSubmitting ? "Procesando..." : "Confirmar Ajuste Final"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
