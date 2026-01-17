@@ -12,17 +12,28 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // TODO: Get storeId from session or user profile
-  const storeId = "your_store_id";
-
   try {
+    // Get storeId from user profile
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("store_id")
+      .eq("id", sessionData.session.user.id)
+      .single();
+
+    if (profileError || !profile?.store_id) {
+      return NextResponse.json(
+        { error: "Bad Request", message: "User is not assigned to a store." },
+        { status: 400 }
+      );
+    }
+
     const { data: products, error } = await supabase
       .from("products")
       .select(`
         *,
         product_variants (*)
       `)
-      .eq("store_id", storeId);
+      .eq("store_id", profile.store_id);
 
     if (error) {
       return NextResponse.json(
