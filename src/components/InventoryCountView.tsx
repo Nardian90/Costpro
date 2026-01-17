@@ -34,6 +34,7 @@ interface Difference {
 
 export default function InventoryCountView() {
   const user = useAuthStore((state) => state.user);
+  const token = useAuthStore((state) => state.token);
   const [products, setProducts] = useState<ExtendedProduct[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [countedQuantities, setCountedQuantities] = useState<{ [key: string]: number }>({});
@@ -61,7 +62,11 @@ export default function InventoryCountView() {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/inventory/products');
+      const response = await fetch('/api/inventory/products', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       if (!response.ok) throw new Error('Error al cargar productos');
       const data = await response.json();
       setProducts(data);
@@ -189,7 +194,10 @@ export default function InventoryCountView() {
 
       const response = await fetch('/api/inventory/adjustments', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
           storeId: user.store_id,
           items: itemsToSubmit
