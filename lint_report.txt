@@ -1,0 +1,24 @@
+
+/app/old proyect/loyverse/main.js
+  194:13  error  Do not assign to the variable `module`. See: https://nextjs.org/docs/messages/no-assign-module-variable  @next/next/no-assign-module-variable
+
+/app/old proyect/loyverse/views/CashierPOSView.js
+  595:9  error  Expected an assignment or function call and instead saw an expression  @typescript-eslint/no-unused-expressions
+
+/app/skills/frontend-design/templates/tailwind.config.js
+  227:5  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  230:5  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+/app/skills/pptx/scripts/html2pptx.js
+  28:22  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  29:14  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  30:15  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+/app/src/hooks/use-toast.ts
+  21:1  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unused-vars')
+
+/app/src/lib/supabaseClient.ts
+  10:2  warning  Unused eslint-disable directive (no problems were reported from 'no-console')
+
+✖ 9 problems (7 errors, 2 warnings)
+  0 errors and 2 warnings potentially fixable with the `--fix` option.
