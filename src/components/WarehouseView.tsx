@@ -881,6 +881,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="neu-input w-full pl-10"
                             placeholder="Buscar por nombre, SKU..."
+                            aria-label="Buscar productos por nombre o SKU"
                         />
                     </div>
                     <div className="relative">
