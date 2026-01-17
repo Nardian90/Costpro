@@ -39,10 +39,7 @@ import {
   History,
   Target,
   Shield,
-  ArrowUpDown,
-  Camera,
-  Save,
-  Trash,
+  ClipboardList,
 } from 'lucide-react';
 import {
   Dialog,
@@ -56,6 +53,7 @@ import type {
   Product,
   CartItem,
   Transaction,
+  TransactionItem,
   PaymentMethod,
   DiscountType,
   DashboardKPIs,
@@ -64,6 +62,7 @@ import type {
 } from '@/types';
 import { toast } from 'sonner';
 import WarehouseView from '@/components/WarehouseView';
+import InventoryCountView from '@/components/InventoryCountView';
 
 export default function HomePage() {
   const router = useRouter();
@@ -133,7 +132,7 @@ export default function HomePage() {
 
       const mappedProducts: Product[] = data?.map((item: any) => {
         let stock_current = 0;
-        let store_id = null;
+        let store_id: string | null = null;
 
         if (user.role === 'admin') {
           stock_current = item.inventory?.reduce(
@@ -309,6 +308,11 @@ export default function HomePage() {
   const [localDiscount, setLocalDiscount] = useState({ type: 'fixed' as DiscountType, value: 0 });
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>('cash');
 
+  // Transaction details state
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [transactionItems, setTransactionItems] = useState<any[]>([]);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+
   // Check authentication
   useEffect(() => {
     if (!loading && !user) {
@@ -332,6 +336,13 @@ export default function HomePage() {
   if (!user) {
     return null;
   }
+
+  const navigationItems = getNavigationItems();
+  const filteredProducts = products.filter(p =>
+    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (p.category && p.category.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
 
   const addToCart = (product: Product) => {
     addItem({
@@ -510,6 +521,31 @@ export default function HomePage() {
     }
   };
 
+  const fetchTransactionDetails = async (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setLoadingDetails(true);
+    try {
+      const { data, error } = await supabase
+        .from('transaction_items')
+        .select(`
+          *,
+          products (
+            name,
+            sku
+          )
+        `)
+        .eq('transaction_id', transaction.id);
+
+      if (error) throw error;
+      setTransactionItems(data || []);
+    } catch (error) {
+      console.error('Error fetching transaction items:', error);
+      toast.error('Error al cargar los detalles de la venta');
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+
   // Get role-specific navigation
   const getProductImageUrl = (product: Product) => {
     if (!product.image_url) return null;
@@ -531,6 +567,7 @@ export default function HomePage() {
       { id: 'inventory', icon: Package, label: 'Inventario', roles: ['admin', 'manager', 'warehouse'] },
       { id: 'recepcion', icon: Warehouse, label: 'Recepciones', roles: ['warehouse', 'manager'] },
       { id: 'sales', icon: Receipt, label: 'Mis Ventas', roles: ['clerk', 'manager'] },
+      { id: 'inventory_count', icon: ClipboardList, label: 'Conteo Inventario', roles: ['clerk', 'manager', 'admin'] },
       { id: 'catalog', icon: Package, label: 'Catálogo', roles: ['manager', 'admin'] },
       { id: 'history', icon: History, label: 'Historial', roles: ['manager', 'admin'] },
       { id: 'audit', icon: Shield, label: 'Auditoría', roles: ['manager', 'admin'] },
@@ -543,13 +580,6 @@ export default function HomePage() {
     return items.filter(item => item.roles.includes(role));
   };
 
-  const navigationItems = getNavigationItems();
-  const filteredProducts = products.filter(p =>
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (p.category && p.category.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
-
   // ==================== VIEWS ====================
 
   const renderDashboard = () => (
@@ -557,7 +587,7 @@ export default function HomePage() {
       <h2 className="text-2xl font-bold">Dashboard</h2>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className={`grid grid-cols-1 ${user?.role !== 'clerk' ? 'md:grid-cols-3' : ''} gap-6`}>
         <div className="neu-card">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-muted-foreground">Ventas Totales</span>
@@ -567,23 +597,27 @@ export default function HomePage() {
           <div className="text-sm text-muted-foreground mt-1">Hoy</div>
         </div>
 
-        <div className="neu-card">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-muted-foreground">Costo de Ventas</span>
-            <Target className="w-5 h-5 text-warning" />
-          </div>
-          <div className="text-3xl font-bold">${dashboardKPIs.cost_of_goods.toFixed(2)}</div>
-          <div className="text-sm text-muted-foreground mt-1">Hoy</div>
-        </div>
+        {user?.role !== 'clerk' && (
+          <>
+            <div className="neu-card">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-muted-foreground">Costo de Ventas</span>
+                <Target className="w-5 h-5 text-warning" />
+              </div>
+              <div className="text-3xl font-bold">${dashboardKPIs.cost_of_goods.toFixed(2)}</div>
+              <div className="text-sm text-muted-foreground mt-1">Hoy</div>
+            </div>
 
-        <div className="neu-card">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-muted-foreground">Utilidad</span>
-            <TrendingUp className="w-5 h-5 text-success" />
-          </div>
-          <div className="text-3xl font-bold text-success">${dashboardKPIs.profit.toFixed(2)}</div>
-          <div className="text-sm text-muted-foreground mt-1">Hoy</div>
-        </div>
+            <div className="neu-card">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-muted-foreground">Utilidad</span>
+                <TrendingUp className="w-5 h-5 text-success" />
+              </div>
+              <div className="text-3xl font-bold text-success">${dashboardKPIs.profit.toFixed(2)}</div>
+              <div className="text-sm text-muted-foreground mt-1">Hoy</div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Additional Stats */}
@@ -663,16 +697,19 @@ export default function HomePage() {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="neu-input w-full pl-10"
                 placeholder="Buscar productos..."
+                aria-label="Buscar productos en el catálogo"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {filteredProducts.map(product => (
-              <div
+              <button
                 key={product.id}
-                className="neu-card p-4 cursor-pointer hover:scale-105 transition-transform"
+                type="button"
+                className="neu-card p-4 cursor-pointer hover:scale-105 transition-transform w-full text-left focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
                 onClick={() => addToCart(product)}
+                aria-label={`Agregar ${product.name} al carrito. Precio: $${product.price.toFixed(2)}. Stock disponible: ${product.stock_current}`}
               >
                 <div className="neu-raised-sm w-16 h-16 mx-auto mb-3 flex items-center justify-center">
                   <Package className="w-8 h-8 text-muted-foreground" />
@@ -683,7 +720,7 @@ export default function HomePage() {
                   <div className="text-lg font-bold text-primary">${product.price.toFixed(2)}</div>
                   <div className="text-xs text-muted-foreground">Stock: {product.stock_current}</div>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </div>
@@ -714,6 +751,7 @@ export default function HomePage() {
                         <button
                           onClick={() => removeItem(item.product_id, item.variant_id)}
                           className="text-danger hover:text-red-600"
+                          aria-label={`Eliminar ${item.product.name} del carrito`}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -723,13 +761,15 @@ export default function HomePage() {
                           <button
                             onClick={() => updateQuantity(item.product_id, item.variant_id, item.quantity - 1)}
                             className="neu-raised-sm w-8 h-8 flex items-center justify-center hover:bg-accent"
+                            aria-label={`Disminuir cantidad de ${item.product.name}`}
                           >
                             <Minus className="w-4 h-4" />
                           </button>
-                          <span className="w-8 text-center font-medium">{item.quantity}</span>
+                          <span className="w-8 text-center font-medium" aria-label={`Cantidad: ${item.quantity}`}>{item.quantity}</span>
                           <button
                             onClick={() => updateQuantity(item.product_id, item.variant_id, item.quantity + 1)}
                             className="neu-raised-sm w-8 h-8 flex items-center justify-center hover:bg-accent"
+                            aria-label={`Aumentar cantidad de ${item.product.name}`}
                           >
                             <Plus className="w-4 h-4" />
                           </button>
@@ -922,6 +962,7 @@ export default function HomePage() {
               type="text"
               className="neu-input w-full pl-10"
               placeholder="Buscar por ID, monto..."
+              aria-label="Buscar en el historial de ventas por ID o monto"
             />
           </div>
           <select className="neu-input">
@@ -967,7 +1008,12 @@ export default function HomePage() {
                 </td>
                 <td data-label="Acciones" className="p-4">
                   <div className="flex justify-center gap-2">
-                    <button className="neu-raised-sm w-8 h-8 flex items-center justify-center hover:bg-accent">
+                    <button
+                      type="button"
+                      onClick={() => fetchTransactionItems(txn)}
+                      className="neu-raised-sm w-8 h-8 flex items-center justify-center hover:bg-accent transition-transform active:scale-95"
+                      title="Ver Detalle"
+                    >
                       <Eye className="w-4 h-4" />
                     </button>
                   </div>
@@ -1504,6 +1550,7 @@ export default function HomePage() {
       case 'inventory': return <WarehouseView key="inventory" />;
       case 'recepcion': return <WarehouseView initialView="history" key="history" />;
       case 'sales': return renderSales();
+      case 'inventory_count': return <InventoryCountView />;
       case 'catalog': return renderCatalog();
       case 'history': return renderHistory();
       case 'audit': return renderAudit();
@@ -1579,6 +1626,7 @@ export default function HomePage() {
               <button
                 onClick={toggleSidebar}
                 className="neu-raised-sm w-10 h-10 flex items-center justify-center hover:bg-accent lg:hidden"
+                aria-label={sidebarOpen ? "Cerrar menú lateral" : "Abrir menú lateral"}
               >
                 {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
@@ -1596,11 +1644,15 @@ export default function HomePage() {
               <button
                 onClick={toggleDarkMode}
                 className="neu-raised-sm w-10 h-10 flex items-center justify-center hover:bg-accent"
+                aria-label={darkMode ? "Activar modo claro" : "Activar modo oscuro"}
               >
                 {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </button>
 
-              <button className="neu-raised-sm w-10 h-10 flex items-center justify-center hover:bg-accent relative">
+              <button
+                className="neu-raised-sm w-10 h-10 flex items-center justify-center hover:bg-accent relative"
+                aria-label="Ver notificaciones"
+              >
                 <Bell className="w-5 h-5" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-danger rounded-full" />
               </button>
@@ -1608,6 +1660,7 @@ export default function HomePage() {
               <button
                 onClick={handleLogout}
                 className="neu-btn neu-btn-danger flex items-center gap-2"
+                aria-label="Cerrar sesión"
               >
                 <LogOut className="w-4 h-4" />
                 <span className="hidden sm:inline">Salir</span>
@@ -1622,162 +1675,109 @@ export default function HomePage() {
         </div>
       </main>
 
-      {/* Modals para Catálogo */}
-      <Dialog open={isEditProductModalOpen} onOpenChange={setIsEditProductModalOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Editar Producto</DialogTitle>
-          </DialogHeader>
-          {editingProduct && (
-            <div className="space-y-6 py-4">
-              <div className="flex flex-col items-center gap-4">
-                <div className="neu-raised-sm w-32 h-32 flex items-center justify-center overflow-hidden bg-accent relative group">
-                  {editingProduct.image_url ? (
-                    <img src={getProductImageUrl(editingProduct) || ''} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <Package className="w-12 h-12 text-muted-foreground" />
-                  )}
-                  <label className="absolute inset-0 bg-black/40 text-white flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
-                    <Camera className="w-6 h-6 mb-1" />
-                    <span className="text-[10px] font-bold">CAMBIAR</span>
-                    <input
-                      type="file"
-                      className="hidden"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handleUpdateImage(file);
-                      }}
-                    />
-                  </label>
-                </div>
-                <p className="text-xs text-muted-foreground italic">Sube una imagen de máximo 2MB</p>
-              </div>
-
+      {/* Transaction Details Modal */}
+      {selectedTransaction && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200">
+          <div className="neu-card max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl scale-in-95 animate-in duration-200">
+            <div className="flex justify-between items-center mb-4 p-4 border-b">
               <div>
-                <label className="text-sm font-bold mb-2 block uppercase tracking-tight">Nombre del Producto</label>
-                <input
-                  type="text"
-                  value={editingProduct.name}
-                  onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
-                  className="neu-input w-full"
-                />
+                <h3 className="text-lg font-bold">Detalles del Ticket</h3>
+                <p className="text-sm text-muted-foreground font-mono">ID: {selectedTransaction.id}</p>
               </div>
+              <button
+                type="button"
+                onClick={() => setSelectedTransaction(null)}
+                className="neu-raised-sm p-2 hover:bg-accent transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
             </div>
-          )}
-          <DialogFooter className="sm:justify-start gap-2">
-            <button
-              onClick={handleUpdateProduct}
-              className="neu-btn neu-btn-primary flex-1 flex items-center justify-center gap-2"
-            >
-              <Save className="w-4 h-4" />
-              Guardar Cambios
-            </button>
-            <button
-              onClick={() => setIsEditProductModalOpen(false)}
-              className="neu-btn flex-1"
-            >
-              Cancelar
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
-      <Dialog open={isVariantsModalOpen} onOpenChange={setIsVariantsModalOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Variantes de Precio: {editingProduct?.name}</DialogTitle>
-          </DialogHeader>
-          <div className="py-4 space-y-6">
-            {/* Lista de variantes actuales */}
-            <div className="space-y-3">
-              <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Variantes Configuradas</h4>
-              {editingProduct?.product_variants && editingProduct.product_variants.length > 0 ? (
-                editingProduct.product_variants.map((v: any) => (
-                  <div key={v.id} className="neu-raised-sm p-3 flex items-center justify-between">
-                    <div>
-                      <div className="font-bold text-sm">{v.name}</div>
-                      <div className="text-xs text-muted-foreground">F. Conversión: {v.conversion_factor}</div>
+            <div className="flex-1 overflow-y-auto p-4">
+              {loadingItems ? (
+                <div className="flex flex-col items-center justify-center py-12 gap-3">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+                  <p className="text-sm text-muted-foreground">Consultando productos...</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="neu-inset-sm p-3">
+                      <div className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Fecha y Hora</div>
+                      <div className="font-medium text-sm">{new Date(selectedTransaction.created_at).toLocaleString()}</div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <div className="font-bold text-primary">${v.price.toFixed(2)}</div>
-                      <button
-                        onClick={() => handleDeleteVariant(v.id)}
-                        className="text-danger hover:scale-110 transition-transform"
-                      >
-                        <Trash className="w-4 h-4" />
-                      </button>
+                    <div className="neu-inset-sm p-3">
+                      <div className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Método de Pago</div>
+                      <div className="font-medium text-sm capitalize">{selectedTransaction.payment_method === 'cash' ? 'Efectivo' : 'Transferencia'}</div>
                     </div>
                   </div>
-                ))
-              ) : (
-                <div className="text-center py-4 text-sm text-muted-foreground italic">
-                  No hay variantes definidas para este producto.
+
+                  <div className="neu-raised-sm overflow-hidden">
+                    <table className="w-full">
+                      <thead className="bg-muted/50">
+                        <tr className="text-left text-[10px] uppercase font-bold text-muted-foreground border-b">
+                          <th className="p-3">Producto</th>
+                          <th className="p-3 text-center">Cant.</th>
+                          <th className="p-3 text-right">Precio</th>
+                          <th className="p-3 text-right">Subtotal</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {transactionItems.length === 0 ? (
+                          <tr>
+                            <td colSpan={4} className="p-8 text-center text-muted-foreground italic">
+                              No se encontraron items para este ticket.
+                            </td>
+                          </tr>
+                        ) : transactionItems.map((item) => (
+                          <tr key={item.id} className="text-sm hover:bg-accent/50 transition-colors">
+                            <td className="p-3 font-medium">{item.product?.name || 'Producto desconocido'}</td>
+                            <td className="p-3 text-center">{item.quantity}</td>
+                            <td className="p-3 text-right font-mono">${item.price_at_sale.toFixed(2)}</td>
+                            <td className="p-3 text-right font-bold font-mono">
+                              ${(item.quantity * item.price_at_sale).toFixed(2)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
             </div>
 
-            {/* Formulario para nueva variante */}
-            <div className="neu-inset-sm p-4 rounded-xl space-y-4">
-              <h4 className="text-xs font-bold text-primary uppercase tracking-wider">Agregar Nueva Variante</h4>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2">
-                  <label className="text-[10px] font-bold mb-1 block">NOMBRE DE VARIANTE (Ej. Pack x6)</label>
-                  <input
-                    type="text"
-                    className="neu-input w-full text-sm"
-                    placeholder="Nombre..."
-                    value={newVariantForm.name}
-                    onChange={e => setNewVariantForm({ ...newVariantForm, name: e.target.value })}
-                  />
+            <div className="p-6 border-t bg-muted/30">
+              <div className="space-y-3 max-w-xs ml-auto">
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>Subtotal:</span>
+                  <span className="font-mono">${selectedTransaction.subtotal.toFixed(2)}</span>
                 </div>
-                <div>
-                  <label className="text-[10px] font-bold mb-1 block">PRECIO DE VENTA</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    className="neu-input w-full text-sm"
-                    placeholder="0.00"
-                    value={newVariantForm.price || ''}
-                    onChange={e => setNewVariantForm({ ...newVariantForm, price: parseFloat(e.target.value) || 0 })}
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] font-bold mb-1 block">FACTOR CONVERSIÓN</label>
-                  <input
-                    type="number"
-                    className="neu-input w-full text-sm"
-                    value={newVariantForm.conversion_factor}
-                    onChange={e => setNewVariantForm({ ...newVariantForm, conversion_factor: parseInt(e.target.value) || 1 })}
-                  />
+                {selectedTransaction.discount_value > 0 && (
+                  <div className="flex justify-between text-sm text-success">
+                    <span>Descuento:</span>
+                    <span className="font-mono">
+                      -${selectedTransaction.discount_type === 'fixed'
+                        ? selectedTransaction.discount_value.toFixed(2)
+                        : selectedTransaction.discount_value + '%'}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between font-bold text-xl pt-3 border-t border-border">
+                  <span>Total:</span>
+                  <span className="text-primary font-mono">${selectedTransaction.total_amount.toFixed(2)}</span>
                 </div>
               </div>
               <button
-                onClick={() => {
-                  if (newVariantForm.name && newVariantForm.price >= 0) {
-                    handleAddVariant(newVariantForm);
-                    setNewVariantForm({ name: '', price: 0, conversion_factor: 1 });
-                  } else {
-                    toast.error('Nombre y precio son obligatorios');
-                  }
-                }}
-                className="neu-btn neu-btn-primary w-full text-xs py-3 flex items-center justify-center gap-2"
+                type="button"
+                onClick={() => setSelectedTransaction(null)}
+                className="neu-btn w-full mt-6 bg-slate-900 !text-white hover:bg-slate-800"
               >
-                <Plus className="w-4 h-4" />
-                Añadir Variante
+                Cerrar Ticket
               </button>
             </div>
           </div>
-          <DialogFooter>
-            <button
-              onClick={() => setIsVariantsModalOpen(false)}
-              className="neu-btn w-full"
-            >
-              Cerrar
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
 
       {/* Sidebar Overlay */}
       {sidebarOpen && (
@@ -1785,6 +1785,140 @@ export default function HomePage() {
           className="fixed inset-0 bg-black/50 z-30 lg:hidden"
           onClick={toggleSidebar}
         />
+      )}
+
+      {/* Transaction Details Modal */}
+      {selectedTransaction && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="neu-card max-w-2xl w-full max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-4 p-4 border-b">
+              <div>
+                <h3 className="text-lg font-bold">Detalle de Venta</h3>
+                <p className="text-xs text-muted-foreground font-mono">{selectedTransaction.id}</p>
+              </div>
+              <button
+                onClick={() => setSelectedTransaction(null)}
+                className="neu-raised-sm w-10 h-10 flex items-center justify-center hover:bg-accent"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="p-4 overflow-y-auto flex-1">
+              {/* Transaction Summary */}
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                <div className="neu-inset-sm p-3">
+                  <div className="text-xs text-muted-foreground uppercase font-bold mb-1">Fecha</div>
+                  <div className="font-medium text-sm">
+                    {new Date(selectedTransaction.created_at).toLocaleString()}
+                  </div>
+                </div>
+                <div className="neu-inset-sm p-3">
+                  <div className="text-xs text-muted-foreground uppercase font-bold mb-1">Método de Pago</div>
+                  <div className="font-medium text-sm capitalize">
+                    {selectedTransaction.payment_method === 'cash' ? 'Efectivo' :
+                     selectedTransaction.payment_method === 'card' ? 'Tarjeta' :
+                     selectedTransaction.payment_method === 'transfer' ? 'Transferencia' : 'Otro'}
+                  </div>
+                </div>
+                <div className="neu-inset-sm p-3">
+                  <div className="text-xs text-muted-foreground uppercase font-bold mb-1">Estado</div>
+                  <div className="font-medium text-sm">
+                    <span className={`neu-badge ${selectedTransaction.status === 'completed' ? 'text-success' :
+                      selectedTransaction.status === 'pending' ? 'text-warning' : 'text-danger'
+                      }`}>
+                      {selectedTransaction.status === 'completed' ? 'Completada' :
+                       selectedTransaction.status === 'pending' ? 'Pendiente' :
+                       selectedTransaction.status === 'voided' ? 'Anulada' :
+                       selectedTransaction.status === 'cancelled' ? 'Cancelada' :
+                       selectedTransaction.status}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Items Table */}
+              <div className="space-y-3">
+                <h4 className="font-bold text-sm border-b pb-2 uppercase tracking-wide text-muted-foreground">Productos vendidos</h4>
+                {loadingDetails ? (
+                  <div className="flex flex-col items-center justify-center py-12 gap-3">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <p className="text-sm text-muted-foreground">Cargando artículos...</p>
+                  </div>
+                ) : (
+                  <div className="table-to-cards">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b text-muted-foreground text-left">
+                          <th className="pb-2">Producto</th>
+                          <th className="pb-2 text-center">Cant.</th>
+                          <th className="pb-2 text-right">Precio</th>
+                          <th className="pb-2 text-right">Subtotal</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {transactionItems.length === 0 ? (
+                          <tr>
+                            <td colSpan={4} className="py-8 text-center text-muted-foreground">
+                              No se encontraron artículos para esta venta.
+                            </td>
+                          </tr>
+                        ) : (
+                          transactionItems.map((item) => (
+                            <tr key={item.id} className="border-b last:border-0 hover:bg-slate-50/50">
+                              <td className="py-3" data-label="Producto">
+                                <div className="font-medium">{item.products?.name || 'Producto desconocido'}</div>
+                                <div className="text-xs text-muted-foreground">{item.products?.sku || '-'}</div>
+                              </td>
+                              <td className="py-3 text-center" data-label="Cant.">{item.quantity}</td>
+                              <td className="py-3 text-right" data-label="Precio">${item.price_at_sale.toFixed(2)}</td>
+                              <td className="py-3 text-right font-bold" data-label="Subtotal">
+                                ${(item.quantity * item.price_at_sale).toFixed(2)}
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              {/* Totals */}
+              {!loadingDetails && (
+                <div className="mt-6 space-y-2 border-t pt-4 max-w-[280px] ml-auto">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Subtotal:</span>
+                    <span className="font-medium">${selectedTransaction.subtotal.toFixed(2)}</span>
+                  </div>
+                  {selectedTransaction.discount_value > 0 && (
+                    <div className="flex justify-between text-sm text-success font-bold">
+                      <span>Descuento:</span>
+                      <span>
+                        -{selectedTransaction.discount_type === 'fixed' ? '$' : ''}
+                        {selectedTransaction.discount_value}
+                        {selectedTransaction.discount_type === 'percentage' ? '%' : ''}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex justify-between font-bold text-xl pt-2 border-t border-border text-primary">
+                    <span>Total:</span>
+                    <span>${selectedTransaction.total_amount.toFixed(2)}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 border-t bg-slate-50 flex justify-end">
+              <button
+                onClick={() => setSelectedTransaction(null)}
+                className="neu-btn neu-btn-primary px-8 font-bold"
+              >
+                Cerrar Detalle
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
