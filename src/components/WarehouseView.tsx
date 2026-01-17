@@ -187,7 +187,9 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                 .order('created_at', { ascending: false });
 
             if (user.role !== 'admin') {
-                query = query.eq('profiles.store_id', user.store_id);
+                // Filter by receipts.store_id for better performance and reliability
+                // since we ensured it is populated via migration and RPC
+                query = query.eq('store_id', user.store_id);
             }
 
             const { data, error } = await query;
