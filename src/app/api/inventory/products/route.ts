@@ -13,27 +13,41 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Get storeId from user profile
+    // Get storeId and role from user profile
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("store_id")
+      .select("store_id, role")
       .eq("id", session.user.id)
       .single();
 
-    if (profileError || !profile?.store_id) {
+    if (profileError) {
+      console.error("Error fetching profile in /api/inventory/products:", profileError);
+      return NextResponse.json(
+        { error: "Internal Server Error", message: "Could not fetch user profile." },
+        { status: 500 }
+      );
+    }
+
+    if (!profile?.store_id && profile?.role !== 'admin') {
       return NextResponse.json(
         { error: "Bad Request", message: "User is not assigned to a store." },
         { status: 400 }
       );
     }
 
-    const { data: products, error } = await supabase
+    let query = supabase
       .from("products")
       .select(`
         *,
         product_variants (*)
-      `)
-      .eq("store_id", profile.store_id);
+      `);
+
+    if (profile.store_id) {
+      query = query.eq("store_id", profile.store_id);
+    }
+    // If admin and no store_id, they see all products
+
+    const { data: products, error } = await query;
 
     if (error) {
       return NextResponse.json(

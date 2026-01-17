@@ -67,7 +67,10 @@ export default function InventoryCountView() {
           'Authorization': `Bearer ${token}`
         }
       });
-      if (!response.ok) throw new Error('Error al cargar productos');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al cargar productos');
+      }
       const data = await response.json();
       setProducts(data);
 
