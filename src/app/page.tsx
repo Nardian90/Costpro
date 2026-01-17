@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuthStore, useCartStore, useUIStore } from '@/store';
 import { useRouter } from 'next/navigation';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
@@ -30,6 +30,7 @@ import {
   Edit,
   ArrowUpRight,
   ArrowDownRight,
+  ArrowUpDown,
   Sun,
   Moon,
   Warehouse,
@@ -325,6 +326,44 @@ export default function HomePage() {
     setDiscount(localDiscount.value > 0 ? localDiscount : null);
   }, [localDiscount, setDiscount]);
 
+  const navigationItems = useMemo(() => {
+    if (!user) return [];
+    return getNavigationItems();
+  }, [user?.role]);
+
+  const filteredProducts = useMemo(() => {
+    const lowerSearch = searchTerm.toLowerCase();
+    return products.filter(p =>
+      p.name.toLowerCase().includes(lowerSearch) ||
+      (p.sku && p.sku.toLowerCase().includes(lowerSearch)) ||
+      (p.category && p.category.toLowerCase().includes(lowerSearch))
+    );
+  }, [products, searchTerm]);
+
+  const filteredMovements = useMemo(() => {
+    return movements.filter(mov => {
+      const movDate = new Date(mov.created_at);
+      const fromDate = dateRange.from ? new Date(dateRange.from) : null;
+      const toDate = dateRange.to ? new Date(dateRange.to) : null;
+
+      if (fromDate && movDate < fromDate) return false;
+      if (toDate && movDate > toDate) return false;
+      return true;
+    });
+  }, [movements, dateRange]);
+
+  const filteredLogs = useMemo(() => {
+    return auditLogs.filter(log => {
+      const logDate = new Date(log.created_at);
+      const fromDate = dateRange.from ? new Date(dateRange.from) : null;
+      const toDate = dateRange.to ? new Date(dateRange.to) : null;
+
+      if (fromDate && logDate < fromDate) return false;
+      if (toDate && logDate > toDate) return false;
+      return true;
+    });
+  }, [auditLogs, dateRange]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -336,13 +375,6 @@ export default function HomePage() {
   if (!user) {
     return null;
   }
-
-  const navigationItems = getNavigationItems();
-  const filteredProducts = products.filter(p =>
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (p.category && p.category.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
 
   const addToCart = (product: Product) => {
     addItem({
@@ -1078,15 +1110,6 @@ export default function HomePage() {
   );
 
   const renderHistory = () => {
-    const filteredMovements = movements.filter(mov => {
-      const movDate = new Date(mov.created_at);
-      const fromDate = dateRange.from ? new Date(dateRange.from) : null;
-      const toDate = dateRange.to ? new Date(dateRange.to) : null;
-
-      if (fromDate && movDate < fromDate) return false;
-      if (toDate && movDate > toDate) return false;
-      return true;
-    });
 
     const getMovementBadge = (type: string) => {
       switch (type) {
@@ -1180,15 +1203,6 @@ export default function HomePage() {
   };
 
   const renderAudit = () => {
-    const filteredLogs = auditLogs.filter(log => {
-        const logDate = new Date(log.created_at);
-        const fromDate = dateRange.from ? new Date(dateRange.from) : null;
-        const toDate = dateRange.to ? new Date(dateRange.to) : null;
-
-        if (fromDate && logDate < fromDate) return false;
-        if (toDate && logDate > toDate) return false;
-        return true;
-    });
 
     return (
         <div className="space-y-6">
@@ -1663,6 +1677,7 @@ export default function HomePage() {
           {renderView()}
         </div>
       </main>
+
 
       {/* Sidebar Overlay */}
       {sidebarOpen && (

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore, useCartStore } from '@/store';
 import {
@@ -44,7 +44,6 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
     const canAdjustStock = permissions?.canAdjustStock || false;
 
     const [products, setProducts] = useState<Product[]>([]);
-    const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<string>('');
     const [loading, setLoading] = useState(true);
@@ -119,9 +118,9 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
         }
     }, [user]);
 
-    useEffect(() => {
+    const filteredProducts = useMemo(() => {
         const lowerTerm = searchTerm.toLowerCase();
-        const filtered = products.filter(product => {
+        return products.filter(product => {
             const matchesSearch =
                 product.name.toLowerCase().includes(lowerTerm) ||
                 product.sku?.toLowerCase().includes(lowerTerm);
@@ -129,7 +128,6 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                 !selectedCategory || product.category === selectedCategory;
             return matchesSearch && matchesCategory;
         });
-        setFilteredProducts(filtered);
     }, [searchTerm, selectedCategory, products]);
 
     const getProductImageUrl = (product: Product) => {

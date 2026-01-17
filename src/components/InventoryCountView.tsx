@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/store';
 import {
@@ -35,7 +35,6 @@ interface Difference {
 export default function InventoryCountView() {
   const user = useAuthStore((state) => state.user);
   const [products, setProducts] = useState<ExtendedProduct[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<ExtendedProduct[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [countedQuantities, setCountedQuantities] = useState<{ [key: string]: number }>({});
   const [loading, setLoading] = useState(true);
@@ -51,13 +50,12 @@ export default function InventoryCountView() {
     }
   }, [user]);
 
-  useEffect(() => {
+  const filteredProducts = useMemo(() => {
     const lowerTerm = searchTerm.toLowerCase();
-    const filtered = products.filter(product =>
+    return products.filter(product =>
       product.name.toLowerCase().includes(lowerTerm) ||
       product.sku?.toLowerCase().includes(lowerTerm)
     );
-    setFilteredProducts(filtered);
   }, [searchTerm, products]);
 
   const fetchProducts = async () => {
