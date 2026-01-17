@@ -37,17 +37,22 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // We fetch products, their variants, and their inventory entries
+    // to determine the correct stock for the current store.
     let query = authClient
       .from("products")
       .select(`
         *,
-        product_variants (*)
-      `);
+        product_variants (*),
+        inventory (*)
+      `)
+      .order('name');
 
     if (profile.store_id) {
-      query = query.eq("store_id", profile.store_id);
+      // Filter products that are either global (no specific store_id)
+      // or specifically assigned to the user's store.
+      query = query.or(`store_id.is.null,store_id.eq.${profile.store_id}`);
     }
-    // If admin and no store_id, they see all products
 
     const { data: products, error } = await query;
 
@@ -58,7 +63,33 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(products);
+    // Map the products to set the correct stock_current for the specific store
+    const mappedProducts = products.map((product: any) => {
+      let stock_current = 0;
+
+      if (profile.store_id) {
+        // Find stock for the user's specific store
+        const storeInventory = product.inventory?.find(
+          (inv: any) => inv.store_id === profile.store_id
+        );
+        stock_current = storeInventory ? storeInventory.quantity : 0;
+      } else {
+        // For admin without a specific store_id, sum stock from all stores
+        stock_current = product.inventory?.reduce(
+          (acc: number, inv: any) => acc + inv.quantity,
+          0
+        ) || 0;
+      }
+
+      // Return product with updated stock_current and without the raw inventory array
+      const { inventory, ...productData } = product;
+      return {
+        ...productData,
+        stock_current,
+      };
+    });
+
+    return NextResponse.json(mappedProducts);
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json(
