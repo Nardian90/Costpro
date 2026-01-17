@@ -20,6 +20,7 @@ import {
   DollarSign,
   CreditCard,
   Check,
+  Loader2,
   Download,
   Upload,
   Filter,
@@ -90,6 +91,7 @@ export default function HomePage() {
   const [movements, setMovements] = useState<any[]>([]);
   const [cashClosures, setCashClosures] = useState<any[]>([]);
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const [dashboardKPIs, setDashboardKPIs] = useState<DashboardKPIs>({
     gross_sales: 0,
@@ -404,12 +406,13 @@ export default function HomePage() {
   };
 
   const handleCheckout = async () => {
-    if (items.length === 0) return;
+    if (items.length === 0 || isProcessing) return;
     if (!user || !user.store_id) {
       toast.error('No se pudo identificar la tienda del usuario');
       return;
     }
 
+    setIsProcessing(true);
     const toastId = toast.loading('Procesando venta...');
     try {
       const saleItems = items.map(item => ({
@@ -444,6 +447,8 @@ export default function HomePage() {
     } catch (error: any) {
       console.error('Error en checkout:', error);
       toast.error(error.message || 'Error al procesar la venta', { id: toastId });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -728,10 +733,20 @@ export default function HomePage() {
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="neu-input w-full pl-10"
+                className="neu-input w-full pl-10 pr-10"
                 placeholder="Buscar productos..."
                 aria-label="Buscar productos en el catálogo"
               />
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 rounded-full hover:bg-slate-200 transition-colors"
+                  aria-label="Limpiar búsqueda"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
             </div>
           </div>
 
@@ -744,8 +759,16 @@ export default function HomePage() {
                 onClick={() => addToCart(product)}
                 aria-label={`Agregar ${product.name} al carrito. Precio: $${product.price.toFixed(2)}. Stock disponible: ${product.stock_current}`}
               >
-                <div className="neu-raised-sm w-16 h-16 mx-auto mb-3 flex items-center justify-center">
-                  <Package className="w-8 h-8 text-muted-foreground" />
+                <div className="neu-raised-sm w-16 h-16 mx-auto mb-3 flex items-center justify-center overflow-hidden">
+                  {product.image_url ? (
+                    <img
+                      src={getProductImageUrl(product) || ''}
+                      alt={product.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <Package className="w-8 h-8 text-muted-foreground" />
+                  )}
                 </div>
                 <h3 className="font-semibold text-sm mb-1 text-center">{product.name}</h3>
                 <div className="text-xs text-muted-foreground text-center mb-2">{product.sku}</div>
@@ -899,10 +922,15 @@ export default function HomePage() {
 
                 <button
                   onClick={handleCheckout}
-                  className="neu-btn neu-btn-success w-full flex items-center justify-center gap-2"
+                  disabled={isProcessing || items.length === 0}
+                  className={`neu-btn neu-btn-success w-full flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
-                  <Check className="w-5 h-5" />
-                  Procesar Venta
+                  {isProcessing ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Check className="w-5 h-5" />
+                  )}
+                  {isProcessing ? 'Procesando...' : 'Procesar Venta'}
                 </button>
 
                 <button
@@ -1045,6 +1073,7 @@ export default function HomePage() {
                       type="button"
                       onClick={() => fetchTransactionDetails(txn)}
                       className="neu-raised-sm w-8 h-8 flex items-center justify-center hover:bg-accent transition-transform active:scale-95"
+                      aria-label="Ver detalles de la venta"
                       title="Ver Detalle"
                     >
                       <Eye className="w-4 h-4" />
@@ -1383,7 +1412,10 @@ export default function HomePage() {
                   </td>
                   <td data-label="Acciones" className="p-4">
                     <div className="flex justify-center">
-                      <button className="neu-raised-sm w-8 h-8 flex items-center justify-center hover:bg-accent">
+                      <button
+                        className="neu-raised-sm w-8 h-8 flex items-center justify-center hover:bg-accent"
+                        aria-label="Ver detalles del cierre"
+                      >
                         <Eye className="w-4 h-4" />
                       </button>
                     </div>
@@ -1445,7 +1477,10 @@ export default function HomePage() {
                 </td>
                 <td data-label="Acciones" className="p-4">
                   <div className="flex justify-center gap-2">
-                    <button className="neu-raised-sm w-8 h-8 flex items-center justify-center hover:bg-accent">
+                    <button
+                      className="neu-raised-sm w-8 h-8 flex items-center justify-center hover:bg-accent"
+                      aria-label="Editar usuario"
+                    >
                       <Edit className="w-4 h-4" />
                     </button>
                   </div>
@@ -1488,10 +1523,16 @@ export default function HomePage() {
             <p className="text-sm text-muted-foreground mb-4">{store.address}</p>
 
             <div className="flex gap-2">
-              <button className="neu-btn neu-raised-sm flex-1 text-sm">
+              <button
+                className="neu-btn neu-raised-sm flex-1 text-sm"
+                aria-label="Editar tienda"
+              >
                 <Edit className="w-4 h-4" />
               </button>
-              <button className="neu-btn neu-raised-sm flex-1 text-sm text-danger">
+              <button
+                className="neu-btn neu-raised-sm flex-1 text-sm text-danger"
+                aria-label="Eliminar tienda"
+              >
                 <Trash2 className="w-4 h-4" />
               </button>
             </div>
