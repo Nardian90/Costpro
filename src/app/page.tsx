@@ -469,16 +469,19 @@ export default function HomePage() {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="neu-input w-full pl-10"
                 placeholder="Buscar productos..."
+                aria-label="Buscar productos en el catálogo"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {filteredProducts.map(product => (
-              <div
+              <button
                 key={product.id}
-                className="neu-card p-4 cursor-pointer hover:scale-105 transition-transform"
+                type="button"
+                className="neu-card p-4 cursor-pointer hover:scale-105 transition-transform w-full text-left focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
                 onClick={() => addToCart(product)}
+                aria-label={`Agregar ${product.name} al carrito. Precio: $${product.price.toFixed(2)}. Stock disponible: ${product.stock_current}`}
               >
                 <div className="neu-raised-sm w-16 h-16 mx-auto mb-3 flex items-center justify-center">
                   <Package className="w-8 h-8 text-muted-foreground" />
@@ -489,7 +492,7 @@ export default function HomePage() {
                   <div className="text-lg font-bold text-primary">${product.price.toFixed(2)}</div>
                   <div className="text-xs text-muted-foreground">Stock: {product.stock_current}</div>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </div>
@@ -520,6 +523,7 @@ export default function HomePage() {
                         <button
                           onClick={() => removeItem(item.product_id, item.variant_id)}
                           className="text-danger hover:text-red-600"
+                          aria-label={`Eliminar ${item.product.name} del carrito`}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -529,13 +533,15 @@ export default function HomePage() {
                           <button
                             onClick={() => updateQuantity(item.product_id, item.variant_id, item.quantity - 1)}
                             className="neu-raised-sm w-8 h-8 flex items-center justify-center hover:bg-accent"
+                            aria-label={`Disminuir cantidad de ${item.product.name}`}
                           >
                             <Minus className="w-4 h-4" />
                           </button>
-                          <span className="w-8 text-center font-medium">{item.quantity}</span>
+                          <span className="w-8 text-center font-medium" aria-label={`Cantidad: ${item.quantity}`}>{item.quantity}</span>
                           <button
                             onClick={() => updateQuantity(item.product_id, item.variant_id, item.quantity + 1)}
                             className="neu-raised-sm w-8 h-8 flex items-center justify-center hover:bg-accent"
+                            aria-label={`Aumentar cantidad de ${item.product.name}`}
                           >
                             <Plus className="w-4 h-4" />
                           </button>
@@ -728,6 +734,7 @@ export default function HomePage() {
               type="text"
               className="neu-input w-full pl-10"
               placeholder="Buscar por ID, monto..."
+              aria-label="Buscar en el historial de ventas por ID o monto"
             />
           </div>
           <select className="neu-input">
@@ -1257,6 +1264,7 @@ export default function HomePage() {
               <button
                 onClick={toggleSidebar}
                 className="neu-raised-sm w-10 h-10 flex items-center justify-center hover:bg-accent lg:hidden"
+                aria-label={sidebarOpen ? "Cerrar menú lateral" : "Abrir menú lateral"}
               >
                 {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
@@ -1274,11 +1282,15 @@ export default function HomePage() {
               <button
                 onClick={toggleDarkMode}
                 className="neu-raised-sm w-10 h-10 flex items-center justify-center hover:bg-accent"
+                aria-label={darkMode ? "Activar modo claro" : "Activar modo oscuro"}
               >
                 {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </button>
 
-              <button className="neu-raised-sm w-10 h-10 flex items-center justify-center hover:bg-accent relative">
+              <button
+                className="neu-raised-sm w-10 h-10 flex items-center justify-center hover:bg-accent relative"
+                aria-label="Ver notificaciones"
+              >
                 <Bell className="w-5 h-5" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-danger rounded-full" />
               </button>
@@ -1286,6 +1298,7 @@ export default function HomePage() {
               <button
                 onClick={handleLogout}
                 className="neu-btn neu-btn-danger flex items-center gap-2"
+                aria-label="Cerrar sesión"
               >
                 <LogOut className="w-4 h-4" />
                 <span className="hidden sm:inline">Salir</span>
