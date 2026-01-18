@@ -293,7 +293,7 @@ export default function InventoryCountView() {
       </div>
 
       {/* Search Bar */}
-      <div className="neu-raised-sm p-4">
+      <div className="neu-raised-sm p-2 sm:p-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
