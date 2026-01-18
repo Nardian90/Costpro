@@ -444,27 +444,32 @@
     display: flex;
     flex-direction: column;
     background: var(--background);
-    box-shadow: var(--neumorphic-shadow-out);
+    box-shadow: var(--neumorphic-shadow-out-sm);
     border-radius: var(--radius-lg);
     margin-bottom: 1rem;
-    padding: 1rem;
+    padding: 0.75rem;
     border: none;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .table-to-cards td {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     padding: 0.5rem 0;
     border: none;
+    gap: 1rem;
+    width: 100%;
+    word-break: break-word;
   }
 
   .table-to-cards td::before {
     content: attr(data-label);
     font-weight: 600;
     color: var(--muted-foreground);
-    margin-right: 1rem;
     flex-shrink: 0;
+    font-size: 0.85rem;
   }
 
   .table-to-cards td:last-child {
