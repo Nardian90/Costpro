@@ -29,6 +29,7 @@ import {
 import type { Product, Receipt, ReceiptItem } from '@/types';
 import { ROLE_PERMISSIONS } from '@/types';
 import { toast } from 'sonner';
+import { getProductImageUrl } from '@/lib/utils';
 
 interface WarehouseViewProps {
     initialView?: 'inventory' | 'history' | 'reception';
@@ -438,6 +439,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                     ...item,
                     stock_current,
                     store_id,
+                    public_image_url: getProductImageUrl(item.image_url),
                 };
             }) || [];
 
@@ -952,7 +954,6 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                                     </td>
                                 </tr>
                             ) : filteredProducts.map(product => {
-                                const imgUrl = getProductImageUrl(product);
                                 const isInReception = receptionItems.has(product.id);
 
                                 return (
@@ -960,9 +961,9 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                                         <td data-label="Producto" className="p-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="neu-raised-sm w-12 h-12 flex items-center justify-center overflow-hidden bg-gray-50 shrink-0 relative group">
-                                                    {imgUrl ? (
+                                                    {product.public_image_url ? (
                                                         <img
-                                                            src={imgUrl}
+                                                            src={product.public_image_url}
                                                             alt={product.name}
                                                             className="w-full h-full object-cover"
                                                             onError={(e) => {
@@ -971,7 +972,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                                                             }}
                                                         />
                                                     ) : null}
-                                                    <Package className={`w-6 h-6 text-muted-foreground ${imgUrl ? 'hidden' : ''}`} />
+                                                    <Package className={`w-6 h-6 text-muted-foreground ${product.public_image_url ? 'hidden' : ''}`} />
 
                                                     {/* Botón rápido para subir imagen */}
                                                     <label className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
@@ -1377,8 +1378,8 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                         <div className="p-6 border-b border-border flex flex-col lg:flex-row justify-between lg:items-center shrink-0 gap-4">
                             <div className="flex items-center gap-4">
                                 <div className="neu-raised-sm w-12 h-12 flex items-center justify-center overflow-hidden bg-gray-50">
-                                    {selectedKardexProduct.image_url ? (
-                                        <img src={getProductImageUrl(selectedKardexProduct) || ''} alt="" className="w-full h-full object-cover" />
+                                    {selectedKardexProduct.public_image_url ? (
+                                        <img src={selectedKardexProduct.public_image_url} alt="" className="w-full h-full object-cover" />
                                     ) : (
                                         <Package className="w-6 h-6 text-muted-foreground" />
                                     )}

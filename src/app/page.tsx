@@ -159,6 +159,7 @@ export default function HomePage() {
           ...item,
           stock_current,
           store_id,
+          public_image_url: getProductImageUrl(item.image_url),
         };
       }) || [];
 
@@ -962,9 +963,9 @@ export default function HomePage() {
                 aria-label={`Agregar ${product.name} al carrito. Precio: $${product.price.toFixed(2)}. Stock disponible: ${product.stock_current}`}
               >
                 <div className="neu-raised-sm w-16 h-16 mx-auto mb-3 flex items-center justify-center overflow-hidden">
-                  {product.image_url ? (
+                  {product.public_image_url ? (
                     <img
-                      src={getProductImageUrl(product) || ''}
+                      src={product.public_image_url}
                       alt={product.name}
                       className="w-full h-full object-cover"
                     />
@@ -1298,8 +1299,8 @@ export default function HomePage() {
         {filteredProducts.map(product => (
           <div key={product.id} className="neu-card">
             <div className="neu-raised-sm w-full h-32 mb-4 flex items-center justify-center overflow-hidden">
-              {product.image_url ? (
-                <img src={getProductImageUrl(product) || ''} alt={product.name} className="w-full h-full object-cover" />
+              {product.public_image_url ? (
+                <img src={product.public_image_url} alt={product.name} className="w-full h-full object-cover" />
               ) : (
                 <Package className="w-16 h-16 text-muted-foreground" />
               )}
@@ -2112,7 +2113,7 @@ export default function HomePage() {
                 <div className="neu-raised-sm w-32 h-32 flex items-center justify-center overflow-hidden">
                   {editingProduct?.image_url ? (
                     <img
-                      src={getProductImageUrl(editingProduct) || ''}
+                      src={getProductImageUrl(editingProduct.image_url) || ''}
                       alt={editingProduct.name}
                       className="w-full h-full object-cover"
                     />
