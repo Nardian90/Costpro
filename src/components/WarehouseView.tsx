@@ -952,7 +952,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                         onClick={toggleReceptionMode}
                         className={`neu-btn flex items-center gap-2 px-4 shadow-sm font-bold transition-all border-none ${isReceptionMode
                             ? 'bg-amber-600 !text-white hover:bg-amber-700'
-                            : 'neu-raised-sm bg-slate-900 !text-white hover:bg-slate-800'
+                            : 'neu-raised-sm bg-primary !text-primary-foreground hover:opacity-90'
                             }`}
                     >
                         {isReceptionMode ? <X className="w-4 h-4" /> : <Download className="w-4 h-4" />}
