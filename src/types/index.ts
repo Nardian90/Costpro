@@ -86,6 +86,7 @@ export interface Product {
   cost_average: number;
   min_stock: number;
   store_id: string | null;
+  public_image_url?: string | null;
 }
 
 export interface ProductVariant {
