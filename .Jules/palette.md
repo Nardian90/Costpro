@@ -24,3 +24,11 @@ main
 ## 2026-01-22 - POS Micro-UX and Accessibility
 **Learning:** For high-traffic interfaces like a POS, visual cues (product images) and immediate interaction feedback (loading states on buttons) significantly reduce cognitive load and prevent accidental duplicate transactions. Clear search buttons and explicit ARIA labels on icon-only buttons are essential for a professional, accessible tool.
 **Action:** Implemented product images in the POS grid, loading/disabled states for the checkout button, a clear search button, and added missing ARIA labels to historical views.
+
+## 2026-01-18
+
+- Learning: Neumorphic buttons with light backgrounds and white text fail contrast standards in light mode.
+- Action: Changed text color to brand indigo (!text-primary) or foreground dark gray (!text-foreground) for light-background buttons.
+
+- Learning: Headers with many action buttons cause horizontal overflow on mobile if they don't wrap or scroll.
+- Action: Implemented a horizontal scrolling ribbon (no-scrollbar) for action buttons in WarehouseView to maintain a clean layout within the frame.
