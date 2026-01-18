@@ -101,6 +101,19 @@ BEGIN
         p_cashier_id,
         NULL
       );
+
+      -- Log audit event for surplus
+      INSERT INTO public.audit_logs (user_id, table_name, record_id, action, metadata)
+      VALUES (
+        p_cashier_id,
+        'inventory_adjustments',
+        v_adjustment_id,
+        'SURPLUS',
+        jsonb_build_object(
+          'product_id', v_item.product_id,
+          'quantity', v_difference
+        )
+      );
     END IF;
   END LOOP;
 
