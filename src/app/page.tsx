@@ -5,6 +5,7 @@ import { useAuthStore, useCartStore, useUIStore } from '@/store';
 import { useRouter } from 'next/navigation';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { supabase } from '@/lib/supabaseClient';
+import { getProductImageUrl } from '@/lib/utils';
 import {
   Package,
   ShoppingCart,
@@ -158,6 +159,7 @@ export default function HomePage() {
           ...item,
           stock_current,
           store_id,
+          public_image_url: getProductImageUrl(item.image_url),
         };
       }) || [];
 
@@ -282,18 +284,6 @@ export default function HomePage() {
     } catch (error) {
       console.error('Error fetching cash closures:', error);
     }
-  };
-
-  const getProductImageUrl = (product: Product) => {
-    if (!product.image_url) return null;
-    if (product.image_url.startsWith('http')) return product.image_url;
-
-    const path = product.image_url.startsWith('products/')
-      ? product.image_url.replace('products/', '')
-      : product.image_url;
-
-    const { data } = supabase.storage.from('product-images').getPublicUrl(path);
-    return data.publicUrl;
   };
 
   const fetchDashboardData = async () => {
@@ -845,9 +835,9 @@ export default function HomePage() {
                 aria-label={`Agregar ${product.name} al carrito. Precio: $${product.price.toFixed(2)}. Stock disponible: ${product.stock_current}`}
               >
                 <div className="neu-raised-sm w-16 h-16 mx-auto mb-3 flex items-center justify-center overflow-hidden">
-                  {product.image_url ? (
+                  {product.public_image_url ? (
                     <img
-                      src={getProductImageUrl(product) || ''}
+                      src={product.public_image_url}
                       alt={product.name}
                       className="w-full h-full object-cover"
                     />
@@ -1181,8 +1171,8 @@ export default function HomePage() {
         {filteredProducts.map(product => (
           <div key={product.id} className="neu-card">
             <div className="neu-raised-sm w-full h-32 mb-4 flex items-center justify-center overflow-hidden">
-              {product.image_url ? (
-                <img src={getProductImageUrl(product) || ''} alt={product.name} className="w-full h-full object-cover" />
+              {product.public_image_url ? (
+                <img src={product.public_image_url} alt={product.name} className="w-full h-full object-cover" />
               ) : (
                 <Package className="w-16 h-16 text-muted-foreground" />
               )}
@@ -1989,7 +1979,7 @@ export default function HomePage() {
                 <div className="neu-raised-sm w-32 h-32 flex items-center justify-center overflow-hidden">
                   {editingProduct?.image_url ? (
                     <img
-                      src={getProductImageUrl(editingProduct) || ''}
+                      src={getProductImageUrl(editingProduct.image_url) || ''}
                       alt={editingProduct.name}
                       className="w-full h-full object-cover"
                     />
