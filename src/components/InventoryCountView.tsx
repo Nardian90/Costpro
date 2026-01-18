@@ -199,7 +199,7 @@ export default function InventoryCountView() {
           d.decomposition.forEach(dec => {
             if (dec.quantity <= 0) return;
 
-            const variant = product.product_variants.find(v => v.id === dec.variantId);
+            const variant = (product.product_variants || []).find(v => v.id === dec.variantId);
 
             useCartStore.getState().addItem({
               product_id: product.id,
