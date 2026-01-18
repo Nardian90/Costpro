@@ -43,6 +43,7 @@ import {
   Target,
   Shield,
   ClipboardList,
+  FileText,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import CostProLogo from '@/components/CostProLogo';
@@ -70,6 +71,7 @@ import type {
 import { toast } from 'sonner';
 import WarehouseView from '@/components/WarehouseView';
 import InventoryCountView from '@/components/InventoryCountView';
+import CostSheetsPage from '@/app/cost-sheets/page';
 
 export default function TerminalView() {
   const router = useRouter();
@@ -817,6 +819,7 @@ export default function TerminalView() {
       { id: 'recepcion', icon: Warehouse, label: 'Recepciones', roles: ['warehouse', 'manager'] },
       { id: 'sales', icon: Receipt, label: 'Mis Ventas', roles: ['clerk', 'manager'] },
       { id: 'inventory_count', icon: ClipboardList, label: 'Conteo Inventario', roles: ['clerk', 'manager', 'admin'] },
+      { id: 'cost-sheets', icon: FileText, label: 'Fichas de Costo', roles: ['admin', 'manager'] },
       { id: 'catalog', icon: Package, label: 'Catálogo', roles: ['manager', 'admin'] },
       { id: 'history', icon: History, label: 'Historial', roles: ['manager', 'admin'] },
       { id: 'audit', icon: Shield, label: 'Auditoría', roles: ['manager', 'admin'] },
@@ -1854,6 +1857,7 @@ export default function TerminalView() {
       case 'users': return renderUsers();
       case 'stores': return renderStores();
       case 'settings': return renderSettings();
+      case 'cost-sheets': return <CostSheetsPage />;
       default: return renderDashboard();
     }
   };
