@@ -367,10 +367,10 @@ export default function InventoryCountView() {
 
       {/* Confirmation Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-          <div className="neu-card w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
-            <div className="p-6 border-b border-border flex justify-between items-center bg-gray-50 dark:bg-slate-800/50">
-              <h3 className="text-xl font-bold flex items-center gap-2">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="neu-card w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden p-0">
+            <div className="p-6 border-b border-border flex justify-between items-center bg-muted/30">
+              <h3 className="text-xl font-bold flex items-center gap-2 text-foreground">
                 <AlertTriangle className="w-6 h-6 text-warning" />
                 Confirmar Diferencias de Inventario
               </h3>
@@ -379,13 +379,13 @@ export default function InventoryCountView() {
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            <div className="flex-1 overflow-y-auto p-6 space-y-6 text-foreground">
               <p className="text-muted-foreground">
                 Se han detectado las siguientes diferencias. Los faltantes se registrarán como una venta para ajustar el inventario.
               </p>
 
               {differences.map((d, pIdx) => (
-                <div key={d.productId} className="neu-raised-sm p-4 rounded-xl border border-border bg-white dark:bg-slate-900">
+                <div key={d.productId} className="neu-raised-sm p-4 rounded-xl border border-border bg-card">
                   <div className="flex justify-between items-start mb-4">
                     <div>
                       <h4 className="font-bold text-lg">{d.name}</h4>
@@ -400,9 +400,9 @@ export default function InventoryCountView() {
                   </div>
 
                   {d.diff < 0 && (
-                    <div className="mt-4 p-4 rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-800">
+                    <div className="mt-4 p-4 rounded-lg bg-warning/10 border border-warning/20">
                       <div className="flex items-center justify-between mb-3">
-                        <h5 className="text-sm font-bold text-amber-800 dark:text-amber-500 flex items-center gap-2">
+                        <h5 className="text-sm font-bold text-warning-dark flex items-center gap-2">
                           <Package className="w-4 h-4" />
                           DESCOMPOSICIÓN PARA TICKET DE VENTA
                         </h5>
@@ -428,12 +428,12 @@ export default function InventoryCountView() {
 
                       <div className="space-y-2">
                         {d.decomposition.map((item, vIdx) => (
-                          <div key={item.variantId} className="flex items-center gap-3 bg-white dark:bg-slate-800 p-2 rounded-md shadow-sm">
+                          <div key={item.variantId} className="flex items-center gap-3 bg-background p-2 rounded-md shadow-sm">
                             <span className="flex-1 text-sm font-medium">{item.name}</span>
                             <div className="flex items-center gap-2">
                               <button
                                 onClick={() => updateDecompositionItem(pIdx, vIdx, item.quantity - 1)}
-                                className="w-6 h-6 flex items-center justify-center rounded bg-slate-100 hover:bg-slate-200"
+                                className="w-6 h-6 flex items-center justify-center rounded bg-muted hover:bg-muted/80"
                               >
                                 <Minus className="w-3 h-3" />
                               </button>
@@ -441,11 +441,11 @@ export default function InventoryCountView() {
                                 type="number"
                                 value={item.quantity}
                                 onChange={(e) => updateDecompositionItem(pIdx, vIdx, parseInt(e.target.value) || 0)}
-                                className="w-12 text-center text-sm font-bold border-none bg-transparent"
+                                className="w-12 text-center text-sm font-bold border-none bg-transparent text-foreground"
                               />
                               <button
                                 onClick={() => updateDecompositionItem(pIdx, vIdx, item.quantity + 1)}
-                                className="w-6 h-6 flex items-center justify-center rounded bg-slate-100 hover:bg-slate-200"
+                                className="w-6 h-6 flex items-center justify-center rounded bg-muted hover:bg-muted/80"
                               >
                                 <Plus className="w-3 h-3" />
                               </button>
@@ -460,7 +460,7 @@ export default function InventoryCountView() {
                         ))}
 
                         {d.decomposition.length === 0 && (
-                          <div className="text-center py-4 text-xs text-amber-700 italic">
+                          <div className="text-center py-4 text-xs text-warning italic">
                             No hay variantes seleccionadas para este faltante.
                           </div>
                         )}
@@ -478,7 +478,7 @@ export default function InventoryCountView() {
               ))}
             </div>
 
-            <div className="p-6 border-t border-border bg-gray-50 dark:bg-slate-800/50 flex gap-4">
+            <div className="p-6 border-t border-border bg-muted/30 flex gap-4">
               <button
                 onClick={() => setIsModalOpen(false)}
                 className="neu-btn flex-1"
