@@ -919,7 +919,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
     }
 
     return (
-        <div className="space-y-6 h-full flex flex-col relative">
+        <div className="space-y-6 h-full flex flex-col relative max-w-full overflow-x-hidden">
             {loading && (
                 <div className="fixed top-4 right-4 z-[100] flex items-center gap-3 bg-background/80 backdrop-blur-sm border border-border px-4 py-2 rounded-full shadow-lg">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
@@ -927,50 +927,52 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                 </div>
             )}
             {/* Header */}
-            <div className="flex items-center justify-between shrink-0">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
                 <div className="flex items-center gap-4">
-                    <h2 className="text-2xl font-bold text-foreground border-l-4 border-primary pl-4">
+                    <h2 className="text-xl sm:text-2xl font-bold text-foreground border-l-4 border-primary pl-4 leading-tight">
                         {isReceptionMode ? 'Recepción de Mercancía' : 'Gestión de Inventario'}
                     </h2>
                     {isReceptionMode && (
-                        <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded border border-amber-200 uppercase tracking-tight">
-                            Modo Recepción Activo
+                        <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded border border-amber-200 uppercase tracking-tight whitespace-nowrap">
+                            Modo Activo
                         </span>
                     )}
                 </div>
-                <div className="flex gap-2">
+
+                {/* Horizontal Ribbon for Action Buttons on Mobile */}
+                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0">
                     {isReceptionMode && (
                         <button
                             onClick={() => setIsCreateModalOpen(true)}
-                            className="neu-btn neu-raised-sm bg-emerald-600 !text-white hover:bg-emerald-700 flex items-center gap-2 px-4 shadow-sm border-none"
+                            className="neu-btn neu-raised-sm !text-emerald-700 dark:!text-emerald-400 flex items-center gap-2 px-4 shadow-sm border-none whitespace-nowrap"
                         >
                             <Plus className="w-4 h-4" />
-                            <span className="font-bold">Nuevo Producto</span>
+                            <span className="font-bold text-sm">Nuevo Producto</span>
                         </button>
                     )}
                     <button
                         onClick={toggleReceptionMode}
-                        className={`neu-btn flex items-center gap-2 px-4 shadow-sm font-bold transition-all border-none ${isReceptionMode
-                            ? 'bg-amber-600 !text-white hover:bg-amber-700'
-                            : 'neu-raised-sm bg-primary !text-primary-foreground hover:opacity-90'
+                        className={`neu-btn flex items-center gap-2 px-4 shadow-sm font-bold transition-all border-none whitespace-nowrap ${isReceptionMode
+                            ? 'neu-raised-sm !text-amber-700 dark:!text-amber-400'
+                            : 'neu-raised-sm !text-primary dark:!text-primary-light'
                             }`}
                     >
                         {isReceptionMode ? <X className="w-4 h-4" /> : <Download className="w-4 h-4" />}
-                        {isReceptionMode ? 'Cancelar Recepción' : 'Nueva Recepción'}
+                        <span className="text-sm">{isReceptionMode ? 'Cancelar' : 'Nueva Recepción'}</span>
                     </button>
 
                     {!isReceptionMode && (
                         <>
                             <button
                                 onClick={handleExport}
-                                className="neu-btn neu-raised-sm flex items-center gap-2"
+                                className="neu-btn neu-raised-sm flex items-center gap-2 !text-foreground whitespace-nowrap"
                             >
                                 <Download className="w-4 h-4" />
-                                Exportar
+                                <span className="text-sm">Exportar</span>
                             </button>
-                            <label className="neu-btn neu-raised-sm flex items-center gap-2 cursor-pointer">
+                            <label className="neu-btn neu-raised-sm flex items-center gap-2 cursor-pointer !text-foreground whitespace-nowrap">
                                 <Upload className="w-4 h-4" />
-                                Importar
+                                <span className="text-sm">Importar</span>
                                 <input
                                     type="file"
                                     className="hidden"

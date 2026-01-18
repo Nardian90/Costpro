@@ -19,9 +19,9 @@ const CyberShell: React.FC<CyberShellProps> = ({ children }) => {
         />
       </div>
       {/* El padding se eliminó de 'main' porque ahora lo gestiona el div padre. */}
-      <main className="relative z-10">
+      <main className="relative z-10 max-w-full">
         {/* Glassmorphic container */}
-        <div className="rounded-xl border border-white/10 bg-white/5 p-2 sm:p-4 backdrop-blur-lg">
+        <div className="rounded-xl border border-border bg-card/40 dark:bg-white/5 p-2 sm:p-4 backdrop-blur-lg shadow-sm overflow-hidden">
           {children}
         </div>
       </main>
