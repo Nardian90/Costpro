@@ -59,6 +59,20 @@ export default function InventoryCountView() {
     );
   }, [searchTerm, products]);
 
+  const isAdjustmentValid = useMemo(() => {
+    const shortages = differences.filter(d => d.diff < 0);
+    if (shortages.length === 0) return true;
+
+    return shortages.every(shortage => {
+      const totalDecomposed = shortage.decomposition.reduce((acc, dec) => {
+        const variant = shortage.variants.find(v => v.id === dec.variantId);
+        const factor = variant?.conversion_factor || 1;
+        return acc + (dec.quantity * factor);
+      }, 0);
+      return totalDecomposed === Math.abs(shortage.diff);
+    });
+  }, [differences]);
+
   const fetchProducts = async () => {
     setLoading(true);
     try {
@@ -475,7 +489,7 @@ export default function InventoryCountView() {
               <button
                 onClick={handleFinalSubmit}
                 className="neu-btn neu-btn-success flex-1 flex items-center justify-center gap-2"
-                disabled={processing}
+                disabled={processing || !isAdjustmentValid}
               >
                 {processing ? (
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
