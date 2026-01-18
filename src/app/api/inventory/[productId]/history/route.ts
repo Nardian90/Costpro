@@ -1,11 +1,21 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { supabase } from "@/lib/supabaseClient";
+import { getSupabaseAuthClient } from "@/lib/supabaseClient";
+import { getServerSession } from "@/lib/auth";
 import { InventoryMovement } from "@/types/inventory";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ productId: string }> }
 ) {
+  const session = await getServerSession(request);
+
+  if (!session || !session.token) {
+    return NextResponse.json(
+      { error: "Unauthorized", message: "No active session" },
+      { status: 401 }
+    );
+  }
+
   const { productId } = await params;
   const { searchParams } = new URL(request.url);
   const page = parseInt(searchParams.get("page") || "1", 10);
@@ -20,7 +30,9 @@ export async function GET(
   }
 
   try {
-    const { data, error } = await supabase.rpc(
+    const authClient = getSupabaseAuthClient(session.token);
+
+    const { data, error } = await authClient.rpc(
       "get_product_stock_ledger_paginated",
       {
         p_product_id: productId,
