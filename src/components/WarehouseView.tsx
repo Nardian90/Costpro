@@ -25,6 +25,7 @@ import {
     ArrowDownLeft,
     ArrowUpRight,
 } from 'lucide-react';
+import Papa from 'papaparse';
 import type { Product, Receipt, ReceiptItem } from '@/types';
 import { ROLE_PERMISSIONS } from '@/types';
 import { toast } from 'sonner';
@@ -458,12 +459,14 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
             }) || [];
 
             setProducts(mappedProducts);
+            return mappedProducts;
         } catch (error: any) {
             console.error('Error fetching products:', error);
             toast.error('Error al cargar productos');
         } finally {
             setLoading(false);
         }
+        return [];
     };
 
     // --- LÓGICA DE AUDITORÍA Y UTILIDADES ---
@@ -522,17 +525,14 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
         }
         const toastId = toast.loading('Generando reporte CSV...');
         try {
-            const headers = ['Producto', 'SKU', 'Categoría', 'Stock Actual', 'Costo', 'Precio', 'Valor Total'];
+            const headers = ['SKU', 'NombreProducto', 'Cantidad', 'Costo'];
             const csvContent = [
                 headers.join(','),
                 ...filteredProducts.map(p => [
-                    `"${p.name.replace(/"/g, '""')}"`,
                     `"${p.sku || ''}"`,
-                    `"${p.category || ''}"`,
+                    `"${p.name.replace(/"/g, '""')}"`,
                     p.stock_current,
-                    p.cost_price || 0,
-                    p.price,
-                    ((p.stock_current || 0) * (p.cost_price || 0)).toFixed(2)
+                    p.cost_price || 0
                 ].join(','))
             ].join('\n');
 
@@ -548,6 +548,84 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
         } catch (err) {
             toast.error('Error al exportar datos', { id: toastId });
         }
+    };
+
+    const handleImport = (file: File) => {
+        if (!file) {
+            toast.error('Por favor, selecciona un archivo CSV.');
+            return;
+        }
+
+        const toastId = toast.loading('Procesando archivo...');
+
+        Papa.parse(file, {
+            header: true,
+            skipEmptyLines: true,
+            complete: async (results) => {
+                const importedProducts = results.data as { SKU: string; NombreProducto: string; Cantidad: string; Costo: string }[];
+                const newItems = new Map(receptionItems);
+                const newProductsToCreateMap = new Map<string, { name: string; sku: string; cost_price: number; price: number }>();
+                let newProductsCreated = false;
+                const productSkuMap = new Map(products.map((p) => [p.sku, p]));
+
+                for (const importedProduct of importedProducts) {
+                    const { SKU, NombreProducto, Cantidad, Costo } = importedProduct;
+                    if (!SKU) continue;
+
+                    const productExists = productSkuMap.has(SKU);
+                    if (!productExists && !newProductsToCreateMap.has(SKU)) {
+                        newProductsToCreateMap.set(SKU, {
+                            name: NombreProducto,
+                            sku: SKU,
+                            cost_price: parseFloat(Costo) || 0,
+                            price: 0,
+                        });
+                    }
+                }
+
+                const newProductsToCreate = Array.from(newProductsToCreateMap.values());
+
+                if (newProductsToCreate.length > 0) {
+                    try {
+                        const { error } = await supabase.from('products').insert(newProductsToCreate);
+                        if (error) throw error;
+                        newProductsCreated = true;
+                    } catch (error: any) {
+                        console.error('Error creating products:', error);
+                        toast.error('Error al crear nuevos productos.');
+                        return; // Exit if we can't create products
+                    }
+                }
+
+                let updatedProducts = products;
+                if (newProductsCreated) {
+                    updatedProducts = await fetchProducts();
+                }
+
+                for (const importedProduct of importedProducts) {
+                    const { SKU, NombreProducto, Cantidad, Costo } = importedProduct;
+                    if (!SKU) continue;
+
+                    const product = updatedProducts.find((p) => p.sku === SKU);
+
+                    if (product) {
+                        newItems.set(product.id, {
+                            product,
+                            quantityToAdd: parseInt(Cantidad) || 1,
+                            newCost: parseFloat(Costo) || product.cost_price || 0,
+                        });
+                    }
+                }
+
+                setReceptionItems(newItems);
+                setIsReceptionMode(true);
+                toast.success(`${importedProducts.length} productos importados y añadidos a la recepción.`, { id: toastId });
+            },
+            error: (error) => {
+                console.error('Error parsing CSV:', error);
+                toast.error('Error al procesar el archivo CSV.', { id: toastId });
+            },
+        });
     };
 
     // --- LÓGICA DE AJUSTE INDIVIDUAL ---
@@ -904,10 +982,21 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                                 <Download className="w-4 h-4" />
                                 Exportar
                             </button>
-                            <button className="neu-btn neu-raised-sm flex items-center gap-2">
+                            <label className="neu-btn neu-raised-sm flex items-center gap-2 cursor-pointer">
                                 <Upload className="w-4 h-4" />
                                 Importar
-                            </button>
+                                <input
+                                    type="file"
+                                    className="hidden"
+                                    accept=".csv"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                            handleImport(file);
+                                        }
+                                    }}
+                                />
+                            </label>
                         </>
                     )}
                 </div>
