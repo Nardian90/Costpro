@@ -1869,12 +1869,12 @@ export default function TerminalView() {
   };
 
   return (
-    <div className="min-h-screen flex text-white bg-transparent">
+    <div className="min-h-screen flex bg-background text-foreground">
       {/* Sidebar */}
       <aside className={`${sidebarOpen ? 'w-64' : 'w-0'} lg:w-64 fixed lg:sticky top-0 h-screen z-40 transition-all duration-300 overflow-hidden ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="bg-black/30 backdrop-blur-lg h-full flex flex-col">
+        <div className="bg-sidebar/80 backdrop-blur-lg h-full flex flex-col border-r border-sidebar-border">
           {/* Logo */}
-          <div className="p-4 border-b border-white/10">
+          <div className="p-4 border-b border-sidebar-border">
             <CostProLogo size={40} animated={false} />
           </div>
 
@@ -1885,7 +1885,9 @@ export default function TerminalView() {
                 <button
                   key={item.id}
                   onClick={() => setCurrentView(item.id)}
-                  className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${currentView === item.id ? 'bg-cyan-400/20 text-cyan-300' : 'hover:bg-white/10'
+                  className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-sidebar-foreground ${currentView === item.id
+                      ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                      : 'hover:bg-sidebar-accent/50'
                     }`}
                 >
                   <item.icon className="w-5 h-5" />
@@ -1896,33 +1898,33 @@ export default function TerminalView() {
           </nav>
 
           {/* User Info */}
-          <div className="p-4 border-t border-white/10">
-            <div className="rounded-lg border border-white/10 bg-white/5 p-3">
-              <div className="font-medium text-sm text-white">{user?.full_name}</div>
-              <div className="text-xs text-cyan-200/50">{getRoleLabel(user?.role || 'clerk')}</div>
+          <div className="p-4 border-t border-sidebar-border">
+            <div className="rounded-lg border border-sidebar-border bg-sidebar-accent/30 p-3">
+              <div className="font-medium text-sm text-sidebar-foreground">{user?.full_name}</div>
+              <div className="text-xs text-muted-foreground">{getRoleLabel(user?.role || 'clerk')}</div>
             </div>
           </div>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 min-h-screen bg-transparent">
+      <main className="flex-1 min-h-screen">
         {/* Header */}
-        <header className="bg-black/10 backdrop-blur-lg p-4 sticky top-0 z-30">
+        <header className="bg-background/80 backdrop-blur-lg p-4 sticky top-0 z-30 border-b border-border">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button
                 onClick={toggleSidebar}
-                className="w-10 h-10 flex items-center justify-center rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 lg:hidden"
+                className="neu-raised-sm w-10 h-10 flex items-center justify-center lg:hidden"
                 aria-label={sidebarOpen ? "Cerrar menú lateral" : "Abrir menú lateral"}
               >
                 {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
               <div>
-                <h1 className="text-xl font-bold capitalize text-cyan-300 font-mono">
+                <h1 className="text-xl font-bold capitalize text-primary font-mono">
                   {navigationItems.find(i => i.id === currentView)?.label || 'Dashboard'}
                 </h1>
-                <p className="text-sm text-cyan-200/50">
+                <p className="text-sm text-muted-foreground">
                   Bienvenido, {user?.full_name}
                 </p>
               </div>
@@ -1931,14 +1933,14 @@ export default function TerminalView() {
             <div className="flex items-center gap-2">
               <button
                 onClick={toggleDarkMode}
-                className="w-10 h-10 flex items-center justify-center rounded-lg border border-white/10 bg-white/5 hover:bg-white/10"
+                className="neu-raised-sm w-10 h-10 flex items-center justify-center"
                 aria-label={darkMode ? "Activar modo claro" : "Activar modo oscuro"}
               >
                 {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </button>
 
               <button
-                className="w-10 h-10 flex items-center justify-center rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 relative"
+                className="neu-raised-sm w-10 h-10 flex items-center justify-center relative"
                 aria-label="Ver notificaciones"
               >
                 <Bell className="w-5 h-5" />
@@ -1947,7 +1949,7 @@ export default function TerminalView() {
 
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-2 rounded-lg border border-red-500/50 bg-red-500/10 px-4 py-2 text-red-300 backdrop-blur-sm transition-all hover:bg-red-500/20 hover:text-white"
+                className="neu-btn neu-btn-danger flex items-center gap-2"
                 aria-label="Cerrar sesión"
               >
                 <LogOut className="w-4 h-4" />
