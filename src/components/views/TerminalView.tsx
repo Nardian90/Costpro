@@ -1027,7 +1027,7 @@ export default function TerminalView() {
               </button>
               ))
             ) : (
-              <div className="col-span-full py-20 text-center text-muted-foreground bg-muted/20 rounded-2xl border-2 border-dashed border-border">
+              <div className="col-span-full py-10 sm:py-20 text-center text-muted-foreground bg-muted/20 rounded-2xl border-2 border-dashed border-border">
                 <Search className="w-12 h-12 mx-auto mb-3 opacity-20" />
                 <p className="text-lg font-medium">No se encontraron productos</p>
                 <p className="text-sm">Intenta buscar por nombre, categoría o SKU</p>
@@ -1298,7 +1298,7 @@ export default function TerminalView() {
         </div>
       </div>
 
-      <div className="table-to-cards">
+      <div className="overflow-x-auto table-to-cards">
         <table className="w-full">
           <thead>
             <tr className="border-b border-border">
@@ -1437,7 +1437,7 @@ export default function TerminalView() {
       <div className="space-y-6">
         <h2 className="text-2xl font-bold">Historial General de Movimientos</h2>
         <div className="neu-raised-sm p-4">
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
               <label className="text-[10px] font-bold mb-1 block uppercase">Desde</label>
               <input
@@ -1466,7 +1466,7 @@ export default function TerminalView() {
         </div>
         <div className="space-y-3">
           {filteredMovements.map(mov => (
-            <div key={mov.id} className="neu-card flex items-center justify-between hover:scale-[1.01] transition-transform">
+            <div key={mov.id} className="neu-card flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:scale-[1.01] transition-transform">
               <div className="flex items-center gap-4">
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${getMovementBadge(mov.movement_type)}`}>
                   {mov.movement_type === 'sale' ? <ArrowUpRight className="w-6 h-6" /> :
@@ -1512,7 +1512,7 @@ export default function TerminalView() {
         <div className="space-y-6">
             <h2 className="text-2xl font-bold">Auditoría del Sistema</h2>
             <div className="neu-raised-sm p-4">
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-4">
                     <div className="relative flex-1">
                         <input
                             type="date"
@@ -1533,7 +1533,7 @@ export default function TerminalView() {
                     </div>
                 </div>
             </div>
-            <div className="table-to-cards">
+            <div className="overflow-x-auto table-to-cards">
                 <table className="w-full">
                     <thead>
                         <tr className="border-b border-border">
@@ -1648,7 +1648,7 @@ export default function TerminalView() {
           Historial de Cierres de Caja
         </h3>
 
-        <div className="table-to-cards">
+        <div className="overflow-x-auto table-to-cards">
           <table className="w-full">
             <thead>
               <tr className="border-b border-border">
@@ -1712,7 +1712,7 @@ export default function TerminalView() {
         </button>
       </div>
 
-      <div className="table-to-cards">
+      <div className="overflow-x-auto table-to-cards">
         <table className="w-full">
           <thead>
             <tr className="border-b border-border">
@@ -1948,30 +1948,30 @@ export default function TerminalView() {
       {/* Main Content */}
       <main className="flex-1 min-h-screen">
         {/* Header */}
-        <header className="bg-background/80 backdrop-blur-lg p-2 sm:p-4 sticky top-0 z-30 border-b border-border">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+        <header className="bg-background/80 backdrop-blur-lg p-2 sm:p-4 sticky top-0 z-30 border-b border-border w-full">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 sm:gap-4 flex-1 overflow-hidden">
               <button
                 onClick={toggleSidebar}
-                className="neu-raised-sm w-10 h-10 flex items-center justify-center lg:hidden"
+                className="neu-raised-sm w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center lg:hidden shrink-0"
                 aria-label={sidebarOpen ? "Cerrar menú lateral" : "Abrir menú lateral"}
               >
-                {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                {sidebarOpen ? <X className="w-4 h-4 sm:w-5 sm:h-5" /> : <Menu className="w-4 h-4 sm:w-5 sm:h-5" />}
               </button>
               <div className="flex items-center gap-2 overflow-hidden">
-                <h1 className="text-lg sm:text-xl font-bold capitalize text-primary font-mono whitespace-nowrap">
+                <h1 className="text-base sm:text-xl font-bold capitalize text-primary font-mono whitespace-nowrap truncate max-w-[120px] sm:max-w-none">
                   {navigationItems.find(i => i.id === currentView)?.label || 'Dashboard'}
                 </h1>
                 <p className="hidden sm:block text-sm text-muted-foreground truncate">
-                  <span className="mx-1">•</span> Bienvenido, {user?.full_name}
+                  <span className="mx-1">•</span> {user?.full_name}
                 </p>
-                <p className="sm:hidden text-[10px] text-muted-foreground truncate max-w-[80px]">
-                   {user?.full_name?.split(' ')[0] || 'Usuario'}
+                <p className="sm:hidden text-[10px] text-muted-foreground truncate max-w-[60px]">
+                   {user?.full_name?.split(' ')[0]}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
               <button
                 onClick={toggleDarkMode}
                 className="neu-raised-sm w-10 h-10 flex items-center justify-center"
@@ -2075,7 +2075,7 @@ export default function TerminalView() {
                     <p className="text-sm text-muted-foreground">Cargando artículos...</p>
                   </div>
                 ) : (
-                  <div className="table-to-cards">
+                  <div className="overflow-x-auto table-to-cards">
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b text-muted-foreground text-left">
