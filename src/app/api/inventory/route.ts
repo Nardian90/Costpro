@@ -1,8 +1,18 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { supabase } from "@/lib/supabaseClient";
+import { getSupabaseAuthClient } from "@/lib/supabaseClient";
+import { getServerSession } from "@/lib/auth";
 import { InventoryItem } from "@/types/inventory";
 
 export async function GET(request: NextRequest) {
+  const session = await getServerSession(request);
+
+  if (!session || !session.token) {
+    return NextResponse.json(
+      { error: "Unauthorized", message: "No active session" },
+      { status: 401 }
+    );
+  }
+
   const { searchParams } = new URL(request.url);
   const page = parseInt(searchParams.get("page") || "1", 10);
   const pageSize = parseInt(searchParams.get("pageSize") || "20", 10);
@@ -13,7 +23,9 @@ export async function GET(request: NextRequest) {
   const to = from + pageSize - 1;
 
   try {
-    const query = supabase
+    const authClient = getSupabaseAuthClient(session.token);
+
+    const query = authClient
       .from("inventory")
       .select(
         `

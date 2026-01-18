@@ -1,11 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { supabase } from "@/lib/supabaseClient";
+import { getSupabaseAuthClient } from "@/lib/supabaseClient";
 import { getServerSession } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   const session = await getServerSession(request);
 
-  if (!session) {
+  if (!session || !session.token) {
     return NextResponse.json(
       { error: "Unauthorized", message: "No active session" },
       { status: 401 }
@@ -24,7 +24,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { data: saleId, error: rpcError } = await supabase.rpc("process_inventory_adjustment", {
+    const authClient = getSupabaseAuthClient(session.token);
+
+    const { data: saleId, error: rpcError } = await authClient.rpc("process_inventory_adjustment", {
       p_store_id: storeId,
       p_cashier_id: userId,
       p_items: items,
@@ -37,7 +39,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { data: saleItems, error: itemsError } = await supabase
+    const { data: saleItems, error: itemsError } = await authClient
       .from("sale_items")
       .select("*")
       .eq("sale_id", saleId);
