@@ -336,6 +336,24 @@ export interface SalesSummary {
   total_transfer: number;
 }
 
+export type Store = {
+  id: string;
+  name: string;
+  address: string;
+  is_active: boolean;
+  created_at: string;
+};
+
+export type Profile = {
+  id: string;
+  full_name: string;
+  email: string;
+  role: UserRole;
+  is_active: boolean;
+  store_id: string;
+  created_at: string;
+};
+
 export interface SalesKPIs {
     total_sales: number;
     total_cost: number;
