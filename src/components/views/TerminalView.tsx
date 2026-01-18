@@ -858,7 +858,7 @@ export default function TerminalView() {
       animate={{ opacity: 1, filter: 'blur(0px)' }}
       transition={{ duration: 0.5 }}
     >
-      <h2 className="text-2xl font-bold text-cyan-300 font-mono">Bento Grid Dashboard</h2>
+      <h2 className="text-2xl font-bold text-primary font-mono dark:text-cyan-300">Bento Grid Dashboard</h2>
 
       <motion.div
         className="grid grid-cols-1 md:grid-cols-3 gap-6"
@@ -875,70 +875,70 @@ export default function TerminalView() {
         animate="show"
       >
         {/* KPI Cards */}
-        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} className="md:col-span-1 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-lg">
+        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} className="md:col-span-1 neu-card p-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-cyan-200/50">Ventas Totales</span>
-            <TrendingUp className="w-5 h-5 text-green-400" />
+            <span className="text-sm text-muted-foreground dark:text-cyan-200/50">Ventas Totales</span>
+            <TrendingUp className="w-5 h-5 text-green-500 dark:text-green-400" />
           </div>
-          <div className="text-3xl font-bold text-white">${dashboardKPIs.gross_sales.toFixed(2)}</div>
-          <div className="text-sm text-cyan-200/50 mt-1">Hoy</div>
+          <div className="text-3xl font-bold text-foreground dark:text-white">${dashboardKPIs.gross_sales.toFixed(2)}</div>
+          <div className="text-sm text-muted-foreground dark:text-cyan-200/50 mt-1">Hoy</div>
         </motion.div>
         {user?.role !== 'clerk' && (
           <>
-            <motion.div variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} className="md:col-span-1 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-lg">
+            <motion.div variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} className="md:col-span-1 neu-card p-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-cyan-200/50">Costo de Ventas</span>
-                <Target className="w-5 h-5 text-yellow-400" />
+                <span className="text-sm text-muted-foreground dark:text-cyan-200/50">Costo de Ventas</span>
+                <Target className="w-5 h-5 text-yellow-500 dark:text-yellow-400" />
               </div>
-              <div className="text-3xl font-bold text-white">${dashboardKPIs.cost_of_goods.toFixed(2)}</div>
-              <div className="text-sm text-cyan-200/50 mt-1">Hoy</div>
+              <div className="text-3xl font-bold text-foreground dark:text-white">${dashboardKPIs.cost_of_goods.toFixed(2)}</div>
+              <div className="text-sm text-muted-foreground dark:text-cyan-200/50 mt-1">Hoy</div>
             </motion.div>
 
-            <motion.div variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} className="md:col-span-1 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-lg">
+            <motion.div variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} className="md:col-span-1 neu-card p-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-cyan-200/50">Utilidad</span>
-                <TrendingUp className="w-5 h-5 text-green-400" />
+                <span className="text-sm text-muted-foreground dark:text-cyan-200/50">Utilidad</span>
+                <TrendingUp className="w-5 h-5 text-green-500 dark:text-green-400" />
               </div>
-              <div className="text-3xl font-bold text-green-400">${dashboardKPIs.profit.toFixed(2)}</div>
-              <div className="text-sm text-cyan-200/50 mt-1">Hoy</div>
+              <div className="text-3xl font-bold text-green-600 dark:text-green-400">${dashboardKPIs.profit.toFixed(2)}</div>
+              <div className="text-sm text-muted-foreground dark:text-cyan-200/50 mt-1">Hoy</div>
             </motion.div>
           </>
         )}
 
         {/* Additional Stats */}
-        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} className="md:col-span-2 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-lg">
-          <h3 className="font-semibold mb-4 text-cyan-300 font-mono">Resumen de Ventas</h3>
-          <div className="space-y-4 text-gray-300">
+        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} className="md:col-span-2 neu-card p-4">
+          <h3 className="font-semibold mb-4 text-primary font-mono dark:text-cyan-300">Resumen de Ventas</h3>
+          <div className="space-y-4 text-foreground/80 dark:text-gray-300">
             <div className="flex justify-between">
               <span>Transacciones:</span>
-              <span className="font-bold text-white">{salesSummary.transaction_count}</span>
+              <span className="font-bold text-foreground dark:text-white">{salesSummary.transaction_count}</span>
             </div>
             <div className="flex justify-between">
               <span>Ticket Promedio:</span>
-              <span className="font-bold text-white">${salesSummary.average_ticket.toFixed(2)}</span>
+              <span className="font-bold text-foreground dark:text-white">${salesSummary.average_ticket.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
               <span>Efectivo:</span>
-              <span className="font-bold text-green-400">${salesSummary.total_cash.toFixed(2)}</span>
+              <span className="font-bold text-green-600 dark:text-green-400">${salesSummary.total_cash.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
               <span>Transferencias:</span>
-              <span className="font-bold text-cyan-400">${salesSummary.total_transfer.toFixed(2)}</span>
+              <span className="font-bold text-primary dark:text-cyan-400">${salesSummary.total_transfer.toFixed(2)}</span>
             </div>
           </div>
         </motion.div>
 
-        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} className="md:col-span-1 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-lg">
-          <h3 className="font-semibold mb-4 text-cyan-300 font-mono">Alertas de Stock</h3>
+        <motion.div variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} className="md:col-span-1 neu-card p-4">
+          <h3 className="font-semibold mb-4 text-primary font-mono dark:text-cyan-300">Alertas de Stock</h3>
           <div className="space-y-3">
             {products.filter(p => p.stock_current <= p.min_stock).map(product => (
-              <div key={product.id} className="rounded-lg border border-white/10 bg-white/5 p-3">
+              <div key={product.id} className="neu-inset-sm p-3">
                 <div className="flex justify-between items-center">
                   <div>
-                    <div className="font-medium text-white">{product.name}</div>
-                    <div className="text-sm text-gray-400">{product.sku}</div>
+                    <div className="font-medium text-foreground dark:text-white">{product.name}</div>
+                    <div className="text-sm text-muted-foreground dark:text-gray-400">{product.sku}</div>
                   </div>
-                  <div className="text-red-400 font-bold">{product.stock_current} uds</div>
+                  <div className="text-red-500 dark:text-red-400 font-bold">{product.stock_current} uds</div>
                 </div>
               </div>
             ))}
@@ -988,7 +988,7 @@ export default function TerminalView() {
                 <button
                   type="button"
                   onClick={() => setSearchTerm('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 rounded-full hover:bg-slate-200 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 rounded-full hover:bg-accent transition-colors"
                   aria-label="Limpiar búsqueda"
                 >
                   <X className="w-4 h-4" />
@@ -1027,7 +1027,7 @@ export default function TerminalView() {
               </button>
               ))
             ) : (
-              <div className="col-span-full py-20 text-center text-muted-foreground bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200">
+              <div className="col-span-full py-20 text-center text-muted-foreground bg-muted/20 rounded-2xl border-2 border-dashed border-border">
                 <Search className="w-12 h-12 mx-auto mb-3 opacity-20" />
                 <p className="text-lg font-medium">No se encontraron productos</p>
                 <p className="text-sm">Intenta buscar por nombre, categoría o SKU</p>
@@ -1958,12 +1958,15 @@ export default function TerminalView() {
               >
                 {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
-              <div>
-                <h1 className="text-xl font-bold capitalize text-primary font-mono">
+              <div className="flex items-center gap-2 overflow-hidden">
+                <h1 className="text-lg sm:text-xl font-bold capitalize text-primary font-mono whitespace-nowrap">
                   {navigationItems.find(i => i.id === currentView)?.label || 'Dashboard'}
                 </h1>
-                <p className="text-sm text-muted-foreground">
-                  Bienvenido, {user?.full_name}
+                <p className="hidden sm:block text-sm text-muted-foreground truncate">
+                  <span className="mx-1">•</span> Bienvenido, {user?.full_name}
+                </p>
+                <p className="sm:hidden text-[10px] text-muted-foreground truncate max-w-[80px]">
+                   {user?.full_name?.split(' ')[0] || 'Usuario'}
                 </p>
               </div>
             </div>
@@ -2014,22 +2017,23 @@ export default function TerminalView() {
 
       {/* Transaction Details Modal */}
       {selectedTransaction && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="rounded-xl border border-white/10 bg-black/50 backdrop-blur-lg max-w-2xl w-full max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-200 text-white">
-            <div className="flex justify-between items-center mb-4 p-4 border-b border-white/10">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="neu-card max-w-2xl w-full max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-200 shadow-2xl border-primary/20 p-0 overflow-hidden">
+            <div className="flex justify-between items-center p-4 border-b border-border bg-background/50">
               <div>
-                <h3 className="text-lg font-bold text-cyan-300">Detalle de Venta</h3>
-                <p className="text-xs text-cyan-200/50 font-mono">{selectedTransaction.id}</p>
+                <h3 className="text-lg font-bold text-primary dark:text-cyan-300">Detalle de Venta</h3>
+                <p className="text-xs text-muted-foreground font-mono">{selectedTransaction.id}</p>
               </div>
               <button
                 onClick={() => setSelectedTransaction(null)}
-                className="w-10 h-10 flex items-center justify-center rounded-lg border border-white/10 bg-white/5 hover:bg-white/10"
+                className="neu-raised-sm w-10 h-10 flex items-center justify-center hover:text-danger transition-colors"
+                aria-label="Cerrar modal"
               >
                 <X className="w-6 h-6" />
               </button>
             </div>
 
-            <div className="p-4 overflow-y-auto flex-1">
+            <div className="p-4 overflow-y-auto flex-1 text-foreground">
               {/* Transaction Summary */}
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
                 <div className="neu-inset-sm p-3">
@@ -2090,7 +2094,7 @@ export default function TerminalView() {
                           </tr>
                         ) : (
                           transactionItems.map((item) => (
-                            <tr key={item.id} className="border-b last:border-0 hover:bg-slate-50/50">
+                            <tr key={item.id} className="border-b last:border-0 hover:bg-accent/10 transition-colors">
                               <td className="py-3" data-label="Producto">
                                 <div className="font-medium">{item.products?.name || 'Producto desconocido'}</div>
                                 <div className="text-xs text-muted-foreground">{item.products?.sku || '-'}</div>
@@ -2114,7 +2118,7 @@ export default function TerminalView() {
                 <div className="mt-6 space-y-2 border-t pt-4 max-w-[280px] ml-auto">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Subtotal:</span>
-                    <span className="font-medium">${selectedTransaction.subtotal.toFixed(2)}</span>
+                    <span className="font-medium text-foreground">${selectedTransaction.subtotal.toFixed(2)}</span>
                   </div>
                   {selectedTransaction.discount_value > 0 && (
                     <div className="flex justify-between text-sm text-success font-bold">
@@ -2134,7 +2138,7 @@ export default function TerminalView() {
               )}
             </div>
 
-            <div className="p-4 border-t bg-slate-50 flex justify-end">
+            <div className="p-4 border-t bg-muted/30 flex justify-end">
               <button
                 onClick={() => setSelectedTransaction(null)}
                 className="neu-btn neu-btn-primary px-8 font-bold"
@@ -2409,7 +2413,7 @@ export default function TerminalView() {
                 type="email"
                 value={editingUser?.email || ''}
                 disabled
-                className="neu-input w-full bg-slate-100"
+                className="neu-input w-full bg-muted/50 cursor-not-allowed"
               />
             </div>
             <div>
