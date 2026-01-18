@@ -61,6 +61,8 @@ import type {
   DashboardKPIs,
   SalesSummary,
   AuditLog,
+  Store,
+  Profile,
 } from '@/types';
 import { toast } from 'sonner';
 import WarehouseView from '@/components/WarehouseView';
@@ -86,7 +88,8 @@ export default function HomePage() {
 
   const [products, setProducts] = useState<(Product & { product_variants?: any[] })[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<Profile[]>([]);
+  const [stores, setStores] = useState<Store[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [movements, setMovements] = useState<any[]>([]);
   const [cashClosures, setCashClosures] = useState<any[]>([]);
@@ -113,6 +116,7 @@ export default function HomePage() {
       fetchProducts();
       fetchTransactions();
       fetchUsers();
+      fetchStores();
       fetchAuditLogs();
       fetchMovements();
       fetchCashClosures();
@@ -195,6 +199,21 @@ export default function HomePage() {
       setUsers(data || []);
     } catch (error) {
       console.error('Error fetching users:', error);
+    }
+  };
+
+  const fetchStores = async () => {
+    if (!user || user.role !== 'admin') return;
+    try {
+      const { data, error } = await supabase
+        .from('stores')
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
+      setStores(data || []);
+    } catch (error) {
+      console.error('Error fetching stores:', error);
     }
   };
 
@@ -317,6 +336,12 @@ export default function HomePage() {
   const [isEditProductModalOpen, setIsEditProductModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [newVariantForm, setNewVariantForm] = useState({ name: '', price: 0, conversion_factor: 1 });
+  const [isEditStoreModalOpen, setIsEditStoreModalOpen] = useState(false);
+  const [editingStore, setEditingStore] = useState<Store | null>(null);
+  const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<Profile | null>(null);
+  const [isDeleteStoreModalOpen, setIsDeleteStoreModalOpen] = useState(false);
+  const [deletingStore, setDeletingStore] = useState<Store | null>(null);
 
   const [stockAdjustment, setStockAdjustment] = useState({ quantity: 0, reason: '' });
   const [receiptForm, setReceiptForm] = useState({ supplier: '', reference: '' });
@@ -555,6 +580,66 @@ export default function HomePage() {
       setEditingProduct({ ...editingProduct, product_variants: data || [] });
     } catch (error: any) {
       toast.error(error.message || 'Error al eliminar variante');
+    }
+  };
+
+  const handleUpdateStore = async () => {
+    if (!editingStore) return;
+    try {
+      const { error } = await supabase
+        .from('stores')
+        .update({
+          name: editingStore.name,
+          address: editingStore.address,
+        })
+        .eq('id', editingStore.id);
+
+      if (error) throw error;
+
+      toast.success('Tienda actualizada con éxito');
+      setIsEditStoreModalOpen(false);
+      fetchStores();
+    } catch (error: any) {
+      toast.error(error.message || 'Error al actualizar la tienda');
+    }
+  };
+
+  const handleDeleteStore = async () => {
+    if (!deletingStore) return;
+    try {
+      const { error } = await supabase
+        .from('stores')
+        .delete()
+        .eq('id', deletingStore.id);
+
+      if (error) throw error;
+
+      toast.success('Tienda eliminada con éxito');
+      setIsDeleteStoreModalOpen(false);
+      fetchStores();
+    } catch (error: any) {
+      toast.error(error.message || 'Error al eliminar la tienda');
+    }
+  };
+
+  const handleUpdateUser = async () => {
+    if (!editingUser) return;
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: editingUser.full_name,
+          role: editingUser.role,
+        })
+        .eq('id', editingUser.id);
+
+      if (error) throw error;
+
+      toast.success('Usuario actualizado con éxito');
+      setIsEditUserModalOpen(false);
+      fetchUsers();
+    } catch (error: any) {
+      toast.error(error.message || 'Error al actualizar el usuario');
     }
   };
 
@@ -1478,6 +1563,10 @@ export default function HomePage() {
                 <td data-label="Acciones" className="p-4">
                   <div className="flex justify-center gap-2">
                     <button
+                      onClick={() => {
+                        setEditingUser(u);
+                        setIsEditUserModalOpen(true);
+                      }}
                       className="neu-raised-sm w-8 h-8 flex items-center justify-center hover:bg-accent"
                       aria-label="Editar usuario"
                     >
@@ -1504,18 +1593,14 @@ export default function HomePage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[
-          { name: 'Tienda Central', address: 'Av. Principal #123', active: true },
-          { name: 'Sucursal Norte', address: 'Calle Norte #456', active: true },
-          { name: 'Sucursal Sur', address: 'Boulevard Sur #789', active: false },
-        ].map((store, i) => (
-          <div key={i} className="neu-card">
+        {stores.map((store) => (
+          <div key={store.id} className="neu-card">
             <div className="flex items-start justify-between mb-4">
               <div className="neu-raised-sm w-12 h-12 flex items-center justify-center">
                 <Building className="w-6 h-6 text-muted-foreground" />
               </div>
-              <span className={`neu-badge ${store.active ? 'text-success' : 'text-danger'}`}>
-                {store.active ? 'Activa' : 'Inactiva'}
+              <span className={`neu-badge ${store.is_active ? 'text-success' : 'text-danger'}`}>
+                {store.is_active ? 'Activa' : 'Inactiva'}
               </span>
             </div>
 
@@ -1524,12 +1609,20 @@ export default function HomePage() {
 
             <div className="flex gap-2">
               <button
+                onClick={() => {
+                  setEditingStore(store);
+                  setIsEditStoreModalOpen(true);
+                }}
                 className="neu-btn neu-raised-sm flex-1 text-sm"
                 aria-label="Editar tienda"
               >
                 <Edit className="w-4 h-4" />
               </button>
               <button
+                onClick={() => {
+                  setDeletingStore(store);
+                  setIsDeleteStoreModalOpen(true);
+                }}
                 className="neu-btn neu-raised-sm flex-1 text-sm text-danger"
                 aria-label="Eliminar tienda"
               >
@@ -2036,6 +2129,134 @@ export default function HomePage() {
               className="neu-btn w-full"
             >
               Cerrar
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Store Modal */}
+      <Dialog open={isEditStoreModalOpen} onOpenChange={setIsEditStoreModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar Tienda</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Nombre de la Tienda</label>
+              <input
+                type="text"
+                value={editingStore?.name || ''}
+                onChange={(e) => setEditingStore({ ...editingStore, name: e.target.value })}
+                className="neu-input w-full"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Dirección</label>
+              <input
+                type="text"
+                value={editingStore?.address || ''}
+                onChange={(e) => setEditingStore({ ...editingStore, address: e.target.value })}
+                className="neu-input w-full"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => setIsEditStoreModalOpen(false)}
+              className="neu-btn"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleUpdateStore}
+              className="neu-btn neu-btn-primary"
+            >
+              Guardar Cambios
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit User Modal */}
+      <Dialog open={isEditUserModalOpen} onOpenChange={setIsEditUserModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar Usuario</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Nombre Completo</label>
+              <input
+                type="text"
+                value={editingUser?.full_name || ''}
+                onChange={(e) => setEditingUser({ ...editingUser, full_name: e.target.value })}
+                className="neu-input w-full"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Email</label>
+              <input
+                type="email"
+                value={editingUser?.email || ''}
+                disabled
+                className="neu-input w-full bg-slate-100"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Rol</label>
+              <select
+                value={editingUser?.role || ''}
+                onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value })}
+                className="neu-input w-full"
+              >
+                <option value="clerk">Cajero</option>
+                <option value="manager">Encargado</option>
+                <option value="warehouse">Almacén</option>
+                <option value="admin">Administrador</option>
+              </select>
+            </div>
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => setIsEditUserModalOpen(false)}
+              className="neu-btn"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleUpdateUser}
+              className="neu-btn neu-btn-primary"
+            >
+              Guardar Cambios
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Store Confirmation Modal */}
+      <Dialog open={isDeleteStoreModalOpen} onOpenChange={setIsDeleteStoreModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirmar Eliminación</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p>
+              ¿Estás seguro de que deseas eliminar la tienda{" "}
+              <strong>{deletingStore?.name}</strong>? Esta acción no se puede deshacer.
+            </p>
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => setIsDeleteStoreModalOpen(false)}
+              className="neu-btn"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleDeleteStore}
+              className="neu-btn neu-btn-danger"
+            >
+              Eliminar
             </button>
           </DialogFooter>
         </DialogContent>
