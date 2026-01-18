@@ -1,12 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { supabase } from "@/lib/supabaseClient";
+import { getSupabaseAuthClient } from "@/lib/supabaseClient";
 import { AdjustInventoryResponse } from "@/types/inventory";
 import { getServerSession } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   const session = await getServerSession(request);
 
-  if (!session) {
+  if (!session || !session.token) {
     return NextResponse.json(
       { error: "Unauthorized", message: "No active session" },
       { status: 401 }
@@ -26,7 +26,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { data, error } = await supabase.rpc("register_stock_movement", {
+    const authClient = getSupabaseAuthClient(session.token);
+
+    const { data, error } = await authClient.rpc("register_stock_movement", {
       p_store_id: storeId,
       p_product_id: productId,
       p_quantity_change: quantity,
@@ -38,7 +40,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       if (error.message.includes("Concurrency error")) {
-        const { data: currentInventory } = await supabase
+        const { data: currentInventory } = await authClient
           .from("inventory")
           .select("quantity, version")
           .eq("product_id", productId)
