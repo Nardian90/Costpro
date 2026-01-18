@@ -844,18 +844,18 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
     if (initialView === 'history') {
         return (
             <div className="space-y-6 h-full flex flex-col">
-                <div className="flex items-center justify-between shrink-0">
-                    <h2 className="text-2xl font-bold text-foreground border-l-4 border-primary pl-4">Historial de Recepciones</h2>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
+                    <h2 className="text-xl sm:text-2xl font-bold text-foreground border-l-4 border-primary pl-4">Historial de Recepciones</h2>
                     <button
                         onClick={fetchReceiptsHistory}
-                        className="neu-btn neu-raised-sm text-xs font-bold"
+                        className="neu-btn neu-raised-sm text-xs font-bold w-full sm:w-auto"
                     >
                         Actualizar
                     </button>
                 </div>
 
                 <div className="flex-1 overflow-auto neu-inset-sm bg-card rounded-xl p-0">
-                    <div className="table-to-cards">
+                    <div className="overflow-x-auto table-to-cards">
                         <table className="w-full text-sm">
                             <thead className="sticky top-0 bg-muted/50 z-10 border-b">
                                 <tr className="text-left text-muted-foreground uppercase text-[10px] font-bold">
@@ -1024,7 +1024,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
             <div className="flex flex-col lg:flex-row flex-1 gap-4 lg:gap-6 overflow-hidden min-h-0">
                 {/* Tabla de Productos - Responsive Card View */}
                 <div className="flex-1 overflow-auto">
-                    <div className="table-to-cards">
+                    <div className="overflow-x-auto table-to-cards">
                         <table className="w-full">
                             <thead className="sticky top-0 bg-background z-10 shadow-sm">
                                 <tr className="border-b border-border">
@@ -1040,7 +1040,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                             <tbody>
                                 {products.length === 0 && !loading ? (
                                     <tr>
-                                        <td colSpan={7} className="p-12 text-center text-muted-foreground">
+                                        <td colSpan={7} className="p-6 sm:p-12 text-center text-muted-foreground">
                                             <Package className="w-12 h-12 mx-auto mb-3 opacity-20" />
                                             <p>No se encontraron productos en el inventario.</p>
                                         </td>
@@ -1287,7 +1287,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                                             {tx.reference_id && (
                                                 <button
                                                     onClick={() => handlePrintReceipt(tx.reference_id)}
-                                                    className="neu-btn neu-btn-primary flex items-center gap-2 px-3 py-1.5 text-[10px] mx-auto"
+                                                        className="neu-btn neu-btn-primary flex items-center gap-2 px-4 py-2 text-xs mx-auto"
                                                     title="Previsualizar Recepción"
                                                 >
                                                     <FileText className="w-3 h-3" />
