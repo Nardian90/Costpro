@@ -61,6 +61,7 @@ export interface Store {
   id: string;
   name: string;
   address: string | null;
+  logo_url: string | null;
   is_active: boolean;
   created_at: string;
 }
@@ -336,13 +337,6 @@ export interface SalesSummary {
   total_transfer: number;
 }
 
-export type Store = {
-  id: string;
-  name: string;
-  address: string;
-  is_active: boolean;
-  created_at: string;
-};
 
 export type Profile = {
   id: string;
