@@ -1948,7 +1948,7 @@ export default function TerminalView() {
       {/* Main Content */}
       <main className="flex-1 min-h-screen">
         {/* Header */}
-        <header className="bg-background/80 backdrop-blur-lg p-4 sticky top-0 z-30 border-b border-border">
+        <header className="bg-background/80 backdrop-blur-lg p-2 sm:p-4 sticky top-0 z-30 border-b border-border">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button
@@ -1998,7 +1998,7 @@ export default function TerminalView() {
         </header>
 
         {/* Content */}
-        <div className="p-4 md:p-6 pb-20">
+        <div className="p-2 md:p-6 pb-20">
           {renderView()}
         </div>
       </main>

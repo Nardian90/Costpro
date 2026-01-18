@@ -989,8 +989,8 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
             </div>
 
             {/* Filtros */}
-            <div className="neu-raised-sm p-4 shrink-0">
-                <div className="flex gap-4">
+            <div className="neu-raised-sm p-2 sm:p-4 shrink-0">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                         <input
@@ -1002,12 +1002,12 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                             aria-label="Buscar productos por nombre o SKU"
                         />
                     </div>
-                    <div className="relative">
+                    <div className="relative w-full sm:w-auto">
                         <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                         <select
                             value={selectedCategory}
                             onChange={(e) => setSelectedCategory(e.target.value)}
-                            className="neu-input w-full pl-10"
+                            className="neu-input w-full pl-10 pr-4"
                         >
                             <option value="">Todas las categorías</option>
                             {[...new Set(products.map(p => p.category))].map(category => (
@@ -1019,9 +1019,9 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
             </div>
 
             {/* Main Content Area - Stacked Col on Mobile, Row on Desktop */}
-            <div className="flex flex-col lg:flex-row flex-1 gap-6 overflow-hidden min-h-0">
+            <div className="flex flex-col lg:flex-row flex-1 gap-4 lg:gap-6 overflow-hidden min-h-0">
                 {/* Tabla de Productos - Responsive Card View */}
-                <div className="flex-1 overflow-auto pr-2">
+                <div className="flex-1 overflow-auto">
                     <div className="table-to-cards">
                         <table className="w-full">
                             <thead className="sticky top-0 bg-background z-10 shadow-sm">
