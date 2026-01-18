@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useAuthStore } from '@/store';
 import { useRouter } from 'next/navigation';
 import { Package2, Eye, EyeOff, LogIn } from 'lucide-react';
@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const login = useAuthStore((state) => state.login);
   const router = useRouter();
@@ -110,7 +111,7 @@ export default function LoginPage() {
             Iniciar Sesión
           </h2>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium mb-2">
                 Correo Electrónico
@@ -192,6 +193,9 @@ export default function LoginPage() {
                   onClick={() => {
                     setEmail(account.email);
                     setPassword('demo123');
+                    setTimeout(() => {
+                      formRef.current?.requestSubmit();
+                    }, 100);
                   }}
                   className="neu-raised-sm w-full text-left p-2 hover:bg-accent transition-colors text-sm"
                 >
