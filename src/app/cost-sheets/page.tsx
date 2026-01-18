@@ -1,62 +1,55 @@
 
 'use client';
 
-import React, { useState } from 'react';
-import template from '@/lib/data/costpro-full.json';
+import React from 'react';
+import CostSheetBody from '@/components/cost-sheets/CostSheetBody';
+import CostSheetHeader from '@/components/cost-sheets/CostSheetHeader';
+import CostSheetSignature from '@/components/cost-sheets/CostSheetSignature';
+import CostSheetAnnexes from '@/components/cost-sheets/CostSheetAnnexes';
 import { useCostSheetCalculator } from '@/hooks/useCostSheetCalculator';
-import AnnexView from '@/components/cost-sheets/AnnexView';
+import template from '@/lib/data/costpro-full.json';
 
-const CostSheetCalculatorPage = () => {
-  const [annexData, setAnnexData] = useState({});
-  const { sections, updateRowValue } = useCostSheetCalculator({ template, annexData });
+const CostSheetPage = () => {
+  // The hook is now correctly called with the template data.
+  const { calculatedValues } = useCostSheetCalculator(template);
+
+  // The main data structure comes directly from the imported template.
+  const data = template;
+
+  if (!data) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-2xl font-semibold">Cargando Ficha de Costo...</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">{template.name}</h1>
-
-      <div className="space-y-8">
-        <div>
-          <h2 className="text-xl font-bold mb-4">Anexos</h2>
-          <AnnexView onAnnexDataChange={setAnnexData} />
-        </div>
-
-        <div>
-          <h2 className="text-xl font-bold mb-4">Ficha de Costo</h2>
-          <div className="space-y-4">
-            {sections.map(section => (
-              <div key={section.id} className="p-4 border rounded">
-                <h3 className="text-lg font-semibold">{section.label}</h3>
-                <table className="w-full mt-2 text-sm">
-                  <thead>
-                    <tr>
-                      <th className="text-left p-2 border-b">Concepto</th>
-                      <th className="text-right p-2 border-b">Valor</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {section.rows.map(row => (
-                      <tr key={row.id}>
-                        <td className="p-1">{row.label}</td>
-                        <td className="p-1 text-right">
-                          <input
-                            type="number"
-                            value={row.value}
-                            onChange={(e) => updateRowValue(row.id, parseFloat(e.target.value) || 0)}
-                            className="w-full text-right bg-transparent border-b"
-                            readOnly={row.readonly || row.formula}
-                          />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ))}
-          </div>
-        </div>
+    <div className="container mx-auto p-4 sm:p-6 lg:p-8 bg-white text-gray-900">
+      <div className="max-w-4xl mx-auto">
+        <CostSheetHeader header={data.header} />
+        <main className="my-6">
+          {/*
+            The CostSheetBody now receives the main sections from the template
+            and the calculatedValues from our powerful hook.
+          */}
+          <CostSheetBody
+            sections={data.sections}
+            calculatedValues={calculatedValues}
+          />
+          {/*
+            The annexes are passed directly from the template data, as their
+            internal calculations are handled by the component itself.
+          */}
+          <CostSheetAnnexes
+            annexes={data.annexes}
+          />
+        </main>
+        {/* The signature data is spread into the component props. */}
+        <CostSheetSignature {...data.signature} />
       </div>
     </div>
   );
 };
 
-export default CostSheetCalculatorPage;
+export default CostSheetPage;
