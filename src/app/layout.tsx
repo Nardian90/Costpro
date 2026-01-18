@@ -22,13 +22,8 @@ export const metadata: Metadata = {
   authors: [{ name: "Costpro Team" }],
   manifest: "/manifest.json",
   icons: {
-    icon: [
-      { url: "/logo.svg", type: "image/svg+xml" },
-      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
-    ],
-    apple: [
-      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
-    ],
+    icon: '/icon.svg',
+    apple: '/icon.svg',
   },
   openGraph: {
     title: "Costpro Enterprise",
