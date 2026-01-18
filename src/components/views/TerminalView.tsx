@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuthStore, useCartStore, useUIStore } from '@/store';
 import { useRouter } from 'next/navigation';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
@@ -88,6 +88,7 @@ export default function TerminalView() {
   const { items, addItem, removeItem, updateQuantity, clearCart, setDiscount, getTotal, getSubtotal, getItemCount, discount } = useCartStore();
 
   const [showCart, setShowCart] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const [products, setProducts] = useState<(Product & { product_variants?: any[] })[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -451,6 +452,22 @@ export default function TerminalView() {
     const timer = setTimeout(() => setShowSplash(false), 3000);
     return () => clearTimeout(timer);
   }, []);
+
+  // Keyboard shortcuts for POS
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Focus search on '/' key only if not in an input and we are in POS view
+      if (e.key === '/' &&
+          (e.target as HTMLElement).tagName !== 'INPUT' &&
+          (e.target as HTMLElement).tagName !== 'TEXTAREA' &&
+          currentView === 'pos') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentView]);
 
   if (loading || showSplash) {
     return (
@@ -956,6 +973,7 @@ export default function TerminalView() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input
+                ref={searchInputRef}
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -977,14 +995,15 @@ export default function TerminalView() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {filteredProducts.map(product => (
-              <button
-                key={product.id}
-                type="button"
-                className="neu-card p-4 cursor-pointer hover:scale-105 transition-transform w-full text-left focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
-                onClick={() => addToCart(product)}
-                aria-label={`Agregar ${product.name} al carrito. Precio: $${product.price.toFixed(2)}. Stock disponible: ${product.stock_current}`}
-              >
+            {filteredProducts.length > 0 ? (
+              filteredProducts.map(product => (
+                <button
+                  key={product.id}
+                  type="button"
+                  className="neu-card p-4 cursor-pointer hover:scale-105 transition-transform w-full text-left focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                  onClick={() => addToCart(product)}
+                  aria-label={`Agregar ${product.name} al carrito. Precio: $${product.price.toFixed(2)}. Stock disponible: ${product.stock_current}`}
+                >
                 <div className="neu-raised-sm w-16 h-16 mx-auto mb-3 flex items-center justify-center overflow-hidden">
                   {product.public_image_url ? (
                     <img
@@ -1003,7 +1022,22 @@ export default function TerminalView() {
                   <div className="text-xs text-muted-foreground">Stock: {product.stock_current}</div>
                 </div>
               </button>
-            ))}
+              ))
+            ) : (
+              <div className="col-span-full py-20 text-center text-muted-foreground bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200">
+                <Search className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                <p className="text-lg font-medium">No se encontraron productos</p>
+                <p className="text-sm">Intenta buscar por nombre, categoría o SKU</p>
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm('')}
+                    className="mt-4 text-primary font-bold hover:underline"
+                  >
+                    Ver todos los productos
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
