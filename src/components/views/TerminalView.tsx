@@ -45,6 +45,7 @@ import {
   ClipboardList,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import CostProLogo from '@/components/CostProLogo';
 import {
   Dialog,
   DialogContent,
@@ -97,6 +98,7 @@ export default function TerminalView() {
   const [cashClosures, setCashClosures] = useState<any[]>([]);
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
 
   const [dashboardKPIs, setDashboardKPIs] = useState<DashboardKPIs>({
     gross_sales: 0,
@@ -445,10 +447,15 @@ export default function TerminalView() {
     });
   }, [auditLogs, dateRange]);
 
-  if (loading) {
+  useEffect(() => {
+    const timer = setTimeout(() => setShowSplash(false), 3000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading || showSplash) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <CostProLogo size={160} />
       </div>
     );
   }
@@ -1868,15 +1875,7 @@ export default function TerminalView() {
         <div className="bg-black/30 backdrop-blur-lg h-full flex flex-col">
           {/* Logo */}
           <div className="p-4 border-b border-white/10">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 flex items-center justify-center rounded-lg border border-white/10 bg-white/5">
-                <Package className="w-6 h-6 text-cyan-300" />
-              </div>
-              <div>
-                <h1 className="font-bold text-white">COSTPRO</h1>
-                <p className="text-xs text-cyan-200/50">v2.0</p>
-              </div>
-            </div>
+            <CostProLogo size={40} animated={false} />
           </div>
 
           {/* Navigation */}
