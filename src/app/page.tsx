@@ -5,7 +5,7 @@ import { useAuthStore, useCartStore, useUIStore } from '@/store';
 import { useRouter } from 'next/navigation';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { supabase } from '@/lib/supabaseClient';
-import { getProductImageUrl } from '@/lib/utils';
+import { getSupabaseUrl } from '@/lib/utils';
 import {
   Package,
   ShoppingCart,
@@ -286,6 +286,52 @@ export default function HomePage() {
     }
   };
 
+  const getProductImageUrl = (product: Product) => {
+    return getSupabaseUrl('product-images', product.image_url);
+  };
+
+  const getStoreLogoUrl = (store: Store) => {
+    return getSupabaseUrl('store-logos', store.logo_url);
+  };
+
+  const handleUpdateStoreLogo = async (file: File) => {
+    if (!editingStore) return;
+    if (file.size > 1 * 1024 * 1024) { // 1MB limit
+      toast.error('El logo no debe superar 1MB');
+      return;
+    }
+
+    const toastId = toast.loading('Subiendo logo...');
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${editingStore.id}-${Date.now()}.${fileExt}`;
+
+      // Upload to 'store-logos' bucket
+      const { error: uploadError } = await supabase.storage
+        .from('store-logos')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: true, // Overwrite if exists for the same store
+        });
+
+      if (uploadError) throw uploadError;
+
+      // Update the store's logo_url
+      const { error: updateError } = await supabase
+        .from('stores')
+        .update({ logo_url: fileName })
+        .eq('id', editingStore.id);
+
+      if (updateError) throw updateError;
+
+      toast.success('Logo actualizado', { id: toastId });
+      setEditingStore({ ...editingStore, logo_url: fileName });
+      fetchStores(); // Refresh stores list
+    } catch (error: any) {
+      toast.error(error.message || 'Error al subir el logo', { id: toastId });
+    }
+  };
+
   const fetchDashboardData = async () => {
     if (!user) return;
 
@@ -332,6 +378,11 @@ export default function HomePage() {
   const [editingUser, setEditingUser] = useState<Profile | null>(null);
   const [isDeleteStoreModalOpen, setIsDeleteStoreModalOpen] = useState(false);
   const [deletingStore, setDeletingStore] = useState<Store | null>(null);
+  const [isCreateStoreModalOpen, setIsCreateStoreModalOpen] = useState(false);
+  const [newStore, setNewStore] = useState({ name: '', address: '' });
+  const [newStoreLogo, setNewStoreLogo] = useState<File | null>(null);
+  const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
+  const [newUser, setNewUser] = useState({ full_name: '', email: '', password: '', role: 'clerk' });
 
   const [stockAdjustment, setStockAdjustment] = useState({ quantity: 0, reason: '' });
   const [receiptForm, setReceiptForm] = useState({ supplier: '', reference: '' });
@@ -594,6 +645,57 @@ export default function HomePage() {
     }
   };
 
+  const handleCreateStore = async () => {
+    const toastId = toast.loading('Creando tienda...');
+    try {
+      // Step 1: Create the store record
+      const { data: storeData, error: createError } = await supabase
+        .from('stores')
+        .insert([{ name: newStore.name, address: newStore.address }])
+        .select()
+        .single();
+
+      if (createError) throw createError;
+
+      // Step 2: If a logo is selected, upload it
+      if (newStoreLogo) {
+        const fileExt = newStoreLogo.name.split('.').pop();
+        const fileName = `${storeData.id}-${Date.now()}.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('store-logos')
+          .upload(fileName, newStoreLogo, {
+            cacheControl: '3600',
+            upsert: false,
+          });
+
+        if (uploadError) {
+          // If upload fails, the store is already created. We can either delete it or just warn the user.
+          // For now, we'll warn and let them edit to add the logo later.
+          toast.warning('Tienda creada, pero falló la subida del logo. Puede agregarlo editando la tienda.');
+        } else {
+          // Step 3: Update the store record with the logo URL
+          const { error: updateError } = await supabase
+            .from('stores')
+            .update({ logo_url: fileName })
+            .eq('id', storeData.id);
+
+          if (updateError) {
+            toast.warning('Tienda creada, pero no se pudo guardar el logo. Intente de nuevo editando la tienda.');
+          }
+        }
+      }
+
+      toast.success('Tienda creada con éxito', { id: toastId });
+      setIsCreateStoreModalOpen(false);
+      setNewStore({ name: '', address: '' });
+      setNewStoreLogo(null);
+      fetchStores();
+    } catch (error: any) {
+      toast.error(error.message || 'Error al crear la tienda', { id: toastId });
+    }
+  };
+
   const handleDeleteStore = async () => {
     if (!deletingStore) return;
     try {
@@ -630,6 +732,32 @@ export default function HomePage() {
       fetchUsers();
     } catch (error: any) {
       toast.error(error.message || 'Error al actualizar el usuario');
+    }
+  };
+
+  const handleCreateUser = async () => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: newUser.email,
+        password: newUser.password,
+        options: {
+          data: {
+            full_name: newUser.full_name,
+            role: newUser.role,
+          },
+        },
+      });
+
+      if (error) throw error;
+
+      // The user is created, but we might need to manually add them to the profiles table
+      // if the trigger isn't set up. Assuming a trigger handles profile creation.
+      toast.success('Usuario creado con éxito');
+      setIsCreateUserModalOpen(false);
+      setNewUser({ full_name: '', email: '', password: '', role: 'clerk' });
+      fetchUsers();
+    } catch (error: any) {
+      toast.error(error.message || 'Error al crear el usuario');
     }
   };
 
@@ -1515,7 +1643,10 @@ export default function HomePage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Gestión de Usuarios</h2>
-        <button className="neu-btn neu-btn-primary flex items-center gap-2">
+        <button
+          onClick={() => setIsCreateUserModalOpen(true)}
+          className="neu-btn neu-btn-primary flex items-center gap-2"
+        >
           <Plus className="w-4 h-4" />
           Nuevo Usuario
         </button>
@@ -1576,7 +1707,10 @@ export default function HomePage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Gestión de Tiendas</h2>
-        <button className="neu-btn neu-btn-primary flex items-center gap-2">
+        <button
+          onClick={() => setIsCreateStoreModalOpen(true)}
+          className="neu-btn neu-btn-primary flex items-center gap-2"
+        >
           <Plus className="w-4 h-4" />
           Nueva Tienda
         </button>
@@ -2149,6 +2283,37 @@ export default function HomePage() {
                 className="neu-input w-full"
               />
             </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Logo de la Tienda</label>
+              <div className="flex flex-col items-center gap-4">
+                <div className="neu-raised-sm w-32 h-32 flex items-center justify-center overflow-hidden">
+                  {editingStore?.logo_url ? (
+                    <img
+                      src={getStoreLogoUrl(editingStore) || ''}
+                      alt={editingStore.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <Building className="w-16 h-16 text-muted-foreground" />
+                  )}
+                </div>
+                <input
+                  type="file"
+                  id="store-logo-upload"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleUpdateStoreLogo(file);
+                  }}
+                />
+                <label
+                  htmlFor="store-logo-upload"
+                  className="neu-btn text-sm cursor-pointer"
+                >
+                  Cambiar Logo
+                </label>
+              </div>
+            </div>
           </div>
           <DialogFooter>
             <button
@@ -2247,6 +2412,123 @@ export default function HomePage() {
               className="neu-btn neu-btn-danger"
             >
               Eliminar
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Store Modal */}
+      <Dialog open={isCreateStoreModalOpen} onOpenChange={setIsCreateStoreModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Nueva Tienda</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Nombre de la Tienda</label>
+              <input
+                type="text"
+                value={newStore.name}
+                onChange={(e) => setNewStore({ ...newStore, name: e.target.value })}
+                className="neu-input w-full"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Dirección</label>
+              <input
+                type="text"
+                value={newStore.address}
+                onChange={(e) => setNewStore({ ...newStore, address: e.target.value })}
+                className="neu-input w-full"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Logo (Opcional)</label>
+              <input
+                type="file"
+                onChange={(e) => setNewStoreLogo(e.target.files ? e.target.files[0] : null)}
+                className="neu-input w-full"
+                accept="image/png, image/jpeg, image/svg+xml"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => setIsCreateStoreModalOpen(false)}
+              className="neu-btn"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleCreateStore}
+              className="neu-btn neu-btn-primary"
+            >
+              Crear Tienda
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create User Modal */}
+      <Dialog open={isCreateUserModalOpen} onOpenChange={setIsCreateUserModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Nuevo Usuario</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Nombre Completo</label>
+              <input
+                type="text"
+                value={newUser.full_name}
+                onChange={(e) => setNewUser({ ...newUser, full_name: e.target.value })}
+                className="neu-input w-full"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Email</label>
+              <input
+                type="email"
+                value={newUser.email}
+                onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                className="neu-input w-full"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Contraseña</label>
+              <input
+                type="password"
+                value={newUser.password}
+                onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                className="neu-input w-full"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Rol</label>
+              <select
+                value={newUser.role}
+                onChange={(e) => setNewUser({ ...newUser, role: e.target.value as UserRole })}
+                className="neu-input w-full"
+              >
+                <option value="clerk">Cajero</option>
+                <option value="manager">Encargado</option>
+                <option value="warehouse">Almacén</option>
+                <option value="admin">Administrador</option>
+              </select>
+            </div>
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => setIsCreateUserModalOpen(false)}
+              className="neu-btn"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleCreateUser}
+              className="neu-btn neu-btn-primary"
+            >
+              Crear Usuario
             </button>
           </DialogFooter>
         </DialogContent>

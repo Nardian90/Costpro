@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import { getSupabaseUrl } from '@/lib/utils';
 import { useAuthStore, useCartStore } from '@/store';
 import {
     Package,
@@ -131,6 +132,10 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
         });
     }, [searchTerm, selectedCategory, products]);
 
+    const getProductImageUrl = (product: Product) => {
+        return getSupabaseUrl('product-images', product.image_url);
+    };
+
     const fetchRecentReceptions = async () => {
         if (!user) return;
         try {
@@ -247,28 +252,38 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
         if (!receiptId) return;
         const toastId = toast.loading('Preparando reporte...');
         try {
-            // Obtener el receipt y sus items
             const { data: receipt, error: rError } = await supabase
                 .from('receipts')
                 .select('*')
                 .eq('id', receiptId)
                 .single();
-
             if (rError) throw rError;
 
             const { data: items, error: iError } = await supabase
                 .from('receipt_items')
-                .select(`
-                    *,
-                    product:products (name, sku)
-                `)
+                .select('*, product:products (name, sku)')
                 .eq('receipt_id', receiptId);
-
             if (iError) throw iError;
 
-            // Generar vista de impresión
+            let storeData = null;
+            if (user?.store_id) {
+                const { data: store, error: storeError } = await supabase
+                    .from('stores')
+                    .select('name, logo_url')
+                    .eq('id', user.store_id)
+                    .single();
+                if (storeError) console.warn('No se pudo cargar la tienda:', storeError);
+                else storeData = store;
+            }
+
+            const logoUrl = getSupabaseUrl('store-logos', storeData?.logo_url);
+
             const printWindow = window.open('', '_blank');
             if (!printWindow) return;
+
+            const logoHtml = logoUrl
+                ? `<img src="${logoUrl}" alt="Logo" style="max-height: 80px; max-width: 200px; margin-right: 20px;">`
+                : '';
 
             const html = `
                 <html>
@@ -276,47 +291,36 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                     <title>Reporte de Recepción - ${receipt.reference_doc}</title>
                     <style>
                         body { font-family: sans-serif; padding: 40px; color: #333; }
-                        .header { display: flex; justify-between: space-between; border-bottom: 2px solid #333; padding-bottom: 20px; }
-                        .title { font-size: 24px; font-bold: bold; }
+                        .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #333; padding-bottom: 20px; }
+                        .title-section { flex-grow: 1; }
+                        .title { font-size: 24px; font-weight: bold; }
                         .details { margin: 20px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
                         table { width: 100%; border-collapse: collapse; margin-top: 30px; }
                         th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-                        th { bg-color: #f5f5f5; }
+                        th { background-color: #f5f5f5; }
                         .footer { margin-top: 50px; display: grid; grid-template-columns: 1fr 1fr; gap: 100px; text-align: center; }
                         .sign-line { border-top: 1px solid #333; margin-top: 40px; padding-top: 10px; }
-                        @media print { .no-print { display: none; } }
                     </style>
                 </head>
                 <body>
                     <div class="header">
-                        <div>
+                        ${logoHtml}
+                        <div class="title-section">
                             <div class="title">REPORTE DE RECEPCIÓN</div>
                             <div>Folio/Factura: <strong>${receipt.reference_doc}</strong></div>
                         </div>
-                        <div style="text-align: right">
+                        <div style="text-align: right; white-space: nowrap;">
                             <div>Fecha: ${new Date(receipt.created_at).toLocaleDateString()}</div>
                             <div>Estado: ${receipt.status.toUpperCase()}</div>
                         </div>
                     </div>
-
                     <div class="details">
-                        <div>
-                            <strong>Proveedor:</strong><br>${receipt.notes || 'N/A'}
-                        </div>
-                        <div>
-                            <strong>Tienda:</strong><br>${user?.store_id || 'Principal'}
-                        </div>
+                        <div><strong>Proveedor:</strong><br>${receipt.notes || 'N/A'}</div>
+                        <div><strong>Tienda:</strong><br>${storeData?.name || user?.store_id || 'Principal'}</div>
                     </div>
-
                     <table>
                         <thead>
-                            <tr>
-                                <th>Producto</th>
-                                <th>SKU</th>
-                                <th>Cantidad</th>
-                                <th>Costo Unit.</th>
-                                <th>Total</th>
-                            </tr>
+                            <tr><th>Producto</th><th>SKU</th><th>Cantidad</th><th>Costo Unit.</th><th>Total</th></tr>
                         </thead>
                         <tbody>
                             ${items.map((item: any) => `
@@ -326,8 +330,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                                     <td>${item.quantity}</td>
                                     <td>$${item.unit_cost.toFixed(2)}</td>
                                     <td>$${(item.quantity * item.unit_cost).toFixed(2)}</td>
-                                </tr>
-                            `).join('')}
+                                </tr>`).join('')}
                         </tbody>
                         <tfoot>
                             <tr>
@@ -336,18 +339,12 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                             </tr>
                         </tfoot>
                     </table>
-
                     <div class="footer">
-                        <div>
-                            <div class="sign-line">Firma Entregado (Proveedor)</div>
-                        </div>
-                        <div>
-                            <div class="sign-line">Firma Recibido (Almacén)</div>
-                        </div>
+                        <div><div class="sign-line">Firma Entregado (Proveedor)</div></div>
+                        <div><div class="sign-line">Firma Recibido (Almacén)</div></div>
                     </div>
                 </body>
-                </html>
-            `;
+                </html>`;
 
             printWindow.document.write(html);
             printWindow.document.close();
@@ -357,7 +354,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
             }, 500);
 
         } catch (err: any) {
-            toast.error('Error al generar PDF: ' + err.message, { id: toastId });
+            toast.error('Error al generar reporte: ' + err.message, { id: toastId });
         }
     };
 
