@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuthStore, useCartStore, useUIStore } from '@/store';
 import { useRouter } from 'next/navigation';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
@@ -68,6 +68,7 @@ import type {
 import { toast } from 'sonner';
 import WarehouseView from '@/components/WarehouseView';
 import InventoryCountView from '@/components/InventoryCountView';
+import ProductCard from '@/components/ProductCard';
 
 export default function HomePage() {
   const router = useRouter();
@@ -456,7 +457,7 @@ export default function HomePage() {
     return null;
   }
 
-  const addToCart = (product: Product) => {
+  const addToCart = useCallback((product: Product) => {
     addItem({
       product_id: product.id,
       variant_id: null,
@@ -469,7 +470,7 @@ export default function HomePage() {
     });
     setShowCart(true);
     toast.success(`${product.name} agregado al carrito`);
-  };
+  }, [addItem]);
 
   const handleCheckout = async () => {
     if (items.length === 0 || isProcessing) return;
@@ -955,31 +956,11 @@ export default function HomePage() {
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {filteredProducts.map(product => (
-              <button
+              <ProductCard
                 key={product.id}
-                type="button"
-                className="neu-card p-4 cursor-pointer hover:scale-105 transition-transform w-full text-left focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
-                onClick={() => addToCart(product)}
-                aria-label={`Agregar ${product.name} al carrito. Precio: $${product.price.toFixed(2)}. Stock disponible: ${product.stock_current}`}
-              >
-                <div className="neu-raised-sm w-16 h-16 mx-auto mb-3 flex items-center justify-center overflow-hidden">
-                  {product.public_image_url ? (
-                    <img
-                      src={product.public_image_url}
-                      alt={product.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <Package className="w-8 h-8 text-muted-foreground" />
-                  )}
-                </div>
-                <h3 className="font-semibold text-sm mb-1 text-center">{product.name}</h3>
-                <div className="text-xs text-muted-foreground text-center mb-2">{product.sku}</div>
-                <div className="text-center">
-                  <div className="text-lg font-bold text-primary">${product.price.toFixed(2)}</div>
-                  <div className="text-xs text-muted-foreground">Stock: {product.stock_current}</div>
-                </div>
-              </button>
+                product={product}
+                onClick={addToCart}
+              />
             ))}
           </div>
         </div>
