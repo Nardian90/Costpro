@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { useState, useEffect, useMemo, useRef, useDeferredValue, useCallback } from 'react';
 import { useAuthStore, useCartStore, useUIStore } from '@/store';
 import { useRouter } from 'next/navigation';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { supabase } from '@/lib/supabaseClient';
 import { getSupabaseUrl, getProductImageUrl, getStoreLogoUrl } from '@/lib/utils';
@@ -88,10 +89,11 @@ export default function TerminalView() {
     currentView,
     setCurrentView,
     notifications,
-    setNotifications
+    setNotifications,
+    setSidebarOpen,
   } = useUIStore();
   const { items, addItem, removeItem, updateQuantity, clearCart, setDiscount, getTotal, getSubtotal, getItemCount, discount } = useCartStore();
-
+  const isMobile = useIsMobile();
   const [showCart, setShowCart] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -1924,7 +1926,12 @@ export default function TerminalView() {
               {navigationItems.map(item => (
                 <button
                   key={item.id}
-                  onClick={() => setCurrentView(item.id)}
+                  onClick={() => {
+                    setCurrentView(item.id);
+                    if (isMobile) {
+                      setSidebarOpen(false);
+                    }
+                  }}
                   className={cn(
                     "w-full flex items-center gap-4 p-4 rounded-2xl transition-all group active:scale-95",
                     currentView === item.id
