@@ -1,22 +1,24 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore, useCartStore, useUIStore } from '@/store';
 import {
   Package,
-  Search,
   Check,
   X,
   Plus,
   Minus,
   Trash2,
   AlertTriangle,
-  ArrowRight,
   Save,
+  Search,
+  ClipboardList,
 } from 'lucide-react';
 import { Product, ProductVariant } from '@/types';
 import { toast } from 'sonner';
+import ActionMenu from '@/components/ui/ActionMenu';
+import SearchBar from '@/components/ui/SearchBar';
+import { cn } from '@/lib/utils';
 
 interface ExtendedProduct extends Product {
   product_variants: ProductVariant[];
@@ -55,7 +57,8 @@ export default function InventoryCountView() {
     const lowerTerm = searchTerm.toLowerCase();
     return products.filter(product =>
       product.name.toLowerCase().includes(lowerTerm) ||
-      product.sku?.toLowerCase().includes(lowerTerm)
+      product.sku?.toLowerCase().includes(lowerTerm) ||
+      product.category?.toLowerCase().includes(lowerTerm)
     );
   }, [searchTerm, products]);
 
@@ -108,7 +111,6 @@ export default function InventoryCountView() {
 
   const calculateOptimalDecomposition = (diff: number, variants: ProductVariant[]) => {
     let remaining = Math.abs(diff);
-    // Sort variants by conversion factor descending
     const sortedVariants = [...variants].sort((a, b) => b.conversion_factor - a.conversion_factor);
     const decomposition: { variantId: string; name: string; quantity: number }[] = [];
 
@@ -123,9 +125,6 @@ export default function InventoryCountView() {
         remaining %= variant.conversion_factor;
       }
     }
-
-    // If there is still a remainder, we could add it as units if a 'unit' variant exists
-    // or just leave it. The user can manually adjust.
 
     return decomposition;
   };
@@ -148,45 +147,12 @@ export default function InventoryCountView() {
       .filter((d) => d.diff !== 0);
 
     if (diffs.length === 0) {
-      toast.info('No hay diferencias registradas');
+      toast.info('No hay diferencias registradas respecto al stock actual');
       return;
     }
 
     setDifferences(diffs);
     setIsModalOpen(true);
-  };
-
-  const updateDecompositionItem = (productIndex: number, variantIndex: number, quantity: number) => {
-    const newDiffs = [...differences];
-    newDiffs[productIndex].decomposition[variantIndex].quantity = Math.max(0, quantity);
-    setDifferences(newDiffs);
-  };
-
-  const removeDecompositionItem = (productIndex: number, variantIndex: number) => {
-    const newDiffs = [...differences];
-    newDiffs[productIndex].decomposition.splice(variantIndex, 1);
-    setDifferences(newDiffs);
-  };
-
-  const addVariantToDecomposition = (productIndex: number, variantId: string) => {
-    const newDiffs = [...differences];
-    const product = newDiffs[productIndex];
-    const variant = product.variants.find(v => v.id === variantId);
-
-    if (!variant) return;
-
-    // Check if variant already exists in decomposition
-    const existingIndex = product.decomposition.findIndex(d => d.variantId === variantId);
-    if (existingIndex >= 0) {
-      product.decomposition[existingIndex].quantity += 1;
-    } else {
-      product.decomposition.push({
-        variantId: variant.id,
-        name: variant.name,
-        quantity: 1
-      });
-    }
-    setDifferences(newDiffs);
   };
 
   const handleFinalSubmit = async () => {
@@ -196,23 +162,19 @@ export default function InventoryCountView() {
     }
 
     setProcessing(true);
-    const toastId = toast.loading('Procesando ajuste...');
+    const toastId = toast.loading('Sincronizando inventario...');
 
     try {
-      // 1. Separate shortages and surpluses
       const shortages = differences.filter(d => d.diff < 0);
       const surpluses = differences.filter(d => d.diff > 0);
 
-      // 2. Handle shortages: Add to cart
       if (shortages.length > 0) {
         shortages.forEach(d => {
-          // Find the full product object
           const product = products.find(p => p.id === d.productId);
           if (!product) return;
 
           d.decomposition.forEach(dec => {
             if (dec.quantity <= 0) return;
-
             const variant = (product.product_variants || []).find(v => v.id === dec.variantId);
 
             useCartStore.getState().addItem({
@@ -227,11 +189,9 @@ export default function InventoryCountView() {
             });
           });
         });
-
-        toast.info(`${shortages.length} productos faltantes agregados al carrito`);
+        toast.info(`${shortages.length} productos con faltantes cargados al punto de venta`);
       }
 
-      // 3. Handle surpluses: Process as adjustments
       if (surpluses.length > 0) {
         const itemsToSubmit = surpluses.map(d => ({
           product_id: d.productId,
@@ -256,7 +216,6 @@ export default function InventoryCountView() {
           const errData = await response.json();
           throw new Error(errData.message || 'Error al procesar el ajuste de sobrantes');
         }
-
         toast.success('Sobrantes ajustados correctamente', { id: toastId });
       } else {
         toast.dismiss(toastId);
@@ -267,7 +226,7 @@ export default function InventoryCountView() {
       if (shortages.length > 0) {
         useUIStore.getState().setCurrentView('pos');
       } else {
-        fetchProducts(); // Refresh list if no redirect
+        fetchProducts();
       }
 
     } catch (error: any) {
@@ -279,57 +238,47 @@ export default function InventoryCountView() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Conteo de Inventario</h2>
-        <button
-          onClick={handleInitialSubmit}
-          className="neu-btn neu-btn-primary flex items-center gap-2"
-          disabled={loading}
-        >
-          <Check className="w-5 h-5" />
-          <span>Confirmar Conteo</span>
-        </button>
-      </div>
-
-      {/* Search Bar */}
-      <div className="neu-raised-sm p-2 sm:p-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="neu-input w-full pl-10"
-            placeholder="Buscar productos..."
-          />
+    <div className="space-y-6 max-w-7xl mx-auto">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
+            <ClipboardList className="w-7 h-7 text-primary" />
+          </div>
+          <h2 className="text-2xl font-black text-foreground tracking-tighter uppercase leading-tight">Auditoría de Stock</h2>
         </div>
+        <ActionMenu
+          actions={[
+            { id: 'submit', label: 'Finalizar Conteo', icon: Check, onClick: handleInitialSubmit, variant: 'primary', disabled: loading }
+          ]}
+          className="sm:w-auto"
+        />
       </div>
 
-      {/* Product Table */}
-      <div className="table-to-cards">
+      <SearchBar value={searchTerm} onChange={setSearchTerm} placeholder="Buscar por producto, SKU o categoría..." />
+
+      <div className="overflow-x-auto table-to-cards rounded-2xl shadow-xl border border-white/5 overflow-hidden">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-border">
-              <th className="p-4 text-left">Producto</th>
-              <th className="p-4 text-left">SKU</th>
-              <th className="p-4 text-right">Stock Sistema</th>
+            <tr className="bg-muted/50 text-muted-foreground font-black uppercase text-[10px] tracking-widest">
+              <th className="p-4 text-left">Producto / SKU</th>
+              <th className="p-4 text-right">Stock Teórico</th>
               <th className="p-4 text-center">Stock Físico (Contado)</th>
-              <th className="p-4 text-right">Diferencia</th>
+              <th className="p-4 text-right">Desviación</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="bg-background/30 backdrop-blur-sm">
             {loading ? (
               <tr>
-                <td colSpan={5} className="p-8 text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                  <p className="mt-2 text-muted-foreground">Cargando catálogo...</p>
+                <td colSpan={4} className="p-20 text-center">
+                  <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                  <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Cargando catálogo...</p>
                 </td>
               </tr>
             ) : filteredProducts.length === 0 ? (
               <tr>
-                <td colSpan={5} className="p-8 text-center text-muted-foreground">
-                  No se encontraron productos
+                <td colSpan={4} className="p-20 text-center">
+                  <Package className="w-16 h-16 mx-auto mb-4 opacity-5" />
+                  <p className="font-black uppercase text-muted-foreground text-sm tracking-widest">No se encontraron productos</p>
                 </td>
               </tr>
             ) : (
@@ -338,22 +287,28 @@ export default function InventoryCountView() {
                 const diff = counted - product.stock_current;
 
                 return (
-                  <tr key={product.id}>
-                    <td data-label="Producto" className="p-4 font-medium">{product.name}</td>
-                    <td data-label="SKU" className="p-4 text-muted-foreground">{product.sku || '-'}</td>
-                    <td data-label="Stock Sistema" className="p-4 text-right font-bold">{product.stock_current}</td>
-                    <td data-label="Stock Físico" className="p-4">
+                  <tr key={product.id} className="border-b border-white/5 hover:bg-primary/5 transition-colors group">
+                    <td data-label="Producto" className="p-4">
+                      <div className="font-black text-sm uppercase tracking-tight">{product.name}</div>
+                      <div className="text-[9px] font-mono text-muted-foreground mt-1">{product.sku || '-'} • {product.category || 'General'}</div>
+                    </td>
+                    <td data-label="Teórico" className="p-4 text-right font-black text-lg text-muted-foreground">{product.stock_current}</td>
+                    <td data-label="Contado" className="p-4">
                       <div className="flex justify-center">
                         <input
                           type="number"
                           value={counted}
                           onChange={(e) => handleQuantityChange(product.id, parseInt(e.target.value) || 0)}
-                          className="neu-input w-24 text-center font-bold"
+                          className="neu-input w-28 text-center font-black text-xl text-primary bg-primary/5 border-primary/20"
                         />
                       </div>
                     </td>
                     <td data-label="Diferencia" className="p-4 text-right">
-                      <span className={`font-bold ${diff === 0 ? '' : diff > 0 ? 'text-success' : 'text-danger'}`}>
+                      <span className={cn(
+                        "text-lg font-black",
+                        diff === 0 ? "text-muted-foreground/30" :
+                        diff > 0 ? "text-success" : "text-danger"
+                      )}>
                         {diff > 0 ? `+${diff}` : diff}
                       </span>
                     </td>
@@ -367,136 +322,78 @@ export default function InventoryCountView() {
 
       {/* Confirmation Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="neu-card w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden p-0">
-            <div className="p-6 border-b border-border flex justify-between items-center bg-muted/30">
-              <h3 className="text-xl font-bold flex items-center gap-2 text-foreground">
-                <AlertTriangle className="w-6 h-6 text-warning" />
-                Confirmar Diferencias de Inventario
+        <div className="fixed inset-0 bg-background/90 backdrop-blur-xl flex items-center justify-center z-50 p-4">
+          <div className="neu-card max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden !p-0 border-primary/20 shadow-2xl">
+            <div className="p-8 border-b border-white/5 bg-primary/5 flex justify-between items-center">
+              <h3 className="text-2xl font-black text-foreground uppercase tracking-tighter flex items-center gap-3">
+                <AlertTriangle className="w-8 h-8 text-warning" />
+                Resumen de Discrepancias
               </h3>
-              <button onClick={() => setIsModalOpen(false)} className="hover:text-danger transition-colors">
-                <X className="w-6 h-6" />
+              <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-danger/10 text-muted-foreground hover:text-danger rounded-full transition-colors">
+                <X className="w-8 h-8" />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 space-y-6 text-foreground">
-              <p className="text-muted-foreground">
-                Se han detectado las siguientes diferencias. Los faltantes se registrarán como una venta para ajustar el inventario.
+            <div className="flex-1 overflow-y-auto p-8 space-y-8 no-scrollbar">
+              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                Se han detectado las siguientes diferencias. Confirma las acciones de ajuste para proceder:
               </p>
 
-              {differences.map((d, pIdx) => (
-                <div key={d.productId} className="neu-raised-sm p-4 rounded-xl border border-border bg-card">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h4 className="font-bold text-lg">{d.name}</h4>
-                      <div className="text-sm text-muted-foreground flex gap-4">
-                        <span>Sistema: <strong>{d.expected}</strong></span>
-                        <span>Contado: <strong>{d.counted}</strong></span>
-                      </div>
-                    </div>
-                    <div className={`text-xl font-black ${d.diff > 0 ? 'text-success' : 'text-danger'}`}>
-                      {d.diff > 0 ? `+${d.diff}` : d.diff}
-                    </div>
-                  </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {differences.map((d, pIdx) => (
+                  <div key={d.productId} className="neu-raised-sm !p-6 border border-white/5 bg-background/50 relative overflow-hidden group">
+                    <div className={cn("absolute top-0 left-0 w-1 h-full", d.diff > 0 ? "bg-success" : "bg-danger")} />
 
-                  {d.diff < 0 && (
-                    <div className="mt-4 p-4 rounded-lg bg-warning/10 border border-warning/20">
-                      <div className="flex items-center justify-between mb-3">
-                        <h5 className="text-sm font-bold text-warning-dark flex items-center gap-2">
-                          <Package className="w-4 h-4" />
-                          DESCOMPOSICIÓN PARA TICKET DE VENTA
-                        </h5>
-
-                        {/* Variant Selector */}
-                        <div className="flex items-center gap-2">
-                          <select
-                            className="neu-input py-1 px-2 text-xs"
-                            onChange={(e) => {
-                              if (e.target.value) {
-                                addVariantToDecomposition(pIdx, e.target.value);
-                                e.target.value = '';
-                              }
-                            }}
-                          >
-                            <option value="">+ Agregar variante...</option>
-                            {d.variants.map(v => (
-                              <option key={v.id} value={v.id}>{v.name} (x{v.conversion_factor})</option>
-                            ))}
-                          </select>
+                    <div className="flex justify-between items-start mb-6">
+                      <div className="flex-1 overflow-hidden">
+                        <h4 className="font-black text-sm uppercase tracking-tight truncate pr-4">{d.name}</h4>
+                        <div className="text-[9px] font-bold text-muted-foreground uppercase mt-1 tracking-widest flex gap-4">
+                          <span>Sistema: <strong className="text-foreground">{d.expected}</strong></span>
+                          <span>Contado: <strong className="text-foreground">{d.counted}</strong></span>
                         </div>
                       </div>
-
-                      <div className="space-y-2">
-                        {d.decomposition.map((item, vIdx) => (
-                          <div key={item.variantId} className="flex items-center gap-3 bg-background p-2 rounded-md shadow-sm">
-                            <span className="flex-1 text-sm font-medium">{item.name}</span>
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => updateDecompositionItem(pIdx, vIdx, item.quantity - 1)}
-                                className="w-6 h-6 flex items-center justify-center rounded bg-muted hover:bg-muted/80"
-                              >
-                                <Minus className="w-3 h-3" />
-                              </button>
-                              <input
-                                type="number"
-                                value={item.quantity}
-                                onChange={(e) => updateDecompositionItem(pIdx, vIdx, parseInt(e.target.value) || 0)}
-                                className="w-12 text-center text-sm font-bold border-none bg-transparent text-foreground"
-                              />
-                              <button
-                                onClick={() => updateDecompositionItem(pIdx, vIdx, item.quantity + 1)}
-                                className="w-6 h-6 flex items-center justify-center rounded bg-muted hover:bg-muted/80"
-                              >
-                                <Plus className="w-3 h-3" />
-                              </button>
-                            </div>
-                            <button
-                              onClick={() => removeDecompositionItem(pIdx, vIdx)}
-                              className="text-danger hover:scale-110 transition-transform p-1"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        ))}
-
-                        {d.decomposition.length === 0 && (
-                          <div className="text-center py-4 text-xs text-warning italic">
-                            No hay variantes seleccionadas para este faltante.
-                          </div>
-                        )}
+                      <div className={cn("text-2xl font-black tracking-tighter", d.diff > 0 ? "text-success" : "text-danger")}>
+                        {d.diff > 0 ? `+${d.diff}` : d.diff}
                       </div>
                     </div>
-                  )}
 
-                  {d.diff > 0 && (
-                    <div className="mt-2 text-xs text-success font-medium flex items-center gap-1">
-                      <Plus className="w-3 h-3" />
-                      Se registrará como un ajuste de entrada (Sobrante).
-                    </div>
-                  )}
-                </div>
-              ))}
+                    {d.diff < 0 && (
+                      <div className="space-y-4 pt-4 border-t border-white/5">
+                        <h5 className="text-[8px] font-black text-warning uppercase tracking-[0.3em]">Resolución de Faltante (Venta)</h5>
+                        <div className="space-y-2">
+                           {d.decomposition.map((item, vIdx) => (
+                             <div key={item.variantId} className="flex items-center justify-between p-3 neu-inset-sm bg-background border border-white/5">
+                                <span className="text-[10px] font-black uppercase tracking-tight">{item.name}</span>
+                                <span className="font-black text-primary text-sm">x{item.quantity}</span>
+                             </div>
+                           ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <div className="p-6 border-t border-border bg-muted/30 flex gap-4">
+            <div className="p-8 border-t border-white/5 bg-muted/10 flex gap-4">
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="neu-btn flex-1"
+                className="neu-btn flex-1 !py-4 font-black uppercase text-xs tracking-[0.2em]"
                 disabled={processing}
               >
                 Cancelar
               </button>
               <button
                 onClick={handleFinalSubmit}
-                className="neu-btn neu-btn-success flex-1 flex items-center justify-center gap-2"
+                className="neu-btn-primary flex-1 flex items-center justify-center gap-3 font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-primary/20"
                 disabled={processing || !isAdjustmentValid}
               >
                 {processing ? (
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 ) : (
                   <>
                     <Save className="w-5 h-5" />
-                    Confirmar Ajuste Final
+                    Ejecutar Ajustes
                   </>
                 )}
               </button>
