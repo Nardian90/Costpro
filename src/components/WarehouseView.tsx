@@ -6,7 +6,6 @@ import { getSupabaseUrl } from '@/lib/utils';
 import { useAuthStore, useCartStore } from '@/store';
 import {
     Package,
-    Search,
     Plus,
     Edit,
     Download,
@@ -15,25 +14,20 @@ import {
     X,
     Save,
     FileText,
-    Calendar,
-    Building2,
-    Hash,
     Shield,
     History,
-    FileDown,
-    Printer,
-    ArrowUpDown,
-    ArrowDownLeft,
-    ArrowUpRight,
     ChevronDown,
     LayoutList,
     Table as TableIcon,
+    ArrowDownLeft,
+    ArrowUpDown,
 } from 'lucide-react';
 import Papa from 'papaparse';
-import type { Product, Receipt, ReceiptItem } from '@/types';
+import type { Product } from '@/types';
 import { ROLE_PERMISSIONS } from '@/types';
 import { toast } from 'sonner';
-import { getProductImageUrl } from '@/lib/utils';
+import ActionMenu, { Action } from '@/components/ui/ActionMenu';
+import SearchBar from '@/components/ui/SearchBar';
 
 interface WarehouseViewProps {
     initialView?: 'inventory' | 'history' | 'reception';
@@ -41,13 +35,11 @@ interface WarehouseViewProps {
 
 export default function WarehouseView({ initialView = 'inventory' }: WarehouseViewProps) {
     const user = useAuthStore((state) => state.user);
-    const { addItem } = useCartStore();
 
     // 1. Validación estricta de permisos por rol
     const permissions = user?.role ? ROLE_PERMISSIONS[user.role] : null;
     const canViewInventory = permissions?.canViewInventory || false;
     const canReceiveProducts = permissions?.canReceiveProducts || false;
-    const canAdjustStock = permissions?.canAdjustStock || false;
 
     const [products, setProducts] = useState<Product[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -77,7 +69,6 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
     // Estados para MODO RECEPCIÓN (Bulk)
     const [isReceptionMode, setIsReceptionMode] = useState(false);
     const [receptionItems, setReceptionItems] = useState<Map<string, { product: Product, quantityToAdd: number, newCost: number }>>(new Map());
-    const [showReceptionSummary, setShowReceptionSummary] = useState(false);
 
     // Estados para captura de detalles de recepción
     const [receptionDetails, setReceptionDetails] = useState({
@@ -85,7 +76,6 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
         invoiceNumber: '',
         receptionDate: new Date().toISOString().split('T')[0],
     });
-    const [showReceptionMeta, setShowReceptionMeta] = useState(false);
 
     // Estados para CREACIÓN DE PRODUCTO
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -101,7 +91,6 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
     // Nuevos estados para Historial y Sesión
     const [recentReceptions, setRecentReceptions] = useState<any[]>([]);
     const [receiptsHistory, setReceiptsHistory] = useState<any[]>([]);
-    const [isSessionChecking, setIsSessionChecking] = useState(true);
 
     // Estados para KARDEX
     const [isKardexOpen, setIsKardexOpen] = useState(false);
@@ -109,24 +98,6 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
     const [kardexMovements, setKardexMovements] = useState<any[]>([]);
     const [kardexLoading, setKardexLoading] = useState(false);
     const [kardexViewMode, setKardexViewMode] = useState<'quantity' | 'amount'>('quantity');
-
-    // Chequeo de sesión para evitar flash de login/error
-    useEffect(() => {
-        const checkSession = async () => {
-            try {
-                const { data: { session } } = await supabase.auth.getSession();
-                if (!session) {
-                    // Si no autenticado, el wrapper debería manejarlo.
-                    // Aquí solo marcamos fin del check.
-                }
-            } catch (error) {
-                console.error("Session check error", error);
-            } finally {
-                setIsSessionChecking(false);
-            }
-        };
-        checkSession();
-    }, []);
 
     useEffect(() => {
         if (user) {
@@ -371,9 +342,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
         }
     };
 
-    // --- LÓGICA DE IMÁGENES CON VALIDACIÓN (HALLAZGO AUDITORÍA) ---
     const handleImageUpdate = async (productId: string, file: File) => {
-        // Validación de tamaño (2MB máximo)
         if (file.size > 2 * 1024 * 1024) {
             toast.error('La imagen no debe superar los 2MB');
             return;
@@ -412,7 +381,6 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
         if (!user) return;
         try {
             setLoading(true);
-            console.log('Fetching products for store:', user.store_id);
             const { data, error } = await supabase
                 .from('products')
                 .select(`
@@ -421,26 +389,18 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                 `)
                 .order('name');
 
-            if (error) {
-                console.error('Supabase error fetching products:', error);
-                throw error;
-            }
-
-            console.log('Products fetched:', data?.length || 0);
+            if (error) throw error;
 
             const mappedProducts: Product[] = data?.map((item: any) => {
                 let stock_current = 0;
                 let store_id: string | null = null;
 
                 if (user.role === 'admin') {
-                    // Admin: Sum stock from all stores
                     stock_current = item.inventory?.reduce(
                         (acc: number, inv: any) => acc + inv.quantity,
                         0
                     ) || 0;
-                    store_id = null; // Admin view is not tied to one store
                 } else {
-                    // Encargado/Manager: Find stock for their specific store
                     const storeInventory = item.inventory?.find(
                         (inv: any) => inv.store_id === user.store_id
                     );
@@ -465,55 +425,6 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
             setLoading(false);
         }
         return [];
-    };
-
-    // --- LÓGICA DE AUDITORÍA Y UTILIDADES ---
-    const logStockMovement = async (
-        productId: string,
-        quantityChange: number,
-        type: 'adjustment' | 'purchase',
-        notes: string = ''
-    ) => {
-        if (!user?.store_id || !user?.id) return;
-
-        try {
-            // Preferir RPC atómico que registre el movimiento y maneje reglas de negocio
-            const payload = {
-                p_store_id: user.store_id,
-                p_product_id: productId,
-                p_variant_id: null,
-                p_quantity_change: quantityChange,
-                p_movement_type: type,
-                p_reference_doc: notes,
-                p_created_by: user.id
-            };
-
-            const { data: rpcData, error: rpcError } = await supabase.rpc('register_stock_movement', payload);
-
-            if (rpcError) {
-                // Si no existe la RPC o falla, caer a inserción directa y advertir
-                console.warn('RPC register_stock_movement failed, falling back to direct insert', rpcError);
-                const { error } = await supabase.from('stock_movements').insert({
-                    store_id: user.store_id,
-                    product_id: productId,
-                    variant_id: null,
-                    quantity_change: quantityChange,
-                    movement_type: type,
-                    reference_doc: notes,
-                    movement_date: new Date().toISOString(),
-                    created_by: user.id,
-                    created_at: new Date().toISOString()
-                });
-
-                if (error) {
-                    console.error('Error logging movement (fallback):', error);
-                }
-            } else {
-                // RPC ok — opcional: manejar rpcData si necesita usarse
-            }
-        } catch (err) {
-            console.error('Failed to log movement:', err);
-        }
     };
 
     const handleExport = () => {
@@ -591,7 +502,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                     } catch (error: any) {
                         console.error('Error creating products:', error);
                         toast.error('Error al crear nuevos productos.');
-                        return; // Exit if we can't create products
+                        return;
                     }
                 }
 
@@ -601,7 +512,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                 }
 
                 for (const importedProduct of importedProducts) {
-                    const { SKU, NombreProducto, Cantidad, Costo } = importedProduct;
+                    const { SKU, Cantidad, Costo } = importedProduct;
                     if (!SKU) continue;
 
                     const product = updatedProducts.find((p) => p.sku === SKU);
@@ -626,7 +537,6 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
         });
     };
 
-    // --- LÓGICA DE AJUSTE INDIVIDUAL ---
     const handleStockAdjustment = async (product: Product) => {
         if (!stockAdjustment.reason) {
             toast.error('Por favor indique un motivo');
@@ -640,7 +550,6 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
 
         const toastId = toast.loading('Procesando ajuste de inventario...');
         try {
-            // Usar RPC atómico con lógica de Costo Promedio Ponderado
             const payload = {
                 p_store_id: user.store_id,
                 p_product_id: product.id,
@@ -652,7 +561,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                 p_cost_value_change: stockAdjustment.cost
             };
 
-            const { data, error } = await supabase.rpc('register_stock_movement', payload);
+            const { error } = await supabase.rpc('register_stock_movement', payload);
             if (error) throw error;
 
             toast.success('Ajuste de Stock y Costo procesado', { id: toastId });
@@ -665,7 +574,6 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
         }
     };
 
-    // --- LÓGICA DE RECEPCIÓN (BULK) ---
     const toggleReceptionMode = () => {
         if (!canReceiveProducts && !isReceptionMode) {
             toast.error('No tienes permisos para hacer recepciones');
@@ -677,9 +585,6 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
 
         if (newMode) {
             setReceptionItems(new Map());
-            setShowReceptionSummary(true); // Siempre mostrar el panel si entramos en el modo
-        } else {
-            setShowReceptionSummary(false);
         }
 
         setReceptionDetails({
@@ -701,7 +606,6 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
             newCost: product.cost_price || 0
         });
         setReceptionItems(newItems);
-        setShowReceptionSummary(true);
         toast.success('Agregado a recepción');
     };
 
@@ -718,7 +622,6 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
         const newItems = new Map(receptionItems);
         newItems.delete(productId);
         setReceptionItems(newItems);
-        if (newItems.size === 0) setShowReceptionSummary(false);
     };
 
     const processReception = async () => {
@@ -731,13 +634,11 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
             return;
         }
 
-        // Validar detalles
         if (!receptionDetails.supplier || !receptionDetails.invoiceNumber || !receptionDetails.receptionDate) {
             toast.error('Complete proveedor, fecha y número de factura');
             return;
         }
 
-        // Construir payload para RPC
         const itemsPayload = Array.from(receptionItems.values()).map(({ product, quantityToAdd, newCost }) => ({
             product_id: product.id,
             quantity: quantityToAdd,
@@ -784,7 +685,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                     name: newProductData.name,
                     sku: newProductData.sku || null,
                     category: newProductData.category || 'General',
-                    price: 0, // En vista almacén no se define el precio
+                    price: 0,
                     cost_price: newProductData.cost_price,
                     min_stock: newProductData.min_stock
                 }])
@@ -795,18 +696,15 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
 
             toast.success('Producto creado y añadido a la lista');
 
-            // Refrescar lista y añadir a la recepción automáticamente
             await fetchProducts();
 
             if (data) {
-                // Mapear el nuevo producto con la cantidad inicial especificada
                 const mappedProduct: Product = {
                     ...data,
                     stock_current: 0,
                     store_id: user?.store_id
                 };
 
-                // Añadir a la recepción con la cantidad indicada en el modal
                 const itemsMap = new Map(receptionItems);
                 itemsMap.set(data.id, {
                     product: mappedProduct,
@@ -814,7 +712,6 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                     newCost: newProductData.cost_price || 0
                 });
                 setReceptionItems(itemsMap);
-                setShowReceptionSummary(true);
             }
 
             setIsCreateModalOpen(false);
@@ -834,9 +731,6 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
         }
     };
 
-    // --- ELIMINADO EL ADDTOCART POR SOLICITUD DE USUARIO ---
-
-    // Bloqueo de vista por permisos
     if (!canViewInventory) {
         return (
             <div className="flex flex-col items-center justify-center p-12 text-center h-full">
@@ -853,228 +747,195 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
         return <div className="p-8 text-center text-red-500">Error: Usuario no asignado a una tienda.</div>;
     }
 
+    const actions: Action[] = [
+        {
+            id: 'toggle-view',
+            label: forceTableView ? 'Ver Tarjetas' : 'Ver Tabla',
+            icon: forceTableView ? LayoutList : TableIcon,
+            onClick: () => setForceTableView(!forceTableView),
+            className: 'sm:hidden',
+        },
+        {
+            id: 'create-product',
+            label: 'Nuevo Producto',
+            icon: Plus,
+            onClick: () => setIsCreateModalOpen(true),
+            variant: 'success',
+            disabled: !isReceptionMode,
+        },
+        {
+            id: 'reception-mode',
+            label: isReceptionMode ? 'Cancelar Recepción' : 'Nueva Recepción',
+            icon: isReceptionMode ? X : Download,
+            onClick: toggleReceptionMode,
+            variant: isReceptionMode ? 'danger' : 'primary',
+        },
+        {
+            id: 'export',
+            label: 'Exportar CSV',
+            icon: Download,
+            onClick: handleExport,
+            disabled: isReceptionMode,
+        },
+        {
+            id: 'import',
+            label: 'Importar CSV',
+            icon: Upload,
+            onClick: () => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.csv';
+                input.onchange = (e) => {
+                    const file = (e.target as HTMLInputElement).files?.[0];
+                    if (file) handleImport(file);
+                };
+                input.click();
+            },
+            disabled: isReceptionMode,
+        }
+    ];
+
     if (initialView === 'history') {
         return (
-            <div className="space-y-6 h-full flex flex-col">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
-                    <h2 className="text-xl sm:text-2xl font-bold text-foreground border-l-4 border-primary pl-4">Historial de Recepciones</h2>
-                    <div className="flex items-center gap-2 w-full sm:w-auto">
-                        <button
-                            onClick={() => setForceTableView(!forceTableView)}
-                            className="neu-btn neu-raised-sm flex items-center justify-center gap-2 px-3 py-2 sm:hidden flex-1"
-                            title={forceTableView ? 'Cambiar a vista de tarjetas' : 'Cambiar a vista de tabla'}
-                        >
-                            {forceTableView ? <LayoutList className="w-4 h-4" /> : <TableIcon className="w-4 h-4" />}
-                            <span className="text-xs font-bold">{forceTableView ? 'Ver Tarjetas' : 'Ver Tabla'}</span>
-                        </button>
-                        <button
-                            onClick={fetchReceiptsHistory}
-                            className="neu-btn neu-raised-sm text-xs font-bold px-4 py-2 flex-1 sm:flex-none"
-                        >
-                            Actualizar
-                        </button>
-                    </div>
+            <div className="space-y-6 max-w-7xl mx-auto">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <h2 className="text-2xl font-bold border-l-4 border-primary pl-4">Historial de Recepciones</h2>
+                    <ActionMenu
+                        actions={[
+                            { id: 'refresh', label: 'Actualizar', icon: History, onClick: fetchReceiptsHistory, variant: 'primary' },
+                            { id: 'toggle-view', label: forceTableView ? 'Ver Tarjetas' : 'Ver Tabla', icon: forceTableView ? LayoutList : TableIcon, onClick: () => setForceTableView(!forceTableView), className: 'sm:hidden' }
+                        ]}
+                        className="sm:w-auto"
+                    />
                 </div>
 
-                <div className="flex-1 overflow-auto neu-inset-sm bg-card rounded-xl p-0">
-                    <div className={`overflow-x-auto table-to-cards ${forceTableView ? 'force-table' : ''}`}>
-                        <table className="w-full text-sm">
-                            <thead className="sticky top-0 bg-muted/50 z-10 border-b">
-                                <tr className="text-left text-muted-foreground uppercase text-[10px] font-bold">
-                                    <th className="p-4">Fecha</th>
-                                    <th className="p-4">Referencia / Factura</th>
-                                    <th className="p-4">Usuario</th>
-                                    <th className="p-4 text-right">Total Costo</th>
-                                    <th className="p-4 text-center">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {receiptsHistory.length > 0 ? (
-                                    receiptsHistory.map((receipt: any) => {
-                                        const isExpanded = expandedRows.has(receipt.id);
-                                        return (
-                                            <tr key={receipt.id} className={`border-b last:border-0 hover:bg-accent transition-colors ${isExpanded ? 'is-expanded' : ''}`}>
-                                                <td data-label="Fecha" className="p-4">
-                                                    <div className="flex items-center gap-2">
-                                                        {!forceTableView && (
-                                                            <button
-                                                                onClick={() => toggleRow(receipt.id)}
-                                                                className="p-1 sm:hidden hover:bg-accent rounded-full transition-colors expand-icon"
-                                                            >
-                                                                <ChevronDown className="w-4 h-4" />
-                                                            </button>
-                                                        )}
-                                                        <div>
-                                                            <div className="font-medium">{new Date(receipt.created_at).toLocaleDateString()}</div>
-                                                            <div className="text-[10px] text-muted-foreground">{new Date(receipt.created_at).toLocaleTimeString()}</div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td data-label="Referencia" className="p-4 mobile-secondary">
-                                                    <div className="font-bold text-foreground">{receipt.reference_doc}</div>
-                                                    <div className="text-xs text-muted-foreground">{receipt.notes || 'Sin notas'}</div>
-                                                </td>
-                                                <td data-label="Usuario" className="p-4 mobile-secondary">
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold">
-                                                            {receipt.profile?.full_name?.charAt(0)}
-                                                        </div>
-                                                        <span>{receipt.profile?.full_name}</span>
-                                                    </div>
-                                                </td>
-                                                <td data-label="Total Costo" className="p-4 text-right">
-                                                    <div className="font-bold text-foreground">${receipt.total_cost.toFixed(2)}</div>
-                                                </td>
-                                                <td data-label="Acciones" className="p-4 mobile-secondary">
-                                                    <div className="flex justify-center">
+                <div className="overflow-x-auto table-to-cards rounded-2xl shadow-xl">
+                    <table className="w-full text-sm">
+                        <thead className="bg-muted/50 border-b">
+                            <tr className="text-left text-muted-foreground uppercase text-[10px] font-bold">
+                                <th className="p-4">Fecha</th>
+                                <th className="p-4">Referencia / Factura</th>
+                                <th className="p-4">Usuario</th>
+                                <th className="p-4 text-right">Total Costo</th>
+                                <th className="p-4 text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {receiptsHistory.length > 0 ? (
+                                receiptsHistory.map((receipt: any) => {
+                                    const isExpanded = expandedRows.has(receipt.id);
+                                    return (
+                                        <tr key={receipt.id} className={`border-b last:border-0 hover:bg-accent/5 transition-colors ${isExpanded ? 'is-expanded' : ''}`}>
+                                            <td data-label="Fecha" className="p-4">
+                                                <div className="flex items-center gap-2">
+                                                    {!forceTableView && (
                                                         <button
-                                                            onClick={() => handlePrintReceipt(receipt.id)}
-                                                            className="neu-btn neu-btn-primary flex items-center gap-2 px-4 py-2 text-xs"
+                                                            onClick={() => toggleRow(receipt.id)}
+                                                            className="p-1 sm:hidden hover:bg-accent rounded-full expand-icon"
                                                         >
-                                                            <FileText className="w-4 h-4" />
-                                                            <span>Ver Detalle</span>
+                                                            <ChevronDown className="w-4 h-4" />
                                                         </button>
+                                                    )}
+                                                    <div>
+                                                        <div className="font-medium">{new Date(receipt.created_at).toLocaleDateString()}</div>
+                                                        <div className="text-[10px] text-muted-foreground">{new Date(receipt.created_at).toLocaleTimeString()}</div>
                                                     </div>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })
-                                ) : (
-                                    <tr>
-                                        <td colSpan={5} className="text-center py-20 text-muted-foreground">
-                                            <FileText className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                                            <p>No hay documentos de recepción registrados.</p>
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                                                </div>
+                                            </td>
+                                            <td data-label="Referencia" className="p-4">
+                                                <div className="font-bold text-foreground">{receipt.reference_doc}</div>
+                                                <div className="text-xs text-muted-foreground">{receipt.notes || 'Sin notas'}</div>
+                                            </td>
+                                            <td data-label="Usuario" className="p-4">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-bold">
+                                                        {receipt.profile?.full_name?.charAt(0)}
+                                                    </div>
+                                                    <span>{receipt.profile?.full_name}</span>
+                                                </div>
+                                            </td>
+                                            <td data-label="Total Costo" className="p-4 text-right">
+                                                <div className="font-bold text-foreground">${receipt.total_cost.toFixed(2)}</div>
+                                            </td>
+                                            <td data-label="Acciones" className="p-4">
+                                                <div className="flex justify-center">
+                                                    <button
+                                                        onClick={() => handlePrintReceipt(receipt.id)}
+                                                        className="neu-btn neu-btn-primary flex items-center gap-2 px-4 py-2 text-xs"
+                                                    >
+                                                        <FileText className="w-4 h-4" />
+                                                        <span>Ver Detalle</span>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            ) : (
+                                <tr>
+                                    <td colSpan={5} className="text-center py-20 text-muted-foreground">
+                                        <FileText className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                                        <p>No hay documentos de recepción registrados.</p>
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="space-y-6 h-full flex flex-col relative max-w-full overflow-x-auto">
-            {loading && (
-                <div className="fixed top-4 right-4 z-[100] flex items-center gap-3 bg-background/80 backdrop-blur-sm border border-border px-4 py-2 rounded-full shadow-lg">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                    <p className="text-[10px] font-bold text-foreground uppercase tracking-widest">Sincronizando</p>
-                </div>
-            )}
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
-                <div className="flex items-center gap-4">
-                    <h2 className="text-xl sm:text-2xl font-bold text-foreground border-l-4 border-primary pl-4 leading-tight">
-                        {isReceptionMode ? 'Recepción de Mercancía' : 'Gestión de Inventario'}
-                    </h2>
-                    {isReceptionMode && (
-                        <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded border border-amber-200 uppercase tracking-tight whitespace-nowrap">
-                            Modo Activo
-                        </span>
-                    )}
+        <div className="space-y-6 max-w-7xl mx-auto pb-24">
+            {/* Header Area */}
+            <div className="flex flex-col gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                        <h2 className="text-2xl font-bold border-l-4 border-primary pl-4">
+                            {isReceptionMode ? 'Recepción de Mercancía' : 'Gestión de Inventario'}
+                        </h2>
+                        {isReceptionMode && (
+                            <span className="bg-warning/20 text-warning text-[10px] font-bold px-2 py-0.5 rounded border border-warning/30 uppercase tracking-widest animate-pulse">
+                                Modo Recepción
+                            </span>
+                        )}
+                    </div>
+                    <ActionMenu actions={actions} className="sm:w-auto" />
                 </div>
 
-                {/* Horizontal Ribbon for Action Buttons on Mobile */}
-                <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0">
-                    <button
-                        onClick={() => setForceTableView(!forceTableView)}
-                        className="neu-btn neu-raised-sm flex items-center gap-2 px-4 shadow-sm border-none whitespace-nowrap sm:hidden"
-                        title={forceTableView ? 'Cambiar a vista de tarjetas' : 'Cambiar a vista de tabla'}
-                    >
-                        {forceTableView ? <LayoutList className="w-4 h-4" /> : <TableIcon className="w-4 h-4" />}
-                        <span className="text-sm font-bold">{forceTableView ? 'Ver Tarjetas' : 'Ver Tabla'}</span>
-                    </button>
-                    {isReceptionMode && (
-                        <button
-                            onClick={() => setIsCreateModalOpen(true)}
-                            className="neu-btn neu-raised-sm !text-emerald-700 dark:!text-emerald-400 flex items-center gap-2 px-4 shadow-sm border-none whitespace-nowrap"
-                        >
-                            <Plus className="w-4 h-4" />
-                            <span className="font-bold text-sm">Nuevo Producto</span>
-                        </button>
-                    )}
-                    <button
-                        onClick={toggleReceptionMode}
-                        className={`neu-btn flex items-center gap-2 px-4 shadow-sm font-bold transition-all border-none whitespace-nowrap ${isReceptionMode
-                            ? 'neu-raised-sm !text-amber-700 dark:!text-amber-400'
-                            : 'neu-raised-sm !text-primary dark:!text-primary-light'
-                            }`}
-                    >
-                        {isReceptionMode ? <X className="w-4 h-4" /> : <Download className="w-4 h-4" />}
-                        <span className="text-sm">{isReceptionMode ? 'Cancelar' : 'Nueva Recepción'}</span>
-                    </button>
-
-                    {!isReceptionMode && (
-                        <>
-                            <button
-                                onClick={handleExport}
-                                className="neu-btn neu-raised-sm flex items-center gap-2 !text-foreground whitespace-nowrap"
+                <SearchBar
+                    value={searchTerm}
+                    onChange={setSearchTerm}
+                    placeholder="Buscar por nombre, SKU o categoría..."
+                >
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                        <div>
+                            <label className="text-[10px] font-bold text-muted-foreground uppercase mb-1 block">Categoría</label>
+                            <select
+                                value={selectedCategory}
+                                onChange={(e) => setSelectedCategory(e.target.value)}
+                                className="neu-input w-full"
                             >
-                                <Download className="w-4 h-4" />
-                                <span className="text-sm">Exportar</span>
-                            </button>
-                            <label className="neu-btn neu-raised-sm flex items-center gap-2 cursor-pointer !text-foreground whitespace-nowrap">
-                                <Upload className="w-4 h-4" />
-                                <span className="text-sm">Importar</span>
-                                <input
-                                    type="file"
-                                    className="hidden"
-                                    accept=".csv"
-                                    onChange={(e) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) {
-                                            handleImport(file);
-                                        }
-                                    }}
-                                />
-                            </label>
-                        </>
-                    )}
-                </div>
+                                <option value="">Todas las categorías</option>
+                                {[...new Set(products.map(p => p.category))].map(category => (
+                                    <option key={category} value={category || ''}>{category}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                </SearchBar>
             </div>
 
-            {/* Filtros */}
-            <div className="neu-raised-sm p-2 sm:p-4 shrink-0">
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                        <input
-                            type="text"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="neu-input w-full pl-10"
-                            placeholder="Buscar por nombre, SKU..."
-                            aria-label="Buscar productos por nombre o SKU"
-                        />
-                    </div>
-                    <div className="relative w-full sm:w-auto">
-                        <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                        <select
-                            value={selectedCategory}
-                            onChange={(e) => setSelectedCategory(e.target.value)}
-                            className="neu-input w-full pl-10 pr-4"
-                        >
-                            <option value="">Todas las categorías</option>
-                            {[...new Set(products.map(p => p.category))].map(category => (
-                                <option key={category} value={category || ''}>{category}</option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            {/* Main Content Area - Stacked Col on Mobile, Row on Desktop */}
-            <div className="flex flex-col lg:flex-row flex-1 gap-4 lg:gap-6 overflow-hidden min-h-0">
-                {/* Tabla de Productos - Responsive Card View */}
-                <div className="flex-1 overflow-auto">
-                    <div className={`overflow-x-auto table-to-cards ${forceTableView ? 'force-table' : ''}`}>
+            {/* Main Content Area */}
+            <div className="flex flex-col lg:flex-row gap-6 items-start">
+                <div className="flex-1 w-full overflow-hidden">
+                    <div className={`overflow-x-auto table-to-cards rounded-2xl shadow-xl border border-white/5 ${forceTableView ? 'force-table' : ''}`}>
                         <table className="w-full">
-                            <thead className="sticky top-0 bg-background z-10 shadow-sm">
-                                <tr className="border-b border-border">
-                                    <th className="p-4 text-left">Producto</th>
-                                    <th className="p-4 text-left">SKU</th>
+                            <thead className="bg-muted/30 border-b">
+                                <tr className="text-left text-muted-foreground uppercase text-[10px] font-bold">
+                                    <th className="p-4">Producto</th>
+                                    <th className="p-4">SKU</th>
                                     <th className="p-4 text-right">Stock</th>
                                     {!isReceptionMode && <th className="p-4 text-right">P. Venta</th>}
                                     {isReceptionMode && <th className="p-4 text-right">Costo Actual</th>}
@@ -1085,9 +946,9 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                             <tbody>
                                 {products.length === 0 && !loading ? (
                                     <tr>
-                                        <td colSpan={7} className="p-6 sm:p-12 text-center text-muted-foreground">
-                                            <Package className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                                            <p>No se encontraron productos en el inventario.</p>
+                                        <td colSpan={7} className="p-20 text-center text-muted-foreground">
+                                            <Package className="w-16 h-16 mx-auto mb-4 opacity-10" />
+                                            <p className="text-lg font-medium">No hay productos en el inventario</p>
                                         </td>
                                     </tr>
                                 ) : filteredProducts.map(product => {
@@ -1095,13 +956,17 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                                     const isExpanded = expandedRows.has(product.id);
 
                                     return (
-                                        <tr key={product.id} className={`${isInReception ? 'bg-accent/50' : ''} ${isExpanded ? 'is-expanded' : ''}`}>
+                                        <tr key={product.id} className={cn(
+                                            "border-b last:border-0 hover:bg-accent/5 transition-colors",
+                                            isInReception && "bg-primary/5",
+                                            isExpanded && "is-expanded"
+                                        )}>
                                             <td data-label="Producto" className="p-4">
                                                 <div className="flex items-center gap-3">
                                                     {!forceTableView && (
                                                         <button
                                                             onClick={() => toggleRow(product.id)}
-                                                            className="p-1 sm:hidden hover:bg-accent rounded-full transition-colors expand-icon"
+                                                            className="p-1 sm:hidden hover:bg-accent rounded-full expand-icon"
                                                         >
                                                             <ChevronDown className="w-4 h-4" />
                                                         </button>
@@ -1111,17 +976,12 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                                                             <img
                                                                 src={product.public_image_url}
                                                                 alt={product.name}
-                                                                className="w-full h-full object-cover"
-                                                                onError={(e) => {
-                                                                    (e.target as HTMLImageElement).style.display = 'none';
-                                                                    (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
-                                                                }}
+                                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                                                             />
-                                                        ) : null}
-                                                        <Package className={`w-6 h-6 text-muted-foreground ${product.public_image_url ? 'hidden' : ''}`} />
-
-                                                        {/* Botón rápido para subir imagen */}
-                                                        <label className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
+                                                        ) : (
+                                                            <Package className="w-6 h-6 text-muted-foreground" />
+                                                        )}
+                                                        <label className="absolute inset-0 bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
                                                             <Upload className="w-4 h-4" />
                                                             <input
                                                                 type="file"
@@ -1135,55 +995,55 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                                                         </label>
                                                     </div>
                                                     <div>
-                                                        <div className="font-medium">{product.name}</div>
-                                                        <div className="text-sm text-muted-foreground">{product.category}</div>
+                                                        <div className="font-bold text-sm">{product.name}</div>
+                                                        <div className="text-[10px] font-bold text-muted-foreground uppercase">{product.category}</div>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td data-label="SKU" className="p-4 text-muted-foreground text-sm mobile-secondary">{product.sku || '-'}</td>
-                                            <td data-label="Stock" className="p-4 text-right font-bold text-lg">
-                                                {product.stock_current}
-                                            </td>
+                                            <td data-label="SKU" className="p-4 text-xs font-mono text-muted-foreground">{product.sku || '-'}</td>
+                                            <td data-label="Stock" className="p-4 text-right font-black text-lg">{product.stock_current}</td>
                                             {!isReceptionMode && (
-                                                <td data-label="Precio" className="p-4 text-right mobile-secondary">${product.price.toFixed(2)}</td>
+                                                <td data-label="Precio" className="p-4 text-right font-bold text-primary">${product.price.toFixed(2)}</td>
                                             )}
                                             {isReceptionMode && (
-                                                <td data-label="Costo" className="p-4 text-right text-muted-foreground mobile-secondary">${product.cost_price?.toFixed(2)}</td>
+                                                <td data-label="Costo" className="p-4 text-right text-muted-foreground">${product.cost_price?.toFixed(2)}</td>
                                             )}
-                                            <td data-label="Estado" className="p-4 text-center mobile-secondary">
-                                                {product.stock_current <= product.min_stock ? (
-                                                    <span className="neu-badge text-danger text-xs px-2 py-1">Stock Bajo</span>
-                                                ) : (
-                                                    <span className="neu-badge text-success text-xs px-2 py-1">OK</span>
-                                                )}
+                                            <td data-label="Estado" className="p-4 text-center">
+                                                <span className={cn(
+                                                    "neu-badge text-[9px] px-2 py-0.5",
+                                                    product.stock_current <= product.min_stock ? "text-danger" : "text-success"
+                                                )}>
+                                                    {product.stock_current <= product.min_stock ? 'Stock Bajo' : 'Normal'}
+                                                </span>
                                             </td>
-                                            <td data-label="Acciones" className="p-4 mobile-secondary">
+                                            <td data-label="Acciones" className="p-4">
                                                 <div className="flex justify-center gap-2">
                                                     {isReceptionMode ? (
                                                         <button
                                                             onClick={() => addToReception(product)}
                                                             disabled={isInReception}
-                                                            className={`neu-raised-sm w-full px-3 py-2 flex items-center justify-center gap-2 ${isInReception ? 'opacity-50 cursor-not-allowed' : 'hover:bg-accent'}`}
+                                                            className={cn(
+                                                                "neu-btn !py-2 !px-4 text-xs w-full sm:w-auto",
+                                                                isInReception ? "opacity-50 !bg-accent" : "neu-btn-primary"
+                                                            )}
                                                         >
-                                                            <Download className="w-4 h-4" />
-                                                            <span className="text-sm">Recibir</span>
+                                                            {isInReception ? 'Añadido' : 'Recibir'}
                                                         </button>
                                                     ) : (
                                                         <>
                                                             <button
                                                                 onClick={() => fetchProductKardex(product)}
-                                                                className="neu-raised-sm w-8 h-8 flex items-center justify-center hover:bg-accent text-primary"
-                                                                title="Ver Kardex / Movimientos"
+                                                                className="neu-raised-sm w-9 h-9 flex items-center justify-center hover:text-primary transition-colors"
+                                                                title="Ver Historial"
                                                             >
                                                                 <History className="w-4 h-4" />
                                                             </button>
                                                             <button
                                                                 onClick={() => setSelectedProduct(product)}
-                                                                className="neu-raised-sm flex-1 px-3 py-2 flex items-center justify-center gap-2 hover:bg-accent"
-                                                                title="Ajuste Rápido"
+                                                                className="neu-btn !p-2 flex-1 flex items-center justify-center gap-2 hover:neu-raised-sm"
                                                             >
                                                                 <Edit className="w-4 h-4" />
-                                                                <span className="text-sm">Ajustar</span>
+                                                                <span className="hidden sm:inline text-xs">Ajustar</span>
                                                             </button>
                                                         </>
                                                     )}
@@ -1197,489 +1057,381 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                     </div>
                 </div>
 
-                {/* Panel Lateral de Recepción - Stacked & Reused Styles */}
+                {/* Reception Summary Panel */}
                 {isReceptionMode && (
-                    <div className="w-full lg:max-w-md xl:max-w-lg neu-card flex flex-col shrink-0 border-l border-border h-full lg:h-auto">
-                        <div className="p-4 border-b border-border bg-muted/30">
-                            <h3 className="font-bold text-lg flex items-center gap-2">
-                                <Download className="w-5 h-5" />
-                                Resumen de Recepción
-                            </h3>
-                            <p className="text-xs text-muted-foreground mt-1">
-                                {receptionItems.size} productos seleccionados
-                            </p>
-                            <div className="mt-3 bg-background p-3 rounded border">
-                                <div className="grid grid-cols-1 gap-2">
+                    <div className="w-full lg:w-96 flex flex-col gap-6 sticky top-24">
+                        <div className="neu-card border-primary/20 bg-primary/5 flex flex-col gap-4">
+                            <div className="flex items-center justify-between">
+                                <h3 className="font-bold flex items-center gap-2">
+                                    <Download className="w-5 h-5 text-primary" />
+                                    Resumen Recepción
+                                </h3>
+                                <span className="neu-badge !text-primary">{receptionItems.size}</span>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="text-[10px] font-black text-muted-foreground uppercase">Proveedor</label>
+                                    <input
+                                        type="text"
+                                        value={receptionDetails.supplier}
+                                        onChange={(e) => setReceptionDetails({ ...receptionDetails, supplier: e.target.value })}
+                                        className="neu-input w-full mt-1 !py-2"
+                                        placeholder="Ej. Distribuidora Global"
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
                                     <div>
-                                        <label className="text-xs text-muted-foreground">Proveedor <span className="text-red-500">*</span></label>
+                                        <label className="text-[10px] font-black text-muted-foreground uppercase">Fecha</label>
                                         <input
-                                            type="text"
-                                            value={receptionDetails.supplier}
-                                            onChange={(e) => setReceptionDetails({ ...receptionDetails, supplier: e.target.value })}
-                                            className="neu-input w-full mt-1"
-                                            placeholder="Nombre del proveedor"
+                                            type="date"
+                                            value={receptionDetails.receptionDate}
+                                            onChange={(e) => setReceptionDetails({ ...receptionDetails, receptionDate: e.target.value })}
+                                            className="neu-input w-full mt-1 !py-2"
                                         />
                                     </div>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                        <div>
-                                            <label className="text-xs font-bold text-foreground">Fecha <span className="text-red-500">*</span></label>
-                                            <input
-                                                type="date"
-                                                value={receptionDetails.receptionDate}
-                                                onChange={(e) => setReceptionDetails({ ...receptionDetails, receptionDate: e.target.value })}
-                                                className="neu-input w-full mt-1"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="text-xs font-bold text-foreground">Ref. / Factura <span className="text-red-500">*</span></label>
-                                            <input
-                                                type="text"
-                                                value={receptionDetails.invoiceNumber}
-                                                onChange={(e) => setReceptionDetails({ ...receptionDetails, invoiceNumber: e.target.value })}
-                                                className="neu-input w-full mt-1"
-                                                placeholder="Ej. FAC-001"
-                                            />
-                                        </div>
+                                    <div>
+                                        <label className="text-[10px] font-black text-muted-foreground uppercase">Factura</label>
+                                        <input
+                                            type="text"
+                                            value={receptionDetails.invoiceNumber}
+                                            onChange={(e) => setReceptionDetails({ ...receptionDetails, invoiceNumber: e.target.value })}
+                                            className="neu-input w-full mt-1 !py-2"
+                                            placeholder="FAC-001"
+                                        />
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div className="flex-1 overflow-y-auto p-4 space-y-4 max-h-[500px] lg:max-h-none">
-                            {Array.from(receptionItems.values()).map(({ product, quantityToAdd, newCost }) => (
-                                <div key={product.id} className="neu-raised-sm p-3 relative bg-background">
-                                    <button
-                                        onClick={() => removeReceptionItem(product.id)}
-                                        className="absolute top-2 right-2 text-muted-foreground hover:text-danger"
-                                    >
-                                        <X className="w-4 h-4" />
-                                    </button>
-
-                                    <div className="font-medium text-sm pr-6 mb-2">{product.name}</div>
-
-                                    <div className="flex flex-col gap-3">
-                                        <div>
-                                            <label className="text-[10px] uppercase font-bold text-muted-foreground block mb-1">Cant. a Agregar</label>
-                                            <input
-                                                type="number"
-                                                min="1"
-                                                value={quantityToAdd}
-                                                onChange={(e) => updateReceptionItem(product.id, 'quantityToAdd', parseInt(e.target.value) || 0)}
-                                                className="neu-input w-full py-1 px-2 text-sm"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="text-[10px] uppercase font-bold text-muted-foreground block mb-1">Costo Unit.</label>
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                step="0.01"
-                                                value={newCost}
-                                                onChange={(e) => updateReceptionItem(product.id, 'newCost', parseFloat(e.target.value) || 0)}
-                                                className="neu-input w-full py-1 px-2 text-sm"
-                                            />
+                            <div className="max-h-80 overflow-y-auto pr-2 space-y-3">
+                                {Array.from(receptionItems.values()).map(({ product, quantityToAdd, newCost }) => (
+                                    <div key={product.id} className="neu-raised-sm !p-3 relative group">
+                                        <button
+                                            onClick={() => removeReceptionItem(product.id)}
+                                            className="absolute -top-1 -right-1 p-1 bg-danger text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                                        >
+                                            <X className="w-3 h-3" />
+                                        </button>
+                                        <div className="text-xs font-bold truncate pr-4 mb-2">{product.name}</div>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <div>
+                                                <input
+                                                    type="number"
+                                                    value={quantityToAdd}
+                                                    onChange={(e) => updateReceptionItem(product.id, 'quantityToAdd', parseInt(e.target.value) || 0)}
+                                                    className="neu-inset-sm w-full text-center font-bold !py-1 text-xs"
+                                                />
+                                            </div>
+                                            <div>
+                                                <input
+                                                    type="number"
+                                                    value={newCost}
+                                                    onChange={(e) => updateReceptionItem(product.id, 'newCost', parseFloat(e.target.value) || 0)}
+                                                    className="neu-inset-sm w-full text-center font-bold !py-1 text-xs"
+                                                />
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="mt-2 text-xs text-right text-muted-foreground">
-                                        Nuevo Stock estimado: <span className="font-bold text-primary">{(product.stock_current || 0) + quantityToAdd}</span>
+                                ))}
+                                {receptionItems.size === 0 && (
+                                    <div className="text-center py-10 text-muted-foreground border-2 border-dashed border-primary/20 rounded-xl">
+                                        <Package className="w-8 h-8 mx-auto mb-2 opacity-20" />
+                                        <p className="text-xs">Seleccione productos</p>
                                     </div>
-                                </div>
-                            ))}
+                                )}
+                            </div>
 
-                            {receptionItems.size === 0 && (
-                                <div className="text-center py-8 text-muted-foreground text-sm border-2 border-dashed border-border rounded-lg">
-                                    <p>Seleccione productos de la tabla para recibir mercancía</p>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="p-4 border-t border-border bg-muted/30">
                             <button
                                 onClick={processReception}
                                 disabled={receptionItems.size === 0 || loading}
-                                className="neu-btn neu-btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed text-sm py-4 flex items-center justify-center gap-2"
+                                className="neu-btn neu-btn-primary w-full mt-4 font-bold flex items-center justify-center gap-2"
                             >
-                                <Download className="w-4 h-4" />
-                                <span>{loading ? 'Procesando...' : 'Confirmar Recepción'}</span>
+                                <Save className="w-5 h-5" />
+                                {loading ? 'Procesando...' : 'Confirmar Todo'}
                             </button>
                         </div>
                     </div>
                 )}
             </div>
 
-            {/* Recepciones Recientes Component */}
+            {/* Recent Receptions List */}
             {!isReceptionMode && recentReceptions.length > 0 && (
-                <div className="neu-card p-4 shrink-0">
-                    <h3 className="font-bold text-lg mb-4">Recepciones Recientes</h3>
-                    <div className={`overflow-x-auto table-to-cards ${forceTableView ? 'force-table' : ''}`}>
+                <div className="neu-card !p-6">
+                    <h3 className="font-bold text-lg mb-6 flex items-center gap-2">
+                        <History className="w-5 h-5 text-primary" />
+                        Movimientos Recientes
+                    </h3>
+                    <div className="overflow-x-auto table-to-cards">
                         <table className="w-full text-sm">
-                            <thead>
-                                <tr className="text-left border-b text-muted-foreground">
-                                    <th className="pb-2">Producto</th>
-                                    <th className="pb-2">Proveedor</th>
-                                    <th className="pb-2">Referencia</th>
-                                    <th className="pb-2 text-right">Cantidad</th>
-                                    <th className="pb-2 text-right">Fecha</th>
-                                    <th className="pb-2 text-center">Estado</th>
-                                    <th className="pb-2 text-center">Acciones</th>
+                            <thead className="border-b text-muted-foreground">
+                                <tr className="text-left font-bold uppercase text-[10px]">
+                                    <th className="pb-3">Producto</th>
+                                    <th className="pb-3">Detalle</th>
+                                    <th className="pb-3 text-right">Cantidad</th>
+                                    <th className="pb-3 text-right">Fecha</th>
+                                    <th className="pb-3 text-center">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {recentReceptions.map((tx) => {
-                                    const isExpanded = expandedRows.has(tx.id);
-                                    return (
-                                        <tr key={tx.id} className={`border-b last:border-0 hover:bg-accent ${isExpanded ? 'is-expanded' : ''}`}>
-                                            <td data-label="Producto" className="py-3 font-medium">
-                                                <div className="flex items-center gap-2">
-                                                    {!forceTableView && (
-                                                        <button
-                                                            onClick={() => toggleRow(tx.id)}
-                                                            className="p-1 sm:hidden hover:bg-accent rounded-full transition-colors expand-icon"
-                                                        >
-                                                            <ChevronDown className="w-4 h-4" />
-                                                        </button>
-                                                    )}
-                                                    <span>{tx.product?.name || 'Producto desconocido'}</span>
-                                                </div>
-                                            </td>
-                                            <td data-label="Proveedor" className="py-3 text-muted-foreground mobile-secondary">{tx.supplier || tx.product?.supplier || '-'}</td>
-                                            <td data-label="Referencia" className="py-3 text-muted-foreground mobile-secondary">{tx.reference_doc || '-'}</td>
-                                            <td data-label="Cantidad" className="py-3 text-right font-bold text-success">+{tx.quantity_change}</td>
-                                            <td data-label="Fecha" className="py-3 text-right text-muted-foreground mobile-secondary">
-                                                {new Date(tx.movement_date).toLocaleDateString()}  {new Date(tx.movement_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                            </td>
-                                            <td data-label="Estado" className="py-3 text-center mobile-secondary">
-                                                <span className="neu-badge text-success text-xs px-2 py-1">Completado</span>
-                                            </td>
-                                            <td data-label="Acciones" className="py-3 text-center mobile-secondary">
+                                {recentReceptions.map((tx) => (
+                                    <tr key={tx.id} className="border-b last:border-0 hover:bg-accent/5">
+                                        <td data-label="Producto" className="py-4 font-bold">{tx.product?.name}</td>
+                                        <td data-label="Detalle" className="py-4 text-xs text-muted-foreground">{tx.reference_doc || '-'}</td>
+                                        <td data-label="Cantidad" className="py-4 text-right">
+                                            <span className="neu-badge !text-success">+{tx.quantity_change}</span>
+                                        </td>
+                                        <td data-label="Fecha" className="py-4 text-right text-xs text-muted-foreground">
+                                            {new Date(tx.movement_date).toLocaleString()}
+                                        </td>
+                                        <td data-label="Acciones" className="py-4 text-center">
                                             {tx.reference_id && (
                                                 <button
                                                     onClick={() => handlePrintReceipt(tx.reference_id)}
-                                                        className="neu-btn neu-btn-primary flex items-center gap-2 px-4 py-2 text-xs mx-auto"
-                                                    title="Previsualizar Recepción"
+                                                    className="neu-btn !p-2 hover:neu-raised-sm"
+                                                    title="Previsualizar"
                                                 >
-                                                    <FileText className="w-3 h-3" />
-                                                    <span>Previsualizar</span>
+                                                    <FileText className="w-4 h-4" />
                                                 </button>
                                             )}
                                         </td>
                                     </tr>
-                                        );
-                                    })}
+                                ))}
                             </tbody>
                         </table>
                     </div>
                 </div>
             )}
 
-            {/* Modal de Ajuste Individual (solo visible fuera de modo recepción) */}
-            {selectedProduct && !isReceptionMode && (
-                <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="neu-card max-w-md w-full">
-                        {/* Mantenemos el modal existente original pero simplificado */}
-                        <div className="flex justify-between items-center mb-4 p-4 border-b">
-                            <h3 className="text-lg font-bold">Ajuste Manual de Inventario</h3>
-                            <button onClick={() => setSelectedProduct(null)}><X className="w-6 h-6" /></button>
+            {/* Individual Adjustment Modal */}
+            {selectedProduct && (
+                <div className="fixed inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+                    <div className="neu-card max-w-md w-full animate-in zoom-in-95 duration-200">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-bold">Ajuste de Inventario</h3>
+                            <button onClick={() => setSelectedProduct(null)} className="p-2 hover:bg-danger/10 hover:text-danger rounded-full"><X className="w-6 h-6" /></button>
                         </div>
-                        <div className="p-4">
-                            <div className="neu-raised-sm p-3 mb-4 bg-muted/30">
-                                <div className="font-medium">{selectedProduct.name}</div>
-                                <div className="text-sm">Stock actual: {selectedProduct.stock_current}</div>
+                        <div className="space-y-6">
+                            <div className="neu-inset-sm p-4 bg-primary/5">
+                                <div className="font-bold text-lg">{selectedProduct.name}</div>
+                                <div className="text-sm text-muted-foreground">Existencia Actual: <span className="font-bold text-primary">{selectedProduct.stock_current}</span></div>
                             </div>
-                            <div className="space-y-4">
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label className="text-xs font-medium text-muted-foreground block mb-1">Cant. Ent/Sal (+/-)</label>
-                                        <input
-                                            type="number"
-                                            value={stockAdjustment.quantity}
-                                            onChange={(e) => setStockAdjustment({ ...stockAdjustment, quantity: parseInt(e.target.value) || 0 })}
-                                            className="neu-input w-full font-bold"
-                                            placeholder="Ej: 10 o -5"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-medium text-muted-foreground block mb-1">Motivo</label>
-                                        <select
-                                            value={stockAdjustment.reason}
-                                            onChange={(e) => setStockAdjustment({ ...stockAdjustment, reason: e.target.value })}
-                                            className="neu-input w-full"
-                                        >
-                                            <option value="">Seleccionar...</option>
-                                            <option value="correccion">Corrección</option>
-                                            <option value="merma">Merma</option>
-                                            <option value="inventario">Inventario Físico</option>
-                                            <option value="otro">Otro</option>
-                                        </select>
-                                    </div>
-                                </div>
 
-                                <div className="bg-primary/10 p-4 rounded-lg border border-primary/20">
-                                    <label className="text-xs font-bold text-primary block mb-2 uppercase tracking-wide">Ajuste de Importe al Costo Total (+/-)</label>
-                                    <div className="flex items-center gap-3">
-                                        <div className="text-2xl font-bold text-primary">$</div>
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            value={stockAdjustment.cost || ''}
-                                            onChange={(e) => setStockAdjustment({ ...stockAdjustment, cost: parseFloat(e.target.value) || 0 })}
-                                            className="neu-input flex-1 font-bold text-lg"
-                                            placeholder="0.00"
-                                        />
-                                    </div>
-                                    <p className="text-[10px] text-primary/80 mt-2 italic">
-                                        * Este valor suma o resta directamente al valor total del inventario. El costo unitario se recalculará automáticamente.
-                                    </p>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-[10px] font-black text-muted-foreground uppercase block mb-1">Ajuste Cantidad</label>
+                                    <input
+                                        type="number"
+                                        value={stockAdjustment.quantity}
+                                        onChange={(e) => setStockAdjustment({ ...stockAdjustment, quantity: parseInt(e.target.value) || 0 })}
+                                        className="neu-input w-full font-black text-xl text-center"
+                                        placeholder="+/-"
+                                    />
                                 </div>
-
-                                <button
-                                    onClick={() => handleStockAdjustment(selectedProduct)}
-                                    className="neu-btn neu-btn-primary w-full mt-4 h-12 text-base font-bold"
-                                >
-                                    Confirmar Ajuste de Inventario
-                                </button>
+                                <div>
+                                    <label className="text-[10px] font-black text-muted-foreground uppercase block mb-1">Motivo</label>
+                                    <select
+                                        value={stockAdjustment.reason}
+                                        onChange={(e) => setStockAdjustment({ ...stockAdjustment, reason: e.target.value })}
+                                        className="neu-input w-full h-[52px]"
+                                    >
+                                        <option value="">Seleccionar...</option>
+                                        <option value="correccion">Corrección</option>
+                                        <option value="merma">Merma</option>
+                                        <option value="inventario">Inventario Físico</option>
+                                        <option value="otro">Otro</option>
+                                    </select>
+                                </div>
                             </div>
+
+                            <div className="neu-card border-primary/20 bg-primary/5">
+                                <label className="text-[10px] font-black text-primary uppercase block mb-2 tracking-widest">Ajuste de Valor Total ($)</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    value={stockAdjustment.cost || ''}
+                                    onChange={(e) => setStockAdjustment({ ...stockAdjustment, cost: parseFloat(e.target.value) || 0 })}
+                                    className="neu-input w-full font-black text-2xl text-center text-primary"
+                                    placeholder="0.00"
+                                />
+                                <p className="text-[10px] text-primary/60 mt-3 italic text-center">
+                                    El costo unitario se recalculará automáticamente basado en este ajuste.
+                                </p>
+                            </div>
+
+                            <button
+                                onClick={() => handleStockAdjustment(selectedProduct)}
+                                className="neu-btn neu-btn-primary w-full py-4 text-lg font-bold"
+                            >
+                                Confirmar Ajuste
+                            </button>
                         </div>
                     </div>
                 </div>
             )}
-            {/* Modal de Creación de Producto */}
+
+            {/* Create Product Modal */}
             {isCreateModalOpen && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-background/80 backdrop-blur-md">
-                    <div className="neu-card w-full max-w-md overflow-hidden bg-card shadow-2xl animate-in zoom-in-95 duration-200">
-                        <div className="p-6 border-b border-border flex justify-between items-center bg-muted/30">
-                            <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
-                                <Plus className="w-5 h-5 text-success" />
+                    <div className="neu-card w-full max-w-md animate-in zoom-in-95 duration-200">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-bold flex items-center gap-2">
+                                <Plus className="w-6 h-6 text-success" />
                                 Nuevo Producto
                             </h3>
-                            <button onClick={() => setIsCreateModalOpen(false)} className="p-1 hover:bg-accent rounded-full transition-colors text-muted-foreground">
+                            <button onClick={() => setIsCreateModalOpen(false)} className="p-2 hover:bg-danger/10 hover:text-danger rounded-full">
                                 <X className="w-6 h-6" />
                             </button>
                         </div>
-                        <div className="p-6 space-y-5">
+                        <div className="space-y-4">
                             <div>
-                                <label className="text-sm font-bold mb-1.5 block text-foreground uppercase tracking-tight">Nombre del Producto <span className="text-red-500">*</span></label>
+                                <label className="text-[10px] font-black text-muted-foreground uppercase block mb-1">Nombre</label>
                                 <input
                                     type="text"
                                     value={newProductData.name}
                                     onChange={(e) => setNewProductData({ ...newProductData, name: e.target.value })}
                                     className="neu-input w-full"
-                                    placeholder="Ej. Coca Cola 1.5L"
+                                    placeholder="Nombre descriptivo"
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-sm font-bold mb-1.5 block text-foreground uppercase tracking-tight">SKU / Código</label>
+                                    <label className="text-[10px] font-black text-muted-foreground uppercase block mb-1">SKU</label>
                                     <input
                                         type="text"
                                         value={newProductData.sku}
                                         onChange={(e) => setNewProductData({ ...newProductData, sku: e.target.value })}
                                         className="neu-input w-full"
-                                        placeholder="Opcional"
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-sm font-bold mb-1.5 block text-foreground uppercase tracking-tight">Categoría</label>
+                                    <label className="text-[10px] font-black text-muted-foreground uppercase block mb-1">Categoría</label>
                                     <input
                                         type="text"
                                         value={newProductData.category}
                                         onChange={(e) => setNewProductData({ ...newProductData, category: e.target.value })}
                                         className="neu-input w-full"
-                                        placeholder="Ej. Bebidas"
                                     />
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-sm font-bold mb-1.5 block text-primary uppercase tracking-tight">Cantidad Inicial</label>
+                                    <label className="text-[10px] font-black text-primary uppercase block mb-1">Cantidad Inicial</label>
                                     <input
                                         type="number"
                                         value={newProductData.initial_quantity || ''}
                                         onChange={(e) => setNewProductData({ ...newProductData, initial_quantity: parseInt(e.target.value) || 0 })}
                                         className="neu-input w-full font-bold"
-                                        placeholder="1"
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-sm font-bold mb-1.5 block text-foreground uppercase tracking-tight">Costo Inicial</label>
+                                    <label className="text-[10px] font-black text-muted-foreground uppercase block mb-1">Costo Inicial</label>
                                     <input
                                         type="number"
                                         value={newProductData.cost_price || ''}
                                         onChange={(e) => setNewProductData({ ...newProductData, cost_price: parseFloat(e.target.value) || 0 })}
                                         className="neu-input w-full"
                                         step="0.01"
-                                        placeholder="0.00"
                                     />
                                 </div>
                             </div>
                         </div>
-                        <div className="p-6 pt-0 flex gap-4 bg-muted/30">
-                            <button
-                                onClick={() => setIsCreateModalOpen(false)}
-                                className="neu-btn flex-1 font-bold py-3"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={handleCreateProduct}
-                                disabled={loading}
-                                className="neu-btn neu-btn-primary flex-1 flex items-center justify-center gap-2 font-bold py-3 disabled:opacity-50"
-                            >
-                                <Save className="w-4 h-4" />
-                                {loading ? 'Creando...' : 'Crear Producto'}
+                        <div className="flex gap-4 mt-8">
+                            <button onClick={() => setIsCreateModalOpen(false)} className="neu-btn flex-1">Cancelar</button>
+                            <button onClick={handleCreateProduct} disabled={loading} className="neu-btn neu-btn-primary flex-1">
+                                {loading ? 'Guardando...' : 'Crear Producto'}
                             </button>
                         </div>
                     </div>
                 </div>
             )}
-            {/* MODAL KARDEX / MOVIMIENTOS */}
+
+            {/* Kardex Modal */}
             {isKardexOpen && selectedKardexProduct && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
-                    <div className="neu-card w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden bg-card">
-                        <div className="p-6 border-b border-border flex flex-col lg:flex-row justify-between lg:items-center shrink-0 gap-4">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/90 backdrop-blur-xl">
+                    <div className="neu-card w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden !p-0 border-primary/20 shadow-2xl">
+                        <div className="p-6 border-b border-border bg-muted/30 flex flex-col sm:flex-row justify-between gap-6 items-start sm:items-center">
                             <div className="flex items-center gap-4">
-                                <div className="neu-raised-sm w-12 h-12 flex items-center justify-center overflow-hidden bg-muted/30">
+                                <div className="neu-raised-sm w-16 h-16 flex items-center justify-center overflow-hidden bg-white/5">
                                     {selectedKardexProduct.public_image_url ? (
                                         <img src={selectedKardexProduct.public_image_url} alt="" className="w-full h-full object-cover" />
                                     ) : (
-                                        <Package className="w-6 h-6 text-muted-foreground" />
+                                        <Package className="w-8 h-8 text-muted-foreground" />
                                     )}
                                 </div>
-                                <div className="text-left">
-                                    <h3 className="text-xl font-bold leading-tight">{selectedKardexProduct.name}</h3>
-                                    <p className="text-xs text-muted-foreground font-mono mb-2">SKU: {selectedKardexProduct.sku || 'N/A'}</p>
-
-                                    <div className="flex flex-wrap items-center gap-3">
-                                        <div className="bg-muted/30 px-2 py-1 rounded border border-border">
-                                            <span className="text-[9px] uppercase font-bold text-muted-foreground block leading-none mb-1">Existencia</span>
-                                            <span className="text-xs font-bold">{selectedKardexProduct.stock_current} und.</span>
-                                        </div>
-                                        <div className="bg-muted/30 px-2 py-1 rounded border border-border">
-                                            <span className="text-[9px] uppercase font-bold text-muted-foreground block leading-none mb-1">Costo Unit.</span>
-                                            <span className="text-xs font-bold">${selectedKardexProduct.cost_price?.toLocaleString() || '0.00'}</span>
-                                        </div>
-                                        <div className="bg-primary/10 px-2 py-1 rounded border border-primary/20">
-                                            <span className="text-[9px] uppercase font-bold text-primary block leading-none mb-1">Valor Total (Stock)</span>
-                                            <span className="text-xs font-bold text-primary">
-                                                ${(selectedKardexProduct.stock_current * (selectedKardexProduct.cost_price || 0)).toLocaleString()}
-                                            </span>
-                                        </div>
+                                <div>
+                                    <h3 className="text-2xl font-black">{selectedKardexProduct.name}</h3>
+                                    <div className="flex items-center gap-4 mt-2">
+                                        <span className="neu-badge !text-primary font-bold">Stock: {selectedKardexProduct.stock_current}</span>
+                                        <span className="neu-badge font-bold">Costo: ${selectedKardexProduct.cost_price?.toFixed(2)}</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-2 bg-muted/50 p-1 rounded-lg self-start">
-                                <button
-                                    onClick={() => setKardexViewMode('quantity')}
-                                    className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${kardexViewMode === 'quantity' ? 'bg-background shadow-sm text-primary' : 'text-muted-foreground hover:text-primary'}`}
-                                >
-                                    CANTIDADES
-                                </button>
-                                <button
-                                    onClick={() => setKardexViewMode('amount')}
-                                    className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${kardexViewMode === 'amount' ? 'bg-background shadow-sm text-primary' : 'text-muted-foreground hover:text-primary'}`}
-                                >
-                                    IMPORTE (COSTO)
-                                </button>
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                                <button onClick={() => setIsKardexOpen(false)} className="neu-raised-sm p-2 hover:bg-accent lg:flex hidden">
-                                    <X className="w-5 h-5" />
-                                </button>
-                                <button onClick={() => setIsKardexOpen(false)} className="neu-raised-sm p-2 hover:bg-accent flex lg:hidden">
-                                    <ArrowDownLeft className="w-5 h-5 rotate-45" />
+                            <div className="flex items-center gap-3">
+                                <div className="neu-inset-sm p-1 flex gap-1">
+                                    <button
+                                        onClick={() => setKardexViewMode('quantity')}
+                                        className={cn("px-4 py-1.5 text-[10px] font-black uppercase rounded-lg transition-all", kardexViewMode === 'quantity' ? "bg-primary text-white" : "text-muted-foreground")}
+                                    >
+                                        Cantidades
+                                    </button>
+                                    <button
+                                        onClick={() => setKardexViewMode('amount')}
+                                        className={cn("px-4 py-1.5 text-[10px] font-black uppercase rounded-lg transition-all", kardexViewMode === 'amount' ? "bg-primary text-white" : "text-muted-foreground")}
+                                    >
+                                        Importe
+                                    </button>
+                                </div>
+                                <button onClick={() => setIsKardexOpen(false)} className="neu-raised-sm p-2 hover:text-danger transition-colors">
+                                    <X className="w-6 h-6" />
                                 </button>
                             </div>
                         </div>
 
                         <div className="flex-1 overflow-auto p-6">
                             {kardexLoading ? (
-                                <div className="flex flex-col items-center justify-center py-20 gap-3">
-                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                                    <p className="text-sm text-muted-foreground">Cargando movimientos...</p>
-                                </div>
-                            ) : kardexMovements.length > 0 ? (
-                                <div className="space-y-4">
-                                    <div className="hidden lg:grid grid-cols-6 gap-4 px-4 py-2 bg-muted/50 rounded-lg text-[10px] font-bold uppercase tracking-wider text-muted-foreground border border-border">
-                                        <span>Fecha / Hora</span>
-                                        <span>Tipo Mov.</span>
-                                        <span className="text-right">Variación</span>
-                                        <span className="text-right">{kardexViewMode === 'quantity' ? 'Stock Final' : 'Costo Unit.'}</span>
-                                        <span>Referencia</span>
-                                        <span>Ref. Doc</span>
-                                    </div>
-                                    <div className="space-y-2">
-                                        {(() => {
-                                            return kardexMovements.map((mov: any) => {
-                                                const isPositive = mov.quantity_change > 0;
-                                                const cost = mov.unit_cost || selectedKardexProduct.cost_price || 0;
-                                                const amount = mov.quantity_change * cost;
-
-                                                return (
-                                                    <div key={mov.id} className="grid grid-cols-1 lg:grid-cols-6 gap-4 p-4 neu-raised-sm rounded-lg items-center relative overflow-hidden group hover:bg-accent/50">
-                                                        <div className={`absolute left-0 top-0 bottom-0 w-1 ${isPositive ? 'bg-green-500' : 'bg-red-500'}`} />
-
-                                                        <div className="text-sm">
-                                                            <div className="font-medium">{new Date(mov.created_at).toLocaleDateString()}</div>
-                                                            <div className="text-[10px] text-muted-foreground">{new Date(mov.created_at).toLocaleTimeString()}</div>
-                                                        </div>
-
-                                                        <div>
-                                                            <span className={`text-[10px] py-0.5 px-2 rounded font-bold uppercase ${mov.movement_type === 'purchase' ? 'bg-blue-100 text-blue-700' :
-                                                                mov.movement_type === 'sale' ? 'bg-green-100 text-green-700' :
-                                                                    'bg-muted'
-                                                                }`}>
-                                                                {mov.movement_type}
-                                                            </span>
-                                                        </div>
-
-                                                        <div className={`text-right font-bold ${isPositive ? 'text-green-600' : 'text-red-700'}`}>
-                                                            {kardexViewMode === 'quantity' ? (
-                                                                <>{isPositive ? '+' : ''}{mov.quantity_change}</>
-                                                            ) : (
-                                                                <>{isPositive ? '+' : '-'}${Math.abs(amount).toLocaleString()}</>
-                                                            )}
-                                                        </div>
-
-                                                        <div className="text-right font-bold border-l border-border pl-4 bg-muted/30 py-1.5 rounded-lg flex flex-col items-end justify-center">
-                                                            {kardexViewMode === 'quantity' ? (
-                                                                <>
-                                                                    <span className="text-[9px] uppercase text-muted-foreground block leading-none mb-1">Stock Final</span>
-                                                                    <span className="font-mono text-base">{mov.balance_after ?? '-'}</span>
-                                                                </>
-                                                            ) : (
-                                                                <span className="text-xs text-muted-foreground font-medium">
-                                                                    @{cost.toLocaleString()}
-                                                                </span>
-                                                            )}
-                                                        </div>
-
-                                                        <div className="text-xs text-muted-foreground truncate" title={mov.reference_id}>
-                                                            ID: {mov.reference_id?.split('-')[0] || '-'}
-                                                        </div>
-
-                                                        <div className="text-xs font-medium truncate">
-                                                            {mov.reference_doc || '-'}
-                                                        </div>
-                                                    </div>
-                                                );
-                                            });
-                                        })()}
-                                    </div>
+                                <div className="flex flex-col items-center justify-center h-full gap-4">
+                                    <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                                    <p className="font-bold text-muted-foreground uppercase tracking-widest">Cargando Kardex</p>
                                 </div>
                             ) : (
-                                <div className="text-center py-20 text-muted-foreground">
-                                    <ArrowUpDown className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                                    <p>No hay registros de movimientos para este producto.</p>
+                                <div className="space-y-3">
+                                    {kardexMovements.map((mov: any) => {
+                                        const isPositive = mov.quantity_change > 0;
+                                        return (
+                                            <div key={mov.id} className="neu-raised-sm p-4 flex flex-col sm:grid sm:grid-cols-5 gap-4 items-center">
+                                                <div>
+                                                    <div className="font-bold text-sm">{new Date(mov.created_at).toLocaleDateString()}</div>
+                                                    <div className="text-[10px] text-muted-foreground">{new Date(mov.created_at).toLocaleTimeString()}</div>
+                                                </div>
+                                                <div className="flex justify-center">
+                                                    <span className={cn(
+                                                        "neu-badge text-[10px] w-full text-center",
+                                                        mov.movement_type === 'purchase' ? "text-primary" :
+                                                        mov.movement_type === 'sale' ? "text-success" : "text-warning"
+                                                    )}>
+                                                        {mov.movement_type}
+                                                    </span>
+                                                </div>
+                                                <div className={cn("text-lg font-black text-right", isPositive ? "text-success" : "text-danger")}>
+                                                    {kardexViewMode === 'quantity' ? (
+                                                        <>{isPositive ? '+' : ''}{mov.quantity_change}</>
+                                                    ) : (
+                                                        <>{isPositive ? '+' : '-'}${(Math.abs(mov.quantity_change) * (mov.unit_cost || 0)).toFixed(2)}</>
+                                                    )}
+                                                </div>
+                                                <div className="text-right">
+                                                    <div className="text-[10px] font-black text-muted-foreground uppercase">Stock Post-Mov</div>
+                                                    <div className="font-bold">{mov.balance_after ?? '-'}</div>
+                                                </div>
+                                                <div className="text-xs text-muted-foreground text-right truncate w-full">
+                                                    {mov.reference_doc || mov.reference_id?.split('-')[0] || '-'}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             )}
-                        </div>
-
-                        <div className="p-6 border-t border-border shrink-0 bg-muted/30">
-                            <button onClick={() => setIsKardexOpen(false)} className="neu-btn neu-btn-primary w-full lg:w-40 font-bold py-3">
-                                Cerrar Kardex
-                            </button>
                         </div>
                     </div>
                 </div>
