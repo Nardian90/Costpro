@@ -527,18 +527,6 @@ export default function TerminalView() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentView]);
 
-  if (loading || showSplash) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <CostProLogo size={160} />
-      </div>
-    );
-  }
-
-  if (!user) {
-    return null;
-  }
-
   // Performance: Memoize addToCart with useCallback to prevent re-creating the function on every render.
   // This is crucial because it's passed as a prop to the memoized ProductCard component,
   // preventing unnecessary re-renders of the entire product list when the parent state changes.
@@ -556,6 +544,18 @@ export default function TerminalView() {
     setShowCart(true);
     toast.success(`${product.name} agregado al carrito`);
   }, [addItem]);
+
+  if (loading || showSplash) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <CostProLogo size={160} />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   const handleCheckout = async () => {
     if (items.length === 0 || isProcessing) return;
