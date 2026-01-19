@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef, useDeferredValue } from 'react';
+import { useState, useEffect, useMemo, useRef, useDeferredValue, useCallback } from 'react';
 import { useAuthStore, useCartStore, useUIStore } from '@/store';
 import { useRouter } from 'next/navigation';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
@@ -539,7 +539,10 @@ export default function TerminalView() {
     return null;
   }
 
-  const addToCart = (product: Product) => {
+  // Performance: Memoize addToCart with useCallback to prevent re-creating the function on every render.
+  // This is crucial because it's passed as a prop to the memoized ProductCard component,
+  // preventing unnecessary re-renders of the entire product list when the parent state changes.
+  const addToCart = useCallback((product: Product) => {
     addItem({
       product_id: product.id,
       variant_id: null,
@@ -552,7 +555,7 @@ export default function TerminalView() {
     });
     setShowCart(true);
     toast.success(`${product.name} agregado al carrito`);
-  };
+  }, [addItem]);
 
   const handleCheckout = async () => {
     if (items.length === 0 || isProcessing) return;
