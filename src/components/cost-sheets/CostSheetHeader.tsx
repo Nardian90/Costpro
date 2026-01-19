@@ -1,7 +1,8 @@
-// src/components/cost-sheets/CostSheetHeader.tsx
-import React from 'react';
+'use client';
 
-// Define the type for the header prop based on the JSON structure
+import React from 'react';
+import { cn } from '@/lib/utils';
+
 type CostSheetHeaderProps = {
   header: {
     code: string;
@@ -17,29 +18,34 @@ type CostSheetHeaderProps = {
 
 const CostSheetHeader: React.FC<CostSheetHeaderProps> = ({ header }) => {
   return (
-    <div className="p-4 bg-gray-50 rounded-lg mb-6">
-      <h1 className="text-xl font-bold mb-4">{header.name}</h1>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+    <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-inner">
+      <div className="flex flex-col gap-6">
         <div>
-          <span className="font-semibold">Código:</span> {header.code}
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary block mb-1">Nombre del Recurso</span>
+          <h1 className="text-2xl font-black text-slate-900 dark:text-white leading-tight uppercase">
+            {header.name || 'Sin nombre'}
+          </h1>
         </div>
-        <div>
-          <span className="font-semibold">Fecha de Elaboración:</span> {header.date}
-        </div>
-        <div>
-          <span className="font-semibold">Unidad de Medida:</span> {header.unit}
-        </div>
-        <div>
-          <span className="font-semibold">Cantidad:</span> {header.quantity}
-        </div>
-        <div>
-          <span className="font-semibold">Moneda:</span> {header.currency}
-        </div>
-        <div>
-          <span className="font-semibold">Clasificación:</span> {header.category}
-        </div>
-        <div>
-          <span className="font-semibold">Tipo:</span> {header.type}
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-6">
+          {[
+            { label: 'Código', value: header.code },
+            { label: 'Fecha', value: header.date },
+            { label: 'Unidad', value: header.unit },
+            { label: 'Cantidad', value: header.quantity },
+            { label: 'Moneda', value: header.currency },
+            { label: 'Categoría', value: header.category },
+            { label: 'Tipo', value: header.type },
+          ].map((item, idx) => (
+            <div key={idx} className="space-y-1">
+              <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400 block">
+                {item.label}
+              </span>
+              <div className="font-bold text-sm text-slate-700 dark:text-slate-300">
+                {item.value || 'N/A'}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

@@ -1,11 +1,11 @@
-// src/components/cost-sheets/CostSheetBody.tsx
-import React from 'react';
+'use client';
 
-// Define types for props based on the JSON structure
+import React from 'react';
+import { cn } from '@/lib/utils';
+
 type Row = {
   id: string;
   label: string;
-  // Other row properties will be used by the calculator hook
 };
 
 type Section = {
@@ -16,29 +16,35 @@ type Section = {
 
 type CostSheetBodyProps = {
   sections: Section[];
-  calculatedValues: { [key: string]: number }; // Values computed by the hook
+  calculatedValues: { [key: string]: number };
 };
 
 const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValues }) => {
   return (
-    <div className="border rounded-lg">
+    <div className="overflow-x-auto table-to-cards border border-slate-100 dark:border-slate-800 rounded-3xl overflow-hidden shadow-xl">
       <table className="w-full text-sm">
-        <thead className="bg-gray-100">
+        <thead className="bg-slate-800 text-white hidden sm:table-header-group">
           <tr>
-            <th className="p-2 text-left font-semibold">Descripción</th>
-            <th className="p-2 text-right font-semibold">Valor</th>
+            <th className="p-4 text-left font-black uppercase tracking-widest text-[10px]">Descripción del Concepto</th>
+            <th className="p-4 text-right font-black uppercase tracking-widest text-[10px] w-48">Valor Calculado</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody className="bg-white dark:bg-slate-900">
           {sections.map((section) => (
             <React.Fragment key={section.id}>
               {section.rows.map((row) => (
-                <tr key={row.id} className="border-t hover:bg-gray-50">
-                  <td className={`p-2 ${row.id.includes('.') ? 'pl-8' : 'font-semibold'}`}>
+                <tr key={row.id} className="border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
+                  <td
+                    data-label="Descripción"
+                    className={cn(
+                      "p-4",
+                      row.id.includes('.') ? 'pl-8 sm:pl-12 text-slate-500 italic' : 'font-bold text-slate-900 dark:text-white uppercase tracking-tight'
+                    )}
+                  >
                     {row.label}
                   </td>
-                  <td className="p-2 text-right font-mono">
-                    {/* Display calculated value, fallback to 0 */}
+                  <td data-label="Valor" className="p-4 text-right font-mono font-black text-primary text-base">
+                    <span className="text-[10px] mr-1 opacity-50">$</span>
                     {calculatedValues[row.id]?.toLocaleString('en-US', {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
