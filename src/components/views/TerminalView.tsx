@@ -1924,7 +1924,12 @@ export default function TerminalView() {
               {navigationItems.map(item => (
                 <button
                   key={item.id}
-                  onClick={() => setCurrentView(item.id)}
+                  onClick={() => {
+                    setCurrentView(item.id);
+                    if (sidebarOpen) {
+                      toggleSidebar();
+                    }
+                  }}
                   className={cn(
                     "w-full flex items-center gap-4 p-4 rounded-2xl transition-all group active:scale-95",
                     currentView === item.id
