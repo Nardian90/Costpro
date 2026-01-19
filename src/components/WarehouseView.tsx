@@ -46,7 +46,17 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
     const [selectedCategory, setSelectedCategory] = useState<string>('');
     const [loading, setLoading] = useState(true);
     const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
-    const [forceTableView, setForceTableView] = useState(false);
+    const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
+
+    useEffect(() => {
+        const mediaQuery = window.matchMedia('(max-width: 768px)');
+        const handleResize = () => {
+            setViewMode(mediaQuery.matches ? 'card' : 'table');
+        };
+        handleResize();
+        mediaQuery.addEventListener('change', handleResize);
+        return () => mediaQuery.removeEventListener('change', handleResize);
+    }, []);
 
     const toggleRow = (id: string) => {
         const newExpanded = new Set(expandedRows);
@@ -750,9 +760,9 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
     const actions: Action[] = [
         {
             id: 'toggle-view',
-            label: forceTableView ? 'Ver Tarjetas' : 'Ver Tabla',
-            icon: forceTableView ? LayoutList : TableIcon,
-            onClick: () => setForceTableView(!forceTableView),
+            label: viewMode === 'table' ? 'Ver Tarjetas' : 'Ver Tabla',
+            icon: viewMode === 'table' ? LayoutList : TableIcon,
+            onClick: () => setViewMode(prev => prev === 'table' ? 'card' : 'table'),
             className: 'sm:hidden',
         },
         {
@@ -803,13 +813,13 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                     <ActionMenu
                         actions={[
                             { id: 'refresh', label: 'Actualizar', icon: History, onClick: fetchReceiptsHistory, variant: 'primary' },
-                            { id: 'toggle-view', label: forceTableView ? 'Ver Tarjetas' : 'Ver Tabla', icon: forceTableView ? LayoutList : TableIcon, onClick: () => setForceTableView(!forceTableView), className: 'sm:hidden' }
+                            { id: 'toggle-view', label: viewMode === 'table' ? 'Ver Tarjetas' : 'Ver Tabla', icon: viewMode === 'table' ? LayoutList : TableIcon, onClick: () => setViewMode(prev => prev === 'table' ? 'card' : 'table'), className: 'sm:hidden' }
                         ]}
                         className="sm:w-auto"
                     />
                 </div>
 
-                <div className="overflow-x-auto table-to-cards rounded-2xl shadow-xl">
+                <div className={cn("overflow-x-auto table-to-cards rounded-2xl shadow-xl", viewMode === 'table' && 'force-table')}>
                     <table className="w-full text-sm">
                         <thead className="bg-muted/50 border-b">
                             <tr className="text-left text-muted-foreground uppercase text-[10px] font-bold">
@@ -828,7 +838,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                                         <tr key={receipt.id} className={`border-b last:border-0 hover:bg-accent/5 transition-colors ${isExpanded ? 'is-expanded' : ''}`}>
                                             <td data-label="Fecha" className="p-4">
                                                 <div className="flex items-center gap-2">
-                                                    {!forceTableView && (
+                                                    {viewMode === 'card' && (
                                                         <button
                                                             onClick={() => toggleRow(receipt.id)}
                                                             className="p-1 sm:hidden hover:bg-accent rounded-full expand-icon"
@@ -931,10 +941,11 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
             {/* Main Content Area */}
             <div className="flex flex-col lg:flex-row gap-6 items-start">
                 <div className="flex-1 w-full overflow-hidden">
-                    <div className={`overflow-x-auto table-to-cards rounded-2xl shadow-xl border border-white/5 ${forceTableView ? 'force-table' : ''}`}>
-                        <table className="w-full">
-                            <thead className="bg-muted/30 border-b">
-                                <tr className="text-left text-muted-foreground uppercase text-[10px] font-bold">
+                    <div className={cn("overflow-x-auto table-to-cards rounded-2xl shadow-xl border border-white/5", viewMode === 'table' && 'force-table')}>
+                        <div className={cn(viewMode === 'table' && 'min-w-[1024px]')}>
+                            <table className="w-full">
+                                <thead className="bg-muted/30 border-b">
+                                    <tr className="text-left text-muted-foreground uppercase text-[10px] font-bold">
                                     <th className="p-4">Producto</th>
                                     <th className="p-4">SKU</th>
                                     <th className="p-4 text-right">Stock</th>
@@ -1056,6 +1067,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                                 })}
                             </tbody>
                         </table>
+                        </div>
                     </div>
                 </div>
 
