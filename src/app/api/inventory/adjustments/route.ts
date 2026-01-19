@@ -23,6 +23,23 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // 🛡️ Sentinel: Input validation to ensure each item has the required properties and types.
+  for (const item of items) {
+    if (
+      !item.product_id ||
+      typeof item.product_id !== "string" ||
+      !item.quantity ||
+      typeof item.quantity !== "number" ||
+      !item.reason ||
+      typeof item.reason !== "string"
+    ) {
+      return NextResponse.json(
+        { error: "Bad Request", message: "Invalid item structure." },
+        { status: 400 }
+      );
+    }
+  }
+
   try {
     const authClient = getSupabaseAuthClient(session.token);
 
