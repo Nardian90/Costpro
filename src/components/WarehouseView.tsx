@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { getSupabaseUrl, getProductImageUrl } from '@/lib/utils';
+import { getSupabaseUrl, getProductImageUrl, cn } from '@/lib/utils';
 import { useAuthStore, useCartStore } from '@/store';
 import {
     Package,
