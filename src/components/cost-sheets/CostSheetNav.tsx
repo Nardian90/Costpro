@@ -2,8 +2,8 @@
 'use client';
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import ActionMenu, { Action } from '@/components/ui/ActionMenu';
+import { Layout, FileSpreadsheet, PenTool, ClipboardList } from 'lucide-react';
 
 interface CostSheetNavProps {
   sections: any[];
@@ -18,30 +18,48 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
   activeSection,
   setActiveSection,
 }) => {
-  // Create a combined list of all navigable sections
-  const navItems = [
-    { id: 'header', label: 'Encabezado' },
-    ...sections.map(s => ({ id: s.id, label: s.label })),
-    ...annexes.map(a => ({ id: a.id, label: `Anexo ${a.id}: ${a.title.substring(0, 20)}...` })),
-     { id: 'signature', label: 'Firmas' },
+  // Create a combined list of all navigable sections mapped to ActionMenu format
+  const navActions: Action[] = [
+    {
+        id: 'header',
+        label: 'Encabezado',
+        icon: Layout,
+        onClick: () => setActiveSection('header'),
+        active: activeSection === 'header'
+    },
+    ...sections.map(s => ({
+        id: s.id,
+        label: s.label,
+        icon: ClipboardList,
+        onClick: () => setActiveSection(s.id),
+        active: activeSection === s.id
+    })),
+    ...annexes.map(a => ({
+        id: a.id,
+        label: `Anexo ${a.id}`,
+        icon: FileSpreadsheet,
+        onClick: () => setActiveSection(a.id),
+        active: activeSection === a.id
+    })),
+    {
+        id: 'signature',
+        label: 'Firmas',
+        icon: PenTool,
+        onClick: () => setActiveSection('signature'),
+        active: activeSection === 'signature'
+    },
   ];
 
   return (
-    <div className="my-4">
-      <ScrollArea className="w-full whitespace-nowrap rounded-md border">
-        <div className="flex w-max space-x-2 p-2">
-          {navItems.map((item) => (
-            <Button
-              key={item.id}
-              variant={activeSection === item.id ? 'default' : 'outline'}
-              onClick={() => setActiveSection(item.id)}
-            >
-              {item.label}
-            </Button>
-          ))}
-        </div>
-        <ScrollBar orientation="horizontal" />
-      </ScrollArea>
+    <div className="mb-8">
+      <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-3 px-1">
+        Navegación de Secciones
+      </div>
+      <ActionMenu
+        actions={navActions}
+        sticky={false}
+        className="!z-10 shadow-none bg-transparent"
+      />
     </div>
   );
 };
