@@ -2285,6 +2285,7 @@ export default function TerminalView() {
                 </div>
                 <input type="file" id="store-logo-upload" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleUpdateStoreLogo(file); }} />
                 <label htmlFor="store-logo-upload" className="neu-btn !px-4 !py-2 text-[8px] font-black uppercase tracking-widest cursor-pointer">Actualizar Logo</label>
+              </div>
             </div>
           </div>
           <DialogFooter className="gap-2">
