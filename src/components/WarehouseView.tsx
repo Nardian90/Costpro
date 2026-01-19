@@ -48,6 +48,8 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
     const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
     const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
 
+    const forceTableView = viewMode === 'table';
+
     useEffect(() => {
         const mediaQuery = window.matchMedia('(max-width: 768px)');
         const handleResize = () => {
