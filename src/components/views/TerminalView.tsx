@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useDeferredValue } from 'react';
 import { useAuthStore, useCartStore, useUIStore } from '@/store';
 import { useRouter } from 'next/navigation';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { supabase } from '@/lib/supabaseClient';
-import { getSupabaseUrl } from '@/lib/utils';
+import { getSupabaseUrl, getProductImageUrl, getStoreLogoUrl } from '@/lib/utils';
+import ProductCard from '@/components/ProductCard';
 import {
   Package,
   ShoppingCart,
@@ -117,18 +118,41 @@ export default function TerminalView() {
     total_transfer: 0,
   });
 
+  // Initial data fetch - only essential data for the default view (dashboard/pos)
   useEffect(() => {
     if (user) {
       fetchDashboardData();
       fetchProducts();
-      fetchTransactions();
-      fetchUsers();
-      fetchStores();
-      fetchAuditLogs();
-      fetchMovements();
-      fetchCashClosures();
     }
   }, [user]);
+
+  // Lazy load data for other views only when they are requested
+  useEffect(() => {
+    if (!user) return;
+
+    switch (currentView) {
+      case 'sales':
+        if (transactions.length === 0) fetchTransactions();
+        break;
+      case 'users':
+        if (users.length === 0) fetchUsers();
+        break;
+      case 'stores':
+        if (stores.length === 0) fetchStores();
+        break;
+      case 'audit':
+        if (auditLogs.length === 0) fetchAuditLogs();
+        break;
+      case 'history':
+        if (movements.length === 0) fetchMovements();
+        break;
+      case 'cash':
+        if (cashClosures.length === 0) {
+          fetchCashClosures();
+        }
+        break;
+    }
+  }, [user, currentView]);
 
   const fetchProducts = async () => {
     if (!user) return;
@@ -292,13 +316,6 @@ export default function TerminalView() {
     }
   };
 
-  const getProductImageUrl = (product: Product) => {
-    return getSupabaseUrl('product-images', product.image_url);
-  };
-
-  const getStoreLogoUrl = (store: Store) => {
-    return getSupabaseUrl('store-logos', store.logo_url);
-  };
 
   const handleUpdateStoreLogo = async (file: File) => {
     if (!editingStore) return;
@@ -373,6 +390,7 @@ export default function TerminalView() {
   };
   // States for views
   const [searchTerm, setSearchTerm] = useState('');
+  const deferredSearchTerm = useDeferredValue(searchTerm);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isVariantsModalOpen, setIsVariantsModalOpen] = useState(false);
   const [isEditProductModalOpen, setIsEditProductModalOpen] = useState(false);
@@ -418,13 +436,13 @@ export default function TerminalView() {
   }, [user?.role]);
 
   const filteredProducts = useMemo(() => {
-    const lowerSearch = searchTerm.toLowerCase();
+    const lowerSearch = deferredSearchTerm.toLowerCase();
     return products.filter(p =>
       p.name.toLowerCase().includes(lowerSearch) ||
       (p.sku && p.sku.toLowerCase().includes(lowerSearch)) ||
       (p.category && p.category.toLowerCase().includes(lowerSearch))
     );
-  }, [products, searchTerm]);
+  }, [products, deferredSearchTerm]);
 
   const filteredMovements = useMemo(() => {
     return movements.filter(mov => {
@@ -1000,31 +1018,11 @@ export default function TerminalView() {
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {filteredProducts.length > 0 ? (
               filteredProducts.map(product => (
-                <button
+                <ProductCard
                   key={product.id}
-                  type="button"
-                  className="neu-card p-4 cursor-pointer hover:scale-105 transition-transform w-full text-left focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
-                  onClick={() => addToCart(product)}
-                  aria-label={`Agregar ${product.name} al carrito. Precio: $${product.price.toFixed(2)}. Stock disponible: ${product.stock_current}`}
-                >
-                <div className="neu-raised-sm w-16 h-16 mx-auto mb-3 flex items-center justify-center overflow-hidden">
-                  {product.public_image_url ? (
-                    <img
-                      src={product.public_image_url}
-                      alt={product.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <Package className="w-8 h-8 text-muted-foreground" />
-                  )}
-                </div>
-                <h3 className="font-semibold text-sm mb-1 text-center">{product.name}</h3>
-                <div className="text-xs text-muted-foreground text-center mb-2">{product.sku}</div>
-                <div className="text-center">
-                  <div className="text-lg font-bold text-primary">${product.price.toFixed(2)}</div>
-                  <div className="text-xs text-muted-foreground">Stock: {product.stock_current}</div>
-                </div>
-              </button>
+                  product={product}
+                  onClick={addToCart}
+                />
               ))
             ) : (
               <div className="col-span-full py-10 sm:py-20 text-center text-muted-foreground bg-muted/20 rounded-2xl border-2 border-dashed border-border">
@@ -2348,7 +2346,7 @@ export default function TerminalView() {
                 <div className="neu-raised-sm w-32 h-32 flex items-center justify-center overflow-hidden">
                   {editingStore?.logo_url ? (
                     <img
-                      src={getStoreLogoUrl(editingStore) || ''}
+                      src={getStoreLogoUrl(editingStore.logo_url) || ''}
                       alt={editingStore.name}
                       className="w-full h-full object-cover"
                     />
