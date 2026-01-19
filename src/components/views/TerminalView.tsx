@@ -2283,14 +2283,37 @@ export default function TerminalView() {
                     <Building className="w-16 h-16 text-muted-foreground" />
                   )}
                 </div>
-                <input type="file" id="store-logo-upload" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleUpdateStoreLogo(file); }} />
-                <label htmlFor="store-logo-upload" className="neu-btn !px-4 !py-2 text-[8px] font-black uppercase tracking-widest cursor-pointer">Actualizar Logo</label>
+                <input
+                  type="file"
+                  id="store-logo-upload"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleUpdateStoreLogo(file);
+                  }}
+                />
+                <label
+                  htmlFor="store-logo-upload"
+                  className="neu-btn !px-4 !py-2 text-[8px] font-black uppercase tracking-widest cursor-pointer"
+                >
+                  Actualizar Logo
+                </label>
               </div>
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <button onClick={() => setIsEditStoreModalOpen(false)} className="neu-btn flex-1 text-[10px] font-black uppercase">Cancelar</button>
-            <button onClick={handleUpdateStore} className="neu-btn-primary flex-1 text-[10px] font-black uppercase shadow-lg shadow-primary/20">Guardar</button>
+            <button
+              onClick={() => setIsEditStoreModalOpen(false)}
+              className="neu-btn flex-1 text-[10px] font-black uppercase"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleUpdateStore}
+              className="neu-btn-primary flex-1 text-[10px] font-black uppercase shadow-lg shadow-primary/20"
+            >
+              Guardar
+            </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -2308,8 +2331,18 @@ export default function TerminalView() {
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <button onClick={() => setIsCreateStoreModalOpen(false)} className="neu-btn flex-1 text-[10px] font-black uppercase">Descartar</button>
-            <button onClick={handleCreateStore} className="neu-btn-primary flex-1 text-[10px] font-black uppercase shadow-xl shadow-primary/20">Registrar Tienda</button>
+            <button
+              onClick={() => setIsCreateStoreModalOpen(false)}
+              className="neu-btn flex-1 text-[10px] font-black uppercase"
+            >
+              Descartar
+            </button>
+            <button
+              onClick={handleCreateStore}
+              className="neu-btn-primary flex-1 text-[10px] font-black uppercase shadow-xl shadow-primary/20"
+            >
+              Registrar Tienda
+            </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -2331,8 +2364,18 @@ export default function TerminalView() {
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <button onClick={() => setIsEditUserModalOpen(false)} className="neu-btn flex-1 text-[10px] font-black uppercase">Cancelar</button>
-            <button onClick={handleUpdateUser} className="neu-btn-primary flex-1 text-[10px] font-black uppercase shadow-xl shadow-primary/20">Aplicar Cambios</button>
+            <button
+              onClick={() => setIsEditUserModalOpen(false)}
+              className="neu-btn flex-1 text-[10px] font-black uppercase"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleUpdateUser}
+              className="neu-btn-primary flex-1 text-[10px] font-black uppercase shadow-xl shadow-primary/20"
+            >
+              Aplicar Cambios
+            </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -2353,8 +2396,18 @@ export default function TerminalView() {
             </select>
           </div>
           <DialogFooter className="gap-2">
-            <button onClick={() => setIsCreateUserModalOpen(false)} className="neu-btn flex-1 text-[10px] font-black uppercase">Anular</button>
-            <button onClick={handleCreateUser} className="neu-btn-primary flex-1 text-[10px] font-black uppercase shadow-xl shadow-primary/20">Crear Acceso</button>
+            <button
+              onClick={() => setIsCreateUserModalOpen(false)}
+              className="neu-btn flex-1 text-[10px] font-black uppercase"
+            >
+              Anular
+            </button>
+            <button
+              onClick={handleCreateUser}
+              className="neu-btn-primary flex-1 text-[10px] font-black uppercase shadow-xl shadow-primary/20"
+            >
+              Crear Acceso
+            </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -2368,8 +2421,18 @@ export default function TerminalView() {
             <p className="text-[10px] text-muted-foreground mt-4 uppercase tracking-[0.2em]">Esta operación no puede revertirse</p>
           </div>
           <DialogFooter className="gap-2">
-            <button onClick={() => setIsDeleteStoreModalOpen(false)} className="neu-btn flex-1 text-[10px] font-black uppercase">Descartar</button>
-            <button onClick={handleDeleteStore} className="neu-btn-danger flex-1 text-[10px] font-black uppercase shadow-xl shadow-danger/20">Confirmar Eliminación</button>
+            <button
+              onClick={() => setIsDeleteStoreModalOpen(false)}
+              className="neu-btn flex-1 text-[10px] font-black uppercase"
+            >
+              Descartar
+            </button>
+            <button
+              onClick={handleDeleteStore}
+              className="neu-btn-danger flex-1 text-[10px] font-black uppercase shadow-xl shadow-danger/20"
+            >
+              Confirmar Eliminación
+            </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
