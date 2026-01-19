@@ -1907,7 +1907,7 @@ export default function TerminalView() {
   };
 
   return (
-    <div className="min-h-screen flex bg-background text-foreground max-w-full overflow-x-hidden">
+    <div className="min-h-screen flex bg-background text-foreground max-w-full overflow-x-auto">
       {/* Sidebar */}
       <aside className={`${sidebarOpen ? 'w-64' : 'w-0'} lg:w-64 fixed lg:sticky top-0 h-screen z-40 transition-all duration-300 overflow-hidden ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="bg-sidebar/80 backdrop-blur-lg h-full flex flex-col border-r border-sidebar-border">
