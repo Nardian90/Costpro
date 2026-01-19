@@ -32,3 +32,7 @@ main
 
 - Learning: Headers with many action buttons cause horizontal overflow on mobile if they don't wrap or scroll.
 - Action: Implemented a horizontal scrolling ribbon (no-scrollbar) for action buttons in WarehouseView to maintain a clean layout within the frame.
+
+## 2025-05-15 - [A11y & Protective UX]
+**Learning:** Icon-only buttons without aria-labels are invisible to screen readers, and destructive actions like clearing a cart without confirmation lead to user frustration.
+**Action:** Always add aria-labels to Lucide-based icon buttons and implement toast-based confirmations for non-reversible UI actions.

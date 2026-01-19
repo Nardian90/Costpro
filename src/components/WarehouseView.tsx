@@ -832,6 +832,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                                                         <button
                                                             onClick={() => toggleRow(receipt.id)}
                                                             className="p-1 sm:hidden hover:bg-accent rounded-full expand-icon"
+                                                            aria-label={isExpanded ? "Contraer fila" : "Expandir fila"}
                                                         >
                                                             <ChevronDown className="w-4 h-4" />
                                                         </button>
@@ -967,6 +968,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                                                         <button
                                                             onClick={() => toggleRow(product.id)}
                                                             className="p-1 sm:hidden hover:bg-accent rounded-full expand-icon"
+                                                            aria-label={isExpanded ? "Contraer fila" : "Expandir fila"}
                                                         >
                                                             <ChevronDown className="w-4 h-4" />
                                                         </button>
@@ -1034,7 +1036,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                                                             <button
                                                                 onClick={() => fetchProductKardex(product)}
                                                                 className="neu-raised-sm w-9 h-9 flex items-center justify-center hover:text-primary transition-colors"
-                                                                title="Ver Historial"
+                                                                aria-label="Ver historial de movimientos (Kardex)"
                                                             >
                                                                 <History className="w-4 h-4" />
                                                             </button>
@@ -1109,6 +1111,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                                         <button
                                             onClick={() => removeReceptionItem(product.id)}
                                             className="absolute -top-1 -right-1 p-1 bg-danger text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                                            aria-label="Remover de la recepción"
                                         >
                                             <X className="w-3 h-3" />
                                         </button>
@@ -1188,7 +1191,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                                                 <button
                                                     onClick={() => handlePrintReceipt(tx.reference_id)}
                                                     className="neu-btn !p-2 hover:neu-raised-sm"
-                                                    title="Previsualizar"
+                                                    aria-label="Previsualizar reporte de recepción"
                                                 >
                                                     <FileText className="w-4 h-4" />
                                                 </button>
