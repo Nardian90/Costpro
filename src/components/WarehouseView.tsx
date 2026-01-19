@@ -25,6 +25,9 @@ import {
     ArrowUpDown,
     ArrowDownLeft,
     ArrowUpRight,
+    ChevronDown,
+    LayoutList,
+    Table as TableIcon,
 } from 'lucide-react';
 import Papa from 'papaparse';
 import type { Product, Receipt, ReceiptItem } from '@/types';
@@ -50,6 +53,18 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<string>('');
     const [loading, setLoading] = useState(true);
+    const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+    const [forceTableView, setForceTableView] = useState(false);
+
+    const toggleRow = (id: string) => {
+        const newExpanded = new Set(expandedRows);
+        if (newExpanded.has(id)) {
+            newExpanded.delete(id);
+        } else {
+            newExpanded.add(id);
+        }
+        setExpandedRows(newExpanded);
+    };
 
     // Estados para Edición Rápida de Stock (Single Item)
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -440,7 +455,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                     ...item,
                     stock_current,
                     store_id,
-                    public_image_url: getProductImageUrl(item.image_url),
+                    public_image_url: getSupabaseUrl('product-images', item.image_url),
                 };
             }) || [];
 
@@ -846,16 +861,26 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
             <div className="space-y-6 h-full flex flex-col">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
                     <h2 className="text-xl sm:text-2xl font-bold text-foreground border-l-4 border-primary pl-4">Historial de Recepciones</h2>
-                    <button
-                        onClick={fetchReceiptsHistory}
-                        className="neu-btn neu-raised-sm text-xs font-bold w-full sm:w-auto"
-                    >
-                        Actualizar
-                    </button>
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <button
+                            onClick={() => setForceTableView(!forceTableView)}
+                            className="neu-btn neu-raised-sm flex items-center justify-center gap-2 px-3 py-2 sm:hidden flex-1"
+                            title={forceTableView ? 'Cambiar a vista de tarjetas' : 'Cambiar a vista de tabla'}
+                        >
+                            {forceTableView ? <LayoutList className="w-4 h-4" /> : <TableIcon className="w-4 h-4" />}
+                            <span className="text-xs font-bold">{forceTableView ? 'Ver Tarjetas' : 'Ver Tabla'}</span>
+                        </button>
+                        <button
+                            onClick={fetchReceiptsHistory}
+                            className="neu-btn neu-raised-sm text-xs font-bold px-4 py-2 flex-1 sm:flex-none"
+                        >
+                            Actualizar
+                        </button>
+                    </div>
                 </div>
 
                 <div className="flex-1 overflow-auto neu-inset-sm bg-card rounded-xl p-0">
-                    <div className="overflow-x-auto table-to-cards">
+                    <div className={`overflow-x-auto table-to-cards ${forceTableView ? 'force-table' : ''}`}>
                         <table className="w-full text-sm">
                             <thead className="sticky top-0 bg-muted/50 z-10 border-b">
                                 <tr className="text-left text-muted-foreground uppercase text-[10px] font-bold">
@@ -868,40 +893,55 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                             </thead>
                             <tbody>
                                 {receiptsHistory.length > 0 ? (
-                                    receiptsHistory.map((receipt: any) => (
-                                        <tr key={receipt.id} className="border-b last:border-0 hover:bg-accent transition-colors">
-                                            <td data-label="Fecha" className="p-4">
-                                                <div className="font-medium">{new Date(receipt.created_at).toLocaleDateString()}</div>
-                                                <div className="text-[10px] text-muted-foreground">{new Date(receipt.created_at).toLocaleTimeString()}</div>
-                                            </td>
-                                            <td data-label="Referencia" className="p-4">
-                                                <div className="font-bold text-foreground">{receipt.reference_doc}</div>
-                                                <div className="text-xs text-muted-foreground">{receipt.notes || 'Sin notas'}</div>
-                                            </td>
-                                            <td data-label="Usuario" className="p-4">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold">
-                                                        {receipt.profile?.full_name?.charAt(0)}
+                                    receiptsHistory.map((receipt: any) => {
+                                        const isExpanded = expandedRows.has(receipt.id);
+                                        return (
+                                            <tr key={receipt.id} className={`border-b last:border-0 hover:bg-accent transition-colors ${isExpanded ? 'is-expanded' : ''}`}>
+                                                <td data-label="Fecha" className="p-4">
+                                                    <div className="flex items-center gap-2">
+                                                        {!forceTableView && (
+                                                            <button
+                                                                onClick={() => toggleRow(receipt.id)}
+                                                                className="p-1 sm:hidden hover:bg-accent rounded-full transition-colors expand-icon"
+                                                            >
+                                                                <ChevronDown className="w-4 h-4" />
+                                                            </button>
+                                                        )}
+                                                        <div>
+                                                            <div className="font-medium">{new Date(receipt.created_at).toLocaleDateString()}</div>
+                                                            <div className="text-[10px] text-muted-foreground">{new Date(receipt.created_at).toLocaleTimeString()}</div>
+                                                        </div>
                                                     </div>
-                                                    <span>{receipt.profile?.full_name}</span>
-                                                </div>
-                                            </td>
-                                            <td data-label="Total Costo" className="p-4 text-right">
-                                                <div className="font-bold text-foreground">${receipt.total_cost.toFixed(2)}</div>
-                                            </td>
-                                            <td data-label="Acciones" className="p-4">
-                                                <div className="flex justify-center">
-                                                    <button
-                                                        onClick={() => handlePrintReceipt(receipt.id)}
-                                                        className="neu-btn neu-btn-primary flex items-center gap-2 px-4 py-2 text-xs"
-                                                    >
-                                                        <FileText className="w-4 h-4" />
-                                                        <span>Ver Detalle</span>
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))
+                                                </td>
+                                                <td data-label="Referencia" className="p-4 mobile-secondary">
+                                                    <div className="font-bold text-foreground">{receipt.reference_doc}</div>
+                                                    <div className="text-xs text-muted-foreground">{receipt.notes || 'Sin notas'}</div>
+                                                </td>
+                                                <td data-label="Usuario" className="p-4 mobile-secondary">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold">
+                                                            {receipt.profile?.full_name?.charAt(0)}
+                                                        </div>
+                                                        <span>{receipt.profile?.full_name}</span>
+                                                    </div>
+                                                </td>
+                                                <td data-label="Total Costo" className="p-4 text-right">
+                                                    <div className="font-bold text-foreground">${receipt.total_cost.toFixed(2)}</div>
+                                                </td>
+                                                <td data-label="Acciones" className="p-4 mobile-secondary">
+                                                    <div className="flex justify-center">
+                                                        <button
+                                                            onClick={() => handlePrintReceipt(receipt.id)}
+                                                            className="neu-btn neu-btn-primary flex items-center gap-2 px-4 py-2 text-xs"
+                                                        >
+                                                            <FileText className="w-4 h-4" />
+                                                            <span>Ver Detalle</span>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
                                 ) : (
                                     <tr>
                                         <td colSpan={5} className="text-center py-20 text-muted-foreground">
@@ -941,6 +981,14 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
 
                 {/* Horizontal Ribbon for Action Buttons on Mobile */}
                 <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0">
+                    <button
+                        onClick={() => setForceTableView(!forceTableView)}
+                        className="neu-btn neu-raised-sm flex items-center gap-2 px-4 shadow-sm border-none whitespace-nowrap sm:hidden"
+                        title={forceTableView ? 'Cambiar a vista de tarjetas' : 'Cambiar a vista de tabla'}
+                    >
+                        {forceTableView ? <LayoutList className="w-4 h-4" /> : <TableIcon className="w-4 h-4" />}
+                        <span className="text-sm font-bold">{forceTableView ? 'Ver Tarjetas' : 'Ver Tabla'}</span>
+                    </button>
                     {isReceptionMode && (
                         <button
                             onClick={() => setIsCreateModalOpen(true)}
@@ -1024,7 +1072,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
             <div className="flex flex-col lg:flex-row flex-1 gap-4 lg:gap-6 overflow-hidden min-h-0">
                 {/* Tabla de Productos - Responsive Card View */}
                 <div className="flex-1 overflow-auto">
-                    <div className="overflow-x-auto table-to-cards">
+                    <div className={`overflow-x-auto table-to-cards ${forceTableView ? 'force-table' : ''}`}>
                         <table className="w-full">
                             <thead className="sticky top-0 bg-background z-10 shadow-sm">
                                 <tr className="border-b border-border">
@@ -1047,11 +1095,20 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                                     </tr>
                                 ) : filteredProducts.map(product => {
                                     const isInReception = receptionItems.has(product.id);
+                                    const isExpanded = expandedRows.has(product.id);
 
                                     return (
-                                        <tr key={product.id} className={isInReception ? 'bg-accent/50' : ''}>
+                                        <tr key={product.id} className={`${isInReception ? 'bg-accent/50' : ''} ${isExpanded ? 'is-expanded' : ''}`}>
                                             <td data-label="Producto" className="p-4">
                                                 <div className="flex items-center gap-3">
+                                                    {!forceTableView && (
+                                                        <button
+                                                            onClick={() => toggleRow(product.id)}
+                                                            className="p-1 sm:hidden hover:bg-accent rounded-full transition-colors expand-icon"
+                                                        >
+                                                            <ChevronDown className="w-4 h-4" />
+                                                        </button>
+                                                    )}
                                                     <div className="neu-raised-sm w-12 h-12 flex items-center justify-center overflow-hidden bg-muted/30 shrink-0 relative group">
                                                         {product.public_image_url ? (
                                                             <img
@@ -1086,24 +1143,24 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td data-label="SKU" className="p-4 text-muted-foreground text-sm">{product.sku || '-'}</td>
+                                            <td data-label="SKU" className="p-4 text-muted-foreground text-sm mobile-secondary">{product.sku || '-'}</td>
                                             <td data-label="Stock" className="p-4 text-right font-bold text-lg">
                                                 {product.stock_current}
                                             </td>
                                             {!isReceptionMode && (
-                                                <td data-label="Precio" className="p-4 text-right">${product.price.toFixed(2)}</td>
+                                                <td data-label="Precio" className="p-4 text-right mobile-secondary">${product.price.toFixed(2)}</td>
                                             )}
                                             {isReceptionMode && (
-                                                <td data-label="Costo" className="p-4 text-right text-muted-foreground">${product.cost_price?.toFixed(2)}</td>
+                                                <td data-label="Costo" className="p-4 text-right text-muted-foreground mobile-secondary">${product.cost_price?.toFixed(2)}</td>
                                             )}
-                                            <td data-label="Estado" className="p-4 text-center">
+                                            <td data-label="Estado" className="p-4 text-center mobile-secondary">
                                                 {product.stock_current <= product.min_stock ? (
                                                     <span className="neu-badge text-danger text-xs px-2 py-1">Stock Bajo</span>
                                                 ) : (
                                                     <span className="neu-badge text-success text-xs px-2 py-1">OK</span>
                                                 )}
                                             </td>
-                                            <td data-label="Acciones" className="p-4">
+                                            <td data-label="Acciones" className="p-4 mobile-secondary">
                                                 <div className="flex justify-center gap-2">
                                                     {isReceptionMode ? (
                                                         <button
@@ -1257,7 +1314,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
             {!isReceptionMode && recentReceptions.length > 0 && (
                 <div className="neu-card p-4 shrink-0">
                     <h3 className="font-bold text-lg mb-4">Recepciones Recientes</h3>
-                    <div className="overflow-x-auto table-to-cards">
+                    <div className={`overflow-x-auto table-to-cards ${forceTableView ? 'force-table' : ''}`}>
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="text-left border-b text-muted-foreground">
@@ -1271,19 +1328,33 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                                 </tr>
                             </thead>
                             <tbody>
-                                {recentReceptions.map((tx) => (
-                                    <tr key={tx.id} className="border-b last:border-0 hover:bg-accent">
-                                        <td data-label="Producto" className="py-3 font-medium">{tx.product?.name || 'Producto desconocido'}</td>
-                                        <td data-label="Proveedor" className="py-3 text-muted-foreground">{tx.supplier || tx.product?.supplier || '-'}</td>
-                                        <td data-label="Referencia" className="py-3 text-muted-foreground">{tx.reference_doc || '-'}</td>
-                                        <td data-label="Cantidad" className="py-3 text-right font-bold text-success">+{tx.quantity_change}</td>
-                                        <td data-label="Fecha" className="py-3 text-right text-muted-foreground">
-                                            {new Date(tx.movement_date).toLocaleDateString()}  {new Date(tx.movement_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                        </td>
-                                        <td data-label="Estado" className="py-3 text-center">
-                                            <span className="neu-badge text-success text-xs px-2 py-1">Completado</span>
-                                        </td>
-                                        <td data-label="Acciones" className="py-3 text-center">
+                                {recentReceptions.map((tx) => {
+                                    const isExpanded = expandedRows.has(tx.id);
+                                    return (
+                                        <tr key={tx.id} className={`border-b last:border-0 hover:bg-accent ${isExpanded ? 'is-expanded' : ''}`}>
+                                            <td data-label="Producto" className="py-3 font-medium">
+                                                <div className="flex items-center gap-2">
+                                                    {!forceTableView && (
+                                                        <button
+                                                            onClick={() => toggleRow(tx.id)}
+                                                            className="p-1 sm:hidden hover:bg-accent rounded-full transition-colors expand-icon"
+                                                        >
+                                                            <ChevronDown className="w-4 h-4" />
+                                                        </button>
+                                                    )}
+                                                    <span>{tx.product?.name || 'Producto desconocido'}</span>
+                                                </div>
+                                            </td>
+                                            <td data-label="Proveedor" className="py-3 text-muted-foreground mobile-secondary">{tx.supplier || tx.product?.supplier || '-'}</td>
+                                            <td data-label="Referencia" className="py-3 text-muted-foreground mobile-secondary">{tx.reference_doc || '-'}</td>
+                                            <td data-label="Cantidad" className="py-3 text-right font-bold text-success">+{tx.quantity_change}</td>
+                                            <td data-label="Fecha" className="py-3 text-right text-muted-foreground mobile-secondary">
+                                                {new Date(tx.movement_date).toLocaleDateString()}  {new Date(tx.movement_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            </td>
+                                            <td data-label="Estado" className="py-3 text-center mobile-secondary">
+                                                <span className="neu-badge text-success text-xs px-2 py-1">Completado</span>
+                                            </td>
+                                            <td data-label="Acciones" className="py-3 text-center mobile-secondary">
                                             {tx.reference_id && (
                                                 <button
                                                     onClick={() => handlePrintReceipt(tx.reference_id)}
@@ -1296,7 +1367,8 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                                             )}
                                         </td>
                                     </tr>
-                                ))}
+                                        );
+                                    })}
                             </tbody>
                         </table>
                     </div>
