@@ -13,3 +13,18 @@ export const getSupabaseUrl = (bucket: string, path: string | null): string | nu
   const { data } = supabase.storage.from(bucket).getPublicUrl(path);
   return data.publicUrl;
 };
+
+/**
+ * Utility to get the public URL for a product image.
+ * Centralizing this logic avoids redundant calculations and SDK overhead in render loops.
+ */
+export const getProductImageUrl = (path: string | null): string | null => {
+  return getSupabaseUrl('product-images', path);
+};
+
+/**
+ * Utility to get the public URL for a store logo.
+ */
+export const getStoreLogoUrl = (path: string | null): string | null => {
+  return getSupabaseUrl('store-logos', path);
+};
