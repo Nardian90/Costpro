@@ -11,23 +11,51 @@ import CostSheetBody from './CostSheetBody';
 import CostSheetAnnexes from './CostSheetAnnexes';
 import { Button } from '@/components/ui/button';
 import CostSheetSignature from './CostSheetSignature';
+import ActionMenu from '@/components/ui/ActionMenu';
+import { Eye, Edit, FileText, Trash2, Download } from 'lucide-react';
 
 const CostSheetView = () => {
   const { data, loadExample, reset } = useCostSheetStore();
-  const { calculatedValues } = useCostSheetCalculator(data);
+  const { calculatedValues, calculatedAnnexes } = useCostSheetCalculator(data);
 
   const [isEditing, setIsEditing] = useState(true);
   const [activeSection, setActiveSection] = useState('header'); // Default to header
 
   return (
-    <div className="container mx-auto p-4 sm:p-6 lg:p-8">
-      <div className="flex justify-end space-x-2 mb-4">
-        <Button onClick={() => setIsEditing(!isEditing)}>
-          {isEditing ? 'Preview' : 'Edit'}
-        </Button>
-        <Button variant="outline" onClick={loadExample}>Load Example</Button>
-        <Button variant="destructive" onClick={reset}>Reset</Button>
-      </div>
+    <div className="max-w-7xl mx-auto p-2 sm:p-6 lg:p-8 pb-24">
+      <ActionMenu
+        actions={[
+          {
+            id: 'toggle-mode',
+            label: isEditing ? 'Vista Previa' : 'Modo Edición',
+            icon: isEditing ? Eye : Edit,
+            onClick: () => setIsEditing(!isEditing),
+            variant: 'primary',
+          },
+          {
+            id: 'load-example',
+            label: 'Cargar Ejemplo',
+            icon: FileText,
+            onClick: loadExample,
+            variant: 'outline',
+          },
+          {
+            id: 'reset',
+            label: 'Reiniciar Todo',
+            icon: Trash2,
+            onClick: reset,
+            variant: 'danger',
+          },
+          {
+            id: 'export-pdf',
+            label: 'Exportar PDF',
+            icon: Download,
+            onClick: () => window.print(),
+            variant: 'success',
+          },
+        ]}
+        className="mb-8"
+      />
 
       {isEditing ? (
         <>
@@ -37,7 +65,11 @@ const CostSheetView = () => {
             activeSection={activeSection}
             setActiveSection={setActiveSection}
           />
-          <CostSheetForm activeSection={activeSection} />
+          <CostSheetForm
+            activeSection={activeSection}
+            calculatedAnnexes={calculatedAnnexes}
+            calculatedValues={calculatedValues}
+          />
         </>
       ) : (
         <div className="bg-white text-gray-900 p-4 sm:p-6 lg:p-8">

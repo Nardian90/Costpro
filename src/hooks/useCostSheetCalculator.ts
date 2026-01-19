@@ -28,35 +28,49 @@ export const useCostSheetCalculator = (template: Template) => {
 
   const calculateAnnexRow = (rowData: any, columns: Column[]): any => {
     return produce(rowData, draft => {
-        for (const col of columns) {
-            if (col.formula) {
-                let expression = col.formula;
-                // Replace placeholders like 'consumption_norm * price' with actual values
-                for (const key in rowData) {
-                    expression = expression.replace(new RegExp(key, 'g'), rowData[key]);
-                }
-                draft[col.key] = evaluateExpression(expression);
-            }
+      // Sort columns: formula-based columns should probably come after data columns
+      // but if a formula depends on another formula, we might need multiple passes or a specific order.
+      // For now, assume formulas only depend on static data keys.
+      for (const col of columns) {
+        if (col.formula) {
+          let expression = col.formula;
+          // Replace placeholders with actual values
+          // Using a more robust replacement to avoid partial matches (e.g., 'price' matching 'total_price')
+          // We'll replace longer keys first.
+          const keys = Object.keys(rowData).sort((a, b) => b.length - a.length);
+          for (const key of keys) {
+            // Regex to match whole word only
+            expression = expression.replace(new RegExp(`\\b${key}\\b`, 'g'), rowData[key]);
+          }
+
+          // Also allow header and other references in annex formulas if needed
+          expression = expression.replace(/header\('([^']+)'\)/g, (_, key) => String(template.header[key] || 0));
+
+          draft[col.key] = evaluateExpression(expression);
         }
+      }
     });
   };
 
+  const calculatedAnnexes = useMemo(() => {
+    return template.annexes.map(annex => ({
+      ...annex,
+      data: annex.data.map(row => calculateAnnexRow(row, annex.columns))
+    }));
+  }, [template.annexes, template.header]);
+
   const annexTotals = useMemo(() => {
     const totals: { [key: string]: number } = {};
-    for (const annex of template.annexes) {
+    for (const annex of calculatedAnnexes) {
       const totalColumn = annex.columns.find(c => c.formula || c.key === 'amount' || c.key === 'total');
       if (!totalColumn) continue;
 
       totals[annex.id] = annex.data.reduce((acc, row) => {
-        if (totalColumn.formula) {
-            const calculatedRow = calculateAnnexRow(row, annex.columns);
-            return acc + (calculatedRow[totalColumn.key] || 0);
-        }
-        return acc + (row[totalColumn.key] || 0); // For simple value columns like in Annex IV
+        return acc + (row[totalColumn.key] || 0);
       }, 0);
     }
     return totals;
-  }, [template.annexes]);
+  }, [calculatedAnnexes]);
 
   useEffect(() => {
     const newCalculatedValues: { [key: string]: number } = {};
@@ -101,5 +115,5 @@ export const useCostSheetCalculator = (template: Template) => {
 
   }, [template, annexTotals]);
 
-  return { calculatedValues, annexTotals };
+  return { calculatedValues, annexTotals, calculatedAnnexes, calculateAnnexRow };
 };
