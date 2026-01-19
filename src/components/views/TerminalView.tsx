@@ -1907,7 +1907,7 @@ export default function TerminalView() {
   return (
     <div className="min-h-screen flex bg-background text-foreground max-w-full overflow-x-auto">
       {/* Sidebar */}
-      <aside className={`${sidebarOpen ? 'w-64' : 'w-0'} lg:w-72 fixed lg:sticky top-0 h-screen z-40 transition-all duration-500 overflow-hidden ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`w-64 lg:w-72 fixed lg:sticky top-0 h-screen z-40 transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="bg-sidebar/90 backdrop-blur-2xl h-full flex flex-col border-r border-sidebar-border shadow-2xl">
           {/* Logo */}
           <div className="p-8 border-b border-sidebar-border/50">
