@@ -1,0 +1,38 @@
+
+> nextjs_tailwind_shadcn_ts@0.1.0 build /app
+> next build && cpx ".next/static/**/*" .next/standalone/.next/static && cpx "public/**/*" .next/standalone/public
+
+▲ Next.js 16.1.3 (Turbopack)
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 15.8s
+  Skipping validation of types
+  Collecting page data using 3 workers ...
+Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY
+Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY
+Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY
+  Generating static pages using 3 workers (0/11) ...
+  Generating static pages using 3 workers (2/11)
+  Generating static pages using 3 workers (5/11)
+⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY
+  Generating static pages using 3 workers (8/11)
+✓ Generating static pages using 3 workers (11/11) in 383.8ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api
+├ ƒ /api/inventory
+├ ƒ /api/inventory/[productId]/history
+├ ƒ /api/inventory/adjust
+├ ƒ /api/inventory/adjustments
+├ ƒ /api/inventory/products
+├ ○ /cashier/close-session
+├ ○ /cost-sheets
+└ ○ /login
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
