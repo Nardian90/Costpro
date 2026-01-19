@@ -959,7 +959,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
     }
 
     return (
-        <div className="space-y-6 h-full flex flex-col relative max-w-full overflow-x-hidden">
+        <div className="space-y-6 h-full flex flex-col relative max-w-full overflow-x-auto">
             {loading && (
                 <div className="fixed top-4 right-4 z-[100] flex items-center gap-3 bg-background/80 backdrop-blur-sm border border-border px-4 py-2 rounded-full shadow-lg">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
@@ -980,7 +980,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                 </div>
 
                 {/* Horizontal Ribbon for Action Buttons on Mobile */}
-                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0">
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0">
                     <button
                         onClick={() => setForceTableView(!forceTableView)}
                         className="neu-btn neu-raised-sm flex items-center gap-2 px-4 shadow-sm border-none whitespace-nowrap sm:hidden"
@@ -1223,7 +1223,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                                             placeholder="Nombre del proveedor"
                                         />
                                     </div>
-                                    <div className="grid grid-cols-2 gap-2">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                         <div>
                                             <label className="text-xs font-bold text-foreground">Fecha <span className="text-red-500">*</span></label>
                                             <input
