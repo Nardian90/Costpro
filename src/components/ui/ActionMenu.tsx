@@ -43,7 +43,7 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
   return (
     <div
       className={cn(
-        'w-full z-40 transition-all duration-300',
+        'w-full z-20 transition-all duration-300',
         sticky && (position === 'top' ? 'sticky top-[72px] sm:top-20' : 'sticky bottom-0 sm:bottom-4'),
         className
       )}
