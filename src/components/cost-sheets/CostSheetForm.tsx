@@ -147,50 +147,52 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
             </button>
          </div>
 
-         <div className="overflow-x-auto table-to-cards rounded-2xl shadow-2xl border border-white/5 bg-background/30">
-            <Table>
-                <TableHeader className="bg-muted/50 hidden sm:table-header-group">
-                    <TableRow className="border-b border-border/50">
-                        {annex.columns.map((col: any) => (
-                            <TableHead key={col.key} className="font-black py-4 px-4 text-[10px] uppercase tracking-widest text-muted-foreground">
-                                {col.label}
-                            </TableHead>
-                        ))}
-                        <TableHead className="text-center w-20"></TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {displayData.map((row: any, rowIndex: number) => (
-                        <TableRow key={rowIndex} className="border-b border-border/30 hover:bg-primary/5 transition-colors group">
-                            {annex.columns.map((col: any) => (
-                                <TableCell key={col.key} data-label={col.label} className="p-3 sm:p-4">
-                                    {col.formula ? (
-                                        <div className="neu-inset-sm px-3 py-2 font-mono text-right bg-primary/5 text-primary font-black min-w-[100px] border border-primary/10">
-                                            {row[col.key]?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                        </div>
-                                    ) : (
-                                        <Input
-                                            type={typeof row[col.key] === 'number' ? 'number' : 'text'}
-                                            value={data.annexes[annexIndex].data[rowIndex][col.key]}
-                                            onChange={(e) => handleInputChange(['annexes', annexIndex, 'data', rowIndex, col.key], e.target.value)}
-                                            className="neu-input !p-2 min-w-[120px] text-sm font-medium border-transparent hover:border-primary/20 focus:border-primary"
-                                        />
-                                    )}
-                                </TableCell>
-                            ))}
-                            <TableCell data-label="Acciones" className="text-center p-3 sm:p-4">
-                                <button
-                                    onClick={() => removeRow(annex.id, rowIndex)}
-                                    className="p-2.5 text-danger hover:bg-danger/10 rounded-xl transition-all neu-raised-sm group-hover:scale-110 active:scale-95"
-                                    aria-label="Eliminar fila"
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </button>
-                            </TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
+         <div className="w-full">
+           <div className="overflow-x-auto table-to-cards rounded-2xl shadow-2xl border border-white/5 bg-background/30">
+              <Table>
+                  <TableHeader className="bg-muted/50 hidden sm:table-header-group">
+                      <TableRow className="border-b border-border/50">
+                          {annex.columns.map((col: any) => (
+                              <TableHead key={col.key} className="font-black py-4 px-4 text-[10px] uppercase tracking-widest text-muted-foreground">
+                                  {col.label}
+                              </TableHead>
+                          ))}
+                          <TableHead className="text-center w-20"></TableHead>
+                      </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                      {displayData.map((row: any, rowIndex: number) => (
+                          <TableRow key={rowIndex} className="border-b border-border/30 hover:bg-primary/5 transition-colors group">
+                              {annex.columns.map((col: any) => (
+                                  <TableCell key={col.key} data-label={col.label} className="p-3 sm:p-4">
+                                      {col.formula ? (
+                                          <div className="neu-inset-sm px-3 py-2 font-mono text-right bg-primary/5 text-primary font-black min-w-[100px] border border-primary/10">
+                                              {row[col.key]?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                          </div>
+                                      ) : (
+                                          <Input
+                                              type={typeof row[col.key] === 'number' ? 'number' : 'text'}
+                                              value={data.annexes[annexIndex].data[rowIndex][col.key]}
+                                              onChange={(e) => handleInputChange(['annexes', annexIndex, 'data', rowIndex, col.key], e.target.value)}
+                                              className="neu-input !p-2 min-w-[120px] text-sm font-medium border-transparent hover:border-primary/20 focus:border-primary"
+                                          />
+                                      )}
+                                  </TableCell>
+                              ))}
+                              <TableCell data-label="Acciones" className="text-center p-3 sm:p-4">
+                                  <button
+                                      onClick={() => removeRow(annex.id, rowIndex)}
+                                      className="p-2.5 text-danger hover:bg-danger/10 rounded-xl transition-all neu-raised-sm group-hover:scale-110 active:scale-95"
+                                      aria-label="Eliminar fila"
+                                  >
+                                      <Trash2 className="h-4 w-4" />
+                                  </button>
+                              </TableCell>
+                          </TableRow>
+                      ))}
+                  </TableBody>
+              </Table>
+           </div>
          </div>
 
          {/* Annex Total */}
