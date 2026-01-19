@@ -1136,6 +1136,7 @@ export default function TerminalView() {
                               <button
                                 onClick={() => removeItem(item.product_id, item.variant_id)}
                                 className="absolute top-2 right-2 text-muted-foreground hover:text-danger p-2 rounded-full hover:bg-danger/5 transition-all"
+                                aria-label="Eliminar del carrito"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
@@ -1145,6 +1146,7 @@ export default function TerminalView() {
                                 <button
                                   onClick={() => updateQuantity(item.product_id, item.variant_id, item.quantity - 1)}
                                   className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-primary/10 hover:text-primary transition-colors active:scale-90"
+                                  aria-label="Disminuir cantidad"
                                 >
                                   <Minus className="w-4 h-4" />
                                 </button>
@@ -1152,6 +1154,7 @@ export default function TerminalView() {
                                 <button
                                   onClick={() => updateQuantity(item.product_id, item.variant_id, item.quantity + 1)}
                                   className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-primary/10 hover:text-primary transition-colors active:scale-90"
+                                  aria-label="Aumentar cantidad"
                                 >
                                   <Plus className="w-4 h-4" />
                                 </button>
@@ -1206,7 +1209,23 @@ export default function TerminalView() {
                         </button>
 
                         <button
-                          onClick={() => { clearCart(); setShowCart(false); }}
+                          onClick={() => {
+                            toast("¿Anular el carrito?", {
+                              description: "Se removerán todos los productos seleccionados.",
+                              action: {
+                                label: "Sí, anular",
+                                onClick: () => {
+                                  clearCart();
+                                  setShowCart(false);
+                                  toast.success("Carrito anulado");
+                                }
+                              },
+                              cancel: {
+                                label: "Cancelar",
+                                onClick: () => {}
+                              }
+                            });
+                          }}
                           className="w-full py-2 text-[10px] font-black text-muted-foreground uppercase tracking-widest hover:text-danger transition-colors"
                         >
                           Anular Carrito
@@ -1293,7 +1312,7 @@ export default function TerminalView() {
                       type="button"
                       onClick={() => fetchTransactionDetails(txn)}
                       className="neu-raised-sm w-9 h-9 flex items-center justify-center hover:text-primary transition-all active:scale-90"
-                      title="Ver Detalle"
+                      aria-label="Ver detalle de venta"
                     >
                       <Eye className="w-4 h-4" />
                     </button>
@@ -2019,6 +2038,7 @@ export default function TerminalView() {
               <button
                 onClick={() => setSelectedTransaction(null)}
                 className="neu-raised-sm w-12 h-12 flex items-center justify-center hover:text-danger transition-colors active:scale-90"
+                aria-label="Cerrar modal"
               >
                 <X className="w-6 h-6" />
               </button>
@@ -2204,7 +2224,11 @@ export default function TerminalView() {
                     </div>
                     <div className="flex items-center gap-6">
                       <div className="font-black text-xl text-primary">${v.price.toFixed(2)}</div>
-                      <button onClick={() => handleDeleteVariant(v.id)} className="p-2 text-danger hover:bg-danger/5 rounded-xl transition-all">
+                      <button
+                        onClick={() => handleDeleteVariant(v.id)}
+                        className="p-2 text-danger hover:bg-danger/5 rounded-xl transition-all"
+                        aria-label="Eliminar variante"
+                      >
                         <Trash2 className="w-5 h-5" />
                       </button>
                     </div>
