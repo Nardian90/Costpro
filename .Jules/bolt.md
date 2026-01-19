@@ -9,3 +9,7 @@
 ## 2026-01-18 - [Lazy Loading and Deferred Search Optimization]
 **Learning:** Found that `TerminalView.tsx` was fetching all administrative data (Audit, Users, History) on initial mount, even for users without those permissions or for views not currently active. Also identified UI lag when filtering the product grid due to synchronous search state updates on every keystroke.
 **Action:** Implemented lazy data fetching in `TerminalView.tsx` by moving non-essential API calls into a separate `useEffect` that triggers based on the `currentView`. Introduced `useDeferredValue` for the search filter and replaced inline product JSX with the memoized `ProductCard` component, significantly improving POS responsiveness and initial load speed.
+
+## 2025-05-15
+- Learning: Declaring hooks after conditional returns causes React Error #310 (Rendered more hooks than during the previous render).
+- Action: Moved `addToCart` useCallback above conditional returns in `TerminalView.tsx` to ensure consistent hook call count.
