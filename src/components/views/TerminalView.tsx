@@ -1,5 +1,6 @@
 'use client';
 
+import { cn } from "@/lib/utils";
 import { useState, useEffect, useMemo, useRef, useDeferredValue, useCallback } from 'react';
 import { useAuthStore, useCartStore, useUIStore } from '@/store';
 import { useRouter } from 'next/navigation';
