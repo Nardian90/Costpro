@@ -112,13 +112,13 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
         return products.filter(product => {
             const matchesSearch =
                 product.name.toLowerCase().includes(lowerTerm) ||
-                product.sku?.toLowerCase().includes(lowerTerm);
+                product.sku?.toLowerCase().includes(lowerTerm) ||
+                product.category?.toLowerCase().includes(lowerTerm);
             const matchesCategory =
                 !selectedCategory || product.category === selectedCategory;
             return matchesSearch && matchesCategory;
         });
     }, [searchTerm, selectedCategory, products]);
-
 
     const fetchRecentReceptions = async () => {
         if (!user) return;
@@ -412,7 +412,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                     ...item,
                     stock_current,
                     store_id,
-                    public_image_url: getProductImageUrl(item.image_url),
+                    public_image_url: getSupabaseUrl('product-images', item.image_url),
                 };
             }) || [];
 
@@ -1013,7 +1013,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                                                     "neu-badge text-[9px] px-2 py-0.5",
                                                     product.stock_current <= product.min_stock ? "text-danger" : "text-success"
                                                 )}>
-                                                    {product.stock_current <= product.min_stock ? 'Stock Bajo' : 'Normal'}
+                                                    {product.stock_current <= product.min_stock ? 'Stock Bajo' : 'Óptimo'}
                                                 </span>
                                             </td>
                                             <td data-label="Acciones" className="p-4">
@@ -1410,7 +1410,8 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                                                         mov.movement_type === 'purchase' ? "text-primary" :
                                                         mov.movement_type === 'sale' ? "text-success" : "text-warning"
                                                     )}>
-                                                        {mov.movement_type}
+                                                        {mov.movement_type === 'purchase' ? 'Recepción' :
+                                                         mov.movement_type === 'sale' ? 'Venta' : 'Ajuste'}
                                                     </span>
                                                 </div>
                                                 <div className={cn("text-lg font-black text-right", isPositive ? "text-success" : "text-danger")}>

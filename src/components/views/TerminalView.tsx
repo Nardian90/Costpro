@@ -1,12 +1,11 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef, useDeferredValue } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuthStore, useCartStore, useUIStore } from '@/store';
 import { useRouter } from 'next/navigation';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { supabase } from '@/lib/supabaseClient';
-import { getSupabaseUrl, getProductImageUrl, getStoreLogoUrl } from '@/lib/utils';
-import ProductCard from '@/components/ProductCard';
+import { getSupabaseUrl, cn } from '@/lib/utils';
 import {
   Package,
   ShoppingCart,
@@ -119,41 +118,18 @@ export default function TerminalView() {
     total_transfer: 0,
   });
 
-  // Initial data fetch - only essential data for the default view (dashboard/pos)
   useEffect(() => {
     if (user) {
       fetchDashboardData();
       fetchProducts();
+      fetchTransactions();
+      fetchUsers();
+      fetchStores();
+      fetchAuditLogs();
+      fetchMovements();
+      fetchCashClosures();
     }
   }, [user]);
-
-  // Lazy load data for other views only when they are requested
-  useEffect(() => {
-    if (!user) return;
-
-    switch (currentView) {
-      case 'sales':
-        if (transactions.length === 0) fetchTransactions();
-        break;
-      case 'users':
-        if (users.length === 0) fetchUsers();
-        break;
-      case 'stores':
-        if (stores.length === 0) fetchStores();
-        break;
-      case 'audit':
-        if (auditLogs.length === 0) fetchAuditLogs();
-        break;
-      case 'history':
-        if (movements.length === 0) fetchMovements();
-        break;
-      case 'cash':
-        if (cashClosures.length === 0) {
-          fetchCashClosures();
-        }
-        break;
-    }
-  }, [user, currentView]);
 
   const fetchProducts = async () => {
     if (!user) return;
@@ -317,6 +293,13 @@ export default function TerminalView() {
     }
   };
 
+  const getProductImageUrl = (product: Product) => {
+    return getSupabaseUrl('product-images', product.image_url);
+  };
+
+  const getStoreLogoUrl = (store: Store) => {
+    return getSupabaseUrl('store-logos', store.logo_url);
+  };
 
   const handleUpdateStoreLogo = async (file: File) => {
     if (!editingStore) return;
@@ -391,7 +374,6 @@ export default function TerminalView() {
   };
   // States for views
   const [searchTerm, setSearchTerm] = useState('');
-  const deferredSearchTerm = useDeferredValue(searchTerm);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isVariantsModalOpen, setIsVariantsModalOpen] = useState(false);
   const [isEditProductModalOpen, setIsEditProductModalOpen] = useState(false);
@@ -439,13 +421,15 @@ export default function TerminalView() {
   }, [user?.role]);
 
   const filteredProducts = useMemo(() => {
-    const lowerSearch = deferredSearchTerm.toLowerCase();
-    return products.filter(p =>
-      p.name.toLowerCase().includes(lowerSearch) ||
-      (p.sku && p.sku.toLowerCase().includes(lowerSearch)) ||
-      (p.category && p.category.toLowerCase().includes(lowerSearch))
-    );
-  }, [products, deferredSearchTerm]);
+    const lowerSearch = searchTerm.toLowerCase();
+    return products.filter(p => {
+      const matchesText = p.name.toLowerCase().includes(lowerSearch) ||
+        (p.sku && p.sku.toLowerCase().includes(lowerSearch)) ||
+        (p.category && p.category.toLowerCase().includes(lowerSearch));
+      const matchesCategory = !selectedCategory || p.category === selectedCategory;
+      return matchesText && matchesCategory;
+    });
+  }, [products, searchTerm, selectedCategory]);
 
   const filteredMovements = useMemo(() => {
     return movements.filter(mov => {
@@ -1071,11 +1055,42 @@ export default function TerminalView() {
           <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             {filteredProducts.length > 0 ? (
               filteredProducts.map(product => (
-                <ProductCard
+                <button
                   key={product.id}
-                  product={product}
-                  onClick={addToCart}
-                />
+                  type="button"
+                  className="neu-card !p-4 group text-left relative overflow-hidden border border-white/5 hover:border-primary/20 transition-all active:scale-95"
+                  onClick={() => addToCart(product)}
+                >
+                  <div className="neu-raised-sm w-full aspect-square mb-4 flex items-center justify-center overflow-hidden bg-background/50 rounded-2xl">
+                    {product.public_image_url ? (
+                      <img
+                        src={product.public_image_url}
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                    ) : (
+                      <Package className="w-10 h-10 text-muted-foreground opacity-20" />
+                    )}
+                  </div>
+                  <h3 className="font-black text-sm uppercase leading-tight mb-1 truncate">{product.name}</h3>
+                  <div className="text-[10px] font-mono text-muted-foreground mb-3">{product.sku}</div>
+
+                  <div className="flex items-center justify-between mt-auto">
+                    <div className="text-lg font-black text-primary">${product.price.toFixed(2)}</div>
+                    <div className={cn(
+                      "text-[9px] font-black uppercase px-1.5 py-0.5 rounded",
+                      product.stock_current <= product.min_stock ? "bg-danger/10 text-danger" : "bg-success/10 text-success"
+                    )}>
+                      {product.stock_current} uds
+                    </div>
+                  </div>
+
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="p-2 bg-primary rounded-xl shadow-lg shadow-primary/30">
+                      <Plus className="w-4 h-4 text-white" />
+                    </div>
+                  </div>
+                </button>
               ))
             ) : (
               <div className="col-span-full py-32 text-center neu-card border-2 border-dashed border-white/5">
@@ -1281,7 +1296,7 @@ export default function TerminalView() {
                     txn.status === 'completed' ? "text-success" :
                     txn.status === 'pending' ? "text-warning" : "text-danger"
                   )}>
-                    {txn.status}
+                    {getStatusLabel(txn.status)}
                   </span>
                 </td>
                 <td data-label="Detalle" className="p-4">
@@ -1372,7 +1387,7 @@ export default function TerminalView() {
                   <div className="font-black text-lg uppercase tracking-tight leading-tight">{mov.product?.name}</div>
                   <div className="flex items-center gap-3 mt-1.5">
                     <span className="font-mono text-[10px] font-bold text-muted-foreground bg-muted/30 px-1.5 py-0.5 rounded tracking-tighter">{mov.product?.sku}</span>
-                    <span className="text-[10px] font-black uppercase text-primary tracking-widest">{mov.movement_type}</span>
+                    <span className="text-[10px] font-black uppercase text-primary tracking-widest">{getMovementLabel(mov.movement_type)}</span>
                   </div>
                 </div>
               </div>
@@ -1700,7 +1715,7 @@ export default function TerminalView() {
                     u.role === 'admin' ? 'text-primary' :
                     u.role === 'manager' ? 'text-secondary' : 'text-success'
                   )}>
-                    {u.role}
+                    {getRoleLabel(u.role)}
                   </span>
                 </td>
                 <td data-label="Estado" className="p-4 text-center">
@@ -1878,13 +1893,39 @@ export default function TerminalView() {
       clerk: 'Cajero',
       warehouse: 'Almacén',
     };
-    return labels[role];
+    return labels[role] || role;
+  };
+
+  const getStatusLabel = (status: string) => {
+    const labels: Record<string, string> = {
+      completed: 'Completado',
+      pending: 'Pendiente',
+      voided: 'Anulado',
+      cancelled: 'Cancelado',
+      draft: 'Borrador',
+      received: 'Recibido',
+      open: 'Abierta',
+      closed: 'Cerrada',
+    };
+    return labels[status] || status;
+  };
+
+  const getMovementLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      sale: 'Venta',
+      purchase: 'Recepción',
+      adjustment: 'Ajuste',
+    };
+    return labels[type] || type;
   };
 
   return (
     <div className="min-h-screen flex bg-background text-foreground max-w-full overflow-x-auto">
       {/* Sidebar */}
-      <aside className={`${sidebarOpen ? 'w-64' : 'w-0'} lg:w-72 fixed lg:sticky top-0 h-screen z-40 transition-all duration-500 overflow-hidden ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={cn(
+        "fixed lg:sticky top-0 h-screen z-40 transition-all duration-500 overflow-hidden",
+        sidebarOpen ? "w-64 lg:w-72 translate-x-0" : "w-0 -translate-x-full lg:translate-x-0"
+      )}>
         <div className="bg-sidebar/90 backdrop-blur-2xl h-full flex flex-col border-r border-sidebar-border shadow-2xl">
           {/* Logo */}
           <div className="p-8 border-b border-sidebar-border/50">
@@ -1934,7 +1975,7 @@ export default function TerminalView() {
             <div className="flex items-center gap-4 flex-1 overflow-hidden">
               <button
                 onClick={toggleSidebar}
-                className="neu-raised-sm w-11 h-11 flex items-center justify-center lg:hidden shrink-0 active:scale-90 transition-transform"
+                className="neu-raised-sm w-11 h-11 flex items-center justify-center shrink-0 active:scale-90 transition-transform"
                 aria-label={sidebarOpen ? "Cerrar menú" : "Abrir menú"}
               >
                 {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -2026,7 +2067,7 @@ export default function TerminalView() {
                 {[
                   { label: 'Fecha de Emisión', value: new Date(selectedTransaction.created_at).toLocaleString(), icon: Calendar },
                   { label: 'Método de Cobro', value: selectedTransaction.payment_method, icon: CreditCard },
-                  { label: 'Estado Transacción', value: selectedTransaction.status, icon: Shield, badge: true },
+                  { label: 'Estado Transacción', value: getStatusLabel(selectedTransaction.status), icon: Shield, badge: true },
                 ].map((item, i) => (
                   <div key={i} className="neu-inset-sm !p-4 bg-background/50 border border-white/5">
                     <div className="flex items-center gap-2 mb-2">
@@ -2269,19 +2310,9 @@ export default function TerminalView() {
               <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Dirección</label>
               <input type="text" value={editingStore?.address || ''} onChange={(e) => setEditingStore({ ...editingStore!, address: e.target.value })} className="neu-input w-full text-xs" />
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Logo de la Tienda</label>
-              <div className="flex flex-col items-center gap-4">
-                <div className="neu-raised-sm w-32 h-32 flex items-center justify-center overflow-hidden">
-                  {editingStore?.logo_url ? (
-                    <img
-                      src={getStoreLogoUrl(editingStore.logo_url) || ''}
-                      alt={editingStore.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <Building className="w-16 h-16 text-muted-foreground" />
-                  )}
+            <div className="flex flex-col items-center gap-4">
+                <div className="neu-raised-sm w-24 h-24 flex items-center justify-center overflow-hidden rounded-2xl bg-background/50">
+                  {editingStore?.logo_url ? <img src={getStoreLogoUrl(editingStore)} alt={editingStore.name} className="w-full h-full object-cover" /> : <Building className="w-8 h-8 opacity-20" />}
                 </div>
                 <input type="file" id="store-logo-upload" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleUpdateStoreLogo(file); }} />
                 <label htmlFor="store-logo-upload" className="neu-btn !px-4 !py-2 text-[8px] font-black uppercase tracking-widest cursor-pointer">Actualizar Logo</label>

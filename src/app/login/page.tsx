@@ -210,7 +210,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-sm text-muted-foreground mt-6">
-          © 2024 POS Enterprise. Todos los derechos reservados.
+          © 2026 POS Enterprise. Todos los derechos reservados.
         </p>
       </div>
     </div>

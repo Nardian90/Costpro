@@ -5,7 +5,3 @@
 ## 2025-01-24 - [Derived Property Memoization Optimization]
 **Learning:** Found that calculating Supabase public image URLs inside React render loops (mapping over large product lists) caused redundant string manipulation and SDK overhead on every keystroke in search filters. Synchronous derived values like these are better calculated once during data fetching.
 **Action:** Centralized image URL logic in a shared utility and added a `public_image_url` field to the `Product` type. Pre-calculating this field during the `fetchProducts` phase reduced the render-time work from O(N*R) to O(N).
-
-## 2026-01-18 - [Lazy Loading and Deferred Search Optimization]
-**Learning:** Found that `TerminalView.tsx` was fetching all administrative data (Audit, Users, History) on initial mount, even for users without those permissions or for views not currently active. Also identified UI lag when filtering the product grid due to synchronous search state updates on every keystroke.
-**Action:** Implemented lazy data fetching in `TerminalView.tsx` by moving non-essential API calls into a separate `useEffect` that triggers based on the `currentView`. Introduced `useDeferredValue` for the search filter and replaced inline product JSX with the memoized `ProductCard` component, significantly improving POS responsiveness and initial load speed.

@@ -18,8 +18,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
   activeSection,
   setActiveSection,
 }) => {
-  // Create a combined list of all navigable sections mapped to ActionMenu format
-  const navActions: Action[] = [
+  const mainActions: Action[] = [
     {
         id: 'header',
         label: 'Encabezado',
@@ -34,13 +33,6 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
         onClick: () => setActiveSection(s.id),
         active: activeSection === s.id
     })),
-    ...annexes.map(a => ({
-        id: a.id,
-        label: `Anexo ${a.id}`,
-        icon: FileSpreadsheet,
-        onClick: () => setActiveSection(a.id),
-        active: activeSection === a.id
-    })),
     {
         id: 'signature',
         label: 'Firmas',
@@ -50,16 +42,37 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
     },
   ];
 
+  const annexActions: Action[] = annexes.map(a => ({
+    id: a.id,
+    label: `Anexo ${a.id}`,
+    icon: FileSpreadsheet,
+    onClick: () => setActiveSection(a.id),
+    active: activeSection === a.id
+  }));
+
   return (
-    <div className="mb-8">
-      <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-3 px-1">
-        Navegación de Secciones
+    <div className="mb-8 space-y-6">
+      <div>
+        <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-3 px-1">
+          Secciones Principales
+        </div>
+        <ActionMenu
+          actions={mainActions}
+          sticky={false}
+          className="!z-10 shadow-none bg-transparent"
+        />
       </div>
-      <ActionMenu
-        actions={navActions}
-        sticky={false}
-        className="!z-10 shadow-none bg-transparent"
-      />
+
+      <div>
+        <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-3 px-1">
+          Anexos de Costo
+        </div>
+        <ActionMenu
+          actions={annexActions}
+          sticky={false}
+          className="!z-10 shadow-none bg-transparent"
+        />
+      </div>
     </div>
   );
 };

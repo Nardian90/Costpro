@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '../ui/button';
 import { Trash2, Plus, Edit } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import ActionMenu from '@/components/ui/ActionMenu';
 
 interface CostSheetFormProps {
   activeSection: string;
@@ -133,18 +134,18 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
 
     return (
       <div className="space-y-6">
-         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
             <div>
-                <h3 className="text-xl font-black text-primary">Anexo {annex.id}</h3>
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{annex.title}</p>
+                <h3 className="text-xl font-black text-primary uppercase tracking-tighter">Anexo {annex.id}</h3>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">{annex.title}</p>
             </div>
-            <button
-              onClick={() => addRow(annex.id)}
-              className="neu-btn-primary !py-2.5 !px-5 rounded-xl w-full sm:w-auto flex items-center justify-center gap-2 font-bold text-sm shadow-lg"
-            >
-                <Plus className="w-4 h-4" />
-                Añadir Fila
-            </button>
+            <ActionMenu
+              actions={[
+                { id: 'add-row', label: 'Añadir Fila', icon: Plus, onClick: () => addRow(annex.id), variant: 'primary' }
+              ]}
+              className="sm:w-auto"
+              sticky={false}
+            />
          </div>
 
          <div className="overflow-x-auto table-to-cards rounded-2xl shadow-2xl border border-white/5 bg-background/30">

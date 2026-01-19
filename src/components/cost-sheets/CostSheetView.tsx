@@ -63,7 +63,7 @@ const CostSheetView = () => {
           },
           {
             id: 'reset',
-            label: 'Limpiar',
+            label: 'Reiniciar Todo',
             icon: Trash2,
             onClick: reset,
             variant: 'danger',
