@@ -148,9 +148,6 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
         });
     }, [searchTerm, selectedCategory, products]);
 
-    const getProductImageUrl = (product: Product) => {
-        return getSupabaseUrl('product-images', product.image_url);
-    };
 
     const fetchRecentReceptions = async () => {
         if (!user) return;
@@ -455,7 +452,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                     ...item,
                     stock_current,
                     store_id,
-                    public_image_url: getSupabaseUrl('product-images', item.image_url),
+                    public_image_url: getProductImageUrl(item.image_url),
                 };
             }) || [];
 
