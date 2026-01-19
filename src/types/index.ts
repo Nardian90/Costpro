@@ -2,7 +2,7 @@
 // Tipos de la Aplicación - Plataforma Tienda Online
 // ============================================
 
-export type UserRole = 'admin' | 'manager' | 'clerk' | 'warehouse';
+export type UserRole = 'admin' | 'encargado' | 'usuario' | 'manager' | 'clerk' | 'warehouse';
 
 export type PaymentMethod = 'cash' | 'card' | 'transfer' | 'wallet' | 'other';
 
@@ -42,6 +42,10 @@ export interface User {
   full_name: string;
   role: UserRole;
   store_id: string | null;
+  active_store_id: string | null;
+  max_stores_limit?: number;
+  max_users_limit?: number;
+  created_by?: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -345,7 +349,11 @@ export type Profile = {
   email: string;
   role: UserRole;
   is_active: boolean;
-  store_id: string;
+  store_id: string | null;
+  active_store_id: string | null;
+  max_stores_limit?: number;
+  max_users_limit?: number;
+  created_by?: string | null;
   created_at: string;
 };
 
@@ -448,6 +456,42 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canManageUsers: true,
     canManageStores: true,
     canViewAudits: true,
+    canPerformInventoryCount: true,
+  },
+  encargado: {
+    canCreateProducts: true,
+    canEditProducts: true,
+    canDeleteProducts: false,
+    canViewInventory: true,
+    canAdjustStock: true,
+    canReceiveProducts: true,
+    canCreateSales: true,
+    canViewSales: true,
+    canViewAllSales: true,
+    canVoidTransactions: true,
+    canCloseCashRegister: true,
+    canViewDashboard: true,
+    canManageUsers: true, // Nuevo: Puede gestionar usuarios bajo su mando
+    canManageStores: true, // Nuevo: Puede gestionar tiendas creadas por él
+    canViewAudits: true,
+    canPerformInventoryCount: true,
+  },
+  usuario: {
+    canCreateProducts: false,
+    canEditProducts: false,
+    canDeleteProducts: false,
+    canViewInventory: true,
+    canAdjustStock: false,
+    canReceiveProducts: false,
+    canCreateSales: true,
+    canViewSales: true,
+    canViewAllSales: false,
+    canVoidTransactions: false,
+    canCloseCashRegister: false,
+    canViewDashboard: true,
+    canManageUsers: false,
+    canManageStores: false,
+    canViewAudits: false,
     canPerformInventoryCount: true,
   },
   manager: {
