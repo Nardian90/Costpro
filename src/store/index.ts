@@ -214,11 +214,25 @@ export const useUserRole = () => useAuthStore((state) => state.user?.role);
 export const useCanAccess = (requiredRole: UserRole) =>
   useAuthStore((state) => {
     if (!state.user) return false;
+
     const roleHierarchy: Record<UserRole, number> = {
       admin: 4,
+      encargado: 3,
       manager: 3,
       clerk: 2,
       warehouse: 2,
+      usuario: 1,
     };
-    return roleHierarchy[state.user.role] >= roleHierarchy[requiredRole];
+
+    // Check primary role
+    if (roleHierarchy[state.user.role] >= roleHierarchy[requiredRole]) {
+      return true;
+    }
+
+    // Check multiple roles (per store)
+    if (state.user.roles && state.user.roles.length > 0) {
+      return state.user.roles.some(r => roleHierarchy[r] >= roleHierarchy[requiredRole]);
+    }
+
+    return false;
   });

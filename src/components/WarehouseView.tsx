@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import Papa from 'papaparse';
 import type { Product } from '@/types';
-import { ROLE_PERMISSIONS } from '@/types';
+import { ROLE_PERMISSIONS, getMergedPermissions } from '@/types';
 import { toast } from 'sonner';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
 import SearchBar from '@/components/ui/SearchBar';
@@ -37,7 +37,12 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
     const user = useAuthStore((state) => state.user);
 
     // 1. Validación estricta de permisos por rol
-    const permissions = user?.role ? ROLE_PERMISSIONS[user.role] : null;
+    const permissions = useMemo(() => {
+        if (!user) return null;
+        const allRoles = user.roles && user.roles.length > 0 ? user.roles : [user.role];
+        return getMergedPermissions(allRoles);
+    }, [user]);
+
     const canViewInventory = permissions?.canViewInventory || false;
     const canReceiveProducts = permissions?.canReceiveProducts || false;
 

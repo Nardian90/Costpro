@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { useState, useEffect, useMemo, useRef, useDeferredValue, useCallback } from 'react';
-import { useAuthStore, useCartStore, useUIStore } from '@/store';
+import { useAuthStore, useCartStore, useUIStore, useCanAccess } from '@/store';
 import { useRouter } from 'next/navigation';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
@@ -94,6 +94,7 @@ export default function TerminalView() {
   } = useUIStore();
   const { items, addItem, removeItem, updateQuantity, clearCart, setDiscount, getTotal, getSubtotal, getItemCount, discount } = useCartStore();
   const isMobile = useIsMobile();
+  const canViewFinancials = useCanAccess('warehouse'); // Using warehouse as a proxy for manager/admin financial view
   const [showCart, setShowCart] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -418,7 +419,7 @@ export default function TerminalView() {
   const [editingStore, setEditingStore] = useState<Store | null>(null);
   const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<Profile | null>(null);
-  const [userStoreAccess, setUserStoreAccess] = useState<string[]>([]);
+  const [userStoreAccess, setUserStoreAccess] = useState<{store_id: string, roles: UserRole[]}[]>([]);
   const [isDeleteStoreModalOpen, setIsDeleteStoreModalOpen] = useState(false);
   const [deletingStore, setDeletingStore] = useState<Store | null>(null);
   const [isCreateStoreModalOpen, setIsCreateStoreModalOpen] = useState(false);
@@ -815,10 +816,10 @@ export default function TerminalView() {
     try {
       const { data, error } = await supabase
         .from('user_store_access')
-        .select('store_id')
+        .select('store_id, roles')
         .eq('user_id', userId);
       if (error) throw error;
-      setUserStoreAccess(data.map(d => d.store_id));
+      setUserStoreAccess(data.map(d => ({ store_id: d.store_id, roles: (d.roles || ['clerk']) as UserRole[] })));
     } catch (error) {
       console.error('Error fetching user store access:', error);
     }
@@ -852,9 +853,10 @@ export default function TerminalView() {
       if (userStoreAccess.length > 0) {
         const { error: insertError } = await supabase
           .from('user_store_access')
-          .insert(userStoreAccess.map(storeId => ({
+          .insert(userStoreAccess.map(access => ({
             user_id: editingUser.id,
-            store_id: storeId,
+            store_id: access.store_id,
+            roles: access.roles,
             assigned_by: user!.id
           })));
         if (insertError) throw insertError;
@@ -895,9 +897,10 @@ export default function TerminalView() {
 
         const { error: accessError } = await supabase
           .from('user_store_access')
-          .insert(userStoreAccess.map(storeId => ({
+          .insert(userStoreAccess.map(access => ({
             user_id: newUserId,
-            store_id: storeId,
+            store_id: access.store_id,
+            roles: access.roles,
             assigned_by: user!.id
           })));
 
@@ -992,7 +995,8 @@ export default function TerminalView() {
   // Get role-specific navigation
   function getNavigationItems() {
     if (!user) return [];
-    const role = user.role;
+    const userRoles = user.roles && user.roles.length > 0 ? user.roles : [user.role];
+
     const items = [
       { id: 'dashboard', icon: BarChart3, label: 'Dashboard', roles: ['admin', 'manager', 'clerk', 'encargado'] },
       { id: 'pos', icon: ShoppingCart, label: 'Punto de Venta', roles: ['clerk', 'manager', 'admin', 'encargado'] },
@@ -1010,7 +1014,7 @@ export default function TerminalView() {
       { id: 'settings', icon: Settings, label: 'Configuración', roles: ['admin', 'manager', 'encargado'] },
     ];
 
-    return items.filter(item => item.roles.includes(role));
+    return items.filter(item => item.roles.some(r => userRoles.includes(r as UserRole)));
   };
 
   // ==================== VIEWS ====================
@@ -1056,7 +1060,7 @@ export default function TerminalView() {
           <div className="text-[10px] font-bold text-green-500 mt-2 uppercase tracking-widest">+12% vs ayer</div>
         </motion.div>
 
-        {user?.role !== 'clerk' && (
+        {canViewFinancials && (
           <>
             <motion.div variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }} className="md:col-span-1 neu-card !p-6 border border-white/5">
               <div className="flex items-center justify-between mb-4">
@@ -1833,10 +1837,11 @@ export default function TerminalView() {
                 <td data-label="Rol" className="p-4">
                   <span className={cn(
                     "neu-badge !text-[9px] font-black px-2.5 py-0.5",
-                    u.role === 'admin' ? 'text-primary' :
-                    u.role === 'manager' ? 'text-secondary' : 'text-success'
+                    u.role === 'admin' ? 'text-primary bg-primary/10' :
+                    (u.role === 'encargado' || u.role === 'manager') ? 'text-secondary bg-secondary/10' :
+                    u.role === 'usuario' ? 'text-success bg-success/10' : 'text-muted-foreground bg-muted/10'
                   )}>
-                    {u.role}
+                    {u.role === 'manager' ? 'encargado' : u.role}
                   </span>
                 </td>
                 <td data-label="Estado" className="p-4 text-center">
@@ -2033,11 +2038,19 @@ export default function TerminalView() {
   const getRoleLabel = (role: UserRole) => {
     const labels: Record<UserRole, string> = {
       admin: 'Administrador',
-      manager: 'Encargado',
+      encargado: 'Encargado',
+      manager: 'Gestor',
       clerk: 'Cajero',
       warehouse: 'Almacén',
+      usuario: 'Usuario',
     };
-    return labels[role];
+    return labels[role] || role;
+  };
+
+  const getActiveRolesLabel = () => {
+    if (!user) return '';
+    const roles = user.roles && user.roles.length > 0 ? user.roles : [user.role];
+    return roles.map(r => getRoleLabel(r)).join(' + ');
   };
 
   return (
@@ -2084,7 +2097,9 @@ export default function TerminalView() {
           <div className="p-6 border-t border-sidebar-border/50">
             <div className="rounded-3xl border border-primary/20 bg-primary/5 p-5 shadow-inner">
               <div className="font-black text-xs text-primary uppercase tracking-widest truncate">{user?.full_name}</div>
-              <div className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mt-1">{getRoleLabel(user?.role || 'clerk')}</div>
+              <div className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mt-1">
+                {getActiveRolesLabel()}
+              </div>
             </div>
           </div>
         </div>
@@ -2537,7 +2552,7 @@ export default function TerminalView() {
               </select>
             </div>
 
-            {user?.role === 'admin' && editingUser?.role === 'encargado' && (
+            {user?.role === 'admin' && (editingUser?.role === 'encargado' || editingUser?.role === 'manager') && (
               <div className="grid grid-cols-2 gap-4 p-4 neu-inset-sm rounded-2xl">
                 <div className="space-y-1">
                   <label className="text-[10px] font-black uppercase text-primary ml-1">Límite Tiendas</label>
@@ -2561,25 +2576,53 @@ export default function TerminalView() {
             )}
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Tiendas Asignadas</label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2 neu-inset-sm rounded-2xl no-scrollbar">
-                {stores.map(store => (
-                  <label key={store.id} className="flex items-center gap-3 p-2 hover:bg-primary/5 rounded-xl cursor-pointer transition-colors">
-                    <input
-                      type="checkbox"
-                      checked={userStoreAccess.includes(store.id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setUserStoreAccess([...userStoreAccess, store.id]);
-                        } else {
-                          setUserStoreAccess(userStoreAccess.filter(id => id !== store.id));
-                        }
-                      }}
-                      className="w-4 h-4 rounded border-white/10 bg-background text-primary focus:ring-primary/20"
-                    />
-                    <span className="text-[10px] font-bold uppercase truncate">{store.name}</span>
-                  </label>
-                ))}
+              <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Tiendas Asignadas y Roles</label>
+              <div className="space-y-2 max-h-60 overflow-y-auto p-2 neu-inset-sm rounded-2xl no-scrollbar">
+                {stores.map(store => {
+                  const access = userStoreAccess.find(a => a.store_id === store.id);
+                  return (
+                    <div key={store.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-background/50 rounded-xl border border-white/5">
+                      <label className="flex items-center gap-3 cursor-pointer flex-1">
+                        <input
+                          type="checkbox"
+                          checked={!!access}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setUserStoreAccess([...userStoreAccess, { store_id: store.id, role: 'clerk' }]);
+                            } else {
+                              setUserStoreAccess(userStoreAccess.filter(a => a.store_id !== store.id));
+                            }
+                          }}
+                          className="w-4 h-4 rounded border-white/10 bg-background text-primary focus:ring-primary/20"
+                        />
+                        <span className="text-[10px] font-black uppercase truncate">{store.name}</span>
+                      </label>
+
+                      {access && (
+                        <div className="flex flex-wrap gap-2">
+                          {['clerk', 'warehouse', 'manager'].map((role) => (
+                            <label key={role} className="flex items-center gap-1 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={access.roles.includes(role as UserRole)}
+                                onChange={(e) => {
+                                  const newRoles = e.target.checked
+                                    ? [...access.roles, role as UserRole]
+                                    : access.roles.filter(r => r !== role);
+                                  setUserStoreAccess(userStoreAccess.map(a =>
+                                    a.store_id === store.id ? { ...a, roles: newRoles } : a
+                                  ));
+                                }}
+                                className="w-3 h-3 rounded border-white/10 bg-background text-primary"
+                              />
+                              <span className="text-[8px] font-bold uppercase">{role === 'clerk' ? 'Cajero' : role === 'warehouse' ? 'Almacén' : 'Gestor'}</span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -2629,25 +2672,53 @@ export default function TerminalView() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Asignar Tiendas</label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2 neu-inset-sm rounded-2xl no-scrollbar">
-                {stores.map(store => (
-                  <label key={store.id} className="flex items-center gap-3 p-2 hover:bg-primary/5 rounded-xl cursor-pointer transition-colors">
-                    <input
-                      type="checkbox"
-                      checked={userStoreAccess.includes(store.id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setUserStoreAccess([...userStoreAccess, store.id]);
-                        } else {
-                          setUserStoreAccess(userStoreAccess.filter(id => id !== store.id));
-                        }
-                      }}
-                      className="w-4 h-4 rounded border-white/10 bg-background text-primary focus:ring-primary/20"
-                    />
-                    <span className="text-[10px] font-bold uppercase truncate">{store.name}</span>
-                  </label>
-                ))}
+              <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Asignar Tiendas y Roles</label>
+              <div className="space-y-2 max-h-60 overflow-y-auto p-2 neu-inset-sm rounded-2xl no-scrollbar">
+                {stores.map(store => {
+                  const access = userStoreAccess.find(a => a.store_id === store.id);
+                  return (
+                    <div key={store.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-background/50 rounded-xl border border-white/5">
+                      <label className="flex items-center gap-3 cursor-pointer flex-1">
+                        <input
+                          type="checkbox"
+                          checked={!!access}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setUserStoreAccess([...userStoreAccess, { store_id: store.id, roles: ['clerk'] }]);
+                            } else {
+                              setUserStoreAccess(userStoreAccess.filter(a => a.store_id !== store.id));
+                            }
+                          }}
+                          className="w-4 h-4 rounded border-white/10 bg-background text-primary focus:ring-primary/20"
+                        />
+                        <span className="text-[10px] font-black uppercase truncate">{store.name}</span>
+                      </label>
+
+                      {access && (
+                        <div className="flex flex-wrap gap-2">
+                          {['clerk', 'warehouse', 'manager'].map((role) => (
+                            <label key={role} className="flex items-center gap-1 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={access.roles.includes(role as UserRole)}
+                                onChange={(e) => {
+                                  const newRoles = e.target.checked
+                                    ? [...access.roles, role as UserRole]
+                                    : access.roles.filter(r => r !== role);
+                                  setUserStoreAccess(userStoreAccess.map(a =>
+                                    a.store_id === store.id ? { ...a, roles: newRoles } : a
+                                  ));
+                                }}
+                                className="w-3 h-3 rounded border-white/10 bg-background text-primary"
+                              />
+                              <span className="text-[8px] font-bold uppercase">{role === 'clerk' ? 'Cajero' : role === 'warehouse' ? 'Almacén' : 'Gestor'}</span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>

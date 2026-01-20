@@ -41,6 +41,7 @@ export interface User {
   email: string;
   full_name: string;
   role: UserRole;
+  roles?: UserRole[]; // New: support for multiple roles (e.g. per store)
   store_id: string | null;
   active_store_id: string | null;
   max_stores_limit?: number;
@@ -549,3 +550,35 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canPerformInventoryCount: true,
   },
 };
+
+export function getMergedPermissions(roles: UserRole[]): RolePermissions {
+  const merged: RolePermissions = {
+    canCreateProducts: false,
+    canEditProducts: false,
+    canDeleteProducts: false,
+    canViewInventory: false,
+    canAdjustStock: false,
+    canReceiveProducts: false,
+    canCreateSales: false,
+    canViewSales: false,
+    canViewAllSales: false,
+    canVoidTransactions: false,
+    canCloseCashRegister: false,
+    canViewDashboard: false,
+    canManageUsers: false,
+    canManageStores: false,
+    canViewAudits: false,
+    canPerformInventoryCount: false,
+  };
+
+  roles.forEach(role => {
+    const perms = ROLE_PERMISSIONS[role];
+    if (!perms) return;
+
+    (Object.keys(perms) as Array<keyof RolePermissions>).forEach(key => {
+      if (perms[key]) merged[key] = true;
+    });
+  });
+
+  return merged;
+}
