@@ -15,8 +15,16 @@ export function useSupabaseAuth() {
     useEffect(() => {
         // Check active session on mount
         const checkSession = async () => {
+            // Timeout failsafe of 10s to prevent hanging the app
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Session check timeout')), 10000)
+            );
+
             try {
-                const { data: { session } } = await supabase.auth.getSession();
+                const { data: { session } } = await Promise.race([
+                    supabase.auth.getSession(),
+                    timeoutPromise
+                ]) as any;
 
                 if (session?.user) {
                     // Fetch profile data
@@ -68,6 +76,8 @@ export function useSupabaseAuth() {
                     }
                 } else if (user) {
                     // No session but user in store - clear it
+                    console.warn('No session found but user exists in store. Clearing state...');
+                    await supabase.auth.signOut();
                     logout();
                 }
             } catch (error) {
@@ -78,6 +88,15 @@ export function useSupabaseAuth() {
         };
 
         checkSession();
+
+        // Re-check session when tab becomes visible (handles "inactivity" waking up)
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                console.log('App visible, re-checking session...');
+                checkSession();
+            }
+        };
+        window.addEventListener('visibilitychange', handleVisibilityChange);
 
         // Listen for auth state changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -147,6 +166,7 @@ export function useSupabaseAuth() {
 
         return () => {
             subscription.unsubscribe();
+            window.removeEventListener('visibilitychange', handleVisibilityChange);
         };
     }, []);
 
