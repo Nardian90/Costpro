@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme-provider";
+import { GlobalSessionManager } from "@/components/GlobalSessionManager";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 
 const geistSans = Geist({
@@ -55,6 +56,7 @@ export default function RootLayout({
           disableTransitionOnChange
           themes={['light', 'dark', 'neumo']}
         >
+          <GlobalSessionManager />
           {children}
           <Toaster position="top-right" richColors />
           <ServiceWorkerRegister />
