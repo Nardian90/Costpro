@@ -452,7 +452,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
     const handleExport = () => {
         const toastId = toast.loading(products.length > 0 ? 'Generando reporte CSV...' : 'Generando plantilla CSV...');
         try {
-            const headers = ['SKU', 'NombreProducto', 'Cantidad', 'Costo'];
+            const headers = ['SKU', 'NombreProducto', 'Cantidad', 'Costo', 'PrecioVenta'];
             let csvLines = [headers.join(',')];
 
             if (products.length > 0) {
@@ -460,12 +460,13 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                     `"${p.sku || ''}"`,
                     `"${p.name.replace(/"/g, '""')}"`,
                     p.stock_current,
-                    p.cost_price || 0
+                    p.cost_price || 0,
+                    p.price || 0
                 ].join(','));
                 csvLines = [...csvLines, ...dataRows];
             } else {
                 // Example row for template
-                csvLines.push(`"EJEMPLO-001","Producto de Ejemplo",10,5.50`);
+                csvLines.push(`"EJEMPLO-001","Producto de Ejemplo",10,5.50,7.00`);
             }
 
             const csvContent = csvLines.join('\n');
@@ -493,8 +494,8 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
     const handleDownloadTemplate = () => {
         const toastId = toast.loading('Generando plantilla CSV...');
         try {
-            const headers = ['SKU', 'NombreProducto', 'Cantidad', 'Costo'];
-            const exampleRow = `"EJEMPLO-001","Producto de Ejemplo",10,5.50`;
+            const headers = ['SKU', 'NombreProducto', 'Cantidad', 'Costo', 'PrecioVenta'];
+            const exampleRow = `"EJEMPLO-001","Producto de Ejemplo",10,5.50,7.00`;
             const csvContent = [headers.join(','), exampleRow].join('\n');
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
@@ -523,29 +524,40 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
             header: true,
             skipEmptyLines: true,
             complete: async (results) => {
-                const importedProducts = results.data as { SKU: string; NombreProducto: string; Cantidad: string; Costo: string }[];
+                const importedProducts = results.data as any[];
                 const newItems = new Map(receptionItems);
                 const newProductsToCreateMap = new Map<string, { name: string; sku: string; cost_price: number; price: number }>();
+                const existingProductsToUpdatePrice: { id: string, price: number }[] = [];
                 let newProductsCreated = false;
                 const productSkuMap = new Map(products.map((p) => [p.sku, p]));
 
                 for (const importedProduct of importedProducts) {
-                    const { SKU, NombreProducto, Cantidad, Costo } = importedProduct;
+                    // Soporte para variaciones de nombres de columnas
+                    const SKU = importedProduct.SKU || importedProduct.sku;
+                    const Nombre = importedProduct.NombreProducto || importedProduct.PRODUCTOS || importedProduct.Nombre;
+                    const Cantidad = importedProduct.Cantidad || importedProduct.cantidad;
+                    const Costo = importedProduct.Costo || importedProduct.costo || importedProduct['Precio costo'];
+                    const PrecioVenta = importedProduct.PrecioVenta || importedProduct['Precio venta'] || importedProduct.Precio;
+
                     if (!SKU) continue;
 
-                    const productExists = productSkuMap.has(SKU);
+                    const productExists = productSkuMap.get(SKU);
+                    const parsedVenta = parseFloat(PrecioVenta) || 0;
+
                     if (!productExists && !newProductsToCreateMap.has(SKU)) {
                         newProductsToCreateMap.set(SKU, {
-                            name: NombreProducto,
+                            name: Nombre || 'Producto Nuevo',
                             sku: SKU,
                             cost_price: parseFloat(Costo) || 0,
-                            price: 0,
+                            price: parsedVenta,
                         });
+                    } else if (productExists && parsedVenta > 0) {
+                        existingProductsToUpdatePrice.push({ id: productExists.id, price: parsedVenta });
                     }
                 }
 
+                // 1. Crear productos nuevos
                 const newProductsToCreate = Array.from(newProductsToCreateMap.values());
-
                 if (newProductsToCreate.length > 0) {
                     try {
                         const { error } = await supabase.from('products').insert(newProductsToCreate);
@@ -558,13 +570,30 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                     }
                 }
 
+                // 2. Actualizar precios de venta de productos existentes (Carga de Catálogo)
+                if (existingProductsToUpdatePrice.length > 0) {
+                    try {
+                        // Actualización por lotes (Supabase soporte upsert para esto si incluimos la PK)
+                        // Pero aquí usaremos un enfoque simple de promesas paralelas si no son demasiados
+                        // o un solo update con rpc si fuera necesario. Para ~50-100 ítems esto está bien:
+                        await Promise.all(existingProductsToUpdatePrice.map(item =>
+                            supabase.from('products').update({ price: item.price }).eq('id', item.id)
+                        ));
+                    } catch (error: any) {
+                        console.warn('Error al actualizar algunos precios:', error);
+                    }
+                }
+
                 let updatedProducts = products;
-                if (newProductsCreated) {
+                if (newProductsCreated || existingProductsToUpdatePrice.length > 0) {
                     updatedProducts = await fetchProducts();
                 }
 
                 for (const importedProduct of importedProducts) {
-                    const { SKU, Cantidad, Costo } = importedProduct;
+                    const SKU = importedProduct.SKU || importedProduct.sku;
+                    const Cantidad = importedProduct.Cantidad || importedProduct.cantidad;
+                    const Costo = importedProduct.Costo || importedProduct.costo || importedProduct['Precio costo'];
+
                     if (!SKU) continue;
 
                     const product = updatedProducts.find((p) => p.sku === SKU);
@@ -1559,6 +1588,11 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                                                 <td className="py-3 pr-4"><span className="neu-badge !text-danger">SÍ</span></td>
                                                 <td className="py-3 text-muted-foreground">Costo unitario neto. No incluya símbolos de moneda ni separadores de miles.</td>
                                             </tr>
+                                            <tr className="border-b border-white/5">
+                                                <td className="py-3 pr-4 font-mono font-bold text-primary">PrecioVenta</td>
+                                                <td className="py-3 pr-4"><span className="neu-badge !text-warning">OPC</span></td>
+                                                <td className="py-3 text-muted-foreground">Precio de venta al público. Útil para actualizar el catálogo de precios masivamente.</td>
+                                            </tr>
                                         </tbody>
                                     </table>
                                 </div>
@@ -1580,7 +1614,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                                         <AlertCircle className="w-3 h-3" /> Notas Importantes
                                     </h4>
                                     <ul className="text-[11px] space-y-2 text-muted-foreground">
-                                        <li>• Los productos nuevos se crearán con precio de venta en cero. Deberá actualizarlos después.</li>
+                                        <li>• Si incluye <strong>PrecioVenta</strong>, el catálogo de precios se actualizará automáticamente tanto para productos nuevos como existentes.</li>
                                         <li>• El sistema valida el SKU. Si el SKU es duplicado en el CSV, se sumarán las cantidades.</li>
                                     </ul>
                                 </div>
