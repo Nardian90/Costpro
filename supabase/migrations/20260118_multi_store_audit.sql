@@ -5,7 +5,7 @@ RETURNS TRIGGER AS $$
 BEGIN
     -- Log active store change
     IF (OLD.active_store_id IS DISTINCT FROM NEW.active_store_id) THEN
-        INSERT INTO public.audit_logs (user_id, action, table_name, record_id, old_values, new_values)
+        INSERT INTO public.audit_logs (user_id, action, table_name, record_id, old_data, new_data)
         VALUES (
             auth.uid(),
             'CHANGE_ACTIVE_STORE',
@@ -18,7 +18,7 @@ BEGIN
 
     -- Log role change
     IF (OLD.role IS DISTINCT FROM NEW.role) THEN
-        INSERT INTO public.audit_logs (user_id, action, table_name, record_id, old_values, new_values)
+        INSERT INTO public.audit_logs (user_id, action, table_name, record_id, old_data, new_data)
         VALUES (
             auth.uid(),
             'CHANGE_ROLE',
@@ -43,7 +43,7 @@ CREATE OR REPLACE FUNCTION public.audit_store_access_changes()
 RETURNS TRIGGER AS $$
 BEGIN
     IF (TG_OP = 'INSERT') THEN
-        INSERT INTO public.audit_logs (user_id, action, table_name, record_id, new_values)
+        INSERT INTO public.audit_logs (user_id, action, table_name, record_id, new_data)
         VALUES (
             auth.uid(),
             'ASSIGN_STORE',
@@ -52,7 +52,7 @@ BEGIN
             jsonb_build_object('user_id', NEW.user_id, 'store_id', NEW.store_id)
         );
     ELSIF (TG_OP = 'DELETE') THEN
-        INSERT INTO public.audit_logs (user_id, action, table_name, record_id, old_values)
+        INSERT INTO public.audit_logs (user_id, action, table_name, record_id, old_data)
         VALUES (
             auth.uid(),
             'REMOVE_STORE_ACCESS',
