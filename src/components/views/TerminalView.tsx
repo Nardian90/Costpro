@@ -107,8 +107,6 @@ export default function TerminalView() {
   const [cashClosures, setCashClosures] = useState<any[]>([]);
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
   const [isProcessing, setIsProcessing] = useState(false);
-  const [showSplash, setShowSplash] = useState(true);
-  const mountedAt = useRef(Date.now());
 
   const [dashboardKPIs, setDashboardKPIs] = useState<DashboardKPIs>({
     gross_sales: 0,
@@ -526,16 +524,6 @@ export default function TerminalView() {
     });
   }, [transactions, searchTerm, selectedStatus]);
 
-  useEffect(() => {
-    if (!loading) {
-      const elapsed = Date.now() - mountedAt.current;
-      // Esperar al menos 2 segundos para completar un ciclo del logo
-      const remaining = Math.max(0, 2000 - elapsed);
-      const timer = setTimeout(() => setShowSplash(false), remaining);
-      return () => clearTimeout(timer);
-    }
-  }, [loading]);
-
   // Keyboard shortcuts for POS
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -570,10 +558,11 @@ export default function TerminalView() {
     toast.success(`${product.name} agregado al carrito`);
   }, [addItem]);
 
-  if (loading || showSplash) {
+  // Only show loading logo if we are loading and don't have a user session yet
+  if (loading && !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <CostProLogo size={160} />
+        <CostProLogo size={160} animated={true} />
       </div>
     );
   }
