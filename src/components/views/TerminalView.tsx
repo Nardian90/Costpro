@@ -72,7 +72,7 @@ import type {
   Profile,
 } from '@/types';
 import { toast } from 'sonner';
-import WarehouseView from '@/components/WarehouseView';
+import InventoryView from '@/components/InventoryView';
 import InventoryCountView from '@/components/InventoryCountView';
 import CostSheetsPage from '@/app/cost-sheets/page';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
@@ -2032,8 +2032,8 @@ export default function TerminalView() {
     switch (currentView) {
       case 'dashboard': return renderDashboard();
       case 'pos': return renderPOS();
-      case 'inventory': return <WarehouseView key="inventory" />;
-      case 'recepcion': return <WarehouseView initialView="history" key="history" />;
+      case 'inventory': return <InventoryView key="inventory" />;
+      case 'recepcion': return <InventoryView key="recepcion" />;
       case 'sales': return renderSales();
       case 'inventory_count': return <InventoryCountView />;
       case 'catalog': return renderCatalog();
