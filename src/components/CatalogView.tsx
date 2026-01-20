@@ -117,6 +117,11 @@ export default function CatalogView() {
           return;
         }
 
+        if (editingProduct.price < editingProduct.cost_price) {
+            toast.error('El precio de venta no puede ser menor que el costo.');
+            return;
+        }
+
         try {
           const { error } = await supabase
             .from('products')
@@ -127,7 +132,8 @@ export default function CatalogView() {
                 price: editingProduct.price,
                 cost_price: editingProduct.cost_price,
                 description: editingProduct.description,
-                unit_of_measure: editingProduct.unit_of_measure
+                unit_of_measure: editingProduct.unit_of_measure,
+                image_url: editingProduct.image_url
             })
             .eq('id', editingProduct.id);
 
@@ -268,35 +274,24 @@ export default function CatalogView() {
             return;
         }
 
-        const exportData: any[] = [];
-        products.forEach(product => {
-            // Base product
-            exportData.push({
-                'ID Producto': product.id,
-                'Nombre': product.name,
-                'Unidad': product.unit_of_measure || 'unidad',
-                'Factor': 1,
-                'Precio': product.price || 0
-            });
+        const exportData = products.map(product => ({
+            id: product.id,
+            nombre: product.name,
+            costo: product.cost_price || 0,
+            precio: product.price || 0,
+            imageUrl: product.public_image_url || ''
+        }));
 
-            // Variants
-            product.product_variants?.forEach(v => {
-                exportData.push({
-                    'ID Producto': product.id,
-                    'Nombre': product.name,
-                    'Unidad': v.name,
-                    'Factor': v.conversion_factor,
-                    'Precio': v.price || 0
-                });
-            });
+        const csv = Papa.unparse(exportData, {
+            header: true,
+            columns: ['id', 'nombre', 'costo', 'precio', 'imageUrl']
         });
 
-        const csv = Papa.unparse(exportData);
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
         const url = URL.createObjectURL(blob);
         link.setAttribute('href', url);
-        link.setAttribute('download', `catalogo_precios_${new Date().toISOString().split('T')[0]}.csv`);
+        link.setAttribute('download', `catalogo_productos_${new Date().toISOString().split('T')[0]}.csv`);
         link.style.visibility = 'hidden';
         document.body.appendChild(link);
         link.click();
@@ -318,7 +313,7 @@ export default function CatalogView() {
                     return;
                 }
 
-                const toastId = toast.loading('Procesando importación de precios...');
+                const toastId = toast.loading('Procesando importación...');
                 let successCount = 0;
                 let errorCount = 0;
                 const errors: string[] = [];
@@ -328,109 +323,75 @@ export default function CatalogView() {
                     return;
                 }
 
+                // Assuming user has access to a list of stores. For now, we'll just check against the active store.
+                // In a multi-store setup, you'd fetch user_store_access here.
+                const userAllowedStores = new Set([user.store_id]);
+
                 try {
-                    // Pre-verify that products belong to the current store
-                    const productIdsInCsv = [...new Set(data.map(r => r['ID Producto']).filter(Boolean))];
-                    const { data: validProducts } = await supabase
-                        .from('products')
-                        .select('id')
-                        .eq('store_id', user.store_id)
-                        .in('id', productIdsInCsv);
-
-                    const validProductIds = new Set(validProducts?.map(p => p.id) || []);
-
                     for (const [index, row] of data.entries()) {
-                        const productId = row['ID Producto'];
-                        const productName = row['Nombre'] || 'Desconocido';
-                        const factor = parseFloat(row['Factor']);
-                        const price = parseFloat(row['Precio']);
+                        const { id, nombre, costo, precio, imageUrl, store_id } = row;
 
-                        if (!productId) {
-                            errors.push(`Fila ${index + 1}: ID de Producto faltante`);
+                        if (!id) {
+                            errors.push(`Fila ${index + 2}: Falta el 'id' del producto.`);
                             errorCount++;
                             continue;
                         }
 
-                        if (!validProductIds.has(productId)) {
-                            errors.push(`Fila ${index + 1}: El producto "${productName}" (ID: ${productId}) no pertenece a esta tienda o no existe`);
+                        const storeId = store_id || user.store_id;
+
+                        if (!userAllowedStores.has(storeId)) {
+                            errors.push(`Fila ${index + 2}: Sin permiso para la tienda ${storeId}.`);
                             errorCount++;
                             continue;
                         }
 
-                        if (isNaN(factor) || isNaN(price) || price < 0) {
-                            errors.push(`Fila ${index + 1}: Datos inválidos (Factor: ${factor}, Precio: ${price})`);
+                        const costPrice = parseFloat(costo);
+                        const price = parseFloat(precio);
+
+                        if (isNaN(costPrice) || isNaN(price)) {
+                            errors.push(`Fila ${index + 2}: 'costo' o 'precio' inválido.`);
                             errorCount++;
                             continue;
                         }
 
-                        if (factor === 1) {
-                            // Update base product
-                            const { error } = await supabase
-                                .from('products')
-                                .update({ price })
-                                .eq('id', productId)
-                                .eq('store_id', user.store_id);
-                            if (error) {
-                                errors.push(`Fila ${index + 1}: Error al actualizar producto base: ${error.message}`);
-                                errorCount++;
-                            } else {
-                                successCount++;
-                            }
-                        } else if (factor > 1) {
-                            // Update or Create variant
-                            const { data: variant, error: fetchErr } = await supabase
-                                .from('product_variants')
-                                .select('id')
-                                .eq('product_id', productId)
-                                .eq('conversion_factor', factor)
-                                .maybeSingle();
+                        if (price < costPrice) {
+                            errors.push(`Fila ${index + 2}: El precio no puede ser menor al costo.`);
+                            errorCount++;
+                            continue;
+                        }
 
-                            if (fetchErr) {
-                                errors.push(`Fila ${index + 1}: Error al buscar variante: ${fetchErr.message}`);
-                                errorCount++;
-                                continue;
-                            }
+                        const updateData: any = {
+                            cost_price: costPrice,
+                            price: price,
+                        };
 
-                            if (variant) {
-                                const { error: updErr } = await supabase
-                                    .from('product_variants')
-                                    .update({ price })
-                                    .eq('id', variant.id);
-                                if (updErr) {
-                                    errors.push(`Fila ${index + 1}: Error al actualizar variante: ${updErr.message}`);
-                                    errorCount++;
-                                } else {
-                                    successCount++;
-                                }
-                            } else {
-                                // Create new variant
-                                const { error: insErr } = await supabase
-                                    .from('product_variants')
-                                    .insert([{
-                                        product_id: productId,
-                                        conversion_factor: factor,
-                                        price,
-                                        name: `Pack x${factor}`
-                                    }]);
-                                if (insErr) {
-                                    errors.push(`Fila ${index + 1}: Error al crear variante: ${insErr.message}`);
-                                    errorCount++;
-                                } else {
-                                    successCount++;
-                                }
-                            }
+                        if (imageUrl && imageUrl.trim() !== '') {
+                            updateData.image_url = imageUrl;
+                        }
+
+                        const { error } = await supabase
+                            .from('products')
+                            .update(updateData)
+                            .eq('id', id)
+                            .eq('store_id', storeId);
+
+                        if (error) {
+                            errors.push(`Fila ${index + 2}: Error al actualizar "${nombre}": ${error.message}`);
+                            errorCount++;
+                        } else {
+                            successCount++;
                         }
                     }
 
                     if (errorCount > 0) {
                         console.error('Errores en importación:', errors);
-                        toast.error(`Importación con errores: ${successCount} exitosos, ${errorCount} fallidos. Ver consola para detalles.`, { id: toastId, duration: 5000 });
+                        toast.error(`Importación con errores: ${successCount} exitosos, ${errorCount} fallidos.`, { id: toastId, duration: 8000 });
                     } else {
-                        toast.success(`Importación finalizada con éxito: ${successCount} precios actualizados`, { id: toastId });
+                        toast.success(`Importación finalizada: ${successCount} productos actualizados.`, { id: toastId });
                     }
                     fetchProducts();
                 } catch (err) {
-                    toast.error('Error durante la importación', { id: toastId });
+                    toast.error('Ocurrió un error inesperado durante la importación.', { id: toastId });
                 } finally {
                     if (fileInputRef.current) fileInputRef.current.value = '';
                 }
@@ -440,15 +401,17 @@ export default function CatalogView() {
 
     const downloadTemplate = () => {
         const templateData = [
-            { 'ID Producto': 'UUID-DEL-PRODUCTO', 'Nombre': 'Ejemplo', 'Unidad': 'unidad', 'Factor': 1, 'Precio': 100 },
-            { 'ID Producto': 'UUID-DEL-PRODUCTO', 'Nombre': 'Ejemplo', 'Unidad': 'Pack x12', 'Factor': 12, 'Precio': 1000 }
+            { id: 'producto-uuid-aqui', nombre: 'Nombre del Producto', costo: 100.50, precio: 150.75, imageUrl: 'https://ejemplo.com/imagen.png', store_id: 'tienda-uuid-aqui' }
         ];
-        const csv = Papa.unparse(templateData);
+        const csv = Papa.unparse(templateData, {
+            header: true,
+            columns: ['id', 'nombre', 'costo', 'precio', 'imageUrl', 'store_id']
+        });
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
         const url = URL.createObjectURL(blob);
         link.setAttribute('href', url);
-        link.setAttribute('download', 'plantilla_precios.csv');
+        link.setAttribute('download', 'plantilla_productos.csv');
         link.click();
     };
 
@@ -646,33 +609,34 @@ export default function CatalogView() {
                                 />
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Precio</label>
-                                <input
-                                    type="number"
-                                    value={editingProduct?.price || 0}
-                                    onChange={(e) => setEditingProduct({ ...editingProduct, price: parseFloat(e.target.value) || 0 })}
-                                    className="neu-input w-full font-bold"
-                                />
-                            </div>
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Costo</label>
-                                <input
-                                    type="number"
-                                    value={editingProduct?.cost_price || 0}
-                                    onChange={(e) => setEditingProduct({ ...editingProduct, cost_price: parseFloat(e.target.value) || 0 })}
-                                    className="neu-input w-full font-bold"
-                                />
-                            </div>
+
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Costo</label>
+                            <input
+                                type="number"
+                                value={editingProduct?.cost_price || 0}
+                                onChange={(e) => setEditingProduct({ ...editingProduct, cost_price: parseFloat(e.target.value) || 0 })}
+                                className="neu-input w-full font-bold"
+                            />
                         </div>
+
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Precio</label>
+                            <input
+                                type="number"
+                                value={editingProduct?.price || 0}
+                                onChange={(e) => setEditingProduct({ ...editingProduct, price: parseFloat(e.target.value) || 0 })}
+                                className="neu-input w-full font-bold"
+                            />
+                        </div>
+
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Imagen del Producto</label>
                             <div className="flex flex-col items-center gap-6 p-6 neu-inset-sm bg-background/50 rounded-3xl">
                                 <div className="neu-raised-sm w-40 h-40 flex items-center justify-center overflow-hidden rounded-3xl border-2 border-white/5">
                                     {editingProduct?.image_url ? (
                                         <img
-                                            src={getSupabaseUrl('product-images', editingProduct.image_url) || ''}
+                                            src={editingProduct.image_url.includes('http') ? editingProduct.image_url : getSupabaseUrl('product-images', editingProduct.image_url)}
                                             alt={editingProduct.name}
                                             className="w-full h-full object-cover"
                                         />
@@ -680,21 +644,30 @@ export default function CatalogView() {
                                         <Package className="w-16 h-16 text-muted-foreground opacity-20" />
                                     )}
                                 </div>
-                                <input
-                                    type="file"
-                                    id="product-image-upload-cat"
-                                    className="hidden"
-                                    onChange={(e) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) handleUpdateImage(file);
-                                    }}
-                                />
-                                <label
-                                    htmlFor="product-image-upload-cat"
-                                    className="neu-btn !px-8 text-[10px] font-black uppercase tracking-widest cursor-pointer shadow-lg active:scale-95 transition-all"
-                                >
-                                    Subir Nueva Imagen
-                                </label>
+                                <div className="w-full space-y-2">
+                                    <input
+                                        type="text"
+                                        placeholder="O pegar URL de imagen aquí"
+                                        value={editingProduct?.image_url || ''}
+                                        onChange={(e) => setEditingProduct({ ...editingProduct, image_url: e.target.value })}
+                                        className="neu-input w-full text-center text-xs"
+                                    />
+                                    <input
+                                        type="file"
+                                        id="product-image-upload-cat"
+                                        className="hidden"
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) handleUpdateImage(file);
+                                        }}
+                                    />
+                                    <label
+                                        htmlFor="product-image-upload-cat"
+                                        className="neu-btn !px-8 text-[10px] font-black uppercase tracking-widest cursor-pointer shadow-lg active:scale-95 transition-all w-full text-center block"
+                                    >
+                                        Subir Nueva Imagen
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     </div>
