@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
+import type { UserRole } from '@/types';
 
 /**
  * Hook to sync Supabase Auth session with Zustand store
@@ -10,7 +11,8 @@ import { useRouter } from 'next/navigation';
 export function useSupabaseAuth() {
     const { login, logout, user } = useAuthStore();
     const router = useRouter();
-    const [loading, setLoading] = useState(true);
+    // Optimistic loading: if we have a persisted user, don't block the UI
+    const [loading, setLoading] = useState(!user);
 
     useEffect(() => {
         // Check active session on mount
@@ -80,8 +82,14 @@ export function useSupabaseAuth() {
                     await supabase.auth.signOut();
                     logout();
                 }
-            } catch (error) {
+            } catch (error: any) {
                 console.error("Session check error", error);
+                if (error.message === 'Session check timeout' && user) {
+                    console.warn('Session check timed out. Clearing stale user state.');
+                    logout();
+                    // Force a local sign out to clear storage without necessarily waiting for the server
+                    await supabase.auth.signOut();
+                }
             } finally {
                 setLoading(false);
             }
