@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
@@ -9,14 +9,30 @@ import type { UserRole } from '@/types';
  * Handles session persistence and automatic logout
  */
 export function useSupabaseAuth() {
-    const { login, logout, user } = useAuthStore();
+    const { login, logout, user, token } = useAuthStore();
     const router = useRouter();
     // Optimistic loading: if we have a persisted user, don't block the UI
     const [loading, setLoading] = useState(!user);
 
+    // Concurrency and throttling control
+    const isChecking = useRef(false);
+    const lastChecked = useRef(0);
+
     useEffect(() => {
-        // Check active session on mount
-        const checkSession = async () => {
+        // Check active session
+        const checkSession = async (force = false) => {
+            // Avoid concurrent checks
+            if (isChecking.current) return;
+
+            // Throttle checks (e.g. 60s) unless forced
+            const now = Date.now();
+            if (!force && now - lastChecked.current < 60000) {
+                return;
+            }
+
+            isChecking.current = true;
+            lastChecked.current = now;
+
             // Timeout failsafe of 15s to prevent hanging the app
             const timeoutPromise = new Promise((_, reject) =>
                 setTimeout(() => reject(new Error('Session check timeout')), 15000)
@@ -70,24 +86,39 @@ export function useSupabaseAuth() {
                             updated_at: profileData.updated_at,
                         };
 
-                        login(userData, session.access_token);
+                        // Only update store if data has changed to prevent unnecessary re-renders
+                        // We use getState() to ensure we have the most recent data even in closures
+                        const currentState = useAuthStore.getState();
+                        const currentSessionChanged = session.access_token !== currentState.token;
+                        const userDataChanged = JSON.stringify(userData) !== JSON.stringify(currentState.user);
+
+                        if (currentSessionChanged || userDataChanged) {
+                            login(userData, session.access_token);
+                        }
                     } else {
                         // User inactive or profile not found
                         await supabase.auth.signOut();
                         logout();
                     }
-                } else if (user) {
+                } else if (useAuthStore.getState().user) {
                     // No session but user in store - clear it
                     console.warn('No session found but user exists in store. Clearing state...');
                     await supabase.auth.signOut();
                     logout();
                 }
             } catch (error: any) {
+                // Ignore Abort errors - they are likely from browser behavior or concurrent requests
+                if (error?.name === 'AbortError' || error?.message?.includes('signal is aborted')) {
+                    console.warn('Session check aborted by browser/signal. Ignoring.');
+                    return;
+                }
+
+                const currentState = useAuthStore.getState();
                 console.error("Session check error", error);
-                if (error.message === 'Session check timeout' && user) {
+                if (error.message === 'Session check timeout' && currentState.user) {
                     console.warn('Session check timed out but user exists in store. Keeping local session for resilience.');
                     // Don't logout, just continue with what we have in the store
-                } else if (user) {
+                } else if (currentState.user) {
                     // For other errors, if we have a user, maybe it's a temporary network error
                     console.warn('Session check error with existing user, keeping local session.');
                 } else {
@@ -96,17 +127,18 @@ export function useSupabaseAuth() {
                     await supabase.auth.signOut().catch(() => {});
                 }
             } finally {
+                isChecking.current = false;
                 setLoading(false);
             }
         };
 
-        checkSession();
+        checkSession(true); // Force check on mount
 
         // Re-check session when tab becomes visible (handles "inactivity" waking up)
         const handleVisibilityChange = () => {
             if (document.visibilityState === 'visible') {
                 console.log('App visible, re-checking session...');
-                checkSession();
+                checkSession(); // throttled call
             }
         };
         window.addEventListener('visibilitychange', handleVisibilityChange);
@@ -158,7 +190,14 @@ export function useSupabaseAuth() {
                             updated_at: profileData.updated_at,
                         };
 
-                        login(userData, session.access_token);
+                        // Comparison check here too using latest state
+                        const currentState = useAuthStore.getState();
+                        const currentSessionChanged = session.access_token !== currentState.token;
+                        const userDataChanged = JSON.stringify(userData) !== JSON.stringify(currentState.user);
+
+                        if (currentSessionChanged || userDataChanged) {
+                            login(userData, session.access_token);
+                        }
                     }
                     setLoading(false);
                 } else if (event === 'SIGNED_OUT') {
