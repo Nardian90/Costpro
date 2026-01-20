@@ -108,6 +108,7 @@ export default function TerminalView() {
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
+  const mountedAt = useRef(Date.now());
 
   const [dashboardKPIs, setDashboardKPIs] = useState<DashboardKPIs>({
     gross_sales: 0,
@@ -526,9 +527,14 @@ export default function TerminalView() {
   }, [transactions, searchTerm, selectedStatus]);
 
   useEffect(() => {
-    const timer = setTimeout(() => setShowSplash(false), 3000);
-    return () => clearTimeout(timer);
-  }, []);
+    if (!loading) {
+      const elapsed = Date.now() - mountedAt.current;
+      // Esperar al menos 2 segundos para completar un ciclo del logo
+      const remaining = Math.max(0, 2000 - elapsed);
+      const timer = setTimeout(() => setShowSplash(false), remaining);
+      return () => clearTimeout(timer);
+    }
+  }, [loading]);
 
   // Keyboard shortcuts for POS
   useEffect(() => {

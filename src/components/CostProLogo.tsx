@@ -16,10 +16,9 @@ const CostProLogo = ({ size = 120, animated = true }) => {
       pathLength: 0.8, // Mantiene la apertura característica de la letra C
       opacity: 1,
       transition: {
-        duration: 2,
+        duration: animated ? 2 : 0,
         ease: "easeInOut",
-        repeat: animated ? Infinity : 0,
-        repeatDelay: 2
+        repeat: 0
       }
     }
   };
