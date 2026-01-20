@@ -17,9 +17,9 @@ export function useSupabaseAuth() {
     useEffect(() => {
         // Check active session on mount
         const checkSession = async () => {
-            // Timeout failsafe of 10s to prevent hanging the app
+            // Timeout failsafe of 15s to prevent hanging the app
             const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('Session check timeout')), 10000)
+                setTimeout(() => reject(new Error('Session check timeout')), 15000)
             );
 
             try {
@@ -85,10 +85,15 @@ export function useSupabaseAuth() {
             } catch (error: any) {
                 console.error("Session check error", error);
                 if (error.message === 'Session check timeout' && user) {
-                    console.warn('Session check timed out. Clearing stale user state.');
+                    console.warn('Session check timed out but user exists in store. Keeping local session for resilience.');
+                    // Don't logout, just continue with what we have in the store
+                } else if (user) {
+                    // For other errors, if we have a user, maybe it's a temporary network error
+                    console.warn('Session check error with existing user, keeping local session.');
+                } else {
+                    // No user and error occurred, ensure we are logged out
                     logout();
-                    // Force a local sign out to clear storage without necessarily waiting for the server
-                    await supabase.auth.signOut();
+                    await supabase.auth.signOut().catch(() => {});
                 }
             } finally {
                 setLoading(false);
