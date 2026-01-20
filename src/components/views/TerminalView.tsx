@@ -2055,7 +2055,6 @@ export default function TerminalView() {
           <div className="p-8 border-b border-sidebar-border/50">
             <CostProLogo size={50} animated={true} />
             <div className="mt-4">
-              <div className="text-[10px] font-black text-primary uppercase tracking-[0.4em] leading-none">COSTPRO</div>
               <div className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Terminal Operativa</div>
             </div>
           </div>
