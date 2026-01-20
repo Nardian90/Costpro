@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     // Get storeId and role from user profile
     const { data: profile, error: profileError } = await authClient
       .from("profiles")
-      .select("store_id, role")
+      .select("store_id, active_store_id, role")
       .eq("id", session.user.id)
       .single();
 
@@ -30,7 +30,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (!profile?.store_id && profile?.role !== 'admin') {
+    const effectiveStoreId = profile?.active_store_id || profile?.store_id;
+
+    if (!effectiveStoreId && profile?.role !== 'admin') {
       return NextResponse.json(
         { error: "Bad Request", message: "User is not assigned to a store." },
         { status: 400 }
@@ -48,10 +50,10 @@ export async function GET(request: NextRequest) {
       `)
       .order('name');
 
-    if (profile.store_id) {
+    if (effectiveStoreId) {
       // Filter products that are either global (no specific store_id)
       // or specifically assigned to the user's store.
-      query = query.or(`store_id.is.null,store_id.eq.${profile.store_id}`);
+      query = query.or(`store_id.is.null,store_id.eq.${effectiveStoreId}`);
     }
 
     const { data: products, error } = await query;
@@ -67,10 +69,10 @@ export async function GET(request: NextRequest) {
     const mappedProducts = products.map((product: any) => {
       let stock_current = 0;
 
-      if (profile.store_id) {
+      if (effectiveStoreId) {
         // Find stock for the user's specific store
         const storeInventory = product.inventory?.find(
-          (inv: any) => inv.store_id === profile.store_id
+          (inv: any) => inv.store_id === effectiveStoreId
         );
         stock_current = storeInventory ? storeInventory.quantity : 0;
       } else {

@@ -224,12 +224,15 @@ export default function TerminalView() {
   };
 
   const fetchUsers = async () => {
-    if (!user || user.role !== 'admin') return;
+    if (!user || (user.role !== 'admin' && user.role !== 'encargado')) return;
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('full_name');
+      let query = supabase.from('profiles').select('*');
+
+      if (user.role === 'encargado') {
+        query = query.eq('created_by', user.id);
+      }
+
+      const { data, error } = await query.order('full_name');
 
       if (error) throw error;
       setUsers(data || []);
@@ -239,13 +242,24 @@ export default function TerminalView() {
   };
 
   const fetchStores = async () => {
-    if (!user || user.role !== 'admin') return;
+    if (!user || (user.role !== 'admin' && user.role !== 'encargado')) return;
     try {
-      const { data, error } = await supabase
-        .from('stores')
-        .select('*')
-        .order('name');
+      let query;
+      if (user.role === 'admin') {
+        query = supabase.from('stores').select('*').order('name');
+      } else {
+        // Fetch stores the user has access to
+        query = supabase
+          .from('stores')
+          .select(`
+            *,
+            user_store_access!inner(user_id)
+          `)
+          .eq('user_store_access.user_id', user.id)
+          .order('name');
+      }
 
+      const { data, error } = await query;
       if (error) throw error;
       setStores(data || []);
     } catch (error) {
@@ -404,6 +418,7 @@ export default function TerminalView() {
   const [editingStore, setEditingStore] = useState<Store | null>(null);
   const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<Profile | null>(null);
+  const [userStoreAccess, setUserStoreAccess] = useState<string[]>([]);
   const [isDeleteStoreModalOpen, setIsDeleteStoreModalOpen] = useState(false);
   const [deletingStore, setDeletingStore] = useState<Store | null>(null);
   const [isCreateStoreModalOpen, setIsCreateStoreModalOpen] = useState(false);
@@ -796,18 +811,54 @@ export default function TerminalView() {
     }
   };
 
+  const fetchUserStoreAccess = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_store_access')
+        .select('store_id')
+        .eq('user_id', userId);
+      if (error) throw error;
+      setUserStoreAccess(data.map(d => d.store_id));
+    } catch (error) {
+      console.error('Error fetching user store access:', error);
+    }
+  };
+
   const handleUpdateUser = async () => {
     if (!editingUser) return;
     try {
-      const { error } = await supabase
+      const { error: profileError } = await supabase
         .from('profiles')
         .update({
           full_name: editingUser.full_name,
           role: editingUser.role,
+          max_stores_limit: editingUser.max_stores_limit,
+          max_users_limit: editingUser.max_users_limit,
         })
         .eq('id', editingUser.id);
 
-      if (error) throw error;
+      if (profileError) throw profileError;
+
+      // Update store access
+      // 1. Delete old access
+      const { error: deleteError } = await supabase
+        .from('user_store_access')
+        .delete()
+        .eq('user_id', editingUser.id);
+
+      if (deleteError) throw deleteError;
+
+      // 2. Insert new access
+      if (userStoreAccess.length > 0) {
+        const { error: insertError } = await supabase
+          .from('user_store_access')
+          .insert(userStoreAccess.map(storeId => ({
+            user_id: editingUser.id,
+            store_id: storeId,
+            assigned_by: user!.id
+          })));
+        if (insertError) throw insertError;
+      }
 
       toast.success('Usuario actualizado con éxito');
       setIsEditUserModalOpen(false);
@@ -819,6 +870,10 @@ export default function TerminalView() {
 
   const handleCreateUser = async () => {
     try {
+      // In a real world, this would use an edge function to handle the creation and assignments
+      // But here we'll try to use the auth.signUp and let the triggers handle the profile creation if possible
+      // However, we need to assign stores too.
+
       const { data, error } = await supabase.auth.signUp({
         email: newUser.email,
         password: newUser.password,
@@ -826,18 +881,74 @@ export default function TerminalView() {
           data: {
             full_name: newUser.full_name,
             role: newUser.role,
+            created_by: user!.id // Pass who created it
           },
         },
       });
 
       if (error) throw error;
 
+      const newUserId = data.user?.id;
+      if (newUserId && userStoreAccess.length > 0) {
+        // Wait a bit for the profile to be created by trigger
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        const { error: accessError } = await supabase
+          .from('user_store_access')
+          .insert(userStoreAccess.map(storeId => ({
+            user_id: newUserId,
+            store_id: storeId,
+            assigned_by: user!.id
+          })));
+
+        if (accessError) {
+          toast.warning('Usuario creado pero hubo error al asignar tiendas');
+        }
+      }
+
       toast.success('Usuario creado con éxito');
       setIsCreateUserModalOpen(false);
       setNewUser({ full_name: '', email: '', password: '', role: 'clerk' });
+      setUserStoreAccess([]);
       fetchUsers();
     } catch (error: any) {
       toast.error(error.message || 'Error al crear el usuario');
+    }
+  };
+
+  const handleSetActiveStore = async (storeId: string) => {
+    if (!user) return;
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ active_store_id: storeId })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      toast.success('Tienda activa actualizada');
+
+      // Update local store state
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (profileData) {
+        useAuthStore.getState().updateUser({
+          active_store_id: profileData.active_store_id,
+          store_id: profileData.active_store_id
+        });
+      }
+
+      // Refresh data for the new store context
+      fetchProducts();
+      fetchDashboardData();
+      fetchTransactions();
+      fetchMovements();
+    } catch (error: any) {
+      toast.error(error.message || 'Error al cambiar de tienda');
     }
   };
 
@@ -883,20 +994,20 @@ export default function TerminalView() {
     if (!user) return [];
     const role = user.role;
     const items = [
-      { id: 'dashboard', icon: BarChart3, label: 'Dashboard', roles: ['admin', 'manager', 'clerk'] },
-      { id: 'pos', icon: ShoppingCart, label: 'Punto de Venta', roles: ['clerk', 'manager', 'admin'] },
-      { id: 'inventory', icon: Package, label: 'Inventario', roles: ['admin', 'manager', 'warehouse'] },
-      { id: 'recepcion', icon: Warehouse, label: 'Recepciones', roles: ['warehouse', 'manager'] },
-      { id: 'sales', icon: Receipt, label: 'Mis Ventas', roles: ['clerk', 'manager'] },
-      { id: 'inventory_count', icon: ClipboardList, label: 'Conteo Inventario', roles: ['clerk', 'manager', 'admin'] },
-      { id: 'cost-sheets', icon: FileText, label: 'Fichas de Costo', roles: ['admin', 'manager'] },
-      { id: 'catalog', icon: Package, label: 'Catálogo', roles: ['manager', 'admin'] },
-      { id: 'history', icon: History, label: 'Historial', roles: ['manager', 'admin'] },
-      { id: 'audit', icon: Shield, label: 'Auditoría', roles: ['manager', 'admin'] },
-      { id: 'cash', icon: DollarSign, label: 'Cierre Caja', roles: ['manager', 'admin'] },
-      { id: 'users', icon: Users, label: 'Usuarios', roles: ['admin'] },
-      { id: 'stores', icon: Building, label: 'Tiendas', roles: ['admin'] },
-      { id: 'settings', icon: Settings, label: 'Configuración', roles: ['admin', 'manager'] },
+      { id: 'dashboard', icon: BarChart3, label: 'Dashboard', roles: ['admin', 'manager', 'clerk', 'encargado'] },
+      { id: 'pos', icon: ShoppingCart, label: 'Punto de Venta', roles: ['clerk', 'manager', 'admin', 'encargado'] },
+      { id: 'inventory', icon: Package, label: 'Inventario', roles: ['admin', 'manager', 'warehouse', 'encargado'] },
+      { id: 'recepcion', icon: Warehouse, label: 'Recepciones', roles: ['warehouse', 'manager', 'encargado'] },
+      { id: 'sales', icon: Receipt, label: 'Mis Ventas', roles: ['clerk', 'manager', 'encargado'] },
+      { id: 'inventory_count', icon: ClipboardList, label: 'Conteo Inventario', roles: ['clerk', 'manager', 'admin', 'encargado'] },
+      { id: 'cost-sheets', icon: FileText, label: 'Fichas de Costo', roles: ['admin', 'manager', 'encargado'] },
+      { id: 'catalog', icon: Package, label: 'Catálogo', roles: ['manager', 'admin', 'encargado'] },
+      { id: 'history', icon: History, label: 'Historial', roles: ['manager', 'admin', 'encargado'] },
+      { id: 'audit', icon: Shield, label: 'Auditoría', roles: ['manager', 'admin', 'encargado'] },
+      { id: 'cash', icon: DollarSign, label: 'Cierre Caja', roles: ['manager', 'admin', 'encargado'] },
+      { id: 'users', icon: Users, label: 'Usuarios', roles: ['admin', 'encargado'] },
+      { id: 'stores', icon: Building, label: 'Tiendas', roles: ['admin', 'encargado'] },
+      { id: 'settings', icon: Settings, label: 'Configuración', roles: ['admin', 'manager', 'encargado'] },
     ];
 
     return items.filter(item => item.roles.includes(role));
@@ -1740,7 +1851,11 @@ export default function TerminalView() {
                 <td data-label="Acciones" className="p-4">
                   <div className="flex justify-center gap-2">
                     <button
-                      onClick={() => { setEditingUser(u); setIsEditUserModalOpen(true); }}
+                      onClick={() => {
+                        setEditingUser(u);
+                        setIsEditUserModalOpen(true);
+                        fetchUserStoreAccess(u.id);
+                      }}
                       className="neu-raised-sm w-9 h-9 flex items-center justify-center hover:text-primary transition-all active:scale-90"
                       aria-label="Editar"
                     >
@@ -1792,21 +1907,40 @@ export default function TerminalView() {
             <h3 className="font-black text-xl uppercase tracking-tighter leading-none mb-2">{store.name}</h3>
             <p className="text-xs font-bold text-muted-foreground leading-relaxed min-h-[40px] mb-8">{store.address || 'Ubicación no especificada'}</p>
 
-            <div className="flex gap-4 pt-6 border-t border-white/5">
-              <button
-                onClick={() => { setEditingStore(store); setIsEditStoreModalOpen(true); }}
-                className="neu-btn !p-3 flex-1 flex items-center justify-center gap-2 hover:neu-raised-sm group/btn transition-all"
-              >
-                <Edit className="w-4 h-4 group-hover/btn:text-primary transition-colors" />
-                <span className="text-[10px] font-black uppercase tracking-[0.2em]">Configurar</span>
-              </button>
-              <button
-                onClick={() => { setDeletingStore(store); setIsDeleteStoreModalOpen(true); }}
-                className="neu-btn !p-3 flex-1 flex items-center justify-center gap-2 hover:neu-raised-sm group/del transition-all"
-              >
-                <Trash2 className="w-4 h-4 group-hover/del:text-danger transition-colors" />
-                <span className="text-[10px] font-black uppercase tracking-[0.2em]">Eliminar</span>
-              </button>
+            <div className="flex flex-col gap-3 pt-6 border-t border-white/5">
+              {user?.active_store_id !== store.id ? (
+                <button
+                  onClick={() => handleSetActiveStore(store.id)}
+                  className="neu-btn-primary !p-3 w-full flex items-center justify-center gap-2 shadow-lg shadow-primary/10"
+                >
+                  <Target className="w-4 h-4" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em]">Seleccionar Tienda</span>
+                </button>
+              ) : (
+                <div className="neu-inset-sm !p-3 w-full flex items-center justify-center gap-2 bg-primary/5 border border-primary/20 rounded-xl">
+                  <Check className="w-4 h-4 text-primary" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Tienda Actual</span>
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => { setEditingStore(store); setIsEditStoreModalOpen(true); }}
+                  className="neu-btn !p-3 flex-1 flex items-center justify-center gap-2 hover:neu-raised-sm group/btn transition-all"
+                >
+                  <Edit className="w-4 h-4 group-hover/btn:text-primary transition-colors" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em]">Info</span>
+                </button>
+                {user?.role === 'admin' && (
+                  <button
+                    onClick={() => { setDeletingStore(store); setIsDeleteStoreModalOpen(true); }}
+                    className="neu-btn !p-3 flex-1 flex items-center justify-center gap-2 hover:neu-raised-sm group/del transition-all"
+                  >
+                    <Trash2 className="w-4 h-4 group-hover/del:text-danger transition-colors" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Borrar</span>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         ))}
@@ -2384,18 +2518,69 @@ export default function TerminalView() {
 
       {/* Edit User Modal */}
       <Dialog open={isEditUserModalOpen} onOpenChange={setIsEditUserModalOpen}>
-        <DialogContent className="max-w-md !rounded-3xl border-white/5 shadow-2xl">
+        <DialogContent className="max-w-xl !rounded-3xl border-white/5 shadow-2xl overflow-y-auto max-h-[90vh]">
           <DialogHeader><DialogTitle className="font-black uppercase tracking-tight">Perfil de Usuario</DialogTitle></DialogHeader>
           <div className="space-y-6 py-4">
-            <input type="text" value={editingUser?.full_name || ''} onChange={(e) => setEditingUser({ ...editingUser!, full_name: e.target.value })} className="neu-input w-full font-black uppercase text-sm" placeholder="Nombre Completo" />
+            <div className="space-y-1">
+              <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Nombre Completo</label>
+              <input type="text" value={editingUser?.full_name || ''} onChange={(e) => setEditingUser({ ...editingUser!, full_name: e.target.value })} className="neu-input w-full font-black uppercase text-sm" placeholder="Nombre Completo" />
+            </div>
+
             <div className="space-y-1">
               <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Asignar Rol Operativo</label>
               <select value={editingUser?.role || ''} onChange={(e) => setEditingUser({ ...editingUser!, role: e.target.value as UserRole })} className="neu-input w-full text-xs font-bold uppercase">
                 <option value="clerk">Cajero (POS)</option>
-                <option value="manager">Encargado (Gestión)</option>
+                <option value="manager">Gestor</option>
                 <option value="warehouse">Almacén (Stock)</option>
+                <option value="encargado">Encargado (Multi-tienda)</option>
                 <option value="admin">Administrador (Full)</option>
               </select>
+            </div>
+
+            {user?.role === 'admin' && editingUser?.role === 'encargado' && (
+              <div className="grid grid-cols-2 gap-4 p-4 neu-inset-sm rounded-2xl">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black uppercase text-primary ml-1">Límite Tiendas</label>
+                  <input
+                    type="number"
+                    value={editingUser.max_stores_limit || 0}
+                    onChange={(e) => setEditingUser({ ...editingUser, max_stores_limit: parseInt(e.target.value) || 0 })}
+                    className="neu-input w-full font-bold"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black uppercase text-primary ml-1">Límite Usuarios</label>
+                  <input
+                    type="number"
+                    value={editingUser.max_users_limit || 0}
+                    onChange={(e) => setEditingUser({ ...editingUser, max_users_limit: parseInt(e.target.value) || 0 })}
+                    className="neu-input w-full font-bold"
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Tiendas Asignadas</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2 neu-inset-sm rounded-2xl no-scrollbar">
+                {stores.map(store => (
+                  <label key={store.id} className="flex items-center gap-3 p-2 hover:bg-primary/5 rounded-xl cursor-pointer transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={userStoreAccess.includes(store.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setUserStoreAccess([...userStoreAccess, store.id]);
+                        } else {
+                          setUserStoreAccess(userStoreAccess.filter(id => id !== store.id));
+                        }
+                      }}
+                      className="w-4 h-4 rounded border-white/10 bg-background text-primary focus:ring-primary/20"
+                    />
+                    <span className="text-[10px] font-bold uppercase truncate">{store.name}</span>
+                  </label>
+                ))}
+              </div>
             </div>
           </div>
           <DialogFooter className="gap-2">
@@ -2417,18 +2602,54 @@ export default function TerminalView() {
 
       {/* Create User Modal */}
       <Dialog open={isCreateUserModalOpen} onOpenChange={setIsCreateUserModalOpen}>
-        <DialogContent className="max-w-md !rounded-3xl border-white/5 shadow-2xl">
+        <DialogContent className="max-w-xl !rounded-3xl border-white/5 shadow-2xl overflow-y-auto max-h-[90vh]">
           <DialogHeader><DialogTitle className="font-black uppercase tracking-tight">Alta de Usuario</DialogTitle></DialogHeader>
           <div className="space-y-4 py-4">
-            <input type="text" value={newUser.full_name} onChange={(e) => setNewUser({ ...newUser, full_name: e.target.value })} className="neu-input w-full font-bold" placeholder="Nombre y Apellido" />
-            <input type="email" value={newUser.email} onChange={(e) => setNewUser({ ...newUser, email: e.target.value })} className="neu-input w-full text-xs" placeholder="Email Institucional" />
-            <input type="password" value={newUser.password} onChange={(e) => setNewUser({ ...newUser, password: e.target.value })} className="neu-input w-full" placeholder="Contraseña Temporal" />
-            <select value={newUser.role} onChange={(e) => setNewUser({ ...newUser, role: e.target.value as UserRole })} className="neu-input w-full text-xs font-black uppercase">
-              <option value="clerk">Cajero</option>
-              <option value="manager">Encargado</option>
-              <option value="warehouse">Almacén</option>
-              <option value="admin">Administrador</option>
-            </select>
+            <div className="space-y-1">
+              <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Nombre Completo</label>
+              <input type="text" value={newUser.full_name} onChange={(e) => setNewUser({ ...newUser, full_name: e.target.value })} className="neu-input w-full font-bold" placeholder="Nombre y Apellido" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Email</label>
+              <input type="email" value={newUser.email} onChange={(e) => setNewUser({ ...newUser, email: e.target.value })} className="neu-input w-full text-xs" placeholder="Email Institucional" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Contraseña</label>
+              <input type="password" value={newUser.password} onChange={(e) => setNewUser({ ...newUser, password: e.target.value })} className="neu-input w-full" placeholder="Contraseña Temporal" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Rol</label>
+              <select value={newUser.role} onChange={(e) => setNewUser({ ...newUser, role: e.target.value as UserRole })} className="neu-input w-full text-xs font-black uppercase">
+                <option value="clerk">Cajero</option>
+                <option value="manager">Gestor</option>
+                <option value="warehouse">Almacén</option>
+                <option value="encargado">Encargado (Multi-tienda)</option>
+                <option value="admin">Administrador</option>
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Asignar Tiendas</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2 neu-inset-sm rounded-2xl no-scrollbar">
+                {stores.map(store => (
+                  <label key={store.id} className="flex items-center gap-3 p-2 hover:bg-primary/5 rounded-xl cursor-pointer transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={userStoreAccess.includes(store.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setUserStoreAccess([...userStoreAccess, store.id]);
+                        } else {
+                          setUserStoreAccess(userStoreAccess.filter(id => id !== store.id));
+                        }
+                      }}
+                      className="w-4 h-4 rounded border-white/10 bg-background text-primary focus:ring-primary/20"
+                    />
+                    <span className="text-[10px] font-bold uppercase truncate">{store.name}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
           </div>
           <DialogFooter className="gap-2">
             <button
