@@ -3,7 +3,8 @@
 import { useState, useRef } from 'react';
 import { useAuthStore } from '@/store';
 import { useRouter } from 'next/navigation';
-import { Package2, Eye, EyeOff, LogIn } from 'lucide-react';
+import { Eye, EyeOff, LogIn } from 'lucide-react';
+import CostProLogo from '@/components/CostProLogo';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 
@@ -96,14 +97,8 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="neu-raised neu-pulse w-20 h-20 mx-auto flex items-center justify-center mb-4">
-            <Package2 className="w-12 h-12 text-primary" />
-          </div>
-          <h1 className="text-3xl font-bold mb-2">POS Enterprise</h1>
-          <p className="text-muted-foreground">
-            Plataforma de Gestión Integral
-          </p>
+        <div className="text-center mb-8 space-y-4">
+          <CostProLogo size={80} animated={false} />
         </div>
 
         <div className="neu-card">
