@@ -1,7 +1,16 @@
+
 'use client';
 
 import React from 'react';
 import { cn } from '@/lib/utils';
+
+// Define the richer structure for a single calculated value
+type CalculatedRowValue = {
+  valorHistorico: number;
+  baseValue: number;
+  coeficiente: number;
+  total: number;
+};
 
 type Row = {
   id: string;
@@ -16,7 +25,8 @@ type Section = {
 
 type CostSheetBodyProps = {
   sections: Section[];
-  calculatedValues: { [key: string]: number };
+  // Update the type definition to expect the new object structure
+  calculatedValues: { [key: string]: CalculatedRowValue };
 };
 
 const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValues }) => {
@@ -45,10 +55,11 @@ const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValue
                   </td>
                   <td data-label="Valor" className="p-4 text-right font-mono font-black text-primary text-base">
                     <span className="text-[10px] mr-1 opacity-50">$</span>
-                    {calculatedValues[row.id]?.toLocaleString('en-US', {
+                    {/* FIX: Access the 'total' property of the calculated value object */}
+                    {(calculatedValues[row.id]?.total ?? 0).toLocaleString('en-US', {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
-                    }) ?? '0.00'}
+                    })}
                   </td>
                 </tr>
               ))}

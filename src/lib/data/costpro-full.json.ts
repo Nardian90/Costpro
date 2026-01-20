@@ -1,8 +1,8 @@
 
 const template = {
-  id: "costpro-full-v2",
-  name: "Ficha de Costo Completa (v2)",
-  version: "2.0.0",
+  id: "costpro-full-v3", // Version up
+  name: "Ficha de Costo Interactiva (v3)",
+  version: "3.0.0",
   metadata: {
     author: "CostPro",
   },
@@ -17,108 +17,216 @@ const template = {
     type: "PRODUCCION",
   },
   sections: [
+    // Section 1: Gasto Material
     {
       id: "s1",
       label: "Gasto Material",
       rows: [
-        { id: "1", code: "gasto_material_total", label: "Gasto Material", formula: "=sum(annex('I'))" },
+        {
+          id: "1",
+          code: "gasto_material_total",
+          label: "Gasto Material",
+          formula: "=sum(children)",
+          helpText: "Suma total de los gastos de materiales directos.",
+          children: [
+            {
+              id: "1.1",
+              code: "gasto_material_insumos",
+              label: "Insumos (MP)",
+              valorHistorico: 150000.00,
+              baseDeCalculoRef: "I",
+              coeficienteFormula: "valorHistorico / baseValue",
+              totalFormula: "coeficiente * baseValue",
+              helpText: "Materias primas y materiales fundamentales detallados en el Anexo I."
+            },
+            {
+              id: "1.2",
+              code: "gasto_material_combustibles",
+              label: "Combustibles y lubricantes",
+              valorHistorico: 15000.00,
+              baseDeCalculoRef: "I",
+              coeficienteFormula: "valorHistorico / baseValue",
+              totalFormula: "coeficiente * baseValue",
+              helpText: "Gastos de combustibles y lubricantes asociados a la producción."
+            }
+          ]
+        },
       ],
     },
+    // Section 2: Salario Directo
     {
       id: "s2",
       label: "Salario Directo",
       rows: [
-        { id: "2", code: "salario_directo_total", label: "Salario Directo", formula: "=sum(annex('II'))" },
+        {
+          id: "2",
+          code: "salario_directo_total",
+          label: "Salario Directo",
+          formula: "=sum(children)",
+          helpText: "Suma total de los salarios directos de los obreros implicados en la producción.",
+          children: [
+             {
+              id: "2.1",
+              code: "salario_directo_obreros",
+              label: "Salarios de Obreros",
+              valorHistorico: 437435.00, // Placeholder
+              baseDeCalculoRef: "II",
+              coeficienteFormula: "valorHistorico / baseValue",
+              totalFormula: "coeficiente * baseValue",
+              helpText: "Salarios directos calculados según el desglose del Anexo II."
+            }
+          ]
+        },
       ],
     },
+    // Section 3: Otros Gastos Directos
     {
       id: "s3",
       label: "Otros Gastos Directos",
       rows: [
-        { id: "3", code: "otros_gastos_directos_total", label: "Otros Gastos Directos", formula: "=sum(annex('III'), annex('IV'))" },
+        {
+          id: "3",
+          code: "otros_gastos_directos_total",
+          label: "Otros Gastos Directos",
+          formula: "=sum(children)",
+          helpText: "Suma de otros gastos directos como depreciación, mantenimiento, etc.",
+          children: [
+            {
+              id: "3.1",
+              code: "otros_gastos_depreciacion",
+              label: "Depreciación de Equipos",
+              valorHistorico: 27000.00, // Placeholder
+              baseDeCalculoRef: "III",
+              coeficienteFormula: "valorHistorico / baseValue",
+              totalFormula: "coeficiente * baseValue",
+              helpText: "Depreciación de equipos productivos, detallado en Anexo III."
+            },
+            {
+              id: "3.2",
+              code: "otros_gastos_varios",
+              label: "Otros Gastos Varios",
+              valorHistorico: 27127.47, // Placeholder
+              baseDeCalculoRef: "IV",
+              coeficienteFormula: "valorHistorico / baseValue",
+              totalFormula: "coeficiente * baseValue",
+              helpText: "Otros gastos como mantenimiento y EPP, detallado en Anexo IV."
+            }
+          ]
+        },
       ],
     },
+    // Section 4: Gastos Asociados a la Producción
     {
       id: "s4",
       label: "Gastos Asociados a la Producción",
       rows: [
-        { id: "4", code: "gastos_asociados_prod_total", label: "Gastos Asociados a la Producción", value: 0.00 }
+        {
+          id: "4",
+          code: "gastos_asociados_prod_total",
+          label: "Gastos Asociados a la Producción",
+          valorHistorico: 0.00,
+          baseDeCalculoRef: null,
+          coeficienteFormula: null,
+          totalFormula: "valorHistorico",
+          helpText: "Gastos indirectos de producción que no se clasifican en las categorías anteriores."
+        }
       ],
     },
+    // Section 5: COSTO TOTAL
     {
       id: "s5",
       label: "COSTO TOTAL",
       rows: [
-        { id: "5", code: "costo_produccion", label: "COSTO DE PRODUCCIÓN (1+2+3+4)", formula: "=sum(ref('1'), ref('2'), ref('3'), ref('4'))" },
+        { id: "5", code: "costo_produccion", label: "COSTO DE PRODUCCIÓN (1+2+3+4)", formula: "=sum(ref('1'), ref('2'), ref('3'), ref('4'))", helpText: "Costo total de producción antes de gastos generales." },
       ],
     },
+    // Section 6: Gastos Generales y de Admón.
     {
       id: "s6",
       label: "Gtos. Grales y de Admón.",
       rows: [
-        { id: "6", code: "gtos_grales_admon_total", label: "Gtos. Grales y de Admón.", value: 0.00 },
+        {
+          id: "6",
+          code: "gtos_grales_admon_total",
+          label: "Gtos. Grales y de Admón.",
+          valorHistorico: 0.00,
+          baseDeCalculoRef: "2", // Example: Salario Directo
+          coeficienteFormula: "valorHistorico / baseValue",
+          totalFormula: "coeficiente * baseValue",
+          helpText: "Gastos generales y de administración, calculados como un porciento de una base seleccionada (ej. Salario Directo)."
+        },
       ],
     },
     {
       id: "s7",
       label: "Gtos. de Distribución y Venta",
        rows: [
-        { id: "7", code: "gtos_dist_venta_total", label: "Gtos. de Distribución y Venta", value: 0.00 },
+        { id: "7", code: "gtos_dist_venta_total", label: "Gtos. de Distribución y Venta", valorHistorico: 0.00, baseDeCalculoRef: null, totalFormula: "valorHistorico", helpText: "Gastos relacionados con la distribución y venta del producto." },
       ],
     },
     {
       id: "s8",
       label: "Gastos Financieros",
       rows: [
-        { id: "8", code: "gastos_financieros_total", label: "Gastos Financieros", value: 0.00 },
+        { id: "8", code: "gastos_financieros_total", label: "Gastos Financieros", valorHistorico: 0.00, baseDeCalculoRef: null, totalFormula: "valorHistorico", helpText: "Gastos por concepto de financiamiento." },
       ],
     },
     {
       id: "s9",
       label: "Gasto Financ. OSDE",
       rows: [
-         { id: "9", code: "gasto_financ_osde", label: "Gasto Financ. OSDE", value: 0.00 },
+         { id: "9", code: "gasto_financ_osde", label: "Gasto Financ. OSDE", valorHistorico: 0.00, baseDeCalculoRef: null, totalFormula: "valorHistorico", helpText: "Gastos financieros específicos de la OSDE." },
       ],
     },
+    // Section 10: Gastos Tributarios
     {
       id: "s10",
       label: "Gastos Tributarios",
       rows: [
-        { id: "10", code: "gastos_tributarios_total", label: "Gastos Tributarios", formula: "=sum(ref('10.1'), ref('10.2'))" },
-        { id: "10.1", code: "gastos_tributarios_seg_social", label: "De ello: -Contrib. Seg. Social (14%)", value: 61070.93 },
-        { id: "10.2", code: "gastos_tributarios_fuerza_trabajo", label: "-Imp. Fuerza Trabajo (5%)", value: 21811.05 }
+        {
+          id: "10",
+          code: "gastos_tributarios_total",
+          label: "Gastos Tributarios",
+          formula: "=sum(children)",
+          helpText: "Suma de todos los gastos tributarios aplicables.",
+          children: [
+            { id: "10.1", code: "gastos_tributarios_seg_social", label: "De ello: -Contrib. Seg. Social (14%)", valorHistorico: 61070.93, baseDeCalculoRef: null, totalFormula: "valorHistorico", helpText: "Contribución a la seguridad social (14% del salario)." },
+            { id: "10.2", code: "gastos_tributarios_fuerza_trabajo", label: "-Imp. Fuerza Trabajo (5%)", valorHistorico: 21811.05, baseDeCalculoRef: null, totalFormula: "valorHistorico", helpText: "Impuesto sobre la utilización de la fuerza de trabajo (5% del salario)." }
+          ]
+        },
       ],
     },
+    // Summary sections
     {
       id: "s11",
       label: "TOTAL DE GASTOS",
       rows: [
-        { id: "11", code: "total_gastos", label: "TOTAL DE GASTOS (6+7+8+9+10)", formula: "=sum(ref('6'), ref('7'), ref('8'), ref('9'), ref('10'))" }
+        { id: "11", code: "total_gastos", label: "TOTAL DE GASTOS (6+7+8+9+10)", formula: "=sum(ref('6'), ref('7'), ref('8'), ref('9'), ref('10'))", helpText: "Suma total de gastos indirectos." }
       ],
     },
     {
       id: "s12",
       label: "TOTAL COSTOS Y GASTOS",
       rows: [
-        { id: "12", code: "total_costos_gastos", label: "TOTAL COSTOS Y GASTOS (5+11)", formula: "=sum(ref('5'), ref('11'))" }
+        { id: "12", code: "total_costos_gastos", label: "TOTAL COSTOS Y GASTOS (5+11)", formula: "=sum(ref('5'), ref('11'))", helpText: "Suma del costo de producción y los gastos indirectos." }
       ],
     },
     {
         id: "s13",
         label: "RESULTADO",
         rows: [
-            { id: "13", code: "resultado_utilidad", label: "Utilidad", value: 0.20, is_percent: true, base_ref: '12' },
-            { id: "13.1", code: "resultado_precio_antes_imp", label: "Precio antes de Impuesto", formula: "=ref('12') * (1 + ref('13'))" },
-            { id: "13.2", code: "resultado_impuesto_ventas", label: "Imp s/Ventas y Serv", value: 0.10, is_percent: true, base_ref: '13.1' },
-            { id: "14", code: "resultado_final", label: "Precio o Tarifa Final", formula: "=ref('13.1') * (1 + ref('13.2'))" }
+            { id: "13", code: "resultado_utilidad", label: "Utilidad", value: 0.20, is_percent: true, base_ref: '12', helpText: "Margen de utilidad deseado, como porciento del total de costos y gastos." },
+            { id: "13.1", code: "resultado_precio_antes_imp", label: "Precio antes de Impuesto", formula: "=ref('12') * (1 + ref('13'))", helpText: "Precio de venta antes de aplicar impuestos sobre las ventas." },
+            { id: "13.2", code: "resultado_impuesto_ventas", label: "Imp s/Ventas y Serv", value: 0.10, is_percent: true, base_ref: '13.1', helpText: "Impuesto sobre ventas y servicios, como porciento del precio antes de impuestos." },
+            { id: "14", code: "resultado_final", label: "Precio o Tarifa Final", formula: "=ref('13.1') * (1 + ref('13.2'))", helpText: "Precio final de venta al público." }
         ]
     },
     {
         id: "s14",
         label: "UNITARIOS",
         rows: [
-            { id: "15", code: "costo_unitario", label: "Costo y gasto UNITARIO", formula: "=ref('12') / header('quantity')" },
-            { id: "16", code: "venta_unitaria", label: "VENTA UNITARIA", formula: "=ref('14') / header('quantity')" }
+            { id: "15", code: "costo_unitario", label: "Costo y gasto UNITARIO", formula: "=ref('12') / header('quantity')", helpText: "Costo total por unidad producida." },
+            { id: "16", code: "venta_unitaria", label: "VENTA UNITARIA", formula: "=ref('14') / header('quantity')", helpText: "Precio de venta por unidad producida." }
         ]
     }
   ],

@@ -1,10 +1,10 @@
+
 'use client';
 
 import React, { useState } from 'react';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
 import { useCostSheetCalculator } from '@/hooks/useCostSheetCalculator';
-import CostSheetNav from './CostSheetNav';
-import CostSheetForm from './CostSheetForm';
+import CostSheetInteractiveTable from './CostSheetInteractiveTable'; // <-- Import the new table
 import CostSheetHeader from './CostSheetHeader';
 import CostSheetBody from './CostSheetBody';
 import CostSheetAnnexes from './CostSheetAnnexes';
@@ -15,10 +15,10 @@ import { cn } from '@/lib/utils';
 
 const CostSheetView = () => {
   const { data, loadExample, reset } = useCostSheetStore();
-  const { calculatedValues, calculatedAnnexes } = useCostSheetCalculator(data);
+  // Pass the full data object to the calculator
+  const { calculatedValues, annexes } = useCostSheetCalculator(data);
 
   const [isEditing, setIsEditing] = useState(true);
-  const [activeSection, setActiveSection] = useState('header');
 
   return (
     <div className="w-full max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 pb-32 pt-4">
@@ -37,7 +37,6 @@ const CostSheetView = () => {
             </p>
           </div>
         </div>
-
         <div className="flex items-center gap-2">
           <div className="neu-badge !text-success !bg-success/10 border border-success/20 py-1 px-3">
             Sistema Activo
@@ -80,57 +79,47 @@ const CostSheetView = () => {
       />
 
       {isEditing ? (
+        // EDITING MODE: Render the new interactive table
         <div className="animate-in fade-in duration-700">
-          <CostSheetNav
+          <CostSheetInteractiveTable
             sections={data.sections}
+            calculatedValues={calculatedValues}
             annexes={data.annexes}
-            activeSection={activeSection}
-            setActiveSection={setActiveSection}
           />
-          <div className="mt-4">
-            <CostSheetForm
-              activeSection={activeSection}
-              calculatedAnnexes={calculatedAnnexes}
-              calculatedValues={calculatedValues}
-            />
-          </div>
         </div>
       ) : (
+        // PREVIEW MODE: Render the static summary view
         <div className="animate-in zoom-in-95 duration-500 max-w-5xl mx-auto">
           <div className="neu-card !p-0 overflow-hidden border-none shadow-2xl bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
-            {/* Standard "Sheet" header */}
             <div className="bg-slate-800 p-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-white">
                <div className="font-black text-xl tracking-tighter uppercase italic">COSTPRO <span className="text-primary font-light text-sm not-italic ml-2 tracking-widest">SHEET</span></div>
                <div className="text-xs font-bold opacity-50 uppercase tracking-widest">Documento Oficial de Costos</div>
             </div>
-
             <div className="p-4 sm:p-10 lg:p-12 space-y-10">
                 <CostSheetHeader header={data.header} />
-
                 <div className="space-y-4">
                   <div className="text-xs font-black uppercase tracking-widest text-primary pb-2 border-b-2 border-primary/20">
                     Resumen de Operación
                   </div>
+                  {/* Note: CostSheetBody might need adjustments if it relies on the old calculatedValues structure */}
                   <CostSheetBody
                       sections={data.sections}
                       calculatedValues={calculatedValues}
                   />
                 </div>
-
                 <div className="space-y-4">
                   <div className="text-xs font-black uppercase tracking-widest text-primary pb-2 border-b-2 border-primary/20">
                     Anexos Detallados
                   </div>
+                  {/* The annexes prop for CostSheetAnnexes should now come from the calculator to include totals */}
                   <CostSheetAnnexes
-                      annexes={data.annexes}
+                      annexes={annexes}
                   />
                 </div>
-
                 <div className="pt-10 border-t border-slate-100 dark:border-slate-800">
                    <CostSheetSignature {...data.signature} />
                 </div>
             </div>
-
             <div className="bg-slate-50 dark:bg-slate-950 p-4 text-[10px] text-center text-slate-400 font-bold uppercase tracking-widest">
               Fin del Documento • Generado automáticamente por COSTPRO v1.0
             </div>
