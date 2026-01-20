@@ -34,7 +34,7 @@ DECLARE
     v_limit integer;
     v_current_count integer;
 BEGIN
-    IF NEW.created_by IS NULL THEN RETURN NEW; IF;
+    IF NEW.created_by IS NULL THEN RETURN NEW; END IF;
 
     SELECT role, max_stores_limit INTO v_creator_role, v_limit
     FROM public.profiles WHERE id = NEW.created_by;
