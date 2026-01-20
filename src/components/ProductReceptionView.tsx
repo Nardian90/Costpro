@@ -1,7 +1,7 @@
 // src/components/ProductReceptionView.tsx
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/store';
 import type { Product } from '@/types';
@@ -60,9 +60,9 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
         }
     }, [debouncedSearchTerm, user?.store_id]);
 
-    useState(() => {
+    useEffect(() => {
         searchProducts();
-    });
+    }, [searchProducts]);
 
     const addToReception = (product: Product) => {
         if (receptionItems.has(product.id)) {
