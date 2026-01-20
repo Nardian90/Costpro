@@ -536,8 +536,8 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                     const SKU = importedProduct.SKU || importedProduct.sku;
                     const Nombre = importedProduct.NombreProducto || importedProduct.PRODUCTOS || importedProduct.Nombre;
                     const Cantidad = importedProduct.Cantidad || importedProduct.cantidad;
-                    const Costo = importedProduct.Costo || importedProduct.costo || importedProduct['Precio costo'];
-                    const PrecioVenta = importedProduct.PrecioVenta || importedProduct['Precio venta'] || importedProduct.Precio;
+                    const Costo = importedProduct.Costo || importedProduct.costo;
+                    const PrecioVenta = importedProduct.PrecioVenta || importedProduct['Precio venta'];
 
                     if (!SKU) continue;
 
@@ -592,7 +592,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                 for (const importedProduct of importedProducts) {
                     const SKU = importedProduct.SKU || importedProduct.sku;
                     const Cantidad = importedProduct.Cantidad || importedProduct.cantidad;
-                    const Costo = importedProduct.Costo || importedProduct.costo || importedProduct['Precio costo'];
+                    const Costo = importedProduct.Costo || importedProduct.costo;
 
                     if (!SKU) continue;
 
