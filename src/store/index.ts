@@ -146,7 +146,6 @@ export const useCartStore = create<CartStore>((set, get) => ({
 
 interface UIStore {
   sidebarOpen: boolean;
-  theme: string;
   loading: boolean;
   currentView: string;
   notifications: {
@@ -155,7 +154,6 @@ interface UIStore {
   };
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
-  setTheme: (theme: string) => void;
   setLoading: (loading: boolean) => void;
   setCurrentView: (view: string) => void;
   setNotifications: (prefs: Partial<UIStore['notifications']>) => void;
@@ -165,7 +163,6 @@ export const useUIStore = create<UIStore>()(
   persist(
     (set) => ({
       sidebarOpen: true,
-      theme: 'neumo',
       loading: false,
       currentView: 'dashboard',
       notifications: {
@@ -175,7 +172,6 @@ export const useUIStore = create<UIStore>()(
 
       toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
-      setTheme: (theme) => set({ theme }),
       setLoading: (loading) => set({ loading }),
       setCurrentView: (view) => set({ currentView: view }),
       setNotifications: (prefs) => set((state) => ({
