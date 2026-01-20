@@ -74,6 +74,7 @@ import type {
 import { toast } from 'sonner';
 import InventoryView from '@/components/InventoryView';
 import InventoryCountView from '@/components/InventoryCountView';
+import CatalogView from '@/components/CatalogView';
 import CostSheetsPage from '@/app/cost-sheets/page';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
 import SearchBar from '@/components/ui/SearchBar';
@@ -392,10 +393,6 @@ export default function TerminalView() {
   const [searchTerm, setSearchTerm] = useState('');
   const deferredSearchTerm = useDeferredValue(searchTerm);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [isVariantsModalOpen, setIsVariantsModalOpen] = useState(false);
-  const [isEditProductModalOpen, setIsEditProductModalOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<any>(null);
-  const [newVariantForm, setNewVariantForm] = useState({ name: '', price: 0, conversion_factor: 1 });
   const [isEditStoreModalOpen, setIsEditStoreModalOpen] = useState(false);
   const [editingStore, setEditingStore] = useState<Store | null>(null);
   const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
@@ -600,106 +597,6 @@ export default function TerminalView() {
     }
   };
 
-  const handleUpdateProduct = async () => {
-    if (!editingProduct || !editingProduct.name) {
-      toast.error('El nombre es obligatorio');
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('products')
-        .update({ name: editingProduct.name })
-        .eq('id', editingProduct.id);
-
-      if (error) throw error;
-      toast.success('Producto actualizado');
-      setIsEditProductModalOpen(false);
-      fetchProducts();
-    } catch (error: any) {
-      toast.error(error.message || 'Error al actualizar producto');
-    }
-  };
-
-  const handleUpdateImage = async (file: File) => {
-    if (!editingProduct) return;
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error('La imagen no debe superar los 2MB');
-      return;
-    }
-
-    const toastId = toast.loading('Subiendo imagen...');
-    try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${editingProduct.id}-${Math.random()}.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('product-images')
-        .upload(fileName, file);
-
-      if (uploadError) throw uploadError;
-
-      const { error: updateError } = await supabase
-        .from('products')
-        .update({ image_url: fileName })
-        .eq('id', editingProduct.id);
-
-      if (updateError) throw updateError;
-
-      toast.success('Imagen actualizada', { id: toastId });
-      setEditingProduct({ ...editingProduct, image_url: fileName });
-      fetchProducts();
-    } catch (error: any) {
-      toast.error(error.message || 'Error al subir imagen', { id: toastId });
-    }
-  };
-
-  const handleAddVariant = async (newVariant: any) => {
-    if (!editingProduct) return;
-    try {
-      const { error } = await supabase
-        .from('product_variants')
-        .insert([{
-          product_id: editingProduct.id,
-          name: newVariant.name,
-          price: newVariant.price,
-          conversion_factor: newVariant.conversion_factor || 1
-        }]);
-
-      if (error) throw error;
-      toast.success('Variante agregada');
-      fetchProducts();
-      // Refresh editing product variants
-      const { data } = await supabase
-        .from('product_variants')
-        .select('*')
-        .eq('product_id', editingProduct.id);
-      setEditingProduct({ ...editingProduct, product_variants: data || [] });
-    } catch (error: any) {
-      toast.error(error.message || 'Error al agregar variante');
-    }
-  };
-
-  const handleDeleteVariant = async (variantId: string) => {
-    try {
-      const { error } = await supabase
-        .from('product_variants')
-        .delete()
-        .eq('id', variantId);
-
-      if (error) throw error;
-      toast.success('Variante eliminada');
-      fetchProducts();
-      // Refresh editing product variants
-      const { data } = await supabase
-        .from('product_variants')
-        .select('*')
-        .eq('product_id', editingProduct.id);
-      setEditingProduct({ ...editingProduct, product_variants: data || [] });
-    } catch (error: any) {
-      toast.error(error.message || 'Error al eliminar variante');
-    }
-  };
 
   const handleUpdateStore = async () => {
     if (!editingStore) return;
@@ -1611,62 +1508,6 @@ export default function TerminalView() {
     </div>
   );
 
-  const renderCatalog = () => (
-    <div className="space-y-6">
-      <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase">Catálogo Global</h2>
-
-      <SearchBar
-        value={searchTerm}
-        onChange={setSearchTerm}
-        placeholder="Buscar en el catálogo..."
-      />
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {filteredProducts.map(product => (
-          <div key={product.id} className="neu-card !p-6 border border-white/5 hover:border-primary/20 transition-all group">
-            <div className="neu-raised-sm w-full h-48 mb-6 flex items-center justify-center overflow-hidden rounded-2xl bg-background/50">
-              {product.public_image_url ? (
-                <img src={product.public_image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-              ) : (
-                <Package className="w-12 h-12 text-muted-foreground opacity-20" />
-              )}
-            </div>
-
-            <h3 className="font-black text-lg uppercase tracking-tight mb-2 truncate">{product.name}</h3>
-            <p className="text-xs text-muted-foreground mb-4 line-clamp-2 min-h-[32px]">{product.description || 'Sin descripción disponible'}</p>
-
-            <div className="grid grid-cols-2 gap-4 mb-8">
-              <div className="neu-inset-sm !p-3 text-center border border-white/5">
-                <div className="text-[8px] font-black uppercase text-muted-foreground tracking-widest mb-1">Costo Unit.</div>
-                <div className="font-bold text-sm text-foreground">${product.cost_price.toFixed(2)}</div>
-              </div>
-              <div className="neu-inset-sm !p-3 text-center border border-primary/10 bg-primary/5">
-                <div className="text-[8px] font-black uppercase text-primary tracking-widest mb-1">Precio Venta</div>
-                <div className="font-black text-sm text-primary">${product.price.toFixed(2)}</div>
-              </div>
-            </div>
-
-            <div className="flex gap-4">
-              <button
-                onClick={() => { setEditingProduct(product); setIsEditProductModalOpen(true); }}
-                className="neu-btn !p-3 flex-1 flex items-center justify-center gap-2 hover:neu-raised-sm"
-              >
-                <Edit className="w-4 h-4" />
-                <span className="text-[10px] font-black uppercase tracking-widest">Info</span>
-              </button>
-              <button
-                onClick={() => { setEditingProduct(product); setIsVariantsModalOpen(true); }}
-                className="neu-btn !p-3 flex-1 flex items-center justify-center gap-2 hover:neu-raised-sm"
-              >
-                <DollarSign className="w-4 h-4" />
-                <span className="text-[10px] font-black uppercase tracking-widest">Precios</span>
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
 
   const renderCash = () => (
     <div className="space-y-8">
@@ -2007,7 +1848,7 @@ export default function TerminalView() {
       case 'recepcion': return <InventoryView key="recepcion" />;
       case 'sales': return renderSales();
       case 'inventory_count': return <InventoryCountView />;
-      case 'catalog': return renderCatalog();
+      case 'catalog': return <CatalogView />;
       case 'history': return renderHistory();
       case 'audit': return renderAudit();
       case 'cash': return renderCash();
@@ -2272,147 +2113,6 @@ export default function TerminalView() {
       {/* Dialogs for modals like Edit/Create Product, Store, User omitted for brevity as they follow standard shadcn/ui but should use neu-input and neu-btn-primary where applicable */}
       {/* (The existing modals already used neu-input and neu-btn-primary mostly, I will maintain that) */}
 
-      {/* Edit Product Modal */}
-      <Dialog open={isEditProductModalOpen} onOpenChange={setIsEditProductModalOpen}>
-        <DialogContent className="max-w-md !rounded-3xl border-white/5 shadow-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-black uppercase tracking-tight">Editar Información de Producto</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-6 py-4">
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Nombre Comercial</label>
-              <input
-                type="text"
-                value={editingProduct?.name || ''}
-                onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
-                className="neu-input w-full font-bold"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Imagen del Producto</label>
-              <div className="flex flex-col items-center gap-6 p-6 neu-inset-sm bg-background/50 rounded-3xl">
-                <div className="neu-raised-sm w-40 h-40 flex items-center justify-center overflow-hidden rounded-3xl border-2 border-white/5">
-                  {editingProduct?.image_url ? (
-                    <img
-                      src={getProductImageUrl(editingProduct.image_url) || ''}
-                      alt={editingProduct.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <Package className="w-16 h-16 text-muted-foreground opacity-20" />
-                  )}
-                </div>
-                <input
-                  type="file"
-                  id="product-image-upload"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleUpdateImage(file);
-                  }}
-                />
-                <label
-                  htmlFor="product-image-upload"
-                  className="neu-btn !px-8 text-[10px] font-black uppercase tracking-widest cursor-pointer shadow-lg active:scale-95 transition-all"
-                >
-                  Subir Nueva Imagen
-                </label>
-              </div>
-            </div>
-          </div>
-          <DialogFooter className="gap-3">
-            <button
-              onClick={() => setIsEditProductModalOpen(false)}
-              className="neu-btn !py-3 flex-1 font-black text-xs uppercase tracking-widest"
-            >
-              Cerrar
-            </button>
-            <button
-              onClick={handleUpdateProduct}
-              className="neu-btn-primary !py-3 flex-1 font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/20"
-            >
-              Guardar Cambios
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Product Variants Modal */}
-      <Dialog open={isVariantsModalOpen} onOpenChange={setIsVariantsModalOpen}>
-        <DialogContent className="max-w-2xl !rounded-3xl border-white/5 shadow-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-black uppercase tracking-tight">Variantes de Precio - {editingProduct?.name}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-8 py-6">
-            <div className="space-y-4">
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-primary border-b border-primary/20 pb-1">Variantes Activas</h4>
-              <div className="space-y-3">
-                {editingProduct?.product_variants?.map((v: any) => (
-                  <div key={v.id} className="neu-raised-sm !p-4 flex justify-between items-center border border-white/5">
-                    <div>
-                      <div className="font-black text-sm uppercase tracking-tight">{v.name}</div>
-                      <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Factor: x{v.conversion_factor}</div>
-                    </div>
-                    <div className="flex items-center gap-6">
-                      <div className="font-black text-xl text-primary">${v.price.toFixed(2)}</div>
-                      <button
-                        onClick={() => handleDeleteVariant(v.id)}
-                        className="p-2 text-danger hover:bg-danger/5 rounded-xl transition-all"
-                        aria-label="Eliminar variante"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="neu-card !p-6 border border-primary/20 bg-primary/5 space-y-4 rounded-3xl">
-              <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Añadir Nueva Variante</h4>
-              <div className="grid grid-cols-2 gap-4">
-                <input
-                  type="text"
-                  value={newVariantForm.name}
-                  onChange={(e) => setNewVariantForm({ ...newVariantForm, name: e.target.value })}
-                  className="neu-input w-full text-xs font-bold uppercase"
-                  placeholder="Nombre (ej. Pack x12)"
-                />
-                <input
-                  type="number"
-                  value={newVariantForm.conversion_factor}
-                  onChange={(e) => setNewVariantForm({ ...newVariantForm, conversion_factor: parseInt(e.target.value) || 1 })}
-                  className="neu-input w-full text-xs font-bold"
-                  placeholder="Factor"
-                />
-              </div>
-              <div className="relative">
-                <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" />
-                <input
-                  type="number"
-                  value={newVariantForm.price || ''}
-                  onChange={(e) => setNewVariantForm({ ...newVariantForm, price: parseFloat(e.target.value) || 0 })}
-                  className="neu-input w-full pl-12 text-xl font-black font-mono"
-                  placeholder="0.00"
-                />
-              </div>
-              <button
-                onClick={() => {
-                  if (!newVariantForm.name || !newVariantForm.price) { toast.error('Complete el nombre y el precio'); return; }
-                  handleAddVariant(newVariantForm);
-                  setNewVariantForm({ name: '', price: 0, conversion_factor: 1 });
-                }}
-                className="neu-btn-primary w-full !py-4 flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest shadow-xl shadow-primary/20"
-              >
-                <Plus className="w-4 h-4" /> Registrar Variante
-              </button>
-            </div>
-          </div>
-          <DialogFooter>
-            <button onClick={() => setIsVariantsModalOpen(false)} className="neu-btn w-full !py-3 font-black text-xs uppercase tracking-widest">Cerrar Panel</button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Edit Store Modal */}
       <Dialog open={isEditStoreModalOpen} onOpenChange={setIsEditStoreModalOpen}>
