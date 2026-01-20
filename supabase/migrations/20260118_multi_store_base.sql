@@ -12,7 +12,9 @@ BEGIN
 END $$;
 
 -- 2. Create user_store_access table
-CREATE TABLE IF NOT EXISTS public.user_store_access (
+-- We drop it if it exists to ensure correct types for this new feature
+DROP TABLE IF EXISTS public.user_store_access;
+CREATE TABLE public.user_store_access (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     store_id uuid NOT NULL REFERENCES public.stores(id) ON DELETE CASCADE,
@@ -22,8 +24,23 @@ CREATE TABLE IF NOT EXISTS public.user_store_access (
 );
 
 -- 3. Update profiles table
+-- If active_store_id exists but is not uuid, we must convert it
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public'
+        AND table_name = 'profiles'
+        AND column_name = 'active_store_id'
+        AND data_type != 'uuid'
+    ) THEN
+        ALTER TABLE public.profiles ALTER COLUMN active_store_id TYPE uuid USING active_store_id::text::uuid;
+    ELSE
+        ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS active_store_id uuid REFERENCES public.stores(id) ON DELETE SET NULL;
+    END IF;
+END $$;
+
 ALTER TABLE public.profiles
-ADD COLUMN IF NOT EXISTS active_store_id uuid REFERENCES public.stores(id) ON DELETE SET NULL,
 ADD COLUMN IF NOT EXISTS max_stores_limit integer DEFAULT 0,
 ADD COLUMN IF NOT EXISTS max_users_limit integer DEFAULT 0,
 ADD COLUMN IF NOT EXISTS created_by uuid REFERENCES auth.users(id);
