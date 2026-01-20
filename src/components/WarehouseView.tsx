@@ -21,6 +21,10 @@ import {
     Table as TableIcon,
     ArrowDownLeft,
     ArrowUpDown,
+    HelpCircle,
+    Info,
+    AlertCircle,
+    CheckCircle2,
 } from 'lucide-react';
 import Papa from 'papaparse';
 import type { Product } from '@/types';
@@ -52,6 +56,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
     const [loading, setLoading] = useState(true);
     const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
     const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
+    const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
 
     const forceTableView = viewMode === 'table';
 
@@ -445,34 +450,64 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
     };
 
     const handleExport = () => {
-        if (!products.length) {
-            toast.error('No hay productos para exportar');
-            return;
-        }
-        const toastId = toast.loading('Generando reporte CSV...');
+        const toastId = toast.loading(products.length > 0 ? 'Generando reporte CSV...' : 'Generando plantilla CSV...');
         try {
             const headers = ['SKU', 'NombreProducto', 'Cantidad', 'Costo'];
-            const csvContent = [
-                headers.join(','),
-                ...filteredProducts.map(p => [
+            let csvLines = [headers.join(',')];
+
+            if (products.length > 0) {
+                const dataRows = filteredProducts.map(p => [
                     `"${p.sku || ''}"`,
                     `"${p.name.replace(/"/g, '""')}"`,
                     p.stock_current,
                     p.cost_price || 0
-                ].join(','))
-            ].join('\n');
+                ].join(','));
+                csvLines = [...csvLines, ...dataRows];
+            } else {
+                // Example row for template
+                csvLines.push(`"EJEMPLO-001","Producto de Ejemplo",10,5.50`);
+            }
 
+            const csvContent = csvLines.join('\n');
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', `inventario_${new Date().toISOString().split('T')[0]}.csv`);
+
+            const fileName = products.length > 0
+                ? `inventario_${new Date().toISOString().split('T')[0]}.csv`
+                : `plantilla_importacion_recepcion.csv`;
+
+            link.setAttribute('download', fileName);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            toast.success('Exportación completada', { id: toastId });
+            URL.revokeObjectURL(url);
+
+            toast.success(products.length > 0 ? 'Exportación completada' : 'Plantilla descargada', { id: toastId });
         } catch (err) {
             toast.error('Error al exportar datos', { id: toastId });
+        }
+    };
+
+    const handleDownloadTemplate = () => {
+        const toastId = toast.loading('Generando plantilla CSV...');
+        try {
+            const headers = ['SKU', 'NombreProducto', 'Cantidad', 'Costo'];
+            const exampleRow = `"EJEMPLO-001","Producto de Ejemplo",10,5.50`;
+            const csvContent = [headers.join(','), exampleRow].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `plantilla_importacion_recepcion.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            toast.success('Plantilla descargada', { id: toastId });
+        } catch (err) {
+            toast.error('Error al generar la plantilla', { id: toastId });
         }
     };
 
@@ -809,6 +844,13 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                 input.click();
             },
             disabled: isReceptionMode,
+        },
+        {
+            id: 'help-csv',
+            label: 'Ayuda CSV',
+            icon: HelpCircle,
+            onClick: () => setIsHelpModalOpen(true),
+            className: 'text-primary',
         }
     ];
 
@@ -1454,6 +1496,114 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                                     })}
                                 </div>
                             )}
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* CSV Help Modal */}
+            {isHelpModalOpen && (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-background/80 backdrop-blur-md">
+                    <div className="neu-card w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
+                        <div className="flex justify-between items-center mb-6 sticky top-0 bg-inherit z-10 pb-2">
+                            <h3 className="text-xl font-bold flex items-center gap-2">
+                                <HelpCircle className="w-6 h-6 text-primary" />
+                                Guía de Importación CSV
+                            </h3>
+                            <button onClick={() => setIsHelpModalOpen(false)} className="p-2 hover:bg-danger/10 hover:text-danger rounded-full">
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-8">
+                            <section>
+                                <h4 className="text-sm font-black uppercase tracking-widest text-primary mb-3">Formato de Archivo</h4>
+                                <div className="neu-inset-sm p-4 text-sm space-y-2">
+                                    <p>Para una importación exitosa, el archivo debe cumplir con los estándares internacionales de intercambio de datos:</p>
+                                    <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                                        <li><strong>Formato:</strong> CSV (Valores separados por comas).</li>
+                                        <li><strong>Codificación:</strong> UTF-8 (Asegura la correcta visualización de tildes y eñes).</li>
+                                        <li><strong>Encabezados:</strong> La primera fila debe contener exactamente los nombres de las columnas.</li>
+                                    </ul>
+                                </div>
+                            </section>
+
+                            <section>
+                                <h4 className="text-sm font-black uppercase tracking-widest text-primary mb-3">Estructura de Columnas</h4>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-xs text-left border-collapse">
+                                        <thead>
+                                            <tr className="border-b text-muted-foreground uppercase">
+                                                <th className="py-2 pr-4">Columna</th>
+                                                <th className="py-2 pr-4">Requerido</th>
+                                                <th className="py-2">Descripción y Reglas</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="text-foreground">
+                                            <tr className="border-b border-white/5">
+                                                <td className="py-3 pr-4 font-mono font-bold text-primary">SKU</td>
+                                                <td className="py-3 pr-4"><span className="neu-badge !text-danger">SÍ</span></td>
+                                                <td className="py-3 text-muted-foreground">Identificador único. Si no existe en el sistema, se creará un nuevo producto automáticamente.</td>
+                                            </tr>
+                                            <tr className="border-b border-white/5">
+                                                <td className="py-3 pr-4 font-mono font-bold text-primary">NombreProducto</td>
+                                                <td className="py-3 pr-4"><span className="neu-badge !text-warning">SÍ*</span></td>
+                                                <td className="py-3 text-muted-foreground">Obligatorio para productos nuevos. Para existentes se usa como validación visual.</td>
+                                            </tr>
+                                            <tr className="border-b border-white/5">
+                                                <td className="py-3 pr-4 font-mono font-bold text-primary">Cantidad</td>
+                                                <td className="py-3 pr-4"><span className="neu-badge !text-danger">SÍ</span></td>
+                                                <td className="py-3 text-muted-foreground">Número entero de unidades que ingresan (Ej: 10, 50, 100).</td>
+                                            </tr>
+                                            <tr className="border-b border-white/5">
+                                                <td className="py-3 pr-4 font-mono font-bold text-primary">Costo</td>
+                                                <td className="py-3 pr-4"><span className="neu-badge !text-danger">SÍ</span></td>
+                                                <td className="py-3 text-muted-foreground">Costo unitario neto. No incluya símbolos de moneda ni separadores de miles.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </section>
+
+                            <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="neu-card !p-4 border-success/20 bg-success/5">
+                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-success flex items-center gap-1 mb-2">
+                                        <CheckCircle2 className="w-3 h-3" /> Buenas Prácticas
+                                    </h4>
+                                    <ul className="text-[11px] space-y-2 text-muted-foreground">
+                                        <li>• Utilice la <strong>plantilla descargable</strong> para evitar errores de formato.</li>
+                                        <li>• Revise que no existan filas en blanco al final del archivo.</li>
+                                        <li>• Mantenga sus SKUs organizados y sin espacios innecesarios.</li>
+                                    </ul>
+                                </div>
+                                <div className="neu-card !p-4 border-warning/20 bg-warning/5">
+                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-warning flex items-center gap-1 mb-2">
+                                        <AlertCircle className="w-3 h-3" /> Notas Importantes
+                                    </h4>
+                                    <ul className="text-[11px] space-y-2 text-muted-foreground">
+                                        <li>• Los productos nuevos se crearán con precio de venta en cero. Deberá actualizarlos después.</li>
+                                        <li>• El sistema valida el SKU. Si el SKU es duplicado en el CSV, se sumarán las cantidades.</li>
+                                    </ul>
+                                </div>
+                            </section>
+
+                            <div className="pt-6 border-t border-white/5 flex flex-col sm:flex-row justify-end gap-4">
+                                <button
+                                    onClick={() => {
+                                        handleDownloadTemplate();
+                                        setIsHelpModalOpen(false);
+                                    }}
+                                    className="neu-btn text-xs flex items-center justify-center gap-2"
+                                >
+                                    <Download className="w-4 h-4" />
+                                    Descargar Plantilla CSV
+                                </button>
+                                <button
+                                    onClick={() => setIsHelpModalOpen(false)}
+                                    className="neu-btn neu-btn-primary px-8"
+                                >
+                                    Entendido
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
