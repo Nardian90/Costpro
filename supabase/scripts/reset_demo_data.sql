@@ -1,40 +1,55 @@
 -- SQL Script to clean everything and reset demo users
 -- Target: Supabase SQL Editor
 
--- 1. CLEAN EVERYTHING
--- Truncate all operational tables in public schema
--- Using CASCADE to handle dependencies and including user tables
-TRUNCATE TABLE
-    public.audit_logs,
-    public.business_events,
-    public.cash_closures,
-    public.cash_movements,
-    public.cash_register_sessions,
-    public.idempotency_keys,
-    public.inventory,
-    public.inventory_batches,
-    public.inventory_movements,
-    public.inventory_snapshots,
-    public.product_variants,
-    public.products,
-    public.purchase_items,
-    public.purchase_orders,
-    public.receipt_items,
-    public.receipts,
-    public.sale_items,
-    public.sales,
-    public.stock_movements,
-    public.transaction_items,
-    public.transactions,
-    public.inventory_adjustments,
-    public.inventory_adjustment_items,
-    public.suppliers,
-    public.user_store_access,
-    public.profiles,
-    public.stores
-CASCADE;
+-- 1. CLEAN EVERYTHING DYNAMICALLY
+-- This script truncates all known operational tables only if they exist.
+DO $$
+DECLARE
+    tab_name text;
+    -- List of all potential tables to clean
+    tables_to_truncate text[] := ARRAY[
+        'audit_logs',
+        'business_events',
+        'cash_closures',
+        'cash_movements',
+        'cash_register_sessions',
+        'idempotency_keys',
+        'inventory',
+        'inventory_batches',
+        'inventory_movements',
+        'inventory_snapshots',
+        'product_variants',
+        'products',
+        'purchase_items',
+        'purchase_orders',
+        'receipt_items',
+        'receipts',
+        'sale_items',
+        'sales',
+        'stock_movements',
+        'transaction_items',
+        'transactions',
+        'inventory_adjustments',
+        'inventory_adjustment_items',
+        'suppliers',
+        'user_store_access',
+        'profiles',
+        'stores'
+    ];
+BEGIN
+    FOREACH tab_name IN ARRAY tables_to_truncate
+    LOOP
+        -- Only attempt to truncate if the table exists in the public schema
+        IF EXISTS (
+            SELECT 1 FROM information_schema.tables
+            WHERE table_schema = 'public' AND table_name = tab_name
+        ) THEN
+            EXECUTE 'TRUNCATE TABLE public.' || quote_ident(tab_name) || ' CASCADE';
+        END IF;
+    END LOOP;
+END $$;
 
--- Delete all users from auth.users (this will cascade if FKs are set, but we already truncated profiles)
+-- Delete all users from auth.users
 DELETE FROM auth.users;
 
 -- 2. ENSURE SCHEMA ROBUSTNESS
@@ -78,10 +93,6 @@ VALUES ('d1c4ba0e-5767-4ba0-e576-7d1c4ba0e576', 'Tienda Demo', 'Calle Principal 
 
 -- 5. CREATE DEMO USERS (Password: demo123)
 -- We use a standardized approach for Supabase auth.users
-
--- Helper for password encryption
--- Note: 'extensions' is the default schema for pgcrypto in Supabase
--- If you get an error, ensure pgcrypto is enabled: CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- Enable pgcrypto if not already enabled
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
