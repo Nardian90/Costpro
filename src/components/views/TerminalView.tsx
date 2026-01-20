@@ -5,7 +5,6 @@ import { useState, useEffect, useMemo, useRef, useDeferredValue, useCallback } f
 import { useAuthStore, useCartStore, useUIStore, useCanAccess } from '@/store';
 import { useRouter } from 'next/navigation';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { supabase } from '@/lib/supabaseClient';
 import { getSupabaseUrl, getProductImageUrl, getStoreLogoUrl } from '@/lib/utils';
 import ProductCard from '@/components/ProductCard';
@@ -80,7 +79,7 @@ import SearchBar from '@/components/ui/SearchBar';
 
 export default function TerminalView() {
   const router = useRouter();
-  const { user, loading } = useSupabaseAuth(); // Sync Supabase session with store
+  const { user, loading } = useAuthStore();
   const logout = useAuthStore((state) => state.logout);
   const { setTheme, theme } = useTheme();
   const {
