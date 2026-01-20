@@ -33,9 +33,16 @@ ALTER TABLE public.stores
 ADD COLUMN IF NOT EXISTS created_by uuid REFERENCES auth.users(id);
 
 -- 5. Data Migration: Populate user_store_access from existing profiles.store_id
+-- We use explicit casts to avoid type mismatch if the environment has different types
 INSERT INTO public.user_store_access (user_id, store_id)
-SELECT id, store_id FROM public.profiles WHERE store_id IS NOT NULL
+SELECT id::uuid, store_id::uuid FROM public.profiles
+WHERE store_id IS NOT NULL
+AND store_id::text ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
 ON CONFLICT DO NOTHING;
 
 -- 6. Data Migration: Set active_store_id from existing profiles.store_id
-UPDATE public.profiles SET active_store_id = store_id WHERE store_id IS NOT NULL AND active_store_id IS NULL;
+UPDATE public.profiles
+SET active_store_id = store_id::uuid
+WHERE store_id IS NOT NULL
+AND active_store_id IS NULL
+AND store_id::text ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$';
