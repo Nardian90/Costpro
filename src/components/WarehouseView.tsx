@@ -474,17 +474,17 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-
-            const fileName = products.length > 0
+            
+            const fileName = products.length > 0 
                 ? `inventario_${new Date().toISOString().split('T')[0]}.csv`
                 : `plantilla_importacion_recepcion.csv`;
-
+                
             link.setAttribute('download', fileName);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
-
+            
             toast.success(products.length > 0 ? 'Exportación completada' : 'Plantilla descargada', { id: toastId });
         } catch (err) {
             toast.error('Error al exportar datos', { id: toastId });
@@ -576,7 +576,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                         // Actualización por lotes (Supabase soporte upsert para esto si incluimos la PK)
                         // Pero aquí usaremos un enfoque simple de promesas paralelas si no son demasiados
                         // o un solo update con rpc si fuera necesario. Para ~50-100 ítems esto está bien:
-                        await Promise.all(existingProductsToUpdatePrice.map(item =>
+                        await Promise.all(existingProductsToUpdatePrice.map(item => 
                             supabase.from('products').update({ price: item.price }).eq('id', item.id)
                         ));
                     } catch (error: any) {
@@ -1542,7 +1542,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                                 <X className="w-6 h-6" />
                             </button>
                         </div>
-
+                        
                         <div className="space-y-8">
                             <section>
                                 <h4 className="text-sm font-black uppercase tracking-widest text-primary mb-3">Formato de Archivo</h4>
@@ -1621,7 +1621,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                             </section>
 
                             <div className="pt-6 border-t border-white/5 flex flex-col sm:flex-row justify-end gap-4">
-                                <button
+                                <button 
                                     onClick={() => {
                                         handleDownloadTemplate();
                                         setIsHelpModalOpen(false);
@@ -1631,7 +1631,7 @@ export default function WarehouseView({ initialView = 'inventory' }: WarehouseVi
                                     <Download className="w-4 h-4" />
                                     Descargar Plantilla CSV
                                 </button>
-                                <button
+                                <button 
                                     onClick={() => setIsHelpModalOpen(false)}
                                     className="neu-btn neu-btn-primary px-8"
                                 >
