@@ -27,11 +27,26 @@ export function useSupabaseAuth() {
                         .single();
 
                     if (profileData && profileData.is_active) {
+                        // Fetch per-store roles if active store is set
+                        let activeRoles: UserRole[] = [profileData.role];
+                        if (profileData.active_store_id) {
+                            const { data: accessData } = await supabase
+                                .from('user_store_access')
+                                .select('roles')
+                                .eq('user_id', profileData.id)
+                                .eq('store_id', profileData.active_store_id)
+                                .single();
+                            if (accessData?.roles) {
+                                activeRoles = accessData.roles as UserRole[];
+                            }
+                        }
+
                         const userData = {
                             id: profileData.id,
                             email: profileData.email,
                             full_name: profileData.full_name,
                             role: profileData.role,
+                            roles: activeRoles,
                             store_id: profileData.active_store_id || profileData.store_id,
                             active_store_id: profileData.active_store_id,
                             max_stores_limit: profileData.max_stores_limit,
@@ -75,11 +90,26 @@ export function useSupabaseAuth() {
                         .single();
 
                     if (profileData && profileData.is_active) {
+                        // Fetch per-store roles if active store is set
+                        let activeRoles: UserRole[] = [profileData.role];
+                        if (profileData.active_store_id) {
+                            const { data: accessData } = await supabase
+                                .from('user_store_access')
+                                .select('roles')
+                                .eq('user_id', profileData.id)
+                                .eq('store_id', profileData.active_store_id)
+                                .single();
+                            if (accessData?.roles) {
+                                activeRoles = accessData.roles as UserRole[];
+                            }
+                        }
+
                         const userData = {
                             id: profileData.id,
                             email: profileData.email,
                             full_name: profileData.full_name,
                             role: profileData.role,
+                            roles: activeRoles,
                             store_id: profileData.active_store_id || profileData.store_id,
                             active_store_id: profileData.active_store_id,
                             max_stores_limit: profileData.max_stores_limit,
