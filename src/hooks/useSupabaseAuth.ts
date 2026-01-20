@@ -30,13 +30,16 @@ export function useSupabaseAuth() {
                         // Fetch per-store roles if active store is set
                         let activeRoles: UserRole[] = [profileData.role];
                         if (profileData.active_store_id) {
-                            const { data: accessData } = await supabase
+                            const { data: accessData, error: accessError } = await supabase
                                 .from('user_store_access')
                                 .select('roles')
                                 .eq('user_id', profileData.id)
                                 .eq('store_id', profileData.active_store_id)
                                 .single();
-                            if (accessData?.roles) {
+
+                            if (accessError) {
+                                console.warn('Error fetching active store roles:', accessError.message);
+                            } else if (accessData?.roles) {
                                 activeRoles = accessData.roles as UserRole[];
                             }
                         }
@@ -93,13 +96,16 @@ export function useSupabaseAuth() {
                         // Fetch per-store roles if active store is set
                         let activeRoles: UserRole[] = [profileData.role];
                         if (profileData.active_store_id) {
-                            const { data: accessData } = await supabase
+                            const { data: accessData, error: accessError } = await supabase
                                 .from('user_store_access')
                                 .select('roles')
                                 .eq('user_id', profileData.id)
                                 .eq('store_id', profileData.active_store_id)
                                 .single();
-                            if (accessData?.roles) {
+
+                            if (accessError) {
+                                console.warn('Error fetching active store roles on sign in:', accessError.message);
+                            } else if (accessData?.roles) {
                                 activeRoles = accessData.roles as UserRole[];
                             }
                         }
