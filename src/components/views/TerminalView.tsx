@@ -83,9 +83,9 @@ export default function TerminalView() {
   const logout = useAuthStore((state) => state.logout);
   const {
     sidebarOpen,
-    darkMode,
+    theme,
     toggleSidebar,
-    toggleDarkMode,
+    setTheme,
     currentView,
     setCurrentView,
     notifications,
@@ -1825,21 +1825,14 @@ export default function TerminalView() {
             Interfaz y Estética
           </h3>
 
-          <div className="flex items-center justify-between p-6 neu-inset-sm bg-background/50 border border-white/5 rounded-2xl">
-            <div>
-              <div className="font-black text-sm uppercase tracking-tight">Esquema de Color</div>
-              <div className="text-[10px] font-bold text-muted-foreground uppercase mt-1 tracking-widest">Alternar entre modo claro y oscuro</div>
+          <div className="neu-inset-sm bg-background/50 border border-white/5 rounded-2xl p-6">
+            <div className="font-black text-sm uppercase tracking-tight mb-2">Tema de la Interfaz</div>
+            <div className="text-[10px] font-bold text-muted-foreground uppercase mt-1 tracking-widest mb-4">Seleccione su esquema de color preferido</div>
+            <div className="grid grid-cols-3 gap-4">
+              <button onClick={() => setTheme('light')} className={`neu-raised-sm p-4 rounded-xl ${theme === 'light' ? 'ring-2 ring-primary' : ''}`}>Light</button>
+              <button onClick={() => setTheme('dark')} className={`neu-raised-sm p-4 rounded-xl ${theme === 'dark' ? 'ring-2 ring-primary' : ''}`}>Dark</button>
+              <button onClick={() => setTheme('neumo')} className={`neu-raised-sm p-4 rounded-xl ${theme === 'neumo' ? 'ring-2 ring-primary' : ''}`}>Neumo</button>
             </div>
-            <button
-              onClick={toggleDarkMode}
-              className="neu-raised-sm w-16 h-16 flex items-center justify-center hover:neu-raised-hover transition-all rounded-2xl group"
-            >
-              {darkMode ? (
-                <Sun className="w-8 h-8 text-warning group-hover:rotate-90 transition-transform duration-500" />
-              ) : (
-                <Moon className="w-8 h-8 text-primary group-hover:-rotate-12 transition-transform duration-500" />
-              )}
-            </button>
           </div>
         </div>
 
@@ -1946,12 +1939,19 @@ export default function TerminalView() {
             </div>
           </nav>
 
-          {/* User Info */}
+          {/* User Info & Logout */}
           <div className="p-6 border-t border-sidebar-border/50">
-            <div className="rounded-3xl border border-primary/20 bg-primary/5 p-5 shadow-inner">
+            <div className="rounded-3xl border border-primary/20 bg-primary/5 p-5 shadow-inner mb-4">
               <div className="font-black text-xs text-primary uppercase tracking-widest truncate">{user?.full_name}</div>
               <div className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mt-1">{getRoleLabel(user?.role || 'clerk')}</div>
             </div>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center justify-center gap-3 p-4 rounded-2xl transition-all group active:scale-95 hover:bg-danger/10 text-danger font-bold"
+            >
+              <LogOut className="w-5 h-5" />
+              <span className="text-xs uppercase tracking-widest">Salir</span>
+            </button>
           </div>
         </div>
       </aside>
@@ -1982,28 +1982,12 @@ export default function TerminalView() {
 
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               <button
-                onClick={toggleDarkMode}
-                className="neu-raised-sm w-11 h-11 flex items-center justify-center active:scale-90 transition-transform group"
-                aria-label="Tema"
-              >
-                {darkMode ? <Sun className="w-5 h-5 group-hover:rotate-45 transition-transform" /> : <Moon className="w-5 h-5 group-hover:-rotate-12 transition-transform" />}
-              </button>
-
-              <button
                 className="neu-raised-sm w-11 h-11 flex items-center justify-center relative active:scale-90 transition-transform"
                 aria-label="Alertas"
               >
                 <Bell className="w-5 h-5" />
                 <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-primary rounded-full animate-ping" />
                 <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-primary rounded-full shadow-[0_0_8px_rgba(99,102,241,0.8)]" />
-              </button>
-
-              <button
-                onClick={handleLogout}
-                className="neu-btn-danger !py-2.5 !px-5 flex items-center gap-2 font-black text-[10px] uppercase tracking-widest shadow-xl shadow-danger/20"
-              >
-                <LogOut className="w-4 h-4" />
-                <span className="hidden sm:inline">Salir</span>
               </button>
             </div>
           </div>

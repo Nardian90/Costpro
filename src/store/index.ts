@@ -146,7 +146,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
 
 interface UIStore {
   sidebarOpen: boolean;
-  darkMode: boolean;
+  theme: string;
   loading: boolean;
   currentView: string;
   notifications: {
@@ -155,8 +155,7 @@ interface UIStore {
   };
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
-  toggleDarkMode: () => void;
-  setDarkMode: (dark: boolean) => void;
+  setTheme: (theme: string) => void;
   setLoading: (loading: boolean) => void;
   setCurrentView: (view: string) => void;
   setNotifications: (prefs: Partial<UIStore['notifications']>) => void;
@@ -166,7 +165,7 @@ export const useUIStore = create<UIStore>()(
   persist(
     (set) => ({
       sidebarOpen: true,
-      darkMode: false,
+      theme: 'neumo',
       loading: false,
       currentView: 'dashboard',
       notifications: {
@@ -176,23 +175,7 @@ export const useUIStore = create<UIStore>()(
 
       toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
-      toggleDarkMode: () => set((state) => {
-        const newMode = !state.darkMode;
-        if (newMode) {
-          document.documentElement.classList.add('dark');
-        } else {
-          document.documentElement.classList.remove('dark');
-        }
-        return { darkMode: newMode };
-      }),
-      setDarkMode: (dark) => set((state) => {
-        if (dark && !state.darkMode) {
-          document.documentElement.classList.add('dark');
-        } else if (!dark && state.darkMode) {
-          document.documentElement.classList.remove('dark');
-        }
-        return { darkMode: dark };
-      }),
+      setTheme: (theme) => set({ theme }),
       setLoading: (loading) => set({ loading }),
       setCurrentView: (view) => set({ currentView: view }),
       setNotifications: (prefs) => set((state) => ({
