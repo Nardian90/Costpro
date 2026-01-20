@@ -33,6 +33,10 @@ main
 - Learning: Headers with many action buttons cause horizontal overflow on mobile if they don't wrap or scroll.
 - Action: Implemented a horizontal scrolling ribbon (no-scrollbar) for action buttons in WarehouseView to maintain a clean layout within the frame.
 
+## 2026-05-24 - [Resilient Auth & UX]
+**Learning:** Artificial splash screen delays (even for logo cycles) and aggressive session timeouts degrade the user experience, especially on slow networks. Users with a valid local session should never be blocked or forced to log out due to a temporary network blip or a slow auth check.
+**Action:** Removed artificial splash delays in `TerminalView.tsx` and updated `useSupabaseAuth.ts` to keep the local session if a check times out, ensuring `loading` state doesn't block the UI if data is cached.
+
 ## 2025-05-15 - [A11y & Protective UX]
 **Learning:** Icon-only buttons without aria-labels are invisible to screen readers, and destructive actions like clearing a cart without confirmation lead to user frustration.
 **Action:** Always add aria-labels to Lucide-based icon buttons and implement toast-based confirmations for non-reversible UI actions.
