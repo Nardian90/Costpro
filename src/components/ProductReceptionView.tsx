@@ -1,14 +1,23 @@
 // src/components/ProductReceptionView.tsx
 'use client';
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/store';
 import type { Product } from '@/types';
 import { toast } from 'sonner';
-import { X, Save, Search, Plus, Trash2, Package } from 'lucide-react';
+import { X, Save, Search, Plus, Trash2, Package, Upload, Download, HelpCircle, FileText } from 'lucide-react';
 import { getProductImageUrl, cn } from '@/lib/utils';
 import { useDebounce } from '@/hooks/useDebounce';
+import ActionMenu, { Action } from './ui/ActionMenu';
+import Papa from 'papaparse';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "@/components/ui/dialog";
 
 interface ProductReceptionViewProps {
     onCancel: () => void;
@@ -36,6 +45,8 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
     const [searchResults, setSearchResults] = useState<Product[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Search for products to add to the reception
     const searchProducts = useCallback(async () => {
@@ -100,6 +111,163 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
         return Array.from(receptionItems.values()).reduce((acc, item) => acc + (item.quantity * item.cost), 0);
     }, [receptionItems]);
 
+    const handleImportClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        Papa.parse(file, {
+            header: true,
+            skipEmptyLines: true,
+            complete: async (results) => {
+                const data = results.data as any[];
+                if (data.length === 0) {
+                    toast.error('The CSV file is empty.');
+                    return;
+                }
+
+                // Validate headers
+                const requiredHeaders = ['SKU', 'NombreProducto', 'Cantidad', 'Costo'];
+                const headers = Object.keys(data[0]);
+                const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+
+                if (missingHeaders.length > 0) {
+                    toast.error(`Missing columns: ${missingHeaders.join(', ')}`);
+                    return;
+                }
+
+                const toastId = toast.loading(`Importing ${data.length} items...`);
+
+                try {
+                    const skus = data.map(item => item.SKU).filter(Boolean);
+
+                    // Fetch products by SKU
+                    const { data: products, error } = await supabase
+                        .from('products')
+                        .select('*')
+                        .in('sku', skus);
+
+                    if (error) throw error;
+
+                    const productMap = new Map(products?.map(p => [p.sku, p]));
+                    const newItems = new Map(receptionItems);
+                    let importedCount = 0;
+                    let notFoundSkus: string[] = [];
+
+                    data.forEach(item => {
+                        const product = productMap.get(item.SKU);
+                        if (product) {
+                            const existing = newItems.get(product.id);
+                            const quantityToAdd = parseInt(item.Cantidad) || 0;
+                            const newCost = parseFloat(item.Costo) || product.cost_price || 0;
+
+                            if (existing) {
+                                newItems.set(product.id, {
+                                    ...existing,
+                                    quantity: existing.quantity + quantityToAdd,
+                                    cost: newCost
+                                });
+                            } else {
+                                newItems.set(product.id, {
+                                    product,
+                                    quantity: quantityToAdd,
+                                    cost: newCost,
+                                });
+                            }
+                            importedCount++;
+                        } else {
+                            notFoundSkus.push(item.SKU);
+                        }
+                    });
+
+                    setReceptionItems(newItems);
+
+                    if (notFoundSkus.length > 0) {
+                        toast.warning(`${importedCount} items imported. ${notFoundSkus.length} SKUs not found.`, { id: toastId });
+                    } else {
+                        toast.success(`Successfully imported ${importedCount} items.`, { id: toastId });
+                    }
+                } catch (error: any) {
+                    toast.error(`Import failed: ${error.message}`, { id: toastId });
+                } finally {
+                    if (fileInputRef.current) fileInputRef.current.value = '';
+                }
+            },
+            error: (error) => {
+                toast.error(`Error parsing CSV: ${error.message}`);
+            }
+        });
+    };
+
+    const handleExport = () => {
+        if (receptionItems.size === 0) {
+            toast.error('No items to export.');
+            return;
+        }
+
+        const data = Array.from(receptionItems.values()).map(item => ({
+            SKU: item.product.sku || '',
+            NombreProducto: item.product.name,
+            Cantidad: item.quantity,
+            Costo: item.cost
+        }));
+
+        const csv = Papa.unparse(data);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `reception_${receptionDetails.invoiceNumber || 'draft'}_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    const downloadTemplate = () => {
+        const data = [
+            { SKU: 'PROD-001', NombreProducto: 'Example Product', Cantidad: 10, Costo: 15.50 },
+            { SKU: 'PROD-002', NombreProducto: 'Another Product', Cantidad: 5, Costo: 20.00 }
+        ];
+        const csv = Papa.unparse(data);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', 'reception_template.csv');
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    const actions: Action[] = [
+        {
+            id: 'import',
+            label: 'Importar',
+            icon: Upload,
+            onClick: handleImportClick,
+            variant: 'outline',
+        },
+        {
+            id: 'export',
+            label: 'Exportar',
+            icon: Download,
+            onClick: handleExport,
+            variant: 'outline',
+        },
+        {
+            id: 'help',
+            label: 'Ayuda',
+            icon: HelpCircle,
+            onClick: () => setIsHelpModalOpen(true),
+            variant: 'outline',
+        },
+    ];
+
     const processReception = async () => {
         if (receptionItems.size === 0) {
             toast.error('Add at least one product to the reception.');
@@ -115,7 +283,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
         }
 
         setIsProcessing(true);
-        const toastId = toast.loading('Registering reception...');
+        const toastId = toast.loading('Registrando recepción...');
 
         const itemsPayload = Array.from(receptionItems.values()).map(item => ({
             product_id: item.product.id,
@@ -135,10 +303,10 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
 
             if (error) throw error;
 
-            toast.success('Reception registered successfully!', { id: toastId });
+            toast.success('¡Recepción registrada con éxito!', { id: toastId });
             onCancel(); // Return to the main inventory view
         } catch (err: any) {
-            toast.error(err.message || 'Failed to process reception.', { id: toastId });
+            toast.error(err.message || 'Error al procesar la recepción.', { id: toastId });
         } finally {
             setIsProcessing(false);
         }
@@ -146,9 +314,20 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
 
     return (
         <div className="pb-28 md:pb-0 relative">
-            <h2 className="text-2xl font-bold border-l-4 border-primary pl-4 mb-6">
-                New Product Reception
-            </h2>
+            <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept=".csv"
+                className="hidden"
+            />
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <h2 className="text-2xl font-bold border-l-4 border-primary pl-4">
+                    Nueva Recepción de Productos
+                </h2>
+                <ActionMenu actions={actions} />
+            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
                 {/* Left side: Form and Items List */}
@@ -312,6 +491,60 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                     {isProcessing ? 'Saving...' : 'Confirm Reception'}
                 </button>
             </div>
+
+            {/* Help Modal */}
+            <Dialog open={isHelpModalOpen} onOpenChange={setIsHelpModalOpen}>
+                <DialogContent className="max-w-md !rounded-3xl border-white/5 shadow-2xl">
+                    <DialogHeader>
+                        <DialogTitle className="text-xl font-black uppercase tracking-tight flex items-center gap-2">
+                            <HelpCircle className="w-6 h-6 text-primary" />
+                            Ayuda: Recepción de Productos
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4 text-sm">
+                        <p>Esta sección permite registrar el ingreso de mercancía al inventario.</p>
+
+                        <div className="space-y-2">
+                            <h4 className="font-bold uppercase text-[10px] text-primary tracking-widest">Importación por CSV</h4>
+                            <p>Puede cargar múltiples productos a la vez usando un archivo CSV con las siguientes columnas:</p>
+                            <ul className="list-disc pl-5 space-y-1 text-xs">
+                                <li><strong>SKU:</strong> Código único del producto.</li>
+                                <li><strong>NombreProducto:</strong> Nombre para referencia (opcional).</li>
+                                <li><strong>Cantidad:</strong> Unidades recibidas.</li>
+                                <li><strong>Costo:</strong> Precio unitario de compra.</li>
+                            </ul>
+                        </div>
+
+                        <div className="neu-card !p-4 bg-primary/5 border-primary/20 space-y-3">
+                            <p className="text-xs font-bold italic">“Los productos se aplicarán al inventario solo al confirmar la recepción.”</p>
+                            <button
+                                onClick={downloadTemplate}
+                                className="w-full neu-btn !py-2 flex items-center justify-center gap-2 text-[10px] font-black uppercase"
+                            >
+                                <FileText className="w-4 h-4" />
+                                Descargar Plantilla CSV
+                            </button>
+                        </div>
+
+                        <div className="space-y-2">
+                            <h4 className="font-bold uppercase text-[10px] text-primary tracking-widest">Consejos</h4>
+                            <ul className="list-disc pl-5 space-y-1 text-xs">
+                                <li>Asegúrese de cerrar el archivo en Excel antes de subirlo.</li>
+                                <li>Verifique que los SKU existan previamente en el sistema.</li>
+                                <li>Revise las cantidades y costos antes de confirmar.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <button
+                            onClick={() => setIsHelpModalOpen(false)}
+                            className="neu-btn-primary w-full !py-3 font-black text-xs uppercase tracking-widest"
+                        >
+                            Entendido
+                        </button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
