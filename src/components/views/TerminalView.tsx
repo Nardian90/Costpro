@@ -161,38 +161,19 @@ export default function TerminalView() {
   const fetchProducts = async () => {
     if (!user) return;
     try {
-      const { data, error } = await supabase
-        .from('products')
-        .select(`
-          *,
-          inventory(*),
-          product_variants(*)
-        `)
-        .order('name');
+      // Use the unified get_products_for_pos RPC for POS data fetching.
+      // This centralizes stock calculation and multi-store isolation in the backend.
+      const { data, error } = await supabase.rpc('get_products_for_pos', {
+        p_store_id: user.store_id,
+        p_search_term: '', // We filter client-side for immediate responsiveness in POS
+        p_category: ''
+      });
 
       if (error) throw error;
 
-      const mappedProducts: Product[] = data?.map((item: any) => {
-        let stock_current = 0;
-        let store_id: string | null = null;
-
-        if (user.role === 'admin') {
-          stock_current = item.inventory?.reduce(
-            (acc: number, inv: any) => acc + inv.quantity,
-            0
-          ) || 0;
-        } else {
-          const storeInventory = item.inventory?.find(
-            (inv: any) => inv.store_id === user.store_id
-          );
-          stock_current = storeInventory ? storeInventory.quantity : 0;
-          store_id = user.store_id;
-        }
-
+      const mappedProducts: (Product & { product_variants?: any[] })[] = data?.map((item: any) => {
         return {
           ...item,
-          stock_current,
-          store_id,
           public_image_url: getSupabaseUrl('product-images', item.image_url),
         };
       }) || [];
@@ -200,6 +181,7 @@ export default function TerminalView() {
       setProducts(mappedProducts);
     } catch (error) {
       console.error('Error fetching products:', error);
+      toast.error('Error al cargar productos del TPV');
     }
   };
 
