@@ -818,10 +818,24 @@ export default function TerminalView() {
         .from('user_store_access')
         .select('store_id, roles')
         .eq('user_id', userId);
-      if (error) throw error;
-      setUserStoreAccess(data.map(d => ({ store_id: d.store_id, roles: (d.roles || ['clerk']) as UserRole[] })));
+
+      if (error) {
+        if (error.code === '42703') {
+          console.warn('Database schema mismatch: column "roles" not found in user_store_access. Ensure migrations are applied.');
+          // Fallback if possible or just set empty
+          setUserStoreAccess([]);
+          return;
+        }
+        throw error;
+      }
+
+      setUserStoreAccess(data.map(d => ({
+        store_id: d.store_id,
+        roles: Array.isArray(d.roles) ? d.roles as UserRole[] : ['clerk' as UserRole]
+      })));
     } catch (error) {
       console.error('Error fetching user store access:', error);
+      toast.error('Error al cargar accesos de tienda');
     }
   };
 
@@ -2571,7 +2585,7 @@ export default function TerminalView() {
                           checked={!!access}
                           onChange={(e) => {
                             if (e.target.checked) {
-                              setUserStoreAccess([...userStoreAccess, { store_id: store.id, role: 'clerk' }]);
+                              setUserStoreAccess([...userStoreAccess, { store_id: store.id, roles: ['clerk'] }]);
                             } else {
                               setUserStoreAccess(userStoreAccess.filter(a => a.store_id !== store.id));
                             }
