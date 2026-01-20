@@ -49,6 +49,7 @@ import {
   Calendar,
   Layers,
 } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import { motion, AnimatePresence } from 'framer-motion';
 import CostProLogo from '@/components/CostProLogo';
 import {
@@ -81,11 +82,10 @@ export default function TerminalView() {
   const router = useRouter();
   const { user, loading } = useSupabaseAuth(); // Sync Supabase session with store
   const logout = useAuthStore((state) => state.logout);
+  const { setTheme, theme } = useTheme();
   const {
     sidebarOpen,
-    theme,
     toggleSidebar,
-    setTheme,
     currentView,
     setCurrentView,
     notifications,
