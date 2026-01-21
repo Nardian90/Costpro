@@ -78,6 +78,7 @@ import CostSheetsPage from '@/app/cost-sheets/page';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
 import SearchBar from '@/components/ui/SearchBar';
 import ScrollToTop from '@/components/ui/ScrollToTop';
+import POSTableView from '@/components/POSTableView';
 
 export default function TerminalView() {
   const router = useRouter();
@@ -97,6 +98,7 @@ export default function TerminalView() {
   const isMobile = useIsMobile();
   const canViewFinancials = useCanAccess('warehouse'); // Using warehouse as a proxy for manager/admin financial view
   const [showCart, setShowCart] = useState(false);
+  const [posLayoutMode, setPosLayoutMode] = useState<'grid' | 'table'>('grid');
   const searchInputRef = useRef<HTMLInputElement>(null);
   const navRef = useRef<HTMLElement>(null);
   const [showSidebarLogo, setShowSidebarLogo] = useState(true);
@@ -1087,19 +1089,29 @@ export default function TerminalView() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase">Punto de Venta</h2>
-        <ActionMenu
-          actions={[
-            {
-              id: 'cart',
-              label: `Carrito (${getItemCount()})`,
-              icon: ShoppingCart,
-              onClick: () => setShowCart(!showCart),
-              variant: getItemCount() > 0 ? 'primary' : 'outline',
-              active: showCart
-            }
-          ]}
-          className="sm:w-auto"
-        />
+        <div className="flex items-center gap-2">
+          <ActionMenu
+            actions={[
+              {
+                id: 'layout',
+                label: posLayoutMode === 'grid' ? 'Vista Tabla' : 'Vista Cuadrícula',
+                icon: posLayoutMode === 'grid' ? Receipt : Package,
+                onClick: () => setPosLayoutMode(prev => prev === 'grid' ? 'table' : 'grid'),
+                variant: 'outline',
+                className: 'hidden md:flex'
+              },
+              {
+                id: 'cart',
+                label: `Carrito (${getItemCount()})`,
+                icon: ShoppingCart,
+                onClick: () => setShowCart(!showCart),
+                variant: getItemCount() > 0 ? 'primary' : 'outline',
+                active: showCart
+              }
+            ]}
+            className="sm:w-auto"
+          />
+        </div>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8 items-start">
@@ -1110,7 +1122,7 @@ export default function TerminalView() {
               initial={isMobile ? { y: -20, opacity: 0 } : { x: 300, opacity: 0 }}
               animate={{ x: 0, y: 0, opacity: 1 }}
               exit={isMobile ? { y: -20, opacity: 0 } : { x: 300, opacity: 0 }}
-              className="w-full lg:w-[400px] shrink-0 lg:sticky top-24 z-20 lg:order-last"
+              className="w-full lg:w-[400px] shrink-0 lg:sticky top-24 z-20 lg:order-last order-first"
             >
               <div className="neu-card !p-0 overflow-hidden border border-primary/20 shadow-2xl bg-background/95 backdrop-blur-md">
                 <div className="bg-primary p-6 flex items-center justify-between text-white">
@@ -1270,30 +1282,37 @@ export default function TerminalView() {
              </div>
           </SearchBar>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-            {filteredProducts.length > 0 ? (
-              filteredProducts.map(product => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  onClick={addToCart}
-                />
-              ))
-            ) : (
-              <div className="col-span-full py-32 text-center neu-card border-2 border-dashed border-white/5">
-                <Search className="w-16 h-16 mx-auto mb-6 opacity-5" />
-                <p className="text-xl font-black text-muted-foreground uppercase tracking-widest">Sin resultados</p>
-                {searchTerm && (
-                  <button
-                    onClick={() => setSearchTerm('')}
-                    className="mt-6 text-primary font-black uppercase text-xs hover:underline tracking-[0.2em]"
-                  >
-                    Ver Todo el Catálogo
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
+          {posLayoutMode === 'grid' ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+              {filteredProducts.length > 0 ? (
+                filteredProducts.map(product => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    onClick={addToCart}
+                  />
+                ))
+              ) : (
+                <div className="col-span-full py-32 text-center neu-card border-2 border-dashed border-white/5">
+                  <Search className="w-16 h-16 mx-auto mb-6 opacity-5" />
+                  <p className="text-xl font-black text-muted-foreground uppercase tracking-widest">Sin resultados</p>
+                  {searchTerm && (
+                    <button
+                      onClick={() => setSearchTerm('')}
+                      className="mt-6 text-primary font-black uppercase text-xs hover:underline tracking-[0.2em]"
+                    >
+                      Ver Todo el Catálogo
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          ) : (
+            <POSTableView
+              products={filteredProducts}
+              onAddToCart={addToCart}
+            />
+          )}
         </div>
       </div>
     </div>
@@ -1325,9 +1344,9 @@ export default function TerminalView() {
          </div>
       </SearchBar>
 
-      <div className="overflow-x-auto table-to-cards rounded-2xl shadow-xl border border-white/5 overflow-hidden">
+      <div className="overflow-x-auto table-to-cards rounded-2xl shadow-xl border border-white/5">
         <table className="w-full">
-          <thead>
+          <thead className="sticky-header">
             <tr className="bg-muted/50 text-muted-foreground font-black uppercase text-[10px] tracking-widest">
               <th className="p-4 text-left">Referencia</th>
               <th className="p-4 text-left">Fecha / Hora</th>
@@ -1510,9 +1529,9 @@ export default function TerminalView() {
             </div>
         </SearchBar>
 
-        <div className="overflow-x-auto table-to-cards rounded-2xl shadow-xl border border-white/5 overflow-hidden">
+        <div className="overflow-x-auto table-to-cards rounded-2xl shadow-xl border border-white/5">
             <table className="w-full text-sm">
-                <thead>
+                <thead className="sticky-header">
                     <tr className="bg-muted/50 text-muted-foreground font-black uppercase text-[10px] tracking-widest">
                         <th className="p-4 text-left">Fecha / Hora</th>
                         <th className="p-4 text-left">Operador</th>
@@ -1636,9 +1655,9 @@ export default function TerminalView() {
           Registros de Cierre
         </h3>
 
-        <div className="overflow-x-auto table-to-cards rounded-2xl overflow-hidden">
+        <div className="overflow-x-auto table-to-cards rounded-2xl">
           <table className="w-full text-sm">
-            <thead>
+            <thead className="sticky-header">
               <tr className="bg-muted/50 text-muted-foreground font-black uppercase text-[10px] tracking-widest">
                 <th className="p-4 text-left">Fecha de Cierre</th>
                 <th className="p-4 text-left">Operador</th>
@@ -1694,9 +1713,9 @@ export default function TerminalView() {
 
       <SearchBar value={searchTerm} onChange={setSearchTerm} placeholder="Buscar usuarios por nombre, email o rol..." />
 
-      <div className="overflow-x-auto table-to-cards rounded-2xl shadow-xl border border-white/5 overflow-hidden">
+      <div className="overflow-x-auto table-to-cards rounded-2xl shadow-xl border border-white/5">
         <table className="w-full">
-          <thead>
+          <thead className="sticky-header">
             <tr className="bg-muted/50 text-muted-foreground font-black uppercase text-[10px] tracking-widest">
               <th className="p-4 text-left">Perfil</th>
               <th className="p-4 text-left">Contacto</th>
@@ -2053,7 +2072,7 @@ export default function TerminalView() {
         </header>
 
         {/* Content */}
-        <div className="p-4 sm:p-8 lg:p-12 pb-32 flex-1 overflow-x-hidden">
+        <div className="p-4 sm:p-8 lg:p-12 pb-32 flex-1 overflow-x-hidden terminal-content">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentView}
@@ -2127,7 +2146,7 @@ export default function TerminalView() {
                 ) : (
                   <div className="overflow-x-auto table-to-cards rounded-2xl">
                     <table className="w-full text-sm">
-                      <thead>
+                      <thead className="sticky-header">
                         <tr className="border-b border-white/5 text-muted-foreground font-black uppercase text-[9px] tracking-widest text-left">
                           <th className="pb-4">Descripción</th>
                           <th className="pb-4 text-center">Cant.</th>
