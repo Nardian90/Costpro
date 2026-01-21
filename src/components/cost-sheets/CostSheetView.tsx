@@ -16,6 +16,7 @@ import CostSheetAnnexes from './CostSheetAnnexes';
 import CostSheetSignature from './CostSheetSignature';
 import ActionMenu from '@/components/ui/ActionMenu';
 import { Eye, Edit, FileText, Trash2, Download, ShieldCheck } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const CostSheetView = () => {
   const { data, loadExample, reset } = useCostSheetStore();
@@ -24,6 +25,27 @@ const CostSheetView = () => {
   const [isEditing, setIsEditing] = useState(true);
   // This state will now control which view is active in editing mode
   const [activeSection, setActiveSection] = useState('main'); // 'main' for the table, or an annex ID
+
+  // **Guard against missing data during hydration**
+  if (!data || !data.header || !data.annexes || !data.sections) {
+    // This provides a fallback UI while the store rehydrates from localStorage
+    return (
+      <div className="w-full max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 pb-32 pt-4">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8 px-2">
+          <div className="flex items-center gap-4">
+            <Skeleton className="w-12 h-12 rounded-2xl" />
+            <div>
+              <Skeleton className="h-8 w-48 mb-2" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+          </div>
+          <Skeleton className="h-8 w-24" />
+        </div>
+        <Skeleton className="h-12 w-full mb-8" />
+        <Skeleton className="h-96 w-full" />
+      </div>
+    );
+  }
 
   // Determine if the active section is an annex
   const isAnnexActive = data.annexes.some((a: any) => a.id === activeSection);
