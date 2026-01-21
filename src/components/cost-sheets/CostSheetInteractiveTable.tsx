@@ -69,28 +69,38 @@ const CostSheetRow: React.FC<RowProps> = ({ row, level, calculatedValues, path, 
     <>
       <tr className="border-t border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
         {/* Concepto */}
-        <td style={{ paddingLeft: `${level * 24 + 12}px` }} className="py-2.5 font-medium text-slate-700 dark:text-slate-300 truncate">
-          <div className="flex items-center gap-2">
+        <td style={{ paddingLeft: `${level * 24 + 12}px` }} className="py-2.5 font-medium text-slate-700 dark:text-slate-300">
+          <div className="flex items-center gap-2 min-w-0">
             {hasChildren && (
-              <button onClick={handleToggle} className="p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700">
+              <button onClick={handleToggle} className="p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 shrink-0">
                 <ChevronRight className={cn('w-4 h-4 transition-transform', isExpanded && 'rotate-90')} />
               </button>
             )}
-            {!hasChildren && <CornerDownRight className="w-4 h-4 text-slate-400 dark:text-slate-600 self-center ml-1" />}
-            <span className="truncate">{row.label}</span>
+            {!hasChildren && <CornerDownRight className="w-4 h-4 text-slate-400 dark:text-slate-600 shrink-0 ml-1" />}
+            <span className="truncate flex-1">{row.label}</span>
           </div>
         </td>
 
         {/* Valor Histórico / % */}
         <td className="px-4 py-2 text-right">
-          {row.hasOwnProperty('valorHistorico') || row.hasOwnProperty('value') ? (
+          {(row.calculationMethod === 'Prorrateo' || row.hasOwnProperty('formula') || hasChildren) && !row.is_percent ? (
+            <div className="h-8 flex items-center justify-end px-3 text-sm font-bold text-primary/70 bg-primary/5 rounded-md border border-primary/10 tabular-nums">
+              {(calculated.valorHistorico || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </div>
+          ) : (row.hasOwnProperty('valorHistorico') || row.hasOwnProperty('value')) ? (
             <div className="relative">
                 <Input
                 type="number"
-                step={row.is_percent ? "0.01" : "1"}
+                step={row.is_percent ? "0.001" : "1"}
                 className={cn("neu-input text-right h-8", row.is_percent && "pr-6")}
-                value={row.hasOwnProperty('valorHistorico') ? row.valorHistorico : row.value}
-                onChange={(e) => handleValueChange(row.hasOwnProperty('valorHistorico') ? 'valorHistorico' : 'value', e.target.value)}
+                value={row.hasOwnProperty('valorHistorico') ? row.valorHistorico : (row.is_percent ? (row.value * 100) : row.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  handleValueChange(
+                    row.hasOwnProperty('valorHistorico') ? 'valorHistorico' : 'value',
+                    row.is_percent ? parseFloat(val) / 100 : val
+                  );
+                }}
                 onFocus={(e) => e.target.select()}
                 />
                 {row.is_percent && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">%</span>}
@@ -100,8 +110,8 @@ const CostSheetRow: React.FC<RowProps> = ({ row, level, calculatedValues, path, 
 
         {/* Forma de Cálculo */}
         <td className="px-4 py-2">
-          {row.hasOwnProperty('calculationMethod') ? (
-            <Select value={row.calculationMethod || ''} onValueChange={(value) => handleValueChange('calculationMethod', value)}>
+          {!hasChildren && !row.formula && !row.is_percent ? (
+            <Select value={row.calculationMethod || 'ValorFijo'} onValueChange={(value) => handleValueChange('calculationMethod', value)}>
               <SelectTrigger className="neu-input h-8">
                 <SelectValue placeholder="Seleccionar Método..." />
               </SelectTrigger>
@@ -114,13 +124,15 @@ const CostSheetRow: React.FC<RowProps> = ({ row, level, calculatedValues, path, 
         </td>
 
         {/* Base de Cálculo */}
-        <td className="px-4 py-2">
-          {row.hasOwnProperty('baseDeCalculoRef') ? (
+        <td className="px-4 py-2 min-w-[180px]">
+          {!hasChildren && !row.formula && !row.is_percent ? (
              <Select value={row.baseDeCalculoRef || ''} onValueChange={(value) => handleValueChange('baseDeCalculoRef', value)}>
-                <SelectTrigger className="neu-input h-8">
-                    <SelectValue placeholder="Seleccionar Base..." className="truncate" />
+                <SelectTrigger className="neu-input h-8 w-full">
+                    <div className="truncate text-left pr-2">
+                      <SelectValue placeholder="Seleccionar Base..." />
+                    </div>
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-w-[400px]">
                     {baseOptions.map(opt => <SelectItem key={opt.value} value={opt.value} className="truncate">{opt.label}</SelectItem>)}
                 </SelectContent>
             </Select>
@@ -185,15 +197,15 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = ({ s
   const allRows = useMemo(() => flattenRows(sections.flatMap(s => s.rows)), [sections]);
 
   return (
-    <div className="neu-card p-0 overflow-hidden">
+    <div className="neu-card p-0">
       <div className="overflow-x-auto">
-        <table className="w-full text-sm table-fixed">
+        <table className="w-full text-sm min-w-[1000px]">
           <thead className="bg-slate-100 dark:bg-slate-800/50">
             <tr>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-1/3">Concepto</th>
-              <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-40">Valor Histórico</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-auto min-w-[250px]">Concepto</th>
+              <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-32">Valor Histórico</th>
               <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-40">Forma de Cálculo</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-48">Base de Cálculo</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-56">Base de Cálculo</th>
               <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-32">Coeficiente</th>
               <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-40">Total</th>
               <th className="px-4 py-3 text-center font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-20">Ayuda</th>
