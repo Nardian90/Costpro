@@ -133,7 +133,6 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
 
                 const headerAliases: { [key: string]: string[] } = {
                   id: ['id', 'urlid', 'ID', 'Identificador', 'SKU'],
-                  name: ['name', 'nombre', 'NombreProducto', 'Product Name'],
                   quantity: ['quantity', 'cantidad', 'Cantidad', 'Qty'],
                   cost: ['cost', 'costo', 'Costo', 'Cost Price'],
                 };
@@ -173,7 +172,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
 
                 normalizedData.forEach((row, index) => {
                     const rowNum = index + 2; // User-facing row number (1-based + header)
-                    const { id, quantity, cost, name } = row;
+                    const { id, quantity, cost } = row;
 
                     if (!id) {
                         validationErrors.push({ row: rowNum, message: "Falta el 'id' del producto." });
@@ -181,10 +180,6 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                         validationErrors.push({ row: rowNum, message: `El id '${id}' está duplicado en el archivo.` });
                     } else {
                         seenIds.add(id);
-                    }
-
-                    if (!name || name.trim() === '') {
-                        validationErrors.push({ row: rowNum, message: "El 'nombre' del producto no puede estar vacío." });
                     }
 
                     const parsedQuantity = parseInt(quantity, 10);
