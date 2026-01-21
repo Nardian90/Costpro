@@ -37,6 +37,8 @@ import {
 } from "@/components/ui/dialog";
 import Papa from 'papaparse';
 
+const PAGE_LIMIT = 10;
+
 export default function CatalogView() {
     const { user } = useAuthStore();
     const isMobile = useIsMobile();
@@ -47,6 +49,8 @@ export default function CatalogView() {
     const deferredSearchTerm = useDeferredValue(searchTerm);
     const [layoutMode, setLayoutMode] = useState<'grid' | 'table'>('grid');
     const [importErrors, setImportErrors] = useState<{ row: number; message: string }[]>([]);
+    const [offset, setOffset] = useState(0);
+    const [hasMore, setHasMore] = useState(true);
 
     // Modals state
     const [isEditProductModalOpen, setIsEditProductModalOpen] = useState(false);
@@ -68,48 +72,55 @@ export default function CatalogView() {
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const fetchProducts = useCallback(async () => {
-        if (!user) return;
+    const fetchProducts = useCallback(async (isNewSearch = false) => {
+        if (loading || (!isNewSearch && !hasMore)) return;
         setLoading(true);
+
+        const currentOffset = isNewSearch ? 0 : offset;
+
         try {
-            const { data, error } = await supabase.rpc('get_products_for_pos', {
+            const { data, error } = await supabase.rpc('get_paginated_products', {
+                p_limit: PAGE_LIMIT,
+                p_offset: currentOffset,
                 p_store_id: user.store_id,
-                p_search_term: '',
-                p_category: ''
+                p_search_term: deferredSearchTerm,
+                p_category: '' // Add category filter if needed later
             });
 
             if (error) throw error;
 
-            const mappedProducts = data?.map((item: any) => ({
+            const fetchedProducts = data?.map((item: any) => ({
                 ...item,
                 public_image_url: getSupabaseUrl('product-images', item.image_url),
             })) || [];
 
-            setProducts(mappedProducts);
+            setProducts(prev => isNewSearch ? fetchedProducts : [...prev, ...fetchedProducts]);
+            setOffset(currentOffset + fetchedProducts.length);
+
+            if (fetchedProducts.length > 0) {
+                setHasMore((currentOffset + fetchedProducts.length) < (fetchedProducts[0].total_count || 0));
+            } else {
+                setHasMore(false);
+            }
+
         } catch (error) {
             console.error('Error fetching products:', error);
             toast.error('Error al cargar catálogo');
         } finally {
             setLoading(false);
         }
-    }, [user?.store_id]);
+    }, [user?.store_id, deferredSearchTerm, loading, hasMore, offset]);
 
     useEffect(() => {
-        fetchProducts();
-    }, [fetchProducts]);
+        setProducts([]);
+        setOffset(0);
+        setHasMore(true);
+        fetchProducts(true);
+    }, [deferredSearchTerm]);
 
     useEffect(() => {
         if (isMobile) setLayoutMode('grid');
     }, [isMobile]);
-
-    const filteredProducts = useMemo(() => {
-        const lowerSearch = deferredSearchTerm.toLowerCase();
-        return products.filter(p =>
-          p.name.toLowerCase().includes(lowerSearch) ||
-          (p.sku && p.sku.toLowerCase().includes(lowerSearch)) ||
-          (p.category && p.category.toLowerCase().includes(lowerSearch))
-        );
-    }, [products, deferredSearchTerm]);
 
     // Handlers
     const handleUpdateProduct = async () => {
@@ -526,56 +537,58 @@ export default function CatalogView() {
             )}
 
             {layoutMode === 'grid' ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {filteredProducts.map(product => (
-                        <div key={product.id} className="neu-card !p-6 border border-white/5 hover:border-primary/20 transition-all group">
-                            <div className="neu-raised-sm w-full h-48 mb-6 flex items-center justify-center overflow-hidden rounded-2xl bg-background/50">
-                                {product.public_image_url ? (
-                                    <img src={product.public_image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                                ) : (
-                                    <Package className="w-12 h-12 text-muted-foreground opacity-20" />
-                                )}
-                            </div>
-
-                            <h3 className="font-black text-lg uppercase tracking-tight mb-2 truncate">{product.name}</h3>
-                            <p className="text-xs text-muted-foreground mb-4 line-clamp-2 min-h-[32px]">{product.description || 'Sin descripción disponible'}</p>
-
-                            <div className="grid grid-cols-2 gap-4 mb-8">
-                                <div className="neu-inset-sm !p-3 text-center border border-white/5">
-                                    <div className="text-[8px] font-black uppercase text-muted-foreground tracking-widest mb-1">Costo Unit.</div>
-                                    <div className="font-bold text-sm text-foreground">${product.cost_price?.toFixed(2) || '0.00'}</div>
+                <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {products.map(product => (
+                            <div key={product.id} className="neu-card !p-6 border border-white/5 hover:border-primary/20 transition-all group">
+                                <div className="neu-raised-sm w-full h-48 mb-6 flex items-center justify-center overflow-hidden rounded-2xl bg-background/50">
+                                    {product.public_image_url ? (
+                                        <img src={product.public_image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                    ) : (
+                                        <Package className="w-12 h-12 text-muted-foreground opacity-20" />
+                                    )}
                                 </div>
-                                <div className="neu-inset-sm !p-3 text-center border border-primary/10 bg-primary/5">
-                                    <div className="text-[8px] font-black uppercase text-primary tracking-widest mb-1">Precio Venta</div>
-                                    <div className="font-black text-sm text-primary">${product.price?.toFixed(2) || '0.00'}</div>
+
+                                <h3 className="font-black text-lg uppercase tracking-tight mb-2 truncate">{product.name}</h3>
+                                <p className="text-xs text-muted-foreground mb-4 line-clamp-2 min-h-[32px]">{product.description || 'Sin descripción disponible'}</p>
+
+                                <div className="grid grid-cols-2 gap-4 mb-8">
+                                    <div className="neu-inset-sm !p-3 text-center border border-white/5">
+                                        <div className="text-[8px] font-black uppercase text-muted-foreground tracking-widest mb-1">Costo Unit.</div>
+                                        <div className="font-bold text-sm text-foreground">${product.cost_price?.toFixed(2) || '0.00'}</div>
+                                    </div>
+                                    <div className="neu-inset-sm !p-3 text-center border border-primary/10 bg-primary/5">
+                                        <div className="text-[8px] font-black uppercase text-primary tracking-widest mb-1">Precio Venta</div>
+                                        <div className="font-black text-sm text-primary">${product.price?.toFixed(2) || '0.00'}</div>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-4">
+                                    <button
+                                        onClick={() => { setEditingProduct(product); setIsEditProductModalOpen(true); }}
+                                        className="neu-btn !p-3 flex-1 flex items-center justify-center gap-2 hover:neu-raised-sm"
+                                    >
+                                        <Edit className="w-4 h-4" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest">Info</span>
+                                    </button>
+                                    <button
+                                        onClick={() => { setEditingProduct(product); setIsVariantsModalOpen(true); }}
+                                        className="neu-btn !p-3 flex-1 flex items-center justify-center gap-2 hover:neu-raised-sm"
+                                    >
+                                        <DollarSign className="w-4 h-4" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest">Precios</span>
+                                    </button>
                                 </div>
                             </div>
-
-                            <div className="flex gap-4">
-                                <button
-                                    onClick={() => { setEditingProduct(product); setIsEditProductModalOpen(true); }}
-                                    className="neu-btn !p-3 flex-1 flex items-center justify-center gap-2 hover:neu-raised-sm"
-                                >
-                                    <Edit className="w-4 h-4" />
-                                    <span className="text-[10px] font-black uppercase tracking-widest">Info</span>
-                                </button>
-                                <button
-                                    onClick={() => { setEditingProduct(product); setIsVariantsModalOpen(true); }}
-                                    className="neu-btn !p-3 flex-1 flex items-center justify-center gap-2 hover:neu-raised-sm"
-                                >
-                                    <DollarSign className="w-4 h-4" />
-                                    <span className="text-[10px] font-black uppercase tracking-widest">Precios</span>
-                                </button>
-                            </div>
-                        </div>
-                    ))}
-                    {filteredProducts.length === 0 && (
+                        ))}
+                    </div>
+                    {products.length === 0 && !loading && (
                         <div className="col-span-full py-32 text-center neu-card border-2 border-dashed border-white/5">
                             <Search className="w-16 h-16 mx-auto mb-6 opacity-5" />
                             <p className="text-xl font-black text-muted-foreground uppercase tracking-widest">Sin resultados</p>
                         </div>
                     )}
-                </div>
+                </>
             ) : (
                 <div className="overflow-x-auto table-to-cards rounded-2xl shadow-xl border border-white/5 overflow-hidden">
                     <table className="w-full">
@@ -590,7 +603,7 @@ export default function CatalogView() {
                             </tr>
                         </thead>
                         <tbody className="bg-background/30 backdrop-blur-sm">
-                            {filteredProducts.map(product => (
+                            {products.map(product => (
                                 <tr key={product.id} className="border-b border-white/5 hover:bg-primary/5 transition-colors">
                                     <td className="p-4">
                                         <div className="flex items-center gap-3">
@@ -618,6 +631,19 @@ export default function CatalogView() {
                             ))}
                         </tbody>
                     </table>
+                </div>
+            )}
+
+            {hasMore && (
+                <div className="flex justify-center mt-8">
+                    <button
+                        onClick={() => fetchProducts()}
+                        disabled={loading}
+                        className="neu-btn-primary !py-3 !px-8 flex items-center gap-2 font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/20 disabled:opacity-50"
+                    >
+                        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                        {loading ? 'Cargando...' : 'Cargar Más'}
+                    </button>
                 </div>
             )}
 
