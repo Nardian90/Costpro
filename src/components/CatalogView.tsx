@@ -46,6 +46,7 @@ export default function CatalogView() {
     const [searchTerm, setSearchTerm] = useState('');
     const deferredSearchTerm = useDeferredValue(searchTerm);
     const [layoutMode, setLayoutMode] = useState<'grid' | 'table'>('grid');
+    const [importErrors, setImportErrors] = useState<{ row: number; message: string }[]>([]);
 
     // Modals state
     const [isEditProductModalOpen, setIsEditProductModalOpen] = useState(false);
@@ -309,93 +310,108 @@ export default function CatalogView() {
             complete: async (results) => {
                 const data = results.data as any[];
                 if (data.length === 0) {
-                    toast.error('El archivo está vacío');
+                    toast.error('El archivo CSV está vacío.');
                     return;
                 }
 
-                const toastId = toast.loading('Procesando importación...');
-                let successCount = 0;
-                let errorCount = 0;
-                const errors: string[] = [];
+                const headerAliases = {
+                    id: ['id', 'ID', 'Identificador', 'SKU', 'urlid'],
+                    name: ['name', 'nombre', 'NombreProducto'],
+                    cost: ['cost', 'costo', 'Costo'],
+                    price: ['price', 'precio', 'Precio'],
+                    imageUrl: ['imageUrl', 'imagen', 'Imagen', 'image_url'],
+                };
 
-                if (!user?.store_id) {
-                    toast.error('No hay una tienda activa seleccionada', { id: toastId });
+                const fileHeaders = results.meta.fields || [];
+                const headerMapping: { [key: string]: string } = {};
+                const missingHeaders: string[] = [];
+
+                for (const canonicalHeader in headerAliases) {
+                    const aliases = headerAliases[canonicalHeader as keyof typeof headerAliases];
+                    const foundAlias = fileHeaders.find(header => aliases.includes(header.trim()));
+                    if (foundAlias) {
+                        headerMapping[canonicalHeader] = foundAlias.trim();
+                    } else if (canonicalHeader !== 'imageUrl') { // imageUrl is optional
+                        missingHeaders.push(canonicalHeader);
+                    }
+                }
+
+                if (missingHeaders.length > 0) {
+                    toast.error(`Faltan las siguientes columnas requeridas: ${missingHeaders.join(', ')}`);
                     return;
                 }
 
-                // Assuming user has access to a list of stores. For now, we'll just check against the active store.
-                // In a multi-store setup, you'd fetch user_store_access here.
-                const userAllowedStores = new Set([user.store_id]);
+                const normalizedData = data.map(row => {
+                    const newRow: any = {};
+                    for (const canonicalHeader in headerMapping) {
+                        newRow[canonicalHeader] = row[headerMapping[canonicalHeader]];
+                    }
+                    return newRow;
+                });
 
+                const validationErrors: { row: number; message: string }[] = [];
+                const productsToUpdate = [];
+                const seenIds = new Set<string>();
+
+                for (const [index, row] of normalizedData.entries()) {
+                    const rowNum = index + 2;
+                    const { id, name, cost, price, imageUrl } = row;
+
+                    if (!id) {
+                        validationErrors.push({ row: rowNum, message: "Falta el 'id' del producto." });
+                        continue;
+                    }
+
+                    if (seenIds.has(id)) {
+                        validationErrors.push({ row: rowNum, message: `El id '${id}' está duplicado.` });
+                        continue;
+                    }
+                    seenIds.add(id);
+
+                    const costPrice = parseFloat(cost);
+                    const sellPrice = parseFloat(price);
+
+                    if (isNaN(costPrice) || costPrice < 0) {
+                        validationErrors.push({ row: rowNum, message: "El 'costo' debe ser un número válido." });
+                    }
+
+                    if (isNaN(sellPrice) || sellPrice < 0) {
+                        validationErrors.push({ row: rowNum, message: "El 'precio' debe ser un número válido." });
+                    }
+
+                    if (!isNaN(costPrice) && !isNaN(sellPrice) && sellPrice < costPrice) {
+                        validationErrors.push({ row: rowNum, message: "El precio de venta no puede ser menor que el costo." });
+                    }
+
+                    productsToUpdate.push({
+                        id,
+                        name,
+                        cost_price: costPrice,
+                        price: sellPrice,
+                        image_url: imageUrl,
+                    });
+                }
+
+                if (validationErrors.length > 0) {
+                    setImportErrors(validationErrors);
+                    toast.error(`Se encontraron ${validationErrors.length} errores en el archivo.`);
+                    return;
+                }
+
+                const toastId = toast.loading(`Actualizando ${productsToUpdate.length} productos...`);
                 try {
-                    for (const [index, row] of data.entries()) {
-                        const { id, nombre, costo, precio, imageUrl, store_id } = row;
+                    const { error } = await supabase.rpc('bulk_update_products', { p_products: productsToUpdate });
 
-                        if (!id) {
-                            errors.push(`Fila ${index + 2}: Falta el 'id' del producto.`);
-                            errorCount++;
-                            continue;
-                        }
+                    if (error) throw error;
 
-                        const storeId = store_id || user.store_id;
-
-                        if (!userAllowedStores.has(storeId)) {
-                            errors.push(`Fila ${index + 2}: Sin permiso para la tienda ${storeId}.`);
-                            errorCount++;
-                            continue;
-                        }
-
-                        const costPrice = parseFloat(costo);
-                        const price = parseFloat(precio);
-
-                        if (isNaN(costPrice) || isNaN(price)) {
-                            errors.push(`Fila ${index + 2}: 'costo' o 'precio' inválido.`);
-                            errorCount++;
-                            continue;
-                        }
-
-                        if (price < costPrice) {
-                            errors.push(`Fila ${index + 2}: El precio no puede ser menor al costo.`);
-                            errorCount++;
-                            continue;
-                        }
-
-                        const updateData: any = {
-                            cost_price: costPrice,
-                            price: price,
-                        };
-
-                        if (imageUrl && imageUrl.trim() !== '') {
-                            updateData.image_url = imageUrl;
-                        }
-
-                        const { error } = await supabase
-                            .from('products')
-                            .update(updateData)
-                            .eq('id', id)
-                            .eq('store_id', storeId);
-
-                        if (error) {
-                            errors.push(`Fila ${index + 2}: Error al actualizar "${nombre}": ${error.message}`);
-                            errorCount++;
-                        } else {
-                            successCount++;
-                        }
-                    }
-
-                    if (errorCount > 0) {
-                        console.error('Errores en importación:', errors);
-                        toast.error(`Importación con errores: ${successCount} exitosos, ${errorCount} fallidos.`, { id: toastId, duration: 8000 });
-                    } else {
-                        toast.success(`Importación finalizada: ${successCount} productos actualizados.`, { id: toastId });
-                    }
+                    toast.success('Catálogo actualizado con éxito!', { id: toastId });
                     fetchProducts();
-                } catch (err) {
-                    toast.error('Ocurrió un error inesperado durante la importación.', { id: toastId });
+                } catch (error: any) {
+                    toast.error(`Error al actualizar: ${error.message}`, { id: toastId });
                 } finally {
                     if (fileInputRef.current) fileInputRef.current.value = '';
                 }
-            }
+            },
         });
     };
 
@@ -441,7 +457,10 @@ export default function CatalogView() {
             id: 'import',
             label: 'Importar Precios',
             icon: Upload,
-            onClick: () => fileInputRef.current?.click(),
+            onClick: () => {
+                setImportErrors([]);
+                fileInputRef.current?.click();
+            },
             variant: 'outline',
         },
         {
@@ -476,6 +495,35 @@ export default function CatalogView() {
                 onChange={setSearchTerm}
                 placeholder="Buscar en el catálogo..."
             />
+
+            {importErrors.length > 0 && (
+                <div className="neu-card border-danger/20 bg-danger/5 !p-4">
+                    <details>
+                        <summary className="cursor-pointer font-bold text-danger flex justify-between items-center">
+                            <span>Importación Fallida: {importErrors.length} errores encontrados.</span>
+                            <span className="text-xs font-black uppercase tracking-widest">Ver Detalles</span>
+                        </summary>
+                        <div className="mt-4 max-h-48 overflow-y-auto pr-2">
+                            <table className="w-full text-xs">
+                                <thead>
+                                    <tr className="text-left font-black uppercase text-[10px] border-b border-danger/20">
+                                        <th className="p-2">Fila</th>
+                                        <th className="p-2">Error</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {importErrors.map((error, index) => (
+                                        <tr key={index} className="border-b border-danger/10">
+                                            <td className="p-2 font-bold">{error.row}</td>
+                                            <td className="p-2">{error.message}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </details>
+                </div>
+            )}
 
             {layoutMode === 'grid' ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
