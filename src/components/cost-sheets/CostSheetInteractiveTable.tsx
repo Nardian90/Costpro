@@ -18,6 +18,7 @@ type RowData = {
   children?: RowData[];
   helpText?: string;
   baseDeCalculoRef?: string | null;
+  calculationMethod?: 'Prorrateo' | 'ValorFijo';
   [key: string]: any;
 };
 
@@ -66,6 +67,7 @@ const CostSheetRow: React.FC<RowProps> = ({ row, level, calculatedValues, path, 
   return (
     <>
       <tr className="border-t border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+        {/* Concepto */}
         <td style={{ paddingLeft: `${level * 24 + 12}px` }} className="py-2.5 font-medium text-slate-700 dark:text-slate-300">
           <div className="flex items-center gap-2">
             {hasChildren && (
@@ -78,6 +80,7 @@ const CostSheetRow: React.FC<RowProps> = ({ row, level, calculatedValues, path, 
           </div>
         </td>
 
+        {/* Valor Histórico */}
         <td className="px-4 py-2 text-right">
           {row.hasOwnProperty('valorHistorico') ? (
             <Input
@@ -90,6 +93,22 @@ const CostSheetRow: React.FC<RowProps> = ({ row, level, calculatedValues, path, 
           ) : <span className="text-sm text-slate-400">-</span>}
         </td>
 
+        {/* Forma de Cálculo */}
+        <td className="px-4 py-2">
+          {row.hasOwnProperty('calculationMethod') ? (
+            <Select value={row.calculationMethod || ''} onValueChange={(value) => handleValueChange('calculationMethod', value)}>
+              <SelectTrigger className="neu-input h-8">
+                <SelectValue placeholder="Seleccionar Método..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Prorrateo">Prorrateo</SelectItem>
+                <SelectItem value="ValorFijo">Valor Fijo</SelectItem>
+              </SelectContent>
+            </Select>
+          ) : <span className="text-sm text-slate-400">-</span>}
+        </td>
+
+        {/* Base de Cálculo */}
         <td className="px-4 py-2">
           {row.hasOwnProperty('baseDeCalculoRef') ? (
              <Select value={row.baseDeCalculoRef || ''} onValueChange={(value) => handleValueChange('baseDeCalculoRef', value)}>
@@ -103,14 +122,17 @@ const CostSheetRow: React.FC<RowProps> = ({ row, level, calculatedValues, path, 
           ) : <span className="text-sm text-slate-400">-</span>}
         </td>
 
+        {/* Coeficiente */}
         <td className="px-4 py-2 text-right tabular-nums text-slate-500 dark:text-slate-400">
           {calculated.coeficiente > 0 ? calculated.coeficiente.toFixed(4) : <span className="text-sm text-slate-400">-</span>}
         </td>
 
+        {/* Total */}
         <td className="px-4 py-2 text-right font-bold tabular-nums text-primary">
           {calculated.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </td>
 
+        {/* Ayuda */}
         <td className="px-4 py-2 text-center">
           {row.helpText && (
             <Popover>
@@ -144,7 +166,6 @@ const CostSheetRow: React.FC<RowProps> = ({ row, level, calculatedValues, path, 
  * The main interactive table component for the Cost Sheet.
  */
 const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = ({ sections, calculatedValues, annexes }) => {
-  // FIX: Implement a recursive function to correctly flatten the entire row hierarchy.
   const flattenRows = (rows: RowData[]): RowData[] => {
     let all: RowData[] = [];
     for (const row of rows) {
@@ -156,7 +177,6 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = ({ s
     return all;
   };
 
-  // Memoize the flattened list to avoid re-computation on every render.
   const allRows = useMemo(() => flattenRows(sections.flatMap(s => s.rows)), [sections]);
 
   return (
@@ -167,6 +187,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = ({ s
             <tr>
               <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Concepto</th>
               <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-40">Valor Histórico</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-48">Forma de Cálculo</th>
               <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-56">Base de Cálculo</th>
               <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-32">Coeficiente</th>
               <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-48">Total</th>
@@ -177,7 +198,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = ({ s
             {sections.map((section, sectionIndex) => (
               <React.Fragment key={section.id}>
                 <tr className="bg-slate-200 dark:bg-slate-900 sticky top-0 z-10">
-                  <td colSpan={6} className="px-4 py-2 font-black text-primary uppercase tracking-widest text-xs">
+                  <td colSpan={7} className="px-4 py-2 font-black text-primary uppercase tracking-widest text-xs">
                     {section.label}
                   </td>
                 </tr>
