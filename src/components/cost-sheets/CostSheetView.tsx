@@ -4,21 +4,26 @@
 import React, { useState } from 'react';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
 import { useCostSheetCalculator } from '@/hooks/useCostSheetCalculator';
-import CostSheetInteractiveTable from './CostSheetInteractiveTable'; // <-- Import the new table
+import CostSheetNav from './CostSheetNav'; // <-- Restore navigation
+import CostSheetInteractiveTable from './CostSheetInteractiveTable';
+import CostSheetAnnexEditor from './CostSheetAnnexEditor'; // <-- Import the new annex editor
 import CostSheetHeader from './CostSheetHeader';
 import CostSheetBody from './CostSheetBody';
 import CostSheetAnnexes from './CostSheetAnnexes';
 import CostSheetSignature from './CostSheetSignature';
 import ActionMenu from '@/components/ui/ActionMenu';
 import { Eye, Edit, FileText, Trash2, Download, ShieldCheck } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 const CostSheetView = () => {
   const { data, loadExample, reset } = useCostSheetStore();
-  // Pass the full data object to the calculator
-  const { calculatedValues, annexes } = useCostSheetCalculator(data);
+  const { calculatedValues, annexes, calculatedAnnexes } = useCostSheetCalculator(data);
 
   const [isEditing, setIsEditing] = useState(true);
+  // This state will now control which view is active in editing mode
+  const [activeSection, setActiveSection] = useState('main'); // 'main' for the table, or an annex ID
+
+  // Determine if the active section is an annex
+  const isAnnexActive = data.annexes.some((a: any) => a.id === activeSection);
 
   return (
     <div className="w-full max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 pb-32 pt-4">
@@ -53,42 +58,34 @@ const CostSheetView = () => {
             onClick: () => setIsEditing(!isEditing),
             variant: 'primary',
           },
-          {
-            id: 'load-example',
-            label: 'Cargar Ejemplo',
-            icon: FileText,
-            onClick: loadExample,
-            variant: 'outline',
-          },
-          {
-            id: 'reset',
-            label: 'Limpiar',
-            icon: Trash2,
-            onClick: reset,
-            variant: 'danger',
-          },
-          {
-            id: 'export-pdf',
-            label: 'Exportar',
-            icon: Download,
-            onClick: () => window.print(),
-            variant: 'success',
-          },
+          { id: 'load-example', label: 'Cargar Ejemplo', icon: FileText, onClick: loadExample, variant: 'outline' },
+          { id: 'reset', label: 'Limpiar', icon: Trash2, onClick: reset, variant: 'danger' },
+          { id: 'export-pdf', label: 'Exportar', icon: Download, onClick: () => window.print(), variant: 'success' },
         ]}
         className="mb-8"
       />
 
       {isEditing ? (
-        // EDITING MODE: Render the new interactive table
         <div className="animate-in fade-in duration-700">
-          <CostSheetInteractiveTable
-            sections={data.sections}
-            calculatedValues={calculatedValues}
-            annexes={data.annexes}
+          <CostSheetNav
+            sections={[{ id: 'main', label: 'Tabla Principal' }, ...data.annexes.map((a:any) => ({ id: a.id, label: `Anexo ${a.id}`}))]}
+            annexes={[]} // Keep it simple, main sections are now in sections prop
+            activeSection={activeSection}
+            setActiveSection={setActiveSection}
           />
+          <div className="mt-4">
+            {isAnnexActive ? (
+              <CostSheetAnnexEditor activeAnnexId={activeSection} />
+            ) : (
+              <CostSheetInteractiveTable
+                sections={data.sections}
+                calculatedValues={calculatedValues}
+                annexes={data.annexes}
+              />
+            )}
+          </div>
         </div>
       ) : (
-        // PREVIEW MODE: Render the static summary view
         <div className="animate-in zoom-in-95 duration-500 max-w-5xl mx-auto">
           <div className="neu-card !p-0 overflow-hidden border-none shadow-2xl bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
             <div className="bg-slate-800 p-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-white">
@@ -101,7 +98,6 @@ const CostSheetView = () => {
                   <div className="text-xs font-black uppercase tracking-widest text-primary pb-2 border-b-2 border-primary/20">
                     Resumen de Operación
                   </div>
-                  {/* Note: CostSheetBody might need adjustments if it relies on the old calculatedValues structure */}
                   <CostSheetBody
                       sections={data.sections}
                       calculatedValues={calculatedValues}
@@ -111,9 +107,8 @@ const CostSheetView = () => {
                   <div className="text-xs font-black uppercase tracking-widest text-primary pb-2 border-b-2 border-primary/20">
                     Anexos Detallados
                   </div>
-                  {/* The annexes prop for CostSheetAnnexes should now come from the calculator to include totals */}
                   <CostSheetAnnexes
-                      annexes={annexes}
+                      annexes={calculatedAnnexes}
                   />
                 </div>
                 <div className="pt-10 border-t border-slate-100 dark:border-slate-800">
