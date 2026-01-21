@@ -433,7 +433,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                                 </summary>
                                 <div className="mt-4 max-h-48 overflow-y-auto pr-2">
                                     <table className="w-full text-xs">
-                                        <thead>
+                                        <thead className="sticky-header">
                                             <tr className="text-left font-black uppercase text-[10px] border-b border-danger/20">
                                                 <th className="p-2">Fila</th>
                                                 <th className="p-2">Error</th>

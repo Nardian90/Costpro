@@ -4,8 +4,9 @@
 import { useState, useEffect, useCallback, useMemo, useRef, useDeferredValue } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/store';
-import { getProductImageUrl, getSupabaseUrl, cn } from '@/lib/utils';
+import { getSupabaseUrl, cn } from '@/lib/utils';
 import type { Product, ProductVariant } from '@/types';
+import ImageWithFallback from './ui/ImageWithFallback';
 import { toast } from 'sonner';
 import {
     Package,
@@ -530,11 +531,12 @@ export default function CatalogView() {
                     {filteredProducts.map(product => (
                         <div key={product.id} className="neu-card !p-6 border border-white/5 hover:border-primary/20 transition-all group">
                             <div className="neu-raised-sm w-full h-48 mb-6 flex items-center justify-center overflow-hidden rounded-2xl bg-background/50">
-                                {product.public_image_url ? (
-                                    <img src={product.public_image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                                ) : (
-                                    <Package className="w-12 h-12 text-muted-foreground opacity-20" />
-                                )}
+                                <ImageWithFallback
+                                    src={product.public_image_url}
+                                    alt={product.name}
+                                    name={product.name}
+                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                />
                             </div>
 
                             <h3 className="font-black text-lg uppercase tracking-tight mb-2 truncate">{product.name}</h3>
@@ -577,9 +579,9 @@ export default function CatalogView() {
                     )}
                 </div>
             ) : (
-                <div className="overflow-x-auto table-to-cards rounded-2xl shadow-xl border border-white/5 overflow-hidden">
+                <div className="overflow-x-auto table-to-cards rounded-2xl shadow-xl border border-white/5">
                     <table className="w-full">
-                        <thead>
+                        <thead className="sticky-header">
                             <tr className="bg-muted/50 text-muted-foreground font-black uppercase text-[10px] tracking-widest">
                                 <th className="p-4 text-left">Producto</th>
                                 <th className="p-4 text-left">SKU</th>
@@ -595,11 +597,12 @@ export default function CatalogView() {
                                     <td className="p-4">
                                         <div className="flex items-center gap-3">
                                             <div className="neu-raised-sm w-10 h-10 flex items-center justify-center overflow-hidden shrink-0">
-                                                {product.image_url ? (
-                                                    <img src={getSupabaseUrl('product-images', product.image_url)} alt={product.name} className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <Package className="w-5 h-5 text-muted-foreground" />
-                                                )}
+                                                <ImageWithFallback
+                                                    alt={product.name}
+                                                    name={product.name}
+                                                    className="w-full h-full object-cover"
+                                                    forcePlaceholder={true}
+                                                />
                                             </div>
                                             <span className="font-bold text-sm truncate max-w-[200px]">{product.name}</span>
                                         </div>
@@ -682,15 +685,12 @@ export default function CatalogView() {
                             <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Imagen del Producto</label>
                             <div className="flex flex-col items-center gap-6 p-6 neu-inset-sm bg-background/50 rounded-3xl">
                                 <div className="neu-raised-sm w-40 h-40 flex items-center justify-center overflow-hidden rounded-3xl border-2 border-white/5">
-                                    {editingProduct?.image_url ? (
-                                        <img
-                                            src={editingProduct.image_url.includes('http') ? editingProduct.image_url : getSupabaseUrl('product-images', editingProduct.image_url)}
-                                            alt={editingProduct.name}
-                                            className="w-full h-full object-cover"
-                                        />
-                                    ) : (
-                                        <Package className="w-16 h-16 text-muted-foreground opacity-20" />
-                                    )}
+                                    <ImageWithFallback
+                                        src={editingProduct?.image_url?.includes('http') ? editingProduct.image_url : getSupabaseUrl('product-images', editingProduct?.image_url)}
+                                        alt={editingProduct?.name || ''}
+                                        name={editingProduct?.name || ''}
+                                        className="w-full h-full object-cover"
+                                    />
                                 </div>
                                 <div className="w-full space-y-2">
                                     <input

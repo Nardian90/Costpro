@@ -3,9 +3,9 @@
 
 import React, { useRef, useCallback } from 'react';
 import type { Product } from '@/types';
-import { getProductImageUrl, cn } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { Package, Edit, Loader2 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import ImageWithFallback from './ui/ImageWithFallback';
 
 interface InventoryTableViewProps {
     products: Product[];
@@ -20,16 +20,13 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product }>((
         <tr ref={ref} className="border-b last:border-0 hover:bg-accent/5 transition-colors">
             <td className="p-4">
                 <div className="flex items-center gap-3">
-                    <div className="neu-raised-sm w-12 h-12 flex items-center justify-center overflow-hidden bg-muted/30 shrink-0">
-                        {product.image_url ? (
-                            <img
-                                src={getProductImageUrl(product.image_url)}
-                                alt={product.name}
-                                className="w-full h-full object-cover"
-                            />
-                        ) : (
-                            <Package className="w-6 h-6 text-muted-foreground" />
-                        )}
+                    <div className="neu-raised-sm w-12 h-12 flex items-center justify-center overflow-hidden shrink-0">
+                        <ImageWithFallback
+                            alt={product.name}
+                            name={product.name}
+                            className="w-full h-full object-cover"
+                            forcePlaceholder={true}
+                        />
                     </div>
                     <div>
                         <div className="font-bold text-sm">{product.name}</div>
@@ -78,7 +75,7 @@ export default function InventoryTableView({ products, loadMore, hasMore, isLoad
     return (
         <div className="overflow-x-auto table-to-cards rounded-2xl shadow-xl border border-white/5 force-table">
             <table className="w-full min-w-[1024px]">
-                <thead className="bg-muted/30 border-b">
+                <thead className="bg-muted/30 border-b sticky-header">
                     <tr className="text-left text-muted-foreground uppercase text-[10px] font-bold">
                         <th className="p-4">Product</th>
                         <th className="p-4">SKU</th>
