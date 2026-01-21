@@ -2,14 +2,14 @@
 import { useState, useEffect, useMemo } from 'react';
 import { produce } from 'immer';
 
-// Enhanced types for v3 template
+// Enhanced types for v4 template
 interface Header { [key: string]: any; }
 interface Row {
   id: string;
   label: string;
   valorHistorico?: number;
   baseDeCalculoRef?: string | null;
-  coeficienteFormula?: string | null;
+  calculationMethod?: 'Prorrateo' | 'ValorFijo';
   totalFormula?: string | null;
   formula?: string; // For summary rows
   children?: Row[];
@@ -20,11 +20,12 @@ interface Column { key: string; formula?: string; }
 interface Annex { id: string; title: string; columns: Column[]; data: any[]; }
 interface Template { header: Header; sections: Section[]; annexes: Annex[]; }
 
-// Calculated value structure will be richer
+// Calculated value structure is now richer
 interface CalculatedRowValue {
   valorHistorico: number;
   baseDeCalculoRef: string | null;
-  baseValue: number;
+  baseTotal: number;
+  baseValorHistorico: number;
   coeficiente: number;
   total: number;
 }
@@ -42,7 +43,6 @@ const evaluateExpression = (expression: string): number => {
 };
 
 export const useCostSheetCalculator = (template: Template) => {
-  // This state will now store a map of row IDs to their full calculated values
   const [calculatedValues, setCalculatedValues] = useState<{ [key: string]: CalculatedRowValue }>({});
 
   const calculateAnnexRow = (rowData: any, columns: Column[]): any => {
@@ -82,7 +82,6 @@ export const useCostSheetCalculator = (template: Template) => {
     const newCalculatedValues: { [key: string]: CalculatedRowValue } = {};
     const allRowsById: { [key: string]: Row } = {};
 
-    // First, flatten all rows into a map for easy lookup
     const flattenRows = (rows: Row[]) => {
         for (const row of rows) {
             allRowsById[row.id] = row;
@@ -93,10 +92,7 @@ export const useCostSheetCalculator = (template: Template) => {
     };
     template.sections.forEach(section => flattenRows(section.rows));
 
-
-    // Recursive function to calculate a single row and its dependencies
     const calculateRow = (row: Row): CalculatedRowValue => {
-        // If already calculated, return stored value to prevent re-computation
         if (newCalculatedValues[row.id]) {
             return newCalculatedValues[row.id];
         }
@@ -104,80 +100,73 @@ export const useCostSheetCalculator = (template: Template) => {
         let calculatedResult: CalculatedRowValue = {
             valorHistorico: row.valorHistorico || 0,
             baseDeCalculoRef: row.baseDeCalculoRef || null,
-            baseValue: 0,
+            baseTotal: 0,
+            baseValorHistorico: 0,
             coeficiente: 0,
             total: 0,
         };
 
-        // Handle children first to sum up totals
         if (row.children && row.children.length > 0) {
             calculatedResult.total = row.children
                 .map(child => calculateRow(child).total)
                 .reduce((sum, current) => sum + current, 0);
         }
 
-        // Resolve Base Value
         if (calculatedResult.baseDeCalculoRef) {
-            // Check if it's a reference to an annex
             if (annexTotals[calculatedResult.baseDeCalculoRef]) {
-                calculatedResult.baseValue = annexTotals[calculatedResult.baseDeCalculoRef];
+                calculatedResult.baseTotal = annexTotals[calculatedResult.baseDeCalculoRef];
+                calculatedResult.baseValorHistorico = annexTotals[calculatedResult.baseDeCalculoRef]; // For annexes, total and historical value are the same
             }
-            // Check if it's a reference to another row
             else if (allRowsById[calculatedResult.baseDeCalculoRef]) {
-                 // Important: Ensure the referenced row is calculated first
-                calculatedResult.baseValue = calculateRow(allRowsById[calculatedResult.baseDeCalculoRef]).total;
+                const baseRowCalculated = calculateRow(allRowsById[calculatedResult.baseDeCalculoRef]);
+                calculatedResult.baseTotal = baseRowCalculated.total;
+                calculatedResult.baseValorHistorico = baseRowCalculated.valorHistorico;
             }
         }
 
-        // Calculate Coeficiente
-        if (row.coeficienteFormula) {
-            let expression = row.coeficienteFormula
-                .replace(/valorHistorico/g, String(calculatedResult.valorHistorico))
-                .replace(/baseValue/g, String(calculatedResult.baseValue));
-            calculatedResult.coeficiente = evaluateExpression(expression);
+        // Main Calculation Logic
+        switch (row.calculationMethod) {
+            case 'Prorrateo':
+                const baseVH = calculatedResult.baseValorHistorico;
+                const baseT = calculatedResult.baseTotal;
+                const rowVH = calculatedResult.valorHistorico;
+                calculatedResult.coeficiente = baseVH > 0 ? rowVH / baseVH : 0;
+                calculatedResult.total = calculatedResult.coeficiente * baseT;
+                break;
+
+            case 'ValorFijo':
+            default:
+                if (row.totalFormula) {
+                    let expression = row.totalFormula
+                        .replace(/baseValue/g, String(calculatedResult.baseTotal))
+                        .replace(/valorHistorico/g, String(calculatedResult.valorHistorico));
+                    calculatedResult.total = evaluateExpression(expression);
+                }
+                break;
         }
 
-        // Calculate Total
-        if (row.totalFormula) {
-            let expression = row.totalFormula
-                .replace(/coeficiente/g, String(calculatedResult.coeficiente))
-                .replace(/baseValue/g, String(calculatedResult.baseValue))
-                .replace(/valorHistorico/g, String(calculatedResult.valorHistorico));
-            calculatedResult.total = evaluateExpression(expression);
-        }
-
-        // For summary rows with legacy 'formula'
         if (row.formula) {
             if (row.formula === '=sum(children)') {
-                 // Total is already calculated from children sum
+                 // Already calculated
             } else {
-                 let expression = row.formula;
-                 expression = expression.replace(/ref\('([^']+)'\)/g, (_, id) => {
-                     // Ensure dependency is calculated
-                     return String(calculateRow(allRowsById[id]).total || 0);
-                 });
-                  expression = expression.replace(/sum\(([^)]+)\)/g, (_, args) => {
-                        const sum = args.split(',').reduce((acc: number, val: string) => acc + parseFloat(val.trim() || '0'), 0);
-                        return String(sum);
-                    });
+                 let expression = row.formula.replace(/ref\('([^']+)'\)/g, (_, id) => String(calculateRow(allRowsById[id]).total || 0));
+                 expression = expression.replace(/sum\(([^)]+)\)/g, (_, args) => String(args.split(',').reduce((acc: number, val: string) => acc + parseFloat(val.trim() || '0'), 0)));
                  expression = expression.startsWith('=') ? expression.substring(1) : expression;
                  calculatedResult.total = evaluateExpression(expression);
             }
         }
 
-        // Store the result
         newCalculatedValues[row.id] = calculatedResult;
         return calculatedResult;
     };
 
-    // Trigger calculation for all top-level rows
     template.sections.forEach(section => {
         section.rows.forEach(calculateRow);
     });
 
     setCalculatedValues(newCalculatedValues);
 
-  }, [template, annexTotals]); // Rerun when the template data or annex totals change
+  }, [template, annexTotals]);
 
-  return { calculatedValues, annexTotals, calculatedAnnexes, /* other exports */ };
+  return { calculatedValues, annexTotals, calculatedAnnexes };
 };
