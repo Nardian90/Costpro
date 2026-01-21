@@ -55,7 +55,8 @@ const CostSheetRow: React.FC<RowProps> = ({ row, level, calculatedValues, path, 
   };
 
   const handleValueChange = (field: string, value: any) => {
-    const numericValue = field === 'valorHistorico' ? parseFloat(value) || 0 : value;
+    const isNumericField = field === 'valorHistorico' || field === 'value';
+    const numericValue = isNumericField ? parseFloat(value) || 0 : value;
     updateValue([...path, field], numericValue);
   };
 
@@ -80,16 +81,20 @@ const CostSheetRow: React.FC<RowProps> = ({ row, level, calculatedValues, path, 
           </div>
         </td>
 
-        {/* Valor Histórico */}
+        {/* Valor Histórico / % */}
         <td className="px-4 py-2 text-right">
-          {row.hasOwnProperty('valorHistorico') ? (
-            <Input
-              type="number"
-              className="neu-input text-right h-8"
-              value={calculated.valorHistorico}
-              onChange={(e) => handleValueChange('valorHistorico', e.target.value)}
-              onFocus={(e) => e.target.select()}
-            />
+          {row.hasOwnProperty('valorHistorico') || row.hasOwnProperty('value') ? (
+            <div className="relative">
+                <Input
+                type="number"
+                step={row.is_percent ? "0.01" : "1"}
+                className={cn("neu-input text-right h-8", row.is_percent && "pr-6")}
+                value={row.hasOwnProperty('valorHistorico') ? row.valorHistorico : row.value}
+                onChange={(e) => handleValueChange(row.hasOwnProperty('valorHistorico') ? 'valorHistorico' : 'value', e.target.value)}
+                onFocus={(e) => e.target.select()}
+                />
+                {row.is_percent && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">%</span>}
+            </div>
           ) : <span className="text-sm text-slate-400">-</span>}
         </td>
 
@@ -124,7 +129,7 @@ const CostSheetRow: React.FC<RowProps> = ({ row, level, calculatedValues, path, 
 
         {/* Coeficiente */}
         <td className="px-4 py-2 text-right tabular-nums text-slate-500 dark:text-slate-400">
-          {calculated.coeficiente > 0 ? calculated.coeficiente.toFixed(4) : <span className="text-sm text-slate-400">-</span>}
+          {calculated.coeficiente > 0 ? calculated.coeficiente.toFixed(6) : <span className="text-sm text-slate-400">-</span>}
         </td>
 
         {/* Total */}

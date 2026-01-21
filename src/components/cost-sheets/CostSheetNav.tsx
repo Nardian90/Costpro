@@ -20,17 +20,10 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
 }) => {
   // Create a combined list of all navigable sections mapped to ActionMenu format
   const navActions: Action[] = [
-    {
-        id: 'header',
-        label: 'Encabezado',
-        icon: Layout,
-        onClick: () => setActiveSection('header'),
-        active: activeSection === 'header'
-    },
     ...sections.map(s => ({
         id: s.id,
         label: s.label,
-        icon: ClipboardList,
+        icon: s.id === 'header' ? Layout : ClipboardList,
         onClick: () => setActiveSection(s.id),
         active: activeSection === s.id
     })),

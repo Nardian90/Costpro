@@ -8,15 +8,18 @@ import { useCostSheetStore } from '@/store/cost-sheet-store';
 import { useCostSheetCalculator } from '@/hooks/useCostSheetCalculator';
 import CostSheetNav from './CostSheetNav'; // <-- Restore navigation
 import CostSheetInteractiveTable from './CostSheetInteractiveTable';
-import CostSheetAnnexEditor from './CostSheetAnnexEditor'; // <-- Import the new annex editor
+import CostSheetAnnexEditor from './CostSheetAnnexEditor';
 import CostSheetHeaderEditor from './CostSheetHeaderEditor';
+import CostSheetSignatureEditor from './CostSheetSignatureEditor';
 import CostSheetHeader from './CostSheetHeader';
 import CostSheetBody from './CostSheetBody';
 import CostSheetAnnexes from './CostSheetAnnexes';
 import CostSheetSignature from './CostSheetSignature';
+import CostSheetPreview from './CostSheetPreview';
 import ActionMenu from '@/components/ui/ActionMenu';
 import { Eye, Edit, FileText, Trash2, Download, ShieldCheck } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
 
 const CostSheetView = () => {
   const { data, loadExample, reset } = useCostSheetStore();
@@ -24,7 +27,7 @@ const CostSheetView = () => {
 
   const [isEditing, setIsEditing] = useState(true);
   // This state will now control which view is active in editing mode
-  const [activeSection, setActiveSection] = useState('main'); // 'main' for the table, or an annex ID
+  const [activeSection, setActiveSection] = useState('header'); // Default to header
 
   // **Guard against missing data during hydration**
   if (!data || !data.header || !data.annexes || !data.sections) {
@@ -50,13 +53,16 @@ const CostSheetView = () => {
   // Determine if the active section is an annex
   const isAnnexActive = data.annexes.some((a: any) => a.id === activeSection);
   const previewRef = useRef(null);
+  const exportRef = useRef(null);
 
   const handleExportPDF = () => {
-    const input = previewRef.current;
+    const input = exportRef.current || previewRef.current;
     if (!input) {
-      console.error("Preview element not found!");
+      toast.error("No se pudo encontrar el elemento para exportar");
       return;
     }
+
+    const toastId = toast.loading("Generando PDF... por favor espere.");
 
     // Temporarily set the theme to light for consistent PDF output
     const originalTheme = document.documentElement.getAttribute('data-theme');
@@ -65,7 +71,8 @@ const CostSheetView = () => {
     html2canvas(input, {
       scale: 2, // Higher scale for better quality
       useCORS: true,
-      backgroundColor: '#ffffff'
+      backgroundColor: '#ffffff',
+      logging: false
     }).then(canvas => {
       // Restore the original theme
       if (originalTheme) {
@@ -96,11 +103,28 @@ const CostSheetView = () => {
 
       const fileName = data.header.name ? `Ficha de Costo - ${data.header.name}.pdf` : 'Ficha de Costo.pdf';
       pdf.save(fileName);
+      toast.success("PDF generado con éxito", { id: toastId });
+    }).catch(err => {
+        console.error("PDF Export error:", err);
+        toast.error("Error al generar el PDF", { id: toastId });
+        if (originalTheme) {
+            document.documentElement.setAttribute('data-theme', originalTheme);
+        }
     });
   };
 
   return (
     <div className="w-full max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 pb-32 pt-4">
+      {/* Hidden preview for PDF export */}
+      <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', width: '1024px', opacity: 0, pointerEvents: 'none' }}>
+          <CostSheetPreview
+            ref={exportRef}
+            data={data}
+            calculatedValues={calculatedValues}
+            calculatedAnnexes={calculatedAnnexes}
+          />
+      </div>
+
       {/* Top Banner/Title */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8 px-2">
         <div className="flex items-center gap-4">
@@ -141,59 +165,33 @@ const CostSheetView = () => {
 
       {isEditing ? (
         <div className="animate-in fade-in duration-700 space-y-6">
-          <CostSheetHeaderEditor />
           <CostSheetNav
-            sections={[{ id: 'main', label: 'Tabla Principal' }, ...data.annexes.map((a:any) => ({ id: a.id, label: `Anexo ${a.id}`}))]}
-            annexes={[]} // Keep it simple, main sections are now in sections prop
+            sections={[{ id: 'header', label: 'Encabezado' }, { id: 'main', label: 'Tabla Principal' }]}
+            annexes={data.annexes}
             activeSection={activeSection}
             setActiveSection={setActiveSection}
           />
           <div className="mt-4">
-            {isAnnexActive ? (
-              <CostSheetAnnexEditor activeAnnexId={activeSection} />
-            ) : (
+            {activeSection === 'header' && <CostSheetHeaderEditor />}
+            {activeSection === 'main' && (
               <CostSheetInteractiveTable
                 sections={data.sections}
                 calculatedValues={calculatedValues}
                 annexes={data.annexes}
               />
             )}
+            {isAnnexActive && <CostSheetAnnexEditor activeAnnexId={activeSection} />}
+            {activeSection === 'signature' && <CostSheetSignatureEditor />}
           </div>
         </div>
       ) : (
-        <div ref={previewRef} className="animate-in zoom-in-95 duration-500 max-w-5xl mx-auto">
-          <div className="neu-card !p-0 overflow-hidden border-none shadow-2xl bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
-            <div className="bg-slate-800 p-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-white">
-               <div className="font-black text-xl tracking-tighter uppercase italic">COSTPRO <span className="text-primary font-light text-sm not-italic ml-2 tracking-widest">SHEET</span></div>
-               <div className="text-xs font-bold opacity-50 uppercase tracking-widest">Documento Oficial de Costos</div>
-            </div>
-            <div className="p-4 sm:p-10 lg:p-12 space-y-10">
-                <CostSheetHeader header={data.header} />
-                <div className="space-y-4">
-                  <div className="text-xs font-black uppercase tracking-widest text-primary pb-2 border-b-2 border-primary/20">
-                    Resumen de Operación
-                  </div>
-                  <CostSheetBody
-                      sections={data.sections}
-                      calculatedValues={calculatedValues}
-                  />
-                </div>
-                <div className="space-y-4">
-                  <div className="text-xs font-black uppercase tracking-widest text-primary pb-2 border-b-2 border-primary/20">
-                    Anexos Detallados
-                  </div>
-                  <CostSheetAnnexes
-                      annexes={calculatedAnnexes}
-                  />
-                </div>
-                <div className="pt-10 border-t border-slate-100 dark:border-slate-800">
-                   <CostSheetSignature {...data.signature} />
-                </div>
-            </div>
-            <div className="bg-slate-50 dark:bg-slate-950 p-4 text-[10px] text-center text-slate-400 font-bold uppercase tracking-widest">
-              Fin del Documento • Generado automáticamente por COSTPRO v1.0
-            </div>
-          </div>
+        <div className="animate-in zoom-in-95 duration-500">
+            <CostSheetPreview
+                ref={previewRef}
+                data={data}
+                calculatedValues={calculatedValues}
+                calculatedAnnexes={calculatedAnnexes}
+            />
         </div>
       )}
     </div>
