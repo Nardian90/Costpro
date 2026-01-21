@@ -77,6 +77,7 @@ import CatalogView from '@/components/CatalogView';
 import CostSheetsPage from '@/app/cost-sheets/page';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
 import SearchBar from '@/components/ui/SearchBar';
+import ScrollToTop from '@/components/ui/ScrollToTop';
 
 export default function TerminalView() {
   const router = useRouter();
@@ -1051,65 +1052,14 @@ export default function TerminalView() {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8 items-start">
-        {/* Product Grid */}
-        <div className="flex-1 w-full space-y-6">
-          <SearchBar
-            value={searchTerm}
-            onChange={setSearchTerm}
-            placeholder="Buscar productos por nombre, SKU o categoría..."
-            showSettings={true}
-          >
-             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[10px] font-black text-muted-foreground uppercase mb-1 block">Categoría</label>
-                  <select
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="neu-input w-full"
-                  >
-                    <option value="">Todas las categorías</option>
-                    {[...new Set(products.map(p => p.category))].map(category => (
-                      <option key={category} value={category || ''}>{category}</option>
-                    ))}
-                  </select>
-                </div>
-             </div>
-          </SearchBar>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-            {filteredProducts.length > 0 ? (
-              filteredProducts.map(product => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  onClick={addToCart}
-                />
-              ))
-            ) : (
-              <div className="col-span-full py-32 text-center neu-card border-2 border-dashed border-white/5">
-                <Search className="w-16 h-16 mx-auto mb-6 opacity-5" />
-                <p className="text-xl font-black text-muted-foreground uppercase tracking-widest">Sin resultados</p>
-                {searchTerm && (
-                  <button
-                    onClick={() => setSearchTerm('')}
-                    className="mt-6 text-primary font-black uppercase text-xs hover:underline tracking-[0.2em]"
-                  >
-                    Ver Todo el Catálogo
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Cart Panel */}
+        {/* Cart Panel - First in mobile, Last in desktop */}
         <AnimatePresence>
           {showCart && (
             <motion.div
-              initial={{ x: 300, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: 300, opacity: 0 }}
-              className="w-full lg:w-[400px] shrink-0 sticky top-24 z-20"
+              initial={isMobile ? { y: -20, opacity: 0 } : { x: 300, opacity: 0 }}
+              animate={{ x: 0, y: 0, opacity: 1 }}
+              exit={isMobile ? { y: -20, opacity: 0 } : { x: 300, opacity: 0 }}
+              className="w-full lg:w-[400px] shrink-0 lg:sticky top-24 z-20 lg:order-last"
             >
               <div className="neu-card !p-0 overflow-hidden border border-primary/20 shadow-2xl bg-background/95 backdrop-blur-md">
                 <div className="bg-primary p-6 flex items-center justify-between text-white">
@@ -1170,7 +1120,7 @@ export default function TerminalView() {
                         ))}
                       </div>
 
-                      {/* Discount & Payment Info omitted for brevity but should follow same style */}
+                      {/* Discount & Payment Info */}
                       <div className="space-y-6 pt-6 border-t border-white/5">
                         <div className="flex justify-between items-center px-2">
                            <span className="text-xs font-black uppercase text-muted-foreground tracking-widest">Total a Pagar</span>
@@ -1243,6 +1193,57 @@ export default function TerminalView() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Product Grid - Second in mobile, First in desktop */}
+        <div className="flex-1 w-full space-y-6 lg:order-first">
+          <SearchBar
+            value={searchTerm}
+            onChange={setSearchTerm}
+            placeholder="Buscar productos por nombre, SKU o categoría..."
+            showSettings={true}
+          >
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] font-black text-muted-foreground uppercase mb-1 block">Categoría</label>
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="neu-input w-full"
+                  >
+                    <option value="">Todas las categorías</option>
+                    {[...new Set(products.map(p => p.category))].map(category => (
+                      <option key={category} value={category || ''}>{category}</option>
+                    ))}
+                  </select>
+                </div>
+             </div>
+          </SearchBar>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+            {filteredProducts.length > 0 ? (
+              filteredProducts.map(product => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onClick={addToCart}
+                />
+              ))
+            ) : (
+              <div className="col-span-full py-32 text-center neu-card border-2 border-dashed border-white/5">
+                <Search className="w-16 h-16 mx-auto mb-6 opacity-5" />
+                <p className="text-xl font-black text-muted-foreground uppercase tracking-widest">Sin resultados</p>
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm('')}
+                    className="mt-6 text-primary font-black uppercase text-xs hover:underline tracking-[0.2em]"
+                  >
+                    Ver Todo el Catálogo
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -2438,6 +2439,8 @@ export default function TerminalView() {
       </Dialog>
 
       {/* Rest of the modals should follow similar styling for inputs and buttons... */}
+
+      <ScrollToTop />
     </div>
   );
 }
