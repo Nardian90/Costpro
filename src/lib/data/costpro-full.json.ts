@@ -1,8 +1,8 @@
 
 const template = {
-  id: "costpro-full-v3", // Version up
-  name: "Ficha de Costo Interactiva (v3)",
-  version: "3.0.0",
+  id: "costpro-full-v4", // Version up
+  name: "Ficha de Costo Interactiva (v4)",
+  version: "4.0.0",
   metadata: {
     author: "CostPro",
   },
@@ -35,8 +35,8 @@ const template = {
               label: "Insumos (MP)",
               valorHistorico: 150000.00,
               baseDeCalculoRef: "I",
-              coeficienteFormula: "valorHistorico / baseValue",
-              totalFormula: "coeficiente * baseValue",
+              calculationMethod: "ValorFijo",
+              totalFormula: "baseValue",
               helpText: "Materias primas y materiales fundamentales detallados en el Anexo I."
             },
             {
@@ -45,8 +45,8 @@ const template = {
               label: "Combustibles y lubricantes",
               valorHistorico: 15000.00,
               baseDeCalculoRef: "I",
-              coeficienteFormula: "valorHistorico / baseValue",
-              totalFormula: "coeficiente * baseValue",
+              calculationMethod: "ValorFijo",
+              totalFormula: "baseValue",
               helpText: "Gastos de combustibles y lubricantes asociados a la producción."
             }
           ]
@@ -71,8 +71,8 @@ const template = {
               label: "Salarios de Obreros",
               valorHistorico: 437435.00, // Placeholder
               baseDeCalculoRef: "II",
-              coeficienteFormula: "valorHistorico / baseValue",
-              totalFormula: "coeficiente * baseValue",
+              calculationMethod: "ValorFijo",
+              totalFormula: "baseValue",
               helpText: "Salarios directos calculados según el desglose del Anexo II."
             }
           ]
@@ -97,8 +97,8 @@ const template = {
               label: "Depreciación de Equipos",
               valorHistorico: 27000.00, // Placeholder
               baseDeCalculoRef: "III",
-              coeficienteFormula: "valorHistorico / baseValue",
-              totalFormula: "coeficiente * baseValue",
+              calculationMethod: "ValorFijo",
+              totalFormula: "baseValue",
               helpText: "Depreciación de equipos productivos, detallado en Anexo III."
             },
             {
@@ -107,8 +107,8 @@ const template = {
               label: "Otros Gastos Varios",
               valorHistorico: 27127.47, // Placeholder
               baseDeCalculoRef: "IV",
-              coeficienteFormula: "valorHistorico / baseValue",
-              totalFormula: "coeficiente * baseValue",
+              calculationMethod: "ValorFijo",
+              totalFormula: "baseValue",
               helpText: "Otros gastos como mantenimiento y EPP, detallado en Anexo IV."
             }
           ]
@@ -126,7 +126,7 @@ const template = {
           label: "Gastos Asociados a la Producción",
           valorHistorico: 0.00,
           baseDeCalculoRef: null,
-          coeficienteFormula: null,
+          calculationMethod: "ValorFijo",
           totalFormula: "valorHistorico",
           helpText: "Gastos indirectos de producción que no se clasifican en las categorías anteriores."
         }
@@ -149,10 +149,9 @@ const template = {
           id: "6",
           code: "gtos_grales_admon_total",
           label: "Gtos. Grales y de Admón.",
-          valorHistorico: 0.00,
-          baseDeCalculoRef: "2", // Example: Salario Directo
-          coeficienteFormula: "valorHistorico / baseValue",
-          totalFormula: "coeficiente * baseValue",
+          valorHistorico: 50000.00,
+          baseDeCalculoRef: "2", // Example: Salario Directo Total
+          calculationMethod: "Prorrateo", // <-- Key change
           helpText: "Gastos generales y de administración, calculados como un porciento de una base seleccionada (ej. Salario Directo)."
         },
       ],
@@ -161,21 +160,21 @@ const template = {
       id: "s7",
       label: "Gtos. de Distribución y Venta",
        rows: [
-        { id: "7", code: "gtos_dist_venta_total", label: "Gtos. de Distribución y Venta", valorHistorico: 0.00, baseDeCalculoRef: null, totalFormula: "valorHistorico", helpText: "Gastos relacionados con la distribución y venta del producto." },
+        { id: "7", code: "gtos_dist_venta_total", label: "Gtos. de Distribución y Venta", valorHistorico: 0.00, baseDeCalculoRef: null, calculationMethod: "ValorFijo", totalFormula: "valorHistorico", helpText: "Gastos relacionados con la distribución y venta del producto." },
       ],
     },
     {
       id: "s8",
       label: "Gastos Financieros",
       rows: [
-        { id: "8", code: "gastos_financieros_total", label: "Gastos Financieros", valorHistorico: 0.00, baseDeCalculoRef: null, totalFormula: "valorHistorico", helpText: "Gastos por concepto de financiamiento." },
+        { id: "8", code: "gastos_financieros_total", label: "Gastos Financieros", valorHistorico: 0.00, baseDeCalculoRef: null, calculationMethod: "ValorFijo", totalFormula: "valorHistorico", helpText: "Gastos por concepto de financiamiento." },
       ],
     },
     {
       id: "s9",
       label: "Gasto Financ. OSDE",
       rows: [
-         { id: "9", code: "gasto_financ_osde", label: "Gasto Financ. OSDE", valorHistorico: 0.00, baseDeCalculoRef: null, totalFormula: "valorHistorico", helpText: "Gastos financieros específicos de la OSDE." },
+         { id: "9", code: "gasto_financ_osde", label: "Gasto Financ. OSDE", valorHistorico: 0.00, baseDeCalculoRef: null, calculationMethod: "ValorFijo", totalFormula: "valorHistorico", helpText: "Gastos financieros específicos de la OSDE." },
       ],
     },
     // Section 10: Gastos Tributarios
@@ -190,8 +189,8 @@ const template = {
           formula: "=sum(children)",
           helpText: "Suma de todos los gastos tributarios aplicables.",
           children: [
-            { id: "10.1", code: "gastos_tributarios_seg_social", label: "De ello: -Contrib. Seg. Social (14%)", valorHistorico: 61070.93, baseDeCalculoRef: null, totalFormula: "valorHistorico", helpText: "Contribución a la seguridad social (14% del salario)." },
-            { id: "10.2", code: "gastos_tributarios_fuerza_trabajo", label: "-Imp. Fuerza Trabajo (5%)", valorHistorico: 21811.05, baseDeCalculoRef: null, totalFormula: "valorHistorico", helpText: "Impuesto sobre la utilización de la fuerza de trabajo (5% del salario)." }
+            { id: "10.1", code: "gastos_tributarios_seg_social", label: "De ello: -Contrib. Seg. Social (14%)", valorHistorico: 61070.93, baseDeCalculoRef: null, calculationMethod: "ValorFijo", totalFormula: "valorHistorico", helpText: "Contribución a la seguridad social (14% del salario)." },
+            { id: "10.2", code: "gastos_tributarios_fuerza_trabajo", label: "-Imp. Fuerza Trabajo (5%)", valorHistorico: 21811.05, baseDeCalculoRef: null, calculationMethod: "ValorFijo", totalFormula: "valorHistorico", helpText: "Impuesto sobre la utilización de la fuerza de trabajo (5% del salario)." }
           ]
         },
       ],
