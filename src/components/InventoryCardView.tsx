@@ -1,11 +1,12 @@
 // src/components/InventoryCardView.tsx
 'use client';
 
-import React, { useRef, useEffect, useCallback } from 'react';
+import React, { useRef, useCallback } from 'react';
 import type { Product } from '@/types';
-import { getProductImageUrl, cn } from '@/lib/utils';
-import { Package, Edit, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Edit, Loader2, Package } from 'lucide-react';
 import { motion } from 'framer-motion';
+import ProductImage from '@/components/ui/ProductImage';
 
 interface InventoryCardViewProps {
     products: Product[];
@@ -24,18 +25,15 @@ const InventoryProductCard = ({ product }: { product: Product }) => {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
             transition={{ duration: 0.2 }}
-            className="neu-card border border-white/5 overflow-hidden flex flex-col"
+            className="rounded-xl border border-border bg-card overflow-hidden flex flex-col shadow-sm"
         >
-            <div className="neu-raised-sm h-40 flex items-center justify-center overflow-hidden bg-background/50 relative">
-                {product.image_url ? (
-                    <img
-                        src={getProductImageUrl(product.image_url)}
-                        alt={product.name}
-                        className="w-full h-full object-cover"
-                    />
-                ) : (
-                    <Package className="w-12 h-12 text-muted-foreground opacity-20" />
-                )}
+            <div className="h-40 flex items-center justify-center overflow-hidden bg-muted/20 relative">
+                <ProductImage
+                    src={product.image_url}
+                    name={product.name}
+                    width={160}
+                    height={160}
+                />
                 <div
                     className={cn(
                         "absolute top-2 right-2 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border",

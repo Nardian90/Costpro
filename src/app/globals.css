@@ -681,28 +681,28 @@
 
 
 /* ============================================
-   NEUMO THEME - MINIMALISTA
+   NEUMO THEME - ULTRA PERFORMANCE (FLAT)
    ============================================ */
 .neumo {
-  --radius: 0.8rem;
+  --radius: 0.5rem;
 
-  /* Colores Base Light */
-  --background: #f0f2f5;
-  --foreground: #4a5568;
-  --card: #f0f2f5;
-  --card-foreground: #4a5568;
+  /* Colores Base Light - Flat */
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
 
-  /* Sombras Neumórficas Sutíles */
-  --shadow-light: #ffffff;
-  --shadow-dark: #d1d5db;
-  --neumorphic-shadow-out: 3px 3px 6px var(--shadow-dark), -3px -3px 6px var(--shadow-light);
-  --neumorphic-shadow-in: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
-  --neumorphic-shadow-out-sm: 2px 2px 4px var(--shadow-dark), -2px -2px 4px var(--shadow-light);
-  --neumorphic-shadow-in-sm: inset 2px 2px 4px var(--shadow-dark), inset -2px -2px 4px var(--shadow-light);
-  --neumorphic-shadow-hover: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light);
+  /* Eliminar Sombras Neumórficas (Flat Design) */
+  --shadow-light: transparent;
+  --shadow-dark: transparent;
+  --neumorphic-shadow-out: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --neumorphic-shadow-in: none;
+  --neumorphic-shadow-out-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --neumorphic-shadow-in-sm: none;
+  --neumorphic-shadow-hover: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 
   /* Colores Semánticos */
-  --primary: #5a67d8;
+  --primary: #2563eb;
   --primary-foreground: #ffffff;
   --secondary: #a0aec0;
   --secondary-foreground: #1a202c;
@@ -717,43 +717,51 @@
   --popover: #f0f2f5;
   --popover-foreground: #4a5568;
 
-  /* Sidebar */
-  --sidebar: #e9edf1;
-  --sidebar-foreground: #4a5568;
-  --sidebar-primary: #5a67d8;
+  /* Sidebar - Flat */
+  --sidebar: #f1f5f9;
+  --sidebar-foreground: #0f172a;
+  --sidebar-primary: #2563eb;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #dde2e7;
-  --sidebar-accent-foreground: #4a5568;
-  --sidebar-border: #d8dde3;
-  --sidebar-ring: rgba(90, 103, 216, 0.4);
+  --sidebar-accent: #e2e8f0;
+  --sidebar-accent-foreground: #0f172a;
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: rgba(37, 99, 235, 0.4);
 
   @media (prefers-color-scheme: dark) {
-    --background: #2d3748;
-    --foreground: #e2e8f0;
-    --card: #2d3748;
-    --card-foreground: #e2e8f0;
-    --shadow-light: #3a475a;
-    --shadow-dark: #202936;
-    --primary: #7f9cf5;
-    --primary-foreground: #1a202c;
-    --secondary: #718096;
-    --secondary-foreground: #e2e8f0;
-    --muted: #4a5568;
-    --muted-foreground: #a0aec0;
-    --accent: #3c4d6b;
-    --accent-foreground: #c3dafe;
-    --border: #4a5568;
-    --input: #2d3748;
-    --ring: rgba(127, 156, 245, 0.5);
-    --popover: #2d3748;
-    --popover-foreground: #e2e8f0;
-    --sidebar: #283141;
-    --sidebar-foreground: #e2e8f0;
-    --sidebar-primary: #7f9cf5;
-    --sidebar-primary-foreground: #1a202c;
-    --sidebar-accent: #333d4f;
-    --sidebar-accent-foreground: #e2e8f0;
-    --sidebar-border: #3a475a;
-    --sidebar-ring: rgba(127, 156, 245, 0.4);
+    --background: #020617;
+    --foreground: #f8fafc;
+    --card: #0f172a;
+    --card-foreground: #f8fafc;
+    --shadow-light: transparent;
+    --shadow-dark: transparent;
+    --primary: #3b82f6;
+    --primary-foreground: #ffffff;
+    --secondary: #64748b;
+    --secondary-foreground: #f8fafc;
+    --muted: #1e293b;
+    --muted-foreground: #94a3b8;
+    --accent: #1e293b;
+    --accent-foreground: #3b82f6;
+    --border: #1e293b;
+    --input: #020617;
+    --ring: rgba(59, 130, 246, 0.5);
+    --popover: #0f172a;
+    --popover-foreground: #f8fafc;
+    --sidebar: #020617;
+    --sidebar-foreground: #f8fafc;
+    --sidebar-primary: #3b82f6;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #0f172a;
+    --sidebar-accent-foreground: #f8fafc;
+    --sidebar-border: #1e293b;
+    --sidebar-ring: rgba(59, 130, 246, 0.4);
   }
+}
+
+/* Reducción de animaciones para Neumo Ultra-Performance */
+.neumo * {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  backdrop-filter: none !important;
 }
