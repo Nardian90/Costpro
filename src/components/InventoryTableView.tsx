@@ -3,9 +3,9 @@
 
 import React, { useRef, useCallback } from 'react';
 import type { Product } from '@/types';
-import { getProductImageUrl, cn } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { Package, Edit, Loader2 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import ProductImage from '@/components/ui/ProductImage';
 
 interface InventoryTableViewProps {
     products: Product[];
@@ -20,17 +20,12 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product }>((
         <tr ref={ref} className="border-b last:border-0 hover:bg-accent/5 transition-colors">
             <td className="p-4">
                 <div className="flex items-center gap-3">
-                    <div className="neu-raised-sm w-12 h-12 flex items-center justify-center overflow-hidden bg-muted/30 shrink-0">
-                        {product.image_url ? (
-                            <img
-                                src={getProductImageUrl(product.image_url)}
-                                alt={product.name}
-                                className="w-full h-full object-cover"
-                            />
-                        ) : (
-                            <Package className="w-6 h-6 text-muted-foreground" />
-                        )}
-                    </div>
+                    <ProductImage
+                        src={product.image_url}
+                        name={product.name}
+                        width={40}
+                        height={40}
+                    />
                     <div>
                         <div className="font-bold text-sm">{product.name}</div>
                         <div className="text-[10px] font-bold text-muted-foreground uppercase">{product.category}</div>

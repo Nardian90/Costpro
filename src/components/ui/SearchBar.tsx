@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Search, Settings2, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { useTheme } from 'next-themes';
 
 interface SearchBarProps {
   value: string;
@@ -16,7 +17,7 @@ interface SearchBarProps {
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({
-  value,
+  value: externalValue,
   onChange,
   onClear,
   placeholder = 'Buscar...',
@@ -24,12 +25,39 @@ const SearchBar: React.FC<SearchBarProps> = ({
   children,
   showSettings = true,
 }) => {
+  const { theme } = useTheme();
+  const [localValue, setLocalValue] = useState(externalValue);
   const [isExpanded, setIsExpanded] = useState(false);
+  const timeoutRef = useRef<any>(null);
+
+  // Sync local value with external value (e.g. if cleared by parent)
+  useEffect(() => {
+    setLocalValue(externalValue);
+  }, [externalValue]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setLocalValue(newValue);
+
+    // Manual debounce (300ms) for high performance
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      onChange(newValue);
+    }, 300);
+  };
 
   const handleClear = () => {
+    setLocalValue('');
     onChange('');
     if (onClear) onClear();
   };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
   return (
     <div className={cn('w-full space-y-3', className)}>
@@ -40,17 +68,20 @@ const SearchBar: React.FC<SearchBarProps> = ({
 
         <input
           type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
+          value={localValue}
+          onChange={handleChange}
           placeholder={placeholder}
-          className="neu-input w-full pl-12 pr-24 py-3.5 text-base sm:text-lg transition-all"
+          className={cn(
+            "w-full pl-12 pr-24 py-3.5 text-base sm:text-lg transition-all outline-none rounded-xl border border-border bg-background",
+            theme !== 'neumo' ? "neu-input" : "focus:border-primary focus:ring-1 focus:ring-primary/20 shadow-sm"
+          )}
         />
 
         <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-          {value && (
+          {localValue && (
             <button
               onClick={handleClear}
-              className="p-2 text-muted-foreground hover:text-danger transition-colors rounded-full hover:bg-black/5 dark:hover:bg-white/5"
+              className="p-2 text-muted-foreground hover:text-destructive transition-colors rounded-full hover:bg-muted"
               aria-label="Limpiar búsqueda"
             >
               <X className="w-5 h-5" />
@@ -61,10 +92,10 @@ const SearchBar: React.FC<SearchBarProps> = ({
             <button
               onClick={() => setIsExpanded(!isExpanded)}
               className={cn(
-                "p-2.5 transition-all rounded-xl",
+                "p-2.5 transition-all rounded-xl border",
                 isExpanded
-                  ? "neu-inset-sm text-primary"
-                  : "text-muted-foreground hover:text-primary hover:neu-raised-sm"
+                  ? "bg-primary/5 text-primary border-primary/20"
+                  : "text-muted-foreground hover:text-primary border-transparent hover:bg-muted"
               )}
               aria-label="Filtros avanzados"
             >
@@ -77,15 +108,15 @@ const SearchBar: React.FC<SearchBarProps> = ({
       <AnimatePresence>
         {isExpanded && children && (
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            initial={theme === 'neumo' ? { opacity: 0 } : { height: 0, opacity: 0 }}
+            animate={theme === 'neumo' ? { opacity: 1 } : { height: 'auto', opacity: 1 }}
+            exit={theme === 'neumo' ? { opacity: 0 } : { height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="neu-card !p-4 border-primary/10 bg-background/50 backdrop-blur-sm">
-              <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
-                <Settings2 className="w-3 h-3" />
+            <div className="p-6 rounded-xl border border-border bg-card shadow-sm">
+              <div className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
+                <Settings2 className="w-4 h-4" />
                 Filtros Avanzados
               </div>
               {children}
