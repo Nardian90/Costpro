@@ -11,7 +11,7 @@ const template = {
     name: "HORMIGON HIDRAULICO DE F'C=25 MPa",
     date: "2024-05-28",
     unit: "m3",
-    quantity: 1.0,
+    quantity: 10.0,
     currency: "CUP",
     category: "PRODUCCION PRINCIPAL",
     type: "PRODUCCION",
@@ -44,9 +44,9 @@ const template = {
               code: "gasto_material_combustibles",
               label: "Combustibles y lubricantes",
               valorHistorico: 15000.00,
-              baseDeCalculoRef: "I",
+              baseDeCalculoRef: null,
               calculationMethod: "ValorFijo",
-              totalFormula: "baseValue",
+              totalFormula: "valorHistorico",
               helpText: "Gastos de combustibles y lubricantes asociados a la producción."
             }
           ]
@@ -215,9 +215,9 @@ const template = {
         label: "RESULTADO",
         rows: [
             { id: "13", code: "resultado_utilidad", label: "Utilidad", value: 0.20, is_percent: true, base_ref: '12', helpText: "Margen de utilidad deseado, como porciento del total de costos y gastos." },
-            { id: "13.1", code: "resultado_precio_antes_imp", label: "Precio antes de Impuesto", formula: "=ref('12') * (1 + ref('13'))", helpText: "Precio de venta antes de aplicar impuestos sobre las ventas." },
+            { id: "13.1", code: "resultado_precio_antes_imp", label: "Precio antes de Impuesto", formula: "=sum(ref('12'), ref('13'))", helpText: "Precio de venta antes de aplicar impuestos sobre las ventas." },
             { id: "13.2", code: "resultado_impuesto_ventas", label: "Imp s/Ventas y Serv", value: 0.10, is_percent: true, base_ref: '13.1', helpText: "Impuesto sobre ventas y servicios, como porciento del precio antes de impuestos." },
-            { id: "14", code: "resultado_final", label: "Precio o Tarifa Final", formula: "=ref('13.1') * (1 + ref('13.2'))", helpText: "Precio final de venta al público." }
+            { id: "14", code: "resultado_final", label: "Precio o Tarifa Final", formula: "=sum(ref('13.1'), ref('13.2'))", helpText: "Precio final de venta al público." }
         ]
     },
     {
