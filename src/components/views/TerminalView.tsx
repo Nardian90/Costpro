@@ -1,56 +1,36 @@
 'use client';
 
-import { cn } from "@/lib/utils";
 import { useState, useEffect, useMemo, useRef, useDeferredValue, useCallback } from 'react';
 import { useAuthStore, useCartStore, useUIStore, useCanAccess } from '@/store';
 import { useRouter } from 'next/navigation';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { supabase } from '@/lib/supabaseClient';
 import { getSupabaseUrl, getProductImageUrl, getStoreLogoUrl } from '@/lib/utils';
-import ProductCard from '@/components/ProductCard';
+import { toast } from 'sonner';
 import {
-  Package,
-  ShoppingCart,
-  BarChart3,
-  Settings,
-  LogOut,
-  Menu,
-  X,
-  Search,
-  Plus,
-  Minus,
-  Trash2,
-  DollarSign,
-  CreditCard,
-  Check,
-  Loader2,
-  Download,
-  Upload,
-  Filter,
-  Bell,
-  TrendingUp,
-  Eye,
-  Edit,
-  ArrowUpRight,
-  ArrowDownRight,
-  ArrowUpDown,
-  Sun,
-  Moon,
-  Warehouse,
-  Receipt,
-  Users,
-  Building,
-  History,
-  Target,
-  Shield,
-  ClipboardList,
-  FileText,
-  Calendar,
-  Layers,
+  BarChart3, ShoppingCart, Package, Warehouse, Receipt,
+  ClipboardList, FileText, History, Shield, DollarSign,
+  Users, Building, Settings
 } from 'lucide-react';
-import { useTheme } from 'next-themes';
-import { motion, AnimatePresence } from 'framer-motion';
-import CostProLogo from '@/components/CostProLogo';
+
+// Sub-components
+import TerminalLayout from './terminal/TerminalLayout';
+import DashboardView from './terminal/DashboardView';
+import POSView from './terminal/POSView';
+import SalesHistoryView from './terminal/SalesHistoryView';
+import StockHistoryView from './terminal/StockHistoryView';
+import AuditLogsView from './terminal/AuditLogsView';
+import CashClosureView from './terminal/CashClosureView';
+import UsersManagementView from './terminal/UsersManagementView';
+import StoresManagementView from './terminal/StoresManagementView';
+import SettingsView from './terminal/SettingsView';
+
+// Original shared components
+import InventoryView from '@/components/InventoryView';
+import InventoryCountView from '@/components/InventoryCountView';
+import CatalogView from '@/components/CatalogView';
+import CostSheetsPage from '@/app/cost-sheets/page';
+
+// UI components
 import {
   Dialog,
   DialogContent,
@@ -58,17 +38,11 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { X, Calendar, CreditCard, Shield as ShieldIcon, Edit, Trash2, Building as BuildingIcon, Loader2, Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import type {
-  UserRole,
-  Product,
-  Transaction,
-  PaymentMethod,
-  DiscountType,
-  DashboardKPIs,
-  SalesSummary,
-  AuditLog,
-  Store,
-  Profile,
+  Product, Transaction, UserRole, Profile, Store,
+  AuditLog, DashboardKPIs, SalesSummary, PaymentMethod
 } from '@/types';
 import { toast } from 'sonner';
 import InventoryView from '@/components/InventoryView';
@@ -84,15 +58,9 @@ export default function TerminalView() {
   const router = useRouter();
   const { user, loading } = useAuthStore();
   const logout = useAuthStore((state) => state.logout);
-  const { setTheme, theme } = useTheme();
   const {
-    sidebarOpen,
-    toggleSidebar,
-    currentView,
-    setCurrentView,
-    notifications,
-    setNotifications,
-    setSidebarOpen,
+    currentView, setCurrentView,
+    notifications, setNotifications
   } = useUIStore();
   const { items, addItem, removeItem, updateQuantity, clearCart, setDiscount, getTotal, getSubtotal, getItemCount, discount } = useCartStore();
   const isMobile = useIsMobile();
@@ -105,6 +73,7 @@ export default function TerminalView() {
   const [showSidebarUser, setShowSidebarUser] = useState(true);
   const [isSidebarScrollable, setIsSidebarScrollable] = useState(false);
 
+  // State
   const [products, setProducts] = useState<(Product & { product_variants?: any[] })[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [users, setUsers] = useState<Profile[]>([]);
@@ -113,321 +82,66 @@ export default function TerminalView() {
   const [movements, setMovements] = useState<any[]>([]);
   const [cashClosures, setCashClosures] = useState<any[]>([]);
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 
   const [dashboardKPIs, setDashboardKPIs] = useState<DashboardKPIs>({
-    gross_sales: 0,
-    cost_of_goods: 0,
-    profit: 0,
+    gross_sales: 0, cost_of_goods: 0, profit: 0,
   });
 
   const [salesSummary, setSalesSummary] = useState<SalesSummary>({
-    total_billed: 0,
-    transaction_count: 0,
-    average_ticket: 0,
-    total_cash: 0,
-    total_transfer: 0,
+    total_billed: 0, transaction_count: 0, average_ticket: 0,
+    total_cash: 0, total_transfer: 0,
   });
 
-  // Sidebar scroll handling
-  const handleSidebarScroll = useCallback(() => {
-    if (!navRef.current) return;
-    const { scrollTop, scrollHeight, clientHeight } = navRef.current;
-    const scrollable = scrollHeight > clientHeight + 10; // Small buffer
-    setIsSidebarScrollable(scrollable);
+  // Modal states
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [transactionItems, setTransactionItems] = useState<any[]>([]);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+  const [isEditStoreModalOpen, setIsEditStoreModalOpen] = useState(false);
+  const [editingStore, setEditingStore] = useState<Store | null>(null);
+  const [isCreateStoreModalOpen, setIsCreateStoreModalOpen] = useState(false);
+  const [newStore, setNewStore] = useState({ name: '', address: '' });
+  const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<Profile | null>(null);
+  const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
+  const [newUser, setNewUser] = useState({ full_name: '', email: '', password: '', role: 'clerk' as UserRole });
+  const [isDeleteStoreModalOpen, setIsDeleteStoreModalOpen] = useState(false);
+  const [deletingStore, setDeletingStore] = useState<Store | null>(null);
+  const [userStoreAccess, setUserStoreAccess] = useState<{store_id: string, roles: UserRole[]}[]>([]);
 
-    if (!scrollable) {
-      setShowSidebarLogo(true);
-      setShowSidebarUser(true);
-      return;
-    }
-
-    // Logo visibility: hide if scroll > 20, show only if scroll is 0
-    if (scrollTop > 20) {
-      setShowSidebarLogo(false);
-    } else if (scrollTop <= 0) {
-      setShowSidebarLogo(true);
-    }
-
-    // User Info visibility: show only if at the very bottom
-    const isAtBottom = Math.ceil(scrollTop + clientHeight) >= scrollHeight - 10;
-    setShowSidebarUser(isAtBottom);
-  }, []);
-
-  const navigationItems = useMemo(() => {
-    if (!user) return [];
-    return getNavigationItems();
-  }, [user?.roles, user?.role]);
-
+  // Auth check
   useEffect(() => {
-    const nav = navRef.current;
-    if (nav) {
-      nav.addEventListener('scroll', handleSidebarScroll);
-      // Initial check
-      handleSidebarScroll();
-
-      // Check on window resize
-      window.addEventListener('resize', handleSidebarScroll);
-
-      // Create a MutationObserver to watch for content changes in the nav
-      const observer = new MutationObserver(handleSidebarScroll);
-      observer.observe(nav, { childList: true, subtree: true });
-
-      return () => {
-        nav.removeEventListener('scroll', handleSidebarScroll);
-        window.removeEventListener('resize', handleSidebarScroll);
-        observer.disconnect();
-      };
+    if (!loading && !user) {
+      router.push('/login');
     }
-  }, [handleSidebarScroll, navigationItems]);
+  }, [user, loading, router]);
 
-  // Initial data fetch - only essential data for the default view (dashboard/pos)
-  useEffect(() => {
-    if (user) {
-      fetchDashboardData();
-      fetchProducts();
+  // Data fetching
+  const fetchProducts = useCallback(async () => {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase.rpc('get_products_for_pos', {
+        p_store_id: user.store_id,
+        p_search_term: '',
+        p_category: ''
+      });
+      if (error) throw error;
+      setProducts(data?.map((item: any) => ({
+        ...item,
+        public_image_url: getSupabaseUrl('product-images', item.image_url),
+      })) || []);
+    } catch (error) {
+      console.error('Error fetching products:', error);
     }
   }, [user]);
 
-  // Lazy load data for other views only when they are requested
-  useEffect(() => {
-    if (!user) return;
-
-    switch (currentView) {
-      case 'sales':
-        if (transactions.length === 0) fetchTransactions();
-        break;
-      case 'users':
-        if (users.length === 0) fetchUsers();
-        break;
-      case 'stores':
-        if (stores.length === 0) fetchStores();
-        break;
-      case 'audit':
-        if (auditLogs.length === 0) fetchAuditLogs();
-        break;
-      case 'history':
-        if (movements.length === 0) fetchMovements();
-        break;
-      case 'cash':
-        if (cashClosures.length === 0) {
-          fetchCashClosures();
-        }
-        break;
-    }
-  }, [user, currentView]);
-
-  const fetchProducts = async () => {
+  const fetchDashboardData = useCallback(async () => {
     if (!user) return;
     try {
-      // Use the unified get_products_for_pos RPC for POS data fetching.
-      // This centralizes stock calculation and multi-store isolation in the backend.
-      const { data, error } = await supabase.rpc('get_products_for_pos', {
-        p_store_id: user.store_id,
-        p_search_term: '', // We filter client-side for immediate responsiveness in POS
-        p_category: ''
-      });
-
+      const { data, error } = await supabase.rpc('get_dashboard_kpis', user.role === 'admin' ? {} : { p_store_id: user.store_id });
       if (error) throw error;
-
-      const mappedProducts: (Product & { product_variants?: any[] })[] = data?.map((item: any) => {
-        return {
-          ...item,
-          public_image_url: getSupabaseUrl('product-images', item.image_url),
-        };
-      }) || [];
-
-      setProducts(mappedProducts);
-    } catch (error) {
-      console.error('Error fetching products:', error);
-      toast.error('Error al cargar productos del TPV');
-    }
-  };
-
-  const fetchTransactions = async () => {
-    if (!user) return;
-    try {
-      let query = supabase
-        .from('transactions')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (user.role !== 'admin' && user.store_id) {
-        query = query.eq('store_id', user.store_id);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      setTransactions(data || []);
-    } catch (error) {
-      console.error('Error fetching transactions:', error);
-    }
-  };
-
-  const fetchUsers = async () => {
-    if (!user || (user.role !== 'admin' && user.role !== 'encargado')) return;
-    try {
-      let query = supabase.from('profiles').select('*');
-
-      if (user.role === 'encargado') {
-        query = query.eq('created_by', user.id);
-      }
-
-      const { data, error } = await query.order('full_name');
-
-      if (error) throw error;
-      setUsers(data || []);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-    }
-  };
-
-  const fetchStores = async () => {
-    if (!user || (user.role !== 'admin' && user.role !== 'encargado')) return;
-    try {
-      let query;
-      if (user.role === 'admin') {
-        query = supabase.from('stores').select('*').order('name');
-      } else {
-        // Fetch stores the user has access to
-        query = supabase
-          .from('stores')
-          .select(`
-            *,
-            user_store_access!inner(user_id)
-          `)
-          .eq('user_store_access.user_id', user.id)
-          .order('name');
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      setStores(data || []);
-    } catch (error) {
-      console.error('Error fetching stores:', error);
-    }
-  };
-
-  const fetchAuditLogs = async () => {
-    if (!user || (user.role !== 'admin' && user.role !== 'manager')) return;
-    try {
-      const { data, error } = await supabase
-        .from('audit_logs')
-        .select(`
-          *,
-          profile:profiles (full_name)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(100);
-
-      if (error) throw error;
-      setAuditLogs(data || []);
-    } catch (error) {
-      console.error('Error fetching audit logs:', error);
-    }
-  };
-
-  const fetchMovements = async () => {
-    if (!user) return;
-    try {
-      let query = supabase
-        .from('stock_movements')
-        .select(`
-          *,
-          product:products (name, sku)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(100);
-
-      if (user.role !== 'admin' && user.store_id) {
-        query = query.eq('store_id', user.store_id);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      setMovements(data || []);
-    } catch (error) {
-      console.error('Error fetching movements:', error);
-    }
-  };
-
-  const fetchCashClosures = async () => {
-    if (!user) return;
-    try {
-      let query = supabase
-        .from('cash_closures')
-        .select(`
-          *,
-          profile:profiles (full_name)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (user.role !== 'admin' && user.store_id) {
-        query = query.eq('store_id', user.store_id);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      setCashClosures(data || []);
-    } catch (error) {
-      console.error('Error fetching cash closures:', error);
-    }
-  };
-
-
-  const handleUpdateStoreLogo = async (file: File) => {
-    if (!editingStore) return;
-    if (file.size > 1 * 1024 * 1024) { // 1MB limit
-      toast.error('El logo no debe superar 1MB');
-      return;
-    }
-
-    const toastId = toast.loading('Subiendo logo...');
-    try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${editingStore.id}-${Date.now()}.${fileExt}`;
-
-      // Upload to 'store-logos' bucket
-      const { error: uploadError } = await supabase.storage
-        .from('store-logos')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: true, // Overwrite if exists for the same store
-        });
-
-      if (uploadError) throw uploadError;
-
-      // Update the store's logo_url
-      const { error: updateError } = await supabase
-        .from('stores')
-        .update({ logo_url: fileName })
-        .eq('id', editingStore.id);
-
-      if (updateError) throw updateError;
-
-      toast.success('Logo actualizado', { id: toastId });
-      setEditingStore({ ...editingStore, logo_url: fileName });
-      fetchStores(); // Refresh stores list
-    } catch (error: any) {
-      toast.error(error.message || 'Error al subir el logo', { id: toastId });
-    }
-  };
-
-  const fetchDashboardData = async () => {
-    if (!user) return;
-
-    try {
-      let query = supabase.rpc('get_dashboard_kpis', {});
-
-      if (user.role !== 'admin' && user.store_id) {
-        query = supabase.rpc('get_dashboard_kpis', { p_store_id: user.store_id });
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-
       if (data && data.length > 0) {
         const kpis = data[0];
         setDashboardKPIs({
@@ -446,514 +160,149 @@ export default function TerminalView() {
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     }
-  };
-  // States for views
-  const [searchTerm, setSearchTerm] = useState('');
-  const deferredSearchTerm = useDeferredValue(searchTerm);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [isEditStoreModalOpen, setIsEditStoreModalOpen] = useState(false);
-  const [editingStore, setEditingStore] = useState<Store | null>(null);
-  const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<Profile | null>(null);
-  const [userStoreAccess, setUserStoreAccess] = useState<{store_id: string, roles: UserRole[]}[]>([]);
-  const [isDeleteStoreModalOpen, setIsDeleteStoreModalOpen] = useState(false);
-  const [deletingStore, setDeletingStore] = useState<Store | null>(null);
-  const [isCreateStoreModalOpen, setIsCreateStoreModalOpen] = useState(false);
-  const [newStore, setNewStore] = useState({ name: '', address: '' });
-  const [newStoreLogo, setNewStoreLogo] = useState<File | null>(null);
-  const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
-  const [newUser, setNewUser] = useState({ full_name: '', email: '', password: '', role: 'clerk' });
+  }, [user]);
 
-  const [localDiscount, setLocalDiscount] = useState({ type: 'fixed' as DiscountType, value: 0 });
-  const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>('cash');
-
-  // Transaction details state
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
-  const [transactionItems, setTransactionItems] = useState<any[]>([]);
-  const [loadingDetails, setLoadingDetails] = useState(false);
-
-  // Filter states for refined views
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('');
-
-  // Check authentication
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
+    if (user) {
+      fetchDashboardData();
+      fetchProducts();
     }
-  }, [user, loading, router]);
+  }, [user, fetchDashboardData, fetchProducts]);
 
-  // Sync local discount with store
+  // Lazy loading views
   useEffect(() => {
-    setDiscount(localDiscount.value > 0 ? localDiscount : null);
-  }, [localDiscount, setDiscount]);
-
-  const filteredProducts = useMemo(() => {
-    const lowerSearch = deferredSearchTerm.toLowerCase();
-    return products.filter(p =>
-      p.name.toLowerCase().includes(lowerSearch) ||
-      (p.sku && p.sku.toLowerCase().includes(lowerSearch)) ||
-      (p.category && p.category.toLowerCase().includes(lowerSearch))
-    );
-  }, [products, deferredSearchTerm]);
-
-  const filteredMovements = useMemo(() => {
-    return movements.filter(mov => {
-      const matchesSearch = !searchTerm ||
-        mov.product?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        mov.product?.sku?.toLowerCase().includes(searchTerm.toLowerCase());
-
-      const movDate = new Date(mov.created_at);
-      const fromDate = dateRange.from ? new Date(dateRange.from) : null;
-      const toDate = dateRange.to ? new Date(dateRange.to) : null;
-
-      if (fromDate && movDate < fromDate) return false;
-      if (toDate && movDate > toDate) return false;
-      return matchesSearch;
-    });
-  }, [movements, dateRange, searchTerm]);
-
-  const filteredLogs = useMemo(() => {
-    return auditLogs.filter(log => {
-      const matchesSearch = !searchTerm ||
-        log.table_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        log.action.toLowerCase().includes(searchTerm.toLowerCase());
-
-      const logDate = new Date(log.created_at);
-      const fromDate = dateRange.from ? new Date(dateRange.from) : null;
-      const toDate = dateRange.to ? new Date(dateRange.to) : null;
-
-      if (fromDate && logDate < fromDate) return false;
-      if (toDate && logDate > toDate) return false;
-      return matchesSearch;
-    });
-  }, [auditLogs, dateRange, searchTerm]);
-
-  const filteredUsers = useMemo(() => {
-    const lowerSearch = searchTerm.toLowerCase();
-    return users.filter(u =>
-      u.full_name?.toLowerCase().includes(lowerSearch) ||
-      u.email.toLowerCase().includes(lowerSearch) ||
-      u.role.toLowerCase().includes(lowerSearch)
-    );
-  }, [users, searchTerm]);
-
-  const filteredStores = useMemo(() => {
-    const lowerSearch = searchTerm.toLowerCase();
-    return stores.filter(s =>
-      s.name.toLowerCase().includes(lowerSearch) ||
-      s.address?.toLowerCase().includes(lowerSearch)
-    );
-  }, [stores, searchTerm]);
-
-  const filteredTransactions = useMemo(() => {
-    const lowerSearch = searchTerm.toLowerCase();
-    return transactions.filter(t => {
-      const matchesText = t.id.toLowerCase().includes(lowerSearch) ||
-        t.total_amount.toString().includes(lowerSearch);
-      const matchesStatus = !selectedStatus || t.status === selectedStatus;
-      return matchesText && matchesStatus;
-    });
-  }, [transactions, searchTerm, selectedStatus]);
-
-  // Keyboard shortcuts for POS
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Focus search on '/' key only if not in an input and we are in POS view
-      if (e.key === '/' &&
-          (e.target as HTMLElement).tagName !== 'INPUT' &&
-          (e.target as HTMLElement).tagName !== 'TEXTAREA' &&
-          currentView === 'pos') {
-        e.preventDefault();
-        searchInputRef.current?.focus();
+    if (!user) return;
+    const fetchers: Record<string, () => void> = {
+      sales: async () => {
+        const { data } = await supabase.from('transactions')
+          .select('*')
+          .eq(user.role !== 'admin' ? 'store_id' : '', user.store_id || '')
+          .order('created_at', { ascending: false });
+        setTransactions(data || []);
+      },
+      history: async () => {
+        const { data } = await supabase.from('stock_movements')
+          .select('*, product:products(name, sku)')
+          .eq(user.role !== 'admin' ? 'store_id' : '', user.store_id || '')
+          .order('created_at', { ascending: false }).limit(100);
+        setMovements(data || []);
+      },
+      audit: async () => {
+        const { data } = await supabase.from('audit_logs')
+          .select('*, profile:profiles(full_name)')
+          .order('created_at', { ascending: false }).limit(100);
+        setAuditLogs(data || []);
+      },
+      users: async () => {
+        const query = supabase.from('profiles').select('*');
+        if (user.role === 'encargado') query.eq('created_by', user.id);
+        const { data } = await query.order('full_name');
+        setUsers(data || []);
+      },
+      stores: async () => {
+        const { data } = await (user.role === 'admin'
+          ? supabase.from('stores').select('*').order('name')
+          : supabase.from('stores').select('*, user_store_access!inner(user_id)').eq('user_store_access.user_id', user.id).order('name'));
+        setStores(data || []);
+      },
+      cash: async () => {
+        const { data } = await supabase.from('cash_closures').select('*, profile:profiles(full_name)')
+          .eq(user.role !== 'admin' ? 'store_id' : '', user.store_id || '')
+          .order('created_at', { ascending: false }).limit(50);
+        setCashClosures(data || []);
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentView]);
 
-  // Performance: Memoize addToCart with useCallback to prevent re-creating the function on every render.
-  // This is crucial because it's passed as a prop to the memoized ProductCard component,
-  // preventing unnecessary re-renders of the entire product list when the parent state changes.
-  const addToCart = useCallback((product: Product) => {
-    addItem({
-      product_id: product.id,
-      variant_id: null,
-      product: product,
-      variant: null,
-      quantity: 1,
-      price: product.price,
-      cost: product.cost_price,
-      subtotal: product.price,
-    });
-    setShowCart(true);
-    toast.success(`${product.name} agregado al carrito`);
-  }, [addItem]);
+    if (fetchers[currentView]) fetchers[currentView]();
+  }, [user, currentView]);
 
-  // Only show loading logo if we are loading and don't have a user session yet
-  if (loading && !user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <CostProLogo size={160} animated={true} />
-      </div>
-    );
-  }
-
-  if (!user) {
-    return null;
-  }
-
-  const handleCheckout = async () => {
-    if (items.length === 0 || isProcessing) return;
-    if (!user || !user.store_id) {
-      toast.error('No se pudo identificar la tienda del usuario');
-      return;
-    }
-
+  // Handlers
+  const handleCheckout = async (paymentMethod: PaymentMethod, checkoutDiscount?: { type: string, value: number } | null) => {
+    if (items.length === 0 || isProcessing || !user) return;
     setIsProcessing(true);
     const toastId = toast.loading('Procesando venta...');
     try {
-      const saleItems = items.map(item => ({
-        product_id: item.product_id,
-        variant_id: item.variant_id,
-        quantity: item.quantity,
-        price: item.price,
-        cost: item.cost
-      }));
+      // Use provided discount or fallback to store discount
+      const finalDiscount = checkoutDiscount || discount;
 
-      const { data: transactionId, error } = await supabase.rpc('create_sale', {
+      const { error } = await supabase.rpc('create_sale', {
         p_store_id: user.store_id,
         p_seller_id: user.id,
-        p_payment_method: selectedPayment,
+        p_payment_method: paymentMethod,
         p_total_amount: Number(getTotal().toFixed(2)),
         p_subtotal: Number(getSubtotal().toFixed(2)),
-        p_discount_type: (discount?.type || 'fixed') as string,
-        p_discount_value: Number(discount?.value || 0),
-        p_items: saleItems
+        p_discount_type: (finalDiscount?.type || 'fixed') as string,
+        p_discount_value: Number(finalDiscount?.value || 0),
+        p_items: items.map(i => ({
+          product_id: i.product_id, variant_id: i.variant_id,
+          quantity: i.quantity, price: i.price, cost: i.cost
+        }))
       });
-
       if (error) throw error;
-
-      toast.success('Venta realizada con éxito', { id: toastId });
+      toast.success('Venta exitosa', { id: toastId });
       clearCart();
-      setShowCart(false);
-
-      // Refresh data
       fetchProducts();
-      fetchTransactions();
       fetchDashboardData();
     } catch (error: any) {
-      console.error('Error en checkout:', error);
-      toast.error(error.message || 'Error al procesar la venta', { id: toastId });
+      toast.error(error.message || 'Error en venta', { id: toastId });
     } finally {
       setIsProcessing(false);
     }
   };
 
-
-  const handleUpdateStore = async () => {
-    if (!editingStore) return;
-    try {
-      const { error } = await supabase
-        .from('stores')
-        .update({
-          name: editingStore.name,
-          address: editingStore.address,
-        })
-        .eq('id', editingStore.id);
-
-      if (error) throw error;
-
-      toast.success('Tienda actualizada con éxito');
-      setIsEditStoreModalOpen(false);
-      fetchStores();
-    } catch (error: any) {
-      toast.error(error.message || 'Error al actualizar la tienda');
-    }
-  };
-
-  const handleCreateStore = async () => {
-    const toastId = toast.loading('Creando tienda...');
-    try {
-      // Step 1: Create the store record
-      const { data: storeData, error: createError } = await supabase
-        .from('stores')
-        .insert([{ name: newStore.name, address: newStore.address }])
-        .select()
-        .single();
-
-      if (createError) throw createError;
-
-      // Step 2: If a logo is selected, upload it
-      if (newStoreLogo) {
-        const fileExt = newStoreLogo.name.split('.').pop();
-        const fileName = `${storeData.id}-${Date.now()}.${fileExt}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from('store-logos')
-          .upload(fileName, newStoreLogo, {
-            cacheControl: '3600',
-            upsert: false,
-          });
-
-        if (uploadError) {
-          toast.warning('Tienda creada, pero falló la subida del logo. Puede agregarlo editando la tienda.');
-        } else {
-          // Step 3: Update the store record with the logo URL
-          const { error: updateError } = await supabase
-            .from('stores')
-            .update({ logo_url: fileName })
-            .eq('id', storeData.id);
-
-          if (updateError) {
-            toast.warning('Tienda creada, pero no se pudo guardar el logo. Intente de nuevo editando la tienda.');
-          }
-        }
-      }
-
-      toast.success('Tienda creada con éxito', { id: toastId });
-      setIsCreateStoreModalOpen(false);
-      setNewStore({ name: '', address: '' });
-      setNewStoreLogo(null);
-      fetchStores();
-    } catch (error: any) {
-      toast.error(error.message || 'Error al crear la tienda', { id: toastId });
-    }
-  };
-
-  const handleDeleteStore = async () => {
-    if (!deletingStore) return;
-    try {
-      const { error } = await supabase
-        .from('stores')
-        .delete()
-        .eq('id', deletingStore.id);
-
-      if (error) throw error;
-
-      toast.success('Tienda eliminada con éxito');
-      setIsDeleteStoreModalOpen(false);
-      fetchStores();
-    } catch (error: any) {
-      toast.error(error.message || 'Error al eliminar la tienda');
-    }
-  };
-
-  const fetchUserStoreAccess = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('user_store_access')
-        .select('store_id, roles')
-        .eq('user_id', userId);
-
-      if (error) {
-        if (error.code === '42703') {
-          console.warn('Database schema mismatch: column "roles" not found in user_store_access. Ensure migrations are applied.');
-          // Fallback if possible or just set empty
-          setUserStoreAccess([]);
-          return;
-        }
-        throw error;
-      }
-
-      setUserStoreAccess(data.map(d => ({
-        store_id: d.store_id,
-        roles: Array.isArray(d.roles) ? d.roles as UserRole[] : ['clerk' as UserRole]
-      })));
-    } catch (error) {
-      console.error('Error fetching user store access:', error);
-      toast.error('Error al cargar accesos de tienda');
-    }
-  };
-
-  const handleUpdateUser = async () => {
-    if (!editingUser) return;
-    try {
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          full_name: editingUser.full_name,
-          role: editingUser.role,
-          max_stores_limit: editingUser.max_stores_limit,
-          max_users_limit: editingUser.max_users_limit,
-        })
-        .eq('id', editingUser.id);
-
-      if (profileError) throw profileError;
-
-      // Update store access
-      // 1. Delete old access
-      const { error: deleteError } = await supabase
-        .from('user_store_access')
-        .delete()
-        .eq('user_id', editingUser.id);
-
-      if (deleteError) throw deleteError;
-
-      // 2. Insert new access
-      if (userStoreAccess.length > 0) {
-        const { error: insertError } = await supabase
-          .from('user_store_access')
-          .insert(userStoreAccess.map(access => ({
-            user_id: editingUser.id,
-            store_id: access.store_id,
-            roles: access.roles,
-            assigned_by: user!.id
-          })));
-        if (insertError) throw insertError;
-      }
-
-      toast.success('Usuario actualizado con éxito');
-      setIsEditUserModalOpen(false);
-      fetchUsers();
-    } catch (error: any) {
-      toast.error(error.message || 'Error al actualizar el usuario');
-    }
-  };
-
-  const handleCreateUser = async () => {
-    try {
-      // In a real world, this would use an edge function to handle the creation and assignments
-      // But here we'll try to use the auth.signUp and let the triggers handle the profile creation if possible
-      // However, we need to assign stores too.
-
-      const { data, error } = await supabase.auth.signUp({
-        email: newUser.email,
-        password: newUser.password,
-        options: {
-          data: {
-            full_name: newUser.full_name,
-            role: newUser.role,
-            created_by: user!.id // Pass who created it
-          },
-        },
-      });
-
-      if (error) throw error;
-
-      const newUserId = data.user?.id;
-      if (newUserId && userStoreAccess.length > 0) {
-        // Wait a bit for the profile to be created by trigger
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        const { error: accessError } = await supabase
-          .from('user_store_access')
-          .insert(userStoreAccess.map(access => ({
-            user_id: newUserId,
-            store_id: access.store_id,
-            roles: access.roles,
-            assigned_by: user!.id
-          })));
-
-        if (accessError) {
-          toast.warning('Usuario creado pero hubo error al asignar tiendas');
-        }
-      }
-
-      toast.success('Usuario creado con éxito');
-      setIsCreateUserModalOpen(false);
-      setNewUser({ full_name: '', email: '', password: '', role: 'clerk' });
-      setUserStoreAccess([]);
-      fetchUsers();
-    } catch (error: any) {
-      toast.error(error.message || 'Error al crear el usuario');
-    }
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    logout();
+    router.replace('/login');
   };
 
   const handleSetActiveStore = async (storeId: string) => {
     if (!user) return;
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ active_store_id: storeId })
-        .eq('id', user.id);
-
-      if (error) throw error;
-
-      toast.success('Tienda activa actualizada');
-
-      // Update local store state
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (profileData) {
-        useAuthStore.getState().updateUser({
-          active_store_id: profileData.active_store_id,
-          store_id: profileData.active_store_id
-        });
-      }
-
-      // Refresh data for the new store context
-      fetchProducts();
-      fetchDashboardData();
-      fetchTransactions();
-      fetchMovements();
-    } catch (error: any) {
-      toast.error(error.message || 'Error al cambiar de tienda');
+    const { error } = await supabase.from('profiles').update({ active_store_id: storeId }).eq('id', user.id);
+    if (!error) {
+      toast.success('Tienda cambiada');
+      window.location.reload(); // Hard reload for simplicity in resetting context
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-      logout();
-      router.replace('/login');
-    } catch (error) {
-      console.error('Error logging out:', error);
-      logout();
-      router.replace('/login');
-    }
-  };
-
-  const fetchTransactionDetails = async (transaction: Transaction) => {
-    setSelectedTransaction(transaction);
+  const fetchTransactionDetails = async (txn: Transaction) => {
+    setSelectedTransaction(txn);
     setLoadingDetails(true);
-    try {
-      const { data, error } = await supabase
-        .from('transaction_items')
-        .select(`
-          *,
-          products (
-            name,
-            sku
-          )
-        `)
-        .eq('transaction_id', transaction.id);
-
-      if (error) throw error;
-      setTransactionItems(data || []);
-    } catch (error) {
-      console.error('Error fetching transaction items:', error);
-      toast.error('Error al cargar los detalles de la venta');
-    } finally {
-      setLoadingDetails(false);
-    }
+    const { data } = await supabase.from('transaction_items').select('*, products(name, sku)').eq('transaction_id', txn.id);
+    setTransactionItems(data || []);
+    setLoadingDetails(false);
   };
 
-  // Get role-specific navigation
-  function getNavigationItems() {
-    if (!user) return [];
-    const userRoles = user.roles && user.roles.length > 0 ? user.roles : [user.role];
+  const fetchUserStoreAccess = async (userId: string) => {
+    const { data } = await supabase.from('user_store_access').select('store_id, roles').eq('user_id', userId);
+    setUserStoreAccess(data?.map(d => ({
+      store_id: d.store_id,
+      roles: Array.isArray(d.roles) ? d.roles as UserRole[] : ['clerk']
+    })) || []);
+  };
 
-    const items = [
+  // Navigation Items logic
+  const navigationItems = useMemo(() => {
+    if (!user) return [];
+    const roles = user.roles && user.roles.length > 0 ? user.roles : [user.role];
+    const all = [
       { id: 'dashboard', icon: BarChart3, label: 'Dashboard', roles: ['admin', 'manager', 'clerk', 'encargado'] },
-      { id: 'pos', icon: ShoppingCart, label: 'Punto de Venta', roles: ['clerk', 'manager', 'admin', 'encargado'] },
+      { id: 'pos', icon: ShoppingCart, label: 'TPV', roles: ['clerk', 'manager', 'admin', 'encargado'] },
       { id: 'inventory', icon: Package, label: 'Inventario', roles: ['admin', 'manager', 'warehouse', 'encargado'] },
       { id: 'recepcion', icon: Warehouse, label: 'Recepciones', roles: ['warehouse', 'manager', 'encargado'] },
-      { id: 'sales', icon: Receipt, label: 'Mis Ventas', roles: ['clerk', 'manager', 'encargado'] },
-      { id: 'inventory_count', icon: ClipboardList, label: 'Conteo Inventario', roles: ['clerk', 'manager', 'admin', 'encargado'] },
-      { id: 'cost-sheets', icon: FileText, label: 'Fichas de Costo', roles: ['admin', 'manager', 'encargado'] },
+      { id: 'sales', icon: Receipt, label: 'Ventas', roles: ['clerk', 'manager', 'encargado'] },
+      { id: 'inventory_count', icon: ClipboardList, label: 'Conteo', roles: ['clerk', 'manager', 'admin', 'encargado'] },
+      { id: 'cost-sheets', icon: FileText, label: 'Costos', roles: ['admin', 'manager', 'encargado'] },
       { id: 'catalog', icon: Package, label: 'Catálogo', roles: ['manager', 'admin', 'encargado'] },
-      { id: 'history', icon: History, label: 'Historial', roles: ['manager', 'admin', 'encargado'] },
+      { id: 'history', icon: History, label: 'Stock', roles: ['manager', 'admin', 'encargado'] },
       { id: 'audit', icon: Shield, label: 'Auditoría', roles: ['manager', 'admin', 'encargado'] },
-      { id: 'cash', icon: DollarSign, label: 'Cierre Caja', roles: ['manager', 'admin', 'encargado'] },
+      { id: 'cash', icon: DollarSign, label: 'Caja', roles: ['manager', 'admin', 'encargado'] },
       { id: 'users', icon: Users, label: 'Usuarios', roles: ['admin', 'encargado'] },
       { id: 'stores', icon: Building, label: 'Tiendas', roles: ['admin', 'encargado'] },
-      { id: 'settings', icon: Settings, label: 'Configuración', roles: ['admin', 'manager', 'encargado'] },
+      { id: 'settings', icon: Settings, label: 'Config', roles: ['admin', 'manager', 'encargado'] },
     ];
+    return all.filter(i => i.roles.some(r => roles.includes(r as any)));
+  }, [user]);
 
     return items.filter(item => item.roles.some(r => userRoles.includes(r as UserRole)));
   };
@@ -1912,40 +1261,22 @@ export default function TerminalView() {
 
   const renderView = () => {
     switch (currentView) {
-      case 'dashboard': return renderDashboard();
-      case 'pos': return renderPOS();
+      case 'dashboard': return <DashboardView kpis={dashboardKPIs} summary={salesSummary} criticalProducts={products.filter(p => p.stock_current <= p.min_stock)} canViewFinancials={canViewFinancials} onViewInventory={() => setCurrentView('inventory')} />;
+      case 'pos': return <POSView products={products} searchTerm={searchTerm} onSearchChange={setSearchTerm} items={items} onAddItem={addItem} onRemoveItem={removeItem} onUpdateQuantity={updateQuantity} onClearCart={clearCart} getTotal={getTotal} getSubtotal={getSubtotal} getItemCount={getItemCount} isProcessing={isProcessing} onCheckout={handleCheckout} />;
+      case 'sales': return <SalesHistoryView transactions={transactions.filter(t => t.id.includes(searchTerm) && (!selectedStatus || t.status === selectedStatus))} searchTerm={searchTerm} onSearchChange={setSearchTerm} selectedStatus={selectedStatus} onStatusChange={setSelectedStatus} onViewDetails={fetchTransactionDetails} />;
+      case 'history': return <StockHistoryView movements={movements.filter(m => m.product?.name.toLowerCase().includes(searchTerm.toLowerCase()))} searchTerm={searchTerm} onSearchChange={setSearchTerm} dateRange={dateRange} onDateRangeChange={setDateRange} onRefresh={() => {}} />;
+      case 'audit': return <AuditLogsView logs={auditLogs.filter(l => l.table_name.includes(searchTerm))} searchTerm={searchTerm} onSearchChange={setSearchTerm} dateRange={dateRange} onDateRangeChange={setDateRange} />;
+      case 'cash': return <CashClosureView summary={salesSummary} cashClosures={cashClosures} onProcessClosure={() => toast.info('Próximamente')} />;
+      case 'users': return <UsersManagementView users={users.filter(u => u.full_name?.toLowerCase().includes(searchTerm.toLowerCase()))} searchTerm={searchTerm} onSearchChange={setSearchTerm} onEditUser={(u) => { setEditingUser(u); fetchUserStoreAccess(u.id); setIsEditUserModalOpen(true); }} onCreateUser={() => setIsCreateUserModalOpen(true)} />;
+      case 'stores': return <StoresManagementView stores={stores.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()))} searchTerm={searchTerm} onSearchChange={setSearchTerm} onEditStore={(s) => { setEditingStore(s); setIsEditStoreModalOpen(true); }} onDeleteStore={(s) => { setDeletingStore(s); setIsDeleteStoreModalOpen(true); }} onCreateStore={() => setIsCreateStoreModalOpen(true)} onSetActiveStore={handleSetActiveStore} activeStoreId={user.active_store_id} isAdmin={user.role === 'admin'} />;
+      case 'settings': return <SettingsView notifications={notifications} setNotifications={setNotifications} />;
       case 'inventory': return <InventoryView key="inventory" />;
       case 'recepcion': return <InventoryView key="recepcion" />;
-      case 'sales': return renderSales();
       case 'inventory_count': return <InventoryCountView />;
       case 'catalog': return <CatalogView />;
-      case 'history': return renderHistory();
-      case 'audit': return renderAudit();
-      case 'cash': return renderCash();
-      case 'users': return renderUsers();
-      case 'stores': return renderStores();
-      case 'settings': return renderSettings();
       case 'cost-sheets': return <CostSheetsPage />;
-      default: return renderDashboard();
+      default: return <DashboardView kpis={dashboardKPIs} summary={salesSummary} criticalProducts={products.filter(p => p.stock_current <= p.min_stock)} canViewFinancials={canViewFinancials} onViewInventory={() => setCurrentView('inventory')} />;
     }
-  };
-
-  const getRoleLabel = (role: UserRole) => {
-    const labels: Record<UserRole, string> = {
-      admin: 'Administrador',
-      encargado: 'Encargado',
-      manager: 'Gestor',
-      clerk: 'Cajero',
-      warehouse: 'Almacén',
-      usuario: 'Usuario',
-    };
-    return labels[role] || role;
-  };
-
-  const getActiveRolesLabel = () => {
-    if (!user) return '';
-    const roles = user.roles && user.roles.length > 0 ? user.roles : [user.role];
-    return roles.map(r => getRoleLabel(r)).join(' + ');
   };
 
   return (
@@ -2096,41 +1427,32 @@ export default function TerminalView() {
         />
       )}
 
-      {/* Transaction Details Modal */}
+      {/* Shared Modals */}
       {selectedTransaction && (
-        <div className="fixed inset-0 bg-background/90 backdrop-blur-xl flex items-center justify-center z-50 p-4">
-          <div className="neu-card max-w-2xl w-full max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-300 shadow-2xl border-primary/20 !p-0 overflow-hidden bg-background">
-            <div className="flex justify-between items-center p-8 border-b border-white/5 bg-primary/5">
+        <Dialog open={!!selectedTransaction} onOpenChange={() => setSelectedTransaction(null)}>
+          <DialogContent className="max-w-2xl !rounded-3xl p-0 overflow-hidden bg-background">
+            <div className="flex justify-between items-center p-8 border-b border-border bg-primary/5">
               <div>
                 <h3 className="text-2xl font-black text-primary uppercase tracking-tighter">Detalle de Operación</h3>
-                <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mt-1">ID: {selectedTransaction.id}</p>
+                <p className="text-[10px] text-muted-foreground font-black uppercase mt-1">ID: {selectedTransaction.id}</p>
               </div>
-              <button
-                onClick={() => setSelectedTransaction(null)}
-                className="neu-raised-sm w-12 h-12 flex items-center justify-center hover:text-danger transition-colors active:scale-90"
-                aria-label="Cerrar modal"
-              >
-                <X className="w-6 h-6" />
-              </button>
+              <button onClick={() => setSelectedTransaction(null)} className="p-2 hover:text-destructive transition-colors"><X /></button>
             </div>
-
-            <div className="p-8 overflow-y-auto flex-1 no-scrollbar">
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mb-10">
-                {[
-                  { label: 'Fecha de Emisión', value: new Date(selectedTransaction.created_at).toLocaleString(), icon: Calendar },
-                  { label: 'Método de Cobro', value: selectedTransaction.payment_method, icon: CreditCard },
-                  { label: 'Estado Transacción', value: selectedTransaction.status, icon: Shield, badge: true },
-                ].map((item, i) => (
-                  <div key={i} className="neu-inset-sm !p-4 bg-background/50 border border-white/5">
-                    <div className="flex items-center gap-2 mb-2">
-                       <item.icon className="w-3 h-3 text-primary" />
-                       <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">{item.label}</span>
+            <div className="p-8 max-h-[70vh] overflow-y-auto">
+              {loadingDetails ? <div className="py-20 flex justify-center"><Loader2 className="animate-spin" /></div> : (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="p-4 rounded-xl border border-border bg-muted/20">
+                      <div className="text-[9px] font-black uppercase text-muted-foreground mb-1">Fecha</div>
+                      <div className="text-xs font-bold">{new Date(selectedTransaction.created_at).toLocaleString()}</div>
                     </div>
-                    <div className={cn(
-                      "text-xs font-black uppercase tracking-tight",
-                      item.badge ? "text-success" : "text-foreground"
-                    )}>
-                      {item.value}
+                    <div className="p-4 rounded-xl border border-border bg-muted/20">
+                      <div className="text-[9px] font-black uppercase text-muted-foreground mb-1">Método</div>
+                      <div className="text-xs font-bold uppercase">{selectedTransaction.payment_method}</div>
+                    </div>
+                    <div className="p-4 rounded-xl border border-border bg-muted/20">
+                      <div className="text-[9px] font-black uppercase text-muted-foreground mb-1">Estado</div>
+                      <div className="text-xs font-bold uppercase text-green-600">{selectedTransaction.status}</div>
                     </div>
                   </div>
                 ))}
@@ -2153,392 +1475,42 @@ export default function TerminalView() {
                           <th className="pb-4 text-right">Precio Unit.</th>
                           <th className="pb-4 text-right">Subtotal</th>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {transactionItems.map((item) => (
-                          <tr key={item.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                            <td className="py-4" data-label="Producto">
-                              <div className="font-black text-xs uppercase">{item.products?.name}</div>
-                              <div className="text-[9px] font-mono text-muted-foreground">{item.products?.sku}</div>
-                            </td>
-                            <td className="py-4 text-center font-bold" data-label="Cant.">{item.quantity}</td>
-                            <td className="py-4 text-right font-bold" data-label="Precio">${item.price_at_sale.toFixed(2)}</td>
-                            <td className="py-4 text-right font-black text-primary" data-label="Subtotal">
-                              ${(item.quantity * item.price_at_sale).toFixed(2)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                      ))}
+                    </tbody>
+                  </table>
+                  <div className="flex justify-end pt-4">
+                    <div className="w-64 p-4 bg-primary text-white rounded-2xl shadow-xl">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs font-black uppercase">Total Final</span>
+                        <span className="text-2xl font-black">${selectedTransaction.total_amount.toFixed(2)}</span>
+                      </div>
+                    </div>
                   </div>
-                )}
-              </div>
-
-              {!loadingDetails && (
-                <div className="mt-10 pt-8 border-t-2 border-white/5 flex justify-end">
-                   <div className="w-full sm:w-64 space-y-3">
-                      <div className="flex justify-between items-center px-2">
-                         <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Subtotal Bruto</span>
-                         <span className="font-bold text-sm">${selectedTransaction.subtotal.toFixed(2)}</span>
-                      </div>
-                      {selectedTransaction.discount_value > 0 && (
-                        <div className="flex justify-between items-center px-2">
-                           <span className="text-[10px] font-black uppercase text-success tracking-widest">Descuento Aplicado</span>
-                           <span className="font-black text-success text-sm">-{selectedTransaction.discount_value}%</span>
-                        </div>
-                      )}
-                      <div className="flex justify-between items-center p-4 bg-primary text-white rounded-2xl shadow-xl shadow-primary/20">
-                         <span className="text-xs font-black uppercase tracking-[0.2em]">Total Final</span>
-                         <span className="text-2xl font-black font-mono">${selectedTransaction.total_amount.toFixed(2)}</span>
-                      </div>
-                   </div>
                 </div>
               )}
             </div>
-
-            <div className="p-6 bg-muted/20 border-t border-white/5 flex justify-end">
-              <button
-                onClick={() => setSelectedTransaction(null)}
-                className="neu-btn-primary !px-10 font-black text-xs uppercase tracking-[0.2em]"
-              >
-                Finalizar Revisión
-              </button>
-            </div>
-          </div>
-        </div>
+          </DialogContent>
+        </Dialog>
       )}
-
-      {/* Dialogs for modals like Edit/Create Product, Store, User omitted for brevity as they follow standard shadcn/ui but should use neu-input and neu-btn-primary where applicable */}
-      {/* (The existing modals already used neu-input and neu-btn-primary mostly, I will maintain that) */}
-
 
       {/* Edit Store Modal */}
       <Dialog open={isEditStoreModalOpen} onOpenChange={setIsEditStoreModalOpen}>
-        <DialogContent className="max-w-md !rounded-3xl border-white/5">
-          <DialogHeader><DialogTitle className="font-black uppercase tracking-tight">Configurar Sucursal</DialogTitle></DialogHeader>
-          <div className="space-y-6 py-4">
-            <div className="space-y-1">
-              <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Nombre</label>
-              <input type="text" value={editingStore?.name || ''} onChange={(e) => setEditingStore({ ...editingStore!, name: e.target.value })} className="neu-input w-full font-bold" />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Dirección</label>
-              <input type="text" value={editingStore?.address || ''} onChange={(e) => setEditingStore({ ...editingStore!, address: e.target.value })} className="neu-input w-full text-xs" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Logo de la Tienda</label>
-              <div className="flex flex-col items-center gap-4">
-                <div className="neu-raised-sm w-32 h-32 flex items-center justify-center overflow-hidden">
-                  {editingStore?.logo_url ? (
-                    <img
-                      src={getStoreLogoUrl(editingStore.logo_url) || ''}
-                      alt={editingStore.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <Building className="w-16 h-16 text-muted-foreground" />
-                  )}
-                </div>
-                <input
-                  type="file"
-                  id="store-logo-upload"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleUpdateStoreLogo(file);
-                  }}
-                />
-                <label
-                  htmlFor="store-logo-upload"
-                  className="neu-btn !px-4 !py-2 text-[8px] font-black uppercase tracking-widest cursor-pointer"
-                >
-                  Actualizar Logo
-                </label>
-              </div>
-            </div>
-          </div>
-          <DialogFooter className="gap-2">
-            <button
-              onClick={() => setIsEditStoreModalOpen(false)}
-              className="neu-btn flex-1 text-[10px] font-black uppercase"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleUpdateStore}
-              className="neu-btn-primary flex-1 text-[10px] font-black uppercase shadow-lg shadow-primary/20"
-            >
-              Guardar
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Create Store Modal */}
-      <Dialog open={isCreateStoreModalOpen} onOpenChange={setIsCreateStoreModalOpen}>
-        <DialogContent className="max-w-md !rounded-3xl border-white/5 shadow-2xl">
-          <DialogHeader><DialogTitle className="font-black uppercase tracking-tight">Nueva Sucursal</DialogTitle></DialogHeader>
-          <div className="space-y-6 py-4">
-            <input type="text" value={newStore.name} onChange={(e) => setNewStore({ ...newStore, name: e.target.value })} className="neu-input w-full" placeholder="Nombre de la Tienda" />
-            <input type="text" value={newStore.address} onChange={(e) => setNewStore({ ...newStore, address: e.target.value })} className="neu-input w-full text-xs" placeholder="Ubicación / Dirección" />
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Logo de Sucursal</label>
-              <input type="file" onChange={(e) => setNewStoreLogo(e.target.files ? e.target.files[0] : null)} className="neu-input w-full text-[10px]" accept="image/*" />
-            </div>
-          </div>
-          <DialogFooter className="gap-2">
-            <button
-              onClick={() => setIsCreateStoreModalOpen(false)}
-              className="neu-btn flex-1 text-[10px] font-black uppercase"
-            >
-              Descartar
-            </button>
-            <button
-              onClick={handleCreateStore}
-              className="neu-btn-primary flex-1 text-[10px] font-black uppercase shadow-xl shadow-primary/20"
-            >
-              Registrar Tienda
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit User Modal */}
-      <Dialog open={isEditUserModalOpen} onOpenChange={setIsEditUserModalOpen}>
-        <DialogContent className="max-w-xl !rounded-3xl border-white/5 shadow-2xl overflow-y-auto max-h-[90vh]">
-          <DialogHeader><DialogTitle className="font-black uppercase tracking-tight">Perfil de Usuario</DialogTitle></DialogHeader>
-          <div className="space-y-6 py-4">
-            <div className="space-y-1">
-              <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Nombre Completo</label>
-              <input type="text" value={editingUser?.full_name || ''} onChange={(e) => setEditingUser({ ...editingUser!, full_name: e.target.value })} className="neu-input w-full font-black uppercase text-sm" placeholder="Nombre Completo" />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Asignar Rol Operativo</label>
-              <select value={editingUser?.role || ''} onChange={(e) => setEditingUser({ ...editingUser!, role: e.target.value as UserRole })} className="neu-input w-full text-xs font-bold uppercase">
-                <option value="clerk">Cajero (POS)</option>
-                <option value="manager">Gestor</option>
-                <option value="warehouse">Almacén (Stock)</option>
-                <option value="encargado">Encargado (Multi-tienda)</option>
-                <option value="admin">Administrador (Full)</option>
-              </select>
-            </div>
-
-            {user?.role === 'admin' && (editingUser?.role === 'encargado' || editingUser?.role === 'manager') && (
-              <div className="grid grid-cols-2 gap-4 p-4 neu-inset-sm rounded-2xl">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black uppercase text-primary ml-1">Límite Tiendas</label>
-                  <input
-                    type="number"
-                    value={editingUser.max_stores_limit || 0}
-                    onChange={(e) => setEditingUser({ ...editingUser, max_stores_limit: parseInt(e.target.value) || 0 })}
-                    className="neu-input w-full font-bold"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black uppercase text-primary ml-1">Límite Usuarios</label>
-                  <input
-                    type="number"
-                    value={editingUser.max_users_limit || 0}
-                    onChange={(e) => setEditingUser({ ...editingUser, max_users_limit: parseInt(e.target.value) || 0 })}
-                    className="neu-input w-full font-bold"
-                  />
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Tiendas Asignadas y Roles</label>
-              <div className="space-y-2 max-h-60 overflow-y-auto p-2 neu-inset-sm rounded-2xl no-scrollbar">
-                {stores.map(store => {
-                  const access = userStoreAccess.find(a => a.store_id === store.id);
-                  return (
-                    <div key={store.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-background/50 rounded-xl border border-white/5">
-                      <label className="flex items-center gap-3 cursor-pointer flex-1">
-                        <input
-                          type="checkbox"
-                          checked={!!access}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setUserStoreAccess([...userStoreAccess, { store_id: store.id, roles: ['clerk'] }]);
-                            } else {
-                              setUserStoreAccess(userStoreAccess.filter(a => a.store_id !== store.id));
-                            }
-                          }}
-                          className="w-4 h-4 rounded border-white/10 bg-background text-primary focus:ring-primary/20"
-                        />
-                        <span className="text-[10px] font-black uppercase truncate">{store.name}</span>
-                      </label>
-
-                      {access && (
-                        <div className="flex flex-wrap gap-2">
-                          {['clerk', 'warehouse', 'manager'].map((role) => (
-                            <label key={role} className="flex items-center gap-1 cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={access.roles.includes(role as UserRole)}
-                                onChange={(e) => {
-                                  const newRoles = e.target.checked
-                                    ? [...access.roles, role as UserRole]
-                                    : access.roles.filter(r => r !== role);
-                                  setUserStoreAccess(userStoreAccess.map(a =>
-                                    a.store_id === store.id ? { ...a, roles: newRoles } : a
-                                  ));
-                                }}
-                                className="w-3 h-3 rounded border-white/10 bg-background text-primary"
-                              />
-                              <span className="text-[8px] font-bold uppercase">{role === 'clerk' ? 'Cajero' : role === 'warehouse' ? 'Almacén' : 'Gestor'}</span>
-                            </label>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-          <DialogFooter className="gap-2">
-            <button
-              onClick={() => setIsEditUserModalOpen(false)}
-              className="neu-btn flex-1 text-[10px] font-black uppercase"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleUpdateUser}
-              className="neu-btn-primary flex-1 text-[10px] font-black uppercase shadow-xl shadow-primary/20"
-            >
-              Aplicar Cambios
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Create User Modal */}
-      <Dialog open={isCreateUserModalOpen} onOpenChange={setIsCreateUserModalOpen}>
-        <DialogContent className="max-w-xl !rounded-3xl border-white/5 shadow-2xl overflow-y-auto max-h-[90vh]">
-          <DialogHeader><DialogTitle className="font-black uppercase tracking-tight">Alta de Usuario</DialogTitle></DialogHeader>
+        <DialogContent className="!rounded-3xl border-border">
+          <DialogHeader><DialogTitle className="font-black uppercase">Configurar Sucursal</DialogTitle></DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="space-y-1">
-              <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Nombre Completo</label>
-              <input type="text" value={newUser.full_name} onChange={(e) => setNewUser({ ...newUser, full_name: e.target.value })} className="neu-input w-full font-bold" placeholder="Nombre y Apellido" />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Email</label>
-              <input type="email" value={newUser.email} onChange={(e) => setNewUser({ ...newUser, email: e.target.value })} className="neu-input w-full text-xs" placeholder="Email Institucional" />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Contraseña</label>
-              <input type="password" value={newUser.password} onChange={(e) => setNewUser({ ...newUser, password: e.target.value })} className="neu-input w-full" placeholder="Contraseña Temporal" />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Rol</label>
-              <select value={newUser.role} onChange={(e) => setNewUser({ ...newUser, role: e.target.value as UserRole })} className="neu-input w-full text-xs font-black uppercase">
-                <option value="clerk">Cajero</option>
-                <option value="manager">Gestor</option>
-                <option value="warehouse">Almacén</option>
-                <option value="encargado">Encargado (Multi-tienda)</option>
-                <option value="admin">Administrador</option>
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Asignar Tiendas y Roles</label>
-              <div className="space-y-2 max-h-60 overflow-y-auto p-2 neu-inset-sm rounded-2xl no-scrollbar">
-                {stores.map(store => {
-                  const access = userStoreAccess.find(a => a.store_id === store.id);
-                  return (
-                    <div key={store.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-background/50 rounded-xl border border-white/5">
-                      <label className="flex items-center gap-3 cursor-pointer flex-1">
-                        <input
-                          type="checkbox"
-                          checked={!!access}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setUserStoreAccess([...userStoreAccess, { store_id: store.id, roles: ['clerk'] }]);
-                            } else {
-                              setUserStoreAccess(userStoreAccess.filter(a => a.store_id !== store.id));
-                            }
-                          }}
-                          className="w-4 h-4 rounded border-white/10 bg-background text-primary focus:ring-primary/20"
-                        />
-                        <span className="text-[10px] font-black uppercase truncate">{store.name}</span>
-                      </label>
-
-                      {access && (
-                        <div className="flex flex-wrap gap-2">
-                          {['clerk', 'warehouse', 'manager'].map((role) => (
-                            <label key={role} className="flex items-center gap-1 cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={access.roles.includes(role as UserRole)}
-                                onChange={(e) => {
-                                  const newRoles = e.target.checked
-                                    ? [...access.roles, role as UserRole]
-                                    : access.roles.filter(r => r !== role);
-                                  setUserStoreAccess(userStoreAccess.map(a =>
-                                    a.store_id === store.id ? { ...a, roles: newRoles } : a
-                                  ));
-                                }}
-                                className="w-3 h-3 rounded border-white/10 bg-background text-primary"
-                              />
-                              <span className="text-[8px] font-bold uppercase">{role === 'clerk' ? 'Cajero' : role === 'warehouse' ? 'Almacén' : 'Gestor'}</span>
-                            </label>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+            <input type="text" value={editingStore?.name || ''} onChange={e => setEditingStore({ ...editingStore!, name: e.target.value })} className="w-full p-3 rounded-lg border border-border bg-background font-bold" placeholder="Nombre" />
+            <input type="text" value={editingStore?.address || ''} onChange={e => setEditingStore({ ...editingStore!, address: e.target.value })} className="w-full p-3 rounded-lg border border-border bg-background text-sm" placeholder="Dirección" />
           </div>
-          <DialogFooter className="gap-2">
-            <button
-              onClick={() => setIsCreateUserModalOpen(false)}
-              className="neu-btn flex-1 text-[10px] font-black uppercase"
-            >
-              Anular
-            </button>
-            <button
-              onClick={handleCreateUser}
-              className="neu-btn-primary flex-1 text-[10px] font-black uppercase shadow-xl shadow-primary/20"
-            >
-              Crear Acceso
-            </button>
+          <DialogFooter>
+            <button onClick={() => setIsEditStoreModalOpen(false)} className="px-4 py-2 font-black uppercase text-xs">Cerrar</button>
+            <button onClick={async () => {
+              const { error } = await supabase.from('stores').update({ name: editingStore?.name, address: editingStore?.address }).eq('id', editingStore?.id);
+              if (!error) { toast.success('Actualizado'); setIsEditStoreModalOpen(false); }
+            }} className="px-6 py-2 bg-primary text-white rounded-lg font-black uppercase text-xs">Guardar</button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Store Confirmation */}
-      <Dialog open={isDeleteStoreModalOpen} onOpenChange={setIsDeleteStoreModalOpen}>
-        <DialogContent className="max-w-md !rounded-3xl border-danger/20 shadow-2xl">
-          <DialogHeader><DialogTitle className="text-danger font-black uppercase tracking-tight flex items-center gap-2"><Trash2 className="w-5 h-5" /> Confirmar Baja</DialogTitle></DialogHeader>
-          <div className="py-6 text-center">
-            <p className="text-sm font-bold uppercase tracking-tight">¿Eliminar permanentemente la sucursal <span className="text-danger font-black">{deletingStore?.name}</span>?</p>
-            <p className="text-[10px] text-muted-foreground mt-4 uppercase tracking-[0.2em]">Esta operación no puede revertirse</p>
-          </div>
-          <DialogFooter className="gap-2">
-            <button
-              onClick={() => setIsDeleteStoreModalOpen(false)}
-              className="neu-btn flex-1 text-[10px] font-black uppercase"
-            >
-              Descartar
-            </button>
-            <button
-              onClick={handleDeleteStore}
-              className="neu-btn-danger flex-1 text-[10px] font-black uppercase shadow-xl shadow-danger/20"
-            >
-              Confirmar Eliminación
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Rest of the modals should follow similar styling for inputs and buttons... */}
-
-      <ScrollToTop />
-    </div>
+    </TerminalLayout>
   );
 }

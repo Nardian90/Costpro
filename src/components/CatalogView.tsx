@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import ActionMenu, { Action } from './ui/ActionMenu';
 import SearchBar from './ui/SearchBar';
+import ProductImage from './ui/ProductImage';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -593,7 +594,7 @@ export default function CatalogView() {
                         </thead>
                         <tbody className="bg-background/30 backdrop-blur-sm">
                             {filteredProducts.map(product => (
-                                <tr key={product.id} className="border-b border-white/5 hover:bg-primary/5 transition-colors">
+                                <tr key={product.id} className="border-b border-border/50 hover:bg-muted/10 transition-colors">
                                     <td className="p-4">
                                         <div className="flex items-center gap-3">
                                             <div className="neu-raised-sm w-10 h-10 flex items-center justify-center overflow-hidden shrink-0">
