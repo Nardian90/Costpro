@@ -209,6 +209,19 @@ export const useCostSheetCalculator = (template: Template) => {
               return String(values.reduce((a: number, b: number) => a + b, 0));
             });
 
+            // pct(value, percentage) -> (value * percentage / 100)
+            expression = expression.replace(/pct\s*\(([^,]+),\s*([^)]+)\)/g, (_, val, p) => {
+                const value = parseFloat(val.trim()) || 0;
+                const percent = parseFloat(p.trim()) || 0;
+                return String(value * (percent / 100));
+            });
+
+            // round2(value)
+            expression = expression.replace(/round2\s*\(([^)]+)\)/g, (_, val) => {
+                const value = parseFloat(val.trim()) || 0;
+                return String(Math.round(value * 100) / 100);
+            });
+
             if (expression.trim().startsWith('=')) {
               expression = expression.trim().substring(1);
             }
