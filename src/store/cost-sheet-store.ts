@@ -5,47 +5,66 @@ import originalTemplate from '@/lib/data/costpro-full.json';
 import { produce } from 'immer';
 
 // Deep clone the original template to avoid modifying it directly
-const blankSheet = JSON.parse(JSON.stringify(originalTemplate));
+const createBlankSheet = () => {
+  const sheet = JSON.parse(JSON.stringify(originalTemplate));
 
-// Clear out all user-editable values for the blank sheet
-blankSheet.header.code = '';
-blankSheet.header.name = '';
-blankSheet.header.date = new Date().toISOString().split('T')[0];
-blankSheet.header.quantity = 1.0;
-blankSheet.header.currency = 'CUP';
-blankSheet.header.category = '';
-blankSheet.header.type = '';
-blankSheet.header.unit = '';
+  // Clear header
+  sheet.header.code = '';
+  sheet.header.name = '';
+  sheet.header.date = new Date().toISOString().split('T')[0];
+  sheet.header.quantity = 1.0;
+  sheet.header.currency = 'CUP';
+  sheet.header.category = '';
+  sheet.header.type = '';
+  sheet.header.unit = '';
 
-blankSheet.sections.forEach((section: any) => {
-  section.rows.forEach((row: any) => {
-    // Only clear rows that have a 'value' property and are not calculated fields
-    if (row.value !== undefined && !row.formula) {
-      row.value = 0;
+  // Recursive function to clear values in rows and their children
+  const clearRowValues = (row: any) => {
+    // Clear editable properties on the current row
+    if (row.hasOwnProperty('valorHistorico')) {
+      row.valorHistorico = 0;
+    }
+    // Handle older value fields as well for compatibility
+    if (row.hasOwnProperty('value') && !row.formula) {
+        row.value = 0;
+    }
+
+    // If the row has children, recurse through them
+    if (row.children && Array.isArray(row.children)) {
+      row.children.forEach(clearRowValues);
+    }
+  };
+
+  // Clear values in all sections
+  sheet.sections.forEach((section: any) => {
+    section.rows.forEach(clearRowValues);
+  });
+
+  // Clear annex data
+  sheet.annexes.forEach((annex: any) => {
+    if (annex.data.length > 0) {
+      const blankRow = { ...annex.data[0] };
+      Object.keys(blankRow).forEach(key => {
+        const column = annex.columns.find((c: any) => c.key === key);
+        if (column && !column.formula) {
+          // @ts-ignore
+          blankRow[key] = typeof blankRow[key] === 'number' ? 0 : '';
+        }
+      });
+      annex.data = [blankRow];
+    } else {
+      annex.data = [];
     }
   });
-});
 
-blankSheet.annexes.forEach((annex: any) => {
-  // Replace existing data with a single blank row
-  if (annex.data.length > 0) {
-    const blankRow = { ...annex.data[0] };
-    Object.keys(blankRow).forEach(key => {
-      const column = annex.columns.find((c: any) => c.key === key);
-      if (column && !column.formula) {
-        // @ts-ignore
-        blankRow[key] = typeof blankRow[key] === 'number' ? 0 : '';
-      }
-    });
-    annex.data = [blankRow];
-  } else {
-    annex.data = [];
-  }
-});
+  // Clear signature
+  sheet.signature.prepared_by = '';
+  sheet.signature.approved_by = '';
 
-blankSheet.signature.prepared_by = '';
-blankSheet.signature.approved_by = '';
+  return sheet;
+};
 
+const blankSheet = createBlankSheet();
 
 interface CostSheetState {
   data: any; // Using 'any' for flexibility with the complex template structure
@@ -60,6 +79,8 @@ export const useCostSheetStore = create<CostSheetState>()(
   persist(
     (set) => ({
       data: blankSheet,
+      // The updateValue logic is generic enough to handle nested paths, so it doesn't need changes.
+      // The path will be constructed in the component like: ['sections', 0, 'rows', 0, 'children', 0, 'valorHistorico']
       updateValue: (path, value) =>
         set(
           produce((draft) => {
@@ -97,8 +118,8 @@ export const useCostSheetStore = create<CostSheetState>()(
                 }
             })
         ),
-      loadExample: () => set({ data: originalTemplate }),
-      reset: () => set({ data: blankSheet }),
+      loadExample: () => set({ data: JSON.parse(JSON.stringify(originalTemplate)) }), // Use fresh clone on load
+      reset: () => set({ data: createBlankSheet() }), // Use fresh blank sheet on reset
     }),
     {
       name: 'cost-sheet-storage', // Name for the localStorage item
