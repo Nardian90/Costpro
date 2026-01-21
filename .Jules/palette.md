@@ -40,3 +40,7 @@ main
 ## 2025-05-15 - [A11y & Protective UX]
 **Learning:** Icon-only buttons without aria-labels are invisible to screen readers, and destructive actions like clearing a cart without confirmation lead to user frustration.
 **Action:** Always add aria-labels to Lucide-based icon buttons and implement toast-based confirmations for non-reversible UI actions.
+
+## 2025-05-15
+- Learning: Enterprise-grade sidebars benefit from dynamic vertical space reclamation. Hiding the brand logo on scroll allows for greater density of navigation items, improving usability for complex SaaS products.
+- Action: Implemented collapsible logo and user info blocks in the TerminalView sidebar using Framer Motion and container-specific scroll tracking.
