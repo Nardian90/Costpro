@@ -74,10 +74,10 @@ export default function InventoryTableView({ products, loadMore, hasMore, isLoad
 
     return (
         <div className="overflow-x-auto table-to-cards rounded-2xl shadow-xl border border-white/5 force-table">
-            <table className="w-full min-w-[1024px]">
+            <table className="w-full min-w-[1024px] grid-table-inventory">
                 <thead className="bg-muted/30 border-b sticky-header">
                     <tr className="text-left text-muted-foreground uppercase text-[10px] font-bold">
-                        <th className="p-4">Product</th>
+                        <th className="p-4 pl-[76px]">Product</th>
                         <th className="p-4">SKU</th>
                         <th className="p-4 text-right">Stock</th>
                         <th className="p-4 text-right">Price</th>

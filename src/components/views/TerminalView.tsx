@@ -1345,7 +1345,7 @@ export default function TerminalView() {
       </SearchBar>
 
       <div className="overflow-x-auto table-to-cards rounded-2xl shadow-xl border border-white/5">
-        <table className="w-full">
+        <table className="w-full grid-table-transactions">
           <thead className="sticky-header">
             <tr className="bg-muted/50 text-muted-foreground font-black uppercase text-[10px] tracking-widest">
               <th className="p-4 text-left">Referencia</th>
@@ -1530,7 +1530,7 @@ export default function TerminalView() {
         </SearchBar>
 
         <div className="overflow-x-auto table-to-cards rounded-2xl shadow-xl border border-white/5">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm grid-table-audit">
                 <thead className="sticky-header">
                     <tr className="bg-muted/50 text-muted-foreground font-black uppercase text-[10px] tracking-widest">
                         <th className="p-4 text-left">Fecha / Hora</th>
@@ -1714,7 +1714,7 @@ export default function TerminalView() {
       <SearchBar value={searchTerm} onChange={setSearchTerm} placeholder="Buscar usuarios por nombre, email o rol..." />
 
       <div className="overflow-x-auto table-to-cards rounded-2xl shadow-xl border border-white/5">
-        <table className="w-full">
+        <table className="w-full grid-table-users">
           <thead className="sticky-header">
             <tr className="bg-muted/50 text-muted-foreground font-black uppercase text-[10px] tracking-widest">
               <th className="p-4 text-left">Perfil</th>

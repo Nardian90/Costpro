@@ -580,10 +580,10 @@ export default function CatalogView() {
                 </div>
             ) : (
                 <div className="overflow-x-auto table-to-cards rounded-2xl shadow-xl border border-white/5">
-                    <table className="w-full">
+                    <table className="w-full grid-table-catalog">
                         <thead className="sticky-header">
                             <tr className="bg-muted/50 text-muted-foreground font-black uppercase text-[10px] tracking-widest">
-                                <th className="p-4 text-left">Producto</th>
+                                <th className="p-4 pl-[68px] text-left">Producto</th>
                                 <th className="p-4 text-left">SKU</th>
                                 <th className="p-4 text-left">Categoría</th>
                                 <th className="p-4 text-right">Costo</th>
