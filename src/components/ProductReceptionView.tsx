@@ -46,6 +46,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
     const [isSearching, setIsSearching] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+    const [importErrors, setImportErrors] = useState<{ row: number; message: string }[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Search for products to add to the reception
@@ -112,6 +113,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
     }, [receptionItems]);
 
     const handleImportClick = () => {
+        setImportErrors([]); // Clear old errors before a new import attempt
         fileInputRef.current?.click();
     };
 
@@ -129,69 +131,126 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                     return;
                 }
 
-                // Validate headers
-                const requiredHeaders = ['SKU', 'NombreProducto', 'Cantidad', 'Costo'];
-                const headers = Object.keys(data[0]);
-                const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+                const headerAliases: { [key: string]: string[] } = {
+                  id: ['id', 'urlid', 'ID', 'Identificador', 'SKU'],
+                  name: ['name', 'nombre', 'NombreProducto', 'Product Name'],
+                  quantity: ['quantity', 'cantidad', 'Cantidad', 'Qty'],
+                  cost: ['cost', 'costo', 'Costo', 'Cost Price'],
+                };
+
+                const fileHeaders = results.meta.fields || [];
+                const headerMapping: { [key: string]: string } = {};
+                const missingHeaders: string[] = [];
+
+                // Normalize headers
+                for (const canonicalHeader in headerAliases) {
+                    const aliases = headerAliases[canonicalHeader];
+                    const foundAlias = fileHeaders.find(header => aliases.includes(header.trim()));
+                    if (foundAlias) {
+                        headerMapping[canonicalHeader] = foundAlias.trim();
+                    } else {
+                        missingHeaders.push(canonicalHeader);
+                    }
+                }
 
                 if (missingHeaders.length > 0) {
-                    toast.error(`Missing columns: ${missingHeaders.join(', ')}`);
+                    toast.error(`Faltan las siguientes columnas requeridas: ${missingHeaders.join(', ')}`);
                     return;
                 }
 
-                const toastId = toast.loading(`Importing ${data.length} items...`);
+                const normalizedData = data.map(row => {
+                    const newRow: { [key: string]: any } = {};
+                    for (const canonicalHeader in headerMapping) {
+                        newRow[canonicalHeader] = row[headerMapping[canonicalHeader]];
+                    }
+                    return newRow;
+                });
+
+
+                setImportErrors([]); // Clear previous errors
+                const validationErrors: { row: number; message: string }[] = [];
+                const seenIds = new Set<string>();
+
+                normalizedData.forEach((row, index) => {
+                    const rowNum = index + 2; // User-facing row number (1-based + header)
+                    const { id, quantity, cost, name } = row;
+
+                    if (!id) {
+                        validationErrors.push({ row: rowNum, message: "Falta el 'id' del producto." });
+                    } else if (seenIds.has(id)) {
+                        validationErrors.push({ row: rowNum, message: `El id '${id}' está duplicado en el archivo.` });
+                    } else {
+                        seenIds.add(id);
+                    }
+
+                    if (!name || name.trim() === '') {
+                        validationErrors.push({ row: rowNum, message: "El 'nombre' del producto no puede estar vacío." });
+                    }
+
+                    const parsedQuantity = parseInt(quantity, 10);
+                    if (isNaN(parsedQuantity) || parsedQuantity <= 0) {
+                        validationErrors.push({ row: rowNum, message: "La 'cantidad' debe ser un número entero positivo." });
+                    }
+
+                    const parsedCost = parseFloat(cost);
+                    if (isNaN(parsedCost) || parsedCost < 0) {
+                        validationErrors.push({ row: rowNum, message: "El 'costo' debe ser un número válido y no negativo." });
+                    }
+                });
+
+                if (validationErrors.length > 0) {
+                    setImportErrors(validationErrors);
+                    toast.error(`Importación fallida. Se encontraron ${validationErrors.length} errores.`);
+                    if (fileInputRef.current) fileInputRef.current.value = '';
+                    return;
+                }
+
+                const toastId = toast.loading(`Importando ${data.length} productos...`);
 
                 try {
-                    const skus = data.map(item => item.SKU).filter(Boolean);
-
-                    // Fetch products by SKU
+                    const ids = Array.from(seenIds);
                     const { data: products, error } = await supabase
                         .from('products')
-                        .select('*')
-                        .in('sku', skus);
+                        .select('id, name, cost_price')
+                        .in('id', ids);
 
                     if (error) throw error;
 
-                    const productMap = new Map(products?.map(p => [p.sku, p]));
+                    const productMap = new Map(products?.map(p => [p.id, p]));
                     const newItems = new Map(receptionItems);
                     let importedCount = 0;
-                    let notFoundSkus: string[] = [];
+                    const notFoundIds: { row: number, id: string }[] = [];
 
-                    data.forEach(item => {
-                        const product = productMap.get(item.SKU);
+                    normalizedData.forEach((item, index) => {
+                        const product = productMap.get(item.id);
                         if (product) {
                             const existing = newItems.get(product.id);
-                            const quantityToAdd = parseInt(item.Cantidad) || 0;
-                            const newCost = parseFloat(item.Costo) || product.cost_price || 0;
+                            const quantityToAdd = parseInt(item.quantity);
+                            const newCost = parseFloat(item.cost);
 
-                            if (existing) {
-                                newItems.set(product.id, {
-                                    ...existing,
-                                    quantity: existing.quantity + quantityToAdd,
-                                    cost: newCost
-                                });
-                            } else {
-                                newItems.set(product.id, {
-                                    product,
-                                    quantity: quantityToAdd,
-                                    cost: newCost,
-                                });
-                            }
+                            newItems.set(product.id, {
+                                product,
+                                quantity: (existing?.quantity || 0) + quantityToAdd,
+                                cost: newCost,
+                            });
                             importedCount++;
                         } else {
-                            notFoundSkus.push(item.SKU);
+                            notFoundIds.push({ row: index + 2, id: item.id });
                         }
                     });
 
+                    if (notFoundIds.length > 0) {
+                        const dbErrors = notFoundIds.map(e => ({ row: e.row, message: `El id '${e.id}' no fue encontrado en la base de datos.` }));
+                        setImportErrors(dbErrors);
+                        toast.error(`Importación parcial. ${notFoundIds.length} productos no se encontraron.`, { id: toastId });
+                    } else {
+                        toast.success(`¡Éxito! ${importedCount} productos han sido validados y añadidos a la lista.`, { id: toastId });
+                    }
+
                     setReceptionItems(newItems);
 
-                    if (notFoundSkus.length > 0) {
-                        toast.warning(`${importedCount} items imported. ${notFoundSkus.length} SKUs not found.`, { id: toastId });
-                    } else {
-                        toast.success(`Successfully imported ${importedCount} items.`, { id: toastId });
-                    }
                 } catch (error: any) {
-                    toast.error(`Import failed: ${error.message}`, { id: toastId });
+                    toast.error(`La importación falló: ${error.message}`, { id: toastId });
                 } finally {
                     if (fileInputRef.current) fileInputRef.current.value = '';
                 }
@@ -368,6 +427,36 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                             </div>
                         </div>
                     </div>
+
+                    {/* Import Error Display */}
+                    {importErrors.length > 0 && (
+                        <div className="neu-card border-danger/20 bg-danger/5 !p-4">
+                            <details>
+                                <summary className="cursor-pointer font-bold text-danger flex justify-between items-center">
+                                    <span>Importación Fallida: {importErrors.length} errores encontrados.</span>
+                                    <span className="text-xs font-black uppercase tracking-widest">Ver Detalles</span>
+                                </summary>
+                                <div className="mt-4 max-h-48 overflow-y-auto pr-2">
+                                    <table className="w-full text-xs">
+                                        <thead>
+                                            <tr className="text-left font-black uppercase text-[10px] border-b border-danger/20">
+                                                <th className="p-2">Fila</th>
+                                                <th className="p-2">Error</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {importErrors.map((error, index) => (
+                                                <tr key={index} className="border-b border-danger/10">
+                                                    <td className="p-2 font-bold">{error.row}</td>
+                                                    <td className="p-2">{error.message}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </details>
+                        </div>
+                    )}
 
                     {/* Product Search */}
                     <div className="relative">
