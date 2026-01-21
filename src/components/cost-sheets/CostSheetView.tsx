@@ -1,12 +1,15 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import jspdf from 'jspdf';
+import html2canvas from 'html2canvas';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
 import { useCostSheetCalculator } from '@/hooks/useCostSheetCalculator';
 import CostSheetNav from './CostSheetNav'; // <-- Restore navigation
 import CostSheetInteractiveTable from './CostSheetInteractiveTable';
 import CostSheetAnnexEditor from './CostSheetAnnexEditor'; // <-- Import the new annex editor
+import CostSheetHeaderEditor from './CostSheetHeaderEditor';
 import CostSheetHeader from './CostSheetHeader';
 import CostSheetBody from './CostSheetBody';
 import CostSheetAnnexes from './CostSheetAnnexes';
@@ -24,6 +27,55 @@ const CostSheetView = () => {
 
   // Determine if the active section is an annex
   const isAnnexActive = data.annexes.some((a: any) => a.id === activeSection);
+  const previewRef = useRef(null);
+
+  const handleExportPDF = () => {
+    const input = previewRef.current;
+    if (!input) {
+      console.error("Preview element not found!");
+      return;
+    }
+
+    // Temporarily set the theme to light for consistent PDF output
+    const originalTheme = document.documentElement.getAttribute('data-theme');
+    document.documentElement.setAttribute('data-theme', 'light');
+
+    html2canvas(input, {
+      scale: 2, // Higher scale for better quality
+      useCORS: true,
+      backgroundColor: '#ffffff'
+    }).then(canvas => {
+      // Restore the original theme
+      if (originalTheme) {
+        document.documentElement.setAttribute('data-theme', originalTheme);
+      }
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jspdf('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const canvasWidth = canvas.width;
+      const canvasHeight = canvas.height;
+      const ratio = canvasWidth / canvasHeight;
+      const imgHeight = pdfWidth / ratio;
+
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+      heightLeft -= pdfHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+        heightLeft -= pdfHeight;
+      }
+
+      const fileName = data.header.name ? `Ficha de Costo - ${data.header.name}.pdf` : 'Ficha de Costo.pdf';
+      pdf.save(fileName);
+    });
+  };
 
   return (
     <div className="w-full max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 pb-32 pt-4">
@@ -60,13 +112,14 @@ const CostSheetView = () => {
           },
           { id: 'load-example', label: 'Cargar Ejemplo', icon: FileText, onClick: loadExample, variant: 'outline' },
           { id: 'reset', label: 'Limpiar', icon: Trash2, onClick: reset, variant: 'danger' },
-          { id: 'export-pdf', label: 'Exportar', icon: Download, onClick: () => window.print(), variant: 'success' },
+          { id: 'export-pdf', label: 'Exportar', icon: Download, onClick: handleExportPDF, variant: 'success' },
         ]}
         className="mb-8"
       />
 
       {isEditing ? (
-        <div className="animate-in fade-in duration-700">
+        <div className="animate-in fade-in duration-700 space-y-6">
+          <CostSheetHeaderEditor />
           <CostSheetNav
             sections={[{ id: 'main', label: 'Tabla Principal' }, ...data.annexes.map((a:any) => ({ id: a.id, label: `Anexo ${a.id}`}))]}
             annexes={[]} // Keep it simple, main sections are now in sections prop
@@ -86,7 +139,7 @@ const CostSheetView = () => {
           </div>
         </div>
       ) : (
-        <div className="animate-in zoom-in-95 duration-500 max-w-5xl mx-auto">
+        <div ref={previewRef} className="animate-in zoom-in-95 duration-500 max-w-5xl mx-auto">
           <div className="neu-card !p-0 overflow-hidden border-none shadow-2xl bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
             <div className="bg-slate-800 p-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-white">
                <div className="font-black text-xl tracking-tighter uppercase italic">COSTPRO <span className="text-primary font-light text-sm not-italic ml-2 tracking-widest">SHEET</span></div>

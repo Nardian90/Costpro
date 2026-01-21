@@ -68,7 +68,7 @@ const CostSheetRow: React.FC<RowProps> = ({ row, level, calculatedValues, path, 
     <>
       <tr className="border-t border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
         {/* Concepto */}
-        <td style={{ paddingLeft: `${level * 24 + 12}px` }} className="py-2.5 font-medium text-slate-700 dark:text-slate-300">
+        <td style={{ paddingLeft: `${level * 24 + 12}px` }} className="py-2.5 font-medium text-slate-700 dark:text-slate-300 truncate">
           <div className="flex items-center gap-2">
             {hasChildren && (
               <button onClick={handleToggle} className="p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700">
@@ -76,7 +76,7 @@ const CostSheetRow: React.FC<RowProps> = ({ row, level, calculatedValues, path, 
               </button>
             )}
             {!hasChildren && <CornerDownRight className="w-4 h-4 text-slate-400 dark:text-slate-600 self-center ml-1" />}
-            <span>{row.label}</span>
+            <span className="truncate">{row.label}</span>
           </div>
         </td>
 
@@ -113,10 +113,10 @@ const CostSheetRow: React.FC<RowProps> = ({ row, level, calculatedValues, path, 
           {row.hasOwnProperty('baseDeCalculoRef') ? (
              <Select value={row.baseDeCalculoRef || ''} onValueChange={(value) => handleValueChange('baseDeCalculoRef', value)}>
                 <SelectTrigger className="neu-input h-8">
-                    <SelectValue placeholder="Seleccionar Base..." />
+                    <SelectValue placeholder="Seleccionar Base..." className="truncate" />
                 </SelectTrigger>
                 <SelectContent>
-                    {baseOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                    {baseOptions.map(opt => <SelectItem key={opt.value} value={opt.value} className="truncate">{opt.label}</SelectItem>)}
                 </SelectContent>
             </Select>
           ) : <span className="text-sm text-slate-400">-</span>}
@@ -182,15 +182,15 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = ({ s
   return (
     <div className="neu-card p-0 overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm table-fixed">
           <thead className="bg-slate-100 dark:bg-slate-800/50">
             <tr>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Concepto</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-1/3">Concepto</th>
               <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-40">Valor Histórico</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-48">Forma de Cálculo</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-56">Base de Cálculo</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-40">Forma de Cálculo</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-48">Base de Cálculo</th>
               <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-32">Coeficiente</th>
-              <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-48">Total</th>
+              <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-40">Total</th>
               <th className="px-4 py-3 text-center font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-20">Ayuda</th>
             </tr>
           </thead>
