@@ -13,10 +13,10 @@ interface POSTableViewProps {
 const POSTableView: React.FC<POSTableViewProps> = ({ products, onAddToCart }) => {
   return (
     <div className="overflow-x-auto rounded-2xl shadow-xl border border-white/5">
-      <table className="w-full text-sm">
+      <table className="w-full text-sm grid-table-pos">
         <thead className="sticky-header">
           <tr className="bg-muted/50 text-muted-foreground font-black uppercase text-[10px] tracking-widest text-left">
-            <th className="p-4">Producto</th>
+            <th className="p-4 pl-[68px]">Producto</th>
             <th className="p-4">SKU</th>
             <th className="p-4 text-right">Stock</th>
             <th className="p-4 text-right">Precio</th>
