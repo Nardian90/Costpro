@@ -200,7 +200,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = ({ s
     <div className="neu-card p-0">
       <div className="overflow-x-auto">
         <table className="w-full text-sm min-w-[1000px]">
-          <thead className="bg-slate-100 dark:bg-slate-800/50">
+          <thead className="bg-slate-100 dark:bg-slate-800/50 sticky-header">
             <tr>
               <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-auto min-w-[250px]">Concepto</th>
               <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-32">Valor Histórico</th>

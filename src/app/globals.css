@@ -677,6 +677,30 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  /* Sticky Table Headers */
+  .sticky-header th {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    background: var(--background) !important;
+  }
+
+  /* Offset for TerminalView main header */
+  .terminal-content .sticky-header th {
+    top: 76px; /* Default mobile header offset */
+  }
+
+  @media (min-width: 640px) {
+    .terminal-content .sticky-header th {
+      top: 92px; /* sm header offset */
+    }
+  }
+
+  /* Support for tables inside scrolling containers */
+  .overflow-x-auto.sticky-container {
+    overflow-y: visible;
+  }
 }
 
 
