@@ -4,8 +4,9 @@
 import { useState, useEffect, useCallback, useMemo, useRef, useDeferredValue } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/store';
-import { getProductImageUrl, getSupabaseUrl, cn } from '@/lib/utils';
+import { getSupabaseUrl, cn } from '@/lib/utils';
 import type { Product, ProductVariant } from '@/types';
+import ImageWithFallback from './ui/ImageWithFallback';
 import { toast } from 'sonner';
 import {
     Package,
@@ -529,14 +530,13 @@ export default function CatalogView() {
             {layoutMode === 'grid' ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {filteredProducts.map(product => (
-                        <div key={product.id} className="p-6 rounded-2xl border border-border bg-card hover:border-primary/20 transition-all group shadow-sm">
-                            <div className="w-full h-48 mb-6 flex items-center justify-center overflow-hidden rounded-xl bg-muted/20">
-                                <ProductImage
-                                    src={product.image_url}
+                        <div key={product.id} className="neu-card !p-6 border border-white/5 hover:border-primary/20 transition-all group">
+                            <div className="neu-raised-sm w-full h-48 mb-6 flex items-center justify-center overflow-hidden rounded-2xl bg-background/50">
+                                <ImageWithFallback
+                                    src={product.public_image_url}
+                                    alt={product.name}
                                     name={product.name}
-                                    width={200}
-                                    height={200}
-                                    className="group-hover:scale-110 transition-transform duration-500"
+                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                                 />
                             </div>
 
@@ -580,9 +580,9 @@ export default function CatalogView() {
                     )}
                 </div>
             ) : (
-                <div className="overflow-x-auto table-to-cards rounded-2xl shadow-xl border border-white/5 overflow-hidden">
+                <div className="overflow-x-auto table-to-cards rounded-2xl shadow-xl border border-white/5">
                     <table className="w-full">
-                        <thead>
+                        <thead className="sticky-header">
                             <tr className="bg-muted/50 text-muted-foreground font-black uppercase text-[10px] tracking-widest">
                                 <th className="p-4 text-left">Producto</th>
                                 <th className="p-4 text-left">SKU</th>
@@ -597,12 +597,14 @@ export default function CatalogView() {
                                 <tr key={product.id} className="border-b border-border/50 hover:bg-muted/10 transition-colors">
                                     <td className="p-4">
                                         <div className="flex items-center gap-3">
-                                            <ProductImage
-                                                src={product.image_url}
-                                                name={product.name}
-                                                width={40}
-                                                height={40}
-                                            />
+                                            <div className="neu-raised-sm w-10 h-10 flex items-center justify-center overflow-hidden shrink-0">
+                                                <ImageWithFallback
+                                                    alt={product.name}
+                                                    name={product.name}
+                                                    className="w-full h-full object-cover"
+                                                    forcePlaceholder={true}
+                                                />
+                                            </div>
                                             <span className="font-bold text-sm truncate max-w-[200px]">{product.name}</span>
                                         </div>
                                     </td>
@@ -682,14 +684,13 @@ export default function CatalogView() {
 
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Imagen del Producto</label>
-                            <div className="flex flex-col items-center gap-6 p-6 rounded-3xl bg-muted/10 border border-border">
-                                <div className="w-40 h-40 flex items-center justify-center overflow-hidden rounded-3xl border border-border bg-background">
-                                    <ProductImage
-                                        src={editingProduct?.image_url}
+                            <div className="flex flex-col items-center gap-6 p-6 neu-inset-sm bg-background/50 rounded-3xl">
+                                <div className="neu-raised-sm w-40 h-40 flex items-center justify-center overflow-hidden rounded-3xl border-2 border-white/5">
+                                    <ImageWithFallback
+                                        src={editingProduct?.image_url?.includes('http') ? editingProduct.image_url : getSupabaseUrl('product-images', editingProduct?.image_url)}
+                                        alt={editingProduct?.name || ''}
                                         name={editingProduct?.name || ''}
-                                        width={160}
-                                        height={160}
-                                        forceShow={true}
+                                        className="w-full h-full object-cover"
                                     />
                                 </div>
                                 <div className="w-full space-y-2">

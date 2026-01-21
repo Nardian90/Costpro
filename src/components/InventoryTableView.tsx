@@ -5,7 +5,7 @@ import React, { useRef, useCallback } from 'react';
 import type { Product } from '@/types';
 import { cn } from '@/lib/utils';
 import { Package, Edit, Loader2 } from 'lucide-react';
-import ProductImage from '@/components/ui/ProductImage';
+import ImageWithFallback from './ui/ImageWithFallback';
 
 interface InventoryTableViewProps {
     products: Product[];
@@ -20,12 +20,14 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product }>((
         <tr ref={ref} className="border-b last:border-0 hover:bg-accent/5 transition-colors">
             <td className="p-4">
                 <div className="flex items-center gap-3">
-                    <ProductImage
-                        src={product.image_url}
-                        name={product.name}
-                        width={40}
-                        height={40}
-                    />
+                    <div className="neu-raised-sm w-12 h-12 flex items-center justify-center overflow-hidden shrink-0">
+                        <ImageWithFallback
+                            alt={product.name}
+                            name={product.name}
+                            className="w-full h-full object-cover"
+                            forcePlaceholder={true}
+                        />
+                    </div>
                     <div>
                         <div className="font-bold text-sm">{product.name}</div>
                         <div className="text-[10px] font-bold text-muted-foreground uppercase">{product.category}</div>
@@ -73,7 +75,7 @@ export default function InventoryTableView({ products, loadMore, hasMore, isLoad
     return (
         <div className="overflow-x-auto table-to-cards rounded-2xl shadow-xl border border-white/5 force-table">
             <table className="w-full min-w-[1024px]">
-                <thead className="bg-muted/30 border-b">
+                <thead className="bg-muted/30 border-b sticky-header">
                     <tr className="text-left text-muted-foreground uppercase text-[10px] font-bold">
                         <th className="p-4">Product</th>
                         <th className="p-4">SKU</th>

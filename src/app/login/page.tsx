@@ -1,14 +1,16 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '@/store';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
 import CostProLogo from '@/components/CostProLogo';
+import SplashScreen from '@/components/SplashScreen';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 
 export default function LoginPage() {
+  const [showSplash, setShowSplash] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -94,8 +96,12 @@ export default function LoginPage() {
     { email: 'almacen@demo.com', role: 'Almacén' },
   ];
 
+  if (showSplash) {
+    return <SplashScreen onFinish={() => setShowSplash(false)} />;
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4 animate-in fade-in duration-700">
       <div className="w-full max-w-md">
         <div className="text-center mb-8 space-y-4">
           <CostProLogo size={80} animated={false} />

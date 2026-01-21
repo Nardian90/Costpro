@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Product } from '@/types';
-import ProductImage from '@/components/ui/ProductImage';
+import ImageWithFallback from './ui/ImageWithFallback';
 
 interface ProductCardProps {
   product: Product;
@@ -15,12 +15,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) => {
       onClick={() => onClick(product)}
       aria-label={`Agregar ${product.name} al carrito. Precio: $${product.price.toFixed(2)}. Stock disponible: ${product.stock_current}`}
     >
-      <div className="flex justify-center mb-3 group-hover:scale-105 transition-transform">
-        <ProductImage
-          src={product.image_url}
+      <div className="neu-raised-sm w-16 h-16 mx-auto mb-3 flex items-center justify-center overflow-hidden">
+        <ImageWithFallback
+          src={product.public_image_url}
+          alt={product.name}
           name={product.name}
-          width={64}
-          height={64}
+          className="w-full h-full object-cover"
         />
       </div>
       <h3 className="font-black text-sm mb-1 text-center uppercase truncate">{product.name}</h3>
