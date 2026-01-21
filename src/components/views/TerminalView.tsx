@@ -98,6 +98,10 @@ export default function TerminalView() {
   const canViewFinancials = useCanAccess('warehouse'); // Using warehouse as a proxy for manager/admin financial view
   const [showCart, setShowCart] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const navRef = useRef<HTMLElement>(null);
+  const [showSidebarLogo, setShowSidebarLogo] = useState(true);
+  const [showSidebarUser, setShowSidebarUser] = useState(true);
+  const [isSidebarScrollable, setIsSidebarScrollable] = useState(false);
 
   const [products, setProducts] = useState<(Product & { product_variants?: any[] })[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -122,6 +126,58 @@ export default function TerminalView() {
     total_cash: 0,
     total_transfer: 0,
   });
+
+  // Sidebar scroll handling
+  const handleSidebarScroll = useCallback(() => {
+    if (!navRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = navRef.current;
+    const scrollable = scrollHeight > clientHeight + 10; // Small buffer
+    setIsSidebarScrollable(scrollable);
+
+    if (!scrollable) {
+      setShowSidebarLogo(true);
+      setShowSidebarUser(true);
+      return;
+    }
+
+    // Logo visibility: hide if scroll > 20, show only if scroll is 0
+    if (scrollTop > 20) {
+      setShowSidebarLogo(false);
+    } else if (scrollTop <= 0) {
+      setShowSidebarLogo(true);
+    }
+
+    // User Info visibility: show only if at the very bottom
+    const isAtBottom = Math.ceil(scrollTop + clientHeight) >= scrollHeight - 10;
+    setShowSidebarUser(isAtBottom);
+  }, []);
+
+  const navigationItems = useMemo(() => {
+    if (!user) return [];
+    return getNavigationItems();
+  }, [user?.roles, user?.role]);
+
+  useEffect(() => {
+    const nav = navRef.current;
+    if (nav) {
+      nav.addEventListener('scroll', handleSidebarScroll);
+      // Initial check
+      handleSidebarScroll();
+
+      // Check on window resize
+      window.addEventListener('resize', handleSidebarScroll);
+
+      // Create a MutationObserver to watch for content changes in the nav
+      const observer = new MutationObserver(handleSidebarScroll);
+      observer.observe(nav, { childList: true, subtree: true });
+
+      return () => {
+        nav.removeEventListener('scroll', handleSidebarScroll);
+        window.removeEventListener('resize', handleSidebarScroll);
+        observer.disconnect();
+      };
+    }
+  }, [handleSidebarScroll, navigationItems]);
 
   // Initial data fetch - only essential data for the default view (dashboard/pos)
   useEffect(() => {
@@ -429,11 +485,6 @@ export default function TerminalView() {
   useEffect(() => {
     setDiscount(localDiscount.value > 0 ? localDiscount : null);
   }, [localDiscount, setDiscount]);
-
-  const navigationItems = useMemo(() => {
-    if (!user) return [];
-    return getNavigationItems();
-  }, [user?.role]);
 
   const filteredProducts = useMemo(() => {
     const lowerSearch = deferredSearchTerm.toLowerCase();
@@ -1882,17 +1933,32 @@ export default function TerminalView() {
     <div className="min-h-screen flex bg-background text-foreground max-w-full overflow-x-auto">
       {/* Sidebar */}
       <aside className={`w-64 lg:w-72 fixed lg:sticky top-0 h-screen z-40 transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="bg-sidebar/90 backdrop-blur-2xl h-full flex flex-col border-r border-sidebar-border shadow-2xl">
+        <div className="bg-sidebar/90 backdrop-blur-2xl h-full flex flex-col border-r border-sidebar-border shadow-2xl overflow-hidden">
           {/* Logo */}
-          <div className="p-8 border-b border-sidebar-border/50">
-            <CostProLogo size={50} animated={true} />
-            <div className="mt-4">
-              <div className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Terminal Operativa</div>
-            </div>
-          </div>
+          <AnimatePresence initial={false}>
+            {showSidebarLogo && (
+              <motion.div
+                id="sidebar-logo-container"
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3, ease: 'easeInOut' }}
+                className="p-8 border-b border-sidebar-border/50 shrink-0 overflow-hidden"
+              >
+                <CostProLogo size={50} animated={true} />
+                <div className="mt-4">
+                  <div className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Terminal Operativa</div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Navigation */}
-          <nav className="flex-1 overflow-y-auto p-4 no-scrollbar">
+          <nav
+            id="sidebar-nav"
+            ref={navRef}
+            className="flex-1 overflow-y-auto p-4 no-scrollbar"
+          >
             <div className="space-y-2">
               {navigationItems.map(item => (
                 <button
@@ -1918,13 +1984,26 @@ export default function TerminalView() {
           </nav>
 
           {/* User Info & Logout */}
-          <div className="p-6 border-t border-sidebar-border/50">
-            <div className="rounded-3xl border border-primary/20 bg-primary/5 p-5 shadow-inner mb-4">
-              <div className="font-black text-xs text-primary uppercase tracking-widest truncate">{user?.full_name}</div>
-              <div className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mt-1">
-                {getActiveRolesLabel()}
-              </div>
-            </div>
+          <div className="p-6 border-t border-sidebar-border/50 shrink-0">
+            <AnimatePresence initial={false}>
+              {showSidebarUser && (
+                <motion.div
+                  id="sidebar-user-container"
+                  initial={{ height: 0, opacity: 0, marginBottom: 0 }}
+                  animate={{ height: 'auto', opacity: 1, marginBottom: 16 }}
+                  exit={{ height: 0, opacity: 0, marginBottom: 0 }}
+                  transition={{ duration: 0.3, ease: 'easeInOut' }}
+                  className="overflow-hidden"
+                >
+                  <div className="rounded-3xl border border-primary/20 bg-primary/5 p-5 shadow-inner">
+                    <div className="font-black text-xs text-primary uppercase tracking-widest truncate">{user?.full_name}</div>
+                    <div className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mt-1">
+                      {getActiveRolesLabel()}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
             <button
               onClick={handleLogout}
               className="w-full flex items-center justify-center gap-3 p-4 rounded-2xl transition-all group active:scale-95 hover:bg-danger/10 text-danger font-bold"
