@@ -30,6 +30,33 @@ type CostSheetBodyProps = {
 };
 
 const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValues }) => {
+  const renderRow = (row: any, level: number = 0) => {
+      return (
+        <React.Fragment key={row.id}>
+            <tr className="border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
+                <td
+                    data-label="Descripción"
+                    style={{ paddingLeft: `${level > 0 ? (level * 24) + 16 : 16}px` }}
+                    className={cn(
+                        "p-4",
+                        level > 0 ? 'text-slate-500 italic' : 'font-bold text-slate-900 dark:text-white uppercase tracking-tight'
+                    )}
+                >
+                    {row.label}
+                </td>
+                <td data-label="Valor" className="p-4 text-right font-mono font-black text-primary text-base">
+                    <span className="text-[10px] mr-1 opacity-50">$</span>
+                    {(calculatedValues[row.id]?.total ?? 0).toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                    })}
+                </td>
+            </tr>
+            {row.children?.map((child: any) => renderRow(child, level + 1))}
+        </React.Fragment>
+      );
+  };
+
   return (
     <div className="overflow-x-auto table-to-cards border border-slate-100 dark:border-slate-800 rounded-3xl overflow-hidden shadow-xl">
       <table className="w-full text-sm">
@@ -42,27 +69,12 @@ const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValue
         <tbody className="bg-white dark:bg-slate-900">
           {sections.map((section) => (
             <React.Fragment key={section.id}>
-              {section.rows.map((row) => (
-                <tr key={row.id} className="border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
-                  <td
-                    data-label="Descripción"
-                    className={cn(
-                      "p-4",
-                      row.id.includes('.') ? 'pl-8 sm:pl-12 text-slate-500 italic' : 'font-bold text-slate-900 dark:text-white uppercase tracking-tight'
-                    )}
-                  >
-                    {row.label}
+              <tr className="bg-slate-50 dark:bg-slate-950/50">
+                  <td colSpan={2} className="px-4 py-2 text-[10px] font-black text-primary/50 uppercase tracking-[0.2em]">
+                      {section.label}
                   </td>
-                  <td data-label="Valor" className="p-4 text-right font-mono font-black text-primary text-base">
-                    <span className="text-[10px] mr-1 opacity-50">$</span>
-                    {/* FIX: Access the 'total' property of the calculated value object */}
-                    {(calculatedValues[row.id]?.total ?? 0).toLocaleString('en-US', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </td>
-                </tr>
-              ))}
+              </tr>
+              {section.rows.map((row) => renderRow(row))}
             </React.Fragment>
           ))}
         </tbody>
