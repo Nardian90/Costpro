@@ -75,8 +75,8 @@ const CostProLogo = ({ size = 120, animated = true }) => {
         <h2 className="text-foreground font-black text-4xl uppercase tracking-tighter">
           COST<span className="text-green-500 dark:text-green-400">PRO</span>
         </h2>
-        <p className="text-muted-foreground text-[10px] tracking-[0.6em] uppercase mt-2 font-bold">
-          El Futuro
+        <p className="text-muted-foreground text-[10px] tracking-[0.2em] uppercase mt-2 font-bold">
+          Protege tus costos y precios
         </p>
       </motion.div>
       <style jsx>{`
