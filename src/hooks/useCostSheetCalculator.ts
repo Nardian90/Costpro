@@ -125,31 +125,46 @@ export const useCostSheetCalculator = (template: Template) => {
         }
 
         // Main Calculation Logic
-        switch (row.calculationMethod) {
-            case 'Prorrateo':
-                const baseVH = calculatedResult.baseValorHistorico;
-                const baseT = calculatedResult.baseTotal;
-                const rowVH = calculatedResult.valorHistorico;
-                calculatedResult.coeficiente = baseVH > 0 ? rowVH / baseVH : 0;
-                calculatedResult.total = calculatedResult.coeficiente * baseT;
-                break;
+        if (row.is_percent && row.base_ref) {
+            const baseRow = allRowsById[row.base_ref];
+            const baseValue = baseRow ? calculateRow(baseRow).total : 0;
+            calculatedResult.total = baseValue * (row.value || 0);
+            calculatedResult.valorHistorico = row.value || 0; // In this context, value is the "historical" percentage
+        } else {
+            switch (row.calculationMethod) {
+                case 'Prorrateo':
+                    const baseVH = calculatedResult.baseValorHistorico;
+                    const baseT = calculatedResult.baseTotal;
+                    const rowVH = calculatedResult.valorHistorico;
+                    calculatedResult.coeficiente = baseVH > 0 ? rowVH / baseVH : 0;
+                    calculatedResult.total = calculatedResult.coeficiente * baseT;
+                    break;
 
-            case 'ValorFijo':
-            default:
-                if (row.totalFormula) {
-                    let expression = row.totalFormula
-                        .replace(/baseValue/g, String(calculatedResult.baseTotal))
-                        .replace(/valorHistorico/g, String(calculatedResult.valorHistorico));
-                    calculatedResult.total = evaluateExpression(expression);
-                }
-                break;
+                case 'ValorFijo':
+                default:
+                    if (row.totalFormula) {
+                        let expression = row.totalFormula
+                            .replace(/baseValue/g, String(calculatedResult.baseTotal))
+                            .replace(/valorHistorico/g, String(calculatedResult.valorHistorico));
+                        calculatedResult.total = evaluateExpression(expression);
+                    } else if (!row.formula && !row.children) {
+                        // If no formula and no children, and not fixed formula, total is historical value
+                        calculatedResult.total = calculatedResult.valorHistorico;
+                    }
+                    break;
+            }
         }
 
         if (row.formula) {
             if (row.formula === '=sum(children)') {
                  // Already calculated
             } else {
-                 let expression = row.formula.replace(/ref\('([^']+)'\)/g, (_, id) => String(calculateRow(allRowsById[id]).total || 0));
+                 let expression = row.formula.replace(/ref\('([^']+)'\)/g, (_, id) => {
+                    const r = allRowsById[id];
+                    if (!r) return '0';
+                    const calc = calculateRow(r);
+                    return String(r.is_percent ? (r.value ?? r.valorHistorico ?? 0) : calc.total);
+                 });
                  expression = expression.replace(/sum\(([^)]+)\)/g, (_, args) => String(args.split(',').reduce((acc: number, val: string) => acc + parseFloat(val.trim() || '0'), 0)));
                  expression = expression.startsWith('=') ? expression.substring(1) : expression;
                  calculatedResult.total = evaluateExpression(expression);
