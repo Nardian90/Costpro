@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { User, UserRole, CartItem, Discount } from '@/types';
+import type { UserRole, CartItem, Discount } from '@/types';
+import { UserContract, UserFactory } from '@/contracts';
 import { cartItemSchema } from '@/validation/schemas';
 
 // ============================================
@@ -8,20 +9,20 @@ import { cartItemSchema } from '@/validation/schemas';
 // ============================================
 
 interface AuthStore {
-  user: User | null;
+  user: UserContract;
   isAuthenticated: boolean;
   token: string | null;
   loading: boolean;
-  login: (user: User, token: string) => void;
+  login: (user: UserContract, token: string) => void;
   logout: () => void;
-  updateUser: (user: Partial<User>) => void;
+  updateUser: (user: Partial<UserContract>) => void;
   setLoading: (loading: boolean) => void;
 }
 
 export const useAuthStore = create<AuthStore>()(
   persist(
     (set) => ({
-      user: null,
+      user: UserFactory.create(),
       isAuthenticated: false,
       token: null,
       loading: true, // Start as loading
@@ -34,14 +35,14 @@ export const useAuthStore = create<AuthStore>()(
         }),
       logout: () =>
         set({
-          user: null,
+          user: UserFactory.create(),
           isAuthenticated: false,
           token: null,
           loading: false,
         }),
       updateUser: (updates) =>
         set((state) => ({
-          user: state.user ? { ...state.user, ...updates } : null,
+          user: { ...state.user, ...updates },
         })),
       setLoading: (loading) => set({ loading }),
     }),
@@ -206,7 +207,7 @@ export const useCurrentUser = () => useAuthStore((state) => state.user);
 export const useUserRole = () => useAuthStore((state) => state.user?.role);
 export const useCanAccess = (requiredRole: UserRole) =>
   useAuthStore((state) => {
-    if (!state.user) return false;
+    if (!state.user.id) return false;
 
     const roleHierarchy: Record<UserRole, number> = {
       admin: 4,
