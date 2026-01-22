@@ -25,19 +25,19 @@ export const transactionStatusSchema = z.enum([
 // ============================================
 
 export const profileSchema = z.object({
-  id: z.string().uuid().or(z.string().length(0).transform(() => null)).nullable(),
-  full_name: z.string(),
-  email: z.string().email(),
-  role: userRoleSchema,
-  roles: z.array(userRoleSchema).optional(),
-  is_active: z.boolean(),
-  store_id: z.string().uuid().or(z.string().length(0).transform(() => null)).nullable(),
-  active_store_id: z.string().uuid().or(z.string().length(0).transform(() => null)).nullable(),
-  max_stores_limit: z.number().optional(),
-  max_users_limit: z.number().optional(),
-  created_by: z.string().uuid().nullable().optional(),
-  created_at: z.string(),
-  updated_at: z.string().optional(),
+  id: z.string().uuid().or(z.string().length(0).transform(() => null)).nullable().optional().catch(null),
+  full_name: z.string().catch('Usuario'),
+  email: z.string().email().catch(''),
+  role: userRoleSchema.catch('clerk'),
+  roles: z.array(userRoleSchema).optional().catch([]),
+  is_active: z.boolean().catch(true),
+  store_id: z.string().uuid().or(z.string().length(0).transform(() => null)).nullable().optional().catch(null),
+  active_store_id: z.string().uuid().or(z.string().length(0).transform(() => null)).nullable().optional().catch(null),
+  max_stores_limit: z.number().optional().catch(1),
+  max_users_limit: z.number().optional().catch(1),
+  created_by: z.string().uuid().nullable().optional().catch(null),
+  created_at: z.string().catch(() => new Date().toISOString()),
+  updated_at: z.string().optional().catch(undefined),
 });
 
 export const productSchema = z.object({
