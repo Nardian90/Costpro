@@ -1,68 +1,44 @@
-# Auditoría de Errores Críticos - COSTPRO (Día 2)
+# Auditoría de Errores Técnicos - CostPro
 
-Este documento registra la recuperación de la integridad del sistema y el estado del tipado tras las acciones del Día 2.
+## 1. Clasificación Profesional de Hallazgos
 
-## 📊 Estado del Build
-- **Configuración:** `ignoreBuildErrors: false`, `noImplicitAny: true`, `reactStrictMode: true`.
-- **Resultado:** EXITOSO (Build completo generado).
+| Archivo | Tipo | Severidad | Descripción | Impacto Negocio | Flujo |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `src/app/login/page.tsx` | TS | 🔴 Crítico | Propiedad `active_store_id` faltante en objeto User. | Impide el login correcto y asociación de tienda. | Auth / POS |
+| `src/components/views/TerminalView.tsx` | TS | 🔴 Crítico | Referencia a `loading` en `AuthStore` (no existe en el store). | Rompe la vista principal del terminal. | Auth / POS |
+| `src/components/views/TerminalView.tsx` | TS | 🔴 Crítico | Decenas de `Cannot find name` (Variables/Funciones de estado desaparecidas). | El terminal está funcionalmente roto (POS, Pagos, Filtros). | POS / Terminal |
+| `src/components/views/TerminalView.tsx` | TS | 🔴 Crítico | Incompatibilidad de tipos en manejadores de carrito (`CartItem` vs `Product`). | Errores en la lógica de agregado al carrito. | POS |
+| `src/components/cost-sheets/CostSheetView.tsx` | TS | 🔴 Crítico | Propiedad `annexes` no existe en el tipo de valores calculados. | Rompe el motor de cálculo de fichas de costo. | Costos |
+| `src/components/ProductReceptionView.tsx` | TS | 🔴 Crítico | Objeto `Product` incompleto (faltan 9+ propiedades requeridas). | Falla en la recepción de mercancía y actualización de stock. | Inventario |
+| `src/lib/db.ts` | TS | 🔴 Crítico | `PrismaClient` no encontrado en `@prisma/client`. | Riesgo de fallo total en capa de persistencia (si se usa). | Base de Datos |
+| `src/components/CatalogView.tsx` | TS | 🟠 Medio | Propiedad `className` no permitida en tipo `Action`. | Posible fallo en renderizado de menús de acción. | POS / Catálogo |
+| `src/components/InventoryView.tsx` | TS | 🟠 Medio | Propiedad `className` no permitida en tipo `Action`. | Posible fallo en renderizado de menús de inventario. | Inventario |
+| `src/components/ui/ProductImage.tsx` | TS | 🟠 Medio | `null` no asignable a `string \| StaticImport`. | Errores visuales/runtime al cargar imágenes de productos. | UI / Catálogo |
+| `src/components/theme-provider.tsx` | TS | 🟠 Medio | Módulo `next-themes/dist/types` no encontrado. | Inestabilidad en el sistema de temas. | UI |
+| `src/components/views/terminal/POSView.tsx` | TS | 🟠 Medio | `null` no asignable a tipos de entrada (string/number). | Bugs menores en inputs del POS. | POS |
+| `src/components/CostProLogo.tsx` | TS | 🟢 Bajo | Mismatch en tipos de variantes de framer-motion (ease). | Animación del logo podría no comportarse como se espera. | UI |
+| `src/components/ui/DataDecryption.tsx` | TS | 🟢 Bajo | Uso de propiedad `yoyo` obsoleta en transiciones. | Advertencia de deprecación en consola. | UI |
+| `examples/websocket/*` | TS | 🟢 Bajo | Dependencias faltantes (`socket.io`). | Ejemplos no compilables. | Otros |
+| `skills/frontend-design/*` | TS | 🟢 Bajo | Errores de tipos en archivos de entrenamiento/ejemplo. | Ruido en el build. | Otros |
 
----
+## 2. Mapa de Riesgo Técnico del Frontend
 
-## 🛠️ Errores Críticos Resueltos
+### Zona Roja (Inminente)
+- **TerminalView.tsx:** Es un monolito de +1500 líneas con referencias a variables inexistentes. Sugiere una refactorización fallida o incompleta.
+- **Flujo de Auth:** El desajuste en la interfaz `User` (`active_store_id`) afectará cualquier operación que dependa del contexto de la tienda activa.
+- **Motor de Costos:** La falta de `annexes` en el estado de cálculo impide la integridad de las fichas de costo v5.
 
-### 1. Núcleo de Autenticación
-- **Problema:** `AuthStore` carecía de propiedades `loading` y `active_store_id`, causando fallos en `TerminalView`.
-- **Solución:** Integradas en el store de Zustand y alineadas con el tipo `User`.
-- **Estado:** ✅ Resuelto.
+### Zona Naranja (Deuda Técnica)
+- **Stores Zustand:** Uso inconsistente de propiedades (ej. `loading` en auth vs ui store).
+- **Tipado de Supabase/RPCs:** Prácticamente todos los llamados a `supabase.rpc` (ej. `get_products_for_pos`, `create_sale`, `register_reception`) carecen de genéricos de retorno, delegando la seguridad de tipos a `any`. Se observa un uso excesivo de objetos parciales que no cumplen con las interfaces definidas.
 
-### 2. Flujo POS (TerminalView)
-- **Problema:** Más de 200 errores por código legado duplicado y falta de importaciones de iconos/subcomponentes.
-- **Solución:** Eliminación de funciones `renderX` obsoletas. Refactorización hacia subcomponentes tipados en `src/components/views/terminal/`.
-- **Estado:** ✅ Resuelto.
+### Zona Verde (Mantenimiento)
+- **UI/Animaciones:** Errores menores en configuraciones de `framer-motion`.
+- **Ejemplos:** Código muerto o de ejemplo que ensucia el proceso de build.
 
-### 3. Motor de Cálculo de Costos
-- **Problema:** Uso extensivo de `any` en el store y el hook de cálculo, perdiendo validación en fórmulas y estructuras anidadas.
-- **Solución:** Creación de interfaces estrictas en `src/types/cost-sheet.ts`. Tipado completo de `useCostSheetCalculator` y `cost-sheet-store.ts`.
-- **Estado:** ✅ Resuelto.
+## 3. Resumen Ejecutivo
 
-### 4. Contratos de Datos (Supabase RPCs)
-- **Problema:** Respuestas de RPCs tipadas como `any`, permitiendo inconsistencias entre DB y UI.
-- **Solución:** Definición de `GetProductsForPosResponse`, `DashboardKpiResponse` y `CreateSaleParams`. Cast explícito en puntos de entrada.
-- **Estado:** ✅ Resuelto.
-
-### 5. Integridad de Componentes UI
-- **Problema:** Errores en `ActionMenu`, `ProductImage`, `InventoryView` por manejo incorrecto de `null` y props faltantes.
-- **Solución:** Refuerzo de tipos y guardias contra nulos.
-- **Estado:** ✅ Resuelto.
-
----
-
-## 🔍 Tipado "any" Eliminado (Muestreo)
-
-| Archivo | Cantidad aprox. | Contexto |
-| --- | --- | --- |
-| `cost-sheet-store.ts` | 15+ | Estructura de la ficha y funciones de limpieza. |
-| `useCostSheetCalculator.ts` | 10+ | Procesamiento de filas y anexos. |
-| `TerminalView.tsx` | 20+ | Mapeo de productos y estados de KPIS. |
-| `CatalogView.tsx` | 5+ | Manejo de variantes y respuesta de productos. |
-
----
-
-## ⚠️ Riesgos Remanentes y Deuda Técnica
-
-1. **Zod Validation:** Aún no se ha implementado validación de esquemas en tiempo de ejecución para las respuestas de Supabase. Confiamos en el cast manual.
-2. **Exclusiones en Build:** Se han excluido directorios no esenciales (`examples`, `skills`) del `tsconfig.json` para agilizar la integridad del core.
-3. **Implicit Any:** Se activó `noImplicitAny`, pero existen archivos fuera del core que podrían requerir atención si se incluyen en el futuro.
-
----
-
-## 🚀 Resumen Ejecutivo (Senior Lead)
-
-**Riesgo Reducido:** El build ahora garantiza que los flujos de POS y Costos son coherentes. Se eliminaron estados imposibles en la sesión y se aseguró que el motor de cálculo reciba y devuelva estructuras predecibles. La eliminación de código muerto en `TerminalView` redujo significativamente la superficie de error.
-
-**Riesgo Remanente:** Dependencia de `as Type` en llamadas RPC. Si el esquema de base de datos cambia sin actualizar los tipos TS, el build pasará pero el runtime podría fallar.
-
-**Próximo Cuello de Botella:** Centralización de fetching. La falta de React Query/SWR empieza a notarse en la complejidad de los `useEffect` de `TerminalView`.
-
----
-*Auditado por Jules (Senior Software Engineer)*
+- **Riesgo Actual:** Crítico. El sistema no compila y tiene fallos de lógica estructural en el terminal y el motor de costos.
+- **Zonas Críticas:** `TerminalView`, `Auth/Session`, `CostSheetCalculator`, `ProductReception`.
+- **Impacto si se despliega así:** El sistema es inoperable. El POS no cargaría, el login fallaría en la validación de tienda, y los cálculos de costos arrojarían errores de runtime (undefined access). Se ha perdido la integridad entre las interfaces de tipos y la implementación real.
+- **Estado de Ingeniería:** Se ha recuperado la visibilidad. El build falla "correctamente", exponiendo la deuda técnica acumulada y los errores de refactorización silenciosos.
