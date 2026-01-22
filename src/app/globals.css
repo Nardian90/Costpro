@@ -678,12 +678,15 @@
     scrollbar-width: none;
   }
 
-  /* Sticky Table Headers */
+  /* Sticky Table Headers - Improved */
   .sticky-header th {
     position: sticky;
     top: 0;
-    z-index: 30;
-    background: var(--background) !important;
+    z-index: 25; /* Safe zone */
+    background: var(--primary) !important;
+    color: white !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-bottom: 2px solid rgba(0,0,0,0.1);
   }
 
   /* Offset for TerminalView main header */
@@ -695,6 +698,43 @@
     .terminal-content .sticky-header th {
       top: 92px; /* sm header offset */
     }
+  }
+
+  /* Grid Table Utilities for perfect alignment */
+  .grid-table-pos tr {
+    display: grid !important;
+    grid-template-columns: minmax(200px, 2fr) minmax(100px, 1fr) 100px 120px 80px !important;
+    width: 100%;
+  }
+
+  .grid-table-catalog tr {
+    display: grid !important;
+    grid-template-columns: minmax(200px, 2fr) minmax(100px, 1fr) minmax(100px, 1fr) 100px 100px 100px !important;
+    width: 100%;
+  }
+
+  .grid-table-inventory tr {
+    display: grid !important;
+    grid-template-columns: minmax(200px, 2fr) 120px 100px 100px 100px 100px 120px !important;
+    width: 100%;
+  }
+
+  .grid-table-transactions tr {
+    display: grid !important;
+    grid-template-columns: 100px 1fr 120px 120px 100px 80px !important;
+    width: 100%;
+  }
+
+  .grid-table-audit tr {
+    display: grid !important;
+    grid-template-columns: 120px 1fr 100px 120px 150px !important;
+    width: 100%;
+  }
+
+  .grid-table-users tr {
+    display: grid !important;
+    grid-template-columns: 1.5fr 1fr 1fr 100px 100px !important;
+    width: 100%;
   }
 
   /* Support for tables inside scrolling containers */

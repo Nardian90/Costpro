@@ -18,3 +18,4 @@ https://nextjs.org/telemetry
 Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY
  GET /login 200 in 9.6s (compile: 8.9s, render: 752ms)
  GET /login 200 in 149ms (compile: 9ms, render: 140ms)
+ GET /login 200 in 573ms (compile: 140ms, render: 434ms)
