@@ -471,7 +471,9 @@ export function useStores(userId: string, isAdmin: boolean) {
   return useQuery({
     queryKey: ['stores', userId, isAdmin],
     queryFn: async () => {
-      if (!isAdmin && !userId) return [];
+      // Strict guard for non-admins to prevent 400 errors with empty/invalid userId
+      if (!isAdmin && (!userId || userId.length < 5)) return [];
+
       const { data, error } = await (isAdmin
         ? supabase.from('stores').select('*').order('name')
         : supabase.from('stores').select('*, user_store_access!inner(user_id)')
@@ -479,7 +481,7 @@ export function useStores(userId: string, isAdmin: boolean) {
       if (error) throw error;
       return data as any[];
     },
-    enabled: isAdmin || !!userId,
+    enabled: isAdmin || (!!userId && userId.length >= 5),
   });
 }
 
