@@ -242,7 +242,7 @@ export default function POSView({
                   >
                     <option value="">Todas</option>
                     {categories.map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
+                      <option key={cat || 'uncategorized'} value={cat || ""}>{cat || 'Sin categoría'}</option>
                     ))}
                   </select>
                 </div>

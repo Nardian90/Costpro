@@ -9,24 +9,21 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import {
+  CostSheetRow as RowData,
+  CostSheetSection,
+  CostSheetAnnex,
+  CalculatedRowValue
+} from '@/types/cost-sheet';
 
 // Define types based on our hook and data structure
-type CalculatedValues = ReturnType<typeof useCostSheetCalculator>['calculatedValues'];
-type RowData = {
-  id: string;
-  label: string;
-  children?: RowData[];
-  helpText?: string;
-  baseDeCalculoRef?: string | null;
-  calculationMethod?: 'Prorrateo' | 'ValorFijo';
-  [key: string]: any;
-};
+type CalculatedValues = Record<string, CalculatedRowValue>;
 
 // Props for the main table component
 interface CostSheetInteractiveTableProps {
-  sections: any[];
+  sections: CostSheetSection[];
   calculatedValues: CalculatedValues;
-  annexes: any[];
+  annexes: CostSheetAnnex[];
 }
 
 // Props for a single row component
@@ -35,7 +32,7 @@ interface RowProps {
   level: number;
   calculatedValues: CalculatedValues;
   path: (string | number)[]; // Path to this row in the Zustand store
-  annexes: any[];
+  annexes: CostSheetAnnex[];
   allRows: RowData[];
 }
 
@@ -46,7 +43,7 @@ const CostSheetRow: React.FC<RowProps> = ({ row, level, calculatedValues, path, 
   const [isExpanded, setIsExpanded] = useState(true);
   const { updateValue } = useCostSheetStore();
   const hasChildren = row.children && row.children.length > 0;
-  const calculated = calculatedValues[row.id] || { total: 0, valorHistorico: 0, baseValue: 0, coeficiente: 0 };
+  const calculated = calculatedValues[row.id] || { total: 0, valorHistorico: 0, baseTotal: 0, coeficiente: 0 };
 
   const handleToggle = () => {
     if (hasChildren) {
@@ -93,7 +90,7 @@ const CostSheetRow: React.FC<RowProps> = ({ row, level, calculatedValues, path, 
                 type="number"
                 step={row.is_percent ? "0.001" : "1"}
                 className={cn("neu-input text-right h-8", row.is_percent && "pr-6")}
-                value={row.hasOwnProperty('valorHistorico') ? row.valorHistorico : (row.is_percent ? (row.value * 100) : row.value)}
+                value={row.hasOwnProperty('valorHistorico') ? (row.valorHistorico ?? 0) : (row.is_percent ? ((row.value ?? 0) * 100) : (row.value ?? 0))}
                 onChange={(e) => {
                   const val = e.target.value;
                   handleValueChange(

@@ -39,13 +39,26 @@ export default function ProductImage({
     );
   }
 
+  const imageUrl = getProductImageUrl(src);
+
+  if (!imageUrl) {
+    return (
+      <div
+        className={`flex items-center justify-center bg-muted/20 rounded-lg border border-border/50 ${className}`}
+        style={{ width, height }}
+      >
+        <Package className="text-muted-foreground/40" style={{ width: width * 0.5, height: height * 0.5 }} />
+      </div>
+    );
+  }
+
   return (
     <div
       className={`relative overflow-hidden rounded-lg border border-border/50 ${className}`}
       style={{ width, height }}
     >
       <Image
-        src={getProductImageUrl(src)}
+        src={imageUrl}
         alt={name}
         width={width}
         height={height}
