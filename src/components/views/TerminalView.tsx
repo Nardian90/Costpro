@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef, useDeferredValue, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { useAuthStore, useCartStore, useUIStore, useCanAccess } from '@/store';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useRouter } from 'next/navigation';
@@ -69,9 +69,13 @@ export default function TerminalView() {
   const [posLayoutMode, setPosLayoutMode] = useState<'grid' | 'table'>('grid');
   const searchInputRef = useRef<HTMLInputElement>(null);
   const navRef = useRef<HTMLElement>(null);
-  const [showSidebarLogo, setShowSidebarLogo] = useState(true);
   const [showSidebarUser, setShowSidebarUser] = useState(true);
-  const [isSidebarScrollable, setIsSidebarScrollable] = useState(false);
+
+  // Scroll animations for sidebar
+  const { scrollY } = useScroll({ container: navRef });
+  const logoHeight = useTransform(scrollY, [0, 80], [160, 0]);
+  const logoOpacity = useTransform(scrollY, [0, 50], [1, 0]);
+  const logoScale = useTransform(scrollY, [0, 80], [1, 0.8]);
 
   // State
   const [products, setProducts] = useState<(Product & { product_variants?: any[] })[]>([]);
@@ -316,12 +320,10 @@ export default function TerminalView() {
     const scrollable = scrollHeight > clientHeight + 10;
 
     if (!scrollable) {
-      setShowSidebarLogo(true);
       setShowSidebarUser(true);
       return;
     }
 
-    setShowSidebarLogo(scrollTop <= 20);
     const isAtBottom = Math.ceil(scrollTop + clientHeight) >= scrollHeight - 10;
     setShowSidebarUser(isAtBottom);
   }, []);
@@ -1322,24 +1324,26 @@ export default function TerminalView() {
         sidebarOpen ? "w-64 lg:w-72 translate-x-0" : "w-0 -translate-x-full border-r-0"
       )}>
         <div className="bg-sidebar/90 backdrop-blur-2xl h-full flex flex-col overflow-hidden w-64 lg:w-72">
-          {/* Logo */}
-          <AnimatePresence initial={false}>
-            {showSidebarLogo && (
-              <motion.div
-                id="sidebar-logo-container"
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.3, ease: 'easeInOut' }}
-                className="p-8 border-b border-sidebar-border/50 shrink-0 overflow-hidden"
-              >
-                <CostProLogo size={50} animated={true} />
-                <div className="mt-4">
-                  <div className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Terminal Operativa</div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {/* Logo Area - Smoothly contracts on scroll */}
+          <motion.div
+            id="sidebar-logo-container"
+            style={{
+              height: logoHeight,
+              opacity: logoOpacity,
+              overflow: 'hidden'
+            }}
+            className="border-b border-sidebar-border/50 shrink-0 bg-sidebar/5"
+          >
+            <motion.div
+              style={{ scale: logoScale }}
+              className="p-8 h-[160px] flex flex-col justify-center"
+            >
+              <CostProLogo size={50} animated={true} />
+              <div className="mt-4">
+                <div className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Terminal Operativa</div>
+              </div>
+            </motion.div>
+          </motion.div>
 
           {/* Navigation */}
           <nav
