@@ -8,6 +8,8 @@ import type { Product } from '@/types';
 import { toast } from 'sonner';
 import { X, Save, Search, Plus, Trash2, Package, Upload, Download, HelpCircle, FileText } from 'lucide-react';
 import { getProductImageUrl, cn } from '@/lib/utils';
+import { validateRPCArrayResponse } from '@/lib/rpc-validator';
+import { paginatedProductSchema } from '@/validation/schemas';
 import { useDebounce } from '@/hooks/useDebounce';
 import ActionMenu, { Action } from './ui/ActionMenu';
 import Papa from 'papaparse';
@@ -64,7 +66,14 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                 p_search_term: debouncedSearchTerm
             });
             if (error) throw error;
-            setSearchResults(data || []);
+
+            const validatedData = await validateRPCArrayResponse(
+                data,
+                paginatedProductSchema,
+                'get_paginated_products'
+            );
+
+            setSearchResults(validatedData || []);
         } catch (error: any) {
             toast.error('Product search failed: ' + error.message);
         } finally {

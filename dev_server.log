@@ -7,12 +7,11 @@
 - Network:       http://192.168.0.2:3000
 
 ✓ Starting...
-✓ Ready in 1509ms
-○ Compiling /login ...
+✓ Ready in 1185ms
+○ Compiling / ...
 ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
 Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY
- HEAD /login 200 in 6.6s (compile: 6.1s, render: 430ms)
-○ Compiling / ...
- GET / 200 in 5.1s (compile: 4.8s, render: 324ms)
- GET /login 200 in 74ms (compile: 6ms, render: 68ms)
- GET /login 200 in 91ms (compile: 5ms, render: 86ms)
+ GET / 200 in 9.2s (compile: 8.2s, render: 992ms)
+⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY
+ GET / 200 in 739ms (compile: 245ms, render: 494ms)

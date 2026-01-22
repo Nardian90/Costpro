@@ -3,7 +3,8 @@ import { useAuthStore } from '@/store';
 import { useSessionStore } from '@/store/session-store';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
-import type { UserRole } from '@/types';
+import { profileSchema } from '@/validation/schemas';
+import type { UserRole, User } from '@/types';
 
 const SESSION_CHECK_THROTTLE = 60 * 1000; // 1 minute
 const SESSION_CHECK_TIMEOUT = 15 * 1000; // 15 seconds
@@ -67,9 +68,17 @@ export function useSessionManager() {
                         updated_at: profileData.updated_at,
                     };
 
+                    // Validate with Zod
+                    const validationResult = profileSchema.safeParse(userData);
+                    if (!validationResult.success) {
+                        console.error('[Zod Validation Error] profile data:', validationResult.error.format());
+                    }
+
+                    const finalUserData = validationResult.success ? validationResult.data : userData;
+
                     const currentState = useAuthStore.getState();
-                    if (session.access_token !== currentState.token || JSON.stringify(userData) !== JSON.stringify(currentState.user)) {
-                        login(userData, session.access_token);
+                    if (session.access_token !== currentState.token || JSON.stringify(finalUserData) !== JSON.stringify(currentState.user)) {
+                        login(finalUserData as User, session.access_token);
                     }
                     setStatus('stable');
                 } else {
