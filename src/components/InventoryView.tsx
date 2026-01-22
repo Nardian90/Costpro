@@ -4,6 +4,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/store';
+import { validateRPCArrayResponse } from '@/lib/rpc-validator';
+import { paginatedProductSchema } from '@/validation/schemas';
 import type { Product } from '@/types';
 import { toast } from 'sonner';
 import { Download, Plus, X, LayoutList, Table as TableIcon, Search } from 'lucide-react';
@@ -56,14 +58,21 @@ export default function InventoryView() {
 
             if (error) throw error;
 
-            const fetchedProducts = data || [];
+            const validatedData = await validateRPCArrayResponse(
+                data,
+                paginatedProductSchema,
+                'get_paginated_products'
+            );
+
+            const fetchedProducts = validatedData || [];
 
             setProducts(prev => isNewSearch ? fetchedProducts : [...prev, ...fetchedProducts]);
             setOffset(currentOffset + fetchedProducts.length);
 
             if (fetchedProducts.length > 0) {
-                 setTotalCount(fetchedProducts[0].total_count || 0);
-                 setHasMore((currentOffset + fetchedProducts.length) < fetchedProducts[0].total_count);
+                 const total = fetchedProducts[0].total_count || 0;
+                 setTotalCount(total);
+                 setHasMore((currentOffset + fetchedProducts.length) < total);
             } else {
                  if (isNewSearch) setTotalCount(0);
                  setHasMore(false);
