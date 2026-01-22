@@ -1,12 +1,18 @@
 // src/components/CatalogView.tsx
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, useRef, useDeferredValue } from 'react';
+import { useState, useEffect, useMemo, useRef, useDeferredValue } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/store';
-import { getSupabaseUrl, cn } from '@/lib/utils';
-import { validateRPCArrayResponse } from '@/lib/rpc-validator';
-import { getProductsForPosResponseSchema } from '@/validation/schemas';
+import { getSupabaseUrl } from '@/lib/utils';
+import {
+  useProducts,
+  useUpdateProduct,
+  useCreateProduct,
+  useBulkUpdateProducts,
+  useAddVariant,
+  useDeleteVariant
+} from '@/hooks/useQueries';
 import type { Product, ProductVariant } from '@/types';
 import type { GetProductsForPosResponse } from '@/types/supabase-rpc';
 import ImageWithFallback from './ui/ImageWithFallback';
@@ -46,8 +52,13 @@ export default function CatalogView() {
     const { user } = useAuthStore();
     const isMobile = useIsMobile();
 
-    const [products, setProducts] = useState<(Product & { product_variants?: ProductVariant[] | null })[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { data: products = [], isLoading: loading } = useProducts(user?.store_id);
+    const updateProductMutation = useUpdateProduct();
+    const createProductMutation = useCreateProduct();
+    const bulkUpdateMutation = useBulkUpdateProducts();
+    const addVariantMutation = useAddVariant();
+    const deleteVariantMutation = useDeleteVariant();
+
     const [searchTerm, setSearchTerm] = useState('');
     const deferredSearchTerm = useDeferredValue(searchTerm);
     const [layoutMode, setLayoutMode] = useState<'grid' | 'table'>('grid');
@@ -72,43 +83,6 @@ export default function CatalogView() {
     });
 
     const fileInputRef = useRef<HTMLInputElement>(null);
-
-    const fetchProducts = useCallback(async () => {
-        if (!user) return;
-        setLoading(true);
-        try {
-            const { data, error } = await supabase.rpc('get_products_for_pos', {
-                p_store_id: user.store_id,
-                p_search_term: '',
-                p_category: ''
-            });
-
-            if (error) throw error;
-
-            // Validate with Zod
-            const validatedData = await validateRPCArrayResponse(
-                data,
-                getProductsForPosResponseSchema,
-                'get_products_for_pos'
-            );
-
-            const mappedProducts = validatedData?.map((item) => ({
-                ...item,
-                public_image_url: getSupabaseUrl('product-images', item.image_url),
-            })) || [];
-
-            setProducts(mappedProducts);
-        } catch (error) {
-            console.error('Error fetching products:', error);
-            toast.error('Error al cargar catálogo');
-        } finally {
-            setLoading(false);
-        }
-    }, [user?.store_id]);
-
-    useEffect(() => {
-        fetchProducts();
-    }, [fetchProducts]);
 
     useEffect(() => {
         if (isMobile) setLayoutMode('grid');
@@ -136,9 +110,8 @@ export default function CatalogView() {
         }
 
         try {
-          const { error } = await supabase
-            .from('products')
-            .update({
+          await updateProductMutation.mutateAsync({
+                id: editingProduct.id,
                 name: editingProduct.name,
                 category: editingProduct.category,
                 sku: editingProduct.sku,
@@ -147,13 +120,10 @@ export default function CatalogView() {
                 description: editingProduct.description,
                 unit_of_measure: editingProduct.unit_of_measure,
                 image_url: editingProduct.image_url
-            })
-            .eq('id', editingProduct.id);
+          });
 
-          if (error) throw error;
           toast.success('Producto actualizado');
           setIsEditProductModalOpen(false);
-          fetchProducts();
         } catch (error: any) {
           toast.error(error.message || 'Error al actualizar producto');
         }
@@ -169,20 +139,17 @@ export default function CatalogView() {
             return;
         }
         try {
-            const { error } = await supabase
-                .from('products')
-                .insert([{
-                    name: newProductForm.name,
-                    sku: newProductForm.sku,
-                    category: newProductForm.category,
-                    price: newProductForm.price,
-                    cost_price: newProductForm.cost_price,
-                    unit_of_measure: newProductForm.unit_of_measure,
-                    description: newProductForm.description,
-                    store_id: user.store_id
-                }]);
+            await createProductMutation.mutateAsync({
+                name: newProductForm.name,
+                sku: newProductForm.sku,
+                category: newProductForm.category,
+                price: newProductForm.price,
+                cost_price: newProductForm.cost_price,
+                unit_of_measure: newProductForm.unit_of_measure,
+                description: newProductForm.description,
+                store_id: user.store_id
+            });
 
-            if (error) throw error;
             toast.success('Producto creado con éxito');
             setIsCreateProductModalOpen(false);
             setNewProductForm({
@@ -194,7 +161,6 @@ export default function CatalogView() {
                 unit_of_measure: 'unidad',
                 description: ''
             });
-            fetchProducts();
         } catch (error: any) {
             toast.error(error.message || 'Error al crear producto');
         }
@@ -227,7 +193,6 @@ export default function CatalogView() {
 
           toast.success('Imagen actualizada', { id: toastId });
           setEditingProduct({ ...editingProduct, image_url: fileName });
-          fetchProducts();
         } catch (error: any) {
           toast.error(error.message || 'Error al subir imagen', { id: toastId });
         }
@@ -236,25 +201,21 @@ export default function CatalogView() {
     const handleAddVariant = async (newV: any) => {
         if (!editingProduct) return;
         try {
-          const { error } = await supabase
-            .from('product_variants')
-            .insert([{
+          await addVariantMutation.mutateAsync({
               product_id: editingProduct.id,
               name: newV.name,
               price: newV.price,
               conversion_factor: newV.conversion_factor || 1
-            }]);
+          });
 
-          if (error) throw error;
           toast.success('Variante agregada');
 
-          // Refresh editing product variants
+          // Refresh editing product variants manually for the modal
           const { data } = await supabase
             .from('product_variants')
             .select('*')
             .eq('product_id', editingProduct.id);
           setEditingProduct({ ...editingProduct, product_variants: data || [] });
-          fetchProducts();
         } catch (error: any) {
           toast.error(error.message || 'Error al agregar variante');
         }
@@ -262,12 +223,7 @@ export default function CatalogView() {
 
     const handleDeleteVariant = async (variantId: string) => {
         try {
-          const { error } = await supabase
-            .from('product_variants')
-            .delete()
-            .eq('id', variantId);
-
-          if (error) throw error;
+          await deleteVariantMutation.mutateAsync(variantId);
           toast.success('Variante eliminada');
 
           const { data } = await supabase
@@ -275,7 +231,6 @@ export default function CatalogView() {
             .select('*')
             .eq('product_id', editingProduct.id);
           setEditingProduct({ ...editingProduct, product_variants: data || [] });
-          fetchProducts();
         } catch (error: any) {
           toast.error(error.message || 'Error al eliminar variante');
         }
@@ -412,12 +367,8 @@ export default function CatalogView() {
 
                 const toastId = toast.loading(`Actualizando ${productsToUpdate.length} productos...`);
                 try {
-                    const { error } = await supabase.rpc('bulk_update_products', { p_products: productsToUpdate });
-
-                    if (error) throw error;
-
+                    await bulkUpdateMutation.mutateAsync(productsToUpdate);
                     toast.success('Catálogo actualizado con éxito!', { id: toastId });
-                    fetchProducts();
                 } catch (error: any) {
                     toast.error(`Error al actualizar: ${error.message}`, { id: toastId });
                 } finally {
