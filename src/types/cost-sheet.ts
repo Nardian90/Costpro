@@ -1,0 +1,67 @@
+export interface CostSheetHeader {
+  code: string;
+  name: string;
+  date: string;
+  quantity: number;
+  currency: string;
+  category: string;
+  type: string;
+  unit: string;
+  [key: string]: any; // Allow for extra metadata
+}
+
+export interface CostSheetRow {
+  id: string;
+  label: string;
+  valorHistorico?: number;
+  value?: number;
+  baseDeCalculoRef?: string | null;
+  base_ref?: string | null;
+  calculationMethod?: 'Prorrateo' | 'ValorFijo';
+  totalFormula?: string | null;
+  formula?: string;
+  is_percent?: boolean;
+  children?: CostSheetRow[];
+  [key: string]: any;
+}
+
+export interface CostSheetSection {
+  id: string;
+  label?: string;
+  rows: CostSheetRow[];
+}
+
+export interface CostSheetColumn {
+  key: string;
+  title?: string;
+  formula?: string;
+  type?: 'number' | 'string' | 'formula';
+}
+
+export interface CostSheetAnnex {
+  id: string;
+  title: string;
+  columns: CostSheetColumn[];
+  data: any[]; // Data rows can have dynamic keys based on columns
+}
+
+export interface CostSheetSignature {
+  prepared_by: string;
+  approved_by: string;
+}
+
+export interface CostSheetData {
+  header: CostSheetHeader;
+  sections: CostSheetSection[];
+  annexes: CostSheetAnnex[];
+  signature: CostSheetSignature;
+}
+
+export interface CalculatedRowValue {
+  valorHistorico: number;
+  baseDeCalculoRef: string | null;
+  baseTotal: number;
+  baseValorHistorico: number;
+  coeficiente: number;
+  total: number;
+}

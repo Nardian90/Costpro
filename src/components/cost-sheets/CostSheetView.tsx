@@ -26,7 +26,7 @@ import { cn } from '@/lib/utils';
 
 const CostSheetView = () => {
   const { data, loadExample, reset } = useCostSheetStore();
-  const { calculatedValues, annexes, calculatedAnnexes } = useCostSheetCalculator(data);
+  const { calculatedValues, annexTotals, calculatedAnnexes } = useCostSheetCalculator(data);
 
   const [isEditing, setIsEditing] = useState(true);
   const [viewMode, setViewMode] = useState<'expert' | 'assisted' | 'reading'>('expert');

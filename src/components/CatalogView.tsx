@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/store';
 import { getSupabaseUrl, cn } from '@/lib/utils';
 import type { Product, ProductVariant } from '@/types';
+import type { GetProductsForPosResponse } from '@/types/supabase-rpc';
 import ImageWithFallback from './ui/ImageWithFallback';
 import { toast } from 'sonner';
 import {
@@ -43,7 +44,7 @@ export default function CatalogView() {
     const { user } = useAuthStore();
     const isMobile = useIsMobile();
 
-    const [products, setProducts] = useState<(Product & { product_variants?: ProductVariant[] })[]>([]);
+    const [products, setProducts] = useState<(Product & { product_variants?: ProductVariant[] | null })[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const deferredSearchTerm = useDeferredValue(searchTerm);
@@ -82,7 +83,8 @@ export default function CatalogView() {
 
             if (error) throw error;
 
-            const mappedProducts = data?.map((item: any) => ({
+            const typedData = data as GetProductsForPosResponse[];
+            const mappedProducts = typedData?.map((item) => ({
                 ...item,
                 public_image_url: getSupabaseUrl('product-images', item.image_url),
             })) || [];

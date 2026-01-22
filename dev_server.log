@@ -1,0 +1,18 @@
+
+> nextjs_tailwind_shadcn_ts@0.1.0 dev /app
+> next dev -p 3000
+
+▲ Next.js 16.1.3 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+
+✓ Starting...
+✓ Ready in 1509ms
+○ Compiling /login ...
+⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY
+ HEAD /login 200 in 6.6s (compile: 6.1s, render: 430ms)
+○ Compiling / ...
+ GET / 200 in 5.1s (compile: 4.8s, render: 324ms)
+ GET /login 200 in 74ms (compile: 6ms, render: 68ms)
+ GET /login 200 in 91ms (compile: 5ms, render: 86ms)
