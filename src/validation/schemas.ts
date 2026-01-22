@@ -25,14 +25,14 @@ export const transactionStatusSchema = z.enum([
 // ============================================
 
 export const profileSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().uuid().or(z.string().length(0).transform(() => null)).nullable(),
   full_name: z.string(),
   email: z.string().email(),
   role: userRoleSchema,
   roles: z.array(userRoleSchema).optional(),
   is_active: z.boolean(),
-  store_id: z.string().uuid().nullable(),
-  active_store_id: z.string().uuid().nullable(),
+  store_id: z.string().uuid().or(z.string().length(0).transform(() => null)).nullable(),
+  active_store_id: z.string().uuid().or(z.string().length(0).transform(() => null)).nullable(),
   max_stores_limit: z.number().optional(),
   max_users_limit: z.number().optional(),
   created_by: z.string().uuid().nullable().optional(),
@@ -43,32 +43,32 @@ export const profileSchema = z.object({
 export const productSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
-  description: z.string().nullable(),
-  sku: z.string().nullable(),
-  price: z.number().min(0),
-  cost_price: z.number().min(0),
-  image_url: z.string().nullable(),
-  category: z.string().nullable(),
-  unit_of_measure: z.string().nullable(),
-  supplier: z.string().nullable(),
-  created_at: z.string(),
-  updated_at: z.string(),
-  stock_current: z.number(),
-  cost_average: z.number(),
-  min_stock: z.number(),
-  store_id: z.string().uuid().nullable(),
+  description: z.string().nullable().optional(),
+  sku: z.string().nullable().optional(),
+  price: z.number().min(0).catch(0),
+  cost_price: z.number().min(0).catch(0),
+  image_url: z.string().nullable().optional(),
+  category: z.string().nullable().optional(),
+  unit_of_measure: z.string().nullable().optional(),
+  supplier: z.string().nullable().optional(),
+  created_at: z.string().nullable().optional(),
+  updated_at: z.string().nullable().optional(),
+  stock_current: z.number().catch(0),
+  cost_average: z.number().nullable().optional().catch(0),
+  min_stock: z.number().catch(0),
+  store_id: z.string().uuid().nullable().optional(),
   public_image_url: z.string().nullable().optional(),
 });
 
 export const productVariantSchema = z.object({
   id: z.string().uuid(),
-  product_id: z.string().uuid(),
+  product_id: z.string().uuid().optional(),
   name: z.string(),
-  sku: z.string().nullable(),
-  price: z.number().min(0),
-  conversion_factor: z.number().min(0),
-  created_at: z.string(),
-  updated_at: z.string(),
+  sku: z.string().nullable().optional(),
+  price: z.number().min(0).catch(0),
+  conversion_factor: z.number().min(0).catch(1),
+  created_at: z.string().optional(),
+  updated_at: z.string().optional(),
 });
 
 export const cartItemSchema = z.object({
@@ -98,6 +98,27 @@ export const transactionSchema = z.object({
   discount_value: z.number(),
   subtotal: z.number(),
   idempotency_key: z.string().nullable(),
+});
+
+export const stockMovementSchema = z.object({
+  id: z.string().uuid(),
+  store_id: z.string().uuid(),
+  product_id: z.string().uuid(),
+  quantity: z.number(),
+  type: z.enum(['in', 'out', 'adjustment']),
+  reason: z.string().nullable(),
+  created_at: z.string(),
+});
+
+export const auditLogSchema = z.object({
+  id: z.string().uuid(),
+  user_id: z.string().uuid(),
+  action: z.string(),
+  entity_type: z.string(),
+  entity_id: z.string().uuid().nullable(),
+  old_data: z.any().nullable(),
+  new_data: z.any().nullable(),
+  created_at: z.string(),
 });
 
 // ============================================
