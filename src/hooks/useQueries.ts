@@ -1,10 +1,14 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery, useSuspenseQuery, useSuspenseInfiniteQuery } from '@tanstack/react-query';
+import { z } from 'zod';
 import { supabase } from '@/lib/supabaseClient';
 import { validateRPCArrayResponse } from '@/lib/rpc-validator';
 import {
   getProductsForPosResponseSchema,
   dashboardKpiResponseSchema,
-  paginatedProductSchema
+  paginatedProductSchema,
+  transactionSchema,
+  stockMovementSchema,
+  auditLogSchema
 } from '@/validation/schemas';
 import { getSupabaseUrl } from '@/lib/utils';
 import type { Product, DashboardKPIs, SalesSummary, Transaction, StockMovement, AuditLog, Profile, Store, CashClosure } from '@/types';
@@ -403,7 +407,8 @@ export function useTransactions(storeId?: string | null, isAdmin = false) {
       }
       const { data, error } = await query.order('created_at', { ascending: false });
       if (error) throw error;
-      return data as Transaction[];
+
+      return await validateRPCArrayResponse(data, transactionSchema, 'transactions');
     },
     enabled: isAdmin || !!storeId,
   });
@@ -419,7 +424,13 @@ export function useStockMovements(storeId?: string | null, isAdmin = false) {
       }
       const { data, error } = await query.order('created_at', { ascending: false }).limit(100);
       if (error) throw error;
-      return data as any[];
+
+      // Use a partial schema for stock movements since we joined with products
+      const extendedSchema = stockMovementSchema.extend({
+        product: z.object({ name: z.string(), sku: z.string().nullable() }).optional()
+      });
+
+      return await validateRPCArrayResponse(data, extendedSchema, 'stock_movements');
     },
     enabled: isAdmin || !!storeId,
   });
@@ -433,7 +444,12 @@ export function useAuditLogs() {
         .select('*, profile:profiles(full_name)')
         .order('created_at', { ascending: false }).limit(100);
       if (error) throw error;
-      return data as any[];
+
+      const extendedSchema = auditLogSchema.extend({
+        profile: z.object({ full_name: z.string() }).nullable().optional()
+      });
+
+      return await validateRPCArrayResponse(data, extendedSchema, 'audit_logs');
     },
   });
 }
@@ -455,6 +471,7 @@ export function useStores(userId: string, isAdmin: boolean) {
   return useQuery({
     queryKey: ['stores', userId, isAdmin],
     queryFn: async () => {
+      if (!isAdmin && !userId) return [];
       const { data, error } = await (isAdmin
         ? supabase.from('stores').select('*').order('name')
         : supabase.from('stores').select('*, user_store_access!inner(user_id)')
@@ -462,6 +479,7 @@ export function useStores(userId: string, isAdmin: boolean) {
       if (error) throw error;
       return data as any[];
     },
+    enabled: isAdmin || !!userId,
   });
 }
 
