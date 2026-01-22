@@ -42,6 +42,7 @@
     "examples",
     "old proyect",
     "skills",
-    "mini-services"
+    "mini-services",
+    "verify_build.ts"
   ]
 }

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { User, UserRole, CartItem, Discount } from '@/types';
+import { cartItemSchema } from '@/validation/schemas';
 
 // ============================================
 // Store de Autenticación
@@ -71,7 +72,13 @@ export const useCartStore = create<CartStore>((set, get) => ({
   items: [],
   discount: null,
 
-  addItem: (item) =>
+  addItem: (item) => {
+    const result = cartItemSchema.safeParse(item);
+    if (!result.success) {
+      console.error('[Zod Validation Error] cart item:', result.error.format());
+      return;
+    }
+
     set((state) => {
       const existingIndex = state.items.findIndex(
         (i) => i.product_id === item.product_id && i.variant_id === item.variant_id
@@ -90,7 +97,8 @@ export const useCartStore = create<CartStore>((set, get) => ({
       }
 
       return { items: [...state.items, item] };
-    }),
+    });
+  },
 
   removeItem: (productId, variantId) =>
     set((state) => ({

@@ -1,5 +1,5 @@
 [build]
-  command = "pnpm build"
+  command = "pnpm prisma generate && pnpm build"
   publish = ".next"
 
 [[plugins]]

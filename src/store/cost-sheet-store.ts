@@ -4,6 +4,8 @@ import { persist } from 'zustand/middleware';
 import originalTemplate from '@/lib/data/costpro-full.json';
 import { produce } from 'immer';
 import { CostSheetData, CostSheetRow, CostSheetSection, CostSheetAnnex } from '@/types/cost-sheet';
+import { costSheetDataSchema } from '@/validation/schemas';
+import { toast } from 'sonner';
 
 // Deep clone the original template to avoid modifying it directly
 const createBlankSheet = (): CostSheetData => {
@@ -71,6 +73,7 @@ interface CostSheetState {
   updateValue: (path: (string | number)[], value: string | number) => void;
   addRow: (annexId: string) => void;
   removeRow: (annexId: string, rowIndex: number) => void;
+  setSheet: (data: CostSheetData) => void;
   loadExample: () => void;
   reset: () => void;
 }
@@ -117,7 +120,25 @@ export const useCostSheetStore = create<CostSheetState>()(
                 }
             })
         ),
-      loadExample: () => set({ data: JSON.parse(JSON.stringify(originalTemplate)) }), // Use fresh clone on load
+      setSheet: (data) => {
+          const result = costSheetDataSchema.safeParse(data);
+          if (result.success) {
+              set({ data: result.data as CostSheetData });
+          } else {
+              console.error('[Zod Validation Error] cost sheet data:', result.error.format());
+              toast.error('Error de validación en la ficha de costo');
+          }
+      },
+      loadExample: () => {
+          const example = JSON.parse(JSON.stringify(originalTemplate));
+          const result = costSheetDataSchema.safeParse(example);
+          if (result.success) {
+            set({ data: result.data as CostSheetData });
+          } else {
+            console.error('[Zod Validation Error] example data:', result.error.format());
+            set({ data: example as CostSheetData }); // Fallback
+          }
+      },
       reset: () => set({ data: createBlankSheet() }), // Use fresh blank sheet on reset
     }),
     {
