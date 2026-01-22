@@ -70,7 +70,9 @@ export default function LoginPage() {
         email: profileData.email,
         full_name: profileData.full_name,
         role: profileData.role,
+        roles: profileData.roles || [], // Ensure roles array is present
         store_id: profileData.store_id,
+        active_store_id: profileData.active_store_id,
         is_active: profileData.is_active,
         created_at: profileData.created_at,
         updated_at: profileData.updated_at,

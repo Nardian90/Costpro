@@ -49,8 +49,8 @@ export default function StoresManagementView({
           <div key={store.id} className="p-6 rounded-2xl border border-border bg-card hover:border-primary/30 transition-all flex flex-col shadow-sm">
             <div className="flex items-start justify-between mb-6">
               <div className="w-14 h-14 rounded-xl border border-border bg-muted/30 flex items-center justify-center overflow-hidden">
-                {store.logo_url ? (
-                  <img src={getStoreLogoUrl(store)} alt={store.name} className="w-full h-full object-cover" />
+                {store.logo_url && getStoreLogoUrl(store.logo_url) ? (
+                  <img src={getStoreLogoUrl(store.logo_url) || ''} alt={store.name} className="w-full h-full object-cover" />
                 ) : (
                   <Building className="w-6 h-6 text-muted-foreground opacity-40" />
                 )}

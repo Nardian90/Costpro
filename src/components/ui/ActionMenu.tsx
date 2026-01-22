@@ -13,6 +13,7 @@ export interface Action {
   variant?: 'default' | 'primary' | 'success' | 'danger' | 'warning' | 'outline';
   disabled?: boolean;
   active?: boolean;
+  className?: string;
 }
 
 interface ActionMenuProps {
@@ -59,7 +60,8 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
                 className={cn(
                   'flex items-center gap-2 px-4 py-2.5 text-sm sm:text-base rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shrink-0',
                   getVariantClass(action.variant, action.active),
-                  !action.active && !action.variant && 'hover:neu-raised-sm'
+                  !action.active && !action.variant && 'hover:neu-raised-sm',
+                  action.className
                 )}
                 aria-label={action.label}
               >

@@ -15,7 +15,7 @@ const DataDecryption = () => {
         className="mt-4 text-lg text-cyan-400 font-mono"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, yoyo: Infinity }}
+        transition={{ duration: 0.5, repeat: Infinity, repeatType: "reverse" }}
       >
         DECRYPTING DATA...
       </motion.p>

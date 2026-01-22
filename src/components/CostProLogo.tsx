@@ -1,16 +1,21 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, Variants } from 'framer-motion';
+
+interface CostProLogoProps {
+  size?: number;
+  animated?: boolean;
+}
 
 /**
  * Componente CostProLogo
  * Un isotipo minimalista basado en una "C" perfecta e invertida.
  * Enfocado en la pureza geométrica y un diseño de vanguardia.
  */
-const CostProLogo = ({ size = 120, animated = true }) => {
+const CostProLogo: React.FC<CostProLogoProps> = ({ size = 120, animated = true }) => {
   // Animación de dibujo de la C invertida
-  const pathVariants = {
+  const pathVariants: Variants = {
     hidden: { pathLength: 0, opacity: 0 },
     visible: {
       pathLength: 0.8, // Mantiene la apertura característica de la letra C
