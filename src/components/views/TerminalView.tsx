@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef, useDeferredValue, useCallback, Suspense } from 'react';
+import { useState, useEffect, useMemo, useRef, useDeferredValue, useCallback, Suspense, useTransition } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValue } from 'framer-motion';
 import { useAuthStore, useCartStore, useUIStore, useCanAccess } from '@/store';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -80,6 +80,7 @@ export default function TerminalView() {
   const router = useRouter();
   const { user, loading } = useAuthStore();
   const logout = useAuthStore((state) => state.logout);
+  const [isPending, startTransition] = useTransition();
 
   // Auth check
   useEffect(() => {
@@ -365,7 +366,9 @@ export default function TerminalView() {
                 <button
                   key={item.id}
                   onClick={() => {
-                    setCurrentView(item.id);
+                    startTransition(() => {
+                      setCurrentView(item.id);
+                    });
                     if (isMobile) {
                       setSidebarOpen(false);
                     }
