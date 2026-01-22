@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '../ui/button';
 import { Trash2, Plus } from 'lucide-react';
+import { CostSheetAnnex, CostSheetColumn } from '@/types/cost-sheet';
 
 interface CostSheetAnnexEditorProps {
   activeAnnexId: string;
@@ -23,7 +24,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = ({ activeAnnex
     updateValue(path, isNumeric ? parseFloat(value) : value);
   };
 
-  const annex = data.annexes.find((a: any) => a.id === activeAnnexId);
+  const annex = data.annexes.find((a: CostSheetAnnex) => a.id === activeAnnexId);
   const calculatedAnnex = calculatedAnnexes.find((a: any) => a.id === activeAnnexId);
 
   if (!annex) {
@@ -107,8 +108,9 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = ({ activeAnnex
                   <span className="text-primary/50 text-xl font-bold">$</span>
                   <span className="text-3xl font-black font-mono text-primary drop-shadow-sm">
                       {displayData.reduce((acc: number, row: any) => {
-                           const totalCol = annex.columns.find((c:any) => c.key === 'total' || c.key === 'amount' || c.key === 'depreciation_cost');
-                           return acc + (row[totalCol?.key] || 0);
+                           const totalCol = annex.columns.find((c: CostSheetColumn) => c.key === 'total' || c.key === 'amount' || c.key === 'depreciation_cost');
+                           const key = totalCol?.key;
+                           return acc + (key ? (row[key] || 0) : 0);
                       }, 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
               </div>

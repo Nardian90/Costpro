@@ -1,37 +1,12 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { produce } from 'immer';
-
-// Enhanced types for v4 template
-interface Header { [key: string]: any; }
-interface Row {
-  id: string;
-  label: string;
-  valorHistorico?: number;
-  value?: number;
-  baseDeCalculoRef?: string | null;
-  base_ref?: string | null;
-  calculationMethod?: 'Prorrateo' | 'ValorFijo';
-  totalFormula?: string | null;
-  formula?: string; // For summary rows
-  is_percent?: boolean;
-  children?: Row[];
-  [key: string]: any;
-}
-interface Section { id: string; rows: Row[]; }
-interface Column { key: string; formula?: string; }
-interface Annex { id: string; title: string; columns: Column[]; data: any[]; }
-interface Template { header: Header; sections: Section[]; annexes: Annex[]; }
-
-// Calculated value structure
-interface CalculatedRowValue {
-  valorHistorico: number;
-  baseDeCalculoRef: string | null;
-  baseTotal: number;
-  baseValorHistorico: number;
-  coeficiente: number;
-  total: number;
-}
+import {
+  CostSheetData,
+  CostSheetRow,
+  CostSheetColumn,
+  CalculatedRowValue
+} from '@/types/cost-sheet';
 
 // Helper to safely evaluate a formula string
 const evaluateExpression = (expression: string): number => {
@@ -54,11 +29,11 @@ const evaluateExpression = (expression: string): number => {
   }
 };
 
-export const useCostSheetCalculator = (template: Template) => {
+export const useCostSheetCalculator = (template: CostSheetData) => {
   const [calculatedValues, setCalculatedValues] = useState<{ [key: string]: CalculatedRowValue }>({});
 
-  const calculateAnnexRow = (rowData: any, columns: Column[]): any => {
-    return produce(rowData, draft => {
+  const calculateAnnexRow = (rowData: any, columns: CostSheetColumn[]): any => {
+    return produce(rowData, (draft: any) => {
       for (const col of columns) {
         if (col.formula) {
           let expression = col.formula;
@@ -99,9 +74,9 @@ export const useCostSheetCalculator = (template: Template) => {
     if (!template || !template.sections) return;
 
     const newCalculatedValues: { [key: string]: CalculatedRowValue } = {};
-    const allRowsById: { [key: string]: Row } = {};
+    const allRowsById: { [key: string]: CostSheetRow } = {};
 
-    const flattenRows = (rows: Row[]) => {
+    const flattenRows = (rows: CostSheetRow[]) => {
       for (const row of rows) {
         allRowsById[row.id] = row;
         if (row.children) {
@@ -111,7 +86,7 @@ export const useCostSheetCalculator = (template: Template) => {
     };
     template.sections.forEach(section => flattenRows(section.rows || []));
 
-    const calculateRow = (row: Row): CalculatedRowValue => {
+    const calculateRow = (row: CostSheetRow): CalculatedRowValue => {
       if (newCalculatedValues[row.id]) {
         return newCalculatedValues[row.id];
       }

@@ -71,9 +71,9 @@ export default function AuditLogsView({
                 <td className="p-4">
                   <div className="flex items-center gap-2">
                     <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[9px] font-black border border-primary/20">
-                      {((log as any).profile?.full_name || 'S')?.charAt(0)}
+                      {(log.profile?.full_name || 'S')?.charAt(0)}
                     </div>
-                    <div className="font-bold text-xs">{(log as any).profile?.full_name || 'Sistema'}</div>
+                    <div className="font-bold text-xs">{log.profile?.full_name || 'Sistema'}</div>
                   </div>
                 </td>
                 <td className="p-4">

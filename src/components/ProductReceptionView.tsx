@@ -24,7 +24,7 @@ interface ProductReceptionViewProps {
 }
 
 interface ReceptionItem {
-    product: Product;
+    product: Pick<Product, 'id' | 'name' | 'cost_price' | 'sku'>;
     quantity: number;
     cost: number;
     batch?: string;
@@ -206,7 +206,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                     const ids = Array.from(seenIds);
                     const { data: products, error } = await supabase
                         .from('products')
-                        .select('id, name, cost_price')
+                        .select('id, name, cost_price, sku')
                         .in('id', ids);
 
                     if (error) throw error;

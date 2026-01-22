@@ -311,6 +311,9 @@ export interface AuditLog {
   old_data: any;
   new_data: any;
   metadata: any;
+  profile?: {
+    full_name: string;
+  };
 }
 
 // ============================================
@@ -349,6 +352,7 @@ export type Profile = {
   full_name: string;
   email: string;
   role: UserRole;
+  roles?: UserRole[];
   is_active: boolean;
   store_id: string | null;
   active_store_id: string | null;
@@ -356,6 +360,7 @@ export type Profile = {
   max_users_limit?: number;
   created_by?: string | null;
   created_at: string;
+  updated_at?: string;
 };
 
 export interface SalesKPIs {

@@ -158,7 +158,7 @@ export default function InventoryView() {
                         >
                             <option value="">All Categories</option>
                             {uniqueCategories.map(category => (
-                                <option key={category} value={category}>{category}</option>
+                                 <option key={category || 'uncategorized'} value={category || ""}>{category || 'Sin categoría'}</option>
                             ))}
                         </select>
                     </div>
