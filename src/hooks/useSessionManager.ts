@@ -14,7 +14,7 @@ const SESSION_CHECK_TIMEOUT = 15 * 1000; // 15 seconds
  * This hook should be used ONCE in a central component (e.g., TerminalView).
  */
 export function useSessionManager() {
-    const { login, logout, user } = useAuthStore();
+    const { login, logout, user, setLoading } = useAuthStore();
     const { isOnline, isCheckingSession, lastChecked, setOnlineStatus, setSessionStatus, setStatus } = useSessionStore();
     const router = useRouter();
 
@@ -84,12 +84,16 @@ export function useSessionManager() {
                 } else {
                     await supabase.auth.signOut();
                 }
-            } else if (useAuthStore.getState().user) {
-                await supabase.auth.signOut();
+            } else {
+                if (useAuthStore.getState().user) {
+                    await supabase.auth.signOut();
+                }
+                setLoading(false);
             }
         } catch (error: any) {
             console.warn(`Session check failed: ${error.message}`);
             setStatus(useAuthStore.getState().user ? 'stable' : 'error'); // Keep session if user exists, otherwise error
+            setLoading(false);
         } finally {
             setSessionStatus(false);
         }

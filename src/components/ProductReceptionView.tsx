@@ -1,15 +1,13 @@
 // src/components/ProductReceptionView.tsx
 'use client';
 
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/store';
 import type { Product } from '@/types';
 import { toast } from 'sonner';
-import { X, Save, Search, Plus, Trash2, Package, Upload, Download, HelpCircle, FileText } from 'lucide-react';
-import { getProductImageUrl, cn } from '@/lib/utils';
-import { validateRPCArrayResponse } from '@/lib/rpc-validator';
-import { paginatedProductSchema } from '@/validation/schemas';
+import { Save, Search, Plus, Trash2, Package, Upload, Download, HelpCircle, FileText } from 'lucide-react';
+import { useInventory, useRegisterReception } from '@/hooks/useQueries';
 import { useDebounce } from '@/hooks/useDebounce';
 import ActionMenu, { Action } from './ui/ActionMenu';
 import Papa from 'papaparse';
@@ -44,46 +42,13 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
 
     const [searchTerm, setSearchTerm] = useState('');
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
-    const [searchResults, setSearchResults] = useState<Product[]>([]);
-    const [isSearching, setIsSearching] = useState(false);
-    const [isProcessing, setIsProcessing] = useState(false);
+    const { data: searchData, isFetching: isSearching } = useInventory(user?.store_id, debouncedSearchTerm, '', 5);
+    const searchResults = useMemo(() => searchData?.pages[0]?.products || [], [searchData]);
+
+    const registerReceptionMutation = useRegisterReception();
     const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
     const [importErrors, setImportErrors] = useState<{ row: number; message: string }[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
-
-    // Search for products to add to the reception
-    const searchProducts = useCallback(async () => {
-        if (!debouncedSearchTerm) {
-            setSearchResults([]);
-            return;
-        }
-        setIsSearching(true);
-        try {
-            const { data, error } = await supabase.rpc('get_paginated_products', {
-                p_limit: 5,
-                p_offset: 0,
-                p_store_id: user?.store_id,
-                p_search_term: debouncedSearchTerm
-            });
-            if (error) throw error;
-
-            const validatedData = await validateRPCArrayResponse(
-                data,
-                paginatedProductSchema,
-                'get_paginated_products'
-            );
-
-            setSearchResults(validatedData || []);
-        } catch (error: any) {
-            toast.error('Product search failed: ' + error.message);
-        } finally {
-            setIsSearching(false);
-        }
-    }, [debouncedSearchTerm, user?.store_id]);
-
-    useEffect(() => {
-        searchProducts();
-    }, [searchProducts]);
 
     const addToReception = (product: Product) => {
         if (receptionItems.has(product.id)) {
@@ -98,7 +63,6 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
         });
         setReceptionItems(newItems);
         setSearchTerm('');
-        setSearchResults([]);
     };
 
     const updateReceptionItem = (productId: string, field: keyof ReceptionItem, value: any) => {
@@ -345,7 +309,6 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
             return;
         }
 
-        setIsProcessing(true);
         const toastId = toast.loading('Registrando recepción...');
 
         const itemsPayload = Array.from(receptionItems.values()).map(item => ({
@@ -355,7 +318,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
         }));
 
         try {
-             const { error } = await supabase.rpc('register_reception', {
+             await registerReceptionMutation.mutateAsync({
                 p_store_id: user.store_id,
                 p_supplier: receptionDetails.supplier,
                 p_reception_date: receptionDetails.receptionDate,
@@ -364,14 +327,10 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                 p_user_id: user.id
             });
 
-            if (error) throw error;
-
             toast.success('¡Recepción registrada con éxito!', { id: toastId });
             onCancel(); // Return to the main inventory view
         } catch (err: any) {
             toast.error(err.message || 'Error al procesar la recepción.', { id: toastId });
-        } finally {
-            setIsProcessing(false);
         }
     };
 
@@ -559,11 +518,11 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                     </button>
                      <button
                         onClick={processReception}
-                        disabled={isProcessing}
+                        disabled={registerReceptionMutation.isPending}
                         className="neu-btn-primary flex-1 py-4 font-bold uppercase tracking-wider flex items-center justify-center gap-2"
                     >
                         <Save className="w-5 h-5" />
-                        {isProcessing ? 'Saving...' : 'Confirm'}
+                        {registerReceptionMutation.isPending ? 'Saving...' : 'Confirm'}
                     </button>
                  </div>
             </div>
@@ -577,11 +536,11 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                 </button>
                 <button
                     onClick={processReception}
-                    disabled={isProcessing}
+                    disabled={registerReceptionMutation.isPending}
                     className="neu-btn-primary px-8 py-3 font-bold uppercase flex items-center gap-2"
                 >
                     <Save className="w-5 h-5" />
-                    {isProcessing ? 'Saving...' : 'Confirm Reception'}
+                    {registerReceptionMutation.isPending ? 'Saving...' : 'Confirm Reception'}
                 </button>
             </div>
 

@@ -61,3 +61,19 @@
 ### Riesgo Residual
 - **Lógica de Negocio en TerminalView:** Aunque los datos ahora están validados, la complejidad del componente `TerminalView` sigue siendo alta. Se recomienda seguir con la modularización.
 - **Sincronización de Tipos:** Es vital mantener sincronizados los esquemas de Zod con las interfaces de TypeScript para evitar discrepancias.
+
+## 5. Actualización Día 4 – Optimización de Datos y Carga Asíncrona
+
+### Avances Realizados
+- **Migración a React Query:**
+    - Centralización de toda la lógica de fetching en `src/hooks/useQueries.ts`.
+    - Uso de `useQuery` para datos estables y `useInfiniteQuery` para inventario paginado.
+    - Implementación de mutaciones (`useMutation`) con invalidación de caché automática para flujos de venta, recepción y edición de productos.
+- **Carga Asíncrona (Suspense):**
+    - Implementación de `Suspense` granular en el Dashboard, permitiendo que las KPIs, el resumen y las alertas carguen de forma independiente con esqueletos visuales.
+    - `InventoryView` ahora utiliza `useSuspenseInfiniteQuery`, mejorando la integración con los límites de carga de React.
+- **Auditoría de Datos:**
+    - Creación de un sistema de logging centralizado vía `/api/logs` que persiste errores de red y validación en `ERROR_LOGS.md`.
+- **UX:**
+    - Reducción drástica de re-renders innecesarios al eliminar múltiples `useEffect` coordinados manualmente.
+    - Mejora en la consistencia de estados de carga ("loading states").
