@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef, useDeferredValue, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore, useCartStore, useUIStore, useCanAccess } from '@/store';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { getSupabaseUrl, getProductImageUrl, getStoreLogoUrl } from '@/lib/utils';
@@ -9,11 +11,13 @@ import { toast } from 'sonner';
 import {
   BarChart3, ShoppingCart, Package, Warehouse, Receipt,
   ClipboardList, FileText, History, Shield, DollarSign,
-  Users, Building, Settings
+  Users, Building, Settings, LogOut, Bell, Menu, Sun,
+  TrendingUp, ArrowRight, Eye, Plus, Minus
 } from 'lucide-react';
 
 // Sub-components
 import TerminalLayout from './terminal/TerminalLayout';
+import CostProLogo from '@/components/CostProLogo';
 import DashboardView from './terminal/DashboardView';
 import POSView from './terminal/POSView';
 import SalesHistoryView from './terminal/SalesHistoryView';
@@ -44,11 +48,6 @@ import type {
   Product, Transaction, UserRole, Profile, Store,
   AuditLog, DashboardKPIs, SalesSummary, PaymentMethod
 } from '@/types';
-import { toast } from 'sonner';
-import InventoryView from '@/components/InventoryView';
-import InventoryCountView from '@/components/InventoryCountView';
-import CatalogView from '@/components/CatalogView';
-import CostSheetsPage from '@/app/cost-sheets/page';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
 import SearchBar from '@/components/ui/SearchBar';
 import ScrollToTop from '@/components/ui/ScrollToTop';
@@ -60,7 +59,8 @@ export default function TerminalView() {
   const logout = useAuthStore((state) => state.logout);
   const {
     currentView, setCurrentView,
-    notifications, setNotifications
+    notifications, setNotifications,
+    sidebarOpen, toggleSidebar
   } = useUIStore();
   const { items, addItem, removeItem, updateQuantity, clearCart, setDiscount, getTotal, getSubtotal, getItemCount, discount } = useCartStore();
   const isMobile = useIsMobile();
@@ -304,7 +304,10 @@ export default function TerminalView() {
     return all.filter(i => i.roles.some(r => roles.includes(r as any)));
   }, [user]);
 
-    return items.filter(item => item.roles.some(r => userRoles.includes(r as UserRole)));
+  const getActiveRolesLabel = () => {
+    if (!user) return 'Cargando...';
+    const roles = user.roles && user.roles.length > 0 ? user.roles : [user.role];
+    return roles.join(' / ').toUpperCase();
   };
 
   // ==================== VIEWS ====================
@@ -1455,8 +1458,9 @@ export default function TerminalView() {
                       <div className="text-xs font-bold uppercase text-green-600">{selectedTransaction.status}</div>
                     </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
+            </div>
 
               <div className="space-y-4">
                 <h4 className="text-xs font-black uppercase tracking-[0.3em] text-primary border-b border-primary/20 pb-2 mb-6">Artículos de la Venta</h4>
@@ -1475,8 +1479,20 @@ export default function TerminalView() {
                           <th className="pb-4 text-right">Precio Unit.</th>
                           <th className="pb-4 text-right">Subtotal</th>
                         </tr>
-                      ))}
-                    </tbody>
+                      </thead>
+                      <tbody>
+                        {transactionItems.map((item) => (
+                          <tr key={item.id} className="border-b border-white/5 hover:bg-white/5 transition-colors group">
+                            <td className="py-4">
+                              <div className="font-bold text-primary">{item.products?.name}</div>
+                              <div className="text-[10px] text-muted-foreground font-medium">{item.products?.sku}</div>
+                            </td>
+                            <td className="py-4 text-center font-black">{item.quantity}</td>
+                            <td className="py-4 text-right font-medium">${item.unit_price.toFixed(2)}</td>
+                            <td className="py-4 text-right font-black text-primary">${(item.quantity * item.unit_price).toFixed(2)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
                   </table>
                   <div className="flex justify-end pt-4">
                     <div className="w-64 p-4 bg-primary text-white rounded-2xl shadow-xl">
@@ -1511,6 +1527,6 @@ export default function TerminalView() {
         </DialogContent>
       </Dialog>
 
-    </TerminalLayout>
+    </div>
   );
 }
