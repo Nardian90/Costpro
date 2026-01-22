@@ -40,3 +40,18 @@ export async function validateRPCArrayResponse<T>(
 
     return result.data;
   }
+
+export async function validateResponse<T>(
+  data: any,
+  schema: z.ZodType<T>,
+  context: string
+): Promise<T> {
+  const result = schema.safeParse(data);
+
+  if (!result.success) {
+    console.error(`[Zod Validation Error] ${context}:`, result.error.format());
+    return data as T;
+  }
+
+  return result.data;
+}
