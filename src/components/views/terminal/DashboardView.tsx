@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import { motion } from 'framer-motion';
 import {
   BarChart3,
@@ -8,24 +8,18 @@ import {
   Target,
   Package,
   Check,
-  Calendar
+  Calendar,
+  Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { DashboardKPIs, SalesSummary, Product } from '@/types';
+import { useAuthStore, useCanAccess } from '@/store';
+import { useSuspenseDashboardData, useSuspenseProducts } from '@/hooks/useQueries';
 
 interface DashboardViewProps {
-  kpis: DashboardKPIs;
-  summary: SalesSummary;
-  criticalProducts: Product[];
-  canViewFinancials: boolean;
   onViewInventory: () => void;
 }
 
 export default function DashboardView({
-  kpis,
-  summary,
-  criticalProducts,
-  canViewFinancials,
   onViewInventory
 }: DashboardViewProps) {
   return (
@@ -39,7 +33,30 @@ export default function DashboardView({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* KPI Cards */}
+        <Suspense fallback={<DashboardKpisSkeleton />}>
+          <DashboardKpisSection />
+        </Suspense>
+
+        <Suspense fallback={<DashboardSummarySkeleton />}>
+          <DashboardSummarySection />
+        </Suspense>
+
+        <Suspense fallback={<DashboardAlertsSkeleton />}>
+          <DashboardAlertsSection onViewInventory={onViewInventory} />
+        </Suspense>
+      </div>
+    </div>
+  );
+}
+
+function DashboardKpisSection() {
+  const { user } = useAuthStore();
+  const canViewFinancials = useCanAccess('warehouse');
+  const { data } = useSuspenseDashboardData(user?.store_id, user?.role === 'admin');
+  const kpis = data.kpis;
+
+  return (
+    <>
         <div className="md:col-span-1 p-6 rounded-xl border border-border bg-card shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Ventas Totales</span>
@@ -78,65 +95,91 @@ export default function DashboardView({
             </div>
           </>
         )}
+    </>
+  );
+}
 
-        {/* Additional Stats */}
-        <div className="md:col-span-2 p-6 rounded-xl border border-border bg-card shadow-sm">
-          <div className="flex items-center justify-between mb-8">
-            <h3 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-primary" />
-              Resumen de Ventas
-            </h3>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
-            {[
-              { label: 'Transacciones', value: summary.transaction_count, sub: 'Hoy' },
-              { label: 'Ticket Promedio', value: `$${summary.average_ticket.toFixed(2)}`, sub: 'ARS' },
-              { label: 'Efectivo', value: `$${summary.total_cash.toFixed(2)}`, sub: 'Recaudado', color: 'text-green-500' },
-              { label: 'Transferencia', value: `$${summary.total_transfer.toFixed(2)}`, sub: 'Banco', color: 'text-primary' },
-            ].map((stat, i) => (
-              <div key={i} className="p-4 rounded-lg bg-background/50 border border-border/50">
-                <span className="text-[9px] font-black uppercase text-muted-foreground tracking-tighter block mb-1">{stat.label}</span>
-                <div className={cn("text-xl font-black tracking-tight", stat.color || "text-foreground")}>{stat.value}</div>
-                <span className="text-[8px] font-bold text-muted-foreground/50 uppercase">{stat.sub}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+function DashboardSummarySection() {
+  const { user } = useAuthStore();
+  const { data } = useSuspenseDashboardData(user?.store_id, user?.role === 'admin');
+  const summary = data.summary;
 
-        <div className="md:col-span-1 p-6 rounded-xl border border-destructive/10 bg-card shadow-sm">
-          <h3 className="text-lg font-black text-destructive uppercase tracking-widest flex items-center gap-2 mb-6">
-            <Package className="w-5 h-5" />
-            Alertas Críticas
-          </h3>
-          <div className="space-y-3">
-            {criticalProducts.slice(0, 4).map(product => (
-              <div key={product.id} className="p-3 rounded-lg bg-destructive/5 border border-destructive/10 group hover:bg-destructive/10 transition-colors">
-                <div className="flex justify-between items-center">
-                  <div className="overflow-hidden">
-                    <div className="font-bold text-xs text-foreground truncate">{product.name}</div>
-                    <div className="text-[10px] font-mono text-muted-foreground">{product.sku}</div>
-                  </div>
-                  <div className="text-destructive font-black text-sm whitespace-nowrap ml-2">{product.stock_current} uds</div>
-                </div>
-              </div>
-            ))}
-            {criticalProducts.length === 0 && (
-              <div className="text-center py-10">
-                <Check className="w-12 h-12 mx-auto mb-2 text-green-500 opacity-20" />
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Todo en orden</p>
-              </div>
-            )}
-            {criticalProducts.length > 4 && (
-              <button
-                onClick={onViewInventory}
-                className="w-full py-2 text-[10px] font-black uppercase text-primary hover:underline"
-              >
-                Ver todas las alertas ({criticalProducts.length})
-              </button>
-            )}
+  return (
+    <div className="md:col-span-2 p-6 rounded-xl border border-border bg-card shadow-sm">
+      <div className="flex items-center justify-between mb-8">
+        <h3 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
+          <BarChart3 className="w-5 h-5 text-primary" />
+          Resumen de Ventas
+        </h3>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+        {[
+          { label: 'Transacciones', value: summary.transaction_count, sub: 'Hoy' },
+          { label: 'Ticket Promedio', value: `$${summary.average_ticket.toFixed(2)}`, sub: 'ARS' },
+          { label: 'Efectivo', value: `$${summary.total_cash.toFixed(2)}`, sub: 'Recaudado', color: 'text-green-500' },
+          { label: 'Transferencia', value: `$${summary.total_transfer.toFixed(2)}`, sub: 'Banco', color: 'text-primary' },
+        ].map((stat, i) => (
+          <div key={i} className="p-4 rounded-lg bg-background/50 border border-border/50">
+            <span className="text-[9px] font-black uppercase text-muted-foreground tracking-tighter block mb-1">{stat.label}</span>
+            <div className={cn("text-xl font-black tracking-tight", stat.color || "text-foreground")}>{stat.value}</div>
+            <span className="text-[8px] font-bold text-muted-foreground/50 uppercase">{stat.sub}</span>
           </div>
-        </div>
+        ))}
       </div>
     </div>
   );
+}
+
+function DashboardAlertsSection({ onViewInventory }: { onViewInventory: () => void }) {
+  const { user } = useAuthStore();
+  const { data: products } = useSuspenseProducts(user?.store_id);
+  const criticalProducts = products.filter(p => p.stock_current <= p.min_stock);
+
+  return (
+    <div className="md:col-span-1 p-6 rounded-xl border border-destructive/10 bg-card shadow-sm">
+      <h3 className="text-lg font-black text-destructive uppercase tracking-widest flex items-center gap-2 mb-6">
+        <Package className="w-5 h-5" />
+        Alertas Críticas
+      </h3>
+      <div className="space-y-3">
+        {criticalProducts.slice(0, 4).map(product => (
+          <div key={product.id} className="p-3 rounded-lg bg-destructive/5 border border-destructive/10 group hover:bg-destructive/10 transition-colors">
+            <div className="flex justify-between items-center">
+              <div className="overflow-hidden">
+                <div className="font-bold text-xs text-foreground truncate">{product.name}</div>
+                <div className="text-[10px] font-mono text-muted-foreground">{product.sku}</div>
+              </div>
+              <div className="text-destructive font-black text-sm whitespace-nowrap ml-2">{product.stock_current} uds</div>
+            </div>
+          </div>
+        ))}
+        {criticalProducts.length === 0 && (
+          <div className="text-center py-10">
+            <Check className="w-12 h-12 mx-auto mb-2 text-green-500 opacity-20" />
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Todo en orden</p>
+          </div>
+        )}
+        {criticalProducts.length > 4 && (
+          <button
+            onClick={onViewInventory}
+            className="w-full py-2 text-[10px] font-black uppercase text-primary hover:underline"
+          >
+            Ver todas las alertas ({criticalProducts.length})
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DashboardKpisSkeleton() {
+  return <div className="md:col-span-1 p-6 rounded-xl border border-border bg-card animate-pulse h-40"></div>;
+}
+
+function DashboardSummarySkeleton() {
+  return <div className="md:col-span-2 p-6 rounded-xl border border-border bg-card animate-pulse h-40"></div>;
+}
+
+function DashboardAlertsSkeleton() {
+  return <div className="md:col-span-1 p-6 rounded-xl border border-border bg-card animate-pulse h-40"></div>;
 }

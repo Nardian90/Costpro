@@ -1,16 +1,13 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef, useDeferredValue, useCallback } from 'react';
+import { useState, useEffect, useMemo, useRef, useDeferredValue, useCallback, Suspense } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValue } from 'framer-motion';
 import { useAuthStore, useCartStore, useUIStore, useCanAccess } from '@/store';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
-import { getSupabaseUrl, getProductImageUrl, getStoreLogoUrl } from '@/lib/utils';
-import { validateRPCArrayResponse } from '@/lib/rpc-validator';
+import { getSupabaseUrl } from '@/lib/utils';
 import {
-  getProductsForPosResponseSchema,
-  dashboardKpiResponseSchema,
   createSaleParamsSchema
 } from '@/validation/schemas';
 import { toast } from 'sonner';
@@ -21,6 +18,20 @@ import {
   TrendingUp, ArrowRight, Eye, Plus, Minus,
   Search, Target, Layers, Check
 } from 'lucide-react';
+
+import {
+  useProducts,
+  useDashboardData,
+  useTransactions,
+  useUsers,
+  useStores,
+  useAuditLogs,
+  useStockMovements,
+  useCashClosures,
+  useTransactionDetails,
+  useUserStoreAccess,
+  useCreateSale
+} from '@/hooks/useQueries';
 
 // Sub-components
 import TerminalLayout from './terminal/TerminalLayout';
@@ -97,32 +108,36 @@ export default function TerminalView() {
   const logoOpacity = useTransform(scrollY, [0, 50], [1, 0]);
   const logoScale = useTransform(scrollY, [0, 80], [1, 0.8]);
 
+  // React Query Hooks
+  const { data: productsData, isLoading: isLoadingProducts, refetch: refetchProducts } = useProducts(user?.store_id);
+  const products = productsData || [];
+
+  const { data: dashboardData, isLoading: isLoadingDashboard, refetch: refetchDashboard } = useDashboardData(user?.store_id, user?.role === 'admin');
+  const dashboardKPIs = dashboardData?.kpis || { gross_sales: 0, cost_of_goods: 0, profit: 0 };
+  const salesSummary = dashboardData?.summary || { total_billed: 0, transaction_count: 0, average_ticket: 0, total_cash: 0, total_transfer: 0 };
+
+  const { data: transactions = [] } = useTransactions(user?.store_id, user?.role === 'admin');
+  const { data: users = [] } = useUsers(user?.id || '', user?.role === 'admin', user?.role === 'encargado');
+  const { data: stores = [] } = useStores(user?.id || '', user?.role === 'admin');
+  const { data: auditLogs = [] } = useAuditLogs();
+  const { data: movements = [] } = useStockMovements(user?.store_id, user?.role === 'admin');
+  const { data: cashClosures = [] } = useCashClosures(user?.store_id, user?.role === 'admin');
+
+  const createSaleMutation = useCreateSale();
+
   // State
-  const [products, setProducts] = useState<(Product & { product_variants?: any[] | null })[]>([]);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [users, setUsers] = useState<Profile[]>([]);
-  const [stores, setStores] = useState<Store[]>([]);
-  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
-  const [movements, setMovements] = useState<any[]>([]);
-  const [cashClosures, setCashClosures] = useState<any[]>([]);
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
-
-  const [dashboardKPIs, setDashboardKPIs] = useState<DashboardKPIs>({
-    gross_sales: 0, cost_of_goods: 0, profit: 0,
-  });
-
-  const [salesSummary, setSalesSummary] = useState<SalesSummary>({
-    total_billed: 0, transaction_count: 0, average_ticket: 0,
-    total_cash: 0, total_transfer: 0,
-  });
 
   // Modal states
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
-  const [transactionItems, setTransactionItems] = useState<any[]>([]);
-  const [loadingDetails, setLoadingDetails] = useState(false);
+  const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
+  const selectedTransaction = useMemo(() => transactions.find(t => t.id === selectedTransactionId) || null, [transactions, selectedTransactionId]);
+  const { data: transactionItems = [], isLoading: loadingDetails } = useTransactionDetails(selectedTransactionId || undefined);
+
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const { data: userStoreAccess = [] } = useUserStoreAccess(selectedUserId || undefined);
+
   const [isEditStoreModalOpen, setIsEditStoreModalOpen] = useState(false);
   const [editingStore, setEditingStore] = useState<Store | null>(null);
   const [isCreateStoreModalOpen, setIsCreateStoreModalOpen] = useState(false);
@@ -133,7 +148,6 @@ export default function TerminalView() {
   const [newUser, setNewUser] = useState({ full_name: '', email: '', password: '', role: 'clerk' as UserRole });
   const [isDeleteStoreModalOpen, setIsDeleteStoreModalOpen] = useState(false);
   const [deletingStore, setDeletingStore] = useState<Store | null>(null);
-  const [userStoreAccess, setUserStoreAccess] = useState<{store_id: string, roles: UserRole[]}[]>([]);
 
   if (loading) {
     return (
@@ -149,117 +163,6 @@ export default function TerminalView() {
 
   if (!user) return null;
 
-  // Data fetching
-  const fetchProducts = useCallback(async () => {
-    if (!user) return;
-    try {
-      const { data, error } = await supabase.rpc('get_products_for_pos', {
-        p_store_id: user.store_id,
-        p_search_term: '',
-        p_category: ''
-      });
-      if (error) throw error;
-
-      const validatedData = await validateRPCArrayResponse(
-        data,
-        getProductsForPosResponseSchema,
-        'get_products_for_pos'
-      );
-
-      setProducts(validatedData?.map((item) => ({
-        ...item,
-        public_image_url: getSupabaseUrl('product-images', item.image_url),
-      })) || []);
-    } catch (error) {
-      console.error('Error fetching products:', error);
-    }
-  }, [user]);
-
-  const fetchDashboardData = useCallback(async () => {
-    if (!user) return;
-    try {
-      const { data, error } = await supabase.rpc('get_dashboard_kpis', user.role === 'admin' ? {} : { p_store_id: user.store_id });
-      if (error) throw error;
-
-      const validatedData = await validateRPCArrayResponse(
-        data,
-        dashboardKpiResponseSchema,
-        'get_dashboard_kpis'
-      );
-
-      if (validatedData && validatedData.length > 0) {
-        const kpis = validatedData[0];
-        setDashboardKPIs({
-          gross_sales: kpis.total_sales || 0,
-          cost_of_goods: kpis.total_cost || 0,
-          profit: kpis.total_profit || 0,
-        });
-        setSalesSummary({
-          total_billed: kpis.total_sales || 0,
-          transaction_count: kpis.transaction_count || 0,
-          average_ticket: kpis.avg_ticket || 0,
-          total_cash: kpis.total_cash || 0,
-          total_transfer: kpis.total_card || 0,
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (user) {
-      fetchDashboardData();
-      fetchProducts();
-    }
-  }, [user, fetchDashboardData, fetchProducts]);
-
-  // Lazy loading views
-  useEffect(() => {
-    if (!user) return;
-    const fetchers: Record<string, () => void> = {
-      sales: async () => {
-        const { data } = await supabase.from('transactions')
-          .select('*')
-          .eq(user.role !== 'admin' ? 'store_id' : '', user.store_id || '')
-          .order('created_at', { ascending: false });
-        setTransactions(data || []);
-      },
-      history: async () => {
-        const { data } = await supabase.from('stock_movements')
-          .select('*, product:products(name, sku)')
-          .eq(user.role !== 'admin' ? 'store_id' : '', user.store_id || '')
-          .order('created_at', { ascending: false }).limit(100);
-        setMovements(data || []);
-      },
-      audit: async () => {
-        const { data } = await supabase.from('audit_logs')
-          .select('*, profile:profiles(full_name)')
-          .order('created_at', { ascending: false }).limit(100);
-        setAuditLogs(data || []);
-      },
-      users: async () => {
-        const query = supabase.from('profiles').select('*');
-        if (user.role === 'encargado') query.eq('created_by', user.id);
-        const { data } = await query.order('full_name');
-        setUsers(data || []);
-      },
-      stores: async () => {
-        const { data } = await (user.role === 'admin'
-          ? supabase.from('stores').select('*').order('name')
-          : supabase.from('stores').select('*, user_store_access!inner(user_id)').eq('user_store_access.user_id', user.id).order('name'));
-        setStores(data || []);
-      },
-      cash: async () => {
-        const { data } = await supabase.from('cash_closures').select('*, profile:profiles(full_name)')
-          .eq(user.role !== 'admin' ? 'store_id' : '', user.store_id || '')
-          .order('created_at', { ascending: false }).limit(50);
-        setCashClosures(data || []);
-      }
-    };
-
-    if (fetchers[currentView]) fetchers[currentView]();
-  }, [user, currentView]);
 
   // Handlers
   const handleAddToCart = useCallback((product: Product) => {
@@ -277,8 +180,8 @@ export default function TerminalView() {
   }, [addItem]);
 
   const handleCheckout = async (paymentMethod: PaymentMethod, checkoutDiscount?: { type: string, value: number } | null) => {
-    if (items.length === 0 || isProcessing || !user) return;
-    setIsProcessing(true);
+    if (items.length === 0 || createSaleMutation.isPending || !user) return;
+
     const toastId = toast.loading('Procesando venta...');
     try {
       // Use provided discount or fallback to store discount
@@ -305,16 +208,11 @@ export default function TerminalView() {
           throw new Error('Datos de venta inválidos. Revise el carrito.');
       }
 
-      const { error } = await supabase.rpc('create_sale', validationResult.data);
-      if (error) throw error;
+      await createSaleMutation.mutateAsync(validationResult.data);
       toast.success('Venta exitosa', { id: toastId });
       clearCart();
-      fetchProducts();
-      fetchDashboardData();
     } catch (error: any) {
       toast.error(error.message || 'Error en venta', { id: toastId });
-    } finally {
-      setIsProcessing(false);
     }
   };
 
@@ -333,20 +231,14 @@ export default function TerminalView() {
     }
   };
 
-  const fetchTransactionDetails = async (txn: Transaction) => {
-    setSelectedTransaction(txn);
-    setLoadingDetails(true);
-    const { data } = await supabase.from('transaction_items').select('*, products(name, sku)').eq('transaction_id', txn.id);
-    setTransactionItems(data || []);
-    setLoadingDetails(false);
+  const handleViewTransactionDetails = (txn: Transaction) => {
+    setSelectedTransactionId(txn.id);
   };
 
-  const fetchUserStoreAccess = async (userId: string) => {
-    const { data } = await supabase.from('user_store_access').select('store_id, roles').eq('user_id', userId);
-    setUserStoreAccess(data?.map(d => ({
-      store_id: d.store_id,
-      roles: Array.isArray(d.roles) ? d.roles as UserRole[] : ['clerk']
-    })) || []);
+  const handleEditUser = (u: Profile) => {
+    setEditingUser(u);
+    setSelectedUserId(u.id);
+    setIsEditUserModalOpen(true);
   };
 
   // Navigation Items logic
@@ -415,13 +307,13 @@ export default function TerminalView() {
 
   const renderView = () => {
     switch (currentView) {
-      case 'dashboard': return <DashboardView kpis={dashboardKPIs} summary={salesSummary} criticalProducts={products.filter(p => p.stock_current <= p.min_stock)} canViewFinancials={canViewFinancials} onViewInventory={() => setCurrentView('inventory')} />;
-      case 'pos': return <POSView products={products} searchTerm={searchTerm} onSearchChange={setSearchTerm} items={items} onAddItem={handleAddToCart} onRemoveItem={removeItem} onUpdateQuantity={updateQuantity} onClearCart={clearCart} getTotal={getTotal} getSubtotal={getSubtotal} getItemCount={getItemCount} isProcessing={isProcessing} onCheckout={handleCheckout} />;
-      case 'sales': return <SalesHistoryView transactions={transactions.filter(t => t.id.includes(searchTerm) && (!selectedStatus || t.status === selectedStatus))} searchTerm={searchTerm} onSearchChange={setSearchTerm} selectedStatus={selectedStatus} onStatusChange={setSelectedStatus} onViewDetails={fetchTransactionDetails} />;
+      case 'dashboard': return <DashboardView onViewInventory={() => setCurrentView('inventory')} />;
+      case 'pos': return <POSView products={products} searchTerm={searchTerm} onSearchChange={setSearchTerm} items={items} onAddItem={handleAddToCart} onRemoveItem={removeItem} onUpdateQuantity={updateQuantity} onClearCart={clearCart} getTotal={getTotal} getSubtotal={getSubtotal} getItemCount={getItemCount} isProcessing={createSaleMutation.isPending} onCheckout={handleCheckout} />;
+      case 'sales': return <SalesHistoryView transactions={transactions.filter(t => t.id.includes(searchTerm) && (!selectedStatus || t.status === selectedStatus))} searchTerm={searchTerm} onSearchChange={setSearchTerm} selectedStatus={selectedStatus} onStatusChange={setSelectedStatus} onViewDetails={handleViewTransactionDetails} />;
       case 'history': return <StockHistoryView movements={movements.filter(m => m.product?.name.toLowerCase().includes(searchTerm.toLowerCase()))} searchTerm={searchTerm} onSearchChange={setSearchTerm} dateRange={dateRange} onDateRangeChange={setDateRange} onRefresh={() => {}} />;
       case 'audit': return <AuditLogsView logs={auditLogs.filter(l => l.table_name.includes(searchTerm))} searchTerm={searchTerm} onSearchChange={setSearchTerm} dateRange={dateRange} onDateRangeChange={setDateRange} />;
       case 'cash': return <CashClosureView summary={salesSummary} cashClosures={cashClosures} onProcessClosure={() => toast.info('Próximamente')} />;
-      case 'users': return <UsersManagementView users={users.filter(u => u.full_name?.toLowerCase().includes(searchTerm.toLowerCase()))} searchTerm={searchTerm} onSearchChange={setSearchTerm} onEditUser={(u) => { setEditingUser(u); fetchUserStoreAccess(u.id); setIsEditUserModalOpen(true); }} onCreateUser={() => setIsCreateUserModalOpen(true)} />;
+      case 'users': return <UsersManagementView users={users.filter(u => u.full_name?.toLowerCase().includes(searchTerm.toLowerCase()))} searchTerm={searchTerm} onSearchChange={setSearchTerm} onEditUser={handleEditUser} onCreateUser={() => setIsCreateUserModalOpen(true)} />;
       case 'stores': return <StoresManagementView stores={stores.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()))} searchTerm={searchTerm} onSearchChange={setSearchTerm} onEditStore={(s) => { setEditingStore(s); setIsEditStoreModalOpen(true); }} onDeleteStore={(s) => { setDeletingStore(s); setIsDeleteStoreModalOpen(true); }} onCreateStore={() => setIsCreateStoreModalOpen(true)} onSetActiveStore={handleSetActiveStore} activeStoreId={user.active_store_id || undefined} isAdmin={user.role === 'admin'} />;
       case 'settings': return <SettingsView notifications={notifications} setNotifications={setNotifications} />;
       case 'inventory': return <InventoryView key="inventory" />;
@@ -429,7 +321,7 @@ export default function TerminalView() {
       case 'inventory_count': return <InventoryCountView />;
       case 'catalog': return <CatalogView />;
       case 'cost-sheets': return <CostSheetsPage />;
-      default: return <DashboardView kpis={dashboardKPIs} summary={salesSummary} criticalProducts={products.filter(p => p.stock_current <= p.min_stock)} canViewFinancials={canViewFinancials} onViewInventory={() => setCurrentView('inventory')} />;
+      default: return <DashboardView onViewInventory={() => setCurrentView('inventory')} />;
     }
   };
 
@@ -572,7 +464,14 @@ export default function TerminalView() {
               transition={{ duration: 0.3 }}
               className="max-w-7xl mx-auto"
             >
-              {renderView()}
+              <Suspense fallback={
+                <div className="flex flex-col items-center justify-center py-20 gap-4">
+                  <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                  <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Cargando vista...</p>
+                </div>
+              }>
+                {renderView()}
+              </Suspense>
             </motion.div>
           </AnimatePresence>
         </div>
@@ -588,14 +487,14 @@ export default function TerminalView() {
 
       {/* Shared Modals */}
       {selectedTransaction && (
-        <Dialog open={!!selectedTransaction} onOpenChange={() => setSelectedTransaction(null)}>
+        <Dialog open={!!selectedTransaction} onOpenChange={(open) => !open && setSelectedTransactionId(null)}>
           <DialogContent className="max-w-2xl !rounded-3xl p-0 overflow-hidden bg-background">
             <div className="flex justify-between items-center p-8 border-b border-border bg-primary/5">
               <div>
                 <h3 className="text-2xl font-black text-primary uppercase tracking-tighter">Detalle de Operación</h3>
                 <p className="text-[10px] text-muted-foreground font-black uppercase mt-1">ID: {selectedTransaction.id}</p>
               </div>
-              <button onClick={() => setSelectedTransaction(null)} className="p-2 hover:text-destructive transition-colors"><X /></button>
+              <button onClick={() => setSelectedTransactionId(null)} className="p-2 hover:text-destructive transition-colors"><X /></button>
             </div>
             <div className="p-8 max-h-[70vh] overflow-y-auto">
               {loadingDetails ? <div className="py-20 flex justify-center"><Loader2 className="animate-spin" /></div> : (

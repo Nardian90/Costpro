@@ -5,6 +5,7 @@ import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { GlobalSessionManager } from "@/components/GlobalSessionManager";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
+import QueryProvider from "@/components/providers/QueryProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -56,10 +57,12 @@ export default function RootLayout({
           disableTransitionOnChange
           themes={['light', 'dark', 'neumo']}
         >
-          <GlobalSessionManager />
-          {children}
-          <Toaster position="top-right" richColors />
-          <ServiceWorkerRegister />
+          <QueryProvider>
+            <GlobalSessionManager />
+            {children}
+            <Toaster position="top-right" richColors />
+            <ServiceWorkerRegister />
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>
