@@ -310,6 +310,38 @@ export default function TerminalView() {
     return roles.join(' / ').toUpperCase();
   };
 
+  const handleSidebarScroll = useCallback(() => {
+    if (!navRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = navRef.current;
+    const scrollable = scrollHeight > clientHeight + 10;
+
+    if (!scrollable) {
+      setShowSidebarLogo(true);
+      setShowSidebarUser(true);
+      return;
+    }
+
+    setShowSidebarLogo(scrollTop <= 20);
+    const isAtBottom = Math.ceil(scrollTop + clientHeight) >= scrollHeight - 10;
+    setShowSidebarUser(isAtBottom);
+  }, []);
+
+  useEffect(() => {
+    const nav = navRef.current;
+    if (nav) {
+      nav.addEventListener('scroll', handleSidebarScroll);
+      handleSidebarScroll();
+      window.addEventListener('resize', handleSidebarScroll);
+      const observer = new MutationObserver(handleSidebarScroll);
+      observer.observe(nav, { childList: true, subtree: true });
+      return () => {
+        nav.removeEventListener('scroll', handleSidebarScroll);
+        window.removeEventListener('resize', handleSidebarScroll);
+        observer.disconnect();
+      };
+    }
+  }, [handleSidebarScroll, navigationItems]);
+
   // ==================== VIEWS ====================
 
   const renderDashboard = () => (
@@ -1285,8 +1317,11 @@ export default function TerminalView() {
   return (
     <div className="min-h-screen flex bg-background text-foreground max-w-full overflow-x-auto">
       {/* Sidebar */}
-      <aside className={`w-64 lg:w-72 fixed lg:sticky top-0 h-screen z-40 transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="bg-sidebar/90 backdrop-blur-2xl h-full flex flex-col border-r border-sidebar-border shadow-2xl overflow-hidden">
+      <aside className={cn(
+        "fixed lg:sticky top-0 h-screen z-40 transition-all duration-300 ease-in-out border-r border-sidebar-border shadow-2xl overflow-hidden",
+        sidebarOpen ? "w-64 lg:w-72 translate-x-0" : "w-0 -translate-x-full border-r-0"
+      )}>
+        <div className="bg-sidebar/90 backdrop-blur-2xl h-full flex flex-col overflow-hidden w-64 lg:w-72">
           {/* Logo */}
           <AnimatePresence initial={false}>
             {showSidebarLogo && (
@@ -1376,7 +1411,7 @@ export default function TerminalView() {
             <div className="flex items-center gap-4 flex-1 overflow-hidden">
               <button
                 onClick={toggleSidebar}
-                className="neu-raised-sm w-11 h-11 flex items-center justify-center lg:hidden shrink-0 active:scale-90 transition-transform"
+                className="neu-raised-sm w-11 h-11 flex items-center justify-center shrink-0 active:scale-90 transition-transform"
                 aria-label={sidebarOpen ? "Cerrar menú" : "Abrir menú"}
               >
                 {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
