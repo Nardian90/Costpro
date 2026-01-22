@@ -16,6 +16,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
   const login = useAuthStore((state) => state.login);
@@ -193,19 +194,28 @@ export default function LoginPage() {
                 <button
                   key={account.email}
                   type="button"
+                  disabled={demoLoading === account.email}
                   onClick={() => {
+                    setDemoLoading(account.email);
                     setEmail(account.email);
                     setPassword('demo123');
                     setTimeout(() => {
                       formRef.current?.requestSubmit();
                     }, 100);
                   }}
-                  className="neu-raised-sm w-full text-left p-2 hover:bg-accent transition-colors text-sm"
+                  className="neu-raised-sm w-full text-left p-2 hover:bg-accent transition-colors text-sm flex items-center justify-center disabled:opacity-75"
                 >
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">{account.email}</span>
-                    <span className="neu-badge">{account.role}</span>
-                  </div>
+                  {demoLoading === account.email ? (
+                    <div className="flex items-center justify-center gap-2 w-full">
+                      <div className="w-4 h-4 border-2 border-foreground border-t-transparent rounded-full animate-spin" />
+                      <span>Cargando...</span>
+                    </div>
+                  ) : (
+                    <div className="flex justify-between items-center w-full">
+                      <span className="font-medium">{account.email}</span>
+                      <span className="neu-badge">{account.role}</span>
+                    </div>
+                  )}
                 </button>
               ))}
             </div>
