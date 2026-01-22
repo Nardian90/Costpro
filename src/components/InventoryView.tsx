@@ -1,12 +1,9 @@
 // src/components/InventoryView.tsx
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useAuthStore } from '@/store';
-import { validateRPCArrayResponse } from '@/lib/rpc-validator';
-import { paginatedProductSchema } from '@/validation/schemas';
-import type { Product } from '@/types';
+import { useSuspenseInventory } from '@/hooks/useQueries';
 import { toast } from 'sonner';
 import { Download, Plus, X, LayoutList, Table as TableIcon, Search } from 'lucide-react';
 
@@ -23,79 +20,11 @@ export default function InventoryView() {
     const { user } = useAuthStore();
     const isMobile = useIsMobile();
 
-    const [products, setProducts] = useState<Product[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [initialLoading, setInitialLoading] = useState(true);
-    const [hasMore, setHasMore] = useState(true);
-    const [offset, setOffset] = useState(0);
-    const [totalCount, setTotalCount] = useState(0);
-
     const [currentView, setCurrentView] = useState<'inventory' | 'reception'>('inventory');
     const [layoutMode, setLayoutMode] = useState<'table' | 'card'>('table');
 
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('');
-
-    const fetchProducts = useCallback(async (isNewSearch = false) => {
-        if (loading || (!isNewSearch && !hasMore)) return;
-        setLoading(true);
-
-        const currentOffset = isNewSearch ? 0 : offset;
-
-        try {
-            if (!user?.store_id) {
-                toast.error('No store selected for this user.');
-                throw new Error('User has no store_id');
-            }
-
-            const { data, error } = await supabase.rpc('get_paginated_products', {
-                p_limit: PAGE_LIMIT,
-                p_offset: currentOffset,
-                p_store_id: user.store_id,
-                p_search_term: searchTerm,
-                p_category: selectedCategory
-            });
-
-            if (error) throw error;
-
-            const validatedData = await validateRPCArrayResponse(
-                data,
-                paginatedProductSchema,
-                'get_paginated_products'
-            );
-
-            const fetchedProducts = validatedData || [];
-
-            setProducts(prev => isNewSearch ? fetchedProducts : [...prev, ...fetchedProducts]);
-            setOffset(currentOffset + fetchedProducts.length);
-
-            if (fetchedProducts.length > 0) {
-                 const total = fetchedProducts[0].total_count || 0;
-                 setTotalCount(total);
-                 setHasMore((currentOffset + fetchedProducts.length) < total);
-            } else {
-                 if (isNewSearch) setTotalCount(0);
-                 setHasMore(false);
-            }
-
-        } catch (error: any) {
-            console.error('Error fetching products:', error);
-            toast.error('Failed to fetch products: ' + error.message);
-            setHasMore(false);
-        } finally {
-            setLoading(false);
-            if (initialLoading) setInitialLoading(false);
-        }
-    }, [user?.store_id, searchTerm, selectedCategory, offset, hasMore, loading, initialLoading]);
-
-    // Effect for initial load and search/filter changes
-    useEffect(() => {
-        setInitialLoading(true);
-        setProducts([]);
-        setOffset(0);
-        setHasMore(true);
-        fetchProducts(true);
-    }, [searchTerm, selectedCategory, user?.store_id]); // fetchProducts is memoized, so we don't need it here
 
     // Effect for responsive layout
     useEffect(() => {
@@ -105,14 +34,6 @@ export default function InventoryView() {
     const handleSearch = (term: string) => {
         setSearchTerm(term);
     };
-
-    const uniqueCategories = useMemo(() => {
-        // This is not ideal as it only knows about loaded products.
-        // A better approach would be a separate endpoint to get all categories.
-        // For now, this provides a basic filter.
-        const categorySet = new Set(products.map(p => p.category).filter(Boolean));
-        return Array.from(categorySet);
-    }, [products]);
 
     const actions: Action[] = [
         {
@@ -131,13 +52,6 @@ export default function InventoryView() {
         },
     ];
 
-    if (initialLoading) {
-        return (
-            <div className="flex items-center justify-center h-64">
-                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-            </div>
-        );
-    }
 
     if (currentView === 'reception') {
         return <ProductReceptionView onCancel={() => setCurrentView('inventory')} />;
@@ -152,9 +66,64 @@ export default function InventoryView() {
                 <ActionMenu actions={actions} />
             </div>
 
+            <Suspense fallback={
+                <div className="flex items-center justify-center h-64">
+                    <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                </div>
+            }>
+                <InventoryContent
+                    storeId={user?.store_id}
+                    searchTerm={searchTerm}
+                    onSearch={handleSearch}
+                    selectedCategory={selectedCategory}
+                    onCategoryChange={setSelectedCategory}
+                    layoutMode={layoutMode}
+                />
+            </Suspense>
+        </div>
+    );
+}
+
+function InventoryContent({
+    storeId,
+    searchTerm,
+    onSearch,
+    selectedCategory,
+    onCategoryChange,
+    layoutMode
+}: {
+    storeId?: string | null,
+    searchTerm: string,
+    onSearch: (term: string) => void,
+    selectedCategory: string,
+    onCategoryChange: (cat: string) => void,
+    layoutMode: 'table' | 'card'
+}) {
+    const {
+        data,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+    } = useSuspenseInventory(storeId, searchTerm, selectedCategory, PAGE_LIMIT);
+
+    const products = useMemo(() => data?.pages.flatMap(page => page.products) || [], [data]);
+
+    const uniqueCategories = useMemo(() => {
+        const categorySet = new Set(products.map(p => p.category).filter(Boolean));
+        return Array.from(categorySet);
+    }, [products]);
+
+    const fetchProducts = async () => {
+        if (hasNextPage && !isFetchingNextPage) {
+            fetchNextPage();
+        }
+    };
+
+    return (
+        <div className="space-y-6">
             <SearchBar
                 value={searchTerm}
-                onChange={handleSearch}
+                onChange={onSearch}
                 placeholder="Search by name or SKU..."
             >
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
@@ -162,7 +131,7 @@ export default function InventoryView() {
                         <label className="text-[10px] font-bold text-muted-foreground uppercase mb-1 block">Category</label>
                         <select
                             value={selectedCategory}
-                            onChange={(e) => setSelectedCategory(e.target.value)}
+                            onChange={(e) => onCategoryChange(e.target.value)}
                             className="neu-input w-full"
                         >
                             <option value="">All Categories</option>
@@ -178,15 +147,15 @@ export default function InventoryView() {
                 <InventoryCardView
                     products={products}
                     loadMore={fetchProducts}
-                    hasMore={hasMore}
-                    isLoading={loading}
+                    hasMore={hasNextPage}
+                    isLoading={isFetchingNextPage}
                 />
             ) : (
                 <InventoryTableView
                     products={products}
                     loadMore={fetchProducts}
-                    hasMore={hasMore}
-                    isLoading={loading}
+                    hasMore={hasNextPage}
+                    isLoading={isFetchingNextPage}
                 />
             )}
         </div>
