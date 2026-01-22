@@ -5,6 +5,8 @@ import { useState, useEffect, useCallback, useMemo, useRef, useDeferredValue } f
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/store';
 import { getSupabaseUrl, cn } from '@/lib/utils';
+import { validateRPCArrayResponse } from '@/lib/rpc-validator';
+import { getProductsForPosResponseSchema } from '@/validation/schemas';
 import type { Product, ProductVariant } from '@/types';
 import type { GetProductsForPosResponse } from '@/types/supabase-rpc';
 import ImageWithFallback from './ui/ImageWithFallback';
@@ -83,8 +85,14 @@ export default function CatalogView() {
 
             if (error) throw error;
 
-            const typedData = data as GetProductsForPosResponse[];
-            const mappedProducts = typedData?.map((item) => ({
+            // Validate with Zod
+            const validatedData = await validateRPCArrayResponse(
+                data,
+                getProductsForPosResponseSchema,
+                'get_products_for_pos'
+            );
+
+            const mappedProducts = validatedData?.map((item) => ({
                 ...item,
                 public_image_url: getSupabaseUrl('product-images', item.image_url),
             })) || [];

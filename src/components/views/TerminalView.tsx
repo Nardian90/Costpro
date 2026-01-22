@@ -1,12 +1,18 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef, useDeferredValue, useCallback } from 'react';
-import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useTransform, useMotionValue } from 'framer-motion';
 import { useAuthStore, useCartStore, useUIStore, useCanAccess } from '@/store';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { getSupabaseUrl, getProductImageUrl, getStoreLogoUrl } from '@/lib/utils';
+import { validateRPCArrayResponse } from '@/lib/rpc-validator';
+import {
+  getProductsForPosResponseSchema,
+  dashboardKpiResponseSchema,
+  createSaleParamsSchema
+} from '@/validation/schemas';
 import { toast } from 'sonner';
 import {
   BarChart3, ShoppingCart, Package, Warehouse, Receipt,
@@ -86,7 +92,7 @@ export default function TerminalView() {
   const [showSidebarUser, setShowSidebarUser] = useState(true);
 
   // Scroll animations for sidebar
-  const { scrollY } = useScroll({ container: navRef });
+  const scrollY = useMotionValue(0);
   const logoHeight = useTransform(scrollY, [0, 80], [160, 0]);
   const logoOpacity = useTransform(scrollY, [0, 50], [1, 0]);
   const logoScale = useTransform(scrollY, [0, 80], [1, 0.8]);
@@ -153,8 +159,14 @@ export default function TerminalView() {
         p_category: ''
       });
       if (error) throw error;
-      const typedData = data as GetProductsForPosResponse[];
-      setProducts(typedData?.map((item) => ({
+
+      const validatedData = await validateRPCArrayResponse(
+        data,
+        getProductsForPosResponseSchema,
+        'get_products_for_pos'
+      );
+
+      setProducts(validatedData?.map((item) => ({
         ...item,
         public_image_url: getSupabaseUrl('product-images', item.image_url),
       })) || []);
@@ -168,9 +180,15 @@ export default function TerminalView() {
     try {
       const { data, error } = await supabase.rpc('get_dashboard_kpis', user.role === 'admin' ? {} : { p_store_id: user.store_id });
       if (error) throw error;
-      const kpisData = data as DashboardKpiResponse[];
-      if (kpisData && kpisData.length > 0) {
-        const kpis = kpisData[0];
+
+      const validatedData = await validateRPCArrayResponse(
+        data,
+        dashboardKpiResponseSchema,
+        'get_dashboard_kpis'
+      );
+
+      if (validatedData && validatedData.length > 0) {
+        const kpis = validatedData[0];
         setDashboardKPIs({
           gross_sales: kpis.total_sales || 0,
           cost_of_goods: kpis.total_cost || 0,
@@ -266,7 +284,7 @@ export default function TerminalView() {
       // Use provided discount or fallback to store discount
       const finalDiscount = checkoutDiscount || discount;
 
-      const { error } = await supabase.rpc('create_sale', {
+      const saleParams = {
         p_store_id: user.store_id,
         p_seller_id: user.id,
         p_payment_method: paymentMethod,
@@ -278,7 +296,16 @@ export default function TerminalView() {
           product_id: i.product_id, variant_id: i.variant_id,
           quantity: i.quantity, price: i.price, cost: i.cost
         }))
-      });
+      };
+
+      // Validate params with Zod
+      const validationResult = createSaleParamsSchema.safeParse(saleParams);
+      if (!validationResult.success) {
+          console.error('[Zod Validation Error] create_sale params:', validationResult.error.format());
+          throw new Error('Datos de venta inválidos. Revise el carrito.');
+      }
+
+      const { error } = await supabase.rpc('create_sale', validationResult.data);
       if (error) throw error;
       toast.success('Venta exitosa', { id: toastId });
       clearCart();
@@ -354,6 +381,10 @@ export default function TerminalView() {
   const handleSidebarScroll = useCallback(() => {
     if (!navRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = navRef.current;
+
+    // Sync motion value
+    scrollY.set(scrollTop);
+
     const scrollable = scrollHeight > clientHeight + 10;
 
     if (!scrollable) {
