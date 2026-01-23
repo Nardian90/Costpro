@@ -23,12 +23,12 @@ export const useSessionStore = create<SessionState>((set) => ({
   }),
   setSessionStatus: (isChecking, newStatus) => {
     const update: Partial<SessionState> = { isCheckingSession: isChecking };
-    if (newStatus) {
-      update.status = newStatus;
-    }
     if (isChecking) {
       update.lastChecked = Date.now();
-      update.status = 'checking';
+      update.status = 'checking'; // Default status when checking starts
+    }
+    if (newStatus) {
+      update.status = newStatus; // Override with specific status if provided
     }
     set(update);
   },
