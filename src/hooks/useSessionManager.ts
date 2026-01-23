@@ -38,18 +38,18 @@ export function useSessionManager() {
             const { session } = data;
 
             if (session?.user) {
-                const { data: profileData } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+                const { data: profileData } = await supabase.from('profiles').select('*, memberships:user_store_memberships(*, store:stores(name))').eq('id', session.user.id).single();
 
                 if (profileData?.is_active) {
                     let activeRoles: UserRole[] = [profileData.role];
                     if (profileData.active_store_id) {
-                        const { data: accessData } = await supabase
-                            .from('user_store_access')
-                            .select('roles')
+                        const { data: membershipData } = await supabase
+                            .from('user_store_memberships')
+                            .select('role')
                             .eq('user_id', profileData.id)
                             .eq('store_id', profileData.active_store_id)
                             .single();
-                        if (accessData?.roles) activeRoles = accessData.roles as UserRole[];
+                        if (membershipData?.role) activeRoles = [membershipData.role];
                     }
 
                     const userData = {
@@ -66,6 +66,7 @@ export function useSessionManager() {
                         is_active: profileData.is_active,
                         created_at: profileData.created_at,
                         updated_at: profileData.updated_at,
+                        memberships: profileData.memberships || [],
                     };
 
                     // Validate with Zod
@@ -90,6 +91,7 @@ export function useSessionManager() {
                       isActive: finalUserData.is_active,
                       createdAt: finalUserData.created_at,
                       updatedAt: finalUserData.updated_at,
+                      memberships: finalUserData.memberships || [],
                     }
 
                     const currentState = useAuthStore.getState();
