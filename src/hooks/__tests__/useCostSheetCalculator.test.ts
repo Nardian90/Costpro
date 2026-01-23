@@ -1,49 +1,166 @@
-import { renderHook } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 import { useCostSheetCalculator } from '../useCostSheetCalculator';
 import { describe, it, expect } from 'vitest';
 import { CostSheetData } from '@/types/cost-sheet';
 
-const mockTemplate: CostSheetData = {
+const baseTemplate: CostSheetData = {
   header: {
     quantity: 100,
     currency: 'CUP',
+    unit: 'kg',
+    production_date: '2023-01-01',
+    product_name: 'Test Product',
   },
-  sections: [
-    {
-      id: 'section1',
-      label: 'Section 1',
-      rows: [
-        {
-          id: 'row1',
-          label: 'Row 1',
-          valorHistorico: 1000,
-          calculationMethod: 'ValorFijo',
-        },
-        {
-          id: 'row2',
-          label: 'Row 2',
-          formula: 'ref("row1") * 0.1',
-        }
-      ]
-    }
-  ],
+  sections: [],
   annexes: [],
-  signature: { prepared_by: '', approved_by: '' }
+  signature: { prepared_by: 'Test User', approved_by: 'Test Approver' },
 };
 
 describe('useCostSheetCalculator', () => {
-  it('should calculate values based on fixed value', () => {
-    const { result } = renderHook(() => useCostSheetCalculator(mockTemplate));
-
-    expect(result.current.calculatedValues['row1']).toBeDefined();
-    expect(result.current.calculatedValues['row1'].total).toBe(1000);
+  it('should handle empty sections without errors', () => {
+    const { result } = renderHook(() => useCostSheetCalculator(baseTemplate));
+    expect(result.current.calculatedValues).toEqual({});
   });
 
-  it('should calculate values based on formula', () => {
-    const { result } = renderHook(() => useCostSheetCalculator(mockTemplate));
+  it('should calculate ValorFijo correctly', () => {
+    const template: CostSheetData = {
+      ...baseTemplate,
+      sections: [{
+        id: 's1',
+        label: 'Section 1',
+        rows: [{ id: 'r1', label: 'Row 1', valorHistorico: 500, calculationMethod: 'ValorFijo' }]
+      }]
+    };
+    const { result } = renderHook(() => useCostSheetCalculator(template));
+    expect(result.current.calculatedValues['r1'].total).toBe(500);
+  });
 
-    // Formula calculation might happen in useEffect, so we might need to wait or just rely on initial render if it's deterministic
-    expect(result.current.calculatedValues['row2']).toBeDefined();
-    expect(result.current.calculatedValues['row2'].total).toBe(100);
+  it('should handle zero and large numbers for valorHistorico', () => {
+    const template: CostSheetData = {
+      ...baseTemplate,
+      sections: [{
+        id: 's1',
+        label: 'Section 1',
+        rows: [
+          { id: 'r1', label: 'Row 1', valorHistorico: 0, calculationMethod: 'ValorFijo' },
+          { id: 'r2', label: 'Row 2', valorHistorico: 999999999, calculationMethod: 'ValorFijo' }
+        ]
+      }]
+    };
+    const { result } = renderHook(() => useCostSheetCalculator(template));
+    expect(result.current.calculatedValues['r1'].total).toBe(0);
+    expect(result.current.calculatedValues['r2'].total).toBe(999999999);
+  });
+
+  it('should calculate formula with ref() correctly', () => {
+    const template: CostSheetData = {
+        ...baseTemplate,
+        sections: [{
+            id: 's1',
+            label: 'Section 1',
+            rows: [
+                { id: 'r1', label: 'Row 1', valorHistorico: 1000, calculationMethod: 'ValorFijo' },
+                { id: 'r2', label: 'Row 2', formula: 'ref("r1") * 0.2' }
+            ]
+        }]
+    };
+    const { result } = renderHook(() => useCostSheetCalculator(template));
+    expect(result.current.calculatedValues['r2'].total).toBe(200);
+  });
+
+  it('should handle nested children calculations (sum)', () => {
+    const template: CostSheetData = {
+      ...baseTemplate,
+      sections: [{
+        id: 's1',
+        label: 'Section 1',
+        rows: [{
+          id: 'parent',
+          label: 'Parent',
+          children: [
+            { id: 'c1', label: 'Child 1', valorHistorico: 150, calculationMethod: 'ValorFijo' },
+            { id: 'c2', label: 'Child 2', valorHistorico: 250, calculationMethod: 'ValorFijo' }
+          ]
+        }]
+      }]
+    };
+    const { result } = renderHook(() => useCostSheetCalculator(template));
+    expect(result.current.calculatedValues['parent'].total).toBe(400);
+  });
+
+  it('should calculate Prorrateo based on annex and row references', () => {
+    const template: CostSheetData = {
+      ...baseTemplate,
+      sections: [{
+        id: 's1',
+        label: 'Prorrateo Section',
+        rows: [
+          { id: 'base_row', label: 'Base Row', valorHistorico: 10000, calculationMethod: 'ValorFijo' },
+          {
+            id: 'prorrateo_row',
+            label: 'Prorrateo Row',
+            valorHistorico: 2000,
+            calculationMethod: 'Prorrateo',
+            baseDeCalculoRef: 'base_row' // Referencing another row
+          }
+        ]
+      }],
+      annexes: [{
+        id: 'annex1',
+        name: 'Annex 1',
+        columns: [{ key: 'name', label: 'Name' }, { key: 'amount', label: 'Amount' }],
+        data: [{ name: 'Item 1', amount: 500 }, { name: 'Item 2', amount: 1500 }]
+      }]
+    };
+
+    const { result } = renderHook(() => useCostSheetCalculator(template));
+
+    // Test prorrateo based on another row
+    // Coeficiente = 2000 / 10000 = 0.2
+    // Total = 0.2 * 10000 = 2000
+    expect(result.current.calculatedValues['prorrateo_row'].coeficiente).toBe(0.2);
+    expect(result.current.calculatedValues['prorrateo_row'].total).toBe(2000);
+
+    // Now, create a row that references the annex
+    const template2: CostSheetData = {
+        ...template,
+        sections: [...template.sections, {
+            id: 's2',
+            label: 'Annex Prorrateo',
+            rows: [{
+                id: 'annex_prorrateo',
+                label: 'Annex Prorrateo Row',
+                valorHistorico: 500,
+                calculationMethod: 'Prorrateo',
+                baseDeCalculoRef: 'annex1' // Referencing an annex
+            }]
+        }]
+    };
+
+    const { result: result2 } = renderHook(() => useCostSheetCalculator(template2));
+
+    // Annex total = 500 + 1500 = 2000
+    // Coeficiente = 500 / 2000 = 0.25
+    // Total = 0.25 * 2000 = 500
+    expect(result2.current.annexTotals['annex1']).toBe(2000);
+    expect(result2.current.calculatedValues['annex_prorrateo'].coeficiente).toBe(0.25);
+    expect(result2.current.calculatedValues['annex_prorrateo'].total).toBe(500);
+  });
+
+  it('should return 0 for invalid refs or formulas', () => {
+    const template: CostSheetData = {
+        ...baseTemplate,
+        sections: [{
+            id: 's1',
+            label: 'Section 1',
+            rows: [
+                { id: 'r1', label: 'Row 1', formula: 'ref("non_existent_row") * 10' },
+                { id: 'r2', label: 'Row 2', formula: 'invalidJsCode()' }
+            ]
+        }]
+    };
+    const { result } = renderHook(() => useCostSheetCalculator(template));
+    expect(result.current.calculatedValues['r1'].total).toBe(0);
+    expect(result.current.calculatedValues['r2'].total).toBe(0);
   });
 });
