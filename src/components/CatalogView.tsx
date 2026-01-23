@@ -47,6 +47,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import Papa from 'papaparse';
+import { v4 as uuidv4 } from 'uuid';
 
 export default function CatalogView() {
     const { user } = useAuthStore();
@@ -275,6 +276,10 @@ export default function CatalogView() {
             header: true,
             skipEmptyLines: true,
             complete: async (results) => {
+                if (!user?.storeId) {
+                    toast.error('No se ha seleccionado una tienda. Por favor, recargue la página.');
+                    return;
+                }
                 const data = results.data as any[];
                 if (data.length === 0) {
                     toast.error('El archivo CSV está vacío.');
@@ -322,40 +327,47 @@ export default function CatalogView() {
 
                 for (const [index, row] of normalizedData.entries()) {
                     const rowNum = index + 2;
-                    const { id, name, cost, price, imageUrl } = row;
+                    let { id, name, cost, price, imageUrl } = row;
 
-                    if (!id) {
-                        validationErrors.push({ row: rowNum, message: "Falta el 'id' del producto." });
+                    // 1. Generate UUID for new products
+                    const productId = id?.trim() || uuidv4();
+
+                    // 2. Check for duplicates
+                    if (seenIds.has(productId)) {
+                        validationErrors.push({ row: rowNum, message: `El id '${productId}' está duplicado.` });
                         continue;
                     }
+                    seenIds.add(productId);
 
-                    if (seenIds.has(id)) {
-                        validationErrors.push({ row: rowNum, message: `El id '${id}' está duplicado.` });
-                        continue;
-                    }
-                    seenIds.add(id);
+                    // 3. Validate and parse numbers
+                    const costValue = parseFloat(cost);
+                    const priceValue = parseFloat(price);
 
-                    const costPrice = parseFloat(cost);
-                    const sellPrice = parseFloat(price);
-
-                    if (isNaN(costPrice) || costPrice < 0) {
+                    if (isNaN(costValue) || costValue < 0) {
                         validationErrors.push({ row: rowNum, message: "El 'costo' debe ser un número válido." });
                     }
 
-                    if (isNaN(sellPrice) || sellPrice < 0) {
+                    if (isNaN(priceValue) || priceValue < 0) {
                         validationErrors.push({ row: rowNum, message: "El 'precio' debe ser un número válido." });
                     }
 
-                    if (!isNaN(costPrice) && !isNaN(sellPrice) && sellPrice < costPrice) {
+                    if (!isNaN(costValue) && !isNaN(priceValue) && priceValue < costValue) {
                         validationErrors.push({ row: rowNum, message: "El precio de venta no puede ser menor que el costo." });
                     }
 
+                    if(!name) {
+                        validationErrors.push({ row: rowNum, message: "El 'nombre' del producto es obligatorio." });
+                        continue;
+                    }
+
+                    // 4. Create the final payload with store_id
                     productsToUpdate.push({
-                        id,
+                        id: productId,
+                        store_id: user.storeId,
                         name,
-                        cost_price: costPrice,
-                        price: sellPrice,
-                        image_url: imageUrl,
+                        cost: costValue,
+                        price: priceValue,
+                        image_url: imageUrl || '',
                     });
                 }
 
@@ -367,7 +379,7 @@ export default function CatalogView() {
 
                 const toastId = toast.loading(`Actualizando ${productsToUpdate.length} productos...`);
                 try {
-                    await bulkUpdateMutation.mutateAsync(productsToUpdate);
+                    await bulkUpdateMutation.mutateAsync({ products: productsToUpdate, storeId: user.storeId });
                     toast.success('Catálogo actualizado con éxito!', { id: toastId });
                 } catch (error: any) {
                     toast.error(`Error al actualizar: ${error.message}`, { id: toastId });
