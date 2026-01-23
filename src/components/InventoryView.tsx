@@ -1,38 +1,70 @@
 // src/components/InventoryView.tsx
 'use client';
 
-import { useState, useEffect, useMemo, Suspense } from 'react';
+import { useState, useEffect, useMemo, useTransition } from 'react';
 import { useAuthStore } from '@/store';
-import { useSuspenseInventory } from '@/hooks/useQueries';
-import { toast } from 'sonner';
-import { Download, Plus, X, LayoutList, Table as TableIcon, Search } from 'lucide-react';
+import { useInventory } from '@/hooks/useQueries';
+import { Download, Plus, X, LayoutList, Table as TableIcon, Package } from 'lucide-react';
 
 import InventoryCardView from './InventoryCardView';
 import InventoryTableView from './InventoryTableView';
 import ProductReceptionView from './ProductReceptionView';
 import ActionMenu, { Action } from './ui/ActionMenu';
 import SearchBar from './ui/SearchBar';
+import { StateRenderer } from './ui/StateRenderer';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
 
 const PAGE_LIMIT = 20;
+
+const EmptyInventoryComponent = () => (
+    <div className="col-span-full py-32 text-center border-2 border-dashed border-border rounded-xl bg-card/50">
+        <Package className="w-16 h-16 mx-auto mb-6 opacity-5" />
+        <p className="text-xl font-black text-muted-foreground uppercase tracking-widest">Inventario Vacío</p>
+        <p className="text-sm text-muted-foreground mt-2">No se encontraron productos. Intenta con otra búsqueda o filtro.</p>
+    </div>
+);
 
 export default function InventoryView() {
     const { user } = useAuthStore();
     const isMobile = useIsMobile();
+    const [isPending, startTransition] = useTransition();
 
     const [currentView, setCurrentView] = useState<'inventory' | 'reception'>('inventory');
     const [layoutMode, setLayoutMode] = useState<'table' | 'card'>('table');
-
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('');
 
-    // Effect for responsive layout
     useEffect(() => {
         setLayoutMode(isMobile ? 'card' : 'table');
     }, [isMobile]);
 
-    const handleSearch = (term: string) => {
-        setSearchTerm(term);
+    const {
+        data,
+        error,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+        isLoading,
+    } = useInventory(user?.store_id, searchTerm, selectedCategory, PAGE_LIMIT);
+
+    const products = useMemo(() => data?.pages.flatMap(page => page.products) || [], [data]);
+
+    const uniqueCategories = useMemo(() => {
+        const categorySet = new Set(products.map(p => p.category).filter(Boolean));
+        return Array.from(categorySet);
+    }, [products]);
+
+    const handleCategoryChange = (value: string) => {
+        startTransition(() => {
+            setSelectedCategory(value);
+        });
+    };
+
+    const fetchMoreProducts = () => {
+        if (hasNextPage && !isFetchingNextPage) {
+            fetchNextPage();
+        }
     };
 
     const actions: Action[] = [
@@ -41,7 +73,7 @@ export default function InventoryView() {
             label: layoutMode === 'table' ? 'Card View' : 'Table View',
             icon: layoutMode === 'table' ? LayoutList : TableIcon,
             onClick: () => setLayoutMode(prev => prev === 'table' ? 'card' : 'table'),
-            className: 'hidden md:flex', // Hide on mobile where it's forced
+            className: 'hidden md:flex',
         },
         {
             id: 'toggle-reception',
@@ -51,7 +83,6 @@ export default function InventoryView() {
             variant: currentView === 'inventory' ? 'primary' : 'danger',
         },
     ];
-
 
     if (currentView === 'reception') {
         return <ProductReceptionView onCancel={() => setCurrentView('inventory')} />;
@@ -66,64 +97,9 @@ export default function InventoryView() {
                 <ActionMenu actions={actions} />
             </div>
 
-            <Suspense fallback={
-                <div className="flex items-center justify-center h-64">
-                    <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                </div>
-            }>
-                <InventoryContent
-                    storeId={user?.store_id}
-                    searchTerm={searchTerm}
-                    onSearch={handleSearch}
-                    selectedCategory={selectedCategory}
-                    onCategoryChange={setSelectedCategory}
-                    layoutMode={layoutMode}
-                />
-            </Suspense>
-        </div>
-    );
-}
-
-function InventoryContent({
-    storeId,
-    searchTerm,
-    onSearch,
-    selectedCategory,
-    onCategoryChange,
-    layoutMode
-}: {
-    storeId?: string | null,
-    searchTerm: string,
-    onSearch: (term: string) => void,
-    selectedCategory: string,
-    onCategoryChange: (cat: string) => void,
-    layoutMode: 'table' | 'card'
-}) {
-    const {
-        data,
-        fetchNextPage,
-        hasNextPage,
-        isFetchingNextPage,
-    } = useSuspenseInventory(storeId, searchTerm, selectedCategory, PAGE_LIMIT);
-
-    const products = useMemo(() => data?.pages.flatMap(page => page.products) || [], [data]);
-
-    const uniqueCategories = useMemo(() => {
-        const categorySet = new Set(products.map(p => p.category).filter(Boolean));
-        return Array.from(categorySet);
-    }, [products]);
-
-    const fetchProducts = async () => {
-        if (hasNextPage && !isFetchingNextPage) {
-            fetchNextPage();
-        }
-    };
-
-    return (
-        <div className="space-y-6">
             <SearchBar
                 value={searchTerm}
-                onChange={onSearch}
+                onChange={setSearchTerm}
                 placeholder="Search by name or SKU..."
             >
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
@@ -131,33 +107,44 @@ function InventoryContent({
                         <label className="text-[10px] font-bold text-muted-foreground uppercase mb-1 block">Category</label>
                         <select
                             value={selectedCategory}
-                            onChange={(e) => onCategoryChange(e.target.value)}
+                            onChange={(e) => handleCategoryChange(e.target.value)}
                             className="neu-input w-full"
                         >
                             <option value="">All Categories</option>
                             {uniqueCategories.map(category => (
-                                 <option key={category || 'uncategorized'} value={category || ""}>{category || 'Sin categoría'}</option>
+                                <option key={category || 'uncategorized'} value={category || ""}>{category || 'Sin categoría'}</option>
                             ))}
                         </select>
                     </div>
                 </div>
             </SearchBar>
 
-            {layoutMode === 'card' ? (
-                <InventoryCardView
-                    products={products}
-                    loadMore={fetchProducts}
-                    hasMore={hasNextPage}
-                    isLoading={isFetchingNextPage}
-                />
-            ) : (
-                <InventoryTableView
-                    products={products}
-                    loadMore={fetchProducts}
-                    hasMore={hasNextPage}
-                    isLoading={isFetchingNextPage}
-                />
-            )}
+            <div className={cn(isPending && "opacity-50 transition-opacity")}>
+                <StateRenderer
+                    isLoading={isLoading}
+                    error={error as Error | null}
+                    data={products}
+                    emptyComponent={<EmptyInventoryComponent />}
+                >
+                    {(loadedProducts) => (
+                        layoutMode === 'card' ? (
+                            <InventoryCardView
+                                products={loadedProducts}
+                                loadMore={fetchMoreProducts}
+                                hasMore={hasNextPage}
+                                isLoading={isFetchingNextPage}
+                            />
+                        ) : (
+                            <InventoryTableView
+                                products={loadedProducts}
+                                loadMore={fetchMoreProducts}
+                                hasMore={hasNextPage}
+                                isLoading={isFetchingNextPage}
+                            />
+                        )
+                    )}
+                </StateRenderer>
+            </div>
         </div>
     );
 }
