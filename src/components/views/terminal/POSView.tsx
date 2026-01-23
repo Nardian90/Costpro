@@ -1,18 +1,20 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useTransition } from 'react';
 import { ShoppingCart, Search, X, Loader2, Check, Minus, Plus, Trash2, DollarSign, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import SearchBar from '@/components/ui/SearchBar';
 import ActionMenu from '@/components/ui/ActionMenu';
 import ProductCard from '@/components/ProductCard';
+import { StateRenderer } from '@/components/ui/StateRenderer';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTheme } from 'next-themes';
-import type { Product, DiscountType, PaymentMethod } from '@/types';
-import { toast } from 'sonner';
+import type { Product, PaymentMethod } from '@/types';
 
 interface POSViewProps {
   products: Product[];
+  isLoading: boolean;
+  error: Error | null;
   searchTerm: string;
   onSearchChange: (value: string) => void;
   items: any[];
@@ -27,8 +29,19 @@ interface POSViewProps {
   onCheckout: (paymentMethod: PaymentMethod, discount?: { type: string, value: number } | null) => Promise<void>;
 }
 
+const EmptyProductsComponent = () => (
+  <div className="col-span-full py-32 text-center border-2 border-dashed border-border rounded-xl bg-card/50">
+    <Search className="w-16 h-16 mx-auto mb-6 opacity-5" />
+    <p className="text-xl font-black text-muted-foreground uppercase tracking-widest">Sin resultados</p>
+    <p className="text-sm text-muted-foreground mt-2">Intenta con otra búsqueda o filtro.</p>
+  </div>
+);
+
+
 export default function POSView({
   products,
+  isLoading,
+  error,
   searchTerm,
   onSearchChange,
   items,
@@ -43,6 +56,7 @@ export default function POSView({
   onCheckout
 }: POSViewProps) {
   const { theme } = useTheme();
+  const [isPending, startTransition] = useTransition();
   const [showCart, setShowCart] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>('cash');
   const [localDiscount, setLocalDiscount] = useState({ type: 'fixed', value: 0 });
@@ -62,6 +76,12 @@ export default function POSView({
   const categories = useMemo(() => {
     return Array.from(new Set(products.map(p => p.category).filter(Boolean)));
   }, [products]);
+
+  const handleCategoryChange = (value: string) => {
+    startTransition(() => {
+      setSelectedCategory(value);
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -149,7 +169,6 @@ export default function POSView({
                       </div>
 
                       <div className="space-y-6 pt-6 border-t border-border">
-                        {/* Descuento */}
                         <div className="px-2 space-y-2">
                           <label className="text-[9px] font-black uppercase text-muted-foreground tracking-widest block">Descuento (%)</label>
                           <input
@@ -237,7 +256,7 @@ export default function POSView({
                   <label className="text-[10px] font-black text-muted-foreground uppercase mb-1 block">Categoría</label>
                   <select
                     value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    onChange={(e) => handleCategoryChange(e.target.value)}
                     className="w-full p-3 rounded-lg border border-border bg-background text-sm font-bold"
                   >
                     <option value="">Todas</option>
@@ -249,21 +268,26 @@ export default function POSView({
              </div>
           </SearchBar>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-            {filteredProducts.length > 0 ? (
-              filteredProducts.map(product => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  onClick={onAddItem}
-                />
-              ))
-            ) : (
-              <div className="col-span-full py-32 text-center border-2 border-dashed border-border rounded-xl bg-card/50">
-                <Search className="w-16 h-16 mx-auto mb-6 opacity-5" />
-                <p className="text-xl font-black text-muted-foreground uppercase tracking-widest">Sin resultados</p>
-              </div>
-            )}
+          <div className={cn(
+            "grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6",
+            isPending && "opacity-50 transition-opacity"
+          )}>
+            <StateRenderer
+              isLoading={isLoading}
+              error={error}
+              data={filteredProducts}
+              emptyComponent={<EmptyProductsComponent />}
+            >
+              {(data) => (
+                data.map(product => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    onClick={onAddItem}
+                  />
+                ))
+              )}
+            </StateRenderer>
           </div>
         </div>
       </div>
