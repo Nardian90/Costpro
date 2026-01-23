@@ -156,7 +156,7 @@ export default function InventoryCountView() {
   };
 
   const handleFinalSubmit = async () => {
-    if (!user?.store_id) {
+      if (!user?.storeId) {
       toast.error('Sesión inválida');
       return;
     }
@@ -207,7 +207,7 @@ export default function InventoryCountView() {
             'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
-            storeId: user.store_id,
+            storeId: user.storeId,
             items: itemsToSubmit
           }),
         });

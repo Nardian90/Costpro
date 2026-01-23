@@ -42,7 +42,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
 
     const [searchTerm, setSearchTerm] = useState('');
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
-    const { data: searchData, isFetching: isSearching } = useInventory(user?.store_id, debouncedSearchTerm, '', 5);
+    const { data: searchData, isFetching: isSearching } = useInventory(user?.storeId, debouncedSearchTerm, '', 5);
     const searchResults = useMemo(() => searchData?.pages[0]?.products || [], [searchData]);
 
     const registerReceptionMutation = useRegisterReception();
@@ -300,7 +300,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
             toast.error('Add at least one product to the reception.');
             return;
         }
-        if (!user?.store_id || !user?.id) {
+        if (!user?.storeId || !user?.id) {
             toast.error('Store or session error.');
             return;
         }
@@ -319,7 +319,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
 
         try {
              await registerReceptionMutation.mutateAsync({
-                p_store_id: user.store_id,
+                p_store_id: user.storeId,
                 p_supplier: receptionDetails.supplier,
                 p_reception_date: receptionDetails.receptionDate,
                 p_invoice_number: receptionDetails.invoiceNumber,

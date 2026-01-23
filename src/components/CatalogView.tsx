@@ -52,7 +52,7 @@ export default function CatalogView() {
     const { user } = useAuthStore();
     const isMobile = useIsMobile();
 
-    const { data: products = [], isLoading: loading } = useProducts(user?.store_id);
+    const { data: products = [], isLoading: loading } = useProducts(user?.storeId);
     const updateProductMutation = useUpdateProduct();
     const createProductMutation = useCreateProduct();
     const bulkUpdateMutation = useBulkUpdateProducts();
@@ -134,7 +134,7 @@ export default function CatalogView() {
             toast.error('El nombre es obligatorio');
             return;
         }
-        if (!user?.store_id) {
+        if (!user?.storeId) {
             toast.error('No hay una tienda activa seleccionada');
             return;
         }
@@ -147,7 +147,7 @@ export default function CatalogView() {
                 cost_price: newProductForm.cost_price,
                 unit_of_measure: newProductForm.unit_of_measure,
                 description: newProductForm.description,
-                store_id: user.store_id
+                store_id: user.storeId
             });
 
             toast.success('Producto creado con éxito');
