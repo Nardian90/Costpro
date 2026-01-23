@@ -54,7 +54,7 @@ export default function UsersManagementView({
             <tr className="bg-muted/30 text-muted-foreground font-black uppercase text-[10px] tracking-widest border-b border-border">
               <th className="p-4 text-left">Perfil</th>
               <th className="p-4 text-left">Email</th>
-              <th className="p-4 text-left">Nivel de Acceso</th>
+              <th className="p-4 text-left">Accesos Multi-Store</th>
               <th className="p-4 text-center">Estado</th>
               <th className="p-4 text-center">Acciones</th>
             </tr>
@@ -72,13 +72,25 @@ export default function UsersManagementView({
                 </td>
                 <td className="p-4 font-mono text-[10px] text-muted-foreground">{u.email}</td>
                 <td className="p-4">
-                  <span className={cn(
-                    "px-2 py-0.5 rounded text-[9px] font-black uppercase",
-                    u.role === 'admin' ? 'bg-primary/10 text-primary' :
-                    (u.role === 'encargado' || u.role === 'manager') ? 'bg-indigo-500/10 text-indigo-600' : 'bg-muted text-muted-foreground'
-                  )}>
-                    {getRoleLabel(u.role)}
-                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    {u.memberships?.map((m, idx) => (
+                      <div key={idx} className="flex flex-col bg-muted/30 p-1.5 rounded-lg border border-border/50 min-w-[80px]">
+                        <span className={cn(
+                          "px-1.5 py-0.5 rounded text-[8px] font-black uppercase w-fit",
+                          m.role === 'admin' ? 'bg-primary/20 text-primary' :
+                          (m.role === 'encargado' || m.role === 'manager') ? 'bg-indigo-500/20 text-indigo-600' : 'bg-background text-muted-foreground'
+                        )}>
+                          {getRoleLabel(m.role)}
+                        </span>
+                        <span className="text-[7px] font-black text-muted-foreground uppercase mt-1 tracking-widest truncate max-w-[100px]">
+                          {m.store?.name || 'Tienda'}
+                        </span>
+                      </div>
+                    ))}
+                    {(!u.memberships || u.memberships.length === 0) && (
+                      <span className="text-[9px] text-muted-foreground uppercase font-bold italic opacity-50">Sin asignaciones</span>
+                    )}
+                  </div>
                 </td>
                 <td className="p-4 text-center">
                   <div className="flex justify-center items-center gap-2">

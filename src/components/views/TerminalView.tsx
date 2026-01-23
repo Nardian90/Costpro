@@ -32,7 +32,8 @@ import {
   useUserStoreAccess,
   useCreateSale,
   useCreateUser,
-  useUpdateUser
+  useUpdateUser,
+  useManageUserMemberships
 } from '@/hooks/useQueries';
 
 // Sub-components
@@ -264,6 +265,7 @@ export default function TerminalView() {
 
   const createUserMutation = useCreateUser();
   const updateUserMutation = useUpdateUser();
+  const manageMembershipsMutation = useManageUserMemberships();
 
   const handleEditUser = (u: Profile) => {
     setSelectedUserContract(mapProfileToContract(u));
@@ -283,14 +285,22 @@ export default function TerminalView() {
           p_email: data.email,
           p_full_name: data.fullName,
           p_role: data.role,
-          p_store_id: user.storeId || ''
+          p_store_id: data.memberships?.[0]?.store_id || user.storeId || '',
+          p_memberships: data.memberships
         });
       } else if (userFormMode === 'edit' && selectedUserContract) {
+        // Update base profile
         await updateUserMutation.mutateAsync({
           id: selectedUserContract.id,
           full_name: data.fullName,
           role: data.role,
           is_active: data.isActive
+        });
+
+        // Update multi-store memberships
+        await manageMembershipsMutation.mutateAsync({
+          userId: selectedUserContract.id,
+          memberships: data.memberships
         });
       }
       setUserFormMode(null);
@@ -494,9 +504,30 @@ export default function TerminalView() {
                   {navigationItems.find(i => i.id === currentView)?.label || 'Dashboard'}
                 </h1>
                 <div className="h-4 w-[1px] bg-white/10 hidden sm:block" />
-                <p className="hidden sm:block text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] truncate">
-                  {user?.fullName}
-                </p>
+
+                {/* User Info & Store Selector */}
+                <div className="hidden sm:flex items-center gap-3">
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] truncate">
+                    {user?.fullName}
+                  </p>
+
+                  {user.memberships && user.memberships.length > 1 && (
+                    <div className="flex items-center gap-2 px-3 py-1 rounded-lg border border-primary/20 bg-primary/5">
+                      <BuildingIcon className="w-3 h-3 text-primary" />
+                      <select
+                        value={user.activeStoreId || ''}
+                        onChange={(e) => handleSetActiveStore(e.target.value)}
+                        className="bg-transparent text-[9px] font-black uppercase text-primary outline-none cursor-pointer border-none p-0 focus:ring-0"
+                      >
+                        {user.memberships.map((m) => (
+                          <option key={m.store_id} value={m.store_id} className="text-foreground bg-background">
+                            {m.store?.name || `Sucursal ${m.store_id.slice(0, 4)}`}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -653,9 +684,10 @@ export default function TerminalView() {
           <UserForm
             mode={userFormMode || 'create'}
             initialData={selectedUserContract}
+            stores={stores}
             onSubmit={handleUserFormSubmit}
             onCancel={() => setUserFormMode(null)}
-            isSubmitting={createUserMutation.isPending || updateUserMutation.isPending}
+            isSubmitting={createUserMutation.isPending || updateUserMutation.isPending || manageMembershipsMutation.isPending}
           />
         </DialogContent>
       </Dialog>
