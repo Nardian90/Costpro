@@ -69,19 +69,22 @@ export default function LoginPage() {
       const userData = {
         id: profileData.id,
         email: profileData.email,
-        full_name: profileData.full_name,
+        fullName: profileData.full_name,
         role: profileData.role,
-        roles: profileData.roles || [], // Ensure roles array is present
-        store_id: profileData.store_id,
-        active_store_id: profileData.active_store_id,
-        is_active: profileData.is_active,
-        created_at: profileData.created_at,
-        updated_at: profileData.updated_at,
+        roles: profileData.roles || [],
+        storeId: profileData.store_id,
+        activeStoreId: profileData.active_store_id,
+        isActive: profileData.is_active,
+        createdAt: profileData.created_at,
+        updatedAt: profileData.updated_at,
+        maxStoresLimit: profileData.max_stores_limit || 0,
+        maxUsersLimit: profileData.max_users_limit || 0,
+        createdBy: profileData.created_by || '',
       };
 
       login(userData, authData.session.access_token);
 
-      toast.success(`¡Bienvenido, ${userData.full_name}!`);
+      toast.success(`¡Bienvenido, ${userData.fullName}!`);
       router.push('/');
     } catch (err: any) {
       console.error('Login error:', err);
