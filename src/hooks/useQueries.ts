@@ -494,3 +494,39 @@ export function useCashClosures(storeId?: string | null, isAdmin = false) {
     enabled: isAdmin || !!storeId,
   });
 }
+
+export function useCreateUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: { p_email: string; p_full_name: string; p_role: string; p_store_id: string }) => {
+      const rpcName = 'managed_create_user';
+      return await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast.success('Usuario creado correctamente');
+    },
+    onError: (error: any) => {
+      toast.error(`Error al crear usuario: ${error.message}`);
+    }
+  });
+}
+
+export function useUpdateUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: { id: string } & Partial<Profile>) => {
+      return await withTableLogging('update', 'profiles', () => supabase
+        .from('profiles')
+        .update(updates)
+        .eq('id', id));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast.success('Usuario actualizado correctamente');
+    },
+    onError: (error: any) => {
+      toast.error(`Error al actualizar usuario: ${error.message}`);
+    }
+  });
+}
