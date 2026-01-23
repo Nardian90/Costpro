@@ -15,6 +15,7 @@ import {
   BarChart3, ShoppingCart, Package, Warehouse, Receipt,
   ClipboardList, FileText, History, Shield, DollarSign,
   Users, Building, Settings, LogOut, Bell, Menu, Sun,
+  HelpCircle,
   TrendingUp, ArrowRight, Eye, Plus, Minus,
   Search, Target, Layers, Check
 } from 'lucide-react';
@@ -50,6 +51,7 @@ import UserForm, { UserFormData } from './terminal/UserForm';
 import { UserContract, UserContractFactory, mapProfileToContract } from '@/contracts/user';
 import StoresManagementView from './terminal/StoresManagementView';
 import SettingsView from './terminal/SettingsView';
+import HelpView from './terminal/HelpView';
 
 // Original shared components
 import InventoryView from '@/components/InventoryView';
@@ -328,6 +330,7 @@ export default function TerminalView() {
       { id: 'users', icon: Users, label: 'Usuarios', roles: ['admin', 'encargado'] },
       { id: 'stores', icon: Building, label: 'Tiendas', roles: ['admin', 'encargado'] },
       { id: 'settings', icon: Settings, label: 'Config', roles: ['admin', 'manager', 'encargado'] },
+      { id: 'help', icon: HelpCircle, label: 'Ayuda', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado'] },
     ];
     return all.filter(i => i.roles.some(r => roles.includes(r as any)));
   }, [user]);
@@ -384,6 +387,7 @@ export default function TerminalView() {
       case 'users': return <UsersManagementView users={users.filter(u => u.full_name?.toLowerCase().includes(searchTerm.toLowerCase()))} searchTerm={searchTerm} onSearchChange={setSearchTerm} onEditUser={handleEditUser} onCreateUser={handleCreateUser} />;
       case 'stores': return <StoresManagementView stores={stores.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()))} searchTerm={searchTerm} onSearchChange={setSearchTerm} onEditStore={(s) => { setEditingStore(s); setIsEditStoreModalOpen(true); }} onDeleteStore={(s) => { setDeletingStore(s); setIsDeleteStoreModalOpen(true); }} onCreateStore={() => setIsCreateStoreModalOpen(true)} onSetActiveStore={handleSetActiveStore} activeStoreId={user.activeStoreId || undefined} isAdmin={user.role === 'admin'} />;
       case 'settings': return <SettingsView notifications={notifications} setNotifications={setNotifications} />;
+      case 'help': return <HelpView />;
       case 'inventory': return <InventoryView key="inventory" />;
       case 'recepcion': return <InventoryView key="recepcion" />;
       case 'inventory_count': return <InventoryCountView />;
