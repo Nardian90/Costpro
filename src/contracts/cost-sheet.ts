@@ -17,6 +17,7 @@
 // ============================================
 
 export interface CostSheetHeaderContract {
+  [key: string]: any;
   code: string;
   name: string;
   date: string;

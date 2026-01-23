@@ -25,13 +25,13 @@ export default function DashboardView({ onViewInventory }: DashboardViewProps) {
     data: dashboardData,
     isLoading: isLoadingDashboard,
     error: dashboardError
-  } = useDashboardData(user?.store_id, user?.role === 'admin');
+  } = useDashboardData(user?.storeId, user?.role === 'admin');
 
   const {
     data: productsData,
     isLoading: isLoadingProducts,
     error: productsError
-  } = useProducts(user?.store_id);
+  } = useProducts(user?.storeId);
   const products = productsData || [];
 
   return (

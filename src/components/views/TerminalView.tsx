@@ -110,19 +110,19 @@ export default function TerminalView() {
   const logoScale = useTransform(scrollY, [0, 80], [1, 0.8]);
 
   // React Query Hooks
-  const { data: productsData, isLoading: isLoadingProducts, refetch: refetchProducts } = useProducts(user?.store_id);
+  const { data: productsData, isLoading: isLoadingProducts, refetch: refetchProducts } = useProducts(user?.storeId);
   const products = productsData || [];
 
-  const { data: dashboardData, isLoading: isLoadingDashboard, refetch: refetchDashboard } = useDashboardData(user?.store_id, user?.role === 'admin');
+  const { data: dashboardData, isLoading: isLoadingDashboard, refetch: refetchDashboard } = useDashboardData(user?.storeId, user?.role === 'admin');
   const dashboardKPIs = dashboardData?.kpis || { gross_sales: 0, cost_of_goods: 0, profit: 0 };
   const salesSummary = dashboardData?.summary || { total_billed: 0, transaction_count: 0, average_ticket: 0, total_cash: 0, total_transfer: 0 };
 
-  const { data: transactions = [] } = useTransactions(user?.store_id, user?.role === 'admin');
+  const { data: transactions = [] } = useTransactions(user?.storeId, user?.role === 'admin');
   const { data: users = [] } = useUsers(user?.id || '', user?.role === 'admin', user?.role === 'encargado');
   const { data: stores = [] } = useStores(user?.id || '', user?.role === 'admin');
   const { data: auditLogs = [] } = useAuditLogs();
-  const { data: movements = [] } = useStockMovements(user?.store_id, user?.role === 'admin');
-  const { data: cashClosures = [] } = useCashClosures(user?.store_id, user?.role === 'admin');
+  const { data: movements = [] } = useStockMovements(user?.storeId, user?.role === 'admin');
+  const { data: cashClosures = [] } = useCashClosures(user?.storeId, user?.role === 'admin');
 
   const createSaleMutation = useCreateSale();
 
@@ -189,7 +189,7 @@ export default function TerminalView() {
       const finalDiscount = checkoutDiscount || discount;
 
       const saleParams = {
-        p_store_id: user.store_id,
+        p_store_id: user.storeId,
         p_seller_id: user.id,
         p_payment_method: paymentMethod,
         p_total_amount: Number(getTotal().toFixed(2)),
@@ -309,13 +309,13 @@ export default function TerminalView() {
   const renderView = () => {
     switch (currentView) {
       case 'dashboard': return <DashboardView onViewInventory={() => setCurrentView('inventory')} />;
-      case 'pos': return <POSView products={products} searchTerm={searchTerm} onSearchChange={setSearchTerm} items={items} onAddItem={handleAddToCart} onRemoveItem={removeItem} onUpdateQuantity={updateQuantity} onClearCart={clearCart} getTotal={getTotal} getSubtotal={getSubtotal} getItemCount={getItemCount} isProcessing={createSaleMutation.isPending} onCheckout={handleCheckout} />;
+      case 'pos': return <POSView products={products} isLoading={isLoadingProducts} error={null} searchTerm={searchTerm} onSearchChange={setSearchTerm} items={items} onAddItem={handleAddToCart} onRemoveItem={removeItem} onUpdateQuantity={updateQuantity} onClearCart={clearCart} getTotal={getTotal} getSubtotal={getSubtotal} getItemCount={getItemCount} isProcessing={createSaleMutation.isPending} onCheckout={handleCheckout} />;
       case 'sales': return <SalesHistoryView transactions={transactions.filter(t => t.id.includes(searchTerm) && (!selectedStatus || t.status === selectedStatus))} searchTerm={searchTerm} onSearchChange={setSearchTerm} selectedStatus={selectedStatus} onStatusChange={setSelectedStatus} onViewDetails={handleViewTransactionDetails} />;
       case 'history': return <StockHistoryView movements={movements.filter(m => m.product?.name.toLowerCase().includes(searchTerm.toLowerCase()))} searchTerm={searchTerm} onSearchChange={setSearchTerm} dateRange={dateRange} onDateRangeChange={setDateRange} onRefresh={() => {}} />;
       case 'audit': return <AuditLogsView logs={auditLogs.filter(l => l.table_name.includes(searchTerm))} searchTerm={searchTerm} onSearchChange={setSearchTerm} dateRange={dateRange} onDateRangeChange={setDateRange} />;
       case 'cash': return <CashClosureView summary={salesSummary} cashClosures={cashClosures} onProcessClosure={() => toast.info('Próximamente')} />;
       case 'users': return <UsersManagementView users={users.filter(u => u.full_name?.toLowerCase().includes(searchTerm.toLowerCase()))} searchTerm={searchTerm} onSearchChange={setSearchTerm} onEditUser={handleEditUser} onCreateUser={() => setIsCreateUserModalOpen(true)} />;
-      case 'stores': return <StoresManagementView stores={stores.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()))} searchTerm={searchTerm} onSearchChange={setSearchTerm} onEditStore={(s) => { setEditingStore(s); setIsEditStoreModalOpen(true); }} onDeleteStore={(s) => { setDeletingStore(s); setIsDeleteStoreModalOpen(true); }} onCreateStore={() => setIsCreateStoreModalOpen(true)} onSetActiveStore={handleSetActiveStore} activeStoreId={user.active_store_id || undefined} isAdmin={user.role === 'admin'} />;
+      case 'stores': return <StoresManagementView stores={stores.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()))} searchTerm={searchTerm} onSearchChange={setSearchTerm} onEditStore={(s) => { setEditingStore(s); setIsEditStoreModalOpen(true); }} onDeleteStore={(s) => { setDeletingStore(s); setIsDeleteStoreModalOpen(true); }} onCreateStore={() => setIsCreateStoreModalOpen(true)} onSetActiveStore={handleSetActiveStore} activeStoreId={user.activeStoreId || undefined} isAdmin={user.role === 'admin'} />;
       case 'settings': return <SettingsView notifications={notifications} setNotifications={setNotifications} />;
       case 'inventory': return <InventoryView key="inventory" />;
       case 'recepcion': return <InventoryView key="recepcion" />;
@@ -400,7 +400,7 @@ export default function TerminalView() {
                   className="overflow-hidden"
                 >
                   <div className="rounded-3xl border border-primary/20 bg-primary/5 p-5 shadow-inner">
-                    <div className="font-black text-xs text-primary uppercase tracking-widest truncate">{user?.full_name}</div>
+                    <div className="font-black text-xs text-primary uppercase tracking-widest truncate">{user?.fullName}</div>
                     <div className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mt-1">
                       {getActiveRolesLabel()}
                     </div>
@@ -438,7 +438,7 @@ export default function TerminalView() {
                 </h1>
                 <div className="h-4 w-[1px] bg-white/10 hidden sm:block" />
                 <p className="hidden sm:block text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] truncate">
-                  {user?.full_name}
+                  {user?.fullName}
                 </p>
               </div>
             </div>

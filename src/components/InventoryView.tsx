@@ -46,7 +46,7 @@ export default function InventoryView() {
         hasNextPage,
         isFetchingNextPage,
         isLoading,
-    } = useInventory(user?.store_id, searchTerm, selectedCategory, PAGE_LIMIT);
+    } = useInventory(user?.storeId, searchTerm, selectedCategory, PAGE_LIMIT);
 
     const products = useMemo(() => data?.pages.flatMap(page => page.products) || [], [data]);
 
