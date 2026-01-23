@@ -76,9 +76,25 @@ export function useSessionManager() {
 
                     const finalUserData = validationResult.success ? validationResult.data : userData;
 
+                    const userContractData = {
+                      id: finalUserData.id,
+                      email: finalUserData.email,
+                      fullName: finalUserData.full_name,
+                      role: finalUserData.role,
+                      roles: finalUserData.roles || [],
+                      storeId: finalUserData.store_id,
+                      activeStoreId: finalUserData.active_store_id,
+                      maxStoresLimit: finalUserData.max_stores_limit,
+                      maxUsersLimit: finalUserData.max_users_limit,
+                      createdBy: finalUserData.created_by,
+                      isActive: finalUserData.is_active,
+                      createdAt: finalUserData.created_at,
+                      updatedAt: finalUserData.updated_at,
+                    }
+
                     const currentState = useAuthStore.getState();
-                    if (session.access_token !== currentState.token || JSON.stringify(finalUserData) !== JSON.stringify(currentState.user)) {
-                        login(finalUserData as User, session.access_token);
+                    if (session.access_token !== currentState.token || JSON.stringify(userContractData) !== JSON.stringify(currentState.user)) {
+                        login(userContractData, session.access_token);
                     }
                     setStatus('stable');
                 } else {
