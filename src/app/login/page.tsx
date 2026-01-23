@@ -89,7 +89,7 @@ export default function LoginPage() {
 
       logger.info('AUTH', 'LOGIN_SUCCESS', { userId: userData.id, email: userData.email });
 
-      toast.success(`¡Bienvenido, ${userData.full_name}!`);
+      toast.success(`¡Bienvenido, ${userData.fullName}!`);
       router.push('/');
     } catch (err: any) {
       logger.error('AUTH', 'LOGIN_FAILED', { email, error: err.message });

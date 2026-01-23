@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { produce } from 'immer';
-import { SaleItem, Product } from '@/types';
+import { CartItem, Product } from '@/types';
 
 // Define Discount type
 type Discount = {
@@ -10,15 +10,17 @@ type Discount = {
 
 // Define CartState interface
 interface CartState {
-  items: SaleItem[];
+  items: CartItem[];
   discount: Discount | null;
-  addItem: (item: SaleItem) => void;
+  addItem: (item: CartItem) => void;
   removeItem: (productId: string, variantId: string | null) => void;
   updateQuantity: (productId: string, variantId: string | null, quantity: number) => void;
   setDiscount: (discount: Discount | null) => void;
   getSubtotal: () => number;
   getTotal: () => number;
+  getItemCount: () => number;
   clearCart: () => void;
+  setCart: (saleId: string, items: CartItem[]) => void;
 }
 
 export const useCartStore = create<CartState>((set, get) => ({
@@ -84,4 +86,10 @@ export const useCartStore = create<CartState>((set, get) => ({
   },
 
   clearCart: () => set({ items: [], discount: null }),
+
+  getItemCount: () => {
+    return get().items.reduce((acc, item) => acc + item.quantity, 0);
+  },
+
+  setCart: (_saleId, items) => set({ items }),
 }));
