@@ -104,14 +104,17 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
         total: 0,
       };
 
-      // 1. Calculate children first if they exist
-      if (row.children && row.children.length > 0) {
-        const childrenCalculations = row.children.map(child => calculateRow(child));
-        calculatedResult.total = childrenCalculations.reduce((sum, c) => sum + c.total, 0);
-        calculatedResult.valorHistorico = childrenCalculations.reduce((sum, c) => sum + c.valorHistorico, 0);
-      }
-
       // 2. Determine the base of calculation
+      if (row.baseDeCalculoRef) {
+        if (annexTotals[row.baseDeCalculoRef] !== undefined) {
+          calculatedResult.baseTotal = annexTotals[row.baseDeCalculoRef];
+          calculatedResult.baseValorHistorico = annexTotals[row.baseDeCalculoRef];
+        } else if (allRowsById[row.baseDeCalculoRef]) {
+          const baseRowCalculated = calculateRow(allRowsById[row.baseDeCalculoRef]);
+          calculatedResult.baseTotal = baseRowCalculated.total;
+          calculatedResult.baseValorHistorico = baseRowCalculated.valorHistorico;
+        }
+      }
       if (calculatedResult.baseDeCalculoRef) {
         if (annexTotals[calculatedResult.baseDeCalculoRef] !== undefined) {
           calculatedResult.baseTotal = annexTotals[calculatedResult.baseDeCalculoRef];
@@ -121,6 +124,18 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
           calculatedResult.baseTotal = baseRowCalculated.total;
           calculatedResult.baseValorHistorico = baseRowCalculated.valorHistorico;
         }
+      }
+
+      // Overwrite total if base is from annex BUT there is no specific formula
+      if (row.baseDeCalculoRef && annexTotals[row.baseDeCalculoRef] !== undefined && !row.totalFormula) {
+        calculatedResult.total = annexTotals[row.baseDeCalculoRef];
+      }
+
+       // 1. Calculate children first if they exist and there is NO base reference or formula
+       if (row.children && row.children.length > 0 && !row.baseDeCalculoRef && !row.formula) {
+        const childrenCalculations = row.children.map(child => calculateRow(child));
+        calculatedResult.total = childrenCalculations.reduce((sum, c) => sum + c.total, 0);
+        calculatedResult.valorHistorico = childrenCalculations.reduce((sum, c) => sum + c.valorHistorico, 0);
       }
 
       // 3. Percentage-based logic (Resultado section)
@@ -138,11 +153,13 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
         // 4. Main Calculation Methods
         switch (row.calculationMethod) {
           case 'Prorrateo':
-            const baseVH = calculatedResult.baseValorHistorico;
-            const baseT = calculatedResult.baseTotal;
-            const rowVH = calculatedResult.valorHistorico;
-            calculatedResult.coeficiente = baseVH > 0 ? rowVH / baseVH : 0;
-            calculatedResult.total = calculatedResult.coeficiente * baseT;
+            if (calculatedResult.baseTotal > 0) {
+              calculatedResult.coeficiente = calculatedResult.valorHistorico / calculatedResult.baseTotal;
+            } else {
+              calculatedResult.coeficiente = 0;
+            }
+            // The total for a prorated item is the coefficient applied to the base total.
+            calculatedResult.total = calculatedResult.coeficiente * calculatedResult.baseTotal;
             break;
 
           case 'ValorFijo':
@@ -153,7 +170,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
                 .replace(/valorHistorico/g, String(calculatedResult.valorHistorico));
               expression = expression.replace(/header\(['"]([^'"]+)['"]\)/g, (_, key) => String(template.header[key] || 0));
               calculatedResult.total = evaluateExpression(expression);
-            } else if (!row.formula && (!row.children || row.children.length === 0)) {
+            } else if (!row.formula && (!row.children || row.children.length === 0) && !row.baseDeCalculoRef) {
               calculatedResult.total = calculatedResult.valorHistorico;
             }
             break;

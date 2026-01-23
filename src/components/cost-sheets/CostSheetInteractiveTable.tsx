@@ -194,7 +194,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = ({ s
   const allRows = useMemo(() => flattenRows(sections.flatMap(s => s.rows)), [sections]);
 
   return (
-    <div className="neu-card p-0">
+    <div data-testid="cost-sheet-interactive-table" className="neu-card p-0">
       <div className="overflow-x-auto">
         <table className="w-full text-sm min-w-[1000px]">
           <thead className="bg-slate-100 dark:bg-slate-800/50 sticky-header">
