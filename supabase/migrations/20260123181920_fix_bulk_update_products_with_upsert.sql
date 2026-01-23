@@ -1,3 +1,5 @@
+DROP FUNCTION IF EXISTS bulk_update_products(jsonb);
+
 CREATE OR REPLACE FUNCTION bulk_update_products(_products jsonb)
 RETURNS TABLE(updated_count int, inserted_count int) AS $$
 DECLARE
