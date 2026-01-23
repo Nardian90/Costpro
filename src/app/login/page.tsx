@@ -8,6 +8,7 @@ import CostProLogo from '@/components/CostProLogo';
 import SplashScreen from '@/components/SplashScreen';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 
 export default function LoginPage() {
   const [showSplash, setShowSplash] = useState(true);
@@ -26,6 +27,8 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
     setLoading(true);
+
+    logger.info('AUTH', 'LOGIN_ATTEMPT', { email });
 
     try {
       if (!email || !password) {
@@ -81,10 +84,12 @@ export default function LoginPage() {
 
       login(userData, authData.session.access_token);
 
+      logger.info('AUTH', 'LOGIN_SUCCESS', { userId: userData.id, email: userData.email });
+
       toast.success(`¡Bienvenido, ${userData.full_name}!`);
       router.push('/');
     } catch (err: any) {
-      console.error('Login error:', err);
+      logger.error('AUTH', 'LOGIN_FAILED', { email, error: err.message });
       setError(err.message || 'Error al iniciar sesión');
       toast.error(err.message || 'Error al iniciar sesión');
     } finally {
