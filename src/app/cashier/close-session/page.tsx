@@ -94,7 +94,7 @@ export default function CloseSessionPage() {
   };
 
   const handleFinalSubmit = async () => {
-    if (!user?.store_id) return;
+    if (!user?.storeId) return;
     setIsSubmitting(true);
 
     const itemsToSubmit = differences.map(d => ({
@@ -107,7 +107,7 @@ export default function CloseSessionPage() {
       }))
     }));
 
-    const storeId = user.store_id;
+    const storeId = user.storeId;
 
     try {
       const response = await fetch("/api/inventory/adjustments", {
