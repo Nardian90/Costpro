@@ -90,6 +90,13 @@ export default function TerminalView() {
   const logout = useAuthStore((state) => state.logout);
   const [isPending, startTransition] = useTransition();
 
+  // Auth check
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+
   const {
     currentView, setCurrentView,
     notifications, setNotifications,
@@ -104,11 +111,11 @@ export default function TerminalView() {
   const navRef = useRef<HTMLElement>(null);
   const [showSidebarUser, setShowSidebarUser] = useState(true);
 
-  // Scroll animations for sidebar - Optimized to maintain 30% visibility
+  // Scroll animations for sidebar
   const scrollY = useMotionValue(0);
-  const logoHeight = useTransform(scrollY, [0, 80], [160, 48]);
-  const logoOpacity = useTransform(scrollY, [0, 50], [1, 1]);
-  const logoScale = useTransform(scrollY, [0, 80], [1, 0.7]);
+  const logoHeight = useTransform(scrollY, [0, 80], [160, 0]);
+  const logoOpacity = useTransform(scrollY, [0, 50], [1, 0]);
+  const logoScale = useTransform(scrollY, [0, 80], [1, 0.8]);
 
   // React Query Hooks
   const { data: productsData, isLoading: isLoadingProducts, refetch: refetchProducts } = useProducts(user?.storeId);
@@ -130,7 +137,6 @@ export default function TerminalView() {
   // State
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
   const [searchTerm, setSearchTerm] = useState('');
-  const [sidebarSearch, setSidebarSearch] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
 
   // Modal states
@@ -149,6 +155,21 @@ export default function TerminalView() {
   const [selectedUserContract, setSelectedUserContract] = useState<UserContract | null>(null);
   const [isDeleteStoreModalOpen, setIsDeleteStoreModalOpen] = useState(false);
   const [deletingStore, setDeletingStore] = useState<Store | null>(null);
+
+  if (loading) {
+    return (
+      <div className="h-screen w-full flex flex-col items-center justify-center gap-4 bg-background">
+        <CostProLogo size={80} animated={true} />
+        <div className="flex items-center gap-2 text-primary font-bold animate-pulse">
+          <Loader2 className="w-5 h-5 animate-spin" />
+          <span>INICIALIZANDO TERMINAL...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) return null;
+
 
   // Handlers
   const handleAddToCart = useCallback((product: Product) => {
@@ -244,6 +265,10 @@ export default function TerminalView() {
     setSelectedTransactionId(txn.id);
   };
 
+  const createUserMutation = useCreateUser();
+  const updateUserMutation = useUpdateUser();
+  const manageMembershipsMutation = useManageUserMemberships();
+
   const handleEditUser = (u: Profile) => {
     setSelectedUserContract(mapProfileToContract(u));
     setUserFormMode('edit');
@@ -286,43 +311,29 @@ export default function TerminalView() {
     }
   };
 
-  // Navigation Items logic with categories and search filtering
+  // Navigation Items logic
   const navigationItems = useMemo(() => {
     if (!user) return [];
     const roles = user.roles && user.roles.length > 0 ? user.roles : [user.role];
     const all = [
-      { id: 'dashboard', icon: BarChart3, label: 'Dashboard', roles: ['admin', 'manager', 'clerk', 'encargado'], category: 'OPERACIONES' },
-      { id: 'pos', icon: ShoppingCart, label: 'TPV', roles: ['clerk', 'manager', 'admin', 'encargado'], category: 'OPERACIONES' },
-      { id: 'sales', icon: Receipt, label: 'Ventas', roles: ['clerk', 'manager', 'encargado'], category: 'OPERACIONES' },
-      { id: 'cash', icon: DollarSign, label: 'Caja', roles: ['manager', 'admin', 'encargado'], category: 'OPERACIONES' },
-
-      { id: 'inventory', icon: Package, label: 'Inventario', roles: ['admin', 'manager', 'warehouse', 'encargado'], category: 'INVENTARIO' },
-      { id: 'recepcion', icon: Warehouse, label: 'Recepciones', roles: ['warehouse', 'manager', 'encargado'], category: 'INVENTARIO' },
-      { id: 'inventory_count', icon: ClipboardList, label: 'Conteo', roles: ['clerk', 'manager', 'admin', 'encargado'], category: 'INVENTARIO' },
-      { id: 'catalog', icon: Package, label: 'Catálogo', roles: ['manager', 'admin', 'encargado'], category: 'INVENTARIO' },
-      { id: 'history', icon: History, label: 'Stock', roles: ['manager', 'admin', 'encargado'], category: 'INVENTARIO' },
-
-      { id: 'cost-sheets', icon: FileText, label: 'Costos', roles: ['admin', 'manager', 'encargado'], category: 'GESTIÓN' },
-      { id: 'audit', icon: Shield, label: 'Auditoría', roles: ['manager', 'admin', 'encargado'], category: 'GESTIÓN' },
-      { id: 'users', icon: Users, label: 'Usuarios', roles: ['admin', 'encargado'], category: 'GESTIÓN' },
-      { id: 'stores', icon: Building, label: 'Tiendas', roles: ['admin', 'encargado'], category: 'GESTIÓN' },
-      { id: 'settings', icon: Settings, label: 'Config', roles: ['admin', 'manager', 'encargado'], category: 'GESTIÓN' },
-
-      { id: 'help', icon: HelpCircle, label: 'Ayuda', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado'], category: 'SOPORTE' },
+      { id: 'dashboard', icon: BarChart3, label: 'Dashboard', roles: ['admin', 'manager', 'clerk', 'encargado'] },
+      { id: 'pos', icon: ShoppingCart, label: 'TPV', roles: ['clerk', 'manager', 'admin', 'encargado'] },
+      { id: 'inventory', icon: Package, label: 'Inventario', roles: ['admin', 'manager', 'warehouse', 'encargado'] },
+      { id: 'recepcion', icon: Warehouse, label: 'Recepciones', roles: ['warehouse', 'manager', 'encargado'] },
+      { id: 'sales', icon: Receipt, label: 'Ventas', roles: ['clerk', 'manager', 'encargado'] },
+      { id: 'inventory_count', icon: ClipboardList, label: 'Conteo', roles: ['clerk', 'manager', 'admin', 'encargado'] },
+      { id: 'cost-sheets', icon: FileText, label: 'Costos', roles: ['admin', 'manager', 'encargado'] },
+      { id: 'catalog', icon: Package, label: 'Catálogo', roles: ['manager', 'admin', 'encargado'] },
+      { id: 'history', icon: History, label: 'Stock', roles: ['manager', 'admin', 'encargado'] },
+      { id: 'audit', icon: Shield, label: 'Auditoría', roles: ['manager', 'admin', 'encargado'] },
+      { id: 'cash', icon: DollarSign, label: 'Caja', roles: ['manager', 'admin', 'encargado'] },
+      { id: 'users', icon: Users, label: 'Usuarios', roles: ['admin', 'encargado'] },
+      { id: 'stores', icon: Building, label: 'Tiendas', roles: ['admin', 'encargado'] },
+      { id: 'settings', icon: Settings, label: 'Config', roles: ['admin', 'manager', 'encargado'] },
+      { id: 'help', icon: HelpCircle, label: 'Ayuda', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado'] },
     ];
-
-    // First filter by role
-    const filteredByRole = all.filter(i => i.roles.some(r => roles.includes(r as any)));
-
-    // Then filter by search term if present
-    if (!sidebarSearch) return filteredByRole;
-
-    const searchLower = sidebarSearch.toLowerCase();
-    return filteredByRole.filter(i =>
-      i.label.toLowerCase().includes(searchLower) ||
-      i.category.toLowerCase().includes(searchLower)
-    );
-  }, [user, sidebarSearch]);
+    return all.filter(i => i.roles.some(r => roles.includes(r as any)));
+  }, [user]);
 
   const getActiveRolesLabel = () => {
     if (!user) return 'Cargando...';
@@ -334,74 +345,36 @@ export default function TerminalView() {
     if (!navRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = navRef.current;
 
-    // Sync motion value with requestAnimationFrame for performance
-    requestAnimationFrame(() => {
-      scrollY.set(scrollTop);
-    });
+    // Sync motion value
+    scrollY.set(scrollTop);
 
-    const scrollable = scrollHeight > clientHeight + 5;
+    const scrollable = scrollHeight > clientHeight + 10;
 
     if (!scrollable) {
       setShowSidebarUser(true);
       return;
     }
 
-    // Use a small buffer to prevent flickering/loops
-    const isAtBottom = scrollTop + clientHeight >= scrollHeight - 20;
-
-    // Only update state if it actually changes to prevent unnecessary re-renders
-    setShowSidebarUser(prev => {
-      if (isAtBottom && !prev) return true;
-      if (!isAtBottom && prev && scrollTop < scrollHeight - clientHeight - 40) return false;
-      return prev;
-    });
-  }, [scrollY]);
+    const isAtBottom = Math.ceil(scrollTop + clientHeight) >= scrollHeight - 10;
+    setShowSidebarUser(isAtBottom);
+  }, []);
 
   useEffect(() => {
     const nav = navRef.current;
     if (nav) {
-      nav.addEventListener('scroll', handleSidebarScroll, { passive: true });
+      nav.addEventListener('scroll', handleSidebarScroll);
       handleSidebarScroll();
       window.addEventListener('resize', handleSidebarScroll);
-
-      // Use ResizeObserver instead of MutationObserver for more stable layout tracking
-      const resizeObserver = new ResizeObserver(() => {
-        handleSidebarScroll();
-      });
-      resizeObserver.observe(nav);
-
+      const observer = new MutationObserver(handleSidebarScroll);
+      observer.observe(nav, { childList: true, subtree: true });
       return () => {
         nav.removeEventListener('scroll', handleSidebarScroll);
         window.removeEventListener('resize', handleSidebarScroll);
-        resizeObserver.disconnect();
+        observer.disconnect();
       };
     }
-  }, [handleSidebarScroll]);
+  }, [handleSidebarScroll, navigationItems]);
 
-  // Auth check and mandatory hooks after state definitions
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-  }, [user, loading, router]);
-
-  const createUserMutation = useCreateUser();
-  const updateUserMutation = useUpdateUser();
-  const manageMembershipsMutation = useManageUserMemberships();
-
-  if (loading) {
-    return (
-      <div className="h-screen w-full flex flex-col items-center justify-center gap-4 bg-background">
-        <CostProLogo size={80} animated={true} />
-        <div className="flex items-center gap-2 text-primary font-bold animate-pulse">
-          <Loader2 className="w-5 h-5 animate-spin" />
-          <span>INICIALIZANDO TERMINAL...</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) return null;
 
   const renderView = () => {
     switch (currentView) {
@@ -453,68 +426,40 @@ export default function TerminalView() {
             </motion.div>
           </motion.div>
 
-          {/* Search Area */}
-          <div className="px-6 py-4 shrink-0 border-b border-sidebar-border/30 bg-sidebar/5">
-            <div className="relative group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-              <input
-                type="text"
-                value={sidebarSearch}
-                onChange={(e) => setSidebarSearch(e.target.value)}
-                placeholder="BUSCAR..."
-                className="w-full bg-background/50 border border-primary/10 rounded-xl py-2.5 pl-9 pr-4 text-[10px] font-black focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all uppercase tracking-[0.2em] placeholder:text-muted-foreground/30"
-              />
-            </div>
-          </div>
-
           {/* Navigation */}
           <nav
             id="sidebar-nav"
             ref={navRef}
-            className="flex-1 overflow-y-auto p-4 no-scrollbar overscroll-contain scroll-smooth"
+            className="flex-1 overflow-y-auto p-4 no-scrollbar"
           >
-            <div className="space-y-8">
-              {['OPERACIONES', 'INVENTARIO', 'GESTIÓN', 'SOPORTE'].map(category => {
-                const categoryItems = navigationItems.filter(i => i.category === category);
-                if (categoryItems.length === 0) return null;
-
-                return (
-                  <div key={category} className="space-y-2">
-                    <div className="px-4 text-[9px] font-black text-primary/40 tracking-[0.4em] uppercase mb-4">
-                      {category}
-                    </div>
-                    <div className="space-y-1">
-                      {categoryItems.map(item => (
-                        <button
-                          key={item.id}
-                          onClick={() => {
-                            startTransition(() => {
-                              setCurrentView(item.id as ViewType);
-                            });
-                            if (isMobile) {
-                              setSidebarOpen(false);
-                            }
-                          }}
-                          className={cn(
-                            "w-full flex items-center gap-4 p-4 rounded-2xl transition-all group active:scale-95",
-                            currentView === item.id
-                              ? "bg-primary text-white shadow-xl shadow-primary/20 font-black"
-                              : "hover:bg-primary/5 text-sidebar-foreground/70 font-bold"
-                          )}
-                        >
-                          <item.icon className={cn("w-5 h-5", currentView === item.id ? "text-white" : "group-hover:text-primary transition-colors")} />
-                          <span className="text-xs uppercase tracking-widest">{item.label}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="space-y-2">
+              {navigationItems.map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    startTransition(() => {
+                      setCurrentView(item.id as ViewType);
+                    });
+                    if (isMobile) {
+                      setSidebarOpen(false);
+                    }
+                  }}
+                  className={cn(
+                    "w-full flex items-center gap-4 p-4 rounded-2xl transition-all group active:scale-95",
+                    currentView === item.id
+                      ? "bg-primary text-white shadow-xl shadow-primary/20 font-black"
+                      : "hover:bg-primary/5 text-sidebar-foreground/70 font-bold"
+                  )}
+                >
+                  <item.icon className={cn("w-5 h-5", currentView === item.id ? "text-white" : "group-hover:text-primary transition-colors")} />
+                  <span className="text-xs uppercase tracking-widest">{item.label}</span>
+                </button>
+              ))}
             </div>
           </nav>
 
           {/* User Info & Logout */}
-          <div className="p-6 border-t border-sidebar-border/50 shrink-0 min-h-[110px] flex flex-col justify-end">
+          <div className="p-6 border-t border-sidebar-border/50 shrink-0">
             <AnimatePresence initial={false}>
               {showSidebarUser && (
                 <motion.div
