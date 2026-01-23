@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef, useDeferredValue, useCallback, Suspense, useTransition } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValue } from 'framer-motion';
-import { useAuthStore, useCartStore, useUIStore, useCanAccess } from '@/store';
+import { useAuthStore, useCartStore, useUIStore, useCanAccess, type ViewType } from '@/store';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
@@ -188,7 +188,7 @@ export default function TerminalView() {
 
     logger.info('POS', 'CHECKOUT_ATTEMPT', {
       userId: user?.id,
-      storeId: user?.store_id,
+      storeId: user?.storeId,
       itemCount: items.length,
       total: getTotal(),
     });
@@ -222,8 +222,8 @@ export default function TerminalView() {
 
       logger.info('POS', 'CHECKOUT_SUCCESS', {
         userId: user?.id,
-        storeId: user?.store_id,
-        saleId: result?.[0]?.r_sale_id,
+        storeId: user?.storeId,
+        saleId: (result as any)?.[0]?.r_sale_id,
       });
 
       toast.success('Venta exitosa', { id: toastId });
@@ -231,7 +231,7 @@ export default function TerminalView() {
     } catch (error: any) {
       logger.error('POS', 'CHECKOUT_FAILED', {
         userId: user?.id,
-        storeId: user?.store_id,
+        storeId: user?.storeId,
         error: error.message,
       });
       toast.error(error.message || 'Error en venta', { id: toastId });
@@ -391,7 +391,7 @@ export default function TerminalView() {
                   key={item.id}
                   onClick={() => {
                     startTransition(() => {
-                      setCurrentView(item.id);
+                      setCurrentView(item.id as ViewType);
                     });
                     if (isMobile) {
                       setSidebarOpen(false);
