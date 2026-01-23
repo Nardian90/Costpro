@@ -7,6 +7,7 @@ import {
   CostSheetColumn,
   CalculatedRowValue
 } from '@/types/cost-sheet';
+import { logger } from '@/lib/logger';
 
 // Helper to safely evaluate a formula string
 const evaluateExpression = (expression: string): number => {
@@ -73,8 +74,11 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
   useEffect(() => {
     if (!template || !template.sections) return;
 
-    const newCalculatedValues: { [key: string]: CalculatedRowValue } = {};
-    const allRowsById: { [key: string]: CostSheetRow } = {};
+    logger.info('COST_SHEET', 'CALCULATION_START', { sheetName: template.header.name });
+
+    try {
+      const newCalculatedValues: { [key: string]: CalculatedRowValue } = {};
+      const allRowsById: { [key: string]: CostSheetRow } = {};
 
     const flattenRows = (rows: CostSheetRow[]) => {
       for (const row of rows) {
@@ -218,8 +222,14 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
     });
 
     setCalculatedValues(newCalculatedValues);
-
-  }, [template, annexTotals]);
+    logger.info('COST_SHEET', 'CALCULATION_SUCCESS', { sheetName: template.header.name });
+  } catch (error) {
+    logger.error('COST_SHEET', 'CALCULATION_FAILED', {
+      sheetName: template.header.name,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+}, [template, annexTotals]);
 
   return { calculatedValues, annexTotals, calculatedAnnexes };
 };

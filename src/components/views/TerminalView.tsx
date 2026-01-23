@@ -62,6 +62,7 @@ import {
 } from "@/components/ui/dialog";
 import { X, Calendar, CreditCard, Shield as ShieldIcon, Edit, Trash2, Building as BuildingIcon, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { logger } from '@/lib/logger';
 import type {
   Product, Transaction, UserRole, Profile, Store,
   AuditLog, DashboardKPIs, SalesSummary, PaymentMethod
@@ -184,6 +185,14 @@ export default function TerminalView() {
     if (items.length === 0 || createSaleMutation.isPending || !user) return;
 
     const toastId = toast.loading('Procesando venta...');
+
+    logger.info('POS', 'CHECKOUT_ATTEMPT', {
+      userId: user?.id,
+      storeId: user?.store_id,
+      itemCount: items.length,
+      total: getTotal(),
+    });
+
     try {
       // Use provided discount or fallback to store discount
       const finalDiscount = checkoutDiscount || discount;
@@ -209,15 +218,30 @@ export default function TerminalView() {
           throw new Error('Datos de venta inválidos. Revise el carrito.');
       }
 
-      await createSaleMutation.mutateAsync(validationResult.data);
+      const result = await createSaleMutation.mutateAsync(validationResult.data);
+
+      logger.info('POS', 'CHECKOUT_SUCCESS', {
+        userId: user?.id,
+        storeId: user?.store_id,
+        saleId: result?.[0]?.r_sale_id,
+      });
+
       toast.success('Venta exitosa', { id: toastId });
       clearCart();
     } catch (error: any) {
+      logger.error('POS', 'CHECKOUT_FAILED', {
+        userId: user?.id,
+        storeId: user?.store_id,
+        error: error.message,
+      });
       toast.error(error.message || 'Error en venta', { id: toastId });
     }
   };
 
   const handleLogout = async () => {
+    if (user) {
+      logger.info('AUTH', 'LOGOUT', { userId: user.id });
+    }
     await supabase.auth.signOut();
     logout();
     router.replace('/login');
