@@ -78,20 +78,20 @@ export interface Store {
 export interface Product {
   id: string;
   name: string;
-  description: string | null;
-  sku: string | null;
+  description?: string | null;
+  sku?: string | null;
   price: number;
   cost_price: number;
-  image_url: string | null;
-  category: string | null;
-  unit_of_measure: string | null;
-  supplier: string | null;
-  created_at: string;
-  updated_at: string;
+  image_url?: string | null;
+  category?: string | null;
+  unit_of_measure?: string | null;
+  supplier?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
   stock_current: number;
-  cost_average: number;
+  cost_average?: number | null;
   min_stock: number;
-  store_id: string | null;
+  store_id?: string | null;
   public_image_url?: string | null;
 }
 
@@ -144,17 +144,21 @@ export interface StockMovement {
   id: string;
   store_id: string;
   product_id: string;
-  variant_id: string | null;
+  variant_id?: string | null;
   quantity_change: number;
-  movement_type: MovementType;
-  reference_id: string | null;
-  reference_doc: string | null;
-  movement_date: string;
-  created_by: string | null;
+  movement_type: MovementType | string;
+  reference_id?: string | null;
+  reference_doc?: string | null;
+  movement_date?: string | null;
+  created_by?: string | null;
   created_at: string;
   unit_cost?: number;
   unit_price?: number;
   balance_after?: number;
+  product?: {
+    name: string;
+    sku: string | null;
+  };
 }
 
 // ============================================
@@ -304,16 +308,16 @@ export interface CashClosure {
 export interface AuditLog {
   id: string;
   created_at: string;
-  user_id: string | null;
+  user_id?: string | null;
   table_name: string;
-  record_id: string | null;
+  record_id?: string | null;
   action: string;
   old_data: any;
   new_data: any;
   metadata: any;
   profile?: {
     full_name: string;
-  };
+  } | null;
 }
 
 // ============================================
