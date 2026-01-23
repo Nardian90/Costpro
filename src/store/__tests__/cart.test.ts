@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { useCartStore } from '../index';
+import { useCartStore } from '../cart';
 
 const mockProduct = {
   id: '550e8400-e29b-41d4-a716-446655440000',

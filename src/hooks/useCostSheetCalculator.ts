@@ -7,6 +7,7 @@ import {
   CostSheetColumn,
   CalculatedRowValue
 } from '@/types/cost-sheet';
+import { logger } from '@/lib/logger';
 
 // Helper to safely evaluate a formula string
 const evaluateExpression = (expression: string): number => {
@@ -31,6 +32,7 @@ const evaluateExpression = (expression: string): number => {
 
 export const useCostSheetCalculator = (template: CostSheetData) => {
   const [calculatedValues, setCalculatedValues] = useState<{ [key: string]: CalculatedRowValue }>({});
+  const [error, setError] = useState<Error | null>(null);
 
   const calculateAnnexRow = (rowData: any, columns: CostSheetColumn[]): any => {
     return produce(rowData, (draft: any) => {
@@ -71,10 +73,11 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
   }, [calculatedAnnexes]);
 
   useEffect(() => {
-    if (!template || !template.sections) return;
+    try {
+      if (!template || !template.header || !template.sections) return;
 
-    const newCalculatedValues: { [key: string]: CalculatedRowValue } = {};
-    const allRowsById: { [key: string]: CostSheetRow } = {};
+      const newCalculatedValues: { [key: string]: CalculatedRowValue } = {};
+      const allRowsById: { [key: string]: CostSheetRow } = {};
 
     const flattenRows = (rows: CostSheetRow[]) => {
       for (const row of rows) {
@@ -145,7 +148,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
           case 'ValorFijo':
           default:
             if (row.totalFormula) {
-              let expression = row.totalFormula
+              let expression = (row.totalFormula || '')
                 .replace(/baseValue/g, String(calculatedResult.baseTotal))
                 .replace(/valorHistorico/g, String(calculatedResult.valorHistorico));
               expression = expression.replace(/header\(['"]([^'"]+)['"]\)/g, (_, key) => String(template.header[key] || 0));
@@ -159,12 +162,12 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
 
       // 5. Final formula override (for summary and reference rows)
       if (row.formula) {
-        if (row.formula.trim() === '=sum(children)') {
+        if ((row.formula || '').trim() === '=sum(children)') {
           // Handled by step 1
         } else {
           // Helper to resolve formula with a specific field (total or valorHistorico)
           const resolveFormula = (field: 'total' | 'valorHistorico') => {
-            let expression = row.formula!.replace(/ref\(\s*['"]?([^'"]+)['"]?\s*\)/g, (_, id) => {
+            let expression = (row.formula || '').replace(/ref\(\s*['"]?([^'"]+)['"]?\s*\)/g, (_, id) => {
               const r = allRowsById[id.trim()];
               if (!r) return '0';
               const calc = calculateRow(r);
@@ -218,8 +221,12 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
     });
 
     setCalculatedValues(newCalculatedValues);
-
+    setError(null);
+    } catch (e) {
+      setError(e as Error);
+      console.error("Error calculating cost sheet:", e);
+    }
   }, [template, annexTotals]);
 
-  return { calculatedValues, annexTotals, calculatedAnnexes };
+  return { calculatedValues, annexTotals, calculatedAnnexes, error };
 };
