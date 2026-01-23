@@ -537,6 +537,16 @@ export default function TerminalView() {
 
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               <button
+                onClick={() => startTransition(() => setCurrentView('help'))}
+                className={cn(
+                  "neu-raised-sm w-11 h-11 flex items-center justify-center relative active:scale-90 transition-transform",
+                  currentView === 'help' && "bg-primary text-white"
+                )}
+                aria-label="Ayuda"
+              >
+                <HelpCircle className="w-5 h-5" />
+              </button>
+              <button
                 className="neu-raised-sm w-11 h-11 flex items-center justify-center relative active:scale-90 transition-transform"
                 aria-label="Alertas"
               >
