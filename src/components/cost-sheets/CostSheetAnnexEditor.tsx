@@ -35,7 +35,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = ({ activeAnnex
   const annexIndex = data.annexes.indexOf(annex);
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div data-testid="cost-sheet-annex-editor" className="space-y-6 animate-in fade-in duration-500">
        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
               <h3 className="text-xl font-black text-primary">Anexo {annex.id}</h3>
