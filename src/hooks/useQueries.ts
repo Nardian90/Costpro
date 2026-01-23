@@ -19,7 +19,7 @@ import { toast } from 'sonner';
 async function withLogging<T>(
   rpcName: string,
   params: Record<string, unknown>,
-  rpcCall: () => Promise<{ data: T; error: any }>
+  rpcCall: () => PromiseLike<{ data: T | null; error: any }>
 ): Promise<T> {
   logger.info('DATABASE', `RPC_CALL_START: ${rpcName}`, params);
   try {
@@ -28,7 +28,7 @@ async function withLogging<T>(
       throw error;
     }
     logger.info('DATABASE', `RPC_CALL_SUCCESS: ${rpcName}`, params);
-    return data;
+    return data as T;
   } catch (error) {
     logger.error('DATABASE', `RPC_CALL_FAILED: ${rpcName}`, {
       ...params,
@@ -42,7 +42,7 @@ async function withLogging<T>(
 async function withTableLogging<T>(
   operation: 'select' | 'insert' | 'update' | 'delete',
   tableName: string,
-  query: () => Promise<{ data: T; error: any }>
+  query: () => PromiseLike<{ data: T | null; error: any }>
 ): Promise<T> {
   const params = { operation, tableName };
   logger.info('DATABASE', `TABLE_OP_START: ${tableName}`, params);
@@ -52,7 +52,7 @@ async function withTableLogging<T>(
       throw error;
     }
     logger.info('DATABASE', `TABLE_OP_SUCCESS: ${tableName}`, params);
-    return data;
+    return data as T;
   } catch (error) {
     logger.error('DATABASE', `TABLE_OP_FAILED: ${tableName}`, {
       ...params,
@@ -216,7 +216,7 @@ export function useUserStoreAccess(userId?: string) {
       const data = await withTableLogging('select', 'user_store_access', () => supabase.from('user_store_access')
         .select('store_id, roles')
         .eq('user_id', userId));
-      return data?.map(d => ({
+      return (data as any[])?.map(d => ({
         store_id: d.store_id,
         roles: Array.isArray(d.roles) ? d.roles : ['clerk']
       })) || [];
@@ -231,7 +231,7 @@ export function useCreateSale() {
   return useMutation({
     mutationFn: async (params: any) => {
       const rpcName = 'create_sale';
-      return await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
+      return await withLogging<any[]>(rpcName, params, () => supabase.rpc(rpcName, params));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
