@@ -5,11 +5,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   BookOpen, Users, ShoppingCart, Package, Shield,
   CheckCircle2, ArrowRight, Info, AlertTriangle,
-  Settings, Building2, Receipt, FileText
+  Settings, Building2, Receipt, FileText, ChevronRight,
+  UserPlus, Store, Key, ListChecks, HelpCircle
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 // Diagrams
 import RolesDiagram from '@/components/help/RolesDiagram';
@@ -22,26 +24,34 @@ import SecurityFlowDiagram from '@/components/help/SecurityFlowDiagram';
 export default function HelpView() {
   return (
     <div className="space-y-8 pb-12">
-      <div className="flex flex-col gap-2">
-        <h2 className="text-3xl font-black uppercase tracking-tighter text-primary flex items-center gap-3">
-          <BookOpen className="w-8 h-8" />
-          Centro de Ayuda Pro
-        </h2>
-        <p className="text-muted-foreground font-medium max-w-2xl">
-          Bienvenido a la guía interactiva de CostPro. Aprende los flujos críticos,
-          permisos por rol y cómo maximizar la eficiencia en tu tienda.
-        </p>
+      {/* Header with Versioning */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-primary/10 pb-6">
+        <div className="flex flex-col gap-2">
+          <h2 className="text-3xl font-black uppercase tracking-tighter text-primary flex items-center gap-3">
+            <BookOpen className="w-8 h-8" />
+            Centro de Capacitación CostPro
+          </h2>
+          <p className="text-muted-foreground font-medium max-w-2xl">
+            Guía profesional para la gestión de costos, ventas y multi-sucursales.
+          </p>
+        </div>
+        <div className="flex flex-col items-end">
+          <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-black">
+            VERSIÓN 5.2.0 (ENTERPRISE)
+          </Badge>
+          <span className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Última actualización: Nov 2024</span>
+        </div>
       </div>
 
       <Tabs defaultValue="roles" className="w-full">
         <TabsList className="grid grid-cols-2 md:grid-cols-5 h-auto p-1 bg-muted/50 rounded-2xl mb-8">
           <TabsTrigger value="roles" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm">
             <Users className="w-4 h-4 mr-2" />
-            Roles
+            Jerarquía
           </TabsTrigger>
           <TabsTrigger value="admin" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm">
             <Settings className="w-4 h-4 mr-2" />
-            Admin
+            Gestión
           </TabsTrigger>
           <TabsTrigger value="pos" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm">
             <ShoppingCart className="w-4 h-4 mr-2" />
@@ -57,85 +67,144 @@ export default function HelpView() {
           </TabsTrigger>
         </TabsList>
 
-        {/* --- ROLES & PERMISSIONS --- */}
-        <TabsContent value="roles" className="space-y-6">
-          <Card className="border-none shadow-none bg-transparent">
-            <CardHeader className="px-0">
-              <CardTitle className="text-2xl font-black uppercase tracking-tight">Estructura de Roles y Permisos</CardTitle>
-              <CardDescription className="text-base font-medium">
-                CostPro utiliza un modelo de Control de Acceso Basado en Roles (RBAC) optimizado para multi-tiendas.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="px-0 space-y-8">
-              <RolesDiagram />
+        {/* --- JERARQUÍA Y ROLES --- */}
+        <TabsContent value="roles" className="space-y-8">
+          <div className="grid lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-6">
+              <Card className="border-none shadow-none bg-transparent">
+                <CardHeader className="px-0">
+                  <CardTitle className="text-2xl font-black uppercase tracking-tight">Modelo Multi-Tienda y Jerarquía</CardTitle>
+                  <CardDescription className="text-base font-medium">
+                    CostPro permite una estructura flexible donde la autoridad se delega en cascada.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="px-0">
+                  <RolesDiagram />
+                </CardContent>
+              </Card>
 
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <h4 className="font-black text-primary uppercase tracking-widest text-sm flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4" />
-                    Checklist de Capacidades
-                  </h4>
-                  <ul className="space-y-3">
-                    <li className="flex gap-3 text-sm">
-                      <Badge variant="outline" className="h-5 bg-primary/10 text-primary border-primary/20">ADMIN</Badge>
-                      <span>Control total del sistema, gestión de todas las tiendas y usuarios globales.</span>
-                    </li>
-                    <li className="flex gap-3 text-sm">
-                      <Badge variant="outline" className="h-5 bg-violet-500/10 text-violet-600 border-violet-500/20">ENCARGADO</Badge>
-                      <span>Gestión operativa de las tiendas asignadas, reportes y supervisión de personal.</span>
-                    </li>
-                    <li className="flex gap-3 text-sm">
-                      <Badge variant="outline" className="h-5 bg-amber-500/10 text-amber-600 border-amber-500/20">ALMACENERO</Badge>
-                      <span>Recepción de mercancía, ajustes de stock e inventarios físicos.</span>
-                    </li>
-                    <li className="flex gap-3 text-sm">
-                      <Badge variant="outline" className="h-5 bg-emerald-500/10 text-emerald-600 border-emerald-500/20">CAJERO</Badge>
-                      <span>Ventas directas, apertura/cierre de caja y atención al cliente.</span>
-                    </li>
-                  </ul>
-                </div>
-
-                <div className="bg-primary/5 rounded-3xl p-6 border border-primary/10">
-                  <h4 className="font-black text-primary uppercase tracking-widest text-sm mb-4 flex items-center gap-2">
-                    <Info className="w-4 h-4" />
-                    Contexto Multi-Store
-                  </h4>
-                  <p className="text-xs font-medium leading-relaxed text-muted-foreground">
-                    Un usuario puede tener **roles distintos en diferentes sucursales**.
-                    Por ejemplo, alguien puede ser "Encargado" en la sucursal Norte pero "Cajero" en la sucursal Sur.
-                    El sistema cambiará sus permisos automáticamente al cambiar de tienda en la terminal.
-                  </p>
+              <div className="bg-primary/5 rounded-3xl p-8 border border-primary/10">
+                <h4 className="text-lg font-black text-primary uppercase mb-6 flex items-center gap-2">
+                  <Info className="w-5 h-5" />
+                  Caso Demostrativo: La Empresa "Global-Tech"
+                </h4>
+                <div className="grid md:grid-cols-2 gap-8 text-sm leading-relaxed">
+                  <div className="space-y-4">
+                    <p>
+                      <span className="font-black text-primary">JUAN (Admin Global):</span> Es el dueño. Crea tres "Encargados" para sus sucursales principales.
+                    </p>
+                    <ul className="space-y-2 pl-4 border-l-2 border-primary/20">
+                      <li>• <span className="font-bold">Pedro:</span> Gestiona Tienda Norte.</li>
+                      <li>• <span className="font-bold">María:</span> Gestiona Tienda Sur.</li>
+                      <li>• <span className="font-bold">Luisa:</span> Gestiona el Almacén Central.</li>
+                    </ul>
+                  </div>
+                  <div className="space-y-4">
+                    <p>
+                      <span className="font-black text-violet-600">PEDRO (Encargado Norte):</span>
+                      Pedro tiene permiso para crear sus propios usuarios. Crea 4 "Cajeros" para los turnos de su tienda sin necesidad de que Juan intervenga.
+                    </p>
+                    <p className="bg-background/50 p-3 rounded-xl italic text-xs">
+                      "La clave es la autonomía: el Admin delega en el Encargado, y el Encargado gestiona su equipo local."
+                    </p>
+                  </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+
+            <div className="space-y-6">
+              <div className="p-6 rounded-3xl bg-muted/30 border border-border">
+                <h4 className="font-black text-xs uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <ListChecks className="w-4 h-4" />
+                  Checklist de Roles
+                </h4>
+                <div className="space-y-6">
+                  <div>
+                    <Badge className="bg-primary mb-2">ADMIN</Badge>
+                    <p className="text-[10px] font-medium text-muted-foreground leading-tight">Control total, creación de tiendas, reportes financieros globales y auditoría de sistema.</p>
+                  </div>
+                  <div>
+                    <Badge variant="outline" className="bg-violet-500/10 text-violet-600 border-violet-500/20 mb-2">ENCARGADO</Badge>
+                    <p className="text-[10px] font-medium text-muted-foreground leading-tight">Administra usuarios de su tienda, supervisa cierres de caja y ajusta inventario local.</p>
+                  </div>
+                  <div>
+                    <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20 mb-2">ALMACENERO / CAJERO</Badge>
+                    <p className="text-[10px] font-medium text-muted-foreground leading-tight">Operaciones diarias de punto de venta y entrada/salida de mercancía.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 rounded-3xl bg-emerald-500/5 border border-emerald-500/10">
+                <h4 className="font-black text-xs uppercase tracking-widest text-emerald-700 mb-2">Tip Multi-Store</h4>
+                <p className="text-xs font-medium text-emerald-800/70">
+                  Un usuario puede ser <span className="font-bold">Encargado</span> en la Tienda A y <span className="font-bold">Cajero</span> en la Tienda B. Sus permisos cambiarán dinámicamente según la tienda que seleccione al entrar.
+                </p>
+              </div>
+            </div>
+          </div>
         </TabsContent>
 
-        {/* --- ADMIN FLOWS --- */}
-        <TabsContent value="admin" className="space-y-6">
+        {/* --- GESTIÓN PASO A PASO --- */}
+        <TabsContent value="admin" className="space-y-8">
           <Card className="border-none shadow-none bg-transparent">
             <CardHeader className="px-0">
-              <CardTitle className="text-2xl font-black uppercase tracking-tight">Gestión de Usuarios y Tiendas</CardTitle>
+              <CardTitle className="text-2xl font-black uppercase tracking-tight">Guía de Configuración y Despliegue</CardTitle>
               <CardDescription className="text-base font-medium">
-                Flujo maestro para la configuración inicial y expansión de la empresa.
+                Sigue estos pasos para poner en marcha tu estructura operativa.
               </CardDescription>
             </CardHeader>
-            <CardContent className="px-0 space-y-8">
+            <CardContent className="px-0 space-y-12">
               <UserFlowDiagram />
 
-              <div className="grid md:grid-cols-3 gap-6">
-                {[
-                  { title: "Crear Usuario", desc: "Introduce el correo y nombre completo. Se generará un perfil inactivo hasta asignar roles.", icon: Users },
-                  { title: "Definir Membresía", desc: "Selecciona la tienda y el rol específico para ese usuario en esa ubicación.", icon: Building2 },
-                  { title: "Control de Acceso", desc: "Activa o revoca el acceso en tiempo real sin eliminar al usuario del sistema.", icon: Shield },
-                ].map((item, i) => (
-                  <div key={i} className="p-5 rounded-2xl bg-muted/30 border border-border/50">
-                    <item.icon className="w-5 h-5 text-primary mb-3" />
-                    <h5 className="font-black text-[10px] uppercase tracking-widest mb-2">{item.title}</h5>
-                    <p className="text-xs text-muted-foreground">{item.desc}</p>
-                  </div>
-                ))}
-              </div>
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="step-1" className="border-b border-primary/10">
+                  <AccordionTrigger className="hover:no-underline py-6">
+                    <div className="flex items-center gap-4 text-left">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-black">1</div>
+                      <div>
+                        <h4 className="font-black text-sm uppercase">Paso 1: Registro del Usuario</h4>
+                        <p className="text-xs text-muted-foreground">Alta inicial en la base de datos central.</p>
+                      </div>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-6 pl-14 text-sm text-muted-foreground space-y-2">
+                    <p>Accede a <span className="font-bold text-primary">Usuarios</span> y haz clic en "Nuevo Usuario".</p>
+                    <p>Solo necesitas el Nombre y Correo Electrónico. En este punto, el usuario <span className="italic">no tiene acceso a nada</span> hasta que se le asigne una membresía.</p>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="step-2" className="border-b border-primary/10">
+                  <AccordionTrigger className="hover:no-underline py-6">
+                    <div className="flex items-center gap-4 text-left">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-black">2</div>
+                      <div>
+                        <h4 className="font-black text-sm uppercase">Paso 2: Asignación de Tienda</h4>
+                        <p className="text-xs text-muted-foreground">Vincular al usuario con una sucursal física.</p>
+                      </div>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-6 pl-14 text-sm text-muted-foreground space-y-2">
+                    <p>Dentro de la ficha del usuario, selecciona la tienda en la que operará.</p>
+                    <p>Puedes asignar <span className="font-bold">múltiples tiendas</span> si el usuario es supervisor o rota entre sucursales.</p>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="step-3" className="border-b border-primary/10">
+                  <AccordionTrigger className="hover:no-underline py-6">
+                    <div className="flex items-center gap-4 text-left">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-black">3</div>
+                      <div>
+                        <h4 className="font-black text-sm uppercase">Paso 3: Definición del Rol</h4>
+                        <p className="text-xs text-muted-foreground">Establecer qué acciones puede realizar en esa tienda.</p>
+                      </div>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-6 pl-14 text-sm text-muted-foreground space-y-2">
+                    <p>Para cada tienda asignada, elige el rol: <Badge variant="secondary" className="scale-75">Encargado</Badge>, <Badge variant="secondary" className="scale-75">Cajero</Badge> o <Badge variant="secondary" className="scale-75">Almacenero</Badge>.</p>
+                    <p>Guarda los cambios. El acceso es <span className="font-bold text-emerald-600">instantáneo</span>.</p>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
             </CardContent>
           </Card>
         </TabsContent>
@@ -148,16 +217,16 @@ export default function HelpView() {
             </CardHeader>
             <CardContent className="px-0 space-y-12">
               <div className="space-y-6">
-                <h3 className="font-bold text-lg flex items-center gap-2">
-                  <span className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-black">01</span>
-                  Flujo de Terminal de Venta (TPV)
+                <h3 className="font-bold text-lg flex items-center gap-2 text-primary">
+                  <ShoppingCart className="w-5 h-5" />
+                  Operativa de Punto de Venta (TPV)
                 </h3>
                 <SalesFlowDiagram />
               </div>
 
               <div className="space-y-6">
-                <h3 className="font-bold text-lg flex items-center gap-2">
-                  <span className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-black">02</span>
+                <h3 className="font-bold text-lg flex items-center gap-2 text-primary">
+                  <Receipt className="w-5 h-5" />
                   Control de Efectivo y Cierre
                 </h3>
                 <CashFlowDiagram />
@@ -165,22 +234,32 @@ export default function HelpView() {
 
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="p-6 rounded-3xl border border-emerald-500/20 bg-emerald-500/5">
-                  <h4 className="font-black text-emerald-600 uppercase tracking-widest text-xs mb-3">Puntos Críticos de Venta</h4>
-                  <ul className="space-y-2">
-                    {["Búsqueda rápida por SKU o Nombre", "Aplicación de descuentos autorizados", "Selección correcta del método de pago", "Verificación del ticket emitido"].map((t, i) => (
-                      <li key={i} className="flex items-center gap-2 text-xs font-medium">
-                        <ArrowRight className="w-3 h-3 text-emerald-500" />
+                  <h4 className="font-black text-emerald-600 uppercase tracking-widest text-xs mb-3">Protocolo de Venta</h4>
+                  <ul className="space-y-3">
+                    {[
+                      "Escanea el producto o búscalo por nombre.",
+                      "Verifica que el precio sea el correcto antes de totalizar.",
+                      "Selecciona el método de pago exacto (Efectivo/Transferencia).",
+                      "Entrega el comprobante digital o impreso al cliente."
+                    ].map((t, i) => (
+                      <li key={i} className="flex gap-3 text-xs font-medium">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                         {t}
                       </li>
                     ))}
                   </ul>
                 </div>
                 <div className="p-6 rounded-3xl border border-amber-500/20 bg-amber-500/5">
-                  <h4 className="font-black text-amber-600 uppercase tracking-widest text-xs mb-3">Protocolo de Cierre</h4>
-                  <ul className="space-y-2">
-                    {["Conteo físico de efectivo inicial", "Arqueo de comprobantes de tarjetas", "Declaración de diferencia (sobrante/faltante)", "Cierre definitivo e impresión de reporte"].map((t, i) => (
-                      <li key={i} className="flex items-center gap-2 text-xs font-medium">
-                        <ArrowRight className="w-3 h-3 text-amber-500" />
+                  <h4 className="font-black text-amber-600 uppercase tracking-widest text-xs mb-3">Cierre de Caja Diario</h4>
+                  <ul className="space-y-3">
+                    {[
+                      "Realiza el arqueo físico del dinero en caja.",
+                      "Registra cualquier salida de efectivo autorizada.",
+                      "Declara el total en el sistema para detectar faltantes.",
+                      "Solicita la firma del Encargado en el reporte final."
+                    ].map((t, i) => (
+                      <li key={i} className="flex gap-3 text-xs font-medium">
+                        <ChevronRight className="w-4 h-4 text-amber-500 shrink-0" />
                         {t}
                       </li>
                     ))}
@@ -204,31 +283,31 @@ export default function HelpView() {
                 <div className="space-y-4">
                   <h4 className="font-black text-primary uppercase tracking-widest text-xs">Gestión de Existencias</h4>
                   <div className="space-y-4">
-                    <div className="flex gap-4">
-                      <div className="shrink-0 w-10 h-10 rounded-xl bg-muted flex items-center justify-center font-black text-primary italic">IN</div>
+                    <div className="flex gap-4 p-4 rounded-2xl bg-muted/30">
+                      <div className="shrink-0 w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center font-black text-primary italic">IN</div>
                       <div>
                         <h5 className="font-bold text-sm">Recepciones</h5>
-                        <p className="text-xs text-muted-foreground">Ingreso de mercancía por compras o traslados. Afecta el costo promedio del producto.</p>
+                        <p className="text-xs text-muted-foreground">Ingreso de mercancía por compras. Incrementa el stock disponible inmediatamente.</p>
                       </div>
                     </div>
-                    <div className="flex gap-4">
-                      <div className="shrink-0 w-10 h-10 rounded-xl bg-muted flex items-center justify-center font-black text-primary italic">ADJ</div>
+                    <div className="flex gap-4 p-4 rounded-2xl bg-muted/30">
+                      <div className="shrink-0 w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center font-black text-amber-600 italic">ADJ</div>
                       <div>
-                        <h5 className="font-bold text-sm">Ajustes</h5>
-                        <p className="text-xs text-muted-foreground">Correcciones por merma, daño o errores de conteo. Requiere justificación obligatoria.</p>
+                        <h5 className="font-bold text-sm">Ajustes de Merma</h5>
+                        <p className="text-xs text-muted-foreground">Correcciones por daño o vencimiento. Debe ir acompañado de una nota explicativa.</p>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-amber-500/10 border border-amber-500/20 rounded-3xl p-6">
+                <div className="bg-amber-500/10 border border-amber-500/20 rounded-3xl p-6 flex flex-col justify-center">
                   <div className="flex items-start gap-4">
-                    <AlertTriangle className="w-6 h-6 text-amber-600 shrink-0" />
+                    <AlertTriangle className="w-8 h-8 text-amber-600 shrink-0" />
                     <div>
-                      <h5 className="font-black text-xs uppercase text-amber-600 tracking-widest mb-2">Alerta de Stock Bajo</h5>
-                      <p className="text-xs text-amber-900/70 font-medium">
-                        El sistema notificará automáticamente cuando el inventario caiga por debajo del umbral definido.
-                        Asegúrate de configurar el "Stock Mínimo" en la ficha de cada producto para evitar quiebres de stock.
+                      <h5 className="font-black text-xs uppercase text-amber-600 tracking-widest mb-2">Regla de Oro del Inventario</h5>
+                      <p className="text-xs text-amber-900/70 font-medium leading-relaxed">
+                        "Nunca vendas un producto que no haya sido ingresado primero al sistema".
+                        El stock negativo está deshabilitado para garantizar la integridad de tus costos y márgenes de ganancia.
                       </p>
                     </div>
                   </div>
@@ -244,28 +323,30 @@ export default function HelpView() {
             <CardHeader className="px-0">
               <CardTitle className="text-2xl font-black uppercase tracking-tight">Seguridad y Observabilidad</CardTitle>
               <CardDescription className="text-base font-medium">
-                Cómo protegemos tus datos y garantizamos la transparencia operativa.
+                Arquitectura de protección de datos empresarial.
               </CardDescription>
             </CardHeader>
             <CardContent className="px-0 space-y-8">
               <SecurityFlowDiagram />
 
               <div className="grid md:grid-cols-2 gap-6 mt-8">
-                <div className="p-6 rounded-3xl bg-primary shadow-xl text-white">
-                  <h4 className="font-black uppercase tracking-widest text-xs mb-4 opacity-80">Aislamiento de Datos</h4>
+                <div className="p-8 rounded-3xl bg-primary shadow-xl text-white">
+                  <h4 className="font-black uppercase tracking-widest text-xs mb-4 opacity-80">Aislamiento de Sucursales</h4>
                   <p className="text-sm font-medium leading-relaxed">
-                    CostPro utiliza filtros a nivel de base de datos (RLS) para asegurar que un Cajero
-                    **nunca vea información de otra tienda** para la que no tiene permisos.
-                    Tus costos y ventas están protegidos por compartimentos estancos.
+                    Utilizamos <span className="underline decoration-white/30 underline-offset-4">Row-Level Security (RLS)</span>.
+                    Esto significa que un empleado de la Tienda A no puede acceder, ni siquiera por error, a los datos de la Tienda B.
                   </p>
                 </div>
-                <div className="p-6 rounded-3xl bg-white border border-border shadow-sm">
-                  <h4 className="font-black uppercase tracking-widest text-xs text-primary mb-4">Auditoría Permanente</h4>
-                  <p className="text-sm font-medium leading-relaxed text-muted-foreground">
-                    Cada acción crítica (ventas, ajustes de stock, cambios de precio) queda registrada con:
+                <div className="p-8 rounded-3xl bg-white border border-border shadow-sm">
+                  <h4 className="font-black uppercase tracking-widest text-xs text-primary mb-4 flex items-center gap-2">
+                    <Key className="w-4 h-4" />
+                    Auditoría Inmutable
+                  </h4>
+                  <p className="text-sm font-medium leading-relaxed text-muted-foreground mb-4">
+                    Cada vez que un precio cambia o una venta se anula, CostPro registra:
                   </p>
-                  <div className="grid grid-cols-2 gap-2 mt-4">
-                    {["Usuario", "Fecha/Hora", "Valor Anterior", "Nuevo Valor"].map((t, i) => (
+                  <div className="grid grid-cols-2 gap-3">
+                    {["Identidad del Usuario", "IP de Conexión", "Timestamp exacto", "Valores históricos"].map((t, i) => (
                       <div key={i} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-tighter text-muted-foreground">
                         <CheckCircle2 className="w-3 h-3 text-primary" />
                         {t}
@@ -278,6 +359,22 @@ export default function HelpView() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Footer Support */}
+      <div className="mt-12 p-8 rounded-[2rem] bg-muted/50 border border-border flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center text-white">
+            <HelpCircle className="w-6 h-6" />
+          </div>
+          <div>
+            <h4 className="font-black text-sm uppercase">¿Necesitas más ayuda?</h4>
+            <p className="text-xs text-muted-foreground">Contacta con el equipo de soporte técnico de CostPro.</p>
+          </div>
+        </div>
+        <button className="px-8 py-3 bg-background border border-border rounded-xl font-black text-xs uppercase tracking-widest hover:bg-primary hover:text-white transition-all">
+          Abrir Ticket de Soporte
+        </button>
+      </div>
     </div>
   );
 }
