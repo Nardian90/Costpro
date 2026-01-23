@@ -7,6 +7,7 @@ import {
   CostSheetColumn,
   CalculatedRowValue
 } from '@/types/cost-sheet';
+import { logger } from '@/lib/logger';
 
 // Helper to safely evaluate a formula string
 const evaluateExpression = (expression: string): number => {
