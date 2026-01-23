@@ -213,12 +213,12 @@ export function useUserStoreAccess(userId?: string) {
     queryKey: ['user-store-access', userId],
     queryFn: async () => {
       if (!userId) return [];
-      const data = await withTableLogging('select', 'user_store_access', () => supabase.from('user_store_access')
-        .select('store_id, roles')
+      const data = await withTableLogging('select', 'user_store_memberships', () => supabase.from('user_store_memberships')
+        .select('store_id, role')
         .eq('user_id', userId));
       return (data as any[])?.map(d => ({
         store_id: d.store_id,
-        roles: Array.isArray(d.roles) ? d.roles : ['clerk']
+        roles: [d.role]
       })) || [];
     },
     enabled: !!userId,
@@ -455,7 +455,7 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
   return useQuery({
     queryKey: ['users', currentUserId, isAdmin, isEncargado],
     queryFn: async () => {
-      let query = supabase.from('profiles').select('*');
+      let query = supabase.from('profiles').select('*, memberships:user_store_memberships(*, store:stores(name))');
       if (isEncargado && !isAdmin) query = query.eq('created_by', currentUserId);
       const data = await withTableLogging('select', 'profiles', () => query.order('full_name'));
       return data as Profile[];
@@ -472,8 +472,8 @@ export function useStores(userId: string, isAdmin: boolean) {
 
       const data = await withTableLogging('select', 'stores', () => isAdmin
         ? supabase.from('stores').select('*').order('name')
-        : supabase.from('stores').select('*, user_store_access!inner(user_id)')
-            .eq('user_store_access.user_id', userId).order('name'));
+        : supabase.from('stores').select('*, user_store_memberships!inner(user_id)')
+            .eq('user_store_memberships.user_id', userId).order('name'));
       return data as any[];
     },
     enabled: isAdmin || (!!userId && userId.length >= 5),
@@ -498,7 +498,7 @@ export function useCashClosures(storeId?: string | null, isAdmin = false) {
 export function useCreateUser() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (params: { p_email: string; p_full_name: string; p_role: string; p_store_id: string }) => {
+    mutationFn: async (params: { p_email: string; p_full_name: string; p_role: string; p_store_id: string; p_memberships?: any[] }) => {
       const rpcName = 'managed_create_user';
       return await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
     },
@@ -508,6 +508,24 @@ export function useCreateUser() {
     },
     onError: (error: any) => {
       toast.error(`Error al crear usuario: ${error.message}`);
+    }
+  });
+}
+
+export function useManageUserMemberships() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ userId, memberships }: { userId: string; memberships: any[] }) => {
+      const rpcName = 'manage_user_memberships';
+      const params = { p_user_id: userId, p_memberships: memberships };
+      return await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast.success('Accesos actualizados correctamente');
+    },
+    onError: (error: any) => {
+      toast.error(`Error al actualizar accesos: ${error.message}`);
     }
   });
 }

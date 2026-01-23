@@ -24,6 +24,16 @@ export const transactionStatusSchema = z.enum([
 // Entities
 // ============================================
 
+export const userStoreMembershipSchema = z.object({
+  id: z.string().uuid().optional(),
+  user_id: z.string().uuid().optional(),
+  store_id: z.string().uuid(),
+  role: userRoleSchema.catch('clerk'),
+  status: z.enum(['active', 'revoked']).catch('active'),
+  created_at: z.string().optional(),
+  updated_at: z.string().optional(),
+});
+
 export const profileSchema = z.object({
   id: z.string().uuid().or(z.string().length(0).transform(() => null)).nullable().optional().catch(null),
   full_name: z.string().catch('Usuario'),
@@ -38,6 +48,7 @@ export const profileSchema = z.object({
   created_by: z.string().uuid().nullable().optional().catch(null),
   created_at: z.string().catch(() => new Date().toISOString()),
   updated_at: z.string().optional().catch(undefined),
+  memberships: z.array(userStoreMembershipSchema).optional().catch([]),
 });
 
 export const productSchema = z.object({
