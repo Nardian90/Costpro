@@ -9,6 +9,7 @@ import SplashScreen from '@/components/SplashScreen';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
+import { UserContract, UserFactory } from '@/contracts';
 
 export default function LoginPage() {
   const [showSplash, setShowSplash] = useState(true);
@@ -68,28 +69,28 @@ export default function LoginPage() {
         throw new Error('Usuario inactivo. Contacte al administrador.');
       }
 
-      // 3. Update Zustand store with complete user data
-      const userData = {
+      // 3. Update Zustand store with complete user data using Factory to ensure all fields
+      const userData: UserContract = UserFactory.create({
         id: profileData.id,
         email: profileData.email,
         fullName: profileData.full_name,
         role: profileData.role,
-        roles: profileData.roles || [],
+        roles: profileData.roles,
         storeId: profileData.store_id,
-        activeStoreId: profileData.active_store_id,
+        activeStoreId: profileData.active_store_id || profileData.store_id,
+        maxStoresLimit: profileData.max_stores_limit,
+        maxUsersLimit: profileData.max_users_limit,
+        createdBy: profileData.created_by,
         isActive: profileData.is_active,
         createdAt: profileData.created_at,
         updatedAt: profileData.updated_at,
-        maxStoresLimit: profileData.max_stores_limit || 0,
-        maxUsersLimit: profileData.max_users_limit || 0,
-        createdBy: profileData.created_by || '',
-      };
+      });
 
       login(userData, authData.session.access_token);
 
       logger.info('AUTH', 'LOGIN_SUCCESS', { userId: userData.id, email: userData.email });
 
-      toast.success(`¡Bienvenido, ${userData.full_name}!`);
+      toast.success(`¡Bienvenido, ${userData.fullName}!`);
       router.push('/');
     } catch (err: any) {
       logger.error('AUTH', 'LOGIN_FAILED', { email, error: err.message });
