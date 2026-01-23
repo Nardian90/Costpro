@@ -62,6 +62,17 @@ export interface AuthState {
 // Tienda
 // ============================================
 
+export interface UserStoreMembership {
+  id: string;
+  user_id: string;
+  store_id: string;
+  role: UserRole;
+  status: 'active' | 'revoked';
+  created_at: string;
+  updated_at: string;
+  store?: Store;
+}
+
 export interface Store {
   id: string;
   name: string;
@@ -365,6 +376,7 @@ export type Profile = {
   created_by?: string | null;
   created_at: string;
   updated_at?: string;
+  memberships?: UserStoreMembership[];
 };
 
 export interface SalesKPIs {

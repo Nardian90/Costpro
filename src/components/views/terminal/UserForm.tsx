@@ -2,16 +2,22 @@
 
 import React from 'react';
 import { z } from 'zod';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { UserContract } from '@/contracts/user';
-import { Loader2, Save } from 'lucide-react';
+import { Store } from '@/types';
+import { Loader2, Save, Plus, Trash2, Building } from 'lucide-react';
 
 const userFormSchema = z.object({
   fullName: z.string().min(3, 'El nombre debe tener al menos 3 caracteres'),
   email: z.string().email('Email inválido'),
   role: z.enum(['admin', 'encargado', 'usuario', 'manager', 'clerk', 'warehouse'] as const),
   isActive: z.boolean(),
+  memberships: z.array(z.object({
+    store_id: z.string().uuid('Seleccione una tienda'),
+    role: z.enum(['admin', 'encargado', 'usuario', 'manager', 'clerk', 'warehouse'] as const),
+    status: z.enum(['active', 'revoked'] as const),
+  })),
 });
 
 export type UserFormData = z.infer<typeof userFormSchema>;
@@ -19,6 +25,7 @@ export type UserFormData = z.infer<typeof userFormSchema>;
 interface UserFormProps {
   mode: 'create' | 'edit';
   initialData?: UserContract | null;
+  stores: Store[];
   onSubmit: (data: UserFormData) => Promise<void>;
   onCancel: () => void;
   isSubmitting?: boolean;
@@ -27,6 +34,7 @@ interface UserFormProps {
 export default function UserForm({
   mode,
   initialData,
+  stores,
   onSubmit,
   onCancel,
   isSubmitting = false
@@ -34,6 +42,7 @@ export default function UserForm({
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<UserFormData>({
     resolver: zodResolver(userFormSchema),
@@ -42,12 +51,23 @@ export default function UserForm({
       email: initialData.email,
       role: initialData.role,
       isActive: initialData.isActive,
+      memberships: initialData.memberships?.map(m => ({
+        store_id: m.store_id,
+        role: m.role,
+        status: m.status || 'active'
+      })) || [],
     } : {
       fullName: '',
       email: '',
       role: 'clerk',
       isActive: true,
+      memberships: [],
     },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "memberships"
   });
 
   return (
@@ -113,6 +133,79 @@ export default function UserForm({
               <option value="false">Inactivo</option>
             </select>
           </div>
+        </div>
+      </div>
+
+      {/* Tiendas Asignadas */}
+      <div className="pt-4 border-t border-border">
+        <div className="flex items-center justify-between mb-4">
+          <label className="text-[10px] font-black uppercase text-primary tracking-widest block">
+            Tiendas Asignadas (Multi-Store)
+          </label>
+          <button
+            type="button"
+            onClick={() => append({ store_id: '', role: 'clerk', status: 'active' })}
+            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-primary/10 text-primary text-[10px] font-black uppercase hover:bg-primary/20 transition-all"
+          >
+            <Plus className="w-3 h-3" />
+            Añadir Tienda
+          </button>
+        </div>
+
+        <div className="space-y-3">
+          {fields.map((field, index) => (
+            <div key={field.id} className="flex gap-2 items-end bg-muted/20 p-3 rounded-xl border border-border/50">
+              <div className="flex-1 space-y-2">
+                 <label className="text-[8px] font-black uppercase text-muted-foreground tracking-widest block">Tienda</label>
+                 <select
+                  {...register(`memberships.${index}.store_id` as const)}
+                  className="w-full p-2 rounded-lg border border-border bg-background font-bold text-xs outline-none"
+                >
+                  <option value="">Seleccione tienda</option>
+                  {stores.map(s => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
+                <div className="w-24 space-y-2">
+                 <label className="text-[8px] font-black uppercase text-muted-foreground tracking-widest block">Rol</label>
+                 <select
+                  {...register(`memberships.${index}.role` as const)}
+                  className="w-full p-2 rounded-lg border border-border bg-background font-bold text-xs outline-none"
+                >
+                  <option value="admin">Admin</option>
+                  <option value="encargado">Encargado</option>
+                  <option value="manager">Gestor</option>
+                  <option value="clerk">Cajero</option>
+                  <option value="warehouse">Almacén</option>
+                  <option value="usuario">Usuario</option>
+                </select>
+              </div>
+                <div className="w-24 space-y-2">
+                   <label className="text-[8px] font-black uppercase text-muted-foreground tracking-widest block">Estado</label>
+                   <select
+                    {...register(`memberships.${index}.status` as const)}
+                    className="w-full p-2 rounded-lg border border-border bg-background font-bold text-xs outline-none"
+                  >
+                    <option value="active">Activo</option>
+                    <option value="revoked">Revocado</option>
+                  </select>
+                </div>
+              <button
+                type="button"
+                onClick={() => remove(index)}
+                className="p-2.5 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-white transition-all mb-0.5"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+          {fields.length === 0 && (
+            <div className="text-center py-6 border-2 border-dashed border-border rounded-xl">
+               <Building className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Sin tiendas asignadas</p>
+            </div>
+          )}
         </div>
       </div>
 

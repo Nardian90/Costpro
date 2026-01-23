@@ -1,4 +1,4 @@
-import { UserRole, Profile } from '../types';
+import { UserRole, Profile, UserStoreMembership } from '../types';
 
 /**
  * @file Contrato de datos estricto para la entidad User.
@@ -20,6 +20,7 @@ export interface UserContract {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  memberships: UserStoreMembership[];
 }
 
 /**
@@ -40,6 +41,7 @@ export const UserFactory = {
     isActive: true,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    memberships: [],
     ...initialValues,
   }),
 };
@@ -69,4 +71,5 @@ export const mapProfileToContract = (p: Profile): UserContract => ({
   isActive: p.is_active,
   createdAt: p.created_at,
   updatedAt: p.updated_at || p.created_at,
+  memberships: p.memberships || [],
 });
