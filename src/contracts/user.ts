@@ -1,4 +1,4 @@
-import { UserRole } from '../types';
+import { UserRole, Profile } from '../types';
 
 /**
  * @file Contrato de datos estricto para la entidad User.
@@ -29,17 +29,44 @@ export const UserFactory = {
   create: (initialValues?: Partial<UserContract>): UserContract => ({
     id: '',
     email: '',
-    fullName: 'Usuario Anónimo',
-    role: 'usuario',
+    fullName: '',
+    role: 'clerk',
     roles: [],
     storeId: '',
     activeStoreId: '',
     maxStoresLimit: 1,
     maxUsersLimit: 1,
     createdBy: '',
-    isActive: false,
+    isActive: true,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     ...initialValues,
   }),
 };
+
+/**
+ * Alias de UserFactory para cumplir con requerimientos específicos de nomenclatura.
+ */
+export const UserContractFactory = {
+  ...UserFactory,
+  createEmpty: () => UserFactory.create(),
+};
+
+/**
+ * Mapeador de Profile (Supabase/SnakeCase) a UserContract (Frontend/CamelCase).
+ */
+export const mapProfileToContract = (p: Profile): UserContract => ({
+  id: p.id,
+  email: p.email,
+  fullName: p.full_name,
+  role: p.role,
+  roles: p.roles || [p.role],
+  storeId: p.store_id || '',
+  activeStoreId: p.active_store_id || '',
+  maxStoresLimit: p.max_stores_limit || 1,
+  maxUsersLimit: p.max_users_limit || 1,
+  createdBy: p.created_by || '',
+  isActive: p.is_active,
+  createdAt: p.created_at,
+  updatedAt: p.updated_at || p.created_at,
+});
