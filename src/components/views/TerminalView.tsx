@@ -30,7 +30,9 @@ import {
   useCashClosures,
   useTransactionDetails,
   useUserStoreAccess,
-  useCreateSale
+  useCreateSale,
+  useCreateUser,
+  useUpdateUser
 } from '@/hooks/useQueries';
 
 // Sub-components
@@ -43,6 +45,8 @@ import StockHistoryView from './terminal/StockHistoryView';
 import AuditLogsView from './terminal/AuditLogsView';
 import CashClosureView from './terminal/CashClosureView';
 import UsersManagementView from './terminal/UsersManagementView';
+import UserForm, { UserFormData } from './terminal/UserForm';
+import { UserContract, UserContractFactory, mapProfileToContract } from '@/contracts/user';
 import StoresManagementView from './terminal/StoresManagementView';
 import SettingsView from './terminal/SettingsView';
 
@@ -144,10 +148,8 @@ export default function TerminalView() {
   const [editingStore, setEditingStore] = useState<Store | null>(null);
   const [isCreateStoreModalOpen, setIsCreateStoreModalOpen] = useState(false);
   const [newStore, setNewStore] = useState({ name: '', address: '' });
-  const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<Profile | null>(null);
-  const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
-  const [newUser, setNewUser] = useState({ full_name: '', email: '', password: '', role: 'clerk' as UserRole });
+  const [userFormMode, setUserFormMode] = useState<'create' | 'edit' | null>(null);
+  const [selectedUserContract, setSelectedUserContract] = useState<UserContract | null>(null);
   const [isDeleteStoreModalOpen, setIsDeleteStoreModalOpen] = useState(false);
   const [deletingStore, setDeletingStore] = useState<Store | null>(null);
 
@@ -260,10 +262,41 @@ export default function TerminalView() {
     setSelectedTransactionId(txn.id);
   };
 
+  const createUserMutation = useCreateUser();
+  const updateUserMutation = useUpdateUser();
+
   const handleEditUser = (u: Profile) => {
-    setEditingUser(u);
-    setSelectedUserId(u.id);
-    setIsEditUserModalOpen(true);
+    setSelectedUserContract(mapProfileToContract(u));
+    setUserFormMode('edit');
+  };
+
+  const handleCreateUser = () => {
+    setSelectedUserContract(UserContractFactory.createEmpty());
+    setUserFormMode('create');
+  };
+
+  const handleUserFormSubmit = async (data: UserFormData) => {
+    if (!user) return;
+    try {
+      if (userFormMode === 'create') {
+        await createUserMutation.mutateAsync({
+          p_email: data.email,
+          p_full_name: data.fullName,
+          p_role: data.role,
+          p_store_id: user.storeId || ''
+        });
+      } else if (userFormMode === 'edit' && selectedUserContract) {
+        await updateUserMutation.mutateAsync({
+          id: selectedUserContract.id,
+          full_name: data.fullName,
+          role: data.role,
+          is_active: data.isActive
+        });
+      }
+      setUserFormMode(null);
+    } catch (error) {
+      // Error is already handled by toast in the mutation
+    }
   };
 
   // Navigation Items logic
@@ -338,7 +371,7 @@ export default function TerminalView() {
       case 'history': return <StockHistoryView movements={movements.filter(m => m.product?.name.toLowerCase().includes(searchTerm.toLowerCase()))} searchTerm={searchTerm} onSearchChange={setSearchTerm} dateRange={dateRange} onDateRangeChange={setDateRange} onRefresh={() => {}} />;
       case 'audit': return <AuditLogsView logs={auditLogs.filter(l => l.table_name.includes(searchTerm))} searchTerm={searchTerm} onSearchChange={setSearchTerm} dateRange={dateRange} onDateRangeChange={setDateRange} />;
       case 'cash': return <CashClosureView summary={salesSummary} cashClosures={cashClosures} onProcessClosure={() => toast.info('Próximamente')} />;
-      case 'users': return <UsersManagementView users={users.filter(u => u.full_name?.toLowerCase().includes(searchTerm.toLowerCase()))} searchTerm={searchTerm} onSearchChange={setSearchTerm} onEditUser={handleEditUser} onCreateUser={() => setIsCreateUserModalOpen(true)} />;
+      case 'users': return <UsersManagementView users={users.filter(u => u.full_name?.toLowerCase().includes(searchTerm.toLowerCase()))} searchTerm={searchTerm} onSearchChange={setSearchTerm} onEditUser={handleEditUser} onCreateUser={handleCreateUser} />;
       case 'stores': return <StoresManagementView stores={stores.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()))} searchTerm={searchTerm} onSearchChange={setSearchTerm} onEditStore={(s) => { setEditingStore(s); setIsEditStoreModalOpen(true); }} onDeleteStore={(s) => { setDeletingStore(s); setIsDeleteStoreModalOpen(true); }} onCreateStore={() => setIsCreateStoreModalOpen(true)} onSetActiveStore={handleSetActiveStore} activeStoreId={user.activeStoreId || undefined} isAdmin={user.role === 'admin'} />;
       case 'settings': return <SettingsView notifications={notifications} setNotifications={setNotifications} />;
       case 'inventory': return <InventoryView key="inventory" />;
@@ -606,6 +639,24 @@ export default function TerminalView() {
               if (!error) { toast.success('Actualizado'); setIsEditStoreModalOpen(false); }
             }} className="px-6 py-2 bg-primary text-white rounded-lg font-black uppercase text-xs">Guardar</button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* User Management Modal */}
+      <Dialog open={!!userFormMode} onOpenChange={(open) => !open && setUserFormMode(null)}>
+        <DialogContent className="!rounded-3xl border-border max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-black uppercase tracking-tighter text-2xl">
+              {userFormMode === 'create' ? 'Nuevo Usuario' : 'Editar Usuario'}
+            </DialogTitle>
+          </DialogHeader>
+          <UserForm
+            mode={userFormMode || 'create'}
+            initialData={selectedUserContract}
+            onSubmit={handleUserFormSubmit}
+            onCancel={() => setUserFormMode(null)}
+            isSubmitting={createUserMutation.isPending || updateUserMutation.isPending}
+          />
         </DialogContent>
       </Dialog>
 
