@@ -143,6 +143,7 @@ export default function POSView({
                         key={product.id}
                         product={product}
                         onClick={onAddItem}
+                        variant="pos"
                       />
                     ))}
                   </div>
