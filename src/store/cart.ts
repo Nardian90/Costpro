@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { produce } from 'immer';
+import { toast } from 'sonner';
 import { CartItem, Product } from '@/types';
 
 // Define Discount type
@@ -33,7 +34,12 @@ export const useCartStore = create<CartState>((set, get) => ({
         (i) => i.product_id === item.product_id && i.variant_id === item.variant_id
       );
       if (existingItem) {
-        existingItem.quantity += item.quantity;
+        const newQuantity = existingItem.quantity + item.quantity;
+        if (newQuantity > existingItem.product.stock_current) {
+          toast.error(`No puedes agregar más ${existingItem.product.name}, stock máximo alcanzado.`);
+          return;
+        }
+        existingItem.quantity = newQuantity;
         existingItem.subtotal = existingItem.quantity * existingItem.price;
       } else {
         state.items.push({
@@ -56,7 +62,11 @@ export const useCartStore = create<CartState>((set, get) => ({
         (i) => i.product_id === productId && i.variant_id === variantId
       );
       if (item) {
-        if (quantity > 0) {
+        if (quantity > item.product.stock_current) {
+          toast.warning(`Stock máximo para ${item.product.name} es ${item.product.stock_current}.`);
+          item.quantity = item.product.stock_current;
+          item.subtotal = item.quantity * item.price;
+        } else if (quantity > 0) {
           item.quantity = quantity;
           item.subtotal = item.quantity * item.price;
         } else {
