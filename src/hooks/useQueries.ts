@@ -260,17 +260,14 @@ export function useRegisterReception() {
 export function useBulkUpdateProducts() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (products: any[]) => {
+    mutationFn: async ({ products, storeId }: { products: any[], storeId: string }) => {
       const rpcName = 'bulk_update_products';
       const params = { _products: products };
       return await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
     },
     onSuccess: (data, variables) => {
-      // Assuming the storeId is available in the variables passed to the mutation
-      // This is a bit of a hack, as we don't have the storeId directly.
-      // A better solution would be to pass the storeId to the mutation.
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory'] });
+      queryClient.invalidateQueries({ queryKey: ['products', variables.storeId] });
+      queryClient.invalidateQueries({ queryKey: ['inventory', variables.storeId] });
     },
   });
 }
