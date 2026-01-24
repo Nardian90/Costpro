@@ -102,13 +102,6 @@ export default function TerminalView() {
   const [posLayoutMode, setPosLayoutMode] = useState<'grid' | 'table'>('grid');
   const searchInputRef = useRef<HTMLInputElement>(null);
   const navRef = useRef<HTMLElement>(null);
-  const [showSidebarUser, setShowSidebarUser] = useState(true);
-
-  // Scroll animations for sidebar - Optimized to maintain 30% visibility
-  const scrollY = useMotionValue(0);
-  const logoHeight = useTransform(scrollY, [0, 80], [160, 48]);
-  const logoOpacity = useTransform(scrollY, [0, 50], [1, 1]);
-  const logoScale = useTransform(scrollY, [0, 80], [1, 0.7]);
 
   // React Query Hooks
   const { data: productsData, isLoading: isLoadingProducts, refetch: refetchProducts } = useProducts(user?.storeId);
@@ -330,54 +323,6 @@ export default function TerminalView() {
     return roles.join(' / ').toUpperCase();
   };
 
-  const handleSidebarScroll = useCallback(() => {
-    if (!navRef.current) return;
-    const { scrollTop, scrollHeight, clientHeight } = navRef.current;
-
-    // Sync motion value with requestAnimationFrame for performance
-    requestAnimationFrame(() => {
-      scrollY.set(scrollTop);
-    });
-
-    const scrollable = scrollHeight > clientHeight + 5;
-
-    if (!scrollable) {
-      setShowSidebarUser(true);
-      return;
-    }
-
-    // Use a small buffer to prevent flickering/loops
-    const isAtBottom = scrollTop + clientHeight >= scrollHeight - 20;
-
-    // Only update state if it actually changes to prevent unnecessary re-renders
-    setShowSidebarUser(prev => {
-      if (isAtBottom && !prev) return true;
-      if (!isAtBottom && prev && scrollTop < scrollHeight - clientHeight - 40) return false;
-      return prev;
-    });
-  }, [scrollY]);
-
-  useEffect(() => {
-    const nav = navRef.current;
-    if (nav) {
-      nav.addEventListener('scroll', handleSidebarScroll, { passive: true });
-      handleSidebarScroll();
-      window.addEventListener('resize', handleSidebarScroll);
-
-      // Use ResizeObserver instead of MutationObserver for more stable layout tracking
-      const resizeObserver = new ResizeObserver(() => {
-        handleSidebarScroll();
-      });
-      resizeObserver.observe(nav);
-
-      return () => {
-        nav.removeEventListener('scroll', handleSidebarScroll);
-        window.removeEventListener('resize', handleSidebarScroll);
-        resizeObserver.disconnect();
-      };
-    }
-  }, [handleSidebarScroll]);
-
   // Auth check and mandatory hooks after state definitions
   useEffect(() => {
     if (!loading && !user) {
@@ -428,30 +373,20 @@ export default function TerminalView() {
     <div className="min-h-screen flex bg-background text-foreground max-w-full overflow-x-auto">
       {/* Sidebar */}
       <aside className={cn(
-        "fixed lg:sticky top-0 h-screen z-40 transition-all duration-300 ease-in-out border-r border-sidebar-border shadow-2xl overflow-hidden",
+        "fixed lg:sticky top-0 h-screen z-50 transition-all duration-300 ease-in-out border-r border-sidebar-border shadow-2xl overflow-hidden",
         sidebarOpen ? "w-64 lg:w-72 translate-x-0" : "w-0 -translate-x-full border-r-0"
       )}>
         <div className="bg-sidebar/90 backdrop-blur-2xl h-full flex flex-col overflow-hidden w-64 lg:w-72">
           {/* Logo Area - Smoothly contracts on scroll */}
-          <motion.div
+          <div
             id="sidebar-logo-container"
-            style={{
-              height: logoHeight,
-              opacity: logoOpacity,
-              overflow: 'hidden'
-            }}
-            className="border-b border-sidebar-border/50 shrink-0 bg-sidebar/5"
+            className="border-b border-sidebar-border/50 shrink-0 bg-sidebar/5 p-8"
           >
-            <motion.div
-              style={{ scale: logoScale }}
-              className="p-8 h-[160px] flex flex-col justify-center"
-            >
-              <CostProLogo size={50} animated={true} />
-              <div className="mt-4">
-                <div className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Terminal Operativa</div>
-              </div>
-            </motion.div>
-          </motion.div>
+            <CostProLogo size={50} animated={true} />
+            <div className="mt-4">
+              <div className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Terminal Operativa</div>
+            </div>
+          </div>
 
           {/* Search Area */}
           <div className="px-6 py-4 shrink-0 border-b border-sidebar-border/30 bg-sidebar/5">
@@ -514,26 +449,7 @@ export default function TerminalView() {
           </nav>
 
           {/* User Info & Logout */}
-          <div className="p-6 border-t border-sidebar-border/50 shrink-0 min-h-[110px] flex flex-col justify-end">
-            <AnimatePresence initial={false}>
-              {showSidebarUser && (
-                <motion.div
-                  id="sidebar-user-container"
-                  initial={{ height: 0, opacity: 0, marginBottom: 0 }}
-                  animate={{ height: 'auto', opacity: 1, marginBottom: 16 }}
-                  exit={{ height: 0, opacity: 0, marginBottom: 0 }}
-                  transition={{ duration: 0.3, ease: 'easeInOut' }}
-                  className="overflow-hidden"
-                >
-                  <div className="rounded-3xl border border-primary/20 bg-primary/5 p-5 shadow-inner">
-                    <div className="font-black text-xs text-primary uppercase tracking-widest truncate">{user?.fullName}</div>
-                    <div className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mt-1">
-                      {getActiveRolesLabel()}
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+          <div className="p-6 border-t border-sidebar-border/50 shrink-0">
             <button
               onClick={handleLogout}
               className="w-full flex items-center justify-center gap-3 p-4 rounded-2xl transition-all group active:scale-95 hover:bg-danger/10 text-danger font-bold"
