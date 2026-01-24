@@ -20,7 +20,7 @@ export default function CostFlowDiagram() {
 
   const arrow = {
     hidden: { pathLength: 0, opacity: 0 },
-    show: { pathLength: 1, opacity: 1, transition: { duration: 0.8, ease: "easeInOut" } }
+    show: { pathLength: 1, opacity: 1, transition: { duration: 0.8 } }
   };
 
   return (
