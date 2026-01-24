@@ -7,12 +7,12 @@ DECLARE
     updated_count int;
 BEGIN
     WITH upserted AS (
-        INSERT INTO products (id, store_id, name, cost, price, image_url, created_at, updated_at)
+        INSERT INTO products (id, store_id, name, cost_price, price, image_url, created_at, updated_at)
         SELECT
             (p->>'id')::UUID,
             (p->>'store_id')::UUID,
             p->>'name',
-            (p->>'cost')::NUMERIC,
+            (p->>'cost_price')::NUMERIC,
             (p->>'price')::NUMERIC,
             p->>'image_url',
             NOW(),
@@ -21,14 +21,14 @@ BEGIN
             id TEXT,
             store_id TEXT,
             name TEXT,
-            cost TEXT,
+            cost_price TEXT,
             price TEXT,
             image_url TEXT
         )
         ON CONFLICT (id) DO UPDATE SET
             name = EXCLUDED.name,
             price = EXCLUDED.price,
-            cost = EXCLUDED.cost,
+            cost_price = EXCLUDED.cost_price,
             image_url = EXCLUDED.image_url,
             updated_at = NOW()
         RETURNING xmax

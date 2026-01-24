@@ -365,7 +365,7 @@ export default function CatalogView() {
                         id: productId,
                         store_id: user.storeId,
                         name,
-                        cost: costValue,
+                        cost_price: costValue,
                         price: priceValue,
                         image_url: imageUrl || '',
                     });
