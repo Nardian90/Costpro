@@ -38,6 +38,7 @@ import { useCatalogModals } from '@/hooks/useCatalogModals';
 import { CatalogModals } from './CatalogModals';
 import { cn } from '@/lib/utils';
 import { Product } from '@/types';
+import ImageWithFallback from './ui/ImageWithFallback';
 
 export default function CatalogView() {
     const { user } = useAuthStore();
