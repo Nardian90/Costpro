@@ -58,7 +58,7 @@ const CostSheetRow: React.FC<RowProps> = ({ row, level, calculatedValues, path, 
   };
 
   const baseOptions = useMemo(() => [
-    ...annexes.map(a => ({ value: a.id, label: `Anexo ${a.id}: ${a.title}` })),
+    ...annexes.map(a => ({ value: a.id, label: `Anexo ${a.id}` })),
     ...allRows.map(r => ({ value: r.id, label: `Fila ${r.id}: ${r.label}` }))
   ], [annexes, allRows]);
 
@@ -197,7 +197,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = ({ s
     <div data-testid="cost-sheet-interactive-table" className="neu-card p-0">
       <div className="overflow-x-auto">
         <table className="w-full text-sm min-w-[1000px]">
-          <thead className="bg-slate-100 dark:bg-slate-800/50 sticky-header">
+          <thead className="bg-slate-100 dark:bg-slate-800/50 sticky top-0 z-20">
             <tr>
               <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-auto min-w-[250px]">Concepto</th>
               <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-32">Valor Histórico</th>
@@ -211,7 +211,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = ({ s
           <tbody>
             {sections.map((section, sectionIndex) => (
               <React.Fragment key={section.id}>
-                <tr className="bg-slate-200 dark:bg-slate-900 sticky top-0 z-10">
+                <tr className="bg-slate-200 dark:bg-slate-900 sticky top-12 z-10">
                   <td colSpan={7} className="px-4 py-2 font-black text-primary uppercase tracking-widest text-xs">
                     {section.label}
                   </td>
