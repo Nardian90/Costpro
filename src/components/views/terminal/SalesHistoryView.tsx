@@ -49,15 +49,15 @@ export default function SalesHistoryView({
          </div>
       </SearchBar>
 
-      <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+      <div className="responsive-table-container">
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-muted/30 text-muted-foreground font-black uppercase text-[10px] tracking-widest border-b border-border">
               <th className="p-4 text-left">Ref</th>
               <th className="p-4 text-left">Fecha</th>
-              <th className="p-4 text-left">Método</th>
+              <th className="p-4 text-left priority-low">Método</th>
               <th className="p-4 text-right">Total</th>
-              <th className="p-4 text-center">Estado</th>
+              <th className="p-4 text-center priority-low">Estado</th>
               <th className="p-4 text-center">Acciones</th>
             </tr>
           </thead>
@@ -69,7 +69,7 @@ export default function SalesHistoryView({
                   <div className="font-bold text-xs">{new Date(txn.created_at).toLocaleDateString()}</div>
                   <div className="text-[10px] text-muted-foreground">{new Date(txn.created_at).toLocaleTimeString()}</div>
                 </td>
-                <td className="p-4">
+                <td className="p-4 priority-low">
                   <div className="flex items-center gap-2">
                     {txn.payment_method === 'cash' ? <DollarSign className="w-3 h-3 text-green-500" /> : <CreditCard className="w-3 h-3 text-primary" />}
                     <span className="text-[10px] font-bold uppercase">{txn.payment_method}</span>
@@ -78,7 +78,7 @@ export default function SalesHistoryView({
                 <td className="p-4 text-right">
                   <span className="text-base font-black">${txn.total_amount.toFixed(2)}</span>
                 </td>
-                <td className="p-4 text-center">
+                <td className="p-4 text-center priority-low">
                   <span className={cn(
                     "inline-flex items-center px-2 py-0.5 rounded text-[9px] font-black uppercase",
                     txn.status === 'completed' ? "bg-green-500/10 text-green-600" :

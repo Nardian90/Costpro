@@ -1,0 +1,46 @@
+'use client';
+
+import React from 'react';
+import { LayoutGrid, List } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+export type ViewMode = 'grid' | 'table';
+
+interface ViewSwitcherProps {
+  currentView: ViewMode;
+  onViewChange: (view: ViewMode) => void;
+  className?: string;
+}
+
+export default function ViewSwitcher({ currentView, onViewChange, className }: ViewSwitcherProps) {
+  return (
+    <div className={cn("flex items-center gap-1 bg-muted/50 p-1 rounded-xl border border-border shrink-0", className)}>
+      <button
+        onClick={() => onViewChange('grid')}
+        className={cn(
+          "flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all text-[10px] font-black uppercase tracking-widest active:scale-95",
+          currentView === 'grid'
+            ? "bg-primary text-white shadow-lg shadow-primary/20"
+            : "text-muted-foreground hover:text-foreground"
+        )}
+        aria-label="Vista de Rejilla"
+      >
+        <LayoutGrid className="w-3.5 h-3.5" />
+        <span className="hidden sm:inline">Grid</span>
+      </button>
+      <button
+        onClick={() => onViewChange('table')}
+        className={cn(
+          "flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all text-[10px] font-black uppercase tracking-widest active:scale-95",
+          currentView === 'table'
+            ? "bg-primary text-white shadow-lg shadow-primary/20"
+            : "text-muted-foreground hover:text-foreground"
+        )}
+        aria-label="Vista de Tabla"
+      >
+        <List className="w-3.5 h-3.5" />
+        <span className="hidden sm:inline">Lista</span>
+      </button>
+    </div>
+  );
+}

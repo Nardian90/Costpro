@@ -377,7 +377,7 @@ export default function TerminalView() {
   const renderView = () => {
     switch (currentView) {
       case 'dashboard': return <DashboardView onViewInventory={() => setCurrentView('inventory')} />;
-      case 'pos': return <POSView products={products} isLoading={isLoadingProducts} error={null} searchTerm={searchTerm} onSearchChange={setSearchTerm} items={items} onAddItem={handleAddToCart} onRemoveItem={removeItem} onUpdateQuantity={updateQuantity} onClearCart={clearCart} getTotal={getTotal} getSubtotal={getSubtotal} getItemCount={getItemCount} isProcessing={createSaleMutation.isPending} onCheckout={handleCheckout} />;
+      case 'pos': return <POSView products={products} isLoading={isLoadingProducts} error={null} searchTerm={searchTerm} onSearchChange={setSearchTerm} items={items} onAddItem={handleAddToCart} onRemoveItem={removeItem} onUpdateQuantity={updateQuantity} onClearCart={clearCart} getTotal={getTotal} getSubtotal={getSubtotal} getItemCount={getItemCount} isProcessing={createSaleMutation.isPending} onCheckout={handleCheckout} viewMode={posLayoutMode} onViewModeChange={setPosLayoutMode} />;
       case 'sales': return <SalesHistoryView transactions={transactions.filter(t => t.id.includes(searchTerm) && (!selectedStatus || t.status === selectedStatus))} searchTerm={searchTerm} onSearchChange={setSearchTerm} selectedStatus={selectedStatus} onStatusChange={setSelectedStatus} onViewDetails={handleViewTransactionDetails} />;
       case 'history': return <StockHistoryView movements={movements.filter(m => m.product?.name.toLowerCase().includes(searchTerm.toLowerCase()))} searchTerm={searchTerm} onSearchChange={setSearchTerm} dateRange={dateRange} onDateRangeChange={setDateRange} onRefresh={() => {}} />;
       case 'audit': return <AuditLogsView logs={auditLogs.filter(l => l.table_name.includes(searchTerm))} searchTerm={searchTerm} onSearchChange={setSearchTerm} dateRange={dateRange} onDateRangeChange={setDateRange} />;
@@ -396,7 +396,7 @@ export default function TerminalView() {
   };
 
   return (
-    <div className="min-h-screen flex bg-background text-foreground max-w-full overflow-x-auto">
+    <div className="min-h-screen flex bg-background text-foreground max-w-full overflow-x-hidden">
       {/* Sidebar */}
       <aside className={cn(
         "fixed lg:sticky top-0 h-screen z-50 transition-all duration-300 ease-in-out border-r border-sidebar-border shadow-2xl overflow-hidden",

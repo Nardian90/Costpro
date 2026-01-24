@@ -12,12 +12,12 @@ interface POSTableViewProps {
 
 const POSTableView: React.FC<POSTableViewProps> = ({ products, onAddToCart }) => {
   return (
-    <div className="overflow-x-auto rounded-2xl shadow-xl border border-white/5">
-      <table className="w-full text-sm grid-table-pos">
+    <div className="responsive-table-container">
+      <table className="w-full text-sm">
         <thead className="sticky-header">
           <tr className="bg-muted/50 text-muted-foreground font-black uppercase text-[10px] tracking-widest text-left">
             <th className="p-4 pl-[68px]">Producto</th>
-            <th className="p-4">SKU</th>
+            <th className="p-4 priority-low">SKU</th>
             <th className="p-4 text-right">Stock</th>
             <th className="p-4 text-right">Precio</th>
             <th className="p-4 text-center">Acción</th>
@@ -39,7 +39,7 @@ const POSTableView: React.FC<POSTableViewProps> = ({ products, onAddToCart }) =>
                   <div className="font-bold truncate max-w-[200px]">{product.name}</div>
                 </div>
               </td>
-              <td className="p-4 font-mono text-xs text-muted-foreground">{product.sku || '-'}</td>
+              <td className="p-4 font-mono text-xs text-muted-foreground priority-low">{product.sku || '-'}</td>
               <td className="p-4 text-right font-bold">{product.stock_current}</td>
               <td className="p-4 text-right font-black text-primary">${product.price.toFixed(2)}</td>
               <td className="p-4">

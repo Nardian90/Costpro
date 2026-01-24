@@ -6,6 +6,8 @@ import { cn } from '@/lib/utils';
 import SearchBar from '@/components/ui/SearchBar';
 import ActionMenu from '@/components/ui/ActionMenu';
 import ProductCard from '@/components/ProductCard';
+import POSTableView from '@/components/POSTableView';
+import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
 import { StateRenderer } from '@/components/ui/StateRenderer';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTheme } from 'next-themes';
@@ -27,6 +29,8 @@ interface POSViewProps {
   getItemCount: () => number;
   isProcessing: boolean;
   onCheckout: (paymentMethod: PaymentMethod, discount?: { type: string, value: number } | null) => Promise<void>;
+  viewMode?: ViewMode;
+  onViewModeChange?: (mode: ViewMode) => void;
 }
 
 const EmptyProductsComponent = () => (
@@ -53,7 +57,9 @@ export default function POSView({
   getSubtotal,
   getItemCount,
   isProcessing,
-  onCheckout
+  onCheckout,
+  viewMode = 'grid',
+  onViewModeChange
 }: POSViewProps) {
   const { theme } = useTheme();
   const [isPending, startTransition] = useTransition();
@@ -87,7 +93,12 @@ export default function POSView({
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase">TPV</h2>
+        <div className="flex items-center gap-4">
+          <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase">TPV</h2>
+          {onViewModeChange && (
+            <ViewSwitcher currentView={viewMode} onViewChange={onViewModeChange} />
+          )}
+        </div>
         <ActionMenu
           actions={[
             {
@@ -269,10 +280,7 @@ export default function POSView({
              </div>
           </SearchBar>
 
-          <div className={cn(
-            "grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6",
-            isPending && "opacity-50 transition-opacity"
-          )}>
+          <div className={cn(isPending && "opacity-50 transition-opacity")}>
             <StateRenderer
               isLoading={isLoading}
               error={error}
@@ -280,13 +288,19 @@ export default function POSView({
               emptyComponent={<EmptyProductsComponent />}
             >
               {(data) => (
-                data.map(product => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    onClick={onAddItem}
-                  />
-                ))
+                viewMode === 'grid' ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+                    {data.map(product => (
+                      <ProductCard
+                        key={product.id}
+                        product={product}
+                        onClick={onAddItem}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <POSTableView products={data} onAddToCart={onAddItem} />
+                )
               )}
             </StateRenderer>
           </div>
