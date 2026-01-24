@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { HelpCircle, FileText, Edit, DollarSign, Plus, Trash2 } from 'lucide-react';
 import ImageWithFallback from './ui/ImageWithFallback';
+import { PrimaryButton, SecondaryButton, IconButton } from './ui/atomic';
 import { getSupabaseUrl } from '@/lib/utils';
 import { Product } from '@/types';
 
@@ -70,14 +71,21 @@ export const CatalogModals = ({
                 <div className="w-full space-y-2">
                   <input type="text" placeholder="O pegar URL" value={modals.editingProduct?.image_url || ''} onChange={(e) => modals.setEditingProduct({ ...modals.editingProduct, image_url: e.target.value })} className="neu-input w-full text-center text-xs" />
                   <input type="file" id="product-image-upload-cat" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleUpdateImage(file); }} />
-                  <label htmlFor="product-image-upload-cat" className="neu-btn !px-8 text-[10px] font-black uppercase tracking-widest cursor-pointer w-full text-center block">Subir Nueva Imagen</label>
+                  <label htmlFor="product-image-upload-cat" className="w-full">
+                    <SecondaryButton asChild className="w-full cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        <Plus className="w-4 h-4" />
+                        <span>Subir Nueva Imagen</span>
+                      </div>
+                    </SecondaryButton>
+                  </label>
                 </div>
               </div>
             </div>
           </div>
-          <DialogFooter className="gap-3">
-            <button onClick={() => modals.setIsEditProductModalOpen(false)} className="neu-btn !py-3 flex-1 font-black text-xs">Cerrar</button>
-            <button onClick={handleUpdateProduct} className="neu-btn-primary !py-3 flex-1 font-black text-xs">Guardar</button>
+          <DialogFooter className="flex-col sm:flex-row gap-3">
+            <SecondaryButton onClick={() => modals.setIsEditProductModalOpen(false)} label="Cerrar" className="flex-1" />
+            <PrimaryButton onClick={handleUpdateProduct} label="Guardar Cambios" className="flex-1" />
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -96,7 +104,7 @@ export const CatalogModals = ({
                     </div>
                     <div className="flex items-center gap-6">
                       <div className="font-black text-xl text-primary">${v.price.toFixed(2)}</div>
-                      <button onClick={() => handleDeleteVariant(v.id)} className="p-2 text-danger"><Trash2 className="w-5 h-5" /></button>
+                      <IconButton onClick={() => handleDeleteVariant(v.id)} icon={Trash2} className="text-destructive border-destructive/20 hover:bg-destructive/10" />
                     </div>
                   </div>
                 ))}
@@ -108,10 +116,12 @@ export const CatalogModals = ({
                 <input type="number" value={modals.newVariantForm.conversion_factor} onChange={(e) => modals.setNewVariantForm({ ...modals.newVariantForm, conversion_factor: parseInt(e.target.value) || 1 })} className="neu-input w-full text-xs" placeholder="Factor" />
               </div>
               <input type="number" value={modals.newVariantForm.price || ''} onChange={(e) => modals.setNewVariantForm({ ...modals.newVariantForm, price: parseFloat(e.target.value) || 0 })} className="neu-input w-full text-xl font-black" placeholder="0.00" />
-              <button onClick={handleAddVariant} className="neu-btn-primary w-full !py-4 flex items-center justify-center gap-2 font-black text-[10px]"><Plus className="w-4 h-4" /> Registrar</button>
+              <PrimaryButton onClick={handleAddVariant} label="Registrar Variante" icon={Plus} className="w-full !py-4" />
             </div>
           </div>
-          <DialogFooter><button onClick={() => modals.setIsVariantsModalOpen(false)} className="neu-btn w-full !py-3 font-black text-xs">Cerrar Panel</button></DialogFooter>
+          <DialogFooter>
+            <SecondaryButton onClick={() => modals.setIsVariantsModalOpen(false)} label="Cerrar Panel" className="w-full" />
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -129,9 +139,9 @@ export const CatalogModals = ({
               <div className="space-y-1.5"><label className="text-[10px] font-black uppercase tracking-widest ml-1">Costo</label><input type="number" value={modals.newProductForm.cost_price || ''} onChange={(e) => modals.setNewProductForm({ ...modals.newProductForm, cost_price: parseFloat(e.target.value) || 0 })} className="neu-input w-full" /></div>
             </div>
           </div>
-          <DialogFooter className="gap-3">
-            <button onClick={() => modals.setIsCreateProductModalOpen(false)} className="neu-btn !py-3 flex-1 font-black text-xs">Cancelar</button>
-            <button onClick={handleCreateProduct} className="neu-btn-primary !py-3 flex-1 font-black text-xs">Crear</button>
+          <DialogFooter className="flex-col sm:flex-row gap-3">
+            <SecondaryButton onClick={() => modals.setIsCreateProductModalOpen(false)} label="Cancelar" className="flex-1" />
+            <PrimaryButton onClick={handleCreateProduct} label="Crear Producto" className="flex-1" />
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -141,9 +151,11 @@ export const CatalogModals = ({
           <DialogHeader><DialogTitle className="text-xl font-black uppercase flex items-center gap-2"><HelpCircle className="w-6 h-6 text-primary" /> Ayuda</DialogTitle></DialogHeader>
           <div className="space-y-4 py-4 text-sm">
             <p>Gestión de Precios y Catálogo.</p>
-            <button onClick={() => catalogService.downloadTemplate()} className="w-full neu-btn !py-2 flex items-center justify-center gap-2 text-[10px] font-black uppercase"><FileText className="w-4 h-4" /> Plantilla CSV</button>
+            <SecondaryButton onClick={() => catalogService.downloadTemplate()} label="Plantilla CSV" icon={FileText} className="w-full" />
           </div>
-          <DialogFooter><button onClick={() => modals.setIsHelpModalOpen(false)} className="neu-btn-primary w-full !py-3 font-black text-xs">Entendido</button></DialogFooter>
+          <DialogFooter>
+            <PrimaryButton onClick={() => modals.setIsHelpModalOpen(false)} label="Entendido" className="w-full" />
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>

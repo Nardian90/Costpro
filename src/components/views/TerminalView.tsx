@@ -46,6 +46,7 @@ import InventoryView from '@/components/InventoryView';
 import InventoryCountView from '@/components/InventoryCountView';
 import CatalogView from '@/components/CatalogView';
 import CostSheetsPage from '@/app/cost-sheets/page';
+import { MobileSafeContainer } from '@/components/ui/MobileSafeContainer';
 
 export default function TerminalView() {
   const { user, loading } = useAuthStore();
@@ -220,7 +221,9 @@ export default function TerminalView() {
                   <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Cargando vista...</p>
                 </div>
               }>
-                {renderView()}
+                <MobileSafeContainer>
+                  {renderView()}
+                </MobileSafeContainer>
               </Suspense>
             </motion.div>
           </AnimatePresence>

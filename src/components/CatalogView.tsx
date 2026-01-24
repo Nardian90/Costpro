@@ -23,8 +23,14 @@ import {
     PlusCircle
 } from 'lucide-react';
 import ActionMenu, { Action } from './ui/ActionMenu';
-import SearchBar from './ui/SearchBar';
-import ImageWithFallback from './ui/ImageWithFallback';
+import {
+    PrimaryButton,
+    SecondaryButton,
+    IconButton,
+    SearchInput,
+    ProductCard
+} from './ui/atomic';
+import { MobileSafeContainer } from './ui/MobileSafeContainer';
 import ViewSwitcher, { ViewMode } from './ui/ViewSwitcher';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { catalogService } from '@/services/catalog-service';
@@ -205,18 +211,52 @@ export default function CatalogView() {
     }
 
     return (
-        <div className="space-y-6">
+        <MobileSafeContainer className="space-y-6 pb-20">
             <input type="file" ref={fileInputRef} className="hidden" accept=".csv" onChange={handleImportFileChange} />
 
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                    <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase">Catálogo Global</h2>
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+                <div className="flex items-center justify-between w-full lg:w-auto gap-4">
+                    <h2 className="text-2xl sm:text-3xl font-black text-foreground tracking-tighter uppercase truncate">Catálogo Global</h2>
                     <ViewSwitcher currentView={layoutMode} onViewChange={setLayoutMode} />
                 </div>
-                <ActionMenu actions={actions} />
+
+                {/* Primary Actions - Column on mobile, ActionMenu on desktop */}
+                {isMobile ? (
+                    <div className="flex flex-col gap-3 w-full">
+                        <PrimaryButton
+                            label="Nuevo Producto"
+                            icon={PlusCircle}
+                            onClick={() => modals.setIsCreateProductModalOpen(true)}
+                        />
+                        <div className="grid grid-cols-3 gap-2">
+                            <IconButton
+                                icon={Download}
+                                onClick={() => catalogService.exportCatalog(products)}
+                                className="w-full"
+                            />
+                            <IconButton
+                                icon={Upload}
+                                onClick={() => { setImportErrors([]); fileInputRef.current?.click(); }}
+                                className="w-full"
+                            />
+                            <IconButton
+                                icon={HelpCircle}
+                                onClick={() => modals.setIsHelpModalOpen(true)}
+                                className="w-full"
+                            />
+                        </div>
+                    </div>
+                ) : (
+                    <ActionMenu actions={actions} />
+                )}
             </div>
 
-            <SearchBar value={searchTerm} onChange={setSearchTerm} placeholder="Buscar en el catálogo..." />
+            <SearchInput
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onClear={() => setSearchTerm('')}
+                placeholder="BUSCAR PRODUCTOS..."
+            />
 
             {importErrors.length > 0 && (
                 <div className="neu-card border-danger/20 bg-danger/5 !p-4">
@@ -248,47 +288,19 @@ export default function CatalogView() {
             )}
 
             {layoutMode === 'grid' ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
                     {filteredProducts.map(product => (
-                        <div key={product.id} className="neu-card !p-6 border border-white/5 hover:border-primary/20 transition-all group">
-                            <div className="neu-raised-sm w-full h-48 mb-6 flex items-center justify-center overflow-hidden rounded-2xl bg-background/50">
-                                <ImageWithFallback
-                                    src={product.public_image_url} alt={product.name} name={product.name}
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                />
-                            </div>
-                            <h3 className="font-black text-lg uppercase tracking-tight mb-2 truncate">{product.name}</h3>
-                            <p className="text-xs text-muted-foreground mb-4 line-clamp-2 min-h-[32px]">{product.description || 'Sin descripción disponible'}</p>
-                            <div className="grid grid-cols-2 gap-4 mb-8">
-                                <div className="neu-inset-sm !p-3 text-center border border-white/5">
-                                    <div className="text-[8px] font-black uppercase text-muted-foreground tracking-widest mb-1">Costo Unit.</div>
-                                    <div className="font-bold text-sm text-foreground">${product.cost_price?.toFixed(2) || '0.00'}</div>
-                                </div>
-                                <div className="neu-inset-sm !p-3 text-center border border-primary/10 bg-primary/5">
-                                    <div className="text-[8px] font-black uppercase text-primary tracking-widest mb-1">Precio Venta</div>
-                                    <div className="font-black text-sm text-primary">${product.price?.toFixed(2) || '0.00'}</div>
-                                </div>
-                            </div>
-                            <div className="flex gap-4">
-                                <button
-                                    onClick={() => { modals.setEditingProduct(product); modals.setIsEditProductModalOpen(true); }}
-                                    className="neu-btn !p-3 flex-1 flex items-center justify-center gap-2 hover:neu-raised-sm"
-                                >
-                                    <Edit className="w-4 h-4" /> <span className="text-[10px] font-black uppercase tracking-widest">Info</span>
-                                </button>
-                                <button
-                                    onClick={() => { modals.setEditingProduct(product); modals.setIsVariantsModalOpen(true); }}
-                                    className="neu-btn !p-3 flex-1 flex items-center justify-center gap-2 hover:neu-raised-sm"
-                                >
-                                    <DollarSign className="w-4 h-4" /> <span className="text-[10px] font-black uppercase tracking-widest">Precios</span>
-                                </button>
-                            </div>
-                        </div>
+                        <ProductCard
+                            key={product.id}
+                            product={product}
+                            onEdit={() => { modals.setEditingProduct(product); modals.setIsEditProductModalOpen(true); }}
+                            onViewPrices={() => { modals.setEditingProduct(product); modals.setIsVariantsModalOpen(true); }}
+                        />
                     ))}
                     {filteredProducts.length === 0 && (
-                        <div className="col-span-full py-32 text-center neu-card border-2 border-dashed border-white/5">
-                            <Search className="w-16 h-16 mx-auto mb-6 opacity-5" />
-                            <p className="text-xl font-black text-muted-foreground uppercase tracking-widest">Sin resultados</p>
+                        <div className="col-span-full py-20 sm:py-32 text-center neu-card border-2 border-dashed border-white/5">
+                            <Search className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-6 opacity-10" />
+                            <p className="text-lg sm:text-xl font-black text-muted-foreground uppercase tracking-widest">Sin resultados</p>
                         </div>
                     )}
                 </div>
@@ -322,8 +334,8 @@ export default function CatalogView() {
                                     <td className="p-4 text-right font-black text-primary">${product.price?.toFixed(2)}</td>
                                     <td className="p-4">
                                         <div className="flex justify-center gap-2">
-                                            <button onClick={() => { modals.setEditingProduct(product); modals.setIsEditProductModalOpen(true); }} className="neu-raised-sm p-2 hover:text-primary transition-all"><Edit className="w-4 h-4" /></button>
-                                            <button onClick={() => { modals.setEditingProduct(product); modals.setIsVariantsModalOpen(true); }} className="neu-raised-sm p-2 hover:text-primary transition-all"><DollarSign className="w-4 h-4" /></button>
+                                            <IconButton onClick={() => { modals.setEditingProduct(product); modals.setIsEditProductModalOpen(true); }} icon={Edit} className="min-h-0 min-w-0 p-2" />
+                                            <IconButton onClick={() => { modals.setEditingProduct(product); modals.setIsVariantsModalOpen(true); }} icon={DollarSign} className="min-h-0 min-w-0 p-2" />
                                         </div>
                                     </td>
                                 </tr>
@@ -342,6 +354,6 @@ export default function CatalogView() {
                 handleCreateProduct={handleCreateProduct}
                 catalogService={catalogService}
             />
-        </div>
+        </MobileSafeContainer>
     );
 }
