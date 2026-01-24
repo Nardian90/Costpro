@@ -8,7 +8,7 @@ interface CyberShellProps {
 const CyberShell: React.FC<CyberShellProps> = ({ children }) => {
   return (
     // Aplicamos el padding aquí para crear el "marco" y usamos colores de tema.
-    <div className="min-h-screen bg-background text-foreground font-sans p-1 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-background text-foreground font-sans p-4 sm:p-6 lg:p-8 overflow-x-hidden">
       <div className="absolute inset-0 z-0 opacity-10">
         {/* Futuristic background grid */}
         <div
@@ -19,9 +19,9 @@ const CyberShell: React.FC<CyberShellProps> = ({ children }) => {
         />
       </div>
       {/* El padding se eliminó de 'main' porque ahora lo gestiona el div padre. */}
-      <main className="relative z-10 max-w-full overflow-x-auto">
+      <main className="relative z-10 max-w-full overflow-x-hidden">
         {/* Glassmorphic container */}
-        <div className="rounded-xl border border-border bg-card/40 dark:bg-white/5 p-2 sm:p-4 backdrop-blur-lg shadow-sm overflow-x-auto">
+        <div className="rounded-xl border border-border bg-card/40 dark:bg-white/5 p-2 sm:p-4 backdrop-blur-lg shadow-sm overflow-x-hidden">
           {children}
         </div>
       </main>

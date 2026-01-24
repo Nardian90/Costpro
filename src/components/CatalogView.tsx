@@ -37,6 +37,7 @@ import {
 import ActionMenu, { Action } from './ui/ActionMenu';
 import SearchBar from './ui/SearchBar';
 import ProductImage from './ui/ProductImage';
+import ViewSwitcher from './ui/ViewSwitcher';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -415,13 +416,6 @@ export default function CatalogView() {
             variant: 'primary',
         },
         {
-            id: 'layout',
-            label: layoutMode === 'grid' ? 'Vista Tabla' : 'Vista Cuadrícula',
-            icon: layoutMode === 'grid' ? TableIcon : LayoutGrid,
-            onClick: () => setLayoutMode(prev => prev === 'grid' ? 'table' : 'grid'),
-            className: 'hidden md:flex'
-        },
-        {
             id: 'export',
             label: 'Exportar Precios',
             icon: Download,
@@ -461,7 +455,10 @@ export default function CatalogView() {
             <input type="file" ref={fileInputRef} className="hidden" accept=".csv" onChange={handleImportFileChange} />
 
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase">Catálogo Global</h2>
+                <div className="flex items-center gap-4">
+                    <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase">Catálogo Global</h2>
+                    <ViewSwitcher currentView={layoutMode} onViewChange={setLayoutMode} />
+                </div>
                 <ActionMenu actions={actions} />
             </div>
 
