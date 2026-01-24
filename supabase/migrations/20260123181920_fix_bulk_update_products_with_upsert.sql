@@ -9,12 +9,12 @@ BEGIN
     WITH upserted AS (
         INSERT INTO products (id, store_id, name, cost_price, price, image_url, created_at, updated_at)
         SELECT
-            (p->>'id')::UUID,
-            (p->>'store_id')::UUID,
-            p->>'name',
-            (p->>'cost_price')::NUMERIC,
-            (p->>'price')::NUMERIC,
-            p->>'image_url',
+            p.id::UUID,
+            p.store_id::UUID,
+            p.name,
+            p.cost_price::NUMERIC,
+            p.price::NUMERIC,
+            p.image_url,
             NOW(),
             NOW()
         FROM jsonb_to_recordset(_products) AS p(
