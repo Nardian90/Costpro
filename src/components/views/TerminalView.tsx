@@ -151,6 +151,10 @@ export default function TerminalView() {
 
   // Handlers
   const handleAddToCart = useCallback((product: Product) => {
+    if (product.stock_current <= 0) {
+      toast.error(`${product.name} no tiene stock disponible.`);
+      return;
+    }
     addItem({
       product_id: product.id,
       variant_id: null,
