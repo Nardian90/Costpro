@@ -103,6 +103,12 @@ export default function TerminalView() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const navRef = useRef<HTMLElement>(null);
 
+  // Scroll animations for sidebar
+  const scrollY = useMotionValue(0);
+  const logoHeight = useTransform(scrollY, [0, 80], [160, 48]);
+  const logoOpacity = useTransform(scrollY, [0, 50], [1, 1]);
+  const logoScale = useTransform(scrollY, [0, 80], [1, 0.7]);
+
   // React Query Hooks
   const { data: productsData, isLoading: isLoadingProducts, refetch: refetchProducts } = useProducts(user?.storeId);
   const products = productsData || [];
@@ -323,6 +329,22 @@ export default function TerminalView() {
     return roles.join(' / ').toUpperCase();
   };
 
+  const handleSidebarScroll = useCallback(() => {
+    if (!navRef.current) return;
+    const { scrollTop } = navRef.current;
+    requestAnimationFrame(() => {
+      scrollY.set(scrollTop);
+    });
+  }, [scrollY]);
+
+  useEffect(() => {
+    const nav = navRef.current;
+    if (nav) {
+      nav.addEventListener('scroll', handleSidebarScroll, { passive: true });
+      return () => nav.removeEventListener('scroll', handleSidebarScroll);
+    }
+  }, [handleSidebarScroll]);
+
   // Auth check and mandatory hooks after state definitions
   useEffect(() => {
     if (!loading && !user) {
@@ -378,15 +400,25 @@ export default function TerminalView() {
       )}>
         <div className="bg-sidebar/90 backdrop-blur-2xl h-full flex flex-col overflow-hidden w-64 lg:w-72">
           {/* Logo Area - Smoothly contracts on scroll */}
-          <div
+          <motion.div
             id="sidebar-logo-container"
-            className="border-b border-sidebar-border/50 shrink-0 bg-sidebar/5 p-8"
+            style={{
+              height: logoHeight,
+              opacity: logoOpacity,
+              overflow: 'hidden'
+            }}
+            className="border-b border-sidebar-border/50 shrink-0 bg-sidebar/5"
           >
-            <CostProLogo size={50} animated={true} />
-            <div className="mt-4">
-              <div className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Terminal Operativa</div>
-            </div>
-          </div>
+            <motion.div
+              style={{ scale: logoScale }}
+              className="p-8 h-[160px] flex flex-col justify-center"
+            >
+              <CostProLogo size={50} animated={true} />
+              <div className="mt-4">
+                <div className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Terminal Operativa</div>
+              </div>
+            </motion.div>
+          </motion.div>
 
           {/* Search Area */}
           <div className="px-6 py-4 shrink-0 border-b border-sidebar-border/30 bg-sidebar/5">
@@ -462,7 +494,7 @@ export default function TerminalView() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 min-h-screen flex flex-col">
+      <main className="flex-1 min-h-screen flex flex-col z-10">
         {/* Header */}
         <header className="bg-background/80 backdrop-blur-xl p-4 sm:p-6 sticky top-0 z-30 border-b border-white/5 w-full">
           <div className="flex items-center justify-between gap-4">
