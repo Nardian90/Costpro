@@ -40,7 +40,7 @@ const CostSheetAnnexes: React.FC<CostSheetAnnexesProps> = ({ annexes }) => {
 
             <div className="overflow-x-auto table-to-cards border border-slate-100 dark:border-slate-800 rounded-3xl overflow-hidden shadow-xl bg-white dark:bg-slate-900">
               <table className="w-full text-sm">
-                <thead className="bg-slate-800 text-white hidden sm:table-header-group">
+                <thead className="bg-slate-800 text-white">
                   <tr>
                     {annex.columns.map((col) => (
                       <th key={col.key} className="p-4 text-left font-black uppercase tracking-widest text-[10px]">
@@ -67,7 +67,7 @@ const CostSheetAnnexes: React.FC<CostSheetAnnexesProps> = ({ annexes }) => {
                   ))}
                   {/* Total Row */}
                   <tr className="bg-slate-50 dark:bg-slate-800/30 font-bold border-t-2 border-slate-100 dark:border-slate-700">
-                      <td colSpan={annex.columns.length - 1} className="p-4 text-right uppercase tracking-widest text-[10px] hidden sm:table-cell">
+                      <td colSpan={annex.columns.length - 1} className="p-4 text-right uppercase tracking-widest text-[10px]">
                         Subtotal {annex.id}
                       </td>
                       <td data-label="TOTAL" className="p-4 text-right font-mono font-black text-xl text-slate-900 dark:text-white">
