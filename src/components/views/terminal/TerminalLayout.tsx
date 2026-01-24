@@ -145,7 +145,7 @@ export default function TerminalLayout({
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 min-h-screen flex flex-col min-w-0">
+      <main className="flex-1 min-h-screen flex flex-col min-w-0 max-w-[100vw] overflow-x-hidden">
         <header className="bg-background/80 backdrop-blur-md p-4 sm:p-6 sticky top-0 z-30 border-b border-border w-full">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-4 flex-1 min-w-0">
