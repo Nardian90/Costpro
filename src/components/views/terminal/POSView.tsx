@@ -65,6 +65,7 @@ export default function POSView({
   const filteredProducts = useMemo(() => {
     const lowerSearch = searchTerm.toLowerCase();
     return products.filter(p => {
+      if (p.stock_current <= 0) return false;
       const matchesSearch = p.name.toLowerCase().includes(lowerSearch) ||
         (p.sku && p.sku.toLowerCase().includes(lowerSearch)) ||
         (p.category && p.category.toLowerCase().includes(lowerSearch));
