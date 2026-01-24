@@ -6,7 +6,8 @@ import {
   BookOpen, Users, ShoppingCart, Package, Shield,
   CheckCircle2, ArrowRight, Info, AlertTriangle,
   Settings, Building2, Receipt, FileText, ChevronRight,
-  UserPlus, Store, Key, ListChecks, HelpCircle
+  UserPlus, Store, Key, ListChecks, HelpCircle,
+  Wand2, Table2, FileSpreadsheet, History, Target
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +21,7 @@ import CashFlowDiagram from '@/components/help/CashFlowDiagram';
 import InventoryFlowDiagram from '@/components/help/InventoryFlowDiagram';
 import SalesFlowDiagram from '@/components/help/SalesFlowDiagram';
 import SecurityFlowDiagram from '@/components/help/SecurityFlowDiagram';
+import CostFlowDiagram from '@/components/help/CostFlowDiagram';
 
 export default function HelpView() {
   return (
@@ -37,33 +39,41 @@ export default function HelpView() {
         </div>
         <div className="flex flex-col items-end">
           <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-black">
-            VERSIÓN 5.2.0 (ENTERPRISE)
+            VERSIÓN 5.3.0 (ENTERPRISE)
           </Badge>
-          <span className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Última actualización: Nov 2024</span>
+          <span className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Última actualización: Ene 2026</span>
         </div>
       </div>
 
       <Tabs defaultValue="roles" className="w-full">
-        <TabsList className="grid grid-cols-2 md:grid-cols-5 h-auto p-1 bg-muted/50 rounded-2xl mb-8">
-          <TabsTrigger value="roles" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm">
-            <Users className="w-4 h-4 mr-2" />
+        <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 h-auto p-1 bg-muted/50 rounded-2xl mb-8">
+          <TabsTrigger value="roles" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs">
+            <Users className="w-4 h-4 mr-2 hidden sm:block" />
             Jerarquía
           </TabsTrigger>
-          <TabsTrigger value="admin" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm">
-            <Settings className="w-4 h-4 mr-2" />
+          <TabsTrigger value="admin" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs">
+            <Settings className="w-4 h-4 mr-2 hidden sm:block" />
             Gestión
           </TabsTrigger>
-          <TabsTrigger value="pos" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm">
-            <ShoppingCart className="w-4 h-4 mr-2" />
+          <TabsTrigger value="costs" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs">
+            <FileText className="w-4 h-4 mr-2 hidden sm:block" />
+            Costos
+          </TabsTrigger>
+          <TabsTrigger value="pos" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs">
+            <ShoppingCart className="w-4 h-4 mr-2 hidden sm:block" />
             Ventas
           </TabsTrigger>
-          <TabsTrigger value="inventory" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm">
-            <Package className="w-4 h-4 mr-2" />
+          <TabsTrigger value="inventory" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs">
+            <Package className="w-4 h-4 mr-2 hidden sm:block" />
             Almacén
           </TabsTrigger>
-          <TabsTrigger value="security" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm">
-            <Shield className="w-4 h-4 mr-2" />
+          <TabsTrigger value="security" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs">
+            <Shield className="w-4 h-4 mr-2 hidden sm:block" />
             Seguridad
+          </TabsTrigger>
+          <TabsTrigger value="history" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs">
+            <History className="w-4 h-4 mr-2 hidden sm:block" />
+            Historial
           </TabsTrigger>
         </TabsList>
 
@@ -178,14 +188,19 @@ export default function HelpView() {
                     <div className="flex items-center gap-4 text-left">
                       <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-black">2</div>
                       <div>
-                        <h4 className="font-black text-sm uppercase">Paso 2: Asignación de Tienda</h4>
-                        <p className="text-xs text-muted-foreground">Vincular al usuario con una sucursal física.</p>
+                        <h4 className="font-black text-sm uppercase">Paso 2: Asignación de Tiendas (Bulk)</h4>
+                        <p className="text-xs text-muted-foreground">Vincular al usuario con una o varias sucursales.</p>
                       </div>
                     </div>
                   </AccordionTrigger>
-                  <AccordionContent className="pb-6 pl-14 text-sm text-muted-foreground space-y-2">
-                    <p>Dentro de la ficha del usuario, selecciona la tienda en la que operará.</p>
-                    <p>Puedes asignar <span className="font-bold">múltiples tiendas</span> si el usuario es supervisor o rota entre sucursales.</p>
+                  <AccordionContent className="pb-6 pl-14 text-sm text-muted-foreground space-y-4">
+                    <p>Utiliza el gestor multi-tienda para asignar <span className="font-bold">múltiples sucursales</span> de una sola vez. Cada membresía es independiente.</p>
+                    <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 flex items-start gap-3">
+                      <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                      <p className="text-xs leading-relaxed">
+                        El sistema ahora soporta la asignación masiva de roles y estados por tienda, permitiendo que un usuario sea <span className="font-bold italic">Encargado</span> en una sede y <span className="font-bold italic">Cajero</span> en otra simultáneamente.
+                      </p>
+                    </div>
                   </AccordionContent>
                 </AccordionItem>
 
@@ -207,6 +222,80 @@ export default function HelpView() {
               </Accordion>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* --- COST SHEET FLOWS --- */}
+        <TabsContent value="costs" className="space-y-8">
+          <div className="grid lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-6">
+              <Card className="border-none shadow-none bg-transparent">
+                <CardHeader className="px-0">
+                  <CardTitle className="text-2xl font-black uppercase tracking-tight">Ingeniería de Costos v5</CardTitle>
+                  <CardDescription className="text-base font-medium">
+                    Nuestro motor de cálculo procesa 14 secciones críticas y 5 anexos técnicos con precisión matemática.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="px-0">
+                  <CostFlowDiagram />
+                </CardContent>
+              </Card>
+
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="p-6 rounded-2xl bg-violet-500/5 border border-violet-500/10 space-y-2">
+                  <Table2 className="w-6 h-6 text-violet-600" />
+                  <h5 className="font-black text-xs uppercase">Modo Experto</h5>
+                  <p className="text-[10px] text-muted-foreground leading-tight">Control total sobre celdas, fórmulas y referencias cruzadas en tiempo real.</p>
+                </div>
+                <div className="p-6 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 space-y-2">
+                  <Wand2 className="w-6 h-6 text-emerald-600" />
+                  <h5 className="font-black text-xs uppercase">Modo Asistido</h5>
+                  <p className="text-[10px] text-muted-foreground leading-tight">Wizard paso a paso que guía la entrada de datos para evitar errores humanos.</p>
+                </div>
+                <div className="p-6 rounded-2xl bg-amber-500/5 border border-amber-500/10 space-y-2">
+                  <BookOpen className="w-6 h-6 text-amber-600" />
+                  <h5 className="font-black text-xs uppercase">Modo Lectura</h5>
+                  <p className="text-[10px] text-muted-foreground leading-tight">Narrativa generada automáticamente que explica el origen de cada costo.</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div className="p-6 rounded-3xl bg-muted/30 border border-border">
+                <h4 className="font-black text-xs uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <Target className="w-4 h-4" />
+                  Arquitectura v5
+                </h4>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center font-black text-primary text-[10px]">14</div>
+                    <span className="text-[10px] font-bold uppercase">Secciones de Gasto</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center font-black text-primary text-[10px]">05</div>
+                    <span className="text-[10px] font-bold uppercase">Anexos Técnicos</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center font-black text-primary text-[10px]">14%</div>
+                    <span className="text-[10px] font-bold uppercase">Seguridad Social</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center font-black text-primary text-[10px]">05%</div>
+                    <span className="text-[10px] font-bold uppercase">Impuesto Fuerza Trabajo</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 rounded-3xl bg-primary text-white space-y-4">
+                <h4 className="font-black text-xs uppercase tracking-widest opacity-80 flex items-center gap-2">
+                  <FileSpreadsheet className="w-4 h-4" />
+                  Exportación
+                </h4>
+                <p className="text-[10px] font-medium leading-relaxed">
+                  Genera reportes profesionales en <span className="font-black">PDF</span> con branding corporativo o exporta a <span className="font-black">CSV/Excel</span> para auditorías contables externas.
+                </p>
+              </div>
+            </div>
+          </div>
         </TabsContent>
 
         {/* --- POS FLOWS --- */}
@@ -352,6 +441,52 @@ export default function HelpView() {
                         {t}
                       </div>
                     ))}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* --- VERSION HISTORY --- */}
+        <TabsContent value="history" className="space-y-8">
+          <Card className="border-none shadow-none bg-transparent">
+            <CardHeader className="px-0">
+              <CardTitle className="text-2xl font-black uppercase tracking-tight">Historial de Actualizaciones</CardTitle>
+              <CardDescription className="text-base font-medium">
+                Registro oficial de cambios y mantenimiento de la plataforma.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-0">
+              <div className="space-y-8">
+                <div className="relative pl-8 border-l-2 border-primary/20 space-y-4">
+                  <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary border-4 border-background" />
+                  <div className="flex items-center gap-3">
+                    <Badge className="bg-primary">v5.3.0</Badge>
+                    <span className="text-xs font-black text-muted-foreground uppercase">24 de Enero, 2026 (Actual)</span>
+                  </div>
+                  <div className="bg-muted/30 rounded-2xl p-6 space-y-4">
+                    <h4 className="font-black text-sm uppercase text-primary">Mantenimiento de Documentación Profesional</h4>
+                    <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Nuevo Módulo de Ayuda para Fichas de Costo v5.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Documentación de Modos: Experto, Asistido y Lectura.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Guía de Gestión Masiva (Bulk) de membresías.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Actualización de diagramas SVG de arquitectura.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Inclusión de reglas impositivas (14% SS / 5% IFT).</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Optimización de navegación en sección Ayuda.</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="relative pl-8 border-l-2 border-primary/10 space-y-4 opacity-60">
+                  <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-muted border-4 border-background" />
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline">v5.2.0</Badge>
+                    <span className="text-xs font-black text-muted-foreground uppercase">Noviembre, 2024</span>
+                  </div>
+                  <div className="bg-muted/10 rounded-2xl p-6">
+                    <h4 className="font-black text-sm uppercase">Lanzamiento Multi-Store Enterprise</h4>
+                    <p className="text-xs mt-2">Implementación de RLS, jerarquías de roles dinámicos y aislamiento de sucursales.</p>
                   </div>
                 </div>
               </div>
