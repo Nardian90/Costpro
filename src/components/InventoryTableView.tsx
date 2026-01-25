@@ -5,7 +5,7 @@ import React, { useRef, useCallback } from 'react';
 import type { Product } from '@/types';
 import { cn } from '@/lib/utils';
 import { Package, Edit, Loader2 } from 'lucide-react';
-import ImageWithFallback from './ui/ImageWithFallback';
+import ProductImage from './ui/ProductImage';
 
 interface InventoryTableViewProps {
     products: Product[];
@@ -21,11 +21,9 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product }>((
             <td className="p-4">
                 <div className="flex items-center gap-3">
                     <div className="neu-raised-sm w-12 h-12 flex items-center justify-center overflow-hidden shrink-0">
-                        <ImageWithFallback
-                            alt={product.name}
+                        <ProductImage
                             name={product.name}
                             className="w-full h-full object-cover"
-                            forcePlaceholder={true}
                         />
                     </div>
                     <div>

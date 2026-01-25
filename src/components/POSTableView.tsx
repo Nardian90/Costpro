@@ -3,7 +3,7 @@
 import React from 'react';
 import type { Product } from '@/types';
 import { ShoppingCart } from 'lucide-react';
-import ImageWithFallback from './ui/ImageWithFallback';
+import ProductImage from './ui/ProductImage';
 
 interface POSTableViewProps {
   products: Product[];
@@ -29,11 +29,9 @@ const POSTableView: React.FC<POSTableViewProps> = ({ products, onAddToCart }) =>
               <td className="p-4">
                 <div className="flex items-center gap-3">
                   <div className="neu-raised-sm w-10 h-10 flex items-center justify-center overflow-hidden shrink-0">
-                    <ImageWithFallback
-                      alt={product.name}
+                    <ProductImage
                       name={product.name}
                       className="w-full h-full object-cover"
-                      forcePlaceholder={true}
                     />
                   </div>
                   <div className="font-bold truncate max-w-[200px]">{product.name}</div>

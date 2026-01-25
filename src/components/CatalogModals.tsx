@@ -9,7 +9,7 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { HelpCircle, FileText, Edit, DollarSign, Plus, Trash2 } from 'lucide-react';
-import ImageWithFallback from './ui/ImageWithFallback';
+import ProductImage from './ui/ProductImage';
 import { PrimaryButton, SecondaryButton, IconButton } from './ui/atomic';
 import { getSupabaseUrl } from '@/lib/utils';
 import { Product } from '@/types';
@@ -66,7 +66,12 @@ export const CatalogModals = ({
               <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Imagen</label>
               <div className="flex flex-col items-center gap-6 p-6 neu-inset-sm bg-background/50 rounded-3xl">
                 <div className="neu-raised-sm w-40 h-40 flex items-center justify-center overflow-hidden rounded-3xl">
-                  <ImageWithFallback src={modals.editingProduct?.image_url?.includes('http') ? modals.editingProduct.image_url : getSupabaseUrl('product-images', modals.editingProduct?.image_url)} alt={modals.editingProduct?.name || ''} name={modals.editingProduct?.name || ''} className="w-full h-full object-cover" />
+                  <ProductImage
+                    src={modals.editingProduct?.image_url}
+                    name={modals.editingProduct?.name || ''}
+                    className="w-full h-full"
+                    forceShow={true}
+                  />
                 </div>
                 <div className="w-full space-y-2">
                   <input type="text" placeholder="O pegar URL" value={modals.editingProduct?.image_url || ''} onChange={(e) => modals.setEditingProduct({ ...modals.editingProduct, image_url: e.target.value })} className="neu-input w-full text-center text-xs" />
