@@ -22,6 +22,9 @@ export function useSessionManager() {
         const now = Date.now();
         // Prevent check if offline, another check is in progress, or within throttle period (unless forced)
         if (!isOnline || isCheckingSession || (!force && now - lastChecked < SESSION_CHECK_THROTTLE)) {
+            if (!user && !isCheckingSession) {
+                setLoading(false);
+            }
             return;
         }
 
@@ -38,7 +41,12 @@ export function useSessionManager() {
             const { session } = data;
 
             if (session?.user) {
-                const { data: profileData } = await supabase.from('profiles').select('*, memberships:user_store_memberships(*, store:stores(name))').eq('id', session.user.id).single();
+                const { data: profileData, error: profileError } = await Promise.race([
+                    supabase.from('profiles').select('*, memberships:user_store_memberships(*, store:stores(name))').eq('id', session.user.id).single(),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Profile fetch timeout')), SESSION_CHECK_TIMEOUT))
+                ]) as any;
+
+                if (profileError) throw profileError;
 
                 if (profileData?.is_active) {
                     let activeRoles: UserRole[] = [profileData.role];
@@ -97,16 +105,21 @@ export function useSessionManager() {
                     const currentState = useAuthStore.getState();
                     if (session.access_token !== currentState.token || JSON.stringify(userContractData) !== JSON.stringify(currentState.user)) {
                         login(userContractData, session.access_token);
+                    } else {
+                        setLoading(false);
                     }
                     setStatus('stable');
                 } else {
                     await supabase.auth.signOut();
+                    setLoading(false);
+                    router.push('/login');
                 }
             } else {
                 if (useAuthStore.getState().user) {
                     await supabase.auth.signOut();
                 }
                 setLoading(false);
+                router.push('/login');
             }
         } catch (error: any) {
             console.warn(`Session check failed: ${error.message}`);
