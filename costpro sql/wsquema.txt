@@ -78,6 +78,7 @@ CREATE TABLE public.inventory (
   quantity integer NOT NULL DEFAULT 0,
   low_stock_threshold integer DEFAULT 10,
   updated_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT inventory_pkey PRIMARY KEY (id),
   CONSTRAINT inventory_store_id_fkey FOREIGN KEY (store_id) REFERENCES public.stores(id),
   CONSTRAINT inventory_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id)
@@ -191,6 +192,8 @@ CREATE TABLE public.receipt_items (
   product_id uuid,
   quantity integer NOT NULL CHECK (quantity > 0),
   unit_cost numeric NOT NULL CHECK (unit_cost >= 0::numeric),
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT receipt_items_pkey PRIMARY KEY (id),
   CONSTRAINT receipt_items_receipt_id_fkey FOREIGN KEY (receipt_id) REFERENCES public.receipts(id),
   CONSTRAINT receipt_items_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id)
