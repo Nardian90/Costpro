@@ -21,6 +21,7 @@ import CashFlowDiagram from '@/components/help/CashFlowDiagram';
 import InventoryFlowDiagram from '@/components/help/InventoryFlowDiagram';
 import StoreSkuDiagram from '@/components/help/StoreSkuDiagram';
 import SalesFlowDiagram from '@/components/help/SalesFlowDiagram';
+import MobilePosDiagram from '@/components/help/MobilePosDiagram';
 import SecurityFlowDiagram from '@/components/help/SecurityFlowDiagram';
 import CostFlowDiagram from '@/components/help/CostFlowDiagram';
 
@@ -40,9 +41,9 @@ export default function HelpView() {
         </div>
         <div className="flex flex-col items-end">
           <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-black">
-            VERSIÓN 5.3.0 (ENTERPRISE)
+            VERSIÓN 5.4.0 (MOBILE-FIRST)
           </Badge>
-          <span className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Última actualización: Ene 2026</span>
+          <span className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Última actualización: 25 Ene 2026</span>
         </div>
       </div>
 
@@ -306,10 +307,29 @@ export default function HelpView() {
               <CardTitle className="text-2xl font-black uppercase tracking-tight">Ciclo de Venta y Caja</CardTitle>
             </CardHeader>
             <CardContent className="px-0 space-y-12">
+              <div className="space-y-10">
+                <div className="grid lg:grid-cols-2 gap-8 items-center">
+                  <div className="space-y-4">
+                    <h3 className="font-bold text-lg flex items-center gap-2 text-primary uppercase tracking-tighter">
+                      <ShoppingCart className="w-5 h-5" />
+                      Arquitectura Mobile-First
+                    </h3>
+                    <p className="text-sm font-medium leading-relaxed">
+                      En la v5.4.0, el TPV ha sido rediseñado para una operativa fluida en dispositivos táctiles. El carrito de compras ahora reside en un <span className="font-bold text-primary">Drawer (Panel Inferior)</span> accesible desde la zona de alcance del pulgar.
+                    </p>
+                    <div className="bg-primary/5 p-4 rounded-xl border-l-4 border-primary">
+                       <p className="text-[10px] font-black uppercase text-primary mb-1">Optimización UX:</p>
+                       <p className="text-xs italic">"Menos clics, más velocidad. El selector de productos y el cierre de venta están optimizados para uso a una sola mano."</p>
+                    </div>
+                  </div>
+                  <MobilePosDiagram />
+                </div>
+              </div>
+
               <div className="space-y-6">
                 <h3 className="font-bold text-lg flex items-center gap-2 text-primary">
                   <ShoppingCart className="w-5 h-5" />
-                  Operativa de Punto de Venta (TPV)
+                  Flujo de Operación Estándar
                 </h3>
                 <SalesFlowDiagram />
               </div>
@@ -486,26 +506,45 @@ export default function HelpView() {
             </CardHeader>
             <CardContent className="px-0">
               <div className="space-y-8">
+                {/* --- v5.4.0 --- */}
                 <div className="relative pl-8 border-l-2 border-primary/20 space-y-4">
                   <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary border-4 border-background" />
                   <div className="flex items-center gap-3">
-                    <Badge className="bg-primary">v5.3.0</Badge>
-                    <span className="text-xs font-black text-muted-foreground uppercase">24 de Enero, 2026 (Actual)</span>
+                    <Badge className="bg-primary">v5.4.0</Badge>
+                    <span className="text-xs font-black text-muted-foreground uppercase">25 de Enero, 2026 (Actual)</span>
                   </div>
                   <div className="bg-muted/30 rounded-2xl p-6 space-y-4">
+                    <h4 className="font-black text-sm uppercase text-primary">Mobile-First Optimization & UI Sync</h4>
+                    <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Rediseño de TPV con carrito tipo Drawer para operativa móvil.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Unificación de vistas de Inventario con ProductCard atómica.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Implementación de ActionMenu con posición inferior (Thumb Zone).</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Transiciones fluidas en navegación y sidebar optimizado.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Nuevo Selector de Tienda Activa en cabecera multi-sucursal.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Micro-guía interactiva de operativa móvil en Ayuda.</li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* --- v5.3.0 --- */}
+                <div className="relative pl-8 border-l-2 border-primary/10 space-y-4 opacity-60">
+                  <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-muted border-4 border-background" />
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline">v5.3.0</Badge>
+                    <span className="text-xs font-black text-muted-foreground uppercase">24 de Enero, 2026</span>
+                  </div>
+                  <div className="bg-muted/10 rounded-2xl p-6 space-y-4">
                     <h4 className="font-black text-sm uppercase text-primary">Multi-Store SKU Hardening</h4>
                     <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
                       <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Implementación de SKU único por tienda (Composite Key).</li>
                       <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Nueva lógica de matching de inventario por Tienda Activa.</li>
                       <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Validación obligatoria de SKU en Catálogo y Recepción.</li>
                       <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Nuevo diagrama SVG: Aislamiento de SKU en entorno Multi-Tienda.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Refuerzo de integridad en importación masiva de productos.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Actualización de Centro de Ayuda v5.3.1.</li>
                     </ul>
                   </div>
                 </div>
 
-                <div className="relative pl-8 border-l-2 border-primary/10 space-y-4 opacity-60">
+                <div className="relative pl-8 border-l-2 border-primary/10 space-y-4 opacity-40">
                   <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-muted border-4 border-background" />
                   <div className="flex items-center gap-3">
                     <Badge variant="outline">v5.2.0</Badge>
