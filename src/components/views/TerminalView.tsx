@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useTransition, Suspense, lazy } from 'react';
+import { useState, useEffect, useTransition, Suspense, lazy } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore, useUIStore, useCartStore, type ViewType } from '@/store';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -82,6 +83,15 @@ export default function TerminalView() {
   const nav = useTerminalNavigation(user, sidebarSearch);
   const modals = useTerminalModals(transactions);
   const ops = useTerminalOperations();
+  const router = useRouter();
+
+  // Guard: if loading is finished but no user, redirect to login as fallback
+  // (Main redirect is handled by useSessionManager)
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [loading, user, router]);
 
   if (loading) {
     return (
