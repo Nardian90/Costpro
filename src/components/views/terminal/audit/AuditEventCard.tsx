@@ -1,0 +1,151 @@
+import React from 'react';
+import { AuditLog } from '@/types';
+import { formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
+import AuditEventIcon, { getAuditCategory } from './AuditEventIcon';
+import AuditEventMeta from './AuditEventMeta';
+import { cn } from '@/lib/utils';
+
+interface AuditEventCardProps {
+  log: AuditLog;
+}
+
+const getBusinessText = (log: AuditLog) => {
+  const { table_name, action, new_data, old_data } = log;
+
+  const tableMap: Record<string, string> = {
+    'products': 'Producto',
+    'inventory': 'Inventario',
+    'stock_movements': 'Movimiento de Stock',
+    'receipts': 'Recepción',
+    'transactions': 'Venta',
+    'profiles': 'Perfil de Usuario',
+    'stores': 'Tienda',
+    'cash_closures': 'Cierre de Caja',
+    'user_store_memberships': 'Membresía de Tienda'
+  };
+
+  const actionMap: Record<string, string> = {
+    'INSERT': 'creó',
+    'UPDATE': 'actualizó',
+    'DELETE': 'eliminó',
+    'VOID': 'anuló',
+    'CANCEL': 'canceló'
+  };
+
+  const tableName = tableMap[table_name] || table_name.replace(/_/g, ' ');
+  const actionName = actionMap[action.toUpperCase()] || action.toLowerCase();
+
+  // Custom logic for specific tables
+  if (table_name === 'products') {
+    const name = new_data?.name || old_data?.name || '';
+    return `${actionName} el producto ${name}`.trim();
+  }
+
+  if (table_name === 'transactions') {
+    const total = new_data?.total_amount || old_data?.total_amount || 0;
+    return `${actionName} una venta por $${total}`;
+  }
+
+  if (table_name === 'receipts') {
+      const ref = new_data?.reference_doc || old_data?.reference_doc || '';
+      return `${actionName} la recepción ${ref}`.trim();
+  }
+
+  if (table_name === 'stock_movements') {
+      const qty = new_data?.quantity_change || old_data?.quantity_change || 0;
+      const type = new_data?.movement_type || old_data?.movement_type || '';
+      return `registró un movimiento de stock (${type}) de ${qty} unidades`;
+  }
+
+  return `${actionName} ${tableName}`;
+};
+
+export default function AuditEventCard({ log }: AuditEventCardProps) {
+  const category = getAuditCategory(log.table_name, log.action);
+  const timeAgo = formatDistanceToNow(new Date(log.created_at), { addSuffix: true, locale: es });
+  const businessText = getBusinessText(log);
+
+  const roleColors: Record<string, string> = {
+    'admin': 'text-red-600 bg-red-50 border-red-200',
+    'encargado': 'text-amber-600 bg-amber-50 border-amber-200',
+    'manager': 'text-blue-600 bg-blue-50 border-blue-200',
+    'usuario': 'text-slate-600 bg-slate-50 border-slate-200'
+  };
+
+  const roleLabel = log.profile?.role || 'Sistema';
+  const storeName = log.metadata?.store_name || log.new_data?.store_name || log.old_data?.store_name || '';
+
+  return (
+    <div className="relative pl-8 pb-8 group last:pb-0">
+      {/* Timeline Line */}
+      <div className="absolute left-[15px] top-0 bottom-0 w-px bg-border group-last:bottom-8" />
+
+      {/* Timeline Node */}
+      <div className="absolute left-0 top-0 z-10">
+        <AuditEventIcon tableName={log.table_name} action={log.action} />
+      </div>
+
+      <div className="bg-card border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+          <div className="flex items-center gap-2">
+            <span className="font-black text-sm text-foreground">
+              {log.profile?.full_name || 'Sistema'}
+            </span>
+            {log.profile?.role && (
+              <span className={cn(
+                "text-[9px] font-black uppercase px-1.5 py-0.5 rounded border",
+                roleColors[log.profile.role as keyof typeof roleColors] || 'text-slate-600 bg-slate-50 border-slate-200'
+              )}>
+                {log.profile.role}
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+            {timeAgo}
+          </span>
+        </div>
+
+        <p className="text-sm text-muted-foreground font-medium mb-3">
+          {businessText}
+        </p>
+
+        <div className="flex flex-wrap items-center gap-3 mt-auto pt-3 border-t border-border/50">
+          {storeName && (
+            <div className="flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+              <span className="text-[10px] font-black uppercase text-muted-foreground">
+                🏬 {storeName}
+              </span>
+            </div>
+          )}
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+            <span className="text-[10px] font-mono text-muted-foreground uppercase">
+              ID: {log.record_id?.slice(0, 8)}...
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className={cn(
+              "px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter",
+              category === 'inventory' ? 'bg-green-500/10 text-green-600' :
+              category === 'sales' ? 'bg-blue-500/10 text-blue-600' :
+              category === 'users' ? 'bg-purple-500/10 text-purple-600' :
+              category === 'stores' ? 'bg-orange-500/10 text-orange-600' :
+              category === 'adjustments' ? 'bg-red-500/10 text-red-600' :
+              'bg-slate-500/10 text-slate-600'
+            )}>
+              {category}
+            </span>
+          </div>
+        </div>
+
+        <AuditEventMeta
+          oldData={log.old_data}
+          newData={log.new_data}
+          metadata={log.metadata}
+        />
+      </div>
+    </div>
+  );
+}
