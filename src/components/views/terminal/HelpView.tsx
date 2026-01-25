@@ -19,6 +19,7 @@ import RolesDiagram from '@/components/help/RolesDiagram';
 import UserFlowDiagram from '@/components/help/UserFlowDiagram';
 import CashFlowDiagram from '@/components/help/CashFlowDiagram';
 import InventoryFlowDiagram from '@/components/help/InventoryFlowDiagram';
+import StoreSkuDiagram from '@/components/help/StoreSkuDiagram';
 import SalesFlowDiagram from '@/components/help/SalesFlowDiagram';
 import SecurityFlowDiagram from '@/components/help/SecurityFlowDiagram';
 import CostFlowDiagram from '@/components/help/CostFlowDiagram';
@@ -365,8 +366,34 @@ export default function HelpView() {
             <CardHeader className="px-0">
               <CardTitle className="text-2xl font-black uppercase tracking-tight">Logística e Inventario</CardTitle>
             </CardHeader>
-            <CardContent className="px-0 space-y-8">
+            <CardContent className="px-0 space-y-12">
               <InventoryFlowDiagram />
+
+              <div className="space-y-6 pt-8 border-t border-primary/10">
+                <h3 className="font-bold text-lg flex items-center gap-2 text-primary uppercase tracking-tighter">
+                  <Store className="w-5 h-5" />
+                  Tienda Activa y SKU (Identificación Unívoca)
+                </h3>
+                <div className="grid lg:grid-cols-2 gap-8 items-center">
+                   <div className="space-y-4 text-sm leading-relaxed">
+                      <p className="font-medium">
+                        En el modelo Enterprise de CostPro, <span className="font-bold">cada tienda es un mundo separado</span>. El sistema garantiza el aislamiento total de inventarios mediante la combinación obligatoria de Tienda + SKU.
+                      </p>
+                      <div className="bg-primary/5 p-4 rounded-xl border-l-4 border-primary space-y-2">
+                        <p className="font-bold text-xs uppercase text-primary">Regla Fundamental:</p>
+                        <p className="italic text-xs">"Un producto se identifica por su SKU dentro de su tienda activa. El mismo SKU puede existir en otra tienda sin causar conflictos."</p>
+                      </div>
+                      <div className="space-y-2">
+                        <h5 className="font-black text-[10px] uppercase tracking-widest text-muted-foreground">Ejemplo Operativo:</h5>
+                        <p className="text-xs bg-muted/50 p-3 rounded-lg">
+                          Juan administra la <strong>Tienda A</strong> y la <strong>Tienda B</strong>. Ambas venden arroz con SKU <code className="bg-primary/10 px-1 rounded text-primary font-bold">ARROZ-1KG</code>.
+                          Cuando Juan importa una recepción estando en la <span className="font-bold uppercase text-primary">Tienda B</span>, solo aumenta el inventario de la Tienda B. El inventario de la Tienda A permanece intacto.
+                        </p>
+                      </div>
+                   </div>
+                   <StoreSkuDiagram />
+                </div>
+              </div>
 
               <div className="grid md:grid-cols-2 gap-8">
                 <div className="space-y-4">
@@ -466,14 +493,14 @@ export default function HelpView() {
                     <span className="text-xs font-black text-muted-foreground uppercase">24 de Enero, 2026 (Actual)</span>
                   </div>
                   <div className="bg-muted/30 rounded-2xl p-6 space-y-4">
-                    <h4 className="font-black text-sm uppercase text-primary">Mantenimiento de Documentación Profesional</h4>
+                    <h4 className="font-black text-sm uppercase text-primary">Multi-Store SKU Hardening</h4>
                     <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Nuevo Módulo de Ayuda para Fichas de Costo v5.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Documentación de Modos: Experto, Asistido y Lectura.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Guía de Gestión Masiva (Bulk) de membresías.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Actualización de diagramas SVG de arquitectura.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Inclusión de reglas impositivas (14% SS / 5% IFT).</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Optimización de navegación en sección Ayuda.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Implementación de SKU único por tienda (Composite Key).</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Nueva lógica de matching de inventario por Tienda Activa.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Validación obligatoria de SKU en Catálogo y Recepción.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Nuevo diagrama SVG: Aislamiento de SKU en entorno Multi-Tienda.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Refuerzo de integridad en importación masiva de productos.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Actualización de Centro de Ayuda v5.3.1.</li>
                     </ul>
                   </div>
                 </div>

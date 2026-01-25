@@ -55,7 +55,7 @@ export const productSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
   description: z.string().nullable().optional(),
-  sku: z.string().nullable().optional(),
+  sku: z.string().min(1, "El SKU es obligatorio"),
   price: z.number().min(0).catch(0),
   cost_price: z.number().min(0).catch(0),
   image_url: z.string().nullable().optional(),
@@ -67,7 +67,7 @@ export const productSchema = z.object({
   stock_current: z.number().catch(0),
   cost_average: z.number().nullable().optional().catch(0),
   min_stock: z.number().catch(0),
-  store_id: z.string().uuid().nullable().optional(),
+  store_id: z.string().uuid({ message: "La tienda es obligatoria" }),
   public_image_url: z.string().nullable().optional(),
 });
 
