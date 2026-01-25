@@ -3,7 +3,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Slot } from '@radix-ui/react-slot';
-import { LucideIcon, Search, X, Edit, DollarSign, Package } from 'lucide-react';
+import { LucideIcon, Search, X, Edit, DollarSign, Package, Trash2, RefreshCw } from 'lucide-react';
 import ProductImage from '../ProductImage';
 import type { Product } from '@/types';
 
@@ -124,13 +124,15 @@ interface ProductCardProps {
   product: Product;
   onEdit?: (product: Product) => void;
   onViewPrices?: (product: Product) => void;
+  onDelete?: (product: Product) => void;
+  onToggleActive?: (product: Product) => void;
   onClick?: (product: Product) => void;
   className?: string;
   variant?: 'catalog' | 'pos' | 'inventory';
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({
-  product, onEdit, onViewPrices, onClick, className, variant = 'catalog'
+  product, onEdit, onViewPrices, onDelete, onToggleActive, onClick, className, variant = 'catalog'
 }) => {
   const isOutOfStock = product.stock_current <= 0;
   const isLowStock = product.stock_current <= (product.min_stock || 0);
@@ -159,7 +161,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   return (
     <div className={cn(
-      "neu-card !p-4 border border-white/5 flex flex-col gap-4 w-full max-w-full overflow-hidden transition-all hover:shadow-lg",
+      "neu-card !p-4 border border-white/5 flex flex-col gap-4 w-full max-w-full overflow-hidden transition-all hover:shadow-lg relative",
+      !product.is_active && "opacity-75 grayscale-[0.3] bg-muted/20",
       className
     )}>
       <div className="w-full aspect-square sm:aspect-video rounded-xl overflow-hidden bg-background/50 flex items-center justify-center shrink-0 relative group">
@@ -169,16 +172,23 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           name={product.name}
           className="w-full h-full"
         />
-        {variant === 'inventory' && (
-           <div
-           className={cn(
-               "absolute top-2 right-2 text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border shadow-sm backdrop-blur-md",
-               isLowStock ? "bg-danger/20 text-danger border-danger/30" : "bg-success/20 text-success border-success/30"
-           )}
-       >
-           {isLowStock ? 'Stock Bajo' : 'En Stock'}
-       </div>
-        )}
+        <div className="absolute top-2 right-2 flex flex-col gap-1">
+          {!product.is_active && (
+            <div className="bg-danger text-white text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-lg">
+              Inactivo
+            </div>
+          )}
+          {variant === 'inventory' && (
+            <div
+              className={cn(
+                "text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border shadow-sm backdrop-blur-md",
+                isLowStock ? "bg-danger/20 text-danger border-danger/30" : "bg-success/20 text-success border-success/30"
+              )}
+            >
+              {isLowStock ? 'Stock Bajo' : 'En Stock'}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="flex-1 min-w-0">
@@ -233,13 +243,38 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                   onClick={() => onEdit(product)}
                 />
               )}
-              {onViewPrices && (
-                <SecondaryButton
-                  label="Precios"
-                  icon={DollarSign}
-                  onClick={() => onViewPrices(product)}
-                />
-              )}
+              <div className="grid grid-cols-2 gap-2">
+                {onViewPrices && (
+                  <SecondaryButton
+                    label="Precios"
+                    icon={DollarSign}
+                    onClick={() => onViewPrices(product)}
+                    className="w-full"
+                  />
+                )}
+                {variant === 'catalog' && (
+                  <>
+                    {product.has_movements ? (
+                      <SecondaryButton
+                        label={product.is_active ? "Desactivar" : "Reactivar"}
+                        icon={product.is_active ? Trash2 : RefreshCw}
+                        onClick={() => onToggleActive?.(product)}
+                        className={cn(
+                          "w-full",
+                          !product.is_active && "bg-success/10 text-success border-success/20 hover:bg-success/20"
+                        )}
+                      />
+                    ) : (
+                      <SecondaryButton
+                        label="Eliminar"
+                        icon={Trash2}
+                        onClick={() => onDelete?.(product)}
+                        className="w-full text-danger border-danger/20 hover:bg-danger/10"
+                      />
+                    )}
+                  </>
+                )}
+              </div>
             </>
           )}
         </div>

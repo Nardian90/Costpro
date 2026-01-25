@@ -104,6 +104,8 @@ export interface Product {
   min_stock: number;
   store_id?: string | null;
   public_image_url?: string | null;
+  is_active?: boolean;
+  has_movements?: boolean;
 }
 
 export interface ProductVariant {

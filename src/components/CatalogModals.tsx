@@ -8,10 +8,10 @@ import {
   DialogTitle,
   DialogFooter
 } from "@/components/ui/dialog";
-import { HelpCircle, FileText, Edit, DollarSign, Plus, Trash2 } from 'lucide-react';
+import { HelpCircle, FileText, Edit, DollarSign, Plus, Trash2, RefreshCw } from 'lucide-react';
 import ProductImage from './ui/ProductImage';
 import { PrimaryButton, SecondaryButton, IconButton } from './ui/atomic';
-import { getSupabaseUrl } from '@/lib/utils';
+import { getSupabaseUrl, cn } from '@/lib/utils';
 import { Product } from '@/types';
 
 interface CatalogModalsProps {
@@ -21,6 +21,8 @@ interface CatalogModalsProps {
   handleAddVariant: () => Promise<void>;
   handleDeleteVariant: (id: string) => Promise<void>;
   handleCreateProduct: () => Promise<void>;
+  handleDeleteProduct: () => Promise<void>;
+  handleToggleActive: () => Promise<void>;
   catalogService: any;
   stores?: any[];
 }
@@ -32,6 +34,8 @@ export const CatalogModals = ({
   handleAddVariant,
   handleDeleteVariant,
   handleCreateProduct,
+  handleDeleteProduct,
+  handleToggleActive,
   catalogService
 }: CatalogModalsProps) => {
   return (
@@ -169,6 +173,66 @@ export const CatalogModals = ({
           </div>
           <DialogFooter>
             <PrimaryButton onClick={() => modals.setIsHelpModalOpen(false)} label="Entendido" className="w-full" />
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirm Deletion */}
+      <Dialog open={modals.isDeleteConfirmOpen} onOpenChange={modals.setIsDeleteConfirmOpen}>
+        <DialogContent className="max-w-md !rounded-3xl border-white/5 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black uppercase text-danger flex items-center gap-2">
+              <Trash2 className="w-6 h-6" /> Confirmar Eliminación
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-6 text-center space-y-4">
+            <p className="font-bold">¿Está seguro de que desea eliminar permanentemente este producto?</p>
+            <div className="neu-card !p-4 bg-muted/20 border-white/5">
+                <p className="font-black uppercase text-xs tracking-widest text-muted-foreground mb-1">Producto</p>
+                <p className="font-bold text-lg">{modals.productToAction?.name}</p>
+                <p className="text-xs font-mono text-muted-foreground">{modals.productToAction?.sku || 'S/N'}</p>
+            </div>
+            <p className="text-xs text-muted-foreground uppercase font-bold tracking-tighter">Esta acción no se puede deshacer.</p>
+          </div>
+          <DialogFooter className="flex-col sm:flex-row gap-3">
+            <SecondaryButton onClick={() => modals.setIsDeleteConfirmOpen(false)} label="Cancelar" className="flex-1" />
+            <PrimaryButton onClick={handleDeleteProduct} label="Eliminar Definitivamente" className="flex-1 bg-danger text-white hover:bg-danger/90 shadow-danger/20" />
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirm Deactivation/Reactivation */}
+      <Dialog open={modals.isDeactivateConfirmOpen} onOpenChange={modals.setIsDeactivateConfirmOpen}>
+        <DialogContent className="max-w-md !rounded-3xl border-white/5 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black uppercase flex items-center gap-2">
+              {modals.productToAction?.is_active ? <Trash2 className="w-6 h-6 text-warning" /> : <RefreshCw className="w-6 h-6 text-success" />}
+              {modals.productToAction?.is_active ? 'Confirmar Desactivación' : 'Confirmar Reactivación'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-6 text-center space-y-4">
+            <p className="font-bold">
+                {modals.productToAction?.is_active
+                    ? 'El producto tiene movimientos y no puede eliminarse. ¿Desea desactivarlo?'
+                    : '¿Desea reactivar este producto para que vuelva a estar disponible?'}
+            </p>
+            <div className="neu-card !p-4 bg-muted/20 border-white/5">
+                <p className="font-black uppercase text-xs tracking-widest text-muted-foreground mb-1">Producto</p>
+                <p className="font-bold text-lg">{modals.productToAction?.name}</p>
+            </div>
+            {modals.productToAction?.is_active && (
+                <p className="text-xs text-muted-foreground uppercase font-bold tracking-tighter">
+                    Los productos desactivados no aparecen en el POS ni en reportes de stock.
+                </p>
+            )}
+          </div>
+          <DialogFooter className="flex-col sm:flex-row gap-3">
+            <SecondaryButton onClick={() => modals.setIsDeactivateConfirmOpen(false)} label="Cancelar" className="flex-1" />
+            <PrimaryButton
+                onClick={handleToggleActive}
+                label={modals.productToAction?.is_active ? 'Desactivar Producto' : 'Reactivar Producto'}
+                className={cn("flex-1", !modals.productToAction?.is_active && "bg-success hover:bg-success/90 shadow-success/20 text-white")}
+            />
           </DialogFooter>
         </DialogContent>
       </Dialog>
