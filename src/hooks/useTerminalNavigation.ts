@@ -40,8 +40,8 @@ export function useTerminalNavigation(user: UserContract | null, sidebarSearch: 
 
       { id: 'cost-sheets', icon: FileText, label: 'Costos', roles: ['admin', 'manager', 'encargado'], category: 'GESTIÓN' },
       { id: 'audit', icon: Shield, label: 'Auditoría', roles: ['manager', 'admin', 'encargado'], category: 'GESTIÓN' },
-      { id: 'users', icon: Users, label: 'Usuarios', roles: ['admin', 'encargado'], category: 'GESTIÓN' },
-      { id: 'stores', icon: Building, label: 'Tiendas', roles: ['admin', 'encargado'], category: 'GESTIÓN' },
+      { id: 'users', icon: Users, label: 'Usuarios', roles: ['admin', 'encargado', 'manager'], category: 'GESTIÓN' },
+      { id: 'stores', icon: Building, label: 'Tiendas', roles: ['admin', 'encargado', 'manager'], category: 'GESTIÓN' },
       { id: 'settings', icon: Settings, label: 'Config', roles: ['admin', 'manager', 'encargado'], category: 'GESTIÓN' },
 
       { id: 'help', icon: HelpCircle, label: 'Ayuda', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado'], category: 'SOPORTE' },

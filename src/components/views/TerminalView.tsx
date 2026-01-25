@@ -73,7 +73,12 @@ export default function TerminalView() {
   const { data: productsData, isLoading: isLoadingProducts } = useProducts(user?.storeId);
   const { data: dashboardData } = useDashboardData(user?.storeId, user?.role === 'admin');
   const { data: transactions = [] } = useTransactions(user?.storeId, user?.role === 'admin');
-  const { data: users = [] } = useUsers(user?.id || '', user?.role === 'admin', user?.role === 'encargado', user?.activeStoreId);
+  const { data: users = [] } = useUsers(
+    user?.id || '',
+    user?.role === 'admin',
+    user?.role === 'encargado' || user?.role === 'manager',
+    user?.activeStoreId
+  );
   const { data: stores = [] } = useStores(user?.id || '', user?.role === 'admin');
   const { data: auditLogs = [] } = useAuditLogs();
   const { data: movements = [] } = useStockMovements(user?.storeId, user?.role === 'admin');
