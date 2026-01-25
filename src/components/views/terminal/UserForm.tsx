@@ -154,12 +154,12 @@ export default function UserForm({
 
         <div className="space-y-3">
           {fields.map((field, index) => (
-            <div key={field.id} className="flex gap-2 items-end bg-muted/20 p-3 rounded-xl border border-border/50">
+            <div key={field.id} className="flex flex-col sm:flex-row gap-4 sm:gap-2 items-stretch sm:items-end bg-muted/20 p-4 sm:p-3 rounded-xl border border-border/50 relative group">
               <div className="flex-1 space-y-2">
                  <label className="text-[8px] font-black uppercase text-muted-foreground tracking-widest block">Tienda</label>
                  <select
                   {...register(`memberships.${index}.store_id` as const)}
-                  className="w-full p-2 rounded-lg border border-border bg-background font-bold text-xs outline-none"
+                  className="w-full p-2.5 sm:p-2 rounded-lg border border-border bg-background font-bold text-xs outline-none"
                 >
                   <option value="">Seleccione tienda</option>
                   {stores.map(s => (
@@ -167,34 +167,37 @@ export default function UserForm({
                   ))}
                 </select>
               </div>
-                <div className="w-24 space-y-2">
-                 <label className="text-[8px] font-black uppercase text-muted-foreground tracking-widest block">Rol</label>
-                 <select
-                  {...register(`memberships.${index}.role` as const)}
-                  className="w-full p-2 rounded-lg border border-border bg-background font-bold text-xs outline-none"
-                >
-                  <option value="admin">Admin</option>
-                  <option value="encargado">Encargado</option>
-                  <option value="manager">Gestor</option>
-                  <option value="clerk">Cajero</option>
-                  <option value="warehouse">Almacén</option>
-                  <option value="usuario">Usuario</option>
-                </select>
-              </div>
-                <div className="w-24 space-y-2">
+              <div className="grid grid-cols-2 sm:flex gap-2">
+                <div className="flex-1 sm:w-24 space-y-2">
+                  <label className="text-[8px] font-black uppercase text-muted-foreground tracking-widest block">Rol</label>
+                  <select
+                    {...register(`memberships.${index}.role` as const)}
+                    className="w-full p-2.5 sm:p-2 rounded-lg border border-border bg-background font-bold text-xs outline-none"
+                  >
+                    <option value="admin">Admin</option>
+                    <option value="encargado">Encargado</option>
+                    <option value="manager">Gestor</option>
+                    <option value="clerk">Cajero</option>
+                    <option value="warehouse">Almacén</option>
+                    <option value="usuario">Usuario</option>
+                  </select>
+                </div>
+                <div className="flex-1 sm:w-24 space-y-2">
                    <label className="text-[8px] font-black uppercase text-muted-foreground tracking-widest block">Estado</label>
                    <select
                     {...register(`memberships.${index}.status` as const)}
-                    className="w-full p-2 rounded-lg border border-border bg-background font-bold text-xs outline-none"
+                    className="w-full p-2.5 sm:p-2 rounded-lg border border-border bg-background font-bold text-xs outline-none"
                   >
                     <option value="active">Activo</option>
                     <option value="revoked">Revocado</option>
                   </select>
                 </div>
+              </div>
               <button
                 type="button"
                 onClick={() => remove(index)}
-                className="p-2.5 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-white transition-all mb-0.5"
+                className="absolute top-2 right-2 sm:relative sm:top-0 sm:right-0 p-2.5 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-white transition-all mb-0.5"
+                title="Eliminar tienda"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
