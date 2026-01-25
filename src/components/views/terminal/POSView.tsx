@@ -12,6 +12,11 @@ import { StateRenderer } from '@/components/ui/StateRenderer';
 import { AnimatePresence } from 'framer-motion';
 import type { Product, PaymentMethod } from '@/types';
 import { usePOSProducts } from '@/hooks/usePOSProducts';
+import { useIsMobile } from '@/hooks/use-mobile';
+import {
+  Drawer,
+  DrawerContent,
+} from '@/components/ui/drawer';
 import { POSCart } from './POSCart';
 
 interface POSViewProps {
@@ -62,6 +67,7 @@ export default function POSView({
   onViewModeChange
 }: POSViewProps) {
   const [showCart, setShowCart] = useState(false);
+  const isMobile = useIsMobile();
   const { filteredProducts, categories, selectedCategory, handleCategoryChange, isPending } = usePOSProducts(products, searchTerm);
 
   return (
@@ -85,12 +91,13 @@ export default function POSView({
             }
           ]}
           className="sm:w-auto"
+          position={isMobile ? 'bottom' : 'top'}
         />
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8 items-start">
         <AnimatePresence>
-          {showCart && (
+          {showCart && !isMobile && (
             <POSCart
               items={items}
               onRemoveItem={onRemoveItem}
@@ -103,6 +110,23 @@ export default function POSView({
             />
           )}
         </AnimatePresence>
+
+        {isMobile && (
+          <Drawer open={showCart} onOpenChange={setShowCart}>
+            <DrawerContent className="p-0 border-none bg-transparent">
+              <POSCart
+                items={items}
+                onRemoveItem={onRemoveItem}
+                onUpdateQuantity={onUpdateQuantity}
+                onClearCart={onClearCart}
+                getTotal={getTotal}
+                isProcessing={isProcessing}
+                onCheckout={onCheckout}
+                onClose={() => setShowCart(false)}
+              />
+            </DrawerContent>
+          </Drawer>
+        )}
 
         <div className="flex-1 w-full space-y-6 lg:order-first">
           <SearchBar

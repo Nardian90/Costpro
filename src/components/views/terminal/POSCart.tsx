@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { ShoppingCart, X, Trash2, Minus, Plus, DollarSign, CreditCard, Loader2, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PaymentMethod } from '@/types';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface POSCartProps {
   items: any[];
@@ -29,15 +30,27 @@ export const POSCart = ({
 }: POSCartProps) => {
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>('cash');
   const [localDiscount, setLocalDiscount] = useState({ type: 'fixed', value: 0 });
+  const isMobile = useIsMobile();
+
+  const Container = isMobile ? 'div' : motion.div;
+  const containerProps = isMobile ? {} : {
+    initial: { x: 300, opacity: 0 },
+    animate: { x: 0, opacity: 1 },
+    exit: { x: 300, opacity: 0 }
+  };
 
   return (
-    <motion.div
-      initial={{ x: 300, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      exit={{ x: 300, opacity: 0 }}
-      className="w-full lg:w-[400px] shrink-0 lg:sticky top-24 z-20 lg:order-last"
+    <Container
+      {...containerProps}
+      className={cn(
+        "w-full shrink-0 z-20",
+        !isMobile && "lg:w-[400px] lg:sticky top-24 lg:order-last"
+      )}
     >
-      <div className="rounded-xl border border-primary/20 bg-card overflow-hidden shadow-2xl">
+      <div className={cn(
+        "border border-primary/20 bg-card overflow-hidden",
+        isMobile ? "rounded-t-2xl h-[80vh] flex flex-col" : "rounded-xl shadow-2xl"
+      )}>
         <div className="bg-primary p-6 flex items-center justify-between text-white">
           <h3 className="font-black text-lg uppercase tracking-widest flex items-center gap-3">
             <ShoppingCart className="w-6 h-6" />
@@ -48,7 +61,7 @@ export const POSCart = ({
           </button>
         </div>
 
-        <div className="p-6">
+        <div className={cn("p-6", isMobile && "flex-1 overflow-y-auto no-scrollbar")}>
           {items.length === 0 ? (
             <div className="text-center py-20 text-muted-foreground">
               <ShoppingCart className="w-20 h-20 mx-auto mb-6 opacity-5" />
@@ -56,7 +69,7 @@ export const POSCart = ({
             </div>
           ) : (
             <>
-              <div className="space-y-4 max-h-[40vh] overflow-y-auto pr-2 mb-8 no-scrollbar">
+              <div className={cn("space-y-4 pr-2 mb-8 no-scrollbar", !isMobile && "max-h-[40vh] overflow-y-auto")}>
                 {items.map(item => (
                   <div key={`${item.product_id}-${item.variant_id}`} className="p-4 rounded-lg border border-border bg-background/50 group relative">
                     <div className="flex justify-between items-start mb-4">
@@ -164,6 +177,6 @@ export const POSCart = ({
           )}
         </div>
       </div>
-    </motion.div>
+    </Container>
   );
 };
