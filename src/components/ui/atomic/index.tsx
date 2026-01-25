@@ -3,8 +3,8 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Slot } from '@radix-ui/react-slot';
-import { LucideIcon, Search, X, Edit, DollarSign } from 'lucide-react';
-import ImageWithFallback from '../ImageWithFallback';
+import { LucideIcon, Search, X, Edit, DollarSign, Package } from 'lucide-react';
+import ProductImage from '../ProductImage';
 import type { Product } from '@/types';
 
 // --- BUTTONS ---
@@ -126,13 +126,14 @@ interface ProductCardProps {
   onViewPrices?: (product: Product) => void;
   onClick?: (product: Product) => void;
   className?: string;
-  variant?: 'catalog' | 'pos';
+  variant?: 'catalog' | 'pos' | 'inventory';
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({
   product, onEdit, onViewPrices, onClick, className, variant = 'catalog'
 }) => {
   const isOutOfStock = product.stock_current <= 0;
+  const isLowStock = product.stock_current <= (product.min_stock || 0);
 
   if (variant === 'pos') {
     return (
@@ -146,7 +147,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         )}
       >
         <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0 bg-muted">
-           <ImageWithFallback src={product.public_image_url} alt={product.name} name={product.name} className="w-full h-full object-cover" />
+           <ProductImage src={product.public_image_url} alt={product.name} name={product.name} className="w-full h-full object-cover" />
         </div>
         <div className="flex-1 min-w-0">
           <h4 className="font-black text-xs uppercase truncate mb-1">{product.name}</h4>
@@ -158,23 +159,41 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   return (
     <div className={cn(
-      "neu-card !p-4 border border-white/5 flex flex-col gap-4 w-full max-w-full overflow-hidden",
+      "neu-card !p-4 border border-white/5 flex flex-col gap-4 w-full max-w-full overflow-hidden transition-all hover:shadow-lg",
       className
     )}>
-      <div className="w-full aspect-square sm:aspect-video rounded-xl overflow-hidden bg-background/50 flex items-center justify-center shrink-0">
-        <ImageWithFallback
-          src={product.public_image_url}
+      <div className="w-full aspect-square sm:aspect-video rounded-xl overflow-hidden bg-background/50 flex items-center justify-center shrink-0 relative group">
+        <ProductImage
+          src={product.public_image_url || product.image_url}
           alt={product.name}
           name={product.name}
-          className="w-full h-full object-cover"
+          className="w-full h-full"
         />
+        {variant === 'inventory' && (
+           <div
+           className={cn(
+               "absolute top-2 right-2 text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border shadow-sm backdrop-blur-md",
+               isLowStock ? "bg-danger/20 text-danger border-danger/30" : "bg-success/20 text-success border-success/30"
+           )}
+       >
+           {isLowStock ? 'Stock Bajo' : 'En Stock'}
+       </div>
+        )}
       </div>
 
       <div className="flex-1 min-w-0">
-        <h3 className="font-black text-base uppercase tracking-tight truncate mb-1">{product.name}</h3>
-        <p className="text-[10px] text-muted-foreground line-clamp-2 min-h-[30px] mb-4">
-          {product.description || 'Sin descripción disponible'}
-        </p>
+        <div className="flex flex-col mb-1">
+          {variant === 'inventory' && (
+             <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mb-1">{product.category || 'General'}</span>
+          )}
+          <h3 className="font-black text-base uppercase tracking-tight truncate">{product.name}</h3>
+        </div>
+
+        {variant !== 'inventory' && (
+          <p className="text-[10px] text-muted-foreground line-clamp-2 min-h-[30px] mb-4">
+            {product.description || 'Sin descripción disponible'}
+          </p>
+        )}
 
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div className="p-2 rounded-lg bg-muted/30 border border-white/5 text-center">
@@ -187,20 +206,41 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </div>
         </div>
 
+        {variant === 'inventory' && (
+           <div className="neu-inset-sm !p-3 bg-background/50 border border-white/5 mb-4">
+              <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Stock Disponible</span>
+                  <span className={cn("font-black text-xl", isLowStock ? "text-danger" : "text-foreground")}>
+                    {product.stock_current}
+                  </span>
+              </div>
+           </div>
+        )}
+
         <div className="flex flex-col gap-2">
-          {onEdit && (
-            <PrimaryButton
-              label="Info / Editar"
-              icon={Edit}
-              onClick={() => onEdit(product)}
-            />
-          )}
-          {onViewPrices && (
-            <SecondaryButton
-              label="Precios"
-              icon={DollarSign}
-              onClick={() => onViewPrices(product)}
-            />
+          {variant === 'inventory' ? (
+             <PrimaryButton
+                label="Ajustar Stock"
+                icon={Edit}
+                onClick={() => onEdit?.(product)}
+             />
+          ) : (
+            <>
+              {onEdit && (
+                <PrimaryButton
+                  label="Info / Editar"
+                  icon={Edit}
+                  onClick={() => onEdit(product)}
+                />
+              )}
+              {onViewPrices && (
+                <SecondaryButton
+                  label="Precios"
+                  icon={DollarSign}
+                  onClick={() => onViewPrices(product)}
+                />
+              )}
+            </>
           )}
         </div>
       </div>
