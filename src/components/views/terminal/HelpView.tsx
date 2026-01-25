@@ -146,11 +146,23 @@ export default function HelpView() {
                 </div>
               </div>
 
-              <div className="p-6 rounded-3xl bg-emerald-500/5 border border-emerald-500/10">
-                <h4 className="font-black text-xs uppercase tracking-widest text-emerald-700 mb-2">Tip Multi-Store</h4>
-                <p className="text-xs font-medium text-emerald-800/70">
-                  Un usuario puede ser <span className="font-bold">Encargado</span> en la Tienda A y <span className="font-bold">Cajero</span> en la Tienda B. Sus permisos cambiarán dinámicamente según la tienda que seleccione al entrar.
-                </p>
+              <div className="p-6 rounded-3xl bg-emerald-500/5 border border-emerald-500/10 space-y-4">
+                <div>
+                  <h4 className="font-black text-xs uppercase tracking-widest text-emerald-700 mb-2">Tip Multi-Store</h4>
+                  <p className="text-xs font-medium text-emerald-800/70">
+                    Un usuario puede ser <span className="font-bold">Encargado</span> en la Tienda A y <span className="font-bold">Cajero</span> en la Tienda B. Sus permisos cambiarán dinámicamente según la tienda que seleccione al entrar.
+                  </p>
+                </div>
+                <div className="pt-4 border-t border-emerald-500/10">
+                  <h4 className="font-black text-xs uppercase tracking-widest text-indigo-700 mb-2 flex items-center gap-2">
+                    <Store className="w-3 h-3" />
+                    Auto-selección de Tienda
+                  </h4>
+                  <p className="text-[10px] font-medium text-indigo-800/70 leading-relaxed">
+                    Para garantizar la operatividad inmediata, el sistema selecciona automáticamente tu primera tienda asignada si no tienes una activa.
+                    <span className="block mt-1 font-bold italic">Nota: Si no ves datos, verifica que tengas al menos una tienda asignada por tu Administrador.</span>
+                  </p>
+                </div>
               </div>
             </div>
           </div>

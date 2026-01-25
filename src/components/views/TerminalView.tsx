@@ -4,7 +4,7 @@ import { useState, useTransition, Suspense, lazy } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore, useUIStore, useCartStore, type ViewType } from '@/store';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Building as BuildingIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
 import {
@@ -72,7 +72,7 @@ export default function TerminalView() {
   const { data: productsData, isLoading: isLoadingProducts } = useProducts(user?.storeId);
   const { data: dashboardData } = useDashboardData(user?.storeId, user?.role === 'admin');
   const { data: transactions = [] } = useTransactions(user?.storeId, user?.role === 'admin');
-  const { data: users = [] } = useUsers(user?.id || '', user?.role === 'admin', user?.role === 'encargado');
+  const { data: users = [] } = useUsers(user?.id || '', user?.role === 'admin', user?.role === 'encargado', user?.activeStoreId);
   const { data: stores = [] } = useStores(user?.id || '', user?.role === 'admin');
   const { data: auditLogs = [] } = useAuditLogs();
   const { data: movements = [] } = useStockMovements(user?.storeId, user?.role === 'admin');
@@ -97,6 +97,9 @@ export default function TerminalView() {
 
   if (!user) return null;
 
+  // BLOCKING ACCESS (Regla 3): If a non-admin user has no active store, block operations
+  const isBlockingRequired = user.role !== 'admin' && !user.activeStoreId;
+
   const handleViewChange = (view: ViewType) => {
     startTransition(() => {
       setCurrentView(view);
@@ -107,6 +110,29 @@ export default function TerminalView() {
   };
 
   const renderView = () => {
+    // If access is blocked, show a clear error message instead of the requested view
+    if (isBlockingRequired) {
+      return (
+        <div className="flex flex-col items-center justify-center p-12 text-center bg-destructive/5 rounded-3xl border-2 border-dashed border-destructive/20 gap-6">
+          <div className="w-20 h-20 rounded-full bg-destructive/10 flex items-center justify-center">
+             <BuildingIcon className="w-10 h-10 text-destructive" />
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-2xl font-black uppercase tracking-tight text-destructive">Sin Tienda Activa</h3>
+            <p className="text-muted-foreground text-sm max-w-md mx-auto font-medium">
+              Tu cuenta no tiene una tienda asignada o activa actualmente. Por favor, contacta al administrador para que te asigne una sucursal.
+            </p>
+          </div>
+          <button
+            onClick={ops.handleLogout}
+            className="px-8 py-3 bg-destructive text-white font-black rounded-xl hover:opacity-90 transition-opacity uppercase text-xs tracking-widest"
+          >
+            Cerrar Sesión
+          </button>
+        </div>
+      );
+    }
+
     const products = productsData || [];
     const salesSummary = dashboardData?.summary || { total_billed: 0, transaction_count: 0, average_ticket: 0, total_cash: 0, total_transfer: 0 };
 
