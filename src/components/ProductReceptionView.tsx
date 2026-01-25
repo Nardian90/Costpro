@@ -176,7 +176,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                 const toastId = toast.loading(`Importando ${data.length} productos...`);
 
                 if (!user?.storeId) {
-                    toast.error('No store context found. Please select a store first.', { id: toastId });
+                    toast.error('No se encontró el contexto de la tienda. Por favor, seleccione una tienda primero.', { id: toastId });
                     if (fileInputRef.current) fileInputRef.current.value = '';
                     return;
                 }
@@ -303,20 +303,31 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
     ];
 
     const processReception = async () => {
+        // Diagnostic logging before validation as per protocol
+        console.log('[ProductReceptionView] Pre-confirmation diagnostic:', {
+            hasUser: !!user,
+            userId: user?.id,
+            storeId: user?.storeId,
+            itemsCount: receptionItems.size
+        });
+
         if (receptionItems.size === 0) {
-            toast.error('Add at least one product to the reception.');
+            toast.error('Agregue al menos un producto a la recepción.');
             return;
         }
-        if (!user?.id) {
-            toast.error('Session error. Please log in again.');
+
+        if (!user) {
+            toast.error('No se encontró una sesión activa. Por favor, inicie sesión nuevamente.');
             return;
         }
-        if (!user?.storeId) {
-            toast.error('No active store selected. Please select a store first.');
+
+        if (!user.storeId) {
+            toast.error('No hay una tienda activa seleccionada. Por favor, seleccione una tienda primero.');
             return;
         }
+
         if (!receptionDetails.supplier || !receptionDetails.invoiceNumber) {
-            toast.error('Please complete supplier and invoice number.');
+            toast.error('Por favor, complete el proveedor y el número de factura.');
             return;
         }
 
