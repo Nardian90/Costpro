@@ -3,6 +3,7 @@
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS is_active boolean DEFAULT true;
 
 -- 2. Update get_products_for_pos to include new fields
+DROP FUNCTION IF EXISTS public.get_products_for_pos(uuid, text, text);
 CREATE OR REPLACE FUNCTION public.get_products_for_pos(
   p_store_id uuid DEFAULT NULL::uuid,
   p_search_term text DEFAULT NULL::text,
@@ -97,6 +98,7 @@ END;
 $function$;
 
 -- 3. Update get_paginated_products
+DROP FUNCTION IF EXISTS public.get_paginated_products(integer, integer, uuid, text, text);
 CREATE OR REPLACE FUNCTION public.get_paginated_products(
   p_limit integer DEFAULT 20,
   p_offset integer DEFAULT 0,
