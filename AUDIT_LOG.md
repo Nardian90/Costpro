@@ -74,3 +74,101 @@ El sistema se encuentra en un estado funcional y controlado, con fortalezas nota
     -   **Crítica:** Refactorizar el "God Component" `TerminalView.tsx` en componentes más pequeños y desacoplados.
     -   **Mayor:** Eliminar o alinear el `schema.prisma` con el proceso de migración real para evitar confusión.
     -   **Menor:** Optimizar la carga de datos para que cada vista solo obtenga lo que necesita cuando lo necesita.
+
+---
+
+## Version: 1.1 (Incremental Audit)
+- **Date:** 2024-08-04
+- **Global Technical Score:** 6.38 / 10.0
+- **System Status:** 🟨 Controlado
+
+---
+
+### Executive Summary
+
+El sistema permanece funcionalmente estable, sin cambios en el código de la aplicación desde la auditoría anterior. Sin embargo, esta auditoría revela una grave discrepancia entre la documentación (`README.md`) y la configuración real del proyecto, lo que degrada críticamente la Experiencia del Desarrollador (DX). La documentación prescribe herramientas (`bun`, `Prisma`) que no se utilizan, creando una barrera de entrada y un riesgo de configuración incorrecta. El sistema se estanca, y su puntuación global disminuye debido a que la deuda técnica documental agrava la ya deficiente DX.
+
+---
+
+### 1. EVALUACIÓN POR DOMINIO
+
+| Dominio | Nota | Justificación |
+| :--- | :---: | :--- |
+| **Core Architecture** | 3.0 | **Sin cambios.** El "God Component" (`TerminalView.tsx`) persiste como el principal punto de deuda técnica arquitectónica, manteniendo un alto acoplamiento y baja cohesión. |
+| **Type Safety** | 9.0 | **Sin cambios.** La robustez de los contratos de datos, Zod y TypeScript sigue siendo un punto fuerte del sistema. |
+| **POS / Terminal** | 7.5 | **Sin cambios.** La lógica de negocio y la gestión del estado del TPV se mantienen estables y funcionales. |
+| **Multi-Store & Roles**| 8.0 | **Sin cambios.** La seguridad a nivel de fila (RLS) en Supabase sigue siendo la base sólida para el aislamiento de datos. |
+| **UX / Mobile** | 6.0 | **Sin cambios.** La interfaz de usuario sigue siendo funcionalmente aceptable, pero no se han abordado las posibles ineficiencias de rendimiento derivadas de la arquitectura. |
+| **Performance** | 6.5 | **Sin cambios.** Persiste el patrón de "over-fetching" en `TerminalView`, sin optimizaciones en la carga de datos. |
+| **Seguridad** | 7.0 | **Sin cambios.** Las políticas RLS garantizan una base de seguridad adecuada. |
+| **Observabilidad** | 8.5 | **Sin cambios.** El sistema de logging centralizado para las operaciones de base de datos sigue siendo excelente. |
+| **DX** | 2.0 | **Degradado.** La auditoría confirma que el `README.md` es fundamentalmente incorrecto: promueve `bun` (se usa `pnpm`) y `Prisma` (se usa Supabase con migraciones SQL). Esto, sumado al `schema.prisma` obsoleto, crea una experiencia de incorporación activamente engañosa y hostil. |
+
+---
+
+### 2. COMPARATIVA CON VERSIÓN ANTERIOR
+
+| Dominio | v1.0 | v1.1 | Variación | Causa Concreta del Cambio |
+| :--- | :---: | :---: | :---: | :--- |
+| Core Architecture | 3.0 | 3.0 | = | Sin refactorización del "God Component". |
+| Type Safety | 9.0 | 9.0 | = | Sin cambios en los contratos de datos o validación. |
+| POS / Terminal | 7.5 | 7.5 | = | Sin cambios en la lógica del TPV. |
+| Multi-Store & Roles | 8.0 | 8.0 | = | Sin cambios en la arquitectura de seguridad. |
+| UX / Mobile | 6.0 | 6.0 | = | Sin mejoras de UX o rendimiento. |
+| Performance | 6.5 | 6.5 | = | Sin optimización de la carga de datos. |
+| Seguridad | 7.0 | 7.0 | = | Sin cambios en las políticas de seguridad. |
+| Observabilidad | 8.5 | 8.5 | = | El sistema de logging permanece intacto. |
+| **DX** | **4.0** | **2.0** | **(-2.0)** | **Descubrimiento de `README.md` incorrecto (promueve `bun`/`Prisma` vs. `pnpm`/`Supabase` real), agravando la confusión del `schema.prisma` ya existente.** |
+| **Global Score** | **6.61**| **6.38**| **(-0.23)**| **El impacto negativo de la degradación severa de la DX supera la estabilidad de los otros dominios.**|
+
+---
+
+### 3. DETECCIÓN DE RIESGOS
+
+1.  **Riesgo: Documentación Engañosa y Desactualizada**
+    -   **Tipo:** DX / Técnico
+    -   **Impacto Potencial:** Muy Alto. Fricción máxima para nuevos desarrolladores, pérdida de tiempo en configuración, riesgo de introducir herramientas incorrectas (Prisma) que entren en conflicto con la fuente de verdad (migraciones SQL).
+    -   **Probabilidad:** Muy Alta.
+    -   **Estado:** empeoró (El riesgo, antes centrado solo en Prisma, ahora incluye toda la configuración inicial del proyecto).
+
+2.  **Riesgo: God Component (`TerminalView.tsx`)**
+    -   **Tipo:** Escalabilidad / Técnico
+    -   **Impacto Potencial:** Alto. Dificulta y ralentiza el desarrollo de nuevas funcionalidades y la corrección de errores.
+    -   **Probabilidad:** Muy Alta.
+    -   **Estado:** igual (Deuda técnica no abordada).
+
+---
+
+### 4. MEJORA VERIFICADA DE LA ITERACIÓN
+- **Ninguna.** No se implementaron mejoras funcionales, técnicas o de rendimiento en esta iteración.
+
+---
+
+### 5. REGISTRO DE MADUREZ DEL SISTEMA
+
+-   **Versión del sistema:** 1.1
+-   **Fecha:** 2024-08-04
+-   **Score global:** 6.38
+-   **Top 3 Avances:**
+    1. (sin cambios)
+-   **Deuda técnica viva:**
+    -   **Crítica:** Corregir el `README.md` y alinear toda la documentación con la pila tecnológica real del proyecto (`pnpm`, `Supabase`).
+    -   **Crítica:** Refactorizar el "God Component" `TerminalView.tsx`.
+    -   **Mayor:** Eliminar por completo el `schema.prisma` para evitar confusión.
+
+---
+
+### 6. SCORE EJECUTIVO FINAL
+
+- **Score técnico global:** 6.38
+- **Estado del sistema:** 🟨 Controlado
+
+El sistema **retrocedió**. Aunque el código funcional no se ha modificado, la revelación de una documentación fundamentalmente incorrecta ha degradado severamente la mantenibilidad y la experiencia del desarrollador (DX). Esta deuda técnica documental aumenta el riesgo y la fricción para el equipo de desarrollo, lo que resulta en una disminución del score global del sistema. El estancamiento funcional, combinado con el empeoramiento de la DX, indica una regresión en la madurez del proyecto.
+
+---
+
+### 7. REGLA DE ORO
+
+El score global **no subió** (de hecho, disminuyó de 6.61 a 6.38) porque, aunque no se introdujeron errores funcionales, la auditoría confirmó que la documentación del proyecto (`README.md`) es activamente engañosa. Este hallazgo degrada drásticamente el dominio de la Experiencia del Desarrollador (DX), que es un pilar fundamental de la madurez y sostenibilidad de un sistema. La deuda técnica documental es una forma de regresión.
+
+---
