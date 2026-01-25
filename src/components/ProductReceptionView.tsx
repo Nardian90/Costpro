@@ -307,11 +307,21 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
             toast.error('Add at least one product to the reception.');
             return;
         }
-        if (!user?.id) {
-            toast.error('Session error. Please log in again.');
+
+        // Diagnostic logging
+        if (!user || !user.id || !user.storeId) {
+            console.error('[Reception] Missing session data:', {
+                hasUser: !!user,
+                userId: user?.id,
+                storeId: user?.storeId
+            });
+        }
+
+        if (!user) {
+            toast.error('No session found. Please log in again.');
             return;
         }
-        if (!user?.storeId) {
+        if (!user.storeId) {
             toast.error('No active store selected. Please select a store first.');
             return;
         }
@@ -336,7 +346,6 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                 p_reception_date: receptionDetails.receptionDate,
                 p_invoice_number: receptionDetails.invoiceNumber,
                 p_items: itemsPayload
-                // p_user_id is not required as it's handled by auth.uid() in the latest RPC
             });
 
             toast.success('¡Recepción registrada con éxito!', { id: toastId });

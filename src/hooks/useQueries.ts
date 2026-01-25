@@ -241,7 +241,7 @@ export function useUserStoreAccess(userId?: string) {
   return useQuery({
     queryKey: ['user-store-access', userId],
     queryFn: async () => {
-      if (!userId) return [];
+      if (!userId || userId.length < 5) return [];
       const data = await withTableLogging('select', 'user_store_memberships', () => supabase.from('user_store_memberships')
         .select('store_id, role')
         .eq('user_id', userId));
@@ -484,6 +484,7 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
   return useQuery({
     queryKey: ['users', currentUserId, isAdmin, isEncargado],
     queryFn: async () => {
+      if (!currentUserId || currentUserId.length < 5) return [];
       let query = supabase.from('profiles').select('*, memberships:user_store_memberships(*, store:stores(name))');
       if (isEncargado && !isAdmin) query = query.eq('created_by', currentUserId);
       const data = await withTableLogging('select', 'profiles', () => query.order('full_name'));
