@@ -201,6 +201,7 @@ CREATE TABLE public.receipt_items (
 CREATE TABLE public.receipts (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
   user_id uuid,
   status text DEFAULT 'active'::text CHECK (status = ANY (ARRAY['active'::text, 'voided'::text])),
   total_cost numeric DEFAULT 0,
