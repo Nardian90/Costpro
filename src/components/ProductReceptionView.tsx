@@ -175,12 +175,18 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
 
                 const toastId = toast.loading(`Importando ${data.length} productos...`);
 
+                if (!user?.storeId) {
+                    toast.error('No store context found. Please select a store first.', { id: toastId });
+                    if (fileInputRef.current) fileInputRef.current.value = '';
+                    return;
+                }
+
                 try {
                     const skus = Array.from(seenSkus);
                     const { data: products, error } = await supabase
                         .from('products')
                         .select('id, name, cost_price, sku')
-                        .eq('store_id', user?.storeId)
+                        .eq('store_id', user.storeId)
                         .in('sku', skus);
 
                     if (error) throw error;
@@ -301,8 +307,12 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
             toast.error('Add at least one product to the reception.');
             return;
         }
-        if (!user?.storeId || !user?.id) {
-            toast.error('Store or session error.');
+        if (!user?.id) {
+            toast.error('Session error. Please log in again.');
+            return;
+        }
+        if (!user?.storeId) {
+            toast.error('No active store selected. Please select a store first.');
             return;
         }
         if (!receptionDetails.supplier || !receptionDetails.invoiceNumber) {
@@ -325,8 +335,8 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                 p_supplier: receptionDetails.supplier,
                 p_reception_date: receptionDetails.receptionDate,
                 p_invoice_number: receptionDetails.invoiceNumber,
-                p_items: itemsPayload,
-                p_user_id: user.id
+                p_items: itemsPayload
+                // p_user_id is not required as it's handled by auth.uid() in the latest RPC
             });
 
             toast.success('¡Recepción registrada con éxito!', { id: toastId });
