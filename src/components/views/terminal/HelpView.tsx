@@ -40,7 +40,7 @@ export default function HelpView() {
         </div>
         <div className="flex flex-col items-end">
           <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-black">
-            VERSIÓN 5.3.0 (ENTERPRISE)
+            VERSIÓN 5.4.0 (MOBILE-FIRST)
           </Badge>
           <span className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Última actualización: Ene 2026</span>
         </div>
@@ -301,6 +301,15 @@ export default function HelpView() {
 
         {/* --- POS FLOWS --- */}
         <TabsContent value="pos" className="space-y-6">
+          <div className="bg-primary/10 border border-primary/20 p-4 rounded-2xl mb-6 md:hidden">
+            <h4 className="font-black text-primary text-xs uppercase mb-2 flex items-center gap-2">
+              <ShoppingCart className="w-4 h-4" />
+              Tip: TPV Optimizado para Móvil
+            </h4>
+            <p className="text-[10px] font-medium leading-relaxed text-primary/80">
+              Hemos movido la <strong>Caja</strong> a la parte inferior para que sea más fácil de alcanzar con el pulgar. El carrito ahora se abre como un panel deslizante (Drawer) para no interrumpir tu navegación por el catálogo.
+            </p>
+          </div>
           <Card className="border-none shadow-none bg-transparent">
             <CardHeader className="px-0">
               <CardTitle className="text-2xl font-black uppercase tracking-tight">Ciclo de Venta y Caja</CardTitle>
@@ -489,19 +498,29 @@ export default function HelpView() {
                 <div className="relative pl-8 border-l-2 border-primary/20 space-y-4">
                   <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary border-4 border-background" />
                   <div className="flex items-center gap-3">
-                    <Badge className="bg-primary">v5.3.0</Badge>
-                    <span className="text-xs font-black text-muted-foreground uppercase">24 de Enero, 2026 (Actual)</span>
+                    <Badge className="bg-primary">v5.4.0</Badge>
+                    <span className="text-xs font-black text-muted-foreground uppercase">25 de Enero, 2026 (Actual)</span>
                   </div>
                   <div className="bg-muted/30 rounded-2xl p-6 space-y-4">
-                    <h4 className="font-black text-sm uppercase text-primary">Multi-Store SKU Hardening</h4>
+                    <h4 className="font-black text-sm uppercase text-primary">Mobile-First POS UX Evolution</h4>
                     <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Implementación de SKU único por tienda (Composite Key).</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Nueva lógica de matching de inventario por Tienda Activa.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Validación obligatoria de SKU en Catálogo y Recepción.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Nuevo diagrama SVG: Aislamiento de SKU en entorno Multi-Tienda.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Refuerzo de integridad en importación masiva de productos.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Actualización de Centro de Ayuda v5.3.1.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Implementación de <strong>Bottom Sheet (Drawer)</strong> para el carrito en móvil.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Reposicionamiento de <strong>ActionMenu</strong> al área del pulgar (sticky bottom).</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Optimización de formularios multi-store para evitar squashing en pantallas pequeñas.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Eliminación de scroll disruptivo al abrir el carrito en TPV.</li>
                     </ul>
+                  </div>
+                </div>
+
+                <div className="relative pl-8 border-l-2 border-primary/10 space-y-4 opacity-60">
+                  <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-muted border-4 border-background" />
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline">v5.3.0</Badge>
+                    <span className="text-xs font-black text-muted-foreground uppercase">24 de Enero, 2026</span>
+                  </div>
+                  <div className="bg-muted/10 rounded-2xl p-6">
+                    <h4 className="font-black text-sm uppercase">Multi-Store SKU Hardening</h4>
+                    <p className="text-xs mt-2">Implementación de SKU único por tienda y aislamiento de inventario.</p>
                   </div>
                 </div>
 
