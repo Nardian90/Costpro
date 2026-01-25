@@ -1,69 +1,118 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { useTheme } from 'next-themes';
 import { Package } from 'lucide-react';
-import { getProductImageUrl } from '@/lib/utils';
+import { getProductImageUrl, cn } from '@/lib/utils';
 
 interface ProductImageProps {
-  src: string | null | undefined;
+  src?: string | null;
+  alt?: string;
   name: string;
   width?: number;
   height?: number;
   className?: string;
-  forceShow?: boolean; // For detail views where we want the image even in neumo
+  forceShow?: boolean;
 }
 
+/**
+ * ProductImage Atom
+ *
+ * A resilient image component that handles:
+ * - Next.js Image optimization
+ * - Supabase public URL resolution
+ * - Theme-based performance rules (hiding images in 'neumo' theme unless forced)
+ * - Initials-based placeholder fallback when image is missing, broken, or hidden
+ * - Stable aspect-ratio via parent or explicit dimensions
+ */
 export default function ProductImage({
   src,
+  alt,
   name,
-  width = 32,
-  height = 32,
+  width,
+  height,
   className,
   forceShow = false
 }: ProductImageProps) {
   const { theme } = useTheme();
+  const [error, setError] = useState(false);
 
-  // Rule: No images in neumo theme for general performance, unless forced (detail views)
-  if (theme === 'neumo' && !forceShow) return null;
+  const initials = useMemo(() => {
+    if (!name) return '';
+    return name
+      .split(' ')
+      .filter(Boolean)
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+  }, [name]);
 
-  if (!src) {
+  const backgroundColor = useMemo(() => {
+    const colors = [
+      'bg-blue-500/10',
+      'bg-green-500/10',
+      'bg-purple-500/10',
+      'bg-orange-500/10',
+      'bg-pink-500/10',
+      'bg-indigo-500/10',
+      'bg-teal-500/10',
+      'bg-cyan-500/10',
+    ];
+    let hash = 0;
+    const str = name || 'product';
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
+  }, [name]);
+
+  const textColor = backgroundColor.replace('/10', '').replace('bg-', 'text-').replace('-500', '-600');
+
+  // Logic: Show placeholder if we are in neumo theme (and not forced),
+  // if there's an error loading, or if no source is provided.
+  const showPlaceholder = (theme === 'neumo' && !forceShow) || error || !src;
+
+  const imageUrl = src ? getProductImageUrl(src) : null;
+
+  if (showPlaceholder || !imageUrl) {
     return (
       <div
-        className={`flex items-center justify-center bg-muted/20 rounded-lg border border-border/50 ${className}`}
+        className={cn(
+          'flex items-center justify-center font-black uppercase transition-all duration-300',
+          backgroundColor,
+          textColor,
+          className
+        )}
         style={{ width, height }}
+        title={alt || name}
       >
-        <Package className="text-muted-foreground/40" style={{ width: width * 0.5, height: height * 0.5 }} />
+        <span className="select-none" style={{ fontSize: width ? Math.max(12, width * 0.25) : 'inherit' }}>
+            {initials || <Package className="opacity-40" />}
+        </span>
       </div>
     );
   }
 
-  const imageUrl = getProductImageUrl(src);
-
-  if (!imageUrl) {
-    return (
-      <div
-        className={`flex items-center justify-center bg-muted/20 rounded-lg border border-border/50 ${className}`}
-        style={{ width, height }}
-      >
-        <Package className="text-muted-foreground/40" style={{ width: width * 0.5, height: height * 0.5 }} />
-      </div>
-    );
-  }
+  // If width/height are provided, use them for the container and next/image
+  // Otherwise, use fill mode (requires parent to be relative)
+  const isFluid = !width && !height;
 
   return (
     <div
-      className={`relative overflow-hidden rounded-lg border border-border/50 ${className}`}
+      className={cn('relative overflow-hidden', !isFluid && 'shrink-0', className)}
       style={{ width, height }}
     >
       <Image
         src={imageUrl}
-        alt={name}
-        width={width}
-        height={height}
+        alt={alt || name}
+        fill={isFluid}
+        width={!isFluid ? width : undefined}
+        height={!isFluid ? height : undefined}
         className="object-cover w-full h-full"
         loading="lazy"
+        onError={() => setError(true)}
       />
     </div>
   );
