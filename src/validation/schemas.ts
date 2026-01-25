@@ -69,6 +69,8 @@ export const productSchema = z.object({
   min_stock: z.number().catch(0),
   store_id: z.string().uuid({ message: "La tienda es obligatoria" }),
   public_image_url: z.string().nullable().optional(),
+  is_active: z.boolean().catch(true),
+  has_movements: z.boolean().catch(false),
 });
 
 export const productVariantSchema = z.object({

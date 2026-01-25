@@ -9,7 +9,9 @@ import {
   useCreateProduct,
   useBulkUpdateProducts,
   useAddVariant,
-  useDeleteVariant
+  useDeleteVariant,
+  useDeleteProduct,
+  useToggleProductActive
 } from '@/hooks/useQueries';
 import { toast } from 'sonner';
 import {
@@ -20,7 +22,9 @@ import {
     HelpCircle,
     Search,
     Loader2,
-    PlusCircle
+    PlusCircle,
+    Trash2,
+    RefreshCw
 } from 'lucide-react';
 import ActionMenu, { Action } from './ui/ActionMenu';
 import {
@@ -50,6 +54,8 @@ export default function CatalogView() {
     const bulkUpdateMutation = useBulkUpdateProducts();
     const addVariantMutation = useAddVariant();
     const deleteVariantMutation = useDeleteVariant();
+    const deleteProductMutation = useDeleteProduct();
+    const toggleProductActiveMutation = useToggleProductActive();
 
     const modals = useCatalogModals();
     const [searchTerm, setSearchTerm] = useState('');
@@ -167,6 +173,38 @@ export default function CatalogView() {
           modals.setEditingProduct({ ...editingProduct, product_variants: data || [] });
         } catch (error: any) {
           toast.error(error.message || 'Error al eliminar variante');
+        }
+    };
+
+    const handleDeleteProduct = async () => {
+        const { productToAction } = modals;
+        if (!productToAction) return;
+        const toastId = toast.loading('Eliminando producto...');
+        try {
+            await deleteProductMutation.mutateAsync(productToAction.id);
+            toast.success('Producto eliminado con éxito', { id: toastId });
+            modals.setIsDeleteConfirmOpen(false);
+            modals.setProductToAction(null);
+        } catch (error: any) {
+            toast.error(error.message || 'Error al eliminar producto', { id: toastId });
+        }
+    };
+
+    const handleToggleActive = async () => {
+        const { productToAction } = modals;
+        if (!productToAction) return;
+        const newStatus = !productToAction.is_active;
+        const toastId = toast.loading(`${newStatus ? 'Activando' : 'Desactivando'} producto...`);
+        try {
+            await toggleProductActiveMutation.mutateAsync({
+                productId: productToAction.id,
+                isActive: newStatus
+            });
+            toast.success(`Producto ${newStatus ? 'activado' : 'desactivado'} con éxito`, { id: toastId });
+            modals.setIsDeactivateConfirmOpen(false);
+            modals.setProductToAction(null);
+        } catch (error: any) {
+            toast.error(error.message || 'Error al actualizar estado', { id: toastId });
         }
     };
 
@@ -296,6 +334,8 @@ export default function CatalogView() {
                             product={product}
                             onEdit={() => { modals.setEditingProduct(product); modals.setIsEditProductModalOpen(true); }}
                             onViewPrices={() => { modals.setEditingProduct(product); modals.setIsVariantsModalOpen(true); }}
+                            onDelete={() => { modals.setProductToAction(product); modals.setIsDeleteConfirmOpen(true); }}
+                            onToggleActive={() => { modals.setProductToAction(product); modals.setIsDeactivateConfirmOpen(true); }}
                         />
                     ))}
                     {filteredProducts.length === 0 && (
@@ -335,8 +375,23 @@ export default function CatalogView() {
                                     <td className="p-4 text-right font-black text-primary">${product.price?.toFixed(2)}</td>
                                     <td className="p-4">
                                         <div className="flex justify-center gap-2">
-                                            <IconButton onClick={() => { modals.setEditingProduct(product); modals.setIsEditProductModalOpen(true); }} icon={Edit} className="min-h-0 min-w-0 p-2" />
-                                            <IconButton onClick={() => { modals.setEditingProduct(product); modals.setIsVariantsModalOpen(true); }} icon={DollarSign} className="min-h-0 min-w-0 p-2" />
+                                            <IconButton onClick={() => { modals.setEditingProduct(product); modals.setIsEditProductModalOpen(true); }} icon={Edit} title="Editar" className="min-h-0 min-w-0 p-2" />
+                                            <IconButton onClick={() => { modals.setEditingProduct(product); modals.setIsVariantsModalOpen(true); }} icon={DollarSign} title="Precios" className="min-h-0 min-w-0 p-2" />
+                                            {product.has_movements ? (
+                                                <IconButton
+                                                    onClick={() => { modals.setProductToAction(product); modals.setIsDeactivateConfirmOpen(true); }}
+                                                    icon={product.is_active ? Trash2 : RefreshCw}
+                                                    title={product.is_active ? "Desactivar" : "Reactivar"}
+                                                    className={cn("min-h-0 min-w-0 p-2", !product.is_active && "text-success border-success/20 bg-success/5")}
+                                                />
+                                            ) : (
+                                                <IconButton
+                                                    onClick={() => { modals.setProductToAction(product); modals.setIsDeleteConfirmOpen(true); }}
+                                                    icon={Trash2}
+                                                    title="Eliminar"
+                                                    className="min-h-0 min-w-0 p-2 text-danger border-danger/20"
+                                                />
+                                            )}
                                         </div>
                                     </td>
                                 </tr>
@@ -353,6 +408,8 @@ export default function CatalogView() {
                 handleAddVariant={handleAddVariant}
                 handleDeleteVariant={handleDeleteVariant}
                 handleCreateProduct={handleCreateProduct}
+                handleDeleteProduct={handleDeleteProduct}
+                handleToggleActive={handleToggleActive}
                 catalogService={catalogService}
             />
         </MobileSafeContainer>
