@@ -90,6 +90,35 @@ export function useSuspenseProducts(storeId?: string | null, searchTerm = '', ca
   });
 }
 
+export function useDeleteProduct() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (productId: string) => {
+      const rpcName = 'managed_delete_product';
+      return await withLogging(rpcName, { p_product_id: productId }, () => supabase.rpc(rpcName, { p_product_id: productId }));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory'] });
+    },
+  });
+}
+
+export function useToggleProductActive() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ productId, isActive }: { productId: string, isActive: boolean }) => {
+      const rpcName = 'managed_toggle_product_active';
+      const params = { p_product_id: productId, p_is_active: isActive };
+      return await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory'] });
+    },
+  });
+}
+
 export function useProducts(storeId?: string | null, searchTerm = '', category = '') {
   return useQuery({
     queryKey: ['products', storeId, searchTerm, category],
