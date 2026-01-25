@@ -46,7 +46,10 @@ export const CatalogModals = ({
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">SKU</label>
+                <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1 flex justify-between">
+                  <span>SKU</span>
+                  <span className="text-[8px] text-primary/70 italic">Único en tienda</span>
+                </label>
                 <input type="text" value={modals.editingProduct?.sku || ''} onChange={(e) => modals.setEditingProduct({ ...modals.editingProduct, sku: e.target.value })} className="neu-input w-full" />
               </div>
               <div className="space-y-1.5">
@@ -136,7 +139,13 @@ export const CatalogModals = ({
           <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto no-scrollbar pr-2">
             <div className="space-y-1.5"><label className="text-[10px] font-black uppercase tracking-widest ml-1">Nombre</label><input type="text" value={modals.newProductForm.name} onChange={(e) => modals.setNewProductForm({ ...modals.newProductForm, name: e.target.value })} className="neu-input w-full font-bold" /></div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5"><label className="text-[10px] font-black uppercase tracking-widest ml-1">SKU</label><input type="text" value={modals.newProductForm.sku} onChange={(e) => modals.setNewProductForm({ ...modals.newProductForm, sku: e.target.value })} className="neu-input w-full" /></div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest ml-1 flex justify-between">
+                  <span>SKU</span>
+                  <span className="text-[8px] text-primary/70 italic">Único en tienda</span>
+                </label>
+                <input type="text" value={modals.newProductForm.sku} onChange={(e) => modals.setNewProductForm({ ...modals.newProductForm, sku: e.target.value })} className="neu-input w-full" />
+              </div>
               <div className="space-y-1.5"><label className="text-[10px] font-black uppercase tracking-widest ml-1">Categoría</label><input type="text" value={modals.newProductForm.category} onChange={(e) => modals.setNewProductForm({ ...modals.newProductForm, category: e.target.value })} className="neu-input w-full" /></div>
             </div>
             <div className="grid grid-cols-2 gap-4">
