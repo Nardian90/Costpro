@@ -330,6 +330,7 @@ export interface AuditLog {
   metadata: any;
   profile?: {
     full_name: string;
+    role?: UserRole;
   } | null;
 }
 

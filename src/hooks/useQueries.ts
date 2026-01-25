@@ -468,11 +468,14 @@ export function useAuditLogs() {
     queryKey: ['audit-logs'],
     queryFn: async () => {
       const data = await withTableLogging('select', 'audit_logs', () => supabase.from('audit_logs')
-        .select('*, profile:profiles(full_name)')
-        .order('created_at', { ascending: false }).limit(100));
+        .select('*, profile:profiles(full_name, role)')
+        .order('created_at', { ascending: false }).limit(1000));
 
       const extendedSchema = auditLogSchema.extend({
-        profile: z.object({ full_name: z.string() }).nullable().optional()
+        profile: z.object({
+          full_name: z.string(),
+          role: z.enum(['admin', 'encargado', 'usuario', 'manager', 'clerk', 'warehouse']).optional()
+        }).nullable().optional()
       });
 
       return await validateRPCArrayResponse(data, extendedSchema, 'audit_logs');
