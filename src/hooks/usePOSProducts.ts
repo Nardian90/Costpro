@@ -8,7 +8,8 @@ export function usePOSProducts(products: Product[], searchTerm: string) {
   const filteredProducts = useMemo(() => {
     const lowerSearch = searchTerm.toLowerCase();
     return products.filter(p => {
-      if (p.stock_current <= 0) return false;
+      // Filter out inactive products or out of stock products
+      if (!p.is_active || p.stock_current <= 0) return false;
       const matchesSearch = p.name.toLowerCase().includes(lowerSearch) ||
         (p.sku && p.sku.toLowerCase().includes(lowerSearch)) ||
         (p.category && p.category.toLowerCase().includes(lowerSearch));
