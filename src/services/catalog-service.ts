@@ -2,7 +2,6 @@ import Papa from 'papaparse';
 import { toast } from 'sonner';
 import { Product } from '@/types';
 import { supabase } from '@/lib/supabaseClient';
-import { v4 as uuidv4 } from 'uuid';
 
 export const catalogService = {
   exportCatalog(products: Product[]) {
@@ -12,7 +11,7 @@ export const catalogService = {
     }
 
     const exportData = products.map(product => ({
-      id: product.id,
+      sku: product.sku,
       nombre: product.name,
       costo: product.cost_price || 0,
       precio: product.price || 0,
@@ -21,7 +20,7 @@ export const catalogService = {
 
     const csv = Papa.unparse(exportData, {
       header: true,
-      columns: ['id', 'nombre', 'costo', 'precio', 'imageUrl']
+      columns: ['sku', 'nombre', 'costo', 'precio', 'imageUrl']
     });
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -38,11 +37,11 @@ export const catalogService = {
 
   downloadTemplate() {
     const templateData = [
-      { id: 'producto-uuid-aqui', nombre: 'Nombre del Producto', costo: 100.50, precio: 150.75, imageUrl: 'https://ejemplo.com/imagen.png', store_id: 'tienda-uuid-aqui' }
+      { sku: 'PROD-001', nombre: 'Nombre del Producto', costo: 100.50, precio: 150.75, imageUrl: 'https://ejemplo.com/imagen.png' }
     ];
     const csv = Papa.unparse(templateData, {
       header: true,
-      columns: ['id', 'nombre', 'costo', 'precio', 'imageUrl', 'store_id']
+      columns: ['sku', 'nombre', 'costo', 'precio', 'imageUrl']
     });
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
@@ -60,7 +59,7 @@ export const catalogService = {
         complete: (results) => {
           const data = results.data as any[];
           const headerAliases = {
-            id: ['id', 'ID', 'Identificador', 'SKU', 'urlid'],
+            sku: ['sku', 'SKU', 'Identificador', 'Código', 'ID', 'id', 'urlid'],
             name: ['name', 'nombre', 'NombreProducto'],
             cost: ['cost', 'costo', 'Costo'],
             price: ['price', 'precio', 'Precio'],
@@ -83,7 +82,7 @@ export const catalogService = {
 
           if (missingHeaders.length > 0) {
             toast.error(`Faltan las siguientes columnas requeridas: ${missingHeaders.join(', ')}`);
-            resolve({ productsToUpdate: [], errors: [{ row: 0, message: 'Missing headers' }] });
+            resolve({ productsToUpdate: [], errors: [{ row: 0, message: `Faltan columnas: ${missingHeaders.join(', ')}` }] });
             return;
           }
 
@@ -97,19 +96,24 @@ export const catalogService = {
 
           const validationErrors: { row: number; message: string }[] = [];
           const productsToUpdate = [];
-          const seenIds = new Set<string>();
+          const seenSkus = new Set<string>();
 
           for (const [index, row] of normalizedData.entries()) {
             const rowNum = index + 2;
-            let { id, name, cost, price, imageUrl } = row;
+            let { sku, name, cost, price, imageUrl } = row;
 
-            const productId = id?.trim() || uuidv4();
+            if (!sku || sku.trim() === '') {
+                validationErrors.push({ row: rowNum, message: "El 'SKU' es obligatorio." });
+                continue;
+            }
 
-            if (seenIds.has(productId)) {
-              validationErrors.push({ row: rowNum, message: `El id '${productId}' está duplicado.` });
+            const cleanSku = sku.trim();
+
+            if (seenSkus.has(cleanSku)) {
+              validationErrors.push({ row: rowNum, message: `El SKU '${cleanSku}' está duplicado en el archivo.` });
               continue;
             }
-            seenIds.add(productId);
+            seenSkus.add(cleanSku);
 
             const costValue = parseFloat(cost);
             const priceValue = parseFloat(price);
@@ -132,7 +136,7 @@ export const catalogService = {
             }
 
             productsToUpdate.push({
-              id: productId,
+              sku: cleanSku,
               store_id: storeId,
               name,
               cost_price: costValue,

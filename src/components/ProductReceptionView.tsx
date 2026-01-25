@@ -105,7 +105,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                 }
 
                 const headerAliases: { [key: string]: string[] } = {
-                  id: ['id', 'urlid', 'ID', 'Identificador', 'SKU'],
+                  sku: ['sku', 'SKU', 'Identificador', 'Código', 'ID', 'id'],
                   quantity: ['quantity', 'cantidad', 'Cantidad', 'Qty'],
                   cost: ['cost', 'costo', 'Costo', 'Cost Price'],
                 };
@@ -141,18 +141,18 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
 
                 setImportErrors([]); // Clear previous errors
                 const validationErrors: { row: number; message: string }[] = [];
-                const seenIds = new Set<string>();
+                const seenSkus = new Set<string>();
 
                 normalizedData.forEach((row, index) => {
                     const rowNum = index + 2; // User-facing row number (1-based + header)
-                    const { id, quantity, cost } = row;
+                    const { sku, quantity, cost } = row;
 
-                    if (!id) {
-                        validationErrors.push({ row: rowNum, message: "Falta el 'id' del producto." });
-                    } else if (seenIds.has(id)) {
-                        validationErrors.push({ row: rowNum, message: `El id '${id}' está duplicado en el archivo.` });
+                    if (!sku || sku.trim() === '') {
+                        validationErrors.push({ row: rowNum, message: "El 'SKU' es obligatorio." });
+                    } else if (seenSkus.has(sku.trim())) {
+                        validationErrors.push({ row: rowNum, message: `El SKU '${sku.trim()}' está duplicado en el archivo.` });
                     } else {
-                        seenIds.add(id);
+                        seenSkus.add(sku.trim());
                     }
 
                     const parsedQuantity = parseInt(quantity, 10);
@@ -176,21 +176,22 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                 const toastId = toast.loading(`Importando ${data.length} productos...`);
 
                 try {
-                    const ids = Array.from(seenIds);
+                    const skus = Array.from(seenSkus);
                     const { data: products, error } = await supabase
                         .from('products')
                         .select('id, name, cost_price, sku')
-                        .in('id', ids);
+                        .eq('store_id', user?.storeId)
+                        .in('sku', skus);
 
                     if (error) throw error;
 
-                    const productMap = new Map(products?.map(p => [p.id, p]));
+                    const productMap = new Map(products?.map(p => [p.sku, p]));
                     const newItems = new Map(receptionItems);
                     let importedCount = 0;
-                    const notFoundIds: { row: number, id: string }[] = [];
+                    const notFoundSkus: { row: number, sku: string }[] = [];
 
                     normalizedData.forEach((item, index) => {
-                        const product = productMap.get(item.id);
+                        const product = productMap.get(item.sku);
                         if (product) {
                             const existing = newItems.get(product.id);
                             const quantityToAdd = parseInt(item.quantity);
@@ -203,14 +204,14 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                             });
                             importedCount++;
                         } else {
-                            notFoundIds.push({ row: index + 2, id: item.id });
+                            notFoundSkus.push({ row: index + 2, sku: item.sku });
                         }
                     });
 
-                    if (notFoundIds.length > 0) {
-                        const dbErrors = notFoundIds.map(e => ({ row: e.row, message: `El id '${e.id}' no fue encontrado en la base de datos.` }));
+                    if (notFoundSkus.length > 0) {
+                        const dbErrors = notFoundSkus.map(e => ({ row: e.row, message: `El SKU '${e.sku}' no fue encontrado en esta tienda.` }));
                         setImportErrors(dbErrors);
-                        toast.error(`Importación parcial. ${notFoundIds.length} productos no se encontraron.`, { id: toastId });
+                        toast.error(`Importación parcial. ${notFoundSkus.length} productos no se encontraron.`, { id: toastId });
                     } else {
                         toast.success(`¡Éxito! ${importedCount} productos han sido validados y añadidos a la lista.`, { id: toastId });
                     }
@@ -313,6 +314,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
 
         const itemsPayload = Array.from(receptionItems.values()).map(item => ({
             product_id: item.product.id,
+            sku: item.product.sku,
             quantity: item.quantity,
             unit_cost: item.cost
         }));
@@ -560,7 +562,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                             <h4 className="font-bold uppercase text-[10px] text-primary tracking-widest">Importación por CSV</h4>
                             <p>Puede cargar múltiples productos a la vez usando un archivo CSV con las siguientes columnas:</p>
                             <ul className="list-disc pl-5 space-y-1 text-xs">
-                                <li><strong>SKU:</strong> Código único del producto.</li>
+                                <li><strong>SKU:</strong> Código único del producto dentro de esta tienda (OBLIGATORIO).</li>
                                 <li><strong>NombreProducto:</strong> Nombre para referencia (opcional).</li>
                                 <li><strong>Cantidad:</strong> Unidades recibidas.</li>
                                 <li><strong>Costo:</strong> Precio unitario de compra.</li>
