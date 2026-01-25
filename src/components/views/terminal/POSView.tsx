@@ -13,6 +13,8 @@ import { AnimatePresence } from 'framer-motion';
 import type { Product, PaymentMethod } from '@/types';
 import { usePOSProducts } from '@/hooks/usePOSProducts';
 import { POSCart } from './POSCart';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Drawer, DrawerContent } from '@/components/ui/drawer';
 
 interface POSViewProps {
   products: Product[];
@@ -62,6 +64,7 @@ export default function POSView({
   onViewModeChange
 }: POSViewProps) {
   const [showCart, setShowCart] = useState(false);
+  const isMobile = useIsMobile();
   const { filteredProducts, categories, selectedCategory, handleCategoryChange, isPending } = usePOSProducts(products, searchTerm);
 
   return (
@@ -85,24 +88,47 @@ export default function POSView({
             }
           ]}
           className="sm:w-auto"
+          position={isMobile ? 'bottom' : 'top'}
         />
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8 items-start">
-        <AnimatePresence>
-          {showCart && (
-            <POSCart
-              items={items}
-              onRemoveItem={onRemoveItem}
-              onUpdateQuantity={onUpdateQuantity}
-              onClearCart={onClearCart}
-              getTotal={getTotal}
-              isProcessing={isProcessing}
-              onCheckout={onCheckout}
-              onClose={() => setShowCart(false)}
-            />
-          )}
-        </AnimatePresence>
+        {isMobile ? (
+          <Drawer open={showCart} onOpenChange={setShowCart}>
+            <DrawerContent className="p-0 border-none bg-transparent">
+              <div className="px-4 pb-8">
+                <POSCart
+                  items={items}
+                  onRemoveItem={onRemoveItem}
+                  onUpdateQuantity={onUpdateQuantity}
+                  onClearCart={onClearCart}
+                  getTotal={getTotal}
+                  isProcessing={isProcessing}
+                  onCheckout={async (pm, d) => {
+                    await onCheckout(pm, d);
+                    setShowCart(false);
+                  }}
+                  onClose={() => setShowCart(false)}
+                />
+              </div>
+            </DrawerContent>
+          </Drawer>
+        ) : (
+          <AnimatePresence>
+            {showCart && (
+              <POSCart
+                items={items}
+                onRemoveItem={onRemoveItem}
+                onUpdateQuantity={onUpdateQuantity}
+                onClearCart={onClearCart}
+                getTotal={getTotal}
+                isProcessing={isProcessing}
+                onCheckout={onCheckout}
+                onClose={() => setShowCart(false)}
+              />
+            )}
+          </AnimatePresence>
+        )}
 
         <div className="flex-1 w-full space-y-6 lg:order-first">
           <SearchBar

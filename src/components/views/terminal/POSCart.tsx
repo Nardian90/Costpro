@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ShoppingCart, X, Trash2, Minus, Plus, DollarSign, CreditCard, Loader2, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { PaymentMethod } from '@/types';
 
 interface POSCartProps {
@@ -29,15 +30,22 @@ export const POSCart = ({
 }: POSCartProps) => {
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>('cash');
   const [localDiscount, setLocalDiscount] = useState({ type: 'fixed', value: 0 });
+  const isMobile = useIsMobile();
 
   return (
     <motion.div
-      initial={{ x: 300, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      exit={{ x: 300, opacity: 0 }}
-      className="w-full lg:w-[400px] shrink-0 lg:sticky top-24 z-20 lg:order-last"
+      initial={isMobile ? undefined : { x: 300, opacity: 0 }}
+      animate={isMobile ? undefined : { x: 0, opacity: 1 }}
+      exit={isMobile ? undefined : { x: 300, opacity: 0 }}
+      className={cn(
+        "shrink-0 z-20",
+        isMobile ? "w-full" : "w-[400px] lg:sticky top-24 lg:order-last"
+      )}
     >
-      <div className="rounded-xl border border-primary/20 bg-card overflow-hidden shadow-2xl">
+      <div className={cn(
+        "bg-card overflow-hidden",
+        isMobile ? "rounded-3xl shadow-none border-none" : "rounded-xl border border-primary/20 shadow-2xl"
+      )}>
         <div className="bg-primary p-6 flex items-center justify-between text-white">
           <h3 className="font-black text-lg uppercase tracking-widest flex items-center gap-3">
             <ShoppingCart className="w-6 h-6" />
