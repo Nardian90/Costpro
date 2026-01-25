@@ -473,8 +473,8 @@ export function useAuditLogs() {
 
       const extendedSchema = auditLogSchema.extend({
         profile: z.object({
-          full_name: z.string(),
-          role: z.enum(['admin', 'encargado', 'usuario', 'manager', 'clerk', 'warehouse']).optional()
+          full_name: z.string().nullable().optional(),
+          role: z.enum(['admin', 'encargado', 'usuario', 'manager', 'clerk', 'warehouse']).nullable().optional()
         }).nullable().optional()
       });
 
@@ -494,12 +494,12 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
         return data as Profile[];
       }
 
-      // ENCARGADO with Active Store: Sees all users who have a membership in that store
+      // ENCARGADO/MANAGER with Active Store: Sees all users who have a membership in that store
       if (isEncargado && activeStoreId) {
         const { data: memberProfiles, error } = await supabase
           .from('profiles')
           .select('*, memberships:user_store_memberships!inner(*, store:stores(name))')
-          .eq('user_store_memberships.store_id', activeStoreId)
+          .eq('memberships.store_id', activeStoreId)
           .order('full_name');
 
         if (error) throw error;

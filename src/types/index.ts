@@ -329,8 +329,8 @@ export interface AuditLog {
   new_data: any;
   metadata: any;
   profile?: {
-    full_name: string;
-    role?: UserRole;
+    full_name?: string | null;
+    role?: UserRole | null;
   } | null;
 }
 
