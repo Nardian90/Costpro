@@ -36,3 +36,12 @@ dev.log
 *.tsbuildinfo
 next-env.d.ts
 dev_server.log
+
+# playwright
+/playwright-report/
+/test-results/
+
+# verification
+/verification_*.png
+/dev_output.log
+/e2e/verification.spec.ts
