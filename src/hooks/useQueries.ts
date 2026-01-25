@@ -480,15 +480,40 @@ export function useAuditLogs() {
   });
 }
 
-export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: boolean) {
+export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: boolean, activeStoreId?: string | null) {
   return useQuery({
-    queryKey: ['users', currentUserId, isAdmin, isEncargado],
+    queryKey: ['users', currentUserId, isAdmin, isEncargado, activeStoreId],
     queryFn: async () => {
-      let query = supabase.from('profiles').select('*, memberships:user_store_memberships(*, store:stores(name))');
-      if (isEncargado && !isAdmin) query = query.eq('created_by', currentUserId);
-      const data = await withTableLogging('select', 'profiles', () => query.order('full_name'));
-      return data as Profile[];
+      // ADMIN: Sees all users in the system
+      if (isAdmin) {
+        let query = supabase.from('profiles').select('*, memberships:user_store_memberships(*, store:stores(name))');
+        const data = await withTableLogging('select', 'profiles', () => query.order('full_name'));
+        return data as Profile[];
+      }
+
+      // ENCARGADO with Active Store: Sees all users who have a membership in that store
+      if (isEncargado && activeStoreId) {
+        const { data: memberProfiles, error } = await supabase
+          .from('profiles')
+          .select('*, memberships:user_store_memberships!inner(*, store:stores(name))')
+          .eq('user_store_memberships.store_id', activeStoreId)
+          .order('full_name');
+
+        if (error) throw error;
+        return memberProfiles as Profile[];
+      }
+
+      // ENCARGADO Fallback or other roles: Filter by created_by (legacy behavior)
+      if (isEncargado && !isAdmin) {
+        let query = supabase.from('profiles').select('*, memberships:user_store_memberships(*, store:stores(name))');
+        query = query.eq('created_by', currentUserId);
+        const data = await withTableLogging('select', 'profiles', () => query.order('full_name'));
+        return data as Profile[];
+      }
+
+      return [];
     },
+    enabled: !!currentUserId,
   });
 }
 

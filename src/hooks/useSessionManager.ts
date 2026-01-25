@@ -4,6 +4,7 @@ import { useSessionStore } from '@/store/session-store';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import { profileSchema } from '@/validation/schemas';
+import { mapProfileToContract } from '@/contracts/user';
 import type { UserRole, User } from '@/types';
 
 const SESSION_CHECK_THROTTLE = 60 * 1000; // 1 minute
@@ -49,32 +50,40 @@ export function useSessionManager() {
                 if (profileError) throw profileError;
 
                 if (profileData?.is_active) {
+                    let effectiveActiveStoreId = profileData.active_store_id;
+
+                    // AUTO-SELECT STORE: If no active store is set but memberships exist, pick the first one
+                    // This ensures ENCARGADO and other non-admin users always have a context.
+                    if (!effectiveActiveStoreId && profileData.memberships && profileData.memberships.length > 0) {
+                        effectiveActiveStoreId = profileData.memberships[0].store_id;
+                        console.log(`[SessionManager] Auto-selecting store ${effectiveActiveStoreId} for user ${profileData.id}`);
+
+                        // Proactively update the profile in the database to persist this selection
+                        supabase
+                          .from('profiles')
+                          .update({ active_store_id: effectiveActiveStoreId })
+                          .eq('id', profileData.id)
+                          .then(({error}) => {
+                              if (error) console.error('[SessionManager] Failed to persist auto-selected store:', error);
+                          });
+                    }
+
                     let activeRoles: UserRole[] = [profileData.role];
-                    if (profileData.active_store_id) {
+                    if (effectiveActiveStoreId) {
                         const { data: membershipData } = await supabase
                             .from('user_store_memberships')
                             .select('role')
                             .eq('user_id', profileData.id)
-                            .eq('store_id', profileData.active_store_id)
+                            .eq('store_id', effectiveActiveStoreId)
                             .single();
                         if (membershipData?.role) activeRoles = [membershipData.role];
                     }
 
                     const userData = {
-                        id: profileData.id,
-                        email: profileData.email,
-                        full_name: profileData.full_name,
-                        role: profileData.role,
+                        ...profileData,
                         roles: activeRoles,
-                        store_id: profileData.active_store_id || profileData.store_id,
-                        active_store_id: profileData.active_store_id,
-                        max_stores_limit: profileData.max_stores_limit,
-                        max_users_limit: profileData.max_users_limit,
-                        created_by: profileData.created_by,
-                        is_active: profileData.is_active,
-                        created_at: profileData.created_at,
-                        updated_at: profileData.updated_at,
-                        memberships: profileData.memberships || [],
+                        active_store_id: effectiveActiveStoreId,
+                        store_id: effectiveActiveStoreId || profileData.store_id,
                     };
 
                     // Validate with Zod
@@ -83,24 +92,7 @@ export function useSessionManager() {
                         console.error('[Zod Validation Error] profile data:', validationResult.error.format());
                     }
 
-                    const finalUserData = validationResult.success ? validationResult.data : userData;
-
-                    const userContractData = {
-                      id: finalUserData.id,
-                      email: finalUserData.email,
-                      fullName: finalUserData.full_name,
-                      role: finalUserData.role,
-                      roles: finalUserData.roles || [],
-                      storeId: finalUserData.store_id,
-                      activeStoreId: finalUserData.active_store_id,
-                      maxStoresLimit: finalUserData.max_stores_limit,
-                      maxUsersLimit: finalUserData.max_users_limit,
-                      createdBy: finalUserData.created_by,
-                      isActive: finalUserData.is_active,
-                      createdAt: finalUserData.created_at,
-                      updatedAt: finalUserData.updated_at,
-                      memberships: finalUserData.memberships || [],
-                    }
+                    const userContractData = mapProfileToContract(validationResult.success ? validationResult.data : userData as any);
 
                     const currentState = useAuthStore.getState();
                     if (session.access_token !== currentState.token || JSON.stringify(userContractData) !== JSON.stringify(currentState.user)) {
