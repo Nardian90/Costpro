@@ -70,13 +70,22 @@ export function useSessionManager() {
 
                     let activeRoles: UserRole[] = [profileData.role];
                     if (effectiveActiveStoreId) {
-                        const { data: membershipData } = await supabase
+                        // Use a regular select instead of .single() to prevent 406/Not Found errors
+                        // if the membership record doesn't exist yet for the active store context.
+                        const { data: membershipRows } = await supabase
                             .from('user_store_memberships')
                             .select('role')
                             .eq('user_id', profileData.id)
                             .eq('store_id', effectiveActiveStoreId)
-                            .single();
-                        if (membershipData?.role) activeRoles = [membershipData.role];
+                            .limit(1);
+
+                        const membershipData = membershipRows?.[0];
+                        if (membershipData?.role) {
+                            activeRoles = [membershipData.role];
+                        } else if (profileData.role === 'admin') {
+                            // Admins preserve their global role if no specific store membership is found
+                            activeRoles = ['admin'];
+                        }
                     }
 
                     const userData = {

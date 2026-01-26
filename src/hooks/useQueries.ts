@@ -493,19 +493,25 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
     queryFn: async () => {
       // ADMIN: Sees all users in the system
       if (isAdmin) {
-        // We use a simplified select first to ensure it works, then add memberships
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*, memberships:user_store_memberships(*, store:stores(name))')
-          .order('full_name');
+        // Fetch profiles and memberships separately to ensure resilience against RLS/Join failures
+        const [profilesRes, membershipsRes] = await Promise.all([
+          supabase.from('profiles').select('*').order('full_name'),
+          supabase.from('user_store_memberships').select('*, store:stores(name)')
+        ]);
 
-        if (error) {
-          logger.error('DATABASE', 'FETCH_USERS_ADMIN_FAILED', { error });
-          // Fallback to profiles only if join fails
-          const { data: fallbackData } = await supabase.from('profiles').select('*').order('full_name');
-          return (fallbackData || []) as Profile[];
+        if (profilesRes.error) {
+          logger.error('DATABASE', 'FETCH_PROFILES_ADMIN_FAILED', { error: profilesRes.error });
+          return [];
         }
-        return (data || []) as Profile[];
+
+        const profiles = profilesRes.data || [];
+        const allMemberships = membershipsRes.data || [];
+
+        // Manually join memberships to profiles
+        return profiles.map(profile => ({
+          ...profile,
+          memberships: allMemberships.filter(m => m.user_id === profile.id)
+        })) as Profile[];
       }
 
       // ENCARGADO/MANAGER: Sees all users who have a membership in ANY store they manage
