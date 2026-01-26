@@ -7,6 +7,9 @@ import { AuditCategory, getAuditCategory } from './AuditEventIcon';
 import { StateRenderer } from '@/components/ui/StateRenderer';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuditLogsView } from './useAuditLogsView';
+import { useStores } from '@/hooks/useQueries';
+import { useAuthStore } from '@/store';
+import { Shield, X } from 'lucide-react';
 
 const AuditLoadingSkeleton = () => (
   <div className="space-y-6">
@@ -23,43 +26,45 @@ const AuditLoadingSkeleton = () => (
 );
 
 export default function AuditLogsView() {
+  const { user } = useAuthStore();
   const {
     logs,
     searchTerm,
     setSearchTerm,
     dateRange,
     setDateRange,
-    isLoading
+    selectedStoreId,
+    setSelectedStoreId,
+    isLoading,
+    error
   } = useAuditLogsView();
 
   const [selectedCategory, setSelectedCategory] = useState<AuditCategory | 'all'>('all');
   const [selectedUser, setSelectedUser] = useState<string>('all');
-  const [selectedStore, setSelectedStore] = useState<string>('all');
+
+  // Fetch stores for the filter
+  const { data: stores = [] } = useStores(
+    user?.id || '',
+    user?.role === 'admin',
+    user?.role === 'encargado'
+  );
 
   const { availableUsers, availableStores } = useMemo(() => {
     const users = new Set<string>();
-    const stores = new Set<string>();
     logs.forEach(log => {
       if (log.profile?.full_name) users.add(log.profile.full_name);
-      const sName = log.metadata?.store_name || log.new_data?.store_name || log.old_data?.store_name;
-      if (sName) stores.add(sName);
     });
+
     return {
       availableUsers: Array.from(users).sort(),
-      availableStores: Array.from(stores).sort()
+      availableStores: stores.map(s => ({ id: s.id, name: s.name }))
     };
-  }, [logs]);
+  }, [logs, stores]);
 
   const filteredLogs = useMemo(() => {
     return logs.filter(log => {
-      // Search term filter
-      const searchLower = searchTerm.toLowerCase();
-      const matchesSearch = !searchTerm ||
-        log.table_name.toLowerCase().includes(searchLower) ||
-        log.action.toLowerCase().includes(searchLower) ||
-        log.profile?.full_name?.toLowerCase().includes(searchLower) ||
-        JSON.stringify(log.new_data).toLowerCase().includes(searchLower) ||
-        JSON.stringify(log.old_data).toLowerCase().includes(searchLower);
+      // Backend already filtered by searchTerm, dateRange, and storeId.
+      // We only need to filter by category and user client-side.
 
       // Category filter
       const category = getAuditCategory(log.table_name, log.action);
@@ -68,18 +73,39 @@ export default function AuditLogsView() {
       // User filter
       const matchesUser = selectedUser === 'all' || log.profile?.full_name === selectedUser;
 
-      // Store filter
-      const sName = log.metadata?.store_name || log.new_data?.store_name || log.old_data?.store_name;
-      const matchesStore = selectedStore === 'all' || sName === selectedStore;
-
-      // Date filter
-      const logDate = new Date(log.created_at);
-      const matchesDateFrom = !dateRange.from || logDate >= new Date(dateRange.from);
-      const matchesDateTo = !dateRange.to || logDate <= new Date(dateRange.to + 'T23:59:59');
-
-      return matchesSearch && matchesCategory && matchesUser && matchesStore && matchesDateFrom && matchesDateTo;
+      return matchesCategory && matchesUser;
     });
-  }, [logs, searchTerm, selectedCategory, selectedUser, selectedStore, dateRange]);
+  }, [logs, selectedCategory, selectedUser]);
+
+  const customErrorComponent = error ? (
+    <div className="flex flex-col items-center justify-center py-20 gap-4 text-center w-full bg-destructive/5 border border-destructive/20 rounded-2xl p-8">
+      <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mb-2">
+        <Shield className="w-8 h-8 text-destructive" />
+      </div>
+      <p className="font-bold text-destructive text-xl uppercase tracking-tight">
+        {error.message.includes('permission denied') || error.message.includes('42501')
+          ? 'Acceso Denegado'
+          : 'Error de Carga'}
+      </p>
+      <p className="text-sm text-muted-foreground max-w-xs mx-auto font-medium">
+        {error.message.includes('permission denied') || error.message.includes('42501')
+          ? 'Tus privilegios actuales no permiten consultar el historial de auditoría de este contexto.'
+          : 'Hubo un problema al recuperar los registros. Por favor, verifica tu conexión.'}
+      </p>
+    </div>
+  ) : null;
+
+  const customEmptyComponent = (
+    <div className="flex flex-col items-center justify-center py-20 gap-4 text-center w-full bg-muted/20 border border-dashed border-border rounded-2xl p-8">
+      <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-2">
+        <X className="w-8 h-8 text-muted-foreground" />
+      </div>
+      <p className="font-bold text-foreground text-xl uppercase tracking-tight">Sin Resultados</p>
+      <p className="text-sm text-muted-foreground max-w-xs mx-auto font-medium">
+        No se encontraron registros de auditoría que coincidan con los filtros seleccionados.
+      </p>
+    </div>
+  );
 
   return (
     <div className="space-y-8 pb-20">
@@ -98,17 +124,26 @@ export default function AuditLogsView() {
         availableUsers={availableUsers}
         selectedUser={selectedUser}
         onUserChange={setSelectedUser}
-        availableStores={availableStores}
-        selectedStore={selectedStore}
-        onStoreChange={setSelectedStore}
+        availableStores={availableStores.map(s => s.name)} // Keep string for now to match interface
+        selectedStore={stores.find(s => s.id === selectedStoreId)?.name || 'all'}
+        onStoreChange={(storeName) => {
+          if (storeName === 'all') {
+            setSelectedStoreId('all');
+          } else {
+            const store = stores.find(s => s.name === storeName);
+            if (store) setSelectedStoreId(store.id);
+          }
+        }}
       />
 
       <div className="mt-8">
         <StateRenderer
           isLoading={isLoading}
-          error={null}
+          error={error}
           data={filteredLogs}
           loadingComponent={<AuditLoadingSkeleton />}
+          errorComponent={customErrorComponent}
+          emptyComponent={customEmptyComponent}
         >
           {(data) => <AuditTimeline logs={data} />}
         </StateRenderer>

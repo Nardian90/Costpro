@@ -3,18 +3,32 @@ import { z } from 'zod';
 import { supabase } from '@/lib/supabaseClient';
 import { validateRPCArrayResponse } from '@/lib/rpc-validator';
 import { auditLogSchema } from '@/validation/schemas';
-import { withTableLogging } from './useQueries';
+import { withLogging } from './useQueries';
 
-export function useAuditLogs() {
+export interface AuditLogFilters {
+  store_id?: string | null;
+  search_term?: string;
+  date_from?: string;
+  date_to?: string;
+  limit?: number;
+}
+
+export function useAuditLogs(filters: AuditLogFilters = {}) {
+  const { store_id, search_term, date_from, date_to, limit = 1000 } = filters;
+
   return useQuery({
-    queryKey: ['audit-logs'],
+    queryKey: ['audit-logs', store_id, search_term, date_from, date_to, limit],
     queryFn: async () => {
-      // Explicitly select columns to avoid over-fetching potentially large JSON fields
-      // while still including those needed for filtering/display
-      const columns = 'id, created_at, user_id, action, table_name, record_id, old_data, new_data, metadata, profile:profiles(full_name, role)';
-      const data = await withTableLogging('select', 'audit_logs', () => supabase.from('audit_logs')
-        .select(columns)
-        .order('created_at', { ascending: false }).limit(1000));
+      const rpcName = 'get_audit_logs';
+      const params = {
+        p_store_id: store_id || null,
+        p_search_term: search_term || null,
+        p_date_from: date_from || null,
+        p_date_to: date_to || null,
+        p_limit: limit
+      };
+
+      const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
 
       const extendedSchema = auditLogSchema.extend({
         profile: z.object({
@@ -23,7 +37,7 @@ export function useAuditLogs() {
         }).nullable().optional()
       });
 
-      return await validateRPCArrayResponse(data, extendedSchema, 'audit_logs');
+      return await validateRPCArrayResponse(data, extendedSchema, rpcName);
     },
     staleTime: 60 * 1000,
   });
@@ -32,14 +46,22 @@ export function useAuditLogs() {
 /**
  * Prefetches audit logs.
  */
-export async function prefetchAuditLogs(queryClient: any) {
+export async function prefetchAuditLogs(queryClient: any, filters: AuditLogFilters = {}) {
+  const { store_id, search_term, date_from, date_to, limit = 1000 } = filters;
+
   return queryClient.prefetchQuery({
-    queryKey: ['audit-logs'],
+    queryKey: ['audit-logs', store_id, search_term, date_from, date_to, limit],
     queryFn: async () => {
-      const columns = 'id, created_at, user_id, action, table_name, record_id, old_data, new_data, metadata, profile:profiles(full_name, role)';
-      const { data, error } = await supabase.from('audit_logs')
-        .select(columns)
-        .order('created_at', { ascending: false }).limit(1000);
+      const rpcName = 'get_audit_logs';
+      const params = {
+        p_store_id: store_id || null,
+        p_search_term: search_term || null,
+        p_date_from: date_from || null,
+        p_date_to: date_to || null,
+        p_limit: limit
+      };
+
+      const { data, error } = await supabase.rpc(rpcName, params);
       if (error) throw error;
 
       const extendedSchema = auditLogSchema.extend({
@@ -49,7 +71,7 @@ export async function prefetchAuditLogs(queryClient: any) {
         }).nullable().optional()
       });
 
-      return await validateRPCArrayResponse(data, extendedSchema, 'audit_logs');
+      return await validateRPCArrayResponse(data, extendedSchema, rpcName);
     },
     staleTime: 60 * 1000,
   });
