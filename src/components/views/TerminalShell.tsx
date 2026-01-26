@@ -38,6 +38,8 @@ const StockHistoryView = lazy(() => import('./terminal/views/stock_history/Stock
 const CatalogView = lazy(() => import('./terminal/views/catalog/CatalogView'));
 const InventoryCountView = lazy(() => import('./terminal/views/inventory_count/InventoryCountView'));
 const CostSheetView = lazy(() => import('./terminal/views/cost_sheet/CostSheetView'));
+const HelpView = lazy(() => import('./terminal/views/help/HelpView'));
+const SettingsView = lazy(() => import('./terminal/views/settings/SettingsView'));
 
 
 export default function TerminalShell() { // Renamed from TerminalView
@@ -51,6 +53,10 @@ export default function TerminalShell() { // Renamed from TerminalView
   } = useUIStore();
 
   const [sidebarSearch, setSidebarSearch] = useState('');
+  const [notifications, setNotifications] = useState({
+    lowStock: true,
+    salesAlerts: false,
+  });
 
   // Hooks
   const nav = useTerminalNavigation(user, sidebarSearch);
@@ -118,8 +124,8 @@ export default function TerminalShell() { // Renamed from TerminalView
         case 'cost-sheets': return <CostSheetView />;
 
         // --- Placeholders for remaining views ---
-        case 'settings': return <div>Settings View Placeholder</div>;
-        case 'help': return <div>Help View Placeholder</div>;
+        case 'settings': return <SettingsView notifications={notifications} setNotifications={setNotifications} />;
+        case 'help': return <HelpView />;
         case 'recepcion': return <div>Reception View Placeholder</div>;
         default: return <div>Default View Placeholder</div>;
     }

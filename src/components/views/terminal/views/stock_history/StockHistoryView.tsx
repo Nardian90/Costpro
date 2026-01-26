@@ -8,18 +8,26 @@ import ActionMenu from '@/components/ui/ActionMenu';
 
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { useStockMovements } from '@/hooks/useStockMovements';
+import { useAuthStore } from '@/store';
 
 interface StockHistoryViewProps {}
 
 export default function StockHistoryView({}: StockHistoryViewProps) {
-  const [movements, setMovements] = useState<any[]>([]);
+  const { user } = useAuthStore();
+  const { data: movementsData, refetch } = useStockMovements(user?.storeId, user?.role === 'admin');
   const [searchTerm, setSearchTerm] = useState('');
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
+
   const onRefresh = () => {
-    toast.info('La lógica de actualización del historial de stock se implementará en el futuro.');
+    refetch();
+    toast.success('Historial de stock actualizado.');
   };
+
   const onSearchChange = (value: string) => setSearchTerm(value);
   const onDateRangeChange = (range: { from: string; to: string }) => setDateRange(range);
+
+  const movements = movementsData || [];
   const getMovementBadge = (type: string) => {
     switch (type) {
       case 'sale': return 'text-primary bg-primary/10 border-primary/20';
