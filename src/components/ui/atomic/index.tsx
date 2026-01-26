@@ -131,6 +131,45 @@ interface ProductCardProps {
   variant?: 'catalog' | 'pos' | 'inventory';
 }
 
+export const CategoryChips: React.FC<{
+  categories: string[];
+  selectedCategory: string;
+  onCategoryChange: (category: string) => void;
+  className?: string;
+}> = ({ categories, selectedCategory, onCategoryChange, className }) => {
+  return (
+    <div className={cn("w-full overflow-x-auto no-scrollbar flex flex-row gap-2 py-2 items-center", className)}>
+      <button
+        type="button"
+        onClick={() => onCategoryChange('')}
+        className={cn(
+          "px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border shrink-0",
+          selectedCategory === ''
+            ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20"
+            : "bg-background text-muted-foreground border-border hover:bg-muted"
+        )}
+      >
+        Todas
+      </button>
+      {categories.map((cat) => (
+        <button
+          key={cat}
+          type="button"
+          onClick={() => onCategoryChange(cat)}
+          className={cn(
+            "px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border shrink-0",
+            selectedCategory === cat
+              ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20"
+              : "bg-background text-muted-foreground border-border hover:bg-muted"
+          )}
+        >
+          {cat}
+        </button>
+      ))}
+    </div>
+  );
+};
+
 export const ProductCard: React.FC<ProductCardProps> = ({
   product, onEdit, onViewPrices, onDelete, onToggleActive, onClick, className, variant = 'catalog'
 }) => {
