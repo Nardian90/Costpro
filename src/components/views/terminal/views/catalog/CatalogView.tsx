@@ -39,7 +39,7 @@ import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { catalogService } from '@/services/catalog-service';
 import { useCatalogModals } from '@/hooks/useCatalogModals';
-import { CatalogModals } from '@/components/CatalogModals';
+import { CatalogModals } from './CatalogModals';
 import { cn } from '@/lib/utils';
 import { Product } from '@/types';
 import ProductImage from '@/components/ui/ProductImage';

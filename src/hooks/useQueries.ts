@@ -40,7 +40,7 @@ async function withLogging<T>(
 }
 
 // Helper to wrap table operations with logging
-async function withTableLogging<T>(
+export async function withTableLogging<T>(
   operation: 'select' | 'insert' | 'update' | 'delete',
   tableName: string,
   query: () => PromiseLike<{ data: T | null; error: any }>

@@ -9,16 +9,16 @@ import { toast } from 'sonner';
 import { storeService } from '@/services/store-service';
 import { userService } from '@/services/user-service';
 
+export type StoreFormMode = 'create' | 'edit' | 'delete' | null;
 
 export function useStoresView() {
     const { user } = useAuthStore();
     const [searchTerm, setSearchTerm] = useState('');
 
     // Modal State
-    const [isEditModalOpen, setEditModalOpen] = useState(false);
-    const [isCreateModalOpen, setCreateModalOpen] = useState(false);
-    const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [storeFormMode, setStoreFormMode] = useState<StoreFormMode>(null);
     const [selectedStore, setSelectedStore] = useState<Store | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Data Fetching
     const { data: storesData = [], isLoading: isLoadingStores } = useStores(
@@ -37,52 +37,63 @@ export function useStoresView() {
         try {
           await userService.setActiveStore(user.id, storeId);
           toast.success('Tienda cambiada. La página se recargará.');
-          // Use a timeout to allow the toast to be seen before reload
           setTimeout(() => window.location.reload(), 1500);
         } catch (error: any) {
           toast.error('Error al cambiar de tienda');
         }
     };
 
-    const handleUpdateStore = async (storeId: string, name: string, address: string) => {
+    const handleStoreFormSubmit = async (mode: StoreFormMode, data: Partial<Store>) => {
+        if (!mode) return;
+        setIsSubmitting(true);
         try {
-          await storeService.updateStore(storeId, name, address);
-          toast.success('Tienda actualizada correctamente');
-          setEditModalOpen(false);
-          setSelectedStore(null);
-          // TODO: Invalidate queries
+            if (mode === 'edit' && selectedStore) {
+                await storeService.updateStore(selectedStore.id, data.name || '', data.address || '');
+                toast.success('Tienda actualizada');
+            } else if (mode === 'create') {
+                // await storeService.createStore(data);
+                toast.info('Funcionalidad de creación en desarrollo');
+            } else if (mode === 'delete' && selectedStore) {
+                // await storeService.deleteStore(selectedStore.id);
+                toast.info('Funcionalidad de eliminación en desarrollo');
+            }
+            setStoreFormMode(null);
+            setSelectedStore(null);
         } catch (error: any) {
-          toast.error('Error al actualizar la tienda');
+            toast.error('Error en la operación');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     // Modal Handlers
-    const openEditModal = (store: Store) => {
+    const handleEditStore = (store: Store) => {
         setSelectedStore(store);
-        setEditModalOpen(true);
+        setStoreFormMode('edit');
     };
 
-    const openCreateModal = () => {
+    const handleCreateStore = () => {
         setSelectedStore(null);
-        setCreateModalOpen(true);
+        setStoreFormMode('create');
     };
 
-    const openDeleteModal = (store: Store) => {
+    const handleDeleteStore = (store: Store) => {
         setSelectedStore(store);
-        setDeleteModalOpen(true);
+        setStoreFormMode('delete');
     };
 
-    const closeModal = () => {
+    const handleCloseModal = () => {
         setSelectedStore(null);
-        setEditModalOpen(false);
-        setCreateModalOpen(false);
-        setDeleteModalOpen(false);
+        setStoreFormMode(null);
     }
 
     return {
         // State
         searchTerm,
         setSearchTerm,
+        storeFormMode,
+        selectedStore,
+        isSubmitting,
 
         // Data
         stores: filteredStores,
@@ -92,16 +103,10 @@ export function useStoresView() {
 
         // Operations
         handleSetActiveStore,
-        handleUpdateStore,
-
-        // Modal State & Handlers
-        isEditModalOpen,
-        isCreateModalOpen,
-        isDeleteModalOpen,
-        selectedStore,
-        openEditModal,
-        openCreateModal,
-        openDeleteModal,
-        closeModal
+        handleStoreFormSubmit,
+        handleEditStore,
+        handleCreateStore,
+        handleDeleteStore,
+        handleCloseModal
     };
 }
