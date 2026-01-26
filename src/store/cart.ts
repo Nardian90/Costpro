@@ -1,7 +1,20 @@
 import { create } from 'zustand';
 import { produce } from 'immer';
 import { toast } from 'sonner';
-import { CartItem, Product } from '@/types';
+import type { Product } from '@/types';
+
+// Moved from `types/index.ts` to here to avoid circular dependencies
+// and because this type is most relevant to the cart's domain.
+export interface CartItem {
+  product_id: string;
+  variant_id: string | null;
+  product: Product;
+  variant: any | null; // ProductVariant is not defined yet, using any
+  quantity: number;
+  price: number;
+  cost: number;
+  subtotal: number;
+}
 
 // Define Discount type
 type Discount = {
