@@ -508,10 +508,14 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
         const allMemberships = membershipsRes.data || [];
 
         // Manually join memberships to profiles
-        return profiles.map(profile => ({
-          ...profile,
-          memberships: allMemberships.filter(m => m.user_id === profile.id)
-        })) as Profile[];
+        // We use a robust mapping to ensure memberships is always an array
+        return profiles.map(profile => {
+          const userMemberships = allMemberships.filter(m => m.user_id === profile.id);
+          return {
+            ...profile,
+            memberships: userMemberships
+          };
+        }) as Profile[];
       }
 
       // ENCARGADO/MANAGER: Sees all users who have a membership in ANY store they manage
