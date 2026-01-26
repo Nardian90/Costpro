@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { Save, Search, Plus, Trash2, Package, Upload, Download, HelpCircle, FileText, AlertTriangle } from 'lucide-react';
 import { useInventory, useRegisterReception } from '@/hooks/useQueries';
 import { useDebounce } from '@/hooks/useDebounce';
-import ActionMenu, { Action } from './ui/ActionMenu';
+import ActionMenu, { Action } from '@/components/ui/ActionMenu';
 import Papa from 'papaparse';
 import {
     Dialog,

@@ -5,7 +5,7 @@ import React, { useRef, useCallback } from 'react';
 import type { Product } from '@/types';
 import { cn } from '@/lib/utils';
 import { Package, Edit, Loader2 } from 'lucide-react';
-import ProductImage from './ui/ProductImage';
+import ProductImage from '@/components/ui/ProductImage';
 
 interface InventoryTableViewProps {
     products: Product[];
