@@ -2,7 +2,7 @@
 'use client'
 
 import { useState, useMemo } from 'react';
-import { useAuditLogs } from '@/hooks/useQueries';
+import { useAuditLogs } from '@/hooks/useAuditLogs';
 
 export function useAuditLogsView() {
     const [searchTerm, setSearchTerm] = useState('');
