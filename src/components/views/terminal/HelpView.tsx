@@ -119,6 +119,27 @@ export default function HelpView() {
               <div className="bg-primary/5 rounded-3xl p-8 border border-primary/10">
                 <h4 className="text-lg font-black text-primary uppercase mb-6 flex items-center gap-2">
                   <Info className="w-5 h-5" />
+                  CostPro para Niños: El Cuento de Juan y Pedro
+                </h4>
+                <div className="mb-8 p-6 bg-background/50 rounded-2xl border border-primary/20">
+                  <p className="text-sm font-medium leading-relaxed mb-4">
+                    <span className="text-xl mr-2">🍭</span>
+                    Imagina que tienes una dulcería. <span className="font-black text-primary">JUAN</span> es el dueño global. Él decide cuántas tiendas abrir y quiénes pueden ayudarle.
+                  </p>
+                  <div className="grid md:grid-cols-2 gap-4 text-xs">
+                    <div className="space-y-2">
+                      <p><span className="font-bold">EL TRUCO DE LOS ESTANTES:</span> Cada tienda es un estante diferente. Juan no quiere que los dulces de la "Tienda Norte" se mezclen con los de la "Tienda Sur".</p>
+                      <p><span className="font-bold">LA LLAVE MÁGICA:</span> Para mover dulces (hacer una <span className="font-bold">Recepción</span>), primero debes elegir qué estante vas a llenar. Si no eliges uno, ¡la caja no se abre!</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p><span className="font-black text-violet-600">PEDRO (El Ayudante):</span> Juan le dio a Pedro permiso para cuidar el estante Norte. Pedro solo ve lo que hay ahí. Así, Juan está tranquilo porque sabe que nadie se confunde.</p>
+                      <p className="font-bold text-primary italic">"En CostPro, elegir tu tienda es como elegir qué juego vas a jugar hoy. ¡Todo queda en su lugar!"</p>
+                    </div>
+                  </div>
+                </div>
+
+                <h4 className="text-lg font-black text-primary uppercase mb-6 flex items-center gap-2">
+                  <Info className="w-5 h-5" />
                   Caso Demostrativo: La Empresa "Global-Tech"
                 </h4>
                 <div className="grid md:grid-cols-2 gap-8 text-sm leading-relaxed">
@@ -444,6 +465,10 @@ export default function HelpView() {
                       <div className="bg-primary/5 p-4 rounded-xl border-l-4 border-primary space-y-2">
                         <p className="font-bold text-xs uppercase text-primary">Regla Fundamental:</p>
                         <p className="italic text-xs">"Un producto se identifica por su SKU dentro de su tienda activa. El mismo SKU puede existir en otra tienda sin causar conflictos."</p>
+                      </div>
+                      <div className="bg-amber-500/5 p-4 rounded-xl border-l-4 border-amber-500 space-y-2">
+                        <p className="font-bold text-xs uppercase text-amber-600">Contexto Obligatorio (v5.5):</p>
+                        <p className="italic text-xs text-amber-900/70">"No se pueden realizar recepciones sin una tienda activa. El sistema bloqueará la operación para garantizar la integridad de los datos."</p>
                       </div>
                       <div className="space-y-2">
                         <h5 className="font-black text-[10px] uppercase tracking-widest text-muted-foreground">Ejemplo Operativo:</h5>
