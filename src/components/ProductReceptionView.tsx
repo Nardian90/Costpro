@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/store';
 import type { Product } from '@/types';
 import { toast } from 'sonner';
-import { Save, Search, Plus, Trash2, Package, Upload, Download, HelpCircle, FileText } from 'lucide-react';
+import { Save, Search, Plus, Trash2, Package, Upload, Download, HelpCircle, FileText, AlertTriangle } from 'lucide-react';
 import { useInventory, useRegisterReception } from '@/hooks/useQueries';
 import { useDebounce } from '@/hooks/useDebounce';
 import ActionMenu, { Action } from './ui/ActionMenu';
@@ -33,6 +33,30 @@ interface ReceptionItem {
 
 export default function ProductReceptionView({ onCancel }: ProductReceptionViewProps) {
     const { user } = useAuthStore();
+
+    if (!user?.storeId) {
+        return (
+            <div className="flex flex-col items-center justify-center p-12 text-center bg-amber-500/5 rounded-3xl border-2 border-dashed border-amber-500/20 gap-6">
+                <div className="w-20 h-20 rounded-full bg-amber-500/10 flex items-center justify-center">
+                    <AlertTriangle className="w-10 h-10 text-amber-500" />
+                </div>
+                <div className="space-y-2">
+                    <h3 className="text-2xl font-black uppercase tracking-tight text-amber-600">Contexto de Tienda Requerido</h3>
+                    <p className="text-muted-foreground text-sm max-w-md mx-auto font-medium">
+                        Para registrar una recepción, debes tener una tienda activa seleccionada.
+                        Por favor, selecciona una tienda en la sección de <span className="font-bold text-primary">Tiendas</span> antes de continuar.
+                    </p>
+                </div>
+                <button
+                    onClick={onCancel}
+                    className="px-8 py-3 bg-amber-500 text-white font-black rounded-xl hover:opacity-90 transition-opacity uppercase text-xs tracking-widest"
+                >
+                    Volver al Inventario
+                </button>
+            </div>
+        );
+    }
+
     const [receptionItems, setReceptionItems] = useState<Map<string, ReceptionItem>>(new Map());
     const [receptionDetails, setReceptionDetails] = useState({
         supplier: '',
@@ -52,7 +76,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
 
     const addToReception = (product: Product) => {
         if (receptionItems.has(product.id)) {
-            toast.info(`${product.name} is already in the reception list.`);
+            toast.info(`${product.name} ya está en la lista de recepción.`);
             return;
         }
         const newItems = new Map(receptionItems);
@@ -100,14 +124,14 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
             complete: async (results) => {
                 const data = results.data as any[];
                 if (data.length === 0) {
-                    toast.error('The CSV file is empty.');
+                    toast.error('El archivo CSV está vacío.');
                     return;
                 }
 
                 const headerAliases: { [key: string]: string[] } = {
                   sku: ['sku', 'SKU', 'Identificador', 'Código', 'ID', 'id'],
-                  quantity: ['quantity', 'cantidad', 'Cantidad', 'Qty'],
-                  cost: ['cost', 'costo', 'Costo', 'Cost Price'],
+                  quantity: ['quantity', 'cantidad', 'Cantidad', 'Qty', 'unidades'],
+                  cost: ['cost', 'costo', 'Costo', 'Cost Price', 'precio_compra'],
                 };
 
                 const fileHeaders = results.meta.fields || [];
@@ -231,20 +255,20 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                 }
             },
             error: (error) => {
-                toast.error(`Error parsing CSV: ${error.message}`);
+                toast.error(`Error al procesar el CSV: ${error.message}`);
             }
         });
     };
 
     const handleExport = () => {
         if (receptionItems.size === 0) {
-            toast.error('No items to export.');
+            toast.error('No hay productos para exportar.');
             return;
         }
 
         const data = Array.from(receptionItems.values()).map(item => ({
             SKU: item.product.sku || '',
-            NombreProducto: item.product.name,
+            'Nombre del Producto': item.product.name,
             Cantidad: item.quantity,
             Costo: item.cost
         }));
@@ -263,8 +287,8 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
 
     const downloadTemplate = () => {
         const data = [
-            { SKU: 'PROD-001', NombreProducto: 'Example Product', Cantidad: 10, Costo: 15.50 },
-            { SKU: 'PROD-002', NombreProducto: 'Another Product', Cantidad: 5, Costo: 20.00 }
+            { SKU: 'PROD-001', 'Nombre del Producto': 'Producto Ejemplo', Cantidad: 10, Costo: 15.50 },
+            { SKU: 'PROD-002', 'Nombre del Producto': 'Otro Producto', Cantidad: 5, Costo: 20.00 }
         ];
         const csv = Papa.unparse(data);
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -281,14 +305,14 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
     const actions: Action[] = [
         {
             id: 'import',
-            label: 'Importar',
+            label: 'Importar CSV',
             icon: Upload,
             onClick: handleImportClick,
             variant: 'outline',
         },
         {
             id: 'export',
-            label: 'Exportar',
+            label: 'Exportar Lista',
             icon: Download,
             onClick: handleExport,
             variant: 'outline',
@@ -381,18 +405,18 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                     <div className="neu-card !p-4">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label className="text-[10px] font-black text-muted-foreground uppercase">Supplier</label>
+                                <label className="text-[10px] font-black text-muted-foreground uppercase">Proveedor</label>
                                 <input
                                     type="text"
                                     value={receptionDetails.supplier}
                                     onChange={(e) => setReceptionDetails({ ...receptionDetails, supplier: e.target.value })}
                                     className="neu-input w-full mt-1 text-base"
-                                    placeholder="Supplier Name"
+                                    placeholder="Nombre del proveedor"
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                                <div>
-                                    <label className="text-[10px] font-black text-muted-foreground uppercase">Date</label>
+                                    <label className="text-[10px] font-black text-muted-foreground uppercase">Fecha</label>
                                     <input
                                         type="date"
                                         value={receptionDetails.receptionDate}
@@ -401,7 +425,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-black text-muted-foreground uppercase">Invoice #</label>
+                                    <label className="text-[10px] font-black text-muted-foreground uppercase">Factura #</label>
                                     <input
                                         type="text"
                                         value={receptionDetails.invoiceNumber}
@@ -451,13 +475,13 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                             type="text"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder="Search product to add..."
+                            placeholder="Buscar producto para agregar..."
                             className="neu-input w-full pl-12 text-base"
                         />
                         {debouncedSearchTerm && (
                             <div className="absolute top-full left-0 w-full mt-2 neu-card z-10 max-h-60 overflow-y-auto">
                                 {isSearching ? (
-                                    <div className="p-4 text-center">Loading...</div>
+                                    <div className="p-4 text-center">Cargando...</div>
                                 ) : searchResults.length > 0 ? (
                                     searchResults.map(p => (
                                         <div key={p.id} onClick={() => addToReception(p)} className="p-3 hover:bg-primary/10 cursor-pointer flex justify-between items-center">
@@ -466,7 +490,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="p-4 text-center text-muted-foreground">No results found.</div>
+                                    <div className="p-4 text-center text-muted-foreground">No se encontraron productos.</div>
                                 )}
                             </div>
                         )}
@@ -507,8 +531,8 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                          {receptionItems.size === 0 && (
                             <div className="text-center py-16 text-muted-foreground border-2 border-dashed border-white/10 rounded-xl">
                                 <Package className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                                <p className="font-bold">Your reception list is empty.</p>
-                                <p className="text-sm">Use the search bar above to add products.</p>
+                                <p className="font-bold">Tu lista de recepción está vacía.</p>
+                                <p className="text-sm">Usa la barra de búsqueda superior para agregar productos.</p>
                             </div>
                         )}
                     </div>
@@ -517,13 +541,13 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                 {/* Right side: Summary */}
                 <div className="lg:col-span-1 w-full lg:sticky top-24">
                      <div className="neu-card border-primary/20 bg-primary/5 space-y-4">
-                         <h3 className="font-bold text-lg text-primary">Reception Summary</h3>
+                         <h3 className="font-bold text-lg text-primary">Resumen de Recepción</h3>
                          <div className="flex justify-between items-center">
-                             <span className="text-muted-foreground font-bold">Total Items</span>
+                             <span className="text-muted-foreground font-bold">Total de Productos</span>
                              <span className="font-black text-xl">{receptionItems.size}</span>
                          </div>
                          <div className="flex justify-between items-center text-2xl pt-4 border-t border-primary/20">
-                             <span className="font-bold">Total Cost</span>
+                             <span className="font-bold">Costo Total</span>
                              <span className="font-black text-primary">${totalCost.toFixed(2)}</span>
                          </div>
                      </div>
@@ -537,7 +561,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                         onClick={onCancel}
                         className="neu-btn flex-1 py-4 font-bold uppercase tracking-wider"
                     >
-                        Cancel
+                        Cancelar
                     </button>
                      <button
                         onClick={processReception}
@@ -545,7 +569,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                         className="neu-btn-primary flex-1 py-4 font-bold uppercase tracking-wider flex items-center justify-center gap-2"
                     >
                         <Save className="w-5 h-5" />
-                        {registerReceptionMutation.isPending ? 'Saving...' : 'Confirm'}
+                        {registerReceptionMutation.isPending ? 'Guardando...' : 'Confirmar'}
                     </button>
                  </div>
             </div>
@@ -555,7 +579,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                     onClick={onCancel}
                     className="neu-btn px-8 py-3 font-bold uppercase"
                 >
-                    Cancel
+                    Cancelar
                 </button>
                 <button
                     onClick={processReception}
@@ -563,7 +587,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                     className="neu-btn-primary px-8 py-3 font-bold uppercase flex items-center gap-2"
                 >
                     <Save className="w-5 h-5" />
-                    {registerReceptionMutation.isPending ? 'Saving...' : 'Confirm Reception'}
+                    {registerReceptionMutation.isPending ? 'Guardando...' : 'Confirmar Recepción'}
                 </button>
             </div>
 
@@ -584,7 +608,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                             <p>Puede cargar múltiples productos a la vez usando un archivo CSV con las siguientes columnas:</p>
                             <ul className="list-disc pl-5 space-y-1 text-xs">
                                 <li><strong>SKU:</strong> Código único del producto dentro de esta tienda (OBLIGATORIO).</li>
-                                <li><strong>NombreProducto:</strong> Nombre para referencia (opcional).</li>
+                                <li><strong>Nombre del Producto:</strong> Nombre para referencia (opcional).</li>
                                 <li><strong>Cantidad:</strong> Unidades recibidas.</li>
                                 <li><strong>Costo:</strong> Precio unitario de compra.</li>
                             </ul>

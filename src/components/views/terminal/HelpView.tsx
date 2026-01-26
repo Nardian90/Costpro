@@ -41,9 +41,9 @@ export default function HelpView() {
         </div>
         <div className="flex flex-col items-end">
           <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-black">
-            VERSIÓN 5.4.0 (MOBILE-FIRST)
+            VERSIÓN 5.5.0 (UX-HARDENING)
           </Badge>
-          <span className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Última actualización: 25 Ene 2026</span>
+          <span className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Última actualización: 26 Ene 2026</span>
         </div>
       </div>
 
@@ -96,6 +96,27 @@ export default function HelpView() {
               </Card>
 
               <div className="bg-primary/5 rounded-3xl p-8 border border-primary/10">
+                <h4 className="text-lg font-black text-primary uppercase mb-6 flex items-center gap-2">
+                  <Info className="w-5 h-5" />
+                  CostPro para Niños: El Cuento de Juan y Pedro
+                </h4>
+                <div className="mb-8 p-6 bg-background/50 rounded-2xl border border-primary/20">
+                  <p className="text-sm font-medium leading-relaxed mb-4">
+                    <span className="text-xl mr-2">🍭</span>
+                    Imagina que tienes una dulcería. <span className="font-black text-primary">JUAN</span> es el dueño global. Él decide cuántas tiendas abrir y quiénes pueden ayudarle.
+                  </p>
+                  <div className="grid md:grid-cols-2 gap-4 text-xs">
+                    <div className="space-y-2">
+                      <p><span className="font-bold">EL TRUCO DE LOS ESTANTES:</span> Cada tienda es un estante diferente. Juan no quiere que los dulces de la "Tienda Norte" se mezclen con los de la "Tienda Sur".</p>
+                      <p><span className="font-bold">LA LLAVE MÁGICA:</span> Para mover dulces (hacer una <span className="font-bold">Recepción</span>), primero debes elegir qué estante vas a llenar. Si no eliges uno, ¡la caja no se abre!</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p><span className="font-black text-violet-600">PEDRO (El Ayudante):</span> Juan le dio a Pedro permiso para cuidar el estante Norte. Pedro solo ve lo que hay ahí. Así, Juan está tranquilo porque sabe que nadie se confunde.</p>
+                      <p className="font-bold text-primary italic">"En CostPro, elegir tu tienda es como elegir qué juego vas a jugar hoy. ¡Todo queda en su lugar!"</p>
+                    </div>
+                  </div>
+                </div>
+
                 <h4 className="text-lg font-black text-primary uppercase mb-6 flex items-center gap-2">
                   <Info className="w-5 h-5" />
                   Caso Demostrativo: La Empresa "Global-Tech"
@@ -424,6 +445,10 @@ export default function HelpView() {
                         <p className="font-bold text-xs uppercase text-primary">Regla Fundamental:</p>
                         <p className="italic text-xs">"Un producto se identifica por su SKU dentro de su tienda activa. El mismo SKU puede existir en otra tienda sin causar conflictos."</p>
                       </div>
+                      <div className="bg-amber-500/5 p-4 rounded-xl border-l-4 border-amber-500 space-y-2">
+                        <p className="font-bold text-xs uppercase text-amber-600">Contexto Obligatorio (v5.5):</p>
+                        <p className="italic text-xs text-amber-900/70">"No se pueden realizar recepciones sin una tienda activa. El sistema bloqueará la operación para garantizar la integridad de los datos."</p>
+                      </div>
                       <div className="space-y-2">
                         <h5 className="font-black text-[10px] uppercase tracking-widest text-muted-foreground">Ejemplo Operativo:</h5>
                         <p className="text-xs bg-muted/50 p-3 rounded-lg">
@@ -527,12 +552,31 @@ export default function HelpView() {
             </CardHeader>
             <CardContent className="px-0">
               <div className="space-y-8">
-                {/* --- v5.4.0 --- */}
+                {/* --- v5.5.0 --- */}
                 <div className="relative pl-8 border-l-2 border-primary/20 space-y-4">
                   <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary border-4 border-background" />
                   <div className="flex items-center gap-3">
-                    <Badge className="bg-primary">v5.4.0</Badge>
-                    <span className="text-xs font-black text-muted-foreground uppercase">25 de Enero, 2026 (Actual)</span>
+                    <Badge className="bg-primary">v5.5.0</Badge>
+                    <span className="text-xs font-black text-muted-foreground uppercase">26 de Enero, 2026 (Actual)</span>
+                  </div>
+                  <div className="bg-muted/30 rounded-2xl p-6 space-y-4">
+                    <h4 className="font-black text-sm uppercase text-primary">Enterprise Flow Hardening</h4>
+                    <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Localización integral (100% español) en el flujo de Recepción de Productos.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Validación estricta de contexto de tienda para operaciones de inventario.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Mejora en la visualización de errores de importación masiva.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Sincronización de nomenclatura en exportaciones de catálogo.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Hardening de componentes atómicos para prevenir estados indefinidos.</li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* --- v5.4.0 --- */}
+                <div className="relative pl-8 border-l-2 border-primary/20 space-y-4 opacity-70">
+                  <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary/50 border-4 border-background" />
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline" className="opacity-70">v5.4.0</Badge>
+                    <span className="text-xs font-black text-muted-foreground uppercase">25 de Enero, 2026</span>
                   </div>
                   <div className="bg-muted/30 rounded-2xl p-6 space-y-4">
                     <h4 className="font-black text-sm uppercase text-primary">Mobile-First Optimization & UI Sync</h4>
