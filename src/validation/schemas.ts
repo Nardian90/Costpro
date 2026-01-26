@@ -135,11 +135,12 @@ export const auditLogSchema = z.object({
   user_id: z.string().uuid().nullable().optional(),
   action: z.string(),
   table_name: z.string(),
-  record_id: z.string().uuid().nullable().optional(),
+  record_id: z.string().nullable().optional(),
   old_data: z.any().nullable(),
   new_data: z.any().nullable(),
   metadata: z.any().nullable(),
   created_at: z.string(),
+  updated_at: z.string().optional(),
 });
 
 // ============================================
