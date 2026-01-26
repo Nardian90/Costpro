@@ -32,6 +32,12 @@ const StoresManagementView = lazy(() => import('./terminal/views/stores/StoresMa
 const AuditLogsView = lazy(() => import('./terminal/views/audit/AuditLogsView'));
 
 // TODO: Map remaining views
+const InventoryView = lazy(() => import('./terminal/views/inventory/InventoryView'));
+const CashClosureView = lazy(() => import('./terminal/views/cash_closure/CashClosureView'));
+const StockHistoryView = lazy(() => import('./terminal/views/stock_history/StockHistoryView'));
+const CatalogView = lazy(() => import('./terminal/views/catalog/CatalogView'));
+const InventoryCountView = lazy(() => import('./terminal/views/inventory_count/InventoryCountView'));
+const CostSheetView = lazy(() => import('./terminal/views/cost_sheet/CostSheetView'));
 const renderView = (view: ViewType) => {
     switch (view) {
         case 'dashboard': return <DashboardView />;
@@ -40,17 +46,17 @@ const renderView = (view: ViewType) => {
         case 'users': return <UsersManagementView />;
         case 'stores': return <StoresManagementView />;
         case 'audit': return <AuditLogsView />;
+        case 'inventory': return <InventoryView />;
+        case 'cash': return <CashClosureView />;
+        case 'history': return <StockHistoryView />;
+        case 'catalog': return <CatalogView />;
+        case 'inventory_count': return <InventoryCountView />;
+        case 'cost-sheets': return <CostSheetView />;
 
         // --- Placeholders for remaining views ---
-        case 'history': return <div>Stock History View Placeholder</div>;
-        case 'cash': return <div>Cash Closure View Placeholder</div>;
         case 'settings': return <div>Settings View Placeholder</div>;
         case 'help': return <div>Help View Placeholder</div>;
-        case 'inventory': return <div>Inventory View Placeholder</div>;
         case 'recepcion': return <div>Reception View Placeholder</div>;
-        case 'inventory_count': return <div>Inventory Count View Placeholder</div>;
-        case 'catalog': return <div>Catalog View Placeholder</div>;
-        case 'cost-sheets': return <div>Cost Sheets View Placeholder</div>;
         default: return <div>Default View Placeholder</div>;
     }
 }
