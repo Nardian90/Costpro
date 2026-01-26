@@ -36,6 +36,7 @@ interface ModalsProps {
   stores: Store[];
   handleUserFormSubmit: (mode: 'create' | 'edit' | null, data: UserFormData, id?: string) => Promise<boolean>;
   isSubmittingUser: boolean;
+  currentUserRole?: string;
 }
 
 export const Modals = ({
@@ -55,7 +56,8 @@ export const Modals = ({
   selectedUserContract,
   stores,
   handleUserFormSubmit,
-  isSubmittingUser
+  isSubmittingUser,
+  currentUserRole
 }: ModalsProps) => {
   return (
     <>
@@ -185,6 +187,7 @@ export const Modals = ({
             }}
             onCancel={() => setUserFormMode(null)}
             isSubmitting={isSubmittingUser}
+            allowedRoles={currentUserRole === 'admin' ? undefined : ['clerk', 'warehouse', 'usuario']}
           />
         </DialogContent>
       </Dialog>

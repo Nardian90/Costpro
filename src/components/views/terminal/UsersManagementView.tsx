@@ -113,8 +113,13 @@ export default function UsersManagementView({
             ))}
             {users.length === 0 && (
               <tr>
-                <td colSpan={5} className="p-12 text-center text-muted-foreground uppercase font-black tracking-widest text-xs">
-                  No se encontraron usuarios
+                <td colSpan={5} className="p-12 text-center py-20">
+                  <p className="text-muted-foreground uppercase font-black tracking-widest text-xs mb-2">
+                    No se encontraron usuarios
+                  </p>
+                  <p className="text-[10px] text-muted-foreground/50 font-bold">
+                    No tienes acceso a entidades en este contexto o no existen registros.
+                  </p>
                 </td>
               </tr>
             )}

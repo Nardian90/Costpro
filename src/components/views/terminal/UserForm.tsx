@@ -29,6 +29,7 @@ interface UserFormProps {
   onSubmit: (data: UserFormData) => Promise<void>;
   onCancel: () => void;
   isSubmitting?: boolean;
+  allowedRoles?: string[];
 }
 
 export default function UserForm({
@@ -37,7 +38,8 @@ export default function UserForm({
   stores,
   onSubmit,
   onCancel,
-  isSubmitting = false
+  isSubmitting = false,
+  allowedRoles
 }: UserFormProps) {
   const {
     register,
@@ -112,12 +114,12 @@ export default function UserForm({
               {...register('role')}
               className="w-full p-3 rounded-xl border border-border bg-background font-bold text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all appearance-none cursor-pointer"
             >
-              <option value="admin">Administrador</option>
-              <option value="encargado">Encargado</option>
-              <option value="manager">Gestor</option>
-              <option value="clerk">Cajero</option>
-              <option value="warehouse">Almacén</option>
-              <option value="usuario">Usuario</option>
+              {(!allowedRoles || allowedRoles.includes('admin')) && <option value="admin">Administrador</option>}
+              {(!allowedRoles || allowedRoles.includes('encargado')) && <option value="encargado">Encargado</option>}
+              {(!allowedRoles || allowedRoles.includes('manager')) && <option value="manager">Gestor</option>}
+              {(!allowedRoles || allowedRoles.includes('clerk')) && <option value="clerk">Cajero</option>}
+              {(!allowedRoles || allowedRoles.includes('warehouse')) && <option value="warehouse">Almacén</option>}
+              {(!allowedRoles || allowedRoles.includes('usuario')) && <option value="usuario">Usuario</option>}
             </select>
           </div>
 
@@ -174,12 +176,12 @@ export default function UserForm({
                     {...register(`memberships.${index}.role` as const)}
                     className="w-full p-2.5 sm:p-2 rounded-lg border border-border bg-background font-bold text-xs outline-none"
                   >
-                    <option value="admin">Admin</option>
-                    <option value="encargado">Encargado</option>
-                    <option value="manager">Gestor</option>
-                    <option value="clerk">Cajero</option>
-                    <option value="warehouse">Almacén</option>
-                    <option value="usuario">Usuario</option>
+                    {(!allowedRoles || allowedRoles.includes('admin')) && <option value="admin">Admin</option>}
+                    {(!allowedRoles || allowedRoles.includes('encargado')) && <option value="encargado">Encargado</option>}
+                    {(!allowedRoles || allowedRoles.includes('manager')) && <option value="manager">Gestor</option>}
+                    {(!allowedRoles || allowedRoles.includes('clerk')) && <option value="clerk">Cajero</option>}
+                    {(!allowedRoles || allowedRoles.includes('warehouse')) && <option value="warehouse">Almacén</option>}
+                    {(!allowedRoles || allowedRoles.includes('usuario')) && <option value="usuario">Usuario</option>}
                   </select>
                 </div>
                 <div className="flex-1 sm:w-24 space-y-2">
