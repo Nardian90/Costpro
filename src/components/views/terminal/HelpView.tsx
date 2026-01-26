@@ -41,9 +41,9 @@ export default function HelpView() {
         </div>
         <div className="flex flex-col items-end">
           <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-black">
-            VERSIÓN 5.4.0 (MOBILE-FIRST)
+            VERSIÓN 5.4.1 (UX-HARDENING)
           </Badge>
-          <span className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Última actualización: 25 Ene 2026</span>
+          <span className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Última actualización: 26 Ene 2026</span>
         </div>
       </div>
 
@@ -320,7 +320,7 @@ export default function HelpView() {
               Tip: TPV Optimizado para Móvil
             </h4>
             <p className="text-[10px] font-medium leading-relaxed text-primary/80">
-              Hemos movido la <strong>Caja</strong> a la parte inferior para que sea más fácil de alcanzar con el pulgar. El carrito ahora se abre como un panel deslizante (Drawer) para no interrumpir tu navegación por el catálogo.
+              Hemos movido la <strong>Caja</strong> a la parte inferior y añadido <strong>Categorías en un toque</strong> debajo del buscador para agilizar el despacho. El carrito ahora se abre como un panel deslizante para no interrumpir tu flujo.
             </p>
           </div>
           <Card className="border-none shadow-none bg-transparent">
@@ -527,22 +527,37 @@ export default function HelpView() {
             </CardHeader>
             <CardContent className="px-0">
               <div className="space-y-8">
-                {/* --- v5.4.0 --- */}
+                {/* --- v5.4.1 --- */}
                 <div className="relative pl-8 border-l-2 border-primary/20 space-y-4">
                   <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary border-4 border-background" />
                   <div className="flex items-center gap-3">
-                    <Badge className="bg-primary">v5.4.0</Badge>
-                    <span className="text-xs font-black text-muted-foreground uppercase">25 de Enero, 2026 (Actual)</span>
+                    <Badge className="bg-primary">v5.4.1</Badge>
+                    <span className="text-xs font-black text-muted-foreground uppercase">26 de Enero, 2026 (Actual)</span>
                   </div>
                   <div className="bg-muted/30 rounded-2xl p-6 space-y-4">
+                    <h4 className="font-black text-sm uppercase text-primary">UX Hardening & POS Efficiency</h4>
+                    <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Implementación de CategoryChips en TPV para filtrado en 1 toque.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Eliminación de fricción táctil en la búsqueda avanzada del POS.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Optimización de espacio vertical en el buscador móvil.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Actualización de documentación de operativa móvil.</li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* --- v5.4.0 --- */}
+                <div className="relative pl-8 border-l-2 border-primary/10 space-y-4 opacity-60">
+                  <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-muted border-4 border-background" />
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline">v5.4.0</Badge>
+                    <span className="text-xs font-black text-muted-foreground uppercase">25 de Enero, 2026</span>
+                  </div>
+                  <div className="bg-muted/10 rounded-2xl p-6 space-y-4">
                     <h4 className="font-black text-sm uppercase text-primary">Mobile-First Optimization & UI Sync</h4>
                     <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
                       <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Rediseño de TPV con carrito tipo Drawer para operativa móvil.</li>
                       <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Unificación de vistas de Inventario con ProductCard atómica.</li>
                       <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Implementación de ActionMenu con posición inferior (Thumb Zone).</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Transiciones fluidas en navegación y sidebar optimizado.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Nuevo Selector de Tienda Activa en cabecera multi-sucursal.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Micro-guía interactiva de operativa móvil en Ayuda.</li>
                     </ul>
                   </div>
                 </div>
