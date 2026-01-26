@@ -12,12 +12,12 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
-    // Logo animation takes about 2 seconds + delay for the text
+    // Optimized timing: 1.2s for logo + brief pause
     const timer = setTimeout(() => {
       setIsVisible(false);
       // Wait for the exit animation to finish before calling onFinish
-      setTimeout(onFinish, 500);
-    }, 3000);
+      setTimeout(onFinish, 400);
+    }, 1200);
 
     return () => clearTimeout(timer);
   }, [onFinish]);
@@ -30,7 +30,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5, ease: "easeInOut" }}
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-background"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-background allow-animations"
         >
           {/* Background grid from CyberShell to match the application background */}
           <div className="absolute inset-0 z-0 opacity-10">
