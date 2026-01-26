@@ -106,7 +106,8 @@ export default function StoresManagementView({
         {stores.length === 0 && (
           <div className="col-span-full py-24 text-center border-2 border-dashed border-border rounded-xl bg-muted/10">
              <Building className="w-16 h-16 mx-auto mb-4 opacity-5" />
-             <p className="font-black uppercase tracking-widest text-xs text-muted-foreground">No se encontraron sucursales</p>
+             <p className="font-black uppercase tracking-widest text-xs text-muted-foreground mb-2">No se encontraron sucursales</p>
+             <p className="text-[10px] text-muted-foreground/50 font-bold uppercase tracking-wider">No tienes acceso a entidades en este contexto o no existen registros.</p>
           </div>
         )}
       </div>
