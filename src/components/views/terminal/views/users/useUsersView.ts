@@ -12,7 +12,8 @@ import {
 } from '@/hooks/useQueries';
 import { UserFormData } from '@/components/views/terminal/UserForm';
 import { UserContract, mapProfileToContract, UserContractFactory } from '@/contracts/user';
-import { Profile } from '@/types';
+import { Profile, UserRole } from '@/types';
+import { getAllowedRoles } from '@/lib/roles';
 
 export function useUsersView() {
     const { user } = useAuthStore();
@@ -107,6 +108,6 @@ export function useUsersView() {
         handleCloseModal,
         handleUserFormSubmit,
         isSubmittingUser: createUserMutation.isPending || updateUserMutation.isPending || manageMembershipsMutation.isPending,
-        currentUserRole: user?.role
+        allowedRoles: getAllowedRoles(user?.role as UserRole)
     };
 }

@@ -20,7 +20,7 @@ export default function UsersManagementView() {
     handleCloseModal,
     handleUserFormSubmit,
     isSubmittingUser,
-    currentUserRole
+    allowedRoles
   } = useUsersView();
 
   return (
@@ -40,7 +40,7 @@ export default function UsersManagementView() {
         userContract={selectedUserContract}
         stores={stores}
         isSubmitting={isSubmittingUser}
-        currentUserRole={currentUserRole}
+        allowedRoles={allowedRoles}
       />
     </>
   );

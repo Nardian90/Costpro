@@ -5,15 +5,15 @@ import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Transaction } from '@/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { Transaction, TransactionItem } from '@/types';
 
 interface TransactionDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   transaction: Transaction | null;
-  items: any[];
+  items: TransactionItem[];
   isLoading: boolean;
 }
 
@@ -64,8 +64,8 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
                   <TableRow key={item.id}>
                     <TableCell>{item.products?.name || 'Producto no disponible'}</TableCell>
                     <TableCell className="text-right">{item.quantity}</TableCell>
-                    <TableCell className="text-right">${item.price.toFixed(2)}</TableCell>
-                    <TableCell className="text-right">${(item.price * item.quantity).toFixed(2)}</TableCell>
+                    <TableCell className="text-right">${item.price_at_sale.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">${(item.price_at_sale * item.quantity).toFixed(2)}</TableCell>
                   </TableRow>
                 ))
               )}

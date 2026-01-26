@@ -216,6 +216,10 @@ export interface TransactionItem {
   price_at_sale: number;
   cost_at_sale: number;
   created_at: string;
+  products?: {
+    name: string;
+    sku: string | null;
+  } | null;
 }
 
 export interface CartItem {
