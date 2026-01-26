@@ -53,10 +53,6 @@ export default function TerminalShell() { // Renamed from TerminalView
   } = useUIStore();
 
   const [sidebarSearch, setSidebarSearch] = useState('');
-  const [notifications, setNotifications] = useState({
-    lowStock: true,
-    salesAlerts: false,
-  });
 
   // Hooks
   const nav = useTerminalNavigation(user, sidebarSearch);
@@ -124,7 +120,7 @@ export default function TerminalShell() { // Renamed from TerminalView
         case 'cost-sheets': return <CostSheetView />;
 
         // --- Placeholders for remaining views ---
-        case 'settings': return <SettingsView notifications={notifications} setNotifications={setNotifications} />;
+        case 'settings': return <SettingsView />;
         case 'help': return <HelpView />;
         case 'recepcion': return <div>Reception View Placeholder</div>;
         default: return <div>Default View Placeholder</div>;

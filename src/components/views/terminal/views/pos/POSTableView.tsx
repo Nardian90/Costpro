@@ -3,7 +3,7 @@
 import React from 'react';
 import type { Product } from '@/types';
 import { ShoppingCart } from 'lucide-react';
-import ProductImage from './ui/ProductImage';
+import ProductImage from '@/components/ui/ProductImage';
 
 interface POSTableViewProps {
   products: Product[];
