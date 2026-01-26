@@ -558,32 +558,38 @@ export function useStores(userId: string, isAdmin: boolean, isEncargado: boolean
       // Strict guard for non-admins to prevent 400 errors with empty/invalid userId
       if (!isAdmin && (!userId || userId.length < 5)) return [];
 
-      const { data, error } = await supabase.from('stores').select('*').order('name');
+      // Use two separate queries to ensure that even if memberships fail (500), we can still handle stores gracefully
+      const [storesResponse, membershipsResponse] = await Promise.all([
+        supabase.from('stores').select('*').order('name'),
+        supabase.from('user_store_memberships').select('store_id, role').eq('user_id', userId).eq('status', 'active')
+      ]);
 
-      if (error) {
-        logger.error('DATABASE', 'FETCH_STORES_FAILED', { error });
+      if (storesResponse.error) {
+        logger.error('DATABASE', 'FETCH_STORES_FAILED', { error: storesResponse.error });
         return [];
       }
 
-      if (isAdmin) return data;
+      const allStores = storesResponse.data || [];
+      if (isAdmin) return allStores;
 
-      // Filter stores based on memberships
-      const { data: memberships } = await supabase
-        .from('user_store_memberships')
-        .select('store_id, role')
-        .eq('user_id', userId)
-        .eq('status', 'active');
-
-      const assignedStoreIds = (memberships || []).map(m => m.store_id);
-
-      if (isEncargado) {
-        const managedStoreIds = (memberships || [])
-          .filter(m => ['encargado', 'manager'].includes(m.role))
-          .map(m => m.store_id);
-        return data.filter(s => managedStoreIds.includes(s.id));
+      if (membershipsResponse.error) {
+        logger.error('DATABASE', 'FETCH_MEMBERSHIPS_FAILED', { error: membershipsResponse.error });
+        // Fallback: If memberships fail due to RLS but the user is authenticated,
+        // they might still see nothing. We return empty instead of crashing.
+        return [];
       }
 
-      return data.filter(s => assignedStoreIds.includes(s.id));
+      const memberships = membershipsResponse.data || [];
+      const assignedStoreIds = memberships.map(m => m.store_id);
+
+      if (isEncargado) {
+        const managedStoreIds = memberships
+          .filter(m => ['encargado', 'manager'].includes(m.role))
+          .map(m => m.store_id);
+        return allStores.filter(s => managedStoreIds.includes(s.id));
+      }
+
+      return allStores.filter(s => assignedStoreIds.includes(s.id));
     },
     enabled: isAdmin || (!!userId && userId.length >= 5),
   });
