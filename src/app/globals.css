@@ -847,8 +847,9 @@
   }
 }
 
-/* Reducción de animaciones para Neumo Ultra-Performance */
-.neumo * {
+/* Reducción de animaciones para Neumo Ultra-Performance
+   Se excluyen componentes críticos de transición como el SplashScreen */
+.neumo *:not(.allow-animations *) {
   animation-duration: 0.01ms !important;
   animation-iteration-count: 1 !important;
   transition-duration: 0.01ms !important;
