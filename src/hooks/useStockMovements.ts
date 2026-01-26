@@ -10,7 +10,8 @@ export function useStockMovements(storeId?: string | null, isAdmin = false) {
   return useQuery({
     queryKey: ['stock-movements', storeId, isAdmin],
     queryFn: async () => {
-      let query = supabase.from('stock_movements').select('*, product:products(name, sku)');
+      const columns = 'id, created_at, movement_type, quantity_change, balance_after, unit_cost, unit_price, product:products(name, sku)';
+      let query = supabase.from('stock_movements').select(columns);
       if (!isAdmin && storeId) {
         query = query.eq('store_id', storeId);
       }

@@ -9,6 +9,7 @@ import { ProductCard, CategoryChips } from '@/components/ui/atomic';
 import POSTableView from './POSTableView';
 import ViewSwitcher from '@/components/ui/ViewSwitcher';
 import { StateRenderer } from '@/components/ui/StateRenderer';
+import { Skeleton } from '@/components/ui/skeleton';
 import { AnimatePresence } from 'framer-motion';
 import { usePOSProducts } from '@/hooks/usePOSProducts';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -26,6 +27,34 @@ const EmptyProductsComponent = () => (
     <p className="text-sm text-muted-foreground mt-2">Intenta con otra búsqueda o filtro.</p>
   </div>
 );
+
+const POSLoadingSkeleton = ({ layoutMode }: { layoutMode: 'grid' | 'table' }) => {
+  if (layoutMode === 'table') {
+    return (
+      <div className="space-y-4">
+        {[...Array(5)].map((_, i) => (
+          <Skeleton key={i} className="h-16 w-full rounded-xl" />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+      {[...Array(8)].map((_, i) => (
+        <div key={i} className="neu-card p-4 space-y-4 h-64">
+          <Skeleton className="h-32 w-full rounded-lg" />
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
+          <div className="flex justify-between items-center pt-2">
+            <Skeleton className="h-6 w-16" />
+            <Skeleton className="h-8 w-8 rounded-lg" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
 
 export default function POSView() {
   const {
@@ -128,6 +157,7 @@ export default function POSView() {
               error={null}
               data={filteredProducts}
               emptyComponent={<EmptyProductsComponent />}
+              loadingComponent={<POSLoadingSkeleton layoutMode={posLayoutMode} />}
             >
               {(data) => (
                 posLayoutMode === 'grid' ? (
