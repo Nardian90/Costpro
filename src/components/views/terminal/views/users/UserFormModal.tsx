@@ -59,7 +59,6 @@ export function UserFormModal({
                 onCancel={onClose}
                 isSubmitting={isSubmitting}
                 mode={mode}
-                allowedRoles={allowedRoles}
             />
         )}
       </DialogContent>
