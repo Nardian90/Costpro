@@ -151,6 +151,21 @@ export const getProductsForPosResponseSchema = productSchema.extend({
   product_variants: z.array(productVariantSchema).nullable(),
 });
 
+export const transactionItemSchema = z.object({
+  id: z.string(),
+  transaction_id: z.string(),
+  product_id: z.string(),
+  variant_id: z.string().nullable(),
+  quantity: z.number(),
+  price_at_sale: z.number(),
+  cost_at_sale: z.number(),
+  created_at: z.string(),
+  products: z.object({
+    name: z.string(),
+    sku: z.string().nullable(),
+  }).nullable(),
+});
+
 export const paginatedProductSchema = productSchema.extend({
   total_count: z.number().optional(),
 });

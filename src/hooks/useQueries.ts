@@ -8,6 +8,7 @@ import {
   dashboardKpiResponseSchema,
   paginatedProductSchema,
   transactionSchema,
+  transactionItemSchema,
   stockMovementSchema,
   auditLogSchema
 } from '@/validation/schemas';
@@ -231,7 +232,7 @@ export function useTransactionDetails(transactionId?: string) {
       const data = await withTableLogging('select', 'transaction_items', () => supabase.from('transaction_items')
         .select('*, products(name, sku)')
         .eq('transaction_id', transactionId));
-      return data as any[];
+      return await validateRPCArrayResponse(data, transactionItemSchema, 'transaction_items');
     },
     enabled: !!transactionId,
   });

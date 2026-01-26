@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { UserContract } from '@/contracts/user';
-import { Store } from '@/types';
+import { Store, UserRole } from '@/types';
 import { Loader2, Save, Plus, Trash2, Building } from 'lucide-react';
 
 const userFormSchema = z.object({
@@ -29,7 +29,7 @@ interface UserFormProps {
   onSubmit: (data: UserFormData) => Promise<void>;
   onCancel: () => void;
   isSubmitting?: boolean;
-  allowedRoles?: string[];
+  allowedRoles?: UserRole[];
 }
 
 export default function UserForm({
