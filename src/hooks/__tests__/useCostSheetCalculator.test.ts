@@ -5,6 +5,11 @@ import { CostSheetData } from '@/types/cost-sheet';
 
 const baseTemplate: CostSheetData = {
   header: {
+    code: 'T-001',
+    name: 'Test Sheet',
+    date: '2023-01-01',
+    category: 'General',
+    type: 'Production',
     quantity: 100,
     currency: 'CUP',
     unit: 'kg',
@@ -107,8 +112,8 @@ describe('useCostSheetCalculator', () => {
       }],
       annexes: [{
         id: 'annex1',
-        name: 'Annex 1',
-        columns: [{ key: 'name', label: 'Name' }, { key: 'amount', label: 'Amount' }],
+        title: 'Annex 1',
+        columns: [{ key: 'name', title: 'Name' }, { key: 'amount', title: 'Amount' }],
         data: [{ name: 'Item 1', amount: 500 }, { name: 'Item 2', amount: 1500 }]
       }]
     };

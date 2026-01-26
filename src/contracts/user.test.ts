@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { UserFactory, mapProfileToContract, UserContractFactory } from './user';
-import { Profile } from '../../types';
+import { Profile } from '../types';
 
 describe('User Contract', () => {
   it('should create an empty user contract', () => {
