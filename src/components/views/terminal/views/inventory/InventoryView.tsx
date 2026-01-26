@@ -12,6 +12,7 @@ import ProductReceptionView from './ProductReceptionView';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
 import SearchBar from '@/components/ui/SearchBar';
 import { StateRenderer } from '@/components/ui/StateRenderer';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 
@@ -22,6 +23,19 @@ const EmptyInventoryComponent = () => (
         <Package className="w-16 h-16 mx-auto mb-6 opacity-5" />
         <p className="text-xl font-black text-muted-foreground uppercase tracking-widest">Inventario Vacío</p>
         <p className="text-sm text-muted-foreground mt-2">No se encontraron productos. Intenta con otra búsqueda o filtro.</p>
+    </div>
+);
+
+const InventoryLoadingSkeleton = ({ layoutMode }: { layoutMode: 'table' | 'card' }) => (
+    <div className={cn(
+        layoutMode === 'card' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"
+    )}>
+        {[...Array(6)].map((_, i) => (
+            <Skeleton key={i} className={cn(
+                "w-full rounded-2xl",
+                layoutMode === 'card' ? "h-64" : "h-16"
+            )} />
+        ))}
     </div>
 );
 
@@ -125,6 +139,7 @@ export default function InventoryView() {
                     error={error as Error | null}
                     data={products}
                     emptyComponent={<EmptyInventoryComponent />}
+                    loadingComponent={<InventoryLoadingSkeleton layoutMode={layoutMode} />}
                 >
                     {(loadedProducts) => (
                         layoutMode === 'card' ? (

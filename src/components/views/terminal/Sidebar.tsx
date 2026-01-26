@@ -15,6 +15,7 @@ interface SidebarProps {
   navigationItems: NavigationItem[];
   currentView: string;
   onViewChange: (view: ViewType) => void;
+  onPrefetchView?: (view: ViewType) => void;
   onLogout: () => void;
   logoHeight: any;
   logoOpacity: any;
@@ -29,6 +30,7 @@ export const Sidebar = ({
   navigationItems,
   currentView,
   onViewChange,
+  onPrefetchView,
   onLogout,
   logoHeight,
   logoOpacity,
@@ -94,6 +96,7 @@ export const Sidebar = ({
                       <button
                         key={item.id}
                         onClick={() => onViewChange(item.id as ViewType)}
+                        onMouseEnter={() => onPrefetchView?.(item.id as ViewType)}
                         className={cn(
                           "w-full flex items-center gap-4 p-4 rounded-2xl transition-all group active:scale-95",
                           currentView === item.id

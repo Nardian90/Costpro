@@ -4,7 +4,23 @@ import React, { useState, useMemo } from 'react';
 import AuditFilters from './AuditFilters';
 import AuditTimeline from './AuditTimeline';
 import { AuditCategory, getAuditCategory } from './AuditEventIcon';
+import { StateRenderer } from '@/components/ui/StateRenderer';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useAuditLogsView } from './useAuditLogsView';
+
+const AuditLoadingSkeleton = () => (
+  <div className="space-y-6">
+    {[...Array(5)].map((_, i) => (
+      <div key={i} className="flex gap-4 items-start">
+        <Skeleton className="w-8 h-8 rounded-full shrink-0" />
+        <div className="space-y-2 flex-1">
+          <Skeleton className="h-4 w-1/4" />
+          <Skeleton className="h-20 w-full rounded-xl" />
+        </div>
+      </div>
+    ))}
+  </div>
+);
 
 export default function AuditLogsView() {
   const {
@@ -12,7 +28,8 @@ export default function AuditLogsView() {
     searchTerm,
     setSearchTerm,
     dateRange,
-    setDateRange
+    setDateRange,
+    isLoading
   } = useAuditLogsView();
 
   const [selectedCategory, setSelectedCategory] = useState<AuditCategory | 'all'>('all');
@@ -87,7 +104,14 @@ export default function AuditLogsView() {
       />
 
       <div className="mt-8">
-        <AuditTimeline logs={filteredLogs} />
+        <StateRenderer
+          isLoading={isLoading}
+          error={null}
+          data={filteredLogs}
+          loadingComponent={<AuditLoadingSkeleton />}
+        >
+          {(data) => <AuditTimeline logs={data} />}
+        </StateRenderer>
       </div>
     </div>
   );

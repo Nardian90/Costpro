@@ -42,14 +42,25 @@ export function useSessionManager() {
             const { session } = data;
 
             if (session?.user) {
+                const profileColumns = 'id, full_name, email, role, roles, is_active, store_id, active_store_id, created_at';
+                const storeColumns = 'id, name, address, logo_url, is_active, created_at';
+                const membershipColumns = `id, user_id, store_id, role, status, created_at, updated_at, store:stores(${storeColumns})`;
                 const { data: profileData, error: profileError } = await Promise.race([
-                    supabase.from('profiles').select('*, memberships:user_store_memberships(*, store:stores(name))').eq('id', session.user.id).single(),
+                    supabase.from('profiles').select(`${profileColumns}, memberships:user_store_memberships(${membershipColumns})`).eq('id', session.user.id).single(),
                     new Promise((_, reject) => setTimeout(() => reject(new Error('Profile fetch timeout')), SESSION_CHECK_TIMEOUT))
                 ]) as any;
 
                 if (profileError) throw profileError;
 
                 if (profileData?.is_active) {
+                    // Fix Supabase returning join as array
+                    if (profileData.memberships) {
+                        profileData.memberships = profileData.memberships.map((m: any) => ({
+                            ...m,
+                            store: Array.isArray(m.store) ? m.store[0] : m.store
+                        }));
+                    }
+
                     let effectiveActiveStoreId = profileData.active_store_id;
 
                     // AUTO-SELECT STORE: If no active store is set but memberships exist, pick the first one

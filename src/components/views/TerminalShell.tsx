@@ -3,6 +3,7 @@
 import { useState, useEffect, useTransition, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore, useUIStore, type ViewType } from '@/store';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Loader2, Building as BuildingIcon } from 'lucide-react';
@@ -12,6 +13,9 @@ import { userService } from '@/services/user-service';
 
 // Modular Hooks
 import { useTerminalNavigation } from '@/hooks/useTerminalNavigation';
+import { prefetchProducts, prefetchDashboardData } from '@/hooks/useQueries';
+import { prefetchTransactions } from '@/hooks/useTransactions';
+import { prefetchAuditLogs } from '@/hooks/useAuditLogs';
 
 // Modular Components
 import { Sidebar } from './terminal/Sidebar';
@@ -46,6 +50,7 @@ export default function TerminalShell() { // Renamed from TerminalView
   const { user, loading, logout } = useAuthStore();
   const [isPending, startTransition] = useTransition();
   const isMobile = useIsMobile();
+  const queryClient = useQueryClient();
 
   const {
     currentView, setCurrentView,
@@ -70,12 +75,18 @@ export default function TerminalShell() { // Renamed from TerminalView
     }
   };
 
-  // Guard: if loading is finished but no user, redirect to login as fallback
+  // Initial check on mount & prefetching
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
+      return;
     }
-  }, [loading, user, router]);
+
+    if (user?.activeStoreId) {
+      // Smart Prefetch: Load critical data in advance
+      prefetchProducts(queryClient, user.activeStoreId);
+    }
+  }, [loading, user, router, queryClient]);
 
   if (loading) {
     return (
@@ -100,6 +111,26 @@ export default function TerminalShell() { // Renamed from TerminalView
     });
     if (isMobile) {
       setSidebarOpen(false);
+    }
+  };
+
+  const handlePrefetchView = (view: ViewType) => {
+    if (!user?.activeStoreId) return;
+
+    switch (view) {
+      case 'pos':
+      case 'inventory':
+        prefetchProducts(queryClient, user.activeStoreId);
+        break;
+      case 'sales':
+        prefetchTransactions(queryClient, user.activeStoreId, user.role === 'admin');
+        break;
+      case 'dashboard':
+        prefetchDashboardData(queryClient, user.activeStoreId, user.role === 'admin');
+        break;
+      case 'audit':
+        prefetchAuditLogs(queryClient);
+        break;
     }
   };
 
@@ -162,6 +193,7 @@ export default function TerminalShell() { // Renamed from TerminalView
         navigationItems={nav.navigationItems}
         currentView={currentView}
         onViewChange={handleViewChange}
+        onPrefetchView={handlePrefetchView}
         onLogout={handleLogout}
         logoHeight={nav.logoHeight}
         logoOpacity={nav.logoOpacity}
