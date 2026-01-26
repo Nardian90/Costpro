@@ -16,16 +16,16 @@ import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 // Diagrams
-import RolesDiagram from '@/components/help/RolesDiagram';
-import UserFlowDiagram from '@/components/help/UserFlowDiagram';
-import CashFlowDiagram from '@/components/help/CashFlowDiagram';
-import InventoryFlowDiagram from '@/components/help/InventoryFlowDiagram';
-import StoreSkuDiagram from '@/components/help/StoreSkuDiagram';
-import SalesFlowDiagram from '@/components/help/SalesFlowDiagram';
-import MobilePosDiagram from '@/components/help/MobilePosDiagram';
-import SecurityFlowDiagram from '@/components/help/SecurityFlowDiagram';
-import CostFlowDiagram from '@/components/help/CostFlowDiagram';
-import KidsOnboarding from '@/components/help/KidsOnboarding';
+import RolesDiagram from './help/RolesDiagram';
+import UserFlowDiagram from './help/UserFlowDiagram';
+import CashFlowDiagram from './help/CashFlowDiagram';
+import InventoryFlowDiagram from './help/InventoryFlowDiagram';
+import StoreSkuDiagram from './help/StoreSkuDiagram';
+import SalesFlowDiagram from './help/SalesFlowDiagram';
+import MobilePosDiagram from './help/MobilePosDiagram';
+import SecurityFlowDiagram from './help/SecurityFlowDiagram';
+import CostFlowDiagram from './help/CostFlowDiagram';
+import KidsOnboarding from './help/KidsOnboarding';
 
 export default function HelpView() {
   return (

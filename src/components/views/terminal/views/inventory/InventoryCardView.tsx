@@ -6,7 +6,7 @@ import type { Product } from '@/types';
 import { cn } from '@/lib/utils';
 import { Loader2, Package } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import ProductCard from '@/components/ProductCard';
+import { ProductCard } from '@/components/ui/atomic';
 
 interface InventoryCardViewProps {
     products: Product[];
