@@ -56,7 +56,6 @@ export function UserFormModal({
                 onSubmit={handleSubmit}
                 isSubmitting={isSubmitting}
                 mode={mode}
-                currentUserRole={currentUserRole}
             />
         )}
       </DialogContent>
