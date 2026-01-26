@@ -19,7 +19,8 @@ export function usePOSProducts(products: Product[], searchTerm: string) {
   }, [products, searchTerm, selectedCategory]);
 
   const categories = useMemo(() => {
-    return Array.from(new Set(products.map(p => p.category).filter(Boolean)));
+    return Array.from(new Set(products.map(p => p.category)))
+      .filter((c): c is string => Boolean(c));
   }, [products]);
 
   const handleCategoryChange = (value: string) => {
