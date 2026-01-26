@@ -139,6 +139,8 @@ export const auditLogSchema = z.object({
   old_data: z.any().nullable(),
   new_data: z.any().nullable(),
   metadata: z.any().nullable(),
+  store_id: z.string().uuid().nullable().optional(),
+  store_name: z.string().nullable().optional(),
   created_at: z.string(),
   updated_at: z.string().optional(),
 });

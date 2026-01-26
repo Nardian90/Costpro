@@ -74,7 +74,7 @@ export default function AuditEventCard({ log }: AuditEventCardProps) {
   };
 
   const roleLabel = log.profile?.role || 'Sistema';
-  const storeName = log.metadata?.store_name || log.new_data?.store_name || log.old_data?.store_name || '';
+  const storeName = log.store_name || log.metadata?.store_name || log.new_data?.store_name || log.old_data?.store_name || '';
 
   return (
     <div className="relative pl-8 pb-8 group last:pb-0">
