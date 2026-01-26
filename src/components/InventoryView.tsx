@@ -70,14 +70,14 @@ export default function InventoryView() {
     const actions: Action[] = [
         {
             id: 'toggle-layout',
-            label: layoutMode === 'table' ? 'Card View' : 'Table View',
+            label: layoutMode === 'table' ? 'Vista Tarjetas' : 'Vista Tabla',
             icon: layoutMode === 'table' ? LayoutList : TableIcon,
             onClick: () => setLayoutMode(prev => prev === 'table' ? 'card' : 'table'),
             className: 'hidden md:flex',
         },
         {
             id: 'toggle-reception',
-            label: currentView === 'inventory' ? 'New Reception' : 'Cancel Reception',
+            label: currentView === 'inventory' ? 'Nueva Recepción' : 'Cancelar Recepción',
             icon: currentView === 'inventory' ? Plus : X,
             onClick: () => setCurrentView(prev => prev === 'inventory' ? 'reception' : 'inventory'),
             variant: currentView === 'inventory' ? 'primary' : 'danger',
@@ -92,7 +92,7 @@ export default function InventoryView() {
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <h2 className="text-2xl font-bold border-l-4 border-primary pl-4">
-                    Inventory Management
+                    Gestión de Inventario
                 </h2>
                 <ActionMenu actions={actions} />
             </div>
@@ -100,17 +100,17 @@ export default function InventoryView() {
             <SearchBar
                 value={searchTerm}
                 onChange={setSearchTerm}
-                placeholder="Search by name or SKU..."
+                placeholder="Buscar por nombre o SKU..."
             >
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
                     <div>
-                        <label className="text-[10px] font-bold text-muted-foreground uppercase mb-1 block">Category</label>
+                        <label className="text-[10px] font-bold text-muted-foreground uppercase mb-1 block">Categoría</label>
                         <select
                             value={selectedCategory}
                             onChange={(e) => handleCategoryChange(e.target.value)}
                             className="neu-input w-full"
                         >
-                            <option value="">All Categories</option>
+                            <option value="">Todas las categorías</option>
                             {uniqueCategories.map(category => (
                                 <option key={category || 'uncategorized'} value={category || ""}>{category || 'Sin categoría'}</option>
                             ))}
