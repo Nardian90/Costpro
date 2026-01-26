@@ -7,7 +7,8 @@ import {
   CheckCircle2, ArrowRight, Info, AlertTriangle,
   Settings, Building2, Receipt, FileText, ChevronRight,
   UserPlus, Store, Key, ListChecks, HelpCircle,
-  Wand2, Table2, FileSpreadsheet, History, Target
+  Wand2, Table2, FileSpreadsheet, History, Target,
+  Baby
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,6 +25,7 @@ import SalesFlowDiagram from '@/components/help/SalesFlowDiagram';
 import MobilePosDiagram from '@/components/help/MobilePosDiagram';
 import SecurityFlowDiagram from '@/components/help/SecurityFlowDiagram';
 import CostFlowDiagram from '@/components/help/CostFlowDiagram';
+import KidsOnboarding from '@/components/help/KidsOnboarding';
 
 export default function HelpView() {
   return (
@@ -41,14 +43,18 @@ export default function HelpView() {
         </div>
         <div className="flex flex-col items-end">
           <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-black">
-            VERSIÓN 5.4.1 (UX-HARDENING)
+            VERSIÓN 5.5.0 (UX-HARDENING)
           </Badge>
           <span className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Última actualización: 26 Ene 2026</span>
         </div>
       </div>
 
       <Tabs defaultValue="roles" className="w-full">
-        <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 h-auto p-1 bg-muted/50 rounded-2xl mb-8">
+        <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 h-auto p-1 bg-muted/50 rounded-2xl mb-8">
+          <TabsTrigger value="onboarding" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs">
+            <Baby className="w-4 h-4 mr-2 hidden sm:block" />
+            Niños
+          </TabsTrigger>
           <TabsTrigger value="roles" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs">
             <Users className="w-4 h-4 mr-2 hidden sm:block" />
             Jerarquía
@@ -78,6 +84,21 @@ export default function HelpView() {
             Historial
           </TabsTrigger>
         </TabsList>
+
+        {/* --- COSTPRO PARA NIÑOS (ONBOARDING) --- */}
+        <TabsContent value="onboarding" className="space-y-8">
+          <Card className="border-none shadow-none bg-transparent">
+            <CardHeader className="px-0">
+              <CardTitle className="text-2xl font-black uppercase tracking-tight">CostPro para Niños (Storytelling)</CardTitle>
+              <CardDescription className="text-base font-medium">
+                Aprende los conceptos fundamentales de CostPro a través de la historia de Juan y Pedro.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-0">
+              <KidsOnboarding />
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* --- JERARQUÍA Y ROLES --- */}
         <TabsContent value="roles" className="space-y-8">
@@ -136,12 +157,12 @@ export default function HelpView() {
                     <p className="text-[10px] font-medium text-muted-foreground leading-tight">Control total, creación de tiendas, reportes financieros globales y auditoría de sistema.</p>
                   </div>
                   <div>
-                    <Badge variant="outline" className="bg-violet-500/10 text-violet-600 border-violet-500/20 mb-2">ENCARGADO</Badge>
-                    <p className="text-[10px] font-medium text-muted-foreground leading-tight">Administra usuarios de su tienda, supervisa cierres de caja y ajusta inventario local.</p>
+                    <Badge variant="outline" className="bg-violet-500/10 text-violet-600 border-violet-500/20 mb-2">ENCARGADO / MANAGER</Badge>
+                    <p className="text-[10px] font-medium text-muted-foreground leading-tight">Administra usuarios y tiendas asignadas, supervisa cierres de caja y gestiona el inventario local.</p>
                   </div>
                   <div>
-                    <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20 mb-2">ALMACENERO / CAJERO</Badge>
-                    <p className="text-[10px] font-medium text-muted-foreground leading-tight">Operaciones diarias de punto de venta y entrada/salida de mercancía.</p>
+                    <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20 mb-2">CLERK / WAREHOUSE</Badge>
+                    <p className="text-[10px] font-medium text-muted-foreground leading-tight">Operaciones diarias de punto de venta y control de entrada/salida de mercancía.</p>
                   </div>
                 </div>
               </div>
@@ -438,13 +459,15 @@ export default function HelpView() {
 
               <div className="grid md:grid-cols-2 gap-8">
                 <div className="space-y-4">
-                  <h4 className="font-black text-primary uppercase tracking-widest text-xs">Gestión de Existencias</h4>
+                  <h4 className="font-black text-primary uppercase tracking-widest text-xs">Gestión de Existencias v5.5</h4>
                   <div className="space-y-4">
-                    <div className="flex gap-4 p-4 rounded-2xl bg-muted/30">
+                    <div className="flex gap-4 p-4 rounded-2xl bg-primary/5 border border-primary/10">
                       <div className="shrink-0 w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center font-black text-primary italic">IN</div>
                       <div>
-                        <h5 className="font-bold text-sm">Recepciones</h5>
-                        <p className="text-xs text-muted-foreground">Ingreso de mercancía por compras. Incrementa el stock disponible inmediatamente.</p>
+                        <h5 className="font-bold text-sm">Recepciones Protegidas</h5>
+                        <p className="text-xs text-muted-foreground">
+                          El sistema bloquea la búsqueda o importación hasta que selecciones una <span className="font-bold">Tienda Activa</span>. Esto garantiza que el stock y los costos se asignen correctamente.
+                        </p>
                       </div>
                     </div>
                     <div className="flex gap-4 p-4 rounded-2xl bg-muted/30">
@@ -496,19 +519,26 @@ export default function HelpView() {
                 </div>
                 <div className="p-8 rounded-3xl bg-white border border-border shadow-sm">
                   <h4 className="font-black uppercase tracking-widest text-xs text-primary mb-4 flex items-center gap-2">
-                    <Key className="w-4 h-4" />
-                    Auditoría Inmutable
+                    <Shield className="w-4 h-4" />
+                    Auditoría Visual Enterprise
                   </h4>
                   <p className="text-sm font-medium leading-relaxed text-muted-foreground mb-4">
-                    Cada vez que un precio cambia o una venta se anula, CostPro registra:
+                    Transformamos logs técnicos en una <span className="font-bold text-primary">Línea de Tiempo Visual</span> comprensible para humanos:
                   </p>
-                  <div className="grid grid-cols-2 gap-3">
-                    {["Identidad del Usuario", "IP de Conexión", "Timestamp exacto", "Valores históricos"].map((t, i) => (
-                      <div key={i} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-tighter text-muted-foreground">
-                        <CheckCircle2 className="w-3 h-3 text-primary" />
-                        {t}
-                      </div>
-                    ))}
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-3">
+                      {["Acciones Categorizadas", "Diferenciales de Datos", "Fechas Relativas", "Búsqueda Avanzada"].map((t, i) => (
+                        <div key={i} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-tighter text-muted-foreground">
+                          <CheckCircle2 className="w-3 h-3 text-primary" />
+                          {t}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="p-4 bg-muted/30 rounded-2xl border border-dashed border-border">
+                       <p className="text-[10px] font-medium leading-tight italic">
+                         "Juan actualizó el producto X" en lugar de "UPDATE public.products SET name = ...".
+                       </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -527,12 +557,32 @@ export default function HelpView() {
             </CardHeader>
             <CardContent className="px-0">
               <div className="space-y-8">
-                {/* --- v5.4.1 --- */}
+                {/* --- v5.5.0 --- */}
                 <div className="relative pl-8 border-l-2 border-primary/20 space-y-4">
                   <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary border-4 border-background" />
                   <div className="flex items-center gap-3">
-                    <Badge className="bg-primary">v5.4.1</Badge>
+                    <Badge className="bg-primary">v5.5.0</Badge>
                     <span className="text-xs font-black text-muted-foreground uppercase">26 de Enero, 2026 (Actual)</span>
+                  </div>
+                  <div className="bg-muted/30 rounded-2xl p-6 space-y-4 border border-primary/10">
+                    <h4 className="font-black text-sm uppercase text-primary">UX Hardening & Enterprise Audit</h4>
+                    <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Nueva sección "CostPro para Niños" con narrativa visual de flujos.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Rediseño completo de Auditoría: Línea de tiempo visual e intuitiva.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Blindaje de Recepción: Bloqueo de operaciones sin tienda activa.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Expansión de rol Manager: Acceso total a gestión de Usuarios y Tiendas.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Hardening de Esquema: Auditoría soporta IDs tipo UUID y Text.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Optimización de Performance: Paginación inteligente en historial de eventos.</li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* --- v5.4.0 --- */}
+                <div className="relative pl-8 border-l-2 border-primary/20 space-y-4 opacity-60">
+                  <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-muted border-4 border-background" />
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline">v5.4.0</Badge>
+                    <span className="text-xs font-black text-muted-foreground uppercase">25 de Enero, 2026</span>
                   </div>
                   <div className="bg-muted/30 rounded-2xl p-6 space-y-4">
                     <h4 className="font-black text-sm uppercase text-primary">UX Hardening & POS Efficiency</h4>
