@@ -198,7 +198,7 @@ export default function TerminalView() {
       case 'history': return <StockHistoryView movements={movements.filter(m => m.product?.name.toLowerCase().includes(searchTerm.toLowerCase()))} searchTerm={searchTerm} onSearchChange={setSearchTerm} dateRange={dateRange} onDateRangeChange={setDateRange} onRefresh={() => {}} />;
       case 'audit': return <AuditLogsView logs={auditLogs} searchTerm={searchTerm} onSearchChange={setSearchTerm} dateRange={dateRange} onDateRangeChange={setDateRange} />;
       case 'cash': return <CashClosureView summary={salesSummary} cashClosures={cashClosures} onProcessClosure={() => {}} />;
-      case 'users': return <UsersManagementView users={users.filter(u => u.full_name?.toLowerCase().includes(searchTerm.toLowerCase()))} searchTerm={searchTerm} onSearchChange={setSearchTerm} onEditUser={modals.handleEditUser} onCreateUser={modals.handleCreateUser} />;
+      case 'users': return <UsersManagementView users={users.filter(u => (u.full_name || '').toLowerCase().includes(searchTerm.toLowerCase()))} searchTerm={searchTerm} onSearchChange={setSearchTerm} onEditUser={modals.handleEditUser} onCreateUser={modals.handleCreateUser} />;
       case 'stores': return (
         <StoresManagementView
           stores={stores.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()))}

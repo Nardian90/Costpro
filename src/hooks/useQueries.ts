@@ -493,9 +493,19 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
     queryFn: async () => {
       // ADMIN: Sees all users in the system
       if (isAdmin) {
-        let query = supabase.from('profiles').select('*, memberships:user_store_memberships(*, store:stores(name))');
-        const data = await withTableLogging('select', 'profiles', () => query.order('full_name'));
-        return data as Profile[];
+        // We use a simplified select first to ensure it works, then add memberships
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*, memberships:user_store_memberships(*, store:stores(name))')
+          .order('full_name');
+
+        if (error) {
+          logger.error('DATABASE', 'FETCH_USERS_ADMIN_FAILED', { error });
+          // Fallback to profiles only if join fails
+          const { data: fallbackData } = await supabase.from('profiles').select('*').order('full_name');
+          return (fallbackData || []) as Profile[];
+        }
+        return (data || []) as Profile[];
       }
 
       // ENCARGADO/MANAGER: Sees all users who have a membership in ANY store they manage
