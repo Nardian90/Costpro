@@ -21,7 +21,7 @@ const CostProLogo: React.FC<CostProLogoProps> = ({ size = 120, animated = true }
       pathLength: 0.8, // Mantiene la apertura característica de la letra C
       opacity: 1,
       transition: {
-        duration: animated ? 2 : 0,
+        duration: animated ? 1 : 0,
         ease: "easeInOut",
         repeat: 0
       }
