@@ -6,23 +6,20 @@ import { cn } from '@/lib/utils';
 import SearchBar from '@/components/ui/SearchBar';
 import ActionMenu from '@/components/ui/ActionMenu';
 
-interface StockHistoryViewProps {
-  movements: any[];
-  searchTerm: string;
-  onSearchChange: (value: string) => void;
-  dateRange: { from: string; to: string };
-  onDateRangeChange: (range: { from: string; to: string }) => void;
-  onRefresh: () => void;
-}
+import { useState } from 'react';
+import { toast } from 'sonner';
 
-export default function StockHistoryView({
-  movements,
-  searchTerm,
-  onSearchChange,
-  dateRange,
-  onDateRangeChange,
-  onRefresh
-}: StockHistoryViewProps) {
+interface StockHistoryViewProps {}
+
+export default function StockHistoryView({}: StockHistoryViewProps) {
+  const [movements, setMovements] = useState<any[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [dateRange, setDateRange] = useState({ from: '', to: '' });
+  const onRefresh = () => {
+    toast.info('La lógica de actualización del historial de stock se implementará en el futuro.');
+  };
+  const onSearchChange = (value: string) => setSearchTerm(value);
+  const onDateRangeChange = (range: { from: string; to: string }) => setDateRange(range);
   const getMovementBadge = (type: string) => {
     switch (type) {
       case 'sale': return 'text-primary bg-primary/10 border-primary/20';

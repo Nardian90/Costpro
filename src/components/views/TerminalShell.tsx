@@ -38,28 +38,6 @@ const StockHistoryView = lazy(() => import('./terminal/views/stock_history/Stock
 const CatalogView = lazy(() => import('./terminal/views/catalog/CatalogView'));
 const InventoryCountView = lazy(() => import('./terminal/views/inventory_count/InventoryCountView'));
 const CostSheetView = lazy(() => import('./terminal/views/cost_sheet/CostSheetView'));
-const renderView = (view: ViewType) => {
-    switch (view) {
-        case 'dashboard': return <DashboardView />;
-        case 'pos': return <POSView />;
-        case 'sales': return <SalesHistoryView />;
-        case 'users': return <UsersManagementView />;
-        case 'stores': return <StoresManagementView />;
-        case 'audit': return <AuditLogsView />;
-        case 'inventory': return <InventoryView />;
-        case 'cash': return <CashClosureView />;
-        case 'history': return <StockHistoryView />;
-        case 'catalog': return <CatalogView />;
-        case 'inventory_count': return <InventoryCountView />;
-        case 'cost-sheets': return <CostSheetView />;
-
-        // --- Placeholders for remaining views ---
-        case 'settings': return <div>Settings View Placeholder</div>;
-        case 'help': return <div>Help View Placeholder</div>;
-        case 'recepcion': return <div>Reception View Placeholder</div>;
-        default: return <div>Default View Placeholder</div>;
-    }
-}
 
 
 export default function TerminalShell() { // Renamed from TerminalView
@@ -124,6 +102,28 @@ export default function TerminalShell() { // Renamed from TerminalView
   };
 
   // The renderView function is now simplified and will be replaced with lazy loading
+  const renderView = (view: ViewType) => {
+    switch (view) {
+        case 'dashboard': return <DashboardView />;
+        case 'pos': return <POSView />;
+        case 'sales': return <SalesHistoryView />;
+        case 'users': return <UsersManagementView />;
+        case 'stores': return <StoresManagementView />;
+        case 'audit': return <AuditLogsView />;
+        case 'inventory': return <InventoryView />;
+        case 'cash': return <CashClosureView />;
+        case 'history': return <StockHistoryView />;
+        case 'catalog': return <CatalogView />;
+        case 'inventory_count': return <InventoryCountView />;
+        case 'cost-sheets': return <CostSheetView />;
+
+        // --- Placeholders for remaining views ---
+        case 'settings': return <div>Settings View Placeholder</div>;
+        case 'help': return <div>Help View Placeholder</div>;
+        case 'recepcion': return <div>Reception View Placeholder</div>;
+        default: return <div>Default View Placeholder</div>;
+    }
+}
   const renderActiveView = () => {
     if (isBlockingRequired) {
       return (

@@ -5,21 +5,21 @@ import { DollarSign, CreditCard, Layers, Edit, History, Eye } from 'lucide-react
 import { cn } from '@/lib/utils';
 import ActionMenu from '@/components/ui/ActionMenu';
 
-interface CashClosureViewProps {
-  summary: {
-    total_billed: number;
-    total_cash: number;
-    total_transfer: number;
-  };
-  cashClosures: any[];
-  onProcessClosure: () => void;
-}
+import { useState } from 'react';
+import { toast } from 'sonner';
 
-export default function CashClosureView({
-  summary,
-  cashClosures,
-  onProcessClosure
-}: CashClosureViewProps) {
+interface CashClosureViewProps {}
+
+export default function CashClosureView({}: CashClosureViewProps) {
+  const [summary, setSummary] = useState({
+    total_billed: 0,
+    total_cash: 0,
+    total_transfer: 0,
+  });
+  const [cashClosures, setCashClosures] = useState<any[]>([]);
+  const onProcessClosure = () => {
+    toast.info('La lógica de cierre de caja se implementará en el futuro.');
+  };
   return (
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
