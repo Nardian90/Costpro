@@ -510,26 +510,38 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
 
       // ENCARGADO/MANAGER: Sees all users who have a membership in ANY store they manage
       if (isEncargado) {
-        // 1. Get store IDs where this user has administrative roles
-        const { data: managedStores } = await supabase
-          .from('user_store_memberships')
-          .select('store_id')
-          .eq('user_id', currentUserId)
-          .in('role', ['encargado', 'manager']);
+        try {
+          // 1. Get store IDs where this user has administrative roles
+          const { data: managedStores } = await supabase
+            .from('user_store_memberships')
+            .select('store_id')
+            .eq('user_id', currentUserId)
+            .in('role', ['encargado', 'manager'])
+            .eq('status', 'active');
 
-        const storeIds = (managedStores || []).map(ms => ms.store_id);
+          const storeIds = (managedStores || []).map(ms => ms.store_id);
 
-        if (storeIds.length === 0) return [];
+          if (storeIds.length === 0) return [];
 
-        // 2. Get profiles that have memberships in those managed stores
-        const { data: memberProfiles, error } = await supabase
-          .from('profiles')
-          .select('*, memberships:user_store_memberships!inner(*, store:stores(name))')
-          .in('memberships.store_id', storeIds)
-          .order('full_name');
+          // 2. Get profiles that have memberships in those managed stores
+          // We use a simpler select and join manually if needed, or stick to this if RLS is fixed
+          const { data: memberProfiles, error } = await supabase
+            .from('profiles')
+            .select('*, memberships:user_store_memberships!inner(*, store:stores(name))')
+            .in('memberships.store_id', storeIds)
+            .order('full_name');
 
-        if (error) throw error;
-        return memberProfiles as Profile[];
+          if (error) {
+            logger.error('DATABASE', 'FETCH_USERS_ENCARGADO_FAILED', { error });
+            // Simplified fallback
+            const { data: fallbackProfiles } = await supabase.from('profiles').select('*').order('full_name');
+            return (fallbackProfiles || []) as Profile[];
+          }
+          return (memberProfiles || []) as Profile[];
+        } catch (err) {
+          logger.error('DATABASE', 'FETCH_USERS_ENCARGADO_CRASH', { err });
+          return [];
+        }
       }
 
       // ALMACENERO / CAJERO (Operativo): NO pueden ver listas globales de usuarios
@@ -546,24 +558,32 @@ export function useStores(userId: string, isAdmin: boolean, isEncargado: boolean
       // Strict guard for non-admins to prevent 400 errors with empty/invalid userId
       if (!isAdmin && (!userId || userId.length < 5)) return [];
 
-      const data = await withTableLogging('select', 'stores', () => {
-        if (isAdmin) {
-          return supabase.from('stores').select('*').order('name');
-        }
+      const { data, error } = await supabase.from('stores').select('*').order('name');
 
-        let query = supabase.from('stores')
-          .select('*, user_store_memberships!inner(user_id, role)')
-          .eq('user_store_memberships.user_id', userId);
+      if (error) {
+        logger.error('DATABASE', 'FETCH_STORES_FAILED', { error });
+        return [];
+      }
 
-        if (isEncargado) {
-          // ENCARGADO only sees stores they administer
-          // We check for both 'encargado' and 'manager' as they are often treated similarly
-          query = query.in('user_store_memberships.role', ['encargado', 'manager']);
-        }
+      if (isAdmin) return data;
 
-        return query.order('name');
-      });
-      return data as any[];
+      // Filter stores based on memberships
+      const { data: memberships } = await supabase
+        .from('user_store_memberships')
+        .select('store_id, role')
+        .eq('user_id', userId)
+        .eq('status', 'active');
+
+      const assignedStoreIds = (memberships || []).map(m => m.store_id);
+
+      if (isEncargado) {
+        const managedStoreIds = (memberships || [])
+          .filter(m => ['encargado', 'manager'].includes(m.role))
+          .map(m => m.store_id);
+        return data.filter(s => managedStoreIds.includes(s.id));
+      }
+
+      return data.filter(s => assignedStoreIds.includes(s.id));
     },
     enabled: isAdmin || (!!userId && userId.length >= 5),
   });
