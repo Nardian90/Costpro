@@ -48,7 +48,7 @@ export function UserFormModal({
             }
           </DialogDescription>
         </DialogHeader>
-        {userContract && (
+        {mode && userContract && (
             <UserForm
                 key={userContract.id || 'new-user'}
                 userContract={userContract}
