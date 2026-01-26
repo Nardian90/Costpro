@@ -40,7 +40,7 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
           </div>
           <div>
             <p className="font-semibold text-muted-foreground">Estado</p>
-            <Badge variant={transaction.status === 'completed' ? 'success' : 'destructive'}>
+            <Badge variant={transaction.status === 'completed' ? 'default' : 'destructive'}>
               {transaction.status}
             </Badge>
           </div>
