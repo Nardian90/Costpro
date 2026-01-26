@@ -26,23 +26,23 @@ import {
     Trash2,
     RefreshCw
 } from 'lucide-react';
-import ActionMenu, { Action } from './ui/ActionMenu';
+import ActionMenu, { Action } from '@/components/ui/ActionMenu';
 import {
     PrimaryButton,
     SecondaryButton,
     IconButton,
     SearchInput,
     ProductCard
-} from './ui/atomic';
-import { MobileSafeContainer } from './ui/MobileSafeContainer';
-import ViewSwitcher, { ViewMode } from './ui/ViewSwitcher';
+} from '@/components/ui/atomic';
+import { MobileSafeContainer } from '@/components/ui/MobileSafeContainer';
+import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { catalogService } from '@/services/catalog-service';
 import { useCatalogModals } from '@/hooks/useCatalogModals';
-import { CatalogModals } from './CatalogModals';
+import { CatalogModals } from '@/components/CatalogModals';
 import { cn } from '@/lib/utils';
 import { Product } from '@/types';
-import ProductImage from './ui/ProductImage';
+import ProductImage from '@/components/ui/ProductImage';
 
 export default function CatalogView() {
     const { user } = useAuthStore();

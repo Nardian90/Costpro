@@ -7,7 +7,7 @@ import React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const CostSheetView = dynamic(
-  () => import('@/components/cost-sheets/CostSheetView'),
+  () => import('@/components/views/terminal/views/cost_sheet/CostSheetView'),
   {
     ssr: false,
     loading: () => (
