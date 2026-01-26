@@ -1,0 +1,210 @@
+'use client';
+
+import { useState, useEffect, useTransition, Suspense } from 'react';
+import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useAuthStore, useUIStore, type ViewType } from '@/store';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Loader2, Building as BuildingIcon } from 'lucide-react';
+import { toast } from 'sonner';
+
+import { userService } from '@/services/user-service';
+
+// Modular Hooks
+import { useTerminalNavigation } from '@/hooks/useTerminalNavigation';
+
+// Modular Components
+import { Sidebar } from './terminal/Sidebar';
+import { Header } from './terminal/Header';
+import CostProLogo from '@/components/CostProLogo';
+
+// Sub-views will be lazy loaded later
+import { MobileSafeContainer } from '@/components/ui/MobileSafeContainer';
+
+import { lazy } from 'react';
+
+// Lazy Loaded Views
+const POSView = lazy(() => import('./terminal/views/pos/POSView'));
+const UsersManagementView = lazy(() => import('./terminal/views/users/UsersManagementView'));
+const DashboardView = lazy(() => import('./terminal/views/dashboard/DashboardView'));
+const SalesHistoryView = lazy(() => import('./terminal/views/sales/SalesHistoryView'));
+const StoresManagementView = lazy(() => import('./terminal/views/stores/StoresManagementView'));
+const AuditLogsView = lazy(() => import('./terminal/views/audit/AuditLogsView'));
+
+// TODO: Map remaining views
+const renderView = (view: ViewType) => {
+    switch (view) {
+        case 'dashboard': return <DashboardView />;
+        case 'pos': return <POSView />;
+        case 'sales': return <SalesHistoryView />;
+        case 'users': return <UsersManagementView />;
+        case 'stores': return <StoresManagementView />;
+        case 'audit': return <AuditLogsView />;
+
+        // --- Placeholders for remaining views ---
+        case 'history': return <div>Stock History View Placeholder</div>;
+        case 'cash': return <div>Cash Closure View Placeholder</div>;
+        case 'settings': return <div>Settings View Placeholder</div>;
+        case 'help': return <div>Help View Placeholder</div>;
+        case 'inventory': return <div>Inventory View Placeholder</div>;
+        case 'recepcion': return <div>Reception View Placeholder</div>;
+        case 'inventory_count': return <div>Inventory Count View Placeholder</div>;
+        case 'catalog': return <div>Catalog View Placeholder</div>;
+        case 'cost-sheets': return <div>Cost Sheets View Placeholder</div>;
+        default: return <div>Default View Placeholder</div>;
+    }
+}
+
+
+export default function TerminalShell() { // Renamed from TerminalView
+  const { user, loading, logout } = useAuthStore();
+  const [isPending, startTransition] = useTransition();
+  const isMobile = useIsMobile();
+
+  const {
+    currentView, setCurrentView,
+    sidebarOpen, toggleSidebar, setSidebarOpen
+  } = useUIStore();
+
+  const [sidebarSearch, setSidebarSearch] = useState('');
+
+  // Hooks
+  const nav = useTerminalNavigation(user, sidebarSearch);
+  const router = useRouter();
+
+
+  // LOGOUT HANDLER (moved from useTerminalOperations)
+   const handleLogout = async () => {
+    try {
+      await userService.logout();
+      logout(); // This is from useAuthStore
+      router.replace('/login');
+    } catch (error: any) {
+      toast.error('Error al cerrar sesión');
+    }
+  };
+
+  // Guard: if loading is finished but no user, redirect to login as fallback
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [loading, user, router]);
+
+  if (loading) {
+    return (
+      <div className="h-screen w-full flex flex-col items-center justify-center gap-4 bg-background">
+        <CostProLogo size={80} animated={true} />
+        <div className="flex items-center gap-2 text-primary font-bold animate-pulse">
+          <Loader2 className="w-5 h-5 animate-spin" />
+          <span>INICIALIZANDO TERMINAL...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) return null;
+
+  // BLOCKING ACCESS (Regla 3): If a non-admin user has no active store, block operations
+  const isBlockingRequired = user.role !== 'admin' && !user.activeStoreId;
+
+  const handleViewChange = (view: ViewType) => {
+    startTransition(() => {
+      setCurrentView(view);
+    });
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
+  };
+
+  // The renderView function is now simplified and will be replaced with lazy loading
+  const renderActiveView = () => {
+    if (isBlockingRequired) {
+      return (
+        <div className="flex flex-col items-center justify-center p-12 text-center bg-destructive/5 rounded-3xl border-2 border-dashed border-destructive/20 gap-6">
+          <div className="w-20 h-20 rounded-full bg-destructive/10 flex items-center justify-center">
+             <BuildingIcon className="w-10 h-10 text-destructive" />
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-2xl font-black uppercase tracking-tight text-destructive">Sin Tienda Activa</h3>
+            <p className="text-muted-foreground text-sm max-w-md mx-auto font-medium">
+              Tu cuenta no tiene una tienda asignada o activa actualmente. Por favor, contacta al administrador para que te asigne una sucursal.
+            </p>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="px-8 py-3 bg-destructive text-white font-black rounded-xl hover:opacity-90 transition-opacity uppercase text-xs tracking-widest"
+          >
+            Cerrar Sesión
+          </button>
+        </div>
+      );
+    }
+
+    // Placeholder for where the dynamic components will be rendered.
+    return renderView(currentView);
+  };
+
+  return (
+    <div className="min-h-screen flex bg-background text-foreground max-w-full overflow-x-hidden">
+      <Sidebar
+        sidebarOpen={sidebarOpen}
+        sidebarSearch={sidebarSearch}
+        setSidebarSearch={setSidebarSearch}
+        navigationItems={nav.navigationItems}
+        currentView={currentView}
+        onViewChange={handleViewChange}
+        onLogout={handleLogout}
+        logoHeight={nav.logoHeight}
+        logoOpacity={nav.logoOpacity}
+        logoScale={nav.logoScale}
+        navRef={nav.navRef}
+      />
+
+      <main className="flex-1 min-h-screen flex flex-col z-10">
+        <Header
+          sidebarOpen={sidebarOpen}
+          toggleSidebar={toggleSidebar}
+          currentView={currentView}
+          navigationItems={nav.navigationItems}
+          onViewChange={handleViewChange}
+          user={user}
+          handleSetActiveStore={() => {
+              toast.info('La funcionalidad de cambio de tienda se moverá a la vista de Tiendas.');
+          }}
+        />
+
+        <div className="p-4 sm:p-8 lg:p-12 pb-32 flex-1 overflow-x-hidden terminal-content">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentView}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+              className="max-w-7xl mx-auto"
+            >
+              <Suspense fallback={
+                <div className="flex flex-col items-center justify-center py-20 gap-4">
+                  <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                  <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Cargando vista...</p>
+                </div>
+              }>
+                <MobileSafeContainer>
+                  {renderActiveView()}
+                </MobileSafeContainer>
+              </Suspense>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </main>
+
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 lg:hidden"
+          onClick={toggleSidebar}
+        />
+      )}
+    </div>
+  );
+}
