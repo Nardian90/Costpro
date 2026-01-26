@@ -453,8 +453,12 @@ export function useStockMovements(storeId?: string | null, isAdmin = false) {
       const data = await withTableLogging('select', 'stock_movements', () => query.order('created_at', { ascending: false }).limit(100));
 
       // Use a partial schema for stock movements since we joined with products
+      // We use .catch() and .nullable() to handle cases where product data might be missing or malformed
       const extendedSchema = stockMovementSchema.extend({
-        product: z.object({ name: z.string(), sku: z.string().nullable() }).optional()
+        product: z.object({
+          name: z.string().catch('Producto desconocido'),
+          sku: z.string().nullable().catch(null)
+        }).nullable().optional().catch(null)
       });
 
       return await validateRPCArrayResponse(data, extendedSchema, 'stock_movements');
