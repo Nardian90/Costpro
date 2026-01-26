@@ -29,7 +29,7 @@ const CostProLogo: React.FC<CostProLogoProps> = ({ size = 120, animated = true }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center gap-6">
+    <div className="flex flex-col items-center justify-center gap-6" translate="no">
       <div className="relative" style={{ width: size, height: size }}>
         {/* Resplandor sutil (Glow) de fondo para profundidad */}
         <div className="absolute inset-0 bg-green-500/10 dark:bg-green-400/10 blur-[40px] rounded-full" />
@@ -43,8 +43,8 @@ const CostProLogo: React.FC<CostProLogoProps> = ({ size = 120, animated = true }
         >
           <defs>
             <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" className="stop-color-start" />
-              <stop offset="100%" className="stop-color-end" />
+              <stop offset="0%" className="logo-stop-start" />
+              <stop offset="100%" className="logo-stop-end" />
             </linearGradient>
 
             <filter id="pure-glow">
@@ -84,17 +84,17 @@ const CostProLogo: React.FC<CostProLogoProps> = ({ size = 120, animated = true }
           Protege tus costos y precios
         </p>
       </motion.div>
-      <style jsx>{`
-        .stop-color-start {
+      <style>{`
+        .logo-stop-start {
           stop-color: #22c55e;
         }
-        .stop-color-end {
+        .logo-stop-end {
           stop-color: #10b981;
         }
-        .dark .stop-color-start {
+        .dark .logo-stop-start {
           stop-color: #4ade80;
         }
-        .dark .stop-color-end {
+        .dark .logo-stop-end {
           stop-color: #2dd4bf;
         }
       `}</style>

@@ -194,7 +194,7 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-6 pt-6 border-t border-border">
+          <div className="mt-6 pt-6 border-t border-border" translate="no">
             <p className="text-xs text-muted-foreground mb-3 text-center">
               Cuentas de Demo (contraseña: demo123)
             </p>
