@@ -79,7 +79,11 @@ export default function TerminalView() {
     user?.role === 'encargado' || user?.role === 'manager',
     user?.activeStoreId
   );
-  const { data: stores = [] } = useStores(user?.id || '', user?.role === 'admin');
+  const { data: stores = [] } = useStores(
+    user?.id || '',
+    user?.role === 'admin',
+    user?.role === 'encargado' || user?.role === 'manager'
+  );
   const { data: auditLogs = [] } = useAuditLogs();
   const { data: movements = [] } = useStockMovements(user?.storeId, user?.role === 'admin');
   const { data: cashClosures = [] } = useCashClosures(user?.storeId, user?.role === 'admin');
@@ -294,6 +298,7 @@ export default function TerminalView() {
         stores={stores}
         handleUserFormSubmit={ops.handleUserFormSubmit}
         isSubmittingUser={ops.isSubmittingUser}
+        currentUserRole={user?.role}
       />
     </div>
   );

@@ -498,43 +498,61 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
         return data as Profile[];
       }
 
-      // ENCARGADO/MANAGER with Active Store: Sees all users who have a membership in that store
-      if (isEncargado && activeStoreId) {
+      // ENCARGADO/MANAGER: Sees all users who have a membership in ANY store they manage
+      if (isEncargado) {
+        // 1. Get store IDs where this user has administrative roles
+        const { data: managedStores } = await supabase
+          .from('user_store_memberships')
+          .select('store_id')
+          .eq('user_id', currentUserId)
+          .in('role', ['encargado', 'manager']);
+
+        const storeIds = (managedStores || []).map(ms => ms.store_id);
+
+        if (storeIds.length === 0) return [];
+
+        // 2. Get profiles that have memberships in those managed stores
         const { data: memberProfiles, error } = await supabase
           .from('profiles')
           .select('*, memberships:user_store_memberships!inner(*, store:stores(name))')
-          .eq('memberships.store_id', activeStoreId)
+          .in('memberships.store_id', storeIds)
           .order('full_name');
 
         if (error) throw error;
         return memberProfiles as Profile[];
       }
 
-      // ENCARGADO Fallback or other roles: Filter by created_by (legacy behavior)
-      if (isEncargado && !isAdmin) {
-        let query = supabase.from('profiles').select('*, memberships:user_store_memberships(*, store:stores(name))');
-        query = query.eq('created_by', currentUserId);
-        const data = await withTableLogging('select', 'profiles', () => query.order('full_name'));
-        return data as Profile[];
-      }
-
+      // ALMACENERO / CAJERO (Operativo): NO pueden ver listas globales de usuarios
       return [];
     },
     enabled: !!currentUserId,
   });
 }
 
-export function useStores(userId: string, isAdmin: boolean) {
+export function useStores(userId: string, isAdmin: boolean, isEncargado: boolean) {
   return useQuery({
-    queryKey: ['stores', userId, isAdmin],
+    queryKey: ['stores', userId, isAdmin, isEncargado],
     queryFn: async () => {
       // Strict guard for non-admins to prevent 400 errors with empty/invalid userId
       if (!isAdmin && (!userId || userId.length < 5)) return [];
 
-      const data = await withTableLogging('select', 'stores', () => isAdmin
-        ? supabase.from('stores').select('*').order('name')
-        : supabase.from('stores').select('*, user_store_memberships!inner(user_id)')
-            .eq('user_store_memberships.user_id', userId).order('name'));
+      const data = await withTableLogging('select', 'stores', () => {
+        if (isAdmin) {
+          return supabase.from('stores').select('*').order('name');
+        }
+
+        let query = supabase.from('stores')
+          .select('*, user_store_memberships!inner(user_id, role)')
+          .eq('user_store_memberships.user_id', userId);
+
+        if (isEncargado) {
+          // ENCARGADO only sees stores they administer
+          // We check for both 'encargado' and 'manager' as they are often treated similarly
+          query = query.in('user_store_memberships.role', ['encargado', 'manager']);
+        }
+
+        return query.order('name');
+      });
       return data as any[];
     },
     enabled: isAdmin || (!!userId && userId.length >= 5),
