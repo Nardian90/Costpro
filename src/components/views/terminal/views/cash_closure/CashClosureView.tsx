@@ -5,18 +5,25 @@ import { DollarSign, CreditCard, Layers, Edit, History, Eye } from 'lucide-react
 import { cn } from '@/lib/utils';
 import ActionMenu from '@/components/ui/ActionMenu';
 
-import { useState } from 'react';
+import { useCashClosures } from '@/hooks/useCashClosures';
+import { useDashboardData } from '@/hooks/useQueries';
+import { useAuthStore } from '@/store';
 import { toast } from 'sonner';
 
 interface CashClosureViewProps {}
 
 export default function CashClosureView({}: CashClosureViewProps) {
-  const [summary, setSummary] = useState({
+  const { user } = useAuthStore();
+  const { data: cashClosuresData } = useCashClosures(user?.storeId, user?.role === 'admin');
+  const { data: dashboardData } = useDashboardData(user?.storeId, user?.role === 'admin');
+
+  const summary = dashboardData?.summary || {
     total_billed: 0,
     total_cash: 0,
     total_transfer: 0,
-  });
-  const [cashClosures, setCashClosures] = useState<any[]>([]);
+  };
+  const cashClosures = cashClosuresData || [];
+
   const onProcessClosure = () => {
     toast.info('La lógica de cierre de caja se implementará en el futuro.');
   };
