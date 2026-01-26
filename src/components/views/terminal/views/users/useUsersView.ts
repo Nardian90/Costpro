@@ -10,7 +10,7 @@ import {
     useManageUserMemberships,
     useStores
 } from '@/hooks/useQueries';
-import { UserFormData } from '@/components/views/terminal/UserForm';
+import { UserFormData } from './UserForm';
 import { UserContract, mapProfileToContract, UserContractFactory } from '@/contracts/user';
 import { Profile, UserRole } from '@/types';
 import { getAllowedRoles } from '@/lib/roles';

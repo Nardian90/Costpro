@@ -9,8 +9,8 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { HelpCircle, FileText, Edit, DollarSign, Plus, Trash2, RefreshCw } from 'lucide-react';
-import ProductImage from './ui/ProductImage';
-import { PrimaryButton, SecondaryButton, IconButton } from './ui/atomic';
+import ProductImage from '@/components/ui/ProductImage';
+import { PrimaryButton, SecondaryButton, IconButton } from '@/components/ui/atomic';
 import { getSupabaseUrl, cn } from '@/lib/utils';
 import { Product } from '@/types';
 

@@ -7,53 +7,85 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Store } from '@/types';
+import { StoreFormMode } from './useStoresView';
 
-// Edit Store Modal
-interface EditStoreModalProps {
+interface StoreModalsProps {
+    mode: StoreFormMode;
     isOpen: boolean;
     onClose: () => void;
-    store: Store | null;
-    onUpdate: (storeId: string, name: string, address: string) => void;
+    onSubmit: (mode: StoreFormMode, data: Partial<Store>) => Promise<void>;
+    selectedStore: Store | null;
+    isSubmitting: boolean;
 }
 
-export function EditStoreModal({ isOpen, onClose, store, onUpdate }: EditStoreModalProps) {
+export function StoreModals({
+    mode,
+    isOpen,
+    onClose,
+    onSubmit,
+    selectedStore,
+    isSubmitting
+}: StoreModalsProps) {
     const [name, setName] = useState('');
     const [address, setAddress] = useState('');
 
     useEffect(() => {
-        if (store) {
-            setName(store.name);
-            setAddress(store.address || '');
+        if (selectedStore && mode === 'edit') {
+            setName(selectedStore.name);
+            setAddress(selectedStore.address || '');
+        } else {
+            setName('');
+            setAddress('');
         }
-    }, [store]);
+    }, [selectedStore, mode, isOpen]);
 
-    if (!store) return null;
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        onSubmit(mode, { name, address });
+    };
+
+    if (!mode) return null;
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Editar Tienda</DialogTitle>
+                    <DialogTitle>
+                        {mode === 'edit' ? 'Editar Tienda' : mode === 'create' ? 'Nueva Tienda' : 'Eliminar Tienda'}
+                    </DialogTitle>
+                    <DialogDescription>
+                        {mode === 'delete' ? '¿Estás seguro de que deseas eliminar esta tienda?' : 'Completa los datos de la sucursal.'}
+                    </DialogDescription>
                 </DialogHeader>
-                <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="name" className="text-right">Nombre</Label>
-                        <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3" />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="address" className="text-right">Dirección</Label>
-                        <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} className="col-span-3" />
-                    </div>
-                </div>
-                <DialogFooter>
-                    <Button variant="outline" onClick={onClose}>Cancelar</Button>
-                    <Button onClick={() => onUpdate(store.id, name, address)}>Guardar Cambios</Button>
-                </DialogFooter>
+
+                {mode !== 'delete' && (
+                    <form onSubmit={handleSubmit} className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="name" className="text-right">Nombre</Label>
+                            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3" required />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="address" className="text-right">Dirección</Label>
+                            <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} className="col-span-3" />
+                        </div>
+                        <DialogFooter>
+                            <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>Cancelar</Button>
+                            <Button type="submit" disabled={isSubmitting}>
+                                {isSubmitting ? 'Guardando...' : mode === 'edit' ? 'Guardar Cambios' : 'Crear Tienda'}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                )}
+
+                {mode === 'delete' && (
+                    <DialogFooter>
+                        <Button variant="outline" onClick={onClose} disabled={isSubmitting}>Cancelar</Button>
+                        <Button variant="destructive" onClick={() => onSubmit('delete', {})} disabled={isSubmitting}>
+                            {isSubmitting ? 'Eliminando...' : 'Eliminar'}
+                        </Button>
+                    </DialogFooter>
+                )}
             </DialogContent>
         </Dialog>
     );
 }
-
-// NOTE: Create and Delete modals would be here as well.
-// For brevity in this refactor, we are focusing on the main logic extraction.
-// The implementation would be very similar to EditStoreModal.

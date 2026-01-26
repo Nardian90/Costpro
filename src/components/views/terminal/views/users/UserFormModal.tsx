@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import UserForm, { UserFormData } from '@/components/views/terminal/UserForm';
+import UserForm, { UserFormData } from './UserForm';
 import { UserContract } from '@/contracts/user';
 import { Store } from '@/types';
 

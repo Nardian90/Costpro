@@ -1,23 +1,16 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Sun, Moon, Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTheme } from 'next-themes';
 
-interface SettingsViewProps {
-  notifications: {
-    lowStock: boolean;
-    salesAlerts: boolean;
-  };
-  setNotifications: (notifs: any) => void;
-}
-
-export default function SettingsView({
-  notifications,
-  setNotifications
-}: SettingsViewProps) {
+export default function SettingsView() {
   const { setTheme, theme } = useTheme();
+  const [notifications, setNotifications] = useState({
+    lowStock: true,
+    salesAlerts: false,
+  });
 
   return (
     <div className="space-y-10 max-w-4xl">
@@ -71,7 +64,7 @@ export default function SettingsView({
                   <div className="text-[10px] font-bold text-muted-foreground uppercase mt-1 tracking-widest">{notif.desc}</div>
                 </div>
                 <button
-                  onClick={() => setNotifications({ ...notifications, [notif.id]: !notif.active })}
+                  onClick={() => setNotifications({ ...notifications, [notif.id]: !notifications[notif.id as keyof typeof notifications] })}
                   className={cn(
                     "px-4 py-2 rounded-lg font-black uppercase text-[10px] tracking-widest transition-all",
                     notif.active ? "bg-green-500/10 text-green-600 border border-green-500/20" : "bg-muted text-muted-foreground border border-border"
