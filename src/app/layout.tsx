@@ -20,6 +20,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Costpro - Sistema de Gestión Integral",
   description: "Plataforma completa para gestión de inventario, ventas y administración de tiendas.",
+  other: {
+    google: "notranslate",
+  },
   keywords: ["POS", "Inventario", "Ventas", "Gestión", "Supabase", "Costpro"],
   authors: [{ name: "Costpro Team" }],
   manifest: "/manifest.json",
@@ -50,6 +53,7 @@ export default function RootLayout({
     <html lang="es" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
+        translate="no"
       >
         <ThemeProvider
           attribute="class"
