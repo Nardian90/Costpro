@@ -3,7 +3,8 @@
 
 import { useState, useMemo } from 'react';
 import { useAuthStore } from '@/store';
-import { useTransactions, useTransactionDetails } from '@/hooks/useQueries';
+import { useTransactionDetails } from '@/hooks/useQueries';
+import { useTransactions } from '@/hooks/useTransactions';
 import { Transaction } from '@/types';
 
 export function useSalesHistoryView() {
