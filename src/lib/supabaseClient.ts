@@ -1,21 +1,25 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+// Fallback Supabase URL found in configuration for images
+const FALLBACK_URL = 'https://wthkddeleylijmonclxg.supabase.co';
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  // En entornos de desarrollo puede que falten las vars; advertimos para facilitar debugging.
-  // No interrumpimos la ejecución aquí para no romper procesos automatizados.
-  // Asegúrate de definir `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || FALLBACK_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !supabaseAnonKey) {
   // eslint-disable-next-line no-console
-  console.warn('Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY')
+  console.warn(
+    'Supabase environment variables are missing. ' +
+    'Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment.'
+  );
 }
 
-// Usamos valores placeholder si las variables no están presentes para evitar que el proceso de build falle.
-// En producción, estas variables deben estar configuradas correctamente.
+// Initialize the Supabase client.
+// Using a fallback URL that is valid for the project helps avoid CORS errors
+// and allows some parts of the app to function if only the anon key is missing (though most will fail).
 export const supabase = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co',
-  supabaseAnonKey || 'placeholder'
+  supabaseUrl,
+  supabaseAnonKey || 'placeholder-key'
 )
 
 /**
