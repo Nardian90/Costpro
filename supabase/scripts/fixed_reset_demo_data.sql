@@ -50,26 +50,19 @@ END $$;
 DELETE FROM auth.users;
 
 -- 2. ENSURE TYPES AND SCHEMA
+-- Note: ALTER TYPE ADD VALUE cannot run inside a transaction/DO block in some Postgres versions.
+-- We use a safer approach for demo scripts.
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
         CREATE TYPE user_role AS ENUM ('admin', 'manager', 'clerk', 'warehouse', 'encargado', 'usuario');
-    ELSE
-        -- Ensure all modern roles exist
-        BEGIN
-            ALTER TYPE user_role ADD VALUE 'encargado';
-        EXCEPTION WHEN duplicate_object THEN NULL;
-        END;
-        BEGIN
-            ALTER TYPE user_role ADD VALUE 'usuario';
-        EXCEPTION WHEN duplicate_object THEN NULL;
-        END;
-        BEGIN
-            ALTER TYPE user_role ADD VALUE 'manager';
-        EXCEPTION WHEN duplicate_object THEN NULL;
-        END;
     END IF;
 END $$;
+
+-- Attempt to add values outside the block if they might be missing
+ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'encargado';
+ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'usuario';
+ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'manager';
 
 -- 3. CREATE DEMO STORE
 DO $$
