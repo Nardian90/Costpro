@@ -5,7 +5,7 @@ import { ShoppingCart, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import SearchBar from '@/components/ui/SearchBar';
 import ActionMenu from '@/components/ui/ActionMenu';
-import ProductCard from '@/components/ProductCard';
+import { ProductCard, CategoryChips } from '@/components/ui/atomic';
 import POSTableView from '@/components/POSTableView';
 import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
 import { StateRenderer } from '@/components/ui/StateRenderer';
@@ -129,28 +129,20 @@ export default function POSView({
         )}
 
         <div className="flex-1 w-full space-y-6 lg:order-first">
-          <SearchBar
-            value={searchTerm}
-            onChange={onSearchChange}
-            placeholder="Buscar productos..."
-            showSettings={true}
-          >
-             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[10px] font-black text-muted-foreground uppercase mb-1 block">Categoría</label>
-                  <select
-                    value={selectedCategory}
-                    onChange={(e) => handleCategoryChange(e.target.value)}
-                    className="w-full p-3 rounded-lg border border-border bg-background text-sm font-bold"
-                  >
-                    <option value="">Todas</option>
-                    {categories.map(cat => (
-                      <option key={cat || 'uncategorized'} value={cat || ""}>{cat || 'Sin categoría'}</option>
-                    ))}
-                  </select>
-                </div>
-             </div>
-          </SearchBar>
+          <div className="space-y-4">
+            <SearchBar
+              value={searchTerm}
+              onChange={onSearchChange}
+              placeholder="Buscar productos..."
+              showSettings={false}
+            />
+
+            <CategoryChips
+              categories={categories}
+              selectedCategory={selectedCategory}
+              onCategoryChange={handleCategoryChange}
+            />
+          </div>
 
           <div className={cn(isPending && "opacity-50 transition-opacity")}>
             <StateRenderer
