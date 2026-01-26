@@ -51,7 +51,7 @@ export function UserFormModal({
         {mode && userContract && (
             <UserForm
                 key={userContract.id || 'new-user'}
-                userContract={userContract}
+                initialData={userContract}
                 stores={stores}
                 onSubmit={handleSubmit}
                 isSubmitting={isSubmitting}
