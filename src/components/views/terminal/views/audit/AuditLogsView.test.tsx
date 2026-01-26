@@ -8,6 +8,14 @@ vi.mock('./useAuditLogsView', () => ({
   useAuditLogsView: vi.fn()
 }));
 
+vi.mock('@/hooks/useQueries', () => ({
+  useStores: vi.fn(() => ({ data: [], isLoading: false }))
+}));
+
+vi.mock('@/store', () => ({
+  useAuthStore: vi.fn(() => ({ user: { id: '1', role: 'admin' } }))
+}));
+
 describe('AuditLogsView', () => {
   const mockLogs = [
     {
@@ -51,11 +59,10 @@ describe('AuditLogsView', () => {
     expect(screen.getByText('Cashier 1')).toBeInTheDocument();
   });
 
-  it('should filter logs by search term', () => {
-    // Note: The component itself still does some filtering on top of what the hook returns
-    // in its useMemo(filteredLogs), so we can test that.
+  it('should reflect filtered logs from the hook', () => {
+    // The hook is now responsible for filtering by searchTerm via backend RPC
     (useAuditLogsView as any).mockReturnValue({
-      logs: mockLogs,
+      logs: [mockLogs[0]], // Only return the matching log
       searchTerm: 'Product',
       setSearchTerm: vi.fn(),
       dateRange: { from: '', to: '' },
