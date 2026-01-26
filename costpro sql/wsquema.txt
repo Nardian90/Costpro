@@ -6,11 +6,12 @@ CREATE TABLE public.audit_logs (
   created_at timestamp with time zone DEFAULT now(),
   user_id uuid,
   table_name text,
-  record_id uuid,
+  record_id text,
   action text,
   old_data jsonb,
   new_data jsonb,
   metadata jsonb,
+  updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT audit_logs_pkey PRIMARY KEY (id),
   CONSTRAINT audit_logs_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
   CONSTRAINT fk_audit_logs_profiles FOREIGN KEY (user_id) REFERENCES public.profiles(id)
