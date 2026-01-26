@@ -7,6 +7,8 @@ import UserForm, { UserFormData } from '@/components/views/terminal/UserForm';
 import { UserContract } from '@/contracts/user';
 import { Store } from '@/types';
 
+import { UserRole } from '@/types';
+
 interface UserFormModalProps {
   mode: 'create' | 'edit' | null;
   isOpen: boolean;
@@ -15,7 +17,7 @@ interface UserFormModalProps {
   userContract: UserContract | null;
   stores: Store[];
   isSubmitting: boolean;
-  currentUserRole?: string;
+  allowedRoles?: UserRole[];
 }
 
 export function UserFormModal({
@@ -26,7 +28,7 @@ export function UserFormModal({
   userContract,
   stores,
   isSubmitting,
-  currentUserRole
+  allowedRoles
 }: UserFormModalProps) {
 
   const handleSubmit = async (data: UserFormData) => {
@@ -54,9 +56,10 @@ export function UserFormModal({
                 initialData={userContract}
                 stores={stores}
                 onSubmit={handleSubmit}
+                onCancel={onClose}
                 isSubmitting={isSubmitting}
                 mode={mode}
-                currentUserRole={currentUserRole}
+                allowedRoles={allowedRoles}
             />
         )}
       </DialogContent>
