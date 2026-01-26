@@ -11,6 +11,7 @@ import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
 import { StateRenderer } from '@/components/ui/StateRenderer';
 import { AnimatePresence } from 'framer-motion';
 import type { Product, PaymentMethod } from '@/types';
+import type { CartItem } from '@/store/cart';
 import { usePOSProducts } from '@/hooks/usePOSProducts';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
@@ -25,7 +26,7 @@ interface POSViewProps {
   error: Error | null;
   searchTerm: string;
   onSearchChange: (value: string) => void;
-  items: any[];
+  items: CartItem[];
   onAddItem: (product: Product) => void;
   onRemoveItem: (productId: string, variantId: string | null) => void;
   onUpdateQuantity: (productId: string, variantId: string | null, quantity: number) => void;
