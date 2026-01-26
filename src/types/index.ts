@@ -333,6 +333,8 @@ export interface AuditLog {
   old_data: any;
   new_data: any;
   metadata: any;
+  store_id?: string | null;
+  store_name?: string | null;
   profile?: {
     full_name?: string | null;
     role?: UserRole | null;
