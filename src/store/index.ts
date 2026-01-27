@@ -3,6 +3,7 @@ import { UserContract } from '@/contracts/user';
 import { useCartStore } from './cart';
 import { useSessionStore } from './session-store';
 import { useCostSheetStore } from './cost-sheet-store';
+import { hasRole } from '@/lib/roles';
 
 // --- Auth Store ---
 interface AuthState {
@@ -63,19 +64,19 @@ export const useUIStore = create<UIState>((set) => ({
 export const useCanAccess = (permission: string): boolean => {
   const user = useAuthStore((state) => state.user);
   if (!user) return false;
-  if (user.role === 'admin') return true;
-
-  const roles = user.roles && user.roles.length > 0 ? user.roles : [user.role];
 
   // Basic permission mapping based on roles
   const permissionMap: Record<string, string[]> = {
     'warehouse': ['admin', 'manager', 'warehouse', 'encargado'],
     'pos': ['admin', 'manager', 'clerk', 'encargado'],
-    'admin': ['admin', 'encargado'],
+    'admin': ['admin', 'encargado', 'manager'],
+    'audit': ['admin', 'manager', 'encargado'],
+    'users': ['admin', 'manager', 'encargado'],
+    'stores': ['admin', 'manager', 'encargado'],
   };
 
   const allowedRoles = permissionMap[permission] || [permission];
-  return roles.some(r => allowedRoles.includes(r as any));
+  return allowedRoles.some(role => hasRole(user, role as any));
 };
 
 // --- Re-exports ---

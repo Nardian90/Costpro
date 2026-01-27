@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { useSessionManager } from '@/hooks/useSessionManager';
+import { useSessionManager } from '@/hooks/logic/useSessionManager';
 import { useSessionStore } from '@/store/session-store';
 import { toast } from 'sonner';
 

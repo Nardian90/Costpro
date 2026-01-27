@@ -52,10 +52,10 @@ export default function LoginPage() {
         throw new Error('Error al obtener datos del usuario');
       }
 
-      // 2. Fetch user profile from profiles table
+      // 2. Fetch user profile and memberships from profiles table
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('*')
+        .select('*, memberships:user_store_memberships(*)')
         .eq('id', authData.user.id)
         .single();
 
@@ -75,15 +75,16 @@ export default function LoginPage() {
         email: profileData.email,
         fullName: profileData.full_name,
         role: profileData.role,
-        roles: profileData.roles,
-        storeId: profileData.store_id,
-        activeStoreId: profileData.active_store_id || profileData.store_id,
+        roles: profileData.roles || [profileData.role],
+        storeId: profileData.store_id || '',
+        activeStoreId: profileData.active_store_id || profileData.store_id || '',
         maxStoresLimit: profileData.max_stores_limit,
         maxUsersLimit: profileData.max_users_limit,
         createdBy: profileData.created_by,
         isActive: profileData.is_active,
         createdAt: profileData.created_at,
         updatedAt: profileData.updated_at,
+        memberships: profileData.memberships || [],
       });
 
       login(userData, authData.session.access_token);

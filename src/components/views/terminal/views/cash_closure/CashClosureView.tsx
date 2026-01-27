@@ -5,8 +5,8 @@ import { DollarSign, CreditCard, Layers, Edit, History, Eye } from 'lucide-react
 import { cn } from '@/lib/utils';
 import ActionMenu from '@/components/ui/ActionMenu';
 
-import { useCashClosures } from '@/hooks/useCashClosures';
-import { useDashboardData } from '@/hooks/useQueries';
+import { useCashClosures } from '@/hooks/api/useCashClosures';
+import { useDashboardData } from '@/hooks/api/useDashboard';
 import { useAuthStore } from '@/store';
 import { toast } from 'sonner';
 

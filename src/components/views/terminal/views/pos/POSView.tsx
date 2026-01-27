@@ -11,8 +11,8 @@ import ViewSwitcher from '@/components/ui/ViewSwitcher';
 import { StateRenderer } from '@/components/ui/StateRenderer';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AnimatePresence } from 'framer-motion';
-import { usePOSProducts } from '@/hooks/usePOSProducts';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { usePOSProducts } from '@/hooks/logic/usePOSProducts';
+import { useIsMobile } from '@/hooks/ui/useMobile';
 import {
   Drawer,
   DrawerContent,

@@ -3,16 +3,7 @@
 
 import { useState, useEffect, useMemo, useRef, useDeferredValue } from 'react';
 import { useAuthStore } from '@/store';
-import {
-  useProducts,
-  useUpdateProduct,
-  useCreateProduct,
-  useBulkUpdateProducts,
-  useAddVariant,
-  useDeleteVariant,
-  useDeleteProduct,
-  useToggleProductActive
-} from '@/hooks/useQueries';
+import { useProducts, useUpdateProduct, useCreateProduct, useBulkUpdateProducts, useAddVariant, useDeleteVariant, useDeleteProduct, useToggleProductActive } from '@/hooks/api/useProducts';
 import { toast } from 'sonner';
 import {
     Edit,
@@ -36,9 +27,9 @@ import {
 } from '@/components/ui/atomic';
 import { MobileSafeContainer } from '@/components/ui/MobileSafeContainer';
 import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/ui/useMobile';
 import { catalogService } from '@/services/catalog-service';
-import { useCatalogModals } from '@/hooks/useCatalogModals';
+import { useCatalogModals } from '@/hooks/ui/useCatalogModals';
 import { CatalogModals } from './CatalogModals';
 import { cn } from '@/lib/utils';
 import { Product } from '@/types';

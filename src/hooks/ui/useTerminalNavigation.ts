@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { type UserRole } from '@/types';
 import { UserContract } from '@/contracts/user';
+import { hasRole } from '@/lib/roles';
 
 export interface NavigationItem {
   id: string;
@@ -25,7 +26,6 @@ export function useTerminalNavigation(user: UserContract | null, sidebarSearch: 
 
   const navigationItems = useMemo(() => {
     if (!user) return [];
-    const roles = user.roles && user.roles.length > 0 ? user.roles : [user.role];
     const all: NavigationItem[] = [
       { id: 'dashboard', icon: BarChart3, label: 'Dashboard', roles: ['admin', 'manager', 'clerk', 'encargado'], category: 'OPERACIONES' },
       { id: 'pos', icon: ShoppingCart, label: 'TPV', roles: ['clerk', 'manager', 'admin', 'encargado'], category: 'OPERACIONES' },
@@ -47,7 +47,7 @@ export function useTerminalNavigation(user: UserContract | null, sidebarSearch: 
       { id: 'help', icon: HelpCircle, label: 'Ayuda', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado'], category: 'SOPORTE' },
     ];
 
-    const filteredByRole = all.filter(i => i.roles.some(r => roles.includes(r as any)));
+    const filteredByRole = all.filter(i => i.roles.some(r => hasRole(user, r)));
 
     if (!sidebarSearch) return filteredByRole;
 

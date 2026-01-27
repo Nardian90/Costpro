@@ -5,17 +5,18 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore, useUIStore, type ViewType } from '@/store';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/ui/useMobile';
 import { Loader2, Building as BuildingIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { userService } from '@/services/user-service';
 
 // Modular Hooks
-import { useTerminalNavigation } from '@/hooks/useTerminalNavigation';
-import { prefetchProducts, prefetchDashboardData } from '@/hooks/useQueries';
-import { prefetchTransactions } from '@/hooks/useTransactions';
-import { prefetchAuditLogs } from '@/hooks/useAuditLogs';
+import { useTerminalNavigation } from '@/hooks/ui/useTerminalNavigation';
+import { prefetchProducts } from '@/hooks/api/useProducts'
+import { prefetchDashboardData } from '@/hooks/api/useDashboard';
+import { prefetchTransactions } from '@/hooks/api/useTransactions';
+import { prefetchAuditLogs } from '@/hooks/api/useAuditLogs';
 
 // Modular Components
 import { Sidebar } from './terminal/Sidebar';
