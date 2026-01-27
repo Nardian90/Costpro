@@ -191,20 +191,20 @@ export interface SaleItem {
 
 export interface Transaction {
   id: string;
-  store_id: string;
-  seller_id: string;
+  store_id?: string;
+  seller_id?: string;
   total_amount: number;
   status: TransactionStatus;
   created_at: string;
-  updated_at: string;
-  completed_at: string | null;
-  cancelled_at: string | null;
-  void_reason: string | null;
-  payment_method: PaymentMethod;
-  discount_type: DiscountType;
-  discount_value: number;
-  subtotal: number;
-  idempotency_key: string | null;
+  updated_at?: string;
+  completed_at?: string | null;
+  cancelled_at?: string | null;
+  void_reason?: string | null;
+  payment_method?: PaymentMethod;
+  discount_type?: DiscountType;
+  discount_value?: number;
+  subtotal?: number;
+  idempotency_key?: string | null;
 }
 
 export interface TransactionItem {
@@ -325,14 +325,14 @@ export interface CashClosure {
 export interface AuditLog {
   id: string;
   created_at: string;
-  updated_at?: string;
+  updated_at?: string | null;
   user_id?: string | null;
   table_name: string;
   record_id?: string | null;
   action: string;
-  old_data: any;
-  new_data: any;
-  metadata: any;
+  old_data?: any;
+  new_data?: any;
+  metadata?: any;
   store_id?: string | null;
   store_name?: string | null;
   profile?: {
