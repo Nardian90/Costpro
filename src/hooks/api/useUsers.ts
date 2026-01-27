@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
 import { logger } from '@/lib/logger';
 import { withLogging, withTableLogging } from './base';
+import { validateRPCArrayResponse } from '@/lib/rpc-validator';
+import { profileSchema } from '@/validation/schemas';
 import type { Profile } from '@/types';
 import { toast } from 'sonner';
 
@@ -32,10 +34,10 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
           return [];
         }
 
-        const profiles = (profilesRes.data || []) as any[];
+        const rawProfiles = (profilesRes.data || []) as any[];
         const allMemberships = (membershipsRes.data || []) as any[];
 
-        return profiles.map((profile: any) => {
+        const joinedData = rawProfiles.map((profile: any) => {
           const userMemberships = allMemberships.filter((m: any) => m.user_id === profile.id).map((m: any) => ({
             ...m,
             store: Array.isArray(m.store) ? m.store[0] : m.store
@@ -44,7 +46,9 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
             ...profile,
             memberships: userMemberships
           };
-        }) as unknown as Profile[];
+        });
+
+        return await validateRPCArrayResponse(joinedData, profileSchema, 'fetch_users_admin');
       }
 
       if (isEncargado) {
@@ -87,16 +91,18 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
             if (fallbackRes.error && fallbackRes.error.code === '42703') {
                 fallbackRes = await supabase.from('profiles').select('id, full_name, email, role, is_active').order('full_name');
             }
-            return (fallbackRes.data || []) as Profile[];
+            return await validateRPCArrayResponse(fallbackRes.data || [], profileSchema, 'fetch_users_encargado_fallback');
           }
 
-          return (memberProfiles || []).map((p: any) => ({
+          const normalizedMembers = (memberProfiles || []).map((p: any) => ({
             ...p,
             memberships: (p.memberships || []).map((m: any) => ({
               ...m,
               store: Array.isArray(m.store) ? m.store[0] : m.store
             }))
-          })) as unknown as Profile[];
+          }));
+
+          return await validateRPCArrayResponse(normalizedMembers, profileSchema, 'fetch_users_encargado');
         } catch (err) {
           logger.error('DATABASE', 'FETCH_USERS_ENCARGADO_CRASH', { err });
           return [];

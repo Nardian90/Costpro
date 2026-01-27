@@ -4,6 +4,8 @@ import { useSessionStore } from '@/store/session-store';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import { profileSchema } from '@/validation/schemas';
+import { validateResponse } from '@/lib/rpc-validator';
+import { safeNavigate } from '@/lib/navigation';
 import { mapProfileToContract } from '@/contracts/user';
 import type { UserRole, User } from '@/types';
 
@@ -121,13 +123,9 @@ export function useSessionManager() {
                         store_id: effectiveActiveStoreId || profileData.store_id,
                     };
 
-                    // Validate with Zod
-                    const validationResult = profileSchema.safeParse(userData);
-                    if (!validationResult.success) {
-                        console.error('[Zod Validation Error] profile data:', validationResult.error.format());
-                    }
-
-                    const userContractData = mapProfileToContract(validationResult.success ? validationResult.data : userData as any);
+                    // Validate and normalize with Zod
+                    const validatedData = await validateResponse(userData, profileSchema, 'session_profile');
+                    const userContractData = mapProfileToContract(validatedData as any);
 
                     const currentState = useAuthStore.getState();
                     if (session.access_token !== currentState.token || JSON.stringify(userContractData) !== JSON.stringify(currentState.user)) {
@@ -139,14 +137,14 @@ export function useSessionManager() {
                 } else {
                     await supabase.auth.signOut();
                     setLoading(false);
-                    router.push('/login');
+                    safeNavigate.push(router, '/login');
                 }
             } else {
                 if (useAuthStore.getState().user) {
                     await supabase.auth.signOut();
                 }
                 setLoading(false);
-                router.push('/login');
+                safeNavigate.push(router, '/login');
             }
         } catch (error: any) {
             console.warn(`Session check failed: ${error.message}`);
@@ -190,7 +188,7 @@ export function useSessionManager() {
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
             if (event === 'SIGNED_OUT') {
                 logout();
-                router.push('/login');
+                safeNavigate.push(router, '/login');
             } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
                 if(session?.access_token && user) {
                     // Update the token in the store without a full profile refetch
