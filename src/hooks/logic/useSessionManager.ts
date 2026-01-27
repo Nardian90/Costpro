@@ -45,12 +45,36 @@ export function useSessionManager() {
                 const profileColumns = 'id, full_name, email, role, roles, active_store_id, logo_url, is_active, store_id, created_at';
                 const storeColumns = 'id, name, address, logo_url, is_active, created_at';
                 const membershipColumns = `id, user_id, store_id, role, status, created_at, updated_at, store:stores(${storeColumns})`;
-                const { data: profileData, error: profileError } = await Promise.race([
-                    supabase.from('profiles').select(`${profileColumns}, memberships:user_store_memberships(${membershipColumns})`).eq('id', session.user.id).single(),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('Profile fetch timeout')), SESSION_CHECK_TIMEOUT))
-                ]) as any;
 
-                if (profileError) throw profileError;
+                let profileData: any;
+                let profileError: any;
+
+                try {
+                    const result = await Promise.race([
+                        supabase.from('profiles').select(`${profileColumns}, memberships:user_store_memberships(${membershipColumns})`).eq('id', session.user.id).single(),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('Profile fetch timeout')), SESSION_CHECK_TIMEOUT))
+                    ]) as any;
+                    profileData = result.data;
+                    profileError = result.error;
+                } catch (err: any) {
+                    console.error('[SessionManager] Critical error fetching profile:', err);
+                    // Attempt fallback without joined memberships and potentially missing columns
+                    const { data: fallbackData, error: fallbackError } = await supabase.from('profiles').select('id, email, full_name, role').eq('id', session.user.id).single();
+                    if (fallbackError) throw fallbackError;
+                    profileData = fallbackData;
+                }
+
+                if (profileError) {
+                    console.error('[SessionManager] Profile error:', profileError);
+                    // If it's a "column does not exist" error, try a limited select
+                    if (profileError.code === '42703') {
+                        const { data: fallbackData, error: fallbackError } = await supabase.from('profiles').select('id, email, full_name, role').eq('id', session.user.id).single();
+                        if (fallbackError) throw fallbackError;
+                        profileData = fallbackData;
+                    } else {
+                        throw profileError;
+                    }
+                }
 
                 if (profileData?.is_active) {
                     // Fix Supabase returning join as array

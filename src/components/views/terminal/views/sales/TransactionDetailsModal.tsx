@@ -74,8 +74,8 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
         </div>
         <div className="mt-4 flex justify-end">
             <div className="text-right">
-                <p className="text-muted-foreground">Subtotal: <span className="font-semibold text-foreground">${transaction.subtotal.toFixed(2)}</span></p>
-                <p className="text-muted-foreground">Descuento: <span className="font-semibold text-foreground">-${transaction.discount_value.toFixed(2)}</span></p>
+                <p className="text-muted-foreground">Subtotal: <span className="font-semibold text-foreground">${(transaction.subtotal ?? 0).toFixed(2)}</span></p>
+                <p className="text-muted-foreground">Descuento: <span className="font-semibold text-foreground">-${(transaction.discount_value ?? 0).toFixed(2)}</span></p>
                 <p className="text-lg font-bold">Total: <span className="text-primary">${transaction.total_amount.toFixed(2)}</span></p>
             </div>
         </div>

@@ -17,10 +17,15 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
 
       if (isAdmin) {
         const profileColumns = 'id, full_name, email, role, roles, active_store_id, logo_url, is_active, store_id, created_at';
-        const [profilesRes, membershipsRes] = await Promise.all([
-          supabase.from('profiles').select(profileColumns).order('full_name'),
-          supabase.from('user_store_memberships').select('id, user_id, store_id, role, status, created_at, updated_at, store:stores(id, name, address, is_active, created_at)')
-        ]);
+        let profilesRes = await supabase.from('profiles').select(profileColumns).order('full_name');
+
+        // Fallback if full column set fails (e.g. migration not fully applied)
+        if (profilesRes.error && profilesRes.error.code === '42703') {
+           console.warn('[useUsers] Column missing, retrying with limited columns');
+           profilesRes = await supabase.from('profiles').select('id, full_name, email, role, is_active').order('full_name');
+        }
+
+        const membershipsRes = await supabase.from('user_store_memberships').select('id, user_id, store_id, role, status, created_at, updated_at, store:stores(id, name, address, is_active, created_at)');
 
         if (profilesRes.error) {
           logger.error('DATABASE', 'FETCH_PROFILES_ADMIN_FAILED', { error: profilesRes.error });

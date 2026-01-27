@@ -79,8 +79,8 @@ export const productVariantSchema = z.object({
   product_id: z.string().uuid().optional(),
   name: z.string(),
   sku: z.string().nullable().optional(),
-  price: z.number().min(0).catch(0),
-  conversion_factor: z.number().min(0).catch(1),
+  price: z.number().min(0).default(0),
+  conversion_factor: z.number().min(0).default(1),
   created_at: z.string().optional(),
   updated_at: z.string().optional(),
 });
@@ -98,20 +98,20 @@ export const cartItemSchema = z.object({
 
 export const transactionSchema = z.object({
   id: z.string().uuid(),
-  store_id: z.string().uuid(),
-  seller_id: z.string().uuid(),
+  store_id: z.string().uuid().optional(),
+  seller_id: z.string().uuid().optional(),
   total_amount: z.number(),
   status: transactionStatusSchema,
   created_at: z.string(),
-  updated_at: z.string(),
-  completed_at: z.string().nullable(),
-  cancelled_at: z.string().nullable(),
-  void_reason: z.string().nullable(),
-  payment_method: paymentMethodSchema,
-  discount_type: discountTypeSchema,
-  discount_value: z.number(),
-  subtotal: z.number(),
-  idempotency_key: z.string().nullable(),
+  updated_at: z.string().optional(),
+  completed_at: z.string().nullable().optional(),
+  cancelled_at: z.string().nullable().optional(),
+  void_reason: z.string().nullable().optional(),
+  payment_method: paymentMethodSchema.optional(),
+  discount_type: discountTypeSchema.optional(),
+  discount_value: z.number().optional().default(0),
+  subtotal: z.number().optional().default(0),
+  idempotency_key: z.string().nullable().optional(),
 });
 
 export const stockMovementSchema = z.object({
@@ -137,13 +137,13 @@ export const auditLogSchema = z.object({
   action: z.string(),
   table_name: z.string(),
   record_id: z.string().nullable().optional(),
-  old_data: z.any().nullable(),
-  new_data: z.any().nullable(),
-  metadata: z.any().nullable(),
+  old_data: z.any().nullable().optional(),
+  new_data: z.any().nullable().optional(),
+  metadata: z.any().nullable().optional(),
   store_id: z.string().uuid().nullable().optional(),
   store_name: z.string().nullable().optional(),
   created_at: z.string(),
-  updated_at: z.string().optional(),
+  updated_at: z.string().nullable().optional(),
 });
 
 // ============================================
