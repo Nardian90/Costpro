@@ -19,7 +19,7 @@ export function useTransactions(storeId?: string | null, isAdmin = false) {
         return await validateRPCArrayResponse(data, transactionSchema, rpcName);
       } catch (err) {
         console.warn('[Transactions] RPC failed, falling back to table query', err);
-        const columns = 'id, created_at, total_amount, status, payment_method, subtotal, discount_value, store_id, seller_id';
+        const columns = 'id, created_at, updated_at, total_amount, status, payment_method, subtotal, discount_value, discount_type, store_id, seller_id, completed_at, cancelled_at, void_reason';
         let query = supabase.from('transactions').select(columns);
         if (!isAdmin && storeId) {
           query = query.eq('store_id', storeId);
@@ -39,7 +39,7 @@ export async function prefetchTransactions(queryClient: any, storeId: string, is
   return queryClient.prefetchQuery({
     queryKey: ['transactions', storeId, isAdmin],
     queryFn: async () => {
-      const columns = 'id, created_at, total_amount, status, payment_method, subtotal, discount_value, store_id, seller_id';
+      const columns = 'id, created_at, updated_at, total_amount, status, payment_method, subtotal, discount_value, discount_type, store_id, seller_id, completed_at, cancelled_at, void_reason';
       let query = supabase.from('transactions').select(columns);
       if (!isAdmin && storeId) {
         query = query.eq('store_id', storeId);

@@ -3,7 +3,7 @@
 
 import React, { useRef, useCallback } from 'react';
 import type { Product } from '@/types';
-import { cn } from '@/lib/utils';
+import { cn, resolveProductImage } from '@/lib/utils';
 import { Package, Edit, Loader2 } from 'lucide-react';
 import ProductImage from '@/components/ui/ProductImage';
 
@@ -22,6 +22,7 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product }>((
                 <div className="flex items-center gap-3">
                     <div className="neu-raised-sm w-12 h-12 flex items-center justify-center overflow-hidden shrink-0">
                         <ProductImage
+                            src={resolveProductImage(product)}
                             name={product.name}
                             className="w-full h-full object-cover"
                         />
