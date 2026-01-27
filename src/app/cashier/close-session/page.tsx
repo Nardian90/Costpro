@@ -25,7 +25,7 @@ export default function CloseSessionPage() {
   const router = useRouter();
   const setCart = useCartStore((state) => state.setCart);
   const [products, setProducts] = useState<(Product & { product_variants: ProductVariant[] })[]>([]);
-  const [countedQuantities, setCountedQuantities] = useState<{ [key: string]: number }>({});
+  const [countedQuantities, setCountedQuantities] = useState<{ [key: string]: number | undefined }>({});
   const [differences, setDifferences] = useState<Difference[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -53,8 +53,12 @@ export default function CloseSessionPage() {
     fetchProducts();
   }, []);
 
-  const handleQuantityChange = (productId: string, quantity: number) => {
-    setCountedQuantities((prev) => ({ ...prev, [productId]: quantity }));
+  const handleQuantityChange = (productId: string, value: string) => {
+    const quantity = parseInt(value, 10);
+    setCountedQuantities((prev) => ({
+      ...prev,
+      [productId]: isNaN(quantity) ? undefined : quantity,
+    }));
   };
 
   const calculateOptimalDecomposition = (diff: number, variants: ProductVariant[]) => {
@@ -74,15 +78,19 @@ export default function CloseSessionPage() {
 
   const handleInitialSubmit = () => {
     const diffs = products
-      .map((p) => ({
-        productId: p.id,
-        name: p.name,
-        expected: p.stock_current,
-        counted: countedQuantities[p.id] ?? p.stock_current,
-        diff: (countedQuantities[p.id] ?? p.stock_current) - p.stock_current,
-        variants: p.product_variants,
-      }))
-      .filter((d) => d.diff !== 0);
+      .map((p) => {
+        const counted = countedQuantities[p.id];
+        if (counted === undefined) return null;
+        return {
+          productId: p.id,
+          name: p.name,
+          expected: p.stock_current,
+          counted: counted,
+          diff: counted - p.stock_current,
+          variants: p.product_variants,
+        };
+      })
+      .filter((d): d is Difference => d !== null && d.diff !== 0);
 
     const processedDiffs = diffs.map(d => ({
       ...d,
@@ -135,6 +143,10 @@ export default function CloseSessionPage() {
 
   if (isLoading) return <div>Cargando productos...</div>;
 
+  const allProductsCounted = products.every(
+    (p) => countedQuantities[p.id] !== undefined
+  );
+
   return (
     <div className="container mx-auto p-4">
       <Card>
@@ -149,14 +161,17 @@ export default function CloseSessionPage() {
               <div>
                 <Input
                   type="number"
-                  defaultValue={product.stock_current}
-                  onChange={(e) => handleQuantityChange(product.id, parseInt(e.target.value))}
+                  placeholder="Contado..."
+                  value={countedQuantities[product.id] ?? ""}
+                  onChange={(e) => handleQuantityChange(product.id, e.target.value)}
                 />
               </div>
             </div>
           ))}
           <div className="mt-4">
-            <Button onClick={handleInitialSubmit}>Confirmar y Procesar Ajuste</Button>
+            <Button onClick={handleInitialSubmit} disabled={!allProductsCounted}>
+              Confirmar y Procesar Ajuste
+            </Button>
           </div>
         </CardContent>
       </Card>
