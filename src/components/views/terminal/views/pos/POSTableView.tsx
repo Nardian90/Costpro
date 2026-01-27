@@ -2,6 +2,7 @@
 
 import React from 'react';
 import type { Product } from '@/types';
+import { resolveProductImage } from '@/lib/utils';
 import { ShoppingCart } from 'lucide-react';
 import ProductImage from '@/components/ui/ProductImage';
 
@@ -30,6 +31,7 @@ const POSTableView: React.FC<POSTableViewProps> = ({ products, onAddToCart }) =>
                 <div className="flex items-center gap-3">
                   <div className="neu-raised-sm w-10 h-10 flex items-center justify-center overflow-hidden shrink-0">
                     <ProductImage
+                      src={resolveProductImage(product)}
                       name={product.name}
                       className="w-full h-full object-cover"
                     />

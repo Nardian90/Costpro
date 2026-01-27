@@ -27,7 +27,14 @@ export default function StockHistoryView({}: StockHistoryViewProps) {
   const onSearchChange = (value: string) => setSearchTerm(value);
   const onDateRangeChange = (range: { from: string; to: string }) => setDateRange(range);
 
-  const movements = movementsData || [];
+  const movements = (movementsData || []).filter(mov => {
+    if (!searchTerm) return true;
+    const term = searchTerm.toLowerCase();
+    const productName = mov.product?.name?.toLowerCase() || '';
+    const productSku = mov.product?.sku?.toLowerCase() || '';
+    const refDoc = mov.reference_doc?.toLowerCase() || '';
+    return productName.includes(term) || productSku.includes(term) || refDoc.includes(term);
+  });
   const getMovementBadge = (type: string) => {
     switch (type) {
       case 'sale': return 'text-primary bg-primary/10 border-primary/20';

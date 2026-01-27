@@ -1,6 +1,7 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { supabase } from './supabaseClient';
+import { type Product } from '@/types';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -27,4 +28,15 @@ export const getProductImageUrl = (path: string | null | undefined): string | nu
  */
 export const getStoreLogoUrl = (path: string | null | undefined): string | null => {
   return getSupabaseUrl('store-logos', path);
+};
+
+/**
+ * Resolves the image URL for a product based on priority:
+ * 1. image_url (External URL)
+ * 2. public_image_url (Internal upload)
+ * 3. null (Fallback to placeholder)
+ */
+export const resolveProductImage = (product: Product | null | undefined): string | null => {
+  if (!product) return null;
+  return product.image_url || product.public_image_url || null;
 };

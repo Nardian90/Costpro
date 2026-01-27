@@ -17,6 +17,7 @@ import { prefetchProducts } from '@/hooks/api/useProducts'
 import { prefetchDashboardData } from '@/hooks/api/useDashboard';
 import { prefetchTransactions } from '@/hooks/api/useTransactions';
 import { prefetchAuditLogs } from '@/hooks/api/useAuditLogs';
+import { prefetchReceptions } from '@/hooks/api/useReceptions';
 
 // Modular Components
 import { Sidebar } from './terminal/Sidebar';
@@ -35,6 +36,7 @@ const DashboardView = lazy(() => import('./terminal/views/dashboard/DashboardVie
 const SalesHistoryView = lazy(() => import('./terminal/views/sales/SalesHistoryView'));
 const StoresManagementView = lazy(() => import('./terminal/views/stores/StoresManagementView'));
 const AuditLogsView = lazy(() => import('./terminal/views/audit/AuditLogsView'));
+const ReceptionsHistoryView = lazy(() => import('./terminal/views/receptions/ReceptionsHistoryView'));
 
 // TODO: Map remaining views
 const InventoryView = lazy(() => import('./terminal/views/inventory/InventoryView'));
@@ -134,6 +136,9 @@ export default function TerminalShell() { // Renamed from TerminalView
       case 'audit':
         prefetchAuditLogs(queryClient);
         break;
+      case 'recepcion':
+        prefetchReceptions(queryClient, user.activeStoreId, user.role === 'admin');
+        break;
     }
   };
 
@@ -156,7 +161,7 @@ export default function TerminalShell() { // Renamed from TerminalView
         // --- Placeholders for remaining views ---
         case 'settings': return <SettingsView />;
         case 'help': return <HelpView />;
-        case 'recepcion': return <div>Reception View Placeholder</div>;
+        case 'recepcion': return <ReceptionsHistoryView />;
         default: return <div>Default View Placeholder</div>;
     }
 }
