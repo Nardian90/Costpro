@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.5.3] - 2026-01-26
+
+### Changed
+- Hardened the inventory count process in the "Close Session" view. The system now requires an explicit count for every product, removing ambiguous fallbacks to the expected stock. This change strengthens data integrity by preventing unverified data from being submitted.
+- **Instrucción de Relevo:** No changes to the user interface. No UX intervention is required.
+
 ## [5.5.2] - 2026-01-26
 
 ### Added
