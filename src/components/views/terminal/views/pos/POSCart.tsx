@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ShoppingCart, X, Trash2, Minus, Plus, DollarSign, CreditCard, Loader2, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 import { PaymentMethod } from '@/types';
 import { useIsMobile } from '@/hooks/ui/useMobile';
 
@@ -88,16 +89,16 @@ export const POSCart = ({
                       <div className="flex items-center gap-1 bg-background rounded-lg p-1 border border-border">
                         <button
                           onClick={() => onUpdateQuantity(item.product_id, item.variant_id, item.quantity - 1)}
-                          className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-primary/10 hover:text-primary transition-colors"
+                          className="w-11 h-11 flex items-center justify-center rounded-md hover:bg-primary/10 hover:text-primary transition-colors"
                         >
-                          <Minus className="w-3 h-3" />
+                          <Minus className="w-4 h-4" />
                         </button>
                         <span className="w-8 text-center font-black text-sm">{item.quantity}</span>
                         <button
                           onClick={() => onUpdateQuantity(item.product_id, item.variant_id, item.quantity + 1)}
-                          className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-primary/10 hover:text-primary transition-colors"
+                          className="w-11 h-11 flex items-center justify-center rounded-md hover:bg-primary/10 hover:text-primary transition-colors"
                         >
-                          <Plus className="w-3 h-3" />
+                          <Plus className="w-4 h-4" />
                         </button>
                       </div>
                       <span className="font-black text-lg text-primary">${item.subtotal.toFixed(2)}</span>
@@ -109,6 +110,23 @@ export const POSCart = ({
               <div className="space-y-6 pt-6 border-t border-border">
                 <div className="px-2 space-y-2">
                   <label className="text-[9px] font-black uppercase text-muted-foreground tracking-widest block">Descuento (%)</label>
+                  <div className="flex gap-2 mb-2">
+                    {[0, 5, 10, 15].map(d => (
+                      <button
+                        key={d}
+                        onClick={() => {
+                          setLocalDiscount({ ...localDiscount, value: d });
+                          if (d > 0) toast.success(`Descuento de ${d}% aplicado`);
+                        }}
+                        className={cn(
+                          "flex-1 py-2 rounded-lg border font-black text-[10px] uppercase transition-all",
+                          localDiscount.value === d ? "bg-primary text-white border-primary" : "bg-background text-muted-foreground border-border"
+                        )}
+                      >
+                        {d === 0 ? 'Sin' : `${d}%`}
+                      </button>
+                    ))}
+                  </div>
                   <input
                     type="number"
                     min="0"
@@ -122,7 +140,9 @@ export const POSCart = ({
 
                 <div className="flex justify-between items-center px-2">
                    <span className="text-xs font-black uppercase text-muted-foreground tracking-widest">Total a Pagar</span>
-                   <span className="text-4xl font-black text-primary tracking-tighter">${getTotal().toFixed(2)}</span>
+                   <span className="text-4xl sm:text-4xl lg:text-4xl font-black text-primary tracking-tighter max-sm:text-5xl transition-all">
+                     ${getTotal().toFixed(2)}
+                   </span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
