@@ -88,11 +88,13 @@ export default function LoginPage() {
         memberships: profileData.memberships || [],
       });
 
-      login(userData, authData.session.access_token);
+      login(userData, authData.session.access_token, 'authenticated_valid');
 
       logger.info('AUTH', 'LOGIN_SUCCESS', { userId: userData.id, email: userData.email });
 
       toast.success(`¡Bienvenido, ${userData.fullName}!`);
+      // No manual push, let TerminalShell handle it or just wait for status change
+      // But actually, LoginPage is not inside TerminalShell, so it needs to go to /
       safeNavigate.push(router, '/');
     } catch (err: any) {
       logger.error('AUTH', 'LOGIN_FAILED', { email, error: err.message });

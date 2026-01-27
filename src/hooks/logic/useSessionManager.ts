@@ -17,7 +17,7 @@ const SESSION_CHECK_TIMEOUT = 15 * 1000; // 15 seconds
  * This hook should be used ONCE in a central component (e.g., TerminalView).
  */
 export function useSessionManager() {
-    const { login, logout, user, setLoading } = useAuthStore();
+    const { login, logout, user, setLoading, setStatus: setAuthStatus } = useAuthStore();
     const { isOnline, isCheckingSession, lastChecked, setOnlineStatus, setSessionStatus, setStatus } = useSessionStore();
     const router = useRouter();
 
@@ -60,22 +60,14 @@ export function useSessionManager() {
                     profileError = result.error;
                 } catch (err: any) {
                     console.error('[SessionManager] Critical error fetching profile:', err);
-                    // Attempt fallback without joined memberships and potentially missing columns
-                    const { data: fallbackData, error: fallbackError } = await supabase.from('profiles').select('id, email, full_name, role').eq('id', session.user.id).single();
-                    if (fallbackError) throw fallbackError;
-                    profileData = fallbackData;
+                    setAuthStatus('authenticated_invalid_profile');
+                    return;
                 }
 
                 if (profileError) {
                     console.error('[SessionManager] Profile error:', profileError);
-                    // If it's a "column does not exist" error, try a limited select
-                    if (profileError.code === '42703') {
-                        const { data: fallbackData, error: fallbackError } = await supabase.from('profiles').select('id, email, full_name, role').eq('id', session.user.id).single();
-                        if (fallbackError) throw fallbackError;
-                        profileData = fallbackData;
-                    } else {
-                        throw profileError;
-                    }
+                    setAuthStatus('authenticated_invalid_profile');
+                    return;
                 }
 
                 if (profileData?.is_active) {
@@ -89,17 +81,13 @@ export function useSessionManager() {
 
                     let effectiveActiveStoreId = profileData.active_store_id || profileData.store_id;
 
-                    // AUTO-SELECT STORE: If no active store is set but memberships exist, pick the first one
-                    // This ensures ENCARGADO and other non-admin users always have a context.
+                    // AUTO-SELECT STORE
                     if (!effectiveActiveStoreId && profileData.memberships && profileData.memberships.length > 0) {
                         effectiveActiveStoreId = profileData.memberships[0].store_id;
-                        console.log(`[SessionManager] Auto-selecting store ${effectiveActiveStoreId} for user ${profileData.id}`);
                     }
 
                     let activeRoles: UserRole[] = profileData.roles || [profileData.role];
                     if (effectiveActiveStoreId) {
-                        // Use a regular select instead of .single() to prevent 406/Not Found errors
-                        // if the membership record doesn't exist yet for the active store context.
                         const { data: membershipRows } = await supabase
                             .from('user_store_memberships')
                             .select('role')
@@ -111,7 +99,6 @@ export function useSessionManager() {
                         if (membershipData?.role) {
                             activeRoles = [membershipData.role];
                         } else if (profileData.role === 'admin') {
-                            // Admins preserve their global role if no specific store membership is found
                             activeRoles = ['admin'];
                         }
                     }
@@ -129,31 +116,28 @@ export function useSessionManager() {
 
                     const currentState = useAuthStore.getState();
                     if (session.access_token !== currentState.token || JSON.stringify(userContractData) !== JSON.stringify(currentState.user)) {
-                        login(userContractData, session.access_token);
+                        login(userContractData, session.access_token, 'authenticated_valid');
                     } else {
-                        setLoading(false);
+                        setAuthStatus('authenticated_valid');
                     }
                     setStatus('stable');
                 } else {
+                    // User inactive - force logout
                     await supabase.auth.signOut();
-                    setLoading(false);
-                    safeNavigate.push(router, '/login');
+                    logout();
                 }
             } else {
-                if (useAuthStore.getState().user) {
-                    await supabase.auth.signOut();
-                }
-                setLoading(false);
-                safeNavigate.push(router, '/login');
+                // No session - set status to unauthenticated
+                setAuthStatus('unauthenticated');
             }
         } catch (error: any) {
             console.warn(`Session check failed: ${error.message}`);
-            setStatus(useAuthStore.getState().user ? 'stable' : 'error'); // Keep session if user exists, otherwise error
-            setLoading(false);
+            setAuthStatus(useAuthStore.getState().user ? 'authenticated_valid' : 'unauthenticated');
+            setStatus('error');
         } finally {
             setSessionStatus(false);
         }
-    }, [isOnline, isCheckingSession, lastChecked, login, setSessionStatus, setStatus]);
+    }, [isOnline, isCheckingSession, lastChecked, login, logout, setAuthStatus, setSessionStatus, setStatus, user]);
 
     // Effect for online/offline listeners
     useEffect(() => {
