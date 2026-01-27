@@ -8,14 +8,25 @@ export function useTransactions(storeId?: string | null, isAdmin = false) {
   return useQuery({
     queryKey: ['transactions', storeId, isAdmin],
     queryFn: async () => {
-      const columns = 'id, created_at, total_amount, status, payment_method, subtotal, discount_value, store_id, seller_id';
-      let query = supabase.from('transactions').select(columns);
-      if (!isAdmin && storeId) {
-        query = query.eq('store_id', storeId);
-      }
-      const data = await withTableLogging('select', 'transactions', () => query.order('created_at', { ascending: false }));
+      const rpcName = 'get_transactions';
+      const params = {
+        p_store_id: storeId || null,
+        p_limit: 1000
+      };
 
-      return await validateRPCArrayResponse(data, transactionSchema, 'transactions');
+      try {
+        const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
+        return await validateRPCArrayResponse(data, transactionSchema, rpcName);
+      } catch (err) {
+        console.warn('[Transactions] RPC failed, falling back to table query', err);
+        const columns = 'id, created_at, total_amount, status, payment_method, subtotal, discount_value, store_id, seller_id';
+        let query = supabase.from('transactions').select(columns);
+        if (!isAdmin && storeId) {
+          query = query.eq('store_id', storeId);
+        }
+        const data = await withTableLogging('select', 'transactions', () => query.order('created_at', { ascending: false }));
+        return await validateRPCArrayResponse(data, transactionSchema, 'transactions_fallback');
+      }
     },
     enabled: isAdmin || !!storeId,
     staleTime: 30 * 1000,

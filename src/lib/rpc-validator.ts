@@ -20,7 +20,8 @@ export async function validateRPCResponse<T>(
         body: JSON.stringify({
           context: `Zod Validation Error: RPC ${rpcName}`,
           error: errorData,
-          data: data // Send partial data for debugging
+          data: data, // Send data for debugging
+          timestamp: new Date().toISOString()
         }),
       }).catch(err => console.error('Failed to log validation error:', err));
     }
@@ -53,7 +54,9 @@ export async function validateRPCArrayResponse<T>(
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             context: `Zod Validation Error: RPC ${rpcName} (Array)`,
-            error: errorData
+            error: errorData,
+            data: Array.isArray(data) ? data.slice(0, 5) : data, // Send sample for debugging
+            timestamp: new Date().toISOString()
           }),
         }).catch(err => console.error('Failed to log validation error:', err));
       }
@@ -75,7 +78,22 @@ export async function validateResponse<T>(
   const result = schema.safeParse(data);
 
   if (!result.success) {
-    console.error(`[Zod Validation Error] ${context}:`, result.error.format());
+    const errorData = result.error.format();
+    console.error(`[Zod Validation Error] ${context}:`, errorData);
+
+    if (process.env.NODE_ENV === 'production') {
+        fetch('/api/logs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            context: `Zod Validation Error: ${context}`,
+            error: errorData,
+            data: data,
+            timestamp: new Date().toISOString()
+          }),
+        }).catch(err => console.error('Failed to log validation error:', err));
+      }
+
     return data as T;
   }
 

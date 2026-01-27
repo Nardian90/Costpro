@@ -54,7 +54,7 @@ export default function UserForm({
       role: initialData.role,
       isActive: initialData.isActive,
       memberships: initialData.memberships?.map(m => ({
-        store_id: m.store_id,
+        store_id: m.store_id || '',
         role: m.role,
         status: m.status || 'active'
       })) || [],

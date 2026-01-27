@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 
+/**
+ * Endpoint for receiving and persisting client-side logs in production.
+ */
 export async function POST(request: Request) {
   try {
     const { context, error } = await request.json();

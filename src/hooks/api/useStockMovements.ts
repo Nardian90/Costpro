@@ -19,9 +19,9 @@ export function useStockMovements(storeId?: string | null, isAdmin = false) {
 
       const extendedSchema = stockMovementSchema.extend({
         product: z.object({
-          name: z.string().catch('Producto desconocido'),
-          sku: z.string().nullable().catch(null)
-        }).nullable().optional().catch(null)
+          name: z.string().default('Producto desconocido'),
+          sku: z.string().nullable().optional()
+        }).nullable().optional()
       });
 
       return await validateRPCArrayResponse(data, extendedSchema, 'stock_movements');
