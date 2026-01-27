@@ -2,6 +2,8 @@ import Papa from 'papaparse';
 import { toast } from 'sonner';
 import { Product } from '@/types';
 import { supabase } from '@/lib/supabaseClient';
+import { importService } from './import-service';
+import { catalogImportRowSchema } from '@/validation/schemas';
 
 export const catalogService = {
   exportCatalog(products: Product[]) {
@@ -52,103 +54,52 @@ export const catalogService = {
   },
 
   async processImportFile(file: File, storeId: string) {
-    return new Promise<{ productsToUpdate: any[], errors: any[] }>((resolve) => {
-      Papa.parse(file, {
-        header: true,
-        skipEmptyLines: true,
-        complete: (results) => {
-          const data = results.data as any[];
-          const headerAliases = {
-            sku: ['sku', 'SKU', 'Identificador', 'Código', 'ID', 'id', 'urlid'],
-            name: ['name', 'nombre', 'NombreProducto'],
-            cost: ['cost', 'costo', 'Costo'],
-            price: ['price', 'precio', 'Precio'],
-            imageUrl: ['imageUrl', 'imagen', 'Imagen', 'image_url'],
-          };
+    const headerAliases = {
+      sku: ['sku', 'SKU', 'Identificador', 'Código', 'ID', 'id', 'urlid'],
+      name: ['name', 'nombre', 'NombreProducto'],
+      cost: ['cost', 'costo', 'Costo'],
+      price: ['price', 'precio', 'Precio'],
+      imageUrl: ['imageUrl', 'imagen', 'Imagen', 'image_url'],
+    };
 
-          const fileHeaders = results.meta.fields || [];
-          const headerMapping: { [key: string]: string } = {};
-          const missingHeaders: string[] = [];
+    const requiredHeaders = ['sku', 'name', 'cost', 'price'];
 
-          for (const canonicalHeader in headerAliases) {
-            const aliases = headerAliases[canonicalHeader as keyof typeof headerAliases];
-            const foundAlias = fileHeaders.find(header => aliases.includes(header.trim()));
-            if (foundAlias) {
-              headerMapping[canonicalHeader] = foundAlias.trim();
-            } else if (canonicalHeader !== 'imageUrl') {
-              missingHeaders.push(canonicalHeader);
-            }
-          }
+    const { data, errors } = await importService.parseCSV(
+      file,
+      headerAliases,
+      catalogImportRowSchema,
+      requiredHeaders
+    );
 
-          if (missingHeaders.length > 0) {
-            toast.error(`Faltan las siguientes columnas requeridas: ${missingHeaders.join(', ')}`);
-            resolve({ productsToUpdate: [], errors: [{ row: 0, message: `Faltan columnas: ${missingHeaders.join(', ')}` }] });
-            return;
-          }
+    if (errors.some(e => e.row === 0)) {
+        toast.error(errors[0].message);
+        return { productsToUpdate: [], errors };
+    }
 
-          const normalizedData = data.map(row => {
-            const newRow: any = {};
-            for (const canonicalHeader in headerMapping) {
-              newRow[canonicalHeader] = row[headerMapping[canonicalHeader]];
-            }
-            return newRow;
-          });
+    const productsToUpdate = [];
+    const validationErrors = [...errors];
+    const seenSkus = new Set<string>();
 
-          const validationErrors: { row: number; message: string }[] = [];
-          const productsToUpdate = [];
-          const seenSkus = new Set<string>();
+    for (const { rowData, rowNumber } of data) {
+      const cleanSku = rowData.sku.trim();
 
-          for (const [index, row] of normalizedData.entries()) {
-            const rowNum = index + 2;
-            let { sku, name, cost, price, imageUrl } = row;
+      if (seenSkus.has(cleanSku)) {
+        validationErrors.push({ row: rowNumber, message: `El SKU '${cleanSku}' está duplicado en el archivo.` });
+        continue;
+      }
+      seenSkus.add(cleanSku);
 
-            if (!sku || sku.trim() === '') {
-                validationErrors.push({ row: rowNum, message: "El 'SKU' es obligatorio." });
-                continue;
-            }
-
-            const cleanSku = sku.trim();
-
-            if (seenSkus.has(cleanSku)) {
-              validationErrors.push({ row: rowNum, message: `El SKU '${cleanSku}' está duplicado en el archivo.` });
-              continue;
-            }
-            seenSkus.add(cleanSku);
-
-            const costValue = parseFloat(cost);
-            const priceValue = parseFloat(price);
-
-            if (isNaN(costValue) || costValue < 0) {
-              validationErrors.push({ row: rowNum, message: "El 'costo' debe ser un número válido." });
-            }
-
-            if (isNaN(priceValue) || priceValue < 0) {
-              validationErrors.push({ row: rowNum, message: "El 'precio' debe ser un número válido." });
-            }
-
-            if (!isNaN(costValue) && !isNaN(priceValue) && priceValue < costValue) {
-              validationErrors.push({ row: rowNum, message: "El precio de venta no puede ser menor que el costo." });
-            }
-
-            if (!name) {
-              validationErrors.push({ row: rowNum, message: "El 'nombre' del producto es obligatorio." });
-              continue;
-            }
-
-            productsToUpdate.push({
-              sku: cleanSku,
-              store_id: storeId,
-              name,
-              cost_price: costValue,
-              price: priceValue,
-              image_url: imageUrl || '',
-            });
-          }
-
-          resolve({ productsToUpdate, errors: validationErrors });
-        },
+      productsToUpdate.push({
+        sku: cleanSku,
+        store_id: storeId,
+        name: rowData.name,
+        cost_price: rowData.cost,
+        price: rowData.price,
+        image_url: rowData.imageUrl || '',
       });
-    });
+    }
+
+    return { productsToUpdate, errors: validationErrors.sort((a, b) => a.row - b.row) };
   },
 
   async uploadProductImage(productId: string, file: File) {
