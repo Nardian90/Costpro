@@ -29,13 +29,15 @@ export async function POST(request: NextRequest) {
     const authClient = getSupabaseAuthClient(session.token);
 
     const { data, error } = await authClient.rpc("register_stock_movement", {
-      p_store_id: storeId,
       p_product_id: productId,
-      p_quantity_change: quantity,
+      p_store_id: storeId,
+      p_user_id: userId,
+      p_quantity: Number(quantity),
       p_movement_type: movementType,
-      p_inventory_version: version,
-      p_reference_doc: reason,
-      p_created_by: userId,
+      p_reason: reason,
+      p_sale_id: null,
+      p_unit_cost: 0,
+      p_notes: `Ajuste manual (Version: ${version})`
     });
 
     if (error) {
