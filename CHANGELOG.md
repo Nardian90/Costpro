@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.5.5] - 2026-02-11
+
+### Added
+- Nueva vista de **Historial de Recepciones** con listado profesional y detalle expandible de productos.
+- Filtrado avanzado por rango de fechas, estado de recepción y proveedor.
+- Soporte para imágenes de productos en el detalle de la recepción.
+- Funcionalidad de exportación a CSV desde la vista de detalle de cada recepción.
+- Acciones de edición y eliminación (con feedback visual de seguridad).
+
 ## [5.5.4] - 2026-02-11
 
 ### Added

@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { Warehouse, Eye, Calendar, Building2, FileText } from 'lucide-react';
+import { Warehouse, Eye, Calendar, Building2, FileText, Pencil, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 import SearchBar from '@/components/ui/SearchBar';
 import { StateRenderer } from '@/components/ui/StateRenderer';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -23,14 +24,27 @@ export default function ReceptionsHistoryView() {
     setSearchTerm,
     selectedStatus,
     setSelectedStatus,
+    dateFrom,
+    setDateFrom,
+    dateTo,
+    setDateTo,
     selectedReceipt,
     receptions,
     isLoading,
     handleViewDetails,
     handleCloseDetails,
+    handleExportCSV,
     receiptItems,
     loadingDetails
   } = useReceptionsHistoryView();
+
+  const handleEdit = (id: string) => {
+    toast.info(`Edición de recepción ${id.split('-')[0]} no implementada aún.`);
+  };
+
+  const handleDelete = (id: string) => {
+    toast.error(`Eliminación de recepción ${id.split('-')[0]} restringida por seguridad.`);
+  };
 
   return (
     <>
@@ -42,7 +56,7 @@ export default function ReceptionsHistoryView() {
           onChange={setSearchTerm}
           placeholder="Buscar por ID, proveedor o factura..."
         >
-           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2">
               <div>
                 <label className="text-[10px] font-black text-muted-foreground uppercase mb-1 block ml-1">Estado</label>
                 <select
@@ -51,9 +65,29 @@ export default function ReceptionsHistoryView() {
                   className="w-full p-2.5 rounded-lg border border-border bg-background text-xs font-bold uppercase focus:ring-1 focus:ring-primary outline-none"
                 >
                   <option value="">Todos</option>
-                  <option value="active">Activa</option>
+                  <option value="active">Confirmada</option>
                   <option value="voided">Anulada</option>
+                  <option value="pending">Pendiente</option>
+                  <option value="partial">Parcial</option>
                 </select>
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-muted-foreground uppercase mb-1 block ml-1">Desde</label>
+                <input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className="w-full p-2 rounded-lg border border-border bg-background text-xs font-bold uppercase focus:ring-1 focus:ring-primary outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-muted-foreground uppercase mb-1 block ml-1">Hasta</label>
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="w-full p-2 rounded-lg border border-border bg-background text-xs font-bold uppercase focus:ring-1 focus:ring-primary outline-none"
+                />
               </div>
            </div>
         </SearchBar>
@@ -69,10 +103,11 @@ export default function ReceptionsHistoryView() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-muted/30 text-muted-foreground font-black uppercase text-[10px] tracking-widest border-b border-border">
-                    <th className="p-4 text-left">Ref</th>
+                    <th className="p-4 text-left">ID / Ref</th>
                     <th className="p-4 text-left">Fecha</th>
                     <th className="p-4 text-left">Proveedor</th>
                     <th className="p-4 text-left priority-low">Factura</th>
+                    <th className="p-4 text-center priority-low">Estado</th>
                     <th className="p-4 text-right">Total Costo</th>
                     <th className="p-4 text-center">Acciones</th>
                   </tr>
@@ -100,17 +135,46 @@ export default function ReceptionsHistoryView() {
                           <span className="text-[10px] font-bold uppercase">{rec.reference_doc || 'S/N'}</span>
                         </div>
                       </td>
+                      <td className="p-4 text-center priority-low">
+                        <span className={cn(
+                          "inline-flex items-center px-2 py-0.5 rounded text-[9px] font-black uppercase",
+                          rec.status === 'active' ? "bg-green-500/10 text-green-600" :
+                          rec.status === 'voided' ? "bg-destructive/10 text-destructive" :
+                          rec.status === 'pending' ? "bg-amber-500/10 text-amber-600" :
+                          "bg-blue-500/10 text-blue-600"
+                        )}>
+                          {rec.status === 'active' ? 'Confirmada' :
+                           rec.status === 'voided' ? 'Anulada' :
+                           rec.status === 'pending' ? 'Pendiente' : 'Parcial'}
+                        </span>
+                      </td>
                       <td className="p-4 text-right">
                         <span className="text-base font-black text-primary">${rec.total_cost.toFixed(2)}</span>
                       </td>
                       <td className="p-4 text-center">
-                        <button
-                          onClick={() => handleViewDetails(rec)}
-                          className="w-8 h-8 inline-flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-white transition-all active:scale-95"
-                          aria-label="Ver detalles"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => handleViewDetails(rec)}
+                            className="w-8 h-8 inline-flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-white transition-all active:scale-95"
+                            title="Ver productos"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleEdit(rec.id)}
+                            className="w-8 h-8 inline-flex items-center justify-center rounded-lg border border-border hover:bg-amber-500 hover:text-white transition-all active:scale-95 priority-low"
+                            title="Editar"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(rec.id)}
+                            className="w-8 h-8 inline-flex items-center justify-center rounded-lg border border-border hover:bg-destructive hover:text-white transition-all active:scale-95 priority-low"
+                            title="Eliminar"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -126,6 +190,7 @@ export default function ReceptionsHistoryView() {
         onClose={handleCloseDetails}
         items={receiptItems}
         isLoading={loadingDetails}
+        onExport={() => selectedReceipt && handleExportCSV(selectedReceipt, receiptItems)}
       />
     </>
   );
