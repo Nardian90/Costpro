@@ -34,6 +34,7 @@ export function useTerminalNavigation(user: UserContract | null, sidebarSearch: 
 
       { id: 'inventory', icon: Package, label: 'Inventario', roles: ['admin', 'manager', 'warehouse', 'encargado'], category: 'INVENTARIO' },
       { id: 'recepcion', icon: Warehouse, label: 'Recepciones', roles: ['warehouse', 'manager', 'encargado'], category: 'INVENTARIO' },
+      { id: 'reception_list', icon: History, label: 'Historial Rec.', roles: ['warehouse', 'manager', 'encargado', 'admin'], category: 'INVENTARIO' },
       { id: 'transferencias', icon: ArrowLeftRight, label: 'Transferencias', roles: ['warehouse', 'manager', 'encargado', 'admin'], category: 'INVENTARIO' },
       { id: 'inventory_count', icon: ClipboardList, label: 'Conteo', roles: ['clerk', 'manager', 'admin', 'encargado'], category: 'INVENTARIO' },
       { id: 'catalog', icon: Package, label: 'Catálogo', roles: ['manager', 'admin', 'encargado'], category: 'INVENTARIO' },
