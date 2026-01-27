@@ -43,7 +43,7 @@ export default function HelpView() {
         </div>
         <div className="flex flex-col items-end">
           <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-black">
-            VERSIÓN 5.5.0 (UX-HARDENING)
+            VERSIÓN 5.5.2 (IMPORT-HARDENING)
           </Badge>
           <span className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Última actualización: 26 Ene 2026</span>
         </div>
@@ -582,22 +582,37 @@ export default function HelpView() {
             </CardHeader>
             <CardContent className="px-0">
               <div className="space-y-8">
-                {/* --- v5.5.0 --- */}
+                {/* --- v5.5.2 --- */}
                 <div className="relative pl-8 border-l-2 border-primary/20 space-y-4">
                   <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary border-4 border-background" />
                   <div className="flex items-center gap-3">
-                    <Badge className="bg-primary">v5.5.0</Badge>
+                    <Badge className="bg-primary">v5.5.2</Badge>
                     <span className="text-xs font-black text-muted-foreground uppercase">26 de Enero, 2026 (Actual)</span>
                   </div>
                   <div className="bg-muted/30 rounded-2xl p-6 space-y-4 border border-primary/10">
+                    <h4 className="font-black text-sm uppercase text-primary">Import Hardening & Protocol Enforcement</h4>
+                    <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Centralización de importaciones vía `importService` y Zod.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Validación estricta de contratos para Catálogo y Recepción.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Feedback de errores mejorado con identificación precisa de filas.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Eliminación de lógica de parsing dispersa y duplicada.</li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* --- v5.5.0 --- */}
+                <div className="relative pl-8 border-l-2 border-primary/20 space-y-4 opacity-70">
+                  <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-muted border-4 border-background" />
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline">v5.5.0</Badge>
+                    <span className="text-xs font-black text-muted-foreground uppercase">26 de Enero, 2026</span>
+                  </div>
+                  <div className="bg-muted/10 rounded-2xl p-6 space-y-4 border border-border">
                     <h4 className="font-black text-sm uppercase text-primary">UX Hardening & Enterprise Audit</h4>
                     <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
                       <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Nueva sección "CostPro para Niños" con narrativa visual de flujos.</li>
                       <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Rediseño completo de Auditoría: Línea de tiempo visual e intuitiva.</li>
                       <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Blindaje de Recepción: Bloqueo de operaciones sin tienda activa.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Expansión de rol Manager: Acceso total a gestión de Usuarios y Tiendas.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Hardening de Esquema: Auditoría soporta IDs tipo UUID y Text.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Optimización de Performance: Paginación inteligente en historial de eventos.</li>
                     </ul>
                   </div>
                 </div>
