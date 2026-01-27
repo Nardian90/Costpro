@@ -17,7 +17,7 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
 
       if (isAdmin) {
         const profileColumns = 'id, full_name, email, role, roles, active_store_id, logo_url, is_active, store_id, created_at';
-        let profilesRes = await supabase.from('profiles').select(profileColumns).order('full_name');
+        let profilesRes: any = await supabase.from('profiles').select(profileColumns).order('full_name');
 
         // Fallback if full column set fails (e.g. migration not fully applied)
         if (profilesRes.error && profilesRes.error.code === '42703') {
@@ -32,11 +32,11 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
           return [];
         }
 
-        const profiles = profilesRes.data || [];
-        const allMemberships = membershipsRes.data || [];
+        const profiles = (profilesRes.data || []) as any[];
+        const allMemberships = (membershipsRes.data || []) as any[];
 
-        return profiles.map(profile => {
-          const userMemberships = allMemberships.filter(m => m.user_id === profile.id).map(m => ({
+        return profiles.map((profile: any) => {
+          const userMemberships = allMemberships.filter((m: any) => m.user_id === profile.id).map((m: any) => ({
             ...m,
             store: Array.isArray(m.store) ? m.store[0] : m.store
           }));
