@@ -42,7 +42,7 @@ export function useSessionManager() {
             const { session } = data;
 
             if (session?.user) {
-                const profileColumns = 'id, full_name, email, role, roles, is_active, store_id, active_store_id, created_at';
+                const profileColumns = 'id, full_name, email, role, roles, active_store_id, logo_url, is_active, store_id, created_at';
                 const storeColumns = 'id, name, address, logo_url, is_active, created_at';
                 const membershipColumns = `id, user_id, store_id, role, status, created_at, updated_at, store:stores(${storeColumns})`;
                 const { data: profileData, error: profileError } = await Promise.race([
@@ -61,25 +61,16 @@ export function useSessionManager() {
                         }));
                     }
 
-                    let effectiveActiveStoreId = profileData.active_store_id;
+                    let effectiveActiveStoreId = profileData.active_store_id || profileData.store_id;
 
                     // AUTO-SELECT STORE: If no active store is set but memberships exist, pick the first one
                     // This ensures ENCARGADO and other non-admin users always have a context.
                     if (!effectiveActiveStoreId && profileData.memberships && profileData.memberships.length > 0) {
                         effectiveActiveStoreId = profileData.memberships[0].store_id;
                         console.log(`[SessionManager] Auto-selecting store ${effectiveActiveStoreId} for user ${profileData.id}`);
-
-                        // Proactively update the profile in the database to persist this selection
-                        supabase
-                          .from('profiles')
-                          .update({ active_store_id: effectiveActiveStoreId })
-                          .eq('id', profileData.id)
-                          .then(({error}) => {
-                              if (error) console.error('[SessionManager] Failed to persist auto-selected store:', error);
-                          });
                     }
 
-                    let activeRoles: UserRole[] = [profileData.role];
+                    let activeRoles: UserRole[] = profileData.roles || [profileData.role];
                     if (effectiveActiveStoreId) {
                         // Use a regular select instead of .single() to prevent 406/Not Found errors
                         // if the membership record doesn't exist yet for the active store context.

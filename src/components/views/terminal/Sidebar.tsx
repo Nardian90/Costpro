@@ -95,6 +95,7 @@ export const Sidebar = ({
                     {categoryItems.map(item => (
                       <button
                         key={item.id}
+                        data-testid={`nav-${item.id}`}
                         onClick={() => onViewChange(item.id as ViewType)}
                         onMouseEnter={() => onPrefetchView?.(item.id as ViewType)}
                         className={cn(

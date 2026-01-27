@@ -105,7 +105,7 @@ export default function StockHistoryView({}: StockHistoryViewProps) {
                 <span className="text-xs ml-1 font-bold">uds</span>
               </div>
               <div className="text-[9px] text-muted-foreground uppercase font-black tracking-widest">
-                {new Date(mov.created_at).toLocaleString()}
+                {mov.created_at ? new Date(mov.created_at).toLocaleString() : 'N/A'}
               </div>
               <div className="text-[9px] font-mono text-muted-foreground/60 italic">
                 REF: {mov.reference_doc || 'N/A'}
