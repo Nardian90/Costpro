@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.5.4] - 2026-02-11
+
+### Added
+- Nueva vista de **Transferencias entre Almacenes** que permite gestionar movimientos de stock entre tiendas del mismo Encargado.
+- Flujo de solicitud (PENDIENTE) y confirmación (CONFIRMADA) con trazabilidad completa.
+- Operación atómica de transferencia de stock mediante el RPC `confirm_transfer` que asegura consistencia entre almacenes origen y destino.
+- Validación de permisos por rol para Almaceneros, Encargados y Administradores.
+
+### Changed
+- Registrada la vista de "Recepciones" en el orquestador principal de la terminal para habilitar el flujo de entrada de mercancía.
+
 ## [5.5.3] - 2026-01-26
 
 ### Changed
