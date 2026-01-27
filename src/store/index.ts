@@ -6,22 +6,29 @@ import { useCostSheetStore } from './cost-sheet-store';
 import { hasRole } from '@/lib/roles';
 
 // --- Auth Store ---
+export type AuthStatus = 'loading' | 'authenticated_valid' | 'authenticated_invalid_profile' | 'unauthenticated';
+
 interface AuthState {
   user: UserContract | null;
   token: string | null;
   loading: boolean;
-  login: (user: UserContract, token: string) => void;
+  status: AuthStatus;
+  login: (user: UserContract, token: string, status?: AuthStatus) => void;
   logout: () => void;
   setLoading: (loading: boolean) => void;
+  setStatus: (status: AuthStatus) => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   token: null,
   loading: true,
-  login: (user, token) => set({ user, token, loading: false }),
-  logout: () => set({ user: null, token: null, loading: false }),
+  status: 'loading',
+  login: (user, token, status = 'authenticated_valid') =>
+    set({ user, token, loading: false, status }),
+  logout: () => set({ user: null, token: null, loading: false, status: 'unauthenticated' }),
   setLoading: (loading) => set({ loading }),
+  setStatus: (status) => set({ status, loading: status === 'loading' }),
 }));
 
 // --- UI Store ---

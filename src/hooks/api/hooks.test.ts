@@ -37,9 +37,12 @@ describe('Zod Schema Resilience', () => {
     // If it fails, it should at least not throw
     // Our userStoreMembershipSchema: store_id: z.string().uuid().or(z.string().length(0).transform(() => null)).nullable().optional()
 
-    // 'bad-uuid' is still not a valid uuid and not length 0, so it might fail.
-    // Let's see.
-    expect(result.success).toBe(false);
+    // Because of our .catch([]), it now succeeds but returns an empty array
+    // instead of failing the whole profile.
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.memberships).toHaveLength(0);
+    }
   });
 
   it('should handle transaction defaults', () => {

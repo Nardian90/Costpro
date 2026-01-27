@@ -71,6 +71,7 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
             .from('profiles')
             .select(`${profileColumns}, memberships:user_store_memberships!inner(${membershipColumns})`)
             .in('memberships.store_id', storeIds)
+            .neq('role', 'admin')
             .order('full_name');
 
           // Fallback for missing columns
@@ -79,6 +80,7 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
                 .from('profiles')
                 .select(`id, full_name, email, role, is_active, memberships:user_store_memberships!inner(${membershipColumns})`)
                 .in('memberships.store_id', storeIds)
+                .neq('role', 'admin')
                 .order('full_name');
           }
 
@@ -87,9 +89,9 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
           if (error) {
             logger.error('DATABASE', 'FETCH_USERS_ENCARGADO_FAILED', { error });
             // Fallback: try with limited columns if the full set fails
-            let fallbackRes: any = await supabase.from('profiles').select(profileColumns).order('full_name');
+            let fallbackRes: any = await supabase.from('profiles').select(profileColumns).neq('role', 'admin').order('full_name');
             if (fallbackRes.error && fallbackRes.error.code === '42703') {
-                fallbackRes = await supabase.from('profiles').select('id, full_name, email, role, is_active').order('full_name');
+                fallbackRes = await supabase.from('profiles').select('id, full_name, email, role, is_active').neq('role', 'admin').order('full_name');
             }
             return await validateRPCArrayResponse(fallbackRes.data || [], profileSchema, 'fetch_users_encargado_fallback');
           }
