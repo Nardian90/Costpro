@@ -10,6 +10,8 @@ import { Save, Search, Plus, Trash2, Package, Upload, Download, HelpCircle, File
 import { useInventory, useRegisterReception } from '@/hooks/api/useInventory';
 import { useDebounce } from '@/hooks/ui/useDebounce';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
+import { importService } from '@/services/import-service';
+import { receptionImportRowSchema } from '@/validation/schemas';
 import Papa from 'papaparse';
 import {
     Dialog,
@@ -114,150 +116,76 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
         fileInputRef.current?.click();
     };
 
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
-        if (!file) return;
+        if (!file || !user?.storeId) return;
 
-        Papa.parse(file, {
-            header: true,
-            skipEmptyLines: true,
-            complete: async (results) => {
-                const data = results.data as any[];
-                if (data.length === 0) {
-                    toast.error('El archivo CSV está vacío.');
-                    return;
-                }
+        const headerAliases: { [key: string]: string[] } = {
+            sku: ['sku', 'SKU', 'Identificador', 'Código', 'ID', 'id'],
+            quantity: ['quantity', 'cantidad', 'Cantidad', 'Qty', 'unidades'],
+            cost: ['cost', 'costo', 'Costo', 'Cost Price', 'precio_compra'],
+        };
 
-                const headerAliases: { [key: string]: string[] } = {
-                  sku: ['sku', 'SKU', 'Identificador', 'Código', 'ID', 'id'],
-                  quantity: ['quantity', 'cantidad', 'Cantidad', 'Qty', 'unidades'],
-                  cost: ['cost', 'costo', 'Costo', 'Cost Price', 'precio_compra'],
-                };
+        const result = await importService.parseAndValidate(file, receptionImportRowSchema, headerAliases);
 
-                const fileHeaders = results.meta.fields || [];
-                const headerMapping: { [key: string]: string } = {};
-                const missingHeaders: string[] = [];
+        if (result.errors.length > 0) {
+            setImportErrors(result.errors);
+            toast.error(`Importación fallida. Se encontraron ${result.errors.length} errores.`);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+            return;
+        }
 
-                // Normalize headers
-                for (const canonicalHeader in headerAliases) {
-                    const aliases = headerAliases[canonicalHeader];
-                    const foundAlias = fileHeaders.find(header => aliases.includes(header.trim()));
-                    if (foundAlias) {
-                        headerMapping[canonicalHeader] = foundAlias.trim();
-                    } else {
-                        missingHeaders.push(canonicalHeader);
-                    }
-                }
+        if (result.data.length === 0) {
+            toast.error('El archivo CSV está vacío.');
+            return;
+        }
 
-                if (missingHeaders.length > 0) {
-                    toast.error(`Faltan las siguientes columnas requeridas: ${missingHeaders.join(', ')}`);
-                    return;
-                }
+        const toastId = toast.loading(`Validando ${result.data.length} productos...`);
+        try {
+            const seenSkus = new Set(result.data.map(d => d.item.sku));
+            const skus = Array.from(seenSkus);
 
-                const normalizedData = data.map(row => {
-                    const newRow: { [key: string]: any } = {};
-                    for (const canonicalHeader in headerMapping) {
-                        newRow[canonicalHeader] = row[headerMapping[canonicalHeader]];
-                    }
-                    return newRow;
-                });
+            const { data: products, error } = await supabase
+                .from('products')
+                .select('id, name, cost_price, sku')
+                .eq('store_id', user.storeId)
+                .in('sku', skus);
 
+            if (error) throw error;
 
-                setImportErrors([]); // Clear previous errors
-                const validationErrors: { row: number; message: string }[] = [];
-                const seenSkus = new Set<string>();
+            const productMap = new Map(products?.map(p => [p.sku, p]));
+            const newItems = new Map(receptionItems);
+            let importedCount = 0;
+            const notFoundErrors: { row: number; message: string }[] = [];
 
-                normalizedData.forEach((row, index) => {
-                    const rowNum = index + 2; // User-facing row number (1-based + header)
-                    const { sku, quantity, cost } = row;
-
-                    if (!sku || sku.trim() === '') {
-                        validationErrors.push({ row: rowNum, message: "El 'SKU' es obligatorio." });
-                    } else if (seenSkus.has(sku.trim())) {
-                        validationErrors.push({ row: rowNum, message: `El SKU '${sku.trim()}' está duplicado en el archivo.` });
-                    } else {
-                        seenSkus.add(sku.trim());
-                    }
-
-                    const parsedQuantity = parseInt(quantity, 10);
-                    if (isNaN(parsedQuantity) || parsedQuantity <= 0) {
-                        validationErrors.push({ row: rowNum, message: "La 'cantidad' debe ser un número entero positivo." });
-                    }
-
-                    const parsedCost = parseFloat(cost);
-                    if (isNaN(parsedCost) || parsedCost < 0) {
-                        validationErrors.push({ row: rowNum, message: "El 'costo' debe ser un número válido y no negativo." });
-                    }
-                });
-
-                if (validationErrors.length > 0) {
-                    setImportErrors(validationErrors);
-                    toast.error(`Importación fallida. Se encontraron ${validationErrors.length} errores.`);
-                    if (fileInputRef.current) fileInputRef.current.value = '';
-                    return;
-                }
-
-                const toastId = toast.loading(`Importando ${data.length} productos...`);
-
-                if (!user?.storeId) {
-                    toast.error('No se encontró el contexto de la tienda. Por favor, seleccione una tienda primero.', { id: toastId });
-                    if (fileInputRef.current) fileInputRef.current.value = '';
-                    return;
-                }
-
-                try {
-                    const skus = Array.from(seenSkus);
-                    const { data: products, error } = await supabase
-                        .from('products')
-                        .select('id, name, cost_price, sku')
-                        .eq('store_id', user.storeId)
-                        .in('sku', skus);
-
-                    if (error) throw error;
-
-                    const productMap = new Map(products?.map(p => [p.sku, p]));
-                    const newItems = new Map(receptionItems);
-                    let importedCount = 0;
-                    const notFoundSkus: { row: number, sku: string }[] = [];
-
-                    normalizedData.forEach((item, index) => {
-                        const product = productMap.get(item.sku);
-                        if (product) {
-                            const existing = newItems.get(product.id);
-                            const quantityToAdd = parseInt(item.quantity);
-                            const newCost = parseFloat(item.cost);
-
-                            newItems.set(product.id, {
-                                product,
-                                quantity: (existing?.quantity || 0) + quantityToAdd,
-                                cost: newCost,
-                            });
-                            importedCount++;
-                        } else {
-                            notFoundSkus.push({ row: index + 2, sku: item.sku });
-                        }
+            result.data.forEach(({ row, item }) => {
+                const product = productMap.get(item.sku);
+                if (product) {
+                    const existing = newItems.get(product.id);
+                    newItems.set(product.id, {
+                        product,
+                        quantity: (existing?.quantity || 0) + item.quantity,
+                        cost: item.cost,
                     });
-
-                    if (notFoundSkus.length > 0) {
-                        const dbErrors = notFoundSkus.map(e => ({ row: e.row, message: `El SKU '${e.sku}' no fue encontrado en esta tienda.` }));
-                        setImportErrors(dbErrors);
-                        toast.error(`Importación parcial. ${notFoundSkus.length} productos no se encontraron.`, { id: toastId });
-                    } else {
-                        toast.success(`¡Éxito! ${importedCount} productos han sido validados y añadidos a la lista.`, { id: toastId });
-                    }
-
-                    setReceptionItems(newItems);
-
-                } catch (error: any) {
-                    toast.error(`La importación falló: ${error.message}`, { id: toastId });
-                } finally {
-                    if (fileInputRef.current) fileInputRef.current.value = '';
+                    importedCount++;
+                } else {
+                    notFoundErrors.push({ row, message: `El SKU '${item.sku}' no fue encontrado en esta tienda.` });
                 }
-            },
-            error: (error) => {
-                toast.error(`Error al procesar el CSV: ${error.message}`);
+            });
+
+            if (notFoundErrors.length > 0) {
+                setImportErrors(notFoundErrors);
+                toast.error(`Importación parcial. ${notFoundErrors.length} productos no se encontraron.`, { id: toastId });
+            } else {
+                toast.success(`¡Éxito! ${importedCount} productos añadidos a la lista.`, { id: toastId });
             }
-        });
+
+            setReceptionItems(newItems);
+        } catch (error: any) {
+            toast.error(`Error al procesar: ${error.message}`, { id: toastId });
+        } finally {
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
     };
 
     const handleExport = () => {
