@@ -47,6 +47,8 @@ const InventoryCountView = lazy(() => import('./terminal/views/inventory_count/I
 const CostSheetView = lazy(() => import('./terminal/views/cost_sheet/CostSheetView'));
 const HelpView = lazy(() => import('./terminal/views/help/HelpView'));
 const SettingsView = lazy(() => import('./terminal/views/settings/SettingsView'));
+const TransferenciasView = lazy(() => import('./terminal/views/transfers/TransferenciasView'));
+const ProductReceptionView = lazy(() => import('./terminal/views/inventory/ProductReceptionView'));
 
 
 export default function TerminalShell() { // Renamed from TerminalView
@@ -161,7 +163,8 @@ export default function TerminalShell() { // Renamed from TerminalView
         // --- Placeholders for remaining views ---
         case 'settings': return <SettingsView />;
         case 'help': return <HelpView />;
-        case 'recepcion': return <ReceptionsHistoryView />;
+        case 'recepcion': return <ProductReceptionView onCancel={() => setCurrentView('inventory')} />;
+        case 'transferencias': return <TransferenciasView />;
         default: return <div>Default View Placeholder</div>;
     }
 }

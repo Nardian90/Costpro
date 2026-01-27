@@ -43,9 +43,9 @@ export default function HelpView() {
         </div>
         <div className="flex flex-col items-end">
           <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-black">
-            VERSIÓN 5.5.2 (IMPORT-HARDENING)
+            VERSIÓN 5.5.4 (MULTI-WAREHOUSE TRANSFERS)
           </Badge>
-          <span className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Última actualización: 26 Ene 2026</span>
+          <span className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Última actualización: 11 Feb 2026</span>
         </div>
       </div>
 
@@ -582,12 +582,29 @@ export default function HelpView() {
             </CardHeader>
             <CardContent className="px-0">
               <div className="space-y-8">
-                {/* --- v5.5.2 --- */}
+                {/* --- v5.5.4 --- */}
                 <div className="relative pl-8 border-l-2 border-primary/20 space-y-4">
                   <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary border-4 border-background" />
                   <div className="flex items-center gap-3">
-                    <Badge className="bg-primary">v5.5.2</Badge>
-                    <span className="text-xs font-black text-muted-foreground uppercase">26 de Enero, 2026 (Actual)</span>
+                    <Badge className="bg-primary">v5.5.4</Badge>
+                    <span className="text-xs font-black text-muted-foreground uppercase">11 de Febrero, 2026 (Actual)</span>
+                  </div>
+                  <div className="bg-muted/30 rounded-2xl p-6 space-y-4 border border-primary/10">
+                    <h4 className="font-black text-sm uppercase text-primary">Multi-Warehouse Transfers & Logic Hardening</h4>
+                    <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Implementación de Transferencias entre Almacenes del mismo Encargado.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Transacciones atómicas de stock (Salida Origen / Entrada Destino).</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Registro oficial de la vista de Recepciones en la terminal.</li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* --- v5.5.2 --- */}
+                <div className="relative pl-8 border-l-2 border-primary/20 space-y-4 opacity-80">
+                  <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-muted border-4 border-background" />
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline">v5.5.2</Badge>
+                    <span className="text-xs font-black text-muted-foreground uppercase">26 de Enero, 2026</span>
                   </div>
                   <div className="bg-muted/30 rounded-2xl p-6 space-y-4 border border-primary/10">
                     <h4 className="font-black text-sm uppercase text-primary">Import Hardening & Protocol Enforcement</h4>
