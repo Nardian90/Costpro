@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.5.5] - 2026-02-12
+
+### Added
+- Configuración profesional para el despliegue de **n8n** en Render.
+- `Dockerfile` optimizado para producción basado en la imagen oficial.
+- Plantilla `.env.template` con variables de entorno críticas pre-configuradas (Basic Auth, TZ, Puerto).
+- Guía detallada de despliegue `RENDER_DEPLOY.md` que cubre persistencia (Persistent Disks) y base de datos externa (PostgreSQL).
+- Actualización de `.gitignore` para soportar directorios de datos de n8n.
+
+### Changed
+- Incrementada la versión del proyecto para reflejar la adición de herramientas de infraestructura.
+
 ## [5.5.4] - 2026-02-11
 
 ### Added

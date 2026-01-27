@@ -28,6 +28,11 @@ dev.log
 # local env files
 .env*.local
 .env
+.env.test
+
+# n8n
+.n8n/
+n8n_data/
 
 # vercel
 .vercel
