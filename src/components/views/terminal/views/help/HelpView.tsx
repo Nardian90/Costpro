@@ -43,7 +43,7 @@ export default function HelpView() {
         </div>
         <div className="flex flex-col items-end">
           <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-black">
-            VERSIÓN 5.5.5 (RECEPTIONS HISTORY)
+            VERSIÓN 5.5.6 (MOBILE SPEED OPTIMIZATION)
           </Badge>
           <span className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Última actualización: 11 Feb 2026</span>
         </div>
@@ -370,6 +370,29 @@ export default function HelpView() {
               <CardTitle className="text-2xl font-black uppercase tracking-tight">Ciclo de Venta y Caja</CardTitle>
             </CardHeader>
             <CardContent className="px-0 space-y-12">
+              <div className="bg-primary/5 p-6 rounded-3xl border border-primary/10 mb-8">
+                <h4 className="font-black text-primary text-xs uppercase mb-4 flex items-center gap-2">
+                  <ShoppingCart className="w-4 h-4" />
+                  Actualización v5.5.6: Optimizaciones de Velocidad Móvil
+                </h4>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-black uppercase text-muted-foreground">TPV (Caja):</p>
+                    <ul className="text-xs space-y-1 font-medium">
+                      <li className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> <strong>Botones 44px:</strong> Controles de cantidad más grandes para evitar errores.</li>
+                      <li className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> <strong>Descuento 1-Tap:</strong> Botones rápidos de 5%, 10% y 15%.</li>
+                    </ul>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-black uppercase text-muted-foreground">Inventario:</p>
+                    <ul className="text-xs space-y-1 font-medium">
+                      <li className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> <strong>Filtros Rápidos:</strong> Categorías siempre visibles en un toque.</li>
+                      <li className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> <strong>Interfaz Limpia:</strong> Eliminación de títulos redundantes en móvil.</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
               <div className="space-y-10">
                 <div className="grid lg:grid-cols-2 gap-8 items-center">
                   <div className="space-y-4">
@@ -582,9 +605,27 @@ export default function HelpView() {
             </CardHeader>
             <CardContent className="px-0">
               <div className="space-y-8">
-                {/* --- v5.5.5 --- */}
+                {/* --- v5.5.6 --- */}
                 <div className="relative pl-8 border-l-2 border-primary/20 space-y-4">
                   <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary border-4 border-background" />
+                  <div className="flex items-center gap-3">
+                    <Badge className="bg-primary">v5.5.6</Badge>
+                    <span className="text-xs font-black text-muted-foreground uppercase">11 de Febrero, 2026 (Actual)</span>
+                  </div>
+                  <div className="bg-muted/30 rounded-2xl p-6 space-y-4 border border-primary/10">
+                    <h4 className="font-black text-sm uppercase text-primary">Mobile Speed Optimization (TPV & Inventory)</h4>
+                    <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Controles de cantidad con target táctil de 44px en el carrito.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Selector de descuentos predefinidos (1-tap) para agilizar el cierre.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Migración de filtros de categoría a chips persistentes en Inventario.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Reducción de ruido visual mediante ocultamiento de títulos en móvil.</li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* --- v5.5.5 --- */}
+                <div className="relative pl-8 border-l-2 border-primary/20 space-y-4 opacity-80">
+                  <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-muted border-4 border-background" />
                   <div className="flex items-center gap-3">
                     <Badge className="bg-primary">v5.5.5</Badge>
                     <span className="text-xs font-black text-muted-foreground uppercase">11 de Febrero, 2026 (Actual)</span>

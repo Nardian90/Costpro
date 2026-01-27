@@ -47,7 +47,7 @@ export default function MobilePosDiagram() {
             strokeWidth="2"
           />
           <rect x="375" y="260" width="50" height="4" rx="2" className="fill-primary/20" />
-          <text x="400" y="285" textAnchor="middle" className="fill-primary font-black text-[10px] uppercase">Carrito (3 Items)</text>
+          <text x="400" y="285" textAnchor="middle" className="fill-primary font-black text-[10px] uppercase">Carrito (1-Tap Discount)</text>
 
           <rect x="275" y="300" width="250" height="30" rx="8" className="fill-primary" />
           <text x="400" y="320" textAnchor="middle" className="fill-white font-black text-[10px] uppercase tracking-widest">Pagar $450.00</text>
@@ -62,7 +62,7 @@ export default function MobilePosDiagram() {
         <motion.g initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1 }}>
           <line x1="150" y1="310" x2="260" y2="310" stroke="currentColor" className="text-primary" strokeWidth="1" strokeDasharray="4,2" />
           <circle cx="150" cy="310" r="4" className="fill-primary" />
-          <text x="140" y="315" textAnchor="end" className="fill-foreground font-black text-xs uppercase">Drawer Bottom</text>
+          <text x="140" y="315" textAnchor="end" className="fill-foreground font-black text-xs uppercase">44px Touch Target</text>
         </motion.g>
 
         <motion.g initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1.5 }}>

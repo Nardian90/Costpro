@@ -5,12 +5,14 @@ import { useState, useEffect, useMemo, useTransition } from 'react';
 import { useAuthStore } from '@/store';
 import { useInventory } from '@/hooks/api/useInventory';
 import { Download, Plus, X, LayoutList, Table as TableIcon, Package } from 'lucide-react';
+import { toast } from 'sonner';
 
 import InventoryCardView from './InventoryCardView';
 import InventoryTableView from './InventoryTableView';
 import ProductReceptionView from './ProductReceptionView';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
 import SearchBar from '@/components/ui/SearchBar';
+import { CategoryChips } from '@/components/ui/atomic';
 import { StateRenderer } from '@/components/ui/StateRenderer';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useIsMobile } from '@/hooks/ui/useMobile';
@@ -72,6 +74,7 @@ export default function InventoryView() {
     const handleCategoryChange = (value: string) => {
         startTransition(() => {
             setSelectedCategory(value);
+            if (value) toast.info(`Filtrando por: ${value}`);
         });
     };
 
@@ -105,33 +108,26 @@ export default function InventoryView() {
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <h2 className="text-2xl font-bold border-l-4 border-primary pl-4">
+                <h2 className="text-2xl font-bold border-l-4 border-primary pl-4 hidden sm:block">
                     Gestión de Inventario
                 </h2>
                 <ActionMenu actions={actions} />
             </div>
 
-            <SearchBar
-                value={searchTerm}
-                onChange={setSearchTerm}
-                placeholder="Buscar por nombre o SKU..."
-            >
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
-                    <div>
-                        <label className="text-[10px] font-bold text-muted-foreground uppercase mb-1 block">Categoría</label>
-                        <select
-                            value={selectedCategory}
-                            onChange={(e) => handleCategoryChange(e.target.value)}
-                            className="neu-input w-full"
-                        >
-                            <option value="">Todas las categorías</option>
-                            {uniqueCategories.map(category => (
-                                <option key={category || 'uncategorized'} value={category || ""}>{category || 'Sin categoría'}</option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
-            </SearchBar>
+            <div className="space-y-4">
+                <SearchBar
+                    value={searchTerm}
+                    onChange={setSearchTerm}
+                    placeholder="Buscar por nombre o SKU..."
+                    showSettings={false}
+                />
+
+                <CategoryChips
+                    categories={uniqueCategories.filter((c): c is string => Boolean(c))}
+                    selectedCategory={selectedCategory}
+                    onCategoryChange={handleCategoryChange}
+                />
+            </div>
 
             <div className={cn(isPending && "opacity-50 transition-opacity")}>
                 <StateRenderer
