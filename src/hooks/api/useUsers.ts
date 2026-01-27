@@ -16,10 +16,10 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
       }
 
       if (isAdmin) {
-        const profileColumns = 'id, full_name, email, role, roles, is_active, store_id, active_store_id, created_at';
+        const profileColumns = 'id, full_name, email, role, roles, active_store_id, logo_url, is_active, store_id, created_at';
         const [profilesRes, membershipsRes] = await Promise.all([
           supabase.from('profiles').select(profileColumns).order('full_name'),
-          supabase.from('user_store_memberships').select('id, user_id, store_id, role, status, created_at, updated_at, store:stores(id, name, address, logo_url, is_active, created_at)')
+          supabase.from('user_store_memberships').select('id, user_id, store_id, role, status, created_at, updated_at, store:stores(id, name, address, is_active, created_at)')
         ]);
 
         if (profilesRes.error) {
@@ -54,7 +54,7 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
           const storeIds = (managedStores || []).map(ms => ms.store_id);
           if (storeIds.length === 0) return [];
 
-          const profileColumns = 'id, full_name, email, role, roles, is_active, store_id, active_store_id, created_at';
+          const profileColumns = 'id, full_name, email, role, roles, active_store_id, logo_url, is_active, store_id, created_at';
           const storeColumns = 'id, name, address, logo_url, is_active, created_at';
           const membershipColumns = `id, user_id, store_id, role, status, created_at, updated_at, store:stores(${storeColumns})`;
           const { data: memberProfiles, error } = await supabase

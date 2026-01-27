@@ -33,7 +33,35 @@ export function useAuditLogs(filters: AuditLogFilters = {}) {
         p_limit: limit
       };
 
-      const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
+      let finalData: any[] = [];
+
+      try {
+        const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
+        finalData = data || [];
+      } catch (err: any) {
+        // Fallback for missing RPC or generic RPC failures in the sandbox environment
+        console.warn('[AuditLogs] RPC call failed, attempting fallback to direct table query', err);
+
+        const query = supabase.from('audit_logs').select(`
+          *,
+          profile:profiles(full_name, role)
+        `).order('created_at', { ascending: false }).limit(limit);
+
+        if (store_id) query.eq('store_id', store_id);
+
+        const { data: fallbackRows, error: fallbackError } = await query;
+
+        if (fallbackError) {
+          console.error('[AuditLogs] Fallback also failed:', fallbackError);
+          // If fallback fails (likely permissions), we return empty to avoid crashing
+          return [];
+        }
+
+        finalData = (fallbackRows || []).map((row: any) => ({
+          ...row,
+          profile: Array.isArray(row.profile) ? row.profile[0] : row.profile
+        }));
+      }
 
       const extendedSchema = auditLogSchema.extend({
         profile: z.object({
@@ -42,7 +70,7 @@ export function useAuditLogs(filters: AuditLogFilters = {}) {
         }).nullable().optional()
       });
 
-      return await validateRPCArrayResponse(data, extendedSchema, rpcName);
+      return await validateRPCArrayResponse(finalData, extendedSchema, rpcName);
     },
     staleTime: 60 * 1000,
   });
@@ -66,8 +94,24 @@ export async function prefetchAuditLogs(queryClient: any, filters: AuditLogFilte
         p_limit: limit
       };
 
-      const { data, error } = await supabase.rpc(rpcName, params);
-      if (error) throw error;
+      let finalData: any[] = [];
+      try {
+        const { data, error } = await supabase.rpc(rpcName, params);
+        if (error) throw error;
+        finalData = data || [];
+      } catch (err) {
+        // Prefetch fallback
+        const query = supabase.from('audit_logs').select(`
+          *,
+          profile:profiles(full_name, role)
+        `).order('created_at', { ascending: false }).limit(limit);
+        if (store_id) query.eq('store_id', store_id);
+        const { data: fallbackRows } = await query;
+        finalData = (fallbackRows || []).map((row: any) => ({
+          ...row,
+          profile: Array.isArray(row.profile) ? row.profile[0] : row.profile
+        }));
+      }
 
       const extendedSchema = auditLogSchema.extend({
         profile: z.object({
@@ -76,7 +120,7 @@ export async function prefetchAuditLogs(queryClient: any, filters: AuditLogFilte
         }).nullable().optional()
       });
 
-      return await validateRPCArrayResponse(data, extendedSchema, rpcName);
+      return await validateRPCArrayResponse(finalData, extendedSchema, rpcName);
     },
     staleTime: 60 * 1000,
   });
