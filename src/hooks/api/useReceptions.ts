@@ -46,7 +46,7 @@ export function useReceptionDetails(receiptId?: string) {
     queryKey: ['receipt-items', receiptId],
     queryFn: async () => {
       if (!receiptId) return [];
-      const columns = 'id, receipt_id, product_id, quantity, unit_cost, created_at, products(name, sku)';
+      const columns = 'id, receipt_id, product_id, quantity, unit_cost, created_at, products(name, sku, image_url, public_image_url)';
       const data = await withTableLogging('select', 'receipt_items', () => supabase.from('receipt_items')
         .select(columns)
         .eq('receipt_id', receiptId));

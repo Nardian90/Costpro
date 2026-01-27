@@ -267,6 +267,8 @@ export interface ReceiptItem {
   products?: {
     name: string;
     sku?: string | null;
+    image_url?: string | null;
+    public_image_url?: string | null;
   } | null;
 }
 
