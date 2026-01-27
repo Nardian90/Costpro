@@ -48,7 +48,7 @@ const SettingsView = lazy(() => import('./terminal/views/settings/SettingsView')
 
 
 export default function TerminalShell() { // Renamed from TerminalView
-  const { user, loading, logout } = useAuthStore();
+  const { user, loading, status, logout } = useAuthStore();
   const [isPending, startTransition] = useTransition();
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
@@ -78,12 +78,14 @@ export default function TerminalShell() { // Renamed from TerminalView
 
   // Initial check on mount & prefetching
   useEffect(() => {
-    if (!loading && !user) {
+    // ONLY REDIRECT if status is explicitly unauthenticated
+    // This prevents the redirect loop if profile is just invalid or still loading
+    if (status === 'unauthenticated') {
       router.push('/login');
       return;
     }
 
-    if (user?.activeStoreId) {
+    if (user?.activeStoreId && status === 'authenticated_valid') {
       // Smart Prefetch: Load critical data in advance
       prefetchProducts(queryClient, user.activeStoreId);
     }
