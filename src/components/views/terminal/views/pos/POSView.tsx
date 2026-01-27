@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { ShoppingCart, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 import SearchBar from '@/components/ui/SearchBar';
 import ActionMenu from '@/components/ui/ActionMenu';
 import { ProductCard, CategoryChips } from '@/components/ui/atomic';
@@ -83,7 +84,7 @@ export default function POSView() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase">TPV</h2>
+          <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase hidden sm:block">TPV</h2>
           <ViewSwitcher currentView={posLayoutMode} onViewChange={setPosLayoutMode} />
         </div>
         <ActionMenu
@@ -166,13 +167,19 @@ export default function POSView() {
                       <ProductCard
                         key={product.id}
                         product={product}
-                        onClick={handleAddItem}
+                        onClick={(p) => {
+                          handleAddItem(p);
+                          toast.success(`${p.name} añadido`);
+                        }}
                         variant="pos"
                       />
                     ))}
                   </div>
                 ) : (
-                  <POSTableView products={data} onAddToCart={handleAddItem} />
+                  <POSTableView products={data} onAddToCart={(p) => {
+                    handleAddItem(p);
+                    toast.success(`${p.name} añadido`);
+                  }} />
                 )
               )}
             </StateRenderer>
