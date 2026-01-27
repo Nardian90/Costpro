@@ -42,14 +42,14 @@ DROP POLICY IF EXISTS "transfers_view_policy" ON public.transfers;
 CREATE POLICY "transfers_view_policy" ON public.transfers
     FOR SELECT USING (
         EXISTS (SELECT 1 FROM public.user_store_memberships WHERE user_id = auth.uid() AND store_id IN (origin_store_id, destination_store_id))
-        OR public.has_role(auth.uid(), 'admin')
+        OR public.has_role('admin')
     );
 
 DROP POLICY IF EXISTS "transfers_insert_policy" ON public.transfers;
 CREATE POLICY "transfers_insert_policy" ON public.transfers
     FOR INSERT WITH CHECK (
         EXISTS (SELECT 1 FROM public.user_store_memberships WHERE user_id = auth.uid() AND store_id = origin_store_id)
-        OR public.has_role(auth.uid(), 'admin')
+        OR public.has_role('admin')
     );
 
 -- Policies for transfer items
@@ -63,7 +63,7 @@ DROP POLICY IF EXISTS "transfer_items_insert_policy" ON public.transfer_items;
 CREATE POLICY "transfer_items_insert_policy" ON public.transfer_items
     FOR INSERT WITH CHECK (
         EXISTS (SELECT 1 FROM public.transfers t WHERE t.id = transfer_id AND t.created_by = auth.uid())
-        OR public.has_role(auth.uid(), 'admin')
+        OR public.has_role('admin')
     );
 
 -- RPC: Get transferable stores (same encargado/manager)
