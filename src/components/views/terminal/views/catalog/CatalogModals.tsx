@@ -11,7 +11,7 @@ import {
 import { HelpCircle, FileText, Edit, DollarSign, Plus, Trash2, RefreshCw } from 'lucide-react';
 import ProductImage from '@/components/ui/ProductImage';
 import { PrimaryButton, SecondaryButton, IconButton } from '@/components/ui/atomic';
-import { getSupabaseUrl, cn } from '@/lib/utils';
+import { resolveProductImage, cn } from '@/lib/utils';
 import { Product } from '@/types';
 
 interface CatalogModalsProps {
@@ -74,7 +74,7 @@ export const CatalogModals = ({
               <div className="flex flex-col items-center gap-6 p-6 neu-inset-sm bg-background/50 rounded-3xl">
                 <div className="neu-raised-sm w-40 h-40 flex items-center justify-center overflow-hidden rounded-3xl">
                   <ProductImage
-                    src={modals.editingProduct?.image_url}
+                    src={resolveProductImage(modals.editingProduct)}
                     name={modals.editingProduct?.name || ''}
                     className="w-full h-full"
                     forceShow={true}

@@ -111,7 +111,7 @@ export const transactionSchema = z.object({
   id: z.string().uuid().or(z.string()),
   store_id: z.string().uuid().optional().nullable(),
   seller_id: z.string().uuid().optional().nullable(),
-  total_amount: z.number().default(0),
+  total_amount: z.coerce.number().default(0),
   status: transactionStatusSchema.default('pending'),
   created_at: z.string().default(() => new Date().toISOString()),
   updated_at: z.string().optional().nullable(),
@@ -120,26 +120,54 @@ export const transactionSchema = z.object({
   void_reason: z.string().nullable().optional(),
   payment_method: paymentMethodSchema.optional().default('cash'),
   discount_type: discountTypeSchema.optional().default('fixed'),
-  discount_value: z.number().optional().default(0),
-  subtotal: z.number().optional().default(0),
+  discount_value: z.coerce.number().optional().default(0),
+  subtotal: z.coerce.number().optional().default(0),
   idempotency_key: z.string().nullable().optional(),
 });
 
 export const stockMovementSchema = z.object({
   id: z.string().uuid(),
-  store_id: z.string().uuid(),
-  product_id: z.string().uuid(),
+  store_id: z.string().uuid().optional().nullable(),
+  product_id: z.string().uuid().optional().nullable(),
   variant_id: z.string().uuid().nullable().optional(),
-  quantity_change: z.number(),
+  quantity_change: z.coerce.number(),
   movement_type: z.string().default('adjustment'),
   reference_id: z.string().nullable().optional(),
   reference_doc: z.string().nullable().optional(),
   movement_date: z.string().nullable().optional(),
   created_by: z.string().uuid().nullable().optional(),
   created_at: z.string().optional(),
-  unit_cost: z.number().nullable().optional().default(0),
-  unit_price: z.number().nullable().optional().default(0),
-  balance_after: z.number().nullable().optional().default(0),
+  unit_cost: z.coerce.number().nullable().optional().default(0),
+  unit_price: z.coerce.number().nullable().optional().default(0),
+  balance_after: z.coerce.number().nullable().optional().default(0),
+});
+
+export const receiptSchema = z.object({
+  id: z.string().uuid(),
+  created_at: z.string().default(() => new Date().toISOString()),
+  updated_at: z.string().optional().nullable(),
+  user_id: z.string().uuid().nullable().optional(),
+  status: z.enum(['active', 'voided']).default('active'),
+  total_cost: z.coerce.number().default(0),
+  reference_doc: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
+  store_id: z.string().uuid().nullable().optional(),
+  supplier: z.string().nullable().optional(),
+  reception_date: z.string().nullable().optional(),
+});
+
+export const receiptItemSchema = z.object({
+  id: z.string().uuid(),
+  receipt_id: z.string().uuid(),
+  product_id: z.string().uuid(),
+  quantity: z.coerce.number(),
+  unit_cost: z.coerce.number(),
+  created_at: z.string().optional(),
+  updated_at: z.string().optional(),
+  products: z.object({
+    name: z.string(),
+    sku: z.string().nullable().optional(),
+  }).nullable().optional(),
 });
 
 export const auditLogSchema = z.object({

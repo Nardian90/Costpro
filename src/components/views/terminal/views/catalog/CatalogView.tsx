@@ -31,7 +31,7 @@ import { useIsMobile } from '@/hooks/ui/useMobile';
 import { catalogService } from '@/services/catalog-service';
 import { useCatalogModals } from '@/hooks/ui/useCatalogModals';
 import { CatalogModals } from './CatalogModals';
-import { cn } from '@/lib/utils';
+import { cn, resolveProductImage } from '@/lib/utils';
 import { Product } from '@/types';
 import ProductImage from '@/components/ui/ProductImage';
 
@@ -355,7 +355,7 @@ export default function CatalogView() {
                                     <td className="p-4">
                                         <div className="flex items-center gap-3">
                                             <div className="neu-raised-sm w-10 h-10 flex items-center justify-center overflow-hidden shrink-0">
-                                                <ProductImage name={product.name} className="w-full h-full object-cover" />
+                                                <ProductImage src={resolveProductImage(product)} name={product.name} className="w-full h-full object-cover" />
                                             </div>
                                             <span className="font-bold text-sm truncate max-w-[200px]">{product.name}</span>
                                         </div>

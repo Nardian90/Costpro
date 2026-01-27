@@ -245,11 +245,15 @@ export interface Discount {
 export interface Receipt {
   id: string;
   created_at: string;
-  user_id: string | null;
+  updated_at?: string | null;
+  user_id?: string | null;
   status: 'active' | 'voided';
   total_cost: number;
-  reference_doc: string | null;
-  notes: string | null;
+  reference_doc?: string | null;
+  notes?: string | null;
+  store_id?: string | null;
+  supplier?: string | null;
+  reception_date?: string | null;
 }
 
 export interface ReceiptItem {
@@ -258,6 +262,12 @@ export interface ReceiptItem {
   product_id: string;
   quantity: number;
   unit_cost: number;
+  created_at?: string;
+  updated_at?: string;
+  products?: {
+    name: string;
+    sku?: string | null;
+  } | null;
 }
 
 // ============================================
