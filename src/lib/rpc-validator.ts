@@ -9,9 +9,22 @@ export async function validateRPCResponse<T>(
   const result = schema.safeParse(data);
 
   if (!result.success) {
-    console.error(`[Zod Validation Error] RPC: ${rpcName}`, result.error.format());
-    // In production, we might want to still return the data but log the error
-    // For now, let's be strict and toast if we are in development or if it's critical
+    const errorData = result.error.format();
+    console.error(`[Zod Validation Error] RPC: ${rpcName}`, errorData);
+
+    // Log to external service in production
+    if (process.env.NODE_ENV === 'production') {
+      fetch('/api/logs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          context: `Zod Validation Error: RPC ${rpcName}`,
+          error: errorData,
+          data: data // Send partial data for debugging
+        }),
+      }).catch(err => console.error('Failed to log validation error:', err));
+    }
+
     if (process.env.NODE_ENV === 'development') {
         toast.error(`Error de validación en ${rpcName}`);
     }
@@ -31,7 +44,20 @@ export async function validateRPCArrayResponse<T>(
     const result = arraySchema.safeParse(data);
 
     if (!result.success) {
-      console.error(`[Zod Validation Error] RPC: ${rpcName} (Array)`, result.error.format());
+      const errorData = result.error.format();
+      console.error(`[Zod Validation Error] RPC: ${rpcName} (Array)`, errorData);
+
+      if (process.env.NODE_ENV === 'production') {
+        fetch('/api/logs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            context: `Zod Validation Error: RPC ${rpcName} (Array)`,
+            error: errorData
+          }),
+        }).catch(err => console.error('Failed to log validation error:', err));
+      }
+
       if (process.env.NODE_ENV === 'development') {
           toast.error(`Error de validación en ${rpcName}`);
       }

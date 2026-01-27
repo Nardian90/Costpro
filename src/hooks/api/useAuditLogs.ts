@@ -14,16 +14,14 @@ export interface AuditLogFilters {
 }
 
 export function useAuditLogs(filters: AuditLogFilters = {}) {
-  const { store_id, search_term, date_from, date_to, limit = 1000 } = filters;
+  const { store_id: raw_store_id, search_term, date_from, date_to, limit = 1000 } = filters;
+
+  // Defensive cleaning of store_id
+  const store_id = (raw_store_id === 'null' || raw_store_id === 'undefined') ? null : raw_store_id;
 
   return useQuery({
     queryKey: ['audit-logs', store_id, search_term, date_from, date_to, limit],
     queryFn: async () => {
-      // Guard for audit logs: only allow if parameters are valid or intentionally null
-      if (store_id === 'undefined' || store_id === 'null') {
-          console.warn('[AuditLogs] Received invalid store_id string:', store_id);
-      }
-
       const rpcName = 'get_audit_logs';
       const params = {
         p_store_id: store_id || null,
@@ -80,7 +78,10 @@ export function useAuditLogs(filters: AuditLogFilters = {}) {
  * Prefetches audit logs.
  */
 export async function prefetchAuditLogs(queryClient: any, filters: AuditLogFilters = {}) {
-  const { store_id, search_term, date_from, date_to, limit = 1000 } = filters;
+  const { store_id: raw_store_id, search_term, date_from, date_to, limit = 1000 } = filters;
+
+  // Defensive cleaning
+  const store_id = (raw_store_id === 'null' || raw_store_id === 'undefined') ? null : raw_store_id;
 
   return queryClient.prefetchQuery({
     queryKey: ['audit-logs', store_id, search_term, date_from, date_to, limit],
