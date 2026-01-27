@@ -307,3 +307,31 @@ CREATE TABLE public.units_of_measure (
   created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
   CONSTRAINT units_of_measure_pkey PRIMARY KEY (id)
 );
+-- ============================================
+-- TRANSFERENCIAS (v5.5.4)
+-- ============================================
+
+CREATE TABLE public.transfers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    origin_store_id UUID NOT NULL REFERENCES public.stores(id),
+    destination_store_id UUID NOT NULL REFERENCES public.stores(id),
+    created_by UUID NOT NULL REFERENCES auth.users(id),
+    status public.transfer_status DEFAULT 'PENDIENTE',
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
+);
+
+CREATE TABLE public.transfer_items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    transfer_id UUID NOT NULL REFERENCES public.transfers(id) ON DELETE CASCADE,
+    product_id UUID NOT NULL REFERENCES public.products(id),
+    quantity INTEGER NOT NULL,
+    unit_cost INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
+);
+
+-- RPCs
+-- public.get_transferable_stores(p_user_id UUID, p_current_store_id UUID)
+-- public.create_transfer(p_origin_store_id UUID, p_destination_store_id UUID, p_items JSONB, p_notes TEXT)
+-- public.confirm_transfer(p_transfer_id UUID, p_user_id UUID)

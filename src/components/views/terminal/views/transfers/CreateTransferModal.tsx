@@ -1,0 +1,227 @@
+// src/components/views/terminal/views/transfers/CreateTransferModal.tsx
+'use client';
+
+import { useState, useMemo } from 'react';
+import { useAuthStore } from '@/store';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
+} from '@/components/ui/dialog';
+import { Search, Plus, Trash2, Save, Building, Package } from 'lucide-react';
+import { useInventory } from '@/hooks/api/useInventory';
+import { useTransferableStores, useCreateTransfer } from '@/hooks/api/useTransfers';
+import { useDebounce } from '@/hooks/ui/useDebounce';
+import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+
+interface CreateTransferModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function CreateTransferModal({ isOpen, onClose }: CreateTransferModalProps) {
+  const { user } = useAuthStore();
+  const [destinationStoreId, setDestinationStoreId] = useState('');
+  const [notes, setNotes] = useState('');
+  const [selectedItems, setSelectedItems] = useState<Map<string, { product: any, quantity: number }>>(new Map());
+  const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
+  const { data: transferableStores } = useTransferableStores(user?.id || '', user?.activeStoreId);
+  const { data: searchData, isFetching: isSearching } = useInventory(user?.activeStoreId, debouncedSearchTerm, '', 5);
+  const searchResults = useMemo(() => searchData?.pages[0]?.products || [], [searchData]);
+
+  const createTransferMutation = useCreateTransfer();
+
+  const addItem = (product: any) => {
+    if (selectedItems.has(product.id)) {
+      toast.info('El producto ya está en la lista');
+      return;
+    }
+    const newItems = new Map(selectedItems);
+    newItems.set(product.id, { product, quantity: 1 });
+    setSelectedItems(newItems);
+    setSearchTerm('');
+  };
+
+  const updateQuantity = (productId: string, qty: number) => {
+    const newItems = new Map(selectedItems);
+    const item = newItems.get(productId);
+    if (item) {
+      newItems.set(productId, { ...item, quantity: Math.max(1, qty) });
+      setSelectedItems(newItems);
+    }
+  };
+
+  const removeItem = (productId: string) => {
+    const newItems = new Map(selectedItems);
+    newItems.delete(productId);
+    setSelectedItems(newItems);
+  };
+
+  const handleCreate = async () => {
+    if (!destinationStoreId) {
+      toast.error('Selecciona un almacén destino');
+      return;
+    }
+    if (selectedItems.size === 0) {
+      toast.error('Agrega al menos un producto');
+      return;
+    }
+
+    const items = Array.from(selectedItems.values()).map(item => ({
+      product_id: item.product.id,
+      quantity: item.quantity,
+      unit_cost: item.product.cost_price || 0
+    }));
+
+    try {
+      await createTransferMutation.mutateAsync({
+        origin_store_id: user!.activeStoreId!,
+        destination_store_id: destinationStoreId,
+        items,
+        notes
+      });
+      toast.success('Solicitud de transferencia creada');
+      onClose();
+      // Reset state
+      setDestinationStoreId('');
+      setNotes('');
+      setSelectedItems(new Map());
+    } catch (err: any) {
+      toast.error(err.message || 'Error al crear la transferencia');
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl !rounded-3xl border-white/5 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <DialogHeader className="p-6 pb-0">
+          <DialogTitle className="text-xl font-black uppercase tracking-tight flex items-center gap-3">
+            <Building className="w-6 h-6 text-primary" />
+            Nueva Solicitud de Transferencia
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+             <div>
+                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1 block">Almacén Destino</label>
+                <select
+                  value={destinationStoreId}
+                  onChange={(e) => setDestinationStoreId(e.target.value)}
+                  className="neu-input w-full text-sm"
+                >
+                   <option value="">Seleccionar destino...</option>
+                   {transferableStores?.map((s: any) => (
+                     <option key={s.id} value={s.id}>{s.name}</option>
+                   ))}
+                </select>
+             </div>
+             <div>
+                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1 block">Notas / Observaciones</label>
+                <input
+                  type="text"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Ej: Reposición de stock semanal"
+                  className="neu-input w-full text-sm"
+                />
+             </div>
+          </div>
+
+          <div className="relative">
+            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1 block">Buscar Productos</label>
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Nombre o SKU del producto..."
+                className="neu-input w-full pl-10 text-sm"
+              />
+            </div>
+
+            {debouncedSearchTerm && (
+              <div className="absolute top-full left-0 w-full mt-2 neu-card z-50 max-h-48 overflow-y-auto shadow-2xl">
+                {isSearching ? (
+                  <div className="p-4 text-center text-xs font-bold animate-pulse">Buscando...</div>
+                ) : searchResults.length > 0 ? (
+                  searchResults.map((p: any) => (
+                    <div
+                      key={p.id}
+                      onClick={() => addItem(p)}
+                      className="p-3 hover:bg-primary/10 cursor-pointer flex justify-between items-center border-b border-white/5 last:border-0"
+                    >
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold">{p.name}</span>
+                        <span className="text-[10px] text-muted-foreground font-mono uppercase">{p.sku}</span>
+                      </div>
+                      <Plus className="w-4 h-4 text-primary" />
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-4 text-center text-xs text-muted-foreground">No se encontraron productos</div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <h4 className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Productos Seleccionados</h4>
+            <div className="space-y-2">
+              {Array.from(selectedItems.values()).map(({ product, quantity }) => (
+                <div key={product.id} className="neu-card !p-3 flex items-center justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold truncate">{product.name}</p>
+                    <p className="text-[10px] text-muted-foreground font-mono uppercase">{product.sku}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex flex-col items-center">
+                       <span className="text-[9px] font-black text-muted-foreground uppercase">Cant.</span>
+                       <input
+                        type="number"
+                        value={quantity}
+                        onChange={(e) => updateQuantity(product.id, parseInt(e.target.value) || 0)}
+                        className="neu-inset-sm w-16 text-center font-bold text-sm !py-1"
+                       />
+                    </div>
+                    <button
+                      onClick={() => removeItem(product.id)}
+                      className="p-2 hover:bg-rose-500/10 text-rose-500 rounded-xl transition-colors mt-4"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {selectedItems.size === 0 && (
+                <div className="text-center py-12 border-2 border-dashed border-white/5 rounded-3xl bg-white/2">
+                   <Package className="w-8 h-8 mx-auto mb-2 text-muted-foreground opacity-20" />
+                   <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Lista vacía</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter className="p-6 bg-white/2 border-t border-white/5">
+          <button
+            onClick={onClose}
+            className="neu-btn px-6 py-2.5 text-xs font-black uppercase tracking-widest"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={handleCreate}
+            disabled={createTransferMutation.isPending}
+            className="neu-btn-primary px-8 py-2.5 text-xs font-black uppercase tracking-widest flex items-center gap-2"
+          >
+            <Save className="w-4 h-4" />
+            {createTransferMutation.isPending ? 'Guardando...' : 'Enviar Solicitud'}
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
