@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { cn } from '@/lib/utils';
+import { cn, resolveProductImage } from '@/lib/utils';
 import { Slot } from '@radix-ui/react-slot';
 import { LucideIcon, Search, X, Edit, DollarSign, Package, Trash2, RefreshCw } from 'lucide-react';
 import ProductImage from '../ProductImage';
@@ -188,7 +188,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         )}
       >
         <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0 bg-muted">
-           <ProductImage src={product.public_image_url} alt={product.name} name={product.name} className="w-full h-full object-cover" />
+           <ProductImage src={resolveProductImage(product)} alt={product.name} name={product.name} className="w-full h-full object-cover" />
         </div>
         <div className="flex-1 min-w-0">
           <h4 className="font-black text-xs uppercase truncate mb-1">{product.name}</h4>
@@ -206,7 +206,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     )}>
       <div className="w-full aspect-square sm:aspect-video rounded-xl overflow-hidden bg-background/50 flex items-center justify-center shrink-0 relative group">
         <ProductImage
-          src={product.public_image_url || product.image_url}
+          src={resolveProductImage(product)}
           alt={product.name}
           name={product.name}
           className="w-full h-full"
