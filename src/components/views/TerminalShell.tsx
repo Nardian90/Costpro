@@ -139,6 +139,7 @@ export default function TerminalShell() { // Renamed from TerminalView
         prefetchAuditLogs(queryClient);
         break;
       case 'recepcion':
+      case 'reception_list':
         prefetchReceptions(queryClient, user.activeStoreId, user.role === 'admin');
         break;
     }
@@ -164,6 +165,7 @@ export default function TerminalShell() { // Renamed from TerminalView
         case 'settings': return <SettingsView />;
         case 'help': return <HelpView />;
         case 'recepcion': return <ProductReceptionView onCancel={() => setCurrentView('inventory')} />;
+        case 'reception_list': return <ReceptionsHistoryView />;
         case 'transferencias': return <TransferenciasView />;
         default: return <div>Default View Placeholder</div>;
     }

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Nueva vista de **Historial de Recepciones** con listado profesional y detalle expandible de productos.
+- Acceso directo al Historial desde el menú lateral (INVENTARIO).
 - Filtrado avanzado por rango de fechas, estado de recepción y proveedor.
 - Soporte para imágenes de productos en el detalle de la recepción.
 - Funcionalidad de exportación a CSV desde la vista de detalle de cada recepción.
