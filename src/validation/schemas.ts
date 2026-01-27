@@ -167,6 +167,8 @@ export const receiptItemSchema = z.object({
   products: z.object({
     name: z.string(),
     sku: z.string().nullable().optional(),
+    image_url: z.string().nullable().optional(),
+    public_image_url: z.string().nullable().optional(),
   }).nullable().optional(),
 });
 

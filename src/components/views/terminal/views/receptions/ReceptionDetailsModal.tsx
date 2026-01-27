@@ -7,9 +7,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Package, Hash, User, Calendar, FileText, Building2 } from 'lucide-react';
+import { Package, Hash, User, Calendar, FileText, Building2, Download } from 'lucide-react';
 import { type Receipt, type ReceiptItem } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { resolveProductImage, getProductImageUrl } from '@/lib/utils';
 
 interface ReceptionDetailsModalProps {
   receipt: Receipt | null;
@@ -17,10 +18,15 @@ interface ReceptionDetailsModalProps {
   onClose: () => void;
   items: ReceiptItem[];
   isLoading: boolean;
+  onExport?: () => void;
 }
 
-export function ReceptionDetailsModal({ receipt, isOpen, onClose, items, isLoading }: ReceptionDetailsModalProps) {
+export function ReceptionDetailsModal({ receipt, isOpen, onClose, items, isLoading, onExport }: ReceptionDetailsModalProps) {
   if (!receipt && !isLoading) return null;
+
+  const subtotal = receipt?.total_cost || 0;
+  const taxes = subtotal * 0; // Assuming 0 for now as it's not in DB, or we can assume it's included
+  const total = subtotal + taxes;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -89,6 +95,7 @@ export function ReceptionDetailsModal({ receipt, isOpen, onClose, items, isLoadi
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="bg-muted/50 text-muted-foreground font-black uppercase text-[9px] tracking-widest text-left">
+                      <th className="p-3">Img</th>
                       <th className="p-3">Producto</th>
                       <th className="p-3 text-center">Cant.</th>
                       <th className="p-3 text-right">Costo U.</th>
@@ -99,6 +106,7 @@ export function ReceptionDetailsModal({ receipt, isOpen, onClose, items, isLoadi
                     {isLoading ? (
                       [...Array(3)].map((_, i) => (
                         <tr key={i} className="border-t border-white/5">
+                          <td className="p-3"><Skeleton className="h-8 w-8 rounded-lg" /></td>
                           <td className="p-3"><Skeleton className="h-4 w-32" /></td>
                           <td className="p-3"><Skeleton className="h-4 w-8 mx-auto" /></td>
                           <td className="p-3"><Skeleton className="h-4 w-16 ml-auto" /></td>
@@ -106,17 +114,29 @@ export function ReceptionDetailsModal({ receipt, isOpen, onClose, items, isLoadi
                         </tr>
                       ))
                     ) : (
-                      items.map((item) => (
-                        <tr key={item.id} className="border-t border-white/5 hover:bg-white/5 transition-colors">
-                          <td className="p-3">
-                            <div className="font-bold">{item.products?.name}</div>
-                            <div className="text-[9px] font-mono text-muted-foreground">{item.products?.sku}</div>
-                          </td>
-                          <td className="p-3 text-center font-black">{item.quantity}</td>
-                          <td className="p-3 text-right font-bold text-muted-foreground">${item.unit_cost.toFixed(2)}</td>
-                          <td className="p-3 text-right font-black text-primary">${(item.quantity * item.unit_cost).toFixed(2)}</td>
-                        </tr>
-                      ))
+                      items.map((item) => {
+                        const imageUrl = item.products ? getProductImageUrl(resolveProductImage(item.products as any)) : null;
+                        return (
+                          <tr key={item.id} className="border-t border-white/5 hover:bg-white/5 transition-colors">
+                            <td className="p-3">
+                              <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center overflow-hidden border border-white/5">
+                                {imageUrl ? (
+                                  <img src={imageUrl} alt={item.products?.name} className="w-full h-full object-cover" />
+                                ) : (
+                                  <Package className="w-5 h-5 text-muted-foreground/50" />
+                                )}
+                              </div>
+                            </td>
+                            <td className="p-3">
+                              <div className="font-bold">{item.products?.name}</div>
+                              <div className="text-[9px] font-mono text-muted-foreground">{item.products?.sku}</div>
+                            </td>
+                            <td className="p-3 text-center font-black">{item.quantity}</td>
+                            <td className="p-3 text-right font-bold text-muted-foreground">${item.unit_cost.toFixed(2)}</td>
+                            <td className="p-3 text-right font-black text-primary">${(item.quantity * item.unit_cost).toFixed(2)}</td>
+                          </tr>
+                        );
+                      })
                     )}
                   </tbody>
                 </table>
@@ -124,7 +144,32 @@ export function ReceptionDetailsModal({ receipt, isOpen, onClose, items, isLoadi
           </div>
         </div>
 
-        <div className="p-6 bg-muted/20 border-t border-white/5 flex justify-end">
+        {/* Financial Summary */}
+        <div className="px-6 py-4 bg-primary/5 border-t border-white/5">
+           <div className="flex flex-col items-end gap-1">
+              <div className="flex justify-between w-full max-w-[200px] text-[10px] font-bold text-muted-foreground uppercase">
+                <span>Subtotal:</span>
+                <span>${subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between w-full max-w-[200px] text-[10px] font-bold text-muted-foreground uppercase">
+                <span>Impuestos (0%):</span>
+                <span>${taxes.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between w-full max-w-[200px] text-sm font-black text-primary uppercase border-t border-primary/20 pt-1 mt-1">
+                <span>Total:</span>
+                <span>${total.toFixed(2)}</span>
+              </div>
+           </div>
+        </div>
+
+        <div className="p-6 bg-muted/20 border-t border-white/5 flex justify-between items-center">
+          <button
+            onClick={onExport}
+            className="flex items-center gap-2 px-4 py-3 bg-background border border-border rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all active:scale-95"
+          >
+            <Download className="w-4 h-4" />
+            Exportar CSV
+          </button>
           <button
             onClick={onClose}
             className="px-8 py-3 bg-background border border-border rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-muted transition-all active:scale-95"
