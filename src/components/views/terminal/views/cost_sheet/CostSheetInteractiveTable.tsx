@@ -3,7 +3,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
-import { useCostSheetCalculator } from '@/hooks/useCostSheetCalculator';
+import { useCostSheetCalculator } from '@/hooks/logic/useCostSheetCalculator';
 import { ChevronRight, HelpCircle, CornerDownRight } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';

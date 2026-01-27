@@ -1,7 +1,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
-import { withTableLogging } from './useQueries';
+import { withTableLogging } from './base';
 
 export function useCashClosures(storeId?: string | null, isAdmin = false) {
   return useQuery({

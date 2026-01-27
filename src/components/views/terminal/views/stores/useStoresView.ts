@@ -3,7 +3,7 @@
 
 import { useState, useMemo } from 'react';
 import { useAuthStore } from '@/store';
-import { useStores } from '@/hooks/useQueries';
+import { useStores } from '@/hooks/api/useStores';
 import { Store } from '@/types';
 import { toast } from 'sonner';
 import { storeService } from '@/services/store-service';
@@ -21,10 +21,12 @@ export function useStoresView() {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Data Fetching
+    const isEncargado = user?.role === 'encargado' || user?.role === 'manager' || user?.memberships?.some(m => m.role === 'encargado');
+
     const { data: storesData = [], isLoading: isLoadingStores } = useStores(
         user?.id || '',
         user?.role === 'admin',
-        user?.role === 'encargado' || user?.role === 'manager'
+        isEncargado || false
     );
 
     const filteredStores = useMemo(() => {

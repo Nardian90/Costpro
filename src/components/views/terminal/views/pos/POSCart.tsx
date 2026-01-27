@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { ShoppingCart, X, Trash2, Minus, Plus, DollarSign, CreditCard, Loader2, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PaymentMethod } from '@/types';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/ui/useMobile';
 
 interface POSCartProps {
   items: any[];

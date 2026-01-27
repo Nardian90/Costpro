@@ -2,7 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { z } from 'zod';
 import { supabase } from '@/lib/supabaseClient';
-import { withTableLogging } from './useQueries';
+import { withTableLogging } from './base';
 import { validateRPCArrayResponse } from '@/lib/rpc-validator';
 import { stockMovementSchema } from '@/validation/schemas';
 

@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo, useTransition } from 'react';
 import { useAuthStore } from '@/store';
-import { useInventory } from '@/hooks/useQueries';
+import { useInventory } from '@/hooks/api/useInventory';
 import { Download, Plus, X, LayoutList, Table as TableIcon, Package } from 'lucide-react';
 
 import InventoryCardView from './InventoryCardView';
@@ -13,7 +13,7 @@ import ActionMenu, { Action } from '@/components/ui/ActionMenu';
 import SearchBar from '@/components/ui/SearchBar';
 import { StateRenderer } from '@/components/ui/StateRenderer';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/ui/useMobile';
 import { cn } from '@/lib/utils';
 
 const PAGE_LIMIT = 20;
