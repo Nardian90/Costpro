@@ -320,3 +320,24 @@ export const receptionImportRowSchema = z.object({
   quantity: z.coerce.number().int().positive("La cantidad debe ser un número entero positivo"),
   cost: z.coerce.number().min(0, "El costo debe ser un número válido (mínimo 0)"),
 });
+
+export const transferStatusSchema = z.enum(['PENDIENTE', 'CONFIRMADA', 'CANCELADA']);
+
+export const transferItemSchema = z.object({
+  id: z.string().uuid().optional(),
+  transfer_id: z.string().uuid().optional(),
+  product_id: z.string().uuid(),
+  quantity: z.number().positive(),
+  unit_cost: z.number().min(0),
+});
+
+export const transferSchema = z.object({
+  id: z.string().uuid(),
+  origin_store_id: z.string().uuid(),
+  destination_store_id: z.string().uuid(),
+  created_by: z.string().uuid(),
+  status: transferStatusSchema,
+  notes: z.string().nullable().optional(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});

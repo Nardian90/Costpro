@@ -270,6 +270,36 @@ export interface ReceiptItem {
   } | null;
 }
 
+// ============================================
+// Transferencias
+// ============================================
+
+export type TransferStatus = 'PENDIENTE' | 'CONFIRMADA' | 'CANCELADA';
+
+export interface Transfer {
+  id: string;
+  origin_store_id: string;
+  destination_store_id: string;
+  created_by: string;
+  status: TransferStatus;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  origin_store?: Store;
+  destination_store?: Store;
+  creator?: { full_name: string };
+  items?: TransferItem[];
+}
+
+export interface TransferItem {
+  id: string;
+  transfer_id: string;
+  product_id: string;
+  quantity: number;
+  unit_cost: number;
+  product?: Product;
+}
+
 export interface PurchaseOrder {
   id: string;
   store_id: string;

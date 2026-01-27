@@ -3,7 +3,7 @@ import { useMotionValue, useTransform } from 'framer-motion';
 import {
   BarChart3, ShoppingCart, Package, Warehouse, Receipt,
   ClipboardList, FileText, History, Shield, DollarSign,
-  Users, Building, Settings, HelpCircle
+  Users, Building, Settings, HelpCircle, ArrowLeftRight
 } from 'lucide-react';
 import { type UserRole } from '@/types';
 import { UserContract } from '@/contracts/user';
@@ -34,6 +34,7 @@ export function useTerminalNavigation(user: UserContract | null, sidebarSearch: 
 
       { id: 'inventory', icon: Package, label: 'Inventario', roles: ['admin', 'manager', 'warehouse', 'encargado'], category: 'INVENTARIO' },
       { id: 'recepcion', icon: Warehouse, label: 'Recepciones', roles: ['warehouse', 'manager', 'encargado'], category: 'INVENTARIO' },
+      { id: 'transferencias', icon: ArrowLeftRight, label: 'Transferencias', roles: ['warehouse', 'manager', 'encargado', 'admin'], category: 'INVENTARIO' },
       { id: 'inventory_count', icon: ClipboardList, label: 'Conteo', roles: ['clerk', 'manager', 'admin', 'encargado'], category: 'INVENTARIO' },
       { id: 'catalog', icon: Package, label: 'Catálogo', roles: ['manager', 'admin', 'encargado'], category: 'INVENTARIO' },
       { id: 'history', icon: History, label: 'Stock', roles: ['manager', 'admin', 'encargado'], category: 'INVENTARIO' },
