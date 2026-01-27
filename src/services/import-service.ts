@@ -6,74 +6,69 @@ export interface ImportError {
   message: string;
 }
 
+export interface ValidatedRow<T> {
+  row: number;
+  item: T;
+}
+
+export interface ParseResult<T> {
+  data: ValidatedRow<T>[];
+  errors: ImportError[];
+}
+
 export const importService = {
   /**
-   * Parses a CSV file, normalizes headers based on aliases, and validates each row against a Zod schema.
+   * Parses and validates a CSV file against a Zod schema with header normalization.
+   * Preserves row numbers (index + 2) for precise feedback.
    */
-  async parseCSV<T>(
+  async parseAndValidate<T>(
     file: File,
-    headerAliases: Record<string, string[]>,
-    rowSchema: z.ZodType<T>,
-    requiredHeaders: string[] = []
-  ): Promise<{ data: { rowData: T; rowNumber: number }[]; errors: ImportError[] }> {
+    schema: z.ZodSchema<T>,
+    headerAliases: Record<string, string[]>
+  ): Promise<ParseResult<T>> {
     return new Promise((resolve) => {
       Papa.parse(file, {
         header: true,
         skipEmptyLines: true,
         complete: (results) => {
-          const rawData = results.data as any[];
-          const fileHeaders = (results.meta.fields || []).map(h => h.trim());
+          const rawData = results.data as Record<string, any>[];
+          const fileHeaders = results.meta.fields || [];
+
           const headerMapping: Record<string, string> = {};
-          const missingRequiredHeaders: string[] = [];
 
-          // Determine which file headers map to our canonical headers
-          for (const canonicalHeader in headerAliases) {
-            const aliases = headerAliases[canonicalHeader];
-            const foundAlias = fileHeaders.find((header) =>
-              aliases.includes(header)
+          // Map canonical headers to file headers based on aliases
+          for (const [canonical, aliases] of Object.entries(headerAliases)) {
+            const foundAlias = fileHeaders.find(h =>
+              aliases.map(a => a.toLowerCase()).includes(h.trim().toLowerCase())
             );
-
             if (foundAlias) {
-              headerMapping[canonicalHeader] = foundAlias;
-            } else if (requiredHeaders.includes(canonicalHeader)) {
-              missingRequiredHeaders.push(canonicalHeader);
+              headerMapping[canonical] = foundAlias.trim();
             }
           }
 
-          if (missingRequiredHeaders.length > 0) {
-            resolve({
-              data: [],
-              errors: [
-                {
-                  row: 0,
-                  message: `Faltan las siguientes columnas requeridas: ${missingRequiredHeaders.join(', ')}`,
-                },
-              ],
-            });
-            return;
-          }
-
-          const validatedData: { rowData: T; rowNumber: number }[] = [];
+          const validatedData: ValidatedRow<T>[] = [];
           const errors: ImportError[] = [];
 
           rawData.forEach((row, index) => {
-            const rowNum = index + 2; // +1 for 1-based index, +1 for header row
-            const normalizedRow: any = {};
+            const rowNum = index + 2; // 1-based + header row
+            const normalizedRow: Record<string, any> = {};
 
-            // Map file values to canonical headers
-            for (const canonicalHeader in headerMapping) {
-              normalizedRow[canonicalHeader] = row[headerMapping[canonicalHeader]];
+            // Fill normalized row using mapping
+            for (const [canonical, fileHeader] of Object.entries(headerMapping)) {
+              normalizedRow[canonical] = row[fileHeader];
             }
 
-            const result = rowSchema.safeParse(normalizedRow);
-            if (result.success) {
-              validatedData.push({ rowData: result.data, rowNumber: rowNum });
+            const validation = schema.safeParse(normalizedRow);
+            if (validation.success) {
+              validatedData.push({
+                row: rowNum,
+                item: validation.data
+              });
             } else {
-              result.error.issues.forEach((issue) => {
-                const path = issue.path.join('.');
+              validation.error.issues.forEach((issue) => {
                 errors.push({
                   row: rowNum,
-                  message: `${path ? path + ': ' : ''}${issue.message}`,
+                  message: issue.message
                 });
               });
             }
@@ -81,13 +76,10 @@ export const importService = {
 
           resolve({ data: validatedData, errors });
         },
-        error: (error) => {
-          resolve({
-            data: [],
-            errors: [{ row: 0, message: `Error al procesar el CSV: ${error.message}` }],
-          });
+        error: (err) => {
+          resolve({ data: [], errors: [{ row: 0, message: `Error de lectura: ${err.message}` }] });
         }
       });
     });
-  },
+  }
 };

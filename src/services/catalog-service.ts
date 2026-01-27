@@ -62,44 +62,30 @@ export const catalogService = {
       imageUrl: ['imageUrl', 'imagen', 'Imagen', 'image_url'],
     };
 
-    const requiredHeaders = ['sku', 'name', 'cost', 'price'];
+    const result = await importService.parseAndValidate(file, catalogImportRowSchema, headerAliases);
 
-    const { data, errors } = await importService.parseCSV(
-      file,
-      headerAliases,
-      catalogImportRowSchema,
-      requiredHeaders
-    );
-
-    if (errors.some(e => e.row === 0)) {
-        toast.error(errors[0].message);
-        return { productsToUpdate: [], errors };
-    }
-
+    // Additional business logic: check for duplicate SKUs in the file
     const productsToUpdate = [];
-    const validationErrors = [...errors];
+    const errors = [...result.errors];
     const seenSkus = new Set<string>();
 
-    for (const { rowData, rowNumber } of data) {
-      const cleanSku = rowData.sku.trim();
-
-      if (seenSkus.has(cleanSku)) {
-        validationErrors.push({ row: rowNumber, message: `El SKU '${cleanSku}' está duplicado en el archivo.` });
+    for (const entry of result.data) {
+      const { row, item } = entry;
+      if (seenSkus.has(item.sku)) {
+        errors.push({ row, message: `El SKU '${item.sku}' está duplicado en el archivo.` });
         continue;
       }
-      seenSkus.add(cleanSku);
+      seenSkus.add(item.sku);
 
       productsToUpdate.push({
-        sku: cleanSku,
+        ...item,
         store_id: storeId,
-        name: rowData.name,
-        cost_price: rowData.cost,
-        price: rowData.price,
-        image_url: rowData.imageUrl || '',
+        cost_price: item.cost,
+        image_url: item.imageUrl || '',
       });
     }
 
-    return { productsToUpdate, errors: validationErrors.sort((a, b) => a.row - b.row) };
+    return { productsToUpdate, errors };
   },
 
   async uploadProductImage(productId: string, file: File) {

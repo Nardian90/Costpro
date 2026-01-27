@@ -273,34 +273,22 @@ export const costSheetDataSchema = z.object({
 });
 
 // ============================================
-// CSV Import Schemas
+// Import Schemas
 // ============================================
 
 export const catalogImportRowSchema = z.object({
   sku: z.string().min(1, "El SKU es obligatorio"),
   name: z.string().min(1, "El nombre es obligatorio"),
-  cost: z.preprocess(
-    (val) => (typeof val === 'string' ? parseFloat(val) : val),
-    z.number().min(0, "El costo debe ser un número positivo")
-  ),
-  price: z.preprocess(
-    (val) => (typeof val === 'string' ? parseFloat(val) : val),
-    z.number().min(0, "El precio debe ser un número positivo")
-  ),
-  imageUrl: z.string().optional().nullable(),
+  cost: z.coerce.number().min(0, "El costo debe ser un número válido (mínimo 0)"),
+  price: z.coerce.number().min(0, "El precio debe ser un número válido (mínimo 0)"),
+  imageUrl: z.string().optional().nullable().default(''),
 }).refine(data => data.price >= data.cost, {
-  message: "El precio de venta no puede ser menor que el costo",
+  message: "El precio de venta no puede ser menor que el costo.",
   path: ["price"]
 });
 
 export const receptionImportRowSchema = z.object({
   sku: z.string().min(1, "El SKU es obligatorio"),
-  quantity: z.preprocess(
-    (val) => (typeof val === 'string' ? parseInt(val, 10) : val),
-    z.number().int().positive("La cantidad debe ser un número entero positivo")
-  ),
-  cost: z.preprocess(
-    (val) => (typeof val === 'string' ? parseFloat(val) : val),
-    z.number().min(0, "El costo debe ser un número positivo")
-  ),
+  quantity: z.coerce.number().int().positive("La cantidad debe ser un número entero positivo"),
+  cost: z.coerce.number().min(0, "El costo debe ser un número válido (mínimo 0)"),
 });
