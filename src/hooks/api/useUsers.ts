@@ -62,16 +62,32 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
           const profileColumns = 'id, full_name, email, role, roles, active_store_id, logo_url, is_active, store_id, created_at';
           const storeColumns = 'id, name, address, logo_url, is_active, created_at';
           const membershipColumns = `id, user_id, store_id, role, status, created_at, updated_at, store:stores(${storeColumns})`;
-          const { data: memberProfiles, error } = await supabase
+
+          let memberProfilesRes: any = await supabase
             .from('profiles')
             .select(`${profileColumns}, memberships:user_store_memberships!inner(${membershipColumns})`)
             .in('memberships.store_id', storeIds)
             .order('full_name');
 
+          // Fallback for missing columns
+          if (memberProfilesRes.error && memberProfilesRes.error.code === '42703') {
+             memberProfilesRes = await supabase
+                .from('profiles')
+                .select(`id, full_name, email, role, is_active, memberships:user_store_memberships!inner(${membershipColumns})`)
+                .in('memberships.store_id', storeIds)
+                .order('full_name');
+          }
+
+          const { data: memberProfiles, error } = memberProfilesRes;
+
           if (error) {
             logger.error('DATABASE', 'FETCH_USERS_ENCARGADO_FAILED', { error });
-            const { data: fallbackProfiles } = await supabase.from('profiles').select(profileColumns).order('full_name');
-            return (fallbackProfiles || []) as Profile[];
+            // Fallback: try with limited columns if the full set fails
+            let fallbackRes: any = await supabase.from('profiles').select(profileColumns).order('full_name');
+            if (fallbackRes.error && fallbackRes.error.code === '42703') {
+                fallbackRes = await supabase.from('profiles').select('id, full_name, email, role, is_active').order('full_name');
+            }
+            return (fallbackRes.data || []) as Profile[];
           }
 
           return (memberProfiles || []).map((p: any) => ({
