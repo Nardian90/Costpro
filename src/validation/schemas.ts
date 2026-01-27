@@ -39,7 +39,7 @@ export const userStoreMembershipSchema = z.object({
     logo_url: z.string().nullable().optional(),
     is_active: z.boolean().optional(),
     created_at: z.string().optional(),
-  }).nullable().optional(),
+  }).nullable().optional().catch(null),
 });
 
 export const profileSchema = z.object({
@@ -59,8 +59,8 @@ export const profileSchema = z.object({
   updated_at: z.string().optional().nullable(),
   memberships: z.preprocess(
     (val) => (Array.isArray(val) ? val : []),
-    z.array(userStoreMembershipSchema).optional().default([])
-  ),
+    z.array(userStoreMembershipSchema).catch([])
+  ).default([]),
 });
 
 export const productSchema = z.object({
