@@ -8,7 +8,7 @@ vi.mock('./useAuditLogsView', () => ({
   useAuditLogsView: vi.fn()
 }));
 
-vi.mock('@/hooks/useQueries', () => ({
+vi.mock('@/hooks/api/useStores', () => ({
   useStores: vi.fn(() => ({ data: [], isLoading: false }))
 }));
 

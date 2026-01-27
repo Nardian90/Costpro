@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { supabase } from '@/lib/supabaseClient';
 import { validateRPCArrayResponse } from '@/lib/rpc-validator';
 import { auditLogSchema } from '@/validation/schemas';
-import { withLogging } from './useQueries';
+import { withLogging } from './base';
 
 export interface AuditLogFilters {
   store_id?: string | null;
@@ -19,6 +19,11 @@ export function useAuditLogs(filters: AuditLogFilters = {}) {
   return useQuery({
     queryKey: ['audit-logs', store_id, search_term, date_from, date_to, limit],
     queryFn: async () => {
+      // Guard for audit logs: only allow if parameters are valid or intentionally null
+      if (store_id === 'undefined' || store_id === 'null') {
+          console.warn('[AuditLogs] Received invalid store_id string:', store_id);
+      }
+
       const rpcName = 'get_audit_logs';
       const params = {
         p_store_id: store_id || null,

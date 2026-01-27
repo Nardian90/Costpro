@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react';
-import { useAuditLogs } from '@/hooks/useAuditLogs';
-import { useDebounce } from '@/hooks/useDebounce';
+import { useAuditLogs } from '@/hooks/api/useAuditLogs';
+import { useDebounce } from '@/hooks/ui/useDebounce';
 
 export function useAuditLogsView() {
     const [searchTerm, setSearchTerm] = useState('');

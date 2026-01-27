@@ -6,7 +6,7 @@ import { Search, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import CostProLogo from '@/components/CostProLogo';
 import { ViewType } from '@/store';
-import { NavigationItem } from '@/hooks/useTerminalNavigation';
+import { NavigationItem } from '@/hooks/ui/useTerminalNavigation';
 
 interface SidebarProps {
   sidebarOpen: boolean;

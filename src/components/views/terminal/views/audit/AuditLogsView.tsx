@@ -7,7 +7,7 @@ import { AuditCategory, getAuditCategory } from './AuditEventIcon';
 import { StateRenderer } from '@/components/ui/StateRenderer';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuditLogsView } from './useAuditLogsView';
-import { useStores } from '@/hooks/useQueries';
+import { useStores } from '@/hooks/api/useStores';
 import { useAuthStore } from '@/store';
 import { Shield, X } from 'lucide-react';
 
@@ -46,7 +46,7 @@ export default function AuditLogsView() {
   const { data: stores = [] } = useStores(
     user?.id || '',
     user?.role === 'admin',
-    user?.role === 'encargado'
+    user?.role === 'encargado' || user?.memberships?.some(m => m.role === 'encargado') || false
   );
 
   const { availableUsers, availableStores } = useMemo(() => {
@@ -83,13 +83,15 @@ export default function AuditLogsView() {
         <Shield className="w-8 h-8 text-destructive" />
       </div>
       <p className="font-bold text-destructive text-xl uppercase tracking-tight">
-        {error.message.includes('permission denied') || error.message.includes('42501')
-          ? 'Acceso Denegado'
+        {error.message.includes('permission denied') || error.message.includes('42501') || error.message.includes('PGRST202')
+          ? 'Acceso Denegado / Error de Sistema'
           : 'Error de Carga'}
       </p>
       <p className="text-sm text-muted-foreground max-w-xs mx-auto font-medium">
         {error.message.includes('permission denied') || error.message.includes('42501')
           ? 'Tus privilegios actuales no permiten consultar el historial de auditoría de este contexto.'
+          : error.message.includes('PGRST202')
+          ? 'El servicio de auditoría no está disponible o requiere actualización de base de datos.'
           : 'Hubo un problema al recuperar los registros. Por favor, verifica tu conexión.'}
       </p>
     </div>
