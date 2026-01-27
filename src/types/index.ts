@@ -63,23 +63,23 @@ export interface AuthState {
 // ============================================
 
 export interface UserStoreMembership {
-  id: string;
-  user_id: string;
-  store_id: string;
+  id?: string | null;
+  user_id?: string | null;
+  store_id?: string | null;
   role: UserRole;
   status: 'active' | 'revoked';
-  created_at: string;
-  updated_at: string;
-  store?: Store;
+  created_at?: string | null;
+  updated_at?: string | null;
+  store?: Store | null;
 }
 
 export interface Store {
   id: string;
   name: string;
-  address: string | null;
-  logo_url: string | null;
-  is_active: boolean;
-  created_at: string;
+  address?: string | null;
+  logo_url?: string | null;
+  is_active?: boolean;
+  created_at?: string;
 }
 
 // ============================================
@@ -191,19 +191,19 @@ export interface SaleItem {
 
 export interface Transaction {
   id: string;
-  store_id?: string;
-  seller_id?: string;
+  store_id?: string | null;
+  seller_id?: string | null;
   total_amount: number;
   status: TransactionStatus;
   created_at: string;
-  updated_at?: string;
+  updated_at?: string | null;
   completed_at?: string | null;
   cancelled_at?: string | null;
   void_reason?: string | null;
-  payment_method?: PaymentMethod;
-  discount_type?: DiscountType;
-  discount_value?: number;
-  subtotal?: number;
+  payment_method?: PaymentMethod | null;
+  discount_type?: DiscountType | null;
+  discount_value?: number | null;
+  subtotal?: number | null;
   idempotency_key?: string | null;
 }
 
@@ -385,7 +385,7 @@ export type Profile = {
   max_users_limit?: number;
   created_by?: string | null;
   created_at: string;
-  updated_at?: string;
+  updated_at?: string | null;
   memberships?: UserStoreMembership[];
 };
 

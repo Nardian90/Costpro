@@ -25,31 +25,42 @@ export const transactionStatusSchema = z.enum([
 // ============================================
 
 export const userStoreMembershipSchema = z.object({
-  id: z.string().uuid().optional(),
-  user_id: z.string().uuid().optional(),
-  store_id: z.string().uuid(),
+  id: z.string().uuid().optional().nullable(),
+  user_id: z.string().uuid().optional().nullable(),
+  store_id: z.string().uuid().or(z.string().length(0).transform(() => null)).nullable().optional(),
   role: userRoleSchema.default('clerk'),
   status: z.enum(['active', 'revoked']).default('active'),
-  created_at: z.string().optional(),
-  updated_at: z.string().optional(),
+  created_at: z.string().optional().nullable(),
+  updated_at: z.string().optional().nullable(),
+  store: z.object({
+    id: z.string(),
+    name: z.string(),
+    address: z.string().nullable().optional(),
+    logo_url: z.string().nullable().optional(),
+    is_active: z.boolean().optional(),
+    created_at: z.string().optional(),
+  }).nullable().optional(),
 });
 
 export const profileSchema = z.object({
-  id: z.string().nullable().optional(),
-  full_name: z.string().min(1, "El nombre es obligatorio"),
-  email: z.string().email("Email inválido"),
+  id: z.string().default(''),
+  full_name: z.preprocess((val) => (val === '' || val === null ? undefined : val), z.string().default('Usuario sin nombre')),
+  email: z.preprocess((val) => (val === '' || val === null ? undefined : val), z.string().email().catch('no-email@costpro.com')),
   role: userRoleSchema.default('clerk'),
   roles: z.array(userRoleSchema).default([]),
   is_active: z.boolean().default(true),
-  store_id: z.string().nullable().optional(),
-  active_store_id: z.string().nullable().optional(),
-  logo_url: z.string().nullable().optional(),
-  max_stores_limit: z.number().optional(),
-  max_users_limit: z.number().optional(),
+  store_id: z.string().nullable().optional().default(null),
+  active_store_id: z.string().nullable().optional().default(null),
+  logo_url: z.string().nullable().optional().default(null),
+  max_stores_limit: z.number().optional().default(1),
+  max_users_limit: z.number().optional().default(1),
   created_by: z.string().uuid().nullable().optional(),
-  created_at: z.string().optional(),
-  updated_at: z.string().optional(),
-  memberships: z.array(userStoreMembershipSchema).optional().default([]),
+  created_at: z.string().default(() => new Date().toISOString()),
+  updated_at: z.string().optional().nullable(),
+  memberships: z.preprocess(
+    (val) => (Array.isArray(val) ? val : []),
+    z.array(userStoreMembershipSchema).optional().default([])
+  ),
 });
 
 export const productSchema = z.object({
@@ -97,18 +108,18 @@ export const cartItemSchema = z.object({
 });
 
 export const transactionSchema = z.object({
-  id: z.string().uuid(),
-  store_id: z.string().uuid().optional(),
-  seller_id: z.string().uuid().optional(),
-  total_amount: z.number(),
-  status: transactionStatusSchema,
-  created_at: z.string(),
-  updated_at: z.string().optional(),
+  id: z.string().uuid().or(z.string()),
+  store_id: z.string().uuid().optional().nullable(),
+  seller_id: z.string().uuid().optional().nullable(),
+  total_amount: z.number().default(0),
+  status: transactionStatusSchema.default('pending'),
+  created_at: z.string().default(() => new Date().toISOString()),
+  updated_at: z.string().optional().nullable(),
   completed_at: z.string().nullable().optional(),
   cancelled_at: z.string().nullable().optional(),
   void_reason: z.string().nullable().optional(),
-  payment_method: paymentMethodSchema.optional(),
-  discount_type: discountTypeSchema.optional(),
+  payment_method: paymentMethodSchema.optional().default('cash'),
+  discount_type: discountTypeSchema.optional().default('fixed'),
   discount_value: z.number().optional().default(0),
   subtotal: z.number().optional().default(0),
   idempotency_key: z.string().nullable().optional(),
