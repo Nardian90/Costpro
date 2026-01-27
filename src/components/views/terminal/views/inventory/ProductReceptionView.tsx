@@ -320,7 +320,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
             />
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                <h2 className="text-2xl font-bold border-l-4 border-primary pl-4">
+                <h2 className="text-2xl font-bold border-l-4 border-primary pl-4 hidden sm:block">
                     Nueva Recepción de Productos
                 </h2>
                 <ActionMenu actions={actions} />

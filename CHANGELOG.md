@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.5.6] - 2026-02-11
+
+### Changed
+- **Mobile Speed Optimization (TPV & Inventory)**: Optimización integral para operativa táctil rápida.
+- Rediseño de controles de cantidad en TPV con targets de 44px para evitar errores táctiles.
+- Implementación de selector de descuentos predefinidos (1-tap) para reducir uso de teclado.
+- Migración de filtros de categoría a chips persistentes en Inventario, permitiendo filtrado en un solo toque.
+- Mejora de ergonomía visual ocultando títulos redundantes en dispositivos móviles (≤768px).
+
 ## [5.5.5] - 2026-02-11
 
 ### Added
