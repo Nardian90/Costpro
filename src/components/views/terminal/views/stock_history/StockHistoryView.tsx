@@ -8,7 +8,7 @@ import ActionMenu from '@/components/ui/ActionMenu';
 
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { useStockMovements } from '@/hooks/useStockMovements';
+import { useStockMovements } from '@/hooks/api/useStockMovements';
 import { useAuthStore } from '@/store';
 
 interface StockHistoryViewProps {}

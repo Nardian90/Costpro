@@ -5,7 +5,7 @@ import { Menu, X, HelpCircle, Bell, Building as BuildingIcon } from 'lucide-reac
 import { cn } from '@/lib/utils';
 import { ViewType } from '@/store';
 import { UserContract } from '@/contracts/user';
-import { NavigationItem } from '@/hooks/useTerminalNavigation';
+import { NavigationItem } from '@/hooks/ui/useTerminalNavigation';
 
 interface HeaderProps {
   sidebarOpen: boolean;

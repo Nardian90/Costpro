@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
-import { useCostSheetCalculator } from '@/hooks/useCostSheetCalculator';
+import { useCostSheetCalculator } from '@/hooks/logic/useCostSheetCalculator';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';

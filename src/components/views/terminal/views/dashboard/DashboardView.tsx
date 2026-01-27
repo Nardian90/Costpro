@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCanAccess, useUIStore } from '@/store';
-import { useProducts } from '@/hooks/useQueries';
+import { useProducts } from '@/hooks/api/useProducts';
 import { StateRenderer } from '@/components/ui/StateRenderer';
 import type { DashboardKPIs, Product, SalesSummary } from '@/types';
 import { useDashboardView } from './useDashboardView';

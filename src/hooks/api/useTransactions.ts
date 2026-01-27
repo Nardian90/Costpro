@@ -1,14 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
 import { validateRPCArrayResponse } from '@/lib/rpc-validator';
-import { transactionSchema } from '@/validation/schemas';
-import { withLogging, withTableLogging } from './useQueries';
+import { transactionSchema, transactionItemSchema } from '@/validation/schemas';
+import { withLogging, withTableLogging } from './base';
 
 export function useTransactions(storeId?: string | null, isAdmin = false) {
   return useQuery({
     queryKey: ['transactions', storeId, isAdmin],
     queryFn: async () => {
-      // Optimizing payload by selecting only required columns for the history list
       const columns = 'id, created_at, total_amount, status, payment_method, subtotal, discount_value';
       let query = supabase.from('transactions').select(columns);
       if (!isAdmin && storeId) {
@@ -23,9 +22,6 @@ export function useTransactions(storeId?: string | null, isAdmin = false) {
   });
 }
 
-/**
- * Prefetches transactions for a given store.
- */
 export async function prefetchTransactions(queryClient: any, storeId: string, isAdmin = false) {
   if (!isAdmin && !storeId) return;
 
@@ -46,6 +42,21 @@ export async function prefetchTransactions(queryClient: any, storeId: string, is
   });
 }
 
+export function useTransactionDetails(transactionId?: string) {
+  return useQuery({
+    queryKey: ['transaction-items', transactionId],
+    queryFn: async () => {
+      if (!transactionId) return [];
+      const columns = 'id, transaction_id, product_id, variant_id, quantity, price_at_sale, cost_at_sale, created_at, products(name, sku)';
+      const data = await withTableLogging('select', 'transaction_items', () => supabase.from('transaction_items')
+        .select(columns)
+        .eq('transaction_id', transactionId));
+      return await validateRPCArrayResponse(data, transactionItemSchema, 'transaction_items');
+    },
+    enabled: !!transactionId,
+  });
+}
+
 export function useCreateSale() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -55,7 +66,6 @@ export function useCreateSale() {
     },
     onSuccess: (_, variables) => {
       const storeId = variables.p_store_id;
-      // Targeted invalidation to avoid global cache churn
       queryClient.invalidateQueries({ queryKey: ['products', storeId] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-kpis', storeId] });
       queryClient.invalidateQueries({ queryKey: ['transactions', storeId] });

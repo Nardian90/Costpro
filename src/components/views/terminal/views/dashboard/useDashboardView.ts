@@ -2,7 +2,7 @@
 'use client'
 
 import { useAuthStore } from '@/store';
-import { useDashboardData } from '@/hooks/useQueries';
+import { useDashboardData } from '@/hooks/api/useDashboard';
 
 export function useDashboardView() {
   const { user } = useAuthStore();

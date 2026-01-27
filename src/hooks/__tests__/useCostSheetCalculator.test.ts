@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react';
-import { useCostSheetCalculator } from '../useCostSheetCalculator';
+import { useCostSheetCalculator } from "../logic/useCostSheetCalculator";
 import { describe, it, expect } from 'vitest';
 import { CostSheetData } from '@/types/cost-sheet';
 

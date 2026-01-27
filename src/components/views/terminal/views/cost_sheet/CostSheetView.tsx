@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
-import { useCostSheetCalculator } from '@/hooks/useCostSheetCalculator';
+import { useCostSheetCalculator } from '@/hooks/logic/useCostSheetCalculator';
 import CostSheetNav from './CostSheetNav';
 import CostSheetInteractiveTable from './CostSheetInteractiveTable';
 import CostSheetAnnexEditor from './CostSheetAnnexEditor';

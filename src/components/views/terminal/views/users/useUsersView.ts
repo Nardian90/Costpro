@@ -3,13 +3,8 @@
 
 import { useState } from 'react';
 import { useAuthStore } from '@/store';
-import {
-    useUsers,
-    useCreateUser,
-    useUpdateUser,
-    useManageUserMemberships,
-    useStores
-} from '@/hooks/useQueries';
+import { useUsers, useCreateUser, useUpdateUser, useManageUserMemberships } from '@/hooks/api/useUsers';
+import { useStores } from '@/hooks/api/useStores';
 import { UserFormData } from './UserForm';
 import { UserContract, mapProfileToContract, UserContractFactory } from '@/contracts/user';
 import { Profile, UserRole } from '@/types';
@@ -24,16 +19,18 @@ export function useUsersView() {
     const [selectedUserContract, setSelectedUserContract] = useState<UserContract | null>(null);
 
     // Data Fetching
+    const isEncargado = user?.role === 'encargado' || user?.role === 'manager' || user?.memberships?.some(m => m.role === 'encargado');
+
     const { data: usersData = [], isLoading: isLoadingUsers } = useUsers(
         user?.id || '',
         user?.role === 'admin',
-        user?.role === 'encargado' || user?.role === 'manager',
+        isEncargado || false,
         user?.activeStoreId
     );
     const { data: stores = [] } = useStores(
         user?.id || '',
         user?.role === 'admin',
-        user?.role === 'encargado' || user?.role === 'manager'
+        isEncargado || false
     );
 
     const filteredUsers = usersData.filter(u => (u.full_name || '').toLowerCase().includes(searchTerm.toLowerCase()));
