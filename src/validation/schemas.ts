@@ -54,6 +54,8 @@ export const profileSchema = z.object({
   store_id: z.string().nullable().optional().default(null),
   active_store_id: z.string().nullable().optional().default(null),
   logo_url: z.string().nullable().optional().default(null),
+  ai_provider: z.string().optional().default('gemini'),
+  ai_api_key: z.string().nullable().optional().default(''),
   max_stores_limit: z.number().optional().default(1),
   max_users_limit: z.number().optional().default(1),
   created_by: z.string().uuid().nullable().optional(),
