@@ -21,6 +21,8 @@ export interface UserContract {
   createdAt: string;
   updatedAt: string;
   memberships: UserStoreMembership[];
+  aiProvider: string;
+  aiApiKey: string;
 }
 
 /**
@@ -42,6 +44,8 @@ export const UserFactory = {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     memberships: [],
+    aiProvider: 'gemini',
+    aiApiKey: '',
     ...initialValues,
   }),
 };
@@ -72,4 +76,6 @@ export const mapProfileToContract = (p: Profile): UserContract => ({
   createdAt: p.created_at,
   updatedAt: p.updated_at || p.created_at,
   memberships: p.memberships || [],
+  aiProvider: p.ai_provider || 'gemini',
+  aiApiKey: p.ai_api_key || '',
 });

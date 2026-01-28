@@ -434,6 +434,8 @@ export type Profile = {
   created_at: string;
   updated_at?: string | null;
   memberships?: UserStoreMembership[];
+  ai_provider?: string | null;
+  ai_api_key?: string | null;
 };
 
 export interface SalesKPIs {

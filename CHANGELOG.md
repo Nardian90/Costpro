@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.6.5] - 2026-02-18
+
+### Added
+- **Multi-AI Bot ("Jules")**: Implementación de un asistente inteligente capaz de alternar dinámicamente entre proveedores de IA (Gemini, GPT).
+- **Arquitectura de Adapters**: Nueva capa en `src/lib/ai` que estandariza las llamadas a LLMs mediante la interfaz `LLMProvider`.
+- **Bot Orchestrator**: Sistema de orquestación que selecciona el modelo adecuado según la configuración de entorno (`LLM_PROVIDER`).
+- **Bot Service**: Integración con la base de datos de Supabase para proporcionar contexto en tiempo real (Stock Crítico, Ventas del día) a la IA.
+- **Floating Chat Widget**: Nueva interfaz de chat neumórfica integrada en la terminal para interacción directa con Jules.
+- **Auditoría de IA**: Registro automático de todas las consultas y respuestas del bot en la tabla `audit_logs` para trazabilidad operativa.
+
+**Nota de Handoff para UX:** Se ha añadido el componente `ChatBot` como un widget flotante en la esquina inferior derecha. El diseño utiliza animaciones de Framer Motion y sigue la estética de "Cyber Shell" del proyecto. Se recomienda revisar la accesibilidad del widget en dispositivos móviles muy pequeños.
+
 ## [5.6.4] - 2026-02-17
 
 ### Added

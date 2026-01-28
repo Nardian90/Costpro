@@ -17,6 +17,7 @@ interface AuthState {
   logout: () => void;
   setLoading: (loading: boolean) => void;
   setStatus: (status: AuthStatus) => void;
+  updateUser: (user: Partial<UserContract>) => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -29,6 +30,9 @@ export const useAuthStore = create<AuthState>((set) => ({
   logout: () => set({ user: null, token: null, loading: false, status: 'unauthenticated' }),
   setLoading: (loading) => set({ loading }),
   setStatus: (status) => set({ status, loading: status === 'loading' }),
+  updateUser: (updatedFields) => set((state) => ({
+    user: state.user ? { ...state.user, ...updatedFields } : null
+  })),
 }));
 
 // --- UI Store ---
