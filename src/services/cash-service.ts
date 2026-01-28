@@ -1,0 +1,53 @@
+import { supabase } from '@/lib/supabaseClient';
+import { CashClosure } from '@/types';
+
+export const cashService = {
+  async getSalesSinceLastClosure(storeId: string) {
+    const { data, error } = await supabase.rpc('get_sales_since_last_closure', {
+      p_store_id: storeId,
+    });
+    if (error) throw error;
+    return data[0] as {
+      total_sales: number;
+      total_cash: number;
+      total_transfer: number;
+      last_closure_at: string;
+    };
+  },
+
+  async createClosure(closure: Partial<CashClosure>) {
+    const { data, error } = await supabase
+      .from('cash_closures')
+      .insert(closure)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as CashClosure;
+  },
+
+  async updateClosure(id: string, closure: Partial<CashClosure>) {
+    const { data, error } = await supabase
+      .from('cash_closures')
+      .update(closure)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as CashClosure;
+  },
+
+  async getClosures(storeId: string, isAdmin: boolean = false) {
+    let query = supabase
+      .from('cash_closures')
+      .select('*, profile:profiles(full_name)')
+      .order('created_at', { ascending: false });
+
+    if (!isAdmin) {
+      query = query.eq('store_id', storeId);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data as CashClosure[];
+  }
+};
