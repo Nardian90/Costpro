@@ -1,20 +1,55 @@
-
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabaseClient';
-import { withTableLogging } from './base';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { cashService } from '@/services/cash-service';
+import { CashClosure } from '@/types';
+import { toast } from 'sonner';
 
 export function useCashClosures(storeId?: string | null, isAdmin = false) {
   return useQuery({
     queryKey: ['cash-closures', storeId, isAdmin],
-    queryFn: async () => {
-      const columns = 'id, created_at, closed_at, declared_cash, declared_vouchers, system_total, difference, notes, profile:profiles(full_name)';
-      let query = supabase.from('cash_closures').select(columns);
-      if (!isAdmin && storeId) {
-        query = query.eq('store_id', storeId);
-      }
-      const data = await withTableLogging('select', 'cash_closures', () => query.order('created_at', { ascending: false }).limit(50));
-      return data as any[];
+    queryFn: () => {
+      if (!storeId && !isAdmin) return [];
+      return cashService.getClosures(storeId || '', isAdmin);
     },
     enabled: isAdmin || !!storeId,
+  });
+}
+
+export function useSalesSinceLastClosure(storeId?: string | null) {
+  return useQuery({
+    queryKey: ['sales-since-last-closure', storeId],
+    queryFn: () => {
+      if (!storeId) return null;
+      return cashService.getSalesSinceLastClosure(storeId);
+    },
+    enabled: !!storeId,
+  });
+}
+
+export function useCreateCashClosure() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (closure: Partial<CashClosure>) => cashService.createClosure(closure),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cash-closures'] });
+      toast.success('Declaración de fondos registrada correctamente');
+    },
+    onError: (error: any) => {
+      toast.error(`Error al registrar declaración: ${error.message}`);
+    },
+  });
+}
+
+export function useUpdateCashClosure() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, closure }: { id: string; closure: Partial<CashClosure> }) =>
+      cashService.updateClosure(id, closure),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cash-closures'] });
+      toast.success('Cierre de caja finalizado correctamente');
+    },
+    onError: (error: any) => {
+      toast.error(`Error al finalizar cierre: ${error.message}`);
+    },
   });
 }

@@ -353,11 +353,15 @@ export interface CashClosure {
   declared_vouchers: number;
   system_total: number;
   notes: string | null;
-  closed_at: string;
+  status: 'pendiente' | 'cerrado';
+  closed_at: string | null;
   created_at: string;
   declared_total: number;
   system_expected_total: number;
   difference: number;
+  profile?: {
+    full_name: string;
+  };
 }
 
 // ============================================

@@ -1,12 +1,11 @@
 'use client';
 
-import React from 'react';
-import { DollarSign, CreditCard, Layers, Edit, History, Eye } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { DollarSign, CreditCard, Layers, Edit, History, Eye, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ActionMenu from '@/components/ui/ActionMenu';
 
-import { useCashClosures } from '@/hooks/api/useCashClosures';
-import { useDashboardData } from '@/hooks/api/useDashboard';
+import { useCashClosures, useCreateCashClosure, useUpdateCashClosure, useSalesSinceLastClosure } from '@/hooks/api/useCashClosures';
 import { useAuthStore } from '@/store';
 import { toast } from 'sonner';
 
@@ -14,26 +13,97 @@ interface CashClosureViewProps {}
 
 export default function CashClosureView({}: CashClosureViewProps) {
   const { user } = useAuthStore();
-  const { data: cashClosuresData } = useCashClosures(user?.storeId, user?.role === 'admin');
-  const { data: dashboardData } = useDashboardData(user?.storeId, user?.role === 'admin');
+  const { data: cashClosuresData, isLoading: isLoadingClosures } = useCashClosures(user?.storeId, user?.role === 'admin');
+  const { data: salesData, isLoading: isLoadingSales } = useSalesSinceLastClosure(user?.storeId);
 
-  const summary = dashboardData?.summary || {
-    total_billed: 0,
-    total_cash: 0,
-    total_transfer: 0,
-  };
+  const createClosure = useCreateCashClosure();
+  const updateClosure = useUpdateCashClosure();
+
+  const [declaredCash, setDeclaredCash] = useState<number>(0);
+  const [declaredVouchers, setDeclaredVouchers] = useState<number>(0);
+  const [notes, setNotes] = useState<string>('');
+
   const cashClosures = cashClosuresData || [];
+  const pendingClosure = cashClosures.find(c => c.status === 'pendiente');
 
-  const onProcessClosure = () => {
-    toast.info('La lógica de cierre de caja se implementará en el futuro.');
+  const summary = {
+    total_billed: salesData?.total_sales || 0,
+    total_cash: salesData?.total_cash || 0,
+    total_transfer: salesData?.total_transfer || 0,
   };
+
+  useEffect(() => {
+    if (pendingClosure) {
+      setDeclaredCash(Number(pendingClosure.declared_cash) || 0);
+      setDeclaredVouchers(Number(pendingClosure.declared_vouchers) || 0);
+      setNotes(pendingClosure.notes || '');
+    } else {
+      setDeclaredCash(0);
+      setDeclaredVouchers(0);
+      setNotes('');
+    }
+  }, [pendingClosure]);
+
+  const totalDeclared = declaredCash + declaredVouchers;
+  const difference = totalDeclared - summary.total_billed;
+
+  const handleProcessClosure = async () => {
+    if (!user?.storeId) return;
+
+    if (pendingClosure) {
+      // Finalize closure (Manager/Admin flow)
+      const canClose = ['admin', 'manager', 'encargado'].includes(user.role);
+      if (!canClose) {
+        toast.error('No tienes permisos para finalizar el cierre de caja.');
+        return;
+      }
+
+      updateClosure.mutate({
+        id: pendingClosure.id,
+        closure: {
+          status: 'cerrado',
+          closed_at: new Date().toISOString(),
+          // We update totals just in case they changed since declaration
+          declared_cash: declaredCash,
+          declared_vouchers: declaredVouchers,
+          declared_total: totalDeclared,
+          system_expected_total: summary.total_billed,
+          difference: totalDeclared - summary.total_billed,
+          notes: notes
+        }
+      });
+    } else {
+      // Create declaration (Operator flow)
+      createClosure.mutate({
+        store_id: user.storeId,
+        user_id: user.id,
+        declared_cash: declaredCash,
+        declared_vouchers: declaredVouchers,
+        declared_total: totalDeclared,
+        system_expected_total: summary.total_billed,
+        difference: totalDeclared - summary.total_billed,
+        notes: notes,
+        status: 'pendiente'
+      });
+    }
+  };
+
+  const isProcessing = createClosure.isPending || updateClosure.isPending;
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase">Cierre de Caja</h2>
         <ActionMenu
           actions={[
-            { id: 'process', label: 'Procesar Cierre', icon: DollarSign, onClick: onProcessClosure, variant: 'primary' }
+            {
+              id: 'process',
+              label: pendingClosure ? 'Cerrar Caja' : 'Declarar Fondos',
+              icon: pendingClosure ? CheckCircle2 : DollarSign,
+              onClick: handleProcessClosure,
+              variant: pendingClosure ? 'success' : 'primary',
+              disabled: isProcessing || isLoadingSales
+            }
           ]}
           className="sm:w-auto"
         />
@@ -51,7 +121,13 @@ export default function CashClosureView({}: CashClosureViewProps) {
               <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block ml-1">Efectivo Físico</label>
               <div className="relative">
                 <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-primary w-5 h-5" />
-                <input type="number" className="w-full p-4 pl-12 rounded-xl border border-border bg-background text-2xl font-black font-mono focus:ring-1 focus:ring-primary outline-none" placeholder="0.00" />
+                <input
+                  type="number"
+                  value={declaredCash || ''}
+                  onChange={(e) => setDeclaredCash(Number(e.target.value))}
+                  className="w-full p-4 pl-12 rounded-xl border border-border bg-background text-2xl font-black font-mono focus:ring-1 focus:ring-primary outline-none"
+                  placeholder="0.00"
+                />
               </div>
             </div>
 
@@ -59,13 +135,24 @@ export default function CashClosureView({}: CashClosureViewProps) {
               <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block ml-1">Transferencias / Otros</label>
               <div className="relative">
                 <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 text-primary w-5 h-5" />
-                <input type="number" className="w-full p-4 pl-12 rounded-xl border border-border bg-background text-2xl font-black font-mono focus:ring-1 focus:ring-primary outline-none" placeholder="0.00" />
+                <input
+                  type="number"
+                  value={declaredVouchers || ''}
+                  onChange={(e) => setDeclaredVouchers(Number(e.target.value))}
+                  className="w-full p-4 pl-12 rounded-xl border border-border bg-background text-2xl font-black font-mono focus:ring-1 focus:ring-primary outline-none"
+                  placeholder="0.00"
+                />
               </div>
             </div>
 
             <div className="space-y-1.5">
               <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block ml-1">Observaciones</label>
-              <textarea className="w-full p-4 rounded-xl border border-border bg-background text-sm font-medium resize-none h-24 focus:ring-1 focus:ring-primary outline-none" placeholder="Notas del turno..." />
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                className="w-full p-4 rounded-xl border border-border bg-background text-sm font-medium resize-none h-24 focus:ring-1 focus:ring-primary outline-none"
+                placeholder="Notas del turno..."
+              />
             </div>
           </div>
         </div>
@@ -88,9 +175,13 @@ export default function CashClosureView({}: CashClosureViewProps) {
               </div>
             ))}
 
-            <div className="flex justify-between items-center p-6 rounded-2xl bg-primary text-white mt-8 shadow-xl shadow-primary/20">
-              <span className="text-xs font-black uppercase tracking-widest">Diferencia de Arqueo</span>
-              <span className="text-3xl font-black font-mono">$0.00</span>
+            <div className={cn(
+              "flex justify-between items-center p-6 rounded-2xl mt-8 shadow-xl transition-colors",
+              difference === 0 ? "bg-green-600 shadow-green-500/20" :
+              difference < 0 ? "bg-destructive shadow-destructive/20" : "bg-amber-600 shadow-amber-500/20"
+            )}>
+              <span className="text-xs font-black uppercase tracking-widest text-white">Diferencia de Arqueo</span>
+              <span className="text-3xl font-black font-mono text-white">${difference.toFixed(2)}</span>
             </div>
           </div>
         </div>
@@ -115,19 +206,28 @@ export default function CashClosureView({}: CashClosureViewProps) {
             </thead>
             <tbody>
               {cashClosures.map((closure) => (
-                <tr key={closure.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
+                <tr key={closure.id} className={cn(
+                  "border-b border-border/50 hover:bg-muted/20 transition-colors",
+                  closure.status === 'pendiente' && "bg-amber-500/5"
+                )}>
                   <td className="p-4">
                     <div className="font-bold text-xs">{new Date(closure.created_at).toLocaleDateString()}</div>
-                    <div className="text-[10px] text-muted-foreground font-mono">{new Date(closure.created_at).toLocaleTimeString()}</div>
+                    <div className="text-[10px] text-muted-foreground font-mono">
+                      {new Date(closure.created_at).toLocaleTimeString()}
+                      {closure.status === 'pendiente' && (
+                        <span className="ml-2 px-1.5 py-0.5 bg-amber-500 text-white rounded-[4px] text-[8px] uppercase font-black tracking-tighter">Pendiente</span>
+                      )}
+                    </div>
                   </td>
                   <td className="p-4 font-bold text-xs uppercase">{closure.profile?.full_name}</td>
-                  <td className="p-4 text-right font-black text-base">${(closure.system_expected_total || closure.system_total || 0).toFixed(2)}</td>
+                  <td className="p-4 text-right font-black text-base">${(Number(closure.system_expected_total) || Number(closure.system_total) || 0).toFixed(2)}</td>
                   <td className="p-4 text-right">
                     <span className={cn(
                       "font-black text-xs px-2 py-1 rounded",
-                      (closure.difference || 0) < 0 ? 'text-destructive bg-destructive/10' : 'text-green-600 bg-green-500/10'
+                      (Number(closure.difference) || 0) < 0 ? 'text-destructive bg-destructive/10' :
+                      (Number(closure.difference) || 0) === 0 ? 'text-green-600 bg-green-500/10' : 'text-amber-600 bg-amber-500/10'
                     )}>
-                      ${(closure.difference || 0).toFixed(2)}
+                      ${(Number(closure.difference) || 0).toFixed(2)}
                     </span>
                   </td>
                   <td className="p-4">
