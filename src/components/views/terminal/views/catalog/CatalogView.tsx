@@ -2,8 +2,8 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef, useDeferredValue } from 'react';
-import { useAuthStore } from '@/store';
-import { useProducts, useUpdateProduct, useCreateProduct, useBulkUpdateProducts, useAddVariant, useDeleteVariant, useDeleteProduct, useToggleProductActive } from '@/hooks/api/useProducts';
+import { useAuthStore, useUIStore } from '@/store';
+import { useProducts, useUpdateProduct, useBulkUpdateProducts, useAddVariant, useDeleteVariant, useDeleteProduct, useToggleProductActive } from '@/hooks/api/useProducts';
 import { toast } from 'sonner';
 import {
     Edit,
@@ -37,11 +37,11 @@ import ProductImage from '@/components/ui/ProductImage';
 
 export default function CatalogView() {
     const { user } = useAuthStore();
+    const { setIsCreateProductModalOpen } = useUIStore();
     const isMobile = useIsMobile();
 
     const { data: products = [], isLoading: loading } = useProducts(user?.storeId);
     const updateProductMutation = useUpdateProduct();
-    const createProductMutation = useCreateProduct();
     const bulkUpdateMutation = useBulkUpdateProducts();
     const addVariantMutation = useAddVariant();
     const deleteVariantMutation = useDeleteVariant();
@@ -52,6 +52,7 @@ export default function CatalogView() {
     const [searchTerm, setSearchTerm] = useState('');
     const deferredSearchTerm = useDeferredValue(searchTerm);
     const [layoutMode, setLayoutMode] = useState<ViewMode>('grid');
+    const [isAuditMode, setIsAuditMode] = useState(false);
     const [importErrors, setImportErrors] = useState<{ row: number; message: string }[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -61,12 +62,22 @@ export default function CatalogView() {
 
     const filteredProducts = useMemo(() => {
         const lowerSearch = deferredSearchTerm.toLowerCase();
-        return products.filter(p =>
-          p.name.toLowerCase().includes(lowerSearch) ||
-          (p.sku && p.sku.toLowerCase().includes(lowerSearch)) ||
-          (p.category && p.category.toLowerCase().includes(lowerSearch))
-        );
-    }, [products, deferredSearchTerm]);
+        return products.filter(p => {
+          const matchesSearch = p.name.toLowerCase().includes(lowerSearch) ||
+            (p.sku && p.sku.toLowerCase().includes(lowerSearch)) ||
+            (p.category && p.category.toLowerCase().includes(lowerSearch));
+
+          if (!matchesSearch) return false;
+
+          if (isAuditMode) {
+            const hasNoPrice = p.price === 0 || p.price === null;
+            const hasNoVariants = !p.product_variants || p.product_variants.length === 0;
+            return hasNoPrice && hasNoVariants;
+          }
+
+          return true;
+        });
+    }, [products, deferredSearchTerm, isAuditMode]);
 
     // Handlers
     const handleUpdateProduct = async () => {
@@ -95,31 +106,6 @@ export default function CatalogView() {
           modals.setIsEditProductModalOpen(false);
         } catch (error: any) {
           toast.error(error.message || 'Error al actualizar producto');
-        }
-    };
-
-    const handleCreateProduct = async () => {
-        const { newProductForm } = modals;
-        if (!newProductForm.name) {
-            toast.error('El nombre es obligatorio');
-            return;
-        }
-        if (!user?.storeId) {
-            toast.error('No hay una tienda activa seleccionada');
-            return;
-        }
-        try {
-            await createProductMutation.mutateAsync({
-                ...newProductForm,
-                store_id: user.storeId
-            });
-            toast.success('Producto creado con éxito');
-            modals.setIsCreateProductModalOpen(false);
-            modals.setNewProductForm({
-                name: '', sku: '', category: '', price: 0, cost_price: 0, unit_of_measure: 'unidad', description: ''
-            });
-        } catch (error: any) {
-            toast.error(error.message || 'Error al crear producto');
         }
     };
 
@@ -222,7 +208,7 @@ export default function CatalogView() {
     };
 
     const actions: Action[] = [
-        { id: 'create', label: 'Nuevo Producto', icon: PlusCircle, onClick: () => modals.setIsCreateProductModalOpen(true), variant: 'primary' },
+        { id: 'create', label: 'Nuevo Producto', icon: PlusCircle, onClick: () => setIsCreateProductModalOpen(true), variant: 'primary' },
         { id: 'export', label: 'Exportar Precios', icon: Download, onClick: () => catalogService.exportCatalog(products), variant: 'outline' },
         {
             id: 'import', label: 'Importar Precios', icon: Upload, variant: 'outline',
@@ -245,9 +231,26 @@ export default function CatalogView() {
             <input type="file" ref={fileInputRef} className="hidden" accept=".csv" onChange={handleImportFileChange} />
 
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-                <div className="flex items-center justify-between w-full lg:w-auto gap-4">
-                    <h2 className="text-2xl sm:text-3xl font-black text-foreground tracking-tighter uppercase truncate">Catálogo Global</h2>
-                    <ViewSwitcher currentView={layoutMode} onViewChange={setLayoutMode} />
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto">
+                    <div className="flex items-center justify-between w-full sm:w-auto gap-4">
+                        <h2 className="text-2xl sm:text-3xl font-black text-foreground tracking-tighter uppercase truncate">Catálogo Global</h2>
+                        <ViewSwitcher currentView={layoutMode} onViewChange={setLayoutMode} />
+                    </div>
+
+                    <button
+                        onClick={() => setIsAuditMode(!isAuditMode)}
+                        className={cn(
+                            "flex items-center gap-2 px-4 py-2 rounded-full transition-all border shrink-0",
+                            isAuditMode
+                                ? "bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-500/20"
+                                : "bg-background text-muted-foreground border-border hover:bg-muted"
+                        )}
+                    >
+                        <DollarSign className={cn("w-4 h-4", isAuditMode ? "animate-pulse" : "opacity-50")} />
+                        <span className="text-[10px] font-black uppercase tracking-widest">
+                            {isAuditMode ? 'Auditoría Activa' : 'Auditoría de Precios'}
+                        </span>
+                    </button>
                 </div>
 
                 {/* Primary Actions - Column on mobile, ActionMenu on desktop */}
@@ -256,7 +259,7 @@ export default function CatalogView() {
                         <PrimaryButton
                             label="Nuevo Producto"
                             icon={PlusCircle}
-                            onClick={() => modals.setIsCreateProductModalOpen(true)}
+                            onClick={() => setIsCreateProductModalOpen(true)}
                         />
                         <div className="grid grid-cols-3 gap-2">
                             <IconButton
@@ -398,7 +401,6 @@ export default function CatalogView() {
                 handleUpdateImage={handleUpdateImage}
                 handleAddVariant={handleAddVariant}
                 handleDeleteVariant={handleDeleteVariant}
-                handleCreateProduct={handleCreateProduct}
                 handleDeleteProduct={handleDeleteProduct}
                 handleToggleActive={handleToggleActive}
                 catalogService={catalogService}

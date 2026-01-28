@@ -42,16 +42,19 @@ interface NotificationsConfig {
 interface UIState {
   currentView: ViewType;
   sidebarOpen: boolean;
+  isCreateProductModalOpen: boolean;
   notifications: NotificationsConfig;
   setCurrentView: (view: ViewType) => void;
   setNotifications: (notifications: NotificationsConfig) => void;
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
+  setIsCreateProductModalOpen: (open: boolean) => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
   currentView: 'dashboard',
   sidebarOpen: true,
+  isCreateProductModalOpen: false,
   notifications: {
     lowStock: true,
     salesAlerts: true
@@ -60,6 +63,7 @@ export const useUIStore = create<UIState>((set) => ({
   setNotifications: (notifications) => set({ notifications }),
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
+  setIsCreateProductModalOpen: (open) => set({ isCreateProductModalOpen: open }),
 }));
 
 // --- Helper Hooks ---
