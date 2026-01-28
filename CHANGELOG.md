@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.6.6] - 2026-02-18
+
+### Fixed
+- **Hardening de Persistencia de IA**: Corregido error en `useSessionManager` que provocaba la pérdida de la configuración del bot (API Key y Proveedor) al recargar la página por falta de selección de columnas en el perfil.
+- **Resiliencia de Configuración**: Mejora en `ChatBot.tsx` para evitar el borrado accidental de la API Key en el estado local cuando se actualiza solo el proveedor de IA.
+- **Sincronización de Contratos**: Actualización de `profileSchema` y `UserContract` para asegurar que las preferencias de IA se mantengan consistentes durante todo el ciclo de vida de la sesión.
+
+**Nota de Handoff para UX:** No hay cambios visuales. Se ha resuelto un bug crítico que impedía que el chat permaneciera habilitado tras guardar la configuración o refrescar el navegador.
+
 ## [5.6.5] - 2026-02-18
 
 ### Added
