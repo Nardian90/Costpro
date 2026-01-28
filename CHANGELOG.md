@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.6.0] - 2026-02-13
+
+### Added
+- Nueva lógica funcional de **Cierre de Caja** conectada a Supabase.
+- Flujo de trabajo en dos pasos: Declaración de Fondos por parte del cajero (Estado: Pendiente) y Validación Final por el Encargado (Estado: Cerrado).
+- Cálculo automático de la diferencia de arqueo en tiempo real comparando la declaración con las ventas registradas en el sistema.
+- Nueva función RPC `get_sales_since_last_closure` que garantiza un balance exacto basado en el último cierre finalizado o el inicio del día.
+- Tabla histórica de cierres con indicadores visuales de estado y trazabilidad por operador.
+
 ## [5.5.6] - 2026-02-11
 
 ### Changed
