@@ -62,52 +62,65 @@ export const POSCart = ({
           </button>
         </div>
 
-        <div className={cn("p-6", isMobile && "flex-1 overflow-y-auto no-scrollbar")}>
+        <div className={cn(
+          "flex flex-col flex-1 min-h-0",
+          !isMobile && "p-6"
+        )}>
           {items.length === 0 ? (
-            <div className="text-center py-20 text-muted-foreground">
+            <div className="text-center py-20 text-muted-foreground flex-1 flex flex-col justify-center">
               <ShoppingCart className="w-20 h-20 mx-auto mb-6 opacity-5" />
               <p className="font-black uppercase tracking-widest text-sm">Carrito Vacío</p>
             </div>
           ) : (
             <>
-              <div className={cn("space-y-4 pr-2 mb-8 no-scrollbar", !isMobile && "max-h-[40vh] overflow-y-auto")}>
-                {items.map(item => (
-                  <div key={`${item.product_id}-${item.variant_id}`} className="p-4 rounded-lg border border-border bg-background/50 group relative">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex-1">
-                        <div className="font-black text-sm uppercase tracking-tight truncate pr-6">{item.product.name}</div>
-                        <div className="text-[10px] font-bold text-muted-foreground mt-1">{formatCurrency(item.price)} / unidad</div>
-                      </div>
-                      <button
-                        onClick={() => onRemoveItem(item.product_id, item.variant_id)}
-                        className="absolute top-2 right-2 text-muted-foreground hover:text-destructive p-2 rounded-full hover:bg-destructive/5 transition-all"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1 bg-background rounded-lg p-1 border border-border">
+              {/* Scrollable Items Area */}
+              <div className={cn(
+                "flex-1 overflow-y-auto no-scrollbar",
+                isMobile ? "p-6 pb-2" : "pr-2 mb-8 max-h-[45vh]"
+              )}>
+                <div className="space-y-4">
+                  {items.map(item => (
+                    <div key={`${item.product_id}-${item.variant_id}`} className="p-4 rounded-lg border border-border bg-background/50 group relative">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex-1">
+                          <div className="font-black text-sm uppercase tracking-tight truncate pr-6">{item.product.name}</div>
+                          <div className="text-[10px] font-bold text-muted-foreground mt-1">{formatCurrency(item.price)} / unidad</div>
+                        </div>
                         <button
-                          onClick={() => onUpdateQuantity(item.product_id, item.variant_id, item.quantity - 1)}
-                          className="w-11 h-11 flex items-center justify-center rounded-md hover:bg-primary/10 hover:text-primary transition-colors"
+                          onClick={() => onRemoveItem(item.product_id, item.variant_id)}
+                          className="absolute top-2 right-2 text-muted-foreground hover:text-destructive p-2 rounded-full hover:bg-destructive/5 transition-all"
                         >
-                          <Minus className="w-4 h-4" />
-                        </button>
-                        <span className="w-8 text-center font-black text-sm">{item.quantity}</span>
-                        <button
-                          onClick={() => onUpdateQuantity(item.product_id, item.variant_id, item.quantity + 1)}
-                          className="w-11 h-11 flex items-center justify-center rounded-md hover:bg-primary/10 hover:text-primary transition-colors"
-                        >
-                          <Plus className="w-4 h-4" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
-                      <span className="font-black text-lg text-primary">{formatCurrency(item.subtotal)}</span>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1 bg-background rounded-lg p-1 border border-border">
+                          <button
+                            onClick={() => onUpdateQuantity(item.product_id, item.variant_id, item.quantity - 1)}
+                            className="w-11 h-11 flex items-center justify-center rounded-md hover:bg-primary/10 hover:text-primary transition-colors"
+                          >
+                            <Minus className="w-4 h-4" />
+                          </button>
+                          <span className="w-8 text-center font-black text-sm">{item.quantity}</span>
+                          <button
+                            onClick={() => onUpdateQuantity(item.product_id, item.variant_id, item.quantity + 1)}
+                            className="w-11 h-11 flex items-center justify-center rounded-md hover:bg-primary/10 hover:text-primary transition-colors"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <span className="font-black text-lg text-primary">{formatCurrency(item.subtotal)}</span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
 
-              <div className="space-y-6 pt-6 border-t border-border">
+              {/* Sticky Summary & Checkout Area */}
+              <div className={cn(
+                "space-y-6 pt-6 border-t border-border bg-card",
+                isMobile && "p-6 pb-12 shadow-[0_-20px_40px_rgba(0,0,0,0.08)] z-10"
+              )}>
                 <div className="px-2 space-y-2">
                   <label className="text-[9px] font-black uppercase text-muted-foreground tracking-widest block">Descuento (%)</label>
                   <div className="flex gap-2 mb-2">
@@ -119,8 +132,8 @@ export const POSCart = ({
                           if (d > 0) toast.success(`Descuento de ${d}% aplicado`);
                         }}
                         className={cn(
-                          "flex-1 py-2 rounded-lg border font-black text-[10px] uppercase transition-all",
-                          localDiscount.value === d ? "bg-primary text-white border-primary" : "bg-background text-muted-foreground border-border"
+                          "flex-1 py-3 min-h-[44px] rounded-lg border font-black text-[10px] uppercase transition-all",
+                          localDiscount.value === d ? "bg-primary text-white border-primary shadow-lg shadow-primary/20" : "bg-background text-muted-foreground border-border"
                         )}
                       >
                         {d === 0 ? 'Sin' : `${d}%`}
@@ -133,14 +146,14 @@ export const POSCart = ({
                     max="100"
                     value={localDiscount.value || ''}
                     onChange={(e) => setLocalDiscount({ ...localDiscount, value: parseInt(e.target.value) || 0 })}
-                    className="w-full p-2 rounded-lg border border-border bg-background text-sm font-bold focus:ring-1 focus:ring-primary outline-none"
+                    className="w-full p-3 min-h-[44px] rounded-lg border border-border bg-background text-sm font-bold focus:ring-1 focus:ring-primary outline-none"
                     placeholder="0"
                   />
                 </div>
 
                 <div className="flex justify-between items-center px-2">
                    <span className="text-xs font-black uppercase text-muted-foreground tracking-widest">Total a Pagar</span>
-                   <span className="text-4xl sm:text-4xl lg:text-4xl font-black text-primary tracking-tighter max-sm:text-5xl transition-all">
+                   <span className="text-4xl font-black text-primary tracking-tighter transition-all">
                      {formatCurrency(getTotal())}
                    </span>
                 </div>
@@ -149,7 +162,7 @@ export const POSCart = ({
                    <button
                     onClick={() => setSelectedPayment('cash')}
                     className={cn(
-                      "p-4 rounded-xl flex flex-col items-center gap-2 border-2 transition-all bg-background",
+                      "p-4 min-h-[60px] rounded-xl flex flex-col items-center justify-center gap-1 border-2 transition-all bg-background",
                       selectedPayment === 'cash' ? "border-primary shadow-lg shadow-primary/10" : "border-transparent"
                     )}
                    >
@@ -159,7 +172,7 @@ export const POSCart = ({
                    <button
                     onClick={() => setSelectedPayment('transfer')}
                     className={cn(
-                      "p-4 rounded-xl flex flex-col items-center gap-2 border-2 transition-all bg-background",
+                      "p-4 min-h-[60px] rounded-xl flex flex-col items-center justify-center gap-1 border-2 transition-all bg-background",
                       selectedPayment === 'transfer' ? "border-primary shadow-lg shadow-primary/10" : "border-transparent"
                     )}
                    >
@@ -171,7 +184,7 @@ export const POSCart = ({
                 <button
                   onClick={() => onCheckout(selectedPayment, localDiscount.value > 0 ? localDiscount : null)}
                   disabled={isProcessing || items.length === 0}
-                  className="w-full py-5 rounded-xl bg-primary text-white font-black text-lg shadow-2xl disabled:opacity-50 flex items-center justify-center gap-3 transition-transform active:scale-[0.98]"
+                  className="w-full py-5 min-h-[64px] rounded-xl bg-primary text-white font-black text-lg shadow-2xl disabled:opacity-50 flex items-center justify-center gap-3 transition-transform active:scale-[0.98]"
                 >
                   {isProcessing ? (
                     <Loader2 className="w-6 h-6 animate-spin" />
@@ -188,7 +201,7 @@ export const POSCart = ({
                       onClose();
                     }
                   }}
-                  className="w-full py-2 text-[10px] font-black text-muted-foreground uppercase tracking-widest hover:text-destructive transition-colors"
+                  className="w-full py-4 min-h-[44px] text-[10px] font-black text-muted-foreground uppercase tracking-widest hover:text-destructive transition-colors"
                 >
                   Anular Carrito
                 </button>

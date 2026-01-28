@@ -35,22 +35,35 @@ export default function MobilePosDiagram() {
         <rect x="275" y="150" width="120" height="80" rx="10" className="fill-primary/5 stroke-primary/10" />
         <rect x="405" y="150" width="120" height="80" rx="10" className="fill-primary/5 stroke-primary/10" />
 
-        {/* Mobile Drawer (Bottom Sheet) */}
+        {/* Mobile Drawer (Bottom Sheet) with Sticky Footer */}
         <motion.g
-          initial={{ y: 150 }}
+          initial={{ y: 120 }}
           animate={{ y: 0 }}
           transition={{ duration: 1, repeat: Infinity, repeatType: "reverse", repeatDelay: 1 }}
         >
+          {/* Main Drawer Body */}
           <path
-            d="M260 250 L540 250 L540 370 L260 370 Z"
-            className="fill-background stroke-primary shadow-2xl"
+            d="M260 220 L540 220 L540 370 L260 370 Z"
+            className="fill-background stroke-primary/30 shadow-2xl"
+            strokeWidth="1"
+          />
+
+          {/* Scrollable Content Simulation */}
+          <rect x="275" y="235" width="250" height="25" rx="5" className="fill-muted/10 stroke-muted/20" />
+          <rect x="275" y="265" width="250" height="25" rx="5" className="fill-muted/10 stroke-muted/20" />
+          <rect x="275" y="295" width="250" height="25" rx="5" className="fill-muted/10 stroke-muted/20" />
+
+          {/* Sticky Footer */}
+          <path
+            d="M260 310 L540 310 L540 370 L260 370 Z"
+            className="fill-background stroke-primary shadow-[0_-10px_20px_rgba(0,0,0,0.1)]"
             strokeWidth="2"
           />
-          <rect x="375" y="260" width="50" height="4" rx="2" className="fill-primary/20" />
-          <text x="400" y="285" textAnchor="middle" className="fill-primary font-black text-[10px] uppercase">Carrito (1-Tap Discount)</text>
+          <rect x="375" y="225" width="50" height="4" rx="2" className="fill-primary/20" />
+          <text x="400" y="325" textAnchor="middle" className="fill-primary font-black text-[9px] uppercase">Sticky Checkout (v5.6.3)</text>
 
-          <rect x="275" y="300" width="250" height="30" rx="8" className="fill-primary" />
-          <text x="400" y="320" textAnchor="middle" className="fill-white font-black text-[10px] uppercase tracking-widest">Pagar $450.00</text>
+          <rect x="275" y="335" width="250" height="25" rx="8" className="fill-primary" />
+          <text x="400" y="352" textAnchor="middle" className="fill-white font-black text-[9px] uppercase tracking-widest">Pagar $450.00</text>
         </motion.g>
 
         {/* Action Menu (Bottom Bar) */}
