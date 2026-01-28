@@ -74,6 +74,9 @@ export const transferService = {
       p_user_id: userId
     });
     if (error) throw error;
+    if (data?.status === 'error') {
+      throw new Error(data.message || 'Error al confirmar la transferencia');
+    }
     return data;
   }
 };
