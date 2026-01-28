@@ -1,0 +1,150 @@
+'use client';
+
+import React, { useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter
+} from "@/components/ui/dialog";
+import { PrimaryButton, SecondaryButton } from '@/components/ui/atomic';
+import { useUIStore, useAuthStore } from '@/store';
+import { useCreateProduct } from '@/hooks/api/useProducts';
+import { toast } from 'sonner';
+
+export const CreateProductModal = () => {
+  const { isCreateProductModalOpen, setIsCreateProductModalOpen } = useUIStore();
+  const { user } = useAuthStore();
+  const createProductMutation = useCreateProduct();
+
+  const initialFormState = {
+    name: '',
+    sku: '',
+    category: '',
+    price: 0,
+    cost_price: 0,
+    unit_of_measure: 'unidad',
+    description: ''
+  };
+
+  const [form, setForm] = useState(initialFormState);
+
+  const handleCreate = async () => {
+    if (!form.name) {
+      toast.error('El nombre es obligatorio');
+      return;
+    }
+    if (!user?.storeId) {
+      toast.error('No hay una tienda activa seleccionada');
+      return;
+    }
+
+    try {
+      await createProductMutation.mutateAsync({
+        ...form,
+        store_id: user.storeId
+      });
+      toast.success('Producto creado con éxito');
+      setIsCreateProductModalOpen(false);
+      setForm(initialFormState);
+    } catch (error: any) {
+      toast.error(error.message || 'Error al crear producto');
+    }
+  };
+
+  return (
+    <Dialog open={isCreateProductModalOpen} onOpenChange={setIsCreateProductModalOpen}>
+      <DialogContent className="max-w-md !rounded-3xl border-white/5 shadow-2xl">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-black uppercase">Nuevo Producto</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto no-scrollbar pr-2">
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black uppercase tracking-widest ml-1">Nombre</label>
+            <input
+              type="text"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              className="neu-input w-full font-bold"
+              placeholder="Ej: Camiseta Algodón"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest ml-1 flex justify-between">
+                <span>SKU</span>
+                <span className="text-[8px] text-primary/70 italic">Único en tienda</span>
+              </label>
+              <input
+                type="text"
+                value={form.sku}
+                onChange={(e) => setForm({ ...form, sku: e.target.value })}
+                className="neu-input w-full"
+                placeholder="SKU-001"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest ml-1">Categoría</label>
+              <input
+                type="text"
+                value={form.category}
+                onChange={(e) => setForm({ ...form, category: e.target.value })}
+                className="neu-input w-full"
+                placeholder="Ropa"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest ml-1 flex justify-between">
+                 <span>Costo</span>
+                 <span className="text-[8px] text-primary/70 italic">Prioridad</span>
+              </label>
+              <input
+                type="number"
+                value={form.cost_price || ''}
+                onChange={(e) => setForm({ ...form, cost_price: parseFloat(e.target.value) || 0 })}
+                className="neu-input w-full font-bold text-primary"
+                placeholder="0.00"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest ml-1">
+                Precio <span className="text-[8px] opacity-50 lowercase font-normal">(opcional)</span>
+              </label>
+              <input
+                type="number"
+                value={form.price || ''}
+                onChange={(e) => setForm({ ...form, price: parseFloat(e.target.value) || 0 })}
+                className="neu-input w-full font-bold"
+                placeholder="0.00"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest ml-1">Descripción</label>
+              <textarea
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                className="neu-input w-full min-h-[80px] text-sm"
+                placeholder="Detalles adicionales del producto..."
+              />
+          </div>
+        </div>
+        <DialogFooter className="flex-col sm:flex-row gap-3">
+          <SecondaryButton onClick={() => setIsCreateProductModalOpen(false)} label="Cancelar" className="flex-1" />
+          <PrimaryButton
+            onClick={handleCreate}
+            label={createProductMutation.isPending ? "Creando..." : "Crear Producto"}
+            disabled={createProductMutation.isPending}
+            className="flex-1"
+          />
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
