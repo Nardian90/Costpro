@@ -43,9 +43,9 @@ export default function HelpView() {
         </div>
         <div className="flex flex-col items-end">
           <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-black">
-            VERSIÓN 5.6.1 (TECHNICAL HARDENING)
+            VERSIÓN 5.6.2 (AUDIT EXPANSION)
           </Badge>
-          <span className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Última actualización: 13 Feb 2026</span>
+          <span className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Última actualización: 15 Feb 2026</span>
         </div>
       </div>
 
@@ -605,20 +605,36 @@ export default function HelpView() {
             </CardHeader>
             <CardContent className="px-0">
               <div className="space-y-8">
-                {/* --- v5.6.1 --- */}
+                {/* --- v5.6.2 --- */}
                 <div className="relative pl-8 border-l-2 border-primary/20 space-y-4">
                   <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary border-4 border-background" />
                   <div className="flex items-center gap-3">
-                    <Badge className="bg-primary">v5.6.1</Badge>
-                    <span className="text-xs font-black text-muted-foreground uppercase">13 de Febrero, 2026 (Actual)</span>
+                    <Badge className="bg-primary">v5.6.2</Badge>
+                    <span className="text-xs font-black text-muted-foreground uppercase">15 de Febrero, 2026 (Actual)</span>
+                  </div>
+                  <div className="bg-muted/30 rounded-2xl p-6 space-y-4 border border-primary/10">
+                    <h4 className="font-black text-sm uppercase text-primary">Expansión del Sistema de Auditoría Operativa</h4>
+                    <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Auditoría completa de Ventas, Transferencias y Ajustes Manuales.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Nuevos Triggers para cambios en Precios, Productos y Usuarios.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Visualizador de Diferencias (Diff) para ver cambios Antes/Después.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Quick-presets de fecha (Hoy, Ayer, 7 días) en filtros de auditoría.</li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* --- v5.6.1 --- */}
+                <div className="relative pl-8 border-l-2 border-primary/20 space-y-4 opacity-80">
+                  <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-muted border-4 border-background" />
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline">v5.6.1</Badge>
+                    <span className="text-xs font-black text-muted-foreground uppercase">13 de Febrero, 2026</span>
                   </div>
                   <div className="bg-muted/30 rounded-2xl p-6 space-y-4 border border-primary/10">
                     <h4 className="font-black text-sm uppercase text-primary">Technical Hardening y Fortalecimiento de Contratos</h4>
                     <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
                       <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Tipado estricto en TransferService eliminando el uso de `any`.</li>
                       <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Validación Zod obligatoria en la capa de datos para transferencias.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Refuerzo de nulabilidad en interfaces de Transferencia e ítems.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Centralización de storeSchema para unificación de contratos globales.</li>
                     </ul>
                   </div>
                 </div>

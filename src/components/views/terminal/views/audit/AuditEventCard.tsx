@@ -22,7 +22,8 @@ const getBusinessText = (log: AuditLog) => {
     'profiles': 'Perfil de Usuario',
     'stores': 'Tienda',
     'cash_closures': 'Cierre de Caja',
-    'user_store_memberships': 'Membresía de Tienda'
+    'user_store_memberships': 'Membresía de Tienda',
+    'transfers': 'Transferencia'
   };
 
   const actionMap: Record<string, string> = {
@@ -30,16 +31,48 @@ const getBusinessText = (log: AuditLog) => {
     'UPDATE': 'actualizó',
     'DELETE': 'eliminó',
     'VOID': 'anuló',
-    'CANCEL': 'canceló'
+    'CANCEL': 'canceló',
+    'CREATE_PRODUCT': 'creó el producto',
+    'UPDATE_PRODUCT': 'actualizó el producto',
+    'UPDATE_PRICES': 'cambió precios de',
+    'DELETE_PRODUCT': 'eliminó el producto',
+    'ACTIVATE_PRODUCT': 'activó el producto',
+    'DEACTIVATE_PRODUCT': 'desactivó el producto',
+    'CREATE_SALE': 'realizó una venta',
+    'MANUAL_STOCK_ADJUSTMENT': 'ajustó stock de',
+    'CREATE_TRANSFER': 'inició una transferencia',
+    'CONFIRM_TRANSFER': 'confirmó una transferencia',
+    'CREATE_USER': 'creó el usuario',
+    'UPDATE_USER_NAME': 'actualizó el nombre de',
+    'DELETE_USER': 'eliminó el usuario',
+    'CHANGE_ROLE': 'cambió el rol de',
+    'CHANGE_ACTIVE_STORE': 'cambió de tienda activa',
+    'UPDATE_STORE_CONFIG': 'actualizó configuración de tienda'
   };
 
   const tableName = tableMap[table_name] || table_name.replace(/_/g, ' ');
   const actionName = actionMap[action.toUpperCase()] || action.toLowerCase();
 
-  // Custom logic for specific tables
+  // Custom logic for specific actions/tables
+  if (action === 'CREATE_SALE') {
+    const total = new_data?.total_amount || 0;
+    return `realizó una venta por ${formatCurrency(total)}`;
+  }
+
+  if (action === 'MANUAL_STOCK_ADJUSTMENT') {
+    const name = old_data?.product_name || 'producto';
+    const delta = new_data?.delta || 0;
+    return `ajustó stock de ${name} (${delta > 0 ? '+' : ''}${delta} unid.)`;
+  }
+
+  if (action === 'UPDATE_PRICES') {
+    const name = new_data?.name || old_data?.name || '';
+    return `cambió precios de ${name}`;
+  }
+
   if (table_name === 'products') {
     const name = new_data?.name || old_data?.name || '';
-    return `${actionName} el producto ${name}`.trim();
+    return `${actionName} ${name}`.trim();
   }
 
   if (table_name === 'transactions') {
@@ -52,10 +85,13 @@ const getBusinessText = (log: AuditLog) => {
       return `${actionName} la recepción ${ref}`.trim();
   }
 
-  if (table_name === 'stock_movements') {
-      const qty = new_data?.quantity_change || old_data?.quantity_change || 0;
-      const type = new_data?.movement_type || old_data?.movement_type || '';
-      return `registró un movimiento de stock (${type}) de ${qty} unidades`;
+  if (table_name === 'profiles') {
+      const name = new_data?.full_name || old_data?.full_name || '';
+      return `${actionName} ${name}`.trim();
+  }
+
+  if (table_name === 'transfers') {
+      return `${actionName}`;
   }
 
   return `${actionName} ${tableName}`;
