@@ -88,8 +88,8 @@ export default function InventoryAdjustmentModal({
   const isIncrease = ajusteUnidades > 0;
 
   return (
-    <div className="fixed inset-0 bg-background/90 backdrop-blur-xl flex items-start sm:items-center justify-center z-50 p-4 pt-4 sm:pt-0 overflow-y-auto">
-      <div className="neu-card max-w-2xl w-full flex flex-col overflow-hidden !p-0 border-primary/20 shadow-2xl my-auto sm:my-0">
+    <div className="fixed inset-0 bg-background/90 backdrop-blur-xl flex items-start sm:items-center justify-center z-50 p-4 pt-8 sm:pt-4 overflow-y-auto">
+      <div className="neu-card max-w-2xl w-full flex flex-col overflow-hidden !p-0 border-primary/20 shadow-2xl">
         {/* Header */}
         <div className="p-6 border-b border-white/5 bg-primary/5 flex justify-between items-center">
           <div className="flex items-center gap-3">
@@ -144,7 +144,7 @@ export default function InventoryAdjustmentModal({
                     type="number"
                     value={ajusteUnidades}
                     onChange={(e) => setAjusteUnidades(parseInt(e.target.value) || 0)}
-                    className="neu-input w-full !pl-16 !pr-12 font-black text-lg"
+                    className="neu-input w-full !pl-20 !pr-12 font-black text-lg"
                     placeholder="Ej: -5, 10..."
                   />
                   <div className="absolute left-6 top-1/2 -translate-y-1/2">
@@ -178,7 +178,7 @@ export default function InventoryAdjustmentModal({
                     value={ajusteValorUnitario}
                     onChange={(e) => setAjusteValorUnitario(e.target.value === '' ? '' : parseFloat(e.target.value))}
                     className={cn(
-                        "neu-input w-full !pl-12 !pr-12 font-black text-lg",
+                        "neu-input w-full !pl-20 !pr-12 font-black text-lg",
                         ajusteValorUnitario === '' ? "text-muted-foreground" : "text-primary"
                     )}
                     placeholder={ajusteUnidades < 0 ? costoPromedioActual.toFixed(2).toString() : "0.00"}
@@ -263,7 +263,7 @@ export default function InventoryAdjustmentModal({
           <button
             onClick={handleConfirm}
             className="neu-btn-primary flex-1 flex items-center justify-center gap-2 !py-3 font-black uppercase text-xs tracking-widest"
-            disabled={isProcessing || (ajusteUnidades === 0 && ajusteValorUnitario === '') || !reason}
+            disabled={isProcessing}
           >
             {isProcessing ? (
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
