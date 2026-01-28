@@ -216,8 +216,8 @@ export const paginatedProductSchema = productSchema.extend({
 
 export const dashboardKpiResponseSchema = z.object({
   total_sales: z.number(),
-  total_cost: z.number(),
-  total_profit: z.number(),
+  total_cost: z.number().nullable(),
+  total_profit: z.number().nullable(),
   transaction_count: z.number(),
   avg_ticket: z.number(),
   total_cash: z.number(),

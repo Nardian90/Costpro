@@ -401,8 +401,8 @@ export interface BusinessEvent {
 
 export interface DashboardKPIs {
   gross_sales: number;
-  cost_of_goods: number;
-  profit: number;
+  cost_of_goods: number | null;
+  profit: number | null;
 }
 
 export interface SalesSummary {
@@ -433,8 +433,8 @@ export type Profile = {
 
 export interface SalesKPIs {
     total_sales: number;
-    total_cost: number;
-    total_profit: number;
+    total_cost: number | null;
+    total_profit: number | null;
     transaction_count: number;
     avg_ticket: number;
     total_cash: number;
