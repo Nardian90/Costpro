@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -14,7 +14,7 @@ import { useCreateProduct } from '@/hooks/api/useProducts';
 import { toast } from 'sonner';
 
 export const CreateProductModal = () => {
-  const { isCreateProductModalOpen, setIsCreateProductModalOpen } = useUIStore();
+  const { isCreateProductModalOpen, setIsCreateProductModalOpen, initialProductName, setInitialProductName } = useUIStore();
   const { user } = useAuthStore();
   const createProductMutation = useCreateProduct();
 
@@ -29,6 +29,18 @@ export const CreateProductModal = () => {
   };
 
   const [form, setForm] = useState(initialFormState);
+
+  useEffect(() => {
+    if (isCreateProductModalOpen && initialProductName) {
+      setForm(prev => ({ ...prev, name: initialProductName }));
+    }
+  }, [isCreateProductModalOpen, initialProductName]);
+
+  const handleClose = () => {
+    setIsCreateProductModalOpen(false);
+    setInitialProductName('');
+    setForm(initialFormState);
+  };
 
   const handleCreate = async () => {
     if (!form.name) {
@@ -46,15 +58,14 @@ export const CreateProductModal = () => {
         store_id: user.storeId
       });
       toast.success('Producto creado con éxito');
-      setIsCreateProductModalOpen(false);
-      setForm(initialFormState);
+      handleClose();
     } catch (error: any) {
       toast.error(error.message || 'Error al crear producto');
     }
   };
 
   return (
-    <Dialog open={isCreateProductModalOpen} onOpenChange={setIsCreateProductModalOpen}>
+    <Dialog open={isCreateProductModalOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-md !rounded-3xl border-white/5 shadow-2xl">
         <DialogHeader>
           <DialogTitle className="text-xl font-black uppercase">Nuevo Producto</DialogTitle>
@@ -136,7 +147,7 @@ export const CreateProductModal = () => {
           </div>
         </div>
         <DialogFooter className="flex-col sm:flex-row gap-3">
-          <SecondaryButton onClick={() => setIsCreateProductModalOpen(false)} label="Cancelar" className="flex-1" />
+          <SecondaryButton onClick={handleClose} label="Cancelar" className="flex-1" />
           <PrimaryButton
             onClick={handleCreate}
             label={createProductMutation.isPending ? "Creando..." : "Crear Producto"}
