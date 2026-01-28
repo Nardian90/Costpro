@@ -51,7 +51,11 @@ export default function DashboardView() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <DashboardKpisSection kpis={kpis} />
               <DashboardSummarySection summary={summary} />
-              <DashboardAlertsSection products={products} onViewInventory={() => setCurrentView('inventory')} />
+              <DashboardAlertsSection
+                products={products}
+                onViewInventory={() => setCurrentView('inventory')}
+                onGoToCatalog={() => setCurrentView('catalog')}
+              />
             </div>
           );
         }}
@@ -160,44 +164,73 @@ function DashboardSummarySection({ summary }: { summary: SalesSummary }) {
   );
 }
 
-function DashboardAlertsSection({ products, onViewInventory }: { products: Product[], onViewInventory: () => void }) {
+function DashboardAlertsSection({ products, onViewInventory, onGoToCatalog }: { products: Product[], onViewInventory: () => void, onGoToCatalog: () => void }) {
   const criticalProducts = products.filter(p => (p.stock_current ?? 0) <= (p.min_stock ?? 0));
+  const unpricedProducts = products.filter(p => p.price === null || p.price <= 0);
 
   return (
-    <div className="md:col-span-1 p-6 rounded-xl border border-destructive/10 bg-card shadow-sm">
-      <h3 className="text-lg font-black text-destructive uppercase tracking-widest flex items-center gap-2 mb-6">
-        <Package className="w-5 h-5" />
-        Alertas Críticas
-      </h3>
-      <div className="space-y-3">
-        {criticalProducts.length > 0 ? (
-          <>
-            {criticalProducts.slice(0, 4).map(product => (
-              <div key={product.id} className="p-3 rounded-lg bg-destructive/5 border border-destructive/10 group hover:bg-destructive/10 transition-colors">
-                <div className="flex justify-between items-center">
-                  <div className="overflow-hidden">
-                    <div className="font-bold text-xs text-foreground truncate">{product.name}</div>
-                    <div className="text-[10px] font-mono text-muted-foreground">{product.sku}</div>
-                  </div>
-                  <div className="text-destructive font-black text-sm whitespace-nowrap ml-2">{product.stock_current} uds</div>
-                </div>
-              </div>
-            ))}
-            {criticalProducts.length > 4 && (
-              <button
-                onClick={onViewInventory}
-                className="w-full py-2 text-[10px] font-black uppercase text-primary hover:underline"
-              >
-                Ver todas las alertas ({criticalProducts.length})
-              </button>
-            )}
-          </>
-        ) : (
-          <div className="text-center py-10">
-            <Check className="w-12 h-12 mx-auto mb-2 text-green-500 opacity-20" />
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Todo en orden</p>
+    <div className="md:col-span-1 space-y-6">
+      {/* Alerta de Productos sin Precio */}
+      {unpricedProducts.length >= 5 && (
+        <div className="p-6 rounded-xl border border-amber-500/20 bg-amber-500/5 shadow-sm">
+          <h3 className="text-lg font-black text-amber-600 uppercase tracking-widest flex items-center gap-2 mb-4">
+            <Target className="w-5 h-5" />
+            ⚠ Productos sin precio
+          </h3>
+          <div className="space-y-4">
+            <div className="flex items-baseline gap-2">
+               <span className="text-4xl font-black text-amber-600">{unpricedProducts.length}</span>
+               <span className="text-xs font-bold text-amber-600/70 uppercase tracking-widest">Productos detectados</span>
+            </div>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase leading-relaxed">
+              Existen productos sin precio asignado. Esto representa un riesgo operativo y de facturación.
+            </p>
+            <button
+              onClick={onGoToCatalog}
+              className="w-full py-3 bg-amber-500 text-white font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-amber-600 transition-colors shadow-lg shadow-amber-500/20"
+            >
+              Ir a catálogo / corregir precios
+            </button>
           </div>
-        )}
+        </div>
+      )}
+
+      {/* Alertas de Stock Críticas */}
+      <div className="p-6 rounded-xl border border-destructive/10 bg-card shadow-sm">
+        <h3 className="text-lg font-black text-destructive uppercase tracking-widest flex items-center gap-2 mb-6">
+          <Package className="w-5 h-5" />
+          Alertas Críticas
+        </h3>
+        <div className="space-y-3">
+          {criticalProducts.length > 0 ? (
+            <>
+              {criticalProducts.slice(0, 4).map(product => (
+                <div key={product.id} className="p-3 rounded-lg bg-destructive/5 border border-destructive/10 group hover:bg-destructive/10 transition-colors">
+                  <div className="flex justify-between items-center">
+                    <div className="overflow-hidden">
+                      <div className="font-bold text-xs text-foreground truncate">{product.name}</div>
+                      <div className="text-[10px] font-mono text-muted-foreground">{product.sku}</div>
+                    </div>
+                    <div className="text-destructive font-black text-sm whitespace-nowrap ml-2">{product.stock_current} uds</div>
+                  </div>
+                </div>
+              ))}
+              {criticalProducts.length > 4 && (
+                <button
+                  onClick={onViewInventory}
+                  className="w-full py-2 text-[10px] font-black uppercase text-primary hover:underline"
+                >
+                  Ver todas las alertas ({criticalProducts.length})
+                </button>
+              )}
+            </>
+          ) : (
+            <div className="text-center py-10">
+              <Check className="w-12 h-12 mx-auto mb-2 text-green-500 opacity-20" />
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Todo en orden</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

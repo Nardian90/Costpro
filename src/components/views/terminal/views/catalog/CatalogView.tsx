@@ -230,8 +230,8 @@ export default function CatalogView() {
         <MobileSafeContainer className="space-y-6 pb-20">
             <input type="file" ref={fileInputRef} className="hidden" accept=".csv" onChange={handleImportFileChange} />
 
-            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 flex-wrap">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto flex-wrap">
                     <div className="flex items-center justify-between w-full sm:w-auto gap-4">
                         <h2 className="text-2xl sm:text-3xl font-black text-foreground tracking-tighter uppercase truncate">Catálogo Global</h2>
                         <ViewSwitcher currentView={layoutMode} onViewChange={setLayoutMode} />
@@ -240,7 +240,7 @@ export default function CatalogView() {
                     <button
                         onClick={() => setIsAuditMode(!isAuditMode)}
                         className={cn(
-                            "flex items-center gap-2 px-4 py-2 rounded-full transition-all border shrink-0",
+                            "flex items-center gap-2 px-4 py-2 rounded-full transition-all border shrink-0 min-h-[44px]",
                             isAuditMode
                                 ? "bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-500/20"
                                 : "bg-background text-muted-foreground border-border hover:bg-muted"
@@ -254,34 +254,36 @@ export default function CatalogView() {
                 </div>
 
                 {/* Primary Actions - Column on mobile, ActionMenu on desktop */}
-                {isMobile ? (
-                    <div className="flex flex-col gap-3 w-full">
-                        <PrimaryButton
-                            label="Nuevo Producto"
-                            icon={PlusCircle}
-                            onClick={() => setIsCreateProductModalOpen(true)}
-                        />
-                        <div className="grid grid-cols-3 gap-2">
-                            <IconButton
-                                icon={Download}
-                                onClick={() => catalogService.exportCatalog(products)}
-                                className="w-full"
+                <div className="w-full lg:w-auto">
+                    {isMobile ? (
+                        <div className="flex flex-col gap-3 w-full">
+                            <PrimaryButton
+                                label="Nuevo Producto"
+                                icon={PlusCircle}
+                                onClick={() => setIsCreateProductModalOpen(true)}
                             />
-                            <IconButton
-                                icon={Upload}
-                                onClick={() => { setImportErrors([]); fileInputRef.current?.click(); }}
-                                className="w-full"
-                            />
-                            <IconButton
-                                icon={HelpCircle}
-                                onClick={() => modals.setIsHelpModalOpen(true)}
-                                className="w-full"
-                            />
+                            <div className="grid grid-cols-3 gap-2">
+                                <IconButton
+                                    icon={Download}
+                                    onClick={() => catalogService.exportCatalog(products)}
+                                    className="w-full"
+                                />
+                                <IconButton
+                                    icon={Upload}
+                                    onClick={() => { setImportErrors([]); fileInputRef.current?.click(); }}
+                                    className="w-full"
+                                />
+                                <IconButton
+                                    icon={HelpCircle}
+                                    onClick={() => modals.setIsHelpModalOpen(true)}
+                                    className="w-full"
+                                />
+                            </div>
                         </div>
-                    </div>
-                ) : (
-                    <ActionMenu actions={actions} />
-                )}
+                    ) : (
+                        <ActionMenu actions={actions} className="lg:w-auto" />
+                    )}
+                </div>
             </div>
 
             <SearchInput
