@@ -24,6 +24,12 @@ interface ExtendedProduct extends Product {
   product_variants: ProductVariant[];
 }
 
+interface DecomposedItem {
+  variantId: string | null;
+  name: string;
+  quantity: number;
+}
+
 interface Difference {
   productId: string;
   name: string;
@@ -31,7 +37,7 @@ interface Difference {
   counted: number;
   diff: number;
   variants: ProductVariant[];
-  decomposition: { variantId: string; name: string; quantity: number }[];
+  decomposition: DecomposedItem[];
 }
 
 export default function InventoryCountView() {
@@ -68,6 +74,7 @@ export default function InventoryCountView() {
 
     return shortages.every(shortage => {
       const totalDecomposed = shortage.decomposition.reduce((acc, dec) => {
+        if (!dec.variantId) return acc + dec.quantity; // Base product counts as 1:1
         const variant = shortage.variants.find(v => v.id === dec.variantId);
         const factor = variant?.conversion_factor || 1;
         return acc + (dec.quantity * factor);
@@ -109,13 +116,17 @@ export default function InventoryCountView() {
     setCountedQuantities(prev => ({ ...prev, [productId]: quantity }));
   };
 
-  const calculateOptimalDecomposition = (diff: number, variants: ProductVariant[]) => {
+  const calculateOptimalDecomposition = (diff: number, variants: ProductVariant[], productName: string) => {
     let remaining = Math.abs(diff);
-    const sortedVariants = [...variants].sort((a, b) => b.conversion_factor - a.conversion_factor);
-    const decomposition: { variantId: string; name: string; quantity: number }[] = [];
+    // Sort variants by conversion factor (largest first), ignoring those with factor 1 for the initial pass
+    const sortedVariants = [...variants]
+      .filter(v => v.conversion_factor > 1)
+      .sort((a, b) => b.conversion_factor - a.conversion_factor);
+
+    const decomposition: DecomposedItem[] = [];
 
     for (const variant of sortedVariants) {
-      if (variant.conversion_factor > 0 && remaining >= variant.conversion_factor) {
+      if (remaining >= variant.conversion_factor) {
         const count = Math.floor(remaining / variant.conversion_factor);
         decomposition.push({
           variantId: variant.id,
@@ -123,6 +134,25 @@ export default function InventoryCountView() {
           quantity: count
         });
         remaining %= variant.conversion_factor;
+      }
+    }
+
+    // If there is still a remaining amount, or if there were no bulk variants
+    if (remaining > 0) {
+      // Prefer a variant with factor 1 if it exists, otherwise use base product
+      const unitVariant = variants.find(v => v.conversion_factor === 1);
+      if (unitVariant) {
+        decomposition.push({
+          variantId: unitVariant.id,
+          name: unitVariant.name,
+          quantity: remaining
+        });
+      } else {
+        decomposition.push({
+          variantId: null,
+          name: productName,
+          quantity: remaining
+        });
       }
     }
 
@@ -141,7 +171,7 @@ export default function InventoryCountView() {
           counted: counted,
           diff: diff,
           variants: p.product_variants || [],
-          decomposition: diff < 0 ? calculateOptimalDecomposition(diff, p.product_variants || []) : []
+          decomposition: diff < 0 ? calculateOptimalDecomposition(diff, p.product_variants || [], p.name) : []
         };
       })
       .filter((d) => d.diff !== 0);
@@ -162,20 +192,25 @@ export default function InventoryCountView() {
     }
 
     setProcessing(true);
-    const toastId = toast.loading('Sincronizando inventario...');
+    const toastId = toast.loading('Sincronizando inventario...'); // Fixed reference for success toast
 
     try {
       const shortages = differences.filter(d => d.diff < 0);
       const surpluses = differences.filter(d => d.diff > 0);
 
       if (shortages.length > 0) {
+        // Clear cart before adding shortages to provide a clean state for adjustment
+        useCartStore.getState().clearCart();
+
         shortages.forEach(d => {
           const product = products.find(p => p.id === d.productId);
           if (!product) return;
 
           d.decomposition.forEach(dec => {
             if (dec.quantity <= 0) return;
-            const variant = (product.product_variants || []).find(v => v.id === dec.variantId);
+            const variant = dec.variantId
+              ? (product.product_variants || []).find(v => v.id === dec.variantId)
+              : null;
 
             useCartStore.getState().addItem({
               product_id: product.id,
@@ -189,7 +224,7 @@ export default function InventoryCountView() {
             });
           });
         });
-        toast.info(`${shortages.length} productos con faltantes cargados al punto de venta`);
+        toast.success(`${shortages.length} productos con faltantes cargados al punto de venta`, { id: toastId });
       }
 
       if (surpluses.length > 0) {
@@ -362,7 +397,7 @@ export default function InventoryCountView() {
                         <h5 className="text-[8px] font-black text-warning uppercase tracking-[0.3em]">Resolución de Faltante (Venta)</h5>
                         <div className="space-y-2">
                            {d.decomposition.map((item, vIdx) => (
-                             <div key={item.variantId} className="flex items-center justify-between p-3 neu-inset-sm bg-background border border-white/5">
+                             <div key={item.variantId || `base-${vIdx}`} className="flex items-center justify-between p-3 neu-inset-sm bg-background border border-white/5">
                                 <span className="text-[10px] font-black uppercase tracking-tight">{item.name}</span>
                                 <span className="font-black text-primary text-sm">x{item.quantity}</span>
                              </div>
