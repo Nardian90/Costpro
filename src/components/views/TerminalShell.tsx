@@ -23,6 +23,7 @@ import { prefetchReceptions } from '@/hooks/api/useReceptions';
 import { Sidebar } from './terminal/Sidebar';
 import { Header } from './terminal/Header';
 import CostProLogo from '@/components/CostProLogo';
+import { CreateProductModal } from '@/components/modals/CreateProductModal';
 
 // Sub-views will be lazy loaded later
 import { MobileSafeContainer } from '@/components/ui/MobileSafeContainer';
@@ -258,6 +259,8 @@ export default function TerminalShell() { // Renamed from TerminalView
           onClick={toggleSidebar}
         />
       )}
+
+      <CreateProductModal />
     </div>
   );
 }
