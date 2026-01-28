@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.6.3] - 2026-02-16
+
+### Changed
+- **Technical Hardening & Performance Audit**: Comprehensive system-wide reinforcement of stability and speed pillars.
+- **Over-Fetching Elimination**: Replaced legacy `select('*')` with explicit column selection in `catalog-service.ts` to reduce network payload and database CPU.
+- **Strict Typing (Core Hooks)**: Significant reduction of `any` types in `useUsers.ts` and `useSessionManager.ts`, moving towards a fully predictable and type-safe data flow for user identity and session management.
+- **React Query Hardening**: Transitioned all prefetch functions (`prefetchProducts`, `prefetchDashboardData`, `prefetchTransactions`, etc.) from `any` to strict `QueryClient` typing, improving IDE support and build-time safety.
+- **Resilient Fallbacks**: Refined error handling and schema fallbacks in `useUsers.ts` to ensure UI stability during database migrations or partial schema evolutions.
+
 ## [5.6.2] - 2026-02-15
 
 ### Added
