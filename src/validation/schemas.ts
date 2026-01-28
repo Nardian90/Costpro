@@ -69,7 +69,7 @@ export const productSchema = z.object({
   id: z.string().uuid(),
   name: z.string().min(1, "El nombre es obligatorio"),
   description: z.string().nullable().optional(),
-  sku: z.string().min(1, "El SKU es obligatorio"),
+  sku: z.preprocess((val) => val === '' ? null : val, z.string().nullable().optional()),
   price: z.coerce.number().min(0).default(0),
   cost_price: z.coerce.number().min(0).default(0),
   image_url: z.string().nullable().optional(),
