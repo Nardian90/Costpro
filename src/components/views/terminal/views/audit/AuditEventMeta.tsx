@@ -24,6 +24,7 @@ export default function AuditEventMeta({ oldData, newData, metadata }: AuditEven
     const keys = new Set([...Object.keys(oldData), ...Object.keys(newData)]);
 
     const labelMap: Record<string, string> = {
+      'price': 'Precio Venta',
       'sale_price': 'Precio Venta',
       'cost_price': 'Costo',
       'cost': 'Costo Promedio',
@@ -38,7 +39,7 @@ export default function AuditEventMeta({ oldData, newData, metadata }: AuditEven
     const formatValue = (key: string, val: any) => {
         if (val === null || val === undefined) return 'N/A';
         if (typeof val === 'boolean') return val ? 'SÍ' : 'NO';
-        if (['sale_price', 'cost_price', 'cost'].includes(key)) return formatCurrency(val);
+        if (['price', 'sale_price', 'cost_price', 'cost'].includes(key)) return formatCurrency(val);
         return String(val);
     };
 
