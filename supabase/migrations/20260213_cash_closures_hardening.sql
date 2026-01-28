@@ -22,9 +22,10 @@ CREATE TABLE IF NOT EXISTS public.cash_closures (
     difference numeric DEFAULT 0
 );
 
--- 2. Add status column if it doesn't exist (in case the table already exists)
+-- 2. Add/Update columns to ensure they are standard numeric columns and not GENERATED ALWAYS
 DO $$
 BEGIN
+    -- Handle status column
     IF NOT EXISTS (
         SELECT 1 FROM information_schema.columns
         WHERE table_name = 'cash_closures' AND column_name = 'status'
@@ -32,6 +33,7 @@ BEGIN
         ALTER TABLE public.cash_closures ADD COLUMN status text NOT NULL DEFAULT 'pendiente' CHECK (status IN ('pendiente', 'cerrado'));
     END IF;
 
+    -- Handle declared_total
     IF NOT EXISTS (
         SELECT 1 FROM information_schema.columns
         WHERE table_name = 'cash_closures' AND column_name = 'declared_total'
@@ -39,6 +41,7 @@ BEGIN
         ALTER TABLE public.cash_closures ADD COLUMN declared_total numeric DEFAULT 0;
     END IF;
 
+    -- Handle system_expected_total
     IF NOT EXISTS (
         SELECT 1 FROM information_schema.columns
         WHERE table_name = 'cash_closures' AND column_name = 'system_expected_total'
@@ -46,12 +49,17 @@ BEGIN
         ALTER TABLE public.cash_closures ADD COLUMN system_expected_total numeric DEFAULT 0;
     END IF;
 
-    IF NOT EXISTS (
+    -- Handle difference: This is the column causing the "cannot insert a non-DEFAULT value" error
+    -- If it exists as a generated column, we must drop it and recreate it.
+    IF EXISTS (
         SELECT 1 FROM information_schema.columns
         WHERE table_name = 'cash_closures' AND column_name = 'difference'
     ) THEN
-        ALTER TABLE public.cash_closures ADD COLUMN difference numeric DEFAULT 0;
+        -- We drop and recreate to ensure it's a normal column
+        ALTER TABLE public.cash_closures DROP COLUMN difference;
     END IF;
+    ALTER TABLE public.cash_closures ADD COLUMN difference numeric DEFAULT 0;
+
 END $$;
 
 -- 3. RLS Policies
