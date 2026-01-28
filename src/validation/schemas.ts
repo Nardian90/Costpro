@@ -68,21 +68,21 @@ export const productSchema = z.object({
   name: z.string().min(1, "El nombre es obligatorio"),
   description: z.string().nullable().optional(),
   sku: z.string().min(1, "El SKU es obligatorio"),
-  price: z.number().min(0).default(0),
-  cost_price: z.number().min(0).default(0),
+  price: z.coerce.number().min(0).default(0),
+  cost_price: z.coerce.number().min(0).default(0),
   image_url: z.string().nullable().optional(),
   category: z.string().nullable().optional(),
   unit_of_measure: z.string().nullable().optional(),
   supplier: z.string().nullable().optional(),
   created_at: z.string().nullable().optional(),
   updated_at: z.string().nullable().optional(),
-  stock_current: z.number().default(0),
-  cost_average: z.number().nullable().optional().default(0),
-  min_stock: z.number().default(0),
-  store_id: z.string().uuid({ message: "La tienda es obligatoria" }),
+  stock_current: z.coerce.number().default(0),
+  cost_average: z.coerce.number().nullable().optional().default(0),
+  min_stock: z.coerce.number().default(0),
+  store_id: z.string().uuid().nullable().optional(),
   public_image_url: z.string().nullable().optional(),
-  is_active: z.boolean().default(true),
-  has_movements: z.boolean().default(false),
+  is_active: z.preprocess((val) => val === 'true' || val === true, z.boolean().default(true)),
+  has_movements: z.preprocess((val) => val === 'true' || val === true, z.boolean().default(false)),
 });
 
 export const productVariantSchema = z.object({
@@ -90,8 +90,8 @@ export const productVariantSchema = z.object({
   product_id: z.string().uuid().optional(),
   name: z.string(),
   sku: z.string().nullable().optional(),
-  price: z.number().min(0).default(0),
-  conversion_factor: z.number().min(0).default(1),
+  price: z.coerce.number().min(0).default(0),
+  conversion_factor: z.coerce.number().min(0).default(1),
   created_at: z.string().optional(),
   updated_at: z.string().optional(),
 });
@@ -200,14 +200,14 @@ export const transactionItemSchema = z.object({
   transaction_id: z.string(),
   product_id: z.string(),
   variant_id: z.string().nullable(),
-  quantity: z.number(),
-  price_at_sale: z.number(),
-  cost_at_sale: z.number(),
+  quantity: z.coerce.number(),
+  price_at_sale: z.coerce.number(),
+  cost_at_sale: z.coerce.number(),
   created_at: z.string(),
   products: z.object({
     name: z.string(),
     sku: z.string().nullable(),
-  }).nullable(),
+  }).nullable().optional(),
 });
 
 export const paginatedProductSchema = productSchema.extend({
@@ -215,13 +215,13 @@ export const paginatedProductSchema = productSchema.extend({
 });
 
 export const dashboardKpiResponseSchema = z.object({
-  total_sales: z.number(),
-  total_cost: z.number().nullable(),
-  total_profit: z.number().nullable(),
-  transaction_count: z.number(),
-  avg_ticket: z.number(),
-  total_cash: z.number(),
-  total_card: z.number(),
+  total_sales: z.coerce.number().default(0),
+  total_cost: z.coerce.number().nullable().optional(),
+  total_profit: z.coerce.number().nullable().optional(),
+  transaction_count: z.coerce.number().default(0),
+  avg_ticket: z.coerce.number().default(0),
+  total_cash: z.coerce.number().default(0),
+  total_card: z.coerce.number().default(0),
 });
 
 export const createSaleParamsSchema = z.object({
