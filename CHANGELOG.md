@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.6.3] - 2026-02-16
+
+### Added
+- **Sistema de Scroll de Seguridad (Plan B)**: Implementación de un mecanismo de seguridad para garantizar que la información crítica nunca sea inaccesible en dispositivos móviles estrechos (e.g., Galaxy S8+ de 360px).
+- Nuevo componente `SecurityScrollContainer` que aplica `overflow-x: auto` y scroll táctil suave a contenedores de resumen y datos financieros.
+- Refuerzo global de `MobileSafeContainer` con `overflow-x: auto` como medida preventiva para todas las vistas de la terminal.
+
+### Changed
+- **Hardening de Interfaz Táctica**: Aplicación de `whitespace-nowrap` en etiquetas de totales, precios y KPIs en las vistas de Dashboard, Ficha de Costo, Recepción de Productos y Auditoría de Stock para mantener la integridad visual de los números.
+- Optimización de contenedores Flexbox en secciones de "Resumen" añadiendo `gap` y `min-width` para prevenir colisiones de elementos en viewports pequeños.
+
+**Nota de Handoff para UX:** No se requieren cambios de diseño. Se han reforzado los pilares de accesibilidad existentes. El sistema ahora permite desplazamiento lateral suave en áreas que antes se desbordaban o cortaban.
+
 ## [5.6.2] - 2026-02-15
 
 ### Added
