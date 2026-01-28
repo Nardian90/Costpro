@@ -435,7 +435,7 @@
 /* En móvil, convertir a cards */
 @media (max-width: 768px) {
   .table-to-cards {
-    overflow-x: hidden;
+    overflow-x: auto;
   }
 
   .table-to-cards table,
@@ -622,29 +622,29 @@
    ============================================ */
 .table-scroll-wrapper {
   width: 100%;
-  overflow-x: auto;
+  overflow-x: auto !important;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
-  /* Indicador visual de scroll (Sombras laterales) */
-  background:
-    linear-gradient(to right, var(--background) 30%, transparent),
-    linear-gradient(to right, transparent, var(--background) 70%) 100% 0,
-    radial-gradient(farthest-side at 0 50%, rgba(0, 0, 0, 0.1), transparent),
-    radial-gradient(farthest-side at 100% 50%, rgba(0, 0, 0, 0.1), transparent) 100% 0;
-  background-repeat: no-repeat;
-  background-size: 40px 100%, 40px 100%, 14px 100%, 14px 100%;
-  background-attachment: local, local, scroll, scroll;
+  position: relative;
+  /* Espacio extra al final para asegurar visibilidad total de la última columna */
+  padding-right: 2rem;
 }
 
 .data-table {
-  min-width: max-content !important; /* Fuerza ancho real para evitar colapsos */
-  width: 100%;
+  min-width: 100%;
+  width: max-content !important;
   border-collapse: collapse;
 }
 
 .data-table th,
 .data-table td {
-  white-space: nowrap !important; /* Evita saltos de línea que rompen el layout */
+  white-space: nowrap !important;
+}
+
+/* Forzamos padding en la última columna para alejarla del borde de scroll */
+.data-table th:last-child,
+.data-table td:last-child {
+  padding-right: 3rem !important;
 }
 
 /* Sticky Column Plan B */
@@ -654,24 +654,18 @@
   left: 0;
   background: var(--background);
   z-index: 10;
-  box-shadow: 4px 0 10px -4px rgba(0, 0, 0, 0.3); /* Sombra lateral para indicar scroll */
+  box-shadow: 4px 0 8px -4px rgba(0, 0, 0, 0.3);
 }
 
-/* Enfoque alternativo para sombras si el fondo es opaco */
-.table-scroll-wrapper {
-  position: relative;
-}
-
-.table-scroll-wrapper::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 20px;
-  background: linear-gradient(to left, rgba(0,0,0,0.05), transparent);
-  pointer-events: none;
-  z-index: 5;
+/* En mobile limitamos el ancho de la columna fija para evitar que cubra toda la pantalla */
+@media (max-width: 640px) {
+  .sticky-column-1 th:first-child,
+  .sticky-column-1 td:first-child {
+    max-width: 120px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
 }
 
 /* Priority Columns Pattern */
