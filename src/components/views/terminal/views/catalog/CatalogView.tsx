@@ -340,8 +340,8 @@ export default function CatalogView() {
                     )}
                 </div>
             ) : (
-                <div className="overflow-x-auto table-to-cards rounded-2xl shadow-xl border border-white/5">
-                    <table className="w-full grid-table-catalog">
+                <div className="table-scroll-wrapper table-to-cards rounded-2xl shadow-xl border border-white/5">
+                    <table className="data-table sticky-column-1 w-full grid-table-catalog">
                         <thead className="sticky-header">
                             <tr className="bg-muted/50 text-muted-foreground font-black uppercase text-[10px] tracking-widest">
                                 <th className="p-4 pl-[68px] text-left">Producto</th>

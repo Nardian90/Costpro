@@ -202,8 +202,8 @@ export default function CashClosureView({}: CashClosureViewProps) {
           Registros de Cierre
         </h3>
 
-        <div className="overflow-x-auto rounded-xl border border-border overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="table-scroll-wrapper rounded-xl border border-border">
+          <table className="data-table sticky-column-1 w-full text-sm">
             <thead>
               <tr className="bg-muted/30 text-muted-foreground font-black uppercase text-[10px] tracking-widest border-b border-border">
                 <th className="p-4 text-left">Fecha</th>
