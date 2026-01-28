@@ -11,7 +11,7 @@ import {
 import { HelpCircle, FileText, Edit, DollarSign, Plus, Trash2, RefreshCw } from 'lucide-react';
 import ProductImage from '@/components/ui/ProductImage';
 import { PrimaryButton, SecondaryButton, IconButton } from '@/components/ui/atomic';
-import { resolveProductImage, cn } from '@/lib/utils';
+import { resolveProductImage, cn, formatCurrency } from '@/lib/utils';
 import { Product } from '@/types';
 
 interface CatalogModalsProps {
@@ -115,7 +115,7 @@ export const CatalogModals = ({
                       <div className="text-[10px] font-bold text-muted-foreground uppercase">Factor: x{v.conversion_factor}</div>
                     </div>
                     <div className="flex items-center gap-6">
-                      <div className="font-black text-xl text-primary">${v.price.toFixed(2)}</div>
+                      <div className="font-black text-xl text-primary">{formatCurrency(v.price)}</div>
                       <IconButton onClick={() => handleDeleteVariant(v.id)} icon={Trash2} className="text-destructive border-destructive/20 hover:bg-destructive/10" />
                     </div>
                   </div>

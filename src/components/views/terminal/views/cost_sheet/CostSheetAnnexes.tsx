@@ -2,6 +2,7 @@
 'use client';
 
 import React from 'react';
+import { formatCurrency } from '@/lib/utils';
 
 // Simplified types for props
 type Column = {
@@ -57,7 +58,7 @@ const CostSheetAnnexes: React.FC<CostSheetAnnexesProps> = ({ annexes }) => {
                            {/* FIX: Directly render the value from the pre-calculated row data */}
                            <span className={col.formula ? "font-black text-primary" : ""}>
                              {typeof row[col.key] === 'number'
-                               ? row[col.key].toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                               ? formatCurrency(row[col.key]).replace('$', '').trim()
                                : row[col.key]
                              }
                            </span>
@@ -71,13 +72,8 @@ const CostSheetAnnexes: React.FC<CostSheetAnnexesProps> = ({ annexes }) => {
                         Subtotal {annex.id}
                       </td>
                       <td data-label="TOTAL" className="p-4 text-right font-mono font-black text-xl text-slate-900 dark:text-white">
-                          <span className="text-xs mr-1 opacity-40">$</span>
                           {/* FIX: Use the pre-calculated data for the final sum */}
-                          {annex.data.reduce((acc, row) => acc + (totalColumn ? (row[totalColumn.key] || 0) : 0), 0)
-                            .toLocaleString('en-US', {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                          })}
+                          {formatCurrency(annex.data.reduce((acc, row) => acc + (totalColumn ? (row[totalColumn.key] || 0) : 0), 0))}
                       </td>
                   </tr>
                 </tbody>

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { cn, resolveProductImage } from '@/lib/utils';
+import { cn, resolveProductImage, formatCurrency } from '@/lib/utils';
 import { Slot } from '@radix-ui/react-slot';
 import { LucideIcon, Search, X, Edit, DollarSign, Package, Trash2, RefreshCw } from 'lucide-react';
 import ProductImage from '../ProductImage';
@@ -192,7 +192,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         </div>
         <div className="flex-1 min-w-0">
           <h4 className="font-black text-xs uppercase truncate mb-1">{product.name}</h4>
-          <div className="text-lg font-black text-primary">${product.price.toFixed(2)}</div>
+          <div className="text-lg font-black text-primary">{formatCurrency(product.price)}</div>
         </div>
       </button>
     );
@@ -247,11 +247,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div className="p-2 rounded-lg bg-muted/30 border border-white/5 text-center">
             <div className="text-[8px] font-black uppercase text-muted-foreground mb-0.5">Costo</div>
-            <div className="font-bold text-xs">${product.cost_price?.toFixed(2) || '0.00'}</div>
+            <div className="font-bold text-xs">{formatCurrency(product.cost_price || 0)}</div>
           </div>
           <div className="p-2 rounded-lg bg-primary/5 border border-primary/10 text-center">
             <div className="text-[8px] font-black uppercase text-primary mb-0.5">Venta</div>
-            <div className="font-black text-xs text-primary">${product.price?.toFixed(2) || '0.00'}</div>
+            <div className="font-black text-xs text-primary">{formatCurrency(product.price || 0)}</div>
           </div>
         </div>
 

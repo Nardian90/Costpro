@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Trash2, Plus, Edit } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 
 interface CostSheetFormProps {
   activeSection: string;
@@ -100,7 +100,7 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
             <div className="w-full sm:w-56 shrink-0">
                 {row.formula ? (
                    <div className="neu-inset-sm px-4 py-2.5 font-mono text-right text-lg font-black text-primary bg-background/50 border border-primary/10">
-                        {calculatedValues[row.id]?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
+                        {formatCurrency(calculatedValues[row.id] || 0)}
                    </div>
                 ) : (
                     <div className="relative group">
@@ -167,7 +167,7 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
                                   <TableCell key={col.key} data-label={col.label} className="p-3 sm:p-4">
                                       {col.formula ? (
                                           <div className="neu-inset-sm px-3 py-2 font-mono text-right bg-primary/5 text-primary font-black min-w-[100px] border border-primary/10">
-                                              {row[col.key]?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                              {formatCurrency(row[col.key] || 0).replace('$', '').trim()}
                                           </div>
                                       ) : (
                                           <Input
@@ -200,12 +200,11 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
             <div className="neu-card !p-5 border-primary/20 bg-primary/5 shadow-xl min-w-[240px]">
                 <span className="text-[10px] text-primary/70 uppercase font-black tracking-[0.2em] block mb-2 text-right">Total {annex.id}</span>
                 <div className="flex items-center justify-end gap-2">
-                    <span className="text-primary/50 text-xl font-bold">$</span>
                     <span className="text-3xl font-black font-mono text-primary drop-shadow-sm">
-                        {displayData.reduce((acc: number, row: any) => {
+                        {formatCurrency(displayData.reduce((acc: number, row: any) => {
                              const totalCol = annex.columns.find((c:any) => c.formula || c.key === 'amount' || c.key === 'total');
                              return acc + (row[totalCol?.key || ''] || 0);
-                        }, 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        }, 0))}
                     </span>
                 </div>
             </div>

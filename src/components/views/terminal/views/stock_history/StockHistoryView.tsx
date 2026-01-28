@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { History, ArrowUpRight, ArrowDownRight, ArrowUpDown, Calendar } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import SearchBar from '@/components/ui/SearchBar';
 import ActionMenu from '@/components/ui/ActionMenu';
 
@@ -102,7 +102,11 @@ export default function StockHistoryView({}: StockHistoryViewProps) {
                 <div className="font-black text-base uppercase tracking-tight leading-tight">{mov.product?.name}</div>
                 <div className="flex items-center gap-3 mt-1">
                   <span className="font-mono text-[9px] font-bold text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded">{mov.product?.sku}</span>
-                  <span className="text-[9px] font-black uppercase text-primary tracking-widest">{mov.movement_type}</span>
+                  <span className="text-[9px] font-black uppercase text-primary tracking-widest">
+                    {mov.movement_type === 'sale' ? 'Venta' :
+                     mov.movement_type === 'purchase' ? 'Compra' :
+                     mov.movement_type === 'adjustment' ? 'Ajuste' : mov.movement_type}
+                  </span>
                 </div>
               </div>
             </div>
@@ -112,7 +116,7 @@ export default function StockHistoryView({}: StockHistoryViewProps) {
                 <span className="text-xs ml-1 font-bold">uds</span>
               </div>
               <div className="text-[9px] text-muted-foreground uppercase font-black tracking-widest">
-                {mov.created_at ? new Date(mov.created_at).toLocaleString() : 'N/A'}
+                {formatDate(mov.created_at)}
               </div>
               <div className="text-[9px] font-mono text-muted-foreground/60 italic">
                 REF: {mov.reference_doc || 'N/A'}

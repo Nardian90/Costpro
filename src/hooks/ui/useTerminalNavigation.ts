@@ -27,7 +27,7 @@ export function useTerminalNavigation(user: UserContract | null, sidebarSearch: 
   const navigationItems = useMemo(() => {
     if (!user) return [];
     const all: NavigationItem[] = [
-      { id: 'dashboard', icon: BarChart3, label: 'Dashboard', roles: ['admin', 'manager', 'clerk', 'encargado'], category: 'OPERACIONES' },
+      { id: 'dashboard', icon: BarChart3, label: 'Panel', roles: ['admin', 'manager', 'clerk', 'encargado'], category: 'OPERACIONES' },
       { id: 'pos', icon: ShoppingCart, label: 'TPV', roles: ['clerk', 'manager', 'admin', 'encargado'], category: 'OPERACIONES' },
       { id: 'sales', icon: Receipt, label: 'Ventas', roles: ['clerk', 'manager', 'encargado'], category: 'OPERACIONES' },
       { id: 'cash', icon: DollarSign, label: 'Caja', roles: ['manager', 'admin', 'encargado'], category: 'OPERACIONES' },
@@ -44,7 +44,7 @@ export function useTerminalNavigation(user: UserContract | null, sidebarSearch: 
       { id: 'audit', icon: Shield, label: 'Auditoría', roles: ['manager', 'admin', 'encargado'], category: 'GESTIÓN' },
       { id: 'users', icon: Users, label: 'Usuarios', roles: ['admin', 'encargado', 'manager'], category: 'GESTIÓN' },
       { id: 'stores', icon: Building, label: 'Tiendas', roles: ['admin', 'encargado', 'manager'], category: 'GESTIÓN' },
-      { id: 'settings', icon: Settings, label: 'Config', roles: ['admin', 'manager', 'encargado'], category: 'GESTIÓN' },
+      { id: 'settings', icon: Settings, label: 'Configuración', roles: ['admin', 'manager', 'encargado'], category: 'GESTIÓN' },
 
       { id: 'help', icon: HelpCircle, label: 'Ayuda', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado'], category: 'SOPORTE' },
     ];

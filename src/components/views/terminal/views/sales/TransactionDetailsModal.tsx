@@ -5,6 +5,7 @@ import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { formatCurrency, formatDate } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Transaction, TransactionItem } from '@/types';
@@ -32,16 +33,19 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
         <div className="grid grid-cols-3 gap-4 text-sm">
           <div>
             <p className="font-semibold text-muted-foreground">Fecha</p>
-            <p>{format(new Date(transaction.created_at), "d MMM yyyy, HH:mm", { locale: es })}</p>
+            <p>{formatDate(transaction.created_at)}</p>
           </div>
           <div>
             <p className="font-semibold text-muted-foreground">Método de Pago</p>
-            <p className="capitalize">{transaction.payment_method}</p>
+            <p className="capitalize">
+              {transaction.payment_method === 'cash' ? 'Efectivo' : 'Transferencia'}
+            </p>
           </div>
           <div>
             <p className="font-semibold text-muted-foreground">Estado</p>
             <Badge variant={transaction.status === 'completed' ? 'default' : 'destructive'}>
-              {transaction.status}
+              {transaction.status === 'completed' ? 'Completada' :
+               transaction.status === 'pending' ? 'Pendiente' : 'Anulada'}
             </Badge>
           </div>
         </div>
@@ -64,8 +68,8 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
                   <TableRow key={item.id}>
                     <TableCell>{item.products?.name || 'Producto no disponible'}</TableCell>
                     <TableCell className="text-right">{item.quantity}</TableCell>
-                    <TableCell className="text-right">${item.price_at_sale.toFixed(2)}</TableCell>
-                    <TableCell className="text-right">${(item.price_at_sale * item.quantity).toFixed(2)}</TableCell>
+                    <TableCell className="text-right">{formatCurrency(item.price_at_sale)}</TableCell>
+                    <TableCell className="text-right">{formatCurrency(item.price_at_sale * item.quantity)}</TableCell>
                   </TableRow>
                 ))
               )}
@@ -74,9 +78,9 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
         </div>
         <div className="mt-4 flex justify-end">
             <div className="text-right">
-                <p className="text-muted-foreground">Subtotal: <span className="font-semibold text-foreground">${(transaction.subtotal ?? 0).toFixed(2)}</span></p>
-                <p className="text-muted-foreground">Descuento: <span className="font-semibold text-foreground">-${(transaction.discount_value ?? 0).toFixed(2)}</span></p>
-                <p className="text-lg font-bold">Total: <span className="text-primary">${transaction.total_amount.toFixed(2)}</span></p>
+                <p className="text-muted-foreground">Subtotal: <span className="font-semibold text-foreground">{formatCurrency(transaction.subtotal ?? 0)}</span></p>
+                <p className="text-muted-foreground">Descuento: <span className="font-semibold text-foreground">-{formatCurrency(transaction.discount_value ?? 0)}</span></p>
+                <p className="text-lg font-bold">Total: <span className="text-primary">{formatCurrency(transaction.total_amount)}</span></p>
             </div>
         </div>
       </DialogContent>

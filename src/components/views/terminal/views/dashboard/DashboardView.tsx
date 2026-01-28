@@ -10,7 +10,7 @@ import {
   Calendar,
   HelpCircle
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency, formatDate } from '@/lib/utils';
 import { useCanAccess, useUIStore } from '@/store';
 import { useProducts } from '@/hooks/api/useProducts';
 import { StateRenderer } from '@/components/ui/StateRenderer';
@@ -33,10 +33,10 @@ export default function DashboardView() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between mb-8">
-        <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase">Dashboard</h2>
+        <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase">Panel de Control</h2>
         <div className="flex items-center gap-2 py-1.5 px-3 rounded-lg border border-border bg-card/50 text-xs font-bold">
           <Calendar className="w-3 h-3" />
-          Hoy: {new Date().toLocaleDateString()}
+          Hoy: {formatDate(new Date())}
         </div>
       </div>
 
@@ -81,7 +81,7 @@ function DashboardKpisSection({ kpis }: { kpis: DashboardKPIs }) {
             <TrendingUp className="w-5 h-5 text-green-500" />
           </div>
         </div>
-        <div className="text-4xl font-black text-foreground">${(kpis?.gross_sales || 0).toFixed(2)}</div>
+        <div className="text-4xl font-black text-foreground">{formatCurrency(kpis?.gross_sales || 0)}</div>
         {/* Indicador de variación desactivado por falta de datos históricos/temporales */}
         <div className="text-[10px] font-bold text-muted-foreground/50 mt-2 uppercase tracking-widest">Variación: N/D</div>
       </div>
@@ -96,7 +96,7 @@ function DashboardKpisSection({ kpis }: { kpis: DashboardKPIs }) {
               </div>
             </div>
             <div className={cn("text-4xl font-black", hasCostData ? "text-foreground" : "text-muted-foreground/40")}>
-              {hasCostData ? `$${kpis.cost_of_goods!.toFixed(2)}` : "Sin datos"}
+              {hasCostData ? formatCurrency(kpis.cost_of_goods!) : "Sin datos"}
             </div>
             <div className="text-[10px] font-bold text-muted-foreground mt-2 uppercase tracking-widest flex items-center gap-1">
               {hasCostData ? (
@@ -121,7 +121,7 @@ function DashboardKpisSection({ kpis }: { kpis: DashboardKPIs }) {
               </div>
             </div>
             <div className={cn("text-4xl font-black", hasProfitData ? "text-primary" : "text-muted-foreground/40")}>
-              {hasProfitData ? `$${kpis.profit!.toFixed(2)}` : "N/D"}
+              {hasProfitData ? formatCurrency(kpis.profit!) : "N/D"}
             </div>
             <div className={cn("text-[10px] font-black mt-2 uppercase tracking-widest", hasProfitData ? "text-primary/70" : "text-muted-foreground/50")}>
               {hasProfitData ? "Utilidad Diaria (Real)" : "Datos insuficientes"}
@@ -145,9 +145,9 @@ function DashboardSummarySection({ summary }: { summary: SalesSummary }) {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
         {[
           { label: 'Transacciones', value: summary?.transaction_count || 0, sub: 'Hoy' },
-          { label: 'Ticket Promedio', value: `$${(summary?.average_ticket || 0).toFixed(2)}`, sub: 'ARS' },
-          { label: 'Efectivo', value: `$${(summary?.total_cash || 0).toFixed(2)}`, sub: 'Recaudado', color: 'text-green-500' },
-          { label: 'Transferencia', value: `$${(summary?.total_transfer || 0).toFixed(2)}`, sub: 'Banco', color: 'text-primary' },
+          { label: 'Ticket Promedio', value: formatCurrency(summary?.average_ticket || 0), sub: 'ARS' },
+          { label: 'Efectivo', value: formatCurrency(summary?.total_cash || 0), sub: 'Recaudado', color: 'text-green-500' },
+          { label: 'Transferencia', value: formatCurrency(summary?.total_transfer || 0), sub: 'Banco', color: 'text-primary' },
         ].map((stat, i) => (
           <div key={i} className="p-4 rounded-lg bg-background/50 border border-border/50">
             <span className="text-[9px] font-black uppercase text-muted-foreground tracking-tighter block mb-1">{stat.label}</span>

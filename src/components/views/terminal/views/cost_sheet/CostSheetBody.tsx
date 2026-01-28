@@ -2,7 +2,7 @@
 'use client';
 
 import React from 'react';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 
 // Define the richer structure for a single calculated value
 type CalculatedRowValue = {
@@ -45,11 +45,7 @@ const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValue
                     {row.label}
                 </td>
                 <td data-label="Valor" className="p-4 text-right font-mono font-black text-primary text-base">
-                    <span className="text-[10px] mr-1 opacity-50">$</span>
-                    {(calculatedValues[row.id]?.total ?? 0).toLocaleString('en-US', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                    })}
+                    {formatCurrency(calculatedValues[row.id]?.total ?? 0)}
                 </td>
             </tr>
             {row.children?.map((child: any) => renderRow(child, level + 1))}
