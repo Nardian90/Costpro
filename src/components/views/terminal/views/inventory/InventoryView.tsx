@@ -118,8 +118,7 @@ export default function InventoryView() {
         if (!adjustingProduct) return;
 
         if (!user?.storeId || !user?.id) {
-            toast.error('Sesión no válida o tienda no seleccionada. Por favor, reincie sesión.');
-            return;
+            throw new Error('Sesión no válida o tienda no seleccionada. Por favor, reincie sesión.');
         }
 
         await adjustStock({
