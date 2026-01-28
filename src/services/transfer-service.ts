@@ -1,28 +1,30 @@
 import { supabase } from '@/lib/supabaseClient';
-import { Transfer } from '@/types';
+import { Transfer, Store, TransferItem } from '@/types';
+import { validateRPCResponse, validateRPCArrayResponse } from '@/lib/rpc-validator';
+import { transferWithDetailsSchema, storeSchema } from '@/validation/schemas';
 
 export const transferService = {
-  async getIncomingTransfers(storeId: string) {
+  async getIncomingTransfers(storeId: string): Promise<Transfer[]> {
     const { data, error } = await supabase
       .from('transfers')
       .select('*, origin_store:stores!transfers_origin_store_id_fkey(*), creator:profiles!transfers_created_by_profiles_fkey(full_name)')
       .eq('destination_store_id', storeId)
       .order('created_at', { ascending: false });
     if (error) throw error;
-    return data as any[];
+    return await validateRPCArrayResponse(data, transferWithDetailsSchema, 'getIncomingTransfers');
   },
 
-  async getOutgoingTransfers(storeId: string) {
+  async getOutgoingTransfers(storeId: string): Promise<Transfer[]> {
     const { data, error } = await supabase
       .from('transfers')
       .select('*, destination_store:stores!transfers_destination_store_id_fkey(*), creator:profiles!transfers_created_by_profiles_fkey(full_name)')
       .eq('origin_store_id', storeId)
       .order('created_at', { ascending: false });
     if (error) throw error;
-    return data as any[];
+    return await validateRPCArrayResponse(data, transferWithDetailsSchema, 'getOutgoingTransfers');
   },
 
-  async getTransferDetails(transferId: string) {
+  async getTransferDetails(transferId: string): Promise<Transfer> {
     const { data, error } = await supabase
       .from('transfers')
       .select(`
@@ -38,22 +40,22 @@ export const transferService = {
       .eq('id', transferId)
       .single();
     if (error) throw error;
-    return data as any;
+    return await validateRPCResponse(data, transferWithDetailsSchema, 'getTransferDetails');
   },
 
-  async getTransferableStores(userId: string, currentStoreId: string) {
+  async getTransferableStores(userId: string, currentStoreId: string): Promise<Store[]> {
     const { data, error } = await supabase.rpc('get_transferable_stores', {
       p_user_id: userId,
       p_current_store_id: currentStoreId
     });
     if (error) throw error;
-    return data;
+    return await validateRPCArrayResponse(data, storeSchema, 'getTransferableStores');
   },
 
   async createTransfer(params: {
     origin_store_id: string;
     destination_store_id: string;
-    items: any[];
+    items: Partial<TransferItem>[];
     notes?: string;
   }) {
     const { data, error } = await supabase.rpc('create_transfer', {
