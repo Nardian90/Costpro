@@ -8,7 +8,7 @@ import { ChevronRight, HelpCircle, CornerDownRight } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 import {
   CostSheetRow as RowData,
   CostSheetSection,
@@ -82,7 +82,7 @@ const CostSheetRow: React.FC<RowProps> = ({ row, level, calculatedValues, path, 
         <td className="px-4 py-2 text-right">
           {(row.calculationMethod === 'Prorrateo' || row.hasOwnProperty('formula') || hasChildren) && !row.is_percent ? (
             <div className="h-8 flex items-center justify-end px-3 text-sm font-bold text-primary/70 bg-primary/5 rounded-md border border-primary/10 tabular-nums">
-              {(calculated.valorHistorico || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {formatCurrency(calculated.valorHistorico || 0).replace('$', '').trim()}
             </div>
           ) : (row.hasOwnProperty('valorHistorico') || row.hasOwnProperty('value')) ? (
             <div className="relative">
@@ -143,7 +143,7 @@ const CostSheetRow: React.FC<RowProps> = ({ row, level, calculatedValues, path, 
 
         {/* Total */}
         <td className="px-4 py-2 text-right font-bold tabular-nums text-primary">
-          {calculated.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          {formatCurrency(calculated.total)}
         </td>
 
         {/* Ayuda */}

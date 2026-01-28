@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { X, Save, AlertTriangle, Calculator, Package, TrendingDown, TrendingUp } from 'lucide-react';
 import { Product } from '@/types';
 import { calcularAjusteInventario } from '@/lib/inventory-logic';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 import { toast } from 'sonner';
 
 interface InventoryAdjustmentModalProps {
@@ -123,11 +123,11 @@ export default function InventoryAdjustmentModal({
             </div>
             <div className="neu-inset-sm p-4 text-center">
               <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mb-1">Costo Promedio</p>
-              <p className="text-xl font-black text-primary">${costoPromedioActual.toFixed(2)}</p>
+              <p className="text-xl font-black text-primary">{formatCurrency(costoPromedioActual)}</p>
             </div>
             <div className="neu-inset-sm p-4 text-center">
               <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mb-1">Valor Total</p>
-              <p className="text-xl font-black">${costoTotalActual.toFixed(2)}</p>
+              <p className="text-xl font-black">{formatCurrency(costoTotalActual)}</p>
             </div>
           </div>
 
@@ -181,12 +181,12 @@ export default function InventoryAdjustmentModal({
                         "neu-input w-full pl-10 font-black text-lg",
                         ajusteValorUnitario === '' ? "text-muted-foreground" : "text-primary"
                     )}
-                    placeholder={ajusteUnidades < 0 ? costoPromedioActual.toFixed(2) : "0.00"}
+                    placeholder={ajusteUnidades < 0 ? costoPromedioActual.toFixed(2).toString() : "0.00"}
                   />
                 </div>
                 <p className="text-[9px] text-muted-foreground italic px-1">
                   {ajusteValorUnitario === '' ? (
-                    isReduction ? `Usando costo promedio actual: $${costoPromedioActual.toFixed(2)}` :
+                    isReduction ? `Usando costo promedio actual: ${formatCurrency(costoPromedioActual)}` :
                     isIncrease ? "Usando costo de entrada: $0.00 (Dilución)" :
                     "Ingresa un valor para re-valuar el stock actual."
                   ) : (
@@ -227,13 +227,13 @@ export default function InventoryAdjustmentModal({
                <div className="text-center border-x border-white/5">
                   <p className="text-[8px] font-bold text-muted-foreground uppercase mb-1">Nuevo Valor Total</p>
                   <p className={cn("text-lg font-black", resultados.nuevo_costo_total !== costoTotalActual && "text-primary")}>
-                    ${resultados.nuevo_costo_total.toFixed(2)}
+                    {formatCurrency(resultados.nuevo_costo_total)}
                   </p>
                </div>
                <div className="text-center">
                   <p className="text-[8px] font-bold text-muted-foreground uppercase mb-1">Nuevo C. Promedio</p>
                   <p className={cn("text-lg font-black", resultados.nuevo_costo_unitario !== costoPromedioActual && "text-primary")}>
-                    ${resultados.nuevo_costo_unitario.toFixed(2)}
+                    {formatCurrency(resultados.nuevo_costo_unitario)}
                   </p>
                </div>
             </div>

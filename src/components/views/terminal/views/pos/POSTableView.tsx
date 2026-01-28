@@ -2,7 +2,7 @@
 
 import React from 'react';
 import type { Product } from '@/types';
-import { resolveProductImage } from '@/lib/utils';
+import { resolveProductImage, formatCurrency } from '@/lib/utils';
 import { ShoppingCart } from 'lucide-react';
 import ProductImage from '@/components/ui/ProductImage';
 
@@ -41,7 +41,7 @@ const POSTableView: React.FC<POSTableViewProps> = ({ products, onAddToCart }) =>
               </td>
               <td className="p-4 font-mono text-xs text-muted-foreground priority-low">{product.sku || '-'}</td>
               <td className="p-4 text-right font-bold">{product.stock_current}</td>
-              <td className="p-4 text-right font-black text-primary">${product.price.toFixed(2)}</td>
+              <td className="p-4 text-right font-black text-primary">{formatCurrency(product.price)}</td>
               <td className="p-4">
                 <div className="flex justify-center">
                   <button

@@ -8,6 +8,7 @@ import {
 import { useTransferDetails, useConfirmTransfer } from '@/hooks/api/useTransfers';
 import { StateRenderer } from '@/components/ui/StateRenderer';
 import { CheckCircle2, Clock, Package, Building, User, Calendar } from 'lucide-react';
+import { formatDate } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -97,7 +98,7 @@ export default function TransferDetailsModal({ transferId, onClose }: TransferDe
                           <Calendar className="w-4 h-4 text-muted-foreground mt-1" />
                           <div>
                              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1 block text-left">Fecha de Solicitud</p>
-                             <p className="text-sm font-bold">{format(new Date(t.created_at), 'PPPp', { locale: es })}</p>
+                             <p className="text-sm font-bold">{formatDate(t.created_at)}</p>
                           </div>
                        </div>
                     </div>

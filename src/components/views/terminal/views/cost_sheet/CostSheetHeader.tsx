@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { cn } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 
 type CostSheetHeaderProps = {
   header: {
@@ -30,7 +30,7 @@ const CostSheetHeader: React.FC<CostSheetHeaderProps> = ({ header }) => {
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-6">
           {[
             { label: 'Código', value: header.code },
-            { label: 'Fecha', value: header.date },
+            { label: 'Fecha', value: formatDate(header.date) },
             { label: 'Unidad', value: header.unit },
             { label: 'Cantidad', value: header.quantity },
             { label: 'Moneda', value: header.currency },

@@ -142,7 +142,7 @@ export default function UserForm({
       <div className="pt-4 border-t border-border">
         <div className="flex items-center justify-between mb-4">
           <label className="text-[10px] font-black uppercase text-primary tracking-widest block">
-            Tiendas Asignadas (Multi-Store)
+            Tiendas Asignadas (Multi-Tienda)
           </label>
           <button
             type="button"

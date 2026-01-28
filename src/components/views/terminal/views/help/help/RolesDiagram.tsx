@@ -77,7 +77,7 @@ export default function RolesDiagram() {
         {/* Labels for multi-store */}
         <motion.g initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5 }}>
           <circle cx="100" cy="100" r="40" className="fill-primary/10 stroke-primary/30" strokeWidth="2" />
-          <text x="100" y="105" textAnchor="middle" className="fill-primary font-black text-[10px] uppercase">Multi-Store</text>
+          <text x="100" y="105" textAnchor="middle" className="fill-primary font-black text-[10px] uppercase">Multi-Tienda</text>
         </motion.g>
 
       </motion.svg>
