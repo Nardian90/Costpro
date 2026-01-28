@@ -1,4 +1,4 @@
-import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
+import { useQuery, useSuspenseQuery, type QueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
 import { validateRPCArrayResponse } from '@/lib/rpc-validator';
 import {
@@ -7,7 +7,7 @@ import {
 import { withLogging } from './base';
 import type { DashboardKPIs, SalesSummary } from '@/types';
 
-export async function prefetchDashboardData(queryClient: any, storeId: string, isAdmin = false) {
+export async function prefetchDashboardData(queryClient: QueryClient, storeId: string, isAdmin = false) {
   const rpcName = 'get_dashboard_kpis';
   const params = isAdmin ? {} : { p_store_id: storeId };
 

@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, type QueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { supabase } from '@/lib/supabaseClient';
 import { validateRPCArrayResponse } from '@/lib/rpc-validator';
@@ -77,7 +77,7 @@ export function useAuditLogs(filters: AuditLogFilters = {}) {
 /**
  * Prefetches audit logs.
  */
-export async function prefetchAuditLogs(queryClient: any, filters: AuditLogFilters = {}) {
+export async function prefetchAuditLogs(queryClient: QueryClient, filters: AuditLogFilters = {}) {
   const { store_id: raw_store_id, search_term, date_from, date_to, limit = 1000 } = filters;
 
   // Defensive cleaning

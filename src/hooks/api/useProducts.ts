@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useSuspenseQuery, type QueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
 import { validateRPCArrayResponse } from '@/lib/rpc-validator';
 import {
@@ -64,7 +64,7 @@ export function useProducts(storeId?: string | null, searchTerm = '', category =
   });
 }
 
-export async function prefetchProducts(queryClient: any, storeId: string) {
+export async function prefetchProducts(queryClient: QueryClient, storeId: string) {
   if (!storeId) return;
   const searchTerm = '';
   const category = '';

@@ -19,12 +19,12 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
 
       if (isAdmin) {
         const profileColumns = 'id, full_name, email, role, roles, active_store_id, logo_url, is_active, store_id, created_at';
-        let profilesRes: any = await supabase.from('profiles').select(profileColumns).order('full_name');
+        let profilesRes = await supabase.from('profiles').select(profileColumns).order('full_name');
 
         // Fallback if full column set fails (e.g. migration not fully applied)
         if (profilesRes.error && profilesRes.error.code === '42703') {
            console.warn('[useUsers] Column missing, retrying with limited columns');
-           profilesRes = await supabase.from('profiles').select('id, full_name, email, role, is_active').order('full_name');
+           profilesRes = await supabase.from('profiles').select('id, full_name, email, role, is_active, created_at').order('full_name') as any;
         }
 
         const membershipsRes = await supabase.from('user_store_memberships').select('id, user_id, store_id, role, status, created_at, updated_at, store:stores(id, name, address, is_active, created_at)');
@@ -34,11 +34,11 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
           return [];
         }
 
-        const rawProfiles = (profilesRes.data || []) as any[];
+        const rawProfiles = (profilesRes.data || []) as Profile[];
         const allMemberships = (membershipsRes.data || []) as any[];
 
-        const joinedData = rawProfiles.map((profile: any) => {
-          const userMemberships = allMemberships.filter((m: any) => m.user_id === profile.id).map((m: any) => ({
+        const joinedData = rawProfiles.map((profile) => {
+          const userMemberships = allMemberships.filter((m) => m.user_id === profile.id).map((m) => ({
             ...m,
             store: Array.isArray(m.store) ? m.store[0] : m.store
           }));
@@ -67,7 +67,7 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
           const storeColumns = 'id, name, address, logo_url, is_active, created_at';
           const membershipColumns = `id, user_id, store_id, role, status, created_at, updated_at, store:stores(${storeColumns})`;
 
-          let memberProfilesRes: any = await supabase
+          let memberProfilesRes = await supabase
             .from('profiles')
             .select(`${profileColumns}, memberships:user_store_memberships!inner(${membershipColumns})`)
             .in('memberships.store_id', storeIds)
@@ -81,7 +81,7 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
                 .select(`id, full_name, email, role, is_active, memberships:user_store_memberships!inner(${membershipColumns})`)
                 .in('memberships.store_id', storeIds)
                 .neq('role', 'admin')
-                .order('full_name');
+                .order('full_name') as any;
           }
 
           const { data: memberProfiles, error } = memberProfilesRes;
@@ -89,16 +89,16 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
           if (error) {
             logger.error('DATABASE', 'FETCH_USERS_ENCARGADO_FAILED', { error });
             // Fallback: try with limited columns if the full set fails
-            let fallbackRes: any = await supabase.from('profiles').select(profileColumns).neq('role', 'admin').order('full_name');
-            if (fallbackRes.error && fallbackRes.error.code === '42703') {
-                fallbackRes = await supabase.from('profiles').select('id, full_name, email, role, is_active').neq('role', 'admin').order('full_name');
+            let fallbackRes = await supabase.from('profiles').select(profileColumns).neq('role', 'admin').order('full_name');
+            if (fallbackRes.error && (fallbackRes.error as any).code === '42703') {
+                fallbackRes = await supabase.from('profiles').select('id, full_name, email, role, is_active, created_at').neq('role', 'admin').order('full_name') as any;
             }
             return await validateRPCArrayResponse(fallbackRes.data || [], profileSchema, 'fetch_users_encargado_fallback');
           }
 
           const normalizedMembers = (memberProfiles || []).map((p: any) => ({
             ...p,
-            memberships: (p.memberships || []).map((m: any) => ({
+            memberships: ((p as any).memberships || []).map((m: any) => ({
               ...m,
               store: Array.isArray(m.store) ? m.store[0] : m.store
             }))

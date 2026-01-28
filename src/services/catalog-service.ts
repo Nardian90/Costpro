@@ -115,7 +115,7 @@ export const catalogService = {
   async getProductVariants(productId: string) {
     const { data, error } = await supabase
       .from('product_variants')
-      .select('*')
+      .select('id, product_id, name, sku, price, conversion_factor, created_at, updated_at')
       .eq('product_id', productId);
     if (error) throw error;
     return data;
