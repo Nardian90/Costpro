@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Save, Search, Plus, Trash2, Package, Upload, Download, HelpCircle, FileText, AlertTriangle } from 'lucide-react';
 import { useInventory, useRegisterReception } from '@/hooks/api/useInventory';
 import { useDebounce } from '@/hooks/ui/useDebounce';
+import { formatCurrency } from '@/lib/utils';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
 import { importService } from '@/services/import-service';
 import { receptionImportRowSchema } from '@/validation/schemas';
@@ -447,7 +448,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                                     />
                                 </div>
                                 <div className="col-span-2 text-right font-bold text-primary">
-                                    ${(quantity * cost).toFixed(2)}
+                                    {formatCurrency(quantity * cost)}
                                 </div>
                                 <div className="col-span-1 flex justify-end">
                                     <button onClick={() => removeReceptionItem(product.id)} className="p-2 hover:bg-danger/10 rounded-full">
@@ -476,7 +477,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                          </div>
                          <div className="flex justify-between items-center text-2xl pt-4 border-t border-primary/20">
                              <span className="font-bold">Costo Total</span>
-                             <span className="font-black text-primary">${totalCost.toFixed(2)}</span>
+                             <span className="font-black text-primary">{formatCurrency(totalCost)}</span>
                          </div>
                      </div>
                 </div>

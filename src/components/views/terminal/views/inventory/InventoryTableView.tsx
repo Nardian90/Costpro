@@ -3,7 +3,7 @@
 
 import React, { useRef, useCallback } from 'react';
 import type { Product } from '@/types';
-import { cn, resolveProductImage } from '@/lib/utils';
+import { cn, resolveProductImage, formatCurrency } from '@/lib/utils';
 import { Package, Edit, Loader2 } from 'lucide-react';
 import ProductImage from '@/components/ui/ProductImage';
 
@@ -36,8 +36,8 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onA
             </td>
             <td className="p-4 text-xs font-mono text-muted-foreground">{product.sku || '-'}</td>
             <td className="p-4 text-right font-black text-lg">{product.stock_current}</td>
-            <td className="p-4 text-right font-bold text-primary">${product.price?.toFixed(2) || '0.00'}</td>
-            <td className="p-4 text-right text-muted-foreground">${product.cost_price?.toFixed(2) || '0.00'}</td>
+            <td className="p-4 text-right font-bold text-primary">{formatCurrency(product.price || 0)}</td>
+            <td className="p-4 text-right text-muted-foreground">{formatCurrency(product.cost_price || 0)}</td>
             <td className="p-4 text-center">
                 <span className={cn(
                     "neu-badge text-[9px] px-2 py-0.5",

@@ -57,7 +57,7 @@ export default function UsersManagementView() {
               <tr className="bg-muted/30 text-muted-foreground font-black uppercase text-[10px] tracking-widest border-b border-border">
                 <th className="p-4 text-left">Perfil</th>
                 <th className="p-4 text-left">Email</th>
-                <th className="p-4 text-left">Accesos Multi-Store</th>
+                <th className="p-4 text-left">Accesos Multi-Tienda</th>
                 <th className="p-4 text-center">Estado</th>
                 <th className="p-4 text-center">Acciones</th>
               </tr>

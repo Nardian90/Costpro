@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ShoppingCart, X, Trash2, Minus, Plus, DollarSign, CreditCard, Loader2, Check } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 import { toast } from 'sonner';
 import { PaymentMethod } from '@/types';
 import { useIsMobile } from '@/hooks/ui/useMobile';
@@ -76,7 +76,7 @@ export const POSCart = ({
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex-1">
                         <div className="font-black text-sm uppercase tracking-tight truncate pr-6">{item.product.name}</div>
-                        <div className="text-[10px] font-bold text-muted-foreground mt-1">${item.price.toFixed(2)} / unidad</div>
+                        <div className="text-[10px] font-bold text-muted-foreground mt-1">{formatCurrency(item.price)} / unidad</div>
                       </div>
                       <button
                         onClick={() => onRemoveItem(item.product_id, item.variant_id)}
@@ -101,7 +101,7 @@ export const POSCart = ({
                           <Plus className="w-4 h-4" />
                         </button>
                       </div>
-                      <span className="font-black text-lg text-primary">${item.subtotal.toFixed(2)}</span>
+                      <span className="font-black text-lg text-primary">{formatCurrency(item.subtotal)}</span>
                     </div>
                   </div>
                 ))}
@@ -141,7 +141,7 @@ export const POSCart = ({
                 <div className="flex justify-between items-center px-2">
                    <span className="text-xs font-black uppercase text-muted-foreground tracking-widest">Total a Pagar</span>
                    <span className="text-4xl sm:text-4xl lg:text-4xl font-black text-primary tracking-tighter max-sm:text-5xl transition-all">
-                     ${getTotal().toFixed(2)}
+                     {formatCurrency(getTotal())}
                    </span>
                 </div>
 

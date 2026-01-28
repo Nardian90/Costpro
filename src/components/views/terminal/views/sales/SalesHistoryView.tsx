@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { DollarSign, CreditCard, Eye } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency, formatDate, formatTime } from '@/lib/utils';
 import SearchBar from '@/components/ui/SearchBar';
 import { StateRenderer } from '@/components/ui/StateRenderer';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -83,17 +83,19 @@ export default function SalesHistoryView() {
                     <tr key={txn.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                       <td className="p-4 font-bold text-xs text-primary">{txn.id.split('-')[0]}</td>
                       <td className="p-4">
-                        <div className="font-bold text-xs">{new Date(txn.created_at).toLocaleDateString()}</div>
-                        <div className="text-[10px] text-muted-foreground">{new Date(txn.created_at).toLocaleTimeString()}</div>
+                        <div className="font-bold text-xs">{formatDate(txn.created_at)}</div>
+                        <div className="text-[10px] text-muted-foreground">{formatTime(txn.created_at)}</div>
                       </td>
                       <td className="p-4 priority-low">
                         <div className="flex items-center gap-2">
                           {txn.payment_method === 'cash' ? <DollarSign className="w-3 h-3 text-green-500" /> : <CreditCard className="w-3 h-3 text-primary" />}
-                          <span className="text-[10px] font-bold uppercase">{txn.payment_method}</span>
+                          <span className="text-[10px] font-bold uppercase">
+                            {txn.payment_method === 'cash' ? 'Efectivo' : 'Transferencia'}
+                          </span>
                         </div>
                       </td>
                       <td className="p-4 text-right">
-                        <span className="text-base font-black">${txn.total_amount.toFixed(2)}</span>
+                        <span className="text-base font-black">{formatCurrency(txn.total_amount)}</span>
                       </td>
                       <td className="p-4 text-center priority-low">
                         <span className={cn(
@@ -101,7 +103,8 @@ export default function SalesHistoryView() {
                           txn.status === 'completed' ? "bg-green-500/10 text-green-600" :
                           txn.status === 'pending' ? "bg-amber-500/10 text-amber-600" : "bg-destructive/10 text-destructive"
                         )}>
-                          {txn.status}
+                          {txn.status === 'completed' ? 'Completada' :
+                           txn.status === 'pending' ? 'Pendiente' : 'Anulada'}
                         </span>
                       </td>
                       <td className="p-4 text-center">
