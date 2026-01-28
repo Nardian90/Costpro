@@ -359,3 +359,44 @@ export const transferWithDetailsSchema = transferSchema.extend({
     })
   ).optional(),
 });
+
+// ============================================
+// Sync Schemas
+// ============================================
+
+export const syncOperationTypeSchema = z.enum(['CREATE', 'UPDATE', 'DELETE']);
+
+export const syncOperationSchema = z.object({
+  id: z.string().uuid().optional(), // Local ID
+  idempotencyKey: z.string().uuid(),
+  operationType: syncOperationTypeSchema,
+  entity: z.string(),
+  payload: z.any(),
+  createdAt: z.string(),
+  clientClock: z.number(),
+  status: z.enum(['pending', 'in-flight', 'failed', 'synced']).default('pending'),
+  attempts: z.number().default(0),
+  lastError: z.string().nullable().optional(),
+  serverData: z.any().optional(),
+});
+
+export const syncBatchSchema = z.object({
+  clientInfo: z.object({
+    userId: z.string(),
+    deviceId: z.string(),
+  }),
+  operations: z.array(syncOperationSchema),
+});
+
+export const syncResultItemSchema = z.object({
+  idempotencyKey: z.string().uuid(),
+  status: z.enum(['ok', 'conflict', 'error']),
+  serverId: z.any().optional(),
+  serverVersion: z.number().optional(),
+  serverData: z.any().optional(),
+  error: z.string().optional(),
+});
+
+export const syncBatchResponseSchema = z.object({
+  results: z.array(syncResultItemSchema),
+});
