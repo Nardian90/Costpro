@@ -18,7 +18,10 @@ DECLARE
 BEGIN
     SELECT conname INTO constraint_name
     FROM pg_constraint
-    WHERE conrelid = 'public.receipts'::regclass AND contype = 'c' AND confkey IS NULL AND consrc LIKE '%status%';
+    WHERE conrelid = 'public.receipts'::regclass
+      AND contype = 'c'
+      AND confkey IS NULL
+      AND pg_get_constraintdef(oid) LIKE '%status%';
 
     IF constraint_name IS NOT NULL THEN
         EXECUTE 'ALTER TABLE public.receipts DROP CONSTRAINT ' || constraint_name;
