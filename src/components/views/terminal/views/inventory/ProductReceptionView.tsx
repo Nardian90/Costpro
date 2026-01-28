@@ -377,8 +377,8 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                                     <span>Importación Fallida: {importErrors.length} errores encontrados.</span>
                                     <span className="text-xs font-black uppercase tracking-widest">Ver Detalles</span>
                                 </summary>
-                                <div className="mt-4 max-h-48 overflow-y-auto pr-2">
-                                    <table className="w-full text-xs">
+                                <div className="table-scroll-wrapper mt-4 max-h-48 overflow-y-auto pr-2">
+                                    <table className="data-table sticky-column-1 w-full text-xs">
                                         <thead className="sticky-header">
                                             <tr className="text-left font-black uppercase text-[10px] border-b border-danger/20">
                                                 <th className="p-2">Fila</th>
