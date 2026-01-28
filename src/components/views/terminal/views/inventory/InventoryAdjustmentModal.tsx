@@ -88,8 +88,8 @@ export default function InventoryAdjustmentModal({
   const isIncrease = ajusteUnidades > 0;
 
   return (
-    <div className="fixed inset-0 bg-background/90 backdrop-blur-xl flex items-center justify-center z-50 p-4">
-      <div className="neu-card max-w-2xl w-full flex flex-col overflow-hidden !p-0 border-primary/20 shadow-2xl">
+    <div className="fixed inset-0 bg-background/90 backdrop-blur-xl flex items-start sm:items-center justify-center z-50 p-4 pt-4 sm:pt-0 overflow-y-auto">
+      <div className="neu-card max-w-2xl w-full flex flex-col overflow-hidden !p-0 border-primary/20 shadow-2xl my-auto sm:my-0">
         {/* Header */}
         <div className="p-6 border-b border-white/5 bg-primary/5 flex justify-between items-center">
           <div className="flex items-center gap-3">
@@ -116,7 +116,7 @@ export default function InventoryAdjustmentModal({
         {/* Content */}
         <div className="p-8 space-y-8">
           {/* Current Status Row */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="neu-inset-sm p-4 text-center">
               <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mb-1">Stock Actual</p>
               <p className="text-xl font-black">{stockActual}</p>
@@ -144,10 +144,10 @@ export default function InventoryAdjustmentModal({
                     type="number"
                     value={ajusteUnidades}
                     onChange={(e) => setAjusteUnidades(parseInt(e.target.value) || 0)}
-                    className="neu-input w-full pl-12 font-black text-lg"
+                    className="neu-input w-full !pl-16 !pr-12 font-black text-lg"
                     placeholder="Ej: -5, 10..."
                   />
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                  <div className="absolute left-6 top-1/2 -translate-y-1/2">
                     {ajusteUnidades === 0 ? <Package className="w-5 h-5 text-muted-foreground" /> :
                      ajusteUnidades > 0 ? <TrendingUp className="w-5 h-5 text-success" /> :
                      <TrendingDown className="w-5 h-5 text-danger" />}
@@ -170,7 +170,7 @@ export default function InventoryAdjustmentModal({
                   )}
                 </div>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-muted-foreground">$</span>
+                  <span className="absolute left-6 top-1/2 -translate-y-1/2 font-black text-muted-foreground">$</span>
                   <input
                     id="ajusteValor"
                     type="number"
@@ -178,7 +178,7 @@ export default function InventoryAdjustmentModal({
                     value={ajusteValorUnitario}
                     onChange={(e) => setAjusteValorUnitario(e.target.value === '' ? '' : parseFloat(e.target.value))}
                     className={cn(
-                        "neu-input w-full pl-10 font-black text-lg",
+                        "neu-input w-full !pl-12 !pr-12 font-black text-lg",
                         ajusteValorUnitario === '' ? "text-muted-foreground" : "text-primary"
                     )}
                     placeholder={ajusteUnidades < 0 ? costoPromedioActual.toFixed(2).toString() : "0.00"}
