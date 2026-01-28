@@ -445,6 +445,8 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                                                 label="+ Agregar nuevo producto al catálogo"
                                                 icon={PlusCircle}
                                                 onClick={() => {
+                                                    const { setInitialProductName } = useUIStore.getState();
+                                                    setInitialProductName(searchTerm);
                                                     setIsCreateProductModalOpen(true);
                                                     setSearchTerm('');
                                                 }}
