@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 import ActionMenu from '@/components/ui/ActionMenu';
 import SearchBar from '@/components/ui/SearchBar';
 import { cn } from '@/lib/utils';
+import { SecurityScrollContainer } from '@/components/ui/SecurityScrollContainer';
 
 interface ExtendedProduct extends Product {
   product_variants: ProductVariant[];
@@ -360,7 +361,7 @@ export default function InventoryCountView() {
         <div className="fixed inset-0 bg-background/90 backdrop-blur-xl flex items-center justify-center z-50 p-4">
           <div className="neu-card max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden !p-0 border-primary/20 shadow-2xl">
             <div className="p-8 border-b border-white/5 bg-primary/5 flex justify-between items-center">
-              <h3 className="text-2xl font-black text-foreground uppercase tracking-tighter flex items-center gap-3">
+              <h3 className="text-2xl font-black text-foreground uppercase tracking-tighter flex items-center gap-3 whitespace-nowrap">
                 <AlertTriangle className="w-8 h-8 text-warning" />
                 Resumen de Discrepancias
               </h3>
@@ -379,18 +380,20 @@ export default function InventoryCountView() {
                   <div key={d.productId} className="neu-raised-sm !p-6 border border-white/5 bg-background/50 relative overflow-hidden group">
                     <div className={cn("absolute top-0 left-0 w-1 h-full", d.diff > 0 ? "bg-success" : "bg-danger")} />
 
-                    <div className="flex justify-between items-start mb-6">
-                      <div className="flex-1 overflow-hidden">
-                        <h4 className="font-black text-sm uppercase tracking-tight truncate pr-4">{d.name}</h4>
-                        <div className="text-[9px] font-bold text-muted-foreground uppercase mt-1 tracking-widest flex gap-4">
-                          <span>Sistema: <strong className="text-foreground">{d.expected}</strong></span>
-                          <span>Contado: <strong className="text-foreground">{d.counted}</strong></span>
+                    <SecurityScrollContainer minWidth="240px">
+                      <div className="flex justify-between items-start mb-6 gap-4">
+                        <div className="flex-1 overflow-hidden">
+                          <h4 className="font-black text-sm uppercase tracking-tight truncate pr-4">{d.name}</h4>
+                          <div className="text-[9px] font-bold text-muted-foreground uppercase mt-1 tracking-widest flex gap-4 whitespace-nowrap">
+                            <span>Sistema: <strong className="text-foreground">{d.expected}</strong></span>
+                            <span>Contado: <strong className="text-foreground">{d.counted}</strong></span>
+                          </div>
+                        </div>
+                        <div className={cn("text-2xl font-black tracking-tighter whitespace-nowrap", d.diff > 0 ? "text-success" : "text-danger")}>
+                          {d.diff > 0 ? `+${d.diff}` : d.diff}
                         </div>
                       </div>
-                      <div className={cn("text-2xl font-black tracking-tighter", d.diff > 0 ? "text-success" : "text-danger")}>
-                        {d.diff > 0 ? `+${d.diff}` : d.diff}
-                      </div>
-                    </div>
+                    </SecurityScrollContainer>
 
                     {d.diff < 0 && (
                       <div className="space-y-4 pt-4 border-t border-white/5">
