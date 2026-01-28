@@ -617,6 +617,63 @@
   @apply min-w-full border-collapse;
 }
 
+/* ============================================
+   PLAN B GLOBAL PARA TABLAS (SCROLL HORIZONTAL)
+   ============================================ */
+.table-scroll-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  /* Indicador visual de scroll (Sombras laterales) */
+  background:
+    linear-gradient(to right, var(--background) 30%, transparent),
+    linear-gradient(to right, transparent, var(--background) 70%) 100% 0,
+    radial-gradient(farthest-side at 0 50%, rgba(0, 0, 0, 0.1), transparent),
+    radial-gradient(farthest-side at 100% 50%, rgba(0, 0, 0, 0.1), transparent) 100% 0;
+  background-repeat: no-repeat;
+  background-size: 40px 100%, 40px 100%, 14px 100%, 14px 100%;
+  background-attachment: local, local, scroll, scroll;
+}
+
+.data-table {
+  min-width: max-content !important; /* Fuerza ancho real para evitar colapsos */
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+  white-space: nowrap !important; /* Evita saltos de línea que rompen el layout */
+}
+
+/* Sticky Column Plan B */
+.sticky-column-1 th:first-child,
+.sticky-column-1 td:first-child {
+  position: sticky;
+  left: 0;
+  background: var(--background);
+  z-index: 10;
+  box-shadow: 4px 0 10px -4px rgba(0, 0, 0, 0.3); /* Sombra lateral para indicar scroll */
+}
+
+/* Enfoque alternativo para sombras si el fondo es opaco */
+.table-scroll-wrapper {
+  position: relative;
+}
+
+.table-scroll-wrapper::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 20px;
+  background: linear-gradient(to left, rgba(0,0,0,0.05), transparent);
+  pointer-events: none;
+  z-index: 5;
+}
+
 /* Priority Columns Pattern */
 @media (max-width: 640px) {
   .priority-low {
