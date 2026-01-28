@@ -25,6 +25,13 @@ export default function CashClosureView({}: CashClosureViewProps) {
 
   const cashClosures = cashClosuresData || [];
   const pendingClosure = cashClosures.find(c => c.status === 'pendiente');
+  const finalizedClosures = cashClosures.filter(c => c.status === 'cerrado');
+
+  const summaryItems = [
+    { label: 'Ventas Totales Esperadas', value: salesData?.total_sales || 0, color: 'text-foreground' },
+    { label: 'Efectivo Declarado (Sistema)', value: salesData?.total_cash || 0, color: 'text-green-600' },
+    { label: 'Transferencias (Sistema)', value: salesData?.total_transfer || 0, color: 'text-primary' },
+  ];
 
   const summary = {
     total_billed: salesData?.total_sales || 0,
@@ -47,23 +54,20 @@ export default function CashClosureView({}: CashClosureViewProps) {
   const totalDeclared = declaredCash + declaredVouchers;
   const difference = totalDeclared - summary.total_billed;
 
+  const canClose = ['admin', 'manager', 'encargado'].includes(user?.role || '');
+
   const handleProcessClosure = async () => {
     if (!user?.storeId) return;
 
     if (pendingClosure) {
-      // Finalize closure (Manager/Admin flow)
-      const canClose = ['admin', 'manager', 'encargado'].includes(user.role);
-      if (!canClose) {
-        toast.error('No tienes permisos para finalizar el cierre de caja.');
-        return;
-      }
+      // If user is manager/admin, they finalize. If clerk, they update declaration.
+      const shouldFinalize = canClose;
 
       updateClosure.mutate({
         id: pendingClosure.id,
         closure: {
-          status: 'cerrado',
-          closed_at: new Date().toISOString(),
-          // We update totals just in case they changed since declaration
+          status: shouldFinalize ? 'cerrado' : 'pendiente',
+          closed_at: shouldFinalize ? new Date().toISOString() : null,
           declared_cash: declaredCash,
           declared_vouchers: declaredVouchers,
           declared_total: totalDeclared,
@@ -90,6 +94,15 @@ export default function CashClosureView({}: CashClosureViewProps) {
 
   const isProcessing = createClosure.isPending || updateClosure.isPending;
 
+  const buttonLabel = !pendingClosure
+    ? 'Declarar Fondos'
+    : canClose
+      ? 'Cerrar Caja'
+      : 'Actualizar Declaración';
+
+  const buttonIcon = !pendingClosure ? DollarSign : CheckCircle2;
+  const buttonVariant = pendingClosure && canClose ? 'success' : 'primary';
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -98,10 +111,10 @@ export default function CashClosureView({}: CashClosureViewProps) {
           actions={[
             {
               id: 'process',
-              label: pendingClosure ? 'Cerrar Caja' : 'Declarar Fondos',
-              icon: pendingClosure ? CheckCircle2 : DollarSign,
+              label: buttonLabel,
+              icon: buttonIcon,
               onClick: handleProcessClosure,
-              variant: pendingClosure ? 'success' : 'primary',
+              variant: buttonVariant,
               disabled: isProcessing || isLoadingSales
             }
           ]}
@@ -164,11 +177,7 @@ export default function CashClosureView({}: CashClosureViewProps) {
           </div>
 
           <div className="space-y-4">
-            {[
-              { label: 'Ventas Totales Esperadas', value: summary.total_billed, color: 'text-foreground' },
-              { label: 'Efectivo Declarado (Sistema)', value: summary.total_cash, color: 'text-green-600' },
-              { label: 'Transferencias (Sistema)', value: summary.total_transfer, color: 'text-primary' },
-            ].map((row, i) => (
+            {summaryItems.map((row, i) => (
               <div key={i} className="flex justify-between items-center p-4 rounded-xl bg-background/50 border border-border">
                 <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">{row.label}</span>
                 <span className={cn("text-xl font-black font-mono", row.color)}>${row.value.toFixed(2)}</span>
@@ -205,18 +214,12 @@ export default function CashClosureView({}: CashClosureViewProps) {
               </tr>
             </thead>
             <tbody>
-              {cashClosures.map((closure) => (
-                <tr key={closure.id} className={cn(
-                  "border-b border-border/50 hover:bg-muted/20 transition-colors",
-                  closure.status === 'pendiente' && "bg-amber-500/5"
-                )}>
+              {finalizedClosures.map((closure) => (
+                <tr key={closure.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                   <td className="p-4">
                     <div className="font-bold text-xs">{new Date(closure.created_at).toLocaleDateString()}</div>
                     <div className="text-[10px] text-muted-foreground font-mono">
                       {new Date(closure.created_at).toLocaleTimeString()}
-                      {closure.status === 'pendiente' && (
-                        <span className="ml-2 px-1.5 py-0.5 bg-amber-500 text-white rounded-[4px] text-[8px] uppercase font-black tracking-tighter">Pendiente</span>
-                      )}
                     </div>
                   </td>
                   <td className="p-4 font-bold text-xs uppercase">{closure.profile?.full_name}</td>
@@ -239,7 +242,7 @@ export default function CashClosureView({}: CashClosureViewProps) {
                   </td>
                 </tr>
               ))}
-              {cashClosures.length === 0 && (
+              {finalizedClosures.length === 0 && (
                 <tr>
                   <td colSpan={5} className="p-12 text-center text-muted-foreground uppercase font-black tracking-widest text-xs">
                     Sin registros de cierre

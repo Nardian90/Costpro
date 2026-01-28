@@ -31,6 +31,7 @@ export function useCreateCashClosure() {
     mutationFn: (closure: Partial<CashClosure>) => cashService.createClosure(closure),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cash-closures'] });
+      queryClient.invalidateQueries({ queryKey: ['sales-since-last-closure'] });
       toast.success('Declaración de fondos registrada correctamente');
     },
     onError: (error: any) => {
@@ -46,6 +47,7 @@ export function useUpdateCashClosure() {
       cashService.updateClosure(id, closure),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cash-closures'] });
+      queryClient.invalidateQueries({ queryKey: ['sales-since-last-closure'] });
       toast.success('Cierre de caja finalizado correctamente');
     },
     onError: (error: any) => {
