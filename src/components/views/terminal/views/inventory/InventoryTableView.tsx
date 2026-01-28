@@ -43,7 +43,7 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onA
                     "neu-badge text-[9px] px-2 py-0.5",
                     isLowStock ? "text-danger" : "text-success"
                 )}>
-                    {isLowStock ? 'Low Stock' : 'Normal'}
+                    {isLowStock ? 'Stock Bajo' : 'Normal'}
                 </span>
             </td>
             <td className="p-4">
@@ -53,7 +53,7 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onA
                         className="neu-btn !p-2 flex items-center justify-center gap-2 hover:neu-raised-sm"
                     >
                         <Edit className="w-4 h-4" />
-                        <span className="hidden sm:inline text-xs">Adjust</span>
+                        <span className="hidden sm:inline text-xs">Ajustar</span>
                     </button>
                 </div>
             </td>
@@ -80,13 +80,13 @@ export default function InventoryTableView({ products, loadMore, hasMore, isLoad
             <table className="w-full min-w-[1024px] grid-table-inventory">
                 <thead className="bg-muted/30 border-b sticky-header">
                     <tr className="text-left text-muted-foreground uppercase text-[10px] font-bold">
-                        <th className="p-4 pl-[76px]">Product</th>
+                        <th className="p-4 pl-[76px]">Producto</th>
                         <th className="p-4">SKU</th>
                         <th className="p-4 text-right">Stock</th>
-                        <th className="p-4 text-right">Price</th>
-                        <th className="p-4 text-right">Cost</th>
-                        <th className="p-4 text-center">Status</th>
-                        <th className="p-4 text-center">Actions</th>
+                        <th className="p-4 text-right">Precio</th>
+                        <th className="p-4 text-right">Costo</th>
+                        <th className="p-4 text-center">Estado</th>
+                        <th className="p-4 text-center">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -109,15 +109,15 @@ export default function InventoryTableView({ products, loadMore, hasMore, isLoad
                         <tr>
                             <td colSpan={7} className="p-20 text-center text-muted-foreground">
                                 <Package className="w-16 h-16 mx-auto mb-4 opacity-10" />
-                                <p className="text-lg font-medium">No products found.</p>
+                                <p className="text-lg font-medium uppercase tracking-widest">No se encontraron productos.</p>
                             </td>
                         </tr>
                     )}
                 </tbody>
             </table>
              {!hasMore && products.length > 0 && (
-                <div className="text-center py-8 text-muted-foreground font-bold text-sm">
-                    You've reached the end of the list.
+                <div className="text-center py-8 text-muted-foreground font-bold text-sm uppercase tracking-widest">
+                    Has llegado al final de la lista.
                 </div>
             )}
         </div>
