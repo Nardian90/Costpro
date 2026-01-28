@@ -248,7 +248,7 @@ export interface Receipt {
   created_at: string;
   updated_at?: string | null;
   user_id?: string | null;
-  status: 'active' | 'voided';
+  status: 'active' | 'voided' | 'pending' | 'partial';
   total_cost: number;
   reference_doc?: string | null;
   notes?: string | null;
