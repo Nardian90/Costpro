@@ -406,7 +406,8 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                             onChange={(e) => setSearchTerm(e.target.value)}
                             onClear={() => setSearchTerm('')}
                             placeholder="Buscar producto para agregar..."
-                            className="w-full !pl-14"
+                            className="w-full"
+                            inputClassName="!pl-14"
                         />
                         {debouncedSearchTerm && (
                             <div className="absolute top-full left-0 w-full mt-2 neu-card z-50 max-h-64 overflow-y-auto shadow-2xl border border-white/10 animate-in fade-in slide-in-from-top-2 duration-200">

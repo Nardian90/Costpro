@@ -85,9 +85,10 @@ export const IconButton: React.FC<BaseButtonProps> = ({ icon: Icon, className, .
 
 interface SearchInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   onClear?: () => void;
+  inputClassName?: string;
 }
 
-export const SearchInput: React.FC<SearchInputProps> = ({ onClear, value, className, ...props }) => {
+export const SearchInput: React.FC<SearchInputProps> = ({ onClear, value, className, inputClassName, ...props }) => {
   return (
     <div className={cn("relative w-full", className)}>
       <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
@@ -101,7 +102,8 @@ export const SearchInput: React.FC<SearchInputProps> = ({ onClear, value, classN
         className={cn(
           "w-full pl-12 pr-12 py-3 min-h-[44px] text-base rounded-xl border border-border bg-background transition-all outline-none",
           "focus:ring-2 focus:ring-primary/20 focus:border-primary",
-          "placeholder:text-muted-foreground/50 placeholder:uppercase placeholder:text-[10px] placeholder:tracking-widest placeholder:font-bold"
+          "placeholder:text-muted-foreground/50 placeholder:uppercase placeholder:text-[10px] placeholder:tracking-widest placeholder:font-bold",
+          inputClassName
         )}
         {...props}
       />
