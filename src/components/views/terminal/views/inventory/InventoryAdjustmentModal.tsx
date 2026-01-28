@@ -13,8 +13,7 @@ interface InventoryAdjustmentModalProps {
   onClose: () => void;
   onConfirm: (adjustmentData: {
     quantityDelta: number;
-    unitCostAdjustment: number;
-    newAverageCost: number;
+    unitCostAdjustment: number | null;
     reason: string;
   }) => Promise<void>;
 }
@@ -74,8 +73,7 @@ export default function InventoryAdjustmentModal({
     try {
       await onConfirm({
         quantityDelta: ajusteUnidades,
-        unitCostAdjustment: ajusteValorUnitario === '' ? (ajusteUnidades < 0 ? costoPromedioActual : 0) : ajusteValorUnitario,
-        newAverageCost: resultados.nuevo_costo_unitario,
+        unitCostAdjustment: ajusteValorUnitario === '' ? null : ajusteValorUnitario,
         reason: reason
       });
       onClose();
