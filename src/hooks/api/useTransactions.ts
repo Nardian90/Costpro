@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
 import { validateRPCArrayResponse } from '@/lib/rpc-validator';
 import { transactionSchema, transactionItemSchema } from '@/validation/schemas';
@@ -33,7 +33,7 @@ export function useTransactions(storeId?: string | null, isAdmin = false) {
   });
 }
 
-export async function prefetchTransactions(queryClient: any, storeId: string, isAdmin = false) {
+export async function prefetchTransactions(queryClient: QueryClient, storeId: string, isAdmin = false) {
   if (!isAdmin && !storeId) return;
 
   return queryClient.prefetchQuery({

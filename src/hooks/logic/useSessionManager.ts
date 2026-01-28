@@ -48,14 +48,14 @@ export function useSessionManager() {
                 const storeColumns = 'id, name, address, logo_url, is_active, created_at';
                 const membershipColumns = `id, user_id, store_id, role, status, created_at, updated_at, store:stores(${storeColumns})`;
 
-                let profileData: any;
-                let profileError: any;
+                let profileData: any = null;
+                let profileError: any = null;
 
                 try {
                     const result = await Promise.race([
                         supabase.from('profiles').select(`${profileColumns}, memberships:user_store_memberships(${membershipColumns})`).eq('id', session.user.id).single(),
                         new Promise((_, reject) => setTimeout(() => reject(new Error('Profile fetch timeout')), SESSION_CHECK_TIMEOUT))
-                    ]) as any;
+                    ]) as { data: any; error: any };
                     profileData = result.data;
                     profileError = result.error;
                 } catch (err: any) {
