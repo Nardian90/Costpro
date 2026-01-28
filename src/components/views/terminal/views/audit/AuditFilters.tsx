@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Search, Filter, X, ChevronDown } from 'lucide-react';
+import { Search, Filter, X, Calendar } from 'lucide-react';
+import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { AuditCategory } from './AuditEventIcon';
 
@@ -95,6 +96,24 @@ export default function AuditFilters({
             {/* Rango de Fechas */}
             <div className="space-y-3">
               <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Rango de Fechas</label>
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {[
+                  { label: 'Hoy', getValue: () => ({ from: format(new Date(), 'yyyy-MM-dd'), to: format(new Date(), 'yyyy-MM-dd') }) },
+                  { label: 'Ayer', getValue: () => {
+                    const yesterday = subDays(new Date(), 1);
+                    return { from: format(yesterday, 'yyyy-MM-dd'), to: format(yesterday, 'yyyy-MM-dd') };
+                  }},
+                  { label: '7 Días', getValue: () => ({ from: format(subDays(new Date(), 7), 'yyyy-MM-dd'), to: format(new Date(), 'yyyy-MM-dd') }) },
+                ].map(preset => (
+                  <button
+                    key={preset.label}
+                    onClick={() => onDateRangeChange(preset.getValue())}
+                    className="px-2 py-1 rounded bg-muted/50 hover:bg-primary/10 hover:text-primary text-[9px] font-black uppercase border border-border/50 transition-colors"
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">
                   <span className="text-[8px] font-bold text-muted-foreground uppercase ml-1">Desde</span>
