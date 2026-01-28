@@ -615,9 +615,9 @@ export default function HelpView() {
                   <div className="bg-muted/30 rounded-2xl p-6 space-y-4 border border-primary/10">
                     <h4 className="font-black text-sm uppercase text-primary">Optimización UX Móvil: Caja Registradora Sticky</h4>
                     <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Caja "Sticky" en móviles: El total y botón de pago siempre visibles.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Caja &quot;Sticky&quot; en móviles: El total y botón de pago siempre visibles.</li>
                       <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Área de productos con scroll independiente para evitar desplazamientos excesivos.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Refuerzo de targets táctiles (>= 44px) en descuentos y acciones globales.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Refuerzo de targets táctiles (&gt;= 44px) en descuentos y acciones globales.</li>
                       <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Sombras proyectadas para jerarquía visual en componentes flotantes.</li>
                     </ul>
                   </div>
