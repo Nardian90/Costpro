@@ -95,40 +95,27 @@ export function useAdjustStock() {
       userId,
       quantityDelta,
       unitCostAdjustment,
-      newAverageCost,
       reason
     }: {
       productId: string;
       storeId: string;
       userId: string;
       quantityDelta: number;
-      unitCostAdjustment: number;
-      newAverageCost: number;
+      unitCostAdjustment: number | null;
       reason: string;
     }) => {
-      const rpcName = 'register_stock_movement';
+      const rpcName = 'perform_inventory_adjustment';
       const params = {
         p_product_id: productId,
         p_store_id: storeId,
         p_user_id: userId,
-        p_quantity: quantityDelta,
-        p_movement_type: 'adjustment',
-        p_reason: reason,
-        p_sale_id: null,
-        p_unit_cost: unitCostAdjustment,
-        p_notes: `Ajuste manual: ${reason}`
+        p_quantity_delta: quantityDelta,
+        p_unit_cost_adjustment: unitCostAdjustment,
+        p_reason: reason
       };
 
       const { data, error } = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
       if (error) throw error;
-
-      // Update the product's global average cost
-      const { error: updateError } = await supabase
-        .from('products')
-        .update({ cost_average: newAverageCost })
-        .eq('id', productId);
-
-      if (updateError) throw updateError;
 
       return data;
     },

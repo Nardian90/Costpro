@@ -1,7 +1,7 @@
 // src/components/InventoryView.tsx
 'use client';
 
-import { useState, useEffect, useMemo, useTransition } from 'react';
+import { useState, useEffect, useMemo, useTransition, useCallback } from 'react';
 import { useAuthStore } from '@/store';
 import { useInventory, useAdjustStock } from '@/hooks/api/useInventory';
 import { Download, Plus, X, LayoutList, Table as TableIcon, Package } from 'lucide-react';
@@ -99,21 +99,20 @@ export default function InventoryView() {
         },
         {
             id: 'toggle-reception',
-            label: currentView === 'inventory' ? 'Nueva Recepción' : 'Cancelar Recepción',
+            label: currentView === 'inventory' ? 'Nueva Recepción' : 'Volver a Inventario',
             icon: currentView === 'inventory' ? Plus : X,
             onClick: () => setCurrentView(prev => prev === 'inventory' ? 'reception' : 'inventory'),
             variant: currentView === 'inventory' ? 'primary' : 'danger',
         },
     ];
 
-    const handleAdjustProduct = (product: Product) => {
+    const handleAdjustProduct = useCallback((product: Product) => {
         setAdjustingProduct(product);
-    };
+    }, []);
 
     const handleConfirmAdjustment = async (adjustmentData: {
         quantityDelta: number;
-        unitCostAdjustment: number;
-        newAverageCost: number;
+        unitCostAdjustment: number | null;
         reason: string;
     }) => {
         if (!adjustingProduct || !user?.storeId || !user?.id) return;
@@ -145,7 +144,7 @@ export default function InventoryView() {
                 <SearchBar
                     value={searchTerm}
                     onChange={setSearchTerm}
-                    placeholder="Buscar por nombre o SKU..."
+                    placeholder="Buscar por nombre o SKU en inventario..."
                     showSettings={false}
                 />
 
