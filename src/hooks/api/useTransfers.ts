@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { transferService } from '@/services/transfer-service';
+import { useSyncContext } from '@/components/providers/SyncProvider';
 
 export function useIncomingTransfers(storeId?: string | null) {
   return useQuery({
@@ -35,8 +36,15 @@ export function useTransferableStores(userId: string, currentStoreId?: string | 
 
 export function useCreateTransfer() {
   const queryClient = useQueryClient();
+  const { addToQueue } = useSyncContext();
+
   return useMutation({
-    mutationFn: transferService.createTransfer,
+    mutationFn: async (params: any) => {
+      if (!navigator.onLine) {
+        return await addToQueue('transfer', 'CREATE', params);
+      }
+      return transferService.createTransfer(params);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transfers'] });
     },

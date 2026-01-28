@@ -36,3 +36,5 @@ dev.log
 *.tsbuildinfo
 next-env.d.ts
 dev_server.log
+playwright-report/
+test-results/

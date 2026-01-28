@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.6.4] - 2026-02-17
+
+### Added
+- **Sistema de Sincronización Offline -> Online**: Implementación de una arquitectura de sincronización robusta para permitir operaciones CRUD (Ventas, Recepciones, Ajustes, Transferencias) sin conexión a internet.
+- Infraestructura de persistencia local mediante **IndexedDB** (`localforage`) para encolar operaciones y mantener snapshots de datos.
+- **Background Sync**: Integración con Service Worker y Workbox `BackgroundSyncPlugin` para reintentos automáticos en segundo plano cuando se recupera la conectividad.
+- **Idempotencia en Backend**: Nuevo endpoint `/api/sync/batch` y tabla `sync_log` en Supabase para garantizar que las operaciones se procesen exactamente una vez, incluso tras múltiples reintentos.
+- **Resolución de Conflictos**: Modal interactivo que permite visualizar diferencias entre el estado local y el del servidor, con capacidad de edición manual (merge) para resolver colisiones de datos.
+- **Indicadores de Estado**: Badge global en el encabezado que muestra el estado en tiempo real (Sincronizado, Pendiente, Offline, Conflicto).
+
+### Changed
+- **Hardening de Resiliencia**: Implementación de reintentos con **backoff exponencial y jitter** en el trabajador de sincronización para optimizar el consumo de recursos y la tasa de éxito bajo redes inestables.
+- Actualización de los hooks de mutación (`useCreateSale`, `useRegisterReception`, `useAdjustStock`, `useCreateTransfer`) para soportar transparencia offline.
+
+**Nota de Handoff para UX:** Se han añadido dos nuevos componentes visuales: `SyncStatusBadge` (indicador circular en el header) y `SyncConflictModal` (modal de resolución). El diseño sigue los principios de Neumorfismo del sistema. Se recomienda revisar el flujo de "Edición Manual" en el modal de conflictos para futuras mejoras de usabilidad.
+
 ## [5.6.3] - 2026-02-16
 
 ### Added

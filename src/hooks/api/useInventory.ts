@@ -5,6 +5,7 @@ import {
   paginatedProductSchema,
 } from '@/validation/schemas';
 import { withLogging } from './base';
+import { useSyncContext } from '@/components/providers/SyncProvider';
 
 export function useSuspenseInventory(storeId?: string | null, searchTerm = '', category = '', limit = 20) {
   return useSuspenseInfiniteQuery({
@@ -73,8 +74,13 @@ export function useInventory(storeId?: string | null, searchTerm = '', category 
 
 export function useRegisterReception() {
   const queryClient = useQueryClient();
+  const { addToQueue } = useSyncContext();
+
   return useMutation({
     mutationFn: async (params: any) => {
+      if (!navigator.onLine) {
+        return await addToQueue('reception', 'CREATE', params);
+      }
       const rpcName = 'register_reception';
       return await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
     },
@@ -88,6 +94,8 @@ export function useRegisterReception() {
 
 export function useAdjustStock() {
   const queryClient = useQueryClient();
+  const { addToQueue } = useSyncContext();
+
   return useMutation({
     mutationFn: async ({
       productId,
@@ -113,6 +121,10 @@ export function useAdjustStock() {
         p_unit_cost_adjustment: unitCostAdjustment,
         p_reason: reason
       };
+
+      if (!navigator.onLine) {
+        return await addToQueue('adjustment', 'CREATE', params);
+      }
 
       const { data, error } = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
       if (error) throw error;
