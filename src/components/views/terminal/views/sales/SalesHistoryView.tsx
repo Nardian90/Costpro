@@ -59,7 +59,7 @@ export default function SalesHistoryView() {
            </div>
         </SearchBar>
 
-        <div className="responsive-table-container">
+        <div className="table-scroll-wrapper">
           <StateRenderer
             isLoading={isLoading}
             error={null}
@@ -67,7 +67,7 @@ export default function SalesHistoryView() {
             loadingComponent={<SalesLoadingSkeleton />}
           >
             {(data) => (
-              <table className="w-full text-sm">
+              <table className="data-table sticky-column-1 w-full text-sm">
                 <thead>
                   <tr className="bg-muted/30 text-muted-foreground font-black uppercase text-[10px] tracking-widest border-b border-border">
                     <th className="p-4 text-left">Ref</th>
