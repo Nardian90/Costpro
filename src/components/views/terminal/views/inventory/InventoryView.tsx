@@ -115,7 +115,12 @@ export default function InventoryView() {
         unitCostAdjustment: number | null;
         reason: string;
     }) => {
-        if (!adjustingProduct || !user?.storeId || !user?.id) return;
+        if (!adjustingProduct) return;
+
+        if (!user?.storeId || !user?.id) {
+            toast.error('Sesión no válida o tienda no seleccionada. Por favor, reincie sesión.');
+            return;
+        }
 
         await adjustStock({
             productId: adjustingProduct.id,
