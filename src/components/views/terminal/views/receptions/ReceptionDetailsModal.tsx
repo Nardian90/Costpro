@@ -4,6 +4,7 @@ import React from 'react';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -38,6 +39,9 @@ export function ReceptionDetailsModal({ receipt, isOpen, onClose, items, isLoadi
             </div>
             Detalle de Recepción
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Muestra el listado de productos y cantidades recibidas en esta operación.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="p-6 space-y-6">
