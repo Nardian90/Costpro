@@ -85,3 +85,57 @@ export function useRegisterReception() {
     },
   });
 }
+
+export function useAdjustStock() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      productId,
+      storeId,
+      userId,
+      quantityDelta,
+      unitCostAdjustment,
+      newAverageCost,
+      reason
+    }: {
+      productId: string;
+      storeId: string;
+      userId: string;
+      quantityDelta: number;
+      unitCostAdjustment: number;
+      newAverageCost: number;
+      reason: string;
+    }) => {
+      const rpcName = 'register_stock_movement';
+      const params = {
+        p_product_id: productId,
+        p_store_id: storeId,
+        p_user_id: userId,
+        p_quantity: quantityDelta,
+        p_movement_type: 'adjustment',
+        p_reason: reason,
+        p_sale_id: null,
+        p_unit_cost: unitCostAdjustment,
+        p_notes: `Ajuste manual: ${reason}`
+      };
+
+      const { data, error } = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
+      if (error) throw error;
+
+      // Update the product's global average cost
+      const { error: updateError } = await supabase
+        .from('products')
+        .update({ cost_average: newAverageCost })
+        .eq('id', productId);
+
+      if (updateError) throw updateError;
+
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory'] });
+      queryClient.invalidateQueries({ queryKey: ['stock-movements'] });
+    },
+  });
+}

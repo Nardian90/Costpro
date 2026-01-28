@@ -13,9 +13,10 @@ interface InventoryCardViewProps {
     loadMore: () => void;
     hasMore: boolean;
     isLoading: boolean;
+    onAdjust?: (product: Product) => void;
 }
 
-export default function InventoryCardView({ products, loadMore, hasMore, isLoading }: InventoryCardViewProps) {
+export default function InventoryCardView({ products, loadMore, hasMore, isLoading, onAdjust }: InventoryCardViewProps) {
     const observer = useRef<IntersectionObserver | null>(null);
     const lastElementRef = useCallback((node: HTMLDivElement) => {
         if (isLoading) return;
@@ -47,7 +48,7 @@ export default function InventoryCardView({ products, loadMore, hasMore, isLoadi
                                 <ProductCard
                                     product={product}
                                     variant="inventory"
-                                    onEdit={() => {/* Handle adjustment */}}
+                                    onEdit={() => onAdjust?.(product)}
                                 />
                             </motion.div>
                         );
