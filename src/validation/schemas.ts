@@ -150,7 +150,7 @@ export const receiptSchema = z.object({
   created_at: z.preprocess((val) => val || new Date().toISOString(), z.string()),
   updated_at: z.string().optional().nullable(),
   user_id: z.string().uuid().nullable().optional(),
-  status: z.enum(['active', 'voided']).catch('active').default('active'),
+  status: z.enum(['active', 'voided', 'pending', 'partial']).catch('active').default('active'),
   total_cost: z.coerce.number().catch(0).default(0),
   reference_doc: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
