@@ -47,17 +47,17 @@ const CostSheetNarrative: React.FC<CostSheetNarrativeProps> = ({ data, calculate
 
         <p className="text-slate-700 dark:text-slate-300 leading-relaxed mb-6">
           Para el producto <span className="font-bold text-foreground">"{data.header.name}"</span>,
-          se ha determinado un <span className="font-bold">Costo Total de Producción</span> de <span className="text-primary font-bold">{data.header.currency} {format(costoTotal)}</span>.
-          A este valor se le adicionan gastos indirectos por un total de <span className="font-bold">{data.header.currency} {format(gastosTotales)}</span>,
-          resultando en un costo y gasto total de <span className="font-bold">{data.header.currency} {format(costoYGastoTotal)}</span>.
+          se ha determinado un <span className="font-bold">Costo Total de Producción</span> de <span className="text-primary font-bold whitespace-nowrap">{data.header.currency} {format(costoTotal)}</span>.
+          A este valor se le adicionan gastos indirectos por un total de <span className="font-bold whitespace-nowrap">{data.header.currency} {format(gastosTotales)}</span>,
+          resultando en un costo y gasto total de <span className="font-bold whitespace-nowrap">{data.header.currency} {format(costoYGastoTotal)}</span>.
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 flex items-start gap-3">
              <TrendingUp className="w-5 h-5 text-success mt-1" />
              <div>
-                <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Margen de Utilidad</p>
-                <p className="text-lg font-bold text-success">
+                <p className="text-xs text-slate-500 uppercase font-bold tracking-wider whitespace-nowrap">Margen de Utilidad</p>
+                <p className="text-lg font-bold text-success whitespace-nowrap">
                   {format(utilidad)}
                   ({costoYGastoTotal > 0 ? ((utilidad/costoYGastoTotal)*100).toFixed(2) : '0.00'}%)
                 </p>
@@ -66,8 +66,8 @@ const CostSheetNarrative: React.FC<CostSheetNarrativeProps> = ({ data, calculate
           <div className="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 flex items-start gap-3">
              <Info className="w-5 h-5 text-primary mt-1" />
              <div>
-                <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Precio Final Sugerido</p>
-                <p className="text-lg font-bold text-primary">{data.header.currency} {format(precioFinal)}</p>
+                <p className="text-xs text-slate-500 uppercase font-bold tracking-wider whitespace-nowrap">Precio Final Sugerido</p>
+                <p className="text-lg font-bold text-primary whitespace-nowrap">{data.header.currency} {format(precioFinal)}</p>
              </div>
           </div>
         </div>
