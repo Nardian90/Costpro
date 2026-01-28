@@ -8,6 +8,7 @@ import { useAuthStore, useCartStore } from '@/store';
 import { useProducts } from '@/hooks/api/useProducts';
 import { useCreateSale } from '@/hooks/api/useTransactions';
 import { PaymentMethod } from '@/types';
+import { auditService } from '@/services/audit-service';
 import { createSaleParamsSchema } from '@/validation/schemas';
 import { CartItem } from '@/store/cart';
 import { Product } from '@/types';
@@ -18,6 +19,11 @@ export function usePOSView() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [posLayoutMode, setPosLayoutMode] = useState<'grid' | 'table'>('grid');
+  const [showPriceWarning, setShowPriceWarning] = useState(false);
+  const [pendingCheckoutData, setPendingCheckoutData] = useState<{
+    paymentMethod: PaymentMethod;
+    discount: any;
+  } | null>(null);
 
   // Data Fetching
   const { data: productsData, isLoading: isLoadingProducts } = useProducts(user?.storeId, searchTerm);
@@ -44,6 +50,31 @@ export function usePOSView() {
     addItem(item);
     toast.success(`${product.name} agregado`);
   }
+
+  const startCheckout = (paymentMethod: PaymentMethod, checkoutDiscount?: { type: string, value: number } | null) => {
+    const unpricedItems = items.filter(i => i.price === null || i.price <= 0);
+    if (unpricedItems.length > 0) {
+      setPendingCheckoutData({ paymentMethod, discount: checkoutDiscount });
+      setShowPriceWarning(true);
+      return;
+    }
+    handleCheckout(paymentMethod, checkoutDiscount);
+  };
+
+  const confirmUnpricedCheckout = async () => {
+    if (!pendingCheckoutData || !user) return;
+
+    setShowPriceWarning(false);
+
+    // Log audit events for each unpriced product
+    const unpricedItems = items.filter(i => i.price === null || i.price <= 0);
+    for (const item of unpricedItems) {
+      await auditService.logInvoiceWithoutPrice(user.id, item.product_id, user.storeId);
+    }
+
+    await handleCheckout(pendingCheckoutData.paymentMethod, pendingCheckoutData.discount);
+    setPendingCheckoutData(null);
+  };
 
   const handleCheckout = async (paymentMethod: PaymentMethod, checkoutDiscount?: { type: string, value: number } | null) => {
     if (items.length === 0 || createSaleMutation.isPending || !user) return;
@@ -122,6 +153,10 @@ export function usePOSView() {
     getItemCount,
 
     // Operations
+    startCheckout,
+    confirmUnpricedCheckout,
+    showPriceWarning,
+    setShowPriceWarning,
     handleCheckout,
     isProcessingSale: createSaleMutation.isPending,
   };
