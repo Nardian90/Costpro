@@ -287,19 +287,19 @@ export interface Transfer {
   notes: string | null;
   created_at: string;
   updated_at: string;
-  origin_store?: Store;
-  destination_store?: Store;
-  creator?: { full_name: string };
-  items?: TransferItem[];
+  origin_store?: Store | null;
+  destination_store?: Store | null;
+  creator?: { full_name: string } | null;
+  items?: TransferItem[] | null;
 }
 
 export interface TransferItem {
-  id: string;
-  transfer_id: string;
+  id?: string;
+  transfer_id?: string;
   product_id: string;
   quantity: number;
   unit_cost: number;
-  product?: Product;
+  product?: Product | null;
 }
 
 export interface PurchaseOrder {

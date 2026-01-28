@@ -24,6 +24,15 @@ export const transactionStatusSchema = z.enum([
 // Entities
 // ============================================
 
+export const storeSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  address: z.string().nullable().optional(),
+  logo_url: z.string().nullable().optional(),
+  is_active: z.boolean().optional(),
+  created_at: z.string().optional(),
+});
+
 export const userStoreMembershipSchema = z.object({
   id: z.string().uuid().optional().nullable(),
   user_id: z.string().uuid().optional().nullable(),
@@ -32,14 +41,7 @@ export const userStoreMembershipSchema = z.object({
   status: z.enum(['active', 'revoked']).default('active'),
   created_at: z.string().optional().nullable(),
   updated_at: z.string().optional().nullable(),
-  store: z.object({
-    id: z.string(),
-    name: z.string(),
-    address: z.string().nullable().optional(),
-    logo_url: z.string().nullable().optional(),
-    is_active: z.boolean().optional(),
-    created_at: z.string().optional(),
-  }).nullable().optional().catch(null),
+  store: storeSchema.nullable().optional().catch(null),
 });
 
 export const profileSchema = z.object({
@@ -339,7 +341,20 @@ export const transferSchema = z.object({
   destination_store_id: z.string().uuid(),
   created_by: z.string().uuid(),
   status: transferStatusSchema,
-  notes: z.string().nullable().optional(),
+  notes: z.string().nullable(),
   created_at: z.string(),
   updated_at: z.string(),
+});
+
+export const transferWithDetailsSchema = transferSchema.extend({
+  origin_store: storeSchema.nullable().optional(),
+  destination_store: storeSchema.nullable().optional(),
+  creator: z.object({
+    full_name: z.string(),
+  }).nullable().optional(),
+  items: z.array(
+    transferItemSchema.extend({
+      product: productSchema.nullable().optional(),
+    })
+  ).optional(),
 });

@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.6.1] - 2026-02-13
+
+### Changed
+- **Technical Hardening (Transfers)**: Fortalecimiento de contratos de datos en el flujo de transferencias entre almacenes.
+- Migración de `transfer-service.ts` a tipado estricto eliminando el uso de `any`.
+- Implementación de validación Zod en la capa de servicio mediante `validateRPCResponse` y `validateRPCArrayResponse` para garantizar la integridad de los datos provenientes de Supabase.
+- Centralización de `storeSchema` y definición de `transferWithDetailsSchema` en `src/validation/schemas.ts` para unificación de contratos.
+- Refuerzo de interfaces en `src/types/index.ts` para reflejar con precisión la nulabilidad de los campos de la base de datos.
+
 ## [5.6.0] - 2026-02-13
 
 ### Added
