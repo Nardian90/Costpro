@@ -6,6 +6,8 @@ import { cn } from '@/lib/utils';
 import { ViewType } from '@/store';
 import { UserContract } from '@/contracts/user';
 import { NavigationItem } from '@/hooks/ui/useTerminalNavigation';
+import { SyncStatusBadge } from '@/components/ui/SyncStatusBadge';
+import { SyncConflictModal } from '@/components/modals/SyncConflictModal';
 
 interface HeaderProps {
   sidebarOpen: boolean;
@@ -69,6 +71,10 @@ export const Header = ({
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <div className="hidden xs:block">
+            <SyncStatusBadge />
+          </div>
+          <SyncConflictModal />
           <button
             onClick={() => onViewChange('help')}
             className={cn(

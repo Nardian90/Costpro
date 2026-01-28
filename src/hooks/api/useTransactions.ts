@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { validateRPCArrayResponse } from '@/lib/rpc-validator';
 import { transactionSchema, transactionItemSchema } from '@/validation/schemas';
 import { withLogging, withTableLogging } from './base';
+import { useSyncContext } from '@/components/providers/SyncProvider';
 
 export function useTransactions(storeId?: string | null, isAdmin = false) {
   return useQuery({
@@ -70,8 +71,13 @@ export function useTransactionDetails(transactionId?: string) {
 
 export function useCreateSale() {
   const queryClient = useQueryClient();
+  const { addToQueue } = useSyncContext();
+
   return useMutation({
     mutationFn: async (params: any) => {
+      if (!navigator.onLine) {
+        return await addToQueue('sale', 'CREATE', params);
+      }
       const rpcName = 'create_sale';
       return await withLogging<any[]>(rpcName, params, () => supabase.rpc(rpcName, params));
     },
