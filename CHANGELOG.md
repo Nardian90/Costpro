@@ -7,12 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [5.6.3] - 2026-02-16
 
+### Added
+- **Sistema de Scroll de Seguridad (Plan B)**: Implementación de un mecanismo de seguridad para garantizar que la información crítica nunca sea inaccesible en dispositivos móviles estrechos (e.g., Galaxy S8+ de 360px).
+- Nuevo componente `SecurityScrollContainer` que aplica `overflow-x: auto` y scroll táctil suave a contenedores de resumen y datos financieros.
+- Refuerzo global de `MobileSafeContainer` con `overflow-x: auto` como medida preventiva para todas las vistas de la terminal.
+
 ### Changed
-- **Technical Hardening & Performance Audit**: Comprehensive system-wide reinforcement of stability and speed pillars.
-- **Over-Fetching Elimination**: Replaced legacy `select('*')` with explicit column selection in `catalog-service.ts` to reduce network payload and database CPU.
-- **Strict Typing (Core Hooks)**: Significant reduction of `any` types in `useUsers.ts` and `useSessionManager.ts`, moving towards a fully predictable and type-safe data flow for user identity and session management.
-- **React Query Hardening**: Transitioned all prefetch functions (`prefetchProducts`, `prefetchDashboardData`, `prefetchTransactions`, etc.) from `any` to strict `QueryClient` typing, improving IDE support and build-time safety.
-- **Resilient Fallbacks**: Refined error handling and schema fallbacks in `useUsers.ts` to ensure UI stability during database migrations or partial schema evolutions.
+- **Hardening de Interfaz Táctica**: Aplicación de `whitespace-nowrap` en etiquetas de totales, precios y KPIs en las vistas de Dashboard, Ficha de Costo, Recepción de Productos y Auditoría de Stock para mantener la integridad visual de los números.
+- Optimización de contenedores Flexbox en secciones de "Resumen" añadiendo `gap` y `min-width` para prevenir colisiones de elementos en viewports pequeños.
+
+**Nota de Handoff para UX:** No se requieren cambios de diseño. Se han reforzado los pilares de accesibilidad existentes. El sistema ahora permite desplazamiento lateral suave en áreas que antes se desbordaban o cortaban.
 
 ## [5.6.2] - 2026-02-15
 

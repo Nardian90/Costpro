@@ -12,6 +12,7 @@ import { useDebounce } from '@/hooks/ui/useDebounce';
 import { formatCurrency } from '@/lib/utils';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
 import { SearchInput, PrimaryButton } from '@/components/ui/atomic';
+import { SecurityScrollContainer } from '@/components/ui/SecurityScrollContainer';
 import { importService } from '@/services/import-service';
 import { receptionImportRowSchema } from '@/validation/schemas';
 import Papa from 'papaparse';
@@ -503,17 +504,19 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
 
                 {/* Right side: Summary */}
                 <div className="lg:col-span-1 w-full lg:sticky top-24">
-                     <div className="neu-card border-primary/20 bg-primary/5 space-y-4">
-                         <h3 className="font-bold text-lg text-primary">Resumen de Recepción</h3>
-                         <div className="flex justify-between items-center">
-                             <span className="text-muted-foreground font-bold">Total de Productos</span>
-                             <span className="font-black text-xl">{receptionItems.size}</span>
-                         </div>
-                         <div className="flex justify-between items-center text-2xl pt-4 border-t border-primary/20">
-                             <span className="font-bold">Costo Total</span>
-                             <span className="font-black text-primary">{formatCurrency(totalCost)}</span>
-                         </div>
-                     </div>
+                    <SecurityScrollContainer minWidth="280px">
+                        <div className="neu-card border-primary/20 bg-primary/5 space-y-4">
+                            <h3 className="font-bold text-lg text-primary whitespace-nowrap">Resumen de Recepción</h3>
+                            <div className="flex justify-between items-center gap-4">
+                                <span className="text-muted-foreground font-bold whitespace-nowrap">Total de Productos</span>
+                                <span className="font-black text-xl whitespace-nowrap">{receptionItems.size}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-2xl pt-4 border-t border-primary/20 gap-4">
+                                <span className="font-bold whitespace-nowrap">Costo Total</span>
+                                <span className="font-black text-primary whitespace-nowrap">{formatCurrency(totalCost)}</span>
+                            </div>
+                        </div>
+                    </SecurityScrollContainer>
                 </div>
             </div>
 

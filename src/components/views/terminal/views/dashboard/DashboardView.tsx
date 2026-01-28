@@ -17,6 +17,7 @@ import { StateRenderer } from '@/components/ui/StateRenderer';
 import type { DashboardKPIs, Product, SalesSummary } from '@/types';
 import { useDashboardView } from './useDashboardView';
 import { useAuthStore } from '@/store';
+import { SecurityScrollContainer } from '@/components/ui/SecurityScrollContainer';
 
 export default function DashboardView() {
   const { user } = useAuthStore();
@@ -85,9 +86,9 @@ function DashboardKpisSection({ kpis }: { kpis: DashboardKPIs }) {
             <TrendingUp className="w-5 h-5 text-green-500" />
           </div>
         </div>
-        <div className="text-4xl font-black text-foreground">{formatCurrency(kpis?.gross_sales || 0)}</div>
+        <div className="text-4xl font-black text-foreground whitespace-nowrap">{formatCurrency(kpis?.gross_sales || 0)}</div>
         {/* Indicador de variación desactivado por falta de datos históricos/temporales */}
-        <div className="text-[10px] font-bold text-muted-foreground/50 mt-2 uppercase tracking-widest">Variación: N/D</div>
+        <div className="text-[10px] font-bold text-muted-foreground/50 mt-2 uppercase tracking-widest whitespace-nowrap">Variación: N/D</div>
       </div>
 
       {canViewFinancials && (
@@ -99,10 +100,10 @@ function DashboardKpisSection({ kpis }: { kpis: DashboardKPIs }) {
                 <Target className="w-5 h-5 text-amber-500" />
               </div>
             </div>
-            <div className={cn("text-4xl font-black", hasCostData ? "text-foreground" : "text-muted-foreground/40")}>
+            <div className={cn("text-4xl font-black whitespace-nowrap", hasCostData ? "text-foreground" : "text-muted-foreground/40")}>
               {hasCostData ? formatCurrency(kpis.cost_of_goods!) : "Sin datos"}
             </div>
-            <div className="text-[10px] font-bold text-muted-foreground mt-2 uppercase tracking-widest flex items-center gap-1">
+            <div className="text-[10px] font-bold text-muted-foreground mt-2 uppercase tracking-widest flex items-center gap-1 whitespace-nowrap">
               {hasCostData ? (
                 <>Margen: {(((kpis?.profit || 0) / (kpis?.gross_sales || 1)) * 100).toFixed(1)}%</>
               ) : (
@@ -124,10 +125,10 @@ function DashboardKpisSection({ kpis }: { kpis: DashboardKPIs }) {
                 <TrendingUp className={cn("w-5 h-5", hasProfitData ? "text-primary" : "text-muted-foreground")} />
               </div>
             </div>
-            <div className={cn("text-4xl font-black", hasProfitData ? "text-primary" : "text-muted-foreground/40")}>
+            <div className={cn("text-4xl font-black whitespace-nowrap", hasProfitData ? "text-primary" : "text-muted-foreground/40")}>
               {hasProfitData ? formatCurrency(kpis.profit!) : "N/D"}
             </div>
-            <div className={cn("text-[10px] font-black mt-2 uppercase tracking-widest", hasProfitData ? "text-primary/70" : "text-muted-foreground/50")}>
+            <div className={cn("text-[10px] font-black mt-2 uppercase tracking-widest whitespace-nowrap", hasProfitData ? "text-primary/70" : "text-muted-foreground/50")}>
               {hasProfitData ? "Utilidad Diaria (Real)" : "Datos insuficientes"}
             </div>
           </div>
@@ -146,20 +147,22 @@ function DashboardSummarySection({ summary }: { summary: SalesSummary }) {
           Resumen de Ventas
         </h3>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
-        {[
-          { label: 'Transacciones', value: summary?.transaction_count || 0, sub: 'Hoy' },
-          { label: 'Ticket Promedio', value: formatCurrency(summary?.average_ticket || 0), sub: 'ARS' },
-          { label: 'Efectivo', value: formatCurrency(summary?.total_cash || 0), sub: 'Recaudado', color: 'text-green-500' },
-          { label: 'Transferencia', value: formatCurrency(summary?.total_transfer || 0), sub: 'Banco', color: 'text-primary' },
-        ].map((stat, i) => (
-          <div key={i} className="p-4 rounded-lg bg-background/50 border border-border/50">
-            <span className="text-[9px] font-black uppercase text-muted-foreground tracking-tighter block mb-1">{stat.label}</span>
-            <div className={cn("text-xl font-black tracking-tight", stat.color || "text-foreground")}>{stat.value}</div>
-            <span className="text-[8px] font-bold text-muted-foreground/50 uppercase">{stat.sub}</span>
-          </div>
-        ))}
-      </div>
+      <SecurityScrollContainer minWidth="300px">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+          {[
+            { label: 'Transacciones', value: summary?.transaction_count || 0, sub: 'Hoy' },
+            { label: 'Ticket Promedio', value: formatCurrency(summary?.average_ticket || 0), sub: 'ARS' },
+            { label: 'Efectivo', value: formatCurrency(summary?.total_cash || 0), sub: 'Recaudado', color: 'text-green-500' },
+            { label: 'Transferencia', value: formatCurrency(summary?.total_transfer || 0), sub: 'Banco', color: 'text-primary' },
+          ].map((stat, i) => (
+            <div key={i} className="p-4 rounded-lg bg-background/50 border border-border/50 overflow-hidden">
+              <span className="text-[9px] font-black uppercase text-muted-foreground tracking-tighter block mb-1 whitespace-nowrap">{stat.label}</span>
+              <div className={cn("text-xl font-black tracking-tight whitespace-nowrap", stat.color || "text-foreground")}>{stat.value}</div>
+              <span className="text-[8px] font-bold text-muted-foreground/50 uppercase whitespace-nowrap">{stat.sub}</span>
+            </div>
+          ))}
+        </div>
+      </SecurityScrollContainer>
     </div>
   );
 }
