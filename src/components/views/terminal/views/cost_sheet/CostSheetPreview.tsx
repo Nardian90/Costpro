@@ -6,6 +6,7 @@ import CostSheetHeader from './CostSheetHeader';
 import CostSheetBody from './CostSheetBody';
 import CostSheetAnnexes from './CostSheetAnnexes';
 import CostSheetSignature from './CostSheetSignature';
+import { SecurityScrollContainer } from '@/components/ui/SecurityScrollContainer';
 
 interface CostSheetPreviewProps {
   data: any;
@@ -24,21 +25,25 @@ const CostSheetPreview = React.forwardRef<HTMLDivElement, CostSheetPreviewProps>
         <div className="p-4 sm:p-10 lg:p-12 space-y-10">
             <CostSheetHeader header={data.header} />
             <div className="space-y-4">
-              <div className="text-xs font-black uppercase tracking-widest text-primary pb-2 border-b-2 border-primary/20">
+              <div className="text-xs font-black uppercase tracking-widest text-primary pb-2 border-b-2 border-primary/20 whitespace-nowrap">
                 Resumen de Operación
               </div>
-              <CostSheetBody
-                  sections={data.sections}
-                  calculatedValues={calculatedValues}
-              />
+              <SecurityScrollContainer minWidth="600px">
+                <CostSheetBody
+                    sections={data.sections}
+                    calculatedValues={calculatedValues}
+                />
+              </SecurityScrollContainer>
             </div>
             <div className="space-y-4">
-              <div className="text-xs font-black uppercase tracking-widest text-primary pb-2 border-b-2 border-primary/20">
+              <div className="text-xs font-black uppercase tracking-widest text-primary pb-2 border-b-2 border-primary/20 whitespace-nowrap">
                 Anexos Detallados
               </div>
-              <CostSheetAnnexes
-                  annexes={calculatedAnnexes}
-              />
+              <SecurityScrollContainer minWidth="800px">
+                <CostSheetAnnexes
+                    annexes={calculatedAnnexes}
+                />
+              </SecurityScrollContainer>
             </div>
             <div className="pt-10 border-t border-slate-100 dark:border-slate-800">
                <CostSheetSignature {...data.signature} />
