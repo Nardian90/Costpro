@@ -3,6 +3,7 @@
 
 import React from 'react';
 import { FileText, TrendingUp, Info } from 'lucide-react';
+import { formatCurrency } from '@/lib/utils';
 
 interface CostSheetNarrativeProps {
   data: any;
@@ -11,7 +12,7 @@ interface CostSheetNarrativeProps {
 
 const CostSheetNarrative: React.FC<CostSheetNarrativeProps> = ({ data, calculatedValues }) => {
   const getVal = (id: string) => calculatedValues[id]?.total || 0;
-  const format = (val: number) => val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const format = (val: number) => formatCurrency(val);
 
   const costoTotal = getVal('5');
   const gastosTotales = getVal('11');

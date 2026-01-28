@@ -10,7 +10,7 @@ import {
 import { Package, Hash, User, Calendar, FileText, Building2, Download } from 'lucide-react';
 import { type Receipt, type ReceiptItem } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { resolveProductImage, getProductImageUrl } from '@/lib/utils';
+import { resolveProductImage, getProductImageUrl, formatCurrency, formatDate } from '@/lib/utils';
 
 interface ReceptionDetailsModalProps {
   receipt: Receipt | null;
@@ -55,7 +55,7 @@ export function ReceptionDetailsModal({ receipt, isOpen, onClose, items, isLoadi
                 <Calendar className="w-3 h-3" /> Fecha
               </div>
               <div className="font-bold text-xs uppercase">
-                {receipt?.reception_date ? new Date(receipt.reception_date).toLocaleDateString() : 'N/A'}
+                {formatDate(receipt?.reception_date)}
               </div>
             </div>
 
@@ -84,7 +84,7 @@ export function ReceptionDetailsModal({ receipt, isOpen, onClose, items, isLoadi
 
             <div className="neu-card !p-3 space-y-1 bg-primary/5 border-primary/20">
               <div className="text-[9px] font-black text-primary uppercase tracking-widest">Total Costo</div>
-              <div className="font-black text-lg text-primary">${receipt?.total_cost.toFixed(2)}</div>
+              <div className="font-black text-lg text-primary">{formatCurrency(receipt?.total_cost || 0)}</div>
             </div>
           </div>
 
@@ -132,8 +132,8 @@ export function ReceptionDetailsModal({ receipt, isOpen, onClose, items, isLoadi
                               <div className="text-[9px] font-mono text-muted-foreground">{item.products?.sku}</div>
                             </td>
                             <td className="p-3 text-center font-black">{item.quantity}</td>
-                            <td className="p-3 text-right font-bold text-muted-foreground">${item.unit_cost.toFixed(2)}</td>
-                            <td className="p-3 text-right font-black text-primary">${(item.quantity * item.unit_cost).toFixed(2)}</td>
+                            <td className="p-3 text-right font-bold text-muted-foreground">{formatCurrency(item.unit_cost)}</td>
+                            <td className="p-3 text-right font-black text-primary">{formatCurrency(item.quantity * item.unit_cost)}</td>
                           </tr>
                         );
                       })
@@ -149,15 +149,15 @@ export function ReceptionDetailsModal({ receipt, isOpen, onClose, items, isLoadi
            <div className="flex flex-col items-end gap-1">
               <div className="flex justify-between w-full max-w-[200px] text-[10px] font-bold text-muted-foreground uppercase">
                 <span>Subtotal:</span>
-                <span>${subtotal.toFixed(2)}</span>
+                <span>{formatCurrency(subtotal)}</span>
               </div>
               <div className="flex justify-between w-full max-w-[200px] text-[10px] font-bold text-muted-foreground uppercase">
                 <span>Impuestos (0%):</span>
-                <span>${taxes.toFixed(2)}</span>
+                <span>{formatCurrency(taxes)}</span>
               </div>
               <div className="flex justify-between w-full max-w-[200px] text-sm font-black text-primary uppercase border-t border-primary/20 pt-1 mt-1">
                 <span>Total:</span>
-                <span>${total.toFixed(2)}</span>
+                <span>{formatCurrency(total)}</span>
               </div>
            </div>
         </div>

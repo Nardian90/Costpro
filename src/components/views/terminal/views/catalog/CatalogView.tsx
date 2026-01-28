@@ -31,7 +31,7 @@ import { useIsMobile } from '@/hooks/ui/useMobile';
 import { catalogService } from '@/services/catalog-service';
 import { useCatalogModals } from '@/hooks/ui/useCatalogModals';
 import { CatalogModals } from './CatalogModals';
-import { cn, resolveProductImage } from '@/lib/utils';
+import { cn, resolveProductImage, formatCurrency } from '@/lib/utils';
 import { Product } from '@/types';
 import ProductImage from '@/components/ui/ProductImage';
 
@@ -362,8 +362,8 @@ export default function CatalogView() {
                                     </td>
                                     <td className="p-4 font-mono text-xs">{product.sku || '-'}</td>
                                     <td className="p-4 text-xs uppercase font-bold text-muted-foreground">{product.category || '-'}</td>
-                                    <td className="p-4 text-right font-bold">${product.cost_price?.toFixed(2)}</td>
-                                    <td className="p-4 text-right font-black text-primary">${product.price?.toFixed(2)}</td>
+                                    <td className="p-4 text-right font-bold">{formatCurrency(product.cost_price || 0)}</td>
+                                    <td className="p-4 text-right font-black text-primary">{formatCurrency(product.price || 0)}</td>
                                     <td className="p-4">
                                         <div className="flex justify-center gap-2">
                                             <IconButton onClick={() => { modals.setEditingProduct(product); modals.setIsEditProductModalOpen(true); }} icon={Edit} title="Editar" className="min-h-0 min-w-0 p-2" />

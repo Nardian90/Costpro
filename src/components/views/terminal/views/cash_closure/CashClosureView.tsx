@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { DollarSign, CreditCard, Layers, Edit, History, Eye, CheckCircle2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency, formatDate, formatTime } from '@/lib/utils';
 import ActionMenu from '@/components/ui/ActionMenu';
 
 import { useCashClosures, useCreateCashClosure, useUpdateCashClosure, useSalesSinceLastClosure } from '@/hooks/api/useCashClosures';
@@ -180,7 +180,7 @@ export default function CashClosureView({}: CashClosureViewProps) {
             {summaryItems.map((row, i) => (
               <div key={i} className="flex justify-between items-center p-4 rounded-xl bg-background/50 border border-border">
                 <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">{row.label}</span>
-                <span className={cn("text-xl font-black font-mono", row.color)}>${row.value.toFixed(2)}</span>
+                <span className={cn("text-xl font-black font-mono", row.color)}>{formatCurrency(row.value)}</span>
               </div>
             ))}
 
@@ -190,7 +190,7 @@ export default function CashClosureView({}: CashClosureViewProps) {
               difference < 0 ? "bg-destructive shadow-destructive/20" : "bg-amber-600 shadow-amber-500/20"
             )}>
               <span className="text-xs font-black uppercase tracking-widest text-white">Diferencia de Arqueo</span>
-              <span className="text-3xl font-black font-mono text-white">${difference.toFixed(2)}</span>
+              <span className="text-3xl font-black font-mono text-white">{formatCurrency(difference)}</span>
             </div>
           </div>
         </div>
@@ -217,20 +217,20 @@ export default function CashClosureView({}: CashClosureViewProps) {
               {finalizedClosures.map((closure) => (
                 <tr key={closure.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                   <td className="p-4">
-                    <div className="font-bold text-xs">{new Date(closure.created_at).toLocaleDateString()}</div>
+                    <div className="font-bold text-xs">{formatDate(closure.created_at)}</div>
                     <div className="text-[10px] text-muted-foreground font-mono">
-                      {new Date(closure.created_at).toLocaleTimeString()}
+                      {formatTime(closure.created_at)}
                     </div>
                   </td>
                   <td className="p-4 font-bold text-xs uppercase">{closure.profile?.full_name}</td>
-                  <td className="p-4 text-right font-black text-base">${(Number(closure.system_expected_total) || Number(closure.system_total) || 0).toFixed(2)}</td>
+                  <td className="p-4 text-right font-black text-base">{formatCurrency(Number(closure.system_expected_total) || Number(closure.system_total) || 0)}</td>
                   <td className="p-4 text-right">
                     <span className={cn(
                       "font-black text-xs px-2 py-1 rounded",
                       (Number(closure.difference) || 0) < 0 ? 'text-destructive bg-destructive/10' :
                       (Number(closure.difference) || 0) === 0 ? 'text-green-600 bg-green-500/10' : 'text-amber-600 bg-amber-500/10'
                     )}>
-                      ${(Number(closure.difference) || 0).toFixed(2)}
+                      {formatCurrency(Number(closure.difference) || 0)}
                     </span>
                   </td>
                   <td className="p-4">

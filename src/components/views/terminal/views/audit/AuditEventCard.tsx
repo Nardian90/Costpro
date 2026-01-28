@@ -4,7 +4,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import AuditEventIcon, { getAuditCategory } from './AuditEventIcon';
 import AuditEventMeta from './AuditEventMeta';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 
 interface AuditEventCardProps {
   log: AuditLog;
@@ -44,7 +44,7 @@ const getBusinessText = (log: AuditLog) => {
 
   if (table_name === 'transactions') {
     const total = new_data?.total_amount || old_data?.total_amount || 0;
-    return `${actionName} una venta por $${total}`;
+    return `${actionName} una venta por ${formatCurrency(total)}`;
   }
 
   if (table_name === 'receipts') {

@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Trash2, Plus } from 'lucide-react';
 import { CostSheetAnnex, CostSheetColumn } from '@/types/cost-sheet';
+import { formatCurrency } from '@/lib/utils';
 
 interface CostSheetAnnexEditorProps {
   activeAnnexId: string;
@@ -70,7 +71,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = ({ activeAnnex
                                 <TableCell key={col.key} data-label={col.label} className="p-3 sm:p-4">
                                     {col.formula ? (
                                         <div className="neu-inset-sm px-3 py-2 font-mono text-right bg-primary/5 text-primary font-black min-w-[100px] border border-primary/10">
-                                            {(row[col.key] ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                            {formatCurrency(row[col.key] ?? 0).replace('$', '').trim()}
                                         </div>
                                     ) : (
                                         <Input
@@ -105,13 +106,12 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = ({ activeAnnex
           <div className="neu-card !p-5 border-primary/20 bg-primary/5 shadow-xl min-w-[240px]">
               <span className="text-[10px] text-primary/70 uppercase font-black tracking-[0.2em] block mb-2 text-right">Total {annex.id}</span>
               <div className="flex items-center justify-end gap-2">
-                  <span className="text-primary/50 text-xl font-bold">$</span>
                   <span className="text-3xl font-black font-mono text-primary drop-shadow-sm">
-                      {displayData.reduce((acc: number, row: any) => {
+                      {formatCurrency(displayData.reduce((acc: number, row: any) => {
                            const totalCol = annex.columns.find((c: CostSheetColumn) => c.key === 'total' || c.key === 'amount' || c.key === 'depreciation_cost');
                            const key = totalCol?.key;
                            return acc + (key ? (row[key] || 0) : 0);
-                      }, 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      }, 0))}
                   </span>
               </div>
           </div>

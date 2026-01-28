@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Warehouse, Eye, Calendar, Building2, FileText, Pencil, Trash2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency, formatDate, formatTime } from '@/lib/utils';
 import { toast } from 'sonner';
 import SearchBar from '@/components/ui/SearchBar';
 import { StateRenderer } from '@/components/ui/StateRenderer';
@@ -119,9 +119,9 @@ export default function ReceptionsHistoryView() {
                       <td className="p-4">
                         <div className="flex items-center gap-2">
                            <Calendar className="w-3 h-3 text-muted-foreground" />
-                           <div className="font-bold text-xs">{rec.reception_date ? new Date(rec.reception_date).toLocaleDateString() : 'N/A'}</div>
+                           <div className="font-bold text-xs">{formatDate(rec.reception_date)}</div>
                         </div>
-                        <div className="text-[9px] text-muted-foreground ml-5">{new Date(rec.created_at).toLocaleTimeString()}</div>
+                        <div className="text-[9px] text-muted-foreground ml-5">{formatTime(rec.created_at)}</div>
                       </td>
                       <td className="p-4">
                         <div className="flex items-center gap-2">
@@ -149,7 +149,7 @@ export default function ReceptionsHistoryView() {
                         </span>
                       </td>
                       <td className="p-4 text-right">
-                        <span className="text-base font-black text-primary">${rec.total_cost.toFixed(2)}</span>
+                        <span className="text-base font-black text-primary">{formatCurrency(rec.total_cost)}</span>
                       </td>
                       <td className="p-4 text-center">
                         <div className="flex items-center justify-center gap-2">

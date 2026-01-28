@@ -64,8 +64,8 @@ export function usePOSView() {
         p_store_id: user.storeId,
         p_seller_id: user.id,
         p_payment_method: paymentMethod,
-        p_total_amount: Number(getTotal().toFixed(2)),
-        p_subtotal: Number(getSubtotal().toFixed(2)),
+        p_total_amount: Number(getTotal().toFixed(2)), // Keep Number casting for API
+        p_subtotal: Number(getSubtotal().toFixed(2)), // Keep Number casting for API
         p_discount_type: (finalDiscount?.type || 'fixed') as string,
         p_discount_value: Number(finalDiscount?.value || 0),
         p_items: items.map(i => ({

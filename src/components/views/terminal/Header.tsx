@@ -39,7 +39,7 @@ export const Header = ({
           </button>
           <div className="flex items-center gap-3 overflow-hidden">
             <h1 className="text-xl sm:text-2xl font-black uppercase tracking-tighter text-primary whitespace-nowrap truncate max-w-[150px] sm:max-w-none">
-              {navigationItems.find(i => i.id === currentView)?.label || 'Dashboard'}
+              {navigationItems.find(i => i.id === currentView)?.label || 'Panel'}
             </h1>
             <div className="h-4 w-[1px] bg-white/10 hidden sm:block" />
 

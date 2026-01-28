@@ -40,3 +40,38 @@ export const resolveProductImage = (product: Product | null | undefined): string
   if (!product) return null;
   return product.image_url || product.public_image_url || null;
 };
+
+/**
+ * Utility to format currency in Spanish (Argentina).
+ */
+export const formatCurrency = (amount: number): string => {
+  return new Intl.NumberFormat('es-AR', {
+    style: 'currency',
+    currency: 'ARS',
+    minimumFractionDigits: 2,
+  }).format(amount);
+};
+
+/**
+ * Utility to format dates in Spanish (Argentina) format DD/MM/YYYY.
+ */
+export const formatDate = (date: string | Date | null | undefined): string => {
+  if (!date) return 'N/A';
+  return new Intl.DateTimeFormat('es-AR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(new Date(date));
+};
+
+/**
+ * Utility to format time in Spanish (Argentina) format HH:MM:SS.
+ */
+export const formatTime = (date: string | Date | null | undefined): string => {
+  if (!date) return 'N/A';
+  return new Intl.DateTimeFormat('es-AR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }).format(new Date(date));
+};

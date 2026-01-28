@@ -3,6 +3,7 @@ import { AuditLog } from '@/types';
 import AuditEventCard from './AuditEventCard';
 import { format, isToday, isYesterday } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { formatDate } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface AuditTimelineProps {
@@ -53,7 +54,7 @@ export default function AuditTimeline({ logs }: AuditTimelineProps) {
           if (itemsToShow.length === 0) return null;
 
           const date = new Date(dateStr + 'T00:00:00');
-          let displayDate = format(date, "EEEE, d 'de' MMMM", { locale: es });
+          let displayDate = formatDate(date);
 
           if (isToday(date)) displayDate = 'Hoy';
           else if (isYesterday(date)) displayDate = 'Ayer';
