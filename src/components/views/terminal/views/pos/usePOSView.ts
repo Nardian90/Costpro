@@ -51,14 +51,14 @@ export function usePOSView() {
     toast.success(`${product.name} agregado`);
   }
 
-  const startCheckout = (paymentMethod: PaymentMethod, checkoutDiscount?: { type: string, value: number } | null) => {
+  const startCheckout = async (paymentMethod: PaymentMethod, checkoutDiscount?: { type: string, value: number } | null) => {
     const unpricedItems = items.filter(i => i.price === null || i.price <= 0);
     if (unpricedItems.length > 0) {
       setPendingCheckoutData({ paymentMethod, discount: checkoutDiscount });
       setShowPriceWarning(true);
       return;
     }
-    handleCheckout(paymentMethod, checkoutDiscount);
+    await handleCheckout(paymentMethod, checkoutDiscount);
   };
 
   const confirmUnpricedCheckout = async () => {
