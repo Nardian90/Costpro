@@ -106,17 +106,18 @@ export interface Product {
   public_image_url?: string | null;
   is_active?: boolean;
   has_movements?: boolean;
+  product_variants?: ProductVariant[] | null;
 }
 
 export interface ProductVariant {
   id: string;
-  product_id: string;
+  product_id?: string;
   name: string;
-  sku: string | null;
+  sku?: string | null;
   price: number;
   conversion_factor: number;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 // ============================================
