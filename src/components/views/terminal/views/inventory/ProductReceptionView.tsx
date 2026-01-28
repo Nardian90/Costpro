@@ -3,14 +3,15 @@
 
 import { useState, useMemo, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { useAuthStore } from '@/store';
+import { useAuthStore, useUIStore } from '@/store';
 import type { Product } from '@/types';
 import { toast } from 'sonner';
-import { Save, Search, Plus, Trash2, Package, Upload, Download, HelpCircle, FileText, AlertTriangle } from 'lucide-react';
+import { Save, Search, Plus, Trash2, Package, Upload, Download, HelpCircle, FileText, AlertTriangle, PlusCircle } from 'lucide-react';
 import { useInventory, useRegisterReception } from '@/hooks/api/useInventory';
 import { useDebounce } from '@/hooks/ui/useDebounce';
 import { formatCurrency } from '@/lib/utils';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
+import { SearchInput, PrimaryButton } from '@/components/ui/atomic';
 import { importService } from '@/services/import-service';
 import { receptionImportRowSchema } from '@/validation/schemas';
 import Papa from 'papaparse';
@@ -36,6 +37,7 @@ interface ReceptionItem {
 
 export default function ProductReceptionView({ onCancel }: ProductReceptionViewProps) {
     const { user } = useAuthStore();
+    const { setIsCreateProductModalOpen } = useUIStore();
 
     if (!user?.storeId) {
         return (
@@ -399,27 +401,56 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
 
                     {/* Product Search */}
                     <div className="relative">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                        <input
-                            type="text"
+                        <SearchInput
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
+                            onClear={() => setSearchTerm('')}
                             placeholder="Buscar producto para agregar..."
-                            className="neu-input w-full pl-12 text-base"
+                            className="w-full !pl-14"
                         />
                         {debouncedSearchTerm && (
-                            <div className="absolute top-full left-0 w-full mt-2 neu-card z-10 max-h-60 overflow-y-auto">
+                            <div className="absolute top-full left-0 w-full mt-2 neu-card z-50 max-h-64 overflow-y-auto shadow-2xl border border-white/10 animate-in fade-in slide-in-from-top-2 duration-200">
                                 {isSearching ? (
-                                    <div className="p-4 text-center">Cargando...</div>
+                                    <div className="p-8 text-center flex flex-col items-center gap-3">
+                                        <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Buscando...</span>
+                                    </div>
                                 ) : searchResults.length > 0 ? (
-                                    searchResults.map(p => (
-                                        <div key={p.id} onClick={() => addToReception(p)} className="p-3 hover:bg-primary/10 cursor-pointer flex justify-between items-center">
-                                            <span>{p.name}</span>
-                                            <Plus className="w-5 h-5" />
-                                        </div>
-                                    ))
+                                    <div className="divide-y divide-white/5">
+                                        {searchResults.map(p => (
+                                            <div
+                                                key={p.id}
+                                                onClick={() => addToReception(p)}
+                                                className="p-4 hover:bg-primary/10 cursor-pointer flex justify-between items-center transition-colors group"
+                                            >
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-sm group-hover:text-primary transition-colors">{p.name}</span>
+                                                    <span className="text-[10px] font-mono text-muted-foreground uppercase">{p.sku || 'S/N'}</span>
+                                                </div>
+                                                <div className="neu-raised-sm p-2 group-hover:bg-primary group-hover:text-white transition-all">
+                                                    <Plus className="w-4 h-4" />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
                                 ) : (
-                                    <div className="p-4 text-center text-muted-foreground">No se encontraron productos.</div>
+                                    <div className="p-8 text-center space-y-4">
+                                        <div className="space-y-1">
+                                            <p className="text-sm font-bold text-muted-foreground uppercase tracking-tight">No se encontraron productos</p>
+                                            <p className="text-[10px] text-muted-foreground/60 italic">Intenta con otro término o SKU</p>
+                                        </div>
+                                        <div className="pt-2 border-t border-white/5">
+                                            <PrimaryButton
+                                                label="+ Agregar nuevo producto al catálogo"
+                                                icon={PlusCircle}
+                                                onClick={() => {
+                                                    setIsCreateProductModalOpen(true);
+                                                    setSearchTerm('');
+                                                }}
+                                                className="w-full !py-2 !text-[9px]"
+                                            />
+                                        </div>
+                                    </div>
                                 )}
                             </div>
                         )}

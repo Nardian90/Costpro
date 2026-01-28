@@ -20,7 +20,6 @@ interface CatalogModalsProps {
   handleUpdateImage: (file: File) => Promise<void>;
   handleAddVariant: () => Promise<void>;
   handleDeleteVariant: (id: string) => Promise<void>;
-  handleCreateProduct: () => Promise<void>;
   handleDeleteProduct: () => Promise<void>;
   handleToggleActive: () => Promise<void>;
   catalogService: any;
@@ -33,7 +32,6 @@ export const CatalogModals = ({
   handleUpdateImage,
   handleAddVariant,
   handleDeleteVariant,
-  handleCreateProduct,
   handleDeleteProduct,
   handleToggleActive,
   catalogService
@@ -137,32 +135,6 @@ export const CatalogModals = ({
         </DialogContent>
       </Dialog>
 
-      <Dialog open={modals.isCreateProductModalOpen} onOpenChange={modals.setIsCreateProductModalOpen}>
-        <DialogContent className="max-w-md !rounded-3xl border-white/5 shadow-2xl">
-          <DialogHeader><DialogTitle className="text-xl font-black uppercase">Nuevo Producto</DialogTitle></DialogHeader>
-          <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto no-scrollbar pr-2">
-            <div className="space-y-1.5"><label className="text-[10px] font-black uppercase tracking-widest ml-1">Nombre</label><input type="text" value={modals.newProductForm.name} onChange={(e) => modals.setNewProductForm({ ...modals.newProductForm, name: e.target.value })} className="neu-input w-full font-bold" /></div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest ml-1 flex justify-between">
-                  <span>SKU</span>
-                  <span className="text-[8px] text-primary/70 italic">Único en tienda</span>
-                </label>
-                <input type="text" value={modals.newProductForm.sku} onChange={(e) => modals.setNewProductForm({ ...modals.newProductForm, sku: e.target.value })} className="neu-input w-full" />
-              </div>
-              <div className="space-y-1.5"><label className="text-[10px] font-black uppercase tracking-widest ml-1">Categoría</label><input type="text" value={modals.newProductForm.category} onChange={(e) => modals.setNewProductForm({ ...modals.newProductForm, category: e.target.value })} className="neu-input w-full" /></div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5"><label className="text-[10px] font-black uppercase tracking-widest ml-1">Precio</label><input type="number" value={modals.newProductForm.price || ''} onChange={(e) => modals.setNewProductForm({ ...modals.newProductForm, price: parseFloat(e.target.value) || 0 })} className="neu-input w-full" /></div>
-              <div className="space-y-1.5"><label className="text-[10px] font-black uppercase tracking-widest ml-1">Costo</label><input type="number" value={modals.newProductForm.cost_price || ''} onChange={(e) => modals.setNewProductForm({ ...modals.newProductForm, cost_price: parseFloat(e.target.value) || 0 })} className="neu-input w-full" /></div>
-            </div>
-          </div>
-          <DialogFooter className="flex-col sm:flex-row gap-3">
-            <SecondaryButton onClick={() => modals.setIsCreateProductModalOpen(false)} label="Cancelar" className="flex-1" />
-            <PrimaryButton onClick={handleCreateProduct} label="Crear Producto" className="flex-1" />
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={modals.isHelpModalOpen} onOpenChange={modals.setIsHelpModalOpen}>
         <DialogContent className="max-w-md !rounded-3xl border-white/5 shadow-2xl">
