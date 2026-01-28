@@ -63,8 +63,14 @@ export default function DashboardView() {
 function DashboardKpisSection({ kpis }: { kpis: DashboardKPIs }) {
   const canViewFinancials = useCanAccess('warehouse');
 
-  const costAvailable = kpis?.cost_of_goods !== null && kpis?.cost_of_goods !== undefined;
-  const profitAvailable = kpis?.profit !== null && kpis?.profit !== undefined;
+  // Treat 0 as missing data if there are sales (prevents 100% margin on missing costs)
+  const hasCostData = kpis.cost_of_goods !== null &&
+                      kpis.cost_of_goods !== undefined &&
+                      (kpis.cost_of_goods > 0 || kpis.gross_sales === 0);
+
+  const hasProfitData = kpis.profit !== null &&
+                        kpis.profit !== undefined &&
+                        (kpis.cost_of_goods !== 0 || kpis.gross_sales === 0);
 
   return (
     <>
@@ -89,14 +95,14 @@ function DashboardKpisSection({ kpis }: { kpis: DashboardKPIs }) {
                 <Target className="w-5 h-5 text-amber-500" />
               </div>
             </div>
-            <div className={cn("text-4xl font-black", costAvailable ? "text-foreground" : "text-muted-foreground/40")}>
-              {costAvailable ? `$${kpis.cost_of_goods!.toFixed(2)}` : "Sin datos"}
+            <div className={cn("text-4xl font-black", hasCostData ? "text-foreground" : "text-muted-foreground/40")}>
+              {hasCostData ? `$${kpis.cost_of_goods!.toFixed(2)}` : "Sin datos"}
             </div>
             <div className="text-[10px] font-bold text-muted-foreground mt-2 uppercase tracking-widest flex items-center gap-1">
-              {costAvailable ? (
+              {hasCostData ? (
                 <>Margen: {(((kpis?.profit || 0) / (kpis?.gross_sales || 1)) * 100).toFixed(1)}%</>
               ) : (
-                <span className="flex items-center gap-1 text-amber-500/70" title="Existen ventas sin registro de costo unitario">
+                <span className="flex items-center gap-1 text-amber-500/70" title="Existen ventas sin registro de costo unitario o costos en 0">
                   <HelpCircle className="w-3 h-3" />
                   Costos no disponibles
                 </span>
@@ -106,19 +112,19 @@ function DashboardKpisSection({ kpis }: { kpis: DashboardKPIs }) {
 
           <div className={cn(
             "md:col-span-1 p-6 rounded-xl border shadow-sm transition-all",
-            profitAvailable ? "border-primary/20 bg-primary/5 shadow-primary/5" : "border-border bg-card"
+            hasProfitData ? "border-primary/20 bg-primary/5 shadow-primary/5" : "border-border bg-card"
           )}>
             <div className="flex items-center justify-between mb-4">
-              <span className={cn("text-xs font-black uppercase tracking-widest", profitAvailable ? "text-primary font-bold" : "text-muted-foreground")}>Utilidad Neta</span>
-              <div className={cn("p-2 rounded-xl", profitAvailable ? "bg-primary/20" : "bg-muted/10")}>
-                <TrendingUp className={cn("w-5 h-5", profitAvailable ? "text-primary" : "text-muted-foreground")} />
+              <span className={cn("text-xs font-black uppercase tracking-widest", hasProfitData ? "text-primary font-bold" : "text-muted-foreground")}>Utilidad Neta</span>
+              <div className={cn("p-2 rounded-xl", hasProfitData ? "bg-primary/20" : "bg-muted/10")}>
+                <TrendingUp className={cn("w-5 h-5", hasProfitData ? "text-primary" : "text-muted-foreground")} />
               </div>
             </div>
-            <div className={cn("text-4xl font-black", profitAvailable ? "text-primary" : "text-muted-foreground/40")}>
-              {profitAvailable ? `$${kpis.profit!.toFixed(2)}` : "N/D"}
+            <div className={cn("text-4xl font-black", hasProfitData ? "text-primary" : "text-muted-foreground/40")}>
+              {hasProfitData ? `$${kpis.profit!.toFixed(2)}` : "N/D"}
             </div>
-            <div className={cn("text-[10px] font-black mt-2 uppercase tracking-widest", profitAvailable ? "text-primary/70" : "text-muted-foreground/50")}>
-              {profitAvailable ? "Utilidad Diaria (Real)" : "Datos insuficientes"}
+            <div className={cn("text-[10px] font-black mt-2 uppercase tracking-widest", hasProfitData ? "text-primary/70" : "text-muted-foreground/50")}>
+              {hasProfitData ? "Utilidad Diaria (Real)" : "Datos insuficientes"}
             </div>
           </div>
         </>

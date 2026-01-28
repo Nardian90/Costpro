@@ -1,9 +1,13 @@
--- Migration: Fix dashboard KPIs to use real cost from transaction items
+-- Migration: Fix dashboard KPIs to use real cost from transaction items with fallback and optional date range
 -- Date: 2026-01-16
 
 BEGIN;
 
-CREATE OR REPLACE FUNCTION public.get_dashboard_kpis(p_store_id uuid DEFAULT NULL)
+CREATE OR REPLACE FUNCTION public.get_dashboard_kpis(
+    p_store_id uuid DEFAULT NULL,
+    p_date_from timestamptz DEFAULT NULL,
+    p_date_to timestamptz DEFAULT NULL
+)
 RETURNS TABLE(
     total_sales numeric,
     total_cost numeric,
@@ -13,6 +17,9 @@ RETURNS TABLE(
     total_cash numeric,
     total_card numeric
 ) AS $$
+DECLARE
+    v_date_from timestamptz := COALESCE(p_date_from, date_trunc('day', now() AT TIME ZONE 'UTC'));
+    v_date_to timestamptz := COALESCE(p_date_to, v_date_from + interval '1 day');
 BEGIN
   RETURN QUERY
   WITH filtered_tx AS (
@@ -20,14 +27,18 @@ BEGIN
     FROM public.transactions
     WHERE (p_store_id IS NULL OR store_id = p_store_id)
       AND status = 'completed'
-      AND (created_at AT TIME ZONE 'UTC') >= (CURRENT_DATE AT TIME ZONE 'UTC')
+      AND created_at >= v_date_from
+      AND created_at < v_date_to
   ),
   tx_costs AS (
     SELECT
       ti.transaction_id,
-      SUM(ti.quantity * ti.cost_at_sale) as transaction_cost,
-      COUNT(*) FILTER (WHERE ti.cost_at_sale IS NULL OR ti.cost_at_sale = 0) as missing_costs
+      -- Fallback chain: recorded cost_at_sale -> current product cost_price -> 0
+      SUM(ti.quantity * COALESCE(NULLIF(ti.cost_at_sale, 0), p.cost_price, 0)) as transaction_cost,
+      -- Count as missing if neither historical nor current cost is available (> 0)
+      COUNT(*) FILTER (WHERE COALESCE(NULLIF(ti.cost_at_sale, 0), p.cost_price, 0) = 0) as missing_costs
     FROM public.transaction_items ti
+    JOIN public.products p ON ti.product_id = p.id
     WHERE ti.transaction_id IN (SELECT id FROM filtered_tx)
     GROUP BY ti.transaction_id
   )
