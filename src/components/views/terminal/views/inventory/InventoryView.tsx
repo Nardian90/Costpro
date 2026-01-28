@@ -3,13 +3,15 @@
 
 import { useState, useEffect, useMemo, useTransition } from 'react';
 import { useAuthStore } from '@/store';
-import { useInventory } from '@/hooks/api/useInventory';
+import { useInventory, useAdjustStock } from '@/hooks/api/useInventory';
 import { Download, Plus, X, LayoutList, Table as TableIcon, Package } from 'lucide-react';
 import { toast } from 'sonner';
 
 import InventoryCardView from './InventoryCardView';
 import InventoryTableView from './InventoryTableView';
 import ProductReceptionView from './ProductReceptionView';
+import InventoryAdjustmentModal from './InventoryAdjustmentModal';
+import { Product } from '@/types';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
 import SearchBar from '@/components/ui/SearchBar';
 import { CategoryChips } from '@/components/ui/atomic';
@@ -50,6 +52,9 @@ export default function InventoryView() {
     const [layoutMode, setLayoutMode] = useState<'table' | 'card'>('table');
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('');
+    const [adjustingProduct, setAdjustingProduct] = useState<Product | null>(null);
+
+    const { mutateAsync: adjustStock } = useAdjustStock();
 
     useEffect(() => {
         setLayoutMode(isMobile ? 'card' : 'table');
@@ -101,6 +106,28 @@ export default function InventoryView() {
         },
     ];
 
+    const handleAdjustProduct = (product: Product) => {
+        setAdjustingProduct(product);
+    };
+
+    const handleConfirmAdjustment = async (adjustmentData: {
+        quantityDelta: number;
+        unitCostAdjustment: number;
+        newAverageCost: number;
+        reason: string;
+    }) => {
+        if (!adjustingProduct || !user?.storeId || !user?.id) return;
+
+        await adjustStock({
+            productId: adjustingProduct.id,
+            storeId: user.storeId,
+            userId: user.id,
+            ...adjustmentData
+        });
+
+        toast.success('Inventario ajustado correctamente');
+    };
+
     if (currentView === 'reception') {
         return <ProductReceptionView onCancel={() => setCurrentView('inventory')} />;
     }
@@ -144,6 +171,7 @@ export default function InventoryView() {
                                 loadMore={fetchMoreProducts}
                                 hasMore={hasNextPage}
                                 isLoading={isFetchingNextPage}
+                                onAdjust={handleAdjustProduct}
                             />
                         ) : (
                             <InventoryTableView
@@ -151,11 +179,21 @@ export default function InventoryView() {
                                 loadMore={fetchMoreProducts}
                                 hasMore={hasNextPage}
                                 isLoading={isFetchingNextPage}
+                                onAdjust={handleAdjustProduct}
                             />
                         )
                     )}
                 </StateRenderer>
             </div>
+
+            {adjustingProduct && (
+                <InventoryAdjustmentModal
+                    product={adjustingProduct}
+                    isOpen={!!adjustingProduct}
+                    onClose={() => setAdjustingProduct(null)}
+                    onConfirm={handleConfirmAdjustment}
+                />
+            )}
         </div>
     );
 }

@@ -12,9 +12,10 @@ interface InventoryTableViewProps {
     loadMore: () => void;
     hasMore: boolean;
     isLoading: boolean;
+    onAdjust?: (product: Product) => void;
 }
 
-const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product }>(({ product }, ref) => {
+const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onAdjust?: (product: Product) => void }>(({ product, onAdjust }, ref) => {
     const isLowStock = product.stock_current <= product.min_stock;
     return (
         <tr ref={ref} className="border-b last:border-0 hover:bg-accent/5 transition-colors">
@@ -47,7 +48,10 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product }>((
             </td>
             <td className="p-4">
                 <div className="flex justify-center">
-                    <button className="neu-btn !p-2 flex items-center justify-center gap-2 hover:neu-raised-sm">
+                    <button
+                        onClick={() => onAdjust?.(product)}
+                        className="neu-btn !p-2 flex items-center justify-center gap-2 hover:neu-raised-sm"
+                    >
                         <Edit className="w-4 h-4" />
                         <span className="hidden sm:inline text-xs">Adjust</span>
                     </button>
@@ -58,7 +62,7 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product }>((
 });
 ProductRow.displayName = "ProductRow";
 
-export default function InventoryTableView({ products, loadMore, hasMore, isLoading }: InventoryTableViewProps) {
+export default function InventoryTableView({ products, loadMore, hasMore, isLoading, onAdjust }: InventoryTableViewProps) {
     const observer = useRef<IntersectionObserver | null>(null);
     const lastElementRef = useCallback((node: HTMLTableRowElement) => {
         if (isLoading) return;
@@ -90,6 +94,7 @@ export default function InventoryTableView({ products, loadMore, hasMore, isLoad
                         <ProductRow
                             key={product.id}
                             product={product}
+                            onAdjust={onAdjust}
                             ref={index === products.length - 1 ? lastElementRef : null}
                         />
                     ))}
