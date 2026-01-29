@@ -138,7 +138,15 @@ export function useUserStoreAccess(userId?: string) {
 export function useCreateUser() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (params: { p_email: string; p_full_name: string; p_role: string; p_store_id: string; p_memberships?: any[] }) => {
+    mutationFn: async (params: {
+      p_email: string;
+      p_full_name: string;
+      p_role: string;
+      p_store_id: string;
+      p_memberships?: any[];
+      p_max_stores?: number;
+      p_max_users?: number;
+    }) => {
       const rpcName = 'managed_create_user';
       return await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
     },
