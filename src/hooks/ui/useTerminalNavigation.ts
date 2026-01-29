@@ -46,7 +46,9 @@ export function useTerminalNavigation(user: UserContract | null, sidebarSearch: 
       { id: 'users', icon: Users, label: 'Usuarios', roles: ['admin', 'encargado', 'manager'], category: 'GESTIÓN' },
       { id: 'stores', icon: Building, label: 'Tiendas', roles: ['admin', 'encargado', 'manager'], category: 'GESTIÓN' },
       { id: 'settings', icon: Settings, label: 'Configuración', roles: ['admin', 'manager', 'encargado'], category: 'GESTIÓN' },
+      { id: 'rss_admin', icon: Settings, label: 'Gestión RSS', roles: ['admin', 'manager', 'encargado'], category: 'GESTIÓN' },
 
+      { id: 'rss_news', icon: FileText, label: 'Noticias', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado'], category: 'SOPORTE' },
       { id: 'help', icon: HelpCircle, label: 'Ayuda', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado'], category: 'SOPORTE' },
     ];
 
