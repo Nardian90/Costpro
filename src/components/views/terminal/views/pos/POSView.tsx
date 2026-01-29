@@ -18,13 +18,7 @@ import {
   Drawer,
   DrawerContent,
 } from '@/components/ui/drawer';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
+import { BaseModal } from '@/components/ui/BaseModal';
 import { PrimaryButton, SecondaryButton } from '@/components/ui/atomic';
 import { POSCart } from './POSCart';
 import { usePOSView } from './usePOSView';
@@ -148,13 +142,30 @@ export default function POSView() {
         )}
 
         {/* Modal de Advertencia de Precio */}
-        <Dialog open={showPriceWarning} onOpenChange={setShowPriceWarning}>
-          <DialogContent className="max-w-md !rounded-3xl border-white/5 shadow-2xl">
-            <DialogHeader>
-              <DialogTitle className="text-xl font-black uppercase text-amber-500 flex items-center gap-2">
-                 ⚠ Advertencia de Precio
-              </DialogTitle>
-            </DialogHeader>
+        <BaseModal
+          open={showPriceWarning}
+          onOpenChange={setShowPriceWarning}
+          title={
+            <div className="text-amber-500 flex items-center gap-2">
+               ⚠ Advertencia de Precio
+            </div>
+          }
+          maxWidth="sm:max-w-md"
+          footer={
+            <>
+              <SecondaryButton
+                onClick={() => setShowPriceWarning(false)}
+                label="Cancelar"
+                className="flex-1"
+              />
+              <PrimaryButton
+                onClick={confirmUnpricedCheckout}
+                label="Confirmar Facturación"
+                className="flex-1 bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/20"
+              />
+            </>
+          }
+        >
             <div className="py-6 text-center space-y-4">
               <p className="font-bold text-foreground">
                 Uno o más productos en el carrito no tienen un precio asignado (Precio 0 o Nulo).
@@ -168,20 +179,7 @@ export default function POSView() {
                 Esta acción quedará registrada en la auditoría del sistema.
               </p>
             </div>
-            <DialogFooter className="flex-col sm:flex-row gap-3">
-              <SecondaryButton
-                onClick={() => setShowPriceWarning(false)}
-                label="Cancelar"
-                className="flex-1"
-              />
-              <PrimaryButton
-                onClick={confirmUnpricedCheckout}
-                label="Confirmar Facturación"
-                className="flex-1 bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/20"
-              />
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        </BaseModal>
 
         <div className="flex-1 w-full space-y-6 lg:order-first">
           <div className="space-y-4">
