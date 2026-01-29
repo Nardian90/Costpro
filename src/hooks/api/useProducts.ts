@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient, useSuspenseQuery, type QueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
+import { validate as isUuid } from 'uuid';
 import { validateRPCArrayResponse, validateRPCResponse } from '@/lib/rpc-validator';
 import {
   getProductsForPosResponseSchema,
@@ -16,10 +17,12 @@ export function useSuspenseProducts(storeId?: string | null, searchTerm = '', ca
   return useSuspenseQuery({
     queryKey: ['products', storeId, searchTerm, category],
     queryFn: async () => {
-      if (!storeId) return [];
+      const cleanStoreId = (storeId === 'null' || storeId === 'undefined' || !storeId) ? null : storeId;
+      if (!cleanStoreId || !isUuid(cleanStoreId)) return [];
+
       const rpcName = 'get_products_for_pos';
       const params = getProductsForPosParamsSchema.parse({
-        p_store_id: storeId,
+        p_store_id: cleanStoreId,
         p_search_term: searchTerm,
         p_category: category
       });
@@ -43,10 +46,12 @@ export function useProducts(storeId?: string | null, searchTerm = '', category =
   return useQuery({
     queryKey: ['products', storeId, searchTerm, category],
     queryFn: async () => {
-      if (!storeId) return [];
+      const cleanStoreId = (storeId === 'null' || storeId === 'undefined' || !storeId) ? null : storeId;
+      if (!cleanStoreId || !isUuid(cleanStoreId)) return [];
+
       const rpcName = 'get_products_for_pos';
       const params = getProductsForPosParamsSchema.parse({
-        p_store_id: storeId,
+        p_store_id: cleanStoreId,
         p_search_term: searchTerm,
         p_category: category
       });
@@ -69,16 +74,18 @@ export function useProducts(storeId?: string | null, searchTerm = '', category =
 }
 
 export async function prefetchProducts(queryClient: QueryClient, storeId: string) {
-  if (!storeId) return;
+  const cleanStoreId = (storeId === 'null' || storeId === 'undefined' || !storeId) ? null : storeId;
+  if (!cleanStoreId || !isUuid(cleanStoreId)) return;
+
   const searchTerm = '';
   const category = '';
 
   return queryClient.prefetchQuery({
-    queryKey: ['products', storeId, searchTerm, category],
+    queryKey: ['products', cleanStoreId, searchTerm, category],
     queryFn: async () => {
       const rpcName = 'get_products_for_pos';
       const params = getProductsForPosParamsSchema.parse({
-        p_store_id: storeId,
+        p_store_id: cleanStoreId,
         p_search_term: searchTerm,
         p_category: category
       });
