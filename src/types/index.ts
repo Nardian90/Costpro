@@ -493,44 +493,6 @@ export interface InventoryReport {
   profit: number;
 }
 
-// ============================================
-// RSS y Noticias
-// ============================================
-
-export interface RSSFeed {
-  id: string;
-  url: string;
-  name: string | null;
-  is_active: boolean;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface RSSSettings {
-  id: string;
-  priority_keywords: string[];
-  cache_duration_minutes: number;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface RSSNewsItem {
-  id: string; // Generado o desde el link del RSS
-  title: string;
-  link: string;
-  pubDate: string;
-  content: string;
-  contentSnippet?: string;
-  feedName?: string;
-  isPriority: boolean;
-  isExchangeRate?: boolean;
-  exchangeRateData?: {
-    currency: string;
-    value: number;
-    date: string;
-  };
-}
-
 export interface ProductStockLedger {
   created_at: string;
   movement_type: string;
