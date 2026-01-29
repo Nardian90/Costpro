@@ -83,7 +83,7 @@ export const profileSchema = z.object({
 });
 
 export const productSchema = z.object({
-  id: resilientUuid.pipe(z.string().uuid()),
+  id: resilientUuid.pipe(z.string().uuid()).catch(''), // Ensure it's a string for Product interface
   name: z.string().min(1, "El nombre es obligatorio"),
   description: z.string().nullable().optional(),
   sku: z.preprocess((val) => val === '' ? null : val, z.string().nullable().optional()),
@@ -105,7 +105,7 @@ export const productSchema = z.object({
 });
 
 export const productVariantSchema = z.object({
-  id: resilientUuid.pipe(z.string().uuid()),
+  id: resilientUuid.pipe(z.string().uuid()).catch(''),
   product_id: optionalResilientUuid,
   name: z.string(),
   sku: z.string().nullable().optional(),
@@ -146,7 +146,7 @@ export const transactionSchema = z.object({
 });
 
 export const stockMovementSchema = z.object({
-  id: resilientUuid.pipe(z.string().uuid()),
+  id: resilientUuid.pipe(z.string().uuid()).catch(''),
   store_id: optionalResilientUuid,
   product_id: optionalResilientUuid,
   variant_id: optionalResilientUuid,
@@ -163,7 +163,7 @@ export const stockMovementSchema = z.object({
 });
 
 export const receiptSchema = z.object({
-  id: resilientUuid.pipe(z.string().uuid()),
+  id: resilientUuid.pipe(z.string().uuid()).catch(''),
   created_at: z.preprocess((val) => val || new Date().toISOString(), z.string()),
   updated_at: z.string().optional().nullable(),
   user_id: optionalResilientUuid,
@@ -193,7 +193,7 @@ export const receiptItemSchema = z.object({
 });
 
 export const auditLogSchema = z.object({
-  id: resilientUuid.pipe(z.string().uuid()),
+  id: resilientUuid.pipe(z.string().uuid()).catch(''),
   user_id: optionalResilientUuid,
   action: z.string(),
   table_name: z.string(),
@@ -421,16 +421,16 @@ export const transferStatusSchema = z.enum(['PENDIENTE', 'CONFIRMADA', 'CANCELAD
 export const transferItemSchema = z.object({
   id: optionalResilientUuid,
   transfer_id: optionalResilientUuid,
-  product_id: resilientUuid.pipe(z.string().uuid()),
+  product_id: resilientUuid.pipe(z.string().uuid()).catch(''),
   quantity: z.number().positive(),
   unit_cost: z.number().min(0),
 });
 
 export const transferSchema = z.object({
-  id: resilientUuid.pipe(z.string().uuid()),
-  origin_store_id: resilientUuid.pipe(z.string().uuid()),
-  destination_store_id: resilientUuid.pipe(z.string().uuid()),
-  created_by: resilientUuid.pipe(z.string().uuid()),
+  id: resilientUuid.pipe(z.string().uuid()).catch(''),
+  origin_store_id: resilientUuid.pipe(z.string().uuid()).catch(''),
+  destination_store_id: resilientUuid.pipe(z.string().uuid()).catch(''),
+  created_by: resilientUuid.pipe(z.string().uuid()).catch(''),
   status: transferStatusSchema,
   notes: z.string().nullable(),
   created_at: z.string(),
@@ -458,7 +458,7 @@ export const syncOperationTypeSchema = z.enum(['CREATE', 'UPDATE', 'DELETE']);
 
 export const syncOperationSchema = z.object({
   id: optionalResilientUuid, // Local ID
-  idempotencyKey: resilientUuid.pipe(z.string().uuid()),
+  idempotencyKey: resilientUuid.pipe(z.string().uuid()).catch(''),
   operationType: syncOperationTypeSchema,
   entity: z.string(),
   payload: z.any(),
@@ -479,7 +479,7 @@ export const syncBatchSchema = z.object({
 });
 
 export const syncResultItemSchema = z.object({
-  idempotencyKey: resilientUuid.pipe(z.string().uuid()),
+  idempotencyKey: resilientUuid.pipe(z.string().uuid()).catch(''),
   status: z.enum(['ok', 'conflict', 'error']),
   serverId: z.any().optional(),
   serverVersion: z.number().optional(),

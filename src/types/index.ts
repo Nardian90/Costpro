@@ -111,7 +111,7 @@ export interface Product {
 
 export interface ProductVariant {
   id: string;
-  product_id?: string;
+  product_id?: string | null;
   name: string;
   sku?: string | null;
   price: number;
@@ -156,8 +156,8 @@ export interface InventoryBatch {
 
 export interface StockMovement {
   id: string;
-  store_id: string;
-  product_id: string;
+  store_id?: string | null;
+  product_id?: string | null;
   variant_id?: string | null;
   quantity_change: number;
   movement_type: MovementType | string;
@@ -295,8 +295,8 @@ export interface Transfer {
 }
 
 export interface TransferItem {
-  id?: string;
-  transfer_id?: string;
+  id?: string | null;
+  transfer_id?: string | null;
   product_id: string;
   quantity: number;
   unit_cost: number;
