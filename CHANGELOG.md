@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.5] - 2026-02-21
+
+### Fixed
+- **Resolución de Conflictos de CSP y Service Worker**: Actualización de las políticas de seguridad de contenido (CSP) en `next.config.ts` para permitir la carga de Workbox desde el CDN de Google (`storage.googleapis.com`), resolviendo fallos en el registro del Service Worker.
+- **Limpieza de Cabeceras de Permisos**: Eliminación de la directiva `interest-cohort` (FLoC) de `Permissions-Policy` para eliminar advertencias de características no habilitadas en navegadores modernos.
+- **Hardenización de Generación de Reportes**: Refuerzo de la API `/api/reports/generate` con validaciones defensivas de parámetros y manejo de errores específico para el sistema de almacenamiento.
+- **Infraestructura de Reportes**: Nueva migración para garantizar la existencia y permisos del bucket de almacenamiento `reports`, solucionando el error crítico "Bucket not found" que impedía la descarga de documentos.
+
+**Nota de Handoff para UX:** No hay cambios visuales. Se ha restaurado la funcionalidad de generación de reportes PDF y se ha habilitado correctamente el soporte PWA (Service Worker) que estaba bloqueado por políticas de seguridad.
+
 ## [5.7.4] - 2026-02-20
 
 ### Fixed
