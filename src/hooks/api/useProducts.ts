@@ -1,11 +1,15 @@
 import { useQuery, useMutation, useQueryClient, useSuspenseQuery, type QueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
-import { validateRPCArrayResponse } from '@/lib/rpc-validator';
+import { validateRPCArrayResponse, validateRPCResponse } from '@/lib/rpc-validator';
 import {
   getProductsForPosResponseSchema,
+  getProductsForPosParamsSchema,
+  bulkUpdateProductsParamsSchema,
+  bulkUpdateProductsInputSchema,
 } from '@/validation/schemas';
 import { getSupabaseUrl } from '@/lib/utils';
 import { withLogging, withTableLogging } from './base';
+import { z } from 'zod';
 import type { Product } from '@/types';
 
 export function useSuspenseProducts(storeId?: string | null, searchTerm = '', category = '') {
@@ -14,11 +18,11 @@ export function useSuspenseProducts(storeId?: string | null, searchTerm = '', ca
     queryFn: async () => {
       if (!storeId) return [];
       const rpcName = 'get_products_for_pos';
-      const params = {
+      const params = getProductsForPosParamsSchema.parse({
         p_store_id: storeId,
         p_search_term: searchTerm,
         p_category: category
-      };
+      });
       const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
 
       const validatedData = await validateRPCArrayResponse(
@@ -41,11 +45,11 @@ export function useProducts(storeId?: string | null, searchTerm = '', category =
     queryFn: async () => {
       if (!storeId) return [];
       const rpcName = 'get_products_for_pos';
-      const params = {
+      const params = getProductsForPosParamsSchema.parse({
         p_store_id: storeId,
         p_search_term: searchTerm,
         p_category: category
-      };
+      });
       const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
 
       const validatedData = await validateRPCArrayResponse(
@@ -73,11 +77,11 @@ export async function prefetchProducts(queryClient: QueryClient, storeId: string
     queryKey: ['products', storeId, searchTerm, category],
     queryFn: async () => {
       const rpcName = 'get_products_for_pos';
-      const params = {
+      const params = getProductsForPosParamsSchema.parse({
         p_store_id: storeId,
         p_search_term: searchTerm,
         p_category: category
-      };
+      });
 
       const { data, error } = await supabase.rpc(rpcName, params);
       if (error) throw error;
@@ -160,10 +164,15 @@ export function useToggleProductActive() {
 export function useBulkUpdateProducts() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ products, storeId }: { products: any[], storeId: string }) => {
+    mutationFn: async (rawInput: z.infer<typeof bulkUpdateProductsInputSchema>) => {
+      const input = bulkUpdateProductsInputSchema.parse(rawInput);
       const rpcName = 'bulk_update_products';
-      const params = { _products: products };
-      return await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
+      const params = { _products: input.products };
+      const data = await withLogging<any[]>(rpcName, params, () => supabase.rpc(rpcName, params));
+      return await validateRPCArrayResponse(data, z.object({
+        updated_count: z.number(),
+        inserted_count: z.number()
+      }), rpcName);
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['products', variables.storeId] });
