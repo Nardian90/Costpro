@@ -18,8 +18,8 @@ WHERE NOT EXISTS (
 DO $$
 BEGIN
     IF NOT EXISTS (
-        SELECT 1 FROM pg_policy
-        WHERE polname = 'Public Access to Reports'
+        SELECT 1 FROM pg_policies
+        WHERE policyname = 'Public Access to Reports'
         AND tablename = 'objects'
         AND schemaname = 'storage'
     ) THEN
@@ -33,8 +33,8 @@ END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (
-        SELECT 1 FROM pg_policy
-        WHERE polname = 'Authenticated Upload to Reports'
+        SELECT 1 FROM pg_policies
+        WHERE policyname = 'Authenticated Upload to Reports'
         AND tablename = 'objects'
         AND schemaname = 'storage'
     ) THEN
@@ -45,12 +45,11 @@ BEGIN
 END $$;
 
 -- 3. Allow authenticated users to update/delete their own uploads if needed
--- (Though typically reports are immutable)
 DO $$
 BEGIN
     IF NOT EXISTS (
-        SELECT 1 FROM pg_policy
-        WHERE polname = 'Authenticated Delete Own Reports'
+        SELECT 1 FROM pg_policies
+        WHERE policyname = 'Authenticated Delete Own Reports'
         AND tablename = 'objects'
         AND schemaname = 'storage'
     ) THEN
