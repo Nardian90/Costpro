@@ -29,7 +29,6 @@ DECLARE
         'inventory_adjustments',
         'inventory_adjustment_items',
         'suppliers',
-        'user_store_access',
         'profiles',
         'stores'
     ];
@@ -92,8 +91,8 @@ BEGIN
         true
     );
 
-    INSERT INTO public.user_store_access (user_id, store_id, roles)
-    VALUES ('a1111111-1111-1111-1111-111111111111', demo_store_id, '{admin}');
+    INSERT INTO public.user_store_memberships (user_id, store_id, role, status)
+    VALUES ('a1111111-1111-1111-1111-111111111111', demo_store_id, 'admin', 'active');
 
 
     -- ENCARGADO: encargado@demo.com
@@ -124,8 +123,8 @@ BEGIN
         true
     );
 
-    INSERT INTO public.user_store_access (user_id, store_id, roles)
-    VALUES ('e2222222-2222-2222-2222-222222222222', demo_store_id, '{encargado}');
+    INSERT INTO public.user_store_memberships (user_id, store_id, role, status)
+    VALUES ('e2222222-2222-2222-2222-222222222222', demo_store_id, 'encargado', 'active');
 
 
     -- CAJERO: cajero@demo.com
@@ -156,6 +155,6 @@ BEGIN
         true
     );
 
-    INSERT INTO public.user_store_access (user_id, store_id, roles)
-    VALUES ('c3333333-3333-3333-3333-333333333333', demo_store_id, '{clerk}');
+    INSERT INTO public.user_store_memberships (user_id, store_id, role, status)
+    VALUES ('c3333333-3333-3333-3333-333333333333', demo_store_id, 'clerk', 'active');
 END $$;
