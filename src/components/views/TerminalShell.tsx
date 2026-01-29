@@ -60,6 +60,7 @@ export default function TerminalShell() { // Renamed from TerminalView
   const { user, loading, status, logout } = useAuthStore();
   const [isPending, startTransition] = useTransition();
   const isMobile = useIsMobile();
+  // Se instancia queryClient para permitir la invalidación de caché en el cambio de sucursal
   const queryClient = useQueryClient();
 
   const {
@@ -238,6 +239,7 @@ export default function TerminalShell() { // Renamed from TerminalView
               await userService.setActiveStore(user.id, id);
               toast.success('Sucursal actualizada');
               // Invalida productos para forzar recarga con el nuevo storeId
+              // queryClient está correctamente instanciado arriba mediante useQueryClient()
               queryClient.invalidateQueries({ queryKey: ['products'] });
             } catch (error) {
               console.error('Error al cambiar de sucursal:', error);

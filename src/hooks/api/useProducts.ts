@@ -9,17 +9,9 @@ import {
   bulkUpdateProductsInputSchema,
 } from '@/validation/schemas';
 import { getSupabaseUrl } from '@/lib/utils';
-import { withLogging, withTableLogging } from './base';
+import { withLogging, withTableLogging, getCleanStoreId } from './base';
 import { z } from 'zod';
 import type { Product } from '@/types';
-
-/**
- * Normaliza el ID de la tienda para asegurar consistencia entre queryKeys y llamadas RPC.
- */
-const getCleanStoreId = (storeId?: string | null) => {
-  if (storeId === 'null' || storeId === 'undefined' || !storeId) return null;
-  return storeId;
-};
 
 export function useSuspenseProducts(storeId?: string | null, searchTerm = '', category = '') {
   const cleanStoreId = getCleanStoreId(storeId);
@@ -192,8 +184,9 @@ export function useBulkUpdateProducts() {
       }), rpcName);
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['products', variables.storeId] });
-      queryClient.invalidateQueries({ queryKey: ['inventory', variables.storeId] });
+      const cleanStoreId = getCleanStoreId(variables.storeId);
+      queryClient.invalidateQueries({ queryKey: ['products', cleanStoreId] });
+      queryClient.invalidateQueries({ queryKey: ['inventory', cleanStoreId] });
     },
   });
 }

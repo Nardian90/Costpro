@@ -3,6 +3,15 @@ import { logger } from '@/lib/logger';
 import { useUIStore } from '@/store';
 import { formatPostgrestUrlToSql, formatRpcToSql } from '@/lib/query-inspector-utils';
 
+/**
+ * Normaliza el ID de la tienda para asegurar consistencia entre queryKeys y llamadas RPC.
+ * Maneja valores como 'null', 'undefined' o cadenas vacías convirtiéndolos a null real.
+ */
+export const getCleanStoreId = (storeId?: string | null) => {
+  if (storeId === 'null' || storeId === 'undefined' || !storeId) return null;
+  return storeId;
+};
+
 // Helper to wrap RPC calls with logging
 export async function withLogging<T>(
   rpcName: string,

@@ -2,15 +2,16 @@ import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tansta
 import { supabase } from '@/lib/supabaseClient';
 import { validateRPCArrayResponse, validateRPCResponse } from '@/lib/rpc-validator';
 import { transactionSchema, transactionItemSchema, createSaleParamsSchema } from '@/validation/schemas';
-import { withLogging, withTableLogging } from './base';
+import { withLogging, withTableLogging, getCleanStoreId } from './base';
 import { z } from 'zod';
 import { useSyncContext } from '@/components/providers/SyncProvider';
 
 export function useTransactions(storeId?: string | null, isAdmin = false) {
+  const cleanStoreId = getCleanStoreId(storeId);
+
   return useQuery({
-    queryKey: ['transactions', storeId, isAdmin],
+    queryKey: ['transactions', cleanStoreId, isAdmin],
     queryFn: async () => {
-      const cleanStoreId = (storeId === 'null' || storeId === 'undefined' || !storeId) ? null : storeId;
       if (!isAdmin && !cleanStoreId) return [];
 
       const rpcName = 'get_transactions';
@@ -39,15 +40,16 @@ export function useTransactions(storeId?: string | null, isAdmin = false) {
 }
 
 export async function prefetchTransactions(queryClient: QueryClient, storeId: string, isAdmin = false) {
-  if (!isAdmin && !storeId) return;
+  const cleanStoreId = getCleanStoreId(storeId);
+  if (!isAdmin && !cleanStoreId) return;
 
   return queryClient.prefetchQuery({
-    queryKey: ['transactions', storeId, isAdmin],
+    queryKey: ['transactions', cleanStoreId, isAdmin],
     queryFn: async () => {
       const columns = 'id, created_at, updated_at, total_amount, status, payment_method, subtotal, discount_value, discount_type, store_id, seller_id, completed_at, cancelled_at, void_reason';
       let query = supabase.from('transactions').select(columns);
-      if (!isAdmin && storeId) {
-        query = query.eq('store_id', storeId);
+      if (!isAdmin && cleanStoreId) {
+        query = query.eq('store_id', cleanStoreId);
       }
       const { data, error } = await query.order('created_at', { ascending: false });
       if (error) throw error;
