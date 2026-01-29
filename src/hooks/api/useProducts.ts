@@ -18,7 +18,7 @@ export function useSuspenseProducts(storeId?: string | null, searchTerm = '', ca
     queryKey: ['products', storeId, searchTerm, category],
     queryFn: async () => {
       const cleanStoreId = (storeId === 'null' || storeId === 'undefined' || !storeId) ? null : storeId;
-      if (!cleanStoreId || !isUuid(cleanStoreId)) return [];
+      if (cleanStoreId && !isUuid(cleanStoreId)) return [];
 
       const rpcName = 'get_products_for_pos';
       const params = getProductsForPosParamsSchema.parse({
@@ -47,7 +47,7 @@ export function useProducts(storeId?: string | null, searchTerm = '', category =
     queryKey: ['products', storeId, searchTerm, category],
     queryFn: async () => {
       const cleanStoreId = (storeId === 'null' || storeId === 'undefined' || !storeId) ? null : storeId;
-      if (!cleanStoreId || !isUuid(cleanStoreId)) return [];
+      if (cleanStoreId && !isUuid(cleanStoreId)) return [];
 
       const rpcName = 'get_products_for_pos';
       const params = getProductsForPosParamsSchema.parse({
@@ -68,14 +68,14 @@ export function useProducts(storeId?: string | null, searchTerm = '', category =
         public_image_url: getSupabaseUrl('product-images', item.image_url),
       }));
     },
-    enabled: !!storeId,
+    enabled: storeId !== undefined,
     staleTime: 30 * 1000,
   });
 }
 
 export async function prefetchProducts(queryClient: QueryClient, storeId: string) {
   const cleanStoreId = (storeId === 'null' || storeId === 'undefined' || !storeId) ? null : storeId;
-  if (!cleanStoreId || !isUuid(cleanStoreId)) return;
+  if (cleanStoreId && !isUuid(cleanStoreId)) return;
 
   const searchTerm = '';
   const category = '';
