@@ -4,12 +4,13 @@
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Download, Play, Save, Loader2, AlertTriangle } from 'lucide-react';
+import { FileText, Download, Play, Save, Loader2, AlertTriangle, FileSpreadsheet } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store';
 import { ReportConfigPanel } from './ReportConfigPanel';
 import { ReportPreview } from './ReportPreview';
 import { ReportType, ReportDefinition } from '@/types';
+import { COLUMN_LABELS } from '@/contracts/reports';
 
 export default function ReportsView() {
   const { user } = useAuthStore();
@@ -27,6 +28,7 @@ export default function ReportsView() {
   });
 
   const [isSaving, setIsSaving] = useState(false);
+  const [isExportingExcel, setIsExportingExcel] = useState(false);
 
   const handleSave = async () => {
     if (!user?.activeStoreId) {
@@ -53,6 +55,11 @@ export default function ReportsView() {
   const handleGenerate = async () => {
     if (!user?.activeStoreId) {
       toast.error('Seleccione una tienda activa');
+      return;
+    }
+
+    if (config.type === 'kardex' && !config.filters?.product_id) {
+      toast.error('Debe seleccionar un producto para generar el reporte de Kardex');
       return;
     }
 
@@ -84,6 +91,48 @@ export default function ReportsView() {
     }
   };
 
+  const handleExportExcel = async () => {
+    if (!user?.activeStoreId) {
+      toast.error('Seleccione una tienda activa');
+      return;
+    }
+
+    if (config.type === 'kardex' && !config.filters?.product_id) {
+      toast.error('Debe seleccionar un producto para generar el reporte de Kardex');
+      return;
+    }
+
+    setIsExportingExcel(true);
+    try {
+      const { reportService } = await import('@/services/report-service');
+      const { exportToExcel } = await import('@/services/export-service');
+
+      const data = await reportService.fetchReportData(
+        config.type as ReportType,
+        config.filters,
+        config.date_range,
+        user.activeStoreId
+      );
+
+      if (!data || data.length === 0) {
+        toast.error('No hay datos disponibles para exportar con los filtros seleccionados');
+        return;
+      }
+
+      exportToExcel(
+        data,
+        config.columns || [],
+        COLUMN_LABELS,
+        config.name || `Reporte_${config.type}_${new Date().toISOString().split('T')[0]}`
+      );
+
+    } catch (error: any) {
+      toast.error(`Error al exportar Excel: ${error.message}`);
+    } finally {
+      setIsExportingExcel(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -105,6 +154,18 @@ export default function ReportsView() {
                 <> <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Guardando... </>
              ) : (
                 <> <Save className="w-4 h-4 mr-2" /> Guardar Plantilla </>
+             )}
+           </Button>
+           <Button
+             onClick={handleExportExcel}
+             disabled={isExportingExcel}
+             variant="outline"
+             className="rounded-xl border-success/20 text-success hover:bg-success/10 font-bold uppercase tracking-widest text-[10px]"
+           >
+             {isExportingExcel ? (
+                <> <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Preparando... </>
+             ) : (
+                <> <FileSpreadsheet className="w-4 h-4 mr-2" /> Exportar Excel </>
              )}
            </Button>
            <Button

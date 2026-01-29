@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { ReportDefinition } from '@/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { COLUMN_LABELS } from '@/contracts/reports';
 
 interface ReportPreviewProps {
   config: Partial<ReportDefinition>;
@@ -45,20 +46,20 @@ export const ReportPreview = ({ config }: ReportPreviewProps) => {
           </div>
 
           {/* Table Placeholder */}
-          <div className="mt-12 flex-1">
+          <div className="mt-12 flex-1 overflow-hidden">
              <div className="w-full">
-                <div className="grid grid-cols-5 gap-4 border-b border-slate-200 pb-4 mb-4">
-                    {config.columns?.slice(0, 5).map(col => (
-                        <div key={col} className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{col}</div>
+                <div className="flex gap-4 border-b border-slate-200 pb-4 mb-4">
+                    {(config.columns || []).map(col => (
+                        <div key={col} className="flex-1 min-w-[60px] text-[8px] font-black text-slate-400 uppercase tracking-widest truncate">
+                            {COLUMN_LABELS[col] || col}
+                        </div>
                     ))}
                 </div>
                 {[1, 2, 3, 4, 5].map(i => (
-                    <div key={i} className="grid grid-cols-5 gap-4 py-3 border-b border-slate-50 opacity-40">
-                        <div className="h-2 bg-slate-100 rounded col-span-1" />
-                        <div className="h-2 bg-slate-100 rounded col-span-1" />
-                        <div className="h-2 bg-slate-100 rounded col-span-1" />
-                        <div className="h-2 bg-slate-100 rounded col-span-1" />
-                        <div className="h-2 bg-slate-100 rounded col-span-1" />
+                    <div key={i} className="flex gap-4 py-3 border-b border-slate-50 opacity-40">
+                        {(config.columns || []).map(col => (
+                            <div key={col} className="flex-1 h-2 bg-slate-100 rounded min-w-[60px]" />
+                        ))}
                     </div>
                 ))}
              </div>
