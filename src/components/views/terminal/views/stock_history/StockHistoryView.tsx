@@ -5,6 +5,7 @@ import { History, ArrowUpRight, ArrowDownRight, ArrowUpDown, Calendar } from 'lu
 import { cn, formatDate } from '@/lib/utils';
 import SearchBar from '@/components/ui/SearchBar';
 import ActionMenu from '@/components/ui/ActionMenu';
+import { QueryInspector } from '@/components/ui/QueryInspector';
 
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -55,6 +56,8 @@ export default function StockHistoryView({}: StockHistoryViewProps) {
             className="sm:w-auto"
          />
       </div>
+
+      <QueryInspector />
 
       <SearchBar
         value={searchTerm}

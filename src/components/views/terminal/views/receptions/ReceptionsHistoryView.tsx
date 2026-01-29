@@ -5,6 +5,7 @@ import { Warehouse, Eye, Calendar, Building2, FileText, Pencil, Trash2 } from 'l
 import { cn, formatCurrency, formatDate, formatTime } from '@/lib/utils';
 import { toast } from 'sonner';
 import SearchBar from '@/components/ui/SearchBar';
+import { QueryInspector } from '@/components/ui/QueryInspector';
 import { StateRenderer } from '@/components/ui/StateRenderer';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useReceptionsHistoryView } from './useReceptionsHistoryView';
@@ -50,6 +51,8 @@ export default function ReceptionsHistoryView() {
     <>
       <div className="space-y-6">
         <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase">Recepciones</h2>
+
+        <QueryInspector />
 
         <SearchBar
           value={searchTerm}
