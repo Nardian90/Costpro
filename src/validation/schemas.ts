@@ -402,3 +402,38 @@ export const syncResultItemSchema = z.object({
 export const syncBatchResponseSchema = z.object({
   results: z.array(syncResultItemSchema),
 });
+
+// ============================================
+// Report Schemas
+// ============================================
+
+export const reportTypeSchema = z.enum(['sales', 'profit', 'inventory', 'kardex', 'purchases', 'audit']);
+
+export const reportDefinitionSchema = z.object({
+  id: z.string().uuid().optional(),
+  name: z.string().min(1, "El nombre del reporte es obligatorio"),
+  type: reportTypeSchema,
+  filters: z.any().default({}),
+  date_range: z.object({
+    from: z.string(),
+    to: z.string(),
+  }),
+  columns: z.array(z.string()).default([]),
+  layout: z.any().default({}),
+  created_by: z.string().uuid().optional(),
+  store_id: z.string().uuid().optional(),
+  created_at: z.string().optional(),
+  updated_at: z.string().optional(),
+});
+
+export const reportRunSchema = z.object({
+  id: z.string().uuid().optional(),
+  report_definition_id: z.string().uuid(),
+  executed_by: z.string().uuid(),
+  executed_at: z.string().optional(),
+  parameters_snapshot: z.any(),
+  file_url: z.string().nullable().optional(),
+  status: z.enum(['pending', 'completed', 'failed']).default('pending'),
+  error_message: z.string().nullable().optional(),
+  store_id: z.string().uuid().optional(),
+});

@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.8.0] - 2026-02-20
+
+### Added
+- **Módulo de Reportes Profesionales**: Implementación de un sistema avanzado de reporting para Ventas, Utilidad, Inventario, Kardex, Compras y Auditoría.
+- **Generación de PDF en Backend**: Nueva arquitectura de generación de documentos PDF (`/api/reports/generate`) utilizando `jsPDF` y `jspdf-autotable`, garantizando documentos auditables e independientes del frontend.
+- **Vista de Configuración (UI)**: Interfaz de usuario profesional con panel de configuración de filtros/periodos y vista previa dinámica del documento.
+- **Persistencia de Plantillas**: Capacidad de guardar definiciones de reportes personalizada para su reutilización inmediata.
+- **Esquema de Datos y RLS**: Nuevas tablas `report_definitions` y `report_runs` con políticas de seguridad granulares por tienda y usuario.
+
+**Nota de Handoff para UX:** Se ha añadido la vista de "Reportes" en la sección de GESTIÓN del menú lateral. La interfaz utiliza un diseño de panel dividido (Configuración a la izquierda, Preview a la derecha) optimizado para flujos de trabajo de escritorio, manteniendo la responsividad en móviles mediante un diseño apilado.
+
 ## [5.7.2] - 2026-02-18
 
 ### Changed
