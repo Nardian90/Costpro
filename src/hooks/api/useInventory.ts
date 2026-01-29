@@ -17,12 +17,14 @@ export function useSuspenseInventory(storeId?: string | null, searchTerm = '', c
   return useSuspenseInfiniteQuery({
     queryKey: ['inventory', storeId, searchTerm, category, limit],
     queryFn: async ({ pageParam = 0 }) => {
-      if (!storeId) return { products: [], total: 0, nextOffset: null };
+      const cleanStoreId = (storeId === 'null' || storeId === 'undefined' || !storeId) ? null : storeId;
+      if (!cleanStoreId) return { products: [], total: 0, nextOffset: null };
+
       const rpcName = 'get_paginated_products';
       const params = getPaginatedProductsParamsSchema.parse({
         p_limit: limit,
         p_offset: pageParam as number,
-        p_store_id: storeId,
+        p_store_id: cleanStoreId,
         p_search_term: searchTerm,
         p_category: category
       });
@@ -49,12 +51,14 @@ export function useInventory(storeId?: string | null, searchTerm = '', category 
   return useInfiniteQuery({
     queryKey: ['inventory', storeId, searchTerm, category, limit],
     queryFn: async ({ pageParam = 0 }) => {
-      if (!storeId) return { products: [], total: 0, nextOffset: null };
+      const cleanStoreId = (storeId === 'null' || storeId === 'undefined' || !storeId) ? null : storeId;
+      if (!cleanStoreId) return { products: [], total: 0, nextOffset: null };
+
       const rpcName = 'get_paginated_products';
       const params = getPaginatedProductsParamsSchema.parse({
         p_limit: limit,
         p_offset: pageParam as number,
-        p_store_id: storeId,
+        p_store_id: cleanStoreId,
         p_search_term: searchTerm,
         p_category: category
       });

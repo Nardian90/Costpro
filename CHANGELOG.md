@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.4] - 2026-02-20
+
+### Fixed
+- **Hardenización de Validaciones de ID (Zod Resilience)**: Implementación de esquemas `resilientUuid` y `optionalResilientUuid` para manejar de forma segura valores "JS-ism" comunes como `'null'`, `'undefined'` o cadenas vacías provenientes de estados serializados o parámetros de URL.
+- **Resiliencia de Hooks de API**: Refuerzo de los hooks `useInventory`, `useDashboard` y `useTransactions` con limpieza defensiva de `storeId` y cláusulas de salvaguarda que previenen llamadas a RPCs con parámetros inválidos, evitando fallos en cascada en la interfaz.
+- **Robustez de Entidades**: Actualización de los esquemas de validación de respuesta para `Transaction`, `Receipt`, `AuditLog` y `Product` para ser tolerantes a datos inconsistentes en campos de ID no críticos, asegurando que la interfaz se mantenga operativa incluso ante anomalías en los datos.
+
+**Nota de Handoff para UX:** No hay cambios visuales. Se ha resuelto un problema que provocaba errores críticos (pantallas de error) en el Dashboard e Inventario cuando el contexto de la tienda no estaba perfectamente definido en el estado global.
+
 ## [5.7.3] - 2026-02-19
 
 ### Changed
