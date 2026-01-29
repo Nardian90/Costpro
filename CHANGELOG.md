@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.0] - 2026-02-18
+
+### Added
+- **Integración con SDK Oficial de Google AI**: Migración de llamadas REST manuales al SDK `@google/generative-ai` para mayor estabilidad y compatibilidad con funciones avanzadas (como system instructions nativas).
+- **Soporte Estricto para Gemini 1.5 Flash**: Configuración del bot para usar específicamente el modelo `gemini-1.5-flash` con la versión de API `v1beta`, cumpliendo con los requisitos de compatibilidad de Jules.
+
 ## [5.6.9] - 2026-02-18
 
 ### Fixed
