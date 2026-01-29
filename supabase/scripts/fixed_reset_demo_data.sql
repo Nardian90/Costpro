@@ -199,5 +199,13 @@ BEGIN
     INSERT INTO public.user_store_memberships (user_id, store_id, role, status)
     VALUES ('b4444444-4444-4444-4444-444444444444', demo_store_id, 'warehouse', 'active');
 
+    -- 5. CREATE DEMO PRODUCTS
+    INSERT INTO public.products (store_id, sku, name, category, price, cost_price, stock_current, is_active)
+    VALUES
+        (demo_store_id, 'PROD-001', 'ARROZ EXTRA 1KG', 'ABARROTES', 1200, 800, 100, true),
+        (demo_store_id, 'PROD-002', 'ACEITE VEGETAL 1L', 'ABARROTES', 2500, 1800, 50, true),
+        (demo_store_id, 'PROD-003', 'LECHE ENTERA 1L', 'LÁCTEOS', 1500, 1100, 80, true),
+        (demo_store_id, 'PROD-004', 'DETERGENTE LÍQUIDO', 'LIMPIEZA', 3200, 2400, 30, true),
+        (demo_store_id, 'PROD-005', 'CAFÉ MOLIDO 250G', 'INFUSIONES', 4500, 3100, 45, true);
 
 END $$;

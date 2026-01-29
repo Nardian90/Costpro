@@ -8,9 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [5.7.13] - 2026-02-25
 
 ### Fixed
-- **Validación Permisiva de UUID**: Sustitución de la validación estricta de UUID v4 por un patrón regex permisivo en todos los esquemas Zod y hooks de API (`useProducts`, `useInventory`, `useDashboard`). Esto permite operar con datos de demo que poseen UUIDs no estandarizados (variantes no-RFC4122) sin bloquear la interfaz.
-- **Consistencia de Store ID en TPV**: Unificación del uso de `active_store_id` en el flujo de facturación del TPV. Se han actualizado el servicio de auditoría y el proceso de creación de ventas para priorizar siempre la sucursal seleccionada en el encabezado global, eliminando discrepancias con el `store_id` heredado del perfil.
-- **Normalización de Cache**: Refactorización de la lógica de limpieza de IDs de tienda en una utilidad centralizada `getCleanStoreId` dentro de los hooks de API, mejorando la mantenibilidad y consistencia de las `queryKeys`.
+- **Validación Permisiva de UUID**: Sustitución de la validación estricta de UUID v4 por un patrón regex permisivo en todos los esquemas Zod y hooks de API. Esto permite operar con datos de demo que poseen UUIDs no estandarizados sin bloquear la interfaz.
+- **Consistencia de Store ID en TPV**: Unificación del uso de `active_store_id` en el flujo de facturación y auditoría del TPV.
+- **Normalización Global de Cache**: Centralización de `getCleanStoreId` en la base de hooks de API y aplicación uniforme en todos los módulos (`products`, `inventory`, `dashboard`, `transactions`, `receptions`, `transfers`, `movements`, `cash`).
+- **Resiliencia de Terminal**: Corrección de la instanciación de `queryClient` en `TerminalShell.tsx` para garantizar la invalidación de caché durante el cambio de sucursal.
+- **Enriquecimiento de Demo Data**: Actualización de los scripts de reset SQL para incluir un catálogo de productos demo (Abarrotes, Lácteos, Limpieza) vinculados a la tienda por defecto.
 
 ## [5.7.12] - 2026-02-25
 

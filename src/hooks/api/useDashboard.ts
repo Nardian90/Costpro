@@ -5,16 +5,8 @@ import { validateRPCArrayResponse } from '@/lib/rpc-validator';
 import {
   dashboardKpiResponseSchema,
 } from '@/validation/schemas';
-import { withLogging } from './base';
+import { withLogging, getCleanStoreId } from './base';
 import type { DashboardKPIs, SalesSummary } from '@/types';
-
-/**
- * Normaliza el ID de la tienda para asegurar consistencia entre queryKeys y llamadas RPC.
- */
-const getCleanStoreId = (storeId?: string | null) => {
-  if (storeId === 'null' || storeId === 'undefined' || !storeId) return null;
-  return storeId;
-};
 
 export async function prefetchDashboardData(queryClient: QueryClient, storeId: string, isAdmin = false) {
   const rpcName = 'get_dashboard_kpis';

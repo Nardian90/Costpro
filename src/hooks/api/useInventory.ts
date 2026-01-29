@@ -10,17 +10,9 @@ import {
   adjustStockInputSchema,
   inventoryAdjustmentResponseSchema
 } from '@/validation/schemas';
-import { withLogging } from './base';
+import { withLogging, getCleanStoreId } from './base';
 import { z } from 'zod';
 import { useSyncContext } from '@/components/providers/SyncProvider';
-
-/**
- * Normaliza el ID de la tienda para asegurar consistencia entre queryKeys y llamadas RPC.
- */
-const getCleanStoreId = (storeId?: string | null) => {
-  if (storeId === 'null' || storeId === 'undefined' || !storeId) return null;
-  return storeId;
-};
 
 export function useSuspenseInventory(storeId?: string | null, searchTerm = '', category = '', limit = 20) {
   const cleanStoreId = getCleanStoreId(storeId);
