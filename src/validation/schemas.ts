@@ -230,20 +230,93 @@ export const dashboardKpiResponseSchema = z.object({
 });
 
 export const createSaleParamsSchema = z.object({
-  p_store_id: z.string().nullable(),
-  p_seller_id: z.string(),
+  p_store_id: z.string().uuid().nullable(),
+  p_seller_id: z.string().uuid(),
   p_payment_method: z.string(),
   p_total_amount: z.number(),
   p_subtotal: z.number(),
   p_discount_type: z.string(),
   p_discount_value: z.number(),
   p_items: z.array(z.object({
-    product_id: z.string(),
-    variant_id: z.string().nullable(),
+    product_id: z.string().uuid(),
+    variant_id: z.string().uuid().nullable(),
     quantity: z.number().positive(),
     price: z.number().min(0),
     cost: z.number().min(0),
   })),
+});
+
+export const registerReceptionParamsSchema = z.object({
+  p_store_id: z.string().uuid(),
+  p_supplier: z.string().min(1),
+  p_reception_date: z.string(),
+  p_invoice_number: z.string().min(1),
+  p_items: z.array(z.object({
+    product_id: z.string().uuid().nullable(),
+    sku: z.string().nullable().optional(),
+    quantity: z.number().positive(),
+    unit_cost: z.number().min(0),
+  })),
+});
+
+export const adjustStockInputSchema = z.object({
+  productId: z.string().uuid(),
+  storeId: z.string().uuid(),
+  userId: z.string().uuid(),
+  quantityDelta: z.number().int(),
+  unitCostAdjustment: z.number().nullable(),
+  reason: z.string().min(1),
+});
+
+export const inventoryAdjustmentResponseSchema = z.object({
+  status: z.string(),
+  nuevo_stock: z.number(),
+  nuevo_costo_total: z.number(),
+  nuevo_costo_unitario: z.number(),
+  movimiento_registrado: z.boolean()
+});
+
+export const performInventoryAdjustmentParamsSchema = z.object({
+  p_product_id: z.string().uuid(),
+  p_store_id: z.string().uuid(),
+  p_user_id: z.string().uuid(),
+  p_quantity_delta: z.number().int(),
+  p_unit_cost_adjustment: z.number().nullable(),
+  p_reason: z.string().min(1),
+});
+
+export const getPaginatedProductsParamsSchema = z.object({
+  p_limit: z.number().int().default(20),
+  p_offset: z.number().int().default(0),
+  p_store_id: z.string().uuid().nullable().optional(),
+  p_search_term: z.string().nullable().optional(),
+  p_category: z.string().nullable().optional(),
+});
+
+export const getProductsForPosParamsSchema = z.object({
+  p_store_id: z.string().uuid().nullable().optional(),
+  p_search_term: z.string().nullable().optional(),
+  p_category: z.string().nullable().optional(),
+});
+
+export const bulkUpdateProductItemSchema = z.object({
+  store_id: z.string().uuid(),
+  sku: z.string().min(1),
+  name: z.string().min(1),
+  cost_price: z.number().min(0),
+  price: z.number().min(0),
+  image_url: z.string().nullable().optional(),
+  category: z.string().nullable().optional(),
+  unit_of_measure: z.string().nullable().optional(),
+});
+
+export const bulkUpdateProductsInputSchema = z.object({
+  products: z.array(bulkUpdateProductItemSchema),
+  storeId: z.string().uuid(),
+});
+
+export const bulkUpdateProductsParamsSchema = z.object({
+  _products: z.array(bulkUpdateProductItemSchema),
 });
 
 // ============================================

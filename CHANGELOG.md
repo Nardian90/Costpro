@@ -5,16 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [5.8.0] - 2026-02-20
+## [5.7.3] - 2026-02-19
 
-### Added
-- **Módulo de Reportes Profesionales**: Implementación de un sistema avanzado de reporting para Ventas, Utilidad, Inventario, Kardex, Compras y Auditoría.
-- **Generación de PDF en Backend**: Nueva arquitectura de generación de documentos PDF (`/api/reports/generate`) utilizando `jsPDF` y `jspdf-autotable`, garantizando documentos auditables e independientes del frontend.
-- **Vista de Configuración (UI)**: Interfaz de usuario profesional con panel de configuración de filtros/periodos y vista previa dinámica del documento.
-- **Persistencia de Plantillas**: Capacidad de guardar definiciones de reportes personalizada para su reutilización inmediata.
-- **Esquema de Datos y RLS**: Nuevas tablas `report_definitions` y `report_runs` con políticas de seguridad granulares por tienda y usuario.
+### Changed
+- **Hardening de Contratos RPC**: Implementación de validación estricta de parámetros mediante Zod para los RPCs críticos (`create_sale`, `register_reception`, `perform_inventory_adjustment`, `bulk_update_products`, `get_paginated_products`, `get_products_for_pos`).
+- **Eliminación de Tipado Ambiguo**: Sustitución sistemática de tipos `any` en los hooks de mutación de la API por contratos definidos y validados.
+- **Refuerzo de Integridad de Respuesta**: Incorporación de `validateRPCResponse` y `validateRPCArrayResponse` en flujos de escritura para garantizar que las respuestas del servidor cumplan con el esquema esperado antes de propagar cambios al estado local.
 
-**Nota de Handoff para UX:** Se ha añadido la vista de "Reportes" en la sección de GESTIÓN del menú lateral. La interfaz utiliza un diseño de panel dividido (Configuración a la izquierda, Preview a la derecha) optimizado para flujos de trabajo de escritorio, manteniendo la responsividad en móviles mediante un diseño apilado.
+**Nota de Handoff para UX:** No hay cambios visuales. Se ha fortalecido la infraestructura de datos para prevenir errores silenciosos y estados inconsistentes en la interfaz.
 
 ## [5.7.2] - 2026-02-18
 

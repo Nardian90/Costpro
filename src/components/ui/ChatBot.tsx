@@ -97,7 +97,7 @@ export function ChatBot() {
   const isConfigured = !!(user?.aiApiKey && user?.aiApiKey.length > 5);
 
   return (
-    <div className="fixed bottom-6 right-6 z-[100]">
+    <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[100] flex flex-col items-end">
       <AnimatePresence>
         {!isOpen && (
           <motion.button
@@ -118,7 +118,7 @@ export function ChatBot() {
             initial={{ y: 100, opacity: 0, scale: 0.95 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 100, opacity: 0, scale: 0.95 }}
-            className="w-[350px] sm:w-[400px] h-[500px] bg-background border border-border rounded-3xl shadow-2xl flex flex-col overflow-hidden"
+            className="w-[calc(100vw-2rem)] sm:w-[400px] h-[500px] max-h-[calc(100dvh-6rem)] bg-background border border-border rounded-3xl shadow-2xl flex flex-col overflow-hidden"
           >
             {/* Header */}
             <div className="p-4 bg-primary text-primary-foreground flex items-center justify-between">
@@ -249,8 +249,8 @@ export function ChatBot() {
                       </div>
                     )}
                     {messages.map((msg, i) => (
-                      <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[85%] p-3 rounded-2xl text-[11px] font-medium shadow-sm ${
+                      <div key={i} className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`max-w-[85%] p-3 rounded-2xl text-[11px] font-medium shadow-sm break-words ${
                           msg.role === 'user'
                           ? 'bg-primary text-primary-foreground rounded-tr-none'
                           : 'bg-background border border-border rounded-tl-none'
