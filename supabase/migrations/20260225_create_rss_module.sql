@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS public.rss_settings (
     id UUID PRIMARY KEY DEFAULT '00000000-0000-0000-0000-000000000000'::uuid,
     priority_keywords TEXT[] DEFAULT ARRAY['Tasas de cambio', 'CUP', 'Divisas', 'Política Monetaria'],
     cache_duration_minutes INTEGER DEFAULT 60,
+    apply_filter BOOLEAN DEFAULT false,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -50,6 +51,6 @@ INSERT INTO public.rss_feeds (name, url)
 VALUES ('Banco Central de Cuba', 'https://www.bc.gob.cu/rss.xml')
 ON CONFLICT (url) DO NOTHING;
 
-INSERT INTO public.rss_settings (id, priority_keywords)
-VALUES ('00000000-0000-0000-0000-000000000000', ARRAY['Tasas de cambio', 'CUP', 'Divisas', 'Política Monetaria', 'Economía', 'Aranceles'])
+INSERT INTO public.rss_settings (id, priority_keywords, apply_filter)
+VALUES ('00000000-0000-0000-0000-000000000000', ARRAY['Tasas de cambio', 'CUP', 'Divisas', 'Política Monetaria', 'Economía', 'Aranceles'], false)
 ON CONFLICT (id) DO NOTHING;
