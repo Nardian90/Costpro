@@ -164,7 +164,7 @@ export async function POST(req: NextRequest) {
     doc.line(14, 45, pageWidth - 14, 45);
 
     // Table
-    const tableHeaders: string[] = columns.length > 0 ? columns : Object.keys(data[0] || {}).slice(0, 7);
+    const tableHeaders: string[] = (columns && columns.length > 0) ? columns : Object.keys(data[0] || {}).slice(0, 7);
     const tableData = data.map((row: any) => tableHeaders.map((col: string) => {
         const val = row[col];
         if (typeof val === 'object') return JSON.stringify(val);
@@ -191,6 +191,10 @@ export async function POST(req: NextRequest) {
     const pdfBuffer = doc.output('arraybuffer');
 
     // 4. Upload to Storage
+    if (!runData?.id) {
+        throw new Error('Error al crear el registro de ejecución del reporte');
+    }
+
     const fileName = `reports/${type}/${runData.id}.pdf`;
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('reports')
@@ -203,10 +207,16 @@ export async function POST(req: NextRequest) {
         // Handle bucket not found by trying to use a public one or failing gracefully
         console.error('Storage error:', uploadError);
         // Update run status to failed
-        await supabase
-            .from('report_runs')
-            .update({ status: 'failed', error_message: 'Error al subir a storage: ' + uploadError.message })
-            .eq('id', runData.id);
+        if (runData?.id) {
+            await supabase
+                .from('report_runs')
+                .update({ status: 'failed', error_message: 'Error al subir a storage: ' + uploadError.message })
+                .eq('id', runData.id);
+        }
+
+        if (uploadError.message === 'Bucket not found') {
+            throw new Error('El sistema de almacenamiento de reportes no está configurado (Bucket not found). Por favor, contacte al administrador.');
+        }
         throw uploadError;
     }
 
