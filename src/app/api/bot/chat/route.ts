@@ -22,23 +22,37 @@ export async function POST(req: NextRequest) {
     const authSupabase = getSupabaseAuthClient(session.token);
 
     // 3. Process chat with restricted context
-    const response = await botService.handleChat(
-      authSupabase,
-      session.user.id,
-      storeId,
-      messages,
-      aiProvider,
-      aiApiKey
-    );
-    return NextResponse.json(response);
+    try {
+      const response = await botService.handleChat(
+        authSupabase,
+        session.user.id,
+        storeId,
+        messages,
+        aiProvider,
+        aiApiKey
+      );
+      return NextResponse.json(response);
+    } catch (botError: any) {
+      console.error('[BotAPI] Logic Error:', {
+        message: botError.message,
+        provider: aiProvider,
+        hasKey: !!aiApiKey,
+        storeId
+      });
+
+      // Return a structured error that the frontend can display nicely
+      return NextResponse.json({
+        error: botError.message || 'Error al procesar la respuesta de Jules',
+        provider: aiProvider
+      }, { status: 502 }); // Bad Gateway for upstream AI errors
+    }
   } catch (error: any) {
-    console.error('[BotAPI] Critical Error:', {
+    console.error('[BotAPI] Route Error:', {
       message: error.message,
-      stack: error.stack,
-      cause: error.cause
+      stack: error.stack?.split('\n')[0]
     });
     return NextResponse.json({
-      error: 'Error interno del Bot',
+      error: 'Error de conexión con el bot',
       details: error.message
     }, { status: 500 });
   }
