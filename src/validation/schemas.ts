@@ -525,3 +525,41 @@ export const reportRunSchema = z.object({
   error_message: z.string().nullable().optional(),
   store_id: z.string().uuid().optional(),
 });
+
+// ============================================
+// RSS Schemas
+// ============================================
+
+export const rssFeedSchema = z.object({
+  id: z.string().uuid().optional(),
+  url: z.string().url("URL de feed inválida"),
+  name: z.string().nullable().optional(),
+  is_active: z.boolean().default(true),
+  created_at: z.string().optional(),
+  updated_at: z.string().optional(),
+});
+
+export const rssSettingsSchema = z.object({
+  id: z.string().uuid().optional(),
+  priority_keywords: z.array(z.string()).default([]),
+  cache_duration_minutes: z.number().int().min(1).default(60),
+  created_at: z.string().optional(),
+  updated_at: z.string().optional(),
+});
+
+export const rssNewsItemSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  link: z.string().url(),
+  pubDate: z.string(),
+  content: z.string(),
+  contentSnippet: z.string().optional(),
+  feedName: z.string().optional(),
+  isPriority: z.boolean().default(false),
+  isExchangeRate: z.boolean().optional(),
+  exchangeRateData: z.object({
+    currency: z.string(),
+    value: z.number(),
+    date: z.string(),
+  }).optional(),
+});
