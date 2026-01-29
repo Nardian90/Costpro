@@ -57,4 +57,55 @@ describe('Product Schema', () => {
       expect(result.data.sku).toBeUndefined();
     }
   });
+
+  it('should default is_active to true when missing or undefined', () => {
+    const productWithoutActive = {
+      id: '550e8400-e29b-41d4-a716-446655440004',
+      name: 'Missing Active Product',
+      price: 10,
+      cost_price: 5
+    };
+
+    // Test missing field
+    const result1 = productSchema.safeParse(productWithoutActive);
+    expect(result1.success).toBe(true);
+    if (result1.success) {
+      expect(result1.data.is_active).toBe(true);
+    }
+
+    // Test undefined field
+    const result2 = productSchema.safeParse({ ...productWithoutActive, is_active: undefined });
+    expect(result2.success).toBe(true);
+    if (result2.success) {
+      expect(result2.data.is_active).toBe(true);
+    }
+
+    // Test null field (should also default to true according to our fix)
+    const result3 = productSchema.safeParse({ ...productWithoutActive, is_active: null });
+    expect(result3.success).toBe(true);
+    if (result3.success) {
+      expect(result3.data.is_active).toBe(true);
+    }
+  });
+
+  it('should correctly handle string "true" and "false" for is_active', () => {
+    const productBase = {
+      id: '550e8400-e29b-41d4-a716-446655440005',
+      name: 'String Boolean Product',
+      price: 10,
+      cost_price: 5
+    };
+
+    const resultTrue = productSchema.safeParse({ ...productBase, is_active: 'true' });
+    expect(resultTrue.success).toBe(true);
+    if (resultTrue.success) {
+      expect(resultTrue.data.is_active).toBe(true);
+    }
+
+    const resultFalse = productSchema.safeParse({ ...productBase, is_active: 'false' });
+    expect(resultFalse.success).toBe(true);
+    if (resultFalse.success) {
+      expect(resultFalse.data.is_active).toBe(false);
+    }
+  });
 });
