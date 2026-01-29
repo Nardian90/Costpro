@@ -67,6 +67,8 @@ export default function TerminalShell() { // Renamed from TerminalView
     sidebarOpen, toggleSidebar, setSidebarOpen
   } = useUIStore();
 
+  const { updateUser } = useAuthStore();
+
   const [sidebarSearch, setSidebarSearch] = useState('');
 
   // Hooks
@@ -230,8 +232,17 @@ export default function TerminalShell() { // Renamed from TerminalView
           navigationItems={nav.navigationItems}
           onViewChange={handleViewChange}
           user={user}
-          handleSetActiveStore={() => {
-              toast.info('La funcionalidad de cambio de tienda se moverá a la vista de Tiendas.');
+          handleSetActiveStore={async (id) => {
+            try {
+              updateUser({ activeStoreId: id });
+              await userService.setActiveStore(user.id, id);
+              toast.success('Sucursal actualizada');
+              // Invalida productos para forzar recarga con el nuevo storeId
+              queryClient.invalidateQueries({ queryKey: ['products'] });
+            } catch (error) {
+              console.error('Error al cambiar de sucursal:', error);
+              toast.error('No se pudo persistir el cambio de sucursal');
+            }
           }}
         />
 
