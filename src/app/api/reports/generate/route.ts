@@ -6,6 +6,7 @@ import { getSupabaseAuthClient } from '@/lib/supabaseClient';
 import { ReportType } from '@/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { COLUMN_LABELS } from '@/contracts/reports';
 
 export async function POST(req: NextRequest) {
   try {
@@ -167,13 +168,15 @@ export async function POST(req: NextRequest) {
     const tableHeaders: string[] = (columns && columns.length > 0) ? columns : Object.keys(data[0] || {}).slice(0, 7);
     const tableData = data.map((row: any) => tableHeaders.map((col: string) => {
         const val = row[col];
-        if (typeof val === 'object') return JSON.stringify(val);
+        if (typeof val === 'object' && val !== null) return JSON.stringify(val);
         return val?.toString() || '';
     }));
 
+    const displayHeaders = tableHeaders.map(h => (COLUMN_LABELS[h] || h).toUpperCase());
+
     autoTable(doc, {
       startY: 50,
-      head: [tableHeaders.map(h => h.toUpperCase())],
+      head: [displayHeaders],
       body: tableData,
       theme: 'striped',
       headStyles: { fillColor: [41, 128, 185], textColor: 255 },
