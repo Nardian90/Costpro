@@ -4,7 +4,7 @@ export class GeminiAdapter implements LLMProvider {
   private apiKey: string;
   private model: string;
 
-  constructor(apiKey: string, model: string = 'gemini-1.5-flash') {
+  constructor(apiKey: string, model: string = 'gemini-2.0-flash') {
     this.apiKey = apiKey;
     this.model = model;
   }
@@ -22,32 +22,40 @@ export class GeminiAdapter implements LLMProvider {
 
     // Gemini requires alternating roles and starts with 'user'
     const contents: any[] = [];
-    let lastRole: string | null = null;
 
     chatMessages.forEach((msg) => {
-      // Normalize role: user -> user, assistant -> model, system -> user (shouldn't happen here)
+      // Normalize role: user -> user, assistant -> model
       const currentRole = msg.role === 'assistant' ? 'model' : 'user';
 
-      // Rule 1: First message must be 'user'
-      if (contents.length === 0 && currentRole !== 'user') {
-        // We prepend a placeholder or just change the role of the first message if it's 'model'
-        // Actually, Gemini strictly expects the first to be 'user'.
-        contents.push({
-          role: 'user',
-          parts: [{ text: "[Inicio de conversación]" }]
-        });
-        lastRole = 'user';
+      if (contents.length === 0) {
+        if (currentRole !== 'user') {
+          // Rule: First message MUST be 'user'
+          contents.push({
+            role: 'user',
+            parts: [{ text: "[Contexto]" }]
+          });
+          contents.push({
+            role: 'model',
+            parts: [{ text: msg.content }]
+          });
+        } else {
+          contents.push({
+            role: 'user',
+            parts: [{ text: msg.content }]
+          });
+        }
+        return;
       }
 
-      // Rule 2: Alternating roles. If same as previous, merge parts.
-      if (currentRole === lastRole) {
-        contents[contents.length - 1].parts.push({ text: msg.content });
+      const lastMessage = contents[contents.length - 1];
+      if (lastMessage.role === currentRole) {
+        // Rule: Consecutive roles must be merged
+        lastMessage.parts.push({ text: msg.content });
       } else {
         contents.push({
           role: currentRole,
           parts: [{ text: msg.content }]
         });
-        lastRole = currentRole;
       }
     });
 
