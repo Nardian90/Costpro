@@ -74,6 +74,7 @@ export interface RSSSettings {
   id: string;
   priority_keywords: string[];
   cache_duration_minutes: number;
+  apply_filter: boolean;
   updated_at?: string;
 }
 
