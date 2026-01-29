@@ -105,7 +105,7 @@ function DashboardKpisSection({ kpis }: { kpis: DashboardKPIs }) {
             </div>
             <div className="text-[10px] font-bold text-muted-foreground mt-2 uppercase tracking-widest flex items-center gap-1 whitespace-nowrap">
               {hasCostData ? (
-                <>Margen: {(((kpis?.profit || 0) / (kpis?.gross_sales || 1)) * 100).toFixed(1)}%</>
+                <>Margen: {(((kpis?.profit || 0) / (Math.max(kpis?.gross_sales || 0, 1))) * 100).toFixed(1)}%</>
               ) : (
                 <span className="flex items-center gap-1 text-amber-500/70" title="Existen ventas sin registro de costo unitario o costos en 0">
                   <HelpCircle className="w-3 h-3" />
