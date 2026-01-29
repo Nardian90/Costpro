@@ -59,6 +59,36 @@ export interface AuthState {
 }
 
 // ============================================
+// RSS y Noticias
+// ============================================
+
+export interface RSSFeed {
+  id: string;
+  url: string;
+  name: string;
+  is_active: boolean;
+  created_at?: string;
+}
+
+export interface RSSSettings {
+  id: string;
+  priority_keywords: string[];
+  cache_duration_minutes: number;
+  updated_at?: string;
+}
+
+export interface RSSItem {
+  id: string;
+  title: string;
+  link: string;
+  pubDate: string;
+  contentSnippet: string;
+  sourceName: string;
+  isPriority: boolean;
+  isExchangeRate?: boolean;
+}
+
+// ============================================
 // Tienda
 // ============================================
 

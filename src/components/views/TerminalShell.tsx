@@ -39,6 +39,8 @@ const SalesHistoryView = lazy(() => import('./terminal/views/sales/SalesHistoryV
 const StoresManagementView = lazy(() => import('./terminal/views/stores/StoresManagementView'));
 const AuditLogsView = lazy(() => import('./terminal/views/audit/AuditLogsView'));
 const ReceptionsHistoryView = lazy(() => import('./terminal/views/receptions/ReceptionsHistoryView'));
+const NewsView = lazy(() => import('./terminal/views/rss/NewsView'));
+const RSSManagementView = lazy(() => import('./terminal/views/rss/RSSManagementView'));
 
 // TODO: Map remaining views
 const InventoryView = lazy(() => import('./terminal/views/inventory/InventoryView'));
@@ -156,6 +158,8 @@ export default function TerminalShell() { // Renamed from TerminalView
         case 'sales': return <SalesHistoryView />;
         case 'users': return <UsersManagementView />;
         case 'stores': return <StoresManagementView />;
+        case 'news': return <NewsView />;
+        case 'rss_management': return <RSSManagementView />;
         case 'audit': return <AuditLogsView />;
         case 'inventory': return <InventoryView />;
         case 'cash': return <CashClosureView />;
