@@ -3,9 +3,7 @@
 
 import { useState, useMemo } from 'react';
 import { useAuthStore } from '@/store';
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
-} from '@/components/ui/dialog';
+import { BaseModal } from '@/components/ui/BaseModal';
 import { Search, Plus, Trash2, Save, Building, Package } from 'lucide-react';
 import { useInventory } from '@/hooks/api/useInventory';
 import { useTransferableStores, useCreateTransfer } from '@/hooks/api/useTransfers';
@@ -93,16 +91,36 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl !rounded-3xl border-white/5 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        <DialogHeader className="p-6 pb-0">
-          <DialogTitle className="text-xl font-black uppercase tracking-tight flex items-center gap-3">
-            <Building className="w-6 h-6 text-primary" />
-            Nueva Solicitud de Transferencia
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+    <BaseModal
+      open={isOpen}
+      onOpenChange={onClose}
+      title={
+        <div className="flex items-center gap-3">
+          <Building className="w-6 h-6 text-primary" />
+          Nueva Solicitud de Transferencia
+        </div>
+      }
+      maxWidth="sm:max-w-4xl"
+      footer={
+        <div className="flex justify-end gap-3 w-full">
+          <button
+            onClick={onClose}
+            className="neu-btn px-6 py-2.5 text-xs font-black uppercase tracking-widest"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={handleCreate}
+            disabled={createTransferMutation.isPending}
+            className="neu-btn-primary px-8 py-2.5 text-xs font-black uppercase tracking-widest flex items-center gap-2"
+          >
+            <Save className="w-4 h-4" />
+            {createTransferMutation.isPending ? 'Guardando...' : 'Enviar Solicitud'}
+          </button>
+        </div>
+      }
+    >
+        <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
              <div>
                 <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1 block">Almacén Destino</label>
@@ -204,24 +222,6 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
             </div>
           </div>
         </div>
-
-        <DialogFooter className="p-6 bg-white/2 border-t border-white/5">
-          <button
-            onClick={onClose}
-            className="neu-btn px-6 py-2.5 text-xs font-black uppercase tracking-widest"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={handleCreate}
-            disabled={createTransferMutation.isPending}
-            className="neu-btn-primary px-8 py-2.5 text-xs font-black uppercase tracking-widest flex items-center gap-2"
-          >
-            <Save className="w-4 h-4" />
-            {createTransferMutation.isPending ? 'Guardando...' : 'Enviar Solicitud'}
-          </button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    </BaseModal>
   );
 }

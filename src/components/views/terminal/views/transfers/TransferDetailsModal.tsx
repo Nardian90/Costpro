@@ -2,9 +2,7 @@
 'use client';
 
 import { useAuthStore } from '@/store';
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
-} from '@/components/ui/dialog';
+import { BaseModal } from '@/components/ui/BaseModal';
 import { useTransferDetails, useConfirmTransfer } from '@/hooks/api/useTransfers';
 import { StateRenderer } from '@/components/ui/StateRenderer';
 import { CheckCircle2, Clock, Package, Building, User, Calendar } from 'lucide-react';
@@ -40,35 +38,58 @@ export default function TransferDetailsModal({ transferId, onClose }: TransferDe
   const canConfirm = isIncoming && transfer?.status === 'PENDIENTE';
 
   return (
-    <Dialog open={!!transferId} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl !rounded-3xl border-white/5 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <BaseModal
+      open={!!transferId}
+      onOpenChange={(open) => !open && onClose()}
+      title={
+        transfer ? (
+          <div className="flex justify-between items-center w-full">
+            <div className="flex items-center gap-3">
+              <Package className="w-6 h-6 text-primary" />
+              <div>
+                <h3 className="text-xl font-black uppercase tracking-tight">Detalle de Transferencia</h3>
+                <p className="text-[10px] text-muted-foreground font-mono uppercase">ID: {transfer.id}</p>
+              </div>
+            </div>
+            <div className="flex flex-col items-end gap-1">
+              {transfer.status === 'PENDIENTE' ? (
+                <span className="flex items-center gap-1 text-amber-500 bg-amber-500/10 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest"><Clock className="w-3 h-3" /> Pendiente</span>
+              ) : (
+                <span className="flex items-center gap-1 text-emerald-500 bg-emerald-500/10 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest"><CheckCircle2 className="w-3 h-3" /> Confirmada</span>
+              )}
+            </div>
+          </div>
+        ) : "Cargando..."
+      }
+      maxWidth="sm:max-w-3xl"
+      footer={
+        <div className="flex justify-end gap-3 w-full">
+          <button
+            onClick={onClose}
+            className="neu-btn px-6 py-2.5 text-xs font-black uppercase tracking-widest"
+          >
+            Cerrar
+          </button>
+          {canConfirm && (
+            <button
+              onClick={handleConfirm}
+              disabled={confirmMutation.isPending}
+              className="neu-btn-primary px-8 py-2.5 text-xs font-black uppercase tracking-widest flex items-center gap-2"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              {confirmMutation.isPending ? 'Procesando...' : 'Confirmar Recepción'}
+            </button>
+          )}
+        </div>
+      }
+    >
         <StateRenderer
           isLoading={isLoading}
           error={error as Error}
           data={transfer ? [transfer] : null}
         >
           {([t]: any[]) => (
-            <>
-              <DialogHeader className="p-6 pb-4 border-b border-white/5">
-                <DialogTitle className="flex justify-between items-center">
-                   <div className="flex items-center gap-3">
-                      <Package className="w-6 h-6 text-primary" />
-                      <div>
-                         <h3 className="text-xl font-black uppercase tracking-tight">Detalle de Transferencia</h3>
-                         <p className="text-[10px] text-muted-foreground font-mono uppercase">ID: {t.id}</p>
-                      </div>
-                   </div>
-                   <div className="flex flex-col items-end gap-1">
-                      {t.status === 'PENDIENTE' ? (
-                        <span className="flex items-center gap-1 text-amber-500 bg-amber-500/10 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest"><Clock className="w-3 h-3" /> Pendiente</span>
-                      ) : (
-                        <span className="flex items-center gap-1 text-emerald-500 bg-emerald-500/10 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest"><CheckCircle2 className="w-3 h-3" /> Confirmada</span>
-                      )}
-                   </div>
-                </DialogTitle>
-              </DialogHeader>
-
-              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            <div className="space-y-6">
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
                        <div className="flex items-start gap-3">
@@ -130,28 +151,9 @@ export default function TransferDetailsModal({ transferId, onClose }: TransferDe
                  </div>
               </div>
 
-              <DialogFooter className="p-6 bg-white/2 border-t border-white/5">
-                <button
-                  onClick={onClose}
-                  className="neu-btn px-6 py-2.5 text-xs font-black uppercase tracking-widest"
-                >
-                  Cerrar
-                </button>
-                {canConfirm && (
-                  <button
-                    onClick={handleConfirm}
-                    disabled={confirmMutation.isPending}
-                    className="neu-btn-primary px-8 py-2.5 text-xs font-black uppercase tracking-widest flex items-center gap-2"
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                    {confirmMutation.isPending ? 'Procesando...' : 'Confirmar Recepción'}
-                  </button>
-                )}
-              </DialogFooter>
-            </>
+            </div>
           )}
         </StateRenderer>
-      </DialogContent>
-    </Dialog>
+    </BaseModal>
   );
 }
