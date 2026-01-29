@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.6.9] - 2026-02-18
+
+### Fixed
+- **Actualización de Modelos Gemini**: Migración del modelo predeterminado de `gemini-1.5-flash` a `gemini-2.0-flash` para asegurar compatibilidad en entornos de producción actuales (2026) donde las versiones legacy han sido deprecadas.
+- **Hardenización de GeminiAdapter**: Refuerzo del algoritmo de alternancia de roles para manejar casos complejos de mensajes consecutivos del mismo rol mediante la fusión de partes de mensaje, evitando errores 400 de la API de Google.
+- **Resiliencia de Servicio**: Añadida validación defensiva en `botService` para prevenir errores de puntero nulo en hilos de conversación vacíos.
+- **Logs de Diagnóstico**: Incorporación de `stack` y `cause` en los logs de error de la API del bot para acelerar la resolución de incidencias en producción.
+
+**Nota de Handoff para UX:** No hay cambios visuales. Se ha restaurado la conectividad del bot Jules tras una actualización de modelos por parte de Google.
+
 ## [5.6.8] - 2026-02-18
 
 ### Fixed
