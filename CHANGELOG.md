@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.2] - 2026-02-18
+
+### Changed
+- **Refinamiento de Personalidad de Jules**: Optimización del prompt de sistema para un tono más práctico, directo y menos técnico.
+- **Mejora de UX en Respuestas**: Implementación de reglas de concisión extrema (lectura en <5s) y simplificación de terminología contable (e.g., "Ganancia" en lugar de "Utilidad Bruta").
+- **Optimización Visual**: Inclusión de emojis y listas simplificadas para mejorar la legibilidad rápida en dispositivos móviles.
+
+**Nota de Handoff para UX:** Jules ahora responde de forma mucho más directa, evitando introducciones innecesarias. Se ha simplificado el lenguaje para que sea comprensible por cualquier operador de tienda sin formación contable avanzada.
+
 ## [5.7.1] - 2026-02-18
 
 ### Fixed
