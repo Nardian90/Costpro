@@ -11,7 +11,8 @@ import { toast } from 'sonner';
 
 export const QueryInspector: React.FC = () => {
   const user = useAuthStore((state) => state.user);
-  const lastQuery = useUIStore((state) => state.lastQuery);
+  const { viewQueries, currentView } = useUIStore();
+  const lastQuery = viewQueries[currentView];
   const [isOpen, setIsOpen] = useState(false);
 
   const isAdmin = user?.role === 'admin';

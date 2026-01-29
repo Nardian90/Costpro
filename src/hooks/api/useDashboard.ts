@@ -67,7 +67,7 @@ export function useSuspenseDashboardData(storeId?: string | null, isAdmin = fals
 
       const rpcName = 'get_dashboard_kpis';
       const params = isAdmin ? {} : { p_store_id: isValidUuid ? cleanStoreId : null };
-      const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
+      const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params), 'dashboard');
 
       const validatedData = await validateRPCArrayResponse(
         data,
@@ -111,7 +111,7 @@ export function useDashboardData(storeId?: string | null, isAdmin = false) {
 
       const rpcName = 'get_dashboard_kpis';
       const params = isAdmin ? {} : { p_store_id: isValidUuid ? cleanStoreId : null };
-      const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
+      const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params), 'dashboard');
 
       const validatedData = await validateRPCArrayResponse(
         data,
