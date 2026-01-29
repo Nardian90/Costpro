@@ -31,7 +31,6 @@ DECLARE
         'inventory_adjustment_items',
         'suppliers',
         'user_store_memberships',
-        'user_store_access',
         'profiles',
         'stores'
     ];
@@ -200,11 +199,5 @@ BEGIN
     INSERT INTO public.user_store_memberships (user_id, store_id, role, status)
     VALUES ('b4444444-4444-4444-4444-444444444444', demo_store_id, 'warehouse', 'active');
 
-    -- Legacy support (Populate user_store_access)
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'user_store_access') THEN
-        INSERT INTO public.user_store_access (user_id, store_id, roles)
-        SELECT user_id, store_id, ARRAY[role::user_role]
-        FROM public.user_store_memberships;
-    END IF;
 
 END $$;
