@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ShoppingCart, Search } from 'lucide-react';
+import { ShoppingCart, Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import SearchBar from '@/components/ui/SearchBar';
@@ -24,11 +24,19 @@ import { POSCart } from './POSCart';
 import { usePOSView } from './usePOSView';
 import { QueryInspector } from '@/components/ui/QueryInspector';
 
-const EmptyProductsComponent = () => (
+const EmptyProductsComponent = ({ onClearSearch }: { onClearSearch?: () => void }) => (
   <div className="col-span-full py-32 text-center border-2 border-dashed border-border rounded-xl bg-card/50">
     <Search className="w-16 h-16 mx-auto mb-6 opacity-5" />
     <p className="text-xl font-black text-muted-foreground uppercase tracking-widest">Sin resultados</p>
     <p className="text-sm text-muted-foreground mt-2">Intenta con otra búsqueda o filtro.</p>
+    {onClearSearch && (
+      <SecondaryButton
+        label="Limpiar búsqueda"
+        onClick={onClearSearch}
+        className="mt-6 mx-auto"
+        icon={X}
+      />
+    )}
   </div>
 );
 
@@ -68,6 +76,7 @@ export default function POSView() {
     setPosLayoutMode,
     products,
     isLoadingProducts,
+    productsError,
     items,
     handleAddItem,
     removeItem,
@@ -200,12 +209,16 @@ export default function POSView() {
             />
           </div>
 
-          <div className={cn(isPending && "opacity-50 transition-opacity")}>
+          <div className={cn("flex-1 overflow-hidden", isPending && "opacity-50 transition-opacity")}>
             <StateRenderer
               isLoading={isLoadingProducts}
-              error={null}
+              error={productsError}
               data={filteredProducts}
-              emptyComponent={<EmptyProductsComponent />}
+              emptyComponent={
+                <EmptyProductsComponent
+                  onClearSearch={searchTerm ? () => setSearchTerm('') : undefined}
+                />
+              }
               loadingComponent={<POSLoadingSkeleton layoutMode={posLayoutMode} />}
             >
               {(data) => (
