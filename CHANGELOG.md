@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.10] - 2026-02-23
+
+### Changed
+- **Optimización Estratégica de UX Móvil (TPV)**: Implementación de un footer persistente ("Sticky Footer") en el carrito del POS para garantizar que el total y el botón de finalización estén siempre visibles en la zona del pulgar, eliminando el scroll excesivo en pedidos grandes.
+- **Ergonomía Táctil (Thumb Zone)**: Reajuste de targets táctiles a un mínimo de 44px en todos los controles críticos de la caja registradora.
+- **Mejora de Densidad de Datos**: Reducción de paddings laterales en dispositivos móviles para maximizar el espacio de visualización de productos en el carrito.
+- **Feedback Visual Avanzado**: Incorporación de sombras dinámicas en el footer del carrito para indicar áreas de scroll y estados `active` optimizados para pantallas táctiles.
+
+**Nota de Handoff para UX:** Se ha mejorado significativamente la velocidad operativa en móviles. El cajero ya no necesita hacer scroll para cerrar una venta, incluso con carritos llenos.
+
 ## [5.7.8] - 2026-02-22
 
 ### Changed
