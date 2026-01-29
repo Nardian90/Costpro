@@ -26,7 +26,7 @@ export function usePOSView() {
   } | null>(null);
 
   // Data Fetching
-  const { data: productsData, isLoading: isLoadingProducts } = useProducts(user?.storeId, searchTerm);
+  const { data: productsData, isLoading: isLoadingProducts } = useProducts(user?.activeStoreId, searchTerm);
   const products = productsData || [];
 
   // Mutations
