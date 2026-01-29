@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { BaseModal } from "@/components/ui/BaseModal";
 import { Product, ProductVariant } from "@/types";
 import { useAuthStore } from "@/store";
 import { useCartStore } from "@/store/cart";
@@ -176,9 +176,19 @@ export default function CloseSessionPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Confirmar Diferencias</DialogTitle></DialogHeader>
+      <BaseModal
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        title="Confirmar Diferencias"
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
+            <Button onClick={handleFinalSubmit} disabled={isSubmitting}>
+              {isSubmitting ? "Procesando..." : "Confirmar Ajuste Final"}
+            </Button>
+          </>
+        }
+      >
           {differences.map((d) => (
             <div key={d.productId} className="mb-4">
               <h3 className="font-bold">{d.name}</h3>
@@ -196,14 +206,7 @@ export default function CloseSessionPage() {
               )}
             </div>
           ))}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
-            <Button onClick={handleFinalSubmit} disabled={isSubmitting}>
-              {isSubmitting ? "Procesando..." : "Confirmar Ajuste Final"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      </BaseModal>
     </div>
   );
 }
