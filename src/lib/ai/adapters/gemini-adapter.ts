@@ -5,7 +5,7 @@ export class GeminiAdapter implements LLMProvider {
   private apiKey: string;
   private modelName: string;
 
-  constructor(apiKey: string, model: string = 'gemini-1.5-flash') {
+  constructor(apiKey: string, model: string = 'gemini-2.5-flash-preview-09-2025') {
     this.apiKey = apiKey;
     this.modelName = model;
   }
