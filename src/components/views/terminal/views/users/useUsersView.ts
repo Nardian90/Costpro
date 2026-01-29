@@ -43,12 +43,12 @@ export function useUsersView() {
         });
 
     const canCreateMoreUsers = user?.role === 'admin' ||
-      (typeof user?.max_users_limit === 'number' && user.max_users_limit > 0
-        ? usersData.length < user.max_users_limit
+      (typeof user?.maxUsersLimit === 'number' && user.maxUsersLimit > 0
+        ? usersData.length < user.maxUsersLimit
         : true);
 
     const limitReachedMessage = !canCreateMoreUsers && user?.role !== 'admin'
-      ? `Has alcanzado el límite de usuarios (${user?.max_users_limit}). Contacta a un administrador para aumentar tu capacidad.`
+      ? `Has alcanzado el límite de usuarios (${user?.maxUsersLimit}). Contacta a un administrador para aumentar tu capacidad.`
       : undefined;
 
     // Mutations
