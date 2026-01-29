@@ -11,6 +11,10 @@ export const botService = {
     aiProvider?: string,
     aiApiKey?: string
   ) {
+    if (!messages || messages.length === 0) {
+        return { text: 'Hola! ¿En qué puedo ayudarte hoy?', metadata: { model: 'default' } };
+    }
+
     // 1. Fetch context data based on the last message if needed
     const lastMessage = messages[messages.length - 1].content.toLowerCase();
     let context = '';

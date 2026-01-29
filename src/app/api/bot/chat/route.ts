@@ -35,6 +35,8 @@ export async function POST(req: NextRequest) {
     } catch (botError: any) {
       console.error('[BotAPI] Logic Error:', {
         message: botError.message,
+        stack: botError.stack,
+        cause: botError.cause,
         provider: aiProvider,
         hasKey: !!aiApiKey,
         storeId
@@ -43,7 +45,8 @@ export async function POST(req: NextRequest) {
       // Return a structured error that the frontend can display nicely
       return NextResponse.json({
         error: botError.message || 'Error al procesar la respuesta de Jules',
-        provider: aiProvider
+        provider: aiProvider,
+        details: botError.message
       }, { status: 502 }); // Bad Gateway for upstream AI errors
     }
   } catch (error: any) {
