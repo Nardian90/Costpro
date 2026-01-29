@@ -13,11 +13,20 @@ import { withLogging, withTableLogging } from './base';
 import { z } from 'zod';
 import type { Product } from '@/types';
 
+/**
+ * Normaliza el ID de la tienda para asegurar consistencia entre queryKeys y llamadas RPC.
+ */
+const getCleanStoreId = (storeId?: string | null) => {
+  if (storeId === 'null' || storeId === 'undefined' || !storeId) return null;
+  return storeId;
+};
+
 export function useSuspenseProducts(storeId?: string | null, searchTerm = '', category = '') {
+  const cleanStoreId = getCleanStoreId(storeId);
+
   return useSuspenseQuery({
-    queryKey: ['products', storeId, searchTerm, category],
+    queryKey: ['products', cleanStoreId, searchTerm, category],
     queryFn: async () => {
-      const cleanStoreId = (storeId === 'null' || storeId === 'undefined' || !storeId) ? null : storeId;
       if (cleanStoreId && !isUuid(cleanStoreId)) return [];
 
       const rpcName = 'get_products_for_pos';
@@ -43,10 +52,11 @@ export function useSuspenseProducts(storeId?: string | null, searchTerm = '', ca
 }
 
 export function useProducts(storeId?: string | null, searchTerm = '', category = '') {
+  const cleanStoreId = getCleanStoreId(storeId);
+
   return useQuery({
-    queryKey: ['products', storeId, searchTerm, category],
+    queryKey: ['products', cleanStoreId, searchTerm, category],
     queryFn: async () => {
-      const cleanStoreId = (storeId === 'null' || storeId === 'undefined' || !storeId) ? null : storeId;
       if (cleanStoreId && !isUuid(cleanStoreId)) return [];
 
       const rpcName = 'get_products_for_pos';
@@ -74,7 +84,7 @@ export function useProducts(storeId?: string | null, searchTerm = '', category =
 }
 
 export async function prefetchProducts(queryClient: QueryClient, storeId: string) {
-  const cleanStoreId = (storeId === 'null' || storeId === 'undefined' || !storeId) ? null : storeId;
+  const cleanStoreId = getCleanStoreId(storeId);
   if (cleanStoreId && !isUuid(cleanStoreId)) return;
 
   const searchTerm = '';
@@ -90,8 +100,8 @@ export async function prefetchProducts(queryClient: QueryClient, storeId: string
         p_category: category
       });
 
-      const { data, error } = await supabase.rpc(rpcName, params);
-      if (error) throw error;
+      // Usamos withLogging también en el prefetch para visibilidad en el inspector
+      const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
 
       const validatedData = await validateRPCArrayResponse(
         data,
