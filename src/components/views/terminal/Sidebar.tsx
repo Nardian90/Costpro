@@ -58,7 +58,7 @@ export const Sidebar = ({
           >
             <CostProLogo size={50} animated={true} />
             <div className="mt-4">
-              <div className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Terminal Operativa</div>
+              <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">Terminal Operativa</div>
             </div>
           </motion.div>
         </motion.div>
@@ -71,7 +71,7 @@ export const Sidebar = ({
               value={sidebarSearch}
               onChange={(e) => setSidebarSearch(e.target.value)}
               placeholder="BUSCAR..."
-              className="w-full bg-background/50 border border-primary/10 rounded-xl py-2.5 pl-9 pr-4 text-[10px] font-black focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all uppercase tracking-[0.2em] placeholder:text-muted-foreground/30"
+              className="w-full bg-background/50 border border-primary/10 rounded-xl py-2.5 pl-9 pr-4 text-xs font-black focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all uppercase tracking-[0.2em] placeholder:text-muted-foreground/30"
             />
           </div>
         </div>
@@ -88,7 +88,7 @@ export const Sidebar = ({
 
               return (
                 <div key={category} className="space-y-2">
-                  <div className="px-4 text-[9px] font-black text-primary/40 tracking-[0.4em] uppercase mb-4">
+                  <div className="px-4 text-xs font-black text-primary/70 tracking-[0.4em] uppercase mb-4">
                     {category}
                   </div>
                   <div className="space-y-1">

@@ -105,6 +105,7 @@ export function ChatBot() {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
             onClick={() => setIsOpen(true)}
+            aria-label="Abrir chat con Jules"
             className="w-14 h-14 rounded-full bg-primary shadow-lg flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-all border-4 border-background"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
@@ -139,7 +140,7 @@ export function ChatBot() {
                   <h3 className="font-black text-xs uppercase tracking-tighter">Jules</h3>
                   <div className="flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                    <p className="text-[9px] opacity-80 uppercase tracking-widest font-bold">Analista de Tienda</p>
+                    <p className="text-xs opacity-80 uppercase tracking-widest font-bold">Analista de Tienda</p>
                   </div>
                 </div>
               </div>
@@ -164,13 +165,13 @@ export function ChatBot() {
                   >
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Proveedor de IA</label>
+                        <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Proveedor de IA</label>
                         <div className="grid grid-cols-3 gap-2">
                           {['gemini', 'gpt', 'qwen'].map((p) => (
                             <button
                               key={p}
                               onClick={() => setTempProvider(p)}
-                              className={`py-2 px-3 rounded-xl border-2 text-[10px] font-black uppercase tracking-tight transition-all ${
+                              className={`py-2 px-3 rounded-xl border-2 text-xs font-black uppercase tracking-tight transition-all ${
                                 tempProvider === p
                                 ? 'border-primary bg-primary/5 text-primary'
                                 : 'border-border bg-background text-muted-foreground'
@@ -183,7 +184,7 @@ export function ChatBot() {
                       </div>
 
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">API KEY Personal</label>
+                        <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">API KEY Personal</label>
                         <div className="relative">
                           <input
                             type="password"
@@ -196,7 +197,7 @@ export function ChatBot() {
                           />
                           <Key className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground opacity-50" />
                         </div>
-                        <p className="text-[9px] text-muted-foreground/60 leading-tight">
+                        <p className="text-xs text-muted-foreground/60 leading-tight">
                           Tu clave se guarda de forma segura. Por seguridad, no se puede visualizar ni copiar una vez guardada.
                         </p>
                       </div>
@@ -206,7 +207,7 @@ export function ChatBot() {
                       <button
                         onClick={handleSaveSettings}
                         disabled={isSaving || (tempProvider === user?.aiProvider && !tempApiKey)}
-                        className="w-full py-3 bg-primary text-primary-foreground rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
+                        className="w-full py-3 bg-primary text-primary-foreground rounded-xl text-xs font-black uppercase tracking-widest shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
                       >
                         {isSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
                         {isSaving ? 'Guardando...' : 'Actualizar Configuración'}
@@ -226,22 +227,22 @@ export function ChatBot() {
                           <Sparkles className="w-8 h-8 text-primary opacity-30" />
                         </div>
                         <div className="space-y-1">
-                          <p className="text-[11px] font-black uppercase text-primary tracking-widest">Bienvenido, {user?.fullName?.split(' ')[0]}</p>
+                          <p className="text-xs font-black uppercase text-primary tracking-widest">Bienvenido, {user?.fullName?.split(' ')[0]}</p>
                           {!isConfigured ? (
                             <div className="p-4 rounded-2xl bg-warning/5 border border-warning/20 space-y-3 mt-4">
-                               <p className="text-[10px] text-warning font-bold uppercase tracking-tight">IA no configurada</p>
-                               <p className="text-[9px] text-muted-foreground font-medium">
+                               <p className="text-xs text-warning font-bold uppercase tracking-tight">IA no configurada</p>
+                               <p className="text-xs text-muted-foreground font-medium">
                                  Para chatear con Jules, primero debes ingresar tu API Key en la configuración (botón de engrane arriba).
                                </p>
                                <button
                                  onClick={() => setIsSettingsOpen(true)}
-                                 className="w-full py-2 bg-warning/10 text-warning rounded-lg text-[9px] font-black uppercase"
+                                 className="w-full py-2 bg-warning/10 text-warning rounded-lg text-xs font-black uppercase"
                                >
                                  Ir a Configuración
                                </button>
                             </div>
                           ) : (
-                            <p className="text-[10px] text-muted-foreground font-medium leading-relaxed">
+                            <p className="text-xs text-muted-foreground font-medium leading-relaxed">
                               Soy Jules. ¿Necesitas un reporte de ventas o revisar el stock crítico? Estoy listo para analizar tus datos.
                             </p>
                           )}
@@ -250,7 +251,7 @@ export function ChatBot() {
                     )}
                     {messages.map((msg, i) => (
                       <div key={i} className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[85%] p-3 rounded-2xl text-[11px] font-medium shadow-sm break-words ${
+                        <div className={`max-w-[85%] p-3 rounded-2xl text-xs font-medium shadow-sm break-words ${
                           msg.role === 'user'
                           ? 'bg-primary text-primary-foreground rounded-tr-none'
                           : 'bg-background border border-border rounded-tl-none'
@@ -263,7 +264,7 @@ export function ChatBot() {
                       <div className="flex justify-start">
                         <div className="bg-background border border-border p-3 rounded-2xl rounded-tl-none flex items-center gap-2 shadow-sm">
                           <Loader2 className="w-3 h-3 animate-spin text-primary" />
-                          <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Analizando...</span>
+                          <span className="text-xs font-black text-muted-foreground uppercase tracking-widest">Analizando...</span>
                         </div>
                       </div>
                     )}
@@ -282,7 +283,7 @@ export function ChatBot() {
                     onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                     disabled={!isConfigured}
                     placeholder={isConfigured ? "Consultar stock, ventas, sugerencias..." : "Configura tu IA para comenzar"}
-                    className="flex-1 bg-transparent border-none px-3 py-1.5 text-[11px] font-medium focus:outline-none placeholder:text-muted-foreground/50"
+                    className="flex-1 bg-transparent border-none px-3 py-1.5 text-xs font-medium focus:outline-none placeholder:text-muted-foreground/50"
                   />
                   <button
                     disabled={!input.trim() || isLoading || !isConfigured}

@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.8] - 2026-02-22
+
+### Changed
+- **Optimización de Performance y SEO**: Implementación de `preconnect` para Supabase y actualización del manifiesto PWA con iconos PNG de alta resolución (512px) para mejorar la carga inicial y compatibilidad con splash screens.
+- **Mejora de Accesibilidad y Legibilidad**: Actualización masiva de tamaños de fuente (incremento a 12px/text-xs) y relaciones de contraste en componentes críticos (Sidebar, Dashboard, ChatBot) para cumplir con estándares WCAG y mejorar la puntuación en Lighthouse.
+- **UX de ChatBot**: Incorporación de etiquetas ARIA y refinamiento visual de la interfaz de Jules para una mejor experiencia en dispositivos móviles.
+
+**Nota de Handoff para UX:** Se han realizado ajustes menores en tamaños de fuente y opacidad de etiquetas para mejorar la legibilidad. No se han alterado los layouts ni la estructura visual existente.
+
 ## [5.7.7] - 2026-02-21
 
 ### Fixed
