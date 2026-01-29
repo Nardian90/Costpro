@@ -34,6 +34,7 @@ import { CatalogModals } from './CatalogModals';
 import { cn, resolveProductImage, formatCurrency } from '@/lib/utils';
 import { Product } from '@/types';
 import ProductImage from '@/components/ui/ProductImage';
+import { QueryInspector } from '@/components/ui/QueryInspector';
 
 export default function CatalogView() {
     const { user } = useAuthStore();
@@ -285,6 +286,8 @@ export default function CatalogView() {
                     )}
                 </div>
             </div>
+
+            <QueryInspector />
 
             <SearchInput
                 value={searchTerm}

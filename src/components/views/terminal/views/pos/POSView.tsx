@@ -22,6 +22,7 @@ import { BaseModal } from '@/components/ui/BaseModal';
 import { PrimaryButton, SecondaryButton } from '@/components/ui/atomic';
 import { POSCart } from './POSCart';
 import { usePOSView } from './usePOSView';
+import { QueryInspector } from '@/components/ui/QueryInspector';
 
 const EmptyProductsComponent = () => (
   <div className="col-span-full py-32 text-center border-2 border-dashed border-border rounded-xl bg-card/50">
@@ -107,6 +108,8 @@ export default function POSView() {
           position={isMobile ? 'bottom' : 'top'}
         />
       </div>
+
+      <QueryInspector />
 
       <div className="flex flex-col lg:flex-row gap-8 items-start">
         <AnimatePresence>
