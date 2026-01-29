@@ -51,9 +51,9 @@ export function UserFormModal({
       }
       maxWidth="sm:max-w-[625px]"
     >
-        {mode && userContract && (
+        {mode && (userContract || mode === 'create') ? (
             <UserForm
-                key={userContract.id || 'new-user'}
+                key={userContract?.id || 'new-user'}
                 initialData={userContract}
                 stores={stores}
                 onSubmit={handleSubmit}

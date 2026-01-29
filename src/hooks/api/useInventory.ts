@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient, useInfiniteQuery, useSuspenseInfiniteQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
+import { validate as isUuid } from 'uuid';
 import { validateRPCArrayResponse, validateRPCResponse } from '@/lib/rpc-validator';
 import {
   paginatedProductSchema,
@@ -18,7 +19,7 @@ export function useSuspenseInventory(storeId?: string | null, searchTerm = '', c
     queryKey: ['inventory', storeId, searchTerm, category, limit],
     queryFn: async ({ pageParam = 0 }) => {
       const cleanStoreId = (storeId === 'null' || storeId === 'undefined' || !storeId) ? null : storeId;
-      if (!cleanStoreId) return { products: [], total: 0, nextOffset: null };
+      if (!cleanStoreId || !isUuid(cleanStoreId)) return { products: [], total: 0, nextOffset: null };
 
       const rpcName = 'get_paginated_products';
       const params = getPaginatedProductsParamsSchema.parse({
@@ -52,7 +53,7 @@ export function useInventory(storeId?: string | null, searchTerm = '', category 
     queryKey: ['inventory', storeId, searchTerm, category, limit],
     queryFn: async ({ pageParam = 0 }) => {
       const cleanStoreId = (storeId === 'null' || storeId === 'undefined' || !storeId) ? null : storeId;
-      if (!cleanStoreId) return { products: [], total: 0, nextOffset: null };
+      if (!cleanStoreId || !isUuid(cleanStoreId)) return { products: [], total: 0, nextOffset: null };
 
       const rpcName = 'get_paginated_products';
       const params = getPaginatedProductsParamsSchema.parse({
