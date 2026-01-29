@@ -1,6 +1,6 @@
 import { useQuery, useSuspenseQuery, type QueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
-import { validate as isUuid } from 'uuid';
+import { uuidRegex as isUuidRegex } from '@/validation/schemas';
 import { validateRPCArrayResponse } from '@/lib/rpc-validator';
 import {
   dashboardKpiResponseSchema,
@@ -8,10 +8,18 @@ import {
 import { withLogging } from './base';
 import type { DashboardKPIs, SalesSummary } from '@/types';
 
+/**
+ * Normaliza el ID de la tienda para asegurar consistencia entre queryKeys y llamadas RPC.
+ */
+const getCleanStoreId = (storeId?: string | null) => {
+  if (storeId === 'null' || storeId === 'undefined' || !storeId) return null;
+  return storeId;
+};
+
 export async function prefetchDashboardData(queryClient: QueryClient, storeId: string, isAdmin = false) {
   const rpcName = 'get_dashboard_kpis';
-  const cleanStoreId = (storeId === 'null' || storeId === 'undefined' || !storeId) ? null : storeId;
-  const isValidUuid = cleanStoreId && isUuid(cleanStoreId);
+  const cleanStoreId = getCleanStoreId(storeId);
+  const isValidUuid = cleanStoreId && isUuidRegex.test(cleanStoreId);
   const params = isAdmin ? {} : { p_store_id: isValidUuid ? cleanStoreId : null };
 
   if (!isAdmin && !isValidUuid) return;
@@ -52,11 +60,12 @@ export async function prefetchDashboardData(queryClient: QueryClient, storeId: s
 }
 
 export function useSuspenseDashboardData(storeId?: string | null, isAdmin = false) {
+  const cleanStoreId = getCleanStoreId(storeId);
+
   return useSuspenseQuery({
-    queryKey: ['dashboard-kpis', storeId, isAdmin],
+    queryKey: ['dashboard-kpis', cleanStoreId, isAdmin],
     queryFn: async () => {
-      const cleanStoreId = (storeId === 'null' || storeId === 'undefined' || !storeId) ? null : storeId;
-      const isValidUuid = cleanStoreId && isUuid(cleanStoreId);
+      const isValidUuid = cleanStoreId && isUuidRegex.test(cleanStoreId);
 
       if (!isAdmin && !isValidUuid) {
         return {
@@ -101,11 +110,12 @@ export function useSuspenseDashboardData(storeId?: string | null, isAdmin = fals
 }
 
 export function useDashboardData(storeId?: string | null, isAdmin = false) {
+  const cleanStoreId = getCleanStoreId(storeId);
+
   return useQuery({
-    queryKey: ['dashboard-kpis', storeId, isAdmin],
+    queryKey: ['dashboard-kpis', cleanStoreId, isAdmin],
     queryFn: async () => {
-      const cleanStoreId = (storeId === 'null' || storeId === 'undefined' || !storeId) ? null : storeId;
-      const isValidUuid = cleanStoreId && isUuid(cleanStoreId);
+      const isValidUuid = cleanStoreId && isUuidRegex.test(cleanStoreId);
 
       if (!isAdmin && !isValidUuid) return null;
 

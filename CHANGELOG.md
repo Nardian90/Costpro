@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.13] - 2026-02-25
+
+### Fixed
+- **Validación Permisiva de UUID**: Sustitución de la validación estricta de UUID v4 por un patrón regex permisivo en todos los esquemas Zod y hooks de API (`useProducts`, `useInventory`, `useDashboard`). Esto permite operar con datos de demo que poseen UUIDs no estandarizados (variantes no-RFC4122) sin bloquear la interfaz.
+- **Consistencia de Store ID en TPV**: Unificación del uso de `active_store_id` en el flujo de facturación del TPV. Se han actualizado el servicio de auditoría y el proceso de creación de ventas para priorizar siempre la sucursal seleccionada en el encabezado global, eliminando discrepancias con el `store_id` heredado del perfil.
+- **Normalización de Cache**: Refactorización de la lógica de limpieza de IDs de tienda en una utilidad centralizada `getCleanStoreId` dentro de los hooks de API, mejorando la mantenibilidad y consistencia de las `queryKeys`.
+
 ## [5.7.12] - 2026-02-25
 
 ### Fixed
