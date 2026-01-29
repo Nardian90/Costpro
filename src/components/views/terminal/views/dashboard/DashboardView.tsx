@@ -88,7 +88,7 @@ function DashboardKpisSection({ kpis }: { kpis: DashboardKPIs }) {
         </div>
         <div className="text-4xl font-black text-foreground whitespace-nowrap">{formatCurrency(kpis?.gross_sales || 0)}</div>
         {/* Indicador de variación desactivado por falta de datos históricos/temporales */}
-        <div className="text-[10px] font-bold text-muted-foreground/50 mt-2 uppercase tracking-widest whitespace-nowrap">Variación: N/D</div>
+        <div className="text-xs font-bold text-muted-foreground/80 mt-2 uppercase tracking-widest whitespace-nowrap">Variación: N/D</div>
       </div>
 
       {canViewFinancials && (
@@ -103,7 +103,7 @@ function DashboardKpisSection({ kpis }: { kpis: DashboardKPIs }) {
             <div className={cn("text-4xl font-black whitespace-nowrap", hasCostData ? "text-foreground" : "text-muted-foreground/40")}>
               {hasCostData ? formatCurrency(kpis.cost_of_goods!) : "Sin datos"}
             </div>
-            <div className="text-[10px] font-bold text-muted-foreground mt-2 uppercase tracking-widest flex items-center gap-1 whitespace-nowrap">
+            <div className="text-xs font-bold text-muted-foreground mt-2 uppercase tracking-widest flex items-center gap-1 whitespace-nowrap">
               {hasCostData ? (
                 <>Margen: {(((kpis?.profit || 0) / (Math.max(kpis?.gross_sales || 0, 1))) * 100).toFixed(1)}%</>
               ) : (
@@ -128,7 +128,7 @@ function DashboardKpisSection({ kpis }: { kpis: DashboardKPIs }) {
             <div className={cn("text-4xl font-black whitespace-nowrap", hasProfitData ? "text-primary" : "text-muted-foreground/40")}>
               {hasProfitData ? formatCurrency(kpis.profit!) : "N/D"}
             </div>
-            <div className={cn("text-[10px] font-black mt-2 uppercase tracking-widest whitespace-nowrap", hasProfitData ? "text-primary/70" : "text-muted-foreground/50")}>
+            <div className={cn("text-xs font-black mt-2 uppercase tracking-widest whitespace-nowrap", hasProfitData ? "text-primary" : "text-muted-foreground/80")}>
               {hasProfitData ? "Utilidad Diaria (Real)" : "Datos insuficientes"}
             </div>
           </div>
@@ -156,9 +156,9 @@ function DashboardSummarySection({ summary }: { summary: SalesSummary }) {
             { label: 'Transferencia', value: formatCurrency(summary?.total_transfer || 0), sub: 'Banco', color: 'text-primary' },
           ].map((stat, i) => (
             <div key={i} className="p-4 rounded-lg bg-background/50 border border-border/50 overflow-hidden">
-              <span className="text-[9px] font-black uppercase text-muted-foreground tracking-tighter block mb-1 whitespace-nowrap">{stat.label}</span>
+              <span className="text-xs font-black uppercase text-muted-foreground tracking-tighter block mb-1 whitespace-nowrap">{stat.label}</span>
               <div className={cn("text-xl font-black tracking-tight whitespace-nowrap", stat.color || "text-foreground")}>{stat.value}</div>
-              <span className="text-[8px] font-bold text-muted-foreground/50 uppercase whitespace-nowrap">{stat.sub}</span>
+              <span className="text-xs font-bold text-muted-foreground/80 uppercase whitespace-nowrap">{stat.sub}</span>
             </div>
           ))}
         </div>
@@ -185,12 +185,12 @@ function DashboardAlertsSection({ products, onViewInventory, onGoToCatalog }: { 
                <span className="text-4xl font-black text-amber-600">{unpricedProducts.length}</span>
                <span className="text-xs font-bold text-amber-600/70 uppercase tracking-widest">Productos detectados</span>
             </div>
-            <p className="text-[10px] font-bold text-muted-foreground uppercase leading-relaxed">
+            <p className="text-xs font-bold text-muted-foreground uppercase leading-relaxed">
               Existen productos sin precio asignado. Esto representa un riesgo operativo y de facturación.
             </p>
             <button
               onClick={onGoToCatalog}
-              className="w-full py-3 bg-amber-500 text-white font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-amber-600 transition-colors shadow-lg shadow-amber-500/20"
+              className="w-full py-3 bg-amber-500 text-white font-black text-xs uppercase tracking-widest rounded-xl hover:bg-amber-600 transition-colors shadow-lg shadow-amber-500/20"
             >
               Ir a catálogo / corregir precios
             </button>
@@ -212,7 +212,7 @@ function DashboardAlertsSection({ products, onViewInventory, onGoToCatalog }: { 
                   <div className="flex justify-between items-center">
                     <div className="overflow-hidden">
                       <div className="font-bold text-xs text-foreground truncate">{product.name}</div>
-                      <div className="text-[10px] font-mono text-muted-foreground">{product.sku}</div>
+                      <div className="text-xs font-mono text-muted-foreground">{product.sku}</div>
                     </div>
                     <div className="text-destructive font-black text-sm whitespace-nowrap ml-2">{product.stock_current} uds</div>
                   </div>
@@ -221,7 +221,7 @@ function DashboardAlertsSection({ products, onViewInventory, onGoToCatalog }: { 
               {criticalProducts.length > 4 && (
                 <button
                   onClick={onViewInventory}
-                  className="w-full py-2 text-[10px] font-black uppercase text-primary hover:underline"
+                  className="w-full py-2 text-xs font-black uppercase text-primary hover:underline"
                 >
                   Ver todas las alertas ({criticalProducts.length})
                 </button>
