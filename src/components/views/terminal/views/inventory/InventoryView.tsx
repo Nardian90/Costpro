@@ -69,7 +69,7 @@ export default function InventoryView() {
         hasNextPage,
         isFetchingNextPage,
         isLoading,
-    } = useInventory(user?.storeId, searchTerm, selectedCategory, PAGE_LIMIT);
+    } = useInventory(user?.activeStoreId, searchTerm, selectedCategory, PAGE_LIMIT);
 
     const products = useMemo(() => {
         const rawProducts = data?.pages.flatMap(page => page.products) || [];
@@ -122,13 +122,13 @@ export default function InventoryView() {
     }) => {
         if (!adjustingProduct) return;
 
-        if (!user?.storeId || !user?.id) {
+        if (!user?.activeStoreId || !user?.id) {
             throw new Error('Sesión no válida o tienda no seleccionada. Por favor, reincie sesión.');
         }
 
         await adjustStock({
             productId: adjustingProduct.id,
-            storeId: user.storeId,
+            storeId: user.activeStoreId,
             userId: user.id,
             ...adjustmentData
         });

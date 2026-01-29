@@ -100,8 +100,16 @@ export const productSchema = z.object({
   min_stock: z.coerce.number().default(0),
   store_id: optionalResilientUuid,
   public_image_url: z.string().nullable().optional(),
-  is_active: z.preprocess((val) => val === 'true' || val === true, z.boolean().default(true)),
-  has_movements: z.preprocess((val) => val === 'true' || val === true, z.boolean().default(false)),
+  is_active: z.preprocess((val) => {
+    if (val === undefined || val === null) return undefined;
+    if (typeof val === 'string') return val === 'true';
+    return val;
+  }, z.boolean().default(true)),
+  has_movements: z.preprocess((val) => {
+    if (val === undefined || val === null) return undefined;
+    if (typeof val === 'string') return val === 'true';
+    return val;
+  }, z.boolean().default(false)),
 });
 
 export const productVariantSchema = z.object({

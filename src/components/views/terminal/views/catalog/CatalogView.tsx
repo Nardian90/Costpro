@@ -41,7 +41,7 @@ export default function CatalogView() {
     const { setIsCreateProductModalOpen } = useUIStore();
     const isMobile = useIsMobile();
 
-    const { data: products = [], isLoading: loading } = useProducts(user?.storeId);
+    const { data: products = [], isLoading: loading } = useProducts(user?.activeStoreId);
     const updateProductMutation = useUpdateProduct();
     const bulkUpdateMutation = useBulkUpdateProducts();
     const addVariantMutation = useAddVariant();
@@ -188,9 +188,9 @@ export default function CatalogView() {
 
     const handleImportFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
-        if (!file || !user?.storeId) return;
+        if (!file || !user?.activeStoreId) return;
 
-        const { productsToUpdate, errors } = await catalogService.processImportFile(file, user.storeId);
+        const { productsToUpdate, errors } = await catalogService.processImportFile(file, user.activeStoreId);
         if (errors.length > 0) {
             setImportErrors(errors);
             toast.error(`Se encontraron ${errors.length} errores en el archivo.`);
@@ -199,7 +199,7 @@ export default function CatalogView() {
 
         const toastId = toast.loading(`Actualizando ${productsToUpdate.length} productos...`);
         try {
-            await bulkUpdateMutation.mutateAsync({ products: productsToUpdate, storeId: user.storeId });
+            await bulkUpdateMutation.mutateAsync({ products: productsToUpdate, storeId: user.activeStoreId });
             toast.success('Catálogo actualizado con éxito!', { id: toastId });
         } catch (error: any) {
             toast.error(`Error al actualizar: ${error.message}`, { id: toastId });
