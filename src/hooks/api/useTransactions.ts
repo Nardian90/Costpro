@@ -10,9 +10,12 @@ export function useTransactions(storeId?: string | null, isAdmin = false) {
   return useQuery({
     queryKey: ['transactions', storeId, isAdmin],
     queryFn: async () => {
+      const cleanStoreId = (storeId === 'null' || storeId === 'undefined' || !storeId) ? null : storeId;
+      if (!isAdmin && !cleanStoreId) return [];
+
       const rpcName = 'get_transactions';
       const params = {
-        p_store_id: storeId || null,
+        p_store_id: cleanStoreId,
         p_limit: 1000
       };
 
