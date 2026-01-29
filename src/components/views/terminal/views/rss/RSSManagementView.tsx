@@ -1,218 +1,252 @@
 'use client';
 
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { rssService } from '@/services/rss-service';
-import { RSSFeed } from '@/types';
+import React from 'react';
 import {
   Plus,
   Trash2,
-  Settings2,
-  Save,
-  Link as LinkIcon,
+  Settings,
+  Globe,
   Tag,
-  AlertCircle,
-  Filter
+  Save,
+  CheckCircle2,
+  XCircle,
+  AlertTriangle
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useRSSFeeds, useRSSSettings, useAddRSSFeed, useUpdateRSSFeed, useDeleteRSSFeed, useUpdateRSSSettings } from '@/hooks/api/useRSS';
+import { StateRenderer } from '@/components/ui/StateRenderer';
 import { toast } from 'sonner';
-import { Switch } from '@/components/ui/switch';
 
 export default function RSSManagementView() {
-  const queryClient = useQueryClient();
-  const [newFeedUrl, setNewFeedUrl] = useState('');
-  const [newFeedName, setNewFeedName] = useState('');
-  const [keywords, setKeywords] = useState('');
-  const [applyFilter, setApplyFilter] = useState(false);
+  const { data: feeds, isLoading: isLoadingFeeds, error: feedsError } = useRSSFeeds();
+  const { data: settings, isLoading: isLoadingSettings, error: settingsError } = useRSSSettings();
 
-  // Queries
-  const { data: feeds, isLoading: loadingFeeds } = useQuery({
-    queryKey: ['rss-feeds'],
-    queryFn: () => rssService.getFeeds()
-  });
+  const addFeedMutation = useAddRSSFeed();
+  const updateFeedMutation = useUpdateRSSFeed();
+  const deleteFeedMutation = useDeleteRSSFeed();
+  const updateSettingsMutation = useUpdateRSSSettings();
 
-  const { data: settings } = useQuery({
-    queryKey: ['rss-settings'],
-    queryFn: async () => {
-      const s = await rssService.getSettings();
-      if (s) {
-        setKeywords(s.priority_keywords.join(', '));
-        setApplyFilter(s.apply_filter);
-      }
-      return s;
-    }
-  });
+  const [newFeedUrl, setNewFeedUrl] = React.useState('');
+  const [newFeedName, setNewFeedName] = React.useState('');
+  const [newKeyword, setNewKeyword] = React.useState('');
 
-  // Mutations
-  const addFeedMutation = useMutation({
-    mutationFn: (feed: Omit<RSSFeed, 'id' | 'is_active'>) =>
-      rssService.addFeed({ ...feed, is_active: true }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['rss-feeds'] });
+  const handleAddFeed = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newFeedUrl) return;
+
+    try {
+      await addFeedMutation.mutateAsync({ url: newFeedUrl, name: newFeedName, is_active: true });
       setNewFeedUrl('');
       setNewFeedName('');
       toast.success('Fuente RSS añadida correctamente');
-    },
-    onError: () => toast.error('Error al añadir fuente')
-  });
-
-  const deleteFeedMutation = useMutation({
-    mutationFn: (id: string) => rssService.deleteFeed(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['rss-feeds'] });
-      toast.success('Fuente RSS eliminada');
+    } catch (err: any) {
+      toast.error('Error al añadir fuente: ' + err.message);
     }
-  });
-
-  const updateSettingsMutation = useMutation({
-    mutationFn: (newSettings: { keywords: string[], applyFilter: boolean }) =>
-      rssService.updateSettings({
-        priority_keywords: newSettings.keywords,
-        apply_filter: newSettings.applyFilter
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['rss-settings', 'news'] });
-      toast.success('Configuración actualizada');
-    }
-  });
-
-  const handleAddFeed = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newFeedUrl || !newFeedName) return;
-    addFeedMutation.mutate({ url: newFeedUrl, name: newFeedName });
   };
 
-  const handleSaveSettings = () => {
-    const kwArray = keywords.split(',').map(k => k.trim()).filter(k => k !== '');
-    updateSettingsMutation.mutate({ keywords: kwArray, applyFilter });
+  const handleToggleFeed = async (id: string, currentStatus: boolean) => {
+    try {
+      await updateFeedMutation.mutateAsync({ id, feed: { is_active: !currentStatus } });
+      toast.success('Fuente actualizada');
+    } catch (err: any) {
+      toast.error('Error al actualizar fuente');
+    }
+  };
+
+  const handleDeleteFeed = async (id: string) => {
+    if (!confirm('¿Estás seguro de eliminar esta fuente?')) return;
+    try {
+      await deleteFeedMutation.mutateAsync(id);
+      toast.success('Fuente eliminada');
+    } catch (err: any) {
+      toast.error('Error al eliminar fuente');
+    }
+  };
+
+  const handleAddKeyword = async () => {
+    if (!newKeyword || !settings) return;
+    const keywords = [...settings.priority_keywords, newKeyword];
+    try {
+      await updateSettingsMutation.mutateAsync({ id: settings.id, settings: { priority_keywords: keywords } });
+      setNewKeyword('');
+      toast.success('Palabra clave añadida');
+    } catch (err: any) {
+      toast.error('Error al actualizar palabras clave');
+    }
+  };
+
+  const handleRemoveKeyword = async (keyword: string) => {
+    if (!settings) return;
+    const keywords = settings.priority_keywords.filter(k => k !== keyword);
+    try {
+      await updateSettingsMutation.mutateAsync({ id: settings.id, settings: { priority_keywords: keywords } });
+      toast.success('Palabra clave eliminada');
+    } catch (err: any) {
+      toast.error('Error al eliminar palabra clave');
+    }
   };
 
   return (
-    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-10">
       <div>
-        <h2 className="text-4xl font-black uppercase tracking-tighter">Gestión RSS</h2>
-        <p className="text-muted-foreground font-medium uppercase text-[10px] tracking-widest">
-          Administra las fuentes de noticias y criterios de prioridad
+        <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase">Gestión RSS</h2>
+        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">
+          Configuración de fuentes de noticias y algoritmos de prioridad
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        {/* Feeds Section */}
-        <div className="space-y-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-xl">
-              <LinkIcon className="w-5 h-5 text-primary" />
-            </div>
-            <h3 className="text-xl font-bold uppercase tracking-tight">Fuentes de Noticias</h3>
-          </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+        {/* Feeds Management */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="p-6 rounded-3xl border border-border bg-card shadow-sm">
+            <h3 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2 mb-6">
+              <Globe className="w-5 h-5 text-primary" />
+              Fuentes de Noticias (Feeds)
+            </h3>
 
-          <form onSubmit={handleAddFeed} className="p-6 bg-card border-2 border-border rounded-[2rem] space-y-4">
-            <div className="grid grid-cols-1 gap-4">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest ml-1">Nombre de la Fuente</label>
-                <input
-                  type="text"
-                  value={newFeedName}
-                  onChange={(e) => setNewFeedName(e.target.value)}
-                  placeholder="Ej: Diario Económico"
-                  className="w-full bg-background border-2 border-border rounded-xl px-4 py-3 text-sm font-medium focus:border-primary outline-none transition-all"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest ml-1">URL del Feed RSS</label>
-                <input
-                  type="url"
-                  value={newFeedUrl}
-                  onChange={(e) => setNewFeedUrl(e.target.value)}
-                  placeholder="https://ejemplo.com/rss.xml"
-                  className="w-full bg-background border-2 border-border rounded-xl px-4 py-3 text-sm font-medium focus:border-primary outline-none transition-all"
-                />
-              </div>
-            </div>
-            <button
-              type="submit"
-              disabled={addFeedMutation.isPending}
-              className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-black rounded-xl text-xs uppercase tracking-widest hover:opacity-90 transition-all disabled:opacity-50"
-            >
-              <Plus className="w-4 h-4" />
-              Añadir Fuente
-            </button>
-          </form>
+            <form onSubmit={handleAddFeed} className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-8">
+              <input
+                type="text"
+                value={newFeedName}
+                onChange={(e) => setNewFeedName(e.target.value)}
+                placeholder="NOMBRE (EJ. BBC)"
+                className="md:col-span-2 bg-background border border-border rounded-xl px-4 py-3 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 uppercase"
+              />
+              <input
+                type="url"
+                value={newFeedUrl}
+                onChange={(e) => setNewFeedUrl(e.target.value)}
+                placeholder="URL DEL FEED RSS..."
+                required
+                className="md:col-span-2 bg-background border border-border rounded-xl px-4 py-3 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+              <button
+                type="submit"
+                disabled={addFeedMutation.isPending}
+                className="bg-primary text-white font-black text-[10px] uppercase tracking-widest rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Añadir
+              </button>
+            </form>
 
-          <div className="space-y-3">
-            {loadingFeeds ? (
-              <p className="text-center py-4 text-xs font-bold uppercase animate-pulse">Cargando fuentes...</p>
-            ) : feeds?.map((feed) => (
-              <div key={feed.id} className="flex items-center justify-between p-4 bg-card border-2 border-border rounded-2xl group hover:border-primary/30 transition-all">
-                <div>
-                  <h4 className="font-bold text-sm uppercase tracking-tight">{feed.name}</h4>
-                  <p className="text-[10px] text-muted-foreground truncate max-w-[200px] md:max-w-xs">{feed.url}</p>
+            <StateRenderer isLoading={isLoadingFeeds} error={feedsError} data={feeds}>
+              {(feedList) => (
+                <div className="table-scroll-wrapper rounded-xl border border-border overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/30">
+                      <tr className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em] border-b border-border">
+                        <th className="p-4 text-left">Fuente</th>
+                        <th className="p-4 text-left">URL</th>
+                        <th className="p-4 text-center">Estado</th>
+                        <th className="p-4 text-right">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/50">
+                      {feedList.map((feed) => (
+                        <tr key={feed.id} className="hover:bg-muted/10 transition-colors">
+                          <td className="p-4">
+                            <div className="font-black text-xs uppercase">{feed.name || 'Sin nombre'}</div>
+                          </td>
+                          <td className="p-4 font-mono text-[10px] text-muted-foreground max-w-[200px] truncate">
+                            {feed.url}
+                          </td>
+                          <td className="p-4">
+                            <div className="flex justify-center">
+                              <button
+                                onClick={() => handleToggleFeed(feed.id, feed.is_active)}
+                                className={cn(
+                                  "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-all",
+                                  feed.is_active
+                                    ? "bg-green-500/10 text-green-600 border border-green-500/20"
+                                    : "bg-muted text-muted-foreground border border-border"
+                                )}
+                              >
+                                {feed.is_active ? 'Activo' : 'Inactivo'}
+                              </button>
+                            </div>
+                          </td>
+                          <td className="p-4 text-right">
+                            <button
+                              onClick={() => handleDeleteFeed(feed.id)}
+                              className="p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-                <button
-                  onClick={() => deleteFeedMutation.mutate(feed.id)}
-                  className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
+              )}
+            </StateRenderer>
           </div>
         </div>
 
-        {/* Settings Section */}
+        {/* Settings Management */}
         <div className="space-y-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-xl">
-              <Settings2 className="w-5 h-5 text-primary" />
-            </div>
-            <h3 className="text-xl font-bold uppercase tracking-tight">Algoritmo de Prioridad</h3>
-          </div>
+          <div className="p-6 rounded-3xl border border-border bg-card shadow-sm h-full">
+            <h3 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2 mb-6">
+              <Settings className="w-5 h-5 text-primary" />
+              Priorización (IA)
+            </h3>
 
-          <div className="p-8 bg-card border-2 border-border rounded-[2.5rem] space-y-6">
-            <div className="flex items-center justify-between p-6 bg-secondary/20 rounded-[2rem] border-2 border-border/50">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 font-black uppercase text-[10px] tracking-widest text-primary">
-                  <Filter className="w-3 h-3" />
-                  Aplicar Filtro de Prioridad
-                </div>
-                <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">
-                  Mostrar únicamente noticias marcadas como prioritarias
-                </p>
-              </div>
-              <Switch
-                checked={applyFilter}
-                onCheckedChange={setApplyFilter}
-              />
-            </div>
-
-            <div className="p-4 bg-primary/5 rounded-2xl border-l-4 border-primary space-y-2">
-              <div className="flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-widest">
-                <AlertCircle className="w-3 h-3" />
-                ¿Cómo funciona?
-              </div>
-              <p className="text-xs text-muted-foreground font-medium leading-relaxed">
-                Las noticias que contengan estas palabras clave en su título o descripción serán marcadas como <span className="text-primary font-bold">Prioritarias</span> y aparecerán primero. Las tasas de cambio del BCC se identifican automáticamente.
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ml-1 text-muted-foreground">
-                  <Tag className="w-3 h-3" />
-                  Palabras Clave (separadas por coma)
+            <div className="space-y-8">
+              <section>
+                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-4 block">
+                  Palabras Clave de Prioridad
                 </label>
-                <textarea
-                  value={keywords}
-                  onChange={(e) => setKeywords(e.target.value)}
-                  rows={4}
-                  className="w-full bg-background border-2 border-border rounded-2xl px-4 py-4 text-sm font-medium focus:border-primary outline-none transition-all resize-none"
-                  placeholder="Ej: Divisas, CUP, Inflación, MLC..."
-                />
-              </div>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {settings?.priority_keywords.map((kw, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-lg text-amber-700 font-bold text-[10px] uppercase group"
+                    >
+                      <Tag className="w-3 h-3" />
+                      {kw}
+                      <button
+                        onClick={() => handleRemoveKeyword(kw)}
+                        className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Trash2 className="w-3 h-3 text-destructive" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newKeyword}
+                    onChange={(e) => setNewKeyword(e.target.value)}
+                    placeholder="NUEVA PALABRA..."
+                    className="flex-1 bg-background border border-border rounded-xl px-4 py-2.5 text-xs font-bold uppercase"
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddKeyword()}
+                  />
+                  <button
+                    onClick={handleAddKeyword}
+                    className="p-2.5 bg-primary text-white rounded-xl hover:opacity-90 transition-opacity"
+                  >
+                    <Plus className="w-5 h-5" />
+                  </button>
+                </div>
+              </section>
+
+              <section className="p-4 rounded-2xl bg-muted/30 border border-border border-dashed">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-black uppercase text-foreground tracking-widest">Nota del Sistema</p>
+                    <p className="text-[10px] font-medium text-muted-foreground leading-relaxed">
+                      Las noticias que contengan estas palabras clave se mostrarán primero y con un indicador visual. Las tasas de cambio del Banco Central se priorizan automáticamente.
+                    </p>
+                  </div>
+                </div>
+              </section>
 
               <button
-                onClick={handleSaveSettings}
-                disabled={updateSettingsMutation.isPending}
-                className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-foreground text-background font-black rounded-2xl text-xs uppercase tracking-widest hover:opacity-90 transition-all disabled:opacity-50"
+                disabled
+                className="w-full py-4 bg-muted text-muted-foreground font-black text-[10px] uppercase tracking-[0.3em] rounded-2xl flex items-center justify-center gap-2 cursor-not-allowed"
               >
                 <Save className="w-4 h-4" />
                 Guardar Configuración

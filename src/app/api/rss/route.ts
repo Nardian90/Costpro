@@ -1,140 +1,113 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Parser from 'rss-parser';
-import { classifyRSSItem, DEFAULT_PRIORITY_KEYWORDS } from '@/lib/rss-utils';
-import { RSSItem } from '@/types';
-import { supabase, getSupabaseAuthClient } from '@/lib/supabaseClient';
+import { createClient } from '@supabase/supabase-js';
+import { RSSNewsItem } from '@/types';
 
-// Simple in-memory cache
-let cache: {
-  items: RSSItem[];
-  timestamp: number;
-} | null = null;
+// Cache results for 60 minutes
+export const revalidate = 3600;
 
-const CACHE_DURATION = 60 * 60 * 1000; // 1 hour
-
-/**
- * Validates the user session and role.
- */
-async function validateSession(req: NextRequest, requiredRole?: string) {
-  const authHeader = req.headers.get('Authorization');
-  if (!authHeader?.startsWith('Bearer ')) {
-    return { error: 'Unauthorized', status: 401 };
-  }
-
-  const token = authHeader.split(' ')[1];
-  const authClient = getSupabaseAuthClient(token);
-
-  const { data: { user }, error: authError } = await authClient.auth.getUser();
-  if (authError || !user) {
-    return { error: 'Invalid session', status: 401 };
-  }
-
-  if (requiredRole) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
-    if (profile?.role !== requiredRole && profile?.role !== 'admin') {
-      return { error: 'Forbidden', status: 403 };
-    }
-  }
-
-  return { user, token };
-}
+const parser = new Parser();
 
 export async function GET(req: NextRequest) {
   try {
-    // 1. Validate session
-    const auth = await validateSession(req);
-    if ('error' in auth) {
-      return NextResponse.json({ error: auth.error }, { status: auth.status });
-    }
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        global: {
+          headers: {
+            Authorization: req.headers.get('Authorization') || '',
+          },
+        },
+      }
+    );
 
-    const now = Date.now();
-
-    // 2. Check cache
-    if (cache && (now - cache.timestamp) < CACHE_DURATION) {
-      return NextResponse.json(cache.items);
-    }
-
-    // 3. Fetch settings and feeds from DB
-    const [feedsRes, settingsRes] = await Promise.all([
+    // 1. Fetch active feeds and settings
+    const [{ data: feeds }, { data: settings }] = await Promise.all([
       supabase.from('rss_feeds').select('*').eq('is_active', true),
-      supabase.from('rss_settings').select('*').single()
+      supabase.from('rss_settings').select('*').single(),
     ]);
 
-    const feeds = (feedsRes.data || []).length > 0
-      ? feedsRes.data!
-      : [{ name: 'Banco Central de Cuba', url: 'https://www.bc.gob.cu/rss.xml' }];
+    if (!feeds) {
+      return NextResponse.json({ items: [] });
+    }
 
-    const keywords = settingsRes.data?.priority_keywords || DEFAULT_PRIORITY_KEYWORDS;
-    const applyFilter = settingsRes.data?.apply_filter ?? false;
+    const priorityKeywords = settings?.priority_keywords || ['Tasas de cambio', 'CUP', 'Divisas', 'Política Monetaria'];
 
-    // 4. Parse feeds
-    const parser = new Parser({
-      timeout: 15000, // Increased timeout
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Accept': 'application/rss+xml, application/xml, text/xml, */*'
+    // 2. Fetch and parse feeds
+    const feedPromises = feeds.map(async (feed) => {
+      try {
+        const parsedFeed = await parser.parseURL(feed.url);
+        return parsedFeed.items.map((item) => ({
+          ...item,
+          feedName: feed.name || parsedFeed.title,
+        }));
+      } catch (err) {
+        console.error(`Error parsing feed ${feed.url}:`, err);
+        return [];
       }
     });
 
-    let allItems: RSSItem[] = [];
+    const allItems = (await Promise.all(feedPromises)).flat();
 
-    for (const feed of feeds) {
-      try {
-        const parsedFeed = await parser.parseURL(feed.url);
-        const classifiedItems = (parsedFeed.items || []).map(item =>
-          classifyRSSItem(item, feed.name, keywords)
-        );
-        allItems.push(...classifiedItems);
-      } catch (feedError: any) {
-        console.error(`Error fetching feed ${feed.url}:`, feedError.message);
+    // 3. Process items
+    const processedItems: RSSNewsItem[] = allItems.map((item: any) => {
+      const title = item.title || 'Sin título';
+      const content = item.content || item.description || '';
+      const contentSnippet = item.contentSnippet || content.substring(0, 200);
+      const link = item.link || '';
+      const pubDate = item.pubDate || item.isoDate || new Date().toISOString();
+
+      // Priority check
+      const isPriority = priorityKeywords.some((keyword: string) =>
+        title.toLowerCase().includes(keyword.toLowerCase()) ||
+        content.toLowerCase().includes(keyword.toLowerCase())
+      );
+
+      // Exchange rate detection (specific for BCC)
+      let isExchangeRate = false;
+      let exchangeRateData = undefined;
+
+      if (item.feedName?.includes('Banco Central') || link.includes('bc.gob.cu')) {
+        if (title.toLowerCase().includes('tasas de cambio') || title.toLowerCase().includes('tipo de cambio')) {
+          isExchangeRate = true;
+          // Pattern matching for Cuba BCC
+          // Example: USD - 120.00, EUR - 130.00
+          const usdMatch = content.match(/USD\s*-\s*([\d.]+)/i) || title.match(/USD\s*-\s*([\d.]+)/i);
+          if (usdMatch) {
+            exchangeRateData = {
+              currency: 'USD',
+              value: parseFloat(usdMatch[1]),
+              date: pubDate,
+            };
+          }
+        }
       }
-    }
 
-    // 5. Apply Filter if enabled
-    if (applyFilter) {
-      allItems = allItems.filter(item => item.isPriority);
-    }
+      return {
+        id: item.guid || item.id || link || Math.random().toString(36).substring(7),
+        title,
+        link,
+        pubDate,
+        content,
+        contentSnippet,
+        feedName: item.feedName,
+        isPriority: isPriority || isExchangeRate,
+        isExchangeRate,
+        exchangeRateData,
+      };
+    });
 
-    // 6. Sort
-    const sortedItems = allItems.sort((a, b) => {
-      // Priority first
+    // 4. Sort: Priority first, then by date
+    const sortedItems = processedItems.sort((a, b) => {
       if (a.isPriority && !b.isPriority) return -1;
       if (!a.isPriority && b.isPriority) return 1;
-      // Then date
       return new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime();
     });
 
-    // 7. Update cache
-    cache = {
-      items: sortedItems,
-      timestamp: now
-    };
-
-    return NextResponse.json(sortedItems);
-  } catch (error: any) {
-    console.error('RSS Aggregator error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch news', details: error.message },
-      { status: 500 }
-    );
-  }
-}
-
-export async function POST(req: NextRequest) {
-  try {
-    const auth = await validateSession(req, 'admin');
-    if ('error' in auth) {
-      return NextResponse.json({ error: auth.error }, { status: auth.status });
-    }
-
-    cache = null;
-    return NextResponse.json({ message: 'Cache cleared' });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ items: sortedItems });
+  } catch (err: any) {
+    console.error('RSS API Error:', err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

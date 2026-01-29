@@ -65,28 +65,35 @@ export interface AuthState {
 export interface RSSFeed {
   id: string;
   url: string;
-  name: string;
+  name: string | null;
   is_active: boolean;
   created_at?: string;
+  updated_at?: string;
 }
 
 export interface RSSSettings {
   id: string;
   priority_keywords: string[];
   cache_duration_minutes: number;
-  apply_filter: boolean;
+  created_at?: string;
   updated_at?: string;
 }
 
-export interface RSSItem {
-  id: string;
+export interface RSSNewsItem {
+  id: string; // Generado o desde el link del RSS
   title: string;
   link: string;
   pubDate: string;
-  contentSnippet: string;
-  sourceName: string;
+  content: string;
+  contentSnippet?: string;
+  feedName?: string;
   isPriority: boolean;
   isExchangeRate?: boolean;
+  exchangeRateData?: {
+    currency: string;
+    value: number;
+    date: string;
+  };
 }
 
 // ============================================
