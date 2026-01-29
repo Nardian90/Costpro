@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.6.8] - 2026-02-18
+
+### Fixed
+- **Robustez de Gemini**: Refactorización del `GeminiAdapter` para garantizar el cumplimiento estricto del protocolo de chat (alternancia de roles, inicio con 'user', no mensajes vacíos).
+- **Control de Seguridad**: Implementación de manejo explícito de bloqueos por filtros de seguridad de IA en la interfaz.
+- **Transparencia de Errores**: Mejora en la visualización de errores del bot, mostrando mensajes detallados directamente en el chat para facilitar el diagnóstico.
+- **Hardenización de API**: Refuerzo de la ruta `/api/bot/chat` con logs detallados en servidor y respuestas HTTP 502 diferenciadas para fallos de proveedores externos.
+
+**Nota de Handoff para UX:** Se han añadido mensajes de error contextuales dentro de la burbuja del bot. El diseño se mantiene intacto, pero la retroalimentación al usuario es ahora mucho más clara cuando hay problemas de conectividad o configuración con la IA.
+
 ## [5.6.6] - 2026-02-18
 
 ### Fixed

@@ -66,6 +66,7 @@ export function ChatBot() {
       setMessages([...newMessages, { role: 'assistant', content: data.text }]);
     } catch (error: any) {
       toast.error(error.message);
+      setMessages([...newMessages, { role: 'assistant', content: `Lo siento, hubo un error: ${error.message}` }]);
     } finally {
       setIsLoading(false);
     }
@@ -93,7 +94,7 @@ export function ChatBot() {
     }
   };
 
-  const isConfigured = user?.aiApiKey && user?.aiApiKey.length > 5;
+  const isConfigured = !!(user?.aiApiKey && user?.aiApiKey.length > 5);
 
   return (
     <div className="fixed bottom-6 right-6 z-[100]">
