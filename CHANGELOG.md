@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.5] - 2026-02-20
+
+### Fixed
+- **Acciones de Usuario (Crear/Editar)**: Reparada la funcionalidad de creación y edición de usuarios. Se eliminó el "fallo silencioso" al editar permitiendo que el campo email sea `readOnly` en lugar de `disabled`, asegurando su inclusión en la validación de Zod.
+- **Feedback de Errores**: Implementación de notificaciones `toast` explícitas en el flujo de gestión de usuarios para evitar fallos sin retroalimentación visual.
+- **Robustez del Modal**: Añadido estado de carga defensivo en el modal de usuario para prevenir renderizados incompletos.
+
+### Added
+- **Capacidades por Rol (User Capabilities)**: Implementación de límites operativos para usuarios. Los administradores ahora pueden configurar `max_stores_limit` y `max_users_limit` desde el formulario de usuario.
+- **Control de Límites para Encargados**: El sistema ahora valida en el frontend si un Encargado ha alcanzado su límite de creación de usuarios, deshabilitando la acción y mostrando un mensaje de advertencia contextual.
+- **Enforzamiento de Límite de Tiendas**: Se añadió validación en tiempo real en el formulario para impedir la asignación de más tiendas de las permitidas por la capacidad del usuario.
+
+**Nota de Handoff para UX:** Se han añadido nuevos campos numéricos en el modal de usuario (visibles solo para administradores) con un diseño integrado en el sistema neumórfico. El botón "Nuevo Usuario" ahora muestra un estado deshabilitado con un mensaje de error si el usuario actual ha alcanzado su capacidad máxima.
+
 ## [5.7.4] - 2026-02-20
 
 ### Fixed

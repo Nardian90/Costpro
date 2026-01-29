@@ -21,7 +21,10 @@ export default function UsersManagementView() {
     handleCloseModal,
     handleUserFormSubmit,
     isSubmittingUser,
-    allowedRoles
+    allowedRoles,
+    isAdmin,
+    canCreateMoreUsers,
+    limitReachedMessage
   } = useUsersView();
 
   const getRoleLabel = (role: string) => {
@@ -40,10 +43,25 @@ export default function UsersManagementView() {
     <>
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase">Usuarios</h2>
+          <div className="space-y-1">
+            <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase">Usuarios</h2>
+            {limitReachedMessage && (
+              <p className="text-[10px] font-bold text-destructive uppercase tracking-widest animate-pulse">
+                {limitReachedMessage}
+              </p>
+            )}
+          </div>
           <ActionMenu
             actions={[
-              { id: 'new', label: 'Nuevo Usuario', icon: Plus, onClick: handleCreateUser, variant: 'primary' }
+              {
+                id: 'new',
+                label: 'Nuevo Usuario',
+                icon: Plus,
+                onClick: handleCreateUser,
+                variant: 'primary',
+                disabled: !canCreateMoreUsers,
+                className: !canCreateMoreUsers ? 'opacity-50 grayscale cursor-not-allowed' : ''
+              }
             ]}
             className="sm:w-auto"
           />
@@ -139,6 +157,7 @@ export default function UsersManagementView() {
         stores={stores}
         isSubmitting={isSubmittingUser}
         allowedRoles={allowedRoles}
+        isAdmin={isAdmin}
       />
     </>
   );
