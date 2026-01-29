@@ -1,6 +1,8 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { getLLMProvider } from '@/lib/ai/orchestrator';
 import { Message } from '@/lib/ai/types';
+import { dashboardKpiResponseSchema } from '@/validation/schemas';
+import { SalesKPIs } from '@/types';
 
 export const botService = {
   async handleChat(
@@ -33,17 +35,41 @@ export const botService = {
         } else {
             context = `No hay productos bajo el stock mínimo actualmente.`;
         }
-        } else if (lastMessage.includes('ventas') || lastMessage.includes('hoy') || lastMessage.includes('resumen')) {
-            const today = new Date().toISOString().split('T')[0];
-            const { data: salesData } = await supabase
-                .from('transactions')
-                .select('total_amount, status')
-                .eq('store_id', storeId)
-                .gte('created_at', today)
-                .eq('status', 'completed');
+        } else if (
+          lastMessage.includes('ventas') ||
+          lastMessage.includes('hoy') ||
+          lastMessage.includes('resumen') ||
+          lastMessage.includes('ganancia') ||
+          lastMessage.includes('utilidad') ||
+          lastMessage.includes('costo') ||
+          lastMessage.includes('margen')
+        ) {
+            // Unify with Dashboard Source of Truth (get_dashboard_kpis RPC)
+            const { data: rawKpis, error: rpcError } = await supabase.rpc('get_dashboard_kpis', {
+              p_store_id: storeId
+            });
 
-            const total = salesData?.reduce((acc, sale) => acc + (Number(sale.total_amount) || 0), 0) || 0;
-            context = `Ventas de hoy (${today}): Total acumulado de ${total} en ${salesData?.length || 0} transacciones completadas.`;
+            if (rpcError) throw rpcError;
+
+            // Strict Validation & Typing (Data Contract)
+            const validatedKpis = (rawKpis as any[] || []).map(k => dashboardKpiResponseSchema.parse(k)) as SalesKPIs[];
+
+            if (validatedKpis.length > 0) {
+                const d = validatedKpis[0];
+                const profit = Number(d.total_profit);
+                const sales = Number(d.total_sales);
+
+                context = `DATOS REALES DEL DASHBOARD (Hoy):
+                - Ventas Brutas: ${sales}
+                - Costo de Mercadería (CMV): ${d.total_cost ?? 'Sin calcular'}
+                - Ganancia (Utilidad Bruta): ${d.total_profit ?? 'Sin calcular'}
+                - Margen Estimado: ${sales > 0 && d.total_profit ? ((profit / sales) * 100).toFixed(1) + '%' : 'N/A'}
+                - Transacciones: ${d.transaction_count}
+                - Ticket Promedio: ${d.avg_ticket}
+                - Métodos: Efectivo (${d.total_cash}), Transferencia/Otros (${d.total_card})`;
+            } else {
+                context = `No hay datos de ventas registrados para hoy en el dashboard.`;
+            }
         }
     } catch (err) {
         console.error('Error fetching context for bot:', err);
@@ -56,14 +82,19 @@ export const botService = {
       content: `Eres Jules, un asistente de ventas práctico y directo de CostPro. Tu objetivo es dar respuestas que se lean en 5 segundos.
 
       DATOS DE LA TIENDA (ID: ${storeId}):
-      Contexto actual de DB: ${context || 'Sin datos específicos para esta consulta.'}
+      Contexto actual (Single Source of Truth): ${context || 'Sin datos específicos para esta consulta.'}
+
+      CONTRATO DE DATOS:
+      - Los datos de ventas, costos y utilidad provienen directamente de los mismos RPCs que alimentan el Dashboard.
+      - Si los costos aparecen como "Sin calcular", es porque faltan datos de costo_price en los productos vendidos.
 
       REGLAS DE ORO:
-      1. Sin rodeos: No repitas la fecha ni digas 'Entendido' o 'Buena pregunta'. Ve directo al dato.
-      2. Formato limpio: Usa listas con emojis en lugar de tablas complejas si el dato es simple.
-      3. Lenguaje claro: Usa 'Costo' o 'Lo que nos costó' en vez de CMV. Usa 'Ganancia' en vez de Utilidad Bruta.
-      4. Resumen visual: Siempre pon el dato más importante en negrita al principio.
-      5. Respuesta siempre en español.`
+      1. Sin rodeos: No repitas la fecha ni digas 'Entendido'. Ve directo al dato.
+      2. Formato limpio: Usa listas con emojis.
+      3. Lenguaje claro: Usa 'Costo' en vez de CMV. Usa 'Ganancia' o 'Utilidad' en vez de Utilidad Bruta.
+      4. Análisis: Si se solicita, analiza la rentabilidad basada en el 'Margen Estimado' proporcionado.
+      5. Resumen visual: El dato clave **siempre en negrita** al inicio.
+      6. Idioma: Siempre en español.`
     };
 
     // 3. Call AI
