@@ -20,7 +20,16 @@ const userFormSchema = z.object({
     store_id: z.string().uuid('Seleccione una tienda'),
     role: z.enum(['admin', 'encargado', 'usuario', 'manager', 'clerk', 'warehouse'] as const),
     status: z.enum(['active', 'revoked'] as const),
-  })),
+  })).min(1, 'El usuario debe tener al menos una tienda asignada'),
+}).refine(data => {
+  // Solo validamos el límite de tiendas si el usuario es un encargado y tiene un límite definido > 0
+  if (data.role === 'encargado' && data.maxStoresLimit > 0) {
+    return data.memberships.length <= data.maxStoresLimit;
+  }
+  return true;
+}, {
+  message: "El número de tiendas asignadas excede el límite permitido para este encargado",
+  path: ["memberships"]
 });
 
 export type UserFormData = z.output<typeof userFormSchema>;
@@ -217,6 +226,17 @@ export default function UserForm({
         </div>
 
         <div className="space-y-3">
+          {errors.memberships?.root && (
+            <p className="p-2 rounded-lg bg-destructive/10 text-destructive text-[10px] font-bold uppercase text-center border border-destructive/20 animate-pulse">
+              {errors.memberships.root.message}
+            </p>
+          )}
+          {errors.memberships?.message && !errors.memberships?.root && (
+            <p className="p-2 rounded-lg bg-destructive/10 text-destructive text-[10px] font-bold uppercase text-center border border-destructive/20 animate-pulse">
+              {errors.memberships.message}
+            </p>
+          )}
+
           {fields.map((field, index) => (
             <div key={field.id} className="flex flex-col sm:flex-row gap-4 sm:gap-2 items-stretch sm:items-end bg-muted/20 p-4 sm:p-3 rounded-xl border border-border/50 relative group">
               <div className="flex-1 space-y-2">
