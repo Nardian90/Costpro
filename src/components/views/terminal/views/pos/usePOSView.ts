@@ -26,7 +26,9 @@ export function usePOSView() {
   } | null>(null);
 
   // Data Fetching
-  const { data: productsData, isLoading: isLoadingProducts, error: productsError } = useProducts(user?.activeStoreId, searchTerm);
+  // Implementamos "Zero Latency": El POS descarga todo el catálogo una sola vez
+  // y el filtrado ocurre localmente en el hook usePOSProducts.
+  const { data: productsData, isLoading: isLoadingProducts, error: productsError } = useProducts(user?.activeStoreId);
   const products = productsData || [];
 
   // Mutations

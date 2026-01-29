@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.12] - 2026-02-25
+
+### Fixed
+- **Arquitectura POS Zero-Latency**: Implementación de una nueva estrategia de carga de datos para el Punto de Venta (TPV). El sistema ahora descarga el catálogo completo una sola vez y realiza todo el filtrado (búsqueda y categorías) de forma local, eliminando latencias de red en cada pulsación de tecla.
+- **Sincronización de Cache y Prefetch**: Unificación de las claves de consulta (`queryKey`) y la lógica de normalización de `storeId` entre los hooks de API y el pre-cargado global, garantizando que el TPV utilice datos ya descargados instantáneamente.
+- **Visibilidad en Auditoría**: Los procesos de pre-carga de productos ahora están integrados con el `QueryInspector`, permitiendo a los administradores auditar la carga inicial del catálogo desde el panel de control.
+- **Hardenización de Hooks**: Refuerzo de `useProducts` y `usePOSProducts` con validaciones defensivas y manejo de tipos estrictos para prevenir estados "Sin Resultados" erróneos ante contextos de tienda inconsistentes.
+
 ## [5.7.11] - 2026-02-25
 
 ### Fixed

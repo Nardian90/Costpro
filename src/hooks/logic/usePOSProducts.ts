@@ -1,13 +1,15 @@
 import { useMemo, useState, useTransition } from 'react';
 import { Product } from '@/types';
 
-export function usePOSProducts(products: Product[], searchTerm: string) {
+export function usePOSProducts(products: Product[] = [], searchTerm: string) {
   const [isPending, startTransition] = useTransition();
   const [selectedCategory, setSelectedCategory] = useState('');
 
   const filteredProducts = useMemo(() => {
     const lowerSearch = searchTerm.toLowerCase();
-    return products.filter(p => {
+    const safeProducts = Array.isArray(products) ? products : [];
+
+    return safeProducts.filter(p => {
       // Filter out inactive products.
       // We no longer filter out of stock products here to ensure they are visible in the catalog,
       // as they are handled during the "Add to Cart" action with a proper message.
