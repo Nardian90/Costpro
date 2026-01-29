@@ -44,7 +44,7 @@ export function useSessionManager() {
             const { session } = data;
 
             if (session?.user) {
-                const profileColumns = 'id, full_name, email, role, roles, active_store_id, logo_url, is_active, store_id, created_at';
+                const profileColumns = 'id, full_name, email, role, roles, active_store_id, logo_url, is_active, store_id, created_at, ai_provider, ai_api_key';
                 const storeColumns = 'id, name, address, logo_url, is_active, created_at';
                 const membershipColumns = `id, user_id, store_id, role, status, created_at, updated_at, store:stores(${storeColumns})`;
 
