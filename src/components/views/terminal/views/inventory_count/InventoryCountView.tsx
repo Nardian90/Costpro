@@ -18,6 +18,7 @@ import { Product, ProductVariant } from '@/types';
 import { toast } from 'sonner';
 import ActionMenu from '@/components/ui/ActionMenu';
 import SearchBar from '@/components/ui/SearchBar';
+import { QueryInspector } from '@/components/ui/QueryInspector';
 import { cn } from '@/lib/utils';
 import { SecurityScrollContainer } from '@/components/ui/SecurityScrollContainer';
 
@@ -289,6 +290,8 @@ export default function InventoryCountView() {
           className="sm:w-auto"
         />
       </div>
+
+      <QueryInspector />
 
       <SearchBar value={searchTerm} onChange={setSearchTerm} placeholder="Buscar por producto, SKU o categoría..." />
 
