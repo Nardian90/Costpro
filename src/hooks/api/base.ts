@@ -7,14 +7,15 @@ import { formatPostgrestUrlToSql, formatRpcToSql } from '@/lib/query-inspector-u
 export async function withLogging<T>(
   rpcName: string,
   params: Record<string, unknown>,
-  rpcCall: () => PromiseLike<{ data: T | null; error: any }>
+  rpcCall: () => PromiseLike<{ data: T | null; error: any }>,
+  view?: string
 ): Promise<T> {
   logger.info('DATABASE', `RPC_CALL_START: ${rpcName}`, params);
 
   // Update last query for admin inspector
   try {
     const sql = formatRpcToSql(rpcName, params);
-    useUIStore.getState().setLastQuery(sql);
+    useUIStore.getState().setLastQuery(sql, view);
   } catch (e) {
     // Ignore errors in formatting to not break the app
   }
@@ -39,7 +40,8 @@ export async function withLogging<T>(
 export async function withTableLogging<T>(
   operation: 'select' | 'insert' | 'update' | 'delete',
   tableName: string,
-  query: () => PromiseLike<{ data: T | null; error: any }>
+  query: () => PromiseLike<{ data: T | null; error: any }>,
+  view?: string
 ): Promise<T> {
   const params = { operation, tableName };
   logger.info('DATABASE', `TABLE_OP_START: ${tableName}`, params);
@@ -49,7 +51,7 @@ export async function withTableLogging<T>(
   try {
     if (builder && (builder as any).url) {
       const sql = formatPostgrestUrlToSql((builder as any).url.toString(), operation);
-      useUIStore.getState().setLastQuery(sql);
+      useUIStore.getState().setLastQuery(sql, view);
     }
   } catch (e) {
     // Ignore errors in formatting
