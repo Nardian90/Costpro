@@ -52,8 +52,6 @@ const SettingsView = lazy(() => import('./terminal/views/settings/SettingsView')
 const TransferenciasView = lazy(() => import('./terminal/views/transfers/TransferenciasView'));
 const ProductReceptionView = lazy(() => import('./terminal/views/inventory/ProductReceptionView'));
 const ReportsView = lazy(() => import('./terminal/views/reports/ReportsView'));
-const RSSNewsView = lazy(() => import('./terminal/views/rss_news/RSSNewsView'));
-const RSSAdminView = lazy(() => import('./terminal/views/rss_news/RSSAdminView'));
 
 
 export default function TerminalShell() { // Renamed from TerminalView
@@ -173,8 +171,6 @@ export default function TerminalShell() { // Renamed from TerminalView
         case 'recepcion': return <ProductReceptionView onCancel={() => setCurrentView('inventory')} />;
         case 'reception_list': return <ReceptionsHistoryView />;
         case 'transferencias': return <TransferenciasView />;
-        case 'rss_news': return <RSSNewsView />;
-        case 'rss_admin': return <RSSAdminView />;
         default: return <div>Default View Placeholder</div>;
     }
 }

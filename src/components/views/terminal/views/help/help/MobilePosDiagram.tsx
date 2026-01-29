@@ -42,24 +42,15 @@ export default function MobilePosDiagram() {
           transition={{ duration: 1, repeat: Infinity, repeatType: "reverse", repeatDelay: 1 }}
         >
           <path
-            d="M260 230 L540 230 L540 370 L260 370 Z"
-            className="fill-background stroke-primary shadow-[0_-10px_20px_rgba(0,0,0,0.1)]"
+            d="M260 250 L540 250 L540 370 L260 370 Z"
+            className="fill-background stroke-primary shadow-2xl"
             strokeWidth="2"
           />
-          <rect x="375" y="240" width="50" height="4" rx="2" className="fill-primary/20" />
+          <rect x="375" y="260" width="50" height="4" rx="2" className="fill-primary/20" />
+          <text x="400" y="285" textAnchor="middle" className="fill-primary font-black text-[10px] uppercase">Carrito (1-Tap Discount)</text>
 
-          {/* Scrollable Items area indicator */}
-          <rect x="275" y="255" width="250" height="40" rx="8" className="fill-primary/5 stroke-primary/10 stroke-dasharray-2" />
-          <text x="400" y="275" textAnchor="middle" className="fill-primary/40 font-bold text-[8px] uppercase">Items (Scrollable)</text>
-
-          {/* Sticky Footer Area */}
-          <rect x="260" y="300" width="280" height="70" className="fill-primary/5" />
-          <line x1="260" y1="300" x2="540" y2="300" stroke="currentColor" className="text-primary/20" strokeWidth="1" />
-
-          <text x="400" y="315" textAnchor="middle" className="fill-primary font-black text-[9px] uppercase">Sticky Checkout Footer</text>
-
-          <rect x="275" y="325" width="250" height="35" rx="12" className="fill-primary shadow-lg" />
-          <text x="400" y="347" textAnchor="middle" className="fill-white font-black text-[10px] uppercase tracking-widest">Pagar $450.00</text>
+          <rect x="275" y="300" width="250" height="30" rx="8" className="fill-primary" />
+          <text x="400" y="320" textAnchor="middle" className="fill-white font-black text-[10px] uppercase tracking-widest">Pagar $450.00</text>
         </motion.g>
 
         {/* Action Menu (Bottom Bar) */}
