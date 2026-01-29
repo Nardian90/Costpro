@@ -42,7 +42,7 @@ DECLARE
         'purchase_orders', 'receipt_items', 'receipts', 'sale_items', 'sales',
         'stock_movements', 'transaction_items', 'transactions',
         'inventory_adjustments', 'inventory_adjustment_items',
-        'user_store_memberships', 'user_store_access', 'profiles', 'stores',
+        'user_store_memberships', 'profiles', 'stores',
         'sync_log'
     ];
 BEGIN
