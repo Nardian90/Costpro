@@ -4,6 +4,10 @@
 -- Version: 5.7.10 (Updated for Enterprise Hardening)
 
 -- 0. FIX SCHEMATIC GAPS
+-- Drop existing to avoid parameter name conflict (ERROR 42P13)
+DROP FUNCTION IF EXISTS public.has_role(public.user_role) CASCADE;
+DROP FUNCTION IF EXISTS public.has_role(uuid, public.user_role) CASCADE;
+
 CREATE OR REPLACE FUNCTION public.has_role(p_user_id UUID, p_required_role public.user_role)
  RETURNS boolean LANGUAGE plpgsql STABLE SECURITY DEFINER AS $$
 DECLARE v_actual_role public.user_role;
@@ -58,6 +62,8 @@ INSERT INTO public.stores (id, name, address, is_active) VALUES
 
 -- 3. USERS (ACTUALIZADO: Password: demo123)
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+DROP FUNCTION IF EXISTS create_demo_user(UUID, TEXT, TEXT, public.user_role, INTEGER, INTEGER);
 
 CREATE OR REPLACE FUNCTION create_demo_user(
     p_id UUID,

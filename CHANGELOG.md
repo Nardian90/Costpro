@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Hardenización de Gestión de Usuarios Multi-Tienda**: Refuerzo del RPC `manage_user_memberships` para permitir actualizaciones parciales seguras, evitando que los encargados afecten accesos fuera de su visibilidad.
 - **Validación de Límites de Negocio**: Incorporación de validación Zod cruzada en `UserForm.tsx` para asegurar que el número de tiendas asignadas respete el `maxStoresLimit` del encargado.
 - **Mejora de Visibilidad en Edición**: Ajuste de políticas de seguridad y hooks de API para garantizar que los encargados puedan visualizar y editar todos los accesos de los usuarios bajo su gestión de forma transparente.
+- **Robustez del Script de Reset**: Corrección del error PostgreSQL 42P13 en el script de reinicio de demo mediante el uso de `DROP FUNCTION` preventivo, asegurando la compatibilidad de firmas de funciones en entornos con esquemas preexistentes.
 
 **Nota de Handoff para UX:** Se han añadido mensajes de error descriptivos en el formulario de usuarios para guiar al administrador cuando se exceden los límites de tiendas o hay errores de validación. La interfaz ahora responde correctamente al guardar cambios tras resolver los bloqueos de base de datos.
 
