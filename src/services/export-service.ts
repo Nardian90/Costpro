@@ -1,6 +1,7 @@
 import jspdf from 'jspdf';
 import html2canvas from 'html2canvas';
 import { toast } from 'sonner';
+import * as XLSX from 'xlsx';
 
 export const exportToPDF = async (element: HTMLElement, fileName: string) => {
   const toastId = toast.loading("Generando PDF... por favor espere.");
@@ -91,6 +92,42 @@ export const exportToCSV = (data: any, calculatedValues: any, fileName: string) 
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
     toast.success("Excel (CSV) exportado con éxito");
+  } catch (error) {
+    console.error("Excel Export error:", error);
+    toast.error("Error al exportar a Excel");
+  }
+};
+
+export const exportToExcel = (data: any[], columns: string[], columnLabels: Record<string, string>, fileName: string) => {
+  try {
+    const toastId = toast.loading("Preparando Excel...");
+
+    // Filter data to only include selected columns and map headers
+    const filteredData = data.map(item => {
+      const filteredItem: any = {};
+      columns.forEach(col => {
+        const label = columnLabels[col] || col;
+        let value = item[col];
+
+        // Format special types
+        if (value instanceof Date) {
+           value = value.toLocaleDateString();
+        } else if (typeof value === 'object' && value !== null) {
+           value = JSON.stringify(value);
+        }
+
+        filteredItem[label] = value;
+      });
+      return filteredItem;
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(filteredData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Reporte");
+
+    XLSX.writeFile(workbook, fileName.endsWith('.xlsx') ? fileName : `${fileName}.xlsx`);
+
+    toast.success("Excel exportado con éxito", { id: toastId });
   } catch (error) {
     console.error("Excel Export error:", error);
     toast.error("Error al exportar a Excel");
