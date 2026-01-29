@@ -28,10 +28,8 @@ export function usePOSView() {
   // Data Fetching
   // Implementamos "Zero Latency": El POS descarga todo el catálogo una sola vez
   // y el filtrado ocurre localmente en el hook usePOSProducts.
-  console.log('[usePOSView] user.activeStoreId:', user?.activeStoreId);
   const { data: productsData, isLoading: isLoadingProducts, error: productsError } = useProducts(user?.activeStoreId);
   const products = productsData || [];
-  console.log('[usePOSView] products length:', products.length, 'isLoading:', isLoadingProducts, 'error:', productsError);
 
   // Mutations
   const createSaleMutation = useCreateSale();
@@ -73,7 +71,7 @@ export function usePOSView() {
     // Log audit events for each unpriced product
     const unpricedItems = items.filter(i => i.price === null || i.price <= 0);
     for (const item of unpricedItems) {
-      await auditService.logInvoiceWithoutPrice(user.id, item.product_id, user.storeId);
+      await auditService.logInvoiceWithoutPrice(user.id, item.product_id, user.activeStoreId);
     }
 
     await handleCheckout(pendingCheckoutData.paymentMethod, pendingCheckoutData.discount);
@@ -87,7 +85,7 @@ export function usePOSView() {
 
     logger.info('POS', 'CHECKOUT_ATTEMPT', {
       userId: user?.id,
-      storeId: user?.storeId,
+      storeId: user?.activeStoreId,
       itemCount: items.length,
       total: getTotal(),
     });
@@ -96,7 +94,7 @@ export function usePOSView() {
       const finalDiscount = checkoutDiscount || discount;
 
       const saleParams = {
-        p_store_id: user.storeId,
+        p_store_id: user.activeStoreId,
         p_seller_id: user.id,
         p_payment_method: paymentMethod,
         p_total_amount: Number(getTotal().toFixed(2)), // Keep Number casting for API
@@ -119,7 +117,7 @@ export function usePOSView() {
 
       logger.info('POS', 'CHECKOUT_SUCCESS', {
         userId: user?.id,
-        storeId: user?.storeId,
+        storeId: user?.activeStoreId,
         saleId: (result as any)?.[0]?.r_sale_id,
       });
 
@@ -128,7 +126,7 @@ export function usePOSView() {
     } catch (error: any) {
       logger.error('POS', 'CHECKOUT_FAILED', {
         userId: user?.id,
-        storeId: user?.storeId,
+        storeId: user?.activeStoreId,
         error: error.message,
       });
       toast.error(error.message || 'Error en venta', { id: toastId });

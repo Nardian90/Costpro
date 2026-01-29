@@ -7,13 +7,21 @@ import { z } from 'zod';
 export const userRoleSchema = z.enum(['admin', 'encargado', 'usuario', 'manager', 'clerk', 'warehouse']);
 
 /**
+ * Permissive UUID regex that matches the standard 8-4-4-4-12 format
+ * without being strict about the version or variant bits.
+ * This is necessary to support some legacy/demo data that doesn't strictly follow RFC 4122.
+ */
+export const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
  * Resilient UUID schema that handles common "JS-isms" like 'null', 'undefined', or empty strings
  * by converting them to actual null before validation.
+ * Uses a permissive regex to support non-strict UUIDs found in demo data.
  */
 export const resilientUuid = z.preprocess((val) => {
   if (val === 'null' || val === 'undefined' || val === '' || val === null) return null;
   return val;
-}, z.string().uuid().nullable().optional());
+}, z.string().regex(uuidRegex).nullable().optional());
 
 /**
  * Same as resilientUuid but with a .catch(null) to ensure that even invalid UUID strings
@@ -73,7 +81,7 @@ export const profileSchema = z.object({
   ai_api_key: z.string().nullable().default(''),
   max_stores_limit: z.number().default(1),
   max_users_limit: z.number().default(1),
-  created_by: z.string().uuid().nullable().optional(),
+  created_by: z.string().regex(uuidRegex).nullable().optional(),
   created_at: z.string().default(() => new Date().toISOString()),
   updated_at: z.string().optional().nullable(),
   memberships: z.preprocess(
@@ -83,7 +91,7 @@ export const profileSchema = z.object({
 });
 
 export const productSchema = z.object({
-  id: resilientUuid.pipe(z.string().uuid()).catch(''), // Ensure it's a string for Product interface
+  id: resilientUuid.pipe(z.string().regex(uuidRegex)).catch(''), // Ensure it's a string for Product interface
   name: z.string().min(1, "El nombre es obligatorio"),
   description: z.string().nullable().optional(),
   sku: z.preprocess((val) => val === '' ? null : val, z.string().nullable().optional()),
@@ -113,7 +121,7 @@ export const productSchema = z.object({
 });
 
 export const productVariantSchema = z.object({
-  id: resilientUuid.pipe(z.string().uuid()).catch(''),
+  id: resilientUuid.pipe(z.string().regex(uuidRegex)).catch(''),
   product_id: optionalResilientUuid,
   name: z.string(),
   sku: z.string().nullable().optional(),
@@ -124,8 +132,8 @@ export const productVariantSchema = z.object({
 });
 
 export const cartItemSchema = z.object({
-  product_id: z.string().uuid(),
-  variant_id: z.string().uuid().nullable(),
+  product_id: z.string().regex(uuidRegex),
+  variant_id: z.string().regex(uuidRegex).nullable(),
   product: productSchema,
   variant: productVariantSchema.nullable(),
   quantity: z.number().positive(),
@@ -135,7 +143,7 @@ export const cartItemSchema = z.object({
 });
 
 export const transactionSchema = z.object({
-  id: z.string().uuid().or(z.string()),
+  id: z.string().regex(uuidRegex).or(z.string()),
   store_id: optionalResilientUuid,
   seller_id: optionalResilientUuid,
   seller_name: z.string().nullable().optional().catch('Desconocido'),
@@ -154,7 +162,7 @@ export const transactionSchema = z.object({
 });
 
 export const stockMovementSchema = z.object({
-  id: resilientUuid.pipe(z.string().uuid()).catch(''),
+  id: resilientUuid.pipe(z.string().regex(uuidRegex)).catch(''),
   store_id: optionalResilientUuid,
   product_id: optionalResilientUuid,
   variant_id: optionalResilientUuid,
@@ -171,7 +179,7 @@ export const stockMovementSchema = z.object({
 });
 
 export const receiptSchema = z.object({
-  id: resilientUuid.pipe(z.string().uuid()).catch(''),
+  id: resilientUuid.pipe(z.string().regex(uuidRegex)).catch(''),
   created_at: z.preprocess((val) => val || new Date().toISOString(), z.string()),
   updated_at: z.string().optional().nullable(),
   user_id: optionalResilientUuid,
@@ -185,9 +193,9 @@ export const receiptSchema = z.object({
 });
 
 export const receiptItemSchema = z.object({
-  id: z.string().uuid(),
-  receipt_id: z.string().uuid(),
-  product_id: z.string().uuid(),
+  id: z.string().regex(uuidRegex),
+  receipt_id: z.string().regex(uuidRegex),
+  product_id: z.string().regex(uuidRegex),
   quantity: z.coerce.number().catch(0),
   unit_cost: z.coerce.number().catch(0),
   created_at: z.string().optional(),
@@ -201,7 +209,7 @@ export const receiptItemSchema = z.object({
 });
 
 export const auditLogSchema = z.object({
-  id: resilientUuid.pipe(z.string().uuid()).catch(''),
+  id: resilientUuid.pipe(z.string().regex(uuidRegex)).catch(''),
   user_id: optionalResilientUuid,
   action: z.string(),
   table_name: z.string(),
@@ -261,8 +269,8 @@ export const createSaleParamsSchema = z.object({
   p_discount_type: z.string(),
   p_discount_value: z.number(),
   p_items: z.array(z.object({
-    product_id: z.string().uuid(),
-    variant_id: z.string().uuid().nullable(),
+    product_id: z.string().regex(uuidRegex),
+    variant_id: z.string().regex(uuidRegex).nullable(),
     quantity: z.number().positive(),
     price: z.number().min(0),
     cost: z.number().min(0),
@@ -275,7 +283,7 @@ export const registerReceptionParamsSchema = z.object({
   p_reception_date: z.string(),
   p_invoice_number: z.string().min(1),
   p_items: z.array(z.object({
-    product_id: z.string().uuid().nullable(),
+    product_id: z.string().regex(uuidRegex).nullable(),
     sku: z.string().nullable().optional(),
     quantity: z.number().positive(),
     unit_cost: z.number().min(0),
@@ -323,7 +331,7 @@ export const getProductsForPosParamsSchema = z.object({
 });
 
 export const bulkUpdateProductItemSchema = z.object({
-  store_id: z.string().uuid(),
+  store_id: z.string().regex(uuidRegex),
   sku: z.string().min(1),
   name: z.string().min(1),
   cost_price: z.number().min(0),
@@ -335,7 +343,7 @@ export const bulkUpdateProductItemSchema = z.object({
 
 export const bulkUpdateProductsInputSchema = z.object({
   products: z.array(bulkUpdateProductItemSchema),
-  storeId: z.string().uuid(),
+  storeId: z.string().regex(uuidRegex),
 });
 
 export const bulkUpdateProductsParamsSchema = z.object({
@@ -429,16 +437,16 @@ export const transferStatusSchema = z.enum(['PENDIENTE', 'CONFIRMADA', 'CANCELAD
 export const transferItemSchema = z.object({
   id: optionalResilientUuid,
   transfer_id: optionalResilientUuid,
-  product_id: resilientUuid.pipe(z.string().uuid()).catch(''),
+  product_id: resilientUuid.pipe(z.string().regex(uuidRegex)).catch(''),
   quantity: z.number().positive(),
   unit_cost: z.number().min(0),
 });
 
 export const transferSchema = z.object({
-  id: resilientUuid.pipe(z.string().uuid()).catch(''),
-  origin_store_id: resilientUuid.pipe(z.string().uuid()).catch(''),
-  destination_store_id: resilientUuid.pipe(z.string().uuid()).catch(''),
-  created_by: resilientUuid.pipe(z.string().uuid()).catch(''),
+  id: resilientUuid.pipe(z.string().regex(uuidRegex)).catch(''),
+  origin_store_id: resilientUuid.pipe(z.string().regex(uuidRegex)).catch(''),
+  destination_store_id: resilientUuid.pipe(z.string().regex(uuidRegex)).catch(''),
+  created_by: resilientUuid.pipe(z.string().regex(uuidRegex)).catch(''),
   status: transferStatusSchema,
   notes: z.string().nullable(),
   created_at: z.string(),
@@ -466,7 +474,7 @@ export const syncOperationTypeSchema = z.enum(['CREATE', 'UPDATE', 'DELETE']);
 
 export const syncOperationSchema = z.object({
   id: optionalResilientUuid, // Local ID
-  idempotencyKey: resilientUuid.pipe(z.string().uuid()).catch(''),
+  idempotencyKey: resilientUuid.pipe(z.string().regex(uuidRegex)).catch(''),
   operationType: syncOperationTypeSchema,
   entity: z.string(),
   payload: z.any(),
@@ -487,7 +495,7 @@ export const syncBatchSchema = z.object({
 });
 
 export const syncResultItemSchema = z.object({
-  idempotencyKey: resilientUuid.pipe(z.string().uuid()).catch(''),
+  idempotencyKey: resilientUuid.pipe(z.string().regex(uuidRegex)).catch(''),
   status: z.enum(['ok', 'conflict', 'error']),
   serverId: z.any().optional(),
   serverVersion: z.number().optional(),
@@ -506,7 +514,7 @@ export const syncBatchResponseSchema = z.object({
 export const reportTypeSchema = z.enum(['sales', 'profit', 'inventory', 'kardex', 'purchases', 'audit']);
 
 export const reportDefinitionSchema = z.object({
-  id: z.string().uuid().optional(),
+  id: z.string().regex(uuidRegex).optional(),
   name: z.string().min(1, "El nombre del reporte es obligatorio"),
   type: reportTypeSchema,
   filters: z.any().default({}),
@@ -516,20 +524,20 @@ export const reportDefinitionSchema = z.object({
   }),
   columns: z.array(z.string()).default([]),
   layout: z.any().default({}),
-  created_by: z.string().uuid().optional(),
-  store_id: z.string().uuid().optional(),
+  created_by: z.string().regex(uuidRegex).optional(),
+  store_id: z.string().regex(uuidRegex).optional(),
   created_at: z.string().optional(),
   updated_at: z.string().optional(),
 });
 
 export const reportRunSchema = z.object({
-  id: z.string().uuid().optional(),
-  report_definition_id: z.string().uuid(),
-  executed_by: z.string().uuid(),
+  id: z.string().regex(uuidRegex).optional(),
+  report_definition_id: z.string().regex(uuidRegex),
+  executed_by: z.string().regex(uuidRegex),
   executed_at: z.string().optional(),
   parameters_snapshot: z.any(),
   file_url: z.string().nullable().optional(),
   status: z.enum(['pending', 'completed', 'failed']).default('pending'),
   error_message: z.string().nullable().optional(),
-  store_id: z.string().uuid().optional(),
+  store_id: z.string().regex(uuidRegex).optional(),
 });
