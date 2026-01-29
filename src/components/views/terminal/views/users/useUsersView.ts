@@ -6,6 +6,7 @@ import { useAuthStore } from '@/store';
 import { useUsers, useCreateUser, useUpdateUser, useManageUserMemberships } from '@/hooks/api/useUsers';
 import { useStores } from '@/hooks/api/useStores';
 import { UserFormData } from './UserForm';
+import { toast } from 'sonner';
 import { UserContract, mapProfileToContract, UserContractFactory } from '@/contracts/user';
 import { Profile, UserRole } from '@/types';
 import { getAllowedRoles } from '@/lib/roles';
@@ -41,6 +42,15 @@ export function useUsersView() {
             return u.role !== 'admin';
         });
 
+    const canCreateMoreUsers = user?.role === 'admin' ||
+      (typeof user?.max_users_limit === 'number' && user.max_users_limit > 0
+        ? usersData.length < user.max_users_limit
+        : true);
+
+    const limitReachedMessage = !canCreateMoreUsers && user?.role !== 'admin'
+      ? `Has alcanzado el límite de usuarios (${user?.max_users_limit}). Contacta a un administrador para aumentar tu capacidad.`
+      : undefined;
+
     // Mutations
     const createUserMutation = useCreateUser();
     const updateUserMutation = useUpdateUser();
@@ -55,14 +65,18 @@ export function useUsersView() {
               p_full_name: data.fullName,
               p_role: data.role,
               p_store_id: data.memberships?.[0]?.store_id || user.storeId || '',
-              p_memberships: data.memberships
+              p_memberships: data.memberships,
+              p_max_stores: data.maxStoresLimit,
+              p_max_users: data.maxUsersLimit
             });
           } else if (mode === 'edit' && selectedUserContractId) {
             await updateUserMutation.mutateAsync({
               id: selectedUserContractId,
               full_name: data.fullName,
               role: data.role,
-              is_active: data.isActive
+              is_active: data.isActive,
+              max_stores_limit: data.maxStoresLimit,
+              max_users_limit: data.maxUsersLimit
             });
 
             await manageMembershipsMutation.mutateAsync({
@@ -73,7 +87,9 @@ export function useUsersView() {
           setUserFormMode(null);
           setSelectedUserContract(null);
           return true;
-        } catch (error) {
+        } catch (error: any) {
+          console.error('[useUsersView] Error submitting form:', error);
+          toast.error(error.message || 'Error al procesar la solicitud');
           return false;
         }
     };
@@ -104,6 +120,9 @@ export function useUsersView() {
         users: filteredUsers,
         stores,
         isLoadingUsers,
+        isAdmin: user?.role === 'admin',
+        canCreateMoreUsers,
+        limitReachedMessage,
 
         // Mutations & handlers
         handleEditUser,
