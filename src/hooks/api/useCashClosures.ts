@@ -2,26 +2,31 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { cashService } from '@/services/cash-service';
 import { CashClosure } from '@/types';
 import { toast } from 'sonner';
+import { getCleanStoreId } from './base';
 
 export function useCashClosures(storeId?: string | null, isAdmin = false) {
+  const cleanStoreId = getCleanStoreId(storeId);
+
   return useQuery({
-    queryKey: ['cash-closures', storeId, isAdmin],
+    queryKey: ['cash-closures', cleanStoreId, isAdmin],
     queryFn: () => {
-      if (!storeId && !isAdmin) return [];
-      return cashService.getClosures(storeId || '', isAdmin);
+      if (!cleanStoreId && !isAdmin) return [];
+      return cashService.getClosures(cleanStoreId || '', isAdmin);
     },
-    enabled: isAdmin || !!storeId,
+    enabled: isAdmin || !!cleanStoreId,
   });
 }
 
 export function useSalesSinceLastClosure(storeId?: string | null) {
+  const cleanStoreId = getCleanStoreId(storeId);
+
   return useQuery({
-    queryKey: ['sales-since-last-closure', storeId],
+    queryKey: ['sales-since-last-closure', cleanStoreId],
     queryFn: () => {
-      if (!storeId) return null;
-      return cashService.getSalesSinceLastClosure(storeId);
+      if (!cleanStoreId) return null;
+      return cashService.getSalesSinceLastClosure(cleanStoreId);
     },
-    enabled: !!storeId,
+    enabled: !!cleanStoreId,
   });
 }
 
