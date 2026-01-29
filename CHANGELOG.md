@@ -5,19 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [5.7.5] - 2026-02-20
+## [5.7.5] - 2026-02-21
 
 ### Fixed
-- **Acciones de Usuario (Crear/Editar)**: Reparada la funcionalidad de creación y edición de usuarios. Se eliminó el "fallo silencioso" al editar permitiendo que el campo email sea `readOnly` en lugar de `disabled`, asegurando su inclusión en la validación de Zod.
-- **Feedback de Errores**: Implementación de notificaciones `toast` explícitas en el flujo de gestión de usuarios para evitar fallos sin retroalimentación visual.
-- **Robustez del Modal**: Añadido estado de carga defensivo en el modal de usuario para prevenir renderizados incompletos.
+- **Resolución de Conflictos de CSP y Service Worker**: Actualización de las políticas de seguridad de contenido (CSP) en `next.config.ts` para permitir la carga de Workbox desde el CDN de Google (`storage.googleapis.com`), resolviendo fallos en el registro del Service Worker.
+- **Limpieza de Cabeceras de Permisos**: Eliminación de la directiva `interest-cohort` (FLoC) de `Permissions-Policy` para eliminar advertencias de características no habilitadas en navegadores modernos.
+- **Hardenización de Generación de Reportes**: Refuerzo de la API `/api/reports/generate` con validaciones defensivas de parámetros y manejo de errores específico para el sistema de almacenamiento.
+- **Infraestructura de Reportes**: Nueva migración para garantizar la existencia y permisos del bucket de almacenamiento `reports`, solucionando el error crítico "Bucket not found" que impedía la descarga de documentos.
 
-### Added
-- **Capacidades por Rol (User Capabilities)**: Implementación de límites operativos para usuarios. Los administradores ahora pueden configurar `max_stores_limit` y `max_users_limit` desde el formulario de usuario.
-- **Control de Límites para Encargados**: El sistema ahora valida en el frontend si un Encargado ha alcanzado su límite de creación de usuarios, deshabilitando la acción y mostrando un mensaje de advertencia contextual.
-- **Enforzamiento de Límite de Tiendas**: Se añadió validación en tiempo real en el formulario para impedir la asignación de más tiendas de las permitidas por la capacidad del usuario.
-
-**Nota de Handoff para UX:** Se han añadido nuevos campos numéricos en el modal de usuario (visibles solo para administradores) con un diseño integrado en el sistema neumórfico. El botón "Nuevo Usuario" ahora muestra un estado deshabilitado con un mensaje de error si el usuario actual ha alcanzado su capacidad máxima.
+**Nota de Handoff para UX:** No hay cambios visuales. Se ha restaurado la funcionalidad de generación de reportes PDF y se ha habilitado correctamente el soporte PWA (Service Worker) que estaba bloqueado por políticas de seguridad.
 
 ## [5.7.4] - 2026-02-20
 

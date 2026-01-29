@@ -1,13 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { BaseModal } from "@/components/ui/BaseModal";
 import { AlertTriangle, RefreshCw, Server, Laptop, ChevronRight } from 'lucide-react';
 import { PrimaryButton } from '@/components/ui/atomic';
 import { offlineStorage } from '@/lib/sync/offline-storage';
@@ -52,16 +46,37 @@ export function SyncConflictModal() {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="max-w-2xl !rounded-3xl border-white/5 shadow-2xl">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-black uppercase tracking-tight flex items-center gap-2 text-danger">
-            <AlertTriangle className="w-6 h-6" />
-            Conflictos de Sincronización
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="py-4 space-y-6">
+    <BaseModal
+      open={isOpen}
+      onOpenChange={setIsOpen}
+      title={
+        <div className="flex items-center gap-2 text-danger">
+          <AlertTriangle className="w-6 h-6" />
+          Conflictos de Sincronización
+        </div>
+      }
+      maxWidth="sm:max-w-2xl"
+      footer={
+        <div className="flex flex-row justify-between w-full gap-4">
+          <button
+            onClick={() => setIsOpen(false)}
+            className="neu-btn px-6 py-2 text-xs font-black uppercase"
+          >
+            Cerrar
+          </button>
+          <PrimaryButton
+            label="Procesar Restantes"
+            icon={RefreshCw}
+            onClick={() => {
+              setIsOpen(false);
+              processQueue();
+            }}
+            className="flex-1"
+          />
+        </div>
+      }
+    >
+        <div className="space-y-6">
           <p className="text-sm text-muted-foreground">
             Se han detectado cambios que entran en conflicto con la versión del servidor.
             Por favor, elige cómo resolver cada uno.
@@ -157,25 +172,6 @@ export function SyncConflictModal() {
             ))}
           </div>
         </div>
-
-        <DialogFooter className="sm:justify-between flex-row gap-4">
-          <button
-            onClick={() => setIsOpen(false)}
-            className="neu-btn px-6 py-2 text-xs font-black uppercase"
-          >
-            Cerrar
-          </button>
-          <PrimaryButton
-            label="Procesar Restantes"
-            icon={RefreshCw}
-            onClick={() => {
-              setIsOpen(false);
-              processQueue();
-            }}
-            className="flex-1"
-          />
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    </BaseModal>
   );
 }

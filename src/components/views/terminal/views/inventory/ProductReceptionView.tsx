@@ -16,13 +16,7 @@ import { SecurityScrollContainer } from '@/components/ui/SecurityScrollContainer
 import { importService } from '@/services/import-service';
 import { receptionImportRowSchema } from '@/validation/schemas';
 import Papa from 'papaparse';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
-} from "@/components/ui/dialog";
+import { BaseModal } from "@/components/ui/BaseModal";
 
 interface ProductReceptionViewProps {
     onCancel: () => void;
@@ -558,58 +552,60 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
             </div>
 
             {/* Help Modal */}
-            <Dialog open={isHelpModalOpen} onOpenChange={setIsHelpModalOpen}>
-                <DialogContent className="max-w-md !rounded-3xl border-white/5 shadow-2xl">
-                    <DialogHeader>
-                        <DialogTitle className="text-xl font-black uppercase tracking-tight flex items-center gap-2">
-                            <HelpCircle className="w-6 h-6 text-primary" />
-                            Ayuda: Recepción de Productos
-                        </DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4 text-sm">
-                        <p>Esta sección permite registrar el ingreso de mercancía al inventario.</p>
-
-                        <div className="space-y-2">
-                            <h4 className="font-bold uppercase text-[10px] text-primary tracking-widest">Importación por CSV</h4>
-                            <p>Puede cargar múltiples productos a la vez usando un archivo CSV con las siguientes columnas:</p>
-                            <ul className="list-disc pl-5 space-y-1 text-xs">
-                                <li><strong>SKU:</strong> Código único del producto dentro de esta tienda (OBLIGATORIO).</li>
-                                <li><strong>Nombre del Producto:</strong> Nombre para referencia (opcional).</li>
-                                <li><strong>Cantidad:</strong> Unidades recibidas.</li>
-                                <li><strong>Costo:</strong> Precio unitario de compra.</li>
-                            </ul>
-                        </div>
-
-                        <div className="neu-card !p-4 bg-primary/5 border-primary/20 space-y-3">
-                            <p className="text-xs font-bold italic">“Los productos se aplicarán al inventario solo al confirmar la recepción.”</p>
-                            <button
-                                onClick={downloadTemplate}
-                                className="w-full neu-btn !py-2 flex items-center justify-center gap-2 text-[10px] font-black uppercase"
-                            >
-                                <FileText className="w-4 h-4" />
-                                Descargar Plantilla CSV
-                            </button>
-                        </div>
-
-                        <div className="space-y-2">
-                            <h4 className="font-bold uppercase text-[10px] text-primary tracking-widest">Consejos</h4>
-                            <ul className="list-disc pl-5 space-y-1 text-xs">
-                                <li>Asegúrese de cerrar el archivo en Excel antes de subirlo.</li>
-                                <li>Verifique que los SKU existan previamente en el sistema.</li>
-                                <li>Revise las cantidades y costos antes de confirmar.</li>
-                            </ul>
-                        </div>
+            <BaseModal
+                open={isHelpModalOpen}
+                onOpenChange={setIsHelpModalOpen}
+                title={
+                    <div className="flex items-center gap-2">
+                        <HelpCircle className="w-6 h-6 text-primary" />
+                        Ayuda: Recepción de Productos
                     </div>
-                    <DialogFooter>
+                }
+                maxWidth="sm:max-w-md"
+                footer={
+                    <button
+                        onClick={() => setIsHelpModalOpen(false)}
+                        className="neu-btn-primary w-full !py-3 font-black text-xs uppercase tracking-widest"
+                    >
+                        Entendido
+                    </button>
+                }
+            >
+                <div className="space-y-4 text-sm">
+                    <p>Esta sección permite registrar el ingreso de mercancía al inventario.</p>
+
+                    <div className="space-y-2">
+                        <h4 className="font-bold uppercase text-[10px] text-primary tracking-widest">Importación por CSV</h4>
+                        <p>Puede cargar múltiples productos a la vez usando un archivo CSV con las siguientes columnas:</p>
+                        <ul className="list-disc pl-5 space-y-1 text-xs">
+                            <li><strong>SKU:</strong> Código único del producto dentro de esta tienda (OBLIGATORIO).</li>
+                            <li><strong>Nombre del Producto:</strong> Nombre para referencia (opcional).</li>
+                            <li><strong>Cantidad:</strong> Unidades recibidas.</li>
+                            <li><strong>Costo:</strong> Precio unitario de compra.</li>
+                        </ul>
+                    </div>
+
+                    <div className="neu-card !p-4 bg-primary/5 border-primary/20 space-y-3">
+                        <p className="text-xs font-bold italic">“Los productos se aplicarán al inventario solo al confirmar la recepción.”</p>
                         <button
-                            onClick={() => setIsHelpModalOpen(false)}
-                            className="neu-btn-primary w-full !py-3 font-black text-xs uppercase tracking-widest"
+                            onClick={downloadTemplate}
+                            className="w-full neu-btn !py-2 flex items-center justify-center gap-2 text-[10px] font-black uppercase"
                         >
-                            Entendido
+                            <FileText className="w-4 h-4" />
+                            Descargar Plantilla CSV
                         </button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+                    </div>
+
+                    <div className="space-y-2">
+                        <h4 className="font-bold uppercase text-[10px] text-primary tracking-widest">Consejos</h4>
+                        <ul className="list-disc pl-5 space-y-1 text-xs">
+                            <li>Asegúrese de cerrar el archivo en Excel antes de subirlo.</li>
+                            <li>Verifique que los SKU existan previamente en el sistema.</li>
+                            <li>Revise las cantidades y costos antes de confirmar.</li>
+                        </ul>
+                    </div>
+                </div>
+            </BaseModal>
         </div>
     );
 }

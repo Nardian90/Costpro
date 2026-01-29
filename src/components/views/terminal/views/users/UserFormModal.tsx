@@ -2,7 +2,7 @@
 'use client'
 
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { BaseModal } from '@/components/ui/BaseModal';
 import UserForm, { UserFormData } from './UserForm';
 import { UserContract } from '@/contracts/user';
 import { Store } from '@/types';
@@ -41,18 +41,17 @@ export function UserFormModal({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[625px]">
-        <DialogHeader>
-          <DialogTitle>{mode === 'create' ? 'Crear Nuevo Usuario' : 'Editar Usuario'}</DialogTitle>
-          <DialogDescription>
-            {mode === 'create'
-              ? "Completa los detalles para registrar un nuevo miembro del equipo."
-              : "Actualiza la información y los permisos del usuario."
-            }
-          </DialogDescription>
-        </DialogHeader>
-        {mode && userContract ? (
+    <BaseModal
+      open={isOpen}
+      onOpenChange={(open) => !open && onClose()}
+      title={mode === 'create' ? 'Crear Nuevo Usuario' : 'Editar Usuario'}
+      description={mode === 'create'
+        ? "Completa los detalles para registrar un nuevo miembro del equipo."
+        : "Actualiza la información y los permisos del usuario."
+      }
+      maxWidth="sm:max-w-[625px]"
+    >
+        {mode && userContract && (
             <UserForm
                 key={userContract.id || 'new-user'}
                 initialData={userContract}
@@ -72,7 +71,6 @@ export function UserFormModal({
             </p>
           </div>
         )}
-      </DialogContent>
-    </Dialog>
+    </BaseModal>
   );
 }
