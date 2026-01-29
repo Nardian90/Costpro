@@ -1,150 +1,237 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { rssService } from '@/services/rss-service';
-import { RSSItem } from '@/types';
+import React from 'react';
 import {
   Newspaper,
+  TrendingUp,
+  AlertCircle,
   ExternalLink,
   Clock,
-  AlertTriangle,
-  TrendingUp,
-  RefreshCw
+  RefreshCw,
+  Search,
+  Filter,
+  DollarSign,
+  ChevronRight
 } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { cn, formatDate, formatTime } from '@/lib/utils';
+import { useRSSNews } from '@/hooks/api/useRSS';
+import { StateRenderer } from '@/components/ui/StateRenderer';
+import { RSSNewsItem } from '@/types';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function NewsView() {
-  const { data: news, isLoading, error, refetch, isRefetching } = useQuery({
-    queryKey: ['news'],
-    queryFn: () => rssService.fetchNews(),
-    staleTime: 30 * 60 * 1000, // 30 mins
-  });
+  const { data: news, isLoading, error, refetch, isRefetching } = useRSSNews();
+  const [searchTerm, setSearchTerm] = React.useState('');
+  const [filterPriority, setFilterPriority] = React.useState(false);
 
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 gap-4">
-        <RefreshCw className="w-10 h-10 animate-spin text-primary" />
-        <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">
-          Sincronizando noticias del mundo...
-        </p>
-      </div>
-    );
-  }
+  const filteredNews = React.useMemo(() => {
+    if (!news) return [];
+    return news.filter(item => {
+      const title = item.title?.toLowerCase() || '';
+      const content = item.content?.toLowerCase() || '';
+      const matchesSearch = title.includes(searchTerm.toLowerCase()) ||
+                          content.includes(searchTerm.toLowerCase());
+      const matchesPriority = filterPriority ? item.isPriority : true;
+      return matchesSearch && matchesPriority;
+    });
+  }, [news, searchTerm, filterPriority]);
 
-  if (error) {
-    return (
-      <div className="p-8 bg-destructive/10 border-2 border-dashed border-destructive/20 rounded-3xl text-center space-y-4">
-        <AlertTriangle className="w-12 h-12 text-destructive mx-auto" />
-        <h3 className="text-lg font-black uppercase text-destructive">Error al cargar noticias</h3>
-        <p className="text-sm text-muted-foreground max-w-md mx-auto">
-          No pudimos conectar con los servicios de noticias. Por favor, intenta de nuevo más tarde.
-        </p>
-        <button
-          onClick={() => refetch()}
-          className="px-6 py-2 bg-destructive text-white font-bold rounded-xl text-xs uppercase"
-        >
-          Reintentar
-        </button>
-      </div>
-    );
-  }
+  const exchangeRateNews = React.useMemo(() => {
+    return news?.find(item => item.isExchangeRate);
+  }, [news]);
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
         <div>
-          <h2 className="text-4xl font-black uppercase tracking-tighter">Noticias Inteligentes</h2>
-          <p className="text-muted-foreground font-medium uppercase text-[10px] tracking-widest">
-            Agregador de feeds con prioridad económica y tasas de cambio
+          <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase">Agregador de Noticias</h2>
+          <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">
+            Información relevante y tasas de cambio en tiempo real
           </p>
         </div>
-        <button
-          onClick={() => refetch()}
-          disabled={isRefetching}
-          className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground font-bold rounded-xl text-[10px] uppercase tracking-wider hover:opacity-90 disabled:opacity-50 transition-all"
-        >
-          <RefreshCw className={`w-3 h-3 ${isRefetching ? 'animate-spin' : ''}`} />
-          {isRefetching ? 'Actualizando...' : 'Actualizar'}
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {news?.map((item) => (
-          <NewsCard key={item.id} item={item} />
-        ))}
-      </div>
-
-      {news?.length === 0 && (
-        <div className="py-20 text-center space-y-4">
-          <Newspaper className="w-16 h-16 text-muted-foreground/20 mx-auto" />
-          <p className="text-muted-foreground font-bold uppercase text-xs">No hay noticias disponibles en este momento.</p>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => refetch()}
+            disabled={isRefetching}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border bg-card hover:bg-accent transition-all text-xs font-black uppercase tracking-widest disabled:opacity-50"
+          >
+            <RefreshCw className={cn("w-3.5 h-3.5", isRefetching && "animate-spin")} />
+            {isRefetching ? 'Actualizando...' : 'Actualizar'}
+          </button>
         </div>
+      </div>
+
+      {/* Tasa de Cambio Card (if available) */}
+      {exchangeRateNews && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative overflow-hidden p-6 rounded-3xl border-2 border-primary/20 bg-primary/5 shadow-xl shadow-primary/5"
+        >
+          <div className="absolute top-0 right-0 p-8 opacity-10">
+            <TrendingUp size={120} />
+          </div>
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-primary font-black uppercase text-xs tracking-[0.2em]">
+                <DollarSign className="w-4 h-4" />
+                Tasa de Cambio Oficial
+              </div>
+              <h3 className="text-2xl font-black text-foreground uppercase tracking-tight leading-none">
+                {exchangeRateNews.title}
+              </h3>
+              <p className="text-sm font-medium text-muted-foreground max-w-2xl">
+                {exchangeRateNews.contentSnippet}
+              </p>
+            </div>
+            <div className="shrink-0 flex flex-col items-end">
+              {exchangeRateNews.exchangeRateData ? (
+                <div className="text-5xl font-black text-primary tracking-tighter">
+                  {exchangeRateNews.exchangeRateData.value} <span className="text-xl uppercase ml-1">CUP</span>
+                </div>
+              ) : (
+                <a
+                  href={exchangeRateNews.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-6 py-3 bg-primary text-white font-black text-xs uppercase tracking-widest rounded-xl hover:opacity-90 transition-opacity flex items-center gap-2"
+                >
+                  Ver Detalles <ExternalLink className="w-4 h-4" />
+                </a>
+              )}
+              <div className="mt-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                Publicado: {formatDate(exchangeRateNews.pubDate)} {formatTime(exchangeRateNews.pubDate)}
+              </div>
+            </div>
+          </div>
+        </motion.div>
       )}
+
+      {/* Filters & Search */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="md:col-span-2 relative group">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="BUSCAR NOTICIAS..."
+            className="w-full bg-card border border-border rounded-2xl py-3.5 pl-11 pr-4 text-xs font-black focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all uppercase tracking-widest"
+          />
+        </div>
+        <div className="md:col-span-1">
+          <button
+            onClick={() => setFilterPriority(!filterPriority)}
+            className={cn(
+              "w-full h-full flex items-center justify-center gap-2 rounded-2xl border-2 transition-all text-xs font-black uppercase tracking-widest",
+              filterPriority
+                ? "bg-amber-500/10 border-amber-500 text-amber-600 shadow-lg shadow-amber-500/10"
+                : "bg-card border-border text-muted-foreground hover:bg-accent"
+            )}
+          >
+            <Filter className="w-4 h-4" />
+            {filterPriority ? 'Solo Prioritarias' : 'Todas'}
+          </button>
+        </div>
+        <div className="md:col-span-1 flex items-center justify-center p-3 rounded-2xl border border-dashed border-border bg-muted/30">
+          <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">
+            {filteredNews.length} Resultados
+          </span>
+        </div>
+      </div>
+
+      {/* News List */}
+      <StateRenderer
+        isLoading={isLoading}
+        error={error}
+        data={filteredNews}
+        emptyComponent={
+          <div className="flex flex-col items-center justify-center py-20 gap-4 text-center w-full bg-muted/20 border border-border rounded-2xl p-8">
+            <p className="font-bold text-foreground uppercase tracking-widest text-xs">No se encontraron noticias</p>
+            <p className="text-sm text-muted-foreground">No hay artículos que coincidan con los criterios actuales.</p>
+          </div>
+        }
+      >
+        {(items) => (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-20">
+            <AnimatePresence mode="popLayout">
+              {items.map((item) => (
+                <NewsCard key={item.id} item={item} />
+              ))}
+            </AnimatePresence>
+          </div>
+        )}
+      </StateRenderer>
     </div>
   );
 }
 
-function NewsCard({ item }: { item: RSSItem }) {
-  const isExchangeRate = item.isExchangeRate;
-  const isPriority = item.isPriority;
-
+function NewsCard({ item }: { item: RSSNewsItem }) {
   return (
-    <div className={`group relative bg-card border-2 transition-all duration-300 rounded-[2rem] overflow-hidden flex flex-col ${
-      isExchangeRate
-        ? 'border-primary ring-4 ring-primary/10'
-        : isPriority
-          ? 'border-orange-500/50 hover:border-orange-500 bg-orange-500/[0.02]'
-          : 'border-border hover:border-primary/50'
-    }`}>
-      {/* Badges */}
-      <div className="absolute top-4 right-4 flex gap-2">
-        {isExchangeRate && (
-          <div className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest flex items-center gap-1 shadow-lg animate-pulse">
-            <TrendingUp className="w-3 h-3" />
-            Tasa de Cambio
+    <motion.div
+      layout
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      className={cn(
+        "group p-6 rounded-3xl border transition-all hover:shadow-2xl hover:-translate-y-1 flex flex-col justify-between h-full relative overflow-hidden",
+        item.isPriority
+          ? "border-amber-500/30 bg-amber-500/[0.02] shadow-amber-500/5 hover:border-amber-500/50"
+          : "border-border bg-card shadow-sm hover:border-primary/30"
+      )}
+    >
+      {item.isPriority && (
+        <div className="absolute top-0 right-0">
+          <div className="bg-amber-500 text-white text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-bl-xl shadow-lg">
+            Prioritario
           </div>
-        )}
-        {isPriority && !isExchangeRate && (
-          <div className="bg-orange-500 text-white px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest flex items-center gap-1 shadow-lg">
-            <AlertTriangle className="w-3 h-3" />
-            Prioridad
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      <div className="p-6 space-y-4 flex-1 flex flex-col">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-            <span className="text-primary">{item.sourceName}</span>
-            <span>•</span>
-            <span className="flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              {formatDistanceToNow(new Date(item.pubDate), { addSuffix: true, locale: es })}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className={cn(
+              "p-2 rounded-xl",
+              item.isPriority ? "bg-amber-500/10 text-amber-600" : "bg-primary/10 text-primary"
+            )}>
+              <Newspaper className="w-4 h-4" />
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+              {item.feedName || 'Noticias'}
             </span>
           </div>
-          <h3 className={`text-lg font-black leading-tight group-hover:text-primary transition-colors ${
-            isExchangeRate ? 'text-xl' : ''
-          }`}>
+          <div className="text-[9px] font-bold text-muted-foreground uppercase flex items-center gap-1">
+            <Clock className="w-3 h-3" />
+            {formatDate(item.pubDate)}
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-lg font-black text-foreground uppercase tracking-tight line-clamp-2 leading-tight group-hover:text-primary transition-colors">
             {item.title}
           </h3>
-        </div>
-
-        <p className="text-sm text-muted-foreground line-clamp-3 font-medium leading-relaxed flex-1">
-          {item.contentSnippet}
-        </p>
-
-        <div className="pt-4 flex items-center justify-between border-t border-border/50">
-          <a
-            href={item.link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary hover:gap-3 transition-all"
-          >
-            Leer más <ExternalLink className="w-3 h-3" />
-          </a>
+          <p className="mt-3 text-xs font-medium text-muted-foreground line-clamp-3 leading-relaxed">
+            {item.contentSnippet}
+          </p>
         </div>
       </div>
-    </div>
+
+      <div className="mt-6 pt-6 border-t border-border/50 flex items-center justify-between">
+        <a
+          href={item.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline flex items-center gap-1"
+        >
+          Leer noticia completa <ExternalLink className="w-3 h-3" />
+        </a>
+        <div className="p-2 rounded-full border border-border group-hover:bg-primary group-hover:border-primary transition-all">
+          <ChevronRight className="w-3 h-3 group-hover:text-white" />
+        </div>
+      </div>
+    </motion.div>
   );
 }
