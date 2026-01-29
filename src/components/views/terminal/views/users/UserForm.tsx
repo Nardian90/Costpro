@@ -14,8 +14,8 @@ const userFormSchema = z.object({
   email: z.string().email('Email inválido'),
   role: z.enum(['admin', 'encargado', 'usuario', 'manager', 'clerk', 'warehouse'] as const),
   isActive: z.boolean(),
-  maxStoresLimit: z.number().optional().default(0),
-  maxUsersLimit: z.number().optional().default(0),
+  maxStoresLimit: z.number().min(0).catch(0),
+  maxUsersLimit: z.number().min(0).catch(0),
   memberships: z.array(z.object({
     store_id: z.string().uuid('Seleccione una tienda'),
     role: z.enum(['admin', 'encargado', 'usuario', 'manager', 'clerk', 'warehouse'] as const),
@@ -23,7 +23,7 @@ const userFormSchema = z.object({
   })),
 });
 
-export type UserFormData = z.infer<typeof userFormSchema>;
+export type UserFormData = z.output<typeof userFormSchema>;
 
 interface UserFormProps {
   mode: 'create' | 'edit';
