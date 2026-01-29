@@ -2,7 +2,7 @@
 'use client'
 
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { BaseModal } from '@/components/ui/BaseModal';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency, formatDate } from '@/lib/utils';
@@ -22,14 +22,13 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
   if (!transaction) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Detalles de la Venta</DialogTitle>
-          <DialogDescription>
-            ID de Transacción: {transaction.id}
-          </DialogDescription>
-        </DialogHeader>
+    <BaseModal
+      open={isOpen}
+      onOpenChange={(open) => !open && onClose()}
+      title="Detalles de la Venta"
+      description={`ID de Transacción: ${transaction.id}`}
+      maxWidth="sm:max-w-2xl"
+    >
         <div className="grid grid-cols-3 gap-4 text-sm">
           <div>
             <p className="font-semibold text-muted-foreground">Fecha</p>
@@ -83,7 +82,6 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
                 <p className="text-lg font-bold">Total: <span className="text-primary">{formatCurrency(transaction.total_amount)}</span></p>
             </div>
         </div>
-      </DialogContent>
-    </Dialog>
+    </BaseModal>
   );
 }

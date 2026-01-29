@@ -1,13 +1,7 @@
 'use client';
 
 import React from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { BaseModal } from "@/components/ui/BaseModal";
 import { Package, Hash, User, Calendar, FileText, Building2, Download } from 'lucide-react';
 import { type Receipt, type ReceiptItem } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -30,21 +24,38 @@ export function ReceptionDetailsModal({ receipt, isOpen, onClose, items, isLoadi
   const total = subtotal + taxes;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl !rounded-3xl border-white/5 shadow-2xl overflow-hidden p-0">
-        <DialogHeader className="p-6 pb-0">
-          <DialogTitle className="text-2xl font-black uppercase tracking-tight flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Package className="w-6 h-6 text-primary" />
-            </div>
-            Detalle de Recepción
-          </DialogTitle>
-          <DialogDescription className="sr-only">
-            Muestra el listado de productos y cantidades recibidas en esta operación.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="p-6 space-y-6">
+    <BaseModal
+      open={isOpen}
+      onOpenChange={onClose}
+      title={
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+            <Package className="w-6 h-6 text-primary" />
+          </div>
+          Detalle de Recepción
+        </div>
+      }
+      description="Muestra el listado de productos y cantidades recibidas en esta operación."
+      maxWidth="sm:max-w-2xl"
+      footer={
+        <div className="flex justify-between items-center w-full">
+          <button
+            onClick={onExport}
+            className="flex items-center gap-2 px-4 py-3 bg-background border border-border rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all active:scale-95"
+          >
+            <Download className="w-4 h-4" />
+            Exportar CSV
+          </button>
+          <button
+            onClick={onClose}
+            className="px-8 py-3 bg-background border border-border rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-muted transition-all active:scale-95"
+          >
+            Cerrar Detalle
+          </button>
+        </div>
+      }
+    >
+        <div className="space-y-6">
           {/* Metadata Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             <div className="neu-card !p-3 space-y-1">
@@ -149,7 +160,7 @@ export function ReceptionDetailsModal({ receipt, isOpen, onClose, items, isLoadi
         </div>
 
         {/* Financial Summary */}
-        <div className="px-6 py-4 bg-primary/5 border-t border-white/5">
+        <div className="mt-6 pt-4 border-t border-white/5">
            <div className="flex flex-col items-end gap-1">
               <div className="flex justify-between w-full max-w-[200px] text-[10px] font-bold text-muted-foreground uppercase">
                 <span>Subtotal:</span>
@@ -165,23 +176,6 @@ export function ReceptionDetailsModal({ receipt, isOpen, onClose, items, isLoadi
               </div>
            </div>
         </div>
-
-        <div className="p-6 bg-muted/20 border-t border-white/5 flex justify-between items-center">
-          <button
-            onClick={onExport}
-            className="flex items-center gap-2 px-4 py-3 bg-background border border-border rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all active:scale-95"
-          >
-            <Download className="w-4 h-4" />
-            Exportar CSV
-          </button>
-          <button
-            onClick={onClose}
-            className="px-8 py-3 bg-background border border-border rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-muted transition-all active:scale-95"
-          >
-            Cerrar Detalle
-          </button>
-        </div>
-      </DialogContent>
-    </Dialog>
+    </BaseModal>
   );
 }
