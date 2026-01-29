@@ -50,8 +50,16 @@ export function useSuspenseDashboardData(storeId?: string | null, isAdmin = fals
   return useSuspenseQuery({
     queryKey: ['dashboard-kpis', storeId, isAdmin],
     queryFn: async () => {
+      const cleanStoreId = (storeId === 'null' || storeId === 'undefined' || !storeId) ? null : storeId;
+      if (!isAdmin && !cleanStoreId) {
+        return {
+          kpis: { gross_sales: 0, cost_of_goods: null, profit: null } as DashboardKPIs,
+          summary: { total_billed: 0, transaction_count: 0, average_ticket: 0, total_cash: 0, total_transfer: 0 } as SalesSummary
+        };
+      }
+
       const rpcName = 'get_dashboard_kpis';
-      const params = isAdmin ? {} : { p_store_id: storeId };
+      const params = isAdmin ? {} : { p_store_id: cleanStoreId };
       const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
 
       const validatedData = await validateRPCArrayResponse(
@@ -89,8 +97,11 @@ export function useDashboardData(storeId?: string | null, isAdmin = false) {
   return useQuery({
     queryKey: ['dashboard-kpis', storeId, isAdmin],
     queryFn: async () => {
+      const cleanStoreId = (storeId === 'null' || storeId === 'undefined' || !storeId) ? null : storeId;
+      if (!isAdmin && !cleanStoreId) return null;
+
       const rpcName = 'get_dashboard_kpis';
-      const params = isAdmin ? {} : { p_store_id: storeId };
+      const params = isAdmin ? {} : { p_store_id: cleanStoreId };
       const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
 
       const validatedData = await validateRPCArrayResponse(
