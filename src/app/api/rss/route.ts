@@ -70,14 +70,18 @@ export async function GET(req: NextRequest) {
       : [{ name: 'Banco Central de Cuba', url: 'https://www.bc.gob.cu/rss.xml' }];
 
     const keywords = settingsRes.data?.priority_keywords || DEFAULT_PRIORITY_KEYWORDS;
+    const applyFilter = settingsRes.data?.apply_filter ?? false;
 
     // 4. Parse feeds
     const parser = new Parser({
-      timeout: 10000,
-      headers: { 'User-Agent': 'CostPro News Aggregator' }
+      timeout: 15000, // Increased timeout
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'application/rss+xml, application/xml, text/xml, */*'
+      }
     });
 
-    const allItems: RSSItem[] = [];
+    let allItems: RSSItem[] = [];
 
     for (const feed of feeds) {
       try {
@@ -86,19 +90,26 @@ export async function GET(req: NextRequest) {
           classifyRSSItem(item, feed.name, keywords)
         );
         allItems.push(...classifiedItems);
-      } catch (feedError) {
-        console.error(`Error fetching feed ${feed.url}:`, feedError);
+      } catch (feedError: any) {
+        console.error(`Error fetching feed ${feed.url}:`, feedError.message);
       }
     }
 
-    // 5. Sort
+    // 5. Apply Filter if enabled
+    if (applyFilter) {
+      allItems = allItems.filter(item => item.isPriority);
+    }
+
+    // 6. Sort
     const sortedItems = allItems.sort((a, b) => {
+      // Priority first
       if (a.isPriority && !b.isPriority) return -1;
       if (!a.isPriority && b.isPriority) return 1;
+      // Then date
       return new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime();
     });
 
-    // 6. Update cache
+    // 7. Update cache
     cache = {
       items: sortedItems,
       timestamp: now
@@ -116,7 +127,6 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    // 1. Validate admin session
     const auth = await validateSession(req, 'admin');
     if ('error' in auth) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
