@@ -32,7 +32,11 @@ export async function POST(req: NextRequest) {
     );
     return NextResponse.json(response);
   } catch (error: any) {
-    console.error('Bot API Route Error:', error);
+    console.error('[BotAPI] Critical Error:', {
+      message: error.message,
+      stack: error.stack,
+      cause: error.cause
+    });
     return NextResponse.json({
       error: 'Error interno del Bot',
       details: error.message
