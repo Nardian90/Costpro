@@ -1,28 +1,28 @@
 import { supabase } from '@/lib/supabaseClient';
-import { RSSFeed, RSSSettings, RSSItem } from '@/types';
+import { RSSFeed, RSSSettings, RSSNewsItem } from '@/types';
 
 export const rssService = {
   /**
-   * Fetch all news from the proxied API
+   * Fetches news from the internal API route (which handles parsing and caching).
    */
-  async fetchNews(): Promise<RSSItem[]> {
+  async getNews(): Promise<RSSNewsItem[]> {
     const { data: { session } } = await supabase.auth.getSession();
-    const token = session?.access_token;
-
     const response = await fetch('/api/rss', {
       headers: {
-        'Authorization': `Bearer ${token}`
-      }
+        Authorization: `Bearer ${session?.access_token}`,
+      },
     });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch news');
+      throw new Error('Error al obtener noticias RSS');
     }
-    return response.json();
+
+    const data = await response.json();
+    return data.items || [];
   },
 
   /**
-   * Get all registered RSS feeds
+   * Fetches all RSS feeds from the database.
    */
   async getFeeds(): Promise<RSSFeed[]> {
     const { data, error } = await supabase
@@ -35,9 +35,9 @@ export const rssService = {
   },
 
   /**
-   * Add a new RSS feed
+   * Adds a new RSS feed.
    */
-  async addFeed(feed: Omit<RSSFeed, 'id' | 'created_at'>): Promise<RSSFeed> {
+  async addFeed(feed: Omit<RSSFeed, 'id' | 'created_at' | 'updated_at'>): Promise<RSSFeed> {
     const { data, error } = await supabase
       .from('rss_feeds')
       .insert(feed)
@@ -49,7 +49,22 @@ export const rssService = {
   },
 
   /**
-   * Remove an RSS feed
+   * Updates an existing RSS feed.
+   */
+  async updateFeed(id: string, feed: Partial<RSSFeed>): Promise<RSSFeed> {
+    const { data, error } = await supabase
+      .from('rss_feeds')
+      .update(feed)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  /**
+   * Deletes an RSS feed.
    */
   async deleteFeed(id: string): Promise<void> {
     const { error } = await supabase
@@ -61,41 +76,30 @@ export const rssService = {
   },
 
   /**
-   * Get RSS settings (keywords, etc.)
+   * Fetches RSS settings.
    */
-  async getSettings(): Promise<RSSSettings | null> {
+  async getSettings(): Promise<RSSSettings> {
     const { data, error } = await supabase
       .from('rss_settings')
       .select('*')
       .single();
 
-    if (error && error.code !== 'PGRST116') throw error; // PGRST116 is "No rows found"
+    if (error) throw error;
     return data;
   },
 
   /**
-   * Update RSS settings
+   * Updates RSS settings.
    */
-  async updateSettings(settings: Partial<RSSSettings>): Promise<RSSSettings> {
-    const { data: { session } } = await supabase.auth.getSession();
-    const token = session?.access_token;
-
+  async updateSettings(id: string, settings: Partial<RSSSettings>): Promise<RSSSettings> {
     const { data, error } = await supabase
       .from('rss_settings')
-      .upsert({ id: '00000000-0000-0000-0000-000000000000', ...settings })
+      .update(settings)
+      .eq('id', id)
       .select()
       .single();
 
     if (error) throw error;
-
-    // Clear API cache after settings change
-    await fetch('/api/rss', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-
     return data;
   }
 };
