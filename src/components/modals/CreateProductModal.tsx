@@ -1,13 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter
-} from "@/components/ui/dialog";
+import { BaseModal } from "@/components/ui/BaseModal";
 import { PrimaryButton, SecondaryButton } from '@/components/ui/atomic';
 import { useUIStore, useAuthStore } from '@/store';
 import { useCreateProduct } from '@/hooks/api/useProducts';
@@ -65,12 +59,24 @@ export const CreateProductModal = () => {
   };
 
   return (
-    <Dialog open={isCreateProductModalOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md !rounded-3xl border-white/5 shadow-2xl">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-black uppercase">Nuevo Producto</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto no-scrollbar pr-2">
+    <BaseModal
+      open={isCreateProductModalOpen}
+      onOpenChange={handleClose}
+      title="Nuevo Producto"
+      maxWidth="sm:max-w-md"
+      footer={
+        <>
+          <SecondaryButton onClick={handleClose} label="Cancelar" className="flex-1" />
+          <PrimaryButton
+            onClick={handleCreate}
+            label={createProductMutation.isPending ? "Creando..." : "Crear Producto"}
+            disabled={createProductMutation.isPending}
+            className="flex-1"
+          />
+        </>
+      }
+    >
+        <div className="space-y-4">
           <div className="space-y-1.5">
             <label className="text-[10px] font-black uppercase tracking-widest ml-1">Nombre</label>
             <input
@@ -146,16 +152,6 @@ export const CreateProductModal = () => {
               />
           </div>
         </div>
-        <DialogFooter className="flex-col sm:flex-row gap-3">
-          <SecondaryButton onClick={handleClose} label="Cancelar" className="flex-1" />
-          <PrimaryButton
-            onClick={handleCreate}
-            label={createProductMutation.isPending ? "Creando..." : "Crear Producto"}
-            disabled={createProductMutation.isPending}
-            className="flex-1"
-          />
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    </BaseModal>
   );
 };
