@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.6] - 2026-02-21
+
+### Fixed
+- **Hardenización de Formulario de Usuarios**: Actualización de `userFormSchema` para que `maxStoresLimit` y `maxUsersLimit` sean opcionales con valores predeterminados seguros (0), eliminando errores de compilación con `zodResolver`.
+- **Validación de UUID en RPCs**: Implementación de validación estricta de UUID para `p_store_id` mediante el paquete `uuid` en los hooks `useDashboard` y `useInventory`, evitando errores de base de datos ante IDs malformados.
+- **Resiliencia de Dashboard e Inventario**: Refuerzo de la lógica de cálculo de márgenes en el Dashboard para evitar divisiones por cero y adición de filtrado defensivo de UUIDs en la vista de Inventario para garantizar la estabilidad de la interfaz ante datos parciales.
+- **Resolución de Errores de Sintaxis**: Corrección de errores críticos de parsing en `UserFormModal.tsx` (lógica de renderizado en modo creación) y `TransferDetailsModal.tsx` (etiquetas JSX mal cerradas) que bloqueaban el despliegue.
+
+**Nota de Handoff para UX:** No hay cambios visuales significativos. Se ha mejorado la estabilidad general y se ha resuelto un problema que impedía cargar el formulario de creación de nuevos usuarios.
+
 ## [5.7.5] - 2026-02-21
 
 ### Fixed

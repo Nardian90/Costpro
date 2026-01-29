@@ -150,8 +150,6 @@ export default function TransferDetailsModal({ transferId, onClose }: TransferDe
                     </div>
                  </div>
               </div>
-
-            </div>
           )}
         </StateRenderer>
     </BaseModal>
