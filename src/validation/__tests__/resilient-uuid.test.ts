@@ -28,6 +28,13 @@ describe('Resilient UUID Schemas', () => {
       if (result.success) expect(result.data).toBe(uuid);
     });
 
+    it('should pass non-standard but format-compliant UUID (demo data case)', () => {
+      const uuid = 'd1c4ba0e-5767-4ba0-e576-7d1c4ba0e576'; // Variant 'e' is non-standard for v4 but used in demo
+      const result = resilientUuid.safeParse(uuid);
+      expect(result.success).toBe(true);
+      if (result.success) expect(result.data).toBe(uuid);
+    });
+
     it('should fail on invalid UUID string (that is not a common JS-ism)', () => {
       const result = resilientUuid.safeParse('not-a-uuid');
       expect(result.success).toBe(false);

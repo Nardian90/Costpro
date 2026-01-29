@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient, useInfiniteQuery, useSuspenseInfiniteQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
-import { validate as isUuid } from 'uuid';
+import { uuidRegex as isUuidRegex } from '@/validation/schemas';
 import { validateRPCArrayResponse, validateRPCResponse } from '@/lib/rpc-validator';
 import {
   paginatedProductSchema,
@@ -14,12 +14,21 @@ import { withLogging } from './base';
 import { z } from 'zod';
 import { useSyncContext } from '@/components/providers/SyncProvider';
 
+/**
+ * Normaliza el ID de la tienda para asegurar consistencia entre queryKeys y llamadas RPC.
+ */
+const getCleanStoreId = (storeId?: string | null) => {
+  if (storeId === 'null' || storeId === 'undefined' || !storeId) return null;
+  return storeId;
+};
+
 export function useSuspenseInventory(storeId?: string | null, searchTerm = '', category = '', limit = 20) {
+  const cleanStoreId = getCleanStoreId(storeId);
+
   return useSuspenseInfiniteQuery({
-    queryKey: ['inventory', storeId, searchTerm, category, limit],
+    queryKey: ['inventory', cleanStoreId, searchTerm, category, limit],
     queryFn: async ({ pageParam = 0 }) => {
-      const cleanStoreId = (storeId === 'null' || storeId === 'undefined' || !storeId) ? null : storeId;
-      if (cleanStoreId && !isUuid(cleanStoreId)) return { products: [], total: 0, nextOffset: null };
+      if (cleanStoreId && !isUuidRegex.test(cleanStoreId)) return { products: [], total: 0, nextOffset: null };
 
       const rpcName = 'get_paginated_products';
       const params = getPaginatedProductsParamsSchema.parse({
@@ -49,11 +58,12 @@ export function useSuspenseInventory(storeId?: string | null, searchTerm = '', c
 }
 
 export function useInventory(storeId?: string | null, searchTerm = '', category = '', limit = 20) {
+  const cleanStoreId = getCleanStoreId(storeId);
+
   return useInfiniteQuery({
-    queryKey: ['inventory', storeId, searchTerm, category, limit],
+    queryKey: ['inventory', cleanStoreId, searchTerm, category, limit],
     queryFn: async ({ pageParam = 0 }) => {
-      const cleanStoreId = (storeId === 'null' || storeId === 'undefined' || !storeId) ? null : storeId;
-      if (cleanStoreId && !isUuid(cleanStoreId)) return { products: [], total: 0, nextOffset: null };
+      if (cleanStoreId && !isUuidRegex.test(cleanStoreId)) return { products: [], total: 0, nextOffset: null };
 
       const rpcName = 'get_paginated_products';
       const params = getPaginatedProductsParamsSchema.parse({
@@ -95,7 +105,7 @@ export function useRegisterReception() {
       }
       const rpcName = 'register_reception';
       const data = await withLogging<string>(rpcName, params, () => supabase.rpc(rpcName, params));
-      return await validateRPCResponse(data, z.string().uuid(), rpcName);
+      return await validateRPCResponse(data, z.string().regex(isUuidRegex), rpcName);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });

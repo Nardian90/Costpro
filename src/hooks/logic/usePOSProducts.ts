@@ -6,7 +6,6 @@ export function usePOSProducts(products: Product[] = [], searchTerm: string) {
   const [selectedCategory, setSelectedCategory] = useState('');
 
   const filteredProducts = useMemo(() => {
-    console.log('[usePOSProducts] Filtering products. Count:', products?.length || 0, 'Search:', searchTerm, 'Category:', selectedCategory);
     const lowerSearch = searchTerm.toLowerCase();
     const safeProducts = Array.isArray(products) ? products : [];
 
@@ -21,14 +20,12 @@ export function usePOSProducts(products: Product[] = [], searchTerm: string) {
       const matchesCategory = !selectedCategory || p.category === selectedCategory;
       return matchesSearch && matchesCategory;
     });
-    console.log('[usePOSProducts] Filter result count:', result.length);
     return result;
   }, [products, searchTerm, selectedCategory]);
 
   const categories = useMemo(() => {
     const cats = Array.from(new Set(products.map(p => p.category)))
       .filter((c): c is string => Boolean(c));
-    console.log('[usePOSProducts] Extracted categories:', cats);
     return cats;
   }, [products]);
 
