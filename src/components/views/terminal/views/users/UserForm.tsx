@@ -17,7 +17,7 @@ const userFormSchema = z.object({
   maxStoresLimit: z.number().min(0).catch(0),
   maxUsersLimit: z.number().min(0).catch(0),
   memberships: z.array(z.object({
-    store_id: z.string().uuid('Seleccione una tienda'),
+    store_id: z.string().min(1, 'Seleccione una tienda'),
     role: z.enum(['admin', 'encargado', 'usuario', 'manager', 'clerk', 'warehouse'] as const),
     status: z.enum(['active', 'revoked'] as const),
   })).min(1, 'El usuario debe tener al menos una tienda asignada'),
@@ -71,7 +71,8 @@ export default function UserForm({
       maxStoresLimit: initialData.maxStoresLimit ?? 0,
       maxUsersLimit: initialData.maxUsersLimit ?? 0,
       memberships: initialData.memberships?.map(m => ({
-        store_id: m.store_id || '',
+        // Extracción resiliente de store_id (maneja casos donde m.store_id puede ser null pero m.store.id existe)
+        store_id: typeof m.store_id === 'string' ? m.store_id : (m as any).store?.id || '',
         role: m.role,
         status: m.status || 'active'
       })) || [],
