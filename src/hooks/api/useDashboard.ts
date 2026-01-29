@@ -10,8 +10,9 @@ import type { DashboardKPIs, SalesSummary } from '@/types';
 
 export async function prefetchDashboardData(queryClient: QueryClient, storeId: string, isAdmin = false) {
   const rpcName = 'get_dashboard_kpis';
-  const isValidUuid = storeId && isUuid(storeId);
-  const params = isAdmin ? {} : { p_store_id: isValidUuid ? storeId : null };
+  const cleanStoreId = (storeId === 'null' || storeId === 'undefined' || !storeId) ? null : storeId;
+  const isValidUuid = cleanStoreId && isUuid(cleanStoreId);
+  const params = isAdmin ? {} : { p_store_id: isValidUuid ? cleanStoreId : null };
 
   if (!isAdmin && !isValidUuid) return;
 
