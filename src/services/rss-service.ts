@@ -82,7 +82,7 @@ export const rssService = {
 
     const { data, error } = await supabase
       .from('rss_settings')
-      .upsert({ id: 'global', ...settings })
+      .upsert({ id: '00000000-0000-0000-0000-000000000000', ...settings })
       .select()
       .single();
 
