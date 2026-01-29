@@ -51,7 +51,7 @@ export default function UserForm({
     handleSubmit,
     control,
     watch,
-    formState: { errors },
+    formState: { errors, isSubmitted },
   } = useForm<UserFormData>({
     resolver: zodResolver(userFormSchema),
     defaultValues: initialData ? {
@@ -82,8 +82,11 @@ export default function UserForm({
     name: "memberships"
   });
 
+  const selectedRole = watch('role');
   const maxStoresLimit = watch('maxStoresLimit');
-  const canAddMoreStores = fields.length < maxStoresLimit;
+  const canAddMoreStores = selectedRole === 'encargado'
+    ? fields.length < (maxStoresLimit || 1)
+    : true;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -153,7 +156,7 @@ export default function UserForm({
           </div>
         </div>
 
-        {isAdmin && (
+        {isAdmin && selectedRole === 'encargado' && (
           <div className="grid grid-cols-2 gap-4 p-4 bg-primary/5 rounded-2xl border border-primary/10">
             <div>
               <label className="text-[10px] font-black uppercase text-primary tracking-widest mb-1.5 block">
@@ -220,13 +223,21 @@ export default function UserForm({
                  <label className="text-[8px] font-black uppercase text-muted-foreground tracking-widest block">Tienda</label>
                  <select
                   {...register(`memberships.${index}.store_id` as const)}
-                  className="w-full p-2.5 sm:p-2 rounded-lg border border-border bg-background font-bold text-xs outline-none"
+                  className={cn(
+                    "w-full p-2.5 sm:p-2 rounded-lg border bg-background font-bold text-xs outline-none transition-all",
+                    errors.memberships?.[index]?.store_id ? "border-destructive ring-1 ring-destructive/20" : "border-border"
+                  )}
                 >
                   <option value="">Seleccione tienda</option>
                   {stores.map(s => (
                     <option key={s.id} value={s.id}>{s.name}</option>
                   ))}
                 </select>
+                {errors.memberships?.[index]?.store_id && (
+                  <p className="text-[9px] text-destructive font-bold uppercase mt-1 animate-pulse">
+                    {errors.memberships[index].store_id.message}
+                  </p>
+                )}
               </div>
               <div className="grid grid-cols-2 sm:flex gap-2">
                 <div className="flex-1 sm:w-24 space-y-2">
@@ -272,6 +283,14 @@ export default function UserForm({
           )}
         </div>
       </div>
+
+      {isSubmitted && Object.keys(errors).length > 0 && (
+        <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20">
+           <p className="text-[10px] text-destructive font-black uppercase tracking-widest text-center">
+             Hay errores en el formulario. Por favor, revisa los campos marcados.
+           </p>
+        </div>
+      )}
 
       <div className="flex gap-3 pt-4">
         <button

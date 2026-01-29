@@ -66,8 +66,8 @@ export function useUsersView() {
               p_role: data.role,
               p_store_id: data.memberships?.[0]?.store_id || user.storeId || '',
               p_memberships: data.memberships,
-              p_max_stores: data.maxStoresLimit,
-              p_max_users: data.maxUsersLimit
+              p_max_stores: data.role === 'encargado' ? data.maxStoresLimit : 0,
+              p_max_users: data.role === 'encargado' ? data.maxUsersLimit : 0
             });
           } else if (mode === 'edit' && selectedUserContractId) {
             await updateUserMutation.mutateAsync({
@@ -75,8 +75,8 @@ export function useUsersView() {
               full_name: data.fullName,
               role: data.role,
               is_active: data.isActive,
-              max_stores_limit: data.maxStoresLimit,
-              max_users_limit: data.maxUsersLimit
+              max_stores_limit: data.role === 'encargado' ? data.maxStoresLimit : 0,
+              max_users_limit: data.role === 'encargado' ? data.maxUsersLimit : 0
             });
 
             await manageMembershipsMutation.mutateAsync({
