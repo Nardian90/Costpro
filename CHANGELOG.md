@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.3] - 2026-02-19
+
+### Changed
+- **Hardening de Contratos RPC**: Implementación de validación estricta de parámetros mediante Zod para los RPCs críticos (`create_sale`, `register_reception`, `perform_inventory_adjustment`, `bulk_update_products`, `get_paginated_products`, `get_products_for_pos`).
+- **Eliminación de Tipado Ambiguo**: Sustitución sistemática de tipos `any` en los hooks de mutación de la API por contratos definidos y validados.
+- **Refuerzo de Integridad de Respuesta**: Incorporación de `validateRPCResponse` y `validateRPCArrayResponse` en flujos de escritura para garantizar que las respuestas del servidor cumplan con el esquema esperado antes de propagar cambios al estado local.
+
+**Nota de Handoff para UX:** No hay cambios visuales. Se ha fortalecido la infraestructura de datos para prevenir errores silenciosos y estados inconsistentes en la interfaz.
+
 ## [5.7.2] - 2026-02-18
 
 ### Changed
