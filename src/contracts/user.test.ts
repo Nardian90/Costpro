@@ -8,6 +8,8 @@ describe('User Contract', () => {
     expect(user.fullName).toBe('');
     expect(user.role).toBe('clerk');
     expect(user.isActive).toBe(true);
+    expect(user.aiProvider).toBe('gemini');
+    expect(user.aiApiKey).toBe('');
   });
 
   it('should map profile to contract correctly', () => {
@@ -22,12 +24,20 @@ describe('User Contract', () => {
       created_at: '2021-01-01',
     };
 
-    const contract = mapProfileToContract(profile);
+    const profileWithAI: Profile = {
+      ...profile,
+      ai_provider: 'gpt',
+      ai_api_key: 'sk-test-key'
+    };
+
+    const contract = mapProfileToContract(profileWithAI);
     expect(contract.id).toBe('123');
     expect(contract.fullName).toBe('John Doe');
     expect(contract.email).toBe('john@example.com');
     expect(contract.role).toBe('admin');
     expect(contract.isActive).toBe(true);
     expect(contract.storeId).toBe('store-1');
+    expect(contract.aiProvider).toBe('gpt');
+    expect(contract.aiApiKey).toBe('sk-test-key');
   });
 });
