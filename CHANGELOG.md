@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.10] - 2026-02-24
+
+### Fixed
+- **Resolución de Recursión Infinita en RLS**: Implementación de funciones `SECURITY DEFINER` para romper ciclos de dependencia circular entre las tablas `profiles` y `user_store_memberships`.
+- **Hardenización de Gestión de Usuarios Multi-Tienda**: Refuerzo del RPC `manage_user_memberships` para permitir actualizaciones parciales seguras, evitando que los encargados afecten accesos fuera de su visibilidad.
+- **Validación de Límites de Negocio**: Incorporación de validación Zod cruzada en `UserForm.tsx` para asegurar que el número de tiendas asignadas respete el `maxStoresLimit` del encargado.
+- **Mejora de Visibilidad en Edición**: Ajuste de políticas de seguridad y hooks de API para garantizar que los encargados puedan visualizar y editar todos los accesos de los usuarios bajo su gestión de forma transparente.
+
+**Nota de Handoff para UX:** Se han añadido mensajes de error descriptivos en el formulario de usuarios para guiar al administrador cuando se exceden los límites de tiendas o hay errores de validación. La interfaz ahora responde correctamente al guardar cambios tras resolver los bloqueos de base de datos.
+
 ## [5.7.8] - 2026-02-22
 
 ### Changed

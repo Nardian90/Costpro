@@ -53,24 +53,13 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
 
       if (isEncargado) {
         try {
-          const { data: managedStores } = await supabase
-            .from('user_store_memberships')
-            .select('store_id')
-            .eq('user_id', currentUserId)
-            .in('role', ['encargado', 'manager'])
-            .eq('status', 'active');
-
-          const storeIds = (managedStores || []).map(ms => ms.store_id);
-          if (storeIds.length === 0) return [];
-
           const profileColumns = 'id, full_name, email, role, roles, active_store_id, logo_url, is_active, store_id, created_at';
           const storeColumns = 'id, name, address, logo_url, is_active, created_at';
           const membershipColumns = `id, user_id, store_id, role, status, created_at, updated_at, store:stores(${storeColumns})`;
 
           let memberProfilesRes = await supabase
             .from('profiles')
-            .select(`${profileColumns}, memberships:user_store_memberships!inner(${membershipColumns})`)
-            .in('memberships.store_id', storeIds)
+            .select(`${profileColumns}, memberships:user_store_memberships(${membershipColumns})`)
             .neq('role', 'admin')
             .order('full_name');
 
@@ -78,8 +67,7 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
           if (memberProfilesRes.error && memberProfilesRes.error.code === '42703') {
              memberProfilesRes = await supabase
                 .from('profiles')
-                .select(`id, full_name, email, role, is_active, memberships:user_store_memberships!inner(${membershipColumns})`)
-                .in('memberships.store_id', storeIds)
+                .select(`id, full_name, email, role, is_active, memberships:user_store_memberships(${membershipColumns})`)
                 .neq('role', 'admin')
                 .order('full_name') as any;
           }
