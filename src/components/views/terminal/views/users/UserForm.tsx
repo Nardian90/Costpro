@@ -4,6 +4,7 @@ import React from 'react';
 import { z } from 'zod';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { cn } from '@/lib/utils';
 import { UserContract } from '@/contracts/user';
 import { Store, UserRole } from '@/types';
 import { Loader2, Save, Plus, Trash2, Building } from 'lucide-react';
@@ -13,6 +14,8 @@ const userFormSchema = z.object({
   email: z.string().email('Email inválido'),
   role: z.enum(['admin', 'encargado', 'usuario', 'manager', 'clerk', 'warehouse'] as const),
   isActive: z.boolean(),
+  maxStoresLimit: z.number().min(1).default(1),
+  maxUsersLimit: z.number().min(0).default(0),
   memberships: z.array(z.object({
     store_id: z.string().uuid('Seleccione una tienda'),
     role: z.enum(['admin', 'encargado', 'usuario', 'manager', 'clerk', 'warehouse'] as const),
@@ -30,6 +33,7 @@ interface UserFormProps {
   onCancel: () => void;
   isSubmitting?: boolean;
   allowedRoles?: UserRole[];
+  isAdmin?: boolean;
 }
 
 export default function UserForm({
@@ -39,12 +43,14 @@ export default function UserForm({
   onSubmit,
   onCancel,
   isSubmitting = false,
-  allowedRoles
+  allowedRoles,
+  isAdmin = false
 }: UserFormProps) {
   const {
     register,
     handleSubmit,
     control,
+    watch,
     formState: { errors },
   } = useForm<UserFormData>({
     resolver: zodResolver(userFormSchema),
@@ -53,6 +59,8 @@ export default function UserForm({
       email: initialData.email,
       role: initialData.role,
       isActive: initialData.isActive,
+      maxStoresLimit: initialData.maxStoresLimit || 1,
+      maxUsersLimit: initialData.maxUsersLimit || 0,
       memberships: initialData.memberships?.map(m => ({
         store_id: m.store_id || '',
         role: m.role,
@@ -63,6 +71,8 @@ export default function UserForm({
       email: '',
       role: 'clerk',
       isActive: true,
+      maxStoresLimit: 1,
+      maxUsersLimit: 0,
       memberships: [],
     },
   });
@@ -71,6 +81,9 @@ export default function UserForm({
     control,
     name: "memberships"
   });
+
+  const maxStoresLimit = watch('maxStoresLimit');
+  const canAddMoreStores = fields.length < maxStoresLimit;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -96,8 +109,11 @@ export default function UserForm({
           <input
             {...register('email')}
             type="email"
-            disabled={mode === 'edit'}
-            className="w-full p-3 rounded-xl border border-border bg-background font-bold text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all disabled:opacity-50"
+            readOnly={mode === 'edit'}
+            className={cn(
+              "w-full p-3 rounded-xl border border-border bg-background font-bold text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all",
+              mode === 'edit' && "bg-muted cursor-not-allowed opacity-70"
+            )}
             placeholder="juan@costpro.com"
           />
           {errors.email && (
@@ -136,6 +152,42 @@ export default function UserForm({
             </select>
           </div>
         </div>
+
+        {isAdmin && (
+          <div className="grid grid-cols-2 gap-4 p-4 bg-primary/5 rounded-2xl border border-primary/10">
+            <div>
+              <label className="text-[10px] font-black uppercase text-primary tracking-widest mb-1.5 block">
+                Límite de Tiendas
+              </label>
+              <input
+                {...register('maxStoresLimit', { valueAsNumber: true })}
+                type="number"
+                min="1"
+                className="w-full p-3 rounded-xl border border-border bg-background font-bold text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+              />
+              {errors.maxStoresLimit && (
+                <p className="text-[10px] text-destructive font-bold uppercase mt-1">{errors.maxStoresLimit.message}</p>
+              )}
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase text-primary tracking-widest mb-1.5 block">
+                Límite de Usuarios
+              </label>
+              <input
+                {...register('maxUsersLimit', { valueAsNumber: true })}
+                type="number"
+                min="0"
+                className="w-full p-3 rounded-xl border border-border bg-background font-bold text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+              />
+              {errors.maxUsersLimit && (
+                <p className="text-[10px] text-destructive font-bold uppercase mt-1">{errors.maxUsersLimit.message}</p>
+              )}
+            </div>
+            <p className="col-span-2 text-[9px] text-muted-foreground font-medium italic">
+              * Estas capacidades definen cuántos recursos puede gestionar el usuario si tiene rol de Encargado.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Tiendas Asignadas */}
@@ -146,8 +198,15 @@ export default function UserForm({
           </label>
           <button
             type="button"
+            disabled={!canAddMoreStores}
             onClick={() => append({ store_id: '', role: 'clerk', status: 'active' })}
-            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-primary/10 text-primary text-[10px] font-black uppercase hover:bg-primary/20 transition-all"
+            className={cn(
+              "flex items-center gap-1 px-2 py-1 rounded-lg transition-all text-[10px] font-black uppercase",
+              canAddMoreStores
+                ? "bg-primary/10 text-primary hover:bg-primary/20"
+                : "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
+            )}
+            title={!canAddMoreStores ? `Límite de ${maxStoresLimit} tiendas alcanzado` : "Añadir Tienda"}
           >
             <Plus className="w-3 h-3" />
             Añadir Tienda
