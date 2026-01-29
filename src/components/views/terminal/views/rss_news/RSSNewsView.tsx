@@ -145,7 +145,12 @@ export default function RSSNewsView() {
         isLoading={isLoading}
         error={error}
         data={filteredNews}
-        emptyMessage="No se encontraron noticias con los criterios actuales."
+        emptyComponent={
+          <div className="flex flex-col items-center justify-center py-20 gap-4 text-center w-full bg-muted/20 border border-border rounded-2xl p-8">
+            <p className="font-bold text-foreground uppercase tracking-widest text-xs">No se encontraron noticias</p>
+            <p className="text-sm text-muted-foreground">No hay artículos que coincidan con los criterios actuales.</p>
+          </div>
+        }
       >
         {(items) => (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-20">
