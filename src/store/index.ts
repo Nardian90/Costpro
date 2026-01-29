@@ -49,14 +49,14 @@ interface UIState {
   isCreateProductModalOpen: boolean;
   initialProductName?: string;
   notifications: NotificationsConfig;
-  lastQuery: string | null;
+  viewQueries: Record<string, string | null>;
   setCurrentView: (view: ViewType) => void;
   setNotifications: (notifications: NotificationsConfig) => void;
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
   setIsCreateProductModalOpen: (open: boolean) => void;
   setInitialProductName: (name?: string) => void;
-  setLastQuery: (query: string | null) => void;
+  setLastQuery: (query: string | null, view?: string) => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -68,14 +68,19 @@ export const useUIStore = create<UIState>((set) => ({
     lowStock: true,
     salesAlerts: true
   },
-  lastQuery: null,
+  viewQueries: {},
   setCurrentView: (view) => set({ currentView: view }),
   setNotifications: (notifications) => set({ notifications }),
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
   setIsCreateProductModalOpen: (open) => set({ isCreateProductModalOpen: open }),
   setInitialProductName: (name) => set({ initialProductName: name }),
-  setLastQuery: (query) => set({ lastQuery: query }),
+  setLastQuery: (query, view) => set((state) => ({
+    viewQueries: {
+      ...state.viewQueries,
+      [view || state.currentView]: query
+    }
+  })),
 }));
 
 // --- Helper Hooks ---
