@@ -1,20 +1,25 @@
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { transferService } from '@/services/transfer-service';
 import { useSyncContext } from '@/components/providers/SyncProvider';
+import { getCleanStoreId } from './base';
 
 export function useIncomingTransfers(storeId?: string | null) {
+  const cleanStoreId = getCleanStoreId(storeId);
+
   return useQuery({
-    queryKey: ['transfers', 'incoming', storeId],
-    queryFn: () => transferService.getIncomingTransfers(storeId!),
-    enabled: !!storeId,
+    queryKey: ['transfers', 'incoming', cleanStoreId],
+    queryFn: () => transferService.getIncomingTransfers(cleanStoreId!),
+    enabled: !!cleanStoreId,
   });
 }
 
 export function useOutgoingTransfers(storeId?: string | null) {
+  const cleanStoreId = getCleanStoreId(storeId);
+
   return useQuery({
-    queryKey: ['transfers', 'outgoing', storeId],
-    queryFn: () => transferService.getOutgoingTransfers(storeId!),
-    enabled: !!storeId,
+    queryKey: ['transfers', 'outgoing', cleanStoreId],
+    queryFn: () => transferService.getOutgoingTransfers(cleanStoreId!),
+    enabled: !!cleanStoreId,
   });
 }
 
@@ -27,10 +32,12 @@ export function useTransferDetails(transferId?: string | null) {
 }
 
 export function useTransferableStores(userId: string, currentStoreId?: string | null) {
+  const cleanStoreId = getCleanStoreId(currentStoreId);
+
   return useQuery({
-    queryKey: ['stores', 'transferable', userId, currentStoreId],
-    queryFn: () => transferService.getTransferableStores(userId, currentStoreId!),
-    enabled: !!userId && !!currentStoreId,
+    queryKey: ['stores', 'transferable', userId, cleanStoreId],
+    queryFn: () => transferService.getTransferableStores(userId, cleanStoreId!),
+    enabled: !!userId && !!cleanStoreId,
   });
 }
 
