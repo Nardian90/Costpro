@@ -6,10 +6,11 @@ export function usePOSProducts(products: Product[] = [], searchTerm: string) {
   const [selectedCategory, setSelectedCategory] = useState('');
 
   const filteredProducts = useMemo(() => {
+    console.log('[usePOSProducts] Filtering products. Count:', products?.length || 0, 'Search:', searchTerm, 'Category:', selectedCategory);
     const lowerSearch = searchTerm.toLowerCase();
     const safeProducts = Array.isArray(products) ? products : [];
 
-    return safeProducts.filter(p => {
+    const result = safeProducts.filter(p => {
       // Filter out inactive products.
       // We no longer filter out of stock products here to ensure they are visible in the catalog,
       // as they are handled during the "Add to Cart" action with a proper message.
@@ -20,11 +21,15 @@ export function usePOSProducts(products: Product[] = [], searchTerm: string) {
       const matchesCategory = !selectedCategory || p.category === selectedCategory;
       return matchesSearch && matchesCategory;
     });
+    console.log('[usePOSProducts] Filter result count:', result.length);
+    return result;
   }, [products, searchTerm, selectedCategory]);
 
   const categories = useMemo(() => {
-    return Array.from(new Set(products.map(p => p.category)))
+    const cats = Array.from(new Set(products.map(p => p.category)))
       .filter((c): c is string => Boolean(c));
+    console.log('[usePOSProducts] Extracted categories:', cats);
+    return cats;
   }, [products]);
 
   const handleCategoryChange = (value: string) => {

@@ -27,7 +27,11 @@ export function useSuspenseProducts(storeId?: string | null, searchTerm = '', ca
   return useSuspenseQuery({
     queryKey: ['products', cleanStoreId, searchTerm, category],
     queryFn: async () => {
-      if (cleanStoreId && !isUuid(cleanStoreId)) return [];
+      console.log(`[useProducts] Fetching products for storeId: ${cleanStoreId}, search: "${searchTerm}", category: "${category}"`);
+      if (cleanStoreId && !isUuid(cleanStoreId)) {
+        console.warn(`[useProducts] storeId is not a valid UUID: ${cleanStoreId}`);
+        return [];
+      }
 
       const rpcName = 'get_products_for_pos';
       const params = getProductsForPosParamsSchema.parse({
@@ -35,13 +39,16 @@ export function useSuspenseProducts(storeId?: string | null, searchTerm = '', ca
         p_search_term: searchTerm,
         p_category: category
       });
+      console.log(`[useProducts] Calling RPC ${rpcName} with params:`, params);
       const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
+      console.log(`[useProducts] RPC ${rpcName} returned ${data?.length || 0} items`);
 
       const validatedData = await validateRPCArrayResponse(
         data,
         getProductsForPosResponseSchema,
         'get_products_for_pos'
       );
+      console.log(`[useProducts] Validated data has ${validatedData?.length || 0} items`);
 
       return (validatedData || []).map((item) => ({
         ...item,
@@ -57,7 +64,11 @@ export function useProducts(storeId?: string | null, searchTerm = '', category =
   return useQuery({
     queryKey: ['products', cleanStoreId, searchTerm, category],
     queryFn: async () => {
-      if (cleanStoreId && !isUuid(cleanStoreId)) return [];
+      console.log(`[useProducts] Fetching products for storeId: ${cleanStoreId}, search: "${searchTerm}", category: "${category}"`);
+      if (cleanStoreId && !isUuid(cleanStoreId)) {
+        console.warn(`[useProducts] storeId is not a valid UUID: ${cleanStoreId}`);
+        return [];
+      }
 
       const rpcName = 'get_products_for_pos';
       const params = getProductsForPosParamsSchema.parse({
@@ -65,13 +76,16 @@ export function useProducts(storeId?: string | null, searchTerm = '', category =
         p_search_term: searchTerm,
         p_category: category
       });
+      console.log(`[useProducts] Calling RPC ${rpcName} with params:`, params);
       const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
+      console.log(`[useProducts] RPC ${rpcName} returned ${data?.length || 0} items`);
 
       const validatedData = await validateRPCArrayResponse(
         data,
         getProductsForPosResponseSchema,
         'get_products_for_pos'
       );
+      console.log(`[useProducts] Validated data has ${validatedData?.length || 0} items`);
 
       return (validatedData || []).map((item) => ({
         ...item,
@@ -85,7 +99,11 @@ export function useProducts(storeId?: string | null, searchTerm = '', category =
 
 export async function prefetchProducts(queryClient: QueryClient, storeId: string) {
   const cleanStoreId = getCleanStoreId(storeId);
-  if (cleanStoreId && !isUuid(cleanStoreId)) return;
+  console.log(`[prefetchProducts] Attempting prefetch for storeId: ${cleanStoreId}`);
+  if (cleanStoreId && !isUuid(cleanStoreId)) {
+    console.warn(`[prefetchProducts] storeId is not a valid UUID: ${cleanStoreId}`);
+    return;
+  }
 
   const searchTerm = '';
   const category = '';
@@ -93,6 +111,7 @@ export async function prefetchProducts(queryClient: QueryClient, storeId: string
   return queryClient.prefetchQuery({
     queryKey: ['products', cleanStoreId, searchTerm, category],
     queryFn: async () => {
+      console.log(`[prefetchProducts] Executing prefetch for storeId: ${cleanStoreId}`);
       const rpcName = 'get_products_for_pos';
       const params = getProductsForPosParamsSchema.parse({
         p_store_id: cleanStoreId,
@@ -102,12 +121,14 @@ export async function prefetchProducts(queryClient: QueryClient, storeId: string
 
       // Usamos withLogging también en el prefetch para visibilidad en el inspector
       const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
+      console.log(`[prefetchProducts] RPC returned ${data?.length || 0} items`);
 
       const validatedData = await validateRPCArrayResponse(
         data,
         getProductsForPosResponseSchema,
         'get_products_for_pos'
       );
+      console.log(`[prefetchProducts] Validated data has ${validatedData?.length || 0} items`);
 
       return (validatedData || []).map((item) => ({
         ...item,
