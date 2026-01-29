@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.7] - 2026-02-21
+
+### Fixed
+- **Hardenización de Validaciones de UUID**: Eliminación de pipes redundantes en esquemas Zod (`resilientUuid`) que provocaban fallos al recibir valores nulos o vacíos.
+- **Resiliencia de Hooks de Productos e Inventario**: Incorporación de validaciones `isUuid` y retornos tempranos en los hooks `useProducts` y `useInventory`, evitando el crash de la interfaz "Invalid UUID" cuando el contexto de la tienda es inconsistente.
+- **Robustez de Dashboard**: Actualización de la lógica de prefetch y carga de datos en el Dashboard para manejar de forma segura parámetros de tienda malformados.
+
+**Nota de Handoff para UX:** No hay cambios visuales. Se han resuelto los errores de validación que bloqueaban la visualización de los paneles de Dashboard e Inventario ante inconsistencias en el ID de la tienda activa.
+
 ## [5.7.6] - 2026-02-21
 
 ### Fixed

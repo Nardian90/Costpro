@@ -246,7 +246,7 @@ export const dashboardKpiResponseSchema = z.object({
 
 export const createSaleParamsSchema = z.object({
   p_store_id: resilientUuid,
-  p_seller_id: resilientUuid.pipe(z.string().uuid()),
+  p_seller_id: resilientUuid,
   p_payment_method: z.string(),
   p_total_amount: z.number(),
   p_subtotal: z.number(),
@@ -262,7 +262,7 @@ export const createSaleParamsSchema = z.object({
 });
 
 export const registerReceptionParamsSchema = z.object({
-  p_store_id: resilientUuid.pipe(z.string().uuid()),
+  p_store_id: resilientUuid,
   p_supplier: z.string().min(1),
   p_reception_date: z.string(),
   p_invoice_number: z.string().min(1),
@@ -275,9 +275,9 @@ export const registerReceptionParamsSchema = z.object({
 });
 
 export const adjustStockInputSchema = z.object({
-  productId: resilientUuid.pipe(z.string().uuid()),
-  storeId: resilientUuid.pipe(z.string().uuid()),
-  userId: resilientUuid.pipe(z.string().uuid()),
+  productId: resilientUuid,
+  storeId: resilientUuid,
+  userId: resilientUuid,
   quantityDelta: z.number().int(),
   unitCostAdjustment: z.number().nullable(),
   reason: z.string().min(1),
@@ -292,9 +292,9 @@ export const inventoryAdjustmentResponseSchema = z.object({
 });
 
 export const performInventoryAdjustmentParamsSchema = z.object({
-  p_product_id: resilientUuid.pipe(z.string().uuid()),
-  p_store_id: resilientUuid.pipe(z.string().uuid()),
-  p_user_id: resilientUuid.pipe(z.string().uuid()),
+  p_product_id: resilientUuid,
+  p_store_id: resilientUuid,
+  p_user_id: resilientUuid,
   p_quantity_delta: z.number().int(),
   p_unit_cost_adjustment: z.number().nullable(),
   p_reason: z.string().min(1),
