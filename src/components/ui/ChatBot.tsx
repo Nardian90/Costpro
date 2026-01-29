@@ -76,7 +76,13 @@ export function ChatBot() {
     setIsSaving(true);
     try {
       await userService.updateAISettings(user.id, tempProvider, tempApiKey);
-      updateUser({ aiProvider: tempProvider, aiApiKey: tempApiKey });
+
+      const updatedData: any = { aiProvider: tempProvider };
+      if (tempApiKey) {
+        updatedData.aiApiKey = tempApiKey;
+      }
+
+      updateUser(updatedData);
       toast.success('Configuración de IA guardada');
       setIsSettingsOpen(false);
       setTempApiKey(''); // Clear sensitive key from state
