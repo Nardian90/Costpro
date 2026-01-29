@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.11] - 2026-02-25
+
+### Fixed
+- **Restauración del Módulo RSS**: Sincronización completa con la versión de referencia "fuente de la verdad". Se ha migrado la infraestructura de noticias a una arquitectura más robusta basada en el agregador inteligente de la versión v5.7.
+- **Normalización de Tipos de Datos**: Actualización de interfaces a `RSSNewsItem`, incorporando soporte para detección automática de tasas de cambio (BCC) y metadatos de moneda.
+- **Optimización de Servicios y Hooks**: Implementación de `useRSSNews` y `useRSSFeeds` con políticas de staleTime de 5 minutos, reduciendo la carga sobre la API y mejorando la respuesta de la interfaz.
+- **Refactorización de la API de Agregación**: La ruta `/api/rss` ahora devuelve un objeto estructurado `{ items: [...] }` para compatibilidad total con el frontend táctico, resolviendo fallos de carga previos.
+- **Limpieza de Arquitectura**: Eliminación de utilidades redundantes (`rss-utils.ts`) en favor de una lógica de clasificación integrada y altamente eficiente en el lado del servidor.
+
+**Nota de Handoff para UX:** Se ha actualizado la vista de Noticias con un nuevo diseño de tarjetas que resalta automáticamente las tasas de cambio y las noticias prioritarias mediante indicadores visuales ámbar y esmeralda. El buscador y los filtros de prioridad ahora operan en tiempo real sobre el set de datos cacheado.
+
 ## [5.7.10] - 2026-02-24
 
 ### Fixed
