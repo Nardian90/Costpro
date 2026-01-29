@@ -448,6 +448,37 @@ export interface SalesKPIs {
     total_card: number;
 }
 
+export type ReportType = 'sales' | 'profit' | 'inventory' | 'kardex' | 'purchases' | 'audit';
+
+export interface ReportDefinition {
+  id: string;
+  name: string;
+  type: ReportType;
+  filters: any;
+  date_range: {
+    from: string;
+    to: string;
+  };
+  columns: string[];
+  layout: any;
+  created_by: string;
+  store_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReportRun {
+  id: string;
+  report_definition_id: string;
+  executed_by: string;
+  executed_at: string;
+  parameters_snapshot: any;
+  file_url: string | null;
+  status: 'pending' | 'completed' | 'failed';
+  error_message?: string | null;
+  store_id: string;
+}
+
 export interface InventoryReport {
   product_id: string;
   product_name: string;
