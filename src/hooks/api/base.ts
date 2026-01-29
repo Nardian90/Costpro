@@ -1,5 +1,7 @@
 import { supabase } from '@/lib/supabaseClient';
 import { logger } from '@/lib/logger';
+import { useUIStore } from '@/store';
+import { formatPostgrestUrlToSql, formatRpcToSql } from '@/lib/query-inspector-utils';
 
 // Helper to wrap RPC calls with logging
 export async function withLogging<T>(
@@ -8,6 +10,15 @@ export async function withLogging<T>(
   rpcCall: () => PromiseLike<{ data: T | null; error: any }>
 ): Promise<T> {
   logger.info('DATABASE', `RPC_CALL_START: ${rpcName}`, params);
+
+  // Update last query for admin inspector
+  try {
+    const sql = formatRpcToSql(rpcName, params);
+    useUIStore.getState().setLastQuery(sql);
+  } catch (e) {
+    // Ignore errors in formatting to not break the app
+  }
+
   try {
     const { data, error } = await rpcCall();
     if (error) {
@@ -32,8 +43,20 @@ export async function withTableLogging<T>(
 ): Promise<T> {
   const params = { operation, tableName };
   logger.info('DATABASE', `TABLE_OP_START: ${tableName}`, params);
+
+  // Capture builder URL for admin inspector
+  const builder = query();
   try {
-    const { data, error } = await query();
+    if (builder && (builder as any).url) {
+      const sql = formatPostgrestUrlToSql((builder as any).url.toString(), operation);
+      useUIStore.getState().setLastQuery(sql);
+    }
+  } catch (e) {
+    // Ignore errors in formatting
+  }
+
+  try {
+    const { data, error } = await builder;
     if (error) {
       throw error;
     }
