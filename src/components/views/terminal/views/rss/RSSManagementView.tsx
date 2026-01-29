@@ -11,15 +11,18 @@ import {
   Save,
   Link as LinkIcon,
   Tag,
-  AlertCircle
+  AlertCircle,
+  Filter
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Switch } from '@/components/ui/switch';
 
 export default function RSSManagementView() {
   const queryClient = useQueryClient();
   const [newFeedUrl, setNewFeedUrl] = useState('');
   const [newFeedName, setNewFeedName] = useState('');
   const [keywords, setKeywords] = useState('');
+  const [applyFilter, setApplyFilter] = useState(false);
 
   // Queries
   const { data: feeds, isLoading: loadingFeeds } = useQuery({
@@ -31,7 +34,10 @@ export default function RSSManagementView() {
     queryKey: ['rss-settings'],
     queryFn: async () => {
       const s = await rssService.getSettings();
-      if (s) setKeywords(s.priority_keywords.join(', '));
+      if (s) {
+        setKeywords(s.priority_keywords.join(', '));
+        setApplyFilter(s.apply_filter);
+      }
       return s;
     }
   });
@@ -58,8 +64,11 @@ export default function RSSManagementView() {
   });
 
   const updateSettingsMutation = useMutation({
-    mutationFn: (newKeywords: string[]) =>
-      rssService.updateSettings({ priority_keywords: newKeywords }),
+    mutationFn: (newSettings: { keywords: string[], applyFilter: boolean }) =>
+      rssService.updateSettings({
+        priority_keywords: newSettings.keywords,
+        apply_filter: newSettings.applyFilter
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rss-settings', 'news'] });
       toast.success('Configuración actualizada');
@@ -74,7 +83,7 @@ export default function RSSManagementView() {
 
   const handleSaveSettings = () => {
     const kwArray = keywords.split(',').map(k => k.trim()).filter(k => k !== '');
-    updateSettingsMutation.mutate(kwArray);
+    updateSettingsMutation.mutate({ keywords: kwArray, applyFilter });
   };
 
   return (
@@ -159,6 +168,22 @@ export default function RSSManagementView() {
           </div>
 
           <div className="p-8 bg-card border-2 border-border rounded-[2.5rem] space-y-6">
+            <div className="flex items-center justify-between p-6 bg-secondary/20 rounded-[2rem] border-2 border-border/50">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 font-black uppercase text-[10px] tracking-widest text-primary">
+                  <Filter className="w-3 h-3" />
+                  Aplicar Filtro de Prioridad
+                </div>
+                <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">
+                  Mostrar únicamente noticias marcadas como prioritarias
+                </p>
+              </div>
+              <Switch
+                checked={applyFilter}
+                onCheckedChange={setApplyFilter}
+              />
+            </div>
+
             <div className="p-4 bg-primary/5 rounded-2xl border-l-4 border-primary space-y-2">
               <div className="flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-widest">
                 <AlertCircle className="w-3 h-3" />
