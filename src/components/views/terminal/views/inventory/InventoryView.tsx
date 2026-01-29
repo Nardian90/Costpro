@@ -20,6 +20,7 @@ import { StateRenderer } from '@/components/ui/StateRenderer';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useIsMobile } from '@/hooks/ui/useMobile';
 import { cn } from '@/lib/utils';
+import { QueryInspector } from '@/components/ui/QueryInspector';
 
 const PAGE_LIMIT = 20;
 
@@ -147,6 +148,8 @@ export default function InventoryView() {
                 </h2>
                 <ActionMenu actions={actions} />
             </div>
+
+            <QueryInspector />
 
             <div className="space-y-4">
                 <SearchBar
