@@ -1,8 +1,9 @@
 import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
-import { validateRPCArrayResponse } from '@/lib/rpc-validator';
-import { transactionSchema, transactionItemSchema } from '@/validation/schemas';
+import { validateRPCArrayResponse, validateRPCResponse } from '@/lib/rpc-validator';
+import { transactionSchema, transactionItemSchema, createSaleParamsSchema } from '@/validation/schemas';
 import { withLogging, withTableLogging } from './base';
+import { z } from 'zod';
 import { useSyncContext } from '@/components/providers/SyncProvider';
 
 export function useTransactions(storeId?: string | null, isAdmin = false) {
@@ -74,12 +75,14 @@ export function useCreateSale() {
   const { addToQueue } = useSyncContext();
 
   return useMutation({
-    mutationFn: async (params: any) => {
+    mutationFn: async (rawParams: z.infer<typeof createSaleParamsSchema>) => {
+      const params = createSaleParamsSchema.parse(rawParams);
       if (!navigator.onLine) {
         return await addToQueue('sale', 'CREATE', params);
       }
       const rpcName = 'create_sale';
-      return await withLogging<any[]>(rpcName, params, () => supabase.rpc(rpcName, params));
+      const data = await withLogging<string>(rpcName, params, () => supabase.rpc(rpcName, params));
+      return await validateRPCResponse(data, z.string().uuid(), rpcName);
     },
     onSuccess: (_, variables) => {
       const storeId = variables.p_store_id;

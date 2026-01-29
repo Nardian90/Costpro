@@ -1,10 +1,16 @@
 import { useMutation, useQueryClient, useInfiniteQuery, useSuspenseInfiniteQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
-import { validateRPCArrayResponse } from '@/lib/rpc-validator';
+import { validateRPCArrayResponse, validateRPCResponse } from '@/lib/rpc-validator';
 import {
   paginatedProductSchema,
+  registerReceptionParamsSchema,
+  performInventoryAdjustmentParamsSchema,
+  getPaginatedProductsParamsSchema,
+  adjustStockInputSchema,
+  inventoryAdjustmentResponseSchema
 } from '@/validation/schemas';
 import { withLogging } from './base';
+import { z } from 'zod';
 import { useSyncContext } from '@/components/providers/SyncProvider';
 
 export function useSuspenseInventory(storeId?: string | null, searchTerm = '', category = '', limit = 20) {
@@ -13,13 +19,13 @@ export function useSuspenseInventory(storeId?: string | null, searchTerm = '', c
     queryFn: async ({ pageParam = 0 }) => {
       if (!storeId) return { products: [], total: 0, nextOffset: null };
       const rpcName = 'get_paginated_products';
-      const params = {
+      const params = getPaginatedProductsParamsSchema.parse({
         p_limit: limit,
         p_offset: pageParam as number,
         p_store_id: storeId,
         p_search_term: searchTerm,
         p_category: category
-      };
+      });
       const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
 
       const validatedData = await validateRPCArrayResponse(
@@ -45,13 +51,13 @@ export function useInventory(storeId?: string | null, searchTerm = '', category 
     queryFn: async ({ pageParam = 0 }) => {
       if (!storeId) return { products: [], total: 0, nextOffset: null };
       const rpcName = 'get_paginated_products';
-      const params = {
+      const params = getPaginatedProductsParamsSchema.parse({
         p_limit: limit,
         p_offset: pageParam as number,
         p_store_id: storeId,
         p_search_term: searchTerm,
         p_category: category
-      };
+      });
       const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
 
       const validatedData = await validateRPCArrayResponse(
@@ -77,12 +83,14 @@ export function useRegisterReception() {
   const { addToQueue } = useSyncContext();
 
   return useMutation({
-    mutationFn: async (params: any) => {
+    mutationFn: async (rawParams: z.infer<typeof registerReceptionParamsSchema>) => {
+      const params = registerReceptionParamsSchema.parse(rawParams);
       if (!navigator.onLine) {
         return await addToQueue('reception', 'CREATE', params);
       }
       const rpcName = 'register_reception';
-      return await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
+      const data = await withLogging<string>(rpcName, params, () => supabase.rpc(rpcName, params));
+      return await validateRPCResponse(data, z.string().uuid(), rpcName);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
@@ -97,39 +105,24 @@ export function useAdjustStock() {
   const { addToQueue } = useSyncContext();
 
   return useMutation({
-    mutationFn: async ({
-      productId,
-      storeId,
-      userId,
-      quantityDelta,
-      unitCostAdjustment,
-      reason
-    }: {
-      productId: string;
-      storeId: string;
-      userId: string;
-      quantityDelta: number;
-      unitCostAdjustment: number | null;
-      reason: string;
-    }) => {
+    mutationFn: async (rawInput: z.infer<typeof adjustStockInputSchema>) => {
+      const input = adjustStockInputSchema.parse(rawInput);
       const rpcName = 'perform_inventory_adjustment';
       const params = {
-        p_product_id: productId,
-        p_store_id: storeId,
-        p_user_id: userId,
-        p_quantity_delta: quantityDelta,
-        p_unit_cost_adjustment: unitCostAdjustment,
-        p_reason: reason
+        p_product_id: input.productId,
+        p_store_id: input.storeId,
+        p_user_id: input.userId,
+        p_quantity_delta: input.quantityDelta,
+        p_unit_cost_adjustment: input.unitCostAdjustment,
+        p_reason: input.reason
       };
 
       if (!navigator.onLine) {
         return await addToQueue('adjustment', 'CREATE', params);
       }
 
-      const { data, error } = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
-      if (error) throw error;
-
-      return data;
+      const data = await withLogging<any>(rpcName, params, () => supabase.rpc(rpcName, params));
+      return await validateRPCResponse(data, inventoryAdjustmentResponseSchema, rpcName);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
