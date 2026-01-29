@@ -12,25 +12,52 @@ export class GeminiAdapter implements LLMProvider {
   async getResponse(messages: Message[], options?: any): Promise<LLMResponse> {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent?key=${this.apiKey}`;
 
+    if (!this.apiKey) {
+      throw new Error("No se ha configurado la API Key de Gemini. Por favor, ve a configuración.");
+    }
+
     // Separate system message and normalize chat history
     const systemMessage = messages.find(m => m.role === 'system');
     const chatMessages = messages.filter(m => m.role !== 'system');
 
     // Gemini requires alternating roles and starts with 'user'
     const contents: any[] = [];
-    chatMessages.forEach((msg) => {
-      const role = msg.role === 'assistant' ? 'model' : 'user';
+    let lastRole: string | null = null;
 
-      // If same role as previous, merge them (Gemini requirement)
-      if (contents.length > 0 && contents[contents.length - 1].role === role) {
-        contents[contents.length - 1].parts[0].text += '\n\n' + msg.content;
+    chatMessages.forEach((msg) => {
+      // Normalize role: user -> user, assistant -> model, system -> user (shouldn't happen here)
+      const currentRole = msg.role === 'assistant' ? 'model' : 'user';
+
+      // Rule 1: First message must be 'user'
+      if (contents.length === 0 && currentRole !== 'user') {
+        // We prepend a placeholder or just change the role of the first message if it's 'model'
+        // Actually, Gemini strictly expects the first to be 'user'.
+        contents.push({
+          role: 'user',
+          parts: [{ text: "[Inicio de conversación]" }]
+        });
+        lastRole = 'user';
+      }
+
+      // Rule 2: Alternating roles. If same as previous, merge parts.
+      if (currentRole === lastRole) {
+        contents[contents.length - 1].parts.push({ text: msg.content });
       } else {
         contents.push({
-          role,
+          role: currentRole,
           parts: [{ text: msg.content }]
         });
+        lastRole = currentRole;
       }
     });
+
+    // Rule 3: Ensure non-empty contents. If empty, it's a 400.
+    if (contents.length === 0) {
+      contents.push({
+        role: 'user',
+        parts: [{ text: "Hola" }]
+      });
+    }
 
     const body: any = {
       contents,
@@ -42,7 +69,7 @@ export class GeminiAdapter implements LLMProvider {
       }
     };
 
-    // Use system_instruction if provided (supported in v1beta/Gemini 1.5+)
+    // Rule 4: Use system_instruction (REST API v1beta)
     if (systemMessage) {
       body.system_instruction = {
         parts: [{ text: systemMessage.content }]
@@ -59,16 +86,29 @@ export class GeminiAdapter implements LLMProvider {
       });
 
       if (!response.ok) {
-        let errorMsg = response.statusText;
+        let errorMsg = `HTTP ${response.status}: ${response.statusText}`;
         try {
           const errorData = await response.json();
           errorMsg = errorData.error?.message || JSON.stringify(errorData);
         } catch (e) {}
-        throw new Error(`Gemini API error: ${errorMsg}`);
+        throw new Error(`Gemini API: ${errorMsg}`);
       }
 
       const data = await response.json();
+
+      // Rule 5: Handle safety filters or blocked responses
+      if (data.promptFeedback?.blockReason) {
+        throw new Error(`Consulta bloqueada por seguridad: ${data.promptFeedback.blockReason}`);
+      }
+
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+      if (!text && data.candidates?.[0]?.finishReason === 'SAFETY') {
+        return {
+          text: "Lo siento, no puedo responder a eso por políticas de seguridad.",
+          metadata: { model: this.model, safetyBlocked: true }
+        };
+      }
 
       return {
         text,
@@ -77,8 +117,8 @@ export class GeminiAdapter implements LLMProvider {
           finishReason: data.candidates?.[0]?.finishReason,
         }
       };
-    } catch (error) {
-      console.error('GeminiAdapter Error:', error);
+    } catch (error: any) {
+      console.error('GeminiAdapter Error:', error.message);
       throw error;
     }
   }
