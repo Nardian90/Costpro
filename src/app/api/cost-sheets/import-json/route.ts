@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
     if (!validation.success) {
       return NextResponse.json({
         ok: false,
-        errors: validation.error.errors.map(e => `${e.path.join('.')}: ${e.message}`)
+        errors: validation.error.issues.map((e: any) => `${e.path.join('.')}: ${e.message}`)
       }, { status: 400 });
     }
 
