@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.14] - 2026-02-26
+
+### Fixed
+- **Actualización Manual en Caja**: Implementación de un botón de "Actualizar" en la vista de Cierre de Caja. Esto permite a los operadores forzar la sincronización de las ventas más recientes del sistema, garantizando que el balance esperado sea siempre preciso antes de realizar el arqueo.
+- **Pre-filtrado de Noticias**: Configuración del filtro de "Prioritarias" como activo de forma predeterminada en el Agregador de Noticias. Esta mejora permite a los usuarios visualizar inmediatamente la información más crítica (tasas de cambio, alertas) al entrar en la sección.
+
+**Nota de Handoff para UX:** Se ha añadido un botón de refresco con animación de rotación en la vista de Caja. En la vista de Noticias, el botón de filtro ahora aparece resaltado en ámbar al cargar, indicando que el modo de prioridad está activo.
+
 ## [5.7.13] - 2026-02-25
 
 ### Fixed
