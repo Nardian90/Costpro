@@ -49,7 +49,13 @@ export function useProducts(storeId?: string | null, searchTerm = '', category =
   return useQuery({
     queryKey: ['products', cleanStoreId, searchTerm, category],
     queryFn: async () => {
-      if (cleanStoreId && !isUuidRegex.test(cleanStoreId)) return [];
+      // Diagnostic Log: Verify why the query is being executed and with what parameters
+      console.log(`[useProducts] Fetching products for store: ${cleanStoreId || 'GLOBAL'}`, { searchTerm, category });
+
+      if (cleanStoreId && !isUuidRegex.test(cleanStoreId)) {
+        console.warn(`[useProducts] Invalid Store UUID detected: ${cleanStoreId}. Returning empty array.`);
+        return [];
+      }
 
       const rpcName = 'get_products_for_pos';
       const params = getProductsForPosParamsSchema.parse({

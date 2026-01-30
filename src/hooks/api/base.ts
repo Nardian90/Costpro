@@ -8,8 +8,10 @@ import { formatPostgrestUrlToSql, formatRpcToSql } from '@/lib/query-inspector-u
  * Maneja valores como 'null', 'undefined' o cadenas vacías convirtiéndolos a null real.
  */
 export const getCleanStoreId = (storeId?: string | null) => {
-  if (storeId === 'null' || storeId === 'undefined' || !storeId) return null;
-  return storeId;
+  if (typeof storeId !== 'string') return null;
+  const trimmed = storeId.trim();
+  if (!trimmed || trimmed === 'null' || trimmed === 'undefined') return null;
+  return trimmed;
 };
 
 // Helper to wrap RPC calls with logging

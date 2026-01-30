@@ -1,5 +1,5 @@
 -- ==========================================
--- CostPro Professional Demo Reset Script (v5.7.13)
+-- CostPro Professional Demo Reset Script (v5.7.14)
 -- Targets: Supabase SQL Editor
 -- Features: Dynamic Cleanup, Schema Enforcement, Trigger Safety, Ultra-Resilience
 -- Includes: 4 Demo Users (Password: demo123), Enriched Catalog, Sales, Transfers & Adjustments
@@ -96,35 +96,36 @@ BEGIN
 
     -- 4. USERS (demo123)
     CREATE EXTENSION IF NOT EXISTS pgcrypto;
-    pwd := crypt('demo123', gen_salt('bf'));
+    -- Use a more standard Bcrypt generation for Supabase compatibility
+    pwd := extensions.crypt('demo123', extensions.gen_salt('bf', 10));
 
     -- ADMIN
-    INSERT INTO auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-    VALUES (u_adm, 'authenticated', 'authenticated', 'admin@demo.com', pwd, now(), '{"provider": "email", "providers": ["email"]}', '{"full_name": "Admin Global"}', now(), now());
+    INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, email_change, email_change_token_new, recovery_token, is_sso_user)
+    VALUES (u_adm, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'admin@demo.com', pwd, now(), '{"provider": "email", "providers": ["email"]}', '{"full_name": "Admin Global"}', now(), now(), '', '', '', '', false);
     INSERT INTO public.profiles (id, email, full_name, role, store_id, active_store_id, is_active)
     VALUES (u_adm, 'admin@demo.com', 'Admin Global', 'admin'::user_role, s1, s1, true);
     INSERT INTO public.user_store_memberships (user_id, store_id, role, status)
     VALUES (u_adm, s1, 'admin'::user_role, 'active'::membership_status), (u_adm, s2, 'admin'::user_role, 'active'::membership_status);
 
     -- ENCARGADO
-    INSERT INTO auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-    VALUES (u_enc, 'authenticated', 'authenticated', 'encargado@demo.com', pwd, now(), '{"provider": "email", "providers": ["email"]}', '{"full_name": "Gerente Sucursal"}', now(), now());
+    INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, email_change, email_change_token_new, recovery_token, is_sso_user)
+    VALUES (u_enc, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'encargado@demo.com', pwd, now(), '{"provider": "email", "providers": ["email"]}', '{"full_name": "Gerente Sucursal"}', now(), now(), '', '', '', '', false);
     INSERT INTO public.profiles (id, email, full_name, role, store_id, active_store_id, is_active)
     VALUES (u_enc, 'encargado@demo.com', 'Gerente Sucursal', 'encargado'::user_role, s1, s1, true);
     INSERT INTO public.user_store_memberships (user_id, store_id, role, status)
     VALUES (u_enc, s1, 'encargado'::user_role, 'active'::membership_status);
 
     -- CAJERO
-    INSERT INTO auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-    VALUES (u_caj, 'authenticated', 'authenticated', 'cajero@demo.com', pwd, now(), '{"provider": "email", "providers": ["email"]}', '{"full_name": "Cajero Central"}', now(), now());
+    INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, email_change, email_change_token_new, recovery_token, is_sso_user)
+    VALUES (u_caj, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'cajero@demo.com', pwd, now(), '{"provider": "email", "providers": ["email"]}', '{"full_name": "Cajero Central"}', now(), now(), '', '', '', '', false);
     INSERT INTO public.profiles (id, email, full_name, role, store_id, active_store_id, is_active)
     VALUES (u_caj, 'cajero@demo.com', 'Cajero Central', 'clerk'::user_role, s1, s1, true);
     INSERT INTO public.user_store_memberships (user_id, store_id, role, status)
     VALUES (u_caj, s1, 'clerk'::user_role, 'active'::membership_status);
 
     -- ALMACENERO
-    INSERT INTO auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-    VALUES (u_alm, 'authenticated', 'authenticated', 'almacen@demo.com', pwd, now(), '{"provider": "email", "providers": ["email"]}', '{"full_name": "Jefe Almacén"}', now(), now());
+    INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, email_change, email_change_token_new, recovery_token, is_sso_user)
+    VALUES (u_alm, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'almacen@demo.com', pwd, now(), '{"provider": "email", "providers": ["email"]}', '{"full_name": "Jefe Almacén"}', now(), now(), '', '', '', '', false);
     INSERT INTO public.profiles (id, email, full_name, role, store_id, active_store_id, is_active)
     VALUES (u_alm, 'almacen@demo.com', 'Jefe Almacén', 'warehouse'::user_role, s1, s1, true);
     INSERT INTO public.user_store_memberships (user_id, store_id, role, status)

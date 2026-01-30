@@ -28,7 +28,7 @@ export default function DashboardView() {
     data: productsData,
     isLoading: isLoadingProducts,
     error: productsError
-  } = useProducts(user?.storeId);
+  } = useProducts(user?.activeStoreId);
   const products = productsData || [];
 
   return (
