@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.15] - 2026-02-26
+
+### Fixed
+- **Estandarización de Tablas en TPV**: Se ha refactorizado la vista de tabla del TPV (`POSTableView.tsx`) para utilizar el contenedor responsivo estándar (`table-scroll-wrapper`) y las clases de datos (`data-table`). Esta corrección elimina el solapamiento del encabezado sobre la primera fila y alinea el diseño con el historial de ventas.
+
 ## [5.7.14] - 2026-02-26
 
 ### Fixed
