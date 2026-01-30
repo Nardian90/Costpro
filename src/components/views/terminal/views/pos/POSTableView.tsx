@@ -13,20 +13,20 @@ interface POSTableViewProps {
 
 const POSTableView: React.FC<POSTableViewProps> = ({ products, onAddToCart }) => {
   return (
-    <div className="responsive-table-container">
-      <table className="w-full text-sm">
-        <thead className="sticky-header">
-          <tr className="bg-muted/50 text-muted-foreground font-black uppercase text-[10px] tracking-widest text-left">
-            <th className="p-4 pl-[68px]">Producto</th>
-            <th className="p-4 priority-low">SKU</th>
+    <div className="table-scroll-wrapper">
+      <table className="data-table sticky-column-1 w-full text-sm">
+        <thead>
+          <tr className="bg-muted/30 text-muted-foreground font-black uppercase text-[10px] tracking-widest border-b border-border">
+            <th className="p-4 pl-[68px] text-left">Producto</th>
+            <th className="p-4 text-left priority-low">SKU</th>
             <th className="p-4 text-right">Stock</th>
             <th className="p-4 text-right">Precio</th>
             <th className="p-4 text-center">Acción</th>
           </tr>
         </thead>
-        <tbody className="bg-background/30 backdrop-blur-sm">
+        <tbody>
           {products.map((product) => (
-            <tr key={product.id} className="border-b border-white/5 hover:bg-primary/5 transition-colors group">
+            <tr key={product.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors group">
               <td className="p-4">
                 <div className="flex items-center gap-3">
                   <div className="neu-raised-sm w-10 h-10 flex items-center justify-center overflow-hidden shrink-0">
