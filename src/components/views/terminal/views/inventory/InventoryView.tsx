@@ -12,7 +12,7 @@ import InventoryTableView from './InventoryTableView';
 import ProductReceptionView from './ProductReceptionView';
 import InventoryAdjustmentModal from './InventoryAdjustmentModal';
 import { Product } from '@/types';
-import { validate as isUuid } from 'uuid';
+import { uuidRegex } from '@/validation/schemas';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
 import SearchBar from '@/components/ui/SearchBar';
 import { CategoryChips } from '@/components/ui/atomic';
@@ -73,7 +73,11 @@ export default function InventoryView() {
 
     const products = useMemo(() => {
         const rawProducts = data?.pages.flatMap(page => page.products) || [];
-        return rawProducts.filter(p => p.id && isUuid(p.id) && (!p.store_id || isUuid(p.store_id)));
+        return rawProducts.filter(p =>
+            p.id &&
+            uuidRegex.test(p.id) &&
+            (!p.store_id || uuidRegex.test(p.store_id))
+        );
     }, [data]);
 
     const uniqueCategories = useMemo(() => {
