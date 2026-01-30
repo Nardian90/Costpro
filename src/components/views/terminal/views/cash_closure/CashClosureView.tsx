@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { DollarSign, CreditCard, Layers, Edit, History, Eye, CheckCircle2 } from 'lucide-react';
+import { DollarSign, CreditCard, Layers, Edit, History, Eye, CheckCircle2, RefreshCw } from 'lucide-react';
 import { cn, formatCurrency, formatDate, formatTime } from '@/lib/utils';
 import ActionMenu from '@/components/ui/ActionMenu';
 
@@ -9,12 +9,21 @@ import { useCashClosures, useCreateCashClosure, useUpdateCashClosure, useSalesSi
 import { useAuthStore } from '@/store';
 import { toast } from 'sonner';
 
-interface CashClosureViewProps {}
-
-export default function CashClosureView({}: CashClosureViewProps) {
+export default function CashClosureView() {
   const { user } = useAuthStore();
-  const { data: cashClosuresData, isLoading: isLoadingClosures } = useCashClosures(user?.storeId, user?.role === 'admin');
-  const { data: salesData, isLoading: isLoadingSales } = useSalesSinceLastClosure(user?.storeId);
+  const {
+    data: cashClosuresData,
+    isLoading: isLoadingClosures,
+    refetch: refetchClosures,
+    isRefetching: isRefetchingClosures
+  } = useCashClosures(user?.storeId, user?.role === 'admin');
+
+  const {
+    data: salesData,
+    isLoading: isLoadingSales,
+    refetch: refetchSales,
+    isRefetching: isRefetchingSales
+  } = useSalesSinceLastClosure(user?.storeId);
 
   const createClosure = useCreateCashClosure();
   const updateClosure = useUpdateCashClosure();
@@ -93,6 +102,11 @@ export default function CashClosureView({}: CashClosureViewProps) {
   };
 
   const isProcessing = createClosure.isPending || updateClosure.isPending;
+  const isRefreshing = isRefetchingClosures || isRefetchingSales;
+
+  const handleRefresh = async () => {
+    await Promise.all([refetchClosures(), refetchSales()]);
+  };
 
   const buttonLabel = !pendingClosure
     ? 'Declarar Fondos'
@@ -107,19 +121,29 @@ export default function CashClosureView({}: CashClosureViewProps) {
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase">Cierre de Caja</h2>
-        <ActionMenu
-          actions={[
-            {
-              id: 'process',
-              label: buttonLabel,
-              icon: buttonIcon,
-              onClick: handleProcessClosure,
-              variant: buttonVariant,
-              disabled: isProcessing || isLoadingSales
-            }
-          ]}
-          className="sm:w-auto"
-        />
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border bg-card hover:bg-accent transition-all text-xs font-black uppercase tracking-widest disabled:opacity-50 h-[46px]"
+          >
+            <RefreshCw className={cn("w-3.5 h-3.5", isRefreshing && "animate-spin")} />
+            {isRefreshing ? 'Actualizando...' : 'Actualizar'}
+          </button>
+          <ActionMenu
+            actions={[
+              {
+                id: 'process',
+                label: buttonLabel,
+                icon: buttonIcon,
+                onClick: handleProcessClosure,
+                variant: buttonVariant,
+                disabled: isProcessing || isLoadingSales
+              }
+            ]}
+            className="flex-1 sm:flex-initial"
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
