@@ -6,9 +6,7 @@ import {
   CalculatedRow,
   AuditEntry,
   CostRow,
-  Anexo,
-  CalculationRule,
-  RowSemanticType,
+  BaseRef,
 } from './types';
 
 export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: string[] } {
@@ -23,13 +21,14 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
   });
 
   ficha.rows.forEach((row) => {
-    if (row.baseCalculo?.type === 'FILA') {
-      if (!classifications.has(row.baseCalculo.classification)) {
-        errors.push(`Row ${row.id} ${row.label} references non-existent classification: ${row.baseCalculo.classification}`);
+    const base = row.baseCalculo;
+    if (base?.type === 'FILA') {
+      if (!classifications.has(base.classification)) {
+        errors.push(`Row ${row.id} ${row.label} references non-existent classification: ${base.classification}`);
       }
-    } else if (row.baseCalculo?.type === 'ANEXO') {
-      if (!ficha.anexos.find((a) => a.id === row.baseCalculo?.anexoId)) {
-        errors.push(`Row ${row.id} ${row.label} references non-existent anexo: ${row.baseCalculo.anexoId}`);
+    } else if (base?.type === 'ANEXO') {
+      if (!ficha.anexos.find((a) => a.id === base.anexoId)) {
+        errors.push(`Row ${row.id} ${row.label} references non-existent anexo: ${base.anexoId}`);
       }
     }
   });
@@ -116,6 +115,8 @@ export function calculateFicha(
         }
     }
 
+    const base = row.baseCalculo;
+
     switch (formaCalculoToUse) {
       case 'FIJO':
         total = vh;
@@ -123,11 +124,11 @@ export function calculateFicha(
         break;
 
       case 'IMPORTAR_ANEXO':
-        if (row.baseCalculo?.type === 'ANEXO') {
-          const classSum = annexSumMap.get(row.baseCalculo.anexoId)?.get(row.classification) || new Decimal(0);
+        if (base?.type === 'ANEXO') {
+          const classSum = annexSumMap.get(base.anexoId)?.get(row.classification) || new Decimal(0);
           total = classSum;
-          fuenteParts.push(row.baseCalculo.anexoId);
-          note += `Imported from ${row.baseCalculo.anexoId} for class ${row.classification}.`;
+          fuenteParts.push(base.anexoId);
+          note += `Imported from ${base.anexoId} for class ${row.classification}.`;
         } else {
           type = 'WARNING';
           note += `Missing ANEXO reference.`;
@@ -140,19 +141,19 @@ export function calculateFicha(
         let baseHist = new Decimal(0);
         let baseRefName = '';
 
-        if (row.baseCalculo?.type === 'ANEXO') {
-            const anexo = annexSumMap.get(row.baseCalculo.anexoId);
+        if (base?.type === 'ANEXO') {
+            const anexo = annexSumMap.get(base.anexoId);
             baseTotal = Array.from(anexo?.values() || []).reduce((acc, val) => acc.plus(val), new Decimal(0));
             baseHist = baseTotal;
-            baseRefName = `Anexo:${row.baseCalculo.anexoId}`;
-        } else if (row.baseCalculo?.type === 'FILA') {
-            const targets = rowsByClass.get(row.baseCalculo.classification) || [];
+            baseRefName = `Anexo:${base.anexoId}`;
+        } else if (base?.type === 'FILA') {
+            const targets = rowsByClass.get(base.classification) || [];
             targets.forEach(t => {
                 const calculated = currentRows.get(t.id);
                 baseTotal = baseTotal.plus(new Decimal(calculated?.total || 0));
                 baseHist = baseHist.plus(new Decimal(t.valorHistorico || 0));
             });
-            baseRefName = `Fila:${row.baseCalculo.classification}`;
+            baseRefName = `Fila:${base.classification}`;
         }
         fuenteParts.push(baseRefName);
 
@@ -183,21 +184,21 @@ export function calculateFicha(
         try {
             const expr = parser.parse(formulaToUse || '0');
 
-            let baseTotal = new Decimal(0);
-            if (row.baseCalculo?.type === 'ANEXO') {
-                 const anexo = annexSumMap.get(row.baseCalculo.anexoId);
-                 baseTotal = Array.from(anexo?.values() || []).reduce((acc, val) => acc.plus(val), new Decimal(0));
-            } else if (row.baseCalculo?.type === 'FILA') {
-                const targets = rowsByClass.get(row.baseCalculo.classification) || [];
+            let formulaBaseTotal = new Decimal(0);
+            if (base?.type === 'ANEXO') {
+                 const anexo = annexSumMap.get(base.anexoId);
+                 formulaBaseTotal = Array.from(anexo?.values() || []).reduce((acc, val) => acc.plus(val), new Decimal(0));
+            } else if (base?.type === 'FILA') {
+                const targets = rowsByClass.get(base.classification) || [];
                 targets.forEach(t => {
                     const calculated = currentRows.get(t.id);
-                    baseTotal = baseTotal.plus(new Decimal(calculated?.total || 0));
+                    formulaBaseTotal = formulaBaseTotal.plus(new Decimal(calculated?.total || 0));
                 });
             }
 
             const result = expr.evaluate({
                 VH: vh.toNumber(),
-                BASE_TOTAL: baseTotal.toNumber(),
+                BASE_TOTAL: formulaBaseTotal.toNumber(),
                 COEF: row.coeficiente || 0
             });
             total = new Decimal(result);
