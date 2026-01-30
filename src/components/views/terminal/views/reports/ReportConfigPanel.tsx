@@ -44,8 +44,8 @@ const REPORT_TYPES = [
 ];
 
 const ALL_COLUMNS: Record<ReportType, string[]> = {
-  sales: ['id', 'created_at', 'total_amount', 'status', 'payment_method', 'subtotal', 'discount_value'],
-  profit: ['id', 'created_at', 'total_amount', 'subtotal', 'discount_value', 'profit', 'margin_percentage'],
+  sales: ['id', 'created_at', 'total_amount', 'total_cost', 'status', 'payment_method', 'subtotal', 'discount_value'],
+  profit: ['id', 'created_at', 'total_amount', 'total_cost', 'subtotal', 'discount_value', 'profit', 'margin_percentage'],
   inventory: ['id', 'name', 'sku', 'stock_current', 'price', 'cost_price', 'supplier'],
   kardex: ['created_at', 'movement_type', 'quantity_change', 'balance_after', 'unit_cost', 'reference_doc'],
   purchases: ['id', 'created_at', 'supplier', 'total_cost', 'status', 'reference_doc', 'notes'],
