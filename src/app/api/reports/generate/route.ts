@@ -46,25 +46,24 @@ export async function POST(req: NextRequest) {
 
     // 2. Fetch Data
     let data: any[] = [];
-    const from = date_range?.from;
-    const to = date_range?.to;
+    const fromDate = date_range?.from;
+    const toDate = date_range?.to;
+
+    // Adjust dates to cover the full day range in UTC
+    const dateFrom = fromDate ? `${fromDate}T00:00:00.000Z` : undefined;
+    const dateTo = toDate ? `${toDate}T23:59:59.999Z` : undefined;
 
     switch (type as ReportType) {
       case 'sales':
         const { data: salesData, error: salesError } = await supabase
           .rpc('get_transactions', {
             p_store_id: store_id,
+            p_date_from: dateFrom,
+            p_date_to: dateTo,
             p_limit: 10000
           });
         if (salesError) throw salesError;
         data = salesData || [];
-        // Filter by date if needed (RPC might already do it or need params)
-        if (from && to) {
-            data = data.filter(item => {
-                const date = new Date(item.created_at);
-                return date >= new Date(from) && date <= new Date(to);
-            });
-        }
         break;
 
       case 'inventory':
@@ -82,16 +81,12 @@ export async function POST(req: NextRequest) {
         const { data: auditData, error: auditError } = await supabase
           .rpc('get_audit_logs', {
             p_store_id: store_id,
+            p_date_from: dateFrom,
+            p_date_to: dateTo,
             p_limit: 10000
           });
         if (auditError) throw auditError;
         data = auditData || [];
-        if (from && to) {
-            data = data.filter((item: any) => {
-                const date = new Date(item.created_at);
-                return date >= new Date(from) && date <= new Date(to);
-            });
-        }
         break;
 
       case 'profit':
@@ -99,16 +94,12 @@ export async function POST(req: NextRequest) {
         const { data: profitData, error: profitError } = await supabase
           .rpc('get_transactions', {
             p_store_id: store_id,
+            p_date_from: dateFrom,
+            p_date_to: dateTo,
             p_limit: 10000
           });
         if (profitError) throw profitError;
         data = profitData || [];
-        if (from && to) {
-            data = data.filter((item: any) => {
-                const date = new Date(item.created_at);
-                return date >= new Date(from) && date <= new Date(to);
-            });
-        }
         break;
 
       case 'kardex':
@@ -117,8 +108,8 @@ export async function POST(req: NextRequest) {
           .rpc('get_product_stock_ledger_paginated', {
             p_product_id: filters.product_id,
             p_store_id: store_id,
-            p_limit: 1000,
-            p_offset: 0
+            p_page: 1,
+            p_page_size: 1000
           });
         if (kardexError) throw kardexError;
         data = kardexData || [];
@@ -127,8 +118,8 @@ export async function POST(req: NextRequest) {
       case 'purchases':
         let query = supabase.from('receipts').select('*');
         if (store_id) query = query.eq('store_id', store_id);
-        if (from) query = query.gte('created_at', from);
-        if (to) query = query.lte('created_at', to);
+        if (dateFrom) query = query.gte('created_at', dateFrom);
+        if (dateTo) query = query.lte('created_at', dateTo);
 
         const { data: purchaseData, error: purchaseError } = await query.order('created_at', { ascending: false }).limit(1000);
         if (purchaseError) throw purchaseError;
@@ -157,7 +148,7 @@ export async function POST(req: NextRequest) {
     doc.setFontSize(10);
     doc.setTextColor(100);
     doc.text(`Tipo: ${type.toUpperCase()}`, 14, 30);
-    doc.text(`Periodo: ${from || 'N/A'} - ${to || 'N/A'}`, 14, 35);
+    doc.text(`Periodo: ${fromDate || 'N/A'} - ${toDate || 'N/A'}`, 14, 35);
     doc.text(`Generado: ${timestamp}`, 14, 40);
 
     // Separator Line
