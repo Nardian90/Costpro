@@ -2,9 +2,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
 import { logger } from '@/lib/logger';
 import { withLogging, withTableLogging } from './base';
-import { validateRPCArrayResponse } from '@/lib/rpc-validator';
-import { profileSchema } from '@/validation/schemas';
+import { validateRPCArrayResponse, validateRPCResponse } from '@/lib/rpc-validator';
+import { profileSchema, managedCreateUserParamsSchema, manageUserMembershipsParamsSchema, uuidRegex } from '@/validation/schemas';
 import type { Profile } from '@/types';
+import { z } from 'zod';
 import { toast } from 'sonner';
 
 export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: boolean, activeStoreId?: string | null) {
@@ -126,17 +127,16 @@ export function useUserStoreAccess(userId?: string) {
 export function useCreateUser() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (params: {
-      p_email: string;
-      p_full_name: string;
-      p_role: string;
-      p_store_id: string;
-      p_memberships?: any[];
-      p_max_stores?: number;
-      p_max_users?: number;
-    }) => {
+    mutationFn: async (rawParams: z.input<typeof managedCreateUserParamsSchema>) => {
+      const params = managedCreateUserParamsSchema.parse(rawParams);
       const rpcName = 'managed_create_user';
-      return await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
+      const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
+      return await validateRPCResponse(data, z.object({
+        success: z.boolean(),
+        user_id: z.string().regex(uuidRegex),
+        email: z.string().email(),
+        message: z.string()
+      }), rpcName);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -151,10 +151,14 @@ export function useCreateUser() {
 export function useManageUserMemberships() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ userId, memberships }: { userId: string; memberships: any[] }) => {
+    mutationFn: async (rawParams: { userId: string; memberships: any[] }) => {
+      const params = manageUserMembershipsParamsSchema.parse({
+        p_user_id: rawParams.userId,
+        p_memberships: rawParams.memberships
+      });
       const rpcName = 'manage_user_memberships';
-      const params = { p_user_id: userId, p_memberships: memberships };
-      return await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
+      const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
+      return await validateRPCResponse(data, z.any(), rpcName);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -169,7 +173,9 @@ export function useManageUserMemberships() {
 export function useUpdateUser() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...updates }: { id: string } & Partial<Profile>) => {
+    mutationFn: async ({ id, ...rawUpdates }: { id: string } & Partial<z.input<typeof profileSchema>>) => {
+      // Validate partial profile updates
+      const updates = profileSchema.partial().parse(rawUpdates);
       return await withTableLogging('update', 'profiles', () => supabase
         .from('profiles')
         .update(updates)

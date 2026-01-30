@@ -7,6 +7,10 @@ import {
   getProductsForPosParamsSchema,
   bulkUpdateProductsParamsSchema,
   bulkUpdateProductsInputSchema,
+  createProductInputSchema,
+  updateProductInputSchema,
+  createProductVariantInputSchema,
+  uuidRegex
 } from '@/validation/schemas';
 import { getSupabaseUrl } from '@/lib/utils';
 import { withLogging, withTableLogging, getCleanStoreId } from './base';
@@ -113,7 +117,8 @@ export async function prefetchProducts(queryClient: QueryClient, storeId: string
 export function useCreateProduct() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (newProduct: any) => {
+    mutationFn: async (rawProduct: z.input<typeof createProductInputSchema>) => {
+      const newProduct = createProductInputSchema.parse(rawProduct);
       return await withTableLogging('insert', 'products', () => supabase
         .from('products')
         .insert([newProduct]));
@@ -128,7 +133,8 @@ export function useCreateProduct() {
 export function useUpdateProduct() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...updates }: { id: string; [key: string]: any }) => {
+    mutationFn: async ({ id, ...rawUpdates }: { id: string } & z.input<typeof updateProductInputSchema>) => {
+      const updates = updateProductInputSchema.parse(rawUpdates);
       return await withTableLogging('update', 'products', () => supabase
         .from('products')
         .update(updates)
@@ -146,7 +152,8 @@ export function useDeleteProduct() {
   return useMutation({
     mutationFn: async (productId: string) => {
       const rpcName = 'managed_delete_product';
-      return await withLogging(rpcName, { p_product_id: productId }, () => supabase.rpc(rpcName, { p_product_id: productId }));
+      const data = await withLogging(rpcName, { p_product_id: productId }, () => supabase.rpc(rpcName, { p_product_id: productId }));
+      return await validateRPCResponse(data, z.boolean().catch(true), rpcName);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
@@ -161,7 +168,8 @@ export function useToggleProductActive() {
     mutationFn: async ({ productId, isActive }: { productId: string, isActive: boolean }) => {
       const rpcName = 'managed_toggle_product_active';
       const params = { p_product_id: productId, p_is_active: isActive };
-      return await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
+      const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
+      return await validateRPCResponse(data, z.boolean().catch(true), rpcName);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
@@ -194,7 +202,8 @@ export function useBulkUpdateProducts() {
 export function useAddVariant() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ product_id, ...variant }: { product_id: string, [key: string]: any }) => {
+    mutationFn: async ({ product_id, ...rawVariant }: { product_id: string } & z.input<typeof createProductVariantInputSchema>) => {
+      const variant = createProductVariantInputSchema.parse(rawVariant);
       return await withTableLogging('insert', 'product_variants', () => supabase
         .from('product_variants')
         .insert([{ product_id, ...variant }]));

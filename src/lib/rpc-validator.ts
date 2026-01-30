@@ -26,10 +26,12 @@ export async function validateRPCResponse<T>(
       }).catch(err => console.error('Failed to log validation error:', err));
     }
 
-    if (process.env.NODE_ENV === 'development') {
-        toast.error(`Error de validación en ${rpcName}`);
+    if (process.env.NODE_ENV !== 'production') {
+        const message = `Error de validación en RPC: ${rpcName}. Revisa la consola para más detalles.`;
+        toast.error(message);
+        throw new Error(message);
     }
-    // We cast to T anyway to avoid breaking the UI, but we've logged the error
+    // We cast to T anyway to avoid breaking the UI in production, but we've logged the error
     return data as T;
   }
 
@@ -61,8 +63,10 @@ export async function validateRPCArrayResponse<T>(
         }).catch(err => console.error('Failed to log validation error:', err));
       }
 
-      if (process.env.NODE_ENV === 'development') {
-          toast.error(`Error de validación en ${rpcName}`);
+      if (process.env.NODE_ENV !== 'production') {
+          const message = `Error de validación en RPC (Array): ${rpcName}. Revisa la consola para más detalles.`;
+          toast.error(message);
+          throw new Error(message);
       }
       return (data || []) as T[];
     }

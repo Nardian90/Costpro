@@ -9,24 +9,17 @@ export const userRoleSchema = z.enum(['admin', 'encargado', 'usuario', 'manager'
 /**
  * Permissive UUID regex that matches the standard 8-4-4-4-12 format
  * without being strict about the version or variant bits.
- *
- * TRADE-OFF DOCUMENTATION:
- * We move from strict .uuid() to this permissive regex to support legacy demo data
- * that may contain non-standard variant bits (e.g. 'e' instead of RFC 4122 standard '8','9','a','b').
- * While this slightly weakens validation for new data, it is a necessary pragmatic
- * decision to ensure system-wide resilience and compatibility with existing databases.
  */
 export const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * Resilient UUID schema that handles common "JS-isms" like 'null', 'undefined', or empty strings
  * by converting them to actual null before validation.
- * Uses a permissive regex to support non-strict UUIDs found in demo data.
  */
 export const resilientUuid = z.preprocess((val) => {
   if (val === 'null' || val === 'undefined' || val === '' || val === null) return null;
   return val;
-}, z.string().regex(uuidRegex).nullable().optional());
+}, z.string().regex(uuidRegex).nullable().optional()).optional().nullable();
 
 /**
  * Same as resilientUuid but with a .catch(null) to ensure that even invalid UUID strings
@@ -96,33 +89,33 @@ export const profileSchema = z.object({
 });
 
 export const productSchema = z.object({
-  id: resilientUuid.pipe(z.string().regex(uuidRegex)).catch(''), // Ensure it's a string for Product interface
+  id: resilientUuid.pipe(z.string().regex(uuidRegex)).catch(''),
   name: z.string().min(1, "El nombre es obligatorio"),
   description: z.string().nullable().optional(),
   sku: z.preprocess((val) => val === '' ? null : val, z.string().nullable().optional()),
-  price: z.coerce.number().min(0).default(0),
-  cost_price: z.coerce.number().min(0).default(0),
+  price: z.coerce.number().min(0).optional().default(0),
+  cost_price: z.coerce.number().min(0).optional().default(0),
   image_url: z.string().nullable().optional(),
   category: z.string().nullable().optional(),
   unit_of_measure: z.string().nullable().optional(),
   supplier: z.string().nullable().optional(),
   created_at: z.string().nullable().optional(),
   updated_at: z.string().nullable().optional(),
-  stock_current: z.coerce.number().default(0),
-  cost_average: z.coerce.number().nullable().default(0),
-  min_stock: z.coerce.number().default(0),
+  stock_current: z.coerce.number().optional().default(0),
+  cost_average: z.coerce.number().nullable().optional().default(0),
+  min_stock: z.coerce.number().optional().default(0),
   store_id: optionalResilientUuid,
   public_image_url: z.string().nullable().optional(),
   is_active: z.preprocess((val) => {
     if (val === undefined || val === null) return undefined;
     if (typeof val === 'string') return val === 'true';
     return val;
-  }, z.boolean().default(true)),
+  }, z.boolean().optional()).default(true),
   has_movements: z.preprocess((val) => {
     if (val === undefined || val === null) return undefined;
     if (typeof val === 'string') return val === 'true';
     return val;
-  }, z.boolean().default(false)),
+  }, z.boolean().optional()).default(false),
 });
 
 export const productVariantSchema = z.object({
@@ -130,10 +123,32 @@ export const productVariantSchema = z.object({
   product_id: optionalResilientUuid,
   name: z.string(),
   sku: z.string().nullable().optional(),
-  price: z.coerce.number().min(0).default(0),
-  conversion_factor: z.coerce.number().min(0).default(1),
+  price: z.coerce.number().min(0).optional().default(0),
+  conversion_factor: z.coerce.number().min(0).optional().default(1),
   created_at: z.string().optional(),
   updated_at: z.string().optional(),
+});
+
+export const createProductInputSchema = productSchema.omit({
+  id: true,
+  created_at: true,
+  updated_at: true,
+  public_image_url: true,
+  has_movements: true
+});
+
+export const updateProductInputSchema = productSchema.partial().omit({
+  id: true,
+  created_at: true,
+  updated_at: true,
+  public_image_url: true,
+  has_movements: true
+});
+
+export const createProductVariantInputSchema = productVariantSchema.omit({
+  id: true,
+  created_at: true,
+  updated_at: true
 });
 
 export const cartItemSchema = z.object({
@@ -266,8 +281,8 @@ export const dashboardKpiResponseSchema = z.object({
 });
 
 export const createSaleParamsSchema = z.object({
-  p_store_id: resilientUuid,
-  p_seller_id: resilientUuid,
+  p_store_id: z.string().regex(uuidRegex), // Use string for required RPC params
+  p_seller_id: z.string().regex(uuidRegex), // Use string for required RPC params
   p_payment_method: z.string(),
   p_total_amount: z.number(),
   p_subtotal: z.number(),
@@ -283,7 +298,7 @@ export const createSaleParamsSchema = z.object({
 });
 
 export const registerReceptionParamsSchema = z.object({
-  p_store_id: resilientUuid,
+  p_store_id: z.string().regex(uuidRegex),
   p_supplier: z.string().min(1),
   p_reception_date: z.string(),
   p_invoice_number: z.string().min(1),
@@ -296,9 +311,9 @@ export const registerReceptionParamsSchema = z.object({
 });
 
 export const adjustStockInputSchema = z.object({
-  productId: resilientUuid,
-  storeId: resilientUuid,
-  userId: resilientUuid,
+  productId: z.string().regex(uuidRegex),
+  storeId: z.string().regex(uuidRegex),
+  userId: z.string().regex(uuidRegex),
   quantityDelta: z.number().int(),
   unitCostAdjustment: z.number().nullable(),
   reason: z.string().min(1),
@@ -353,6 +368,28 @@ export const bulkUpdateProductsInputSchema = z.object({
 
 export const bulkUpdateProductsParamsSchema = z.object({
   _products: z.array(bulkUpdateProductItemSchema),
+});
+
+export const managedCreateUserParamsSchema = z.object({
+  p_email: z.string().email(),
+  p_full_name: z.string().min(1),
+  p_role: userRoleSchema,
+  p_store_id: z.string().regex(uuidRegex),
+  p_memberships: z.array(z.object({
+    store_id: z.string().regex(uuidRegex),
+    role: userRoleSchema
+  })).optional(),
+  p_max_stores: z.number().int().min(0).optional(),
+  p_max_users: z.number().int().min(0).optional(),
+});
+
+export const manageUserMembershipsParamsSchema = z.object({
+  p_user_id: z.string().regex(uuidRegex),
+  p_memberships: z.array(z.object({
+    store_id: z.string().regex(uuidRegex),
+    role: userRoleSchema,
+    status: z.enum(['active', 'revoked']).optional()
+  }))
 });
 
 // ============================================
@@ -442,16 +479,16 @@ export const transferStatusSchema = z.enum(['PENDIENTE', 'CONFIRMADA', 'CANCELAD
 export const transferItemSchema = z.object({
   id: optionalResilientUuid,
   transfer_id: optionalResilientUuid,
-  product_id: resilientUuid.pipe(z.string().regex(uuidRegex)).catch(''),
+  product_id: z.string().regex(uuidRegex),
   quantity: z.number().positive(),
   unit_cost: z.number().min(0),
 });
 
 export const transferSchema = z.object({
-  id: resilientUuid.pipe(z.string().regex(uuidRegex)).catch(''),
-  origin_store_id: resilientUuid.pipe(z.string().regex(uuidRegex)).catch(''),
-  destination_store_id: resilientUuid.pipe(z.string().regex(uuidRegex)).catch(''),
-  created_by: resilientUuid.pipe(z.string().regex(uuidRegex)).catch(''),
+  id: z.string().regex(uuidRegex),
+  origin_store_id: z.string().regex(uuidRegex),
+  destination_store_id: z.string().regex(uuidRegex),
+  created_by: z.string().regex(uuidRegex),
   status: transferStatusSchema,
   notes: z.string().nullable(),
   created_at: z.string(),
@@ -478,8 +515,8 @@ export const transferWithDetailsSchema = transferSchema.extend({
 export const syncOperationTypeSchema = z.enum(['CREATE', 'UPDATE', 'DELETE']);
 
 export const syncOperationSchema = z.object({
-  id: optionalResilientUuid, // Local ID
-  idempotencyKey: resilientUuid.pipe(z.string().regex(uuidRegex)).catch(''),
+  id: optionalResilientUuid,
+  idempotencyKey: z.string().regex(uuidRegex),
   operationType: syncOperationTypeSchema,
   entity: z.string(),
   payload: z.any(),
@@ -500,7 +537,7 @@ export const syncBatchSchema = z.object({
 });
 
 export const syncResultItemSchema = z.object({
-  idempotencyKey: resilientUuid.pipe(z.string().regex(uuidRegex)).catch(''),
+  idempotencyKey: z.string().regex(uuidRegex),
   status: z.enum(['ok', 'conflict', 'error']),
   serverId: z.any().optional(),
   serverVersion: z.number().optional(),

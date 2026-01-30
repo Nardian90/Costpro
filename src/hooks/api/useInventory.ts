@@ -90,7 +90,7 @@ export function useRegisterReception() {
   const { addToQueue } = useSyncContext();
 
   return useMutation({
-    mutationFn: async (rawParams: z.infer<typeof registerReceptionParamsSchema>) => {
+    mutationFn: async (rawParams: z.input<typeof registerReceptionParamsSchema>) => {
       const params = registerReceptionParamsSchema.parse(rawParams);
       if (!navigator.onLine) {
         return await addToQueue('reception', 'CREATE', params);
@@ -112,7 +112,7 @@ export function useAdjustStock() {
   const { addToQueue } = useSyncContext();
 
   return useMutation({
-    mutationFn: async (rawInput: z.infer<typeof adjustStockInputSchema>) => {
+    mutationFn: async (rawInput: z.input<typeof adjustStockInputSchema>) => {
       const input = adjustStockInputSchema.parse(rawInput);
       const rpcName = 'perform_inventory_adjustment';
       const params = {

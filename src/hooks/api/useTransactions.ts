@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
 import { validateRPCArrayResponse, validateRPCResponse } from '@/lib/rpc-validator';
-import { transactionSchema, transactionItemSchema, createSaleParamsSchema } from '@/validation/schemas';
+import { transactionSchema, transactionItemSchema, createSaleParamsSchema, uuidRegex } from '@/validation/schemas';
 import { withLogging, withTableLogging, getCleanStoreId } from './base';
 import { z } from 'zod';
 import { useSyncContext } from '@/components/providers/SyncProvider';
@@ -80,14 +80,14 @@ export function useCreateSale() {
   const { addToQueue } = useSyncContext();
 
   return useMutation({
-    mutationFn: async (rawParams: z.infer<typeof createSaleParamsSchema>) => {
+    mutationFn: async (rawParams: z.input<typeof createSaleParamsSchema>) => {
       const params = createSaleParamsSchema.parse(rawParams);
       if (!navigator.onLine) {
         return await addToQueue('sale', 'CREATE', params);
       }
       const rpcName = 'create_sale';
       const data = await withLogging<string>(rpcName, params, () => supabase.rpc(rpcName, params));
-      return await validateRPCResponse(data, z.string().uuid(), rpcName);
+      return await validateRPCResponse(data, z.string().regex(uuidRegex), rpcName);
     },
     onSuccess: (_, variables) => {
       const cleanStoreId = getCleanStoreId(variables.p_store_id);
