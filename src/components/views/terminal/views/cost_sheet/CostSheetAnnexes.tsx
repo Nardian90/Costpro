@@ -3,23 +3,10 @@
 
 import React from 'react';
 import { formatCurrency } from '@/lib/utils';
-
-// Simplified types for props
-type Column = {
-  key: string;
-  label: string;
-  formula?: string;
-};
-
-type Annex = {
-  id: string;
-  title: string;
-  columns: Column[];
-  data: any[]; // Data is pre-calculated by the hook
-};
+import { CostSheetAnnex, CostSheetColumn } from '@/types/cost-sheet';
 
 type CostSheetAnnexesProps = {
-  annexes: Annex[];
+  annexes: CostSheetAnnex[];
 };
 
 const CostSheetAnnexes: React.FC<CostSheetAnnexesProps> = ({ annexes }) => {
@@ -42,7 +29,7 @@ const CostSheetAnnexes: React.FC<CostSheetAnnexesProps> = ({ annexes }) => {
               <table className="w-full text-xs">
                 <thead className="bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-700">
                   <tr>
-                    {annex.columns.map((col) => (
+                    {annex.columns.map((col: CostSheetColumn) => (
                       <th key={col.key} className="p-3 text-left font-black uppercase tracking-widest text-[9px] text-slate-500 dark:text-slate-400">
                         {col.label || col.title || col.key}
                       </th>
@@ -52,7 +39,7 @@ const CostSheetAnnexes: React.FC<CostSheetAnnexesProps> = ({ annexes }) => {
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {annex.data.length > 0 ? annex.data.map((row, rowIndex) => (
                     <tr key={rowIndex} className="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
-                      {annex.columns.map((col) => (
+                      {annex.columns.map((col: CostSheetColumn) => (
                         <td key={`${rowIndex}-${col.key}`} className="p-3 font-mono text-[10px] text-slate-700 dark:text-slate-300">
                            <span className={col.formula ? "font-black text-primary" : "font-medium"}>
                              {typeof row[col.key] === 'number'
