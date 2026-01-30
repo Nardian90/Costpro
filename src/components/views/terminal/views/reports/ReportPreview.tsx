@@ -20,10 +20,15 @@ export const ReportPreview = ({ config }: ReportPreviewProps) => {
       <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary/60 px-2">Vista Previa (Borrador)</h3>
 
       <Card className={`
-        bg-white text-slate-900 shadow-2xl mx-auto overflow-hidden transition-all duration-500
+        bg-white text-slate-900 shadow-2xl mx-auto overflow-hidden transition-all duration-500 relative
         ${orientation === 'portrait' ? 'aspect-[1/1.414] w-full max-w-[600px]' : 'aspect-[1.414/1] w-full'}
       `}>
-        <div className="p-12 h-full flex flex-col">
+        {/* Draft Watermark */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden opacity-[0.03] select-none">
+            <span className="text-[200px] font-black uppercase tracking-[0.2em] -rotate-45">BORRADOR</span>
+        </div>
+
+        <div className="p-12 h-full flex flex-col relative z-10">
           {/* Header */}
           <div className="border-b-2 border-slate-100 pb-8 flex justify-between items-start">
             <div>
