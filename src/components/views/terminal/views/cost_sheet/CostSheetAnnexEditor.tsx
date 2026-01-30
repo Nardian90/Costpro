@@ -70,7 +70,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = ({ activeAnnex
                   layoutMode === 'grid' ? "hidden md:table-header-group" : "table-header-group"
                 )}>
                     <TableRow className="border-b border-border/50">
-                        {annex.columns.map((col: any) => (
+                        {annex.columns.map((col: CostSheetColumn) => (
                             <TableHead key={col.key} className="font-black py-4 px-4 text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 whitespace-nowrap">
                                 {col.label || col.title || col.key}
                             </TableHead>
@@ -81,7 +81,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = ({ activeAnnex
                 <TableBody>
                     {displayData.map((row: any, rowIndex: number) => (
                         <TableRow key={rowIndex} className="border-b border-border/30 hover:bg-primary/5 transition-colors group">
-                            {annex.columns.map((col: any) => (
+                            {annex.columns.map((col: CostSheetColumn) => (
                                 <TableCell key={col.key} data-label={col.label || col.title || col.key} className="p-3 sm:p-4">
                                     {col.formula ? (
                                         <div className="neu-inset-sm px-3 py-2 font-mono text-right bg-primary/5 text-primary font-black min-w-[100px] border border-primary/10">

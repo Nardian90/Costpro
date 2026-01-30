@@ -23,7 +23,7 @@ export default function ReportsView() {
       from: new Date().toISOString().split('T')[0],
       to: new Date().toISOString().split('T')[0],
     },
-    columns: ['id', 'created_at', 'total_amount', 'total_cost', 'status', 'payment_method'],
+    columns: ['id', 'created_at', 'total_amount', 'status', 'payment_method'],
     layout: { orientation: 'portrait', format: 'a4' }
   });
 
@@ -73,7 +73,7 @@ export default function ReportsView() {
         },
         body: JSON.stringify({
           ...config,
-          store_id: config.store_id || user.activeStoreId,
+          store_id: user.activeStoreId,
           name: config.name || `Reporte ${config.type}`
         })
       });
@@ -111,7 +111,7 @@ export default function ReportsView() {
         config.type as ReportType,
         config.filters,
         config.date_range,
-        config.store_id || user.activeStoreId
+        user.activeStoreId
       );
 
       if (!data || data.length === 0) {

@@ -179,9 +179,6 @@ export const transactionSchema = z.object({
   discount_value: z.coerce.number().catch(0).default(0),
   subtotal: z.coerce.number().catch(0).default(0),
   idempotency_key: z.string().nullable().optional(),
-  total_cost: z.coerce.number().optional().nullable(),
-  profit: z.coerce.number().optional().nullable(),
-  margin_percentage: z.coerce.number().optional().nullable(),
 });
 
 export const stockMovementSchema = z.object({
