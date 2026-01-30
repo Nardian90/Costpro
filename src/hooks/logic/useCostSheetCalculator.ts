@@ -134,11 +134,15 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
         calculatedResult.total = annexTotals[row.baseDeCalculoRef];
       }
 
-       // 1. Calculate children first if they exist and there is NO base reference or formula
-       if (row.children && row.children.length > 0 && !row.baseDeCalculoRef && !row.formula) {
+       // 1. Calculate children first if they exist
+       if (row.children && row.children.length > 0) {
         const childrenCalculations = row.children.map(child => calculateRow(child));
-        calculatedResult.total = childrenCalculations.reduce((sum, c) => sum + c.total, 0);
-        calculatedResult.valorHistorico = childrenCalculations.reduce((sum, c) => sum + c.valorHistorico, 0);
+        // Only auto-sum if there's no formula and no base reference,
+        // OR if the formula is specifically =sum(children)
+        if ((!row.baseDeCalculoRef && !row.formula) || (row.formula || '').trim() === '=sum(children)') {
+            calculatedResult.total = childrenCalculations.reduce((sum, c) => sum + c.total, 0);
+            calculatedResult.valorHistorico = childrenCalculations.reduce((sum, c) => sum + c.valorHistorico, 0);
+        }
       }
 
       // 3. Percentage-based logic (Resultado section)
@@ -181,10 +185,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
       }
 
       // 5. Final formula override (for summary and reference rows)
-      if (row.formula) {
-        if ((row.formula || '').trim() === '=sum(children)') {
-          // Handled by step 1
-        } else {
+      if (row.formula && (row.formula || '').trim() !== '=sum(children)') {
           // Helper to resolve formula with a specific field (total or valorHistorico)
           const resolveFormula = (field: 'total' | 'valorHistorico') => {
             let expression = (row.formula || '').replace(/ref\(\s*['"]?([^'"]+)['"]?\s*\)/g, (_, id) => {
@@ -229,7 +230,6 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
           calculatedResult.total = resolveFormula('total');
           calculatedResult.valorHistorico = resolveFormula('valorHistorico');
         }
-      }
 
       newCalculatedValues[row.id] = calculatedResult;
       return calculatedResult;
