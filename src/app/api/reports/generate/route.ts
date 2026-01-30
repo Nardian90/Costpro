@@ -29,6 +29,13 @@ export async function POST(req: NextRequest) {
     const token = authHeader.split(' ')[1];
     const supabase = getSupabaseAuthClient(token);
 
+    // Fetch Store Info
+    const { data: storeInfo } = await supabase
+      .from('stores')
+      .select('name, logo_url')
+      .eq('id', store_id)
+      .single();
+
     // 1. Create a record in report_runs
     const { data: runData, error: runError } = await supabase
       .from('report_runs')
@@ -138,25 +145,46 @@ export async function POST(req: NextRequest) {
     });
 
     const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
     const timestamp = format(new Date(), "yyyy-MM-dd HH:mm:ss");
 
-    // Header
-    doc.setFontSize(20);
-    doc.setTextColor(40, 40, 40);
-    doc.text(name || 'Reporte de Sistema', 14, 22);
+    // Logo Placeholder / Store Logo
+    doc.setDrawColor(230);
+    doc.setFillColor(245);
+    doc.roundedRect(14, 15, 25, 25, 3, 3, 'FD');
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text("LOGO", 22, 30);
+
+    // Store Info (Top Right)
+    doc.setFontSize(10);
+    doc.setTextColor(40);
+    doc.setFont("helvetica", "bold");
+    doc.text(storeInfo?.name || "CostPro Enterprise", pageWidth - 14, 20, { align: "right" });
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(100);
+    doc.text("SISTEMA DE GESTIÓN POS", pageWidth - 14, 25, { align: "right" });
+    doc.text(`Generado: ${timestamp}`, pageWidth - 14, 30, { align: "right" });
+
+    // Centered Report Title
+    doc.setFontSize(22);
+    doc.setTextColor(40);
+    doc.setFont("helvetica", "bold");
+    doc.text(name || 'Reporte de Sistema', pageWidth / 2, 55, { align: "center" });
 
     doc.setFontSize(10);
     doc.setTextColor(100);
-    doc.text(`Tipo: ${type.toUpperCase()}`, 14, 30);
-    doc.text(`Periodo: ${fromDate || 'N/A'} - ${toDate || 'N/A'}`, 14, 35);
-    doc.text(`Generado: ${timestamp}`, 14, 40);
+    doc.setFont("helvetica", "normal");
+    doc.text(`${type.toUpperCase()} | PERIODO: ${fromDate || 'N/A'} - ${toDate || 'N/A'}`, pageWidth / 2, 62, { align: "center" });
 
     // Separator Line
-    doc.setDrawColor(200);
-    doc.line(14, 45, pageWidth - 14, 45);
+    doc.setDrawColor(220);
+    doc.setLineWidth(0.5);
+    doc.line(14, 70, pageWidth - 14, 70);
 
     // Table
-    const tableHeaders: string[] = (columns && columns.length > 0) ? columns : Object.keys(data[0] || {}).slice(0, 7);
+    const tableHeaders: string[] = (columns && columns.length > 0) ? columns : (data.length > 0 ? Object.keys(data[0]).slice(0, 7) : []);
     const tableData = data.map((row: any) => tableHeaders.map((col: string) => {
         const val = row[col];
         if (typeof val === 'object' && val !== null) return JSON.stringify(val);
@@ -166,19 +194,49 @@ export async function POST(req: NextRequest) {
     const displayHeaders = tableHeaders.map(h => (COLUMN_LABELS[h] || h).toUpperCase());
 
     autoTable(doc, {
-      startY: 50,
+      startY: 75,
       head: [displayHeaders],
       body: tableData,
       theme: 'striped',
-      headStyles: { fillColor: [41, 128, 185], textColor: 255 },
-      styles: { fontSize: 8, cellPadding: 2 },
-      margin: { top: 50 },
+      headStyles: {
+        fillColor: [30, 41, 59], // Slate-800
+        textColor: 255,
+        fontSize: 9,
+        fontStyle: 'bold',
+        halign: 'center'
+      },
+      styles: {
+        fontSize: 8,
+        cellPadding: 3,
+        overflow: 'linebreak'
+      },
+      alternateRowStyles: {
+        fillColor: [248, 250, 252] // Slate-50
+      },
+      margin: { top: 75, bottom: 40 },
       didDrawPage: (data) => {
-        // Footer
+        // Signature Lines in Footer (only on last page or all pages? Usually all or last)
+        // Let's do it at the bottom of every page for professionalism
+        const footerY = pageHeight - 35;
+
+        doc.setDrawColor(200);
+        doc.setLineWidth(0.2);
+
+        // Line 1
+        doc.line(30, footerY, 80, footerY);
+        doc.setFontSize(7);
+        doc.setTextColor(100);
+        doc.text("ELABORADO POR", 55, footerY + 5, { align: "center" });
+
+        // Line 2
+        doc.line(pageWidth - 80, footerY, pageWidth - 30, footerY);
+        doc.text("REVISADO / AUTORIZADO", pageWidth - 55, footerY + 5, { align: "center" });
+
+        // Pagination
         const str = `Página ${doc.getNumberOfPages()}`;
-        doc.setFontSize(8);
-        doc.text(str, pageWidth - 30, doc.internal.pageSize.getHeight() - 10);
-        doc.text('Documento generado automáticamente por CostPro', 14, doc.internal.pageSize.getHeight() - 10);
+        doc.setFontSize(7);
+        doc.text(str, pageWidth - 14, pageHeight - 10, { align: "right" });
+        doc.text('Documento oficial generado por CostPro Enterprise Reporting v5.7', 14, pageHeight - 10);
       }
     });
 
