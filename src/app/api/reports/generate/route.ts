@@ -258,12 +258,18 @@ export async function POST(req: NextRequest) {
 
         doc.setFontSize(9);
         doc.setFont("helvetica", "bold");
-        doc.text(annex.title.toUpperCase(), 14, finalY);
+        doc.text(`${annex.id || ''} - ${annex.title}`.toUpperCase(), 14, finalY);
 
-        const headers = annex.columns.map((c: any) => c.label.toUpperCase());
+        const headers = annex.columns.map((c: any) => (c.label || c.title || c.key).toUpperCase());
         const data = annex.data.map((row: any) => annex.columns.map((col: any) => {
           const val = row[col.key];
-          return typeof val === 'number' ? val.toLocaleString('es-ES', { minimumFractionDigits: 2 }) : (val || '-');
+          if (typeof val === 'number') {
+              return val.toLocaleString('es-ES', {
+                  minimumFractionDigits: (col.key === 'no' || col.key === 'quantity' || col.key === 'days' || col.key === 'worker_count') ? 0 : 2,
+                  maximumFractionDigits: 4
+              });
+          }
+          return val || '-';
         }));
 
         autoTable(doc, {
