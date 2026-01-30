@@ -22,7 +22,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 export default function NewsView() {
   const { data: news, isLoading, error, refetch, isRefetching } = useRSSNews();
   const [searchTerm, setSearchTerm] = React.useState('');
-  const [filterPriority, setFilterPriority] = React.useState(false);
+  const [filterPriority, setFilterPriority] = React.useState(true);
 
   const filteredNews = React.useMemo(() => {
     if (!news) return [];
