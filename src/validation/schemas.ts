@@ -9,7 +9,12 @@ export const userRoleSchema = z.enum(['admin', 'encargado', 'usuario', 'manager'
 /**
  * Permissive UUID regex that matches the standard 8-4-4-4-12 format
  * without being strict about the version or variant bits.
- * This is necessary to support some legacy/demo data that doesn't strictly follow RFC 4122.
+ *
+ * TRADE-OFF DOCUMENTATION:
+ * We move from strict .uuid() to this permissive regex to support legacy demo data
+ * that may contain non-standard variant bits (e.g. 'e' instead of RFC 4122 standard '8','9','a','b').
+ * While this slightly weakens validation for new data, it is a necessary pragmatic
+ * decision to ensure system-wide resilience and compatibility with existing databases.
  */
 export const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

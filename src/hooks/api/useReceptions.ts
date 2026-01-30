@@ -18,7 +18,7 @@ export function useReceptions(storeId?: string | null, isAdmin = false) {
       const data = await withTableLogging('select', 'receipts', () => query.order('created_at', { ascending: false }));
       return await validateRPCArrayResponse(data, receiptSchema, 'receipts');
     },
-    enabled: isAdmin || !!storeId,
+    enabled: isAdmin || !!cleanStoreId,
     staleTime: 30 * 1000,
   });
 }

@@ -27,8 +27,8 @@ export function useTransactions(storeId?: string | null, isAdmin = false) {
         console.warn('[Transactions] RPC failed, falling back to table query', err);
         const columns = 'id, created_at, updated_at, total_amount, status, payment_method, subtotal, discount_value, discount_type, store_id, seller_id, completed_at, cancelled_at, void_reason';
         let query = supabase.from('transactions').select(columns);
-        if (!isAdmin && storeId) {
-          query = query.eq('store_id', storeId);
+        if (!isAdmin && cleanStoreId) {
+          query = query.eq('store_id', cleanStoreId);
         }
         const data = await withTableLogging('select', 'transactions', () => query.order('created_at', { ascending: false }));
         return await validateRPCArrayResponse(data, transactionSchema, 'transactions_fallback');
@@ -90,11 +90,11 @@ export function useCreateSale() {
       return await validateRPCResponse(data, z.string().uuid(), rpcName);
     },
     onSuccess: (_, variables) => {
-      const storeId = variables.p_store_id;
-      queryClient.invalidateQueries({ queryKey: ['products', storeId] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-kpis', storeId] });
-      queryClient.invalidateQueries({ queryKey: ['transactions', storeId] });
-      queryClient.invalidateQueries({ queryKey: ['inventory', storeId] });
+      const cleanStoreId = getCleanStoreId(variables.p_store_id);
+      queryClient.invalidateQueries({ queryKey: ['products', cleanStoreId] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-kpis', cleanStoreId] });
+      queryClient.invalidateQueries({ queryKey: ['transactions', cleanStoreId] });
+      queryClient.invalidateQueries({ queryKey: ['inventory', cleanStoreId] });
     },
   });
 }
