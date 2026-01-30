@@ -1,7 +1,7 @@
 -- ==========================================
 -- CostPro Professional Demo Reset Script (v5.7.13)
 -- Targets: Supabase SQL Editor
--- Features: Dynamic Cleanup, Schema Enforcement, Trigger Safety, Version Resilience
+-- Features: Dynamic Cleanup, Schema Enforcement, Trigger Safety, Ultra-Resilience
 -- ==========================================
 
 -- 0. INITIAL SETUP & SECURITY
@@ -12,6 +12,7 @@ DO $$
 BEGIN
     -- 1. DYNAMIC CLEANUP OF OPERATIONAL TABLES
     -- CASCADE ensures that all dependent records are removed in correct order
+    -- RSS tables are EXCLUDED per user instruction
     DECLARE
         tab_name text;
         tables_to_truncate text[] := ARRAY[
@@ -21,22 +22,32 @@ BEGIN
             'cash_movements',
             'cash_register_sessions',
             'idempotency_keys',
-            'inventory_adjustments',
+            'inventory',
             'inventory_adjustment_items',
+            'inventory_adjustments',
+            'inventory_batches',
+            'inventory_movements',
+            'inventory_snapshots',
             'product_variants',
             'products',
-            'categories',
+            'purchase_items',
+            'purchase_orders',
             'receipt_items',
             'receipts',
+            'sale_items',
+            'sales',
             'stock_movements',
+            'sync_log',
             'transaction_items',
             'transactions',
+            'transfer_items',
+            'transfers',
             'user_store_memberships',
             'profiles',
             'stores',
             'suppliers',
-            'rss_feeds',
-            'rss_settings'
+            'units_of_measure',
+            'categories'
         ];
     BEGIN
         FOREACH tab_name IN ARRAY tables_to_truncate
@@ -159,30 +170,9 @@ BEGIN
             (demo_store_id, 'PROD-006', 'YOGUR NATURAL', 'LÁCTEOS', 800, 550, 45, true);
     END IF;
 
-    -- 6. RSS DEFAULT SETTINGS (Safe Columns)
-    -- We use dynamic SQL to insert into rss_settings to avoid 42703 error
-    DECLARE
-        rss_cols text;
-        rss_vals text;
-    BEGIN
-        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'rss_settings') THEN
-            -- Check for actual columns
-            IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'rss_settings' AND column_name = 'cache_duration_minutes') THEN
-                INSERT INTO public.rss_settings (id, priority_keywords, cache_duration_minutes, apply_filter)
-                VALUES ('00000000-0000-0000-0000-000000000000', ARRAY['Tasas de cambio', 'CUP', 'Divisas'], 60, false)
-                ON CONFLICT (id) DO UPDATE SET updated_at = now();
-            ELSE
-                -- Legacy fallback if needed
-                INSERT INTO public.rss_settings (id)
-                VALUES ('00000000-0000-0000-0000-000000000000')
-                ON CONFLICT (id) DO NOTHING;
-            END IF;
-        END IF;
-    END;
-
 END $$;
 
--- 7. RESTORE TRIGGER SECURITY
+-- 6. RESTORE TRIGGER SECURITY
 SET session_replication_role = 'origin';
 
 -- End of Pro Reset Script
