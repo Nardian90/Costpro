@@ -148,37 +148,37 @@ export async function POST(req: NextRequest) {
     const timestamp = format(new Date(), "yyyy-MM-dd HH:mm:ss");
 
     // Logo Placeholder / Store Logo
-    doc.setDrawColor(230);
-    doc.setFillColor(245);
+    doc.setDrawColor(230, 230, 230);
+    doc.setFillColor(245, 245, 245);
     doc.roundedRect(14, 15, 25, 25, 3, 3, 'FD');
     doc.setFontSize(8);
-    doc.setTextColor(150);
+    doc.setTextColor(150, 150, 150);
     doc.text("LOGO", 22, 30);
 
     // Store Info (Top Right)
     doc.setFontSize(10);
-    doc.setTextColor(40);
+    doc.setTextColor(40, 40, 40);
     doc.setFont("helvetica", "bold");
     doc.text(storeInfo?.name || "CostPro Enterprise", pageWidth - 14, 20, { align: "right" });
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
-    doc.setTextColor(100);
+    doc.setTextColor(100, 100, 100);
     doc.text("SISTEMA DE GESTIÓN POS", pageWidth - 14, 25, { align: "right" });
     doc.text(`Generado: ${timestamp}`, pageWidth - 14, 30, { align: "right" });
 
     // Centered Report Title
     doc.setFontSize(22);
-    doc.setTextColor(40);
+    doc.setTextColor(40, 40, 40);
     doc.setFont("helvetica", "bold");
     doc.text(name || 'Reporte de Sistema', pageWidth / 2, 55, { align: "center" });
 
     doc.setFontSize(10);
-    doc.setTextColor(100);
+    doc.setTextColor(100, 100, 100);
     doc.setFont("helvetica", "normal");
     doc.text(`${type.toUpperCase()} | PERIODO: ${fromDate || 'N/A'} - ${toDate || 'N/A'}`, pageWidth / 2, 62, { align: "center" });
 
     // Separator Line
-    doc.setDrawColor(220);
+    doc.setDrawColor(220, 220, 220);
     doc.setLineWidth(0.5);
     doc.line(14, 70, pageWidth - 14, 70);
 
@@ -218,13 +218,13 @@ export async function POST(req: NextRequest) {
         // Let's do it at the bottom of every page for professionalism
         const footerY = pageHeight - 35;
 
-        doc.setDrawColor(200);
+        doc.setDrawColor(200, 200, 200);
         doc.setLineWidth(0.2);
 
         // Line 1
         doc.line(30, footerY, 80, footerY);
         doc.setFontSize(7);
-        doc.setTextColor(100);
+        doc.setTextColor(100, 100, 100);
         doc.text("ELABORADO POR", 55, footerY + 5, { align: "center" });
 
         // Line 2
