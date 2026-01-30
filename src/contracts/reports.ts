@@ -21,7 +21,7 @@ export const COLUMN_LABELS: Record<string, string> = {
   balance_after: 'Saldo Posterior',
   unit_cost: 'Costo Unit.',
   supplier: 'Proveedor',
-  total_cost: 'Costo Total',
+  total_cost: 'Costo',
   reference_doc: 'Doc. Referencia',
   notes: 'Notas',
   profit: 'Utilidad',
