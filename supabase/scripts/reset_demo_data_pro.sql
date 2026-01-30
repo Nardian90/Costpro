@@ -1,7 +1,7 @@
 -- ==========================================
 -- CostPro Professional Demo Reset Script (v5.7.13)
 -- Targets: Supabase SQL Editor
--- Features: Dynamic Cleanup, Schema Enforcement, Trigger Safety
+-- Features: Dynamic Cleanup, Schema Enforcement, Trigger Safety, Version Resilience
 -- ==========================================
 
 -- 0. INITIAL SETUP & SECURITY
@@ -58,10 +58,10 @@ BEGIN
         -- Ensure all roles are present (Safe addition)
         BEGIN
             ALTER TYPE user_role ADD VALUE 'encargado';
+        EXCEPTION WHEN duplicate_object THEN NULL; END;
+        BEGIN
             ALTER TYPE user_role ADD VALUE 'usuario';
-        EXCEPTION WHEN duplicate_object THEN
-            -- Role already exists, skip
-        END;
+        EXCEPTION WHEN duplicate_object THEN NULL; END;
     END IF;
 
     -- Ensure categories table exists
@@ -72,10 +72,12 @@ BEGIN
         created_at timestamptz DEFAULT now()
     );
 
-    -- Ensure products has category_id and link it
+    -- Ensure products has category_id and link it if needed
     IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'products') THEN
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'products' AND column_name = 'category_id') THEN
-            ALTER TABLE public.products ADD COLUMN category_id uuid REFERENCES public.categories(id);
+            BEGIN
+                ALTER TABLE public.products ADD COLUMN category_id uuid REFERENCES public.categories(id);
+            EXCEPTION WHEN others THEN NULL; END;
         END IF;
     END IF;
 
@@ -88,6 +90,7 @@ DECLARE
     cat_abarrotes_id uuid := 'a1111111-aaaa-1111-aaaa-111111111111';
     cat_lacteos_id uuid := 'b2222222-bbbb-2222-bbbb-222222222222';
     cat_limpieza_id uuid := 'c3333333-cccc-3333-cccc-333333333333';
+    has_category_id boolean;
 BEGIN
     -- Create Demo Store
     INSERT INTO public.stores (id, name, address, is_active)
@@ -101,7 +104,6 @@ BEGIN
         (cat_limpieza_id, 'LIMPIEZA', 'Artículos para el hogar');
 
     -- 4. INITIALIZE AUTH & PROFILES (Password: demo123)
-    -- Note: Using standard PGCrypto for auth compatibility
     CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
     -- ADMIN: admin@demo.com
@@ -135,31 +137,48 @@ BEGIN
     VALUES ('e2222222-2222-2222-2222-222222222222', demo_store_id, 'encargado', 'active');
 
     -- 5. INITIALIZE PRODUCTS (Linked to Categories)
-    -- Using a technique that handles both legacy 'category' (text) and new 'category_id' (uuid)
-    -- This prevents error 42703 (Undefined Column) in different schema versions
-    EXECUTE format('
-        INSERT INTO public.products (store_id, sku, name, %I, price, cost_price, stock_current, is_active)
-        VALUES
-            ($1, $2, $3, $4, 1200, 800, 150, true),
-            ($1, $5, $6, $4, 2500, 1850, 85, true),
-            ($1, $7, $8, $9, 1500, 1100, 240, true),
-            ($1, $10, $11, $12, 3200, 2400, 60, true),
-            ($1, $13, $14, $4, 4500, 3100, 120, true),
-            ($1, $15, $16, $9, 800, 550, 45, true)',
-        CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'products' AND column_name = 'category_id')
-             THEN 'category_id' ELSE 'category' END
-    ) USING
-        demo_store_id, 'PROD-001', 'ARROZ EXTRA 1KG', cat_abarrotes_id,
-        'PROD-002', 'ACEITE VEGETAL 1L',
-        'PROD-003', 'LECHE ENTERA 1L', cat_lacteos_id,
-        'PROD-004', 'DETERGENTE LÍQUIDO', cat_limpieza_id,
-        'PROD-005', 'CAFÉ MOLIDO 250G',
-        'PROD-006', 'YOGUR NATURAL';
+    SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'products' AND column_name = 'category_id') INTO has_category_id;
 
-    -- 6. RSS DEFAULT SETTINGS
-    INSERT INTO public.rss_settings (id, ai_enabled, refresh_interval)
-    VALUES ('00000000-0000-0000-0000-000000000000', true, 60)
-    ON CONFLICT (id) DO NOTHING;
+    IF has_category_id THEN
+        INSERT INTO public.products (store_id, sku, name, category_id, price, cost_price, stock_current, is_active)
+        VALUES
+            (demo_store_id, 'PROD-001', 'ARROZ EXTRA 1KG', cat_abarrotes_id, 1200, 800, 150, true),
+            (demo_store_id, 'PROD-002', 'ACEITE VEGETAL 1L', cat_abarrotes_id, 2500, 1850, 85, true),
+            (demo_store_id, 'PROD-003', 'LECHE ENTERA 1L', cat_lacteos_id, 1500, 1100, 240, true),
+            (demo_store_id, 'PROD-004', 'DETERGENTE LÍQUIDO', cat_limpieza_id, 3200, 2400, 60, true),
+            (demo_store_id, 'PROD-005', 'CAFÉ MOLIDO 250G', cat_abarrotes_id, 4500, 3100, 120, true),
+            (demo_store_id, 'PROD-006', 'YOGUR NATURAL', cat_lacteos_id, 800, 550, 45, true);
+    ELSE
+        INSERT INTO public.products (store_id, sku, name, category, price, cost_price, stock_current, is_active)
+        VALUES
+            (demo_store_id, 'PROD-001', 'ARROZ EXTRA 1KG', 'ABARROTES', 1200, 800, 150, true),
+            (demo_store_id, 'PROD-002', 'ACEITE VEGETAL 1L', 'ABARROTES', 2500, 1850, 85, true),
+            (demo_store_id, 'PROD-003', 'LECHE ENTERA 1L', 'LÁCTEOS', 1500, 1100, 240, true),
+            (demo_store_id, 'PROD-004', 'DETERGENTE LÍQUIDO', 'LIMPIEZA', 3200, 2400, 60, true),
+            (demo_store_id, 'PROD-005', 'CAFÉ MOLIDO 250G', 'ABARROTES', 4500, 3100, 120, true),
+            (demo_store_id, 'PROD-006', 'YOGUR NATURAL', 'LÁCTEOS', 800, 550, 45, true);
+    END IF;
+
+    -- 6. RSS DEFAULT SETTINGS (Safe Columns)
+    -- We use dynamic SQL to insert into rss_settings to avoid 42703 error
+    DECLARE
+        rss_cols text;
+        rss_vals text;
+    BEGIN
+        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'rss_settings') THEN
+            -- Check for actual columns
+            IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'rss_settings' AND column_name = 'cache_duration_minutes') THEN
+                INSERT INTO public.rss_settings (id, priority_keywords, cache_duration_minutes, apply_filter)
+                VALUES ('00000000-0000-0000-0000-000000000000', ARRAY['Tasas de cambio', 'CUP', 'Divisas'], 60, false)
+                ON CONFLICT (id) DO UPDATE SET updated_at = now();
+            ELSE
+                -- Legacy fallback if needed
+                INSERT INTO public.rss_settings (id)
+                VALUES ('00000000-0000-0000-0000-000000000000')
+                ON CONFLICT (id) DO NOTHING;
+            END IF;
+        END IF;
+    END;
 
 END $$;
 
