@@ -80,7 +80,7 @@ export const reportService = {
 
     switch (type) {
       case 'sales':
-        const { data: salesData, error: salesError } = await supabase.rpc('get_transactions', {
+        const { data: salesData, error: salesError } = await supabase.rpc('get_transactions_with_profit', {
           p_store_id: store_id,
           p_date_from: dateFrom,
           p_date_to: dateTo,
@@ -137,7 +137,7 @@ export const reportService = {
         break;
 
       case 'profit':
-        const { data: profitData, error: profitError } = await supabase.rpc('get_transactions', {
+        const { data: profitData, error: profitError } = await supabase.rpc('get_transactions_with_profit', {
           p_store_id: store_id,
           p_date_from: dateFrom,
           p_date_to: dateTo,
