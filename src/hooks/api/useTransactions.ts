@@ -80,7 +80,7 @@ export function useCreateSale() {
   const { addToQueue } = useSyncContext();
 
   return useMutation({
-    mutationFn: async (rawParams: z.infer<typeof createSaleParamsSchema>) => {
+    mutationFn: async (rawParams: z.input<typeof createSaleParamsSchema>) => {
       const params = createSaleParamsSchema.parse(rawParams);
       if (!navigator.onLine) {
         return await addToQueue('sale', 'CREATE', params);

@@ -127,7 +127,7 @@ export function useUserStoreAccess(userId?: string) {
 export function useCreateUser() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (rawParams: z.infer<typeof managedCreateUserParamsSchema>) => {
+    mutationFn: async (rawParams: z.input<typeof managedCreateUserParamsSchema>) => {
       const params = managedCreateUserParamsSchema.parse(rawParams);
       const rpcName = 'managed_create_user';
       const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
@@ -173,7 +173,7 @@ export function useManageUserMemberships() {
 export function useUpdateUser() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...rawUpdates }: { id: string } & Partial<Profile>) => {
+    mutationFn: async ({ id, ...rawUpdates }: { id: string } & Partial<z.input<typeof profileSchema>>) => {
       // Validate partial profile updates
       const updates = profileSchema.partial().parse(rawUpdates);
       return await withTableLogging('update', 'profiles', () => supabase

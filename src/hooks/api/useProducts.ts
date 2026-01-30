@@ -117,7 +117,7 @@ export async function prefetchProducts(queryClient: QueryClient, storeId: string
 export function useCreateProduct() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (rawProduct: z.infer<typeof createProductInputSchema>) => {
+    mutationFn: async (rawProduct: z.input<typeof createProductInputSchema>) => {
       const newProduct = createProductInputSchema.parse(rawProduct);
       return await withTableLogging('insert', 'products', () => supabase
         .from('products')
@@ -133,7 +133,7 @@ export function useCreateProduct() {
 export function useUpdateProduct() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...rawUpdates }: { id: string } & z.infer<typeof updateProductInputSchema>) => {
+    mutationFn: async ({ id, ...rawUpdates }: { id: string } & z.input<typeof updateProductInputSchema>) => {
       const updates = updateProductInputSchema.parse(rawUpdates);
       return await withTableLogging('update', 'products', () => supabase
         .from('products')
@@ -202,7 +202,7 @@ export function useBulkUpdateProducts() {
 export function useAddVariant() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ product_id, ...rawVariant }: { product_id: string } & z.infer<typeof createProductVariantInputSchema>) => {
+    mutationFn: async ({ product_id, ...rawVariant }: { product_id: string } & z.input<typeof createProductVariantInputSchema>) => {
       const variant = createProductVariantInputSchema.parse(rawVariant);
       return await withTableLogging('insert', 'product_variants', () => supabase
         .from('product_variants')
