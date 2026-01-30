@@ -1,0 +1,51 @@
+{
+  "meta": {
+    "id": "FC-DEMO-243",
+    "name": "Demo Soporte Técnico",
+    "currency": "CUP",
+    "decimals": 2,
+    "settings": {
+        "allowFormulas": true,
+        "maxIter": 10
+    }
+  },
+  "anexos": [
+    {
+        "id": "Anexo1",
+        "name": "MP",
+        "rows": [
+            {"classification": "1.1", "importe": 1418319.20},
+            {"classification": "1.2", "importe": 128749.02}
+        ]
+    }
+  ],
+  "rows": [
+    {
+        "id": "r1",
+        "classification": "1",
+        "type": "COST",
+        "label": "Gasto Material",
+        "formaCalculo": "PRORRATEO",
+        "valorHistorico": 1615551.74,
+        "baseCalculo": {"type": "ANEXO", "anexoId": "Anexo1"}
+    },
+    {
+        "id": "r1.1",
+        "classification": "1.1",
+        "type": "COST",
+        "label": "Insumos MP",
+        "formaCalculo": "IMPORTAR_ANEXO",
+        "baseCalculo": {"type": "ANEXO", "anexoId": "Anexo1"},
+        "valorHistorico": 150000
+    },
+    {
+        "id": "util",
+        "classification": "U",
+        "type": "MARGIN",
+        "label": "Utilidad",
+        "formaCalculo": "COEFICIENTE",
+        "coeficiente": 0.20,
+        "baseCalculo": {"type": "FILA", "classification": "1"}
+    }
+  ]
+}
