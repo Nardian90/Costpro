@@ -24,58 +24,63 @@ type CostSheetAnnexesProps = {
 
 const CostSheetAnnexes: React.FC<CostSheetAnnexesProps> = ({ annexes }) => {
   return (
-    <div className="space-y-12">
+    <div className="space-y-16">
       {annexes.map((annex) => {
         // Find the column that represents the total for summary calculation
-        const totalColumn = annex.columns.find(c => c.key === 'total' || c.key === 'amount' || c.key === 'depreciation_cost');
+        const totalColumn = annex.columns.find(c => c.key === 'total' || c.key === 'amount' || c.key === 'depreciation_cost' || c.key === 'total_cost');
 
         return (
-          <div key={annex.id} className="page-break-before space-y-4">
-            <div className="flex items-center gap-4">
-              <div className="h-0.5 flex-1 bg-slate-100 dark:bg-slate-800" />
-              <h2 className="text-sm font-black uppercase tracking-[0.3em] text-slate-400">
-                {annex.id} • {annex.title}
+          <div key={annex.id} className="page-break-before space-y-6">
+            <div className="text-center space-y-2">
+              <h2 className="text-base font-black uppercase tracking-[0.4em] text-slate-900 dark:text-white">
+                {annex.id} - {annex.title}
               </h2>
-              <div className="h-0.5 flex-1 bg-slate-100 dark:bg-slate-800" />
+              <div className="h-1 w-24 bg-primary mx-auto rounded-full" />
             </div>
 
-            <div className="overflow-x-auto table-to-cards border border-slate-100 dark:border-slate-800 rounded-3xl overflow-hidden shadow-xl bg-white dark:bg-slate-900">
-              <table className="w-full text-sm">
-                <thead className="bg-slate-800 text-white">
+            <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-lg bg-white dark:bg-slate-900">
+              <table className="w-full text-xs">
+                <thead className="bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-700">
                   <tr>
                     {annex.columns.map((col) => (
-                      <th key={col.key} className="p-4 text-left font-black uppercase tracking-widest text-[10px]">
+                      <th key={col.key} className="p-3 text-left font-black uppercase tracking-widest text-[9px]">
                         {col.label}
                       </th>
                     ))}
                   </tr>
                 </thead>
-                <tbody>
-                  {annex.data.map((row, rowIndex) => (
-                    <tr key={rowIndex} className="border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {annex.data.length > 0 ? annex.data.map((row, rowIndex) => (
+                    <tr key={rowIndex} className="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
                       {annex.columns.map((col) => (
-                        <td key={`${rowIndex}-${col.key}`} data-label={col.label} className="p-4 font-mono text-slate-700 dark:text-slate-300">
-                           {/* FIX: Directly render the value from the pre-calculated row data */}
+                        <td key={`${rowIndex}-${col.key}`} className="p-3 font-mono text-slate-700 dark:text-slate-300">
                            <span className={col.formula ? "font-black text-primary" : ""}>
                              {typeof row[col.key] === 'number'
-                               ? formatCurrency(row[col.key]).replace('$', '').trim()
-                               : row[col.key]
+                               ? row[col.key].toLocaleString('es-ES', { minimumFractionDigits: 2 })
+                               : row[col.key] || '--'
                              }
                            </span>
                         </td>
                       ))}
                     </tr>
-                  ))}
+                  )) : (
+                    <tr>
+                      <td colSpan={annex.columns.length} className="p-8 text-center italic text-slate-400">
+                        No hay datos registrados en este anexo.
+                      </td>
+                    </tr>
+                  )}
                   {/* Total Row */}
-                  <tr className="bg-slate-50 dark:bg-slate-800/30 font-bold border-t-2 border-slate-100 dark:border-slate-700">
-                      <td colSpan={annex.columns.length - 1} className="p-4 text-right uppercase tracking-widest text-[10px]">
-                        Subtotal {annex.id}
-                      </td>
-                      <td data-label="TOTAL" className="p-4 text-right font-mono font-black text-xl text-slate-900 dark:text-white">
-                          {/* FIX: Use the pre-calculated data for the final sum */}
-                          {formatCurrency(annex.data.reduce((acc, row) => acc + (totalColumn ? (row[totalColumn.key] || 0) : 0), 0))}
-                      </td>
-                  </tr>
+                  {annex.data.length > 0 && (
+                    <tr className="bg-slate-50 dark:bg-slate-800/50 font-bold border-t border-slate-200 dark:border-slate-700">
+                        <td colSpan={annex.columns.length - 1} className="p-4 text-right uppercase tracking-[0.2em] text-[10px] font-black text-slate-500">
+                          TOTAL
+                        </td>
+                        <td className="p-4 text-right font-mono font-black text-base text-slate-900 dark:text-white border-l border-slate-200 dark:border-slate-700">
+                            {formatCurrency(annex.data.reduce((acc, row) => acc + (totalColumn ? (row[totalColumn.key] || 0) : 0), 0)).replace('$', '').trim()}
+                        </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
