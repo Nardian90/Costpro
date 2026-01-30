@@ -13,6 +13,7 @@ import CostSheetNarrative from './CostSheetNarrative';
 import CostSheetWizard from './CostSheetWizard';
 import { CostSheetBanner } from './CostSheetBanner';
 import { CostSheetModeSwitcher } from './CostSheetModeSwitcher';
+import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
 import ActionMenu from '@/components/ui/ActionMenu';
 import { Eye, Edit, FileText, Trash2, Download, FileSpreadsheet } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -25,6 +26,7 @@ const CostSheetView = () => {
 
   const [isEditing, setIsEditing] = useState(true);
   const [viewMode, setViewMode] = useState<'expert' | 'assisted' | 'reading'>('expert');
+  const [layoutMode, setLayoutMode] = useState<ViewMode>('grid');
   const [activeSection, setActiveSection] = useState('header');
 
   const previewRef = useRef(null);
@@ -97,7 +99,12 @@ const CostSheetView = () => {
         />
 
         {isEditing && (
-             <CostSheetModeSwitcher viewMode={viewMode} setViewMode={setViewMode} />
+             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+               <CostSheetModeSwitcher viewMode={viewMode} setViewMode={setViewMode} />
+               {viewMode === 'expert' && (
+                 <ViewSwitcher currentView={layoutMode} onViewChange={setLayoutMode} />
+               )}
+             </div>
         )}
       </div>
 
@@ -120,7 +127,12 @@ const CostSheetView = () => {
                         annexes={data.annexes}
                     />
                     )}
-                    {isAnnexActive && <CostSheetAnnexEditor activeAnnexId={activeSection} />}
+                    {isAnnexActive && (
+                      <CostSheetAnnexEditor
+                        activeAnnexId={activeSection}
+                        layoutMode={layoutMode}
+                      />
+                    )}
                     {activeSection === 'signature' && <CostSheetSignatureEditor />}
                 </div>
             </>

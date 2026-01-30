@@ -8,7 +8,9 @@ import { ChevronRight, HelpCircle, CornerDownRight } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn, formatCurrency } from '@/lib/utils';
+import { ViewMode } from '@/components/ui/ViewSwitcher';
 import {
   CostSheetRow as RowData,
   CostSheetSection,
@@ -64,22 +66,22 @@ const CostSheetRow: React.FC<RowProps> = ({ row, level, calculatedValues, path, 
 
   return (
     <>
-      <tr className="border-t border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+      <TableRow className="border-t border-border/50 hover:bg-primary/5 transition-colors">
         {/* Concepto */}
-        <td style={{ paddingLeft: `${level * 24 + 12}px` }} className="py-2.5 font-medium text-slate-700 dark:text-slate-300">
+        <TableCell style={{ paddingLeft: `${level * 24 + 12}px` }} className="py-2.5 font-medium text-foreground sticky-column-1">
           <div className="flex items-center gap-2 min-w-0">
             {hasChildren && (
-              <button onClick={handleToggle} className="p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 shrink-0">
+              <button onClick={handleToggle} className="p-1 rounded-full hover:bg-primary/10 shrink-0">
                 <ChevronRight className={cn('w-4 h-4 transition-transform', isExpanded && 'rotate-90')} />
               </button>
             )}
-            {!hasChildren && <CornerDownRight className="w-4 h-4 text-slate-400 dark:text-slate-600 shrink-0 ml-1" />}
+            {!hasChildren && <CornerDownRight className="w-4 h-4 text-muted-foreground shrink-0 ml-1" />}
             <span className="truncate flex-1">{row.label}</span>
           </div>
-        </td>
+        </TableCell>
 
         {/* Valor Histórico / % */}
-        <td className="px-4 py-2 text-right">
+        <TableCell className="px-4 py-2 text-right">
           {(row.calculationMethod === 'Prorrateo' || row.hasOwnProperty('formula') || hasChildren) && !row.is_percent ? (
             <div className="h-8 flex items-center justify-end px-3 text-sm font-bold text-primary/70 bg-primary/5 rounded-md border border-primary/10 tabular-nums">
               {formatCurrency(calculated.valorHistorico || 0).replace('$', '').trim()}
@@ -103,10 +105,10 @@ const CostSheetRow: React.FC<RowProps> = ({ row, level, calculatedValues, path, 
                 {row.is_percent && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">%</span>}
             </div>
           ) : <span className="text-sm text-slate-400">-</span>}
-        </td>
+        </TableCell>
 
         {/* Forma de Cálculo */}
-        <td className="px-4 py-2">
+        <TableCell className="px-4 py-2">
           {!hasChildren && !row.formula && !row.is_percent ? (
             <Select value={row.calculationMethod || 'ValorFijo'} onValueChange={(value) => handleValueChange('calculationMethod', value)}>
               <SelectTrigger className="neu-input h-8">
@@ -118,10 +120,10 @@ const CostSheetRow: React.FC<RowProps> = ({ row, level, calculatedValues, path, 
               </SelectContent>
             </Select>
           ) : <span className="text-sm text-slate-400">-</span>}
-        </td>
+        </TableCell>
 
         {/* Base de Cálculo */}
-        <td className="px-4 py-2 min-w-[180px]">
+        <TableCell className="px-4 py-2 min-w-[180px]">
           {!hasChildren && !row.formula && !row.is_percent ? (
              <Select value={row.baseDeCalculoRef || ''} onValueChange={(value) => handleValueChange('baseDeCalculoRef', value)}>
                 <SelectTrigger className="neu-input h-8 w-full">
@@ -134,20 +136,20 @@ const CostSheetRow: React.FC<RowProps> = ({ row, level, calculatedValues, path, 
                 </SelectContent>
             </Select>
           ) : <span className="text-sm text-slate-400">-</span>}
-        </td>
+        </TableCell>
 
         {/* Coeficiente */}
-        <td className="px-4 py-2 text-right tabular-nums text-slate-500 dark:text-slate-400">
+        <TableCell className="px-4 py-2 text-right tabular-nums text-muted-foreground">
           {calculated.coeficiente > 0 ? calculated.coeficiente.toFixed(6) : <span className="text-sm text-slate-400">-</span>}
-        </td>
+        </TableCell>
 
         {/* Total */}
-        <td className="px-4 py-2 text-right font-bold tabular-nums text-primary">
+        <TableCell className="px-4 py-2 text-right font-black tabular-nums text-primary">
           {formatCurrency(calculated.total)}
-        </td>
+        </TableCell>
 
         {/* Ayuda */}
-        <td className="px-4 py-2 text-center">
+        <TableCell className="px-4 py-2 text-center">
           {row.helpText && (
             <Popover>
               <PopoverTrigger asChild>
@@ -158,8 +160,8 @@ const CostSheetRow: React.FC<RowProps> = ({ row, level, calculatedValues, path, 
               <PopoverContent className="w-80"><p className="text-sm">{row.helpText}</p></PopoverContent>
             </Popover>
           )}
-        </td>
-      </tr>
+        </TableCell>
+      </TableRow>
 
       {isExpanded && hasChildren && row.children?.map((child, index) => (
         <CostSheetRow
@@ -194,28 +196,27 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = ({ s
   const allRows = useMemo(() => flattenRows(sections.flatMap(s => s.rows)), [sections]);
 
   return (
-    <div data-testid="cost-sheet-interactive-table" className="neu-card p-0">
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm min-w-[1000px]">
-          <thead className="bg-slate-100 dark:bg-slate-800/50 sticky top-0 z-20">
-            <tr>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-auto min-w-[250px]">Concepto</th>
-              <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-32">Valor Histórico</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-40">Forma de Cálculo</th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-56">Base de Cálculo</th>
-              <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-32">Coeficiente</th>
-              <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-40">Total</th>
-              <th className="px-4 py-3 text-center font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider w-20">Ayuda</th>
-            </tr>
-          </thead>
-          <tbody>
+    <div data-testid="cost-sheet-interactive-table" className="neu-card p-0 overflow-hidden">
+        <Table className="min-w-[1000px]">
+          <TableHeader className="bg-muted/30 text-muted-foreground font-black uppercase text-[10px] tracking-widest border-b border-border">
+            <TableRow>
+              <TableHead className="px-4 py-4 text-left font-black uppercase tracking-widest min-w-[250px] sticky-column-1">Concepto</TableHead>
+              <TableHead className="px-4 py-4 text-right font-black uppercase tracking-widest w-32">Valor Histórico</TableHead>
+              <TableHead className="px-4 py-4 text-left font-black uppercase tracking-widest w-40">Forma de Cálculo</TableHead>
+              <TableHead className="px-4 py-4 text-left font-black uppercase tracking-widest w-56">Base de Cálculo</TableHead>
+              <TableHead className="px-4 py-4 text-right font-black uppercase tracking-widest w-32">Coeficiente</TableHead>
+              <TableHead className="px-4 py-4 text-right font-black uppercase tracking-widest w-40">Total</TableHead>
+              <TableHead className="px-4 py-4 text-center font-black uppercase tracking-widest w-20">Ayuda</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {sections.map((section, sectionIndex) => (
               <React.Fragment key={section.id}>
-                <tr className="bg-slate-200 dark:bg-slate-900 sticky top-12 z-10">
-                  <td colSpan={7} className="px-4 py-2 font-black text-primary uppercase tracking-widest text-xs">
+                <TableRow className="bg-muted/50 border-b border-border/50">
+                  <TableCell colSpan={7} className="px-4 py-2 font-black text-primary uppercase tracking-widest text-xs">
                     {section.label}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
                 {section.rows.map((row: RowData, rowIndex: number) => (
                   <CostSheetRow
                     key={row.id}
@@ -229,9 +230,8 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = ({ s
                 ))}
               </React.Fragment>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </TableBody>
+        </Table>
     </div>
   );
 };
