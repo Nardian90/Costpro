@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.15] - 2026-02-26
+
+### Changed
+- **Hardenización de Contratos de API**: Implementación de validación estricta de parámetros y respuestas para todas las mutaciones críticas (`products`, `users`, `transactions`).
+- **Zero-Tolerance Policy en RPC**: Actualización del validador de RPC para lanzar errores explícitos en entornos de desarrollo ante desajustes de contrato, eliminando fallos silenciosos.
+- **Corrección de Flujo de Venta**: Resolución de un error de tipado en el TPV que impedía la extracción correcta del ID de venta tras una transacción exitosa.
+- **Sincronización de Esquemas Zod**: Creación de nuevos esquemas de entrada (`createProductInputSchema`, `updateProductInputSchema`, `managedCreateUserParamsSchema`) para asegurar que solo datos válidos lleguen a la base de datos.
+
+**Nota de Handoff para UX:** No hay cambios visuales. Se ha reforzado la estabilidad interna del sistema y la captura de errores en tiempo de desarrollo.
+
 ## [5.7.14] - 2026-02-26
 
 ### Fixed

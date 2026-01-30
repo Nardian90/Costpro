@@ -136,6 +136,28 @@ export const productVariantSchema = z.object({
   updated_at: z.string().optional(),
 });
 
+export const createProductInputSchema = productSchema.omit({
+  id: true,
+  created_at: true,
+  updated_at: true,
+  public_image_url: true,
+  has_movements: true
+});
+
+export const updateProductInputSchema = productSchema.partial().omit({
+  id: true,
+  created_at: true,
+  updated_at: true,
+  public_image_url: true,
+  has_movements: true
+});
+
+export const createProductVariantInputSchema = productVariantSchema.omit({
+  id: true,
+  created_at: true,
+  updated_at: true
+});
+
 export const cartItemSchema = z.object({
   product_id: z.string().regex(uuidRegex),
   variant_id: z.string().regex(uuidRegex).nullable(),
@@ -353,6 +375,28 @@ export const bulkUpdateProductsInputSchema = z.object({
 
 export const bulkUpdateProductsParamsSchema = z.object({
   _products: z.array(bulkUpdateProductItemSchema),
+});
+
+export const managedCreateUserParamsSchema = z.object({
+  p_email: z.string().email(),
+  p_full_name: z.string().min(1),
+  p_role: userRoleSchema,
+  p_store_id: resilientUuid,
+  p_memberships: z.array(z.object({
+    store_id: z.string().regex(uuidRegex),
+    role: userRoleSchema
+  })).optional(),
+  p_max_stores: z.number().int().min(0).optional(),
+  p_max_users: z.number().int().min(0).optional(),
+});
+
+export const manageUserMembershipsParamsSchema = z.object({
+  p_user_id: z.string().regex(uuidRegex),
+  p_memberships: z.array(z.object({
+    store_id: z.string().regex(uuidRegex),
+    role: userRoleSchema,
+    status: z.enum(['active', 'revoked']).optional()
+  }))
 });
 
 // ============================================

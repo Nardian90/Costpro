@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
 import { validateRPCArrayResponse, validateRPCResponse } from '@/lib/rpc-validator';
-import { transactionSchema, transactionItemSchema, createSaleParamsSchema } from '@/validation/schemas';
+import { transactionSchema, transactionItemSchema, createSaleParamsSchema, uuidRegex } from '@/validation/schemas';
 import { withLogging, withTableLogging, getCleanStoreId } from './base';
 import { z } from 'zod';
 import { useSyncContext } from '@/components/providers/SyncProvider';
@@ -87,7 +87,7 @@ export function useCreateSale() {
       }
       const rpcName = 'create_sale';
       const data = await withLogging<string>(rpcName, params, () => supabase.rpc(rpcName, params));
-      return await validateRPCResponse(data, z.string().uuid(), rpcName);
+      return await validateRPCResponse(data, z.string().regex(uuidRegex), rpcName);
     },
     onSuccess: (_, variables) => {
       const cleanStoreId = getCleanStoreId(variables.p_store_id);

@@ -118,7 +118,7 @@ export function usePOSView() {
       logger.info('POS', 'CHECKOUT_SUCCESS', {
         userId: user?.id,
         storeId: user?.activeStoreId,
-        saleId: (result as any)?.[0]?.r_sale_id,
+        saleId: result,
       });
 
       toast.success('Venta exitosa', { id: toastId });
