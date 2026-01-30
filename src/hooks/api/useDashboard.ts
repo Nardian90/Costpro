@@ -17,7 +17,7 @@ export async function prefetchDashboardData(queryClient: QueryClient, storeId: s
   if (!isAdmin && !isValidUuid) return;
 
   return queryClient.prefetchQuery({
-    queryKey: ['dashboard-kpis', storeId, isAdmin],
+    queryKey: ['dashboard-kpis', cleanStoreId, isAdmin],
     queryFn: async () => {
       const { data, error } = await supabase.rpc(rpcName, params);
       if (error) throw error;
