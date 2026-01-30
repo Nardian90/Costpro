@@ -18,6 +18,7 @@ import ActionMenu from '@/components/ui/ActionMenu';
 import { Eye, Edit, FileText, Trash2, Download, FileSpreadsheet } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
+import { useAuthStore } from '@/store';
 import { exportToPDF, exportToCSV } from '@/services/export-service';
 
 const CostSheetView = () => {
@@ -53,14 +54,29 @@ const CostSheetView = () => {
 
   const isAnnexActive = data.annexes.some((a: any) => a.id === activeSection);
 
-  const handleExportPDF = () => {
-    const input = exportRef.current || previewRef.current;
-    if (!input) {
-      toast.error("No se pudo encontrar el elemento para exportar");
-      return;
+  const handleExportPDF = async () => {
+    const toastId = toast.loading("Generando PDF profesional... por favor espere.");
+    try {
+      const { reportService } = await import('@/services/report-service');
+      const response = await reportService.generateReport({
+        type: 'cost_sheet',
+        data: data,
+        calculatedValues: calculatedValues,
+        calculatedAnnexes: calculatedAnnexes,
+        store_id: useAuthStore.getState().user?.activeStoreId,
+        name: data.header.name || 'Ficha de Costo'
+      }, useAuthStore.getState().token || '');
+
+      if (response.url) {
+        window.open(response.url, '_blank');
+        toast.success("PDF generado con éxito", { id: toastId });
+      } else {
+        throw new Error("No se recibió la URL del PDF");
+      }
+    } catch (error: any) {
+      console.error("PDF Export error:", error);
+      toast.error(`Error al generar el PDF: ${error.message}`, { id: toastId });
     }
-    const fileName = data.header.name ? `Ficha de Costo - ${data.header.name}` : 'Ficha de Costo';
-    exportToPDF(input, fileName);
   };
 
   const handleExportExcel = () => {

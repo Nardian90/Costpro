@@ -486,7 +486,7 @@ export interface SalesKPIs {
     total_card: number;
 }
 
-export type ReportType = 'sales' | 'profit' | 'inventory' | 'kardex' | 'purchases' | 'audit';
+export type ReportType = 'sales' | 'profit' | 'inventory' | 'kardex' | 'purchases' | 'audit' | 'cost_sheet';
 
 export interface ReportDefinition {
   id: string;

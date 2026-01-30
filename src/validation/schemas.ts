@@ -432,29 +432,30 @@ export const costSheetSectionSchema = z.object({
 
 export const costSheetColumnSchema = z.object({
   key: z.string(),
+  label: z.string().optional(),
   title: z.string().optional(),
   formula: z.string().optional(),
-  type: z.enum(['number', 'string', 'formula']).optional(),
-});
+  type: z.enum(['number', 'string', 'formula', 'text']).optional(),
+}).catchall(z.any());
 
 export const costSheetAnnexSchema = z.object({
   id: z.string(),
   title: z.string(),
   columns: z.array(costSheetColumnSchema),
   data: z.array(z.record(z.string(), z.any())),
-});
+}).catchall(z.any());
 
 export const costSheetSignatureSchema = z.object({
   prepared_by: z.string(),
   approved_by: z.string(),
-});
+}).catchall(z.any());
 
 export const costSheetDataSchema = z.object({
   header: costSheetHeaderSchema,
   sections: z.array(costSheetSectionSchema),
   annexes: z.array(costSheetAnnexSchema),
   signature: costSheetSignatureSchema,
-});
+}).catchall(z.any());
 
 // ============================================
 // Import Schemas

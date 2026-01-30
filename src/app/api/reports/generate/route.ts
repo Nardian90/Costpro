@@ -60,6 +60,11 @@ export async function POST(req: NextRequest) {
     const dateFrom = fromDate ? `${fromDate}T00:00:00.000Z` : undefined;
     const dateTo = toDate ? `${toDate}T23:59:59.999Z` : undefined;
 
+    // Special case for cost_sheet: data is already provided in the body
+    if (type === 'cost_sheet') {
+      data = body.data?.sections || [];
+    }
+
     switch (type as ReportType) {
       case 'sales':
         const { data: salesData, error: salesError } = await supabase
@@ -131,6 +136,10 @@ export async function POST(req: NextRequest) {
         const { data: purchaseData, error: purchaseError } = await query.order('created_at', { ascending: false }).limit(1000);
         if (purchaseError) throw purchaseError;
         data = purchaseData || [];
+        break;
+
+      case 'cost_sheet':
+        // Data already handled above
         break;
 
       default:
@@ -238,7 +247,58 @@ export async function POST(req: NextRequest) {
         doc.text(str, pageWidth - 14, pageHeight - 10, { align: "right" });
         doc.text('Documento oficial generado por CostPro Enterprise Reporting v5.7', 14, pageHeight - 10);
       }
-    });
+
+      doc.setFontSize(8);
+      doc.text("__________________________", 30, finalY + 15);
+      doc.text("Elaborado por", 30, finalY + 20);
+
+      doc.text("__________________________", pageWidth - 80, finalY + 15);
+      doc.text("Aprobado por", pageWidth - 80, finalY + 20);
+
+    } else {
+      // --- STANDARD REPORT GENERATOR ---
+      // Header
+      doc.setFontSize(20);
+      doc.setTextColor(40, 40, 40);
+      doc.text(name || 'Reporte de Sistema', 14, 22);
+
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      doc.text(`Tipo: ${type.toUpperCase()}`, 14, 30);
+      doc.text(`Periodo: ${from || 'N/A'} - ${to || 'N/A'}`, 14, 35);
+      doc.text(`Generado: ${timestamp}`, 14, 40);
+
+      // Separator Line
+      doc.setDrawColor(200);
+      doc.line(14, 45, pageWidth - 14, 45);
+
+      // Table
+      const tableHeaders: string[] = (columns && columns.length > 0) ? columns : Object.keys(data[0] || {}).slice(0, 7);
+      const tableData = data.map((row: any) => tableHeaders.map((col: string) => {
+          const val = row[col];
+          if (typeof val === 'object' && val !== null) return JSON.stringify(val);
+          return val?.toString() || '';
+      }));
+
+      const displayHeaders = tableHeaders.map(h => (COLUMN_LABELS[h] || h).toUpperCase());
+
+      autoTable(doc, {
+        startY: 50,
+        head: [displayHeaders],
+        body: tableData,
+        theme: 'striped',
+        headStyles: { fillColor: [41, 128, 185], textColor: 255 },
+        styles: { fontSize: 8, cellPadding: 2 },
+        margin: { top: 50 },
+        didDrawPage: (data) => {
+          // Footer
+          const str = `Página ${doc.getNumberOfPages()}`;
+          doc.setFontSize(8);
+          doc.text(str, pageWidth - 30, doc.internal.pageSize.getHeight() - 10);
+          doc.text('Documento generado automáticamente por CostPro', 14, doc.internal.pageSize.getHeight() - 10);
+        }
+      });
+    }
 
     const pdfBuffer = doc.output('arraybuffer');
 

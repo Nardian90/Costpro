@@ -53,9 +53,11 @@ export interface CostSheetSectionContract {
 
 export interface CostSheetColumnContract {
   key: string;
-  title: string;
-  formula: string;
-  type: 'number' | 'string' | 'formula';
+  label?: string;
+  title?: string;
+  formula?: string;
+  type?: 'number' | 'string' | 'formula' | 'text';
+  [key: string]: any;
 }
 
 export interface CostSheetAnnexContract {
