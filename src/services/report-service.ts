@@ -128,6 +128,7 @@ export const reportService = {
       case 'audit':
         const { data: auditData, error: auditError } = await supabase.rpc('get_audit_logs', {
           p_store_id: store_id,
+          p_search_term: '',
           p_date_from: dateFrom,
           p_date_to: dateTo,
           p_limit: 10000
