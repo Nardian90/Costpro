@@ -5,17 +5,19 @@ import React from 'react';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
 import { useCostSheetCalculator } from '@/hooks/logic/useCostSheetCalculator';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Trash2, Plus } from 'lucide-react';
 import { CostSheetAnnex, CostSheetColumn } from '@/types/cost-sheet';
-import { formatCurrency } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
+import { ViewMode } from '@/components/ui/ViewSwitcher';
 
 interface CostSheetAnnexEditorProps {
   activeAnnexId: string;
+  layoutMode?: ViewMode;
 }
 
-const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = ({ activeAnnexId }) => {
+const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = ({ activeAnnexId, layoutMode = 'grid' }) => {
   const { data, updateValue, addRow, removeRow } = useCostSheetStore();
   // We need the calculator to get the calculated values for display
   const { calculatedAnnexes } = useCostSheetCalculator(data);
@@ -35,6 +37,12 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = ({ activeAnnex
   const displayData = calculatedAnnex ? calculatedAnnex.data : annex.data;
   const annexIndex = data.annexes.indexOf(annex);
 
+  const totalValue = displayData.reduce((acc: number, row: any) => {
+    const totalCol = annex.columns.find((c: CostSheetColumn) => c.key === 'total' || c.key === 'amount' || c.key === 'depreciation_cost');
+    const key = totalCol?.key;
+    return acc + (key ? (row[key] || 0) : 0);
+  }, 0);
+
   return (
     <div data-testid="cost-sheet-annex-editor" className="space-y-6 animate-in fade-in duration-500">
        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -44,7 +52,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = ({ activeAnnex
           </div>
           <Button
             onClick={() => addRow(annex.id)}
-            className="neu-btn-primary !py-2.5 !px-5 rounded-xl w-full sm:w-auto flex items-center justify-center gap-2 font-bold text-sm shadow-lg"
+            className="neu-btn-primary !py-3 !px-5 rounded-xl w-full sm:w-auto flex items-center justify-center gap-2 font-bold text-sm shadow-lg min-h-[44px]"
           >
               <Plus className="w-4 h-4" />
               Añadir Fila
@@ -52,16 +60,22 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = ({ activeAnnex
        </div>
 
        <div className="w-full">
-         <div className="overflow-x-auto table-to-cards rounded-2xl shadow-2xl border border-white/5 bg-background/30">
+         <div className={cn(
+           "table-to-cards rounded-2xl shadow-2xl border border-white/5 bg-background/30",
+           layoutMode === 'table' && "force-table"
+         )}>
             <Table>
-                <TableHeader className="bg-muted/50 hidden sm:table-header-group">
+                <TableHeader className={cn(
+                  "bg-muted/30 text-muted-foreground font-black uppercase text-[10px] tracking-widest border-b border-border",
+                  layoutMode === 'grid' ? "hidden sm:table-header-group" : "table-header-group"
+                )}>
                     <TableRow className="border-b border-border/50">
                         {annex.columns.map((col: any) => (
-                            <TableHead key={col.key} className="font-black py-4 px-4 text-[10px] uppercase tracking-widest text-muted-foreground">
+                            <TableHead key={col.key} className="font-black py-4 px-4 text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">
                                 {col.label}
                             </TableHead>
                         ))}
-                        <TableHead className="text-center w-20"></TableHead>
+                        <TableHead className="text-center w-20 uppercase tracking-widest">Acciones</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -88,34 +102,45 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = ({ activeAnnex
                                     variant="ghost"
                                     size="icon"
                                     onClick={() => removeRow(annex.id, rowIndex)}
-                                    className="p-2.5 text-danger hover:bg-danger/10 rounded-xl transition-all neu-raised-sm group-hover:scale-110 active:scale-95"
+                                    className="p-3 text-danger hover:bg-danger/10 rounded-xl transition-all neu-raised-sm group-hover:scale-110 active:scale-95 min-h-[44px] min-w-[44px]"
                                     aria-label="Eliminar fila"
                                 >
-                                    <Trash2 className="h-4 w-4" />
+                                    <Trash2 className="h-5 w-5" />
                                 </Button>
                             </TableCell>
                         </TableRow>
                     ))}
                 </TableBody>
+                <TableFooter className={cn(layoutMode === 'grid' && "hidden sm:table-footer-group")}>
+                  <TableRow className="bg-primary/5 hover:bg-primary/10 transition-colors border-t-2 border-primary/20">
+                    <TableCell colSpan={annex.columns.length} className="p-0">
+                      <div className="flex flex-col sm:flex-row justify-end items-end sm:items-center gap-4 p-6 min-w-full">
+                        <span className="text-[10px] text-primary/70 uppercase font-black tracking-[0.2em]">Total {annex.id}</span>
+                        <span className="text-3xl font-black font-mono text-primary drop-shadow-sm">
+                          {formatCurrency(totalValue)}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="bg-primary/5"></TableCell>
+                  </TableRow>
+                </TableFooter>
             </Table>
          </div>
        </div>
 
-       {/* Annex Total */}
-       <div className="flex justify-end mt-4">
-          <div className="neu-card !p-5 border-primary/20 bg-primary/5 shadow-xl min-w-[240px]">
-              <span className="text-[10px] text-primary/70 uppercase font-black tracking-[0.2em] block mb-2 text-right">Total {annex.id}</span>
-              <div className="flex items-center justify-end gap-2">
-                  <span className="text-3xl font-black font-mono text-primary drop-shadow-sm">
-                      {formatCurrency(displayData.reduce((acc: number, row: any) => {
-                           const totalCol = annex.columns.find((c: CostSheetColumn) => c.key === 'total' || c.key === 'amount' || c.key === 'depreciation_cost');
-                           const key = totalCol?.key;
-                           return acc + (key ? (row[key] || 0) : 0);
-                      }, 0))}
-                  </span>
-              </div>
-          </div>
-       </div>
+       {/* Annex Total for Grid Mode (Mobile Cards) */}
+       {layoutMode === 'grid' && (
+         <div className="flex justify-end mt-4 sm:hidden">
+            <div className="neu-card !p-5 border-primary/20 bg-primary/5 shadow-xl min-w-[240px] w-full">
+                <span className="text-[10px] text-primary/70 uppercase font-black tracking-[0.2em] block mb-2 text-right">Total {annex.id}</span>
+                <div className="flex items-center justify-end gap-2">
+                    <span className="text-3xl font-black font-mono text-primary drop-shadow-sm">
+                        {formatCurrency(totalValue)}
+                    </span>
+                </div>
+            </div>
+         </div>
+       )}
     </div>
   );
 };
