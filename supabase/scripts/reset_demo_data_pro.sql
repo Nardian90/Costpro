@@ -134,17 +134,25 @@ BEGIN
     SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'products' AND column_name = 'category_id') INTO has_cat_id;
     IF has_cat_id THEN
         INSERT INTO public.products (id, store_id, sku, name, category_id, price, cost_price, stock_current, is_active) VALUES
-            (p1, s1, 'PROD-001', c_aba, 1200, 800, 150, true), (p2, s1, 'PROD-002', c_aba, 2500, 1850, 85, true),
-            (p3, s1, 'PROD-003', c_lac, 1500, 1100, 240, true), (p4, s1, 'PROD-004', c_lim, 3200, 2400, 60, true),
-            (p5, s1, 'PROD-005', c_beb, 900, 600, 120, true), (p6, s1, 'PROD-006', c_beb, 1800, 1200, 45, true),
-            (p7, s1, 'PROD-007', c_aba, 3500, 2100, 30, true), (p8, s1, 'PROD-008', c_lac, 2200, 1400, 55, true);
+            (p1, s1, 'PROD-001', 'ARROZ EXTRA 1KG', c_aba, 1200, 800, 150, true),
+            (p2, s1, 'PROD-002', 'ACEITE VEGETAL 1L', c_aba, 2500, 1850, 85, true),
+            (p3, s1, 'PROD-003', 'LECHE ENTERA 1L', c_lac, 1500, 1100, 240, true),
+            (p4, s1, 'PROD-004', 'DETERGENTE LÍQUIDO', c_lim, 3200, 2400, 60, true),
+            (p5, s1, 'PROD-005', 'CAFÉ MOLIDO 250G', c_beb, 900, 600, 120, true),
+            (p6, s1, 'PROD-006', 'AGUA MINERAL 2L', c_beb, 1800, 1200, 45, true),
+            (p7, s1, 'PROD-007', 'GALLETAS DULCES', c_aba, 3500, 2100, 30, true),
+            (p8, s1, 'PROD-008', 'QUESO CREMA', c_lac, 2200, 1400, 55, true);
         INSERT INTO public.products (store_id, sku, name, category_id, price, cost_price, stock_current, is_active) VALUES
-            (s2, 'PROD-001', 'ARROZ EXTRA 1KG', c_aba, 1200, 800, 20, true), (s2, 'PROD-003', 'LECHE ENTERA 1L', c_lac, 1500, 1100, 15, true);
+            (s2, 'PROD-001', 'ARROZ EXTRA 1KG', c_aba, 1200, 800, 20, true),
+            (s2, 'PROD-003', 'LECHE ENTERA 1L', c_lac, 1500, 1100, 15, true);
     ELSE
         INSERT INTO public.products (id, store_id, sku, name, category, price, cost_price, stock_current, is_active) VALUES
-            (p1, s1, 'PROD-001', 'ABARROTES', 1200, 800, 150, true), (p2, s1, 'PROD-002', 'ABARROTES', 2500, 1850, 85, true),
-            (p3, s1, 'PROD-003', 'LÁCTEOS', 1500, 1100, 240, true), (p4, s1, 'PROD-004', 'LIMPIEZA', 3200, 2400, 60, true),
-            (p5, s1, 'PROD-005', 'BEBIDAS', 900, 600, 120, true), (p6, s1, 'PROD-006', 'BEBIDAS', 1800, 1200, 45, true);
+            (p1, s1, 'PROD-001', 'ARROZ EXTRA 1KG', 'ABARROTES', 1200, 800, 150, true),
+            (p2, s1, 'PROD-002', 'ACEITE VEGETAL 1L', 'ABARROTES', 2500, 1850, 85, true),
+            (p3, s1, 'PROD-003', 'LECHE ENTERA 1L', 'LÁCTEOS', 1500, 1100, 240, true),
+            (p4, s1, 'PROD-004', 'DETERGENTE LÍQUIDO', 'LIMPIEZA', 3200, 2400, 60, true),
+            (p5, s1, 'PROD-005', 'CAFÉ MOLIDO 250G', 'BEBIDAS', 900, 600, 120, true),
+            (p6, s1, 'PROD-006', 'AGUA MINERAL 2L', 'BEBIDAS', 1800, 1200, 45, true);
     END IF;
 
     -- 6. SALES
@@ -168,7 +176,7 @@ BEGIN
         a1 uuid := gen_random_uuid();
     BEGIN
         INSERT INTO public.inventory_adjustments (id, store_id, created_by, status, notes, reason)
-        VALUES (a1, s1, u_enc, 'COMPLETED', 'Demo adj', 'DAMAGED'::text::inventory_adjustment_reason);
+        VALUES (a1, s1, u_enc, 'COMPLETED', 'Demo adjustment', 'DAMAGED'::text::inventory_adjustment_reason);
         INSERT INTO public.inventory_adjustment_items (adjustment_id, product_id, expected_quantity, counted_quantity, difference)
         VALUES (a1, p3, 241, 240, -1);
     EXCEPTION WHEN others THEN NULL; END;
@@ -178,7 +186,7 @@ BEGIN
         tr1 uuid := gen_random_uuid();
     BEGIN
         INSERT INTO public.transfers (id, origin_store_id, destination_store_id, created_by, status, notes)
-        VALUES (tr1, s1, s2, u_enc, 'PENDIENTE'::text::transfer_status, 'Stock demo');
+        VALUES (tr1, s1, s2, u_enc, 'PENDIENTE'::text::transfer_status, 'Refuerzo stock Belgrano');
         INSERT INTO public.transfer_items (transfer_id, product_id, quantity, unit_cost) VALUES
             (tr1, p1, 10, 800), (tr1, p3, 5, 1100);
     EXCEPTION WHEN others THEN NULL; END;
