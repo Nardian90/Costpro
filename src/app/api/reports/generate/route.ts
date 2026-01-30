@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
     switch (type as ReportType) {
       case 'sales':
         const { data: salesData, error: salesError } = await supabase
-          .rpc('get_transactions', {
+          .rpc('get_transactions_with_profit', {
             p_store_id: store_id,
             p_date_from: dateFrom,
             p_date_to: dateTo,
@@ -97,9 +97,8 @@ export async function POST(req: NextRequest) {
         break;
 
       case 'profit':
-        // Reuse transactions but ensure cost and profit are included
         const { data: profitData, error: profitError } = await supabase
-          .rpc('get_transactions', {
+          .rpc('get_transactions_with_profit', {
             p_store_id: store_id,
             p_date_from: dateFrom,
             p_date_to: dateTo,
