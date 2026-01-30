@@ -66,13 +66,13 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = ({ activeAnnex
          )}>
             <Table>
                 <TableHeader className={cn(
-                  "bg-muted/30 text-muted-foreground font-black uppercase text-[10px] tracking-widest border-b border-border",
-                  layoutMode === 'grid' ? "hidden sm:table-header-group" : "table-header-group"
+                  "bg-slate-100 dark:bg-slate-800/50 text-slate-900 dark:text-white font-black uppercase text-[10px] tracking-widest border-b border-slate-200 dark:border-slate-700",
+                  layoutMode === 'grid' ? "hidden md:table-header-group" : "table-header-group"
                 )}>
                     <TableRow className="border-b border-border/50">
                         {annex.columns.map((col: any) => (
-                            <TableHead key={col.key} className="font-black py-4 px-4 text-[10px] uppercase tracking-widest text-muted-foreground whitespace-nowrap">
-                                {col.label}
+                            <TableHead key={col.key} className="font-black py-4 px-4 text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                                {col.label || col.title || col.key}
                             </TableHead>
                         ))}
                         <TableHead className="text-center w-20 uppercase tracking-widest">Acciones</TableHead>
@@ -82,17 +82,17 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = ({ activeAnnex
                     {displayData.map((row: any, rowIndex: number) => (
                         <TableRow key={rowIndex} className="border-b border-border/30 hover:bg-primary/5 transition-colors group">
                             {annex.columns.map((col: any) => (
-                                <TableCell key={col.key} data-label={col.label} className="p-3 sm:p-4">
+                                <TableCell key={col.key} data-label={col.label || col.title || col.key} className="p-3 sm:p-4">
                                     {col.formula ? (
                                         <div className="neu-inset-sm px-3 py-2 font-mono text-right bg-primary/5 text-primary font-black min-w-[100px] border border-primary/10">
                                             {formatCurrency(row[col.key] ?? 0).replace('$', '').trim()}
                                         </div>
                                     ) : (
                                         <Input
-                                            type={typeof row[col.key] === 'number' ? 'number' : 'text'}
-                                            value={data.annexes[annexIndex].data[rowIndex][col.key]}
+                                            type={typeof (data.annexes[annexIndex].data[rowIndex][col.key]) === 'number' ? 'number' : 'text'}
+                                            value={data.annexes[annexIndex].data[rowIndex][col.key] ?? ''}
                                             onChange={(e) => handleInputChange(['annexes', annexIndex, 'data', rowIndex, col.key], e.target.value)}
-                                            className="neu-input !p-2 min-w-[120px] text-sm font-medium border-transparent hover:border-primary/20 focus:border-primary"
+                                            className="neu-input !p-2 min-w-[140px] text-xs font-bold text-slate-700 dark:text-slate-200 border-transparent hover:border-primary/20 focus:border-primary bg-white/50 dark:bg-slate-900/50"
                                         />
                                     )}
                                 </TableCell>
