@@ -19,7 +19,7 @@ const CostSheetPreview = React.forwardRef<HTMLDivElement, CostSheetPreviewProps>
     <div ref={ref} className="max-w-5xl mx-auto">
       <div className="neu-card !p-0 overflow-hidden border-none shadow-2xl bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
         <div className="bg-slate-800 p-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-white">
-           <div className="font-black text-xl tracking-tighter uppercase italic">COSTPRO <span className="text-primary font-light text-sm not-italic ml-2 tracking-widest">SHEET</span></div>
+           <div className="font-black text-xl tracking-tighter uppercase italic">COSTPRO <span className="text-primary font-light text-sm not-italic ml-2 tracking-widest">FICHA</span></div>
            <div className="text-xs font-bold opacity-50 uppercase tracking-widest">Documento Oficial de Costos</div>
         </div>
         <div className="p-4 sm:p-10 lg:p-12 space-y-10">
