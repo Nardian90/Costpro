@@ -455,39 +455,61 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                     </div>
 
                     {/* Reception Items List */}
-                    <div className="space-y-3">
-                        {Array.from(receptionItems.values()).map(({ product, quantity, cost }) => (
-                            <div key={product.id} className="neu-card !p-3 grid grid-cols-12 gap-3 items-center">
-                                <div className="col-span-4 font-bold text-sm truncate">{product.name}</div>
-                                <div className="col-span-2">
-                                     <input
-                                        type="number"
-                                        value={quantity}
-                                        onChange={(e) => updateReceptionItem(product.id, 'quantity', parseInt(e.target.value) || 0)}
-                                        className="neu-inset-sm w-full text-center font-bold !py-1 text-base"
-                                    />
-                                </div>
-                               <div className="col-span-3">
-                                     <input
-                                        type="number"
-                                        value={cost}
-                                        step="0.01"
-                                        onChange={(e) => updateReceptionItem(product.id, 'cost', parseFloat(e.target.value) || 0)}
-                                        className="neu-inset-sm w-full text-center font-bold !py-1 text-base"
-                                    />
-                                </div>
-                                <div className="col-span-2 text-right font-bold text-primary">
-                                    {formatCurrency(quantity * cost)}
-                                </div>
-                                <div className="col-span-1 flex justify-end">
-                                    <button onClick={() => removeReceptionItem(product.id)} className="p-2 hover:bg-danger/10 rounded-full">
-                                        <Trash2 className="w-4 h-4 text-danger" />
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                         {receptionItems.size === 0 && (
-                            <div className="text-center py-16 text-muted-foreground border-2 border-dashed border-white/10 rounded-xl">
+                    <div className="table-scroll-wrapper">
+                        <table className="data-table w-full min-w-[700px]">
+                            <thead>
+                                <tr className="text-left font-black uppercase text-[10px] text-muted-foreground border-b border-white/5">
+                                    <th className="pb-4 pl-4 sticky-column-1">Producto</th>
+                                    <th className="pb-4 text-center">Cant.</th>
+                                    <th className="pb-4 text-center">Costo Unit.</th>
+                                    <th className="pb-4 text-right">Subtotal</th>
+                                    <th className="pb-4 text-right pr-4">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-white/5">
+                                {Array.from(receptionItems.values()).map(({ product, quantity, cost }) => (
+                                    <tr key={product.id} className="group hover:bg-primary/5 transition-colors">
+                                        <td className="py-4 pl-4 sticky-column-1">
+                                            <div className="flex flex-col">
+                                                <span className="font-bold text-sm">{product.name}</span>
+                                                <span className="text-[10px] font-mono text-muted-foreground uppercase">{product.sku || 'S/N'}</span>
+                                            </div>
+                                        </td>
+                                        <td className="py-4 px-2 w-24">
+                                            <input
+                                                type="number"
+                                                value={quantity}
+                                                onChange={(e) => updateReceptionItem(product.id, 'quantity', parseInt(e.target.value) || 0)}
+                                                className="neu-inset-sm w-full text-center font-bold !py-1 text-sm"
+                                            />
+                                        </td>
+                                        <td className="py-4 px-2 w-32">
+                                            <input
+                                                type="number"
+                                                value={cost}
+                                                step="0.01"
+                                                onChange={(e) => updateReceptionItem(product.id, 'cost', parseFloat(e.target.value) || 0)}
+                                                className="neu-inset-sm w-full text-center font-bold !py-1 text-sm"
+                                            />
+                                        </td>
+                                        <td className="py-4 px-2 text-right font-bold text-primary">
+                                            {formatCurrency(quantity * cost)}
+                                        </td>
+                                        <td className="py-4 pr-4 text-right">
+                                            <button
+                                                onClick={() => removeReceptionItem(product.id)}
+                                                className="p-2 hover:bg-danger/10 rounded-xl transition-colors text-danger active:scale-95"
+                                                title="Eliminar item"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        {receptionItems.size === 0 && (
+                            <div className="text-center py-16 text-muted-foreground border-2 border-dashed border-white/10 rounded-xl mt-4">
                                 <Package className="w-12 h-12 mx-auto mb-3 opacity-20" />
                                 <p className="font-bold">Tu lista de recepción está vacía.</p>
                                 <p className="text-sm">Usa la barra de búsqueda superior para agregar productos.</p>
@@ -498,19 +520,19 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
 
                 {/* Right side: Summary */}
                 <div className="lg:col-span-1 w-full lg:sticky top-24">
-                    <SecurityScrollContainer minWidth="280px">
-                        <div className="neu-card border-primary/20 bg-primary/5 space-y-4">
-                            <h3 className="font-bold text-lg text-primary whitespace-nowrap">Resumen de Recepción</h3>
-                            <div className="flex justify-between items-center gap-4">
-                                <span className="text-muted-foreground font-bold whitespace-nowrap">Total de Productos</span>
-                                <span className="font-black text-xl whitespace-nowrap">{receptionItems.size}</span>
+                    <div className="table-scroll-wrapper !p-0">
+                        <div className="neu-card border-primary/20 bg-primary/5 space-y-4 min-w-[300px]">
+                            <h3 className="font-bold text-lg text-primary uppercase tracking-tighter">Resumen de Recepción</h3>
+                            <div className="flex flex-wrap justify-between items-center gap-2">
+                                <span className="text-muted-foreground font-bold text-[10px] uppercase tracking-widest">Total Items</span>
+                                <span className="font-black text-xl">{receptionItems.size}</span>
                             </div>
-                            <div className="flex justify-between items-center text-2xl pt-4 border-t border-primary/20 gap-4">
-                                <span className="font-bold whitespace-nowrap">Costo Total</span>
-                                <span className="font-black text-primary whitespace-nowrap">{formatCurrency(totalCost)}</span>
+                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center text-xl pt-4 border-t border-primary/20 gap-2">
+                                <span className="font-bold text-xs uppercase tracking-widest">Costo Total</span>
+                                <span className="font-black text-primary break-all">{formatCurrency(totalCost)}</span>
                             </div>
                         </div>
-                    </SecurityScrollContainer>
+                    </div>
                 </div>
             </div>
 
