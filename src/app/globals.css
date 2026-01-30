@@ -513,14 +513,17 @@
     font-size: 0.65rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    width: 85px;
+    width: 100px;
     text-align: left;
+    display: inline-block !important;
   }
 
   /* Ajuste para celdas con mucho contenido */
   .table-to-cards td > div,
   .table-to-cards td > span,
   .table-to-cards td > p,
+  .table-to-cards td > input,
+  .table-to-cards td > select,
   .table-to-cards td > button {
     flex: 1;
     text-align: left;
