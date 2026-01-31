@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { memo } from 'react';
 import { CalculatedRowValue } from '@/types/cost-sheet';
 import { formatCurrency } from '@/lib/utils';
 import { TrendingUp, DollarSign, PieChart, Activity } from 'lucide-react';
@@ -10,7 +10,7 @@ interface CostSheetSummaryProps {
   data: any;
 }
 
-const CostSheetSummary: React.FC<CostSheetSummaryProps> = ({ calculatedValues, data }) => {
+const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({ calculatedValues, data }) => {
   // Helper to get total for a row ID
   const getTotal = (id: string) => calculatedValues[id]?.total || 0;
 
