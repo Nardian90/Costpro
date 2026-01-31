@@ -54,6 +54,18 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
     }));
   }, [template.annexes, template.header]);
 
+  const annexTotals = useMemo(() => {
+    const totals: { [key: string]: number } = {};
+    calculatedAnnexes.forEach(a => {
+      const total = (a.data || []).reduce((sum: number, row: any) => {
+        const val = row.total || row.amount || row.depreciation_cost || row.price_total || 0;
+        return sum + (typeof val === 'number' ? val : 0);
+      }, 0);
+      totals[a.id] = total;
+    });
+    return totals;
+  }, [calculatedAnnexes]);
+
   // 2. Run the declarative Engine for the main rows
   useEffect(() => {
     try {
@@ -70,17 +82,25 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
           if (['14', '12', '5'].includes(r.id)) type = 'TOTAL';
 
           // Map calculation method
+          let formula = r.formula || r.totalFormula;
+
+          // If no formula but has children, default to sum(children) for compatibility
+          if (!formula && r.children && r.children.length > 0) {
+              formula = '=sum(children)';
+          }
+
           let formaCalculo: FormaCalculo = 'FIJO';
           if (r.calculationMethod === 'Prorrateo') formaCalculo = 'PRORRATEO';
           if (r.is_percent) formaCalculo = 'COEFICIENTE';
-          if (r.formula || r.totalFormula) formaCalculo = 'FORMULA';
+          if (formula) formaCalculo = 'FORMULA';
 
           // Base Calculation mapping
           let baseCalculo: BaseRef | null = null;
           const baseRefId = r.baseDeCalculoRef || r.base_ref;
           if (baseRefId) {
-              // Check if it's an Annex ID (I, II, III, IV, V)
-              if (/^[IVXLC]+$/.test(baseRefId)) {
+              // Check if it's an Annex ID (match explicit annexes or Roman numerals)
+              const isAnnex = template.annexes.some(a => a.id === baseRefId) || /^[IVXLC]+$/.test(baseRefId);
+              if (isAnnex) {
                   baseCalculo = { type: 'ANEXO', anexoId: baseRefId };
                   // If pointing to annex without specific formula, it's an import
                   if (r.calculationMethod !== 'Prorrateo' && !r.formula && !r.totalFormula) {
@@ -90,8 +110,6 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
                   baseCalculo = { type: 'FILA', classification: baseRefId };
               }
           }
-
-          let formula = r.formula || r.totalFormula;
 
           // Map =sum(children) to a specific engine-compatible formula
           if (formula?.trim() === '=sum(children)' && r.children) {
@@ -125,10 +143,10 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
           decimals: 2,
           settings: { allowFormulas: true }
         },
-        anexos: calculatedAnnexes.map(a => ({
+        anexos: calculatedAnnexes.map((a: any) => ({
           id: a.id,
           name: a.title,
-          rows: a.data.map(d => ({
+          rows: (a.data || []).map((d: any) => ({
             // Normalize classification by taking the prefix before ' - ' (e.g. "1.1 - Insumos" -> "1.1")
             classification: (d.classification || d.label || '').split(' - ')[0].trim(),
             importe: d.total || d.amount || d.depreciation_cost || d.price_total || 0
@@ -151,7 +169,9 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
               baseDeCalculoRef: r.baseCalculo?.type === 'FILA' ? r.baseCalculo.classification : (r.baseCalculo?.anexoId || null),
               baseTotal: r.baseTotal || 0,
               baseValorHistorico: r.baseHist || 0,
-              coeficiente: r.coeficiente || 0,
+              coeficiente: r.formaCalculo === 'PRORRATEO'
+                ? (r.baseHist ? (r.valorHistorico || 0) / r.baseHist : 0)
+                : (r.coeficiente || 0),
               audits: r.audit,
               hasWarnings: r.audit.some(a => a.type === 'WARNING' || a.type === 'ERROR' || a.type === 'CYCLE_DETECTED')
           };
@@ -167,5 +187,5 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
     }
   }, [template, calculatedAnnexes]);
 
-  return { calculatedValues, calculatedAnnexes, audits, calculationResult, error };
+  return { calculatedValues, calculatedAnnexes, annexTotals, audits, calculationResult, error };
 };
