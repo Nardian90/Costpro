@@ -8,6 +8,7 @@ import CostSheetHeaderEditor from './CostSheetHeaderEditor';
 import CostSheetAnnexEditor from './CostSheetAnnexEditor';
 import CostSheetInteractiveTable from './CostSheetInteractiveTable';
 import CostSheetSignatureEditor from './CostSheetSignatureEditor';
+import { CostSheetSidebarNav } from './CostSheetSidebarNav';
 import { Progress } from '@/components/ui/progress';
 
 interface CostSheetWizardProps {
@@ -28,6 +29,15 @@ const steps = [
 
 const CostSheetWizard: React.FC<CostSheetWizardProps> = ({ data, calculatedValues }) => {
   const [currentStep, setCurrentStep] = React.useState(0);
+  const [activeSubSectionId, setActiveSubSectionId] = React.useState('');
+  const [isSectionsSidebarOpen, setIsSectionsSidebarOpen] = React.useState(false);
+
+  // Auto-select first section when wizard reaches the main step
+  React.useEffect(() => {
+    if (data?.sections?.length > 0 && !activeSubSectionId) {
+      setActiveSubSectionId(data.sections[0].id);
+    }
+  }, [data, activeSubSectionId]);
 
   const step = steps[currentStep];
   const progress = ((currentStep + 1) / steps.length) * 100;
@@ -84,6 +94,19 @@ const CostSheetWizard: React.FC<CostSheetWizardProps> = ({ data, calculatedValue
                 sections={data.sections}
                 calculatedValues={calculatedValues}
                 annexes={data.annexes}
+                activeSubSectionId={activeSubSectionId}
+                setActiveSubSectionId={setActiveSubSectionId}
+                onOpenSections={() => setIsSectionsSidebarOpen(true)}
+              />
+
+              <CostSheetSidebarNav
+                isOpen={isSectionsSidebarOpen}
+                onClose={() => setIsSectionsSidebarOpen(false)}
+                title="Secciones de la Ficha"
+                type="sections"
+                items={data.sections}
+                activeId={activeSubSectionId}
+                onSelect={setActiveSubSectionId}
               />
            </div>
         )}
