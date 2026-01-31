@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.19] - 2026-02-27
+
+### Added
+- **Módulo IPV Builder (v10.0)**: Lanzamiento de la nueva herramienta definitiva para conciliación bancaria y generación de IPV automatizada.
+- **Persistencia Local Robusta**: Implementación de IndexedDB vía Dexie.js para almacenamiento seguro de transacciones, catálogo y reportes directamente en el navegador.
+- **Motor de Matching Multi-Pass**: Nuevo motor de conciliación declarativo ejecutado en un Web Worker con 4 niveles de análisis: `HARD_REF`, `EXACT_SUM` (Backtracking), `TOLERANCE` y `CASH_FILL`.
+- **Precisión Monetaria**: Procesamiento de todos los valores monetarios en centavos (enteros) para garantizar integridad contable absoluta sin errores de redondeo.
+- **Generación de Reportes PDF**: Capacidad de generar reportes IPV profesionales en formato PDF de forma local (en memoria del navegador) con un solo clic.
+- **Gestión de Ingesta Inteligente**: Soporte para carga masiva de extractos bancarios (CSV/XLSX) con detección de duplicados mediante hashes SHA-256 e importación/exportación de catálogo de productos.
+- **Dashboard de Control**: Vista unificada con KPIs de conciliación (Completadas, Pendientes, Parciales) y gestión de ajustes de efectivo auditables.
 ## [5.7.19] - 2026-02-28
 
 ### Added
