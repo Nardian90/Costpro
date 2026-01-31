@@ -10,6 +10,7 @@ interface CostSheetNavProps {
   annexes: any[];
   activeSection: string;
   setActiveSection: (id: string) => void;
+  onOpenAnnexes?: () => void;
 }
 
 const CostSheetNav: React.FC<CostSheetNavProps> = ({
@@ -17,6 +18,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
   annexes,
   activeSection,
   setActiveSection,
+  onOpenAnnexes
 }) => {
   // Create a combined list of all navigable sections mapped to ActionMenu format
   const navActions: Action[] = [
@@ -27,17 +29,13 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
         onClick: () => setActiveSection(s.id),
         active: activeSection === s.id
     })),
-    ...annexes.map(a => {
-        const hasData = a.data && a.data.length > 0;
-        return {
-            id: a.id,
-            label: `Anexo ${a.id}`,
-            icon: hasData ? CheckCircle2 : FileSpreadsheet,
-            onClick: () => setActiveSection(a.id),
-            active: activeSection === a.id,
-            variant: hasData ? 'success' : 'outline'
-        };
-    }),
+    {
+        id: 'annexes-trigger',
+        label: 'Anexos',
+        icon: FileSpreadsheet,
+        onClick: () => onOpenAnnexes?.(),
+        variant: 'outline'
+    },
     {
         id: 'signature',
         label: 'Firmas',
