@@ -44,6 +44,7 @@ export function useTerminalNavigation(user: UserContract | null, sidebarSearch: 
 
       { id: 'cost-sheets', icon: FileText, label: 'Costos', roles: ['admin', 'manager', 'encargado'], category: 'GESTIÓN' },
       { id: 'reports', icon: FileText, label: 'Reportes', roles: ['admin', 'manager', 'encargado'], category: 'GESTIÓN' },
+      { id: 'ipv', icon: FileText, label: 'IPV Builder', roles: ['admin', 'manager', 'encargado'], category: 'GESTIÓN' },
       { id: 'audit', icon: Shield, label: 'Auditoría', roles: ['manager', 'admin', 'encargado'], category: 'GESTIÓN' },
       { id: 'users', icon: Users, label: 'Usuarios', roles: ['admin', 'encargado', 'manager'], category: 'GESTIÓN' },
       { id: 'stores', icon: Building, label: 'Tiendas', roles: ['admin', 'encargado', 'manager'], category: 'GESTIÓN' },
