@@ -34,19 +34,6 @@ const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValue
       const calc = calculatedValues[row.id] || { total: 0, valorHistorico: 0, baseTotal: 0, coeficiente: 0 };
       const hasChildren = row.children && row.children.length > 0;
 
-      // Special handling for Base Cálculo column
-      let baseCalculoDisplay = '-';
-
-      if (row.base_display_override) {
-          baseCalculoDisplay = row.base_display_override;
-      } else if (row.is_percent && row.value !== undefined) {
-          baseCalculoDisplay = `${((row.value || 0) * 100).toFixed(2)}%`;
-      } else if (calc.coeficiente > 0) {
-          baseCalculoDisplay = calc.coeficiente.toLocaleString('es-ES', { minimumFractionDigits: 4 });
-      } else if (calc.baseTotal > 0 && !hasChildren) {
-          baseCalculoDisplay = calc.baseTotal.toLocaleString('es-ES', { minimumFractionDigits: 2 });
-      }
-
       return (
         <React.Fragment key={row.id}>
             <tr className={cn(
@@ -68,16 +55,16 @@ const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValue
                     )}
                 >
                     {row.label}
+                    {row.is_percent && (
+                        <span className="ml-2 text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
+                            {((row.value || calc.valorHistorico || 0) * 100).toFixed(2)}%
+                        </span>
+                    )}
                 </td>
 
                 {/* Valor Histórico */}
                 <td data-label="Valor Histórico" className="p-3 text-right font-mono text-slate-500 text-xs">
                     {calc.valorHistorico > 0 ? calc.valorHistorico.toLocaleString('es-ES', { minimumFractionDigits: 2 }) : '--'}
-                </td>
-
-                {/* Base Cálculo */}
-                <td data-label="Base Cálculo" className="p-3 text-right font-mono text-slate-500 text-xs">
-                    {baseCalculoDisplay}
                 </td>
 
                 {/* Total */}
@@ -100,16 +87,15 @@ const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValue
           <tr>
             <th className="p-4 text-center font-black uppercase tracking-widest text-[9px] w-16">Fila</th>
             <th className="p-4 text-left font-black uppercase tracking-widest text-[9px]">Concepto</th>
-            <th className="p-4 text-right font-black uppercase tracking-widest text-[9px] w-32">Valor Histórico</th>
-            <th className="p-4 text-right font-black uppercase tracking-widest text-[9px] w-32">Base Cálculo</th>
-            <th className="p-4 text-right font-black uppercase tracking-widest text-[9px] w-40">Total</th>
+            <th className="p-4 text-right font-black uppercase tracking-widest text-[9px] w-40">Valor Histórico</th>
+            <th className="p-4 text-right font-black uppercase tracking-widest text-[9px] w-48">Total</th>
           </tr>
         </thead>
         <tbody className="bg-white dark:bg-slate-900">
           {sections.map((section) => (
             <React.Fragment key={section.id}>
               <tr className="bg-slate-100 dark:bg-slate-950/80">
-                  <td colSpan={5} className="px-4 py-2 text-[10px] font-black text-primary uppercase tracking-[0.2em] border-y border-slate-200 dark:border-slate-800">
+                  <td colSpan={4} className="px-4 py-2 text-[10px] font-black text-primary uppercase tracking-[0.2em] border-y border-slate-200 dark:border-slate-800">
                       {section.label}
                   </td>
               </tr>

@@ -29,13 +29,6 @@ export async function POST(req: NextRequest) {
     const token = authHeader.split(' ')[1];
     const supabase = getSupabaseAuthClient(token);
 
-    // Fetch Store Info
-    const { data: storeInfo } = await supabase
-      .from('stores')
-      .select('name, logo_url')
-      .eq('id', store_id)
-      .single();
-
     // 1. Create a record in report_runs
     const { data: runData, error: runError } = await supabase
       .from('report_runs')
@@ -53,24 +46,30 @@ export async function POST(req: NextRequest) {
 
     // 2. Fetch Data
     let data: any[] = [];
-    const fromDate = date_range?.from;
-    const toDate = date_range?.to;
+    const from = date_range?.from;
+    const to = date_range?.to;
 
-    // Adjust dates to cover the full day range in UTC
-    const dateFrom = fromDate ? `${fromDate}T00:00:00.000Z` : undefined;
-    const dateTo = toDate ? `${toDate}T23:59:59.999Z` : undefined;
+    // Special case for cost_sheet: data is already provided in the body
+    if (type === 'cost_sheet') {
+      data = body.data?.sections || [];
+    }
 
     switch (type as ReportType) {
       case 'sales':
         const { data: salesData, error: salesError } = await supabase
-          .rpc('get_transactions_with_profit', {
+          .rpc('get_transactions', {
             p_store_id: store_id,
-            p_date_from: dateFrom,
-            p_date_to: dateTo,
             p_limit: 10000
           });
         if (salesError) throw salesError;
         data = salesData || [];
+        // Filter by date if needed (RPC might already do it or need params)
+        if (from && to) {
+            data = data.filter(item => {
+                const date = new Date(item.created_at);
+                return date >= new Date(from) && date <= new Date(to);
+            });
+        }
         break;
 
       case 'inventory':
@@ -88,24 +87,33 @@ export async function POST(req: NextRequest) {
         const { data: auditData, error: auditError } = await supabase
           .rpc('get_audit_logs', {
             p_store_id: store_id,
-            p_date_from: dateFrom,
-            p_date_to: dateTo,
             p_limit: 10000
           });
         if (auditError) throw auditError;
         data = auditData || [];
+        if (from && to) {
+            data = data.filter((item: any) => {
+                const date = new Date(item.created_at);
+                return date >= new Date(from) && date <= new Date(to);
+            });
+        }
         break;
 
       case 'profit':
+        // Reuse transactions but ensure cost and profit are included
         const { data: profitData, error: profitError } = await supabase
-          .rpc('get_transactions_with_profit', {
+          .rpc('get_transactions', {
             p_store_id: store_id,
-            p_date_from: dateFrom,
-            p_date_to: dateTo,
             p_limit: 10000
           });
         if (profitError) throw profitError;
         data = profitData || [];
+        if (from && to) {
+            data = data.filter((item: any) => {
+                const date = new Date(item.created_at);
+                return date >= new Date(from) && date <= new Date(to);
+            });
+        }
         break;
 
       case 'kardex':
@@ -114,8 +122,8 @@ export async function POST(req: NextRequest) {
           .rpc('get_product_stock_ledger_paginated', {
             p_product_id: filters.product_id,
             p_store_id: store_id,
-            p_page: 1,
-            p_page_size: 1000
+            p_limit: 1000,
+            p_offset: 0
           });
         if (kardexError) throw kardexError;
         data = kardexData || [];
@@ -124,12 +132,16 @@ export async function POST(req: NextRequest) {
       case 'purchases':
         let query = supabase.from('receipts').select('*');
         if (store_id) query = query.eq('store_id', store_id);
-        if (dateFrom) query = query.gte('created_at', dateFrom);
-        if (dateTo) query = query.lte('created_at', dateTo);
+        if (from) query = query.gte('created_at', from);
+        if (to) query = query.lte('created_at', to);
 
         const { data: purchaseData, error: purchaseError } = await query.order('created_at', { ascending: false }).limit(1000);
         if (purchaseError) throw purchaseError;
         data = purchaseData || [];
+        break;
+
+      case 'cost_sheet':
+        // Data already handled above
         break;
 
       default:
@@ -144,100 +156,191 @@ export async function POST(req: NextRequest) {
     });
 
     const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
     const timestamp = format(new Date(), "yyyy-MM-dd HH:mm:ss");
 
-    // Logo Placeholder / Store Logo
-    doc.setDrawColor(230, 230, 230);
-    doc.setFillColor(245, 245, 245);
-    doc.roundedRect(14, 15, 25, 25, 3, 3, 'FD');
-    doc.setFontSize(8);
-    doc.setTextColor(150, 150, 150);
-    doc.text("LOGO", 22, 30);
+    if (type === 'cost_sheet') {
+      const costData = body.data;
+      const calcValues = body.calculatedValues;
+      const calcAnnexes = body.calculatedAnnexes;
 
-    // Store Info (Top Right)
-    doc.setFontSize(10);
-    doc.setTextColor(40, 40, 40);
-    doc.setFont("helvetica", "bold");
-    doc.text(storeInfo?.name || "CostPro Enterprise", pageWidth - 14, 20, { align: "right" });
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    doc.setTextColor(100, 100, 100);
-    doc.text("SISTEMA DE GESTIÓN POS", pageWidth - 14, 25, { align: "right" });
-    doc.text(`Generado: ${timestamp}`, pageWidth - 14, 30, { align: "right" });
+      // --- CUSTOM COST SHEET GENERATOR ---
 
-    // Centered Report Title
-    doc.setFontSize(22);
-    doc.setTextColor(40, 40, 40);
-    doc.setFont("helvetica", "bold");
-    doc.text(name || 'Reporte de Sistema', pageWidth / 2, 55, { align: "center" });
+      // Formal Ministry Header
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.text("MINISTERIO DE FINANZAS Y PRECIOS", pageWidth / 2, 15, { align: "center" });
+      doc.setFontSize(8);
+      doc.text("FICHA DE COSTOS Y GASTOS DE PRODUCTOS Y SERVICIOS", pageWidth / 2, 20, { align: "center" });
+      doc.setFont("helvetica", "normal");
+      doc.text("PARA LA EVALUACIÓN DE PRECIOS Y TARIFAS", pageWidth / 2, 24, { align: "center" });
 
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    doc.setFont("helvetica", "normal");
-    doc.text(`${type.toUpperCase()} | PERIODO: ${fromDate || 'N/A'} - ${toDate || 'N/A'}`, pageWidth / 2, 62, { align: "center" });
+      // Title
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.text(costData.header.name?.toUpperCase() || "FICHA DE COSTO", 14, 35);
 
-    // Separator Line
-    doc.setDrawColor(220, 220, 220);
-    doc.setLineWidth(0.5);
-    doc.line(14, 70, pageWidth - 14, 70);
+      // Metadata Grid
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "bold");
+      doc.text("DATOS GENERALES:", 14, 42);
+      doc.line(14, 43, 50, 43);
 
-    // Table
-    const tableHeaders: string[] = (columns && columns.length > 0) ? columns : (data.length > 0 ? Object.keys(data[0]).slice(0, 7) : []);
-    const tableData = data.map((row: any) => tableHeaders.map((col: string) => {
-        const val = row[col];
-        if (typeof val === 'object' && val !== null) return JSON.stringify(val);
-        return val?.toString() || '';
-    }));
+      const metadata = [
+        [`No. FC: ${costData.header.code}`, `Fecha: ${costData.header.date}`],
+        [`UM: ${costData.header.unit}`, `Cantidad: ${costData.header.quantity}`],
+        [`Moneda: ${costData.header.currency}`, `Organismo: ${costData.header.category}`],
+        [`Nivel Prod: ${costData.header.productionLevel || 'N/A'}`, `Utilización: ${costData.header.utilization || 'N/A'}`],
+        [`Precio Venta: ${costData.header.salePrice || 'N/A'}`, ""]
+      ];
 
-    const displayHeaders = tableHeaders.map(h => (COLUMN_LABELS[h] || h).toUpperCase());
+      let yPos = 48;
+      doc.setFont("helvetica", "normal");
+      metadata.forEach(row => {
+        doc.text(row[0], 14, yPos);
+        doc.text(row[1], pageWidth / 2, yPos);
+        yPos += 5;
+      });
 
-    autoTable(doc, {
-      startY: 75,
-      head: [displayHeaders],
-      body: tableData,
-      theme: 'striped',
-      headStyles: {
-        fillColor: [30, 41, 59], // Slate-800
-        textColor: 255,
-        fontSize: 9,
-        fontStyle: 'bold',
-        halign: 'center'
-      },
-      styles: {
-        fontSize: 8,
-        cellPadding: 3,
-        overflow: 'linebreak'
-      },
-      alternateRowStyles: {
-        fillColor: [248, 250, 252] // Slate-50
-      },
-      margin: { top: 75, bottom: 40 },
-      didDrawPage: (data) => {
-        // Signature Lines in Footer (only on last page or all pages? Usually all or last)
-        // Let's do it at the bottom of every page for professionalism
-        const footerY = pageHeight - 35;
+      // Main Table
+      const mainHeaders = ["FILA", "CONCEPTO", "VALOR HISTÓRICO", "BASE CÁLCULO", "TOTAL"];
+      const mainRows: any[] = [];
 
-        doc.setDrawColor(200, 200, 200);
-        doc.setLineWidth(0.2);
+      const processRows = (rows: any[], level = 0) => {
+        rows.forEach(row => {
+          const calc = calcValues[row.id] || { total: 0, valorHistorico: 0, baseTotal: 0 };
+          const prefix = "  ".repeat(level);
 
-        // Line 1
-        doc.line(30, footerY, 80, footerY);
-        doc.setFontSize(7);
-        doc.setTextColor(100, 100, 100);
-        doc.text("ELABORADO POR", 55, footerY + 5, { align: "center" });
+          let baseDisplay = '-';
+          if (row.base_display_override) baseDisplay = row.base_display_override;
+          else if (row.is_percent) baseDisplay = `${((row.value || 0) * 100).toFixed(2)}%`;
+          else if (calc.baseTotal > 0) baseDisplay = calc.baseTotal.toLocaleString('es-ES');
 
-        // Line 2
-        doc.line(pageWidth - 80, footerY, pageWidth - 30, footerY);
-        doc.text("REVISADO / AUTORIZADO", pageWidth - 55, footerY + 5, { align: "center" });
+          mainRows.push([
+            row.id,
+            prefix + row.label.toUpperCase(),
+            calc.valorHistorico > 0 ? calc.valorHistorico.toLocaleString('es-ES', { minimumFractionDigits: 2 }) : '--',
+            baseDisplay,
+            calc.total.toLocaleString('es-ES', { minimumFractionDigits: 2 })
+          ]);
 
-        // Pagination
-        const str = `Página ${doc.getNumberOfPages()}`;
-        doc.setFontSize(7);
-        doc.text(str, pageWidth - 14, pageHeight - 10, { align: "right" });
-        doc.text('Documento oficial generado por CostPro Enterprise Reporting v5.7', 14, pageHeight - 10);
+          if (row.children) processRows(row.children, level + 1);
+        });
+      };
+
+      costData.sections.forEach((section: any) => {
+        mainRows.push([{ content: section.label.toUpperCase(), colSpan: 5, styles: { fillColor: [240, 240, 240], fontStyle: 'bold' } }]);
+        processRows(section.rows);
+      });
+
+      autoTable(doc, {
+        startY: yPos + 5,
+        head: [mainHeaders],
+        body: mainRows,
+        theme: 'grid',
+        headStyles: { fillColor: [40, 40, 40], textColor: 255, fontSize: 7 },
+        styles: { fontSize: 7, cellPadding: 1.5 },
+        columnStyles: {
+          0: { cellWidth: 15, halign: 'center' },
+          2: { halign: 'right' },
+          3: { halign: 'right' },
+          4: { halign: 'right', fontStyle: 'bold' }
+        }
+      });
+
+      // Annexes
+      let finalY = (doc as any).lastAutoTable.finalY + 10;
+
+      calcAnnexes.forEach((annex: any) => {
+        if (finalY > doc.internal.pageSize.getHeight() - 40) {
+          doc.addPage();
+          finalY = 20;
+        }
+
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "bold");
+        doc.text(`${annex.id || ''} - ${annex.title}`.toUpperCase(), 14, finalY);
+
+        const headers = annex.columns.map((c: any) => (c.label || c.title || c.key).toUpperCase());
+        const data = annex.data.map((row: any) => annex.columns.map((col: any) => {
+          const val = row[col.key];
+          if (typeof val === 'number') {
+              return val.toLocaleString('es-ES', {
+                  minimumFractionDigits: (col.key === 'no' || col.key === 'quantity' || col.key === 'days' || col.key === 'worker_count') ? 0 : 2,
+                  maximumFractionDigits: 4
+              });
+          }
+          return val || '-';
+        }));
+
+        autoTable(doc, {
+          startY: finalY + 2,
+          head: [headers],
+          body: data,
+          theme: 'striped',
+          headStyles: { fillColor: [80, 80, 80], textColor: 255, fontSize: 6 },
+          styles: { fontSize: 6, cellPadding: 1 },
+        });
+
+        finalY = (doc as any).lastAutoTable.finalY + 10;
+      });
+
+      // Signatures
+      if (finalY > doc.internal.pageSize.getHeight() - 30) {
+        doc.addPage();
+        finalY = 30;
       }
-    });
+
+      doc.setFontSize(8);
+      doc.text("__________________________", 30, finalY + 15);
+      doc.text("Elaborado por", 30, finalY + 20);
+
+      doc.text("__________________________", pageWidth - 80, finalY + 15);
+      doc.text("Aprobado por", pageWidth - 80, finalY + 20);
+
+    } else {
+      // --- STANDARD REPORT GENERATOR ---
+      // Header
+      doc.setFontSize(20);
+      doc.setTextColor(40, 40, 40);
+      doc.text(name || 'Reporte de Sistema', 14, 22);
+
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      doc.text(`Tipo: ${type.toUpperCase()}`, 14, 30);
+      doc.text(`Periodo: ${from || 'N/A'} - ${to || 'N/A'}`, 14, 35);
+      doc.text(`Generado: ${timestamp}`, 14, 40);
+
+      // Separator Line
+      doc.setDrawColor(200);
+      doc.line(14, 45, pageWidth - 14, 45);
+
+      // Table
+      const tableHeaders: string[] = (columns && columns.length > 0) ? columns : Object.keys(data[0] || {}).slice(0, 7);
+      const tableData = data.map((row: any) => tableHeaders.map((col: string) => {
+          const val = row[col];
+          if (typeof val === 'object' && val !== null) return JSON.stringify(val);
+          return val?.toString() || '';
+      }));
+
+      const displayHeaders = tableHeaders.map(h => (COLUMN_LABELS[h] || h).toUpperCase());
+
+      autoTable(doc, {
+        startY: 50,
+        head: [displayHeaders],
+        body: tableData,
+        theme: 'striped',
+        headStyles: { fillColor: [41, 128, 185], textColor: 255 },
+        styles: { fontSize: 8, cellPadding: 2 },
+        margin: { top: 50 },
+        didDrawPage: (data) => {
+          // Footer
+          const str = `Página ${doc.getNumberOfPages()}`;
+          doc.setFontSize(8);
+          doc.text(str, pageWidth - 30, doc.internal.pageSize.getHeight() - 10);
+          doc.text('Documento generado automáticamente por CostPro', 14, doc.internal.pageSize.getHeight() - 10);
+        }
+      });
+    }
 
     const pdfBuffer = doc.output('arraybuffer');
 

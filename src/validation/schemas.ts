@@ -62,7 +62,10 @@ export const userStoreMembershipSchema = z.object({
   status: z.enum(['active', 'revoked']).default('active'),
   created_at: z.string().optional().nullable(),
   updated_at: z.string().optional().nullable(),
-  store: storeSchema.nullable().optional().catch(null),
+  store: z.preprocess(
+    (val) => (Array.isArray(val) ? val[0] : val),
+    storeSchema.nullable().optional().catch(null)
+  ),
 });
 
 export const profileSchema = z.object({
@@ -178,10 +181,9 @@ export const transactionSchema = z.object({
   discount_type: discountTypeSchema.catch('fixed').optional().default('fixed'),
   discount_value: z.coerce.number().catch(0).default(0),
   subtotal: z.coerce.number().catch(0).default(0),
+  tax_amount: z.coerce.number().catch(0).default(0),
+  applied_taxes: z.array(z.any()).catch([]).optional(),
   idempotency_key: z.string().nullable().optional(),
-  total_cost: z.coerce.number().optional().nullable(),
-  profit: z.coerce.number().optional().nullable(),
-  margin_percentage: z.coerce.number().optional().nullable(),
 });
 
 export const stockMovementSchema = z.object({
@@ -223,12 +225,15 @@ export const receiptItemSchema = z.object({
   unit_cost: z.coerce.number().catch(0),
   created_at: z.string().optional(),
   updated_at: z.string().optional(),
-  products: z.object({
-    name: z.string(),
-    sku: z.string().nullable().optional(),
-    image_url: z.string().nullable().optional(),
-    public_image_url: z.string().nullable().optional(),
-  }).nullable().optional(),
+  products: z.preprocess(
+    (val) => (Array.isArray(val) ? val[0] : val),
+    z.object({
+      name: z.string(),
+      sku: z.string().nullable().optional(),
+      image_url: z.string().nullable().optional(),
+      public_image_url: z.string().nullable().optional(),
+    }).nullable().optional().catch(null)
+  ),
 });
 
 export const auditLogSchema = z.object({
@@ -298,6 +303,8 @@ export const createSaleParamsSchema = z.object({
     price: z.number().min(0),
     cost: z.number().min(0),
   })),
+  p_applied_taxes: z.array(z.any()).optional(),
+  p_tax_amount: z.number().optional(),
 });
 
 export const registerReceptionParamsSchema = z.object({
@@ -432,29 +439,30 @@ export const costSheetSectionSchema = z.object({
 
 export const costSheetColumnSchema = z.object({
   key: z.string(),
+  label: z.string().optional(),
   title: z.string().optional(),
   formula: z.string().optional(),
-  type: z.enum(['number', 'string', 'formula']).optional(),
-});
+  type: z.enum(['number', 'string', 'formula', 'text']).optional(),
+}).catchall(z.any());
 
 export const costSheetAnnexSchema = z.object({
   id: z.string(),
   title: z.string(),
   columns: z.array(costSheetColumnSchema),
   data: z.array(z.record(z.string(), z.any())),
-});
+}).catchall(z.any());
 
 export const costSheetSignatureSchema = z.object({
   prepared_by: z.string(),
   approved_by: z.string(),
-});
+}).catchall(z.any());
 
 export const costSheetDataSchema = z.object({
   header: costSheetHeaderSchema,
   sections: z.array(costSheetSectionSchema),
   annexes: z.array(costSheetAnnexSchema),
   signature: costSheetSignatureSchema,
-});
+}).catchall(z.any());
 
 // ============================================
 // Import Schemas
@@ -499,14 +507,17 @@ export const transferSchema = z.object({
 });
 
 export const transferWithDetailsSchema = transferSchema.extend({
-  origin_store: storeSchema.nullable().optional(),
-  destination_store: storeSchema.nullable().optional(),
-  creator: z.object({
-    full_name: z.string(),
-  }).nullable().optional(),
+  origin_store: z.preprocess((val) => (Array.isArray(val) ? val[0] : val), storeSchema.nullable().optional().catch(null)),
+  destination_store: z.preprocess((val) => (Array.isArray(val) ? val[0] : val), storeSchema.nullable().optional().catch(null)),
+  creator: z.preprocess(
+    (val) => (Array.isArray(val) ? val[0] : val),
+    z.object({
+      full_name: z.string(),
+    }).nullable().optional().catch(null)
+  ),
   items: z.array(
     transferItemSchema.extend({
-      product: productSchema.nullable().optional(),
+      product: z.preprocess((val) => (Array.isArray(val) ? val[0] : val), productSchema.nullable().optional().catch(null)),
     })
   ).optional(),
 });

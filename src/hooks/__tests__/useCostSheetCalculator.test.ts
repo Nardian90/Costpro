@@ -168,4 +168,21 @@ describe('useCostSheetCalculator', () => {
     expect(result.current.calculatedValues['r1'].total).toBe(0);
     expect(result.current.calculatedValues['r2'].total).toBe(0);
   });
+
+  it('should handle numeric formulas correctly (manual total override)', () => {
+    const template: CostSheetData = {
+        ...baseTemplate,
+        sections: [{
+            id: 's1',
+            label: 'Section 1',
+            rows: [
+                { id: 'r1', label: 'Row 1', formula: '100', calculationMethod: 'FORMULA' },
+                { id: 'r2', label: 'Row 2', formula: '0', calculationMethod: 'FORMULA' }
+            ]
+        }]
+    };
+    const { result } = renderHook(() => useCostSheetCalculator(template));
+    expect(result.current.calculatedValues['r1'].total).toBe(100);
+    expect(result.current.calculatedValues['r2'].total).toBe(0);
+  });
 });

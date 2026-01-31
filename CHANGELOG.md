@@ -13,6 +13,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Hardenización de Touch Targets**: Incremento masivo de áreas táctiles a un mínimo de 44px en elementos críticos (Chips de Categoría, Botones de acción, Menú de Terminal) para reducir errores de pulsación accidental.
 - **Feedback Táctil Inmediato**: Incorporación de micro-animaciones de presión (`active:scale-95`) en tarjetas de producto y botones de acción, proporcionando confirmación visual instantánea de la interacción táctil.
 - **Actualización de Documentación Visual**: Sincronización de los diagramas de ayuda en `MobilePosDiagram.tsx` para reflejar la nueva interfaz de TPV persistente y las mejoras ergonómicas.
+### Hardening
+- **Centralización de Perfil de Usuario**: Migración de la lógica de recuperación y normalización de perfiles a `userService.getUserProfile`. Se eliminó lógica dispersa y repetitiva en `useSessionManager` y `LoginPage`.
+- **Contratos de Datos Resilientes**: Implementación de `z.preprocess` en esquemas Zod (`userStoreMembershipSchema`, `receiptItemSchema`, `transferWithDetailsSchema`) para normalizar automáticamente las relaciones de Supabase (conversión de arreglos a objetos).
+- **Resiliencia ante Cambios de Esquema**: Incorporación de fallbacks defensivos para el error 42703 (columna inexistente) en el servicio de perfil, permitiendo que la sesión se inicie correctamente incluso durante procesos de migración de base de datos.
+- **Limpieza de Tipado Estricto**: Eliminación de múltiples instancias de `as any` en `useUsers` y `base.ts`, sustituyéndolos por interfaces específicas y tipos desconocidos seguros.
+- **Eficiencia en Consultas RSS**: Actualización de `rss-service.ts` para utilizar selección explícita de columnas, siguiendo los estándares de performance del proyecto.
+
+**Nota de Handoff para UX:** No hay cambios visuales. Se ha reforzado la estabilidad del inicio de sesión y la gestión de usuarios.
 
 ## [5.7.16] - 2026-02-26
 

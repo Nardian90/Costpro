@@ -1,16 +1,15 @@
 
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, memo } from 'react';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
-import { useCostSheetCalculator } from '@/hooks/logic/useCostSheetCalculator';
-import { ChevronRight, HelpCircle, CornerDownRight } from 'lucide-react';
+import { ChevronRight, HelpCircle, CornerDownRight, AlertTriangle } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn, formatCurrency } from '@/lib/utils';
-import { ViewMode } from '@/components/ui/ViewSwitcher';
+import { FormulaEditor } from './FormulaEditor';
 import {
   CostSheetRow as RowData,
   CostSheetSection,
@@ -26,26 +25,31 @@ interface CostSheetInteractiveTableProps {
   sections: CostSheetSection[];
   calculatedValues: CalculatedValues;
   annexes: CostSheetAnnex[];
+  activeSubSectionId: string;
+  setActiveSubSectionId: (id: string) => void;
+  onOpenSections?: () => void;
 }
 
 // Props for a single row component
 interface RowProps {
   row: RowData;
   level: number;
+  calculated: CalculatedRowValue;
   calculatedValues: CalculatedValues;
   path: (string | number)[]; // Path to this row in the Zustand store
   annexes: CostSheetAnnex[];
-  allRows: RowData[];
+  suggestions: { label: string; value: string; description?: string }[];
 }
 
 /**
  * Renders a single, potentially recursive, row in the cost sheet table.
  */
-const CostSheetRow: React.FC<RowProps> = ({ row, level, calculatedValues, path, annexes, allRows }) => {
+const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calculatedValues, path, annexes, suggestions }) => {
   const [isExpanded, setIsExpanded] = useState(true);
+  const [isEditingTotal, setIsEditingTotal] = useState(false);
   const { updateValue } = useCostSheetStore();
+
   const hasChildren = row.children && row.children.length > 0;
-  const calculated = calculatedValues[row.id] || { total: 0, valorHistorico: 0, baseTotal: 0, coeficiente: 0 };
 
   const handleToggle = () => {
     if (hasChildren) {
@@ -54,110 +58,153 @@ const CostSheetRow: React.FC<RowProps> = ({ row, level, calculatedValues, path, 
   };
 
   const handleValueChange = (field: string, value: any) => {
-    const isNumericField = field === 'valorHistorico' || field === 'value';
-    const numericValue = isNumericField ? parseFloat(value) || 0 : value;
-    updateValue([...path, field], numericValue);
+    updateValue([...path, field], value);
   };
 
-  const baseOptions = useMemo(() => [
-    ...annexes.map(a => ({ value: a.id, label: `Anexo ${a.id}` })),
-    ...allRows.map(r => ({ value: r.id, label: `Fila ${r.id}: ${r.label}` }))
-  ], [annexes, allRows]);
+  const handleTotalSave = (val: string) => {
+    setIsEditingTotal(false);
+
+    // Improved check for fixed values, especially '0'
+    const trimmedVal = val.trim();
+    if (trimmedVal.startsWith('=')) {
+      // It's a formula
+      updateValue([...path, 'formula'], trimmedVal);
+      updateValue([...path, 'calculationMethod'], 'FORMULA');
+    } else if (trimmedVal !== '' && !isNaN(Number(trimmedVal))) {
+      // It's a valid fixed number (including 0)
+      // Save it as a formula to keep it in the Total column and not touch Valor Histórico
+      updateValue([...path, 'formula'], trimmedVal);
+      updateValue([...path, 'calculationMethod'], 'FORMULA');
+
+      // If it was a percentage row, clear it to ensure the fixed value is respected
+      if (row.is_percent) {
+        updateValue([...path, 'is_percent'], false);
+      }
+    } else if (trimmedVal === '') {
+        // Reset to 0 if empty
+        const field = row.hasOwnProperty('valorHistorico') ? 'valorHistorico' : 'value';
+        updateValue([...path, field], 0);
+        updateValue([...path, 'calculationMethod'], 'ValorFijo');
+        updateValue([...path, 'formula'], '');
+        if (row.is_percent) {
+          updateValue([...path, 'is_percent'], false);
+        }
+    }
+  };
+
+
+  const isResultRow = row.is_percent || ['5', '12', '13', '13.1', '13.2', '14'].includes(row.id);
+  const safeCalculated = calculated || { total: 0, valorHistorico: 0, baseTotal: 0, coeficiente: 0, hasWarnings: false, audits: [] };
+  const showWarning = safeCalculated.hasWarnings || (!hasChildren && !row.is_percent && safeCalculated.total === 0 && ((row.valorHistorico ?? 0) > 0 || !!row.baseDeCalculoRef));
 
   return (
     <>
-      <TableRow className="border-t border-border/50 hover:bg-primary/5 transition-colors">
+      <TableRow className={cn(
+        "border-t border-border/50 hover:bg-primary/5 transition-colors group",
+        isResultRow && "bg-primary/5 font-bold"
+      )}>
         {/* Concepto */}
-        <TableCell style={{ paddingLeft: `${level * 24 + 12}px` }} className="py-2.5 font-medium text-foreground sticky-column-1">
-          <div className="flex items-center gap-2 min-w-0">
+        <TableCell style={{ paddingLeft: `${level * 24 + 12}px` }} className="px-2 py-2 sm:px-4 sm:py-2.5 font-medium text-[13px] sm:text-sm text-foreground min-w-[180px] sm:min-w-[250px]">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
             {hasChildren && (
               <button onClick={handleToggle} className="p-1 rounded-full hover:bg-primary/10 shrink-0">
-                <ChevronRight className={cn('w-4 h-4 transition-transform', isExpanded && 'rotate-90')} />
+                <ChevronRight className={cn('w-3.5 h-3.5 sm:w-4 h-4 transition-transform', isExpanded && 'rotate-90')} />
               </button>
             )}
-            {!hasChildren && <CornerDownRight className="w-4 h-4 text-muted-foreground shrink-0 ml-1" />}
+            {!hasChildren && <CornerDownRight className="w-3.5 h-3.5 sm:w-4 h-4 text-muted-foreground shrink-0 ml-1" />}
             <span className="truncate flex-1">{row.label}</span>
           </div>
         </TableCell>
 
         {/* Valor Histórico / % */}
-        <TableCell className="px-4 py-2 text-right">
-          {(row.calculationMethod === 'Prorrateo' || row.hasOwnProperty('formula') || hasChildren) && !row.is_percent ? (
-            <div className="h-8 flex items-center justify-end px-3 text-sm font-bold text-primary/70 bg-primary/5 rounded-md border border-primary/10 tabular-nums">
-              {formatCurrency(calculated.valorHistorico || 0).replace('$', '').trim()}
-            </div>
-          ) : (row.hasOwnProperty('valorHistorico') || row.hasOwnProperty('value')) ? (
+        <TableCell className="px-2 py-1.5 sm:px-4 sm:py-2 text-right w-32 sm:w-40">
             <div className="relative">
                 <Input
                 type="number"
                 step={row.is_percent ? "0.001" : "1"}
-                className={cn("neu-input text-right h-8", row.is_percent && "pr-6")}
-                value={row.hasOwnProperty('valorHistorico') ? (row.valorHistorico ?? 0) : (row.is_percent ? ((row.value ?? 0) * 100) : (row.value ?? 0))}
+                className={cn(
+                  "neu-input text-right h-8 transition-all text-xs sm:text-sm px-2",
+                  row.is_percent && "pr-6",
+                  hasChildren && "bg-muted/30 font-bold border-dashed cursor-default"
+                )}
+                value={hasChildren
+                  ? (safeCalculated.valorHistorico ?? 0).toFixed(row.is_percent ? 3 : 2)
+                  : (row.hasOwnProperty('valorHistorico') ? (row.valorHistorico ?? 0) : (row.is_percent ? ((row.value ?? 0) * 100) : (row.value ?? 0)))}
+                readOnly={hasChildren}
                 onChange={(e) => {
+                  if (hasChildren) return;
                   const val = e.target.value;
+                  const numVal = parseFloat(val) || 0;
                   handleValueChange(
                     row.hasOwnProperty('valorHistorico') ? 'valorHistorico' : 'value',
-                    row.is_percent ? parseFloat(val) / 100 : val
+                    row.is_percent ? numVal / 100 : numVal
                   );
+                  // Ensure engine respects manual changes
+                  handleValueChange('calculationMethod', 'ValorFijo');
+                  handleValueChange('formula', '');
                 }}
-                onFocus={(e) => e.target.select()}
+                onFocus={(e) => !hasChildren && e.target.select()}
                 />
                 {row.is_percent && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">%</span>}
+                {hasChildren && <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full animate-pulse" title="Calculado automáticamente" />}
             </div>
-          ) : <span className="text-sm text-slate-400">-</span>}
-        </TableCell>
-
-        {/* Forma de Cálculo */}
-        <TableCell className="px-4 py-2">
-          {!hasChildren && !row.formula && !row.is_percent ? (
-            <Select value={row.calculationMethod || 'ValorFijo'} onValueChange={(value) => handleValueChange('calculationMethod', value)}>
-              <SelectTrigger className="neu-input h-8">
-                <SelectValue placeholder="Seleccionar Método..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Prorrateo">Prorrateo</SelectItem>
-                <SelectItem value="ValorFijo">Valor Fijo</SelectItem>
-              </SelectContent>
-            </Select>
-          ) : <span className="text-sm text-slate-400">-</span>}
-        </TableCell>
-
-        {/* Base de Cálculo */}
-        <TableCell className="px-4 py-2 min-w-[180px]">
-          {!hasChildren && !row.formula && !row.is_percent ? (
-             <Select value={row.baseDeCalculoRef || ''} onValueChange={(value) => handleValueChange('baseDeCalculoRef', value)}>
-                <SelectTrigger className="neu-input h-8 w-full">
-                    <div className="truncate text-left pr-2">
-                      <SelectValue placeholder="Seleccionar Base..." />
-                    </div>
-                </SelectTrigger>
-                <SelectContent className="max-w-[400px]">
-                    {baseOptions.map(opt => <SelectItem key={opt.value} value={opt.value} className="truncate">{opt.label}</SelectItem>)}
-                </SelectContent>
-            </Select>
-          ) : <span className="text-sm text-slate-400">-</span>}
-        </TableCell>
-
-        {/* Coeficiente */}
-        <TableCell className="px-4 py-2 text-right tabular-nums text-muted-foreground">
-          {calculated.coeficiente > 0 ? calculated.coeficiente.toFixed(6) : <span className="text-sm text-slate-400">-</span>}
         </TableCell>
 
         {/* Total */}
-        <TableCell className="px-4 py-2 text-right font-black tabular-nums text-primary">
-          {formatCurrency(calculated.total)}
+        <TableCell
+          className="px-2 py-1.5 sm:px-4 sm:py-2 text-right font-black tabular-nums text-primary w-36 sm:w-48 cursor-pointer hover:bg-primary/5 transition-colors text-xs sm:text-sm"
+          onClick={() => setIsEditingTotal(true)}
+        >
+          {isEditingTotal ? (
+            <FormulaEditor
+              initialValue={row.formula || String(safeCalculated.total)}
+              onSave={handleTotalSave}
+              onCancel={() => setIsEditingTotal(false)}
+              suggestions={suggestions}
+            />
+          ) : (
+            <div className="flex items-center justify-end gap-2 group-hover:scale-105 transition-transform origin-right">
+                {showWarning && (
+                    <Popover>
+                        <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
+                            <AlertTriangle className={cn("w-4 h-4 cursor-help animate-pulse", calculated.hasWarnings ? "text-destructive" : "text-amber-500")} />
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80" onClick={(e) => e.stopPropagation()}>
+                            <p className={cn("text-xs font-bold mb-1", calculated.hasWarnings ? "text-destructive" : "text-amber-600")}>
+                                {calculated.hasWarnings ? "Errores de Motor" : "Advertencia de Cálculo"}
+                            </p>
+                            <div className="space-y-2">
+                                {calculated.audits && calculated.audits.length > 0 ? (
+                                    calculated.audits.map((a: any, idx: number) => (
+                                        <div key={idx} className="text-[10px] bg-muted p-1.5 rounded border border-border">
+                                            <span className="font-bold uppercase text-[8px] block opacity-50">{a.type}</span>
+                                            {a.note}
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="text-[10px] text-slate-500">Esta fila tiene un total de 0.00 pero tiene una base de cálculo o valor histórico asignado. Verifique el prorrateo o la fórmula.</p>
+                                )}
+                            </div>
+                        </PopoverContent>
+                    </Popover>
+                )}
+                <span className={cn(row.formula && "underline decoration-dotted decoration-primary/30")}>
+                    {formatCurrency(safeCalculated.total)}
+                </span>
+            </div>
+          )}
         </TableCell>
 
-        {/* Ayuda */}
-        <TableCell className="px-4 py-2 text-center">
+        {/* Ayuda - Hidden on very small screens */}
+        <TableCell className="px-4 py-2 text-center w-12 sm:w-20 hidden sm:table-cell">
           {row.helpText && (
             <Popover>
               <PopoverTrigger asChild>
                  <button className="p-2 rounded-full hover:bg-primary/10 text-primary/50 hover:text-primary transition-colors">
-                    <HelpCircle className="w-5 h-5" />
+                    <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5" />
                  </button>
               </PopoverTrigger>
-              <PopoverContent className="w-80"><p className="text-sm">{row.helpText}</p></PopoverContent>
+              <PopoverContent className="w-72 sm:w-80"><p className="text-sm">{row.helpText}</p></PopoverContent>
             </Popover>
           )}
         </TableCell>
@@ -168,20 +215,32 @@ const CostSheetRow: React.FC<RowProps> = ({ row, level, calculatedValues, path, 
           key={child.id}
           row={child}
           level={level + 1}
+          calculated={calculatedValues[child.id]}
           calculatedValues={calculatedValues}
           path={[...path, 'children', index]}
           annexes={annexes}
-          allRows={allRows}
+          suggestions={suggestions}
         />
       ))}
     </>
   );
-};
+});
+
+import { ListFilter } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 /**
  * The main interactive table component for the Cost Sheet.
+ * Decomposed by sections for a more professional and clean enterprise-level experience.
  */
-const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = ({ sections, calculatedValues, annexes }) => {
+const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = ({
+    sections,
+    calculatedValues,
+    annexes,
+    activeSubSectionId,
+    setActiveSubSectionId,
+    onOpenSections
+}) => {
   const flattenRows = (rows: RowData[]): RowData[] => {
     let all: RowData[] = [];
     for (const row of rows) {
@@ -195,43 +254,75 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = ({ s
 
   const allRows = useMemo(() => flattenRows(sections.flatMap(s => s.rows)), [sections]);
 
+  const suggestions = useMemo(() => [
+    ...annexes.map(a => ({ label: `Anexo ${a.id}`, value: `Anexo${a.id}`, description: a.title })),
+    ...allRows.map(r => ({ label: `Fila ${r.id}`, value: `ref('${r.id}')`, description: r.label })),
+    { label: 'SUMA', value: 'SUMA(', description: 'Suma de valores' },
+    { label: 'PROMEDIO', value: 'PROMEDIO(', description: 'Promedio de valores' },
+    { label: 'MAX', value: 'MAX(', description: 'Valor máximo' },
+    { label: 'MIN', value: 'MIN(', description: 'Valor mínimo' },
+    { label: 'PCT', value: 'pct(', description: 'Porcentaje: pct(valor, %)' },
+    { label: 'ROUND2', value: 'round2(', description: 'Redondear a 2 decimales' },
+    { label: 'VH', value: 'VH', description: 'Valor Histórico de la fila' },
+    { label: 'BASE_TOTAL', value: 'BASE_TOTAL', description: 'Total de la base de cálculo' },
+  ], [annexes, allRows]);
+
   return (
-    <div data-testid="cost-sheet-interactive-table" className="neu-card p-0 overflow-hidden">
-        <Table className="min-w-[1000px]">
-          <TableHeader className="bg-muted/30 text-muted-foreground font-black uppercase text-[10px] tracking-widest border-b border-border">
-            <TableRow>
-              <TableHead className="px-4 py-4 text-left font-black uppercase tracking-widest min-w-[250px] sticky-column-1">Concepto</TableHead>
-              <TableHead className="px-4 py-4 text-right font-black uppercase tracking-widest w-32">Valor Histórico</TableHead>
-              <TableHead className="px-4 py-4 text-left font-black uppercase tracking-widest w-40">Forma de Cálculo</TableHead>
-              <TableHead className="px-4 py-4 text-left font-black uppercase tracking-widest w-56">Base de Cálculo</TableHead>
-              <TableHead className="px-4 py-4 text-right font-black uppercase tracking-widest w-32">Coeficiente</TableHead>
-              <TableHead className="px-4 py-4 text-right font-black uppercase tracking-widest w-40">Total</TableHead>
-              <TableHead className="px-4 py-4 text-center font-black uppercase tracking-widest w-20">Ayuda</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sections.map((section, sectionIndex) => (
-              <React.Fragment key={section.id}>
-                <TableRow className="bg-muted/50 border-b border-border/50">
-                  <TableCell colSpan={7} className="px-4 py-2 font-black text-primary uppercase tracking-widest text-xs">
-                    {section.label}
-                  </TableCell>
-                </TableRow>
-                {section.rows.map((row: RowData, rowIndex: number) => (
-                  <CostSheetRow
-                    key={row.id}
-                    row={row}
-                    level={0}
-                    calculatedValues={calculatedValues}
-                    path={['sections', sectionIndex, 'rows', rowIndex]}
-                    annexes={annexes}
-                    allRows={allRows}
-                  />
-                ))}
-              </React.Fragment>
-            ))}
-          </TableBody>
-        </Table>
+    <div data-testid="cost-sheet-interactive-table" className="space-y-6">
+        {/* Trigger for Sections Sidebar */}
+        <div className="flex justify-end mb-4 sm:mb-6">
+            <Button
+                variant="outline"
+                size="sm"
+                onClick={onOpenSections}
+                className="rounded-full gap-2 font-black uppercase tracking-widest text-[10px] px-6 neu-raised-sm"
+            >
+                <ListFilter className="w-4 h-4" />
+                Secciones
+            </Button>
+        </div>
+
+        {sections.map((section, sectionIndex) => (
+            section.id === activeSubSectionId && (
+                <div key={section.id} className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    <div className="flex items-center gap-3 mb-4 px-1">
+                        <div className="w-1.5 h-6 bg-primary rounded-full" />
+                        <h3 className="text-sm font-black uppercase tracking-[0.2em] text-foreground/80">
+                            {section.label}
+                        </h3>
+                    </div>
+
+                    <div className="neu-card p-0 overflow-hidden border-border/50 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="table-scroll-wrapper">
+                        <Table className="w-full min-w-[500px] sm:min-w-[700px]">
+                            <TableHeader className="bg-muted/30 text-muted-foreground font-black uppercase text-[9px] sm:text-[10px] tracking-widest border-b border-border">
+                                <TableRow>
+                                    <TableHead className="px-2 py-3 sm:px-4 sm:py-4 text-left font-black uppercase tracking-widest min-w-[180px] sm:min-w-[250px]">Concepto</TableHead>
+                                    <TableHead className="px-2 py-3 sm:px-4 sm:py-4 text-right font-black uppercase tracking-widest w-32 sm:w-40">Valor Histórico</TableHead>
+                                    <TableHead className="px-2 py-3 sm:px-4 sm:py-4 text-right font-black uppercase tracking-widest w-36 sm:w-48">Total</TableHead>
+                                    <TableHead className="px-2 py-3 sm:px-4 sm:py-4 text-center font-black uppercase tracking-widest w-12 sm:w-20 hidden sm:table-cell">Ayuda</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {section.rows.map((row: RowData, rowIndex: number) => (
+                                    <CostSheetRow
+                                        key={row.id}
+                                        row={row}
+                                        level={0}
+                                        calculated={calculatedValues[row.id]}
+                                        calculatedValues={calculatedValues}
+                                        path={['sections', sectionIndex, 'rows', rowIndex]}
+                                        annexes={annexes}
+                                        suggestions={suggestions}
+                                    />
+                                ))}
+                            </TableBody>
+                        </Table>
+                        </div>
+                    </div>
+                </div>
+            )
+        ))}
     </div>
   );
 };

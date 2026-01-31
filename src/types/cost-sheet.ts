@@ -33,9 +33,10 @@ export interface CostSheetSection {
 
 export interface CostSheetColumn {
   key: string;
+  label?: string;
   title?: string;
   formula?: string;
-  type?: 'number' | 'string' | 'formula';
+  type?: 'number' | 'string' | 'formula' | 'text';
 }
 
 export interface CostSheetAnnex {
@@ -64,4 +65,6 @@ export interface CalculatedRowValue {
   baseValorHistorico: number;
   coeficiente: number;
   total: number;
+  audits?: any[];
+  hasWarnings?: boolean;
 }

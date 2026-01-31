@@ -137,9 +137,15 @@ importers:
       date-fns:
         specifier: ^4.1.0
         version: 4.1.0
+      decimal.js:
+        specifier: ^10.6.0
+        version: 10.6.0
       embla-carousel-react:
         specifier: ^8.6.0
         version: 8.6.0(react@19.2.3)
+      expr-eval:
+        specifier: ^2.0.2
+        version: 2.0.2
       framer-motion:
         specifier: ^12.23.2
         version: 12.26.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -253,7 +259,7 @@ importers:
         specifier: ^1.57.0
         version: 1.57.0
       '@prisma/client':
-        specifier: ^4.16.2
+        specifier: 4.16.2
         version: 4.16.2(prisma@4.16.2)
       '@tailwindcss/postcss':
         specifier: ^4
@@ -295,7 +301,7 @@ importers:
         specifier: ^27.4.0
         version: 27.4.0
       prisma:
-        specifier: ^4.16.2
+        specifier: 4.16.2
         version: 4.16.2
       tailwindcss:
         specifier: ^4
@@ -3604,6 +3610,9 @@ packages:
   expect-type@1.3.0:
     resolution: {integrity: sha512-knvyeauYhqjOYvQ66MznSMs83wmHrCycNEN6Ao+2AeYEfxUIkuiVxdEa1qlGEPK+We3n0THiDciYSsCcgW/DoA==}
     engines: {node: '>=12.0.0'}
+
+  expr-eval@2.0.2:
+    resolution: {integrity: sha512-4EMSHGOPSwAfBiibw3ndnP0AvjDWLsMvGOvWEZ2F96IGk0bIVdjQisOHxReSkE13mHcfbuCiXw+G4y0zv6N8Eg==}
 
   ext@1.7.0:
     resolution: {integrity: sha512-6hxeJYaL110a9b5TEJSj0gojyHQAmA2ch5Os+ySCiA1QGdS697XWY1pzsrSjqA9LDEEgdB/KypIlR59RcLuHYw==}
@@ -9698,6 +9707,8 @@ snapshots:
       fill-range: 2.2.4
 
   expect-type@1.3.0: {}
+
+  expr-eval@2.0.2: {}
 
   ext@1.7.0:
     dependencies:
