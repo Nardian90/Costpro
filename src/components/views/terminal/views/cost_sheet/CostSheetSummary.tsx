@@ -80,6 +80,6 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({ calculatedValu
       ))}
     </div>
   );
-};
+});
 
 export default CostSheetSummary;

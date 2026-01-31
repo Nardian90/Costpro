@@ -68,7 +68,7 @@ export const CostSheetAuditLog: React.FC<CostSheetAuditLogProps> = memo(({ audit
       </CardContent>
     </Card>
   );
-};
+});
 
 function StatusIcon({ type }: { type: AuditEntry['type'] }) {
     switch (type) {
