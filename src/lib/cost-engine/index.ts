@@ -81,12 +81,34 @@ export function calculateFicha(
     return annexSumMap.get(anexoId)?.get(classification)?.toNumber() || 0;
   };
 
+  parser.functions.ref = (classification: string) => {
+      const targets = rowsByClass.get(classification) || [];
+      return targets.reduce((acc, t) => {
+          const calculated = calculatedRows.get(t.id);
+          return acc + (calculated?.total || 0);
+      }, 0);
+  };
+
+  parser.functions.pct = (value: number, percentage: number) => {
+      return value * (percentage / 100);
+  };
+
+  parser.functions.round2 = (value: number) => {
+      return Math.round(value * 100) / 100;
+  };
+
+  parser.functions.sum = (...args: number[]) => {
+      return args.reduce((a, b) => a + b, 0);
+  };
+
   const computeRowTotal = (
     row: CostRow,
     currentRows: Map<string, CalculatedRow>
-  ): { total: Decimal; note: string; type: AuditEntry['type']; fuente: string } => {
+  ): { total: Decimal; note: string; type: AuditEntry['type']; fuente: string; baseTotal: Decimal; baseHist: Decimal } => {
     let total = new Decimal(0);
     let note = '';
+    let baseTotalValue = new Decimal(0);
+    let baseHistValue = new Decimal(0);
     let type: AuditEntry['type'] = 'INFO';
     let fuenteParts: string[] = [row.formaCalculo];
 
@@ -127,6 +149,8 @@ export function calculateFicha(
         if (base?.type === 'ANEXO') {
           const classSum = annexSumMap.get(base.anexoId)?.get(row.classification) || new Decimal(0);
           total = classSum;
+          baseTotalValue = classSum;
+          baseHistValue = classSum;
           fuenteParts.push(base.anexoId);
           note += `Imported from ${base.anexoId} for class ${row.classification}.`;
         } else {
@@ -137,40 +161,38 @@ export function calculateFicha(
 
       case 'PRORRATEO':
       case 'COEFICIENTE':
-        let baseTotal = new Decimal(0);
-        let baseHist = new Decimal(0);
         let baseRefName = '';
 
         if (base?.type === 'ANEXO') {
             const anexo = annexSumMap.get(base.anexoId);
-            baseTotal = Array.from(anexo?.values() || []).reduce((acc, val) => acc.plus(val), new Decimal(0));
-            baseHist = baseTotal;
+            baseTotalValue = Array.from(anexo?.values() || []).reduce((acc, val) => acc.plus(val), new Decimal(0));
+            baseHistValue = baseTotalValue;
             baseRefName = `Anexo:${base.anexoId}`;
         } else if (base?.type === 'FILA') {
             const targets = rowsByClass.get(base.classification) || [];
             targets.forEach(t => {
                 const calculated = currentRows.get(t.id);
-                baseTotal = baseTotal.plus(new Decimal(calculated?.total || 0));
-                baseHist = baseHist.plus(new Decimal(t.valorHistorico || 0));
+                baseTotalValue = baseTotalValue.plus(new Decimal(calculated?.total || 0));
+                baseHistValue = baseHistValue.plus(new Decimal(t.valorHistorico || 0));
             });
             baseRefName = `Fila:${base.classification}`;
         }
         fuenteParts.push(baseRefName);
 
         if (formaCalculoToUse === 'PRORRATEO') {
-            if (baseHist.isZero()) {
+            if (baseHistValue.isZero()) {
                 total = new Decimal(0);
                 type = 'WARNING';
                 note += `BaseHist is zero for ${baseRefName}.`;
             } else {
-                const ratio = vh.div(baseHist);
-                total = ratio.times(baseTotal);
-                note += `Prorrated: (${vh}/${baseHist}) * ${baseTotal.toFixed(decimals)}.`;
+                const ratio = vh.div(baseHistValue);
+                total = ratio.times(baseTotalValue);
+                note += `Prorrated: (${vh}/${baseHistValue}) * ${baseTotalValue.toFixed(decimals)}.`;
             }
         } else {
             const coef = new Decimal(row.coeficiente ?? 0);
-            total = coef.times(baseTotal);
-            note += `Coefficient: ${coef} * ${baseTotal.toFixed(decimals)}.`;
+            total = coef.times(baseTotalValue);
+            note += `Coefficient: ${coef} * ${baseTotalValue.toFixed(decimals)}.`;
         }
         break;
 
@@ -184,21 +206,20 @@ export function calculateFicha(
         try {
             const expr = parser.parse(formulaToUse || '0');
 
-            let formulaBaseTotal = new Decimal(0);
             if (base?.type === 'ANEXO') {
                  const anexo = annexSumMap.get(base.anexoId);
-                 formulaBaseTotal = Array.from(anexo?.values() || []).reduce((acc, val) => acc.plus(val), new Decimal(0));
+                 baseTotalValue = Array.from(anexo?.values() || []).reduce((acc, val) => acc.plus(val), new Decimal(0));
             } else if (base?.type === 'FILA') {
                 const targets = rowsByClass.get(base.classification) || [];
                 targets.forEach(t => {
                     const calculated = currentRows.get(t.id);
-                    formulaBaseTotal = formulaBaseTotal.plus(new Decimal(calculated?.total || 0));
+                    baseTotalValue = baseTotalValue.plus(new Decimal(calculated?.total || 0));
                 });
             }
 
             const result = expr.evaluate({
                 VH: vh.toNumber(),
-                BASE_TOTAL: formulaBaseTotal.toNumber(),
+                BASE_TOTAL: baseTotalValue.toNumber(),
                 COEF: row.coeficiente || 0
             });
             total = new Decimal(result);
@@ -211,7 +232,7 @@ export function calculateFicha(
         break;
     }
 
-    return { total, note, type, fuente: fuenteParts.join('|') };
+    return { total, note, type, fuente: fuenteParts.join('|'), baseTotal: baseTotalValue, baseHist: baseHistValue };
   };
 
   // 3. Iterative Solver
@@ -224,7 +245,7 @@ export function calculateFicha(
 
     ficha.rows.forEach((row) => {
       const current = calculatedRows.get(row.id)!;
-      const { total: computedTotal, note, type, fuente } = computeRowTotal(row, calculatedRows);
+      const { total: computedTotal, note, type, fuente, baseTotal, baseHist } = computeRowTotal(row, calculatedRows);
 
       const targetTotal = computedTotal.toDecimalPlaces(decimals);
       const currentTotal = new Decimal(current.total);
@@ -253,6 +274,8 @@ export function calculateFicha(
             });
             current.total = finalTotal;
             current.fuente = fuente;
+            current.baseTotal = baseTotal.toNumber();
+            current.baseHist = baseHist.toNumber();
         }
       }
     });
