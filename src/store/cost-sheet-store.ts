@@ -52,7 +52,7 @@ const blankSheet = clearTemplate(originalTemplate);
 
 interface CostSheetState {
   data: CostSheetDataContract;
-  updateValue: (path: (string | number)[], value: string | number) => void;
+  updateValue: (path: (string | number)[], value: string | number | boolean) => void;
   addRow: (annexId: string) => void;
   removeRow: (annexId: string, rowIndex: number) => void;
   setSheet: (data: CostSheetDataContract) => void;

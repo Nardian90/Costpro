@@ -238,12 +238,11 @@ const CostSheetView = () => {
                         <div className="mt-4">
                             {activeSection === 'header' && <CostSheetHeaderEditor />}
                             {activeSection === 'main' && (
-                            <CostSheetProvider calculatedValues={calculatedValues}>
-                                <CostSheetInteractiveTable
-                                    sections={data.sections}
-                                    annexes={data.annexes}
-                                />
-                            </CostSheetProvider>
+                            <CostSheetInteractiveTable
+                                sections={data.sections}
+                                calculatedValues={calculatedValues}
+                                annexes={data.annexes}
+                            />
                             )}
                             {isAnnexActive && (
                               <CostSheetAnnexEditor
