@@ -5,7 +5,7 @@ import { useDropzone } from 'react-dropzone';
 import { db, type BankTransaction } from '@/lib/dexie';
 import { generateHash } from '@/lib/ipv/engine';
 import { Button } from '@/components/ui/button';
-import { FileUp, Download, Info, FileSpreadsheet, FileText, Upload, HelpCircle } from 'lucide-react';
+import { FileUp, Download, Info, FileSpreadsheet, FileText, Upload, HelpCircle, Trash2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
@@ -43,6 +43,29 @@ export function BankIngestion() {
       }
     }
   }, []);
+
+  const resetBankData = async () => {
+    if (confirm('¿ELIMINAR TODAS LAS TRANSACCIONES? Esta acción borrará todo el historial bancario cargado y no se puede deshacer.')) {
+      await db.bank_statements.clear();
+      await db.reconciliation_lines.clear();
+      toast.success('Datos bancarios y conciliaciones eliminados correctamente');
+    }
+  };
+
+  const resetCatalog = async () => {
+    if (confirm('¿ELIMINAR TODO EL CATÁLOGO? Se borrarán todos los productos y configuraciones de matching.')) {
+      await db.products.clear();
+      toast.success('Catálogo de productos vaciado');
+    }
+  };
+
+  const resetAllMatching = async () => {
+    if (confirm('¿REINICIAR TODAS LAS CONCILIACIONES? Se borrarán los resultados de matching pero se mantendrán las transacciones y el catálogo.')) {
+      await db.reconciliation_lines.clear();
+      await db.bank_statements.toCollection().modify({ estado_conciliacion: 'PENDIENTE' });
+      toast.success('Todas las transacciones han vuelto al estado PENDIENTE');
+    }
+  };
 
   const downloadTemplate = (format: 'csv' | 'xlsx') => {
     const headers = ['Fecha', 'Ref_Corriente', 'Ref_Origen', 'Observaciones', 'Importe', 'Tipo'];
@@ -173,9 +196,9 @@ export function BankIngestion() {
         const tx: BankTransaction = {
           id: uuidv4(),
           fecha,
-          referencia_corta: String(row['Ref_Corriente'] || ref_origen),
-          referencia_origen: String(ref_origen),
-          observaciones: String(observaciones),
+          referencia_corta: row['Ref_Corriente'] || ref_origen,
+          referencia_origen: ref_origen,
+          observaciones,
           importe_cents,
           tipo: tipo === 'Cr' ? 'Cr' : 'Db',
           estado_conciliacion: 'PENDIENTE',
@@ -309,6 +332,27 @@ export function BankIngestion() {
                 <Button variant="outline" className="flex-1 neu-btn text-xs" onClick={() => downloadTemplate('xlsx')}>
                     <FileSpreadsheet className="w-3 h-3 mr-2 text-primary" />
                     Excel
+                </Button>
+            </div>
+        </div>
+
+        <div className="p-6 bg-destructive/5 rounded-3xl border border-destructive/20 space-y-4 md:col-span-2">
+            <div className="flex items-center gap-2 text-destructive">
+                <Trash2 className="w-5 h-5" />
+                <h4 className="font-black uppercase text-sm tracking-widest">Zona de Peligro / Mantenimiento</h4>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <Button variant="destructive" className="w-full text-xs font-bold gap-2" onClick={resetBankData}>
+                    <Trash2 className="w-4 h-4" />
+                    Reiniciar Datos Banco
+                </Button>
+                <Button variant="destructive" className="w-full text-xs font-bold gap-2" onClick={resetCatalog}>
+                    <Trash2 className="w-4 h-4" />
+                    Vaciar Catálogo
+                </Button>
+                <Button variant="outline" className="w-full text-xs font-bold gap-2 border-destructive/30 text-destructive hover:bg-destructive/10" onClick={resetAllMatching}>
+                    <RefreshCw className="w-4 h-4" />
+                    Resetear Matching
                 </Button>
             </div>
         </div>

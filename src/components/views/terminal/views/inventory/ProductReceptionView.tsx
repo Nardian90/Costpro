@@ -537,18 +537,18 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
             </div>
 
             {/* Sticky Footer for Actions */}
-            <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-md p-4 pb-8 border-t border-white/5 md:hidden z-50">
+            <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-md p-4 border-t border-white/5 md:hidden">
                  <div className="flex gap-4">
                     <button
                         onClick={onCancel}
-                        className="neu-btn flex-1 py-4 min-h-[44px] font-bold uppercase tracking-wider"
+                        className="neu-btn flex-1 py-4 font-bold uppercase tracking-wider"
                     >
                         Cancelar
                     </button>
                      <button
                         onClick={processReception}
                         disabled={registerReceptionMutation.isPending}
-                        className="neu-btn-primary flex-1 py-4 min-h-[44px] font-bold uppercase tracking-wider flex items-center justify-center gap-2"
+                        className="neu-btn-primary flex-1 py-4 font-bold uppercase tracking-wider flex items-center justify-center gap-2"
                     >
                         <Save className="w-5 h-5" />
                         {registerReceptionMutation.isPending ? 'Guardando...' : 'Confirmar'}
