@@ -53,7 +53,7 @@ export const TaxCalculationModal = ({
     doc.text('Reporte de Cálculo de Impuestos', 14, 20);
     doc.setFontSize(10);
     doc.text(`Fecha de generación: ${new Date().toLocaleString()}`, 14, 28);
-    doc.text(`Usuario: ${user?.full_name || 'Admin'}`, 14, 34);
+    doc.text(`Usuario: ${user?.fullName || 'Admin'}`, 14, 34);
     doc.text(`Facturas seleccionadas: ${selectedTransactions.length}`, 14, 40);
 
     // Summary Table
