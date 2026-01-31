@@ -182,46 +182,6 @@ export const POSCart = ({
                   </div>
                 </div>
 
-                {/* Impuestos Section */}
-                {taxes.length > 0 && (
-                  <div className="px-2 space-y-2">
-                    <label className="text-[9px] font-black uppercase text-muted-foreground tracking-widest block">Impuestos Aplicables</label>
-                    <div className="grid grid-cols-1 gap-2">
-                      {taxes.map(tax => (
-                        <button
-                          key={tax.id}
-                          onClick={() => toggleTax(tax)}
-                          className={cn(
-                            "flex items-center justify-between p-3 rounded-xl border transition-all text-left",
-                            appliedTaxes.some(t => t.id === tax.id)
-                              ? "bg-primary/5 border-primary shadow-sm"
-                              : "bg-background border-border"
-                          )}
-                        >
-                          <div>
-                            <div className={cn(
-                              "text-[10px] font-black uppercase tracking-tight",
-                              appliedTaxes.some(t => t.id === tax.id) ? "text-primary" : "text-foreground"
-                            )}>
-                              {tax.name}
-                            </div>
-                            <div className="text-[9px] font-bold text-muted-foreground uppercase">
-                              {tax.type === 'percentage' ? `${tax.value}%` : formatCurrency(tax.value)}
-                              {tax.min_exempt ? ` (Mín. Exento: ${tax.min_exempt})` : ''}
-                            </div>
-                          </div>
-                          <div className={cn(
-                            "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all",
-                            appliedTaxes.some(t => t.id === tax.id) ? "bg-primary border-primary" : "border-border"
-                          )}>
-                            {appliedTaxes.some(t => t.id === tax.id) && <Check className="w-3 h-3 text-white" />}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
                 {/* Resumen de Totales */}
                 <div className="px-4 py-6 bg-muted/30 rounded-2xl border border-border/50 space-y-3">
                   <div className="flex justify-between items-center text-[10px] font-black uppercase text-muted-foreground tracking-widest">
@@ -236,22 +196,10 @@ export const POSCart = ({
                     </div>
                   )}
 
-                  <div className="flex justify-between items-center pt-2 border-t border-border/50">
-                    <span className="text-[10px] font-black uppercase text-primary tracking-widest">Valor a Cobrar (Base)</span>
-                    <span className="text-sm font-black text-primary">{formatCurrency(Math.max(0, getSubtotal() - getDiscountAmount()))}</span>
-                  </div>
-
-                  {getTaxAmount() > 0 && (
-                    <div className="flex justify-between items-center text-[10px] font-black uppercase text-amber-600 tracking-widest">
-                      <span>Impuestos</span>
-                      <span>+{formatCurrency(getTaxAmount())}</span>
-                    </div>
-                  )}
-
                   <div className="flex justify-between items-center pt-4 border-t-2 border-primary/20">
                     <span className="text-xs font-black uppercase text-foreground tracking-widest">Total Final</span>
                     <span className="text-4xl font-black text-primary tracking-tighter">
-                      {formatCurrency(getTotal())}
+                      {formatCurrency(Math.max(0, getSubtotal() - getDiscountAmount()))}
                     </span>
                   </div>
                 </div>
