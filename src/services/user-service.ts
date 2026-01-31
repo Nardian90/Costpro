@@ -1,5 +1,8 @@
 import { supabase } from '@/lib/supabaseClient';
 import { logger } from '@/lib/logger';
+import { Profile, UserRole } from '@/types';
+import { profileSchema } from '@/validation/schemas';
+import { validateResponse } from '@/lib/rpc-validator';
 
 export const userService = {
   async setActiveStore(userId: string, storeId: string) {
@@ -43,5 +46,75 @@ export const userService = {
       logger.error('DATABASE', 'UPDATE_AI_SETTINGS_FAILED', { userId, error });
       throw error;
     }
+  },
+
+  /**
+   * Obtiene el perfil completo del usuario, resuelve el store activo
+   * y determina los roles efectivos basados en la membresía.
+   */
+  async getUserProfile(userId: string): Promise<Profile | null> {
+    const profileColumns = 'id, full_name, email, role, roles, active_store_id, logo_url, is_active, store_id, created_at, ai_provider, ai_api_key';
+    const storeColumns = 'id, name, address, logo_url, is_active, created_at';
+    const membershipColumns = `id, user_id, store_id, role, status, created_at, updated_at, store:stores(${storeColumns})`;
+
+    let result = await supabase
+      .from('profiles')
+      .select(`${profileColumns}, memberships:user_store_memberships(${membershipColumns})`)
+      .eq('id', userId)
+      .single();
+
+    // Fallback if full column set fails (e.g. migration not fully applied)
+    if (result.error && result.error.code === '42703') {
+      logger.warn('DATABASE', 'GET_USER_PROFILE_COLUMN_MISSING_FALLBACK', { userId });
+      result = await supabase
+        .from('profiles')
+        .select(`id, full_name, email, role, is_active, created_at, memberships:user_store_memberships(${membershipColumns})`)
+        .eq('id', userId)
+        .single();
+    }
+
+    const { data: profileData, error } = result;
+
+    if (error) {
+      logger.error('DATABASE', 'GET_USER_PROFILE_FAILED', { userId, error });
+      return null;
+    }
+
+    if (!profileData || !profileData.is_active) {
+      return null;
+    }
+
+    let effectiveActiveStoreId = profileData.active_store_id || profileData.store_id;
+
+    // AUTO-SELECT STORE si no tiene uno activo
+    if (!effectiveActiveStoreId && profileData.memberships && profileData.memberships.length > 0) {
+      effectiveActiveStoreId = profileData.memberships[0].store_id;
+    }
+
+    let activeRoles: UserRole[] = profileData.roles || [profileData.role];
+    if (effectiveActiveStoreId) {
+      const { data: membershipRows } = await supabase
+        .from('user_store_memberships')
+        .select('role')
+        .eq('user_id', profileData.id)
+        .eq('store_id', effectiveActiveStoreId)
+        .limit(1);
+
+      const membershipData = membershipRows?.[0];
+      if (membershipData?.role) {
+        activeRoles = [membershipData.role as UserRole];
+      } else if (profileData.role === 'admin') {
+        activeRoles = ['admin'];
+      }
+    }
+
+    const userData = {
+      ...profileData,
+      roles: activeRoles,
+      active_store_id: effectiveActiveStoreId,
+      store_id: effectiveActiveStoreId || profileData.store_id,
+    };
+
+    return await validateResponse(userData, profileSchema, 'getUserProfile');
   }
 };
