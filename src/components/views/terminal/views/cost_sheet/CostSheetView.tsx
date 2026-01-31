@@ -11,6 +11,7 @@ import CostSheetSignatureEditor from './CostSheetSignatureEditor';
 import CostSheetPreview from './CostSheetPreview';
 import CostSheetNarrative from './CostSheetNarrative';
 import CostSheetWizard from './CostSheetWizard';
+import CostSheetSummary from './CostSheetSummary';
 import { CostSheetBanner } from './CostSheetBanner';
 import { CostSheetModeSwitcher } from './CostSheetModeSwitcher';
 import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
@@ -128,6 +129,10 @@ const CostSheetView = () => {
         <div className="animate-in fade-in duration-700 space-y-6">
           {viewMode === 'expert' && (
             <>
+                <CostSheetSummary
+                    calculatedValues={calculatedValues}
+                    data={data}
+                />
                 <CostSheetNav
                     sections={[{ id: 'header', label: 'Encabezado' }, { id: 'main', label: 'Tabla Principal' }]}
                     annexes={data.annexes}

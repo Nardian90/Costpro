@@ -4,7 +4,7 @@
 import React, { useState, useMemo } from 'react';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
 import { useCostSheetCalculator } from '@/hooks/logic/useCostSheetCalculator';
-import { ChevronRight, HelpCircle, CornerDownRight } from 'lucide-react';
+import { ChevronRight, HelpCircle, CornerDownRight, AlertTriangle } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -64,9 +64,15 @@ const CostSheetRow: React.FC<RowProps> = ({ row, level, calculatedValues, path, 
     ...allRows.map(r => ({ value: r.id, label: `Fila ${r.id}: ${r.label}` }))
   ], [annexes, allRows]);
 
+  const isResultRow = row.is_percent || ['5', '12', '13', '13.1', '13.2', '14'].includes(row.id);
+  const showWarning = !hasChildren && !row.is_percent && calculated.total === 0 && (row.valorHistorico > 0 || row.baseDeCalculoRef);
+
   return (
     <>
-      <TableRow className="border-t border-border/50 hover:bg-primary/5 transition-colors">
+      <TableRow className={cn(
+        "border-t border-border/50 hover:bg-primary/5 transition-colors",
+        isResultRow && "bg-primary/5 font-bold"
+      )}>
         {/* Concepto */}
         <TableCell style={{ paddingLeft: `${level * 24 + 12}px` }} className="py-2.5 font-medium text-foreground sticky-column-1">
           <div className="flex items-center gap-2 min-w-0">
@@ -145,7 +151,20 @@ const CostSheetRow: React.FC<RowProps> = ({ row, level, calculatedValues, path, 
 
         {/* Total */}
         <TableCell className="px-4 py-2 text-right font-black tabular-nums text-primary">
-          {formatCurrency(calculated.total)}
+          <div className="flex items-center justify-end gap-2">
+            {showWarning && (
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <AlertTriangle className="w-4 h-4 text-amber-500 cursor-help animate-pulse" />
+                    </PopoverTrigger>
+                    <PopoverContent className="w-64">
+                        <p className="text-xs font-bold text-amber-600 mb-1">Advertencia de Cálculo</p>
+                        <p className="text-[10px] text-slate-500">Esta fila tiene un total de 0.00 pero tiene una base de cálculo o valor histórico asignado. Verifique el prorrateo o la fórmula.</p>
+                    </PopoverContent>
+                </Popover>
+            )}
+            {formatCurrency(calculated.total)}
+          </div>
         </TableCell>
 
         {/* Ayuda */}
