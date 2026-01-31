@@ -38,6 +38,31 @@ export function BankIngestion() {
     }
   }, []);
 
+  const downloadTemplate = () => {
+    const headers = ['Fecha', 'Ref_Corriente', 'Ref_Origen', 'Observaciones', 'Importe', 'Tipo'];
+    const sampleRows = [
+      ['01/08/2025', 'HC50000147646', 'HC50000147646', 'CIERRE DE LA CUENTA A NOMBRE DE: Jesús Alejandro Morales', '150,000.00', 'Cr'],
+      ['11/09/2025', 'VB50052672646', 'VB50052672646', 'Ordenante: jesmarkmc S.U.R.L. Acreditando a: 0664642122740113', '2,040.00', 'Db'],
+      ['17/10/2025', 'YY50110793646', 'KW502013PU999', 'TRANSFERENCIA RECIBIDA - BEXI C. CALDERON TAMAYO', '800.00', 'Cr']
+    ];
+
+    const csvContent = [
+      headers.join(','),
+      ...sampleRows.map(row => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'plantilla_banco_ipv.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Plantilla descargada correctamente');
+  };
+
   const processBankData = async (data: any[]) => {
     let imported = 0;
     let skipped = 0;
@@ -158,8 +183,8 @@ export function BankIngestion() {
             <p className="text-sm text-muted-foreground">
                 Descarga una plantilla de ejemplo para asegurarte de que el formato de tus datos es correcto.
             </p>
-            <Button variant="outline" className="w-full neu-btn" disabled>
-                Próximamente
+            <Button variant="outline" className="w-full neu-btn" onClick={downloadTemplate}>
+                Descargar Plantilla CSV
             </Button>
         </div>
       </div>
