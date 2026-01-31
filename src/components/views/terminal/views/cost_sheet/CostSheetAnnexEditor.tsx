@@ -20,7 +20,11 @@ interface CostSheetAnnexEditorProps {
 }
 
 const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = ({ activeAnnexId, layoutMode = 'grid' }) => {
-  const { data, updateValue, addRow, removeRow } = useCostSheetStore();
+  const data = useCostSheetStore(state => state.data);
+  const updateValue = useCostSheetStore(state => state.updateValue);
+  const addRow = useCostSheetStore(state => state.addRow);
+  const removeRow = useCostSheetStore(state => state.removeRow);
+
   const { user } = useAuthStore();
   const [isPickerOpen, setIsPickerOpen] = React.useState(false);
   const [targetRowIndex, setTargetRowIndex] = React.useState<number | null>(null);
@@ -43,11 +47,17 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = ({ activeAnnex
   const displayData = calculatedAnnex ? calculatedAnnex.data : annex.data;
   const annexIndex = data.annexes.indexOf(annex);
 
-  const totalValue = displayData.reduce((acc: number, row: any) => {
-    const totalCol = annex.columns.find((c: CostSheetColumn) => c.key === 'total' || c.key === 'amount' || c.key === 'depreciation_cost');
+  const totalValue = React.useMemo(() => {
+    const totalCol = annex.columns.find((c: CostSheetColumn) =>
+        ['total', 'amount', 'depreciation_cost', 'price_total'].includes(c.key)
+    );
     const key = totalCol?.key;
-    return acc + (key ? (row[key] || 0) : 0);
-  }, 0);
+    if (!key) return 0;
+
+    return displayData.reduce((acc: number, row: any) => {
+        return acc + (Number(row[key]) || 0);
+    }, 0);
+  }, [displayData, annex.columns]);
 
   const handleProductSelect = (product: any) => {
     if (targetRowIndex === null) return;
@@ -87,8 +97,9 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = ({ activeAnnex
               {annex.id === 'I' && (
                 <Button
                     onClick={() => {
+                        const currentLength = data.annexes[annexIndex].data.length;
                         addRow(annex.id);
-                        setTargetRowIndex(data.annexes[annexIndex].data.length);
+                        setTargetRowIndex(currentLength);
                         setIsPickerOpen(true);
                     }}
                     variant="outline"
