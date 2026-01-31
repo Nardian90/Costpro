@@ -45,9 +45,9 @@ export default function HelpView() {
         </div>
         <div className="flex flex-col items-end">
           <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-black">
-            VERSIÓN 5.7.16 (RESPONSIVE RECEPTION)
+            VERSIÓN 5.7.18 (COST SHEET REFACTOR)
           </Badge>
-          <span className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Última actualización: 26 Feb 2026</span>
+          <span className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Última actualización: 27 Feb 2026</span>
         </div>
       </div>
 
@@ -678,12 +678,28 @@ export default function HelpView() {
             </CardHeader>
             <CardContent className="px-0">
               <div className="space-y-8">
-                {/* --- v5.7.16 --- */}
+                {/* --- v5.7.18 --- */}
                 <div className="relative pl-8 border-l-2 border-primary/20 space-y-4">
                   <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary border-4 border-background" />
                   <div className="flex items-center gap-3">
-                    <Badge className="bg-primary">v5.7.16</Badge>
-                    <span className="text-xs font-black text-muted-foreground uppercase">26 de Febrero, 2026 (Actual)</span>
+                    <Badge className="bg-primary">v5.7.18</Badge>
+                    <span className="text-xs font-black text-muted-foreground uppercase">27 de Febrero, 2026 (Actual)</span>
+                  </div>
+                  <div className="bg-muted/30 rounded-2xl p-6 space-y-4 border border-primary/10">
+                    <h4 className="font-black text-sm uppercase text-primary">Refactor de Flujo en Ficha de Costo</h4>
+                    <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Navegación optimizada mediante Dropdown en Tabla Principal.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Inicio en ceros y función de carga de ejemplo realista.</li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* --- v5.7.16 --- */}
+                <div className="relative pl-8 border-l-2 border-primary/20 space-y-4 opacity-90">
+                  <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-muted border-4 border-background" />
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline">v5.7.16</Badge>
+                    <span className="text-xs font-black text-muted-foreground uppercase">26 de Febrero, 2026</span>
                   </div>
                   <div className="bg-muted/30 rounded-2xl p-6 space-y-4 border border-primary/10">
                     <h4 className="font-black text-sm uppercase text-primary">Responsividad en Recepción de Productos</h4>
@@ -822,7 +838,7 @@ export default function HelpView() {
            <button className="px-8 py-3 bg-background border border-border rounded-xl font-black text-xs uppercase tracking-widest hover:bg-primary hover:text-white transition-all">
              Abrir Ticket de Soporte
            </button>
-           <span className="text-[10px] font-bold text-muted-foreground">COSTPRO v5.7.16</span>
+           <span className="text-[10px] font-bold text-muted-foreground">COSTPRO v5.7.18</span>
         </div>
       </div>
     </div>

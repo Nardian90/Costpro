@@ -13,6 +13,7 @@ export interface Action {
   disabled?: boolean;
   active?: boolean;
   className?: string;
+  component?: React.ReactNode;
 }
 
 interface ActionMenuProps {
@@ -51,21 +52,26 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
       <div className="neu-card !p-2 sm:!p-3 !rounded-2xl sm:!rounded-3xl shadow-2xl border-white/10 bg-background/95 backdrop-blur-md relative overflow-hidden">
         <div className="w-full overflow-x-auto no-scrollbar flex flex-row flex-nowrap items-center gap-3 p-1 pr-12 sm:pr-1">
           {actions.map((action) => (
-            <button
-              key={action.id}
-              onClick={action.onClick}
-              disabled={action.disabled}
-              className={cn(
-                'flex items-center gap-2 px-4 py-2.5 text-sm sm:text-base rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shrink-0 whitespace-nowrap',
-                getVariantClass(action.variant, action.active),
-                !action.active && !action.variant && 'hover:neu-raised-sm',
-                action.className
+            <React.Fragment key={action.id}>
+              {action.component ? (
+                  action.component
+              ) : (
+                <button
+                  onClick={action.onClick}
+                  disabled={action.disabled}
+                  className={cn(
+                    'flex items-center gap-2 px-4 py-2.5 text-sm sm:text-base rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shrink-0 whitespace-nowrap',
+                    getVariantClass(action.variant, action.active),
+                    !action.active && !action.variant && 'hover:neu-raised-sm',
+                    action.className
+                  )}
+                  aria-label={action.label}
+                >
+                  {action.icon && <action.icon className="w-4 h-4 sm:w-5 sm:h-5" />}
+                  <span className="font-semibold">{action.label}</span>
+                </button>
               )}
-              aria-label={action.label}
-            >
-              {action.icon && <action.icon className="w-4 h-4 sm:w-5 sm:h-5" />}
-              <span className="font-semibold">{action.label}</span>
-            </button>
+            </React.Fragment>
           ))}
         </div>
 
