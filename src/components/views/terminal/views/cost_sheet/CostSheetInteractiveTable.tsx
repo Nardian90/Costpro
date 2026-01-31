@@ -3,7 +3,7 @@
 
 import React, { useState, useMemo, memo } from 'react';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
-import { useCostSheetCalculator } from '@/hooks/logic/useCostSheetCalculator';
+import { useCostSheetCalculatedValues } from './CostSheetContext';
 import { ChevronRight, HelpCircle, CornerDownRight, AlertTriangle } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -24,7 +24,6 @@ type CalculatedValues = Record<string, CalculatedRowValue>;
 // Props for the main table component
 interface CostSheetInteractiveTableProps {
   sections: CostSheetSection[];
-  calculatedValues: CalculatedValues;
   annexes: CostSheetAnnex[];
 }
 
@@ -32,20 +31,21 @@ interface CostSheetInteractiveTableProps {
 interface RowProps {
   row: RowData;
   level: number;
-  calculated: CalculatedRowValue;
-  calculatedValues: CalculatedValues; // Still need this for children
   path: (string | number)[]; // Path to this row in the Zustand store
   annexes: CostSheetAnnex[];
-  allRows: RowData[];
+  suggestions: { label: string; value: string; description?: string }[];
 }
 
 /**
  * Renders a single, potentially recursive, row in the cost sheet table.
  */
-const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calculatedValues, path, annexes, allRows }) => {
+const CostSheetRow: React.FC<RowProps> = memo(({ row, level, path, annexes, suggestions }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isEditingTotal, setIsEditingTotal] = useState(false);
   const { updateValue } = useCostSheetStore();
+  const calculatedValues = useCostSheetCalculatedValues();
+  const calculated = calculatedValues[row.id];
+
   const hasChildren = row.children && row.children.length > 0;
 
   const handleToggle = () => {
@@ -74,27 +74,23 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
       updateValue([...path, field], num);
       updateValue([...path, 'calculationMethod'], 'ValorFijo');
       updateValue([...path, 'formula'], ''); // Clear formula
+
+      // If it was a percentage row, clear it to ensure the fixed value is respected
+      if (row.is_percent) {
+        updateValue([...path, 'is_percent'], false);
+      }
     } else if (trimmedVal === '') {
         // Reset to 0 if empty
         const field = row.hasOwnProperty('valorHistorico') ? 'valorHistorico' : 'value';
         updateValue([...path, field], 0);
         updateValue([...path, 'calculationMethod'], 'ValorFijo');
         updateValue([...path, 'formula'], '');
+        if (row.is_percent) {
+          updateValue([...path, 'is_percent'], false);
+        }
     }
   };
 
-  const suggestions = useMemo(() => [
-    ...annexes.map(a => ({ label: `Anexo ${a.id}`, value: `Anexo${a.id}`, description: a.title })),
-    ...allRows.map(r => ({ label: `Fila ${r.id}`, value: `ref('${r.id}')`, description: r.label })),
-    { label: 'SUMA', value: 'SUMA(', description: 'Suma de valores' },
-    { label: 'PROMEDIO', value: 'PROMEDIO(', description: 'Promedio de valores' },
-    { label: 'MAX', value: 'MAX(', description: 'Valor máximo' },
-    { label: 'MIN', value: 'MIN(', description: 'Valor mínimo' },
-    { label: 'PCT', value: 'pct(', description: 'Porcentaje: pct(valor, %)' },
-    { label: 'ROUND2', value: 'round2(', description: 'Redondear a 2 decimales' },
-    { label: 'VH', value: 'VH', description: 'Valor Histórico de la fila' },
-    { label: 'BASE_TOTAL', value: 'BASE_TOTAL', description: 'Total de la base de cálculo' },
-  ], [annexes, allRows]);
 
   const isResultRow = row.is_percent || ['5', '12', '13', '13.1', '13.2', '14'].includes(row.id);
   const safeCalculated = calculated || { total: 0, valorHistorico: 0, baseTotal: 0, coeficiente: 0, hasWarnings: false, audits: [] };
@@ -209,11 +205,9 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
           key={child.id}
           row={child}
           level={level + 1}
-          calculated={calculatedValues[child.id]}
-          calculatedValues={calculatedValues}
           path={[...path, 'children', index]}
           annexes={annexes}
-          allRows={allRows}
+          suggestions={suggestions}
         />
       ))}
     </>
@@ -224,7 +218,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
  * The main interactive table component for the Cost Sheet.
  * Decomposed by sections for a more professional and clean enterprise-level experience.
  */
-const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = ({ sections, calculatedValues, annexes }) => {
+const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = ({ sections, annexes }) => {
   const [activeSubSectionId, setActiveSubSectionId] = useState(sections[0]?.id || '');
 
   const flattenRows = (rows: RowData[]): RowData[] => {
@@ -240,24 +234,42 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = ({ s
 
   const allRows = useMemo(() => flattenRows(sections.flatMap(s => s.rows)), [sections]);
 
+  const suggestions = useMemo(() => [
+    ...annexes.map(a => ({ label: `Anexo ${a.id}`, value: `Anexo${a.id}`, description: a.title })),
+    ...allRows.map(r => ({ label: `Fila ${r.id}`, value: `ref('${r.id}')`, description: r.label })),
+    { label: 'SUMA', value: 'SUMA(', description: 'Suma de valores' },
+    { label: 'PROMEDIO', value: 'PROMEDIO(', description: 'Promedio de valores' },
+    { label: 'MAX', value: 'MAX(', description: 'Valor máximo' },
+    { label: 'MIN', value: 'MIN(', description: 'Valor mínimo' },
+    { label: 'PCT', value: 'pct(', description: 'Porcentaje: pct(valor, %)' },
+    { label: 'ROUND2', value: 'round2(', description: 'Redondear a 2 decimales' },
+    { label: 'VH', value: 'VH', description: 'Valor Histórico de la fila' },
+    { label: 'BASE_TOTAL', value: 'BASE_TOTAL', description: 'Total de la base de cálculo' },
+  ], [annexes, allRows]);
+
   return (
     <div data-testid="cost-sheet-interactive-table" className="space-y-6">
         {/* Secondary Navigation for Sections within the Main Table */}
-        <div className="flex flex-wrap gap-2 mb-6 bg-muted/20 p-2 rounded-2xl border border-border/50 overflow-x-auto no-scrollbar">
-            {sections.map(s => (
-                <button
-                    key={s.id}
-                    onClick={() => setActiveSubSectionId(s.id)}
-                    className={cn(
-                        "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shrink-0",
-                        activeSubSectionId === s.id
-                            ? "bg-primary text-white shadow-lg scale-105"
-                            : "bg-background text-muted-foreground hover:bg-muted"
-                    )}
-                >
-                    {s.label}
-                </button>
-            ))}
+        <div className="space-y-2 mb-6">
+            <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground px-1">
+                Secciones de la Ficha
+            </div>
+            <div className="flex flex-wrap gap-2 bg-muted/20 p-2 rounded-2xl border border-border/50 overflow-x-auto no-scrollbar">
+                {sections.map(s => (
+                    <button
+                        key={s.id}
+                        onClick={() => setActiveSubSectionId(s.id)}
+                        className={cn(
+                            "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shrink-0",
+                            activeSubSectionId === s.id
+                                ? "bg-primary text-white shadow-lg scale-105"
+                                : "bg-background text-muted-foreground hover:bg-muted"
+                        )}
+                    >
+                        {s.label}
+                    </button>
+                ))}
+            </div>
         </div>
 
         {sections.map((section, sectionIndex) => (
@@ -286,11 +298,9 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = ({ s
                                         key={row.id}
                                         row={row}
                                         level={0}
-                                        calculated={calculatedValues[row.id]}
-                                        calculatedValues={calculatedValues}
                                         path={['sections', sectionIndex, 'rows', rowIndex]}
                                         annexes={annexes}
-                                        allRows={allRows}
+                                        suggestions={suggestions}
                                     />
                                 ))}
                             </TableBody>
