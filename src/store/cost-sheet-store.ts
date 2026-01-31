@@ -133,6 +133,7 @@ export const useCostSheetStore = create<CostSheetState>()(
     }),
     {
       name: 'cost-sheet-storage', // Name for the localStorage item
+      version: 2, // Versioning to avoid issues with older structures
     }
   )
 );
