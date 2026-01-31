@@ -8,6 +8,7 @@ import {
   CostRow,
   BaseRef,
 } from './types';
+import { translateFormulaFromSpanish } from './formula-utils';
 
 export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
@@ -105,6 +106,11 @@ export function calculateFicha(
 
   parser.functions.sum = (...args: number[]) => {
       return args.reduce((a, b) => a + b, 0);
+  };
+
+  parser.functions.average = (...args: number[]) => {
+      if (args.length === 0) return 0;
+      return args.reduce((a, b) => a + b, 0) / args.length;
   };
 
   const computeRowTotal = (
@@ -210,10 +216,14 @@ export function calculateFicha(
             break;
         }
         try {
-            const formulaStr = (formulaToUse || '0').trim().startsWith('=')
+            const formulaStrRaw = (formulaToUse || '0').trim().startsWith('=')
               ? formulaToUse!.trim().substring(1)
               : formulaToUse;
-            const expr = parser.parse(formulaStr || '0');
+
+            // Translate Spanish functions to English before parsing
+            const formulaStr = translateFormulaFromSpanish(formulaStrRaw || '0');
+
+            const expr = parser.parse(formulaStr);
 
             if (base?.type === 'ANEXO') {
                  const anexo = annexSumMap.get(base.anexoId);
