@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { BankIngestion } from './BankIngestion';
 import { TransactionTable } from './TransactionTable';
+import { CatalogTable } from './CatalogTable';
 import { IPVReportView } from './IPVReportView';
 import { MatchingRulesEditor } from './MatchingRulesEditor';
 import { CashAdjustmentsTable } from './CashAdjustmentsTable';
@@ -135,8 +136,9 @@ export default function IPVView() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-5 w-full max-w-3xl">
+        <TabsList className="grid grid-cols-6 w-full max-w-4xl">
           <TabsTrigger value="transactions">Transacciones</TabsTrigger>
+          <TabsTrigger value="catalog">Catálogo</TabsTrigger>
           <TabsTrigger value="ingestion">Ingesta</TabsTrigger>
           <TabsTrigger value="reports">Reportes IPV</TabsTrigger>
           <TabsTrigger value="adjustments">Ajustes</TabsTrigger>
@@ -146,6 +148,10 @@ export default function IPVView() {
         <Card className="mt-6 p-0 overflow-hidden border-none shadow-xl bg-card/50 backdrop-blur-sm">
           <TabsContent value="transactions" className="m-0">
             <TransactionTable transactions={transactions || []} />
+          </TabsContent>
+
+          <TabsContent value="catalog" className="m-0">
+            <CatalogTable />
           </TabsContent>
 
           <TabsContent value="ingestion" className="m-0 p-6">
