@@ -16,6 +16,7 @@ import { CostSheetBanner } from './CostSheetBanner';
 import { CostSheetModeSwitcher } from './CostSheetModeSwitcher';
 import { CostSheetAuditLog } from './CostSheetAuditLog';
 import { CostSheetActionsPanel } from './CostSheetActionsPanel';
+import { CostSheetSidebarNav } from './CostSheetSidebarNav';
 import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
 import ActionMenu from '@/components/ui/ActionMenu';
 import { Eye, Edit, FileText, Trash2, Download, FileSpreadsheet, Upload, Save, BarChart3, Activity, MoreVertical } from 'lucide-react';
@@ -32,9 +33,19 @@ const CostSheetView = () => {
   const [isEditing, setIsEditing] = useState(true);
   const [viewMode, setViewMode] = useState<'expert' | 'assisted' | 'reading'>('expert');
   const [layoutMode, setLayoutMode] = useState<ViewMode>('grid');
-  const [activeSection, setActiveSection] = useState('header');
-  const [showKpiOnly, setShowKpiOnly] = useState(false);
+  const [activeSection, setActiveSection] = useState('kpis');
+  const [activeSubSectionId, setActiveSubSectionId] = useState('');
+
+  // Auto-select first section when data loads
+  React.useEffect(() => {
+    if (data?.sections?.length > 0 && !activeSubSectionId) {
+        setActiveSubSectionId(data.sections[0].id);
+    }
+  }, [data, activeSubSectionId]);
+
   const [isActionsPanelOpen, setIsActionsPanelOpen] = useState(false);
+  const [isSectionsSidebarOpen, setIsSectionsSidebarOpen] = useState(false);
+  const [isAnnexesSidebarOpen, setIsAnnexesSidebarOpen] = useState(false);
 
   const previewRef = useRef(null);
   const exportRef = useRef(null);
@@ -151,17 +162,8 @@ const CostSheetView = () => {
         icon: isEditing ? Eye : Edit,
         onClick: () => {
             setIsEditing(!isEditing);
-            setShowKpiOnly(false);
         },
         variant: 'primary' as const,
-    },
-    {
-        id: 'toggle-kpi',
-        label: showKpiOnly ? 'Vista Completa' : 'Ver KPIs',
-        icon: BarChart3,
-        onClick: () => setShowKpiOnly(!showKpiOnly),
-        variant: showKpiOnly ? 'success' as const : 'outline' as const,
-        className: "shadow-md scale-105"
     },
     { id: 'load-example', label: 'Ejemplo', icon: FileText, onClick: loadExample, variant: 'outline' as const },
     { id: 'reset', label: 'Reiniciar', icon: Trash2, onClick: reset, variant: 'danger' as const },
@@ -172,7 +174,7 @@ const CostSheetView = () => {
   ];
 
   const mainActions = [
-    ...allActions.filter(a => ['toggle-mode', 'toggle-kpi'].includes(a.id)),
+    ...allActions.filter(a => ['toggle-mode'].includes(a.id)),
     {
         id: 'more-actions',
         label: 'Más Acciones',
@@ -182,7 +184,7 @@ const CostSheetView = () => {
     }
   ];
 
-  const secondaryActions = allActions.filter(a => !['toggle-mode', 'toggle-kpi'].includes(a.id));
+  const secondaryActions = allActions.filter(a => !['toggle-mode'].includes(a.id));
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-32 pt-4">
@@ -194,6 +196,26 @@ const CostSheetView = () => {
         setViewMode={setViewMode}
         layoutMode={layoutMode}
         setLayoutMode={setLayoutMode}
+      />
+
+      <CostSheetSidebarNav
+        isOpen={isSectionsSidebarOpen}
+        onClose={() => setIsSectionsSidebarOpen(false)}
+        title="Secciones de la Ficha"
+        type="sections"
+        items={data.sections}
+        activeId={activeSubSectionId}
+        onSelect={setActiveSubSectionId}
+      />
+
+      <CostSheetSidebarNav
+        isOpen={isAnnexesSidebarOpen}
+        onClose={() => setIsAnnexesSidebarOpen(false)}
+        title="Anexos Disponibles"
+        type="annexes"
+        items={data.annexes}
+        activeId={activeSection}
+        onSelect={setActiveSection}
       />
 
       <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', width: '1024px', opacity: 0, pointerEvents: 'none' }}>
@@ -215,65 +237,60 @@ const CostSheetView = () => {
         <div className="animate-in fade-in duration-700 space-y-6">
           {viewMode === 'expert' && (
             <>
-                {showKpiOnly ? (
-                    <div className="animate-in zoom-in-95 duration-500 py-8">
-                         <CostSheetSummary
-                            calculatedValues={calculatedValues}
-                            data={data}
-                        />
-                        <div className="flex justify-center mt-12">
-                            <Button
-                                variant="outline"
-                                className="rounded-full px-8 border-primary/20 hover:bg-primary/5"
-                                onClick={() => setShowKpiOnly(false)}
-                            >
-                                <Eye className="w-4 h-4 mr-2" />
-                                Volver a la Vista Detallada
-                            </Button>
-                        </div>
-                    </div>
-                ) : (
-                    <>
-                        {activeSection === 'header' && (
+                <CostSheetNav
+                    sections={[
+                        { id: 'kpis', label: 'KPIs', icon: BarChart3 },
+                        { id: 'header', label: 'Encabezado' },
+                        { id: 'main', label: 'Tabla Principal' },
+                        { id: 'audit', label: 'Auditoría', icon: Activity }
+                    ]}
+                    annexes={data.annexes}
+                    activeSection={activeSection}
+                    setActiveSection={setActiveSection}
+                    onOpenAnnexes={() => setIsAnnexesSidebarOpen(true)}
+                />
+
+                <div className="mt-4">
+                    {activeSection === 'kpis' && (
+                         <div className="animate-in zoom-in-95 duration-500 py-8">
                             <CostSheetSummary
                                 calculatedValues={calculatedValues}
                                 data={data}
                             />
-                        )}
-                        <CostSheetNav
-                            sections={[
-                                { id: 'header', label: 'Encabezado' },
-                                { id: 'main', label: 'Tabla Principal' },
-                                { id: 'audit', label: 'Auditoría', icon: Activity }
-                            ]}
-                            annexes={data.annexes}
-                            activeSection={activeSection}
-                            setActiveSection={setActiveSection}
-                        />
-                        <div className="mt-4">
-                            {activeSection === 'header' && <CostSheetHeaderEditor />}
-                            {activeSection === 'main' && (
-                            <CostSheetInteractiveTable
-                                sections={data.sections}
-                                calculatedValues={calculatedValues}
-                                annexes={data.annexes}
-                            />
-                            )}
-                            {isAnnexActive && (
-                              <CostSheetAnnexEditor
-                                activeAnnexId={activeSection}
-                                layoutMode={layoutMode}
-                              />
-                            )}
-                            {activeSection === 'signature' && <CostSheetSignatureEditor />}
-                            {activeSection === 'audit' && (
-                                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                    <CostSheetAuditLog audits={audits} />
-                                </div>
-                            )}
                         </div>
-                    </>
-                )}
+                    )}
+                    {activeSection === 'header' && (
+                        <div className="space-y-6">
+                            <CostSheetSummary
+                                calculatedValues={calculatedValues}
+                                data={data}
+                            />
+                            <CostSheetHeaderEditor />
+                        </div>
+                    )}
+                    {activeSection === 'main' && (
+                        <CostSheetInteractiveTable
+                            sections={data.sections}
+                            calculatedValues={calculatedValues}
+                            annexes={data.annexes}
+                            activeSubSectionId={activeSubSectionId}
+                            setActiveSubSectionId={setActiveSubSectionId}
+                            onOpenSections={() => setIsSectionsSidebarOpen(true)}
+                        />
+                    )}
+                    {isAnnexActive && (
+                        <CostSheetAnnexEditor
+                            activeAnnexId={activeSection}
+                            layoutMode={layoutMode}
+                        />
+                    )}
+                    {activeSection === 'signature' && <CostSheetSignatureEditor />}
+                    {activeSection === 'audit' && (
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <CostSheetAuditLog audits={audits} />
+                        </div>
+                    )}
+                </div>
             </>
           )}
 
