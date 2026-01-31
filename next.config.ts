@@ -41,6 +41,7 @@ const nextConfig: NextConfig = {
             value: [
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live https://vercel.com https://storage.googleapis.com",
+              "worker-src 'self' blob:",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' blob: data: https://wthkddeleylijmonclxg.supabase.co https://vercel.com https://vercel.live",
               "font-src 'self' data: https://fonts.gstatic.com",
