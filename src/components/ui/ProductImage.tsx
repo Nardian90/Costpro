@@ -51,12 +51,12 @@ export default function ProductImage({
 
   const backgroundColor = useMemo(() => {
     const colors = [
-      'bg-blue-500/10',
+      'bg-green-600/10',
       'bg-green-500/10',
       'bg-purple-500/10',
       'bg-orange-500/10',
       'bg-pink-500/10',
-      'bg-indigo-500/10',
+      'bg-green-600/10',
       'bg-teal-500/10',
       'bg-cyan-500/10',
     ];

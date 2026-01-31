@@ -46,7 +46,7 @@ export default function CashFlowDiagram() {
         </motion.g>
 
         <motion.g variants={item} transform="translate(300, 200)">
-          <circle r="60" className="fill-blue-500" />
+          <circle r="60" className="fill-emerald-600" />
           <text textAnchor="middle" y="5" className="fill-white font-black text-[10px] uppercase">Ventas</text>
           <text textAnchor="middle" y="80" className="fill-muted-foreground font-bold text-[8px] uppercase">Registro de Cobros</text>
         </motion.g>

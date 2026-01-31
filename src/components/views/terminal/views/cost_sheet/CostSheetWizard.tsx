@@ -86,7 +86,7 @@ const CostSheetWizard: React.FC<CostSheetWizardProps> = ({ data, calculatedValue
         {['I', 'II', 'III', 'IV', 'V'].includes(step.id) && <CostSheetAnnexEditor activeAnnexId={step.id} />}
         {step.id === 'main' && (
            <div className="space-y-4">
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl text-blue-700 dark:text-blue-300 text-sm flex gap-3">
+              <div className="p-4 bg-green-50 dark:bg-green-950/20 border border-green-100 dark:border-green-800 rounded-xl text-green-800 dark:text-green-300 text-sm flex gap-3">
                  <CheckCircle2 className="w-5 h-5 shrink-0" />
                  <p>En este paso puede revisar los cálculos automáticos y ajustar valores históricos o métodos de prorrateo para los gastos indirectos.</p>
               </div>

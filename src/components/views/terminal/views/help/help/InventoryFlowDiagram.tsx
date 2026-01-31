@@ -47,9 +47,9 @@ export default function InventoryFlowDiagram() {
           animate={{ x: 0, opacity: 1 }}
           transition={{ delay: 1, duration: 1 }}
         >
-          <rect x="630" y="150" width="120" height="60" rx="10" className="fill-blue-500/10 stroke-blue-500" strokeWidth="2" />
-          <text x="690" y="185" textAnchor="middle" className="fill-blue-600 font-bold text-[10px] uppercase">Venta / Salida</text>
-          <path d="M510 180 L620 180" stroke="#3b82f6" strokeWidth="2" markerEnd="url(#arrow-blue)" strokeDasharray="4,2" />
+          <rect x="630" y="150" width="120" height="60" rx="10" className="fill-emerald-600/10 stroke-emerald-600" strokeWidth="2" />
+          <text x="690" y="185" textAnchor="middle" className="fill-emerald-700 font-bold text-[10px] uppercase">Venta / Salida</text>
+          <path d="M510 180 L620 180" stroke="#059669" strokeWidth="2" markerEnd="url(#arrow-green)" strokeDasharray="4,2" />
         </motion.g>
 
         {/* Adjustments */}
@@ -67,8 +67,8 @@ export default function InventoryFlowDiagram() {
           <marker id="arrow-emerald" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
             <polygon points="0 0, 10 3.5, 0 7" fill="#10b981" />
           </marker>
-          <marker id="arrow-blue" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
-            <polygon points="0 0, 10 3.5, 0 7" fill="#3b82f6" />
+          <marker id="arrow-green" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#16a34a" />
           </marker>
           <marker id="arrow-amber" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
             <polygon points="0 0, 10 3.5, 0 7" fill="#f59e0b" />

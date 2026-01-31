@@ -27,8 +27,8 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({ calculatedValu
       label: 'Costo Directo',
       value: directCost,
       icon: DollarSign,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
+      color: 'text-green-700',
+      bgColor: 'bg-green-50',
       description: 'Materiales, Salario y Otros Directos'
     },
     {

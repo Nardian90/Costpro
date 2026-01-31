@@ -40,7 +40,7 @@ export default function OfflineSyncDiagram() {
 
         {/* Nodes */}
         <motion.g variants={item} transform="translate(100, 200)">
-          <rect x="-60" y="-60" width="120" height="120" rx="20" className="fill-blue-500" />
+          <rect x="-60" y="-60" width="120" height="120" rx="20" className="fill-emerald-600" />
           <text textAnchor="middle" y="5" className="fill-white font-black text-[10px] uppercase">Operación</text>
           <text textAnchor="middle" y="80" className="fill-muted-foreground font-bold text-[8px] uppercase">Venta / Compra</text>
         </motion.g>
