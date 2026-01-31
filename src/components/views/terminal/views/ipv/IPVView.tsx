@@ -31,7 +31,7 @@ export default function IPVView() {
   const products = useLiveQuery(() => db.products.toArray());
 
   const stats = useMemo(() => {
-    if (!transactions) return { total: 0, completed: 0, pending: 0 };
+    if (!transactions) return { total: 0, completed: 0, pending: 0, partial: 0 };
     return {
       total: transactions.length,
       completed: transactions.filter(t => t.estado_conciliacion === 'COMPLETO').length,
