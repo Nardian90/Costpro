@@ -121,7 +121,6 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
 
         {/* Valor Histórico / % */}
         <TableCell className="px-4 py-2 text-right w-40">
-          {(row.hasOwnProperty('valorHistorico') || row.hasOwnProperty('value')) ? (
             <div className="relative">
                 <Input
                 type="number"
@@ -143,7 +142,6 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
                 />
                 {row.is_percent && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">%</span>}
             </div>
-          ) : <span className="text-sm text-slate-400 italic">Auto</span>}
         </TableCell>
 
         {/* Total */}
