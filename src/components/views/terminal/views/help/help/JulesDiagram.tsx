@@ -21,6 +21,9 @@ export default function JulesDiagram() {
   return (
     <div className="w-full aspect-video bg-muted/30 rounded-3xl border border-primary/10 flex items-center justify-center p-4">
       <motion.svg
+        width="100%"
+        height="100%"
+        preserveAspectRatio="xMidYMid meet"
         viewBox="0 0 800 400"
         className="w-full h-full max-w-3xl"
         variants={container}
@@ -40,30 +43,40 @@ export default function JulesDiagram() {
         />
 
         {/* Nodes around the core */}
-        <motion.g variants={item} transform="translate(400, 100)">
-          <circle r="40" className="fill-emerald-600" />
-          <text textAnchor="middle" y="5" className="fill-white font-black text-[8px] uppercase">Pregunta</text>
-        </motion.g>
+        <g transform="translate(400, 100)">
+          <motion.g variants={item}>
+            <circle r="40" className="fill-emerald-600" />
+            <text textAnchor="middle" y="5" className="fill-white font-black text-[8px] uppercase">Pregunta</text>
+          </motion.g>
+        </g>
 
-        <motion.g variants={item} transform="translate(600, 200)">
-          <circle r="40" className="fill-emerald-500" />
-          <text textAnchor="middle" y="5" className="fill-white font-black text-[8px] uppercase">Contexto</text>
-        </motion.g>
+        <g transform="translate(600, 200)">
+          <motion.g variants={item}>
+            <circle r="40" className="fill-emerald-500" />
+            <text textAnchor="middle" y="5" className="fill-white font-black text-[8px] uppercase">Contexto</text>
+          </motion.g>
+        </g>
 
-        <motion.g variants={item} transform="translate(400, 300)">
-          <circle r="40" className="fill-amber-500" />
-          <text textAnchor="middle" y="5" className="fill-white font-black text-[8px] uppercase">Respuesta</text>
-        </motion.g>
+        <g transform="translate(400, 300)">
+          <motion.g variants={item}>
+            <circle r="40" className="fill-amber-500" />
+            <text textAnchor="middle" y="5" className="fill-white font-black text-[8px] uppercase">Respuesta</text>
+          </motion.g>
+        </g>
 
-        <motion.g variants={item} transform="translate(200, 200)">
-          <circle r="40" className="fill-violet-500" />
-          <text textAnchor="middle" y="5" className="fill-white font-black text-[8px] uppercase">Modelos</text>
-        </motion.g>
+        <g transform="translate(200, 200)">
+          <motion.g variants={item}>
+            <circle r="40" className="fill-violet-500" />
+            <text textAnchor="middle" y="5" className="fill-white font-black text-[8px] uppercase">Modelos</text>
+          </motion.g>
+        </g>
 
         {/* Jules Center */}
-        <motion.g transform="translate(400, 200)" variants={item}>
-          <text textAnchor="middle" y="8" className="fill-primary font-black text-xl uppercase tracking-widest">JULES</text>
-        </motion.g>
+        <g transform="translate(400, 200)">
+          <motion.g variants={item}>
+            <text textAnchor="middle" y="8" className="fill-primary font-black text-xl uppercase tracking-widest">JULES</text>
+          </motion.g>
+        </g>
 
         {/* Lines connecting to center */}
         {[0, 90, 180, 270].map((angle, i) => (

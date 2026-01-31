@@ -5,16 +5,10 @@ import { useDropzone } from 'react-dropzone';
 import { db, type BankTransaction } from '@/lib/dexie';
 import { generateHash } from '@/lib/ipv/engine';
 import { Button } from '@/components/ui/button';
-import { FileUp, Download, Info, FileSpreadsheet, FileText, Upload } from 'lucide-react';
+import { FileUp, Download, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { v4 as uuidv4 } from 'uuid';
 
 export function BankIngestion() {
@@ -44,110 +38,29 @@ export function BankIngestion() {
     }
   }, []);
 
-  const downloadTemplate = (format: 'csv' | 'xlsx') => {
+  const downloadTemplate = () => {
     const headers = ['Fecha', 'Ref_Corriente', 'Ref_Origen', 'Observaciones', 'Importe', 'Tipo'];
-    const sampleData = [
-      { Fecha: '01/08/2025', Ref_Corriente: 'HC50000147646', Ref_Origen: 'HC50000147646', Observaciones: 'CIERRE DE LA CUENTA A NOMBRE DE: Jesús Alejandro Morales', Importe: '150,000.00', Tipo: 'Cr' },
-      { Fecha: '11/09/2025', Ref_Corriente: 'VB50052672646', Ref_Origen: 'VB50052672646', Observaciones: 'Ordenante: jesmarkmc S.U.R.L. Acreditando a: 0664642122740113', Importe: '2,040.00', Tipo: 'Db' },
-      { Fecha: '17/10/2025', Ref_Corriente: 'YY50110793646', Ref_Origen: 'KW502013PU999', Observaciones: 'TRANSFERENCIA RECIBIDA - BEXI C. CALDERON TAMAYO', Importe: '800.00', Tipo: 'Cr' }
+    const sampleRows = [
+      ['01/08/2025', 'HC50000147646', 'HC50000147646', 'CIERRE DE LA CUENTA A NOMBRE DE: Jesús Alejandro Morales', '150,000.00', 'Cr'],
+      ['11/09/2025', 'VB50052672646', 'VB50052672646', 'Ordenante: jesmarkmc S.U.R.L. Acreditando a: 0664642122740113', '2,040.00', 'Db'],
+      ['17/10/2025', 'YY50110793646', 'KW502013PU999', 'TRANSFERENCIA RECIBIDA - BEXI C. CALDERON TAMAYO', '800.00', 'Cr']
     ];
 
-    if (format === 'csv') {
-      const csv = Papa.unparse({ fields: headers, data: sampleData });
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'plantilla_banco_ipv.csv';
-      link.click();
-      URL.revokeObjectURL(url);
-    } else {
-      const ws = XLSX.utils.json_to_sheet(sampleData, { header: headers });
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Template');
-      XLSX.writeFile(wb, 'plantilla_banco_ipv.xlsx');
-    }
-    toast.success(`Plantilla ${format.toUpperCase()} descargada`);
-  };
+    const csvContent = [
+      headers.join(','),
+      ...sampleRows.map(row => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(','))
+    ].join('\n');
 
-  const exportCatalog = async (format: 'csv' | 'xlsx') => {
-    const products = await db.products.toArray();
-    if (products.length === 0) {
-        toast.error('No hay productos para exportar');
-        return;
-    }
-
-    // Limpiar metadatos de Dexie para la exportación
-    const data = products.map(({ created_at, updated_at, ...p }) => p);
-
-    if (format === 'csv') {
-        const csv = Papa.unparse(data);
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'catalogo_productos_ipv.csv';
-        link.click();
-        URL.revokeObjectURL(url);
-    } else {
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Productos');
-        XLSX.writeFile(wb, 'catalogo_productos_ipv.xlsx');
-    }
-    toast.success(`Catálogo ${format.toUpperCase()} exportado`);
-  };
-
-  const handleImportCatalog = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const extension = file.name.split('.').pop()?.toLowerCase();
-
-    if (extension === 'csv') {
-      Papa.parse(file, {
-        header: true,
-        skipEmptyLines: true,
-        complete: async (results) => {
-          await processCatalogData(results.data);
-        }
-      });
-    } else if (extension === 'xlsx' || extension === 'xls') {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(firstSheet);
-        await processCatalogData(jsonData);
-      };
-      reader.readAsArrayBuffer(file);
-    }
-
-    // Reset input
-    e.target.value = '';
-  };
-
-  const processCatalogData = async (data: any[]) => {
-    try {
-        const productsToImport = data.map(row => ({
-            cod: String(row.cod),
-            descripcion: String(row.descripcion),
-            um: String(row.um),
-            precio_cents: Math.round(Number(row.precio_cents || 0)),
-            prioridad_algoritmo: Number(row.prioridad_algoritmo || 1),
-            activo: row.activo === true || String(row.activo).toLowerCase() === 'true' || row.activo === 1,
-            es_paquete: row.es_paquete === true || String(row.es_paquete).toLowerCase() === 'true' || row.es_paquete === 1,
-            contenido_paquete: Number(row.contenido_paquete || 1),
-            created_at: new Date().toISOString()
-        }));
-
-        await db.products.bulkPut(productsToImport);
-        toast.success(`${productsToImport.length} productos importados al catálogo`);
-    } catch (error) {
-        console.error('Error importing catalog:', error);
-        toast.error('Error al importar el catálogo. Verifica el formato.');
-    }
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'plantilla_banco_ipv.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Plantilla descargada correctamente');
   };
 
   const processBankData = async (data: any[]) => {
@@ -255,41 +168,11 @@ export function BankIngestion() {
                 <h4 className="font-black uppercase text-sm tracking-widest">Configuración Inicial</h4>
             </div>
             <p className="text-sm text-muted-foreground">
-                Administra tu catálogo de productos para el matching.
+                Carga el catálogo de productos predeterminado para comenzar a realizar el matching de transacciones.
             </p>
-
-            <div className="grid grid-cols-2 gap-3">
-                <Button variant="outline" className="neu-btn text-xs" onClick={importDefaultProducts}>
-                    Productos Demo
-                </Button>
-
-                <label className="cursor-pointer">
-                    <div className="flex items-center justify-center h-full px-4 py-2 border border-input bg-background rounded-xl hover:bg-accent hover:text-accent-foreground text-xs font-medium transition-colors">
-                        <Upload className="w-3 h-3 mr-2" />
-                        Importar Catálogo
-                    </div>
-                    <input type="file" className="hidden" accept=".csv,.xlsx,.xls" onChange={handleImportCatalog} />
-                </label>
-
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="neu-btn w-full text-xs">
-                            <Download className="w-3 h-3 mr-2" />
-                            Exportar Catálogo
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="rounded-xl border-primary/20">
-                        <DropdownMenuItem onClick={() => exportCatalog('csv')} className="cursor-pointer gap-2">
-                            <FileText className="w-4 h-4 text-primary" />
-                            <span>Exportar como CSV</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => exportCatalog('xlsx')} className="cursor-pointer gap-2">
-                            <FileSpreadsheet className="w-4 h-4 text-primary" />
-                            <span>Exportar como Excel</span>
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </div>
+            <Button variant="outline" className="w-full neu-btn" onClick={importDefaultProducts}>
+                Cargar Productos Demo
+            </Button>
         </div>
 
         <div className="p-6 bg-card/50 rounded-3xl border border-border/50 space-y-4">
@@ -298,19 +181,11 @@ export function BankIngestion() {
                 <h4 className="font-black uppercase text-sm tracking-widest">Plantilla</h4>
             </div>
             <p className="text-sm text-muted-foreground">
-                Descarga una plantilla de ejemplo para el extracto bancario.
+                Descarga una plantilla de ejemplo para asegurarte de que el formato de tus datos es correcto.
             </p>
-
-            <div className="flex gap-3">
-                <Button variant="outline" className="flex-1 neu-btn text-xs" onClick={() => downloadTemplate('csv')}>
-                    <FileText className="w-3 h-3 mr-2 text-primary" />
-                    CSV
-                </Button>
-                <Button variant="outline" className="flex-1 neu-btn text-xs" onClick={() => downloadTemplate('xlsx')}>
-                    <FileSpreadsheet className="w-3 h-3 mr-2 text-primary" />
-                    Excel
-                </Button>
-            </div>
+            <Button variant="outline" className="w-full neu-btn" onClick={downloadTemplate}>
+                Descargar Plantilla CSV
+            </Button>
         </div>
       </div>
     </div>

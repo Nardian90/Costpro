@@ -16,8 +16,11 @@ export default function SecurityFlowDiagram() {
   return (
     <div className="w-full aspect-video bg-muted/30 rounded-3xl border border-primary/10 flex items-center justify-center p-4">
       <motion.svg
+        width="100%"
+        height="100%"
+        preserveAspectRatio="xMidYMid meet"
         viewBox="0 0 800 400"
-        className="w-full h-full max-w-3xl"
+        className="w-full h-full"
         variants={container}
         initial="hidden"
         animate="show"
@@ -33,20 +36,26 @@ export default function SecurityFlowDiagram() {
         />
 
         {/* Steps */}
-        <motion.g transform="translate(400, 100)" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
-          <rect x="-120" y="-30" width="240" height="60" rx="10" className="fill-background stroke-primary/40" strokeWidth="2" />
-          <text textAnchor="middle" y="5" className="fill-foreground font-black text-[10px] uppercase">1. Verificación de Rol</text>
-        </motion.g>
+        <g transform="translate(400, 100)">
+          <motion.g initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+            <rect x="-120" y="-30" width="240" height="60" rx="10" className="fill-background stroke-primary/40" strokeWidth="2" />
+            <text textAnchor="middle" y="5" className="fill-foreground font-black text-[10px] uppercase">1. Verificación de Rol</text>
+          </motion.g>
+        </g>
 
-        <motion.g transform="translate(400, 200)" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1 }}>
-          <rect x="-120" y="-30" width="240" height="60" rx="10" className="fill-background stroke-primary/40" strokeWidth="2" />
-          <text textAnchor="middle" y="5" className="fill-foreground font-black text-[10px] uppercase">2. Aislamiento de Tienda</text>
-        </motion.g>
+        <g transform="translate(400, 200)">
+          <motion.g initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1 }}>
+            <rect x="-120" y="-30" width="240" height="60" rx="10" className="fill-background stroke-primary/40" strokeWidth="2" />
+            <text textAnchor="middle" y="5" className="fill-foreground font-black text-[10px] uppercase">2. Aislamiento de Tienda</text>
+          </motion.g>
+        </g>
 
-        <motion.g transform="translate(400, 300)" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.5 }}>
-          <rect x="-120" y="-30" width="240" height="60" rx="10" className="fill-primary" />
-          <text textAnchor="middle" y="5" className="fill-white font-black text-[10px] uppercase">3. Registro de Auditoría</text>
-        </motion.g>
+        <g transform="translate(400, 300)">
+          <motion.g initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.5 }}>
+            <rect x="-120" y="-30" width="240" height="60" rx="10" className="fill-primary" />
+            <text textAnchor="middle" y="5" className="fill-white font-black text-[10px] uppercase">3. Registro de Auditoría</text>
+          </motion.g>
+        </g>
 
         {/* Scan line effect */}
         <motion.line

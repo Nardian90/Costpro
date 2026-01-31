@@ -26,8 +26,11 @@ export default function CostFlowDiagram() {
   return (
     <div className="w-full aspect-[16/9] md:aspect-video bg-muted/30 rounded-3xl border border-primary/10 flex items-center justify-center p-4 overflow-hidden">
       <motion.svg
+        width="100%"
+        height="100%"
+        preserveAspectRatio="xMidYMid meet"
         viewBox="0 0 800 450"
-        className="w-full h-full max-w-4xl"
+        className="w-full h-full"
         variants={container}
         initial="hidden"
         animate="show"

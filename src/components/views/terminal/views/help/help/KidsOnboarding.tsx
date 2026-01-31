@@ -98,7 +98,10 @@ export default function KidsOnboarding() {
 
 function RolesStoryDiagram() {
   return (
-    <motion.svg viewBox="0 0 400 250" className="w-full h-full p-4">
+    <motion.svg
+        width="100%"
+        height="100%"
+        preserveAspectRatio="xMidYMid meet" viewBox="0 0 400 250" className="w-full h-full p-4">
       {/* Juan (Admin) */}
       <motion.g
         initial={{ opacity: 0, scale: 0.5 }}
@@ -149,7 +152,10 @@ function RolesStoryDiagram() {
 function ContextIsolationDiagram() {
   return (
     <div className="w-full aspect-[21/9] bg-muted/20 rounded-3xl border border-primary/10 overflow-hidden">
-      <motion.svg viewBox="0 0 800 300" className="w-full h-full p-8">
+      <motion.svg
+        width="100%"
+        height="100%"
+        preserveAspectRatio="xMidYMid meet" viewBox="0 0 800 300" className="w-full h-full p-8">
         {/* Store A Context */}
         <motion.g initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
            <rect x="50" y="20" width="300" height="260" rx="30" className="fill-primary/5 stroke-primary/20" strokeWidth="2" />

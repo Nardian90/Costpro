@@ -16,8 +16,11 @@ export default function SalesFlowDiagram() {
   return (
     <div className="w-full aspect-video bg-muted/30 rounded-3xl border border-primary/10 flex items-center justify-center p-4">
       <motion.svg
+        width="100%"
+        height="100%"
+        preserveAspectRatio="xMidYMid meet"
         viewBox="0 0 800 300"
-        className="w-full h-full max-w-3xl"
+        className="w-full h-full"
         variants={container}
         initial="hidden"
         animate="show"
