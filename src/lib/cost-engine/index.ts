@@ -66,6 +66,12 @@ export function calculateFicha(
     rowsByClass.set(row.classification, list);
   });
 
+  const annexTotals = new Map<string, number>();
+  annexSumMap.forEach((classMap, anexoId) => {
+    const total = Array.from(classMap.values()).reduce((acc, val) => acc.plus(val), new Decimal(0)).toNumber();
+    annexTotals.set(anexoId, total);
+  });
+
   // 2. Initialize calculated rows
   const calculatedRows = new Map<string, CalculatedRow>();
   ficha.rows.forEach((row) => {
@@ -204,7 +210,10 @@ export function calculateFicha(
             break;
         }
         try {
-            const expr = parser.parse(formulaToUse || '0');
+            const formulaStr = (formulaToUse || '0').trim().startsWith('=')
+              ? formulaToUse!.trim().substring(1)
+              : formulaToUse;
+            const expr = parser.parse(formulaStr || '0');
 
             if (base?.type === 'ANEXO') {
                  const anexo = annexSumMap.get(base.anexoId);
@@ -217,11 +226,20 @@ export function calculateFicha(
                 });
             }
 
-            const result = expr.evaluate({
+            const context: any = {
                 VH: vh.toNumber(),
                 BASE_TOTAL: baseTotalValue.toNumber(),
                 COEF: row.coeficiente || 0
+            };
+
+            // Add annex totals to context (e.g., AnexoI, AnexoII)
+            annexTotals.forEach((total, id) => {
+                context[id] = total;
+                // Also support AnexoI, AnexoII style for clarity
+                context[`Anexo${id}`] = total;
             });
+
+            const result = expr.evaluate(context);
             total = new Decimal(result);
             note += `Evaluated: ${formulaToUse}.`;
         } catch (e: any) {
