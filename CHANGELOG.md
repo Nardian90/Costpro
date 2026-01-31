@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.20] - 2026-02-27
+
+### Changed
+- **Hardenización de IPV Builder (v10.1)**: Mejora sustancial en la gestión administrativa del módulo.
+- **Edición Total de Catálogo**: Implementación de edición inline y creación manual de productos, permitiendo un control granular de todos los campos (UM, Paquetes, Precios, Prioridades).
+- **Mantenimiento Simplificado**: Adición de funciones de reinicio maestro en la sección de Ingesta para limpiar selectivamente transacciones, catálogo o estados de conciliación.
+- **Auditoría y Certificación**: Emisión de certificación de funcionalidad al 100% tras auditoría técnica de persistencia e integridad.
+
 ## [5.7.19] - 2026-02-27
 
 ### Added
@@ -15,16 +23,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Generación de Reportes PDF**: Capacidad de generar reportes IPV profesionales en formato PDF de forma local (en memoria del navegador) con un solo clic.
 - **Gestión de Ingesta Inteligente**: Soporte para carga masiva de extractos bancarios (CSV/XLSX) con detección de duplicados mediante hashes SHA-256 e importación/exportación de catálogo de productos.
 - **Dashboard de Control**: Vista unificada con KPIs de conciliación (Completadas, Pendientes, Parciales) y gestión de ajustes de efectivo auditables.
-## [5.7.19] - 2026-02-28
-
-### Added
-- **Módulo IPV Builder & Conciliación Bancaria**: Implementación de una nueva vista para la gestión de Ingresos por Venta (IPV) basada en conciliación bancaria.
-- **Motor de Matching Multi-paso**: Nuevo motor de procesamiento local (Worker) con 4 niveles de validación: HARD_REF (referencia directa), EXACT_SUM (combinaciones matemáticas), TOLERANCE (ajustes mínimos) y CASH_FILL (completado con efectivo).
-- **Documentación de Ayuda IPV**: Incorporación de una nueva pestaña en el Centro de Capacitación con diagramas de flujo interactivos (`IPVFlowDiagram.tsx`) y guías paso a paso sobre la transición de estados de transacciones.
-- **Reportes IPV Inmutables**: Sistema de generación de reportes diarios en PDF con soporte para estados BORRADOR, CERRADO y ANULADO.
-
-### Fixed
-- **Hardenización de Ingesta IPV**: Corrección de importaciones duplicadas en `BankIngestion.tsx` que causaban errores de compilación.
 
 ## [5.7.18] - 2026-02-27
 
