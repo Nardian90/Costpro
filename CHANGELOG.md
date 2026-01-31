@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.19] - 2026-02-27
+
+### Changed
+- **Optimización de Ergonomía Mobile (Thumb Zone 2.0)**: Refactorización crítica de `POSCart.tsx` para implementar un footer persistente en dispositivos móviles. El resumen de totales y el botón "Finalizar Venta" ahora están anclados en la base del Drawer, eliminando la necesidad de scroll para completar transacciones.
+- **Micro-interacciones en TPV**: Incorporación de `framer-motion` `AnimatePresence` para proporcionar feedback visual fluido al añadir o eliminar productos del carrito.
+- **Accesibilidad en Inventario**: El `ActionMenu` de la gestión de inventario se ha movido a la parte inferior en móviles, facilitando la operación con una sola mano.
+- **Hardening de Touch Targets**: Revisión y ajuste de áreas táctiles en `InventoryAdjustmentModal` y `ProductReceptionView`, garantizando un cumplimiento estricto del estándar de 44px para operación táctil sin errores.
+- **Sincronización de Documentación**: Actualización del diagrama `MobilePosDiagram.tsx` para reflejar con precisión las nuevas zonas de acción fijas y el flujo optimizado.
+
 ## [5.7.18] - 2026-02-27
 
 ### Changed
