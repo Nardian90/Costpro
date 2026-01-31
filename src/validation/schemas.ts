@@ -62,7 +62,10 @@ export const userStoreMembershipSchema = z.object({
   status: z.enum(['active', 'revoked']).default('active'),
   created_at: z.string().optional().nullable(),
   updated_at: z.string().optional().nullable(),
-  store: storeSchema.nullable().optional().catch(null),
+  store: z.preprocess(
+    (val) => (Array.isArray(val) ? val[0] : val),
+    storeSchema.nullable().optional().catch(null)
+  ),
 });
 
 export const profileSchema = z.object({
@@ -220,12 +223,15 @@ export const receiptItemSchema = z.object({
   unit_cost: z.coerce.number().catch(0),
   created_at: z.string().optional(),
   updated_at: z.string().optional(),
-  products: z.object({
-    name: z.string(),
-    sku: z.string().nullable().optional(),
-    image_url: z.string().nullable().optional(),
-    public_image_url: z.string().nullable().optional(),
-  }).nullable().optional(),
+  products: z.preprocess(
+    (val) => (Array.isArray(val) ? val[0] : val),
+    z.object({
+      name: z.string(),
+      sku: z.string().nullable().optional(),
+      image_url: z.string().nullable().optional(),
+      public_image_url: z.string().nullable().optional(),
+    }).nullable().optional().catch(null)
+  ),
 });
 
 export const auditLogSchema = z.object({
@@ -497,14 +503,17 @@ export const transferSchema = z.object({
 });
 
 export const transferWithDetailsSchema = transferSchema.extend({
-  origin_store: storeSchema.nullable().optional(),
-  destination_store: storeSchema.nullable().optional(),
-  creator: z.object({
-    full_name: z.string(),
-  }).nullable().optional(),
+  origin_store: z.preprocess((val) => (Array.isArray(val) ? val[0] : val), storeSchema.nullable().optional().catch(null)),
+  destination_store: z.preprocess((val) => (Array.isArray(val) ? val[0] : val), storeSchema.nullable().optional().catch(null)),
+  creator: z.preprocess(
+    (val) => (Array.isArray(val) ? val[0] : val),
+    z.object({
+      full_name: z.string(),
+    }).nullable().optional().catch(null)
+  ),
   items: z.array(
     transferItemSchema.extend({
-      product: productSchema.nullable().optional(),
+      product: z.preprocess((val) => (Array.isArray(val) ? val[0] : val), productSchema.nullable().optional().catch(null)),
     })
   ).optional(),
 });

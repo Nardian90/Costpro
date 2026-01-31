@@ -3,11 +3,10 @@ import { useAuthStore } from '@/store';
 import { useSessionStore } from '@/store/session-store';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
-import { profileSchema } from '@/validation/schemas';
-import { validateResponse } from '@/lib/rpc-validator';
 import { safeNavigate } from '@/lib/navigation';
 import { mapProfileToContract } from '@/contracts/user';
-import type { UserRole, User } from '@/types';
+import { userService } from '@/services/user-service';
+import type { UserRole, User, Profile } from '@/types';
 
 const SESSION_CHECK_THROTTLE = 60 * 1000; // 1 minute
 const SESSION_CHECK_TIMEOUT = 15 * 1000; // 15 seconds
@@ -44,75 +43,21 @@ export function useSessionManager() {
             const { session } = data;
 
             if (session?.user) {
-                const profileColumns = 'id, full_name, email, role, roles, active_store_id, logo_url, is_active, store_id, created_at, ai_provider, ai_api_key';
-                const storeColumns = 'id, name, address, logo_url, is_active, created_at';
-                const membershipColumns = `id, user_id, store_id, role, status, created_at, updated_at, store:stores(${storeColumns})`;
-
-                let profileData: any = null;
-                let profileError: any = null;
+                let profileData: Profile | null = null;
 
                 try {
-                    const result = await Promise.race([
-                        supabase.from('profiles').select(`${profileColumns}, memberships:user_store_memberships(${membershipColumns})`).eq('id', session.user.id).single(),
+                    profileData = await Promise.race([
+                        userService.getUserProfile(session.user.id),
                         new Promise((_, reject) => setTimeout(() => reject(new Error('Profile fetch timeout')), SESSION_CHECK_TIMEOUT))
-                    ]) as { data: any; error: any };
-                    profileData = result.data;
-                    profileError = result.error;
+                    ]) as Profile | null;
                 } catch (err: any) {
                     console.error('[SessionManager] Critical error fetching profile:', err);
                     setAuthStatus('authenticated_invalid_profile');
                     return;
                 }
 
-                if (profileError) {
-                    console.error('[SessionManager] Profile error:', profileError);
-                    setAuthStatus('authenticated_invalid_profile');
-                    return;
-                }
-
-                if (profileData?.is_active) {
-                    // Fix Supabase returning join as array
-                    if (profileData.memberships) {
-                        profileData.memberships = profileData.memberships.map((m: any) => ({
-                            ...m,
-                            store: Array.isArray(m.store) ? m.store[0] : m.store
-                        }));
-                    }
-
-                    let effectiveActiveStoreId = profileData.active_store_id || profileData.store_id;
-
-                    // AUTO-SELECT STORE
-                    if (!effectiveActiveStoreId && profileData.memberships && profileData.memberships.length > 0) {
-                        effectiveActiveStoreId = profileData.memberships[0].store_id;
-                    }
-
-                    let activeRoles: UserRole[] = profileData.roles || [profileData.role];
-                    if (effectiveActiveStoreId) {
-                        const { data: membershipRows } = await supabase
-                            .from('user_store_memberships')
-                            .select('role')
-                            .eq('user_id', profileData.id)
-                            .eq('store_id', effectiveActiveStoreId)
-                            .limit(1);
-
-                        const membershipData = membershipRows?.[0];
-                        if (membershipData?.role) {
-                            activeRoles = [membershipData.role];
-                        } else if (profileData.role === 'admin') {
-                            activeRoles = ['admin'];
-                        }
-                    }
-
-                    const userData = {
-                        ...profileData,
-                        roles: activeRoles,
-                        active_store_id: effectiveActiveStoreId,
-                        store_id: effectiveActiveStoreId || profileData.store_id,
-                    };
-
-                    // Validate and normalize with Zod
-                    const validatedData = await validateResponse(userData, profileSchema, 'session_profile');
-                    const userContractData = mapProfileToContract(validatedData as any);
+                if (profileData) {
+                    const userContractData = mapProfileToContract(profileData);
 
                     const currentState = useAuthStore.getState();
                     if (session.access_token !== currentState.token || JSON.stringify(userContractData) !== JSON.stringify(currentState.user)) {
@@ -122,7 +67,7 @@ export function useSessionManager() {
                     }
                     setStatus('stable');
                 } else {
-                    // User inactive - force logout
+                    // User inactive or not found - force logout
                     await supabase.auth.signOut();
                     logout();
                 }
