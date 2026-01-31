@@ -228,6 +228,16 @@ export interface SaleItem {
   created_at: string;
 }
 
+export interface TaxConfiguration {
+  id: string;
+  name: string;
+  type: 'fixed' | 'percentage';
+  value: number;
+  min_exempt?: number;
+  is_active: boolean;
+  store_id?: string | null;
+}
+
 export interface Transaction {
   id: string;
   store_id?: string | null;
@@ -243,6 +253,8 @@ export interface Transaction {
   discount_type?: DiscountType | null;
   discount_value?: number | null;
   subtotal?: number | null;
+  tax_amount?: number | null;
+  applied_taxes?: any[] | null;
   idempotency_key?: string | null;
 }
 
