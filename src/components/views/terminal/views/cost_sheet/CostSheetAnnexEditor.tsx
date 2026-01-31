@@ -7,8 +7,10 @@ import { useCostSheetCalculator } from '@/hooks/logic/useCostSheetCalculator';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Trash2, Plus } from 'lucide-react';
+import { Trash2, Plus, Database } from 'lucide-react';
 import { CostSheetAnnex, CostSheetColumn } from '@/types/cost-sheet';
+import ProductInventoryPicker from './ProductInventoryPicker';
+import { useAuthStore } from '@/store';
 import { cn, formatCurrency } from '@/lib/utils';
 import { ViewMode } from '@/components/ui/ViewSwitcher';
 
@@ -19,6 +21,10 @@ interface CostSheetAnnexEditorProps {
 
 const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = ({ activeAnnexId, layoutMode = 'grid' }) => {
   const { data, updateValue, addRow, removeRow } = useCostSheetStore();
+  const { user } = useAuthStore();
+  const [isPickerOpen, setIsPickerOpen] = React.useState(false);
+  const [targetRowIndex, setTargetRowIndex] = React.useState<number | null>(null);
+
   // We need the calculator to get the calculated values for display
   const { calculatedAnnexes } = useCostSheetCalculator(data);
 
@@ -43,20 +49,63 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = ({ activeAnnex
     return acc + (key ? (row[key] || 0) : 0);
   }, 0);
 
+  const handleProductSelect = (product: any) => {
+    if (targetRowIndex === null) return;
+
+    // Map product fields to annex columns
+    // We update the original data in the store
+    const basePath = ['annexes', annexIndex, 'data', targetRowIndex];
+
+    updateValue([...basePath, 'description'], product.name);
+    if (product.sku || product.code) {
+        updateValue([...basePath, 'code'], product.sku || product.code);
+    }
+    if (product.unit) {
+        updateValue([...basePath, 'um'], product.unit);
+    }
+    if (product.cost !== undefined) {
+        updateValue([...basePath, 'price'], product.cost);
+    }
+
+    setTargetRowIndex(null);
+  };
+
   return (
     <div data-testid="cost-sheet-annex-editor" className="space-y-6 animate-in fade-in duration-500">
+      <ProductInventoryPicker
+        open={isPickerOpen}
+        onOpenChange={setIsPickerOpen}
+        onSelect={handleProductSelect}
+        storeId={user?.activeStoreId}
+      />
        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
               <h3 className="text-xl font-black text-primary">Anexo {annex.id}</h3>
               <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{annex.title}</p>
           </div>
-          <Button
-            onClick={() => addRow(annex.id)}
-            className="neu-btn-primary !py-3 !px-5 rounded-xl w-full sm:w-auto flex items-center justify-center gap-2 font-bold text-sm shadow-lg min-h-[44px]"
-          >
-              <Plus className="w-4 h-4" />
-              Añadir Fila
-          </Button>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+              {annex.id === 'I' && (
+                <Button
+                    onClick={() => {
+                        addRow(annex.id);
+                        setTargetRowIndex(data.annexes[annexIndex].data.length);
+                        setIsPickerOpen(true);
+                    }}
+                    variant="outline"
+                    className="neu-button flex-1 sm:flex-none flex items-center justify-center gap-2 font-bold text-sm min-h-[44px] px-5"
+                >
+                    <Database className="w-4 h-4 text-primary" />
+                    Importar Inventario
+                </Button>
+              )}
+              <Button
+                onClick={() => addRow(annex.id)}
+                className="neu-btn-primary !py-3 !px-5 rounded-xl flex-1 sm:flex-none flex items-center justify-center gap-2 font-bold text-sm shadow-lg min-h-[44px]"
+              >
+                  <Plus className="w-4 h-4" />
+                  Añadir Fila
+              </Button>
+          </div>
        </div>
 
        <div className="w-full">
@@ -98,6 +147,21 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = ({ activeAnnex
                                 </TableCell>
                             ))}
                             <TableCell data-label="Acciones" className="text-center p-3 sm:p-4">
+                                <div className="flex items-center justify-center gap-1">
+                                {annex.id === 'I' && (
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => {
+                                            setTargetRowIndex(rowIndex);
+                                            setIsPickerOpen(true);
+                                        }}
+                                        className="p-3 text-primary hover:bg-primary/10 rounded-xl transition-all neu-raised-sm group-hover:scale-110 active:scale-95 min-h-[44px] min-w-[44px]"
+                                        aria-label="Importar desde inventario"
+                                    >
+                                        <Database className="h-4 w-4" />
+                                    </Button>
+                                )}
                                 <Button
                                     variant="ghost"
                                     size="icon"
@@ -107,6 +171,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = ({ activeAnnex
                                 >
                                     <Trash2 className="h-5 w-5" />
                                 </Button>
+                                </div>
                             </TableCell>
                         </TableRow>
                     ))}

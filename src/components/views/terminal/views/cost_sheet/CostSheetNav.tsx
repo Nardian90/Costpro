@@ -3,7 +3,7 @@
 
 import React from 'react';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
-import { Layout, FileSpreadsheet, PenTool, ClipboardList } from 'lucide-react';
+import { Layout, FileSpreadsheet, PenTool, ClipboardList, CheckCircle2 } from 'lucide-react';
 
 interface CostSheetNavProps {
   sections: any[];
@@ -27,13 +27,17 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
         onClick: () => setActiveSection(s.id),
         active: activeSection === s.id
     })),
-    ...annexes.map(a => ({
-        id: a.id,
-        label: `Anexo ${a.id}`,
-        icon: FileSpreadsheet,
-        onClick: () => setActiveSection(a.id),
-        active: activeSection === a.id
-    })),
+    ...annexes.map(a => {
+        const hasData = a.data && a.data.length > 0;
+        return {
+            id: a.id,
+            label: `Anexo ${a.id}`,
+            icon: hasData ? CheckCircle2 : FileSpreadsheet,
+            onClick: () => setActiveSection(a.id),
+            active: activeSection === a.id,
+            variant: hasData ? 'success' : 'outline'
+        };
+    }),
     {
         id: 'signature',
         label: 'Firmas',
