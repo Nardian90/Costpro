@@ -57,7 +57,7 @@ export default function AuditEventIcon({ tableName, action, className }: AuditEv
       break;
     case 'sales':
       Icon = ShoppingCart;
-      colorClass = 'bg-blue-500/10 text-blue-600';
+      colorClass = 'bg-green-500/10 text-green-700';
       break;
     case 'users':
       Icon = Users;

@@ -41,7 +41,7 @@ export default function JulesDiagram() {
 
         {/* Nodes around the core */}
         <motion.g variants={item} transform="translate(400, 100)">
-          <circle r="40" className="fill-blue-500" />
+          <circle r="40" className="fill-emerald-600" />
           <text textAnchor="middle" y="5" className="fill-white font-black text-[8px] uppercase">Pregunta</text>
         </motion.g>
 
