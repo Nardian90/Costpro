@@ -1,16 +1,16 @@
 const template = {
   id: "costpro-full-v5",
-  name: "Soporte Técnico",
+  name: "Producción de Pan Artistas",
   version: "5.0.0",
   metadata: {
-    author: "CostPro",
+    author: "CostPro Enterprise",
   },
   header: {
-    code: "FC-DEMO-243",
-    name: "Soporte Técnico",
-    date: "2026-01-30",
-    unit: "Unidades",
-    quantity: 183,
+    code: "FC-PAN-2026",
+    name: "Producción de Pan Artistas (1kg)",
+    date: "2026-02-27",
+    unit: "Kilogramos",
+    quantity: 500,
     currency: "CUP",
     category: "ORGANISMO",
     type: "EMPRESA",
@@ -237,11 +237,14 @@ const template = {
         { key: "description", label: "Descripción de la Mat. Prima" },
         { key: "um", label: "UM" },
         { key: "consumption_norm", label: "Norma de Consumo" },
-        { key: "price", label: "Precio Total" },
+        { key: "price", label: "Precio Unitario" },
         { key: "total", label: "Total", formula: "consumption_norm * price" }
       ],
       data: [
-        { no: 1.00, classification: "1.1 - Insumos (MP)", code: "MAT-001", description: "Insumos Tecnológicos", um: "u", consumption_norm: 183, price: 7750.3781 },
+        { no: 1.00, classification: "1.1 - Insumos (MP)", code: "MP-001", description: "Harina de Trigo Especial", um: "kg", consumption_norm: 350.00, price: 450.00 },
+        { no: 2.00, classification: "1.1 - Insumos (MP)", code: "MP-002", description: "Levadura Seca", um: "kg", consumption_norm: 5.00, price: 1200.00 },
+        { no: 3.00, classification: "1.1 - Insumos (MP)", code: "MP-003", description: "Sal Común", um: "kg", consumption_norm: 7.00, price: 85.00 },
+        { no: 4.00, classification: "1.1 - Insumos (MP)", code: "MP-004", description: "Aceite Vegetal", um: "lt", consumption_norm: 12.00, price: 650.00 },
       ]
     },
     {
@@ -249,14 +252,16 @@ const template = {
         title: "II - DESGLOSE DE LOS GASTOS DE SALARIO DE LOS OBREROS",
         columns: [
             { key: "no", label: "NO" },
-            { key: "description", label: "Descripción" },
-            { key: "time_norm", label: "Norma de Tiempo (h)" },
-            { key: "hourly_rate", label: "Tarifa Horaria ($/h)" },
+            { key: "description", label: "Descripción del Puesto" },
+            { key: "time_norm", label: "Horas Mensuales" },
+            { key: "hourly_rate", label: "Tarifa $/h" },
             { key: "worker_count", label: "Cant. Obreros" },
             { key: "total", label: "Total", formula: "time_norm * hourly_rate * worker_count" }
         ],
         data: [
-            { no: 1.00, description: "Personal de Soporte", time_norm: 183.00, hourly_rate: 374.226885, worker_count: 1.00 },
+            { no: 1.00, description: "Maestro Panadero", time_norm: 190.00, hourly_rate: 450.00, worker_count: 2.00 },
+            { no: 2.00, description: "Ayudante de Panadería", time_norm: 190.00, hourly_rate: 280.00, worker_count: 4.00 },
+            { no: 3.00, description: "Hornero", time_norm: 190.00, hourly_rate: 320.00, worker_count: 2.00 },
         ]
     },
     {

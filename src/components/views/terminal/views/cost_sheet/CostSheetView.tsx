@@ -36,13 +36,6 @@ const CostSheetView = () => {
   const [activeSection, setActiveSection] = useState('kpis');
   const [activeSubSectionId, setActiveSubSectionId] = useState('');
 
-  // Auto-select first section when data loads
-  React.useEffect(() => {
-    if (data?.sections?.length > 0 && !activeSubSectionId) {
-        setActiveSubSectionId(data.sections[0].id);
-    }
-  }, [data, activeSubSectionId]);
-
   const [isActionsPanelOpen, setIsActionsPanelOpen] = useState(false);
   const [isSectionsSidebarOpen, setIsSectionsSidebarOpen] = useState(false);
   const [isAnnexesSidebarOpen, setIsAnnexesSidebarOpen] = useState(false);
@@ -238,13 +231,16 @@ const CostSheetView = () => {
           {viewMode === 'expert' && (
             <>
                 <CostSheetNav
-                    sections={[
+                    navItems={[
                         { id: 'kpis', label: 'KPIs', icon: BarChart3 },
                         { id: 'header', label: 'Encabezado' },
                         { id: 'main', label: 'Tabla Principal' },
                         { id: 'audit', label: 'Auditoría', icon: Activity }
                     ]}
-                    annexes={data.annexes}
+                    subSections={data?.sections || []}
+                    activeSubSectionId={activeSubSectionId}
+                    setActiveSubSectionId={setActiveSubSectionId}
+                    annexes={data?.annexes || []}
                     activeSection={activeSection}
                     setActiveSection={setActiveSection}
                     onOpenAnnexes={() => setIsAnnexesSidebarOpen(true)}
