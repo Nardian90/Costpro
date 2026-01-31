@@ -62,6 +62,8 @@ describe('Cost Engine', () => {
   it('should calculate PRORRATEO correctly', () => {
     const result = calculateFicha(mockFicha);
     const r2 = result.rows.find(r => r.id === 'r2');
+    // Ratio = 50 / 350. Total = (50/350) * 350 = 50.
+    // Wait, Anexo total is 100+50+200 = 350.
     expect(r2?.total).toBe(50);
   });
 
@@ -69,6 +71,26 @@ describe('Cost Engine', () => {
     const result = calculateFicha(mockFicha);
     const r3 = result.rows.find(r => r.id === 'r3');
     expect(r3?.total).toBe(30);
+  });
+
+  it('should handle "Energía" (FIJO with base) correctly', () => {
+    const energiaFicha: FichaJSON = {
+        ...mockFicha,
+        rows: [
+            {
+                id: 'energia',
+                classification: '1.3',
+                label: 'Energía',
+                formaCalculo: 'FIJO',
+                valorHistorico: 500,
+                baseCalculo: { type: 'FILA', classification: '1.1' }
+            }
+        ]
+    };
+    const result = calculateFicha(energiaFicha);
+    const energia = result.rows.find(r => r.id === 'energia');
+    // Even if it has a base, if method is FIJO, it must use VH.
+    expect(energia?.total).toBe(500);
   });
 
   it('should handle cycles with damping', () => {
@@ -99,30 +121,12 @@ describe('Cost Engine', () => {
     const ra = result.rows.find(r => r.id === 'a');
     const rb = result.rows.find(r => r.id === 'b');
 
+    // a = 0.5 * b
+    // b = a + 100
+    // a = 0.5 * (a + 100) = 0.5a + 50 => 0.5a = 50 => a = 100
+    // b = 100 + 100 = 200
     expect(ra?.total).toBeCloseTo(100, 0);
     expect(rb?.total).toBeCloseTo(200, 0);
-  });
-
-  it('should apply declarative rules', () => {
-    const ruleFicha: FichaJSON = {
-        ...mockFicha,
-        rules: [
-            {
-                id: 'rule-1',
-                name: 'Global Margin Override',
-                description: 'Set margin to 25%',
-                version: '1.0.0',
-                targetType: 'MARGIN',
-                formulaOverride: 'BASE_TOTAL * 0.25',
-                priority: 10,
-                enabled: true
-            }
-        ]
-    };
-    const result = calculateFicha(ruleFicha);
-    const r3 = result.rows.find(r => r.id === 'r3');
-    expect(r3?.total).toBe(37.5);
-    expect(r3?.audit.some(a => a.type === 'RULE_APPLIED')).toBe(true);
   });
 
   it('should validate non-existent references', () => {

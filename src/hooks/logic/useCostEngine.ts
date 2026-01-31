@@ -6,7 +6,7 @@ export const useCalculateFicha = () => {
 
   return useMutation({
     mutationFn: async (ficha: FichaJSON): Promise<CalculationResult> => {
-      const response = await fetch('/api/cost-sheets/calculate', {
+      const response = await fetch('/api/calculate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(ficha),
@@ -31,7 +31,7 @@ export const useImportJson = () => {
       const text = await file.text();
       const json = JSON.parse(text);
 
-      const response = await fetch('/api/cost-sheets/import-json', {
+      const response = await fetch('/api/import-json', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(json),
@@ -55,7 +55,7 @@ export const useImportAnexo = () => {
       formData.append('file', file);
       formData.append('anexoId', anexoId);
 
-      const response = await fetch('/api/cost-sheets/import-anexo', {
+      const response = await fetch('/api/import-anexo', {
         method: 'POST',
         body: formData,
       });

@@ -62,7 +62,9 @@ export interface CalculatedRowValue {
   valorHistorico: number;
   baseDeCalculoRef: string | null;
   baseTotal: number;
-  baseValorHistorico: number;
+  baseValorHistorico?: number;
   coeficiente: number;
   total: number;
+  audit?: any[];
+  fuente?: string;
 }
