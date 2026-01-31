@@ -131,7 +131,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
   return (
     <div className={cn("relative w-full flex justify-end h-8", className)}>
       <motion.div
-        className="absolute right-0 z-40 bg-white dark:bg-slate-800 border-2 border-primary rounded-md shadow-xl overflow-hidden flex items-center"
+        className="absolute right-0 z-40 bg-white dark:bg-slate-800 border-2 border-primary rounded-md shadow-xl flex items-center"
         initial={false}
         animate={{
             width: isFocused ? '400px' : '100%',
@@ -142,20 +142,49 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
         <div className="pl-2 pr-1 text-primary shrink-0">
             {value.startsWith('=') ? <Command className="w-3.5 h-3.5" /> : <span className="text-xs font-bold">$</span>}
         </div>
-        <input
-          ref={inputRef}
-          type="text"
-          className="flex-1 h-8 px-1 py-1 text-sm bg-transparent border-none outline-none focus:ring-0 font-mono"
-          value={value}
-          onChange={handleChange}
-          onKeyDown={handleKeyDown}
-          onBlur={handleBlur}
-          onFocus={() => setIsFocused(true)}
-          onClick={(e) => setCursorPosition((e.target as HTMLInputElement).selectionStart || 0)}
-        />
+        <div className="flex-1 relative h-full flex items-center min-w-0">
+            <input
+              ref={inputRef}
+              type="text"
+              className="w-full h-8 px-1 py-1 text-sm bg-transparent border-none outline-none focus:ring-0 font-mono"
+              value={value}
+              onChange={handleChange}
+              onKeyDown={handleKeyDown}
+              onBlur={handleBlur}
+              onFocus={() => setIsFocused(true)}
+              onClick={(e) => setCursorPosition((e.target as HTMLInputElement).selectionStart || 0)}
+            />
+
+            <AnimatePresence>
+                {showSuggestions && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        ref={suggestionsRef}
+                        className="absolute z-50 top-full left-0 w-full mt-1 bg-white dark:bg-slate-800 border border-border rounded-md shadow-2xl max-h-48 overflow-y-auto"
+                    >
+                        {filteredSuggestions.map((s, i) => (
+                            <button
+                                key={s.value}
+                                className={cn(
+                                    "w-full text-left px-3 py-2 text-xs hover:bg-primary/10 flex flex-col gap-0.5 transition-colors",
+                                    i === selectedIndex && "bg-primary/20"
+                                )}
+                                onClick={() => applySuggestion(s)}
+                                onMouseDown={(e) => e.preventDefault()} // Prevent blur
+                            >
+                                <div className="font-bold text-primary">{s.label}</div>
+                                {s.description && <div className="text-[10px] text-muted-foreground">{s.description}</div>}
+                            </button>
+                        ))}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
 
         {isFocused && (
-          <div className="flex items-center gap-1 px-1 border-l border-border bg-muted/30">
+          <div className="flex items-center gap-1 px-1 border-l border-border bg-muted/30 shrink-0">
              <Popover>
                 <PopoverTrigger asChild>
                   <button
@@ -227,27 +256,6 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
         )}
       </motion.div>
 
-      {showSuggestions && (
-        <div
-          ref={suggestionsRef}
-          className="absolute z-50 left-0 right-24 mt-1 bg-white dark:bg-slate-800 border border-border rounded-md shadow-xl max-h-48 overflow-y-auto"
-        >
-          {filteredSuggestions.map((s, i) => (
-            <button
-              key={s.value}
-              className={cn(
-                "w-full text-left px-3 py-2 text-xs hover:bg-primary/10 flex flex-col gap-0.5 transition-colors",
-                i === selectedIndex && "bg-primary/20"
-              )}
-              onClick={() => applySuggestion(s)}
-              onMouseDown={(e) => e.preventDefault()} // Prevent blur
-            >
-              <div className="font-bold text-primary">{s.label}</div>
-              {s.description && <div className="text-[10px] text-muted-foreground">{s.description}</div>}
-            </button>
-          ))}
-        </div>
-      )}
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="sm:max-w-[600px] z-[200]">
