@@ -313,6 +313,49 @@ export function BankIngestion() {
             </div>
         </div>
       </div>
+
+      {/* Column Help Section */}
+      <div className="p-6 bg-card/50 rounded-3xl border border-border/50 space-y-4">
+        <div className="flex items-center gap-2 text-primary">
+            <HelpCircle className="w-5 h-5" />
+            <h4 className="font-black uppercase text-sm tracking-widest">Guía de Columnas (Estado de Cuenta)</h4>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <HelpItem
+                title="Fecha"
+                desc="Fecha de la operación (ej: 17/10/2025). El sistema la normaliza automáticamente."
+            />
+            <HelpItem
+                title="Ref_Origen"
+                desc="Identificador único del banco (Número de transferencia o ID de mensaje)."
+            />
+            <HelpItem
+                title="Ref_Corriente"
+                desc="Referencia corta para visualización rápida en tablas."
+            />
+            <HelpItem
+                title="Importe"
+                desc="Monto con decimales (ej: 1,500.00). Se convierte a centavos internamente."
+            />
+            <HelpItem
+                title="Tipo"
+                desc="'Cr' para Créditos (Ingresos) y 'Db' para Débitos (Gastos/Comisiones)."
+            />
+            <HelpItem
+                title="Observaciones"
+                desc="Detalle del banco. Aquí se buscan códigos de producto para el matching automático."
+            />
+        </div>
+      </div>
     </div>
   );
+}
+
+function HelpItem({ title, desc }: { title: string, desc: string }) {
+    return (
+        <div className="space-y-1">
+            <p className="text-xs font-bold text-primary uppercase tracking-tighter">{title}</p>
+            <p className="text-[11px] text-muted-foreground leading-relaxed font-medium">{desc}</p>
+        </div>
+    );
 }
