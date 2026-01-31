@@ -265,7 +265,7 @@ export const POSCart = ({
                     )}
                    >
                      <DollarSign className={cn("w-6 h-6", selectedPayment === 'cash' ? "text-primary" : "text-muted-foreground")} />
-                     <span className="text-[10px] font-black uppercase tracking-widest">Efectivo</span>
+                     <span className="text-[10px] font-black uppercase tracking-widest text-foreground">Efectivo</span>
                    </button>
                    <button
                     onClick={() => setSelectedPayment('transfer')}
@@ -275,7 +275,7 @@ export const POSCart = ({
                     )}
                    >
                      <CreditCard className={cn("w-6 h-6", selectedPayment === 'transfer' ? "text-primary" : "text-muted-foreground")} />
-                     <span className="text-[10px] font-black uppercase tracking-widest">Transf.</span>
+                     <span className="text-[10px] font-black uppercase tracking-widest text-foreground">Transf.</span>
                    </button>
                 </div>
 
@@ -299,7 +299,7 @@ export const POSCart = ({
                       onClose();
                     }
                   }}
-                  className="w-full py-2 text-[10px] font-black text-muted-foreground uppercase tracking-widest hover:text-destructive transition-colors"
+                  className="w-full py-2 text-[10px] font-black text-foreground uppercase tracking-widest hover:text-destructive transition-colors"
                 >
                   Anular Carrito
                 </button>
