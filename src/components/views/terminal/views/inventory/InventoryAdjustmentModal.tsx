@@ -255,14 +255,14 @@ export default function InventoryAdjustmentModal({
         <div className="p-6 border-t border-white/5 bg-muted/10 flex gap-4">
           <button
             onClick={onClose}
-            className="neu-btn flex-1 !py-3 font-black uppercase text-xs tracking-widest"
+            className="neu-btn flex-1 !py-3 min-h-[44px] font-black uppercase text-xs tracking-widest"
             disabled={isProcessing}
           >
             Cancelar
           </button>
           <button
             onClick={handleConfirm}
-            className="neu-btn-primary flex-1 flex items-center justify-center gap-2 !py-3 font-black uppercase text-xs tracking-widest"
+            className="neu-btn-primary flex-1 flex items-center justify-center gap-2 !py-3 min-h-[44px] font-black uppercase text-xs tracking-widest"
             disabled={isProcessing}
           >
             {isProcessing ? (
