@@ -2,7 +2,7 @@
 
 import React, { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { db } from '@/lib/dexie';
+import { db, BankTransaction } from '@/lib/dexie';
 import { generateHash } from '@/lib/ipv/engine';
 import { Button } from '@/components/ui/button';
 import { FileUp, Download, Info } from 'lucide-react';
@@ -58,12 +58,12 @@ export function BankIngestion() {
 
         const ingestion_hash = await generateHash(`${ref_origen}-${fecha}-${importe_cents}`);
 
-        const tx = {
+        const tx: BankTransaction = {
           id: uuidv4(),
           fecha,
-          referencia_corta: row['Ref_Corriente'] || ref_origen,
-          referencia_origen: ref_origen,
-          observaciones,
+          referencia_corta: String(row['Ref_Corriente'] || ref_origen),
+          referencia_origen: String(ref_origen),
+          observaciones: String(observaciones),
           importe_cents,
           tipo: tipo === 'Cr' ? 'Cr' : 'Db',
           estado_conciliacion: 'PENDIENTE',
