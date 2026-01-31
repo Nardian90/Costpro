@@ -42,15 +42,20 @@ export default function MobilePosDiagram() {
           transition={{ duration: 1, repeat: Infinity, repeatType: "reverse", repeatDelay: 1 }}
         >
           <path
-            d="M260 250 L540 250 L540 370 L260 370 Z"
+            d="M260 220 L540 220 L540 370 L260 370 Z"
             className="fill-background stroke-primary shadow-2xl"
             strokeWidth="2"
           />
-          <rect x="375" y="260" width="50" height="4" rx="2" className="fill-primary/20" />
-          <text x="400" y="285" textAnchor="middle" className="fill-primary font-black text-[10px] uppercase">Carrito (1-Tap Discount)</text>
+          {/* Scrollable Items Indicator */}
+          <rect x="275" y="235" width="250" height="40" rx="8" className="fill-primary/5 stroke-primary/10" />
+          <rect x="275" y="280" width="250" height="40" rx="8" className="fill-primary/5 stroke-primary/10" />
 
-          <rect x="275" y="300" width="250" height="30" rx="8" className="fill-primary" />
-          <text x="400" y="320" textAnchor="middle" className="fill-white font-black text-[10px] uppercase tracking-widest">Pagar $450.00</text>
+          {/* Sticky Footer in Drawer */}
+          <rect x="260" y="320" width="280" height="50" className="fill-background border-t stroke-primary/20" />
+          <rect x="375" y="225" width="50" height="4" rx="2" className="fill-primary/20" />
+
+          <rect x="275" y="330" width="250" height="30" rx="8" className="fill-primary" />
+          <text x="400" y="350" textAnchor="middle" className="fill-white font-black text-[10px] uppercase tracking-widest">Finalizar Venta (Sticky)</text>
         </motion.g>
 
         {/* Action Menu (Bottom Bar) */}
