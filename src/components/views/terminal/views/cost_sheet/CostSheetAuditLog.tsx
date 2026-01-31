@@ -1,7 +1,7 @@
 
 'use client';
 
-import React from 'react';
+import React, { memo } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -13,7 +13,7 @@ interface CostSheetAuditLogProps {
   audits: AuditEntry[];
 }
 
-export const CostSheetAuditLog: React.FC<CostSheetAuditLogProps> = ({ audits }) => {
+export const CostSheetAuditLog: React.FC<CostSheetAuditLogProps> = memo(({ audits }) => {
   if (!audits || audits.length === 0) return null;
 
   return (
