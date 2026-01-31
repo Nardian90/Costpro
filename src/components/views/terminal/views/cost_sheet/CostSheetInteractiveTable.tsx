@@ -65,7 +65,7 @@ const CostSheetRow: React.FC<RowProps> = ({ row, level, calculatedValues, path, 
   ], [annexes, allRows]);
 
   const isResultRow = row.is_percent || ['5', '12', '13', '13.1', '13.2', '14'].includes(row.id);
-  const showWarning = !hasChildren && !row.is_percent && calculated.total === 0 && (row.valorHistorico > 0 || row.baseDeCalculoRef);
+  const showWarning = !hasChildren && !row.is_percent && calculated.total === 0 && ((row.valorHistorico ?? 0) > 0 || !!row.baseDeCalculoRef);
 
   return (
     <>

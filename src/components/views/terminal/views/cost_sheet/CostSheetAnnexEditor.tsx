@@ -57,14 +57,14 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = ({ activeAnnex
     const basePath = ['annexes', annexIndex, 'data', targetRowIndex];
 
     updateValue([...basePath, 'description'], product.name);
-    if (product.sku || product.code) {
-        updateValue([...basePath, 'code'], product.sku || product.code);
+    if (product.sku) {
+        updateValue([...basePath, 'code'], product.sku);
     }
-    if (product.unit) {
-        updateValue([...basePath, 'um'], product.unit);
+    if (product.unit_of_measure) {
+        updateValue([...basePath, 'um'], product.unit_of_measure);
     }
-    if (product.cost !== undefined) {
-        updateValue([...basePath, 'price'], product.cost);
+    if (product.cost_price !== undefined) {
+        updateValue([...basePath, 'price'], product.cost_price);
     }
 
     setTargetRowIndex(null);
