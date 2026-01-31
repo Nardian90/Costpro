@@ -38,7 +38,7 @@ export default function AuditFilters({
   const categories: { id: AuditCategory | 'all'; label: string; color: string }[] = [
     { id: 'all', label: 'Todo', color: 'bg-slate-500' },
     { id: 'inventory', label: 'Inventario', color: 'bg-green-500' },
-    { id: 'sales', label: 'Ventas', color: 'bg-blue-500' },
+    { id: 'sales', label: 'Ventas', color: 'bg-green-500' },
     { id: 'users', label: 'Usuarios', color: 'bg-purple-500' },
     { id: 'stores', label: 'Tiendas', color: 'bg-orange-500' },
     { id: 'adjustments', label: 'Ajustes', color: 'bg-red-500' },

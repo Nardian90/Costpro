@@ -99,7 +99,7 @@ export default function UsersManagementView() {
                           <span className={cn(
                             "px-1.5 py-0.5 rounded text-[8px] font-black uppercase w-fit",
                             m.role === 'admin' ? 'bg-primary/20 text-primary' :
-                            (m.role === 'encargado' || m.role === 'manager') ? 'bg-indigo-500/20 text-indigo-600' : 'bg-background text-muted-foreground'
+                            (m.role === 'encargado' || m.role === 'manager') ? 'bg-green-600/20 text-green-700' : 'bg-background text-muted-foreground'
                           )}>
                             {getRoleLabel(m.role)}
                           </span>

@@ -45,12 +45,12 @@ export default function StoreSkuDiagram() {
           <text x="600" y="155" textAnchor="middle" className="fill-foreground font-bold text-xs">SKU: ARROZ-1KG</text>
 
           <motion.rect
-            x="520" y="220" width="160" height="80" rx="10" className="fill-blue-500/10 stroke-blue-500" strokeWidth="2"
+            x="520" y="220" width="160" height="80" rx="10" className="fill-emerald-600/10 stroke-emerald-600" strokeWidth="2"
             animate={{ opacity: [0.4, 1, 0.4] }}
             transition={{ duration: 2, repeat: Infinity, delay: 1 }}
           />
-          <text x="600" y="255" textAnchor="middle" className="fill-blue-600 font-black text-[10px] uppercase">Inventario B</text>
-          <text x="600" y="275" textAnchor="middle" className="fill-blue-600 font-bold text-lg">120 Unid.</text>
+          <text x="600" y="255" textAnchor="middle" className="fill-emerald-700 font-black text-[10px] uppercase">Inventario B</text>
+          <text x="600" y="275" textAnchor="middle" className="fill-emerald-700 font-bold text-lg">120 Unid.</text>
         </motion.g>
 
         {/* Separation Line */}
