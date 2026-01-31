@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { produce } from 'immer';
 import { toast } from 'sonner';
-import type { Product } from '@/types';
+import type { Product, TaxConfiguration } from '@/types';
 
 // Moved from `types/index.ts` to here to avoid circular dependencies
 // and because this type is most relevant to the cart's domain.
@@ -26,11 +26,15 @@ type Discount = {
 interface CartState {
   items: CartItem[];
   discount: Discount | null;
+  appliedTaxes: TaxConfiguration[];
   addItem: (item: CartItem) => void;
   removeItem: (productId: string, variantId: string | null) => void;
   updateQuantity: (productId: string, variantId: string | null, quantity: number) => void;
   setDiscount: (discount: Discount | null) => void;
+  toggleTax: (tax: TaxConfiguration) => void;
   getSubtotal: () => number;
+  getDiscountAmount: () => number;
+  getTaxAmount: () => number;
   getTotal: () => number;
   getItemCount: () => number;
   clearCart: () => void;
@@ -40,6 +44,7 @@ interface CartState {
 export const useCartStore = create<CartState>((set, get) => ({
   items: [],
   discount: null,
+  appliedTaxes: [],
 
   addItem: (item) =>
     set(produce((state: CartState) => {
@@ -92,23 +97,56 @@ export const useCartStore = create<CartState>((set, get) => ({
 
   setDiscount: (discount) => set({ discount }),
 
+  toggleTax: (tax) => set(produce((state: CartState) => {
+    const index = state.appliedTaxes.findIndex(t => t.id === tax.id);
+    if (index > -1) {
+      state.appliedTaxes.splice(index, 1);
+    } else {
+      state.appliedTaxes.push(tax);
+    }
+  })),
+
   getSubtotal: () => {
     return get().items.reduce((acc, item) => acc + item.subtotal, 0);
   },
 
-  getTotal: () => {
+  getDiscountAmount: () => {
     const subtotal = get().getSubtotal();
     const { discount } = get();
-    if (!discount) {
-      return subtotal;
-    }
+    if (!discount || discount.value <= 0) return 0;
+
     if (discount.type === 'percentage') {
-      return subtotal * (1 - discount.value / 100);
+      return (subtotal * discount.value) / 100;
     }
-    return subtotal - discount.value;
+    return discount.value;
   },
 
-  clearCart: () => set({ items: [], discount: null }),
+  getTaxAmount: () => {
+    const subtotal = get().getSubtotal();
+    const discountAmount = get().getDiscountAmount();
+    const baseAmount = Math.max(0, subtotal - discountAmount);
+    const { appliedTaxes } = get();
+
+    return appliedTaxes.reduce((totalTax, tax) => {
+      let taxValue = 0;
+      if (tax.type === 'percentage') {
+        const taxableAmount = Math.max(0, baseAmount - (tax.min_exempt || 0));
+        taxValue = (taxableAmount * tax.value) / 100;
+      } else {
+        taxValue = tax.value;
+      }
+      return totalTax + taxValue;
+    }, 0);
+  },
+
+  getTotal: () => {
+    const subtotal = get().getSubtotal();
+    const discountAmount = get().getDiscountAmount();
+    const taxAmount = get().getTaxAmount();
+    return Math.max(0, subtotal - discountAmount + taxAmount);
+  },
+
+  clearCart: () => set({ items: [], discount: null, appliedTaxes: [] }),
 
   getItemCount: () => {
     return get().items.reduce((acc, item) => acc + item.quantity, 0);

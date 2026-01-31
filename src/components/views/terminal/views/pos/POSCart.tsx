@@ -5,17 +5,26 @@ import { motion } from 'framer-motion';
 import { ShoppingCart, X, Trash2, Minus, Plus, DollarSign, CreditCard, Loader2, Check } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { toast } from 'sonner';
-import { PaymentMethod } from '@/types';
+import { PaymentMethod, TaxConfiguration } from '@/types';
 import { useIsMobile } from '@/hooks/ui/useMobile';
+import { useTaxes } from '@/hooks/api/useTaxes';
+import { useAuthStore } from '@/store';
 
 interface POSCartProps {
   items: any[];
   onRemoveItem: (productId: string, variantId: string | null) => void;
   onUpdateQuantity: (productId: string, variantId: string | null, quantity: number) => void;
   onClearCart: () => void;
+  getSubtotal: () => number;
+  getDiscountAmount: () => number;
+  getTaxAmount: () => number;
   getTotal: () => number;
+  discount: { type: 'fixed' | 'percentage', value: number } | null;
+  setDiscount: (discount: { type: 'fixed' | 'percentage', value: number } | null) => void;
+  appliedTaxes: TaxConfiguration[];
+  toggleTax: (tax: TaxConfiguration) => void;
   isProcessing: boolean;
-  onCheckout: (paymentMethod: PaymentMethod, discount?: { type: string, value: number } | null) => Promise<void>;
+  onCheckout: (paymentMethod: PaymentMethod, discount?: { type: 'fixed' | 'percentage', value: number } | null) => Promise<void>;
   onClose: () => void;
 }
 
@@ -24,13 +33,21 @@ export const POSCart = ({
   onRemoveItem,
   onUpdateQuantity,
   onClearCart,
+  getSubtotal,
+  getDiscountAmount,
+  getTaxAmount,
   getTotal,
+  discount,
+  setDiscount,
+  appliedTaxes,
+  toggleTax,
   isProcessing,
   onCheckout,
   onClose
 }: POSCartProps) => {
+  const { user } = useAuthStore();
+  const { data: taxes = [] } = useTaxes(user?.activeStoreId);
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>('cash');
-  const [localDiscount, setLocalDiscount] = useState({ type: 'fixed', value: 0 });
   const isMobile = useIsMobile();
 
   const Container = isMobile ? 'div' : motion.div;
@@ -108,41 +125,135 @@ export const POSCart = ({
               </div>
 
               <div className="space-y-6 pt-6 border-t border-border">
-                <div className="px-2 space-y-2">
-                  <label className="text-[9px] font-black uppercase text-muted-foreground tracking-widest block">Descuento (%)</label>
-                  <div className="flex gap-2 mb-2">
+                {/* Descuento Section */}
+                <div className="px-2 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <label className="text-[9px] font-black uppercase text-muted-foreground tracking-widest block">Descuento</label>
+                    <div className="flex gap-1 bg-muted p-0.5 rounded-lg border border-border">
+                      <button
+                        onClick={() => setDiscount({ type: 'percentage', value: discount?.value || 0 })}
+                        className={cn(
+                          "px-2 py-0.5 rounded-md text-[9px] font-black uppercase transition-all",
+                          discount?.type === 'percentage' ? "bg-primary text-white" : "text-muted-foreground"
+                        )}
+                      >
+                        %
+                      </button>
+                      <button
+                        onClick={() => setDiscount({ type: 'fixed', value: discount?.value || 0 })}
+                        className={cn(
+                          "px-2 py-0.5 rounded-md text-[9px] font-black uppercase transition-all",
+                          discount?.type === 'fixed' ? "bg-primary text-white" : "text-muted-foreground"
+                        )}
+                      >
+                        $
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
                     {[0, 5, 10, 15].map(d => (
                       <button
                         key={d}
                         onClick={() => {
-                          setLocalDiscount({ ...localDiscount, value: d });
-                          if (d > 0) toast.success(`Descuento de ${d}% aplicado`);
+                          setDiscount({ type: discount?.type || 'percentage', value: d });
                         }}
                         className={cn(
                           "flex-1 py-2 rounded-lg border font-black text-[10px] uppercase transition-all",
-                          localDiscount.value === d ? "bg-primary text-white border-primary" : "bg-background text-muted-foreground border-border"
+                          discount?.value === d && discount?.type === 'percentage' ? "bg-primary text-white border-primary" : "bg-background text-muted-foreground border-border"
                         )}
                       >
                         {d === 0 ? 'Sin' : `${d}%`}
                       </button>
                     ))}
                   </div>
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={localDiscount.value || ''}
-                    onChange={(e) => setLocalDiscount({ ...localDiscount, value: parseInt(e.target.value) || 0 })}
-                    className="w-full p-2 rounded-lg border border-border bg-background text-sm font-bold focus:ring-1 focus:ring-primary outline-none"
-                    placeholder="0"
-                  />
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-black text-xs">
+                      {discount?.type === 'percentage' ? '%' : '$'}
+                    </span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={discount?.value || ''}
+                      onChange={(e) => setDiscount({ type: discount?.type || 'percentage', value: parseFloat(e.target.value) || 0 })}
+                      className="w-full pl-8 p-2 rounded-lg border border-border bg-background text-sm font-bold focus:ring-1 focus:ring-primary outline-none"
+                      placeholder="0"
+                    />
+                  </div>
                 </div>
 
-                <div className="flex justify-between items-center px-2">
-                   <span className="text-xs font-black uppercase text-muted-foreground tracking-widest">Total a Pagar</span>
-                   <span className="text-4xl sm:text-4xl lg:text-4xl font-black text-primary tracking-tighter max-sm:text-5xl transition-all">
-                     {formatCurrency(getTotal())}
-                   </span>
+                {/* Impuestos Section */}
+                {taxes.length > 0 && (
+                  <div className="px-2 space-y-2">
+                    <label className="text-[9px] font-black uppercase text-muted-foreground tracking-widest block">Impuestos Aplicables</label>
+                    <div className="grid grid-cols-1 gap-2">
+                      {taxes.map(tax => (
+                        <button
+                          key={tax.id}
+                          onClick={() => toggleTax(tax)}
+                          className={cn(
+                            "flex items-center justify-between p-3 rounded-xl border transition-all text-left",
+                            appliedTaxes.some(t => t.id === tax.id)
+                              ? "bg-primary/5 border-primary shadow-sm"
+                              : "bg-background border-border"
+                          )}
+                        >
+                          <div>
+                            <div className={cn(
+                              "text-[10px] font-black uppercase tracking-tight",
+                              appliedTaxes.some(t => t.id === tax.id) ? "text-primary" : "text-foreground"
+                            )}>
+                              {tax.name}
+                            </div>
+                            <div className="text-[9px] font-bold text-muted-foreground uppercase">
+                              {tax.type === 'percentage' ? `${tax.value}%` : formatCurrency(tax.value)}
+                              {tax.min_exempt ? ` (Mín. Exento: ${tax.min_exempt})` : ''}
+                            </div>
+                          </div>
+                          <div className={cn(
+                            "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all",
+                            appliedTaxes.some(t => t.id === tax.id) ? "bg-primary border-primary" : "border-border"
+                          )}>
+                            {appliedTaxes.some(t => t.id === tax.id) && <Check className="w-3 h-3 text-white" />}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Resumen de Totales */}
+                <div className="px-4 py-6 bg-muted/30 rounded-2xl border border-border/50 space-y-3">
+                  <div className="flex justify-between items-center text-[10px] font-black uppercase text-muted-foreground tracking-widest">
+                    <span>Subtotal</span>
+                    <span className="text-foreground">{formatCurrency(getSubtotal())}</span>
+                  </div>
+
+                  {getDiscountAmount() > 0 && (
+                    <div className="flex justify-between items-center text-[10px] font-black uppercase text-destructive tracking-widest">
+                      <span>Descuento ({discount?.type === 'percentage' ? `${discount.value}%` : 'Monto'})</span>
+                      <span>-{formatCurrency(getDiscountAmount())}</span>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between items-center pt-2 border-t border-border/50">
+                    <span className="text-[10px] font-black uppercase text-primary tracking-widest">Valor a Cobrar (Base)</span>
+                    <span className="text-sm font-black text-primary">{formatCurrency(Math.max(0, getSubtotal() - getDiscountAmount()))}</span>
+                  </div>
+
+                  {getTaxAmount() > 0 && (
+                    <div className="flex justify-between items-center text-[10px] font-black uppercase text-amber-600 tracking-widest">
+                      <span>Impuestos</span>
+                      <span>+{formatCurrency(getTaxAmount())}</span>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between items-center pt-4 border-t-2 border-primary/20">
+                    <span className="text-xs font-black uppercase text-foreground tracking-widest">Total Final</span>
+                    <span className="text-4xl font-black text-primary tracking-tighter">
+                      {formatCurrency(getTotal())}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -169,7 +280,7 @@ export const POSCart = ({
                 </div>
 
                 <button
-                  onClick={() => onCheckout(selectedPayment, localDiscount.value > 0 ? localDiscount : null)}
+                  onClick={() => onCheckout(selectedPayment, (discount && discount.value > 0) ? discount : null)}
                   disabled={isProcessing || items.length === 0}
                   className="w-full py-5 rounded-xl bg-primary text-white font-black text-lg shadow-2xl disabled:opacity-50 flex items-center justify-center gap-3 transition-transform active:scale-[0.98]"
                 >

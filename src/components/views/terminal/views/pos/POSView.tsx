@@ -82,7 +82,14 @@ export default function POSView() {
     removeItem,
     updateQuantity,
     clearCart,
+    getSubtotal,
+    getDiscountAmount,
+    getTaxAmount,
     getTotal,
+    discount,
+    setDiscount,
+    appliedTaxes,
+    toggleTax,
     getItemCount,
     startCheckout,
     confirmUnpricedCheckout,
@@ -128,7 +135,14 @@ export default function POSView() {
               onRemoveItem={removeItem}
               onUpdateQuantity={updateQuantity}
               onClearCart={clearCart}
+              getSubtotal={getSubtotal}
+              getDiscountAmount={getDiscountAmount}
+              getTaxAmount={getTaxAmount}
               getTotal={getTotal}
+              discount={discount}
+              setDiscount={setDiscount}
+              appliedTaxes={appliedTaxes}
+              toggleTax={toggleTax}
               isProcessing={isProcessingSale}
               onCheckout={startCheckout}
               onClose={() => setShowCart(false)}
@@ -144,7 +158,14 @@ export default function POSView() {
                 onRemoveItem={removeItem}
                 onUpdateQuantity={updateQuantity}
                 onClearCart={clearCart}
+                getSubtotal={getSubtotal}
+                getDiscountAmount={getDiscountAmount}
+                getTaxAmount={getTaxAmount}
                 getTotal={getTotal}
+                discount={discount}
+                setDiscount={setDiscount}
+                appliedTaxes={appliedTaxes}
+                toggleTax={toggleTax}
                 isProcessing={isProcessingSale}
                 onCheckout={startCheckout}
                 onClose={() => setShowCart(false)}

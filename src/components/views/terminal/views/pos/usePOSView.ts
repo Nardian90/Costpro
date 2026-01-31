@@ -15,14 +15,18 @@ import { Product } from '@/types';
 
 export function usePOSView() {
   const { user } = useAuthStore();
-  const { items, addItem, removeItem, updateQuantity, clearCart, getTotal, getSubtotal, getItemCount, discount } = useCartStore();
+  const {
+    items, addItem, removeItem, updateQuantity, clearCart,
+    getTotal, getSubtotal, getDiscountAmount, getTaxAmount,
+    getItemCount, discount, setDiscount, appliedTaxes, toggleTax
+  } = useCartStore();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [posLayoutMode, setPosLayoutMode] = useState<'grid' | 'table'>('grid');
   const [showPriceWarning, setShowPriceWarning] = useState(false);
   const [pendingCheckoutData, setPendingCheckoutData] = useState<{
     paymentMethod: PaymentMethod;
-    discount: any;
+    discount: { type: 'fixed' | 'percentage', value: number } | null | undefined;
   } | null>(null);
 
   // Data Fetching
@@ -53,7 +57,7 @@ export function usePOSView() {
     toast.success(`${product.name} agregado`);
   }
 
-  const startCheckout = async (paymentMethod: PaymentMethod, checkoutDiscount?: { type: string, value: number } | null) => {
+  const startCheckout = async (paymentMethod: PaymentMethod, checkoutDiscount?: { type: 'fixed' | 'percentage', value: number } | null) => {
     const unpricedItems = items.filter(i => i.price === null || i.price <= 0);
     if (unpricedItems.length > 0) {
       setPendingCheckoutData({ paymentMethod, discount: checkoutDiscount });
@@ -78,7 +82,7 @@ export function usePOSView() {
     setPendingCheckoutData(null);
   };
 
-  const handleCheckout = async (paymentMethod: PaymentMethod, checkoutDiscount?: { type: string, value: number } | null) => {
+  const handleCheckout = async (paymentMethod: PaymentMethod, checkoutDiscount?: { type: 'fixed' | 'percentage', value: number } | null) => {
     if (items.length === 0 || createSaleMutation.isPending || !user) return;
 
     const toastId = toast.loading('Procesando venta...');
@@ -97,14 +101,16 @@ export function usePOSView() {
         p_store_id: user.activeStoreId,
         p_seller_id: user.id,
         p_payment_method: paymentMethod,
-        p_total_amount: Number(getTotal().toFixed(2)), // Keep Number casting for API
-        p_subtotal: Number(getSubtotal().toFixed(2)), // Keep Number casting for API
+        p_total_amount: Number(getTotal().toFixed(2)),
+        p_subtotal: Number(getSubtotal().toFixed(2)),
         p_discount_type: (finalDiscount?.type || 'fixed') as string,
         p_discount_value: Number(finalDiscount?.value || 0),
         p_items: items.map(i => ({
           product_id: i.product_id, variant_id: i.variant_id,
           quantity: i.quantity, price: i.price, cost: i.cost
-        }))
+        })),
+        p_applied_taxes: appliedTaxes,
+        p_tax_amount: Number(getTaxAmount().toFixed(2))
       };
 
       const validationResult = createSaleParamsSchema.safeParse(saleParams);
@@ -153,7 +159,13 @@ export function usePOSView() {
     clearCart,
     getTotal,
     getSubtotal,
+    getDiscountAmount,
+    getTaxAmount,
     getItemCount,
+    discount,
+    setDiscount,
+    appliedTaxes,
+    toggleTax,
 
     // Operations
     startCheckout,
