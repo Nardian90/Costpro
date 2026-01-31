@@ -45,7 +45,7 @@ const CostSheetRow: React.FC<RowProps> = ({ row, level, calculatedValues, path, 
   const [isExpanded, setIsExpanded] = useState(true);
   const { updateValue } = useCostSheetStore();
   const hasChildren = row.children && row.children.length > 0;
-  const calculated = calculatedValues[row.id] || { total: 0, valorHistorico: 0, baseTotal: 0, coeficiente: 0 };
+  const calculated = calculatedValues[row.id] || { total: 0, valorHistorico: 0, baseTotal: 0, coeficiente: 0, hasWarnings: false, audits: [] };
 
   const handleToggle = () => {
     if (hasChildren) {
@@ -65,7 +65,7 @@ const CostSheetRow: React.FC<RowProps> = ({ row, level, calculatedValues, path, 
   ], [annexes, allRows]);
 
   const isResultRow = row.is_percent || ['5', '12', '13', '13.1', '13.2', '14'].includes(row.id);
-  const showWarning = !hasChildren && !row.is_percent && calculated.total === 0 && ((row.valorHistorico ?? 0) > 0 || !!row.baseDeCalculoRef);
+  const showWarning = calculated.hasWarnings || (!hasChildren && !row.is_percent && calculated.total === 0 && ((row.valorHistorico ?? 0) > 0 || !!row.baseDeCalculoRef));
 
   return (
     <>
@@ -155,11 +155,24 @@ const CostSheetRow: React.FC<RowProps> = ({ row, level, calculatedValues, path, 
             {showWarning && (
                 <Popover>
                     <PopoverTrigger asChild>
-                        <AlertTriangle className="w-4 h-4 text-amber-500 cursor-help animate-pulse" />
+                        <AlertTriangle className={cn("w-4 h-4 cursor-help animate-pulse", calculated.hasWarnings ? "text-destructive" : "text-amber-500")} />
                     </PopoverTrigger>
-                    <PopoverContent className="w-64">
-                        <p className="text-xs font-bold text-amber-600 mb-1">Advertencia de Cálculo</p>
-                        <p className="text-[10px] text-slate-500">Esta fila tiene un total de 0.00 pero tiene una base de cálculo o valor histórico asignado. Verifique el prorrateo o la fórmula.</p>
+                    <PopoverContent className="w-80">
+                        <p className={cn("text-xs font-bold mb-1", calculated.hasWarnings ? "text-destructive" : "text-amber-600")}>
+                            {calculated.hasWarnings ? "Errores de Motor" : "Advertencia de Cálculo"}
+                        </p>
+                        <div className="space-y-2">
+                            {calculated.audits && calculated.audits.length > 0 ? (
+                                calculated.audits.map((a: any, idx: number) => (
+                                    <div key={idx} className="text-[10px] bg-muted p-1.5 rounded border border-border">
+                                        <span className="font-bold uppercase text-[8px] block opacity-50">{a.type}</span>
+                                        {a.note}
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-[10px] text-slate-500">Esta fila tiene un total de 0.00 pero tiene una base de cálculo o valor histórico asignado. Verifique el prorrateo o la fórmula.</p>
+                            )}
+                        </div>
                     </PopoverContent>
                 </Popover>
             )}
