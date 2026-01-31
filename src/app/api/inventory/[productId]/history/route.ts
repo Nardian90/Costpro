@@ -37,8 +37,8 @@ export async function GET(
       {
         p_product_id: productId,
         p_store_id: storeId,
-        p_page: page,
-        p_page_size: pageSize,
+        p_limit: pageSize,
+        p_offset: (page - 1) * pageSize,
       }
     );
 

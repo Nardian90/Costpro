@@ -4,11 +4,12 @@
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Download, Play, Save, Loader2, AlertTriangle, FileSpreadsheet } from 'lucide-react';
+import { FileText, Download, Play, Save, Loader2, AlertTriangle, FileSpreadsheet, History } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store';
 import { ReportConfigPanel } from './ReportConfigPanel';
 import { ReportPreview } from './ReportPreview';
+import { AuditLogsModal } from './AuditLogsModal';
 import { ReportType, ReportDefinition } from '@/types';
 import { COLUMN_LABELS } from '@/contracts/reports';
 
@@ -29,6 +30,7 @@ export default function ReportsView() {
 
   const [isSaving, setIsSaving] = useState(false);
   const [isExportingExcel, setIsExportingExcel] = useState(false);
+  const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
 
   const handleSave = async () => {
     if (!user?.activeStoreId) {
@@ -169,6 +171,14 @@ export default function ReportsView() {
              )}
            </Button>
            <Button
+             onClick={() => setIsAuditModalOpen(true)}
+             variant="ghost"
+             className="rounded-xl hover:bg-primary/10 text-primary font-bold uppercase tracking-widest text-[10px]"
+           >
+             <History className="w-4 h-4 mr-2" />
+             Auditoría
+           </Button>
+           <Button
              onClick={handleGenerate}
              disabled={isGenerating}
              className="rounded-xl bg-primary text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20"
@@ -181,6 +191,12 @@ export default function ReportsView() {
            </Button>
         </div>
       </div>
+
+      <AuditLogsModal
+        isOpen={isAuditModalOpen}
+        onClose={() => setIsAuditModalOpen(false)}
+        storeId={config.store_id || user?.activeStoreId}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-1 space-y-4">
