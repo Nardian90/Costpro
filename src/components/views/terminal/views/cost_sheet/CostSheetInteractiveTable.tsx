@@ -3,7 +3,6 @@
 
 import React, { useState, useMemo, memo } from 'react';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
-import { useCostSheetCalculatedValues } from './CostSheetContext';
 import { ChevronRight, HelpCircle, CornerDownRight, AlertTriangle } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -24,6 +23,7 @@ type CalculatedValues = Record<string, CalculatedRowValue>;
 // Props for the main table component
 interface CostSheetInteractiveTableProps {
   sections: CostSheetSection[];
+  calculatedValues: CalculatedValues;
   annexes: CostSheetAnnex[];
 }
 
@@ -31,6 +31,8 @@ interface CostSheetInteractiveTableProps {
 interface RowProps {
   row: RowData;
   level: number;
+  calculated: CalculatedRowValue;
+  calculatedValues: CalculatedValues;
   path: (string | number)[]; // Path to this row in the Zustand store
   annexes: CostSheetAnnex[];
   suggestions: { label: string; value: string; description?: string }[];
@@ -39,12 +41,10 @@ interface RowProps {
 /**
  * Renders a single, potentially recursive, row in the cost sheet table.
  */
-const CostSheetRow: React.FC<RowProps> = memo(({ row, level, path, annexes, suggestions }) => {
+const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calculatedValues, path, annexes, suggestions }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isEditingTotal, setIsEditingTotal] = useState(false);
   const { updateValue } = useCostSheetStore();
-  const calculatedValues = useCostSheetCalculatedValues();
-  const calculated = calculatedValues[row.id];
 
   const hasChildren = row.children && row.children.length > 0;
 
@@ -205,6 +205,8 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, path, annexes, sugg
           key={child.id}
           row={child}
           level={level + 1}
+          calculated={calculatedValues[child.id]}
+          calculatedValues={calculatedValues}
           path={[...path, 'children', index]}
           annexes={annexes}
           suggestions={suggestions}
@@ -218,7 +220,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, path, annexes, sugg
  * The main interactive table component for the Cost Sheet.
  * Decomposed by sections for a more professional and clean enterprise-level experience.
  */
-const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = ({ sections, annexes }) => {
+const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = ({ sections, calculatedValues, annexes }) => {
   const [activeSubSectionId, setActiveSubSectionId] = useState(sections[0]?.id || '');
 
   const flattenRows = (rows: RowData[]): RowData[] => {
@@ -298,6 +300,8 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = ({ s
                                         key={row.id}
                                         row={row}
                                         level={0}
+                                        calculated={calculatedValues[row.id]}
+                                        calculatedValues={calculatedValues}
                                         path={['sections', sectionIndex, 'rows', rowIndex]}
                                         annexes={annexes}
                                         suggestions={suggestions}
