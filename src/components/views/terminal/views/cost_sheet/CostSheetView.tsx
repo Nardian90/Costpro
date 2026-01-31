@@ -17,8 +17,9 @@ import { CostSheetModeSwitcher } from './CostSheetModeSwitcher';
 import { CostSheetAuditLog } from './CostSheetAuditLog';
 import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
 import ActionMenu from '@/components/ui/ActionMenu';
-import { Eye, Edit, FileText, Trash2, Download, FileSpreadsheet, Upload, Save } from 'lucide-react';
+import { Eye, Edit, FileText, Trash2, Download, FileSpreadsheet, Upload, Save, BarChart3, Activity } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store';
 import { exportToPDF, exportToCSV } from '@/services/export-service';
@@ -31,6 +32,7 @@ const CostSheetView = () => {
   const [viewMode, setViewMode] = useState<'expert' | 'assisted' | 'reading'>('expert');
   const [layoutMode, setLayoutMode] = useState<ViewMode>('grid');
   const [activeSection, setActiveSection] = useState('header');
+  const [showKpiOnly, setShowKpiOnly] = useState(false);
 
   const previewRef = useRef(null);
   const exportRef = useRef(null);
@@ -160,8 +162,18 @@ const CostSheetView = () => {
                 id: 'toggle-mode',
                 label: isEditing ? 'Ver Resultado' : 'Seguir Editando',
                 icon: isEditing ? Eye : Edit,
-                onClick: () => setIsEditing(!isEditing),
+                onClick: () => {
+                    setIsEditing(!isEditing);
+                    setShowKpiOnly(false);
+                },
                 variant: 'primary',
+            },
+            {
+                id: 'toggle-kpi',
+                label: showKpiOnly ? 'Vista Completa' : 'Ver KPIs',
+                icon: BarChart3,
+                onClick: () => setShowKpiOnly(!showKpiOnly),
+                variant: showKpiOnly ? 'success' : 'outline',
             },
             { id: 'load-example', label: 'Ejemplo', icon: FileText, onClick: loadExample, variant: 'outline' },
             { id: 'reset', label: 'Reiniciar', icon: Trash2, onClick: reset, variant: 'danger' },
@@ -186,35 +198,63 @@ const CostSheetView = () => {
         <div className="animate-in fade-in duration-700 space-y-6">
           {viewMode === 'expert' && (
             <>
-                <CostSheetSummary
-                    calculatedValues={calculatedValues}
-                    data={data}
-                />
-                <CostSheetNav
-                    sections={[{ id: 'header', label: 'Encabezado' }, { id: 'main', label: 'Tabla Principal' }]}
-                    annexes={data.annexes}
-                    activeSection={activeSection}
-                    setActiveSection={setActiveSection}
-                />
-                <div className="mt-4">
-                    {activeSection === 'header' && <CostSheetHeaderEditor />}
-                    {activeSection === 'main' && (
-                    <CostSheetInteractiveTable
-                        sections={data.sections}
-                        calculatedValues={calculatedValues}
-                        annexes={data.annexes}
-                    />
-                    )}
-                    {isAnnexActive && (
-                      <CostSheetAnnexEditor
-                        activeAnnexId={activeSection}
-                        layoutMode={layoutMode}
-                      />
-                    )}
-                    {activeSection === 'signature' && <CostSheetSignatureEditor />}
-                </div>
-
-                <CostSheetAuditLog audits={audits} />
+                {showKpiOnly ? (
+                    <div className="animate-in zoom-in-95 duration-500 py-8">
+                         <CostSheetSummary
+                            calculatedValues={calculatedValues}
+                            data={data}
+                        />
+                        <div className="flex justify-center mt-12">
+                            <Button
+                                variant="outline"
+                                className="rounded-full px-8 border-primary/20 hover:bg-primary/5"
+                                onClick={() => setShowKpiOnly(false)}
+                            >
+                                <Eye className="w-4 h-4 mr-2" />
+                                Volver a la Vista Detallada
+                            </Button>
+                        </div>
+                    </div>
+                ) : (
+                    <>
+                        <CostSheetSummary
+                            calculatedValues={calculatedValues}
+                            data={data}
+                        />
+                        <CostSheetNav
+                            sections={[
+                                { id: 'header', label: 'Encabezado' },
+                                { id: 'main', label: 'Tabla Principal' },
+                                { id: 'audit', label: 'Auditoría', icon: Activity }
+                            ]}
+                            annexes={data.annexes}
+                            activeSection={activeSection}
+                            setActiveSection={setActiveSection}
+                        />
+                        <div className="mt-4">
+                            {activeSection === 'header' && <CostSheetHeaderEditor />}
+                            {activeSection === 'main' && (
+                            <CostSheetInteractiveTable
+                                sections={data.sections}
+                                calculatedValues={calculatedValues}
+                                annexes={data.annexes}
+                            />
+                            )}
+                            {isAnnexActive && (
+                              <CostSheetAnnexEditor
+                                activeAnnexId={activeSection}
+                                layoutMode={layoutMode}
+                              />
+                            )}
+                            {activeSection === 'signature' && <CostSheetSignatureEditor />}
+                            {activeSection === 'audit' && (
+                                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                    <CostSheetAuditLog audits={audits} />
+                                </div>
+                            )}
+                        </div>
+                    </>
+                )}
             </>
           )}
 

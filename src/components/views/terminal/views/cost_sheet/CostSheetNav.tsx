@@ -23,7 +23,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
     ...sections.map(s => ({
         id: s.id,
         label: s.label,
-        icon: s.id === 'header' ? Layout : ClipboardList,
+        icon: s.icon || (s.id === 'header' ? Layout : ClipboardList),
         onClick: () => setActiveSection(s.id),
         active: activeSection === s.id
     })),

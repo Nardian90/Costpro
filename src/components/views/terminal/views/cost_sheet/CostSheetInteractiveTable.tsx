@@ -4,7 +4,7 @@
 import React, { useState, useMemo, memo } from 'react';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
 import { useCostSheetCalculator } from '@/hooks/logic/useCostSheetCalculator';
-import { ChevronRight, HelpCircle, CornerDownRight, AlertTriangle, Settings2, Eye } from 'lucide-react';
+import { ChevronRight, HelpCircle, CornerDownRight, AlertTriangle } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -37,13 +37,12 @@ interface RowProps {
   path: (string | number)[]; // Path to this row in the Zustand store
   annexes: CostSheetAnnex[];
   allRows: RowData[];
-  isTechnicalMode: boolean;
 }
 
 /**
  * Renders a single, potentially recursive, row in the cost sheet table.
  */
-const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calculatedValues, path, annexes, allRows, isTechnicalMode }) => {
+const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calculatedValues, path, annexes, allRows }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isEditingTotal, setIsEditingTotal] = useState(false);
   const { updateValue } = useCostSheetStore();
@@ -61,24 +60,28 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
 
   const handleTotalSave = (val: string) => {
     setIsEditingTotal(false);
-    if (val.startsWith('=')) {
+
+    // Improved check for fixed values, especially '0'
+    const trimmedVal = val.trim();
+    if (trimmedVal.startsWith('=')) {
       // It's a formula
-      updateValue([...path, 'formula'], val);
+      updateValue([...path, 'formula'], trimmedVal);
       updateValue([...path, 'calculationMethod'], 'FORMULA');
-    } else {
-      // It's a fixed value
-      const num = parseFloat(val) || 0;
+    } else if (trimmedVal !== '' && !isNaN(Number(trimmedVal))) {
+      // It's a valid fixed number (including 0)
+      const num = Number(trimmedVal);
       const field = row.hasOwnProperty('valorHistorico') ? 'valorHistorico' : 'value';
       updateValue([...path, field], num);
       updateValue([...path, 'calculationMethod'], 'ValorFijo');
       updateValue([...path, 'formula'], ''); // Clear formula
+    } else if (trimmedVal === '') {
+        // Reset to 0 if empty
+        const field = row.hasOwnProperty('valorHistorico') ? 'valorHistorico' : 'value';
+        updateValue([...path, field], 0);
+        updateValue([...path, 'calculationMethod'], 'ValorFijo');
+        updateValue([...path, 'formula'], '');
     }
   };
-
-  const baseOptions = useMemo(() => [
-    ...annexes.map(a => ({ value: a.id, label: `Anexo ${a.id}`, description: a.title })),
-    ...allRows.filter(r => r.id !== row.id).map(r => ({ value: r.id, label: `Fila ${r.id}: ${r.label}` }))
-  ], [annexes, allRows, row.id]);
 
   const suggestions = useMemo(() => [
     ...annexes.map(a => ({ label: `Anexo ${a.id}`, value: `Anexo${a.id}`, description: a.title })),
@@ -117,12 +120,8 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
         </TableCell>
 
         {/* Valor Histórico / % */}
-        <TableCell className={cn("px-4 py-2 text-right w-32", !isTechnicalMode && "hidden")}>
-          {(row.calculationMethod === 'Prorrateo' || row.hasOwnProperty('formula') || hasChildren) && !row.is_percent ? (
-            <div className="h-8 flex items-center justify-end px-3 text-sm font-bold text-primary/70 bg-primary/5 rounded-md border border-primary/10 tabular-nums">
-              {formatCurrency(safeCalculated.valorHistorico || 0).replace('$', '').trim()}
-            </div>
-          ) : (row.hasOwnProperty('valorHistorico') || row.hasOwnProperty('value')) ? (
+        <TableCell className="px-4 py-2 text-right w-40">
+          {(row.hasOwnProperty('valorHistorico') || row.hasOwnProperty('value')) ? (
             <div className="relative">
                 <Input
                 type="number"
@@ -141,43 +140,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
                 />
                 {row.is_percent && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">%</span>}
             </div>
-          ) : <span className="text-sm text-slate-400">-</span>}
-        </TableCell>
-
-        {/* Forma de Cálculo */}
-        <TableCell className={cn("px-4 py-2 w-40", !isTechnicalMode && "hidden")}>
-          {!hasChildren && !row.formula && !row.is_percent ? (
-            <Select value={row.calculationMethod || 'ValorFijo'} onValueChange={(value) => handleValueChange('calculationMethod', value)}>
-              <SelectTrigger className="neu-input h-8">
-                <SelectValue placeholder="Método..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Prorrateo">Prorrateo</SelectItem>
-                <SelectItem value="ValorFijo">Valor Fijo</SelectItem>
-              </SelectContent>
-            </Select>
-          ) : <span className="text-sm text-slate-400">{row.calculationMethod || (row.formula ? 'Fórmula' : '-')}</span>}
-        </TableCell>
-
-        {/* Base de Cálculo */}
-        <TableCell className={cn("px-4 py-2 min-w-[180px]", !isTechnicalMode && "hidden")}>
-          {!hasChildren && !row.formula && !row.is_percent ? (
-             <Select value={row.baseDeCalculoRef || ''} onValueChange={(value) => handleValueChange('baseDeCalculoRef', value)}>
-                <SelectTrigger className="neu-input h-8 w-full">
-                    <div className="truncate text-left pr-2">
-                      <SelectValue placeholder="Seleccionar Base..." />
-                    </div>
-                </SelectTrigger>
-                <SelectContent className="max-w-[400px]">
-                    {baseOptions.map(opt => <SelectItem key={opt.value} value={opt.value} className="truncate">{opt.label}</SelectItem>)}
-                </SelectContent>
-            </Select>
-          ) : <span className="text-sm text-slate-400">{row.baseDeCalculoRef || '-'}</span>}
-        </TableCell>
-
-        {/* Coeficiente */}
-        <TableCell className={cn("px-4 py-2 text-right tabular-nums text-muted-foreground w-32", !isTechnicalMode && "hidden")}>
-          {safeCalculated.coeficiente > 0 ? safeCalculated.coeficiente.toFixed(6) : <span className="text-sm text-slate-400">-</span>}
+          ) : <span className="text-sm text-slate-400 italic">Auto</span>}
         </TableCell>
 
         {/* Total */}
@@ -250,7 +213,6 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
           path={[...path, 'children', index]}
           annexes={annexes}
           allRows={allRows}
-          isTechnicalMode={isTechnicalMode}
         />
       ))}
     </>
@@ -259,10 +221,9 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
 
 /**
  * The main interactive table component for the Cost Sheet.
+ * Decomposed by sections for a more professional and clean enterprise-level experience.
  */
 const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = ({ sections, calculatedValues, annexes }) => {
-  const [isTechnicalMode, setIsTechnicalMode] = useState(false);
-
   const flattenRows = (rows: RowData[]): RowData[] => {
     let all: RowData[] = [];
     for (const row of rows) {
@@ -277,59 +238,44 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = ({ s
   const allRows = useMemo(() => flattenRows(sections.flatMap(s => s.rows)), [sections]);
 
   return (
-    <div data-testid="cost-sheet-interactive-table" className="space-y-4">
-        <div className="flex justify-end px-2">
-            <button
-                onClick={() => setIsTechnicalMode(!isTechnicalMode)}
-                className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                    isTechnicalMode ? "bg-primary text-white" : "bg-muted text-muted-foreground hover:bg-muted/80"
-                )}
-            >
-                {isTechnicalMode ? <Eye className="w-3.5 h-3.5" /> : <Settings2 className="w-3.5 h-3.5" />}
-                {isTechnicalMode ? "Modo Operativo" : "Modo Técnico"}
-            </button>
-        </div>
+    <div data-testid="cost-sheet-interactive-table" className="space-y-8">
+        {sections.map((section, sectionIndex) => (
+            <div key={section.id} className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                <div className="flex items-center gap-3 mb-4 px-1">
+                    <div className="w-1.5 h-6 bg-primary rounded-full" />
+                    <h3 className="text-sm font-black uppercase tracking-[0.2em] text-foreground/80">
+                        {section.label}
+                    </h3>
+                </div>
 
-        <div className="neu-card p-0 overflow-hidden border-border/50">
-            <Table className="w-full table-fixed min-w-[800px]">
-            <TableHeader className="bg-muted/30 text-muted-foreground font-black uppercase text-[10px] tracking-widest border-b border-border">
-                <TableRow>
-                <TableHead className="px-4 py-4 text-left font-black uppercase tracking-widest sticky-column-1 min-w-[250px]">Concepto</TableHead>
-                <TableHead className={cn("px-4 py-4 text-right font-black uppercase tracking-widest w-32", !isTechnicalMode && "hidden")}>Valor Histórico</TableHead>
-                <TableHead className={cn("px-4 py-4 text-left font-black uppercase tracking-widest w-40", !isTechnicalMode && "hidden")}>Forma de Cálculo</TableHead>
-                <TableHead className={cn("px-4 py-4 text-left font-black uppercase tracking-widest w-56", !isTechnicalMode && "hidden")}>Base de Cálculo</TableHead>
-                <TableHead className={cn("px-4 py-4 text-right font-black uppercase tracking-widest w-32", !isTechnicalMode && "hidden")}>Coeficiente</TableHead>
-                <TableHead className="px-4 py-4 text-right font-black uppercase tracking-widest w-48">Total</TableHead>
-                <TableHead className="px-4 py-4 text-center font-black uppercase tracking-widest w-20">Ayuda</TableHead>
-                </TableRow>
-            </TableHeader>
-          <TableBody>
-            {sections.map((section, sectionIndex) => (
-              <React.Fragment key={section.id}>
-                <TableRow className="bg-muted/50 border-b border-border/50">
-                  <TableCell colSpan={7} className="px-4 py-2 font-black text-primary uppercase tracking-widest text-xs">
-                    {section.label}
-                  </TableCell>
-                </TableRow>
-                {section.rows.map((row: RowData, rowIndex: number) => (
-                  <CostSheetRow
-                    key={row.id}
-                    row={row}
-                    level={0}
-                    calculated={calculatedValues[row.id]}
-                    calculatedValues={calculatedValues}
-                    path={['sections', sectionIndex, 'rows', rowIndex]}
-                    annexes={annexes}
-                    allRows={allRows}
-                    isTechnicalMode={isTechnicalMode}
-                  />
-                ))}
-              </React.Fragment>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+                <div className="neu-card p-0 overflow-hidden border-border/50 shadow-sm hover:shadow-md transition-shadow">
+                    <Table className="w-full table-fixed min-w-[700px]">
+                        <TableHeader className="bg-muted/30 text-muted-foreground font-black uppercase text-[10px] tracking-widest border-b border-border">
+                            <TableRow>
+                                <TableHead className="px-4 py-4 text-left font-black uppercase tracking-widest sticky-column-1 min-w-[250px]">Concepto</TableHead>
+                                <TableHead className="px-4 py-4 text-right font-black uppercase tracking-widest w-40">Valor Histórico</TableHead>
+                                <TableHead className="px-4 py-4 text-right font-black uppercase tracking-widest w-48">Total</TableHead>
+                                <TableHead className="px-4 py-4 text-center font-black uppercase tracking-widest w-20">Ayuda</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {section.rows.map((row: RowData, rowIndex: number) => (
+                                <CostSheetRow
+                                    key={row.id}
+                                    row={row}
+                                    level={0}
+                                    calculated={calculatedValues[row.id]}
+                                    calculatedValues={calculatedValues}
+                                    path={['sections', sectionIndex, 'rows', rowIndex]}
+                                    annexes={annexes}
+                                    allRows={allRows}
+                                />
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
+            </div>
+        ))}
     </div>
   );
 };
