@@ -259,7 +259,7 @@ importers:
         specifier: ^1.57.0
         version: 1.57.0
       '@prisma/client':
-        specifier: ^4.16.2
+        specifier: 4.16.2
         version: 4.16.2(prisma@4.16.2)
       '@tailwindcss/postcss':
         specifier: ^4
@@ -301,7 +301,7 @@ importers:
         specifier: ^27.4.0
         version: 27.4.0
       prisma:
-        specifier: ^4.16.2
+        specifier: 4.16.2
         version: 4.16.2
       tailwindcss:
         specifier: ^4

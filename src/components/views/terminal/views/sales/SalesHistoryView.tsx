@@ -35,7 +35,7 @@ export default function SalesHistoryView() {
   return (
     <>
       <div className="space-y-6">
-        <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase">Ventas</h2>
+        <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase hidden sm:block">Ventas</h2>
 
         <SearchBar
           value={searchTerm}
