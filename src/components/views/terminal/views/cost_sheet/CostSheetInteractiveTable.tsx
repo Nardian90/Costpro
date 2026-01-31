@@ -3,11 +3,12 @@
 
 import React, { useState, useMemo, memo } from 'react';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
-import { ChevronRight, HelpCircle, CornerDownRight, AlertTriangle } from 'lucide-react';
+import { ChevronRight, HelpCircle, CornerDownRight, AlertTriangle, ListFilter, LayoutGrid, ArrowRight } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
 import { cn, formatCurrency } from '@/lib/utils';
 import { FormulaEditor } from './FormulaEditor';
 import {
@@ -226,9 +227,6 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
   );
 });
 
-import { ListFilter } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-
 /**
  * The main interactive table component for the Cost Sheet.
  * Decomposed by sections for a more professional and clean enterprise-level experience.
@@ -267,21 +265,40 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = ({
     { label: 'BASE_TOTAL', value: 'BASE_TOTAL', description: 'Total de la base de cálculo' },
   ], [annexes, allRows]);
 
+  if (!activeSubSectionId) {
+      return (
+          <div className="py-12 px-4 text-center animate-in fade-in slide-in-from-bottom-4 duration-700">
+              <div className="max-w-md mx-auto space-y-6">
+                  <div className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center mx-auto mb-8 neu-raised-sm">
+                      <LayoutGrid className="w-10 h-10 text-primary animate-pulse" />
+                  </div>
+                  <h2 className="text-2xl font-black text-foreground uppercase tracking-tighter italic">Seleccione una Sección</h2>
+                  <p className="text-muted-foreground text-sm font-medium leading-relaxed">
+                      Para comenzar a visualizar o editar los datos de la tabla principal, elija una de las secciones disponibles en el menú superior o en la cuadrícula a continuación.
+                  </p>
+
+                  <div className="grid grid-cols-1 gap-3 pt-8">
+                      {sections.map(section => (
+                          <button
+                            key={section.id}
+                            onClick={() => setActiveSubSectionId(section.id)}
+                            className="flex items-center justify-between p-4 rounded-2xl bg-background border border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all group neu-raised-sm active:scale-[0.98]"
+                          >
+                              <div className="flex items-center gap-3 text-left">
+                                  <div className="w-1.5 h-8 bg-muted group-hover:bg-primary rounded-full transition-colors" />
+                                  <span className="font-bold text-sm uppercase tracking-wider">{section.label}</span>
+                              </div>
+                              <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all translate-x-[-10px] group-hover:translate-x-0" />
+                          </button>
+                      ))}
+                  </div>
+              </div>
+          </div>
+      );
+  }
+
   return (
     <div data-testid="cost-sheet-interactive-table" className="space-y-6">
-        {/* Trigger for Sections Sidebar */}
-        <div className="flex justify-end mb-4 sm:mb-6">
-            <Button
-                variant="outline"
-                size="sm"
-                onClick={onOpenSections}
-                className="rounded-full gap-2 font-black uppercase tracking-widest text-[10px] px-6 neu-raised-sm"
-            >
-                <ListFilter className="w-4 h-4" />
-                Secciones
-            </Button>
-        </div>
-
         {sections.map((section, sectionIndex) => (
             section.id === activeSubSectionId && (
                 <div key={section.id} className="animate-in fade-in slide-in-from-bottom-2 duration-500">

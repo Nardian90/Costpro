@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.18] - 2026-02-27
+
+### Changed
+- **Refactor de Flujo en Ficha de Costo**: Optimización de la navegación en la vista de Ficha de Costo. Se eliminó la carga automática de la "Sección 1" y el botón redundante de "Secciones".
+- **Navegación Intuitiva**: Implementación de un menú desplegable (`DropdownMenu`) en "Tabla Principal" para selección directa de sub-secciones y una vista de cuadrícula de selección inicial.
+- **Hardenización de Estado Inicial**: El sistema ahora inicia con todos los valores en cero (excepto fórmulas de cálculo) y anexos vacíos, garantizando un lienzo limpio para nuevos presupuestos.
+- **Función de Ejemplo Realista**: Incorporación de un botón "Cargar Ejemplo" que genera automáticamente una estructura de costos lógica para la producción de pan artesanal, permitiendo una rápida demostración de las capacidades de la herramienta.
+- **Resiliencia de Reset**: Mejora en la función de reinicio para limpiar datos históricos e ingresos manuales preservando la integridad de las fórmulas de la columna total.
+
+**Nota de Handoff para UX:** Se ha unificado la navegación de secciones dentro del botón "Tabla Principal". La interfaz ahora presenta una cuadrícula de opciones cuando no hay una sección activa, mejorando la ergonomía y claridad del flujo de trabajo.
+
 ## [5.7.17] - 2026-02-26
 
 ### Hardening
