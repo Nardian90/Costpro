@@ -15,6 +15,7 @@ import CostSheetSummary from './CostSheetSummary';
 import { CostSheetBanner } from './CostSheetBanner';
 import { CostSheetModeSwitcher } from './CostSheetModeSwitcher';
 import { CostSheetAuditLog } from './CostSheetAuditLog';
+import { CostSheetProvider } from './CostSheetContext';
 import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
 import ActionMenu from '@/components/ui/ActionMenu';
 import { Eye, Edit, FileText, Trash2, Download, FileSpreadsheet, Upload, Save, BarChart3, Activity } from 'lucide-react';
@@ -174,6 +175,7 @@ const CostSheetView = () => {
                 icon: BarChart3,
                 onClick: () => setShowKpiOnly(!showKpiOnly),
                 variant: showKpiOnly ? 'success' : 'outline',
+                className: "shadow-md scale-105"
             },
             { id: 'load-example', label: 'Ejemplo', icon: FileText, onClick: loadExample, variant: 'outline' },
             { id: 'reset', label: 'Reiniciar', icon: Trash2, onClick: reset, variant: 'danger' },
@@ -236,11 +238,12 @@ const CostSheetView = () => {
                         <div className="mt-4">
                             {activeSection === 'header' && <CostSheetHeaderEditor />}
                             {activeSection === 'main' && (
-                            <CostSheetInteractiveTable
-                                sections={data.sections}
-                                calculatedValues={calculatedValues}
-                                annexes={data.annexes}
-                            />
+                            <CostSheetProvider calculatedValues={calculatedValues}>
+                                <CostSheetInteractiveTable
+                                    sections={data.sections}
+                                    annexes={data.annexes}
+                                />
+                            </CostSheetProvider>
                             )}
                             {isAnnexActive && (
                               <CostSheetAnnexEditor
