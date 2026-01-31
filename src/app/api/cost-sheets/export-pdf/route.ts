@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
         body: auditData,
         theme: 'plain',
         styles: { fontSize: 6 },
-        headStyles: { fontStyle: 'bold', borderBottom: { width: 0.1 } }
+        headStyles: { fontStyle: 'bold' }
     });
 
     // Footer
