@@ -91,16 +91,28 @@ export function MatchingRulesEditor() {
 
       <div className="space-y-4">
         {rules?.map((rule) => (
-          <Card key={rule.id} className="p-6 border-none shadow-md bg-background/50 flex items-center gap-6">
-            <div className="text-muted-foreground cursor-grab">
+          <Card key={rule.id} className="p-4 sm:p-6 border-none shadow-md bg-background/50 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+            <div className="hidden sm:block text-muted-foreground cursor-grab">
                 <GripVertical className="w-5 h-5" />
             </div>
 
-            <div className="p-3 bg-card rounded-2xl shadow-inner">
-                {getIcon(rule.tipo)}
+            <div className="flex items-center gap-4 w-full sm:w-auto">
+                <div className="p-3 bg-card rounded-2xl shadow-inner shrink-0">
+                    {getIcon(rule.tipo)}
+                </div>
+                <div className="sm:hidden flex-1">
+                    <h4 className="font-bold text-sm uppercase tracking-wide">{getLabel(rule.tipo)}</h4>
+                    <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-black">Prio {rule.prioridad}</span>
+                </div>
+                <div className="sm:hidden">
+                    <Switch
+                        checked={rule.activo}
+                        onCheckedChange={(checked) => toggleRule(rule.id, checked)}
+                    />
+                </div>
             </div>
 
-            <div className="flex-1 space-y-1">
+            <div className="hidden sm:block flex-1 space-y-1">
                 <div className="flex items-center gap-2">
                     <h4 className="font-bold text-sm uppercase tracking-wide">{getLabel(rule.tipo)}</h4>
                     <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-black">Prioridad {rule.prioridad}</span>
@@ -108,27 +120,33 @@ export function MatchingRulesEditor() {
                 <p className="text-xs text-muted-foreground max-w-xl">{getDescription(rule.tipo)}</p>
             </div>
 
-            {rule.tipo === 'TOLERANCE' && (
-                <div className="flex items-center gap-2 mr-4">
-                    <Label className="text-xs font-bold uppercase">Max ($):</Label>
-                    <Input
-                        type="number"
-                        className="w-20 h-8"
-                        defaultValue={(rule.tolerancia_cents || 0) / 100}
-                        onBlur={(e) => updateTolerance(rule.id, e.target.value)}
+            <p className="sm:hidden text-xs text-muted-foreground">
+                {getDescription(rule.tipo)}
+            </p>
+
+            <div className="flex flex-wrap items-center gap-4 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-border/50">
+                {rule.tipo === 'TOLERANCE' && (
+                    <div className="flex items-center gap-2 mr-auto sm:mr-4">
+                        <Label className="text-[10px] sm:text-xs font-bold uppercase">Max ($):</Label>
+                        <Input
+                            type="number"
+                            className="w-16 sm:w-20 h-8 text-xs"
+                            defaultValue={(rule.tolerancia_cents || 0) / 100}
+                            onBlur={(e) => updateTolerance(rule.id, e.target.value)}
+                        />
+                    </div>
+                )}
+
+                <div className="hidden sm:flex items-center gap-3">
+                    <Label htmlFor={`active-${rule.id}`} className="text-xs font-bold uppercase cursor-pointer">
+                        {rule.activo ? 'Activa' : 'Inactiva'}
+                    </Label>
+                    <Switch
+                        id={`active-${rule.id}`}
+                        checked={rule.activo}
+                        onCheckedChange={(checked) => toggleRule(rule.id, checked)}
                     />
                 </div>
-            )}
-
-            <div className="flex items-center gap-3">
-                <Label htmlFor={`active-${rule.id}`} className="text-xs font-bold uppercase cursor-pointer">
-                    {rule.activo ? 'Activa' : 'Inactiva'}
-                </Label>
-                <Switch
-                    id={`active-${rule.id}`}
-                    checked={rule.activo}
-                    onCheckedChange={(checked) => toggleRule(rule.id, checked)}
-                />
             </div>
           </Card>
         ))}

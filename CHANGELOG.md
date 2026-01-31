@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.21] - 2026-02-27
+
+### Changed
+- **IPV Builder Mobile & Demo (v10.2)**: Optimización ergonómica y funcional del módulo de conciliación.
+- **Experiencia Mobile-First**: Implementación de pestañas scrollables y layouts responsivos en todas las sub-vistas del IPV Builder. Se estandarizaron las tablas al sistema global de scroll y se incrementaron los touch targets a un mínimo de 44px para acciones críticas.
+- **Generador de Extractos Demo**: Incorporación de una herramienta de generación de datos sintéticos realistas para pruebas inmediatas del motor de matching (Hard Ref, Exact Sum, Tolerance, Debits).
+- **Refactorización Ergonómica**: Los botones de acción principal (Ejecutar Matching, Ingesta) ahora ocupan el ancho total y tienen mayor altura en móviles, facilitando la operación con una sola mano.
+
 ## [5.7.20] - 2026-02-27
 
 ### Changed
