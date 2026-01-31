@@ -15,7 +15,6 @@ import CostSheetSummary from './CostSheetSummary';
 import { CostSheetBanner } from './CostSheetBanner';
 import { CostSheetModeSwitcher } from './CostSheetModeSwitcher';
 import { CostSheetAuditLog } from './CostSheetAuditLog';
-import { CostSheetProvider } from './CostSheetContext';
 import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
 import ActionMenu from '@/components/ui/ActionMenu';
 import { Eye, Edit, FileText, Trash2, Download, FileSpreadsheet, Upload, Save, BarChart3, Activity } from 'lucide-react';
@@ -40,7 +39,7 @@ const CostSheetView = () => {
 
   if (!data || !data.header || !data.annexes || !data.sections) {
     return (
-      <div className="w-full max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 pb-32 pt-4">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-32 pt-4">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8 px-2">
           <div className="flex items-center gap-4">
             <Skeleton className="w-12 h-12 rounded-2xl" />
@@ -144,7 +143,7 @@ const CostSheetView = () => {
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 pb-32 pt-4">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-32 pt-4">
       <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', width: '1024px', opacity: 0, pointerEvents: 'none' }}>
           <CostSheetPreview
             ref={exportRef}
