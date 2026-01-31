@@ -8,7 +8,7 @@ import {
   Settings, Building2, Receipt, FileText, ChevronRight,
   UserPlus, Store, Key, ListChecks, HelpCircle,
   Wand2, Table2, FileSpreadsheet, History, Target,
-  Baby
+  Baby, Zap, Cpu, WifiOff, Search, Newspaper
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,6 +26,8 @@ import MobilePosDiagram from './help/MobilePosDiagram';
 import SecurityFlowDiagram from './help/SecurityFlowDiagram';
 import CostFlowDiagram from './help/CostFlowDiagram';
 import KidsOnboarding from './help/KidsOnboarding';
+import OfflineSyncDiagram from './help/OfflineSyncDiagram';
+import JulesDiagram from './help/JulesDiagram';
 
 export default function HelpView() {
   return (
@@ -43,14 +45,14 @@ export default function HelpView() {
         </div>
         <div className="flex flex-col items-end">
           <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-black">
-            VERSIÓN 5.7.13 (POS DATA RESILIENCE)
+            VERSIÓN 5.7.16 (RESPONSIVE RECEPTION)
           </Badge>
-          <span className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Última actualización: 25 Feb 2026</span>
+          <span className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Última actualización: 26 Feb 2026</span>
         </div>
       </div>
 
       <Tabs defaultValue="roles" className="w-full">
-        <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 h-auto p-1 bg-muted/50 rounded-2xl mb-8">
+        <TabsList className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-9 h-auto p-1 bg-muted/50 rounded-2xl mb-8">
           <TabsTrigger value="onboarding" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs">
             <Baby className="w-4 h-4 mr-2 hidden sm:block" />
             Niños
@@ -74,6 +76,10 @@ export default function HelpView() {
           <TabsTrigger value="inventory" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs">
             <Package className="w-4 h-4 mr-2 hidden sm:block" />
             Almacén
+          </TabsTrigger>
+          <TabsTrigger value="innovation" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs">
+            <Zap className="w-4 h-4 mr-2 hidden sm:block" />
+            Innovación
           </TabsTrigger>
           <TabsTrigger value="security" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs">
             <Shield className="w-4 h-4 mr-2 hidden sm:block" />
@@ -356,13 +362,15 @@ export default function HelpView() {
 
         {/* --- POS FLOWS --- */}
         <TabsContent value="pos" className="space-y-6">
-          <div className="bg-primary/10 border border-primary/20 p-4 rounded-2xl mb-6 md:hidden">
+          <div className="bg-primary/10 border border-primary/20 p-4 rounded-2xl mb-6">
             <h4 className="font-black text-primary text-xs uppercase mb-2 flex items-center gap-2">
-              <ShoppingCart className="w-4 h-4" />
-              Tip: TPV Optimizado para Móvil
+              <Zap className="w-4 h-4" />
+              Arquitectura Zero-Latency (v5.7.12)
             </h4>
             <p className="text-[10px] font-medium leading-relaxed text-primary/80">
-              Hemos movido la <strong>Caja</strong> a la parte inferior y añadido <strong>Categorías en un toque</strong> debajo del buscador para agilizar el despacho. El carrito ahora se abre como un panel deslizante para no interrumpir tu flujo.
+              <strong>Antes Juan hacía X:</strong> Cada búsqueda de producto requería una llamada a la nube, causando esperas.
+              <br />
+              <strong>Ahora Juan hace Y:</strong> El TPV descarga todo el catálogo al inicio (como llenar los estantes al abrir la tienda). Las búsquedas son instantáneas y locales.
             </p>
           </div>
           <Card className="border-none shadow-none bg-transparent">
@@ -373,7 +381,7 @@ export default function HelpView() {
               <div className="bg-primary/5 p-6 rounded-3xl border border-primary/10 mb-8">
                 <h4 className="font-black text-primary text-xs uppercase mb-4 flex items-center gap-2">
                   <ShoppingCart className="w-4 h-4" />
-                  Actualización v5.5.6: Optimizaciones de Velocidad Móvil
+                  Optimizaciones de Velocidad Móvil
                 </h4>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -387,7 +395,7 @@ export default function HelpView() {
                     <p className="text-[10px] font-black uppercase text-muted-foreground">Inventario:</p>
                     <ul className="text-xs space-y-1 font-medium">
                       <li className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> <strong>Filtros Rápidos:</strong> Categorías siempre visibles en un toque.</li>
-                      <li className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> <strong>Interfaz Limpia:</strong> Eliminación de títulos redundantes en móvil.</li>
+                      <li className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> <strong>Búsqueda Local:</strong> Resultados inmediatos sin latencia de red.</li>
                     </ul>
                   </div>
                 </div>
@@ -433,7 +441,7 @@ export default function HelpView() {
                   <h4 className="font-black text-emerald-600 uppercase tracking-widest text-xs mb-3">Protocolo de Venta</h4>
                   <ul className="space-y-3">
                     {[
-                      "Escanea el producto o búscalo por nombre.",
+                      "Escanea el producto o búscalo por nombre localmente.",
                       "Verifica que el precio sea el correcto antes de totalizar.",
                       "Selecciona el método de pago exacto (Efectivo/Transferencia).",
                       "Entrega el comprobante digital o impreso al cliente."
@@ -450,7 +458,7 @@ export default function HelpView() {
                   <ul className="space-y-3">
                     {[
                       "Realiza el arqueo físico del dinero en caja.",
-                      "Registra cualquier salida de efectivo autorizada.",
+                      "Usa el botón 'Actualizar' para sincronizar ventas recientes.",
                       "Declara el total en el sistema para detectar faltantes.",
                       "Solicita la firma del Encargado en el reporte final."
                     ].map((t, i) => (
@@ -489,9 +497,9 @@ export default function HelpView() {
                         <p className="font-bold text-xs uppercase text-primary">Regla Fundamental:</p>
                         <p className="italic text-xs">"Un producto se identifica por su SKU dentro de su tienda activa. El mismo SKU puede existir en otra tienda sin causar conflictos."</p>
                       </div>
-                      <div className="bg-amber-500/5 p-4 rounded-xl border-l-4 border-amber-500 space-y-2">
-                        <p className="font-bold text-xs uppercase text-amber-600">Contexto Obligatorio (v5.5):</p>
-                        <p className="italic text-xs text-amber-900/70">"No se pueden realizar recepciones sin una tienda activa. El sistema bloqueará la operación para garantizar la integridad de los datos."</p>
+                      <div className="bg-emerald-500/5 p-4 rounded-xl border-l-4 border-emerald-500 space-y-2">
+                        <p className="font-bold text-xs uppercase text-emerald-600">Recepción Responsiva (v5.7.16):</p>
+                        <p className="italic text-xs text-emerald-900/70">"La tabla de recepción ahora permite scroll horizontal en móviles, asegurando que los subtotales y costos totales sean siempre visibles."</p>
                       </div>
                       <div className="space-y-2">
                         <h5 className="font-black text-[10px] uppercase tracking-widest text-muted-foreground">Ejemplo Operativo:</h5>
@@ -507,7 +515,7 @@ export default function HelpView() {
 
               <div className="grid md:grid-cols-2 gap-8">
                 <div className="space-y-4">
-                  <h4 className="font-black text-primary uppercase tracking-widest text-xs">Gestión de Existencias v5.5</h4>
+                  <h4 className="font-black text-primary uppercase tracking-widest text-xs">Gestión de Existencias</h4>
                   <div className="space-y-4">
                     <div className="flex gap-4 p-4 rounded-2xl bg-primary/5 border border-primary/10">
                       <div className="shrink-0 w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center font-black text-primary italic">IN</div>
@@ -545,6 +553,73 @@ export default function HelpView() {
           </Card>
         </TabsContent>
 
+        {/* --- INNOVATION FLOWS --- */}
+        <TabsContent value="innovation" className="space-y-8">
+          <Card className="border-none shadow-none bg-transparent">
+            <CardHeader className="px-0">
+              <CardTitle className="text-2xl font-black uppercase tracking-tight">Vanguardia Tecnológica</CardTitle>
+              <CardDescription className="text-base font-medium">
+                IA y Resiliencia Offline para una operativa sin interrupciones.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-0 space-y-12">
+              <div className="grid lg:grid-cols-2 gap-8 items-start">
+                <div className="space-y-6">
+                  <div className="p-6 rounded-3xl bg-violet-500/5 border border-violet-500/10">
+                    <h4 className="text-lg font-black text-violet-600 uppercase mb-4 flex items-center gap-2">
+                      <Cpu className="w-5 h-5" />
+                      Jules: Tu Asistente de IA
+                    </h4>
+                    <p className="text-sm font-medium leading-relaxed mb-4 text-muted-foreground">
+                      Jules es un asistente inteligente que analiza tus datos en tiempo real. Puede responder sobre stock crítico, ventas del día y darte consejos de optimización.
+                    </p>
+                    <div className="bg-background/50 p-4 rounded-xl border border-violet-200">
+                       <p className="text-xs italic text-violet-800">
+                         "Juan ya no tiene que buscar en 10 reportes. Solo le pregunta a Jules: '¿Cuál fue mi producto más vendido hoy?' y obtiene la respuesta en 5 segundos."
+                       </p>
+                    </div>
+                  </div>
+                  <JulesDiagram />
+                </div>
+
+                <div className="space-y-6">
+                  <div className="p-6 rounded-3xl bg-amber-500/5 border border-amber-500/10">
+                    <h4 className="text-lg font-black text-amber-600 uppercase mb-4 flex items-center gap-2">
+                      <WifiOff className="w-5 h-5" />
+                      Sincronización Offline
+                    </h4>
+                    <p className="text-sm font-medium leading-relaxed mb-4 text-muted-foreground">
+                      ¿Sin internet? No hay problema. CostPro guarda tus operaciones localmente y las sincroniza automáticamente cuando vuelves a estar en línea.
+                    </p>
+                    <div className="bg-background/50 p-4 rounded-xl border border-amber-200">
+                       <p className="text-xs italic text-amber-800">
+                         "Imagina que se va la luz. El cajero sigue vendiendo normalmente. El sistema anota todo en un 'cuaderno digital' invisible y lo sube a la nube después."
+                       </p>
+                    </div>
+                  </div>
+                  <OfflineSyncDiagram />
+                </div>
+              </div>
+
+              <div className="p-8 rounded-3xl bg-muted/30 border border-border">
+                <h4 className="text-lg font-black text-primary uppercase mb-6 flex items-center gap-2">
+                  <Newspaper className="w-5 h-5" />
+                  Agregador de Noticias & Divisas
+                </h4>
+                <div className="grid md:grid-cols-2 gap-8 text-sm leading-relaxed text-muted-foreground">
+                   <p>
+                     Nuestro módulo RSS ahora detecta automáticamente tasas de cambio (BCC) y prioriza noticias críticas. Juan puede ver el precio del dólar actualizado nada más entrar en la sección de Noticias.
+                   </p>
+                   <ul className="space-y-2">
+                     <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Filtro de prioridad activo por defecto.</li>
+                     <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Detección inteligente de moneda y metadatos.</li>
+                   </ul>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* --- SECURITY FLOWS --- */}
         <TabsContent value="security" className="space-y-6">
           <Card className="border-none shadow-none bg-transparent">
@@ -567,25 +642,23 @@ export default function HelpView() {
                 </div>
                 <div className="p-8 rounded-3xl bg-white border border-border shadow-sm">
                   <h4 className="font-black uppercase tracking-widest text-xs text-primary mb-4 flex items-center gap-2">
-                    <Shield className="w-4 h-4" />
-                    Auditoría Visual Empresarial
+                    <Search className="w-4 h-4" />
+                    Admin Query Inspector
                   </h4>
                   <p className="text-sm font-medium leading-relaxed text-muted-foreground mb-4">
-                    Transformamos logs técnicos en una <span className="font-bold text-primary">Línea de Tiempo Visual</span> comprensible para humanos:
+                    Transparencia total para administradores:
                   </p>
                   <div className="space-y-4">
+                    <p className="text-xs">
+                      Es como tener una cámara de seguridad que registra cada pregunta hecha a la base de datos. Permite auditar en tiempo real qué información se está consultando y desde qué vista.
+                    </p>
                     <div className="grid grid-cols-2 gap-3">
-                      {["Acciones Categorizadas", "Diferenciales de Datos", "Fechas Relativas", "Búsqueda Avanzada"].map((t, i) => (
+                      {["Auditoría Real-time", "Parámetros RPC", "Filtros Supabase", "Restringido a Admins"].map((t, i) => (
                         <div key={i} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-tighter text-muted-foreground">
                           <CheckCircle2 className="w-3 h-3 text-primary" />
                           {t}
                         </div>
                       ))}
-                    </div>
-                    <div className="p-4 bg-muted/30 rounded-2xl border border-dashed border-border">
-                       <p className="text-[10px] font-medium leading-tight italic">
-                         "Juan actualizó el producto X" en lugar de "UPDATE public.products SET name = ...".
-                       </p>
                     </div>
                   </div>
                 </div>
@@ -605,53 +678,98 @@ export default function HelpView() {
             </CardHeader>
             <CardContent className="px-0">
               <div className="space-y-8">
-                {/* --- v5.7.13 --- */}
+                {/* --- v5.7.16 --- */}
                 <div className="relative pl-8 border-l-2 border-primary/20 space-y-4">
                   <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary border-4 border-background" />
                   <div className="flex items-center gap-3">
-                    <Badge className="bg-primary">v5.7.13</Badge>
-                    <span className="text-xs font-black text-muted-foreground uppercase">25 de Febrero, 2026 (Actual)</span>
+                    <Badge className="bg-primary">v5.7.16</Badge>
+                    <span className="text-xs font-black text-muted-foreground uppercase">26 de Febrero, 2026 (Actual)</span>
+                  </div>
+                  <div className="bg-muted/30 rounded-2xl p-6 space-y-4 border border-primary/10">
+                    <h4 className="font-black text-sm uppercase text-primary">Responsividad en Recepción de Productos</h4>
+                    <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Refactorización de tablas para scroll horizontal garantizado.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Resumen de costos siempre visible en dispositivos móviles.</li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* --- v5.7.15 --- */}
+                <div className="relative pl-8 border-l-2 border-primary/20 space-y-4 opacity-90">
+                  <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary border-4 border-background" />
+                  <div className="flex items-center gap-3">
+                    <Badge className="bg-primary">v5.7.15</Badge>
+                    <span className="text-xs font-black text-muted-foreground uppercase">26 de Febrero, 2026</span>
+                  </div>
+                  <div className="bg-muted/30 rounded-2xl p-6 space-y-4 border border-primary/10">
+                    <h4 className="font-black text-sm uppercase text-primary">Hardenización de API y TPV</h4>
+                    <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Validación estricta de parámetros en mutaciones críticas.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Corrección de solapamiento de cabeceras en tablas del TPV.</li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* --- v5.7.14 --- */}
+                <div className="relative pl-8 border-l-2 border-primary/20 space-y-4 opacity-90">
+                  <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary border-4 border-background" />
+                  <div className="flex items-center gap-3">
+                    <Badge className="bg-primary">v5.7.14</Badge>
+                    <span className="text-xs font-black text-muted-foreground uppercase">26 de Febrero, 2026</span>
+                  </div>
+                  <div className="bg-muted/30 rounded-2xl p-6 space-y-4 border border-primary/10">
+                    <h4 className="font-black text-sm uppercase text-primary">UX de Caja y Noticias</h4>
+                    <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Nuevo botón de actualización manual en Cierre de Caja.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Filtro de noticias prioritarias activo por defecto.</li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* --- v5.7.13 --- */}
+                <div className="relative pl-8 border-l-2 border-primary/20 space-y-4 opacity-80">
+                  <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-muted border-4 border-background" />
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline">v5.7.13</Badge>
+                    <span className="text-xs font-black text-muted-foreground uppercase">25 de Febrero, 2026</span>
                   </div>
                   <div className="bg-muted/30 rounded-2xl p-6 space-y-4 border border-primary/10">
                     <h4 className="font-black text-sm uppercase text-primary">Validación Permisiva de UUID y Resiliencia en TPV</h4>
                     <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
                       <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Implementación de validación permisiva de UUID para soportar datos de demo.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Unificación de `active_store_id` en el flujo de facturación y auditoría del TPV.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Centralización de la lógica de normalización de IDs en hooks de API.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Unificación de `active_store_id` en el flujo de facturación.</li>
                     </ul>
                   </div>
                 </div>
 
-                {/* --- v5.6.2 --- */}
-                <div className="relative pl-8 border-l-2 border-primary/20 space-y-4 opacity-80">
-                  <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary border-4 border-background" />
-                  <div className="flex items-center gap-3">
-                    <Badge className="bg-primary">v5.6.2</Badge>
-                    <span className="text-xs font-black text-muted-foreground uppercase">15 de Febrero, 2026 (Actual)</span>
-                  </div>
-                  <div className="bg-muted/30 rounded-2xl p-6 space-y-4 border border-primary/10">
-                    <h4 className="font-black text-sm uppercase text-primary">Expansión del Sistema de Auditoría Operativa</h4>
-                    <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Auditoría completa de Ventas, Transferencias y Ajustes Manuales.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Nuevos Triggers para cambios en Precios, Productos y Usuarios.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Visualizador de Diferencias (Diff) para ver cambios Antes/Después.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Quick-presets de fecha (Hoy, Ayer, 7 días) en filtros de auditoría.</li>
-                    </ul>
-                  </div>
-                </div>
-
-                {/* --- v5.6.1 --- */}
+                {/* --- v5.6.5 --- */}
                 <div className="relative pl-8 border-l-2 border-primary/20 space-y-4 opacity-80">
                   <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-muted border-4 border-background" />
                   <div className="flex items-center gap-3">
-                    <Badge variant="outline">v5.6.1</Badge>
-                    <span className="text-xs font-black text-muted-foreground uppercase">13 de Febrero, 2026</span>
+                    <Badge variant="outline">v5.6.5</Badge>
+                    <span className="text-xs font-black text-muted-foreground uppercase">18 de Febrero, 2026</span>
                   </div>
                   <div className="bg-muted/30 rounded-2xl p-6 space-y-4 border border-primary/10">
-                    <h4 className="font-black text-sm uppercase text-primary">Technical Hardening y Fortalecimiento de Contratos</h4>
+                    <h4 className="font-black text-sm uppercase text-primary">Lanzamiento de Jules AI Assistant</h4>
                     <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Tipado estricto en TransferService eliminando el uso de `any`.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Validación Zod obligatoria en la capa de datos para transferencias.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Integración de chat flotante con Jules (Multi-AI Bot).</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Auditoría automática de consultas IA.</li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* --- v5.6.4 --- */}
+                <div className="relative pl-8 border-l-2 border-primary/20 space-y-4 opacity-80">
+                  <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-muted border-4 border-background" />
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline">v5.6.4</Badge>
+                    <span className="text-xs font-black text-muted-foreground uppercase">17 de Febrero, 2026</span>
+                  </div>
+                  <div className="bg-muted/30 rounded-2xl p-6 space-y-4 border border-primary/10">
+                    <h4 className="font-black text-sm uppercase text-primary">Arquitectura Offline-First</h4>
+                    <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Persistencia local con IndexedDB para ventas offline.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Sistema de resolución de conflictos y Badge de estado.</li>
                     </ul>
                   </div>
                 </div>
@@ -666,164 +784,9 @@ export default function HelpView() {
                   <div className="bg-muted/30 rounded-2xl p-6 space-y-4 border border-primary/10">
                     <h4 className="font-black text-sm uppercase text-primary">Lógica Funcional de Cierre de Caja</h4>
                     <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Implementación de flujo de cierre: Declaración (Pendiente) y Validación (Cerrado).</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Cálculo automático de diferencia de arqueo en tiempo real.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Nueva RPC `get_sales_since_last_closure` para balance exacto.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Listado histórico de cierres con trazabilidad total por operador.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Implementación de flujo de cierre: Declaración y Validación.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Cálculo automático de diferencia de arqueo.</li>
                     </ul>
-                  </div>
-                </div>
-
-                {/* --- v5.5.6 --- */}
-                <div className="relative pl-8 border-l-2 border-primary/20 space-y-4">
-                  <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary border-4 border-background" />
-                  <div className="flex items-center gap-3">
-                    <Badge className="bg-primary">v5.5.6</Badge>
-                    <span className="text-xs font-black text-muted-foreground uppercase">11 de Febrero, 2026 (Actual)</span>
-                  </div>
-                  <div className="bg-muted/30 rounded-2xl p-6 space-y-4 border border-primary/10">
-                    <h4 className="font-black text-sm uppercase text-primary">Optimización de Velocidad Móvil (TPV e Inventario)</h4>
-                    <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Controles de cantidad con target táctil de 44px en el carrito.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Selector de descuentos predefinidos (1-tap) para agilizar el cierre.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Migración de filtros de categoría a chips persistentes en Inventario.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Reducción de ruido visual mediante ocultamiento de títulos en móvil.</li>
-                    </ul>
-                  </div>
-                </div>
-
-                {/* --- v5.5.5 --- */}
-                <div className="relative pl-8 border-l-2 border-primary/20 space-y-4 opacity-80">
-                  <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-muted border-4 border-background" />
-                  <div className="flex items-center gap-3">
-                    <Badge className="bg-primary">v5.5.5</Badge>
-                    <span className="text-xs font-black text-muted-foreground uppercase">11 de Febrero, 2026 (Actual)</span>
-                  </div>
-                  <div className="bg-muted/30 rounded-2xl p-6 space-y-4 border border-primary/10">
-                    <h4 className="font-black text-sm uppercase text-primary">Historial de Recepciones y UX Avanzado</h4>
-                    <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Nuevo historial de recepciones con detalle expandible.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Filtrado profesional por fechas, estados y proveedores.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Exportación de detalles de recepción a formato CSV.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Visualización de imágenes de productos en el flujo de entrada.</li>
-                    </ul>
-                  </div>
-                </div>
-
-                {/* --- v5.5.4 --- */}
-                <div className="relative pl-8 border-l-2 border-primary/20 space-y-4 opacity-80">
-                  <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-muted border-4 border-background" />
-                  <div className="flex items-center gap-3">
-                    <Badge variant="outline">v5.5.4</Badge>
-                    <span className="text-xs font-black text-muted-foreground uppercase">11 de Febrero, 2026 (Actual)</span>
-                  </div>
-                  <div className="bg-muted/30 rounded-2xl p-6 space-y-4 border border-primary/10">
-                    <h4 className="font-black text-sm uppercase text-primary">Transferencias Multi-Almacén y Robustez de Lógica</h4>
-                    <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Implementación de Transferencias entre Almacenes del mismo Encargado.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Transacciones atómicas de stock (Salida Origen / Entrada Destino).</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Registro oficial de la vista de Recepciones en la terminal.</li>
-                    </ul>
-                  </div>
-                </div>
-
-                {/* --- v5.5.2 --- */}
-                <div className="relative pl-8 border-l-2 border-primary/20 space-y-4 opacity-80">
-                  <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-muted border-4 border-background" />
-                  <div className="flex items-center gap-3">
-                    <Badge variant="outline">v5.5.2</Badge>
-                    <span className="text-xs font-black text-muted-foreground uppercase">26 de Enero, 2026</span>
-                  </div>
-                  <div className="bg-muted/30 rounded-2xl p-6 space-y-4 border border-primary/10">
-                    <h4 className="font-black text-sm uppercase text-primary">Robustez de Importación y Cumplimiento de Protocolo</h4>
-                    <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Centralización de importaciones vía `importService` y Zod.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Validación estricta de contratos para Catálogo y Recepción.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Feedback de errores mejorado con identificación precisa de filas.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Eliminación de lógica de parsing dispersa y duplicada.</li>
-                    </ul>
-                  </div>
-                </div>
-
-                {/* --- v5.5.0 --- */}
-                <div className="relative pl-8 border-l-2 border-primary/20 space-y-4 opacity-70">
-                  <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-muted border-4 border-background" />
-                  <div className="flex items-center gap-3">
-                    <Badge variant="outline">v5.5.0</Badge>
-                    <span className="text-xs font-black text-muted-foreground uppercase">26 de Enero, 2026</span>
-                  </div>
-                  <div className="bg-muted/10 rounded-2xl p-6 space-y-4 border border-border">
-                    <h4 className="font-black text-sm uppercase text-primary">Robustez de UX y Auditoría Empresarial</h4>
-                    <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Nueva sección "CostPro para Niños" con narrativa visual de flujos.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Rediseño completo de Auditoría: Línea de tiempo visual e intuitiva.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Blindaje de Recepción: Bloqueo de operaciones sin tienda activa.</li>
-                    </ul>
-                  </div>
-                </div>
-
-                {/* --- v5.4.0 --- */}
-                <div className="relative pl-8 border-l-2 border-primary/20 space-y-4 opacity-60">
-                  <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-muted border-4 border-background" />
-                  <div className="flex items-center gap-3">
-                    <Badge variant="outline">v5.4.0</Badge>
-                    <span className="text-xs font-black text-muted-foreground uppercase">25 de Enero, 2026</span>
-                  </div>
-                  <div className="bg-muted/30 rounded-2xl p-6 space-y-4">
-                    <h4 className="font-black text-sm uppercase text-primary">Robustez de UX y Eficiencia de TPV</h4>
-                    <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Implementación de CategoryChips en TPV para filtrado en 1 toque.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Eliminación de fricción táctil en la búsqueda avanzada del POS.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Optimización de espacio vertical en el buscador móvil.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Actualización de documentación de operativa móvil.</li>
-                    </ul>
-                  </div>
-                </div>
-
-                {/* --- v5.4.0 --- */}
-                <div className="relative pl-8 border-l-2 border-primary/10 space-y-4 opacity-60">
-                  <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-muted border-4 border-background" />
-                  <div className="flex items-center gap-3">
-                    <Badge variant="outline">v5.4.0</Badge>
-                    <span className="text-xs font-black text-muted-foreground uppercase">25 de Enero, 2026</span>
-                  </div>
-                  <div className="bg-muted/10 rounded-2xl p-6 space-y-4">
-                    <h4 className="font-black text-sm uppercase text-primary">Optimización Mobile-First y Sincronización de UI</h4>
-                    <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Rediseño de TPV con carrito tipo Drawer para operativa móvil.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Unificación de vistas de Inventario con ProductCard atómica.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Implementación de ActionMenu con posición inferior (Thumb Zone).</li>
-                    </ul>
-                  </div>
-                </div>
-
-                {/* --- v5.3.0 --- */}
-                <div className="relative pl-8 border-l-2 border-primary/10 space-y-4 opacity-60">
-                  <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-muted border-4 border-background" />
-                  <div className="flex items-center gap-3">
-                    <Badge variant="outline">v5.3.0</Badge>
-                    <span className="text-xs font-black text-muted-foreground uppercase">24 de Enero, 2026</span>
-                  </div>
-                  <div className="bg-muted/10 rounded-2xl p-6 space-y-4">
-                    <h4 className="font-black text-sm uppercase text-primary">Robustez de SKU Multi-Tienda</h4>
-                    <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Implementación de SKU único por tienda (Composite Key).</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Nueva lógica de matching de inventario por Tienda Activa.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Validación obligatoria de SKU en Catálogo y Recepción.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Nuevo diagrama SVG: Aislamiento de SKU en entorno Multi-Tienda.</li>
-                    </ul>
-                  </div>
-                </div>
-
-                <div className="relative pl-8 border-l-2 border-primary/10 space-y-4 opacity-40">
-                  <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-muted border-4 border-background" />
-                  <div className="flex items-center gap-3">
-                    <Badge variant="outline">v5.3.0</Badge>
-                    <span className="text-xs font-black text-muted-foreground uppercase">24 de Enero, 2026</span>
-                  </div>
-                  <div className="bg-muted/10 rounded-2xl p-6">
-                    <h4 className="font-black text-sm uppercase">Robustez de SKU Multi-Tienda</h4>
-                    <p className="text-xs mt-2">Implementación de SKU único por tienda y aislamiento de inventario.</p>
                   </div>
                 </div>
 
@@ -855,9 +818,12 @@ export default function HelpView() {
             <p className="text-xs text-muted-foreground">Contacta con el equipo de soporte técnico de CostPro.</p>
           </div>
         </div>
-        <button className="px-8 py-3 bg-background border border-border rounded-xl font-black text-xs uppercase tracking-widest hover:bg-primary hover:text-white transition-all">
-          Abrir Ticket de Soporte
-        </button>
+        <div className="flex flex-col items-end gap-2">
+           <button className="px-8 py-3 bg-background border border-border rounded-xl font-black text-xs uppercase tracking-widest hover:bg-primary hover:text-white transition-all">
+             Abrir Ticket de Soporte
+           </button>
+           <span className="text-[10px] font-bold text-muted-foreground">COSTPRO v5.7.16</span>
+        </div>
       </div>
     </div>
   );
