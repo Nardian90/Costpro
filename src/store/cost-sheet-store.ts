@@ -91,15 +91,37 @@ export const useCostSheetStore = create<CostSheetState>()(
             const annex = draft.data.annexes.find(
               (a: CostSheetAnnexContract) => a.id === annexId
             );
-            if (annex && annex.data.length > 0) {
-              const firstRow = annex.data[0];
-              const newRow = { ...firstRow };
-              Object.keys(newRow).forEach((key) => {
-                const column = annex.columns.find((c) => c.key === key);
-                if (column && !column.formula) {
-                  newRow[key] = typeof newRow[key] === 'number' ? 0 : '';
-                }
-              });
+            if (annex) {
+              const newRow: any = {};
+              if (annex.data.length > 0) {
+                // Clone from first row structure
+                const firstRow = annex.data[0];
+                Object.keys(firstRow).forEach((key) => {
+                  const column = annex.columns.find((c) => c.key === key);
+                  if (column && !column.formula) {
+                    newRow[key] = typeof firstRow[key] === 'number' ? 0 : '';
+                  } else if (!column) {
+                    newRow[key] = typeof firstRow[key] === 'number' ? 0 : '';
+                  } else {
+                    newRow[key] = 0; // Formula column
+                  }
+                });
+              } else {
+                // Initialize from columns
+                annex.columns.forEach((col) => {
+                  // Heuristic for default values based on common key names
+                  const isNumeric = col.key === 'no' ||
+                                    col.key.includes('norm') ||
+                                    col.key.includes('price') ||
+                                    col.key.includes('value') ||
+                                    col.key.includes('amount') ||
+                                    col.key.includes('count') ||
+                                    col.key.includes('rate') ||
+                                    col.key.includes('total') ||
+                                    col.key.includes('cost');
+                  newRow[col.key] = isNumeric ? 0 : '';
+                });
+              }
               annex.data.push(newRow);
             }
           })
