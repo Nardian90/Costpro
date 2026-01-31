@@ -35,8 +35,8 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
       case 'success': return 'neu-btn-success';
       case 'danger': return 'neu-btn-danger';
       case 'warning': return 'bg-warning text-white shadow-lg';
-      case 'outline': return 'neu-raised-sm border-primary/20';
-      default: return 'neu-btn';
+      case 'outline': return 'neu-raised-sm border-primary/20 text-foreground';
+      default: return 'neu-btn text-foreground';
     }
   };
 
