@@ -33,7 +33,7 @@ export default function DashboardView() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between mb-8">
+      <div className="hidden sm:flex items-center justify-between mb-8">
         <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase">Panel de Control</h2>
         <div className="flex items-center gap-2 py-1.5 px-3 rounded-lg border border-border bg-card/50 text-xs font-bold">
           <Calendar className="w-3 h-3" />
