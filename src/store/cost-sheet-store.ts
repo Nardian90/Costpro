@@ -24,8 +24,23 @@ const clearTemplate = (template: any) => {
     // Clear sections and rows
     const clearRows = (rows: any[]) => {
         rows.forEach(row => {
+            // Clear primary numeric values
             if (row.hasOwnProperty('valorHistorico')) row.valorHistorico = 0;
-            if (row.hasOwnProperty('value')) row.value = row.is_percent ? row.value : 0;
+            if (row.hasOwnProperty('value')) row.value = 0;
+
+            // Clear formulas if they are actually fixed numbers
+            if (row.formula && !row.formula.startsWith('=')) {
+                row.formula = "0";
+            }
+            if (row.totalFormula && !row.totalFormula.startsWith('=')) {
+                row.totalFormula = "0";
+            }
+
+            // Ensure calculation method reflects manual input if we cleared a fixed number
+            if (row.calculationMethod === 'ValorFijo' || (!row.formula?.startsWith('=') && !row.totalFormula?.startsWith('='))) {
+                // If it's not a real formula, ensure it's treated as a clean slate
+            }
+
             if (row.children) clearRows(row.children);
         });
     };
@@ -34,14 +49,10 @@ const clearTemplate = (template: any) => {
         cleared.sections.forEach((s: any) => clearRows(s.rows));
     }
 
-    // Clear annexes
+    // Clear annexes - Total reset to empty data as requested
     if (cleared.annexes) {
         cleared.annexes.forEach((a: any) => {
-            a.data = []; // Start with no data in annexes or keep one empty row?
-            // User said "aunque esten en cero todos los valores pero ya sea una plantilla completa lista paraa ingresar valores"
-            // Usually annexes are dynamic, but maybe we should keep the first row if it was there?
-            // Actually, annexes in the template have one demo row. Let's clear its values.
-            // But usually users add rows to annexes.
+            a.data = [];
         });
     }
 
