@@ -14,17 +14,18 @@ import CostSheetWizard from './CostSheetWizard';
 import CostSheetSummary from './CostSheetSummary';
 import { CostSheetBanner } from './CostSheetBanner';
 import { CostSheetModeSwitcher } from './CostSheetModeSwitcher';
+import { CostSheetAuditLog } from './CostSheetAuditLog';
 import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
 import ActionMenu from '@/components/ui/ActionMenu';
-import { Eye, Edit, FileText, Trash2, Download, FileSpreadsheet } from 'lucide-react';
+import { Eye, Edit, FileText, Trash2, Download, FileSpreadsheet, Upload, Save } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store';
 import { exportToPDF, exportToCSV } from '@/services/export-service';
 
 const CostSheetView = () => {
-  const { data, loadExample, reset } = useCostSheetStore();
-  const { calculatedValues, calculatedAnnexes } = useCostSheetCalculator(data);
+  const { data, loadExample, reset, setSheet } = useCostSheetStore();
+  const { calculatedValues, calculatedAnnexes, audits, calculationResult } = useCostSheetCalculator(data);
 
   const [isEditing, setIsEditing] = useState(true);
   const [viewMode, setViewMode] = useState<'expert' | 'assisted' | 'reading'>('expert');
@@ -58,6 +59,29 @@ const CostSheetView = () => {
   const handleExportPDF = async () => {
     const toastId = toast.loading("Generando PDF profesional... por favor espere.");
     try {
+      // Prioritize the declarative engine export
+      if (calculationResult) {
+        const response = await fetch('/api/cost-sheets/export-pdf', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(calculationResult)
+        });
+
+        if (response.ok) {
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ficha-${data.header.code || 'export'}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            toast.success("PDF generado con éxito", { id: toastId });
+            return;
+        }
+      }
+
+      // Fallback to legacy report service if engine fails or not available
       const { reportService } = await import('@/services/report-service');
       const response = await reportService.generateReport({
         type: 'cost_sheet',
@@ -85,6 +109,37 @@ const CostSheetView = () => {
     exportToCSV(data, calculatedValues, fileName);
   };
 
+  const handleImportJSON = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = async (e: any) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        try {
+          const text = await file.text();
+          const json = JSON.parse(text);
+          setSheet(json);
+          toast.success("Ficha cargada correctamente");
+        } catch (err) {
+          toast.error("Error al cargar el archivo JSON");
+        }
+      }
+    };
+    input.click();
+  };
+
+  const handleExportJSON = () => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href",     dataStr);
+    downloadAnchorNode.setAttribute("download", `ficha-${data.header.code || 'export'}.json`);
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+    toast.success("JSON exportado correctamente");
+  };
+
   return (
     <div className="w-full max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 pb-32 pt-4">
       <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', width: '1024px', opacity: 0, pointerEvents: 'none' }}>
@@ -110,6 +165,8 @@ const CostSheetView = () => {
             },
             { id: 'load-example', label: 'Ejemplo', icon: FileText, onClick: loadExample, variant: 'outline' },
             { id: 'reset', label: 'Reiniciar', icon: Trash2, onClick: reset, variant: 'danger' },
+            { id: 'import-json', label: 'Importar', icon: Upload, onClick: handleImportJSON, variant: 'outline' },
+            { id: 'export-json', label: 'Guardar', icon: Save, onClick: handleExportJSON, variant: 'outline' },
             { id: 'export-excel', label: 'Excel', icon: FileSpreadsheet, onClick: handleExportExcel, variant: 'primary' },
             { id: 'export-pdf', label: 'PDF', icon: Download, onClick: handleExportPDF, variant: 'success' },
             ]}
@@ -156,6 +213,8 @@ const CostSheetView = () => {
                     )}
                     {activeSection === 'signature' && <CostSheetSignatureEditor />}
                 </div>
+
+                <CostSheetAuditLog audits={audits} />
             </>
           )}
 

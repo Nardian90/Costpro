@@ -1,252 +1,171 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { produce } from 'immer';
+import Decimal from 'decimal.js';
 import {
   CostSheetData,
   CostSheetRow,
   CostSheetColumn,
   CalculatedRowValue
 } from '@/types/cost-sheet';
-import { logger } from '@/lib/logger';
+import { calculateFicha } from '@/lib/cost-engine';
+import { FichaJSON, CostRow, Anexo, RowSemanticType, FormaCalculo, BaseRef, AuditEntry, CalculationResult } from '@/lib/cost-engine/types';
 
-// Helper to safely evaluate a formula string
-const evaluateExpression = (expression: string): number => {
+// Helper to safely evaluate a formula string for ANNEXES (keeping it simple for annex rows)
+const evaluateAnnexExpression = (expression: string, rowData: any, header: any): number => {
   if (!expression) return 0;
-
-  // Basic sanitization: only allow math characters and numbers
-  // This is a simple version for the demo.
   try {
-    // If it's just a number string, return it
     if (/^-?\d*\.?\d+$/.test(expression.trim())) {
       return parseFloat(expression.trim());
     }
-
-    // Use Function constructor as a safer alternative to eval
-    const result = new Function(`return ${expression}`)();
-    return isNaN(result) || !isFinite(result) ? 0 : result;
-  } catch (error) {
-    // Silent errors in test environment to avoid breaking CI builds on purpose
-    if (process.env.NODE_ENV !== 'test') {
-      console.error("Formula evaluation error:", expression, error);
+    // Simple replacement for annex row variables
+    let expr = expression;
+    const keys = Object.keys(rowData).sort((a, b) => b.length - a.length);
+    for (const key of keys) {
+      expr = expr.replace(new RegExp(`\\b${key}\\b`, 'g'), String(rowData[key] || 0));
     }
+    // Header replacements
+    expr = expr.replace(/header\(['"]([^'"]+)['"]\)/g, (_, key) => String(header[key] || 0));
+
+    return new Function(`return ${expr}`)();
+  } catch (error) {
     return 0;
   }
 };
 
 export const useCostSheetCalculator = (template: CostSheetData) => {
   const [calculatedValues, setCalculatedValues] = useState<{ [key: string]: CalculatedRowValue }>({});
+  const [calculationResult, setCalculationResult] = useState<CalculationResult | null>(null);
+  const [audits, setAudits] = useState<AuditEntry[]>([]);
   const [error, setError] = useState<Error | null>(null);
 
-  const calculateAnnexRow = (rowData: any, columns: CostSheetColumn[]): any => {
-    return produce(rowData, (draft: any) => {
-      for (const col of columns) {
-        if (col.formula) {
-          let expression = col.formula;
-          // Sort keys by length descending to avoid partial replacements (e.g., 'price' vs 'price_total')
-          const keys = Object.keys(rowData).sort((a, b) => b.length - a.length);
-          for (const key of keys) {
-            const val = rowData[key];
-            // Use word boundaries for replacement
-            expression = expression.replace(new RegExp(`\\b${key}\\b`, 'g'), String(val || 0));
-          }
-          // Header replacements
-          expression = expression.replace(/header\(['"]([^'"]+)['"]\)/g, (_, key) => String(template.header[key] || 0));
-          draft[col.key] = evaluateExpression(expression);
-        }
-      }
-    });
-  };
-
+  // 1. Calculate Annexes first (internal formulas)
   const calculatedAnnexes = useMemo(() => {
     if (!template || !template.annexes) return [];
     return template.annexes.map(annex => ({
       ...annex,
-      data: (annex.data || []).map(row => calculateAnnexRow(row, annex.columns))
+      data: (annex.data || []).map(row => produce(row, (draft: any) => {
+        for (const col of annex.columns) {
+          if (col.formula) {
+            draft[col.key] = evaluateAnnexExpression(col.formula, row, template.header);
+          }
+        }
+      }))
     }));
-  }, [template, template.header]);
+  }, [template.annexes, template.header]);
 
-  const annexTotals = useMemo(() => {
-    const totals: { [key: string]: number } = {};
-    for (const annex of calculatedAnnexes) {
-      const totalColumn = annex.columns.find(c => c.formula || ['amount', 'total', 'depreciation_cost'].includes(c.key));
-      if (!totalColumn) continue;
-      totals[annex.id] = annex.data.reduce((acc, row) => acc + (row[totalColumn.key] || 0), 0);
-    }
-    return totals;
-  }, [calculatedAnnexes]);
-
+  // 2. Run the declarative Engine for the main rows
   useEffect(() => {
     try {
       if (!template || !template.header || !template.sections) return;
 
-      const newCalculatedValues: { [key: string]: CalculatedRowValue } = {};
-      const allRowsById: { [key: string]: CostSheetRow } = {};
+      // Map UI state to Engine-compatible JSON
+      const engineRows: CostRow[] = [];
+      const flatten = (uiRows: CostSheetRow[]) => {
+        uiRows.forEach(r => {
+          // Infer semantic type
+          let type: RowSemanticType = 'COST';
+          if (['13', '13.1'].includes(r.id)) type = 'MARGIN';
+          if (r.id === '13.2') type = 'TAX';
+          if (['14', '12', '5'].includes(r.id)) type = 'TOTAL';
 
-    const flattenRows = (rows: CostSheetRow[]) => {
-      for (const row of rows) {
-        allRowsById[row.id] = row;
-        if (row.children) {
-          flattenRows(row.children);
-        }
-      }
-    };
-    template.sections.forEach(section => flattenRows(section.rows || []));
+          // Map calculation method
+          let formaCalculo: FormaCalculo = 'FIJO';
+          if (r.calculationMethod === 'Prorrateo') formaCalculo = 'PRORRATEO';
+          if (r.is_percent) formaCalculo = 'COEFICIENTE';
+          if (r.formula || r.totalFormula) formaCalculo = 'FORMULA';
 
-    const calculateRow = (row: CostSheetRow): CalculatedRowValue => {
-      if (newCalculatedValues[row.id]) {
-        return newCalculatedValues[row.id];
-      }
+          // Base Calculation mapping
+          let baseCalculo: BaseRef | null = null;
+          const baseRefId = r.baseDeCalculoRef || r.base_ref;
+          if (baseRefId) {
+              // Check if it's an Annex ID (I, II, III, IV, V)
+              if (/^[IVXLC]+$/.test(baseRefId)) {
+                  baseCalculo = { type: 'ANEXO', anexoId: baseRefId };
+                  // If pointing to annex without specific formula, it's an import
+                  if (r.calculationMethod !== 'Prorrateo' && !r.formula && !r.totalFormula) {
+                      formaCalculo = 'IMPORTAR_ANEXO';
+                  }
+              } else {
+                  baseCalculo = { type: 'FILA', classification: baseRefId };
+              }
+          }
 
-      // Initialize result
-      let calculatedResult: CalculatedRowValue = {
-        valorHistorico: row.valorHistorico || 0,
-        baseDeCalculoRef: row.baseDeCalculoRef || null,
-        baseTotal: 0,
-        baseValorHistorico: 0,
-        coeficiente: 0,
-        total: 0,
+          let formula = r.formula || r.totalFormula;
+
+          // Map =sum(children) to a specific engine-compatible formula
+          if (formula?.trim() === '=sum(children)' && r.children) {
+              const childRefs = r.children.map(c => `ref('${c.id}')`).join(', ');
+              formula = `sum(${childRefs})`;
+          }
+
+          engineRows.push({
+            id: r.id,
+            parentId: null, // We could pass it but ref based formula is enough
+            classification: r.id,
+            label: r.label,
+            type,
+            formaCalculo,
+            valorHistorico: r.valorHistorico ?? r.value,
+            baseCalculo,
+            coeficiente: r.is_percent ? (r.value ?? r.valorHistorico) : r.coeficiente,
+            formula: formula,
+          });
+
+          if (r.children) flatten(r.children);
+        });
+      };
+      template.sections.forEach(s => flatten(s.rows));
+
+      const ficha: FichaJSON = {
+        meta: {
+          id: template.header.code || 'default',
+          name: template.header.name || 'Ficha',
+          currency: template.header.currency || 'CUP',
+          decimals: 2,
+          settings: { allowFormulas: true }
+        },
+        anexos: calculatedAnnexes.map(a => ({
+          id: a.id,
+          name: a.title,
+          rows: a.data.map(d => ({
+            // Normalize classification by taking the prefix before ' - ' (e.g. "1.1 - Insumos" -> "1.1")
+            classification: (d.classification || d.label || '').split(' - ')[0].trim(),
+            importe: d.total || d.amount || d.depreciation_cost || d.price_total || 0
+          }))
+        })),
+        rows: engineRows
       };
 
-      // 2. Determine the base of calculation
-      if (row.baseDeCalculoRef) {
-        if (annexTotals[row.baseDeCalculoRef] !== undefined) {
-          calculatedResult.baseTotal = annexTotals[row.baseDeCalculoRef];
-          calculatedResult.baseValorHistorico = annexTotals[row.baseDeCalculoRef];
-        } else if (allRowsById[row.baseDeCalculoRef]) {
-          const baseRowCalculated = calculateRow(allRowsById[row.baseDeCalculoRef]);
-          calculatedResult.baseTotal = baseRowCalculated.total;
-          calculatedResult.baseValorHistorico = baseRowCalculated.valorHistorico;
-        }
-      }
-      if (calculatedResult.baseDeCalculoRef) {
-        if (annexTotals[calculatedResult.baseDeCalculoRef] !== undefined) {
-          calculatedResult.baseTotal = annexTotals[calculatedResult.baseDeCalculoRef];
-          calculatedResult.baseValorHistorico = annexTotals[calculatedResult.baseDeCalculoRef];
-        } else if (allRowsById[calculatedResult.baseDeCalculoRef]) {
-          const baseRowCalculated = calculateRow(allRowsById[calculatedResult.baseDeCalculoRef]);
-          calculatedResult.baseTotal = baseRowCalculated.total;
-          calculatedResult.baseValorHistorico = baseRowCalculated.valorHistorico;
-        }
-      }
+      // Execute Engine
+      const result = calculateFicha(ficha, { actor: 'ui-hook' });
 
-      // Overwrite total if base is from annex BUT there is no specific formula
-      if (row.baseDeCalculoRef && annexTotals[row.baseDeCalculoRef] !== undefined && !row.totalFormula) {
-        calculatedResult.total = annexTotals[row.baseDeCalculoRef];
-      }
-
-       // 1. Calculate children first if they exist
-       if (row.children && row.children.length > 0) {
-        const childrenCalculations = row.children.map(child => calculateRow(child));
-        // Only auto-sum if there's no formula and no base reference,
-        // OR if the formula is specifically =sum(children)
-        if ((!row.baseDeCalculoRef && !row.formula) || (row.formula || '').trim() === '=sum(children)') {
-            calculatedResult.total = childrenCalculations.reduce((sum, c) => sum + c.total, 0);
-            calculatedResult.valorHistorico = childrenCalculations.reduce((sum, c) => sum + c.valorHistorico, 0);
-        }
-      }
-
-      // 3. Percentage-based logic (Resultado section)
-      if (row.is_percent && row.base_ref) {
-        const baseRow = allRowsById[row.base_ref];
-        if (baseRow) {
-          const baseCalc = calculateRow(baseRow);
-          calculatedResult.total = baseCalc.total * (row.value || 0);
-          calculatedResult.valorHistorico = baseCalc.valorHistorico * (row.value || 0);
-        } else {
-          calculatedResult.total = 0;
-          calculatedResult.valorHistorico = row.value || 0;
-        }
-      } else {
-        // 4. Main Calculation Methods
-        switch (row.calculationMethod) {
-          case 'Prorrateo':
-            if (calculatedResult.baseTotal > 0) {
-              calculatedResult.coeficiente = calculatedResult.valorHistorico / calculatedResult.baseTotal;
-            } else {
-              calculatedResult.coeficiente = 0;
-            }
-            // The total for a prorated item is the coefficient applied to the base total.
-            calculatedResult.total = calculatedResult.coeficiente * calculatedResult.baseTotal;
-            break;
-
-          case 'ValorFijo':
-          default:
-            if (row.totalFormula) {
-              let expression = (row.totalFormula || '')
-                .replace(/baseValue/g, String(calculatedResult.baseTotal))
-                .replace(/valorHistorico/g, String(calculatedResult.valorHistorico));
-              expression = expression.replace(/header\(['"]([^'"]+)['"]\)/g, (_, key) => String(template.header[key] || 0));
-              calculatedResult.total = evaluateExpression(expression);
-            } else if (!row.formula && (!row.children || row.children.length === 0) && !row.baseDeCalculoRef) {
-              calculatedResult.total = calculatedResult.valorHistorico;
-            }
-            break;
-        }
-      }
-
-      // 5. Final formula override (for summary and reference rows)
-      if (row.formula && (row.formula || '').trim() !== '=sum(children)') {
-          // Helper to resolve formula with a specific field (total or valorHistorico)
-          const resolveFormula = (field: 'total' | 'valorHistorico') => {
-            let expression = (row.formula || '').replace(/ref\(\s*['"]?([^'"]+)['"]?\s*\)/g, (_, id) => {
-              const r = allRowsById[id.trim()];
-              if (!r) return '0';
-              const calc = calculateRow(r);
-              return String(calc[field] || 0);
-            });
-
-            expression = expression.replace(/header\(\s*['"]?([^'"]+)['"]?\s*\)/g, (_, key) =>
-              String(template.header[key.trim()] || 0)
-            );
-
-            // Simple sum replacement (non-nested)
-            expression = expression.replace(/sum\s*\(([^)]+)\)/g, (_, args) => {
-              const values = args.split(',').map((val: string) => {
-                const parsed = parseFloat(val.trim());
-                return isNaN(parsed) ? 0 : parsed;
-              });
-              return String(values.reduce((a: number, b: number) => a + b, 0));
-            });
-
-            // pct(value, percentage) -> (value * percentage / 100)
-            expression = expression.replace(/pct\s*\(([^,]+),\s*([^)]+)\)/g, (_, val, p) => {
-                const value = parseFloat(val.trim()) || 0;
-                const percent = parseFloat(p.trim()) || 0;
-                return String(value * (percent / 100));
-            });
-
-            // round2(value)
-            expression = expression.replace(/round2\s*\(([^)]+)\)/g, (_, val) => {
-                const value = parseFloat(val.trim()) || 0;
-                return String(Math.round(value * 100) / 100);
-            });
-
-            if (expression.trim().startsWith('=')) {
-              expression = expression.trim().substring(1);
-            }
-            return evaluateExpression(expression);
+      // Map back to UI values
+      const newCalculatedValues: { [key: string]: CalculatedRowValue } = {};
+      result.rows.forEach(r => {
+          // We need to approximate baseTotal and coeficiente for the UI table display
+          // The engine doesn't explicitly return baseTotal in the row object, but we can infer or leave it
+          newCalculatedValues[r.id] = {
+              total: r.total,
+              valorHistorico: r.valorHistorico || 0,
+              baseDeCalculoRef: r.baseCalculo?.type === 'FILA' ? r.baseCalculo.classification : (r.baseCalculo?.anexoId || null),
+              baseTotal: r.baseTotal || 0,
+              baseValorHistorico: r.baseHist || 0,
+              coeficiente: r.coeficiente || 0,
+              audits: r.audit,
+              hasWarnings: r.audit.some(a => a.type === 'WARNING' || a.type === 'ERROR' || a.type === 'CYCLE_DETECTED')
           };
+      });
 
-          calculatedResult.total = resolveFormula('total');
-          calculatedResult.valorHistorico = resolveFormula('valorHistorico');
-        }
-
-      newCalculatedValues[row.id] = calculatedResult;
-      return calculatedResult;
-    };
-
-    // Calculate all rows
-    template.sections.forEach(section => {
-      (section.rows || []).forEach(calculateRow);
-    });
-
-    setCalculatedValues(newCalculatedValues);
-    setError(null);
+      setCalculatedValues(newCalculatedValues);
+      setCalculationResult(result);
+      setAudits(result.audits);
+      setError(null);
     } catch (e) {
       setError(e as Error);
-      console.error("Error calculating cost sheet:", e);
+      console.error("Error in unified cost calculator:", e);
     }
-  }, [template, annexTotals]);
+  }, [template, calculatedAnnexes]);
 
-  return { calculatedValues, annexTotals, calculatedAnnexes, error };
+  return { calculatedValues, calculatedAnnexes, audits, calculationResult, error };
 };

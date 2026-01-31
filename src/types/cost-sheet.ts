@@ -65,4 +65,6 @@ export interface CalculatedRowValue {
   baseValorHistorico: number;
   coeficiente: number;
   total: number;
+  audits?: any[];
+  hasWarnings?: boolean;
 }
