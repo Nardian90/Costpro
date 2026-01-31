@@ -28,7 +28,6 @@ import CostFlowDiagram from './help/CostFlowDiagram';
 import KidsOnboarding from './help/KidsOnboarding';
 import OfflineSyncDiagram from './help/OfflineSyncDiagram';
 import JulesDiagram from './help/JulesDiagram';
-import IPVFlowDiagram from './help/IPVFlowDiagram';
 
 export default function HelpView() {
   return (
@@ -46,14 +45,14 @@ export default function HelpView() {
         </div>
         <div className="flex flex-col items-end">
           <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-black">
-            VERSIÓN 5.7.19 (IPV CONCILIATION)
+            VERSIÓN 5.7.18 (COST SHEET REFACTOR)
           </Badge>
-          <span className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Última actualización: 28 Feb 2026</span>
+          <span className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Última actualización: 27 Feb 2026</span>
         </div>
       </div>
 
       <Tabs defaultValue="roles" className="w-full">
-        <TabsList className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-10 h-auto p-1 bg-muted/50 rounded-2xl mb-8">
+        <TabsList className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-9 h-auto p-1 bg-muted/50 rounded-2xl mb-8">
           <TabsTrigger value="onboarding" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs">
             <Baby className="w-4 h-4 mr-2 hidden sm:block" />
             Niños
@@ -65,10 +64,6 @@ export default function HelpView() {
           <TabsTrigger value="admin" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs">
             <Settings className="w-4 h-4 mr-2 hidden sm:block" />
             Gestión
-          </TabsTrigger>
-          <TabsTrigger value="ipv" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs">
-            <History className="w-4 h-4 mr-2 hidden sm:block" />
-            IPV
           </TabsTrigger>
           <TabsTrigger value="costs" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs">
             <FileText className="w-4 h-4 mr-2 hidden sm:block" />
@@ -95,79 +90,6 @@ export default function HelpView() {
             Historial
           </TabsTrigger>
         </TabsList>
-
-        {/* --- IPV CONCILIATION --- */}
-        <TabsContent value="ipv" className="space-y-8">
-          <div className="grid lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-6">
-              <Card className="border-none shadow-none bg-transparent">
-                <CardHeader className="px-0">
-                  <CardTitle className="text-2xl font-black uppercase tracking-tight">Motor de Conciliación Bancaria (IPV Builder)</CardTitle>
-                  <CardDescription className="text-base font-medium">
-                    Transforma extractos bancarios en reportes de ventas (IPV) mediante un motor de matching multi-paso.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="px-0">
-                  <IPVFlowDiagram />
-                </CardContent>
-              </Card>
-
-              <div className="bg-primary/5 rounded-3xl p-8 border border-primary/10">
-                <h4 className="text-lg font-black text-primary uppercase mb-6 flex items-center gap-2">
-                  <Info className="w-5 h-5" />
-                  ¿Cómo cambiar el estado de "Pendiente"?
-                </h4>
-                <p className="text-sm font-medium leading-relaxed mb-6">
-                  Las transacciones bancarias ingresan con estado <Badge variant="outline" className="bg-gray-500/10 text-gray-500">PENDIENTE</Badge>. Para que cambien de estado, debes presionar el botón <span className="font-bold text-primary italic">"Ejecutar Matching"</span>.
-                </p>
-                <div className="grid md:grid-cols-2 gap-4 text-xs">
-                    <div className="p-4 bg-background/50 rounded-2xl border border-primary/20">
-                        <h5 className="font-black uppercase mb-2 text-emerald-600">Estado PARCIAL</h5>
-                        <p>Ocurre cuando el sistema identifica algunos productos que coinciden con el monto, pero aún queda un saldo por conciliar.</p>
-                    </div>
-                    <div className="p-4 bg-background/50 rounded-2xl border border-primary/20">
-                        <h5 className="font-black uppercase mb-2 text-green-600">Estado COMPLETO</h5>
-                        <p>Ocurre cuando el importe total de la transacción bancaria ha sido asignado a ventas de productos o ajustes de efectivo.</p>
-                    </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <div className="p-6 rounded-3xl bg-muted/30 border border-border">
-                <h4 className="font-black text-xs uppercase tracking-widest mb-4 flex items-center gap-2">
-                  <Target className="w-4 h-4" />
-                  Los 4 Pasos del Motor
-                </h4>
-                <div className="space-y-6">
-                  <div>
-                    <Badge className="bg-blue-500 mb-2">1. HARD_REF</Badge>
-                    <p className="text-[10px] font-medium text-muted-foreground leading-tight">Busca códigos de productos o nombres exactos en las observaciones del banco.</p>
-                  </div>
-                  <div>
-                    <Badge className="bg-violet-500 mb-2">2. EXACT_SUM</Badge>
-                    <p className="text-[10px] font-medium text-muted-foreground leading-tight">Algoritmo matemático que busca combinaciones de productos que sumen el monto exacto.</p>
-                  </div>
-                  <div>
-                    <Badge className="bg-amber-500 mb-2">3. TOLERANCE</Badge>
-                    <p className="text-[10px] font-medium text-muted-foreground leading-tight">Permite descuadres mínimos (ej: centavos) configurados en las reglas.</p>
-                  </div>
-                  <div>
-                    <Badge className="bg-emerald-500 mb-2">4. CASH_FILL</Badge>
-                    <p className="text-[10px] font-medium text-muted-foreground leading-tight">Asigna el excedente a efectivo si la regla está activa y dentro del límite diario.</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-6 rounded-3xl bg-primary text-white space-y-4 shadow-lg">
-                <h4 className="font-black text-xs uppercase tracking-widest opacity-80">Tip Operativo</h4>
-                <p className="text-[10px] font-medium leading-relaxed">
-                  Si una transacción no se concilia automáticamente, verifica que tus <span className="font-black">Reglas de Matching</span> estén activas y que los precios de los productos estén actualizados.
-                </p>
-              </div>
-            </div>
-          </div>
-        </TabsContent>
 
         {/* --- COSTPRO PARA NIÑOS (ONBOARDING) --- */}
         <TabsContent value="onboarding" className="space-y-8">
@@ -756,29 +678,12 @@ export default function HelpView() {
             </CardHeader>
             <CardContent className="px-0">
               <div className="space-y-8">
-                {/* --- v5.7.19 --- */}
+                {/* --- v5.7.18 --- */}
                 <div className="relative pl-8 border-l-2 border-primary/20 space-y-4">
                   <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary border-4 border-background" />
                   <div className="flex items-center gap-3">
-                    <Badge className="bg-primary">v5.7.19</Badge>
-                    <span className="text-xs font-black text-muted-foreground uppercase">28 de Febrero, 2026 (Actual)</span>
-                  </div>
-                  <div className="bg-muted/30 rounded-2xl p-6 space-y-4 border border-primary/10">
-                    <h4 className="font-black text-sm uppercase text-primary">Módulo IPV Builder & Conciliación Bancaria</h4>
-                    <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Ingesta de estados de cuenta CSV y validación SHA-256.</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Motor de matching multi-paso (HARD_REF, EXACT_SUM, TOLERANCE, CASH_FILL).</li>
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Generación de reportes IPV inmutables en PDF con firmas digitales.</li>
-                    </ul>
-                  </div>
-                </div>
-
-                {/* --- v5.7.18 --- */}
-                <div className="relative pl-8 border-l-2 border-primary/20 space-y-4 opacity-90">
-                  <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-muted border-4 border-background" />
-                  <div className="flex items-center gap-3">
-                    <Badge variant="outline">v5.7.18</Badge>
-                    <span className="text-xs font-black text-muted-foreground uppercase">27 de Febrero, 2026</span>
+                    <Badge className="bg-primary">v5.7.18</Badge>
+                    <span className="text-xs font-black text-muted-foreground uppercase">27 de Febrero, 2026 (Actual)</span>
                   </div>
                   <div className="bg-muted/30 rounded-2xl p-6 space-y-4 border border-primary/10">
                     <h4 className="font-black text-sm uppercase text-primary">Refactor de Flujo en Ficha de Costo</h4>
@@ -933,7 +838,7 @@ export default function HelpView() {
            <button className="px-8 py-3 bg-background border border-border rounded-xl font-black text-xs uppercase tracking-widest hover:bg-primary hover:text-white transition-all">
              Abrir Ticket de Soporte
            </button>
-           <span className="text-[10px] font-bold text-muted-foreground">COSTPRO v5.7.19</span>
+           <span className="text-[10px] font-bold text-muted-foreground">COSTPRO v5.7.18</span>
         </div>
       </div>
     </div>
