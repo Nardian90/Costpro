@@ -23,6 +23,8 @@ import {
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { toast } from 'sonner';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { v4 as uuidv4 } from 'uuid';
 
 export function IPVReportView() {
@@ -102,34 +104,70 @@ export function IPVReportView() {
 
   const exportPDF = async (report: DailyIPVReport) => {
     try {
-      toast.loading('Generando PDF en el servidor...', { id: 'pdf-gen' });
+      toast.loading('Generando PDF...', { id: 'pdf-gen' });
 
-      const response = await fetch('/api/ipv/pdf', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ report }),
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.width;
+
+      // Header
+      doc.setFontSize(18);
+      doc.text('REPORTE IPV DIARIO', pageWidth / 2, 20, { align: 'center' });
+
+      doc.setFontSize(10);
+      doc.text(`Fecha del Reporte: ${report.fecha_reporte}`, 14, 30);
+      doc.text(`Estado: ${report.estado}`, 14, 35);
+      doc.text(`Generado el: ${new Date().toLocaleString()}`, 14, 40);
+
+      // Summary
+      doc.setFontSize(12);
+      doc.text('RESUMEN MONETARIO', 14, 50);
+
+      autoTable(doc, {
+        startY: 55,
+        head: [['Concepto', 'Monto']],
+        body: [
+          ['Total Ventas', `$ ${(report.total_ventas_cents / 100).toFixed(2)}`],
+          ['Resumen Efectivo', `$ ${(report.resumen_efectivo_cents / 100).toFixed(2)}`],
+          ['Resumen Transferencia', `$ ${(report.resumen_transferencia_cents / 100).toFixed(2)}`],
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: [22, 163, 74] }
       });
 
-      if (!response.ok) {
-        throw new Error('Error al generar el PDF en el servidor');
-      }
+      // Details Table
+      const tableData = report.filas.map((f: any) => [
+        f.cod,
+        f.descripcion,
+        f.um,
+        f.saldo_inicial_qty,
+        f.entrada_salida_qty,
+        f.venta_cantidad_qty,
+        `$ ${(f.precio_unitario_cents / 100).toFixed(2)}`,
+        `$ ${(f.importe_cents / 100).toFixed(2)}`,
+        f.existencia_final_qty
+      ]);
 
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `IPV_${report.fecha_reporte}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      autoTable(doc, {
+        startY: (doc as any).lastAutoTable.finalY + 15,
+        head: [['Cod', 'Producto', 'UM', 'Inicial', 'E/S', 'Venta', 'Precio', 'Importe', 'Final']],
+        body: tableData,
+        theme: 'striped',
+        headStyles: { fillColor: [22, 163, 74] },
+        styles: { fontSize: 8 }
+      });
 
-      toast.success('PDF descargado (generado en servidor)', { id: 'pdf-gen' });
+      // Footer / Signatures
+      const finalY = (doc as any).lastAutoTable.finalY + 20;
+      doc.text('__________________________', 14, finalY);
+      doc.text('Firma Responsable', 14, finalY + 5);
+      doc.text(`Realizado por: ${report.firmas?.realizado_por || 'Sistema'}`, 14, finalY + 10);
+
+      doc.save(`IPV_${report.fecha_reporte}.pdf`);
+
+      toast.success('PDF descargado exitosamente', { id: 'pdf-gen' });
     } catch (error) {
       console.error(error);
-      toast.error('Error al descargar el PDF', { id: 'pdf-gen' });
+      toast.error('Error al generar el PDF', { id: 'pdf-gen' });
     }
   };
 
