@@ -121,7 +121,6 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
 
         {/* Valor Histórico / % */}
         <TableCell className="px-4 py-2 text-right w-40">
-          {(row.hasOwnProperty('valorHistorico') || row.hasOwnProperty('value')) ? (
             <div className="relative">
                 <Input
                 type="number"
@@ -135,12 +134,14 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
                     row.hasOwnProperty('valorHistorico') ? 'valorHistorico' : 'value',
                     row.is_percent ? numVal / 100 : numVal
                   );
+                  // Ensure engine respects manual changes
+                  handleValueChange('calculationMethod', 'ValorFijo');
+                  handleValueChange('formula', '');
                 }}
                 onFocus={(e) => e.target.select()}
                 />
                 {row.is_percent && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">%</span>}
             </div>
-          ) : <span className="text-sm text-slate-400 italic">Auto</span>}
         </TableCell>
 
         {/* Total */}
@@ -224,6 +225,8 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
  * Decomposed by sections for a more professional and clean enterprise-level experience.
  */
 const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = ({ sections, calculatedValues, annexes }) => {
+  const [activeSubSectionId, setActiveSubSectionId] = useState(sections[0]?.id || '');
+
   const flattenRows = (rows: RowData[]): RowData[] => {
     let all: RowData[] = [];
     for (const row of rows) {
@@ -238,43 +241,63 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = ({ s
   const allRows = useMemo(() => flattenRows(sections.flatMap(s => s.rows)), [sections]);
 
   return (
-    <div data-testid="cost-sheet-interactive-table" className="space-y-8">
-        {sections.map((section, sectionIndex) => (
-            <div key={section.id} className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-                <div className="flex items-center gap-3 mb-4 px-1">
-                    <div className="w-1.5 h-6 bg-primary rounded-full" />
-                    <h3 className="text-sm font-black uppercase tracking-[0.2em] text-foreground/80">
-                        {section.label}
-                    </h3>
-                </div>
+    <div data-testid="cost-sheet-interactive-table" className="space-y-6">
+        {/* Secondary Navigation for Sections within the Main Table */}
+        <div className="flex flex-wrap gap-2 mb-6 bg-muted/20 p-2 rounded-2xl border border-border/50 overflow-x-auto no-scrollbar">
+            {sections.map(s => (
+                <button
+                    key={s.id}
+                    onClick={() => setActiveSubSectionId(s.id)}
+                    className={cn(
+                        "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shrink-0",
+                        activeSubSectionId === s.id
+                            ? "bg-primary text-white shadow-lg scale-105"
+                            : "bg-background text-muted-foreground hover:bg-muted"
+                    )}
+                >
+                    {s.label}
+                </button>
+            ))}
+        </div>
 
-                <div className="neu-card p-0 overflow-hidden border-border/50 shadow-sm hover:shadow-md transition-shadow">
-                    <Table className="w-full table-fixed min-w-[700px]">
-                        <TableHeader className="bg-muted/30 text-muted-foreground font-black uppercase text-[10px] tracking-widest border-b border-border">
-                            <TableRow>
-                                <TableHead className="px-4 py-4 text-left font-black uppercase tracking-widest sticky-column-1 min-w-[250px]">Concepto</TableHead>
-                                <TableHead className="px-4 py-4 text-right font-black uppercase tracking-widest w-40">Valor Histórico</TableHead>
-                                <TableHead className="px-4 py-4 text-right font-black uppercase tracking-widest w-48">Total</TableHead>
-                                <TableHead className="px-4 py-4 text-center font-black uppercase tracking-widest w-20">Ayuda</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {section.rows.map((row: RowData, rowIndex: number) => (
-                                <CostSheetRow
-                                    key={row.id}
-                                    row={row}
-                                    level={0}
-                                    calculated={calculatedValues[row.id]}
-                                    calculatedValues={calculatedValues}
-                                    path={['sections', sectionIndex, 'rows', rowIndex]}
-                                    annexes={annexes}
-                                    allRows={allRows}
-                                />
-                            ))}
-                        </TableBody>
-                    </Table>
+        {sections.map((section, sectionIndex) => (
+            section.id === activeSubSectionId && (
+                <div key={section.id} className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    <div className="flex items-center gap-3 mb-4 px-1">
+                        <div className="w-1.5 h-6 bg-primary rounded-full" />
+                        <h3 className="text-sm font-black uppercase tracking-[0.2em] text-foreground/80">
+                            {section.label}
+                        </h3>
+                    </div>
+
+                    <div className="neu-card p-0 overflow-hidden border-border/50 shadow-sm hover:shadow-md transition-shadow">
+                        <Table className="w-full table-fixed min-w-[700px]">
+                            <TableHeader className="bg-muted/30 text-muted-foreground font-black uppercase text-[10px] tracking-widest border-b border-border">
+                                <TableRow>
+                                    <TableHead className="px-4 py-4 text-left font-black uppercase tracking-widest sticky-column-1 min-w-[250px]">Concepto</TableHead>
+                                    <TableHead className="px-4 py-4 text-right font-black uppercase tracking-widest w-40">Valor Histórico</TableHead>
+                                    <TableHead className="px-4 py-4 text-right font-black uppercase tracking-widest w-48">Total</TableHead>
+                                    <TableHead className="px-4 py-4 text-center font-black uppercase tracking-widest w-20">Ayuda</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {section.rows.map((row: RowData, rowIndex: number) => (
+                                    <CostSheetRow
+                                        key={row.id}
+                                        row={row}
+                                        level={0}
+                                        calculated={calculatedValues[row.id]}
+                                        calculatedValues={calculatedValues}
+                                        path={['sections', sectionIndex, 'rows', rowIndex]}
+                                        annexes={annexes}
+                                        allRows={allRows}
+                                    />
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
                 </div>
-            </div>
+            )
         ))}
     </div>
   );
