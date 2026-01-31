@@ -43,6 +43,8 @@ export interface CostRow {
 
 export interface CalculatedRow extends CostRow {
   total: number;
+  baseTotal?: number;
+  baseHist?: number;
   audit: AuditEntry[];
 }
 
