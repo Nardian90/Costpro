@@ -72,4 +72,39 @@ describe('Cart Store', () => {
     setDiscount({ type: 'fixed', value: 50 });
     expect(getTotal()).toBe(150);
   });
+
+  it('should calculate taxes correctly', () => {
+    const { addItem, getSubtotal, getTotal, getTaxAmount, toggleTax, setDiscount } = useCartStore.getState();
+    addItem(mockCartItem); // Subtotal: 200
+
+    const tax10 = { id: 'tax1', name: 'IVA 10%', type: 'percentage' as const, value: 10, is_active: true };
+    toggleTax(tax10);
+
+    expect(getTaxAmount()).toBe(20);
+    expect(getTotal()).toBe(220);
+
+    // With discount
+    setDiscount({ type: 'fixed', value: 100 }); // Base: 100
+    expect(getTaxAmount()).toBe(10); // 10% of 100
+    expect(getTotal()).toBe(110);
+  });
+
+  it('should handle taxes with minimum exempt', () => {
+    const { addItem, getTotal, getTaxAmount, toggleTax } = useCartStore.getState();
+    addItem({ ...mockCartItem, quantity: 40 }); // Subtotal: 4000
+
+    const tax5 = {
+      id: 'tax2',
+      name: 'Tax 5%',
+      type: 'percentage' as const,
+      value: 5,
+      min_exempt: 3000,
+      is_active: true
+    };
+    toggleTax(tax5);
+
+    // Base: 4000. Taxable: 4000 - 3000 = 1000. Tax: 1000 * 0.05 = 50.
+    expect(getTaxAmount()).toBe(50);
+    expect(getTotal()).toBe(4050);
+  });
 });

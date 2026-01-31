@@ -181,6 +181,8 @@ export const transactionSchema = z.object({
   discount_type: discountTypeSchema.catch('fixed').optional().default('fixed'),
   discount_value: z.coerce.number().catch(0).default(0),
   subtotal: z.coerce.number().catch(0).default(0),
+  tax_amount: z.coerce.number().catch(0).default(0),
+  applied_taxes: z.array(z.any()).catch([]).optional(),
   idempotency_key: z.string().nullable().optional(),
 });
 
@@ -301,6 +303,8 @@ export const createSaleParamsSchema = z.object({
     price: z.number().min(0),
     cost: z.number().min(0),
   })),
+  p_applied_taxes: z.array(z.any()).optional(),
+  p_tax_amount: z.number().optional(),
 });
 
 export const registerReceptionParamsSchema = z.object({
