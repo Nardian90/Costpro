@@ -202,11 +202,11 @@ export default function HelpView() {
                   </p>
                 </div>
                 <div className="pt-4 border-t border-emerald-500/10">
-                  <h4 className="font-black text-xs uppercase tracking-widest text-indigo-700 mb-2 flex items-center gap-2">
+                  <h4 className="font-black text-xs uppercase tracking-widest text-green-700 mb-2 flex items-center gap-2">
                     <Store className="w-3 h-3" />
                     Auto-selección de Tienda
                   </h4>
-                  <p className="text-[10px] font-medium text-indigo-800/70 leading-relaxed">
+                  <p className="text-[10px] font-medium text-green-800/70 leading-relaxed">
                     Para garantizar la operatividad inmediata, el sistema selecciona automáticamente tu primera tienda asignada si no tienes una activa.
                     <span className="block mt-1 font-bold italic">Nota: Si no ves datos, verifica que tengas al menos una tienda asignada por tu Administrador.</span>
                   </p>

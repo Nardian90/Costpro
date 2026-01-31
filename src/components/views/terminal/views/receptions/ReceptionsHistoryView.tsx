@@ -144,7 +144,7 @@ export default function ReceptionsHistoryView() {
                           rec.status === 'active' ? "bg-green-500/10 text-green-600" :
                           rec.status === 'voided' ? "bg-destructive/10 text-destructive" :
                           rec.status === 'pending' ? "bg-amber-500/10 text-amber-600" :
-                          "bg-blue-500/10 text-blue-600"
+                          "bg-green-600/10 text-green-700"
                         )}>
                           {rec.status === 'active' ? 'Confirmada' :
                            rec.status === 'voided' ? 'Anulada' :

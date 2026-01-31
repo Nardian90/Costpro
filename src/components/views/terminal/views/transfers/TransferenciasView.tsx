@@ -137,9 +137,9 @@ export default function TransferenciasView() {
                 <div className="flex items-center gap-4">
                    <div className={cn(
                      "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0",
-                     activeTab === 'outgoing' ? "bg-amber-500/10" : "bg-blue-500/10"
+                     activeTab === 'outgoing' ? "bg-amber-500/10" : "bg-green-600/10"
                    )}>
-                      {activeTab === 'outgoing' ? <ArrowUpRight className="w-6 h-6 text-amber-500" /> : <ArrowDownLeft className="w-6 h-6 text-blue-500" />}
+                      {activeTab === 'outgoing' ? <ArrowUpRight className="w-6 h-6 text-amber-500" /> : <ArrowDownLeft className="w-6 h-6 text-green-600" />}
                    </div>
                    <div>
                       <div className="flex items-center gap-2">
