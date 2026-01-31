@@ -140,7 +140,10 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       >
         <div className="pl-2 pr-1 text-primary shrink-0">
-            {value.startsWith('=') ? <Command className="w-3.5 h-3.5" /> : <span className="text-xs font-bold">$</span>}
+            {(value.startsWith('=') || (value.trim() !== '' && isNaN(Number(value.trim())))) ?
+                <Command className="w-3.5 h-3.5" /> :
+                <span className="text-xs font-bold">$</span>
+            }
         </div>
         <div className="flex-1 relative h-full flex items-center min-w-0">
             <input
