@@ -261,10 +261,6 @@ const CostSheetView = () => {
                     )}
                     {activeSection === 'header' && (
                         <div className="space-y-6">
-                            <CostSheetSummary
-                                calculatedValues={calculatedValues}
-                                data={data}
-                            />
                             <CostSheetHeaderEditor />
                         </div>
                     )}
