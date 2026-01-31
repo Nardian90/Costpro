@@ -662,9 +662,15 @@
   }
 }
 
-/* En mobile eliminamos el sticky y permitimos scroll total */
+/* En mobile eliminamos el sticky horizontal pero mantenemos el vertical para encabezados */
 @media (max-width: 767px) {
-  .sticky-column-1 th:first-child,
+  .sticky-column-1 th:first-child {
+    position: sticky !important; /* Mantener sticky vertical si es parte del header */
+    left: auto !important;
+    max-width: none !important;
+    box-shadow: none !important;
+    z-index: 30 !important;
+  }
   .sticky-column-1 td:first-child {
     position: static !important;
     max-width: none !important;
@@ -769,14 +775,15 @@
     border-bottom: 2px solid rgba(0,0,0,0.1);
   }
 
-  /* Offset for TerminalView main header */
+  /* Offset for TerminalView main header - Adjusted for better mobile alignment */
   .terminal-content .sticky-header th {
-    top: 76px; /* Default mobile header offset */
+    top: 64px; /* Slightly reduced to align with smaller mobile headers */
+    z-index: 40;
   }
 
   @media (min-width: 640px) {
     .terminal-content .sticky-header th {
-      top: 92px; /* sm header offset */
+      top: 80px;
     }
   }
 
