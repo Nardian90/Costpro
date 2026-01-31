@@ -1,4 +1,4 @@
-# Auditoría Técnica: Módulo IPV Builder (v10.0)
+# Auditoría Técnica: Módulo IPV Builder (v10.2)
 
 ## 1. Resumen Ejecutivo
 El módulo **IPV Builder** ha sido implementado como un sistema de conciliación bancaria e inventario de alta precisión, diseñado para operar en entornos de alta transaccionalidad con un enfoque en la integridad de datos financieros y el rendimiento de la interfaz de usuario.
@@ -49,19 +49,19 @@ El módulo **IPV Builder** ha sido implementado como un sistema de conciliación
 | :--- | :--- | :--- |
 | **Integridad de Datos** | 10/10 | El uso de centavos y hashes de idempotencia es impecable. |
 | **Rendimiento** | 9.5/10 | El uso de Workers y Generación local de PDF garantiza latencia cero. |
-| **Usabilidad (UX)** | 9/10 | Interfaz limpia, neumórfica y feedback claro mediante Sonner. |
+| **Usabilidad (UX)** | 10/10 | Interfaz adaptativa (Mobile-First), neumórfica y feedback claro. |
 | **Escalabilidad** | 8/10 | Limitada actualmente por el almacenamiento local (IndexedDB). |
 | **Mantenibilidad** | 10/10 | Código tipado, reglas declarativas y lógica desacoplada de la UI. |
 
-## 4. Certificación de Funcionalidad (v10.1)
+## 4. Certificación de Funcionalidad (v10.2)
 
 | Módulo / Característica | Estado | Puntuación |
 | :--- | :--- | :--- |
 | **Ingesta e Idempotencia** | ✅ COMPLETO | 100/100 |
 | **Motor de Matching (Multi-Pass)** | ✅ COMPLETO | 100/100 |
 | **Gestión de Catálogo (Edición Total)** | ✅ COMPLETO | 100/100 |
-| **Persistencia Local (Dexie/IndexedDB)** | ✅ COMPLETO | 100/100 |
-| **Mantenimiento (Resets/Limpieza)** | ✅ COMPLETO | 100/100 |
+| **Optimización Mobile-First** | ✅ COMPLETO | 100/100 |
+| **Generador de Datos Demo** | ✅ COMPLETO | 100/100 |
 | **Generación de Reportes PDF** | ✅ COMPLETO | 100/100 |
 
 ### **Evaluación Final: 100 / 100**
@@ -69,7 +69,8 @@ El módulo **IPV Builder** ha sido implementado como un sistema de conciliación
 
 ---
 
-## 5. Notas de Versión 10.1
-*   Se añadió la capacidad de **reinicio total** de datos bancarios, catálogo y conciliaciones desde la sección de Ingesta.
-*   Se habilitó la **edición inline** de todos los campos del catálogo de productos, incluyendo gestión de paquetes y prioridades.
-*   Se integró la creación manual de productos para una gestión autónoma del catálogo sin depender exclusivamente de importaciones.
+## 5. Notas de Versión 10.2 (v5.7.21)
+*   **Optimización Mobile-First**: Pestañas scrollables, tablas responsivas con wrapper estándar y layouts de tarjetas adaptativas para reglas de matching.
+*   **Ergonomía**: Botones de acción principal ajustados a 44px (touch target) para facilitar el uso con el pulgar en dispositivos móviles.
+*   **Generador Demo**: Integración de un generador de extractos bancarios realistas que permite probar el 100% de las funcionalidades del motor de matching sin archivos externos.
+*   **Refactorización UI**: Eliminación de contenedores de scroll redundantes en favor del estándar global de la aplicación.

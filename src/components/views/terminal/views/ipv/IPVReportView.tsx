@@ -198,8 +198,8 @@ export function IPVReportView() {
         </Button>
       </div>
 
-      <div className="overflow-x-auto">
-        <Table className="data-table">
+      <div>
+        <Table>
           <TableHeader>
             <TableRow>
               <TableHead className="sticky-column-1">Fecha</TableHead>

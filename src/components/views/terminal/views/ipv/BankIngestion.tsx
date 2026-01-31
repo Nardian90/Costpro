@@ -220,6 +220,103 @@ export function BankIngestion() {
     toast.success(`Ingesta finalizada: ${imported} importados, ${skipped} duplicados omitidos`);
   };
 
+  const loadDemoStatement = async () => {
+      const products = await db.products.toArray();
+      if (products.length === 0) {
+          toast.error('Primero debes cargar el catálogo (puedes usar el botón Productos Demo)');
+          return;
+      }
+
+      const today = new Date();
+      const demoTxs: BankTransaction[] = [];
+
+      // Función para generar fecha en formato DD/MM/YYYY
+      const fmtDate = (date: Date) => {
+          return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
+      };
+
+      // 1. Transacción con Referencia Directa (HARD_REF)
+      const beer = products.find(p => p.cod === '1');
+      if (beer) {
+          const ref = `VB${Math.random().toString(36).substring(7).toUpperCase()}`;
+          const cents = beer.precio_cents * 5; // 5 cervezas
+          demoTxs.push({
+              id: uuidv4(),
+              fecha: fmtDate(today),
+              referencia_corta: ref,
+              referencia_origen: ref,
+              observaciones: `PAGO A COMERCIO: 4277505 - COMPRA 5 UNID COD:${beer.cod}`,
+              importe_cents: cents,
+              tipo: 'Cr',
+              estado_conciliacion: 'PENDIENTE',
+              created_at: new Date().toISOString(),
+              ingestion_hash: await generateHash(`DEMO-HARD-${ref}`)
+          });
+      }
+
+      // 2. Transacción para Suma Exacta (EXACT_SUM)
+      // Buscamos una combinación: 1 Caja de Windmil ($5,760) + 1 Tigon ($320) = $6,080
+      const box = products.find(p => p.cod === '1-C');
+      const tigon = products.find(p => p.cod === '3');
+      if (box && tigon) {
+          const ref = `VB${Math.random().toString(36).substring(7).toUpperCase()}`;
+          const cents = box.precio_cents + tigon.precio_cents;
+          demoTxs.push({
+              id: uuidv4(),
+              fecha: fmtDate(today),
+              referencia_corta: ref,
+              referencia_origen: ref,
+              observaciones: `TRANSFERENCIA RECIBIDA - CLIENTE: JUAN PEREZ`,
+              importe_cents: cents,
+              tipo: 'Cr',
+              estado_conciliacion: 'PENDIENTE',
+              created_at: new Date().toISOString(),
+              ingestion_hash: await generateHash(`DEMO-SUM-${ref}`)
+          });
+      }
+
+      // 3. Comisión Bancaria (Debito)
+      const refDb = `VB${Math.random().toString(36).substring(7).toUpperCase()}`;
+      demoTxs.push({
+          id: uuidv4(),
+          fecha: fmtDate(today),
+          referencia_corta: refDb,
+          referencia_origen: refDb,
+          observaciones: `Cobro por utilizacion del Servicio de Banca Remota. Comision 100.00`,
+          importe_cents: 10000,
+          tipo: 'Db',
+          estado_conciliacion: 'PENDIENTE',
+          created_at: new Date().toISOString(),
+          ingestion_hash: await generateHash(`DEMO-DB-${refDb}`)
+      });
+
+      // 4. Transacción con Tolerancia
+      // Caja Bavaria ($6,000) pero recibimos $5,999 (-$1.00 de supuesta comisión extra)
+      const bavaria = products.find(p => p.cod === '4-C');
+      if (bavaria) {
+          const ref = `VB${Math.random().toString(36).substring(7).toUpperCase()}`;
+          demoTxs.push({
+              id: uuidv4(),
+              fecha: fmtDate(today),
+              referencia_corta: ref,
+              referencia_origen: ref,
+              observaciones: `PAGO QR COMERCIO - REF: ${ref}`,
+              importe_cents: bavaria.precio_cents - 100, // Falta $1.00
+              tipo: 'Cr',
+              estado_conciliacion: 'PENDIENTE',
+              created_at: new Date().toISOString(),
+              ingestion_hash: await generateHash(`DEMO-TOL-${ref}`)
+          });
+      }
+
+      try {
+          await db.bank_statements.bulkAdd(demoTxs);
+          toast.success(`Se han generado ${demoTxs.length} transacciones demo`);
+      } catch (error) {
+          toast.error('Error al generar transacciones demo');
+      }
+  };
+
   const importDefaultProducts = async () => {
       const defaultProducts = [
           { cod: '1', descripcion: 'Cerveza Windmil', um: 'Unidades', precio_cents: 26000, prioridad_algoritmo: 1, activo: true, es_paquete: false, contenido_paquete: 1 },
@@ -282,8 +379,12 @@ export function BankIngestion() {
             </p>
 
             <div className="grid grid-cols-2 gap-3">
-                <Button variant="outline" className="neu-btn text-xs" onClick={importDefaultProducts}>
+                <Button variant="outline" className="neu-btn text-[10px] sm:text-xs" onClick={importDefaultProducts}>
                     Productos Demo
+                </Button>
+
+                <Button variant="outline" className="neu-btn text-[10px] sm:text-xs" onClick={loadDemoStatement}>
+                    Extracto Demo
                 </Button>
 
                 <label className="cursor-pointer">
