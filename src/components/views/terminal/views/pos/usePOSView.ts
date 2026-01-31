@@ -109,8 +109,8 @@ export function usePOSView() {
           product_id: i.product_id, variant_id: i.variant_id,
           quantity: i.quantity, price: i.price, cost: i.cost
         })),
-        p_applied_taxes: appliedTaxes,
-        p_tax_amount: Number(getTaxAmount().toFixed(2))
+        p_applied_taxes: [],
+        p_tax_amount: 0
       };
 
       const validationResult = createSaleParamsSchema.safeParse(saleParams);

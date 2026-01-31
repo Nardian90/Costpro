@@ -12,6 +12,8 @@ export function useSalesHistoryView() {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedStatus, setSelectedStatus] = useState('');
     const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [isTaxModalOpen, setIsTaxModalOpen] = useState(false);
 
     // Data Fetching
     const { data: transactionsData = [], isLoading: isLoadingTransactions } = useTransactions(user?.storeId, user?.role === 'admin');
@@ -39,12 +41,41 @@ export function useSalesHistoryView() {
         setSelectedTransactionId(null);
     }
 
+    const toggleSelection = (id: string) => {
+        setSelectedIds(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
+            return next;
+        });
+    };
+
+    const toggleAll = (ids: string[]) => {
+        setSelectedIds(prev => {
+            if (prev.size === ids.length) {
+                return new Set();
+            } else {
+                return new Set(ids);
+            }
+        });
+    };
+
+    const selectedTransactions = useMemo(() => {
+        return transactionsData.filter(t => selectedIds.has(t.id));
+    }, [transactionsData, selectedIds]);
+
     return {
         // State
         searchTerm,
         setSearchTerm,
         selectedStatus,
         setSelectedStatus,
+        selectedIds,
+        isTaxModalOpen,
+        setIsTaxModalOpen,
 
         // Data
         transactions: filteredTransactions,
@@ -57,5 +88,10 @@ export function useSalesHistoryView() {
         isDetailsModalOpen: !!selectedTransactionId,
         handleViewDetails,
         handleCloseDetails,
+
+        // Selection Actions
+        toggleSelection,
+        toggleAll,
+        selectedTransactions
     };
 }

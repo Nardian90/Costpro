@@ -8,6 +8,8 @@ import { StateRenderer } from '@/components/ui/StateRenderer';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSalesHistoryView } from './useSalesHistoryView';
 import { TransactionDetailsModal } from './TransactionDetailsModal';
+import { Calculator, CheckSquare, Square } from 'lucide-react';
+import { TaxCalculationModal } from './TaxCalculationModal';
 
 const SalesLoadingSkeleton = () => (
   <div className="space-y-4">
@@ -29,13 +31,33 @@ export default function SalesHistoryView() {
     handleViewDetails,
     handleCloseDetails,
     transactionItems,
-    loadingDetails
+    loadingDetails,
+    selectedIds,
+    toggleSelection,
+    toggleAll,
+    selectedTransactions,
+    isTaxModalOpen,
+    setIsTaxModalOpen
   } = useSalesHistoryView();
+
+  const allIds = transactions.map(t => t.id);
+  const isAllSelected = allIds.length > 0 && selectedIds.size === allIds.length;
 
   return (
     <>
       <div className="space-y-6">
-        <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase hidden sm:block">Ventas</h2>
+        <div className="flex justify-between items-center">
+          <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase hidden sm:block">Ventas</h2>
+          {selectedIds.size > 0 && (
+            <button
+              onClick={() => setIsTaxModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 transition-all active:scale-95"
+            >
+              <Calculator className="w-4 h-4" />
+              Calcular Impuestos ({selectedIds.size})
+            </button>
+          )}
+        </div>
 
         <SearchBar
           value={searchTerm}
@@ -70,6 +92,14 @@ export default function SalesHistoryView() {
               <table className="data-table sticky-column-1 w-full text-sm">
                 <thead>
                   <tr className="bg-muted/30 text-muted-foreground font-black uppercase text-[10px] tracking-widest border-b border-border">
+                    <th className="p-4 text-center w-10">
+                      <button
+                        onClick={() => toggleAll(allIds)}
+                        className="text-primary hover:scale-110 transition-transform"
+                      >
+                        {isAllSelected ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
+                      </button>
+                    </th>
                     <th className="p-4 text-left">Ref</th>
                     <th className="p-4 text-left">Fecha</th>
                     <th className="p-4 text-left priority-low">Método</th>
@@ -80,7 +110,21 @@ export default function SalesHistoryView() {
                 </thead>
                 <tbody>
                   {data.map(txn => (
-                    <tr key={txn.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
+                    <tr key={txn.id} className={cn(
+                        "border-b border-border/50 hover:bg-muted/20 transition-colors",
+                        selectedIds.has(txn.id) && "bg-primary/5"
+                    )}>
+                      <td className="p-4 text-center">
+                        <button
+                          onClick={() => toggleSelection(txn.id)}
+                          className={cn(
+                            "transition-all",
+                            selectedIds.has(txn.id) ? "text-primary scale-110" : "text-muted-foreground/30"
+                          )}
+                        >
+                          {selectedIds.has(txn.id) ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
+                        </button>
+                      </td>
                       <td className="p-4 font-bold text-xs text-primary">{txn.id.split('-')[0]}</td>
                       <td className="p-4">
                         <div className="font-bold text-xs">{formatDate(txn.created_at)}</div>
@@ -130,6 +174,12 @@ export default function SalesHistoryView() {
         onClose={handleCloseDetails}
         items={transactionItems}
         isLoading={loadingDetails}
+      />
+
+      <TaxCalculationModal
+        isOpen={isTaxModalOpen}
+        onClose={() => setIsTaxModalOpen(false)}
+        selectedTransactions={selectedTransactions}
       />
     </>
   );
