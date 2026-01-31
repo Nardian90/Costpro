@@ -121,9 +121,17 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
                 <Input
                 type="number"
                 step={row.is_percent ? "0.001" : "1"}
-                className={cn("neu-input text-right h-8", row.is_percent && "pr-6")}
-                value={row.hasOwnProperty('valorHistorico') ? (row.valorHistorico ?? 0) : (row.is_percent ? ((row.value ?? 0) * 100) : (row.value ?? 0))}
+                className={cn(
+                  "neu-input text-right h-9 sm:h-8 transition-all",
+                  row.is_percent && "pr-6",
+                  hasChildren && "bg-muted/30 font-bold border-dashed cursor-default"
+                )}
+                value={hasChildren
+                  ? (safeCalculated.valorHistorico ?? 0).toFixed(row.is_percent ? 3 : 2)
+                  : (row.hasOwnProperty('valorHistorico') ? (row.valorHistorico ?? 0) : (row.is_percent ? ((row.value ?? 0) * 100) : (row.value ?? 0)))}
+                readOnly={hasChildren}
                 onChange={(e) => {
+                  if (hasChildren) return;
                   const val = e.target.value;
                   const numVal = parseFloat(val) || 0;
                   handleValueChange(
@@ -134,9 +142,10 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
                   handleValueChange('calculationMethod', 'ValorFijo');
                   handleValueChange('formula', '');
                 }}
-                onFocus={(e) => e.target.select()}
+                onFocus={(e) => !hasChildren && e.target.select()}
                 />
                 {row.is_percent && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">%</span>}
+                {hasChildren && <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full animate-pulse" title="Calculado automáticamente" />}
             </div>
         </TableCell>
 
@@ -185,16 +194,16 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
           )}
         </TableCell>
 
-        {/* Ayuda */}
-        <TableCell className="px-4 py-2 text-center w-20">
+        {/* Ayuda - Hidden on very small screens */}
+        <TableCell className="px-4 py-2 text-center w-12 sm:w-20 hidden sm:table-cell">
           {row.helpText && (
             <Popover>
               <PopoverTrigger asChild>
                  <button className="p-2 rounded-full hover:bg-primary/10 text-primary/50 hover:text-primary transition-colors">
-                    <HelpCircle className="w-5 h-5" />
+                    <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5" />
                  </button>
               </PopoverTrigger>
-              <PopoverContent className="w-80"><p className="text-sm">{row.helpText}</p></PopoverContent>
+              <PopoverContent className="w-72 sm:w-80"><p className="text-sm">{row.helpText}</p></PopoverContent>
             </Popover>
           )}
         </TableCell>
@@ -285,13 +294,14 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = ({ s
                     </div>
 
                     <div className="neu-card p-0 overflow-hidden border-border/50 shadow-sm hover:shadow-md transition-shadow">
-                        <Table className="w-full table-fixed min-w-[700px]">
-                            <TableHeader className="bg-muted/30 text-muted-foreground font-black uppercase text-[10px] tracking-widest border-b border-border">
+                        <div className="table-scroll-wrapper sticky-column-1">
+                        <Table className="w-full min-w-[600px] sm:min-w-[700px]">
+                            <TableHeader className="bg-muted/30 text-muted-foreground font-black uppercase text-[10px] tracking-widest border-b border-border sticky-header">
                                 <TableRow>
-                                    <TableHead className="px-4 py-4 text-left font-black uppercase tracking-widest sticky-column-1 min-w-[250px]">Concepto</TableHead>
-                                    <TableHead className="px-4 py-4 text-right font-black uppercase tracking-widest w-40">Valor Histórico</TableHead>
-                                    <TableHead className="px-4 py-4 text-right font-black uppercase tracking-widest w-48">Total</TableHead>
-                                    <TableHead className="px-4 py-4 text-center font-black uppercase tracking-widest w-20">Ayuda</TableHead>
+                                    <TableHead className="px-4 py-4 text-left font-black uppercase tracking-widest min-w-[200px] sm:min-w-[250px]">Concepto</TableHead>
+                                    <TableHead className="px-4 py-4 text-right font-black uppercase tracking-widest w-32 sm:w-40">Valor Histórico</TableHead>
+                                    <TableHead className="px-4 py-4 text-right font-black uppercase tracking-widest w-40 sm:w-48">Total</TableHead>
+                                    <TableHead className="px-4 py-4 text-center font-black uppercase tracking-widest w-12 sm:w-20 hidden sm:table-cell">Ayuda</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -309,6 +319,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = ({ s
                                 ))}
                             </TableBody>
                         </Table>
+                        </div>
                     </div>
                 </div>
             )
