@@ -230,7 +230,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
       {showSuggestions && (
         <div
           ref={suggestionsRef}
-          className="absolute z-50 left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-border rounded-md shadow-xl max-h-48 overflow-y-auto"
+          className="absolute z-50 left-0 right-24 mt-1 bg-white dark:bg-slate-800 border border-border rounded-md shadow-xl max-h-48 overflow-y-auto"
         >
           {filteredSuggestions.map((s, i) => (
             <button

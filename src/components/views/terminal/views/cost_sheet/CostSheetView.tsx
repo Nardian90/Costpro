@@ -217,10 +217,12 @@ const CostSheetView = () => {
                     </div>
                 ) : (
                     <>
-                        <CostSheetSummary
-                            calculatedValues={calculatedValues}
-                            data={data}
-                        />
+                        {activeSection === 'header' && (
+                            <CostSheetSummary
+                                calculatedValues={calculatedValues}
+                                data={data}
+                            />
+                        )}
                         <CostSheetNav
                             sections={[
                                 { id: 'header', label: 'Encabezado' },
