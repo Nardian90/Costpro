@@ -24,7 +24,7 @@ const ProductInventoryPicker: React.FC<ProductInventoryPickerProps> = ({
   storeId
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const { products, isLoading } = useProducts(storeId, searchTerm);
+  const { data: products, isLoading } = useProducts(storeId, searchTerm);
 
   return (
     <BaseModal
@@ -70,12 +70,11 @@ const ProductInventoryPicker: React.FC<ProductInventoryPickerProps> = ({
                 products.map((product) => (
                   <TableRow key={product.id} className="hover:bg-primary/5 transition-colors group">
                     <TableCell className="font-bold text-sm">{product.name}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{product.sku || product.code || '-'}</TableCell>
-                    <TableCell className="text-right font-mono text-sm">{formatCurrency(product.cost || 0)}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{product.sku || '-'}</TableCell>
+                    <TableCell className="text-right font-mono text-sm">{formatCurrency(product.cost_price || 0)}</TableCell>
                     <TableCell className="text-center">
                       <SecondaryButton
                         label="Seleccionar"
-                        size="sm"
                         icon={Check}
                         onClick={() => {
                           onSelect(product);
