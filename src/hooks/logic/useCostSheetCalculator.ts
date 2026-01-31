@@ -73,6 +73,24 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
 
       // Map UI state to Engine-compatible JSON
       const engineRows: CostRow[] = [];
+
+      // Pre-calculate recursive Valor Histórico for parents
+      const vhSums: Record<string, number> = {};
+      const calculateVH = (rows: CostSheetRow[]) => {
+          rows.forEach(r => {
+              if (r.children && r.children.length > 0) {
+                  calculateVH(r.children);
+                  vhSums[r.id] = r.children.reduce((sum, child) => {
+                      const val = vhSums[child.id] ?? child.valorHistorico ?? child.value ?? 0;
+                      return sum + val;
+                  }, 0);
+              } else {
+                  vhSums[r.id] = r.valorHistorico ?? r.value ?? 0;
+              }
+          });
+      };
+      template.sections.forEach(s => calculateVH(s.rows));
+
       const flatten = (uiRows: CostSheetRow[]) => {
         uiRows.forEach(r => {
           // Infer semantic type
@@ -125,7 +143,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
             label: r.label,
             type,
             formaCalculo,
-            valorHistorico: r.valorHistorico ?? r.value,
+            valorHistorico: vhSums[r.id] ?? r.valorHistorico ?? r.value,
             baseCalculo,
             coeficiente: r.is_percent ? (r.value ?? r.valorHistorico) : r.coeficiente,
             formula: formula,
