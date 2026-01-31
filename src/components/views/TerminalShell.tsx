@@ -248,7 +248,7 @@ export default function TerminalShell() { // Renamed from TerminalView
           }}
         />
 
-        <div className="p-4 sm:p-8 lg:p-12 pb-32 flex-1 overflow-x-visible terminal-content">
+        <div className="px-2 py-4 sm:p-8 lg:p-12 pb-32 flex-1 overflow-x-visible terminal-content">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentView}

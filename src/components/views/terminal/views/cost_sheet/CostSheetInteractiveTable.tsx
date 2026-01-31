@@ -104,7 +104,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
         isResultRow && "bg-primary/5 font-bold"
       )}>
         {/* Concepto */}
-        <TableCell style={{ paddingLeft: `${level * 24 + 12}px` }} className="px-2 py-2 sm:px-4 sm:py-2.5 font-medium text-[13px] sm:text-sm text-foreground sticky-column-1 min-w-[180px] sm:min-w-[250px]">
+        <TableCell style={{ paddingLeft: `${level * 24 + 12}px` }} className="px-2 py-2 sm:px-4 sm:py-2.5 font-medium text-[13px] sm:text-sm text-foreground min-w-[180px] sm:min-w-[250px]">
           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
             {hasChildren && (
               <button onClick={handleToggle} className="p-1 rounded-full hover:bg-primary/10 shrink-0">
@@ -293,9 +293,9 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = ({
                     </div>
 
                     <div className="neu-card p-0 overflow-hidden border-border/50 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="table-scroll-wrapper sticky-column-1">
+                        <div className="table-scroll-wrapper">
                         <Table className="w-full min-w-[500px] sm:min-w-[700px]">
-                            <TableHeader className="bg-muted/30 text-muted-foreground font-black uppercase text-[9px] sm:text-[10px] tracking-widest border-b border-border sticky-header">
+                            <TableHeader className="bg-muted/30 text-muted-foreground font-black uppercase text-[9px] sm:text-[10px] tracking-widest border-b border-border">
                                 <TableRow>
                                     <TableHead className="px-2 py-3 sm:px-4 sm:py-4 text-left font-black uppercase tracking-widest min-w-[180px] sm:min-w-[250px]">Concepto</TableHead>
                                     <TableHead className="px-2 py-3 sm:px-4 sm:py-4 text-right font-black uppercase tracking-widest w-32 sm:w-40">Valor Histórico</TableHead>

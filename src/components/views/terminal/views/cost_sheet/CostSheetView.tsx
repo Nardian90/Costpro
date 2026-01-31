@@ -52,7 +52,7 @@ const CostSheetView = () => {
 
   if (!data || !data.header || !data.annexes || !data.sections) {
     return (
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-32 pt-4">
+      <div className="w-full max-w-7xl mx-auto px-1 sm:px-6 lg:px-8 pb-32 pt-4">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8 px-2">
           <div className="flex items-center gap-4">
             <Skeleton className="w-12 h-12 rounded-2xl" />
@@ -187,7 +187,7 @@ const CostSheetView = () => {
   const secondaryActions = allActions.filter(a => !['toggle-mode'].includes(a.id));
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-32 pt-4">
+    <div className="w-full max-w-7xl mx-auto px-1 sm:px-6 lg:px-8 pb-32 pt-4">
       <CostSheetActionsPanel
         isOpen={isActionsPanelOpen}
         onClose={() => setIsActionsPanelOpen(false)}
