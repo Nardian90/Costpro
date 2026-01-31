@@ -83,7 +83,10 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
   const suggestions = useMemo(() => [
     ...annexes.map(a => ({ label: `Anexo ${a.id}`, value: `Anexo${a.id}`, description: a.title })),
     ...allRows.map(r => ({ label: `Fila ${r.id}`, value: `ref('${r.id}')`, description: r.label })),
-    { label: 'SUM', value: 'sum(', description: 'Suma de valores' },
+    { label: 'SUMA', value: 'SUMA(', description: 'Suma de valores' },
+    { label: 'PROMEDIO', value: 'PROMEDIO(', description: 'Promedio de valores' },
+    { label: 'MAX', value: 'MAX(', description: 'Valor máximo' },
+    { label: 'MIN', value: 'MIN(', description: 'Valor mínimo' },
     { label: 'PCT', value: 'pct(', description: 'Porcentaje: pct(valor, %)' },
     { label: 'ROUND2', value: 'round2(', description: 'Redondear a 2 decimales' },
     { label: 'VH', value: 'VH', description: 'Valor Histórico de la fila' },
