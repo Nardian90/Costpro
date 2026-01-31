@@ -11,6 +11,8 @@ import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
 import { UserContract, UserFactory } from '@/contracts';
 import { safeNavigate } from '@/lib/navigation';
+import { userService } from '@/services/user-service';
+import { mapProfileToContract } from '@/contracts/user';
 
 export default function LoginPage() {
   const [showSplash, setShowSplash] = useState(true);
@@ -53,40 +55,16 @@ export default function LoginPage() {
         throw new Error('Error al obtener datos del usuario');
       }
 
-      // 2. Fetch user profile and memberships from profiles table
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*, memberships:user_store_memberships(*)')
-        .eq('id', authData.user.id)
-        .single();
+      // 2. Fetch user profile and memberships from profiles table via service
+      const profileData = await userService.getUserProfile(authData.user.id);
 
-      if (profileError || !profileData) {
-        throw new Error('Error al cargar el perfil del usuario');
-      }
-
-      // Check if user is active
-      if (!profileData.is_active) {
+      if (!profileData) {
         await supabase.auth.signOut();
-        throw new Error('Usuario inactivo. Contacte al administrador.');
+        throw new Error('Perfil de usuario no encontrado o inactivo');
       }
 
-      // 3. Update Zustand store with complete user data using Factory to ensure all fields
-      const userData: UserContract = UserFactory.create({
-        id: profileData.id,
-        email: profileData.email,
-        fullName: profileData.full_name,
-        role: profileData.role,
-        roles: profileData.roles || [profileData.role],
-        storeId: profileData.store_id || '',
-        activeStoreId: profileData.active_store_id || profileData.store_id || '',
-        maxStoresLimit: profileData.max_stores_limit,
-        maxUsersLimit: profileData.max_users_limit,
-        createdBy: profileData.created_by,
-        isActive: profileData.is_active,
-        createdAt: profileData.created_at,
-        updatedAt: profileData.updated_at,
-        memberships: profileData.memberships || [],
-      });
+      // 3. Update Zustand store with complete user data
+      const userData = mapProfileToContract(profileData);
 
       login(userData, authData.session.access_token, 'authenticated_valid');
 

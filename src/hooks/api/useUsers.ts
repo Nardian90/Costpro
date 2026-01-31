@@ -25,7 +25,8 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
         // Fallback if full column set fails (e.g. migration not fully applied)
         if (profilesRes.error && profilesRes.error.code === '42703') {
            console.warn('[useUsers] Column missing, retrying with limited columns');
-           profilesRes = await supabase.from('profiles').select('id, full_name, email, role, is_active, created_at').order('full_name') as any;
+           const retryRes = await supabase.from('profiles').select('id, full_name, email, role, is_active, created_at').order('full_name');
+           profilesRes = retryRes as any;
         }
 
         const membershipsRes = await supabase.from('user_store_memberships').select('id, user_id, store_id, role, status, created_at, updated_at, store:stores(id, name, address, is_active, created_at)');
@@ -36,18 +37,21 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
         }
 
         const rawProfiles = (profilesRes.data || []) as Profile[];
-        const allMemberships = (membershipsRes.data || []) as any[];
+        // Use a more specific type to avoid dot-access errors with Record
+        interface RawMembershipRow {
+          id: string;
+          user_id: string;
+          store_id: string;
+          role: string;
+          status: string;
+          store: any;
+        }
+        const allMemberships = (membershipsRes.data || []) as RawMembershipRow[];
 
-        const joinedData = rawProfiles.map((profile) => {
-          const userMemberships = allMemberships.filter((m) => m.user_id === profile.id).map((m) => ({
-            ...m,
-            store: Array.isArray(m.store) ? m.store[0] : m.store
-          }));
-          return {
-            ...profile,
-            memberships: userMemberships
-          };
-        });
+        const joinedData = rawProfiles.map((profile) => ({
+          ...profile,
+          memberships: allMemberships.filter((m) => m.user_id === profile.id)
+        }));
 
         return await validateRPCArrayResponse(joinedData, profileSchema, 'fetch_users_admin');
       }
@@ -66,11 +70,12 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
 
           // Fallback for missing columns
           if (memberProfilesRes.error && memberProfilesRes.error.code === '42703') {
-             memberProfilesRes = await supabase
+             const retryRes = await supabase
                 .from('profiles')
                 .select(`id, full_name, email, role, is_active, memberships:user_store_memberships(${membershipColumns})`)
                 .neq('role', 'admin')
-                .order('full_name') as any;
+                .order('full_name');
+             memberProfilesRes = retryRes as any;
           }
 
           const { data: memberProfiles, error } = memberProfilesRes;
@@ -79,21 +84,14 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
             logger.error('DATABASE', 'FETCH_USERS_ENCARGADO_FAILED', { error });
             // Fallback: try with limited columns if the full set fails
             let fallbackRes = await supabase.from('profiles').select(profileColumns).neq('role', 'admin').order('full_name');
-            if (fallbackRes.error && (fallbackRes.error as any).code === '42703') {
-                fallbackRes = await supabase.from('profiles').select('id, full_name, email, role, is_active, created_at').neq('role', 'admin').order('full_name') as any;
+            if (fallbackRes.error && fallbackRes.error.code === '42703') {
+                const retryFallbackRes = await supabase.from('profiles').select('id, full_name, email, role, is_active, created_at').neq('role', 'admin').order('full_name');
+                fallbackRes = retryFallbackRes as any;
             }
             return await validateRPCArrayResponse(fallbackRes.data || [], profileSchema, 'fetch_users_encargado_fallback');
           }
 
-          const normalizedMembers = (memberProfiles || []).map((p: any) => ({
-            ...p,
-            memberships: ((p as any).memberships || []).map((m: any) => ({
-              ...m,
-              store: Array.isArray(m.store) ? m.store[0] : m.store
-            }))
-          }));
-
-          return await validateRPCArrayResponse(normalizedMembers, profileSchema, 'fetch_users_encargado');
+          return await validateRPCArrayResponse(memberProfiles || [], profileSchema, 'fetch_users_encargado');
         } catch (err) {
           logger.error('DATABASE', 'FETCH_USERS_ENCARGADO_CRASH', { err });
           return [];
@@ -112,12 +110,12 @@ export function useUserStoreAccess(userId?: string) {
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       if (!userId) return [];
-      const data = await withTableLogging('select', 'user_store_memberships', () => supabase.from('user_store_memberships')
+      const data = await withTableLogging<any[]>('select', 'user_store_memberships', () => supabase.from('user_store_memberships')
         .select('store_id, role')
         .eq('user_id', userId));
-      return (data as any[])?.map(d => ({
-        store_id: d.store_id,
-        roles: [d.role]
+      return data?.map(d => ({
+        store_id: d.store_id as string,
+        roles: [d.role] as string[]
       })) || [];
     },
     enabled: !!userId,

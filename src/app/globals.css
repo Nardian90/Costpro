@@ -650,24 +650,31 @@
   padding-right: 3rem !important;
 }
 
-/* Sticky Column Plan B */
-.sticky-column-1 th:first-child,
-.sticky-column-1 td:first-child {
-  position: sticky;
-  left: 0;
-  background: var(--background);
-  z-index: 10;
-  box-shadow: 4px 0 8px -4px rgba(0, 0, 0, 0.3);
-}
-
-/* En mobile limitamos el ancho de la columna fija para evitar que cubra toda la pantalla */
-@media (max-width: 640px) {
+/* Sticky Column Plan B - Only for tablet and desktop */
+@media (min-width: 768px) {
   .sticky-column-1 th:first-child,
   .sticky-column-1 td:first-child {
-    max-width: 120px !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    white-space: nowrap !important;
+    position: sticky;
+    left: 0;
+    background: var(--background);
+    z-index: 10;
+    box-shadow: 4px 0 8px -4px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* En mobile eliminamos el sticky horizontal pero mantenemos el vertical para encabezados */
+@media (max-width: 767px) {
+  .sticky-column-1 th:first-child {
+    position: sticky !important; /* Mantener sticky vertical si es parte del header */
+    left: auto !important;
+    max-width: none !important;
+    box-shadow: none !important;
+    z-index: 30 !important;
+  }
+  .sticky-column-1 td:first-child {
+    position: static !important;
+    max-width: none !important;
+    box-shadow: none !important;
   }
 }
 
@@ -768,14 +775,15 @@
     border-bottom: 2px solid rgba(0,0,0,0.1);
   }
 
-  /* Offset for TerminalView main header */
+  /* Offset for TerminalView main header - Adjusted for better mobile alignment */
   .terminal-content .sticky-header th {
-    top: 76px; /* Default mobile header offset */
+    top: 64px; /* Slightly reduced to align with smaller mobile headers */
+    z-index: 40;
   }
 
   @media (min-width: 640px) {
     .terminal-content .sticky-header th {
-      top: 92px; /* sm header offset */
+      top: 80px;
     }
   }
 

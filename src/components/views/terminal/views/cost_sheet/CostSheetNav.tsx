@@ -3,13 +3,14 @@
 
 import React from 'react';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
-import { Layout, FileSpreadsheet, PenTool, ClipboardList } from 'lucide-react';
+import { Layout, FileSpreadsheet, PenTool, ClipboardList, CheckCircle2 } from 'lucide-react';
 
 interface CostSheetNavProps {
   sections: any[];
   annexes: any[];
   activeSection: string;
   setActiveSection: (id: string) => void;
+  onOpenAnnexes?: () => void;
 }
 
 const CostSheetNav: React.FC<CostSheetNavProps> = ({
@@ -17,23 +18,24 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
   annexes,
   activeSection,
   setActiveSection,
+  onOpenAnnexes
 }) => {
   // Create a combined list of all navigable sections mapped to ActionMenu format
   const navActions: Action[] = [
     ...sections.map(s => ({
         id: s.id,
         label: s.label,
-        icon: s.id === 'header' ? Layout : ClipboardList,
+        icon: s.icon || (s.id === 'header' ? Layout : ClipboardList),
         onClick: () => setActiveSection(s.id),
         active: activeSection === s.id
     })),
-    ...annexes.map(a => ({
-        id: a.id,
-        label: `Anexo ${a.id}`,
+    {
+        id: 'annexes-trigger',
+        label: 'Anexos',
         icon: FileSpreadsheet,
-        onClick: () => setActiveSection(a.id),
-        active: activeSection === a.id
-    })),
+        onClick: () => onOpenAnnexes?.(),
+        variant: 'outline'
+    },
     {
         id: 'signature',
         label: 'Firmas',
@@ -44,9 +46,10 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
   ];
 
   return (
-    <div className="mb-8">
-      <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-3 px-1">
-        Navegación de Secciones
+    <div className="mb-8 space-y-3">
+      <div className="text-[10px] font-black uppercase tracking-[0.4em] text-primary/70 px-2 flex items-center gap-2">
+        <div className="w-1 h-1 bg-primary rounded-full" />
+        Navegación Principal
       </div>
       <ActionMenu
         actions={navActions}

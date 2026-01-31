@@ -4,11 +4,12 @@
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Download, Play, Save, Loader2, AlertTriangle, FileSpreadsheet } from 'lucide-react';
+import { FileText, Download, Play, Save, Loader2, AlertTriangle, FileSpreadsheet, History } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store';
 import { ReportConfigPanel } from './ReportConfigPanel';
 import { ReportPreview } from './ReportPreview';
+import { AuditLogsModal } from './AuditLogsModal';
 import { ReportType, ReportDefinition } from '@/types';
 import { COLUMN_LABELS } from '@/contracts/reports';
 
@@ -23,12 +24,13 @@ export default function ReportsView() {
       from: new Date().toISOString().split('T')[0],
       to: new Date().toISOString().split('T')[0],
     },
-    columns: ['id', 'created_at', 'total_amount', 'total_cost', 'status', 'payment_method'],
+    columns: ['id', 'created_at', 'total_amount', 'status', 'payment_method'],
     layout: { orientation: 'portrait', format: 'a4' }
   });
 
   const [isSaving, setIsSaving] = useState(false);
   const [isExportingExcel, setIsExportingExcel] = useState(false);
+  const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
 
   const handleSave = async () => {
     if (!user?.activeStoreId) {
@@ -73,7 +75,7 @@ export default function ReportsView() {
         },
         body: JSON.stringify({
           ...config,
-          store_id: config.store_id || user.activeStoreId,
+          store_id: user.activeStoreId,
           name: config.name || `Reporte ${config.type}`
         })
       });
@@ -111,7 +113,7 @@ export default function ReportsView() {
         config.type as ReportType,
         config.filters,
         config.date_range,
-        config.store_id || user.activeStoreId
+        user.activeStoreId
       );
 
       if (!data || data.length === 0) {
@@ -136,7 +138,7 @@ export default function ReportsView() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
+        <div className="hidden md:block">
           <h1 className="text-3xl font-black uppercase tracking-tight text-primary flex items-center gap-3">
             <FileText className="w-8 h-8" />
             Configuración de Reportes
@@ -169,6 +171,14 @@ export default function ReportsView() {
              )}
            </Button>
            <Button
+             onClick={() => setIsAuditModalOpen(true)}
+             variant="ghost"
+             className="rounded-xl hover:bg-primary/10 text-primary font-bold uppercase tracking-widest text-[10px]"
+           >
+             <History className="w-4 h-4 mr-2" />
+             Auditoría
+           </Button>
+           <Button
              onClick={handleGenerate}
              disabled={isGenerating}
              className="rounded-xl bg-primary text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20"
@@ -181,6 +191,12 @@ export default function ReportsView() {
            </Button>
         </div>
       </div>
+
+      <AuditLogsModal
+        isOpen={isAuditModalOpen}
+        onClose={() => setIsAuditModalOpen(false)}
+        storeId={config.store_id || user?.activeStoreId}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-1 space-y-4">

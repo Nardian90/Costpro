@@ -58,8 +58,11 @@ export async function withTableLogging<T>(
   // Capture builder URL for admin inspector
   const builder = query();
   try {
-    if (builder && (builder as any).url) {
-      const sql = formatPostgrestUrlToSql((builder as any).url.toString(), operation);
+    // Supabase builders have a internal .url property that we use to format the SQL for the inspector.
+    // We use a safe cast here to access it if it exists.
+    const builderWithUrl = builder as unknown as { url?: { toString: () => string } };
+    if (builderWithUrl?.url) {
+      const sql = formatPostgrestUrlToSql(builderWithUrl.url.toString(), operation);
       useUIStore.getState().setLastQuery(sql, view);
     }
   } catch (e) {

@@ -125,7 +125,7 @@ export default function CashClosureView() {
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border bg-card hover:bg-accent transition-all text-xs font-black uppercase tracking-widest disabled:opacity-50 h-[46px]"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border bg-card hover:bg-accent transition-all text-xs font-black uppercase tracking-widest disabled:opacity-50 h-[46px] text-foreground"
           >
             <RefreshCw className={cn("w-3.5 h-3.5", isRefreshing && "animate-spin")} />
             {isRefreshing ? 'Actualizando...' : 'Actualizar'}
@@ -259,7 +259,7 @@ export default function CashClosureView() {
                   </td>
                   <td className="p-4">
                     <div className="flex justify-center">
-                      <button className="w-8 h-8 flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-white transition-all active:scale-95">
+                      <button className="w-8 h-8 flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-white transition-all active:scale-95 text-foreground">
                         <Eye className="w-4 h-4" />
                       </button>
                     </div>

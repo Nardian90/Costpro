@@ -11,11 +11,48 @@ import {
 import { costSheetDataSchema } from '@/validation/schemas';
 import { toast } from 'sonner';
 
-const blankSheet = CostSheetDataFactory.create();
+const clearTemplate = (template: any) => {
+    const cleared = JSON.parse(JSON.stringify(template));
+
+    // Clear header
+    if (cleared.header) {
+        cleared.header.code = "";
+        cleared.header.name = "";
+        cleared.header.quantity = 0;
+    }
+
+    // Clear sections and rows
+    const clearRows = (rows: any[]) => {
+        rows.forEach(row => {
+            if (row.hasOwnProperty('valorHistorico')) row.valorHistorico = 0;
+            if (row.hasOwnProperty('value')) row.value = row.is_percent ? row.value : 0;
+            if (row.children) clearRows(row.children);
+        });
+    };
+
+    if (cleared.sections) {
+        cleared.sections.forEach((s: any) => clearRows(s.rows));
+    }
+
+    // Clear annexes
+    if (cleared.annexes) {
+        cleared.annexes.forEach((a: any) => {
+            a.data = []; // Start with no data in annexes or keep one empty row?
+            // User said "aunque esten en cero todos los valores pero ya sea una plantilla completa lista paraa ingresar valores"
+            // Usually annexes are dynamic, but maybe we should keep the first row if it was there?
+            // Actually, annexes in the template have one demo row. Let's clear its values.
+            // But usually users add rows to annexes.
+        });
+    }
+
+    return cleared;
+};
+
+const blankSheet = clearTemplate(originalTemplate);
 
 interface CostSheetState {
   data: CostSheetDataContract;
-  updateValue: (path: (string | number)[], value: string | number) => void;
+  updateValue: (path: (string | number)[], value: string | number | boolean) => void;
   addRow: (annexId: string) => void;
   removeRow: (annexId: string, rowIndex: number) => void;
   setSheet: (data: CostSheetDataContract) => void;
@@ -92,10 +129,11 @@ export const useCostSheetStore = create<CostSheetState>()(
           set({ data: example as CostSheetDataContract }); // Fallback
         }
       },
-      reset: () => set({ data: CostSheetDataFactory.create() }), // Use fresh blank sheet on reset
+      reset: () => set({ data: clearTemplate(originalTemplate) }), // Use fresh blank sheet on reset
     }),
     {
       name: 'cost-sheet-storage', // Name for the localStorage item
+      version: 2, // Versioning to avoid issues with older structures
     }
   )
 );

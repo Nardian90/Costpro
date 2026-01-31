@@ -11,24 +11,39 @@ interface CostSheetModeSwitcherProps {
 
 export const CostSheetModeSwitcher = ({ viewMode, setViewMode }: CostSheetModeSwitcherProps) => {
   return (
-    <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-900 p-1 rounded-2xl w-fit self-center sm:self-start">
+    <div className="flex flex-col gap-1.5 w-full bg-slate-100/50 dark:bg-slate-900/50 p-1.5 rounded-2xl">
       <button
         onClick={() => setViewMode('expert')}
-        className={cn("flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all", viewMode === 'expert' ? "bg-white dark:bg-slate-800 shadow-sm text-primary" : "text-slate-500 hover:text-slate-700")}
+        className={cn(
+          "flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all w-full",
+          viewMode === 'expert'
+            ? "bg-white dark:bg-slate-800 shadow-md text-primary scale-[1.02]"
+            : "text-slate-500 hover:bg-white/50 dark:hover:bg-slate-800/50"
+        )}
       >
         <Table2 className="w-4 h-4" />
         Modo Experto
       </button>
       <button
         onClick={() => setViewMode('assisted')}
-        className={cn("flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all", viewMode === 'assisted' ? "bg-white dark:bg-slate-800 shadow-sm text-primary" : "text-slate-500 hover:text-slate-700")}
+        className={cn(
+          "flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all w-full",
+          viewMode === 'assisted'
+            ? "bg-white dark:bg-slate-800 shadow-md text-primary scale-[1.02]"
+            : "text-slate-500 hover:bg-white/50 dark:hover:bg-slate-800/50"
+        )}
       >
         <Wand2 className="w-4 h-4" />
         Modo Asistido
       </button>
       <button
         onClick={() => setViewMode('reading')}
-        className={cn("flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all", viewMode === 'reading' ? "bg-white dark:bg-slate-800 shadow-sm text-primary" : "text-slate-500 hover:text-slate-700")}
+        className={cn(
+          "flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all w-full",
+          viewMode === 'reading'
+            ? "bg-white dark:bg-slate-800 shadow-md text-primary scale-[1.02]"
+            : "text-slate-500 hover:bg-white/50 dark:hover:bg-slate-800/50"
+        )}
       >
         <BookOpen className="w-4 h-4" />
         Modo Lectura

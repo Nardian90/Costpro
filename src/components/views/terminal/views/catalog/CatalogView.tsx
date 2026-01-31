@@ -234,7 +234,7 @@ export default function CatalogView() {
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 flex-wrap">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto flex-wrap">
                     <div className="flex items-center justify-between w-full sm:w-auto gap-4">
-                        <h2 className="text-2xl sm:text-3xl font-black text-foreground tracking-tighter uppercase truncate">Catálogo Global</h2>
+                        <h2 className="text-2xl sm:text-3xl font-black text-foreground tracking-tighter uppercase truncate hidden sm:block">Catálogo Global</h2>
                         <ViewSwitcher currentView={layoutMode} onViewChange={setLayoutMode} />
                     </div>
 

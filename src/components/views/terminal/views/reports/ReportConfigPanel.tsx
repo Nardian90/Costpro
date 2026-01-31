@@ -41,15 +41,17 @@ const REPORT_TYPES = [
   { id: 'kardex', label: 'Kardex (Movimientos)' },
   { id: 'purchases', label: 'Compras / Recepciones' },
   { id: 'audit', label: 'Auditoría / Logs' },
+  { id: 'cost_sheet', label: 'Ficha de Costo' },
 ];
 
 const ALL_COLUMNS: Record<ReportType, string[]> = {
-  sales: ['id', 'created_at', 'total_amount', 'total_cost', 'status', 'payment_method', 'subtotal', 'discount_value'],
-  profit: ['id', 'created_at', 'total_amount', 'total_cost', 'subtotal', 'discount_value', 'profit', 'margin_percentage'],
+  sales: ['id', 'created_at', 'total_amount', 'status', 'payment_method', 'subtotal', 'discount_value'],
+  profit: ['id', 'created_at', 'total_amount', 'subtotal', 'discount_value', 'profit', 'margin_percentage'],
   inventory: ['id', 'name', 'sku', 'stock_current', 'price', 'cost_price', 'supplier'],
   kardex: ['created_at', 'movement_type', 'quantity_change', 'balance_after', 'unit_cost', 'reference_doc'],
   purchases: ['id', 'created_at', 'supplier', 'total_cost', 'status', 'reference_doc', 'notes'],
-  audit: ['created_at', 'action', 'table_name', 'store_name', 'profile']
+  audit: ['created_at', 'action', 'table_name', 'store_name', 'profile'],
+  cost_sheet: ['id', 'created_at', 'name', 'code', 'total_cost']
 };
 
 export const ReportConfigPanel = ({ config, setConfig }: ReportConfigPanelProps) => {

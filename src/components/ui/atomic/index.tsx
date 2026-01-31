@@ -45,7 +45,7 @@ export const SecondaryButton: React.FC<BaseButtonProps> = ({ icon: Icon, label, 
     <Comp
       className={cn(
         "flex items-center justify-center gap-2 px-6 py-3 min-h-[44px] w-full sm:w-auto transition-all",
-        "bg-muted text-muted-foreground font-bold uppercase tracking-widest text-[10px] rounded-xl border border-border",
+        "bg-muted text-foreground font-bold uppercase tracking-widest text-[10px] rounded-xl border border-border",
         "hover:bg-muted active:scale-95",
         "disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap overflow-hidden",
         className
