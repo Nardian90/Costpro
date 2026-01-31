@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [5.7.17] - 2026-02-26
 
+### Changed
+- **Optimización Mobile POS (Thumb Zone)**: Rediseño del carrito de ventas en TPV para dispositivos móviles. Se ha implementado un layout de columna donde la lista de productos es desplazable pero el resumen de totales y el botón "Finalizar Venta" permanecen fijos en la base (zona natural del pulgar), eliminando la necesidad de scroll para completar la transacción.
+- **Navegación Persistente (Sticky POS)**: La barra de búsqueda y los filtros de categoría en el TPV ahora son fijos (`sticky`) en la parte superior, garantizando acceso inmediato a las herramientas de filtrado sin importar la longitud del catálogo.
+- **Hardenización de Touch Targets**: Incremento masivo de áreas táctiles a un mínimo de 44px en elementos críticos (Chips de Categoría, Botones de acción, Menú de Terminal) para reducir errores de pulsación accidental.
+- **Feedback Táctil Inmediato**: Incorporación de micro-animaciones de presión (`active:scale-95`) en tarjetas de producto y botones de acción, proporcionando confirmación visual instantánea de la interacción táctil.
+- **Actualización de Documentación Visual**: Sincronización de los diagramas de ayuda en `MobilePosDiagram.tsx` para reflejar la nueva interfaz de TPV persistente y las mejoras ergonómicas.
 ### Hardening
 - **Centralización de Perfil de Usuario**: Migración de la lógica de recuperación y normalización de perfiles a `userService.getUserProfile`. Se eliminó lógica dispersa y repetitiva en `useSessionManager` y `LoginPage`.
 - **Contratos de Datos Resilientes**: Implementación de `z.preprocess` en esquemas Zod (`userStoreMembershipSchema`, `receiptItemSchema`, `transferWithDetailsSchema`) para normalizar automáticamente las relaciones de Supabase (conversión de arreglos a objetos).
