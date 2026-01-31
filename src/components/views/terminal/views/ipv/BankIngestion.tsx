@@ -173,9 +173,9 @@ export function BankIngestion() {
         const tx: BankTransaction = {
           id: uuidv4(),
           fecha,
-          referencia_corta: row['Ref_Corriente'] || ref_origen,
-          referencia_origen: ref_origen,
-          observaciones,
+          referencia_corta: String(row['Ref_Corriente'] || ref_origen),
+          referencia_origen: String(ref_origen),
+          observaciones: String(observaciones),
           importe_cents,
           tipo: tipo === 'Cr' ? 'Cr' : 'Db',
           estado_conciliacion: 'PENDIENTE',

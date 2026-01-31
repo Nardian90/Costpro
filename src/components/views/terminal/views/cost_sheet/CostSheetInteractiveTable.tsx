@@ -64,9 +64,16 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
 
   const handleTotalSave = (val: string) => {
     setIsEditingTotal(false);
+    const trimmedVal = val.trim();
+
+    console.log('[CostSheet] Guardando valor total:', {
+        path,
+        originalValue: val,
+        trimmedValue: trimmedVal,
+        rowId: row.id
+    });
 
     // Improved check for fixed values, especially '0'
-    const trimmedVal = val.trim();
     if (trimmedVal.startsWith('=')) {
       // It's a formula
       updateValue([...path, 'formula'], trimmedVal);
@@ -90,6 +97,11 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
         if (row.is_percent) {
           updateValue([...path, 'is_percent'], false);
         }
+    } else {
+        // Fallback: If it's not a number and doesn't have '=', but it's not empty,
+        // it's likely a formula (e.g., ref('1.3')). We save it as a formula.
+        updateValue([...path, 'formula'], trimmedVal);
+        updateValue([...path, 'calculationMethod'], 'FORMULA');
     }
   };
 
