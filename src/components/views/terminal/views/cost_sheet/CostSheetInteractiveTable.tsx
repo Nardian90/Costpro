@@ -72,11 +72,9 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
       updateValue([...path, 'calculationMethod'], 'FORMULA');
     } else if (trimmedVal !== '' && !isNaN(Number(trimmedVal))) {
       // It's a valid fixed number (including 0)
-      const num = Number(trimmedVal);
-      const field = row.hasOwnProperty('valorHistorico') ? 'valorHistorico' : 'value';
-      updateValue([...path, field], num);
-      updateValue([...path, 'calculationMethod'], 'ValorFijo');
-      updateValue([...path, 'formula'], ''); // Clear formula
+      // Save it as a formula to keep it in the Total column and not touch Valor Histórico
+      updateValue([...path, 'formula'], trimmedVal);
+      updateValue([...path, 'calculationMethod'], 'FORMULA');
 
       // If it was a percentage row, clear it to ensure the fixed value is respected
       if (row.is_percent) {
@@ -106,26 +104,26 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
         isResultRow && "bg-primary/5 font-bold"
       )}>
         {/* Concepto */}
-        <TableCell style={{ paddingLeft: `${level * 24 + 12}px` }} className="py-2.5 font-medium text-foreground sticky-column-1 min-w-[250px]">
-          <div className="flex items-center gap-2 min-w-0">
+        <TableCell style={{ paddingLeft: `${level * 24 + 12}px` }} className="px-2 py-2 sm:px-4 sm:py-2.5 font-medium text-[13px] sm:text-sm text-foreground sticky-column-1 min-w-[180px] sm:min-w-[250px]">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
             {hasChildren && (
               <button onClick={handleToggle} className="p-1 rounded-full hover:bg-primary/10 shrink-0">
-                <ChevronRight className={cn('w-4 h-4 transition-transform', isExpanded && 'rotate-90')} />
+                <ChevronRight className={cn('w-3.5 h-3.5 sm:w-4 h-4 transition-transform', isExpanded && 'rotate-90')} />
               </button>
             )}
-            {!hasChildren && <CornerDownRight className="w-4 h-4 text-muted-foreground shrink-0 ml-1" />}
+            {!hasChildren && <CornerDownRight className="w-3.5 h-3.5 sm:w-4 h-4 text-muted-foreground shrink-0 ml-1" />}
             <span className="truncate flex-1">{row.label}</span>
           </div>
         </TableCell>
 
         {/* Valor Histórico / % */}
-        <TableCell className="px-4 py-2 text-right w-40">
+        <TableCell className="px-2 py-1.5 sm:px-4 sm:py-2 text-right w-32 sm:w-40">
             <div className="relative">
                 <Input
                 type="number"
                 step={row.is_percent ? "0.001" : "1"}
                 className={cn(
-                  "neu-input text-right h-9 sm:h-8 transition-all",
+                  "neu-input text-right h-8 transition-all text-xs sm:text-sm px-2",
                   row.is_percent && "pr-6",
                   hasChildren && "bg-muted/30 font-bold border-dashed cursor-default"
                 )}
@@ -154,7 +152,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
 
         {/* Total */}
         <TableCell
-          className="px-4 py-2 text-right font-black tabular-nums text-primary w-48 cursor-pointer hover:bg-primary/5 transition-colors"
+          className="px-2 py-1.5 sm:px-4 sm:py-2 text-right font-black tabular-nums text-primary w-36 sm:w-48 cursor-pointer hover:bg-primary/5 transition-colors text-xs sm:text-sm"
           onClick={() => setIsEditingTotal(true)}
         >
           {isEditingTotal ? (
@@ -296,13 +294,13 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = ({
 
                     <div className="neu-card p-0 overflow-hidden border-border/50 shadow-sm hover:shadow-md transition-shadow">
                         <div className="table-scroll-wrapper sticky-column-1">
-                        <Table className="w-full min-w-[600px] sm:min-w-[700px]">
-                            <TableHeader className="bg-muted/30 text-muted-foreground font-black uppercase text-[10px] tracking-widest border-b border-border sticky-header">
+                        <Table className="w-full min-w-[500px] sm:min-w-[700px]">
+                            <TableHeader className="bg-muted/30 text-muted-foreground font-black uppercase text-[9px] sm:text-[10px] tracking-widest border-b border-border sticky-header">
                                 <TableRow>
-                                    <TableHead className="px-4 py-4 text-left font-black uppercase tracking-widest min-w-[200px] sm:min-w-[250px]">Concepto</TableHead>
-                                    <TableHead className="px-4 py-4 text-right font-black uppercase tracking-widest w-32 sm:w-40">Valor Histórico</TableHead>
-                                    <TableHead className="px-4 py-4 text-right font-black uppercase tracking-widest w-40 sm:w-48">Total</TableHead>
-                                    <TableHead className="px-4 py-4 text-center font-black uppercase tracking-widest w-12 sm:w-20 hidden sm:table-cell">Ayuda</TableHead>
+                                    <TableHead className="px-2 py-3 sm:px-4 sm:py-4 text-left font-black uppercase tracking-widest min-w-[180px] sm:min-w-[250px]">Concepto</TableHead>
+                                    <TableHead className="px-2 py-3 sm:px-4 sm:py-4 text-right font-black uppercase tracking-widest w-32 sm:w-40">Valor Histórico</TableHead>
+                                    <TableHead className="px-2 py-3 sm:px-4 sm:py-4 text-right font-black uppercase tracking-widest w-36 sm:w-48">Total</TableHead>
+                                    <TableHead className="px-2 py-3 sm:px-4 sm:py-4 text-center font-black uppercase tracking-widest w-12 sm:w-20 hidden sm:table-cell">Ayuda</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
