@@ -98,12 +98,13 @@ export default function IPVView() {
           <p className="text-muted-foreground font-medium">Conciliación bancaria y generación de IPV</p>
         </div>
 
-        <div className="flex gap-2">
-            <Button variant="outline" className="neu-btn" onClick={() => setActiveTab('rules')}>
+        <div className="flex gap-2 w-full sm:w-auto">
+            <Button variant="outline" className="neu-btn flex-1 sm:flex-none h-11 sm:h-10" onClick={() => setActiveTab('rules')}>
                 <Settings className="w-4 h-4 mr-2" />
-                Reglas
+                <span className="hidden sm:inline">Reglas</span>
+                <span className="sm:hidden">Reglas</span>
             </Button>
-            <Button onClick={handleRunMatching} className="neu-btn-primary">
+            <Button onClick={handleRunMatching} className="neu-btn-primary flex-[2] sm:flex-none h-11 sm:h-10 font-black">
                 <Play className="w-4 h-4 mr-2" />
                 Ejecutar Matching
             </Button>
@@ -136,14 +137,16 @@ export default function IPVView() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-6 w-full max-w-4xl">
-          <TabsTrigger value="transactions">Transacciones</TabsTrigger>
-          <TabsTrigger value="catalog">Catálogo</TabsTrigger>
-          <TabsTrigger value="ingestion">Ingesta</TabsTrigger>
-          <TabsTrigger value="reports">Reportes IPV</TabsTrigger>
-          <TabsTrigger value="adjustments">Ajustes</TabsTrigger>
-          <TabsTrigger value="rules">Reglas</TabsTrigger>
-        </TabsList>
+        <div className="flex overflow-x-auto pb-1 scrollbar-none sm:pb-0">
+          <TabsList className="flex w-max min-w-full sm:grid sm:grid-cols-6 sm:max-w-4xl">
+            <TabsTrigger value="transactions" className="px-4">Transacciones</TabsTrigger>
+            <TabsTrigger value="catalog" className="px-4">Catálogo</TabsTrigger>
+            <TabsTrigger value="ingestion" className="px-4">Ingesta</TabsTrigger>
+            <TabsTrigger value="reports" className="px-4">Reportes IPV</TabsTrigger>
+            <TabsTrigger value="adjustments" className="px-4">Ajustes</TabsTrigger>
+            <TabsTrigger value="rules" className="px-4">Reglas</TabsTrigger>
+          </TabsList>
+        </div>
 
         <Card className="mt-6 p-0 overflow-hidden border-none shadow-xl bg-card/50 backdrop-blur-sm">
           <TabsContent value="transactions" className="m-0">
