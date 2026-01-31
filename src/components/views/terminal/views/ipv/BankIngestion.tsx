@@ -2,7 +2,6 @@
 
 import React, { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { db, BankTransaction } from '@/lib/dexie';
 import { db, type BankTransaction } from '@/lib/dexie';
 import { generateHash } from '@/lib/ipv/engine';
 import { Button } from '@/components/ui/button';
