@@ -261,20 +261,21 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = ({ s
   return (
     <div data-testid="cost-sheet-interactive-table" className="space-y-6">
         {/* Secondary Navigation for Sections within the Main Table */}
-        <div className="space-y-2 mb-6">
-            <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground px-1">
+        <div className="space-y-3 mb-8">
+            <div className="text-[10px] font-black uppercase tracking-[0.4em] text-primary/70 px-2 flex items-center gap-2">
+                <div className="w-1 h-1 bg-primary rounded-full" />
                 Secciones de la Ficha
             </div>
-            <div className="flex flex-wrap gap-2 bg-muted/20 p-2 rounded-2xl border border-border/50 overflow-x-auto no-scrollbar">
+            <div className="flex flex-wrap gap-2 bg-background/50 backdrop-blur-sm p-2 rounded-[2rem] border border-sidebar-border/30 overflow-x-auto no-scrollbar shadow-inner">
                 {sections.map(s => (
                     <button
                         key={s.id}
                         onClick={() => setActiveSubSectionId(s.id)}
                         className={cn(
-                            "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shrink-0",
+                            "px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shrink-0 active:scale-95",
                             activeSubSectionId === s.id
-                                ? "bg-primary text-white shadow-lg scale-105"
-                                : "bg-background text-muted-foreground hover:bg-muted"
+                                ? "bg-primary text-white shadow-xl shadow-primary/20 scale-105"
+                                : "bg-background/50 text-sidebar-foreground/60 hover:bg-primary/5 hover:text-primary"
                         )}
                     >
                         {s.label}

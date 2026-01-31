@@ -15,9 +15,10 @@ import CostSheetSummary from './CostSheetSummary';
 import { CostSheetBanner } from './CostSheetBanner';
 import { CostSheetModeSwitcher } from './CostSheetModeSwitcher';
 import { CostSheetAuditLog } from './CostSheetAuditLog';
+import { CostSheetActionsPanel } from './CostSheetActionsPanel';
 import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
 import ActionMenu from '@/components/ui/ActionMenu';
-import { Eye, Edit, FileText, Trash2, Download, FileSpreadsheet, Upload, Save, BarChart3, Activity } from 'lucide-react';
+import { Eye, Edit, FileText, Trash2, Download, FileSpreadsheet, Upload, Save, BarChart3, Activity, MoreVertical } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -33,6 +34,7 @@ const CostSheetView = () => {
   const [layoutMode, setLayoutMode] = useState<ViewMode>('grid');
   const [activeSection, setActiveSection] = useState('header');
   const [showKpiOnly, setShowKpiOnly] = useState(false);
+  const [isActionsPanelOpen, setIsActionsPanelOpen] = useState(false);
 
   const previewRef = useRef(null);
   const exportRef = useRef(null);
@@ -142,8 +144,58 @@ const CostSheetView = () => {
     toast.success("JSON exportado correctamente");
   };
 
+  const allActions = [
+    {
+        id: 'toggle-mode',
+        label: isEditing ? 'Ver Resultado' : 'Seguir Editando',
+        icon: isEditing ? Eye : Edit,
+        onClick: () => {
+            setIsEditing(!isEditing);
+            setShowKpiOnly(false);
+        },
+        variant: 'primary' as const,
+    },
+    {
+        id: 'toggle-kpi',
+        label: showKpiOnly ? 'Vista Completa' : 'Ver KPIs',
+        icon: BarChart3,
+        onClick: () => setShowKpiOnly(!showKpiOnly),
+        variant: showKpiOnly ? 'success' as const : 'outline' as const,
+        className: "shadow-md scale-105"
+    },
+    { id: 'load-example', label: 'Ejemplo', icon: FileText, onClick: loadExample, variant: 'outline' as const },
+    { id: 'reset', label: 'Reiniciar', icon: Trash2, onClick: reset, variant: 'danger' as const },
+    { id: 'import-json', label: 'Importar', icon: Upload, onClick: handleImportJSON, variant: 'outline' as const },
+    { id: 'export-json', label: 'Guardar', icon: Save, onClick: handleExportJSON, variant: 'outline' as const },
+    { id: 'export-excel', label: 'Excel', icon: FileSpreadsheet, onClick: handleExportExcel, variant: 'primary' as const },
+    { id: 'export-pdf', label: 'PDF', icon: Download, onClick: handleExportPDF, variant: 'success' as const },
+  ];
+
+  const mainActions = [
+    ...allActions.filter(a => ['toggle-mode', 'toggle-kpi'].includes(a.id)),
+    {
+        id: 'more-actions',
+        label: 'Más Acciones',
+        icon: MoreVertical,
+        onClick: () => setIsActionsPanelOpen(true),
+        variant: 'outline' as const
+    }
+  ];
+
+  const secondaryActions = allActions.filter(a => !['toggle-mode', 'toggle-kpi'].includes(a.id));
+
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-32 pt-4">
+      <CostSheetActionsPanel
+        isOpen={isActionsPanelOpen}
+        onClose={() => setIsActionsPanelOpen(false)}
+        actions={secondaryActions}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        layoutMode={layoutMode}
+        setLayoutMode={setLayoutMode}
+      />
+
       <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', width: '1024px', opacity: 0, pointerEvents: 'none' }}>
           <CostSheetPreview
             ref={exportRef}
@@ -156,43 +208,7 @@ const CostSheetView = () => {
       <CostSheetBanner />
 
       <div className="flex flex-col gap-6 mb-8">
-        <ActionMenu
-            actions={[
-            {
-                id: 'toggle-mode',
-                label: isEditing ? 'Ver Resultado' : 'Seguir Editando',
-                icon: isEditing ? Eye : Edit,
-                onClick: () => {
-                    setIsEditing(!isEditing);
-                    setShowKpiOnly(false);
-                },
-                variant: 'primary',
-            },
-            {
-                id: 'toggle-kpi',
-                label: showKpiOnly ? 'Vista Completa' : 'Ver KPIs',
-                icon: BarChart3,
-                onClick: () => setShowKpiOnly(!showKpiOnly),
-                variant: showKpiOnly ? 'success' : 'outline',
-                className: "shadow-md scale-105"
-            },
-            { id: 'load-example', label: 'Ejemplo', icon: FileText, onClick: loadExample, variant: 'outline' },
-            { id: 'reset', label: 'Reiniciar', icon: Trash2, onClick: reset, variant: 'danger' },
-            { id: 'import-json', label: 'Importar', icon: Upload, onClick: handleImportJSON, variant: 'outline' },
-            { id: 'export-json', label: 'Guardar', icon: Save, onClick: handleExportJSON, variant: 'outline' },
-            { id: 'export-excel', label: 'Excel', icon: FileSpreadsheet, onClick: handleExportExcel, variant: 'primary' },
-            { id: 'export-pdf', label: 'PDF', icon: Download, onClick: handleExportPDF, variant: 'success' },
-            ]}
-        />
-
-        {isEditing && (
-             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-               <CostSheetModeSwitcher viewMode={viewMode} setViewMode={setViewMode} />
-               {viewMode === 'expert' && (
-                 <ViewSwitcher currentView={layoutMode} onViewChange={setLayoutMode} />
-               )}
-             </div>
-        )}
+        <ActionMenu actions={mainActions} />
       </div>
 
       {isEditing ? (

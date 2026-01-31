@@ -48,9 +48,10 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
   ];
 
   return (
-    <div className="mb-8">
-      <div className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-3 px-1">
-        Navegación de Secciones
+    <div className="mb-8 space-y-3">
+      <div className="text-[10px] font-black uppercase tracking-[0.4em] text-primary/70 px-2 flex items-center gap-2">
+        <div className="w-1 h-1 bg-primary rounded-full" />
+        Navegación Principal
       </div>
       <ActionMenu
         actions={navActions}
