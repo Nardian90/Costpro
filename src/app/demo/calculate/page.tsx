@@ -241,12 +241,12 @@ export default function CostEngineDemo() {
                         />
                     </TableCell>
                     <TableCell className="text-right font-mono text-sm text-muted-foreground">
-                        {row.formaCalculo === 'COEFICIENTE' && row.coeficiente !== null ? (
+                        {row.formaCalculo === 'COEFICIENTE' && typeof row.coeficiente === 'number' ? (
                             <span className="font-bold text-primary">{row.coeficiente.toFixed(4)}</span>
-                        ) : (rowResult?.total && row.valorHistorico && row.valorHistorico > 0 ? (rowResult.total / row.valorHistorico).toFixed(4) : '-')}
+                        ) : (rowResult && typeof rowResult.total === 'number' && row.valorHistorico && row.valorHistorico > 0 ? (rowResult.total / row.valorHistorico).toFixed(4) : '-')}
                     </TableCell>
                     <TableCell className="text-right font-black text-lg text-primary tabular-nums pr-6">
-                        {rowResult ? `$ ${rowResult.total.toFixed(ficha.meta.decimals)}` : '-'}
+                        {rowResult && typeof rowResult.total === 'number' ? `$ ${rowResult.total.toFixed(ficha.meta.decimals)}` : '-'}
                     </TableCell>
                     <TableCell className="pr-6">
                         <Button variant="ghost" size="icon" onClick={() => setEditingRowId(row.id)} className="rounded-xl hover:bg-primary/10 hover:text-primary">
@@ -387,7 +387,7 @@ export default function CostEngineDemo() {
                         <span className="text-[10px] text-slate-500 font-bold uppercase">{new Date(audit.ts).toLocaleTimeString()}</span>
                      </div>
                      <p className="text-slate-300 text-xs mt-1 font-medium">{audit.note}</p>
-                     {audit.prev !== undefined && (
+                     {typeof audit.prev === 'number' && typeof audit.now === 'number' && (
                         <div className="mt-3 font-mono text-[10px] bg-black/40 p-2 rounded-xl border border-white/5 flex items-center gap-3 w-fit">
                           <span className="text-slate-500">{audit.prev.toFixed(ficha.meta.decimals)}</span>
                           <span className="text-primary font-black">→</span>
