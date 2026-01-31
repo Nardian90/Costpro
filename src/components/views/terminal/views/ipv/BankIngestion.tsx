@@ -5,7 +5,7 @@ import { useDropzone } from 'react-dropzone';
 import { db, type BankTransaction } from '@/lib/dexie';
 import { generateHash } from '@/lib/ipv/engine';
 import { Button } from '@/components/ui/button';
-import { FileUp, Download, Info, FileSpreadsheet, FileText, Upload } from 'lucide-react';
+import { FileUp, Download, Info, FileSpreadsheet, FileText, Upload, HelpCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
