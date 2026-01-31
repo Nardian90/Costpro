@@ -54,6 +54,7 @@ const SettingsView = lazy(() => import('./terminal/views/settings/SettingsView')
 const TransferenciasView = lazy(() => import('./terminal/views/transfers/TransferenciasView'));
 const ProductReceptionView = lazy(() => import('./terminal/views/inventory/ProductReceptionView'));
 const ReportsView = lazy(() => import('./terminal/views/reports/ReportsView'));
+const IPVView = lazy(() => import('./terminal/views/ipv/IPVView'));
 
 
 export default function TerminalShell() { // Renamed from TerminalView
@@ -171,6 +172,7 @@ export default function TerminalShell() { // Renamed from TerminalView
         case 'inventory_count': return <InventoryCountView />;
         case 'cost-sheets': return <CostSheetView />;
         case 'reports': return <ReportsView />;
+        case 'ipv': return <IPVView />;
 
         // --- Placeholders for remaining views ---
         case 'settings': return <SettingsView />;
