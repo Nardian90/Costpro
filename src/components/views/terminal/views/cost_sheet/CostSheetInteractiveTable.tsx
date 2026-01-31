@@ -25,6 +25,9 @@ interface CostSheetInteractiveTableProps {
   sections: CostSheetSection[];
   calculatedValues: CalculatedValues;
   annexes: CostSheetAnnex[];
+  activeSubSectionId: string;
+  setActiveSubSectionId: (id: string) => void;
+  onOpenSections?: () => void;
 }
 
 // Props for a single row component
@@ -225,13 +228,21 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
   );
 });
 
+import { ListFilter } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
 /**
  * The main interactive table component for the Cost Sheet.
  * Decomposed by sections for a more professional and clean enterprise-level experience.
  */
-const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = ({ sections, calculatedValues, annexes }) => {
-  const [activeSubSectionId, setActiveSubSectionId] = useState(sections[0]?.id || '');
-
+const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = ({
+    sections,
+    calculatedValues,
+    annexes,
+    activeSubSectionId,
+    setActiveSubSectionId,
+    onOpenSections
+}) => {
   const flattenRows = (rows: RowData[]): RowData[] => {
     let all: RowData[] = [];
     for (const row of rows) {
@@ -260,28 +271,17 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = ({ s
 
   return (
     <div data-testid="cost-sheet-interactive-table" className="space-y-6">
-        {/* Secondary Navigation for Sections within the Main Table */}
-        <div className="space-y-3 mb-8">
-            <div className="text-[10px] font-black uppercase tracking-[0.4em] text-primary/70 px-2 flex items-center gap-2">
-                <div className="w-1 h-1 bg-primary rounded-full" />
-                Secciones de la Ficha
-            </div>
-            <div className="flex flex-wrap gap-2 bg-background/50 backdrop-blur-sm p-2 rounded-[2rem] border border-sidebar-border/30 overflow-x-auto no-scrollbar shadow-inner">
-                {sections.map(s => (
-                    <button
-                        key={s.id}
-                        onClick={() => setActiveSubSectionId(s.id)}
-                        className={cn(
-                            "px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shrink-0 active:scale-95",
-                            activeSubSectionId === s.id
-                                ? "bg-primary text-white shadow-xl shadow-primary/20 scale-105"
-                                : "bg-background/50 text-sidebar-foreground/60 hover:bg-primary/5 hover:text-primary"
-                        )}
-                    >
-                        {s.label}
-                    </button>
-                ))}
-            </div>
+        {/* Trigger for Sections Sidebar */}
+        <div className="flex justify-end mb-4 sm:mb-6">
+            <Button
+                variant="outline"
+                size="sm"
+                onClick={onOpenSections}
+                className="rounded-full gap-2 font-black uppercase tracking-widest text-[10px] px-6 neu-raised-sm"
+            >
+                <ListFilter className="w-4 h-4" />
+                Secciones
+            </Button>
         </div>
 
         {sections.map((section, sectionIndex) => (
