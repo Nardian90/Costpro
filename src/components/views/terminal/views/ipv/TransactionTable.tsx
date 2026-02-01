@@ -14,7 +14,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Eye, Trash2, Search, RotateCcw, LayoutGrid, List } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Eye, Trash2, Search, RotateCcw, LayoutGrid, List, CheckCircle2, XCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { ManualReconciliationModal } from './ManualReconciliationModal';
@@ -31,6 +32,7 @@ export function TransactionTable({ transactions }: { transactions: BankTransacti
   const [selectedTx, setSelectedTx] = useState<BankTransaction | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [layoutMode, setLayoutMode] = useState<'table' | 'cards'>('table');
+  const [typeFilter, setTypeFilter] = useState<'ALL' | 'Cr' | 'Db'>('ALL');
 
   const reconciliationLines = useLiveQuery(() => db.reconciliation_lines.toArray());
 
@@ -42,10 +44,12 @@ export function TransactionTable({ transactions }: { transactions: BankTransacti
     }, {} as Record<string, number>);
   }, [reconciliationLines]);
 
-  const filtered = transactions.filter(t =>
-    t.referencia_origen.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    t.observaciones.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filtered = transactions.filter(t => {
+    const matchesSearch = t.referencia_origen.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         t.observaciones.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesType = typeFilter === 'ALL' || t.tipo === typeFilter;
+    return matchesSearch && matchesType;
+  });
 
   const handleDelete = async (id: string) => {
     if (confirm('¿Eliminar esta transacción?')) {
@@ -62,6 +66,17 @@ export function TransactionTable({ transactions }: { transactions: BankTransacti
     }
   };
 
+  const toggleExclusion = async (tx: BankTransaction) => {
+      await db.bank_statements.update(tx.id, {
+          excluido: !tx.excluido
+      });
+  };
+
+  const bulkToggleExclusion = async (exclude: boolean) => {
+      const ids = filtered.map(t => t.id);
+      await db.bank_statements.where('id').anyOf(ids).modify({ excluido: exclude });
+  };
+
   const getStatusBadge = (status: string, diffCents: number, matchedTotal: number) => {
     if (matchedTotal > 0 && diffCents === 0) {
       return <Badge className="bg-green-500 text-white border-green-600 shadow-sm text-[10px] font-black uppercase tracking-tighter">CUADRADA</Badge>;
@@ -74,8 +89,8 @@ export function TransactionTable({ transactions }: { transactions: BankTransacti
 
   return (
     <div className="space-y-4">
-      <div className="p-3 sm:p-4 flex flex-col sm:flex-row gap-3 bg-background/50 border-b">
-        <div className="relative flex-1">
+      <div className="p-3 sm:p-4 flex flex-col lg:flex-row gap-3 bg-background/50 border-b items-center">
+        <div className="relative flex-1 w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Buscar referencia u observaciones..."
@@ -84,7 +99,26 @@ export function TransactionTable({ transactions }: { transactions: BankTransacti
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="flex gap-2 self-end sm:self-auto">
+        <div className="flex flex-wrap gap-2 w-full lg:w-auto justify-end items-center">
+            <select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value as any)}
+                className="h-10 text-xs font-bold border rounded-md bg-background px-3 outline-none"
+            >
+                <option value="ALL">TODOS LOS TIPOS</option>
+                <option value="Cr">SOLO CRÉDITOS (INGRESOS)</option>
+                <option value="Db">SOLO DÉBITOS (GASTOS)</option>
+            </select>
+
+            <div className="flex gap-1 bg-muted/50 p-1 rounded-lg">
+                <Button variant="ghost" size="sm" onClick={() => bulkToggleExclusion(false)} className="h-8 text-[10px] font-black uppercase hover:bg-green-500/10 hover:text-green-600">
+                    <CheckCircle2 className="w-3 h-3 mr-1" /> Incluir Filtro
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => bulkToggleExclusion(true)} className="h-8 text-[10px] font-black uppercase hover:bg-red-500/10 hover:text-red-600">
+                    <XCircle className="w-3 h-3 mr-1" /> Excluir Filtro
+                </Button>
+            </div>
+
             <Button
                 variant="outline"
                 size="icon"
@@ -109,6 +143,9 @@ export function TransactionTable({ transactions }: { transactions: BankTransacti
           <Table className="data-table">
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[40px] text-center">
+                    <Info className="w-3 h-3 mx-auto opacity-20" />
+                </TableHead>
                 <TableHead className="sticky-column-1">Fecha</TableHead>
                 <TableHead>Referencia</TableHead>
                 <TableHead className="max-w-md">Observaciones</TableHead>
@@ -153,7 +190,14 @@ export function TransactionTable({ transactions }: { transactions: BankTransacti
                   const diff = targetAmount - matchedTotal;
 
                   return (
-                  <TableRow key={tx.id}>
+                  <TableRow key={tx.id} className={tx.excluido ? 'opacity-40 grayscale bg-muted/20' : ''}>
+                    <TableCell className="text-center">
+                        <Checkbox
+                            checked={!tx.excluido}
+                            onCheckedChange={() => toggleExclusion(tx)}
+                            className="translate-y-0.5"
+                        />
+                    </TableCell>
                     <TableCell className="sticky-column-1 font-medium whitespace-nowrap">
                       {formatDate(tx.fecha)}
                     </TableCell>
@@ -234,9 +278,16 @@ export function TransactionTable({ transactions }: { transactions: BankTransacti
                             <div className={`absolute top-0 left-0 w-1 h-full ${tx.tipo === 'Cr' ? 'bg-green-500' : 'bg-red-500'}`} />
 
                             <div className="flex justify-between items-start">
-                                <div>
-                                    <p className="text-[10px] font-black text-muted-foreground uppercase">{formatDate(tx.fecha)}</p>
-                                    <p className="text-xs font-mono font-bold text-primary">{tx.referencia_origen}</p>
+                                <div className="flex items-start gap-3">
+                                    <Checkbox
+                                        checked={!tx.excluido}
+                                        onCheckedChange={() => toggleExclusion(tx)}
+                                        className="mt-1"
+                                    />
+                                    <div>
+                                        <p className="text-[10px] font-black text-muted-foreground uppercase">{formatDate(tx.fecha)}</p>
+                                        <p className="text-xs font-mono font-bold text-primary">{tx.referencia_origen}</p>
+                                    </div>
                                 </div>
                                 {getStatusBadge(tx.estado_conciliacion, diff, matchedTotal)}
                             </div>

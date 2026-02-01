@@ -23,6 +23,7 @@ import { CatalogTable } from './CatalogTable';
 import { IPVReportView } from './IPVReportView';
 import { MatchingRulesEditor } from './MatchingRulesEditor';
 import { CashAdjustmentsTable } from './CashAdjustmentsTable';
+import { PivotStatementView } from './PivotStatementView';
 import { toast } from 'sonner';
 import {
   Tooltip,
@@ -117,7 +118,7 @@ export default function IPVView() {
 
     worker.postMessage({
       type: 'RECONCILE_BATCH',
-      transactions: updatedTransactions.filter(t => t.estado_conciliacion !== 'COMPLETO'),
+      transactions: updatedTransactions.filter(t => t.estado_conciliacion !== 'COMPLETO' && !t.excluido),
       products,
       rules
     });
@@ -237,13 +238,14 @@ export default function IPVView() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="relative">
             <div className="flex overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent sm:pb-0">
-                <TabsList className="flex w-max min-w-full lg:grid lg:grid-cols-6 lg:max-w-5xl bg-muted/50 p-1 rounded-xl">
-                    <TabsTrigger value="transactions" className="px-6 text-[10px] sm:text-xs font-bold uppercase tracking-widest">Transacciones</TabsTrigger>
-                    <TabsTrigger value="catalog" className="px-6 text-[10px] sm:text-xs font-bold uppercase tracking-widest">Catálogo</TabsTrigger>
-                    <TabsTrigger value="ingestion" className="px-6 text-[10px] sm:text-xs font-bold uppercase tracking-widest text-nowrap">Extracto Bancario</TabsTrigger>
-                    <TabsTrigger value="reports" className="px-6 text-[10px] sm:text-xs font-bold uppercase tracking-widest text-nowrap">Reportes IPV</TabsTrigger>
-                    <TabsTrigger value="adjustments" className="px-6 text-[10px] sm:text-xs font-bold uppercase tracking-widest">Ajustes</TabsTrigger>
-                    <TabsTrigger value="rules" className="px-6 text-[10px] sm:text-xs font-bold uppercase tracking-widest">Reglas</TabsTrigger>
+                <TabsList className="flex w-max min-w-full lg:grid lg:grid-cols-7 lg:max-w-[1200px] bg-muted/50 p-1 rounded-xl">
+                    <TabsTrigger value="transactions" className="px-4 text-[10px] sm:text-xs font-bold uppercase tracking-widest">Transacciones</TabsTrigger>
+                    <TabsTrigger value="pivot" className="px-4 text-[10px] sm:text-xs font-bold uppercase tracking-widest">Consolidado</TabsTrigger>
+                    <TabsTrigger value="catalog" className="px-4 text-[10px] sm:text-xs font-bold uppercase tracking-widest">Catálogo</TabsTrigger>
+                    <TabsTrigger value="ingestion" className="px-4 text-[10px] sm:text-xs font-bold uppercase tracking-widest text-nowrap">Extracto</TabsTrigger>
+                    <TabsTrigger value="reports" className="px-4 text-[10px] sm:text-xs font-bold uppercase tracking-widest text-nowrap">Reportes IPV</TabsTrigger>
+                    <TabsTrigger value="adjustments" className="px-4 text-[10px] sm:text-xs font-bold uppercase tracking-widest">Ajustes</TabsTrigger>
+                    <TabsTrigger value="rules" className="px-4 text-[10px] sm:text-xs font-bold uppercase tracking-widest">Reglas</TabsTrigger>
                 </TabsList>
             </div>
             <div className="absolute right-0 top-0 bottom-2 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none lg:hidden" />
@@ -252,6 +254,10 @@ export default function IPVView() {
         <Card className="mt-6 p-0 overflow-hidden border-none shadow-xl bg-card/50 backdrop-blur-sm">
           <TabsContent value="transactions" className="m-0">
             <TransactionTable transactions={transactions || []} />
+          </TabsContent>
+
+          <TabsContent value="pivot" className="m-0">
+            <PivotStatementView />
           </TabsContent>
 
           <TabsContent value="catalog" className="m-0">
