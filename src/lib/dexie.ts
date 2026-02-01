@@ -82,6 +82,7 @@ export interface DailyIPVReport {
   };
   estado: 'BORRADOR' | 'CERRADO' | 'ANULADO';
   created_at: string;
+  updated_at?: string;
 }
 
 export interface CashAdjustment {

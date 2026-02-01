@@ -15,7 +15,7 @@ import { formatCurrency } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
-import { Search, Plus, Trash2, CheckCircle2 } from 'lucide-react';
+import { Search, Plus, Trash2, CheckCircle2, Info } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { generateHash } from '@/lib/ipv/engine';
 import { v4 as uuidv4 } from 'uuid';
