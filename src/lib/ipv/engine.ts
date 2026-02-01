@@ -36,10 +36,11 @@ export class MatchingEngine {
 
   async matchTransaction(transaction: BankTransaction): Promise<MatchingResult> {
     const logs: string[] = [];
-    let remaining_cents = transaction.importe_cents;
+    const targetAmount = transaction.importe_venta_cents || transaction.importe_cents;
+    let remaining_cents = targetAmount;
     const lines: ReconciliationLine[] = [];
 
-    logs.push(`Iniciando matching para transacción ${transaction.referencia_origen} por ${transaction.importe_cents} cts`);
+    logs.push(`Iniciando matching para transacción ${transaction.referencia_origen} (Importe: ${transaction.importe_cents}, Venta: ${targetAmount} cts)`);
 
     // PASS 0: Debitos (Comisiones)
     if (transaction.tipo === 'Db') {
@@ -55,9 +56,9 @@ export class MatchingEngine {
 
     // Intentar recuperación desde caché (sólo para PASS 2 EXACT_SUM)
     const catalogHash = await generateHash(JSON.stringify(this.products.map(p => ({ cod: p.cod, price: p.precio_cents }))));
-    const cached = await db.matching_cache.get(transaction.importe_cents);
+    const cached = await db.matching_cache.get(targetAmount);
     if (cached && cached.catalog_hash === catalogHash) {
-      logs.push(`Caché hit para importe ${transaction.importe_cents}`);
+      logs.push(`Caché hit para importe ${targetAmount}`);
       for (const item of cached.results) {
         const product = this.products.find(p => p.cod === item.product_cod);
         if (product) {
