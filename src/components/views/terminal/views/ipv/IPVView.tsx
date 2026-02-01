@@ -33,7 +33,7 @@ import {
 export default function IPVView() {
   const [activeTab, setActiveTab] = useState('transactions');
 
-  const transactions = useLiveQuery(() => db.bank_statements.toArray());
+  const transactions = useLiveQuery(() => db.bank_statements.orderBy('fecha').toArray());
   const rules = useLiveQuery(() => db.matching_rules.toArray());
   const products = useLiveQuery(() => db.products.toArray());
 
@@ -60,12 +60,36 @@ export default function IPVView() {
 
     toast.info('Iniciando proceso de matching...');
 
+    // RESET LOGIC: Reiniciar conciliación para transacciones que no estén cuadradas (diff != 0)
+    const allLines = await db.reconciliation_lines.toArray();
+    const txTotals = allLines.reduce((acc, line) => {
+        acc[line.transaction_ref] = (acc[line.transaction_ref] || 0) + line.importe_linea_cents;
+        return acc;
+    }, {} as Record<string, number>);
+
+    const txToReset = transactions.filter(t => {
+        const matched = txTotals[t.referencia_origen] || 0;
+        return (t.importe_cents - matched) !== 0;
+    });
+
+    if (txToReset.length > 0) {
+        toast.loading(`Reiniciando ${txToReset.length} transacciones no cuadradas...`, { id: 'reset-matching' });
+        for (const tx of txToReset) {
+            await db.reconciliation_lines.where('transaction_ref').equals(tx.referencia_origen).delete();
+            await db.bank_statements.update(tx.id, { estado_conciliacion: 'PENDIENTE' });
+        }
+        toast.success('Reset completado', { id: 'reset-matching' });
+    }
+
+    // Volvemos a obtener transacciones actualizadas para enviar al worker
+    const updatedTransactions = await db.bank_statements.toArray();
+
     // Aquí invocaríamos al Worker
     const worker = new Worker(new URL('@/lib/ipv/matching.worker.ts', import.meta.url));
 
     worker.postMessage({
       type: 'RECONCILE_BATCH',
-      transactions: transactions.filter(t => t.estado_conciliacion !== 'COMPLETO'),
+      transactions: updatedTransactions.filter(t => t.estado_conciliacion !== 'COMPLETO'),
       products,
       rules
     });

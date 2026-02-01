@@ -26,6 +26,7 @@ export interface Product {
   precio_cents: number;        // EN CENTAVOS
   prioridad_algoritmo: number; // 1..5
   activo: boolean;
+  stock_inicial_manual: number;
   created_at: string;
   updated_at?: string;
 }
@@ -129,9 +130,9 @@ export class IPVDatabase extends Dexie {
 
   constructor() {
     super('IPVDB');
-    this.version(2).stores({
+    this.version(3).stores({
       bank_statements: '&referencia_origen, fecha, importe_cents, ingestion_hash',
-      products: '&cod, descripcion, precio_cents, prioridad_algoritmo, activo',
+      products: '&cod, descripcion, precio_cents, prioridad_algoritmo, activo, stock_inicial_manual',
       matching_rules: '&id, tipo, prioridad',
       reconciliation_lines: '&id, transaction_ref, reconciliation_hash, fecha_operacion',
       ipv_reports: '&id, fecha_reporte, estado',

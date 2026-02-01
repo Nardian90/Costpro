@@ -31,24 +31,12 @@ import { v4 as uuidv4 } from 'uuid';
 
 export function IPVReportView() {
   const reports = useLiveQuery(() => db.ipv_reports.orderBy('fecha_reporte').reverse().toArray());
+  const [selectedMonth, setSelectedMonth] = React.useState(new Date().getMonth() + 1);
+  const [selectedYear, setSelectedYear] = React.useState(new Date().getFullYear());
 
-  const generateReportForToday = async () => {
-    const today = new Date().toISOString().split('T')[0];
-
-    // Verificar si ya existe un reporte para hoy
-    const existing = await db.ipv_reports.where('fecha_reporte').equals(today).first();
-    if (existing) {
-      toast.error('Ya existe un reporte para el día de hoy');
-      return;
-    }
-
-    // Obtener todas las líneas de conciliación para hoy
-    const lines = await db.reconciliation_lines.where('fecha_operacion').equals(today).toArray();
-
-    if (lines.length === 0) {
-        toast.error('No hay transacciones conciliadas para el día de hoy');
-        return;
-    }
+  const createReportForDate = async (dateStr: string, products: any[], lastReport: DailyIPVReport | null) => {
+    // Obtener todas las líneas de conciliación para esa fecha
+    const lines = await db.reconciliation_lines.where('fecha_operacion').equals(dateStr).toArray();
 
     // Agrupar por producto
     const productGroups: Record<string, any> = {};
@@ -74,39 +62,41 @@ export function IPVReportView() {
         else totalTransferencia += line.importe_linea_cents;
     }
 
-    // Obtener descripciones de productos y último reporte para saldo inicial
-    const products = await db.products.toArray();
-    const productMap = new Map(products.map(p => [p.cod, p.descripcion]));
+    const productMap = new Map(products.map(p => [p.cod, p]));
 
-    const lastReport = await db.ipv_reports
-      .where('estado').equals('CERRADO')
-      .or('estado').equals('BORRADOR')
-      .sortBy('fecha_reporte')
-      .then(list => list.reverse()[0]);
+    // Asegurar que todos los productos del catálogo aparezcan en el reporte, incluso sin ventas
+    const reportFilas = products.map(p => {
+        const ventaInfo = productGroups[p.cod] || { venta_cantidad_qty: 0, precio_unitario_cents: p.precio_cents, importe_cents: 0 };
+        const prevRow = lastReport?.filas.find((pr: any) => pr.cod === p.cod);
+
+        // Si no hay reporte anterior, usar stock_inicial_manual
+        const initial = prevRow ? prevRow.existencia_final_qty : (p.stock_inicial_manual || 0);
+        const venta = ventaInfo.venta_cantidad_qty;
+        const final = initial - venta;
+
+        return {
+            cod: p.cod,
+            descripcion: p.descripcion,
+            um: p.um,
+            saldo_inicial_qty: initial,
+            entrada_salida_qty: 0,
+            total_disponible_qty: initial,
+            venta_cantidad_qty: venta,
+            precio_unitario_cents: ventaInfo.precio_unitario_cents,
+            importe_cents: ventaInfo.importe_cents,
+            existencia_final_qty: final
+        };
+    });
 
     const report: DailyIPVReport = {
         id: uuidv4(),
-        fecha_reporte: today,
+        fecha_reporte: dateStr,
         total_ventas_cents: totalVentas,
         resumen_efectivo_cents: totalEfectivo,
         resumen_transferencia_cents: totalTransferencia,
-        filas: Object.values(productGroups).map(f => {
-            const prevRow = lastReport?.filas.find((pr: any) => pr.cod === f.cod);
-            const initial = prevRow?.existencia_final_qty || 0;
-            const venta = f.venta_cantidad_qty;
-            const final = initial - venta;
-
-            return {
-                ...f,
-                descripcion: productMap.get(f.cod) || 'Producto Desconocido',
-                saldo_inicial_qty: initial,
-                entrada_salida_qty: 0,
-                total_disponible_qty: initial,
-                existencia_final_qty: final
-            };
-        }),
+        filas: reportFilas,
         firmas: {
-            realizado_por: 'Admin Demo',
+            realizado_por: 'Sistema',
             fecha_generacion: new Date().toISOString()
         },
         estado: 'BORRADOR',
@@ -114,7 +104,60 @@ export function IPVReportView() {
     };
 
     await db.ipv_reports.add(report);
+    return report;
+  };
+
+  const generateReportForToday = async () => {
+    const today = new Date().toISOString().split('T')[0];
+
+    // Verificar si ya existe un reporte para hoy
+    const existing = await db.ipv_reports.where('fecha_reporte').equals(today).first();
+    if (existing) {
+      toast.error('Ya existe un reporte para el día de hoy');
+      return;
+    }
+
+    const products = await db.products.toArray();
+    const lastReport = await db.ipv_reports
+      .where('estado').equals('CERRADO')
+      .or('estado').equals('BORRADOR')
+      .sortBy('fecha_reporte')
+      .then(list => list.reverse()[0]);
+
+    await createReportForDate(today, products, lastReport);
     toast.success('Reporte generado exitosamente');
+  };
+
+  const generateMonthlyReports = async () => {
+      if (!confirm(`¿Generar reportes para todo el mes ${selectedMonth}/${selectedYear}? Se omitirán los días que ya tengan reportes.`)) return;
+
+      toast.loading('Generando reportes mensuales...', { id: 'monthly-gen' });
+
+      try {
+          const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
+          const products = await db.products.toArray();
+
+          for (let day = 1; day <= daysInMonth; day++) {
+              const date = new Date(selectedYear, selectedMonth - 1, day);
+              const dateStr = date.toISOString().split('T')[0];
+
+              const existing = await db.ipv_reports.where('fecha_reporte').equals(dateStr).first();
+              if (existing) continue;
+
+              // Obtener el último reporte anterior a esta fecha para el saldo inicial
+              const lastReport = await db.ipv_reports
+                  .where('fecha_reporte').below(dateStr)
+                  .sortBy('fecha_reporte')
+                  .then(list => list.reverse()[0]);
+
+              await createReportForDate(dateStr, products, lastReport || null);
+          }
+
+          toast.success('Generación mensual completada', { id: 'monthly-gen' });
+      } catch (error) {
+          console.error(error);
+          toast.error('Error durante la generación mensual', { id: 'monthly-gen' });
+      }
   };
 
   const exportPDF = async (report: DailyIPVReport) => {
@@ -277,15 +320,43 @@ export function IPVReportView() {
 
   return (
     <div className="space-y-6">
-      <div className="p-4 flex justify-between items-center bg-background/50 border-b">
+      <div className="p-4 flex flex-col md:flex-row justify-between items-center bg-background/50 border-b gap-4">
         <h3 className="font-black uppercase text-sm tracking-widest text-primary flex items-center gap-2">
             <Calendar className="w-4 h-4" />
             Historial de Cierres
         </h3>
-        <Button onClick={generateReportForToday} className="neu-btn-primary h-9">
-            <Plus className="w-4 h-4 mr-2" />
-            Generar Reporte Hoy
-        </Button>
+
+        <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1 bg-background border rounded-md px-2 h-9">
+                <select
+                    value={selectedMonth}
+                    onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                    className="bg-transparent text-xs font-bold focus:outline-none"
+                >
+                    {Array.from({ length: 12 }, (_, i) => (
+                        <option key={i + 1} value={i + 1}>
+                            {new Date(0, i).toLocaleString('es', { month: 'long' }).toUpperCase()}
+                        </option>
+                    ))}
+                </select>
+                <select
+                    value={selectedYear}
+                    onChange={(e) => setSelectedYear(Number(e.target.value))}
+                    className="bg-transparent text-xs font-bold focus:outline-none"
+                >
+                    {[2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
+            </div>
+
+            <Button onClick={generateMonthlyReports} variant="outline" className="h-9 text-xs font-bold uppercase tracking-tighter">
+                Generar Mes Completo
+            </Button>
+
+            <Button onClick={generateReportForToday} className="neu-btn-primary h-9">
+                <Plus className="w-4 h-4 mr-2" />
+                Generar Hoy
+            </Button>
+        </div>
       </div>
 
       <div className="table-scroll-wrapper">
