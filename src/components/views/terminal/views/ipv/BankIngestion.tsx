@@ -4,6 +4,7 @@ import React, { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { db, type BankTransaction } from '@/lib/dexie';
 import { generateHash } from '@/lib/ipv/engine';
+import { parseBandecTxt } from '@/lib/ipv/bandecParser';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { FileUp, Download, Info, FileSpreadsheet, FileText, Upload, HelpCircle, Trash2, RefreshCw, Plus } from 'lucide-react';
@@ -41,6 +42,30 @@ export function BankIngestion() {
           await processBankData(jsonData);
         };
         reader.readAsArrayBuffer(file);
+      } else if (extension === 'txt') {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          const text = e.target?.result as string;
+          const transactions = await parseBandecTxt(text);
+          if (transactions.length > 0) {
+            let imported = 0;
+            let skipped = 0;
+            for (const tx of transactions) {
+              try {
+                await db.bank_statements.add(tx);
+                imported++;
+              } catch (error: any) {
+                if (error.name === 'ConstraintError') {
+                  skipped++;
+                }
+              }
+            }
+            toast.success(`BANDEC TXT: ${imported} importados, ${skipped} omitidos`);
+          } else {
+            toast.error('No se encontraron transacciones válidas en el archivo TXT');
+          }
+        };
+        reader.readAsText(file);
       }
     }
   }, []);
@@ -380,7 +405,8 @@ export function BankIngestion() {
     accept: {
       'text/csv': ['.csv'],
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
-      'application/vnd.ms-excel': ['.xls']
+      'application/vnd.ms-excel': ['.xls'],
+      'text/plain': ['.txt']
     }
   });
 
@@ -408,7 +434,7 @@ export function BankIngestion() {
             </div>
             <div>
               <p className="text-xl font-black uppercase tracking-tight text-primary">Arrastra tu extracto bancario</p>
-              <p className="text-sm text-muted-foreground font-medium">Soporta CSV, XLSX y XLS</p>
+              <p className="text-sm text-muted-foreground font-medium">Soporta CSV, XLSX, XLS y TXT (BANDEC)</p>
             </div>
             <Button className="neu-btn-primary mt-4">
                 Seleccionar Archivo
@@ -587,6 +613,10 @@ export function BankIngestion() {
             <HelpItem
                 title="Observaciones"
                 desc="Detalle del banco. Aquí se buscan códigos de producto para el matching automático."
+            />
+            <HelpItem
+                title="Soporte BANDEC"
+                desc="Los archivos .txt exportados de la Banca Remota BANDEC son compatibles y se parsean automáticamente."
             />
         </div>
       </div>
