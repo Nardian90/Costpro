@@ -263,7 +263,7 @@ export function CatalogTable() {
                 size="sm"
                 onClick={syncWithSystemCatalog}
                 disabled={isSyncing}
-                className="h-10 text-[10px] uppercase font-black tracking-widest gap-2 text-primary border-primary/20 flex-1 sm:flex-none"
+                className="h-12 sm:h-10 text-[10px] uppercase font-black tracking-widest gap-2 text-primary border-primary/20 flex-1 sm:flex-none"
             >
                 <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
                 Catálogo Real
@@ -273,7 +273,7 @@ export function CatalogTable() {
                 variant="outline"
                 size="sm"
                 onClick={handleAddNew}
-                className="h-10 text-[10px] uppercase font-black tracking-widest gap-2 flex-1 sm:flex-none"
+                className="h-12 sm:h-10 text-[10px] uppercase font-black tracking-widest gap-2 flex-1 sm:flex-none"
             >
                 <Plus className="w-4 h-4" />
                 <span className="hidden sm:inline">Nuevo Producto</span>
@@ -284,7 +284,7 @@ export function CatalogTable() {
                 variant="outline"
                 size="sm"
                 onClick={handleRecalculateReportsChain}
-                className="h-10 text-[10px] uppercase font-black tracking-widest gap-2 text-primary border-primary/20 flex-1 sm:flex-none"
+                className="h-12 sm:h-10 text-[10px] uppercase font-black tracking-widest gap-2 text-primary border-primary/20 flex-1 sm:flex-none"
             >
                 <RefreshCw className="w-4 h-4" />
                 <span className="hidden sm:inline">Recalcular IPVs</span>
@@ -581,11 +581,11 @@ function ProductCard({ product, stats, isEditing, editForm, setEditForm, onSave,
                 </div>
                 <div className="flex gap-2">
                     {isEditing ? (
-                        <Button size="sm" className="h-9 w-9 neu-btn-primary" onClick={onSave}><Check className="w-4 h-4" /></Button>
+                        <Button size="sm" className="h-11 w-11 sm:h-9 sm:w-9 neu-btn-primary" onClick={onSave}><Check className="w-4 h-4" /></Button>
                     ) : (
-                        <Button size="sm" variant="outline" className="h-9 w-9 neu-btn" onClick={onEdit}><Edit2 className="w-4 h-4" /></Button>
+                        <Button size="sm" variant="outline" className="h-11 w-11 sm:h-9 sm:w-9 neu-btn" onClick={onEdit}><Edit2 className="w-4 h-4" /></Button>
                     )}
-                    <Button size="sm" variant="outline" className="h-9 w-9 text-destructive border-destructive/20 hover:bg-destructive/10" onClick={onDelete}><Trash2 className="w-4 h-4" /></Button>
+                    <Button size="sm" variant="outline" className="h-11 w-11 sm:h-9 sm:w-9 text-destructive border-destructive/20 hover:bg-destructive/10" onClick={onDelete}><Trash2 className="w-4 h-4" /></Button>
                 </div>
             </div>
         </Card>
@@ -620,8 +620,8 @@ function NewProductCard({ editForm, setEditForm, onSave, onCancel }: any) {
                 </div>
             </div>
             <div className="flex gap-2 pt-2">
-                <Button className="flex-1 neu-btn-primary h-10 font-black text-[10px] uppercase" onClick={onSave}><Check className="w-4 h-4 mr-2" /> Guardar</Button>
-                <Button variant="ghost" className="h-10 text-[10px] uppercase font-bold" onClick={onCancel}>Cancelar</Button>
+                <Button className="flex-1 neu-btn-primary h-12 sm:h-10 font-black text-[10px] uppercase" onClick={onSave}><Check className="w-4 h-4 mr-2" /> Guardar</Button>
+                <Button variant="ghost" className="h-12 sm:h-10 text-[10px] uppercase font-bold" onClick={onCancel}>Cancelar</Button>
             </div>
         </Card>
     );

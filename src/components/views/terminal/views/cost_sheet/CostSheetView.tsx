@@ -225,8 +225,8 @@ const CostSheetView = () => {
 
       <CostSheetBanner />
 
-      <div className="flex flex-col gap-6 mb-8">
-        <ActionMenu actions={mainActions} />
+      <div className="flex flex-col gap-6 mb-8 sm:mb-12">
+        <ActionMenu actions={mainActions} position="bottom" />
       </div>
 
       {isEditing ? (

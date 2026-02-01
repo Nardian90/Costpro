@@ -317,7 +317,7 @@ export function TransactionTable({ transactions }: { transactions: BankTransacti
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        className="h-9 px-4 text-xs font-bold uppercase gap-2 neu-btn"
+                                        className="h-11 px-4 text-xs font-bold uppercase gap-2 neu-btn"
                                         onClick={() => {
                                             setSelectedTx(tx);
                                             setModalOpen(true);
@@ -329,7 +329,7 @@ export function TransactionTable({ transactions }: { transactions: BankTransacti
                                     <Button
                                         variant="outline"
                                         size="icon"
-                                        className="h-9 w-9 text-destructive border-destructive/20 hover:bg-destructive/10"
+                                        className="h-11 w-11 text-destructive border-destructive/20 hover:bg-destructive/10"
                                         onClick={() => handleDelete(tx.id)}
                                     >
                                         <Trash2 className="w-3 h-3" />
