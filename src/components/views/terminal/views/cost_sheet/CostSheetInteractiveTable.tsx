@@ -3,7 +3,7 @@
 
 import React, { useState, useMemo, memo } from 'react';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
-import { ChevronRight, HelpCircle, CornerDownRight, AlertTriangle, ListFilter, LayoutGrid, ArrowRight } from 'lucide-react';
+import { ChevronRight, HelpCircle, CornerDownRight, AlertTriangle, ListFilter, LayoutGrid, ArrowRight, FunctionSquare } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -48,7 +48,7 @@ interface RowProps {
 const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calculatedValues, path, annexes, suggestions }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isEditingTotal, setIsEditingTotal] = useState(false);
-  const { updateValue } = useCostSheetStore();
+  const updateValue = useCostSheetStore(state => state.updateValue);
 
   const hasChildren = row.children && row.children.length > 0;
 
@@ -65,23 +65,8 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
   const handleTotalSave = (val: string) => {
     setIsEditingTotal(false);
 
-    // Improved check for fixed values, especially '0'
     const trimmedVal = val.trim();
-    if (trimmedVal.startsWith('=')) {
-      // It's a formula
-      updateValue([...path, 'formula'], trimmedVal);
-      updateValue([...path, 'calculationMethod'], 'FORMULA');
-    } else if (trimmedVal !== '' && !isNaN(Number(trimmedVal))) {
-      // It's a valid fixed number (including 0)
-      // Save it as a formula to keep it in the Total column and not touch Valor Histórico
-      updateValue([...path, 'formula'], trimmedVal);
-      updateValue([...path, 'calculationMethod'], 'FORMULA');
-
-      // If it was a percentage row, clear it to ensure the fixed value is respected
-      if (row.is_percent) {
-        updateValue([...path, 'is_percent'], false);
-      }
-    } else if (trimmedVal === '') {
+    if (trimmedVal === '') {
         // Reset to 0 if empty
         const field = row.hasOwnProperty('valorHistorico') ? 'valorHistorico' : 'value';
         updateValue([...path, field], 0);
@@ -90,6 +75,19 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
         if (row.is_percent) {
           updateValue([...path, 'is_percent'], false);
         }
+        return;
+    }
+
+    // Cost Sheet Logic: Any non-empty input is treated as a formula unless it's a simple number.
+    // However, per user request and memory, we should persist formulas even without '='.
+    // If it's a number, we also save it as formula to keep it in the Total column.
+
+    updateValue([...path, 'formula'], trimmedVal);
+    updateValue([...path, 'calculationMethod'], 'FORMULA');
+
+    // If it's a number and it was a percentage row, clear is_percent to ensure fixed value is respected
+    if (row.is_percent && !isNaN(Number(trimmedVal))) {
+      updateValue([...path, 'is_percent'], false);
     }
   };
 
@@ -189,9 +187,12 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
                         </PopoverContent>
                     </Popover>
                 )}
-                <span className={cn(row.formula && "underline decoration-dotted decoration-primary/30")}>
-                    {formatCurrency(safeCalculated.total)}
-                </span>
+                <div className="flex items-center gap-1">
+                    {row.formula && <FunctionSquare className="w-3 h-3 text-primary/40" />}
+                    <span className={cn(row.formula && "underline decoration-dotted decoration-primary/30")}>
+                        {formatCurrency(safeCalculated.total)}
+                    </span>
+                </div>
             </div>
           )}
         </TableCell>
@@ -231,7 +232,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
  * The main interactive table component for the Cost Sheet.
  * Decomposed by sections for a more professional and clean enterprise-level experience.
  */
-const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = ({
+const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo(({
     sections,
     calculatedValues,
     annexes,
@@ -342,6 +343,6 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = ({
         ))}
     </div>
   );
-};
+});
 
 export default CostSheetInteractiveTable;
