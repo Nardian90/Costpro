@@ -69,7 +69,8 @@ export default function IPVView() {
 
     const txToReset = transactions.filter(t => {
         const matched = txTotals[t.referencia_origen] || 0;
-        return (t.importe_cents - matched) !== 0;
+        const target = t.importe_venta_cents || t.importe_cents;
+        return (target - matched) !== 0;
     });
 
     if (txToReset.length > 0) {

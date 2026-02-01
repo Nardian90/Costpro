@@ -96,6 +96,7 @@ export function TransactionTable({ transactions }: { transactions: BankTransacti
               <TableHead>Referencia</TableHead>
               <TableHead className="max-w-md">Observaciones</TableHead>
               <TableHead className="text-right">Importe</TableHead>
+              <TableHead className="text-right">Venta</TableHead>
               <TableHead className="text-right">Diferencia</TableHead>
               <TableHead>Tipo</TableHead>
               <TableHead>
@@ -132,7 +133,8 @@ export function TransactionTable({ transactions }: { transactions: BankTransacti
             ) : (
               filtered.map((tx) => {
                 const matchedTotal = txReconciliationTotals[tx.referencia_origen] || 0;
-                const diff = tx.importe_cents - matchedTotal;
+                const targetAmount = tx.importe_venta_cents ?? tx.importe_cents;
+                const diff = targetAmount - matchedTotal;
 
                 return (
                 <TableRow key={tx.id}>
@@ -143,8 +145,11 @@ export function TransactionTable({ transactions }: { transactions: BankTransacti
                   <TableCell className="text-xs truncate max-w-md" title={tx.observaciones}>
                     {tx.observaciones}
                   </TableCell>
-                  <TableCell className="text-right font-black">
+                  <TableCell className="text-right font-medium text-muted-foreground">
                     {formatCurrency(tx.importe_cents / 100)}
+                  </TableCell>
+                  <TableCell className="text-right font-black">
+                    {formatCurrency(targetAmount / 100)}
                   </TableCell>
                   <TableCell className={`text-right font-bold ${diff === 0 ? 'text-green-500' : (diff < 0 ? 'text-red-500' : 'text-orange-500')}`}>
                     {formatCurrency(diff / 100)}

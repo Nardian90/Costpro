@@ -251,6 +251,11 @@ export function BankIngestion() {
         // Convertir importe a centavos
         const importe_cents = Math.round(parseFloat(importe_str.replace(',', '')) * 100);
 
+        // Extract commission "comis X.XX"
+        const comisMatch = observaciones.match(/comis\s*([0-9,.]+)/i);
+        const comision_cents = comisMatch ? Math.round(parseFloat(comisMatch[1].replace(/,/g, '')) * 100) : 0;
+        const importe_venta_cents = importe_cents + comision_cents;
+
         const ingestion_hash = await generateHash(`${ref_origen}-${fecha}-${importe_cents}`);
 
         const tx: BankTransaction = {
@@ -260,6 +265,8 @@ export function BankIngestion() {
           referencia_origen: ref_origen,
           observaciones,
           importe_cents,
+          comision_cents,
+          importe_venta_cents,
           tipo: tipo === 'Cr' ? 'Cr' : 'Db',
           estado_conciliacion: 'PENDIENTE',
           created_at: new Date().toISOString(),
