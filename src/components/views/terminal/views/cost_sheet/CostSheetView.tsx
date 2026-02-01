@@ -62,9 +62,9 @@ const CostSheetView = () => {
     );
   }
 
-  const isAnnexActive = data.annexes.some((a: any) => a.id === activeSection);
+  const isAnnexActive = React.useMemo(() => data.annexes.some((a: any) => a.id === activeSection), [data.annexes, activeSection]);
 
-  const handleExportPDF = async () => {
+  const handleExportPDF = React.useCallback(async () => {
     const toastId = toast.loading("Generando PDF profesional... por favor espere.");
     try {
       // Prioritize the declarative engine export
@@ -110,14 +110,14 @@ const CostSheetView = () => {
       console.error("PDF Export error:", error);
       toast.error(`Error al generar el PDF: ${error.message}`, { id: toastId });
     }
-  };
+  }, [calculationResult, data, calculatedValues, calculatedAnnexes]);
 
-  const handleExportExcel = () => {
+  const handleExportExcel = React.useCallback(() => {
     const fileName = data.header.name ? `Ficha de Costo - ${data.header.name}` : 'Ficha de Costo';
     exportToCSV(data, calculatedValues, fileName);
-  };
+  }, [data, calculatedValues]);
 
-  const handleImportJSON = () => {
+  const handleImportJSON = React.useCallback(() => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.json';
@@ -135,9 +135,9 @@ const CostSheetView = () => {
       }
     };
     input.click();
-  };
+  }, [setSheet]);
 
-  const handleExportJSON = () => {
+  const handleExportJSON = React.useCallback(() => {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href",     dataStr);
@@ -146,9 +146,9 @@ const CostSheetView = () => {
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
     toast.success("JSON exportado correctamente");
-  };
+  }, [data]);
 
-  const allActions = [
+  const allActions = React.useMemo(() => [
     {
         id: 'toggle-mode',
         label: isEditing ? 'Ver Resultado' : 'Seguir Editando',
@@ -164,9 +164,9 @@ const CostSheetView = () => {
     { id: 'export-json', label: 'Guardar', icon: Save, onClick: handleExportJSON, variant: 'outline' as const },
     { id: 'export-excel', label: 'Excel', icon: FileSpreadsheet, onClick: handleExportExcel, variant: 'primary' as const },
     { id: 'export-pdf', label: 'PDF', icon: Download, onClick: handleExportPDF, variant: 'success' as const },
-  ];
+  ], [isEditing, loadExample, reset, handleImportJSON, handleExportJSON, handleExportExcel, handleExportPDF]);
 
-  const mainActions = [
+  const mainActions = React.useMemo(() => [
     ...allActions.filter(a => ['toggle-mode'].includes(a.id)),
     {
         id: 'more-actions',
@@ -175,9 +175,9 @@ const CostSheetView = () => {
         onClick: () => setIsActionsPanelOpen(true),
         variant: 'outline' as const
     }
-  ];
+  ], [allActions]);
 
-  const secondaryActions = allActions.filter(a => !['toggle-mode'].includes(a.id));
+  const secondaryActions = React.useMemo(() => allActions.filter(a => !['toggle-mode'].includes(a.id)), [allActions]);
 
   return (
     <div className="w-full max-w-7xl mx-auto px-1 sm:px-6 lg:px-8 pb-32 pt-4">
@@ -198,7 +198,10 @@ const CostSheetView = () => {
         type="sections"
         items={data.sections}
         activeId={activeSubSectionId}
-        onSelect={setActiveSubSectionId}
+        onSelect={(id) => {
+            setActiveSubSectionId(id);
+            setActiveSection('main');
+        }}
       />
 
       <CostSheetSidebarNav
@@ -231,19 +234,20 @@ const CostSheetView = () => {
           {viewMode === 'expert' && (
             <>
                 <CostSheetNav
-                    navItems={[
+                    navItems={React.useMemo(() => [
                         { id: 'kpis', label: 'KPIs', icon: BarChart3 },
                         { id: 'header', label: 'Encabezado' },
                         { id: 'main', label: 'Tabla Principal' },
                         { id: 'audit', label: 'Auditoría', icon: Activity }
-                    ]}
+                    ], [])}
                     subSections={data?.sections || []}
                     activeSubSectionId={activeSubSectionId}
                     setActiveSubSectionId={setActiveSubSectionId}
                     annexes={data?.annexes || []}
                     activeSection={activeSection}
                     setActiveSection={setActiveSection}
-                    onOpenAnnexes={() => setIsAnnexesSidebarOpen(true)}
+                    onOpenAnnexes={React.useCallback(() => setIsAnnexesSidebarOpen(true), [])}
+                    onOpenSections={React.useCallback(() => setIsSectionsSidebarOpen(true), [])}
                 />
 
                 <div className="mt-4">
@@ -274,6 +278,7 @@ const CostSheetView = () => {
                         <CostSheetAnnexEditor
                             activeAnnexId={activeSection}
                             layoutMode={layoutMode}
+                            calculatedAnnexes={calculatedAnnexes}
                         />
                     )}
                     {activeSection === 'signature' && <CostSheetSignatureEditor />}
