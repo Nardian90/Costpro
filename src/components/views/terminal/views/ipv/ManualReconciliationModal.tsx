@@ -46,13 +46,18 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
         );
     }, [products, searchTerm]);
 
+    const targetAmount = useMemo(() => {
+        if (!transaction) return 0;
+        return transaction.importe_venta_cents || transaction.importe_cents;
+    }, [transaction]);
+
     const currentTotal = useMemo(() => {
         const existingTotal = existingLines?.reduce((sum, l) => sum + l.importe_linea_cents, 0) || 0;
         const manualTotal = manualLines.reduce((sum, l) => sum + (l.importe_linea_cents || 0), 0);
         return existingTotal + manualTotal;
     }, [existingLines, manualLines]);
 
-    const remaining = transaction ? transaction.importe_cents - currentTotal : 0;
+    const remaining = targetAmount - currentTotal;
 
     const addProduct = (product: Product) => {
         const newLine: Partial<ReconciliationLine> = {
@@ -80,7 +85,8 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
             // Actualizar estado de la transacción
             const lines = await db.reconciliation_lines.where('transaction_ref').equals(transaction.referencia_origen).toArray();
             const newTotal = lines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
-            const newStatus = newTotal >= transaction.importe_cents ? 'COMPLETO' : (newTotal > 0 ? 'PARCIAL' : 'PENDIENTE');
+            const target = transaction.importe_venta_cents || transaction.importe_cents;
+            const newStatus = newTotal >= target ? 'COMPLETO' : (newTotal > 0 ? 'PARCIAL' : 'PENDIENTE');
 
             await db.bank_statements.update(transaction.id, {
                 estado_conciliacion: newStatus
@@ -123,7 +129,8 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                 await db.reconciliation_lines.add(fullLine);
             }
 
-            const newStatus = currentTotal >= transaction.importe_cents ? 'COMPLETO' : (currentTotal > 0 ? 'PARCIAL' : 'PENDIENTE');
+            const target = transaction.importe_venta_cents || transaction.importe_cents;
+            const newStatus = currentTotal >= target ? 'COMPLETO' : (currentTotal > 0 ? 'PARCIAL' : 'PENDIENTE');
 
             await db.bank_statements.update(transaction.id, {
                 estado_conciliacion: newStatus
@@ -161,8 +168,13 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                             </DialogDescription>
                         </div>
                         <div className="text-right">
-                            <p className="text-xs font-bold text-muted-foreground uppercase">Importe Total</p>
-                            <p className="text-2xl font-black text-primary">{formatCurrency(transaction.importe_cents / 100)}</p>
+                            <p className="text-xs font-bold text-muted-foreground uppercase">Target (Venta)</p>
+                            <p className="text-2xl font-black text-primary">{formatCurrency(targetAmount / 100)}</p>
+                            {transaction.comision_cents ? (
+                                <p className="text-[10px] text-muted-foreground">
+                                    Importe: {formatCurrency(transaction.importe_cents / 100)} + Comis: {formatCurrency(transaction.comision_cents / 100)}
+                                </p>
+                            ) : null}
                         </div>
                     </div>
 

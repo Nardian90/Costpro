@@ -34,6 +34,11 @@ export function IPVReportView() {
   const [selectedMonth, setSelectedMonth] = React.useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = React.useState(new Date().getFullYear());
 
+  const years = React.useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    return Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
+  }, []);
+
   const createReportForDate = async (dateStr: string, products: any[], lastReport: DailyIPVReport | null) => {
     // Obtener todas las líneas de conciliación para esa fecha
     const lines = await db.reconciliation_lines.where('fecha_operacion').equals(dateStr).toArray();
@@ -344,7 +349,7 @@ export function IPVReportView() {
                     onChange={(e) => setSelectedYear(Number(e.target.value))}
                     className="bg-transparent text-xs font-bold focus:outline-none"
                 >
-                    {[2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
+                    {years.map(y => <option key={y} value={y}>{y}</option>)}
                 </select>
             </div>
 
