@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Trash2, Search, HelpCircle, Info, Edit2, Check, X, Plus } from 'lucide-react';
+import { Trash2, Search, HelpCircle, Info, Edit2, Check, X, Plus, RefreshCw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { formatCurrency } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
@@ -41,8 +41,8 @@ export function CatalogTable() {
     const lastClosedReport = reports.find(r => r.estado === 'CERRADO');
 
     products.forEach(p => {
-        // Saldo Inicial: Buscar en el último reporte cerrado
-        let initial = 0;
+        // Saldo Inicial: Buscar en el último reporte cerrado, o usar stock_inicial_manual si no hay reportes
+        let initial = p.stock_inicial_manual || 0;
         if (lastClosedReport) {
             const reportRow = lastClosedReport.filas.find(f => f.cod === p.cod);
             if (reportRow) initial = reportRow.existencia_final_qty;
@@ -112,6 +112,7 @@ export function CatalogTable() {
           precio_cents: 0,
           prioridad_algoritmo: 1,
           activo: true,
+          stock_inicial_manual: 0,
           created_at: new Date().toISOString()
       };
       setEditingId('NEW');
@@ -121,6 +122,52 @@ export function CatalogTable() {
   const clearCatalog = async () => {
     if (confirm('¿ESTÁS SEGURO? Se borrará TODO el catálogo cargado actualmente.')) {
         await db.products.clear();
+    }
+  };
+
+  const handleRecalculateReportsChain = async () => {
+    if (confirm('¿Recalcular toda la cadena de reportes IPV? Esto actualizará los saldos iniciales y finales de todos los reportes existentes basándose en el stock inicial del catálogo y las ventas registradas.')) {
+        try {
+            const allProducts = await db.products.toArray();
+            const productMap = new Map(allProducts.map(p => [p.cod, p]));
+            const allReports = await db.ipv_reports.orderBy('fecha_reporte').toArray();
+
+            for (let i = 0; i < allReports.length; i++) {
+                const report = allReports[i];
+                const prevReport = i > 0 ? allReports[i - 1] : null;
+
+                const updatedFilas = report.filas.map(f => {
+                    const product = productMap.get(f.cod);
+                    // Si es el primer reporte, usar stock_inicial_manual. Si no, usar existencia_final del anterior.
+                    const initial = prevReport
+                        ? (prevReport.filas.find(pf => pf.cod === f.cod)?.existencia_final_qty || 0)
+                        : (product?.stock_inicial_manual || 0);
+
+                    const venta = f.venta_cantidad_qty;
+                    const final = initial - venta;
+
+                    return {
+                        ...f,
+                        saldo_inicial_qty: initial,
+                        total_disponible_qty: initial,
+                        existencia_final_qty: final
+                    };
+                });
+
+                await db.ipv_reports.update(report.id, {
+                    filas: updatedFilas,
+                    updated_at: new Date().toISOString()
+                });
+
+                // Actualizar el array local para la siguiente iteración
+                allReports[i].filas = updatedFilas;
+            }
+
+            toast.success('Cadena de reportes recalculada exitosamente');
+        } catch (error) {
+            console.error(error);
+            toast.error('Error al recalcular los reportes');
+        }
     }
   };
 
@@ -169,6 +216,16 @@ export function CatalogTable() {
             </Button>
 
             <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRecalculateReportsChain}
+                className="text-xs uppercase font-black tracking-widest gap-2 text-primary border-primary/20"
+            >
+                <RefreshCw className="w-4 h-4" />
+                Recalcular IPVs
+            </Button>
+
+            <Button
                 variant="destructive"
                 size="sm"
                 onClick={clearCatalog}
@@ -206,7 +263,7 @@ export function CatalogTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.length === 0 ? (
+            {filtered.length === 0 && editingId !== 'NEW' ? (
               <TableRow>
                 <TableCell colSpan={11} className="h-24 text-center text-muted-foreground">
                   No hay productos en el catálogo.
@@ -266,7 +323,15 @@ export function CatalogTable() {
                             />
                         </div>
                     </TableCell>
-                    <TableCell colSpan={3}></TableCell>
+                    <TableCell className="text-right">
+                        <Input
+                            type="number"
+                            value={editForm.stock_inicial_manual || 0}
+                            onChange={e => setEditForm({...editForm, stock_inicial_manual: Number(e.target.value)})}
+                            className="h-8 w-16 text-right text-xs"
+                        />
+                    </TableCell>
+                    <TableCell colSpan={2}></TableCell>
                     <TableCell className="text-center">
                         <select
                             value={editForm.prioridad_algoritmo}
@@ -376,7 +441,18 @@ export function CatalogTable() {
                       )}
                     </TableCell>
 
-                    <TableCell className="text-right font-bold text-muted-foreground">{stats.initial}</TableCell>
+                    <TableCell className="text-right">
+                        {isEditing ? (
+                            <Input
+                                type="number"
+                                value={editForm.stock_inicial_manual || 0}
+                                onChange={e => setEditForm({...editForm, stock_inicial_manual: Number(e.target.value)})}
+                                className="h-8 w-16 text-right text-xs"
+                            />
+                        ) : (
+                            <span className="font-bold text-muted-foreground">{stats.initial}</span>
+                        )}
+                    </TableCell>
                     <TableCell className="text-right font-bold text-orange-500">{stats.sales}</TableCell>
                     <TableCell className={`text-right font-black ${stats.final < 0 ? 'text-red-500' : 'text-primary'}`}>
                         {stats.final}
