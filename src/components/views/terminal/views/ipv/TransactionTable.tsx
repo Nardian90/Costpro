@@ -23,6 +23,16 @@ export function TransactionTable({ transactions }: { transactions: BankTransacti
   const [selectedTx, setSelectedTx] = useState<BankTransaction | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
+  const reconciliationLines = useLiveQuery(() => db.reconciliation_lines.toArray());
+
+  const txReconciliationTotals = React.useMemo(() => {
+    if (!reconciliationLines) return {};
+    return reconciliationLines.reduce((acc, line) => {
+      acc[line.transaction_ref] = (acc[line.transaction_ref] || 0) + line.importe_linea_cents;
+      return acc;
+    }, {} as Record<string, number>);
+  }, [reconciliationLines]);
+
   const filtered = transactions.filter(t =>
     t.referencia_origen.toLowerCase().includes(searchTerm.toLowerCase()) ||
     t.observaciones.toLowerCase().includes(searchTerm.toLowerCase())
@@ -34,7 +44,10 @@ export function TransactionTable({ transactions }: { transactions: BankTransacti
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, diffCents: number) => {
+    if (status === 'COMPLETO' && diffCents === 0) {
+      return <Badge className="bg-green-500 text-white border-green-600">CUADRADA</Badge>;
+    }
     switch (status) {
       case 'COMPLETO':
         return <Badge className="bg-green-500/10 text-green-500 border-green-500/20">COMPLETO</Badge>;
@@ -67,6 +80,7 @@ export function TransactionTable({ transactions }: { transactions: BankTransacti
               <TableHead>Referencia</TableHead>
               <TableHead className="max-w-md">Observaciones</TableHead>
               <TableHead className="text-right">Importe</TableHead>
+              <TableHead className="text-right">Diferencia</TableHead>
               <TableHead>Tipo</TableHead>
               <TableHead>Estado</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
@@ -80,7 +94,11 @@ export function TransactionTable({ transactions }: { transactions: BankTransacti
                 </TableCell>
               </TableRow>
             ) : (
-              filtered.map((tx) => (
+              filtered.map((tx) => {
+                const matchedTotal = txReconciliationTotals[tx.referencia_origen] || 0;
+                const diff = tx.importe_cents - matchedTotal;
+
+                return (
                 <TableRow key={tx.id}>
                   <TableCell className="sticky-column-1 font-medium whitespace-nowrap">
                     {formatDate(tx.fecha)}
@@ -92,12 +110,15 @@ export function TransactionTable({ transactions }: { transactions: BankTransacti
                   <TableCell className="text-right font-black">
                     {formatCurrency(tx.importe_cents / 100)}
                   </TableCell>
+                  <TableCell className={`text-right font-bold ${diff === 0 ? 'text-green-500' : 'text-orange-500'}`}>
+                    {formatCurrency(diff / 100)}
+                  </TableCell>
                   <TableCell>
                     <span className={tx.tipo === 'Cr' ? 'text-green-500' : 'text-red-500'}>
                         {tx.tipo}
                     </span>
                   </TableCell>
-                  <TableCell>{getStatusBadge(tx.estado_conciliacion)}</TableCell>
+                  <TableCell>{getStatusBadge(tx.estado_conciliacion, diff)}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                         <Button
@@ -122,7 +143,8 @@ export function TransactionTable({ transactions }: { transactions: BankTransacti
                     </div>
                   </TableCell>
                 </TableRow>
-              ))
+                );
+              })
             )}
           </TableBody>
         </Table>
