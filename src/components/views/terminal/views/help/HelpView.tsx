@@ -28,6 +28,7 @@ import CostFlowDiagram from './help/CostFlowDiagram';
 import KidsOnboarding from './help/KidsOnboarding';
 import OfflineSyncDiagram from './help/OfflineSyncDiagram';
 import JulesDiagram from './help/JulesDiagram';
+import StickyCartFlowDiagram from './help/StickyCartFlowDiagram';
 
 export default function HelpView() {
   return (
@@ -45,9 +46,9 @@ export default function HelpView() {
         </div>
         <div className="flex flex-col items-end">
           <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-black">
-            VERSIÓN 5.7.18 (COST SHEET REFACTOR)
+            VERSIÓN 5.7.22 (UX HARDENING)
           </Badge>
-          <span className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Última actualización: 27 Feb 2026</span>
+          <span className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Última actualización: 01 Mar 2026</span>
         </div>
       </div>
 
@@ -412,11 +413,14 @@ export default function HelpView() {
                         En la v5.4.0, el TPV ha sido rediseñado para una operativa fluida en dispositivos táctiles. El carrito de compras ahora reside en un <span className="font-bold text-primary">Panel Inferior</span> accesible desde la zona de alcance del pulgar.
                     </p>
                     <div className="bg-primary/5 p-4 rounded-xl border-l-4 border-primary">
-                       <p className="text-[10px] font-black uppercase text-primary mb-1">Optimización UX:</p>
-                       <p className="text-xs italic">"Menos clics, más velocidad. El selector de productos y el cierre de venta están optimizados para uso a una sola mano."</p>
+                       <p className="text-[10px] font-black uppercase text-primary mb-1">Optimización UX (Nueva Estructura):</p>
+                       <p className="text-xs italic">"Menos clics, más velocidad. El selector de productos y el cierre de venta están optimizados para uso a una sola mano mediante un footer sticky."</p>
                     </div>
                   </div>
-                  <MobilePosDiagram />
+                  <div className="space-y-4">
+                    <StickyCartFlowDiagram />
+                    <MobilePosDiagram />
+                  </div>
                 </div>
               </div>
 

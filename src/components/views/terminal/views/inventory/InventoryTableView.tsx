@@ -50,10 +50,10 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onA
                 <div className="flex justify-center">
                     <button
                         onClick={() => onAdjust?.(product)}
-                        className="neu-btn !p-2 flex items-center justify-center gap-2 hover:neu-raised-sm"
+                        className="neu-btn min-h-[44px] min-w-[44px] !px-4 flex items-center justify-center gap-2 hover:neu-raised-sm"
                     >
                         <Edit className="w-4 h-4" />
-                        <span className="hidden sm:inline text-xs">Ajustar</span>
+                        <span className="hidden sm:inline text-xs font-black uppercase tracking-widest">Ajustar</span>
                     </button>
                 </div>
             </td>
