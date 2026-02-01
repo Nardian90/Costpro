@@ -19,7 +19,8 @@ import {
   Plus,
   Calendar,
   Lock,
-  RotateCcw
+  RotateCcw,
+  Trash2
 } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -72,9 +73,15 @@ export function IPVReportView() {
         else totalTransferencia += line.importe_linea_cents;
     }
 
-    // Obtener descripciones de productos
+    // Obtener descripciones de productos y último reporte para saldo inicial
     const products = await db.products.toArray();
     const productMap = new Map(products.map(p => [p.cod, p.descripcion]));
+
+    const lastReport = await db.ipv_reports
+      .where('estado').equals('CERRADO')
+      .or('estado').equals('BORRADOR')
+      .sortBy('fecha_reporte')
+      .then(list => list.reverse()[0]);
 
     const report: DailyIPVReport = {
         id: uuidv4(),
@@ -82,14 +89,21 @@ export function IPVReportView() {
         total_ventas_cents: totalVentas,
         resumen_efectivo_cents: totalEfectivo,
         resumen_transferencia_cents: totalTransferencia,
-        filas: Object.values(productGroups).map(f => ({
-            ...f,
-            descripcion: productMap.get(f.cod) || 'Producto Desconocido',
-            saldo_inicial_qty: 0, // En un sistema real vendría del día anterior
-            entrada_salida_qty: 0,
-            total_disponible_qty: 0,
-            existencia_final_qty: 0
-        })),
+        filas: Object.values(productGroups).map(f => {
+            const prevRow = lastReport?.filas.find((pr: any) => pr.cod === f.cod);
+            const initial = prevRow?.existencia_final_qty || 0;
+            const venta = f.venta_cantidad_qty;
+            const final = initial - venta;
+
+            return {
+                ...f,
+                descripcion: productMap.get(f.cod) || 'Producto Desconocido',
+                saldo_inicial_qty: initial,
+                entrada_salida_qty: 0,
+                total_disponible_qty: initial,
+                existencia_final_qty: final
+            };
+        }),
         firmas: {
             realizado_por: 'Admin Demo',
             fecha_generacion: new Date().toISOString()
@@ -185,6 +199,13 @@ export function IPVReportView() {
     }
   };
 
+  const handleDeleteReport = async (id: string) => {
+    if (confirm('¿ELIMINAR ESTE REPORTE? Esta acción no se puede deshacer.')) {
+      await db.ipv_reports.delete(id);
+      toast.success('Reporte eliminado permanentemente');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="p-4 flex justify-between items-center bg-background/50 border-b">
@@ -246,6 +267,15 @@ export function IPVReportView() {
                                 </Button>
                             </>
                         )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                          onClick={() => handleDeleteReport(r.id)}
+                          title="Eliminar Reporte"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                        </Button>
                     </div>
                   </TableCell>
                 </TableRow>
