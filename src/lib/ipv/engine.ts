@@ -41,6 +41,18 @@ export class MatchingEngine {
 
     logs.push(`Iniciando matching para transacción ${transaction.referencia_origen} por ${transaction.importe_cents} cts`);
 
+    // PASS 0: Debitos (Comisiones)
+    if (transaction.tipo === 'Db') {
+        const isCommission = transaction.observaciones.toLowerCase().includes('comision') ||
+                            transaction.observaciones.toLowerCase().includes('banca remota') ||
+                            transaction.observaciones.toLowerCase().includes('virtualbandec');
+
+        if (isCommission) {
+            logs.push(`PASS 0: Detectada comisión bancaria. Marcando como COMPLETO.`);
+            return { lines: [], status: 'COMPLETO', logs };
+        }
+    }
+
     // Intentar recuperación desde caché (sólo para PASS 2 EXACT_SUM)
     const catalogHash = await generateHash(JSON.stringify(this.products.map(p => ({ cod: p.cod, price: p.precio_cents }))));
     const cached = await db.matching_cache.get(transaction.importe_cents);
@@ -203,11 +215,14 @@ export class MatchingEngine {
    */
   private findExactCombination(target: number): { product: Product, qty: number }[] {
     const sortedProducts = [...this.products].sort((a, b) => {
-        // Prioridad algoritmo asc, luego precio desc
+        // Prioridad algoritmo asc, luego precio desc, luego cod para determinismo
         if (a.prioridad_algoritmo !== b.prioridad_algoritmo) {
             return a.prioridad_algoritmo - b.prioridad_algoritmo;
         }
-        return b.precio_cents - a.precio_cents;
+        if (b.precio_cents !== a.precio_cents) {
+            return b.precio_cents - a.precio_cents;
+        }
+        return a.cod.localeCompare(b.cod);
     });
 
     const MAX_DEPTH = 6;
@@ -240,6 +255,19 @@ export class MatchingEngine {
     };
 
     return solve(target, 0, 0) || [];
+  }
+
+  async reconcileAll(transactions: BankTransaction[]): Promise<any[]> {
+    const results = [];
+    for (const tx of transactions) {
+        const res = await this.matchTransaction(tx);
+        results.push({
+            transactionId: tx.id,
+            status: res.status,
+            lines: res.lines
+        });
+    }
+    return results;
   }
 
   /**

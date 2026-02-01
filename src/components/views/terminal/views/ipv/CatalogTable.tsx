@@ -156,8 +156,8 @@ export function CatalogTable() {
         </div>
       </div>
 
-      <div>
-        <Table>
+      <div className="table-scroll-wrapper">
+        <Table className="data-table">
           <TableHeader>
             <TableRow>
               <TableHead className="sticky-column-1">Código</TableHead>
