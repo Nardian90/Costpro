@@ -115,14 +115,14 @@ export function useAdjustStock() {
     mutationFn: async (rawInput: z.input<typeof adjustStockInputSchema>) => {
       const input = adjustStockInputSchema.parse(rawInput);
       const rpcName = 'perform_inventory_adjustment';
-      const params = {
+      const params = performInventoryAdjustmentParamsSchema.parse({
         p_product_id: input.productId,
         p_store_id: input.storeId,
         p_user_id: input.userId,
         p_quantity_delta: input.quantityDelta,
         p_unit_cost_adjustment: input.unitCostAdjustment,
         p_reason: input.reason
-      };
+      });
 
       if (!navigator.onLine) {
         return await addToQueue('adjustment', 'CREATE', params);
