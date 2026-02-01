@@ -67,7 +67,7 @@ export const POSCart = ({
     >
       <div className={cn(
         "border border-primary/20 bg-card overflow-hidden",
-        isMobile ? "rounded-t-2xl h-[80vh] flex flex-col" : "rounded-xl shadow-2xl"
+        isMobile ? "rounded-t-2xl h-[85vh] flex flex-col" : "rounded-xl shadow-2xl"
       )}>
         <div className="bg-primary p-6 flex items-center justify-between text-white">
           <h3 className="font-black text-lg uppercase tracking-widest flex items-center gap-3">
@@ -79,52 +79,61 @@ export const POSCart = ({
           </button>
         </div>
 
-        <div className={cn("p-6", isMobile && "flex-1 overflow-y-auto no-scrollbar")}>
+        <div className={cn("flex-1 flex flex-col overflow-hidden")}>
           {items.length === 0 ? (
-            <div className="text-center py-20 text-muted-foreground">
+            <div className="flex-1 flex flex-col items-center justify-center p-6 text-muted-foreground">
               <ShoppingCart className="w-20 h-20 mx-auto mb-6 opacity-5" />
-              <p className="font-black uppercase tracking-widest text-sm">Carrito Vacío</p>
+              <p className="font-black uppercase tracking-widest text-sm text-center">Carrito Vacío</p>
             </div>
           ) : (
             <>
-              <div className={cn("space-y-4 pr-2 mb-8 no-scrollbar", !isMobile && "max-h-[40vh] overflow-y-auto")}>
-                {items.map(item => (
-                  <div key={`${item.product_id}-${item.variant_id}`} className="p-4 rounded-lg border border-border bg-background/50 group relative">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex-1">
-                        <div className="font-black text-sm uppercase tracking-tight truncate pr-6">{item.product.name}</div>
-                        <div className="text-[10px] font-bold text-muted-foreground mt-1">{formatCurrency(item.price)} / unidad</div>
-                      </div>
-                      <button
-                        onClick={() => onRemoveItem(item.product_id, item.variant_id)}
-                        className="absolute top-2 right-2 text-muted-foreground hover:text-destructive p-2 rounded-full hover:bg-destructive/5 transition-all"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1 bg-background rounded-lg p-1 border border-border">
+              <div className="flex-1 relative overflow-hidden">
+                <div className={cn("h-full overflow-y-auto p-6 no-scrollbar", !isMobile && "max-h-[45vh]")}>
+                  <div className="space-y-4 pr-2 pb-8">
+                    {items.map(item => (
+                    <div key={`${item.product_id}-${item.variant_id}`} className="p-4 rounded-lg border border-border bg-background/50 group relative">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex-1">
+                          <div className="font-black text-sm uppercase tracking-tight truncate pr-6">{item.product.name}</div>
+                          <div className="text-[10px] font-bold text-muted-foreground mt-1">{formatCurrency(item.price)} / unidad</div>
+                        </div>
                         <button
-                          onClick={() => onUpdateQuantity(item.product_id, item.variant_id, item.quantity - 1)}
-                          className="w-11 h-11 flex items-center justify-center rounded-md hover:bg-primary/10 hover:text-primary transition-colors"
+                          onClick={() => onRemoveItem(item.product_id, item.variant_id)}
+                          className="absolute top-2 right-2 text-muted-foreground hover:text-destructive p-2 rounded-full hover:bg-destructive/5 transition-all"
                         >
-                          <Minus className="w-4 h-4" />
-                        </button>
-                        <span className="w-8 text-center font-black text-sm">{item.quantity}</span>
-                        <button
-                          onClick={() => onUpdateQuantity(item.product_id, item.variant_id, item.quantity + 1)}
-                          className="w-11 h-11 flex items-center justify-center rounded-md hover:bg-primary/10 hover:text-primary transition-colors"
-                        >
-                          <Plus className="w-4 h-4" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
-                      <span className="font-black text-lg text-primary">{formatCurrency(item.subtotal)}</span>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1 bg-background rounded-lg p-1 border border-border">
+                          <button
+                            onClick={() => onUpdateQuantity(item.product_id, item.variant_id, item.quantity - 1)}
+                            className="w-11 h-11 flex items-center justify-center rounded-md hover:bg-primary/10 hover:text-primary transition-colors"
+                          >
+                            <Minus className="w-4 h-4" />
+                          </button>
+                          <span className="w-8 text-center font-black text-sm">{item.quantity}</span>
+                          <button
+                            onClick={() => onUpdateQuantity(item.product_id, item.variant_id, item.quantity + 1)}
+                            className="w-11 h-11 flex items-center justify-center rounded-md hover:bg-primary/10 hover:text-primary transition-colors"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <span className="font-black text-lg text-primary">{formatCurrency(item.subtotal)}</span>
+                      </div>
                     </div>
+                    ))}
                   </div>
-                ))}
+                </div>
+                {/* Scroll Indicator Gradient */}
+                <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-card to-transparent pointer-events-none z-10" />
               </div>
 
-              <div className="space-y-6 pt-6 border-t border-border">
+              <div className={cn(
+                "p-6 space-y-6 border-t border-border bg-card",
+                isMobile && "pb-10 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] rounded-t-3xl"
+              )}>
                 {/* Descuento Section */}
                 <div className="px-2 space-y-3">
                   <div className="flex justify-between items-center">
