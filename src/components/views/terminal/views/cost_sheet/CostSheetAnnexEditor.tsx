@@ -17,10 +17,16 @@ import { ViewMode } from '@/components/ui/ViewSwitcher';
 interface CostSheetAnnexEditorProps {
   activeAnnexId: string;
   layoutMode?: ViewMode;
+  calculatedAnnexes?: any[];
 }
 
-const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = ({ activeAnnexId, layoutMode = 'grid' }) => {
-  const data = useCostSheetStore(state => state.data);
+const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
+    activeAnnexId,
+    layoutMode = 'grid',
+    calculatedAnnexes: providedCalculatedAnnexes
+}) => {
+  const annexes = useCostSheetStore(state => state.data.annexes);
+  const header = useCostSheetStore(state => state.data.header);
   const updateValue = useCostSheetStore(state => state.updateValue);
   const addRow = useCostSheetStore(state => state.addRow);
   const removeRow = useCostSheetStore(state => state.removeRow);
@@ -29,10 +35,13 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = ({ activeAnnex
   const [isPickerOpen, setIsPickerOpen] = React.useState(false);
   const [targetRowIndex, setTargetRowIndex] = React.useState<number | null>(null);
 
-  // We need the calculator to get the calculated values for display
-  const { calculatedAnnexes } = useCostSheetCalculator(data);
+  // Fallback to internal calculator only if not provided by parent (optimization)
+  const internalData = React.useMemo(() => ({ annexes, header, sections: [] } as any), [annexes, header]);
+  const { calculatedAnnexes: internalCalculatedAnnexes } = useCostSheetCalculator(providedCalculatedAnnexes ? null as any : internalData);
 
-  const handleInputChange = (path: (string | number)[], value: any) => {
+  const calculatedAnnexes = providedCalculatedAnnexes || internalCalculatedAnnexes;
+
+  const handleInputChange = React.useCallback((path: (string | number)[], value: any) => {
     if (typeof value === 'string') {
         const trimmed = value.trim();
         // If it's a simple number, store as number
@@ -45,17 +54,17 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = ({ activeAnnex
     } else {
         updateValue(path, value);
     }
-  };
+  }, [updateValue]);
 
-  const annex = data.annexes.find((a: CostSheetAnnex) => a.id === activeAnnexId);
-  const calculatedAnnex = calculatedAnnexes.find((a: any) => a.id === activeAnnexId);
+  const annex = React.useMemo(() => annexes.find((a: CostSheetAnnex) => a.id === activeAnnexId), [annexes, activeAnnexId]);
+  const calculatedAnnex = React.useMemo(() => calculatedAnnexes.find((a: any) => a.id === activeAnnexId), [calculatedAnnexes, activeAnnexId]);
 
   if (!annex) {
       return <p className="text-center py-12 text-muted-foreground italic">Anexo no encontrado.</p>;
   }
 
   const displayData = calculatedAnnex ? calculatedAnnex.data : annex.data;
-  const annexIndex = data.annexes.indexOf(annex);
+  const annexIndex = React.useMemo(() => annexes.indexOf(annex), [annexes, annex]);
 
   const totalValue = React.useMemo(() => {
     const totalCol = annex.columns.find((c: CostSheetColumn) =>
@@ -69,7 +78,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = ({ activeAnnex
     }, 0);
   }, [displayData, annex.columns]);
 
-  const handleProductSelect = (product: any) => {
+  const handleProductSelect = React.useCallback((product: any) => {
     if (targetRowIndex === null) return;
 
     // Map product fields to annex columns
@@ -88,7 +97,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = ({ activeAnnex
     }
 
     setTargetRowIndex(null);
-  };
+  }, [targetRowIndex, annexIndex, updateValue]);
 
   return (
     <div data-testid="cost-sheet-annex-editor" className="space-y-6 animate-in fade-in duration-500">
@@ -107,7 +116,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = ({ activeAnnex
               {annex.id === 'I' && (
                 <Button
                     onClick={() => {
-                        const currentLength = data.annexes[annexIndex].data.length;
+                        const currentLength = annexes[annexIndex].data.length;
                         addRow(annex.id);
                         setTargetRowIndex(currentLength);
                         setIsPickerOpen(true);
@@ -163,15 +172,15 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = ({ activeAnnex
                                     ) : (
                                         <div className="relative group/cell">
                                             <Input
-                                                type={typeof (data.annexes[annexIndex].data[rowIndex][col.key]) === 'number' ? 'number' : 'text'}
-                                                value={data.annexes[annexIndex].data[rowIndex][col.key] ?? ''}
+                                                type={typeof (annexes[annexIndex].data[rowIndex][col.key]) === 'number' ? 'number' : 'text'}
+                                                value={annexes[annexIndex].data[rowIndex][col.key] ?? ''}
                                                 onChange={(e) => handleInputChange(['annexes', annexIndex, 'data', rowIndex, col.key], e.target.value)}
                                                 className={cn(
                                                     "neu-input !p-2 min-w-[140px] text-xs font-bold text-slate-700 dark:text-slate-200 border-transparent hover:border-primary/20 focus:border-primary bg-white/50 dark:bg-slate-900/50",
-                                                    typeof data.annexes[annexIndex].data[rowIndex][col.key] === 'string' && data.annexes[annexIndex].data[rowIndex][col.key] !== '' && "border-primary/20 bg-primary/5"
+                                                    typeof annexes[annexIndex].data[rowIndex][col.key] === 'string' && annexes[annexIndex].data[rowIndex][col.key] !== '' && "border-primary/20 bg-primary/5"
                                                 )}
                                             />
-                                            {typeof data.annexes[annexIndex].data[rowIndex][col.key] === 'string' && data.annexes[annexIndex].data[rowIndex][col.key] !== '' && (
+                                            {typeof annexes[annexIndex].data[rowIndex][col.key] === 'string' && annexes[annexIndex].data[rowIndex][col.key] !== '' && (
                                                 <FunctionSquare className="absolute top-1 right-1 w-2.5 h-2.5 text-primary/40" />
                                             )}
                                         </div>
@@ -240,6 +249,6 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = ({ activeAnnex
        )}
     </div>
   );
-};
+});
 
 export default CostSheetAnnexEditor;
