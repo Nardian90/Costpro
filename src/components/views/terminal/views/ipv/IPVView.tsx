@@ -6,6 +6,7 @@ import { db, type BankTransaction } from '@/lib/dexie';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   FileUp,
   Settings,
@@ -36,16 +37,42 @@ export default function IPVView() {
   const transactions = useLiveQuery(() => db.bank_statements.orderBy('fecha').toArray());
   const rules = useLiveQuery(() => db.matching_rules.toArray());
   const products = useLiveQuery(() => db.products.toArray());
+  const reconciliationLines = useLiveQuery(() => db.reconciliation_lines.toArray());
 
   const stats = useMemo(() => {
-    if (!transactions) return { total: 0, completed: 0, pending: 0, partial: 0 };
+    if (!transactions || !reconciliationLines) return { total: 0, squared: 0, inProcess: 0, pending: 0, percentage: 0 };
+
+    const txTotals = reconciliationLines.reduce((acc, line) => {
+        acc[line.transaction_ref] = (acc[line.transaction_ref] || 0) + line.importe_linea_cents;
+        return acc;
+    }, {} as Record<string, number>);
+
+    let squared = 0;
+    let inProcess = 0;
+    let pending = 0;
+
+    transactions.forEach(t => {
+        const matched = txTotals[t.referencia_origen] || 0;
+        const target = t.importe_venta_cents || t.importe_cents;
+        const diff = target - matched;
+
+        if (matched === 0) {
+            pending++;
+        } else if (diff === 0) {
+            squared++;
+        } else {
+            inProcess++;
+        }
+    });
+
     return {
       total: transactions.length,
-      completed: transactions.filter(t => t.estado_conciliacion === 'COMPLETO').length,
-      pending: transactions.filter(t => t.estado_conciliacion === 'PENDIENTE').length,
-      partial: transactions.filter(t => t.estado_conciliacion === 'PARCIAL').length,
+      squared,
+      inProcess,
+      pending,
+      percentage: transactions.length > 0 ? Math.round((squared / transactions.length) * 100) : 0
     };
-  }, [transactions]);
+  }, [transactions, reconciliationLines]);
 
   const handleRunMatching = async () => {
     if (!transactions || transactions.length === 0) {
@@ -135,7 +162,7 @@ export default function IPVView() {
                   <CheckCircle2 className="w-5 h-5" />
                   <h2 className="font-black uppercase tracking-widest text-sm">Flujo de Trabajo Profesional</h2>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                   <FlowStep number="1" title="Catálogo" desc="Carga productos y precios base." />
                   <FlowStep number="2" title="Ingesta" desc="Arrastra el estado de cuenta." />
                   <FlowStep number="3" title="Matching" desc="Ejecuta el motor de búsqueda." />
@@ -144,23 +171,22 @@ export default function IPVView() {
           </div>
       </Card>
 
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 px-1">
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-primary uppercase">IPV Builder</h1>
-          <p className="text-muted-foreground font-medium">Conciliación bancaria y generación de IPV</p>
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-primary uppercase">IPV Builder</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground font-medium">Conciliación bancaria y generación de IPV</p>
         </div>
 
-        <div className="flex gap-2 w-full sm:w-auto">
-            <Button variant="outline" className="neu-btn flex-1 sm:flex-none h-11 sm:h-10" onClick={() => setActiveTab('rules')}>
-                <Settings className="w-4 h-4 mr-2" />
-                <span className="hidden sm:inline">Reglas</span>
-                <span className="sm:hidden">Reglas</span>
+        <div className="flex gap-2 w-full lg:w-auto">
+            <Button variant="outline" className="neu-btn flex-1 lg:flex-none h-10 text-xs font-bold uppercase" onClick={() => setActiveTab('rules')}>
+                <Settings className="w-4 h-4 mr-2 shrink-0" />
+                Reglas
             </Button>
             <TooltipProvider>
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button onClick={handleRunMatching} className="neu-btn-primary flex-[2] sm:flex-none h-11 sm:h-10 font-black">
-                            <Play className="w-4 h-4 mr-2" />
+                        <Button onClick={handleRunMatching} className="neu-btn-primary flex-[2] lg:flex-none h-10 font-black text-xs uppercase">
+                            <Play className="w-4 h-4 mr-2 shrink-0" />
                             Ejecutar Matching
                         </Button>
                     </TooltipTrigger>
@@ -180,40 +206,47 @@ export default function IPVView() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard
-            title="Total Transacciones"
+            title="Total"
             value={stats.total}
             icon={<History className="text-blue-500" />}
+            subtitle="Transacciones"
         />
         <StatCard
-            title="Completadas"
-            value={stats.completed}
+            title="Cuadradas"
+            value={stats.squared}
             icon={<CheckCircle2 className="text-green-500" />}
-            trend={`${((stats.completed / (stats.total || 1)) * 100).toFixed(1)}%`}
+            trend={`${stats.percentage}%`}
+            subtitle="Completadas"
+        />
+        <StatCard
+            title="En Proceso"
+            value={stats.inProcess}
+            icon={<AlertCircle className="text-yellow-500" />}
+            subtitle="Con Diferencia"
         />
         <StatCard
             title="Pendientes"
             value={stats.pending}
             icon={<Clock className="text-orange-500" />}
-        />
-        <StatCard
-            title="Parciales"
-            value={stats.partial}
-            icon={<AlertCircle className="text-yellow-500" />}
+            subtitle="Sin Matching"
         />
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <div className="flex overflow-x-auto pb-1 scrollbar-none sm:pb-0">
-          <TabsList className="flex w-max min-w-full sm:grid sm:grid-cols-6 sm:max-w-4xl">
-            <TabsTrigger value="transactions" className="px-4">Transacciones</TabsTrigger>
-            <TabsTrigger value="catalog" className="px-4">Catálogo</TabsTrigger>
-            <TabsTrigger value="ingestion" className="px-4">Ingesta</TabsTrigger>
-            <TabsTrigger value="reports" className="px-4">Reportes IPV</TabsTrigger>
-            <TabsTrigger value="adjustments" className="px-4">Ajustes</TabsTrigger>
-            <TabsTrigger value="rules" className="px-4">Reglas</TabsTrigger>
-          </TabsList>
+        <div className="relative">
+            <div className="flex overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent sm:pb-0">
+                <TabsList className="flex w-max min-w-full lg:grid lg:grid-cols-6 lg:max-w-5xl bg-muted/50 p-1 rounded-xl">
+                    <TabsTrigger value="transactions" className="px-6 text-[10px] sm:text-xs font-bold uppercase tracking-widest">Transacciones</TabsTrigger>
+                    <TabsTrigger value="catalog" className="px-6 text-[10px] sm:text-xs font-bold uppercase tracking-widest">Catálogo</TabsTrigger>
+                    <TabsTrigger value="ingestion" className="px-6 text-[10px] sm:text-xs font-bold uppercase tracking-widest text-nowrap">Extracto Bancario</TabsTrigger>
+                    <TabsTrigger value="reports" className="px-6 text-[10px] sm:text-xs font-bold uppercase tracking-widest text-nowrap">Reportes IPV</TabsTrigger>
+                    <TabsTrigger value="adjustments" className="px-6 text-[10px] sm:text-xs font-bold uppercase tracking-widest">Ajustes</TabsTrigger>
+                    <TabsTrigger value="rules" className="px-6 text-[10px] sm:text-xs font-bold uppercase tracking-widest">Reglas</TabsTrigger>
+                </TabsList>
+            </div>
+            <div className="absolute right-0 top-0 bottom-2 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none lg:hidden" />
         </div>
 
         <Card className="mt-6 p-0 overflow-hidden border-none shadow-xl bg-card/50 backdrop-blur-sm">
@@ -258,18 +291,23 @@ function FlowStep({ number, title, desc }: { number: string, title: string, desc
     );
 }
 
-function StatCard({ title, value, icon, trend }: { title: string, value: number, icon: React.ReactNode, trend?: string }) {
+function StatCard({ title, value, icon, trend, subtitle }: { title: string, value: number, icon: React.ReactNode, trend?: string, subtitle?: string }) {
   return (
-    <Card className="p-4 flex items-center justify-between border-none shadow-md bg-card/50 backdrop-blur-sm">
-      <div className="space-y-1">
-        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{title}</p>
-        <div className="flex items-baseline gap-2">
-            <h3 className="text-2xl font-black">{value}</h3>
-            {trend && <span className="text-[10px] font-bold text-green-500">{trend}</span>}
+    <Card className="p-3 sm:p-4 flex flex-col sm:flex-row items-center sm:justify-between border-none shadow-md bg-card/50 backdrop-blur-sm gap-2">
+      <div className="flex flex-col items-center sm:items-start space-y-0.5 sm:space-y-1">
+        <p className="text-[10px] sm:text-xs font-black text-muted-foreground uppercase tracking-widest">{title}</p>
+        <div className="flex items-baseline gap-1.5 sm:gap-2">
+            <h3 className="text-xl sm:text-2xl font-black">{value}</h3>
+            {trend && (
+                <Badge variant="outline" className="text-[10px] h-4 px-1 font-bold text-green-600 bg-green-500/10 border-green-500/20">
+                    {trend}
+                </Badge>
+            )}
         </div>
+        {subtitle && <p className="text-[9px] sm:text-[10px] text-muted-foreground font-bold uppercase opacity-60">{subtitle}</p>}
       </div>
-      <div className="p-3 bg-background rounded-2xl shadow-inner">
-        {icon}
+      <div className="p-2 sm:p-3 bg-background rounded-xl sm:rounded-2xl shadow-inner">
+        {React.cloneElement(icon as React.ReactElement, { className: 'w-4 h-4 sm:w-5 sm:h-5' })}
       </div>
     </Card>
   );
