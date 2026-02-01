@@ -269,6 +269,7 @@ export function BankIngestion() {
           importe_venta_cents,
           tipo: tipo === 'Cr' ? 'Cr' : 'Db',
           estado_conciliacion: 'PENDIENTE',
+          excluido: false,
           created_at: new Date().toISOString(),
           ingestion_hash
         };

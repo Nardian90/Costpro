@@ -255,6 +255,105 @@ export function IPVReportView() {
     }
   };
 
+  const exportAllMonthPDFs = async () => {
+    const monthReports = reports?.filter(r => {
+        const date = new Date(r.fecha_reporte + 'T12:00:00');
+        return (date.getMonth() + 1) === selectedMonth && date.getFullYear() === selectedYear;
+    });
+
+    if (!monthReports || monthReports.length === 0) {
+        toast.error('No hay reportes para el mes seleccionado');
+        return;
+    }
+
+    if (!confirm(`¿Exportar ${monthReports.length} reportes PDF? Se descargarán uno tras otro.`)) return;
+
+    for (const report of monthReports) {
+        await exportPDF(report);
+        // Pequeña pausa para no saturar el navegador
+        await new Promise(r => setTimeout(r, 500));
+    }
+    toast.success('Exportación masiva finalizada');
+  };
+
+  const exportConsolidatedMonthlyPDF = async () => {
+    const monthReports = reports?.filter(r => {
+        const date = new Date(r.fecha_reporte + 'T12:00:00');
+        return (date.getMonth() + 1) === selectedMonth && date.getFullYear() === selectedYear;
+    }).sort((a,b) => a.fecha_reporte.localeCompare(b.fecha_reporte));
+
+    if (!monthReports || monthReports.length === 0) {
+        toast.error('No hay reportes para consolidar');
+        return;
+    }
+
+    try {
+        toast.loading('Generando Consolidado Mensual...', { id: 'consolidated-gen' });
+        const doc = new jsPDF();
+        const monthName = new Date(selectedYear, selectedMonth - 1).toLocaleString('es', { month: 'long' }).toUpperCase();
+
+        doc.setFontSize(18);
+        doc.text(`REPORTE IPV CONSOLIDADO - ${monthName} ${selectedYear}`, 105, 20, { align: 'center' });
+
+        // Totales consolidados
+        const totalVentas = monthReports.reduce((s, r) => s + r.total_ventas_cents, 0);
+        const totalEfectivo = monthReports.reduce((s, r) => s + r.resumen_efectivo_cents, 0);
+        const totalTransferencia = monthReports.reduce((s, r) => s + r.resumen_transferencia_cents, 0);
+
+        autoTable(doc, {
+            startY: 30,
+            head: [['Concepto', 'Total Mensual']],
+            body: [
+                ['Total Ventas Brutas', formatCurrency(totalVentas / 100)],
+                ['Total Efectivo', formatCurrency(totalEfectivo / 100)],
+                ['Total Transferencias', formatCurrency(totalTransferencia / 100)],
+                ['Días Reportados', monthReports.length]
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [22, 163, 74] }
+        });
+
+        // Consolidación de filas por producto
+        const productSummary: Record<string, any> = {};
+        monthReports.forEach(r => {
+            r.filas.forEach(f => {
+                if (!productSummary[f.cod]) {
+                    productSummary[f.cod] = { ...f, saldo_inicial_qty: f.saldo_inicial_qty, venta_cantidad_qty: 0, importe_cents: 0 };
+                }
+                productSummary[f.cod].venta_cantidad_qty += f.venta_cantidad_qty;
+                productSummary[f.cod].importe_cents += f.importe_cents;
+                // La existencia final del último reporte es la final del mes
+                productSummary[f.cod].existencia_final_qty = f.existencia_final_qty;
+            });
+        });
+
+        const tableData = Object.values(productSummary).map((f: any) => [
+            f.cod,
+            f.descripcion,
+            f.um,
+            f.saldo_inicial_qty, // Ojo: este debería ser el inicial del primer día del mes
+            f.venta_cantidad_qty,
+            formatCurrency(f.precio_unitario_cents / 100),
+            formatCurrency(f.importe_cents / 100),
+            f.existencia_final_qty
+        ]);
+
+        autoTable(doc, {
+            startY: (doc as any).lastAutoTable.finalY + 15,
+            head: [['Cod', 'Producto', 'UM', 'Ini Mes', 'Venta Mes', 'Precio', 'Imp Mes', 'Fin Mes']],
+            body: tableData,
+            theme: 'striped',
+            headStyles: { fillColor: [22, 163, 74] },
+            styles: { fontSize: 8 }
+        });
+
+        doc.save(`IPV_CONSOLIDADO_${selectedYear}_${selectedMonth}.pdf`);
+        toast.success('Reporte Consolidado generado', { id: 'consolidated-gen' });
+    } catch (error) {
+        toast.error('Error al generar consolidado');
+    }
+  };
+
   const handleRefreshReport = async (report: DailyIPVReport) => {
     if (confirm('¿Recalcular este reporte con los datos actuales de conciliación?')) {
         const lines = await db.reconciliation_lines.where('fecha_operacion').equals(report.fecha_reporte).toArray();
@@ -353,11 +452,19 @@ export function IPVReportView() {
                 </select>
             </div>
 
-            <Button onClick={generateMonthlyReports} variant="outline" className="h-9 text-xs font-bold uppercase tracking-tighter">
-                Generar Mes Completo
-            </Button>
+            <div className="flex gap-1 bg-muted/30 p-1 rounded-lg border">
+                <Button onClick={generateMonthlyReports} variant="ghost" className="h-7 text-[9px] font-black uppercase hover:bg-primary/10">
+                    Generar Mes
+                </Button>
+                <Button onClick={exportConsolidatedMonthlyPDF} variant="ghost" className="h-7 text-[9px] font-black uppercase hover:bg-primary/10">
+                    Consolidado PDF
+                </Button>
+                <Button onClick={exportAllMonthPDFs} variant="ghost" className="h-7 text-[9px] font-black uppercase hover:bg-primary/10">
+                    Masivo PDF
+                </Button>
+            </div>
 
-            <Button onClick={generateReportForToday} className="neu-btn-primary h-9">
+            <Button onClick={generateReportForToday} className="neu-btn-primary h-9 text-[10px] font-black uppercase">
                 <Plus className="w-4 h-4 mr-2" />
                 Generar Hoy
             </Button>

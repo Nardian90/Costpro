@@ -14,6 +14,7 @@ export interface BankTransaction {
   tipo: 'Cr' | 'Db';
   estado_conciliacion: 'PENDIENTE' | 'PARCIAL' | 'COMPLETO';
   ipv_id?: string;             // FK ipv_reports.id
+  excluido?: boolean;          // Excluir del matching
   created_at: string;
   updated_at?: string;
   ingestion_hash: string;      // HASH para idempotencia
