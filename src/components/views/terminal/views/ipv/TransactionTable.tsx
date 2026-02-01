@@ -15,10 +15,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eye, Trash2, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, formatDate } from '@/lib/utils';
+import { ManualReconciliationModal } from './ManualReconciliationModal';
 
 export function TransactionTable({ transactions }: { transactions: BankTransaction[] }) {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedTx, setSelectedTx] = useState<BankTransaction | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
   const filtered = transactions.filter(t =>
     t.referencia_origen.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -56,8 +59,8 @@ export function TransactionTable({ transactions }: { transactions: BankTransacti
         </div>
       </div>
 
-      <div>
-        <Table>
+      <div className="table-scroll-wrapper">
+        <Table className="data-table">
           <TableHeader>
             <TableRow>
               <TableHead className="sticky-column-1">Fecha</TableHead>
@@ -79,7 +82,9 @@ export function TransactionTable({ transactions }: { transactions: BankTransacti
             ) : (
               filtered.map((tx) => (
                 <TableRow key={tx.id}>
-                  <TableCell className="sticky-column-1 font-medium">{tx.fecha}</TableCell>
+                  <TableCell className="sticky-column-1 font-medium whitespace-nowrap">
+                    {formatDate(tx.fecha)}
+                  </TableCell>
                   <TableCell className="font-mono text-xs">{tx.referencia_origen}</TableCell>
                   <TableCell className="text-xs truncate max-w-md" title={tx.observaciones}>
                     {tx.observaciones}
@@ -95,7 +100,15 @@ export function TransactionTable({ transactions }: { transactions: BankTransacti
                   <TableCell>{getStatusBadge(tx.estado_conciliacion)}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10 hover:text-primary">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 hover:bg-primary/10 hover:text-primary"
+                          onClick={() => {
+                            setSelectedTx(tx);
+                            setModalOpen(true);
+                          }}
+                        >
                             <Eye className="w-4 h-4" />
                         </Button>
                         <Button
@@ -114,6 +127,12 @@ export function TransactionTable({ transactions }: { transactions: BankTransacti
           </TableBody>
         </Table>
       </div>
+
+      <ManualReconciliationModal
+        transaction={selectedTx}
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+      />
     </div>
   );
 }

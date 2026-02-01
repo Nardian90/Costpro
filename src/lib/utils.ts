@@ -57,11 +57,15 @@ export const formatCurrency = (amount: number): string => {
  */
 export const formatDate = (date: string | Date | null | undefined): string => {
   if (!date) return 'N/A';
+  const d = typeof date === 'string' && date.includes('-')
+    ? new Date(date + 'T12:00:00') // Force mid-day to avoid TZ shifts
+    : new Date(date);
+
   return new Intl.DateTimeFormat('es-AR', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
-  }).format(new Date(date));
+  }).format(d);
 };
 
 /**

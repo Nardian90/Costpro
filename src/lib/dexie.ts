@@ -130,7 +130,7 @@ export class IPVDatabase extends Dexie {
     super('IPVDB');
     this.version(2).stores({
       bank_statements: '&referencia_origen, fecha, importe_cents, ingestion_hash',
-      products: '&cod, descripcion, precio_cents, prioridad_algoritmo',
+      products: '&cod, descripcion, precio_cents, prioridad_algoritmo, activo',
       matching_rules: '&id, tipo, prioridad',
       reconciliation_lines: '&id, transaction_ref, reconciliation_hash, fecha_operacion',
       ipv_reports: '&id, fecha_reporte, estado',
