@@ -597,3 +597,49 @@ export const reportRunSchema = z.object({
   error_message: z.string().nullable().optional(),
   store_id: z.string().regex(uuidRegex).optional(),
 });
+
+// ============================================
+// RPC Parameter Schemas (Hardened Contracts)
+// ============================================
+
+export const managedDeleteProductParamsSchema = z.object({
+  p_product_id: z.string().regex(uuidRegex),
+});
+
+export const managedToggleProductActiveParamsSchema = z.object({
+  p_product_id: z.string().regex(uuidRegex),
+  p_is_active: z.boolean(),
+});
+
+export const createTransferParamsSchema = z.object({
+  p_origin_store_id: z.string().regex(uuidRegex),
+  p_destination_store_id: z.string().regex(uuidRegex),
+  p_items: z.array(z.object({
+    product_id: z.string().regex(uuidRegex),
+    quantity: z.number().positive(),
+    unit_cost: z.number().min(0),
+  })),
+  p_notes: z.string().nullable(),
+});
+
+export const confirmTransferParamsSchema = z.object({
+  p_transfer_id: z.string().regex(uuidRegex),
+  p_user_id: z.string().regex(uuidRegex),
+});
+
+export const getSalesSinceLastClosureParamsSchema = z.object({
+  p_store_id: z.string().regex(uuidRegex),
+});
+
+export const getTransferableStoresParamsSchema = z.object({
+  p_user_id: z.string().regex(uuidRegex),
+  p_current_store_id: z.string().regex(uuidRegex),
+});
+
+export const getAuditLogsParamsSchema = z.object({
+  p_store_id: z.string().regex(uuidRegex).nullable(),
+  p_search_term: z.string().nullable(),
+  p_date_from: z.string().nullable(),
+  p_date_to: z.string().nullable(),
+  p_limit: z.number().int().positive().optional().default(1000),
+});

@@ -1,11 +1,11 @@
 import { supabase } from '@/lib/supabaseClient';
 import { CashClosure } from '@/types';
+import { getSalesSinceLastClosureParamsSchema } from '@/validation/schemas';
 
 export const cashService = {
   async getSalesSinceLastClosure(storeId: string) {
-    const { data, error } = await supabase.rpc('get_sales_since_last_closure', {
-      p_store_id: storeId,
-    });
+    const params = getSalesSinceLastClosureParamsSchema.parse({ p_store_id: storeId });
+    const { data, error } = await supabase.rpc('get_sales_since_last_closure', params);
     if (error) throw error;
     return data[0] as {
       total_sales: number;
