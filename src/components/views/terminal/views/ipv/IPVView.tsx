@@ -23,6 +23,12 @@ import { IPVReportView } from './IPVReportView';
 import { MatchingRulesEditor } from './MatchingRulesEditor';
 import { CashAdjustmentsTable } from './CashAdjustmentsTable';
 import { toast } from 'sonner';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 export default function IPVView() {
   const [activeTab, setActiveTab] = useState('transactions');
