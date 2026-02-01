@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.22] - 2026-03-01
+
+### Changed
+- **Hardening de Contratos RPC (v10.4)**: Refuerzo integral de la capa de comunicación con la base de datos.
+- **Validación Estricta de Parámetros**: Implementación de esquemas Zod explícitos para múltiples RPCs críticos (`managed_delete_product`, `managed_toggle_product_active`, `create_transfer`, `confirm_transfer`, `get_sales_since_last_closure`, `get_transferable_stores`, `get_audit_logs`, `perform_inventory_adjustment`).
+- **Cierre de Agujeros de Lógica**: Eliminación del mapeo manual de parámetros en hooks de API (`useAdjustStock`, `useBulkUpdateProducts`, `useAuditLogs`), sustituyéndolo por validación y parsing tipado en la entrada de la mutación.
+- **Contratos de Servicio Fortalecidos**: Los servicios de Caja (`cash-service.ts`) y Transferencias (`transfer-service.ts`) ahora validan sus argumentos contra el esquema contractual antes de realizar llamadas a Supabase.
+- **Integridad de Datos en Transferencias**: El flujo de transferencias ahora cuenta con una validación de esquema profunda para los ítems JSONB, asegurando consistencia en precios y cantidades.
+
+**Nota de Handoff para UX:** No hay cambios visuales. Esta actualización mejora la estabilidad del sistema y proporciona retroalimentación de error inmediata y precisa en entornos de desarrollo cuando hay desajustes de datos.
+
 ## [5.7.21] - 2026-02-27
 
 ### Changed

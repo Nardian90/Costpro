@@ -1,7 +1,13 @@
 import { supabase } from '@/lib/supabaseClient';
 import { Transfer, Store, TransferItem } from '@/types';
 import { validateRPCResponse, validateRPCArrayResponse } from '@/lib/rpc-validator';
-import { transferWithDetailsSchema, storeSchema } from '@/validation/schemas';
+import {
+  transferWithDetailsSchema,
+  storeSchema,
+  getTransferableStoresParamsSchema,
+  createTransferParamsSchema,
+  confirmTransferParamsSchema
+} from '@/validation/schemas';
 
 export const transferService = {
   async getIncomingTransfers(storeId: string): Promise<Transfer[]> {
@@ -44,35 +50,38 @@ export const transferService = {
   },
 
   async getTransferableStores(userId: string, currentStoreId: string): Promise<Store[]> {
-    const { data, error } = await supabase.rpc('get_transferable_stores', {
+    const params = getTransferableStoresParamsSchema.parse({
       p_user_id: userId,
       p_current_store_id: currentStoreId
     });
+    const { data, error } = await supabase.rpc('get_transferable_stores', params);
     if (error) throw error;
     return await validateRPCArrayResponse(data, storeSchema, 'getTransferableStores');
   },
 
-  async createTransfer(params: {
+  async createTransfer(rawParams: {
     origin_store_id: string;
     destination_store_id: string;
     items: Partial<TransferItem>[];
     notes?: string;
   }) {
-    const { data, error } = await supabase.rpc('create_transfer', {
-      p_origin_store_id: params.origin_store_id,
-      p_destination_store_id: params.destination_store_id,
-      p_items: params.items,
-      p_notes: params.notes || null
+    const params = createTransferParamsSchema.parse({
+      p_origin_store_id: rawParams.origin_store_id,
+      p_destination_store_id: rawParams.destination_store_id,
+      p_items: rawParams.items,
+      p_notes: rawParams.notes || null
     });
+    const { data, error } = await supabase.rpc('create_transfer', params);
     if (error) throw error;
     return data;
   },
 
   async confirmTransfer(transferId: string, userId: string) {
-    const { data, error } = await supabase.rpc('confirm_transfer', {
+    const params = confirmTransferParamsSchema.parse({
       p_transfer_id: transferId,
       p_user_id: userId
     });
+    const { data, error } = await supabase.rpc('confirm_transfer', params);
     if (error) throw error;
     if (data?.status === 'error') {
       throw new Error(data.message || 'Error al confirmar la transferencia');

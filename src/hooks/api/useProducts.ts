@@ -7,6 +7,8 @@ import {
   getProductsForPosParamsSchema,
   bulkUpdateProductsParamsSchema,
   bulkUpdateProductsInputSchema,
+  managedDeleteProductParamsSchema,
+  managedToggleProductActiveParamsSchema,
   createProductInputSchema,
   updateProductInputSchema,
   createProductVariantInputSchema,
@@ -152,7 +154,8 @@ export function useDeleteProduct() {
   return useMutation({
     mutationFn: async (productId: string) => {
       const rpcName = 'managed_delete_product';
-      const data = await withLogging(rpcName, { p_product_id: productId }, () => supabase.rpc(rpcName, { p_product_id: productId }));
+      const params = managedDeleteProductParamsSchema.parse({ p_product_id: productId });
+      const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
       return await validateRPCResponse(data, z.boolean().catch(true), rpcName);
     },
     onSuccess: () => {
@@ -167,7 +170,10 @@ export function useToggleProductActive() {
   return useMutation({
     mutationFn: async ({ productId, isActive }: { productId: string, isActive: boolean }) => {
       const rpcName = 'managed_toggle_product_active';
-      const params = { p_product_id: productId, p_is_active: isActive };
+      const params = managedToggleProductActiveParamsSchema.parse({
+        p_product_id: productId,
+        p_is_active: isActive
+      });
       const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
       return await validateRPCResponse(data, z.boolean().catch(true), rpcName);
     },
@@ -184,7 +190,7 @@ export function useBulkUpdateProducts() {
     mutationFn: async (rawInput: z.infer<typeof bulkUpdateProductsInputSchema>) => {
       const input = bulkUpdateProductsInputSchema.parse(rawInput);
       const rpcName = 'bulk_update_products';
-      const params = { _products: input.products };
+      const params = bulkUpdateProductsParamsSchema.parse({ _products: input.products });
       const data = await withLogging<any[]>(rpcName, params, () => supabase.rpc(rpcName, params));
       return await validateRPCArrayResponse(data, z.object({
         updated_count: z.number(),

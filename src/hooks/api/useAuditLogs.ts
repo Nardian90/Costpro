@@ -2,7 +2,7 @@ import { useQuery, type QueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { supabase } from '@/lib/supabaseClient';
 import { validateRPCArrayResponse } from '@/lib/rpc-validator';
-import { auditLogSchema } from '@/validation/schemas';
+import { auditLogSchema, getAuditLogsParamsSchema } from '@/validation/schemas';
 import { withLogging } from './base';
 
 export interface AuditLogFilters {
@@ -23,13 +23,13 @@ export function useAuditLogs(filters: AuditLogFilters = {}) {
     queryKey: ['audit-logs', store_id, search_term, date_from, date_to, limit],
     queryFn: async () => {
       const rpcName = 'get_audit_logs';
-      const params = {
+      const params = getAuditLogsParamsSchema.parse({
         p_store_id: store_id || null,
         p_search_term: search_term || null,
         p_date_from: date_from || null,
         p_date_to: date_to || null,
         p_limit: limit
-      };
+      });
 
       let finalData: any[] = [];
 
@@ -87,13 +87,13 @@ export async function prefetchAuditLogs(queryClient: QueryClient, filters: Audit
     queryKey: ['audit-logs', store_id, search_term, date_from, date_to, limit],
     queryFn: async () => {
       const rpcName = 'get_audit_logs';
-      const params = {
+      const params = getAuditLogsParamsSchema.parse({
         p_store_id: store_id || null,
         p_search_term: search_term || null,
         p_date_from: date_from || null,
         p_date_to: date_to || null,
         p_limit: limit
-      };
+      });
 
       let finalData: any[] = [];
       try {
