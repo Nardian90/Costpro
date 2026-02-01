@@ -13,23 +13,43 @@ import { FichaJSON, CostRow, Anexo, RowSemanticType, FormaCalculo, BaseRef, Audi
 
 // Helper to safely evaluate a formula string for ANNEXES (keeping it simple for annex rows)
 const evaluateAnnexExpression = (expression: string, rowData: any, header: any): number => {
-  if (!expression) return 0;
+  if (expression === undefined || expression === null || expression === '') return 0;
+
+  // If it's already a number, return it
+  if (typeof expression === 'number') return expression;
+
+  const trimmed = String(expression).trim();
+  if (trimmed === '') return 0;
+
+  // If it's a simple number in a string, parse it
+  if (/^-?\d*\.?\d+$/.test(trimmed)) {
+    return parseFloat(trimmed);
+  }
+
   try {
-    if (/^-?\d*\.?\d+$/.test(expression.trim())) {
-      return parseFloat(expression.trim());
-    }
     // Simple replacement for annex row variables
-    let expr = expression;
+    let expr = trimmed;
+    if (expr.startsWith('=')) expr = expr.substring(1);
+
     const keys = Object.keys(rowData).sort((a, b) => b.length - a.length);
     for (const key of keys) {
+      // Avoid replacing the key if it's currently being evaluated (prevents some recursion issues)
       expr = expr.replace(new RegExp(`\\b${key}\\b`, 'g'), String(rowData[key] || 0));
     }
     // Header replacements
     expr = expr.replace(/header\(['"]([^'"]+)['"]\)/g, (_, key) => String(header[key] || 0));
 
+    // Basic arithmetic evaluation
+    // We use a limited set of characters for safety in this simple evaluator
+    if (!/^[0-9.+\-*/() ]+$/.test(expr)) {
+        // If it contains non-arithmetic chars after replacement, it might be an invalid formula
+        // or a string that shouldn't be evaluated.
+        return isNaN(Number(trimmed)) ? 0 : Number(trimmed);
+    }
+
     return new Function(`return ${expr}`)();
   } catch (error) {
-    return 0;
+    return isNaN(Number(trimmed)) ? 0 : Number(trimmed);
   }
 };
 
@@ -42,12 +62,38 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
   // 1. Calculate Annexes first (internal formulas)
   const calculatedAnnexes = useMemo(() => {
     if (!template || !template.annexes) return [];
+
+    const isNumericColumn = (key: string) => {
+        const lowerKey = key.toLowerCase();
+        return lowerKey === 'no' ||
+               lowerKey.includes('norm') ||
+               lowerKey.includes('price') ||
+               lowerKey.includes('value') ||
+               lowerKey.includes('amount') ||
+               lowerKey.includes('count') ||
+               lowerKey.includes('rate') ||
+               lowerKey.includes('total') ||
+               lowerKey.includes('cost');
+    };
+
     return template.annexes.map(annex => ({
       ...annex,
       data: (annex.data || []).map(row => produce(row, (draft: any) => {
+        // First, pass through non-formula columns to see if they contain manual formulas
+        // ONLY for columns that are supposed to be numeric to avoid zeroing out descriptions
+        for (const col of annex.columns) {
+          if (!col.formula && isNumericColumn(col.key)) {
+            const val = draft[col.key];
+            if (typeof val === 'string' && val.length > 0 && isNaN(Number(val))) {
+                draft[col.key] = evaluateAnnexExpression(val, row, template.header);
+            }
+          }
+        }
+
+        // Then apply column-level formulas (which might depend on the calculated cell values above)
         for (const col of annex.columns) {
           if (col.formula) {
-            draft[col.key] = evaluateAnnexExpression(col.formula, row, template.header);
+            draft[col.key] = evaluateAnnexExpression(col.formula, draft, template.header);
           }
         }
       }))
