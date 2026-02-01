@@ -46,10 +46,10 @@ const POSTableView: React.FC<POSTableViewProps> = ({ products, onAddToCart }) =>
                 <div className="flex justify-center">
                   <button
                     onClick={() => onAddToCart(product)}
-                    className="neu-raised-sm p-2 text-primary hover:bg-primary hover:text-white transition-all active:scale-90"
+                    className="neu-raised-sm min-h-[44px] min-w-[44px] flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all active:scale-90"
                     aria-label={`Agregar ${product.name} al carrito`}
                   >
-                    <ShoppingCart className="w-4 h-4" />
+                    <ShoppingCart className="w-5 h-5" />
                   </button>
                 </div>
               </td>

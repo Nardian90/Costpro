@@ -150,7 +150,12 @@ export default function InventoryView() {
                 <h2 className="text-2xl font-bold border-l-4 border-primary pl-4 hidden sm:block">
                     Gestión de Inventario
                 </h2>
-                <ActionMenu actions={actions} />
+                {!isMobile && (
+                    <ActionMenu
+                        actions={actions}
+                        position="top"
+                    />
+                )}
             </div>
 
             <QueryInspector />
@@ -206,6 +211,13 @@ export default function InventoryView() {
                     isOpen={!!adjustingProduct}
                     onClose={() => setAdjustingProduct(null)}
                     onConfirm={handleConfirmAdjustment}
+                />
+            )}
+
+            {isMobile && (
+                <ActionMenu
+                    actions={actions}
+                    position="bottom"
                 />
             )}
         </div>
