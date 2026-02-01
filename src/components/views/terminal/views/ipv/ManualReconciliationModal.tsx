@@ -133,8 +133,8 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
-                <DialogHeader className="p-6 border-b">
+            <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0 overflow-hidden">
+                <DialogHeader className="p-4 md:p-6 border-b shrink-0">
                     <div className="flex justify-between items-start">
                         <div>
                             <DialogTitle className="text-2xl font-black uppercase text-primary">Conciliación Manual</DialogTitle>
@@ -162,9 +162,9 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                     </div>
                 </DialogHeader>
 
-                <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+                <div className="flex-1 flex flex-col md:flex-row overflow-hidden bg-background">
                     {/* Left: Product Selection */}
-                    <div className="w-full md:w-1/2 border-r flex flex-col">
+                    <div className="w-full md:w-1/2 border-r flex flex-col h-1/2 md:h-full overflow-hidden">
                         <div className="p-4 border-b">
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -199,7 +199,7 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                     </div>
 
                     {/* Right: Selected Lines */}
-                    <div className="w-full md:w-1/2 bg-muted/30 flex flex-col border-t md:border-t-0">
+                    <div className="w-full md:w-1/2 bg-muted/30 flex flex-col border-t md:border-t-0 h-1/2 md:h-full overflow-hidden">
                         <div className="p-4 border-b bg-background">
                             <h4 className="font-black text-xs uppercase tracking-widest text-muted-foreground">Líneas de Conciliación</h4>
                         </div>
@@ -256,20 +256,20 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                     </div>
                 </div>
 
-                <DialogFooter className="p-6 border-t bg-background">
-                    <div className="flex justify-between w-full items-center">
-                        <Button variant="outline" onClick={markAsCommission} className="text-xs uppercase font-black tracking-widest">
+                <DialogFooter className="p-4 md:p-6 border-t bg-background shrink-0">
+                    <div className="flex flex-col sm:flex-row justify-between w-full items-center gap-4">
+                        <Button variant="outline" onClick={markAsCommission} className="w-full sm:w-auto text-[10px] md:text-xs uppercase font-black tracking-widest h-9 md:h-10">
                             Es Comisión / No Reconciliable
                         </Button>
-                        <div className="flex gap-2">
-                            <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
+                        <div className="flex gap-2 w-full sm:w-auto">
+                            <Button variant="ghost" className="flex-1 sm:flex-none h-9 md:h-10" onClick={() => onOpenChange(false)}>Cancelar</Button>
                             <Button
                                 onClick={handleSave}
-                                className="neu-btn-primary px-8"
+                                className="neu-btn-primary flex-1 sm:flex-none px-4 md:px-8 h-9 md:h-10 text-xs md:text-sm"
                                 disabled={manualLines.length === 0}
                             >
-                                <CheckCircle2 className="w-4 h-4 mr-2" />
-                                Guardar Conciliación
+                                <CheckCircle2 className="w-4 h-4 mr-1 md:mr-2" />
+                                Guardar
                             </Button>
                         </div>
                     </div>
