@@ -58,11 +58,11 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
     }
   };
 
-  const handleValueChange = (field: string, value: any) => {
+  const handleValueChange = React.useCallback((field: string, value: any) => {
     updateValue([...path, field], value);
-  };
+  }, [path, updateValue]);
 
-  const handleTotalSave = (val: string) => {
+  const handleTotalSave = React.useCallback((val: string) => {
     setIsEditingTotal(false);
 
     const trimmedVal = val.trim();
@@ -89,7 +89,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
     if (row.is_percent && !isNaN(Number(trimmedVal))) {
       updateValue([...path, 'is_percent'], false);
     }
-  };
+  }, [path, updateValue, row.is_percent]);
 
 
   const isResultRow = row.is_percent || ['5', '12', '13', '13.1', '13.2', '14'].includes(row.id);
@@ -240,18 +240,19 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
     setActiveSubSectionId,
     onOpenSections
 }) => {
-  const flattenRows = (rows: RowData[]): RowData[] => {
-    let all: RowData[] = [];
-    for (const row of rows) {
-      all.push(row);
-      if (row.children && row.children.length > 0) {
-        all = [...all, ...flattenRows(row.children)];
+  const allRows = useMemo(() => {
+    const all: RowData[] = [];
+    const flatten = (rows: RowData[]) => {
+      for (const row of rows) {
+        all.push(row);
+        if (row.children && row.children.length > 0) {
+          flatten(row.children);
+        }
       }
-    }
+    };
+    flatten(sections.flatMap(s => s.rows));
     return all;
-  };
-
-  const allRows = useMemo(() => flattenRows(sections.flatMap(s => s.rows)), [sections]);
+  }, [sections]);
 
   const suggestions = useMemo(() => [
     ...annexes.map(a => ({ label: `Anexo ${a.id}`, value: `Anexo${a.id}`, description: a.title })),
