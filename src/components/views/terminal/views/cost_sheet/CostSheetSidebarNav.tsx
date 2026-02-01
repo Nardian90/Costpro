@@ -8,7 +8,9 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, FileSpreadsheet, ListFilter, Layout, ClipboardList, Activity } from 'lucide-react';
+import { CheckCircle2, FileSpreadsheet, ListFilter, Layout, ClipboardList, Activity, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useCostSheetStore } from '@/store/cost-sheet-store';
 
 interface CostSheetSidebarNavProps {
   isOpen: boolean;
@@ -29,17 +31,38 @@ export const CostSheetSidebarNav: React.FC<CostSheetSidebarNavProps> = ({
   onSelect,
   type
 }) => {
+  const addMainSection = useCostSheetStore(state => state.addMainSection);
+  const addRow = useCostSheetStore(state => state.addRow);
+
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <SheetContent side="right" className="w-[300px] sm:w-[400px] bg-sidebar/95 backdrop-blur-xl border-l border-sidebar-border shadow-2xl p-0 flex flex-col">
         <SheetHeader className="p-6 border-b border-sidebar-border/50 bg-sidebar/5">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-primary/10">
-              {type === 'sections' ? <ListFilter className="w-5 h-5 text-primary" /> : <FileSpreadsheet className="w-5 h-5 text-primary" />}
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-primary/10">
+                {type === 'sections' ? <ListFilter className="w-5 h-5 text-primary" /> : <FileSpreadsheet className="w-5 h-5 text-primary" />}
+                </div>
+                <SheetTitle className="text-xs font-black uppercase tracking-[0.2em] text-foreground">
+                    {title}
+                </SheetTitle>
             </div>
-            <SheetTitle className="text-xs font-black uppercase tracking-[0.2em] text-foreground">
-                {title}
-            </SheetTitle>
+            <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-full bg-primary/10 text-primary hover:bg-primary/20"
+                onClick={() => {
+                    if (type === 'sections') {
+                        addMainSection();
+                    } else {
+                        // For annexes we don't dynamically add new types of annexes usually,
+                        // but we could if needed. For now let's stick to sections.
+                    }
+                }}
+                title={type === 'sections' ? "Nueva Sección" : "Nuevo Anexo"}
+            >
+                <Plus className="h-4 w-4" />
+            </Button>
           </div>
         </SheetHeader>
 

@@ -66,6 +66,10 @@ interface CostSheetState {
   updateValue: (path: (string | number)[], value: string | number | boolean) => void;
   addRow: (annexId: string) => void;
   removeRow: (annexId: string, rowIndex: number) => void;
+  addMainSection: () => void;
+  removeMainSection: (index: number) => void;
+  addMainRow: (parentPath: (string | number)[]) => void;
+  removeMainRow: (path: (string | number)[]) => void;
   setSheet: (data: CostSheetDataContract) => void;
   loadExample: () => void;
   reset: () => void;
@@ -83,6 +87,63 @@ export const useCostSheetStore = create<CostSheetState>()(
               current = current[path[i]];
             }
             current[path[path.length - 1]] = value;
+          })
+        ),
+      addMainSection: () =>
+        set(
+          produce((draft: CostSheetState) => {
+            const nextId = (draft.data.sections.length + 1).toString();
+            draft.data.sections.push({
+              id: nextId,
+              label: `Nueva Sección ${nextId}`,
+              rows: []
+            });
+          })
+        ),
+      removeMainSection: (index) =>
+        set(
+          produce((draft: CostSheetState) => {
+            if (draft.data.sections[index]) {
+              draft.data.sections.splice(index, 1);
+            }
+          })
+        ),
+      addMainRow: (parentPath) =>
+        set(
+          produce((draft: CostSheetState) => {
+            let current: any = draft.data;
+            for (const p of parentPath) {
+              current = current[p];
+            }
+            // current should be an array (rows or children)
+            if (Array.isArray(current)) {
+                const nextId = (current.length + 1).toString();
+                // We need to generate a somewhat unique ID for the engine
+                // Heuristic: use a timestamp or a combination
+                const uniqueId = `new-${Date.now()}-${nextId}`;
+
+                current.push({
+                    id: uniqueId,
+                    label: "Nuevo Concepto",
+                    valorHistorico: 0,
+                    calculationMethod: 'ValorFijo',
+                    children: []
+                });
+            }
+          })
+        ),
+      removeMainRow: (path) =>
+        set(
+          produce((draft: CostSheetState) => {
+            const parentPath = path.slice(0, -1);
+            const index = path[path.length - 1] as number;
+            let current: any = draft.data;
+            for (const p of parentPath) {
+              current = current[p];
+            }
+            if (Array.isArray(current) && current[index]) {
+                current.splice(index, 1);
+            }
           })
         ),
       addRow: (annexId) =>

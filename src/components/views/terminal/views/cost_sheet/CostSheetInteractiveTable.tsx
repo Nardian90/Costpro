@@ -3,7 +3,7 @@
 
 import React, { useState, useMemo, memo } from 'react';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
-import { ChevronRight, HelpCircle, CornerDownRight, AlertTriangle, ListFilter, LayoutGrid, ArrowRight, FunctionSquare } from 'lucide-react';
+import { ChevronRight, HelpCircle, CornerDownRight, AlertTriangle, ListFilter, LayoutGrid, ArrowRight, FunctionSquare, Plus, Trash2, Edit2 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -48,7 +48,10 @@ interface RowProps {
 const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calculatedValues, path, annexes, suggestions }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isEditingTotal, setIsEditingTotal] = useState(false);
+  const [isEditingLabel, setIsEditingLabel] = useState(false);
   const updateValue = useCostSheetStore(state => state.updateValue);
+  const addMainRow = useCostSheetStore(state => state.addMainRow);
+  const removeMainRow = useCostSheetStore(state => state.removeMainRow);
 
   const hasChildren = row.children && row.children.length > 0;
 
@@ -104,14 +107,55 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
       )}>
         {/* Concepto */}
         <TableCell style={{ paddingLeft: `${level * 24 + 12}px` }} className="px-2 py-2 sm:px-4 sm:py-2.5 font-medium text-[13px] sm:text-sm text-foreground min-w-[180px] sm:min-w-[250px]">
-          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 group/row">
             {hasChildren && (
               <button onClick={handleToggle} className="p-1 rounded-full hover:bg-primary/10 shrink-0">
                 <ChevronRight className={cn('w-3.5 h-3.5 sm:w-4 h-4 transition-transform', isExpanded && 'rotate-90')} />
               </button>
             )}
             {!hasChildren && <CornerDownRight className="w-3.5 h-3.5 sm:w-4 h-4 text-muted-foreground shrink-0 ml-1" />}
-            <span className="truncate flex-1">{row.label}</span>
+
+            {isEditingLabel ? (
+                <Input
+                    autoFocus
+                    className="h-7 text-xs sm:text-sm py-0"
+                    defaultValue={row.label}
+                    onBlur={(e) => {
+                        handleValueChange('label', e.target.value);
+                        setIsEditingLabel(false);
+                    }}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                            handleValueChange('label', (e.target as HTMLInputElement).value);
+                            setIsEditingLabel(false);
+                        }
+                    }}
+                />
+            ) : (
+                <span className="truncate flex-1 cursor-text" onClick={() => setIsEditingLabel(true)}>{row.label}</span>
+            )}
+
+            {/* Row Actions */}
+            <div className="hidden group-hover/row:flex items-center gap-1 ml-auto shrink-0 animate-in fade-in slide-in-from-right-2">
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 text-primary hover:bg-primary/10"
+                    onClick={() => addMainRow([...path, 'children'])}
+                    title="Añadir hijo"
+                >
+                    <Plus className="h-3 w-3" />
+                </Button>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 text-destructive hover:bg-destructive/10"
+                    onClick={() => removeMainRow(path)}
+                    title="Eliminar fila"
+                >
+                    <Trash2 className="h-3 w-3" />
+                </Button>
+            </div>
           </div>
         </TableCell>
 
@@ -240,6 +284,11 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
     setActiveSubSectionId,
     onOpenSections
 }) => {
+  const addMainSection = useCostSheetStore(state => state.addMainSection);
+  const removeMainSection = useCostSheetStore(state => state.removeMainSection);
+  const updateValue = useCostSheetStore(state => state.updateValue);
+  const addMainRow = useCostSheetStore(state => state.addMainRow);
+
   const allRows = useMemo(() => {
     const all: RowData[] = [];
     const flatten = (rows: RowData[]) => {
@@ -280,19 +329,41 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                   </p>
 
                   <div className="grid grid-cols-1 gap-3 pt-8">
-                      {sections.map(section => (
-                          <button
-                            key={section.id}
-                            onClick={() => setActiveSubSectionId(section.id)}
-                            className="flex items-center justify-between p-4 rounded-2xl bg-background border border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all group neu-raised-sm active:scale-[0.98]"
-                          >
-                              <div className="flex items-center gap-3 text-left">
-                                  <div className="w-1.5 h-8 bg-muted group-hover:bg-primary rounded-full transition-colors" />
-                                  <span className="font-bold text-sm uppercase tracking-wider">{section.label}</span>
-                              </div>
-                              <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all translate-x-[-10px] group-hover:translate-x-0" />
-                          </button>
+                      {sections.map((section, idx) => (
+                          <div key={section.id} className="relative group">
+                              <button
+                                onClick={() => setActiveSubSectionId(section.id)}
+                                className="w-full flex items-center justify-between p-4 rounded-2xl bg-background border border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all group neu-raised-sm active:scale-[0.98]"
+                              >
+                                  <div className="flex items-center gap-3 text-left">
+                                      <div className="w-1.5 h-8 bg-muted group-hover:bg-primary rounded-full transition-colors" />
+                                      <span className="font-bold text-sm uppercase tracking-wider">{section.label}</span>
+                                  </div>
+                                  <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all translate-x-[-10px] group-hover:translate-x-0" />
+                              </button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="absolute -top-2 -right-2 h-7 w-7 bg-destructive text-white rounded-full opacity-0 group-hover:opacity-100 transition-all shadow-lg hover:bg-destructive/90 z-10"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    removeMainSection(idx);
+                                }}
+                                title="Eliminar Sección"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                          </div>
                       ))}
+
+                      <Button
+                        onClick={addMainSection}
+                        variant="outline"
+                        className="w-full p-6 rounded-2xl border-dashed border-2 hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2 bg-primary/5 group"
+                      >
+                        <Plus className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                        <span className="font-bold uppercase tracking-widest text-xs">Nueva Sección</span>
+                      </Button>
                   </div>
               </div>
           </div>
@@ -304,11 +375,38 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
         {sections.map((section, sectionIndex) => (
             section.id === activeSubSectionId && (
                 <div key={section.id} className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-                    <div className="flex items-center gap-3 mb-4 px-1">
-                        <div className="w-1.5 h-6 bg-primary rounded-full" />
-                        <h3 className="text-sm font-black uppercase tracking-[0.2em] text-foreground/80">
-                            {section.label}
-                        </h3>
+                    <div className="flex items-center justify-between mb-4 px-1">
+                        <div className="flex items-center gap-3">
+                            <div className="w-1.5 h-6 bg-primary rounded-full" />
+                            <Input
+                                className="h-8 text-sm font-black uppercase tracking-[0.2em] text-foreground/80 bg-transparent border-none focus-visible:ring-0 p-0 w-auto min-w-[250px]"
+                                value={section.label}
+                                onChange={(e) => updateValue(['sections', sectionIndex, 'label'], e.target.value)}
+                            />
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8 rounded-xl font-bold gap-2 text-[10px] uppercase tracking-wider"
+                                onClick={() => addMainRow(['sections', sectionIndex, 'rows'])}
+                            >
+                                <Plus className="w-3.5 h-3.5" />
+                                Añadir Fila
+                            </Button>
+                            <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive transition-colors"
+                                onClick={() => {
+                                    removeMainSection(sectionIndex);
+                                    setActiveSubSectionId('');
+                                }}
+                                title="Eliminar Sección"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </Button>
+                        </div>
                     </div>
 
                     <div className="neu-card p-0 overflow-hidden border-border/50 shadow-sm hover:shadow-md transition-shadow">
