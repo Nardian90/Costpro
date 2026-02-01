@@ -109,20 +109,22 @@ export default function POSView() {
           <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase hidden sm:block">TPV</h2>
           <ViewSwitcher currentView={posLayoutMode} onViewChange={setPosLayoutMode} />
         </div>
-        <ActionMenu
-          actions={[
-            {
-              id: 'cart',
-              label: `Caja (${getItemCount()})`,
-              icon: ShoppingCart,
-              onClick: () => setShowCart(!showCart),
-              variant: getItemCount() > 0 ? 'primary' : 'outline',
-              active: showCart
-            }
-          ]}
-          className="sm:w-auto"
-          position={isMobile ? 'bottom' : 'top'}
-        />
+        {!isMobile && (
+          <ActionMenu
+            actions={[
+              {
+                id: 'cart',
+                label: `Caja (${getItemCount()})`,
+                icon: ShoppingCart,
+                onClick: () => setShowCart(!showCart),
+                variant: getItemCount() > 0 ? 'primary' : 'outline',
+                active: showCart
+              }
+            ]}
+            className="sm:w-auto"
+            position="top"
+          />
+        )}
       </div>
 
       <QueryInspector />
@@ -152,7 +154,7 @@ export default function POSView() {
 
         {isMobile && (
           <Drawer open={showCart} onOpenChange={setShowCart}>
-            <DrawerContent className="p-0 border-none bg-transparent">
+            <DrawerContent className="p-0 border-none bg-transparent max-h-[85vh]">
               <POSCart
                 items={items}
                 onRemoveItem={removeItem}
@@ -268,6 +270,23 @@ export default function POSView() {
           </div>
         </div>
       </div>
+
+      {isMobile && (
+        <ActionMenu
+          actions={[
+            {
+              id: 'cart',
+              label: `Caja (${getItemCount()})`,
+              icon: ShoppingCart,
+              onClick: () => setShowCart(!showCart),
+              variant: getItemCount() > 0 ? 'primary' : 'outline',
+              active: showCart
+            }
+          ]}
+          className="w-full"
+          position="bottom"
+        />
+      )}
     </div>
   );
 }
