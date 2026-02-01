@@ -20,6 +20,10 @@ import { Input } from '@/components/ui/input';
 import { formatCurrency } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
+import { supabase } from '@/lib/supabaseClient';
+import { useStores } from '@/hooks/api/useStores';
+import { useAuthStore } from '@/store';
+import { hasRole } from '@/lib/roles';
 import {
   Tooltip,
   TooltipContent,
@@ -32,7 +36,13 @@ export function CatalogTable() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Product>>({});
   const [layoutMode, setLayoutMode] = useState<'table' | 'cards'>('table');
+  const [isSyncing, setIsSyncing] = useState(false);
 
+  const user = useAuthStore(state => state.user);
+  const isAdmin = hasRole(user, 'admin');
+  const isEncargado = hasRole(user, 'encargado');
+
+  const { data: stores } = useStores(user?.id || '', isAdmin, isEncargado);
   const products = useLiveQuery(() => db.products.toArray());
   const reports = useLiveQuery(() => db.ipv_reports.orderBy('fecha_reporte').reverse().toArray());
   const reconciliationLines = useLiveQuery(() => db.reconciliation_lines.toArray());
@@ -125,6 +135,49 @@ export function CatalogTable() {
     }
   };
 
+  const syncWithSystemCatalog = async () => {
+    if (!stores || stores.length === 0) {
+        toast.error('No se encontró tienda activa para sincronizar');
+        return;
+    }
+
+    if (!confirm('¿Sincronizar con el catálogo real del sistema? Los productos locales con el mismo código serán actualizados.')) return;
+
+    setIsSyncing(true);
+    toast.loading('Sincronizando catálogo...', { id: 'sync-catalog' });
+
+    try {
+        const { data, error } = await supabase.rpc('get_products_for_pos', {
+            p_store_id: stores[0].id,
+            p_search_term: '',
+            p_category: ''
+        });
+
+        if (error) throw error;
+
+        const systemProducts = (data || []).map((p: any) => ({
+            cod: p.sku || p.id, // Preferir SKU si existe
+            descripcion: p.name,
+            um: 'UNIDADES', // Valor por defecto
+            es_paquete: false,
+            contenido_paquete: 1,
+            precio_cents: Math.round((p.price || 0) * 100),
+            prioridad_algoritmo: 3,
+            activo: true,
+            stock_inicial_manual: Math.round(p.stock_quantity || 0),
+            created_at: new Date().toISOString()
+        }));
+
+        await db.products.bulkPut(systemProducts);
+        toast.success(`Sincronización completa: ${systemProducts.length} productos cargados`, { id: 'sync-catalog' });
+    } catch (error) {
+        console.error(error);
+        toast.error('Error al sincronizar con el sistema', { id: 'sync-catalog' });
+    } finally {
+        setIsSyncing(false);
+    }
+  };
+
   const handleRecalculateReportsChain = async () => {
     if (confirm('¿Recalcular toda la cadena de reportes IPV?')) {
         try {
@@ -204,6 +257,17 @@ export function CatalogTable() {
                     </TooltipContent>
                 </Tooltip>
             </TooltipProvider>
+
+            <Button
+                variant="outline"
+                size="sm"
+                onClick={syncWithSystemCatalog}
+                disabled={isSyncing}
+                className="h-10 text-[10px] uppercase font-black tracking-widest gap-2 text-primary border-primary/20 flex-1 sm:flex-none"
+            >
+                <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                Catálogo Real
+            </Button>
 
             <Button
                 variant="outline"

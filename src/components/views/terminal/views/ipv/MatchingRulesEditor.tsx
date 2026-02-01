@@ -41,9 +41,11 @@ interface SortableRuleItemProps {
     rule: MatchingRule;
     toggleRule: (id: string, active: boolean) => Promise<void>;
     updateTolerance: (id: string, value: string) => Promise<void>;
+    updatePriority: (id: string, priority: number) => Promise<void>;
+    totalRules: number;
 }
 
-function SortableRuleItem({ rule, toggleRule, updateTolerance }: SortableRuleItemProps) {
+function SortableRuleItem({ rule, toggleRule, updateTolerance, updatePriority, totalRules }: SortableRuleItemProps) {
     const {
         attributes,
         listeners,
@@ -107,7 +109,19 @@ function SortableRuleItem({ rule, toggleRule, updateTolerance }: SortableRuleIte
                     </div>
                     <div className="sm:hidden flex-1">
                         <h4 className="font-bold text-sm uppercase tracking-wide">{getLabel(rule.tipo)}</h4>
-                        <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-black">Prio {rule.prioridad}</span>
+                        <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-black uppercase tracking-widest">Prio</span>
+                            <select
+                                value={rule.prioridad}
+                                onChange={(e) => updatePriority(rule.id, parseInt(e.target.value))}
+                                className="h-6 text-[10px] font-bold border rounded bg-background px-1 focus:ring-1 focus:ring-primary outline-none"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                {Array.from({ length: totalRules }, (_, i) => i + 1).map(p => (
+                                    <option key={p} value={p}>{p}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
                     <div className="sm:hidden">
                         <Switch
@@ -128,7 +142,18 @@ function SortableRuleItem({ rule, toggleRule, updateTolerance }: SortableRuleIte
                 <div className="hidden sm:block flex-1 space-y-1">
                     <div className="flex items-center gap-2">
                         <h4 className="font-bold text-sm uppercase tracking-wide">{getLabel(rule.tipo)}</h4>
-                        <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-black">Prioridad {rule.prioridad}</span>
+                        <div className="flex items-center gap-2 ml-2">
+                            <span className="text-[10px] font-bold text-muted-foreground uppercase opacity-50 tracking-widest">Prioridad:</span>
+                            <select
+                                value={rule.prioridad}
+                                onChange={(e) => updatePriority(rule.id, parseInt(e.target.value))}
+                                className="h-7 text-[10px] font-black border rounded bg-background px-2 focus:ring-1 focus:ring-primary outline-none cursor-pointer hover:bg-muted/50 transition-colors"
+                            >
+                                {Array.from({ length: totalRules }, (_, i) => i + 1).map(p => (
+                                    <option key={p} value={p}>{p}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
                     <p className="text-xs text-muted-foreground max-w-xl">{getDescription(rule.tipo)}</p>
                 </div>
@@ -198,6 +223,24 @@ export function MatchingRulesEditor() {
     }
   };
 
+  const updatePriorityManually = async (id: string, newPriority: number) => {
+    if (!rules) return;
+    const rule = rules.find(r => r.id === id);
+    if (!rule || rule.prioridad === newPriority) return;
+
+    // Logic: move item to new position and shift others
+    const otherRules = rules.filter(r => r.id !== id);
+    const updatedRules = [...otherRules];
+    updatedRules.splice(newPriority - 1, 0, rule);
+
+    const updates = updatedRules.map((r, idx) => {
+        return db.matching_rules.update(r.id, { prioridad: idx + 1 });
+    });
+
+    await Promise.all(updates);
+    toast.success(`Prioridad actualizada a ${newPriority}`);
+  };
+
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
 
@@ -249,6 +292,8 @@ export function MatchingRulesEditor() {
                 rule={rule}
                 toggleRule={toggleRule}
                 updateTolerance={updateTolerance}
+                updatePriority={updatePriorityManually}
+                totalRules={rules.length}
               />
             ))}
           </SortableContext>
