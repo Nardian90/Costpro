@@ -13,10 +13,17 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Eye, Trash2, Search } from 'lucide-react';
+import { Eye, Trash2, Search, RotateCcw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { ManualReconciliationModal } from './ManualReconciliationModal';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { Info } from 'lucide-react';
 
 export function TransactionTable({ transactions }: { transactions: BankTransaction[] }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -44,9 +51,18 @@ export function TransactionTable({ transactions }: { transactions: BankTransacti
     }
   };
 
+  const handleResetReconciliation = async (tx: BankTransaction) => {
+    if (confirm(`¿Reiniciar conciliación para ${tx.referencia_origen}? Se borrarán todos los productos asociados.`)) {
+        await db.reconciliation_lines.where('transaction_ref').equals(tx.referencia_origen).delete();
+        await db.bank_statements.update(tx.id, {
+            estado_conciliacion: 'PENDIENTE'
+        });
+    }
+  };
+
   const getStatusBadge = (status: string, diffCents: number) => {
-    if (status === 'COMPLETO' && diffCents === 0) {
-      return <Badge className="bg-green-500 text-white border-green-600">CUADRADA</Badge>;
+    if (diffCents === 0) {
+      return <Badge className="bg-green-500 text-white border-green-600 shadow-sm">CUADRADA</Badge>;
     }
     switch (status) {
       case 'COMPLETO':
@@ -82,7 +98,27 @@ export function TransactionTable({ transactions }: { transactions: BankTransacti
               <TableHead className="text-right">Importe</TableHead>
               <TableHead className="text-right">Diferencia</TableHead>
               <TableHead>Tipo</TableHead>
-              <TableHead>Estado</TableHead>
+              <TableHead>
+                <div className="flex items-center gap-1">
+                    Estado
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger>
+                                <Info className="w-3 h-3 text-muted-foreground" />
+                            </TooltipTrigger>
+                            <TooltipContent className="text-[10px] max-w-xs">
+                                <p className="font-bold mb-1">Estados de Conciliación:</p>
+                                <ul>
+                                    <li><strong>CUADRADA:</strong> Diferencia es $0.00. Listo para el IPV.</li>
+                                    <li><strong>COMPLETO:</strong> Marcado como finalizado o comisión.</li>
+                                    <li><strong>PARCIAL:</strong> Tiene productos pero no cubre el total.</li>
+                                    <li><strong>PENDIENTE:</strong> Sin productos asociados.</li>
+                                </ul>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                </div>
+              </TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
@@ -110,7 +146,7 @@ export function TransactionTable({ transactions }: { transactions: BankTransacti
                   <TableCell className="text-right font-black">
                     {formatCurrency(tx.importe_cents / 100)}
                   </TableCell>
-                  <TableCell className={`text-right font-bold ${diff === 0 ? 'text-green-500' : 'text-orange-500'}`}>
+                  <TableCell className={`text-right font-bold ${diff === 0 ? 'text-green-500' : (diff < 0 ? 'text-red-500' : 'text-orange-500')}`}>
                     {formatCurrency(diff / 100)}
                   </TableCell>
                   <TableCell>
@@ -132,6 +168,17 @@ export function TransactionTable({ transactions }: { transactions: BankTransacti
                         >
                             <Eye className="w-4 h-4" />
                         </Button>
+                        {matchedTotal > 0 && (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 hover:bg-orange-500/10 hover:text-orange-500"
+                                onClick={() => handleResetReconciliation(tx)}
+                                title="Reiniciar Conciliación"
+                            >
+                                <RotateCcw className="w-4 h-4" />
+                            </Button>
+                        )}
                         <Button
                             variant="ghost"
                             size="icon"

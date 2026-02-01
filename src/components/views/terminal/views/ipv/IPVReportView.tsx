@@ -20,7 +20,8 @@ import {
   Calendar,
   Lock,
   RotateCcw,
-  Trash2
+  Trash2,
+  RefreshCw
 } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -206,6 +207,74 @@ export function IPVReportView() {
     }
   };
 
+  const handleRefreshReport = async (report: DailyIPVReport) => {
+    if (confirm('¿Recalcular este reporte con los datos actuales de conciliación?')) {
+        const lines = await db.reconciliation_lines.where('fecha_operacion').equals(report.fecha_reporte).toArray();
+
+        if (lines.length === 0) {
+            toast.error('No hay transacciones conciliadas para esta fecha');
+            return;
+        }
+
+        const productGroups: Record<string, any> = {};
+        let totalVentas = 0;
+        let totalEfectivo = 0;
+        let totalTransferencia = 0;
+
+        for (const line of lines) {
+            if (!productGroups[line.product_cod]) {
+                productGroups[line.product_cod] = {
+                    cod: line.product_cod,
+                    um: line.product_um,
+                    venta_cantidad_qty: 0,
+                    precio_unitario_cents: line.precio_unitario_cents,
+                    importe_cents: 0
+                };
+            }
+            productGroups[line.product_cod].venta_cantidad_qty += line.cantidad;
+            productGroups[line.product_cod].importe_cents += line.importe_linea_cents;
+            totalVentas += line.importe_linea_cents;
+
+            if (line.clasificacion === 'Efectivo') totalEfectivo += line.importe_linea_cents;
+            else totalTransferencia += line.importe_linea_cents;
+        }
+
+        const products = await db.products.toArray();
+        const productMap = new Map(products.map(p => [p.cod, p.descripcion]));
+
+        // Buscar reporte anterior para saldos iniciales (igual que en generate)
+        const allReports = await db.ipv_reports.orderBy('fecha_reporte').toArray();
+        const currentIndex = allReports.findIndex(r => r.id === report.id);
+        const lastReport = currentIndex > 0 ? allReports[currentIndex - 1] : null;
+
+        const updatedFilas = Object.values(productGroups).map(f => {
+            const prevRow = lastReport?.filas.find((pr: any) => pr.cod === f.cod);
+            const initial = prevRow?.existencia_final_qty || 0;
+            const venta = f.venta_cantidad_qty;
+            const final = initial - venta;
+
+            return {
+                ...f,
+                descripcion: productMap.get(f.cod) || 'Producto Desconocido',
+                saldo_inicial_qty: initial,
+                entrada_salida_qty: 0,
+                total_disponible_qty: initial,
+                existencia_final_qty: final
+            };
+        });
+
+        await db.ipv_reports.update(report.id, {
+            total_ventas_cents: totalVentas,
+            resumen_efectivo_cents: totalEfectivo,
+            resumen_transferencia_cents: totalTransferencia,
+            filas: updatedFilas,
+            updated_at: new Date().toISOString()
+        });
+
+        toast.success('Reporte recalculado correctamente');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="p-4 flex justify-between items-center bg-background/50 border-b">
@@ -259,6 +328,9 @@ export function IPVReportView() {
                         </Button>
                         {r.estado === 'BORRADOR' && (
                             <>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500" onClick={() => handleRefreshReport(r)} title="Recalcular Reporte">
+                                    <RefreshCw className="w-3 h-3" />
+                                </Button>
                                 <Button variant="ghost" size="icon" className="h-8 w-8 text-orange-500" onClick={() => handleCloseReport(r.id)} title="Cerrar Reporte">
                                     <Lock className="w-4 h-4" />
                                 </Button>
