@@ -67,6 +67,22 @@ export function BankIngestion() {
     }
   };
 
+  const resetEverything = async () => {
+    if (confirm('¿REINICIO TOTAL DEL SISTEMA? Se borrará TODO: Transacciones, Catálogo, Reportes, Reglas y Conciliaciones. Esta acción es irreversible.')) {
+        await Promise.all([
+            db.bank_statements.clear(),
+            db.products.clear(),
+            db.reconciliation_lines.clear(),
+            db.ipv_reports.clear(),
+            db.matching_rules.clear(),
+            db.cash_adjustments.clear(),
+            db.daily_aggregates.clear(),
+            db.matching_cache.clear()
+        ]);
+        toast.success('Sistema IPV reiniciado completamente');
+    }
+  };
+
   const downloadTemplate = (format: 'csv' | 'xlsx') => {
     const headers = ['Fecha', 'Ref_Corriente', 'Ref_Origen', 'Observaciones', 'Importe', 'Tipo'];
     const sampleData = [
@@ -368,6 +384,19 @@ export function BankIngestion() {
 
   return (
     <div className="space-y-8">
+      {/* Guía Profesional Principal */}
+      <div className="px-6 py-4 bg-primary/5 border-l-4 border-primary mx-4 rounded-r-2xl flex items-start gap-4">
+        <Info className="w-6 h-6 text-primary mt-1 shrink-0" />
+        <div className="space-y-1">
+            <h4 className="font-black text-primary uppercase text-xs tracking-widest">Guía Profesional: Flujo de Ingesta</h4>
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+                El flujo ideal comienza cargando el <strong>Catálogo de Productos</strong>. Una vez listo, arrastra tu <strong>Estado de Cuenta</strong>.
+                El sistema aplicará ingeniería inversa para encontrar combinaciones de productos que cuadren con cada transferencia.
+                Si el match no es exacto, podrás realizar <strong>Ajustes Manuales</strong> para lograr el cuadre perfecto.
+            </p>
+        </div>
+      </div>
+
       <div className="bg-primary/5 rounded-3xl border-2 border-dashed border-primary/20 p-12 text-center transition-colors hover:bg-primary/10">
         <div {...getRootProps()} className="cursor-pointer">
           <input {...getInputProps()} />
@@ -387,37 +416,39 @@ export function BankIngestion() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="p-6 bg-card/50 rounded-3xl border border-border/50 space-y-4">
-            <div className="flex items-center gap-2 text-primary">
-                <Info className="w-5 h-5" />
-                <h4 className="font-black uppercase text-sm tracking-widest">Configuración Inicial</h4>
+        {/* Card: Catálogo */}
+        <div className="p-6 bg-card/50 rounded-3xl border border-border/50 space-y-6 flex flex-col">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-primary">
+                    <FileSpreadsheet className="w-5 h-5" />
+                    <h4 className="font-black uppercase text-sm tracking-widest">Maestro de Catálogo</h4>
+                </div>
+                <Badge variant="outline" className="text-[10px] uppercase font-bold">Paso 1</Badge>
             </div>
-            <p className="text-sm text-muted-foreground">
-                Administra tu catálogo de productos para el matching.
+
+            <p className="text-xs text-muted-foreground font-medium leading-relaxed">
+                Define los productos, precios y prioridades. El algoritmo usará estos datos para "reconstruir" las ventas.
             </p>
 
-            <div className="grid grid-cols-2 gap-3">
-                <Button variant="outline" className="neu-btn text-[10px] sm:text-xs" onClick={importDefaultProducts}>
+            <div className="grid grid-cols-2 gap-3 flex-1">
+                <Button variant="outline" className="neu-btn text-[10px]" onClick={importDefaultProducts} title="Carga un set de productos de prueba">
+                    <Plus className="w-3 h-3 mr-2" />
                     Productos Demo
                 </Button>
 
-                <Button variant="outline" className="neu-btn text-[10px] sm:text-xs" onClick={loadDemoStatement}>
-                    Extracto Demo
-                </Button>
-
                 <label className="cursor-pointer">
-                    <div className="flex items-center justify-center h-full px-4 py-2 border border-input bg-background rounded-xl hover:bg-accent hover:text-accent-foreground text-xs font-medium transition-colors">
+                    <div className="flex items-center justify-center h-full px-2 py-2 border border-input bg-background rounded-xl hover:bg-accent hover:text-accent-foreground text-[10px] font-bold transition-colors uppercase">
                         <Upload className="w-3 h-3 mr-2" />
-                        Importar Catálogo
+                        Importar CSV
                     </div>
                     <input type="file" className="hidden" accept=".csv,.xlsx,.xls" onChange={handleImportCatalog} />
                 </label>
 
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="neu-btn w-full text-xs">
+                        <Button variant="outline" className="neu-btn w-full text-[10px]">
                             <Download className="w-3 h-3 mr-2" />
-                            Exportar Catálogo
+                            Exportar
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="rounded-xl border-primary/20">
@@ -431,27 +462,70 @@ export function BankIngestion() {
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
+
+                <Button variant="outline" className="neu-btn text-[10px] text-destructive hover:bg-destructive/5" onClick={resetCatalog}>
+                    <Trash2 className="w-3 h-3 mr-2" />
+                    Vaciar
+                </Button>
+            </div>
+
+            <div className="p-3 bg-primary/5 rounded-xl border-l-2 border-primary text-[10px] text-muted-foreground">
+                <span className="font-bold text-primary">TIP:</span> Exporta el catálogo actual para usarlo como plantilla de importación.
             </div>
         </div>
 
-        <div className="p-6 bg-card/50 rounded-3xl border border-border/50 space-y-4">
-            <div className="flex items-center gap-2 text-primary">
-                <Download className="w-5 h-5" />
-                <h4 className="font-black uppercase text-sm tracking-widest">Plantilla</h4>
+        {/* Card: Estado de Cuenta */}
+        <div className="p-6 bg-card/50 rounded-3xl border border-border/50 space-y-6 flex flex-col">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-primary">
+                    <FileText className="w-5 h-5" />
+                    <h4 className="font-black uppercase text-sm tracking-widest">Estado de Cuenta</h4>
+                </div>
+                <Badge variant="outline" className="text-[10px] uppercase font-bold">Paso 2</Badge>
             </div>
-            <p className="text-sm text-muted-foreground">
-                Descarga una plantilla de ejemplo para el extracto bancario.
+
+            <p className="text-xs text-muted-foreground font-medium leading-relaxed">
+                Descarga la plantilla o carga transacciones de prueba para validar el motor de matching.
             </p>
 
-            <div className="flex gap-3">
-                <Button variant="outline" className="flex-1 neu-btn text-xs" onClick={() => downloadTemplate('csv')}>
-                    <FileText className="w-3 h-3 mr-2 text-primary" />
-                    CSV
+            <div className="grid grid-cols-2 gap-3 flex-1">
+                <Button variant="outline" className="neu-btn text-[10px]" onClick={loadDemoStatement}>
+                    <RefreshCw className="w-3 h-3 mr-2 text-primary" />
+                    Extracto Demo
                 </Button>
-                <Button variant="outline" className="flex-1 neu-btn text-xs" onClick={() => downloadTemplate('xlsx')}>
-                    <FileSpreadsheet className="w-3 h-3 mr-2 text-primary" />
-                    Excel
+
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="outline" className="neu-btn w-full text-[10px]">
+                            <Download className="w-3 h-3 mr-2" />
+                            Plantillas
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="rounded-xl">
+                        <DropdownMenuItem onClick={() => downloadTemplate('csv')} className="cursor-pointer gap-2">
+                            <FileText className="w-4 h-4" />
+                            <span>Descargar CSV</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => downloadTemplate('xlsx')} className="cursor-pointer gap-2">
+                            <FileSpreadsheet className="w-4 h-4" />
+                            <span>Descargar Excel</span>
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+
+                <Button variant="outline" className="neu-btn text-[10px]" onClick={resetAllMatching}>
+                    <RefreshCw className="w-3 h-3 mr-2" />
+                    Reset Matching
                 </Button>
+
+                <Button variant="outline" className="neu-btn text-[10px] text-destructive hover:bg-destructive/5" onClick={resetBankData}>
+                    <Trash2 className="w-3 h-3 mr-2" />
+                    Limpiar Banco
+                </Button>
+            </div>
+
+            <div className="p-3 bg-orange-500/5 rounded-xl border-l-2 border-orange-500 text-[10px] text-muted-foreground">
+                <span className="font-bold text-orange-500">IMPORTANTE:</span> El motor requiere que la columna <strong>Ref_Origen</strong> sea única por transacción.
             </div>
         </div>
 
@@ -460,16 +534,20 @@ export function BankIngestion() {
                 <Trash2 className="w-5 h-5" />
                 <h4 className="font-black uppercase text-sm tracking-widest">Zona de Peligro / Mantenimiento</h4>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <Button variant="destructive" className="w-full text-xs font-bold gap-2" onClick={resetBankData}>
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                <Button variant="destructive" className="w-full text-[10px] font-bold gap-2" onClick={resetEverything}>
                     <Trash2 className="w-4 h-4" />
-                    Reiniciar Datos Banco
+                    REINICIO TOTAL
                 </Button>
-                <Button variant="destructive" className="w-full text-xs font-bold gap-2" onClick={resetCatalog}>
+                <Button variant="destructive" className="w-full text-[10px] font-bold gap-2" onClick={resetBankData}>
+                    <Trash2 className="w-4 h-4" />
+                    Limpiar Banco
+                </Button>
+                <Button variant="destructive" className="w-full text-[10px] font-bold gap-2" onClick={resetCatalog}>
                     <Trash2 className="w-4 h-4" />
                     Vaciar Catálogo
                 </Button>
-                <Button variant="outline" className="w-full text-xs font-bold gap-2 border-destructive/30 text-destructive hover:bg-destructive/10" onClick={resetAllMatching}>
+                <Button variant="outline" className="w-full text-[10px] font-bold gap-2 border-destructive/30 text-destructive hover:bg-destructive/10" onClick={resetAllMatching}>
                     <RefreshCw className="w-4 h-4" />
                     Resetear Matching
                 </Button>

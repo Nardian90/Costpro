@@ -72,6 +72,24 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
         setManualLines(manualLines.filter(l => l.id !== id));
     };
 
+    const removeExistingLine = async (id: string) => {
+        if (!transaction) return;
+        if (confirm('¿Eliminar esta línea de conciliación?')) {
+            await db.reconciliation_lines.delete(id);
+
+            // Actualizar estado de la transacción
+            const lines = await db.reconciliation_lines.where('transaction_ref').equals(transaction.referencia_origen).toArray();
+            const newTotal = lines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
+            const newStatus = newTotal >= transaction.importe_cents ? 'COMPLETO' : (newTotal > 0 ? 'PARCIAL' : 'PENDIENTE');
+
+            await db.bank_statements.update(transaction.id, {
+                estado_conciliacion: newStatus
+            });
+
+            toast.success('Línea eliminada y estado actualizado');
+        }
+    };
+
     const updateQty = (id: string, qty: number) => {
         setManualLines(manualLines.map(l => {
             if (l.id === id) {
@@ -178,6 +196,13 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                         </div>
                         <ScrollArea className="flex-1">
                             <div className="p-4 space-y-2">
+                                <div className="p-3 bg-primary/5 rounded-xl border border-primary/20 flex gap-3 mb-4">
+                                    <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                                    <p className="text-[10px] text-muted-foreground leading-tight">
+                                        <span className="font-bold text-primary uppercase">Guía:</span> Selecciona productos para asignar a esta transferencia.
+                                        Puedes ajustar cantidades para lograr el <strong>Cuadre Perfecto</strong>.
+                                    </p>
+                                </div>
                                 {filteredProducts.map(p => (
                                     <div
                                         key={p.cod}
@@ -207,12 +232,22 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                             <div className="p-4 space-y-3">
                                 {/* Existing Lines */}
                                 {existingLines?.map(l => (
-                                    <div key={l.id} className="p-3 bg-background border rounded-xl flex justify-between items-center opacity-70">
+                                    <div key={l.id} className="p-3 bg-background border rounded-xl flex justify-between items-center group/exist">
                                         <div>
                                             <p className="font-bold text-xs">{l.product_cod}</p>
                                             <p className="text-[10px] uppercase">{l.cantidad} {l.product_um} x {formatCurrency(l.precio_unitario_cents / 100)}</p>
                                         </div>
-                                        <span className="font-black text-xs">{formatCurrency(l.importe_linea_cents / 100)}</span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-black text-xs">{formatCurrency(l.importe_linea_cents / 100)}</span>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-6 w-6 text-destructive opacity-0 group-hover/exist:opacity-100 transition-opacity"
+                                                onClick={() => removeExistingLine(l.id)}
+                                            >
+                                                <Trash2 className="w-3 h-3" />
+                                            </Button>
+                                        </div>
                                     </div>
                                 ))}
 

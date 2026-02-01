@@ -94,6 +94,25 @@ export default function IPVView() {
 
   return (
     <div className="space-y-6">
+      {/* Help Section: Professional Flow */}
+      <Card className="p-6 bg-primary/5 border-none shadow-none rounded-3xl overflow-hidden relative group">
+          <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+              <Settings className="w-32 h-32" />
+          </div>
+          <div className="relative z-10 space-y-4">
+              <div className="flex items-center gap-2 text-primary">
+                  <CheckCircle2 className="w-5 h-5" />
+                  <h2 className="font-black uppercase tracking-widest text-sm">Flujo de Trabajo Profesional</h2>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <FlowStep number="1" title="Catálogo" desc="Carga productos y precios base." />
+                  <FlowStep number="2" title="Ingesta" desc="Arrastra el estado de cuenta." />
+                  <FlowStep number="3" title="Matching" desc="Ejecuta el motor de búsqueda." />
+                  <FlowStep number="4" title="Cuadre" desc="Ajusta manualmente si es necesario." />
+              </div>
+          </div>
+      </Card>
+
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-black tracking-tight text-primary uppercase">IPV Builder</h1>
@@ -106,10 +125,26 @@ export default function IPVView() {
                 <span className="hidden sm:inline">Reglas</span>
                 <span className="sm:hidden">Reglas</span>
             </Button>
-            <Button onClick={handleRunMatching} className="neu-btn-primary flex-[2] sm:flex-none h-11 sm:h-10 font-black">
-                <Play className="w-4 h-4 mr-2" />
-                Ejecutar Matching
-            </Button>
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button onClick={handleRunMatching} className="neu-btn-primary flex-[2] sm:flex-none h-11 sm:h-10 font-black">
+                            <Play className="w-4 h-4 mr-2" />
+                            Ejecutar Matching
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs p-4 space-y-2">
+                        <p className="font-bold text-primary">Motor de Matching Pro:</p>
+                        <p className="text-[10px] leading-relaxed">
+                            Procesa transacciones en 4 pasos automáticos:
+                            <br/>1. <strong>Hard Ref:</strong> Match por código en obs.
+                            <br/>2. <strong>Exact Sum:</strong> Combinación exacta de productos.
+                            <br/>3. <strong>Tolerance:</strong> Match con pequeño margen de error.
+                            <br/>4. <strong>Cash Fill:</strong> Cubre el resto con ajuste de caja.
+                        </p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
         </div>
       </div>
 
@@ -178,6 +213,18 @@ export default function IPVView() {
       </Tabs>
     </div>
   );
+}
+
+function FlowStep({ number, title, desc }: { number: string, title: string, desc: string }) {
+    return (
+        <div className="flex gap-3 items-start">
+            <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-black">{number}</span>
+            <div>
+                <p className="text-xs font-black uppercase text-primary tracking-tighter">{title}</p>
+                <p className="text-[10px] text-muted-foreground leading-tight font-medium">{desc}</p>
+            </div>
+        </div>
+    );
 }
 
 function StatCard({ title, value, icon, trend }: { title: string, value: number, icon: React.ReactNode, trend?: string }) {
