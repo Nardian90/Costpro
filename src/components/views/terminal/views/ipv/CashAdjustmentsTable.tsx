@@ -25,8 +25,8 @@ export function CashAdjustmentsTable() {
           <h3 className="font-black uppercase text-sm tracking-widest">Ajustes de Efectivo Auditados</h3>
       </div>
 
-      <div>
-        <Table>
+      <div className="table-scroll-wrapper">
+        <Table className="data-table">
           <TableHeader>
             <TableRow>
               <TableHead>Fecha</TableHead>

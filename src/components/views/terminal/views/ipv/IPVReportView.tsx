@@ -21,7 +21,7 @@ import {
   Lock,
   RotateCcw
 } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, formatDate } from '@/lib/utils';
 import { toast } from 'sonner';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -198,8 +198,8 @@ export function IPVReportView() {
         </Button>
       </div>
 
-      <div>
-        <Table>
+      <div className="table-scroll-wrapper">
+        <Table className="data-table">
           <TableHeader>
             <TableRow>
               <TableHead className="sticky-column-1">Fecha</TableHead>
@@ -220,7 +220,9 @@ export function IPVReportView() {
             ) : (
               reports.map((r) => (
                 <TableRow key={r.id}>
-                  <TableCell className="sticky-column-1 font-bold">{r.fecha_reporte}</TableCell>
+                  <TableCell className="sticky-column-1 font-bold">
+                    {formatDate(r.fecha_reporte)}
+                  </TableCell>
                   <TableCell className="text-right font-black">{formatCurrency(r.total_ventas_cents / 100)}</TableCell>
                   <TableCell className="text-right">{formatCurrency(r.resumen_efectivo_cents / 100)}</TableCell>
                   <TableCell className="text-right">{formatCurrency(r.resumen_transferencia_cents / 100)}</TableCell>
