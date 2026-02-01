@@ -179,14 +179,14 @@ export default function IPVView() {
         </div>
 
         <div className="flex gap-2 w-full lg:w-auto">
-            <Button variant="outline" className="neu-btn flex-1 lg:flex-none h-10 text-xs font-bold uppercase" onClick={() => setActiveTab('rules')}>
+            <Button variant="outline" className="neu-btn flex-1 lg:flex-none h-12 lg:h-10 text-xs font-bold uppercase" onClick={() => setActiveTab('rules')}>
                 <Settings className="w-4 h-4 mr-2 shrink-0" />
                 Reglas
             </Button>
             <TooltipProvider>
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button onClick={handleRunMatching} className="neu-btn-primary flex-[2] lg:flex-none h-10 font-black text-xs uppercase">
+                        <Button onClick={handleRunMatching} className="neu-btn-primary flex-[2] lg:flex-none h-12 lg:h-10 font-black text-xs uppercase">
                             <Play className="w-4 h-4 mr-2 shrink-0" />
                             Ejecutar Matching
                         </Button>
@@ -237,15 +237,15 @@ export default function IPVView() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="relative">
-            <div className="flex overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent sm:pb-0">
-                <TabsList className="flex w-max min-w-full lg:grid lg:grid-cols-7 lg:max-w-[1200px] bg-muted/50 p-1 rounded-xl">
-                    <TabsTrigger value="transactions" className="px-4 text-[10px] sm:text-xs font-bold uppercase tracking-widest">Transacciones</TabsTrigger>
-                    <TabsTrigger value="pivot" className="px-4 text-[10px] sm:text-xs font-bold uppercase tracking-widest">Consolidado</TabsTrigger>
-                    <TabsTrigger value="catalog" className="px-4 text-[10px] sm:text-xs font-bold uppercase tracking-widest">Catálogo</TabsTrigger>
-                    <TabsTrigger value="ingestion" className="px-4 text-[10px] sm:text-xs font-bold uppercase tracking-widest text-nowrap">Extracto</TabsTrigger>
-                    <TabsTrigger value="reports" className="px-4 text-[10px] sm:text-xs font-bold uppercase tracking-widest text-nowrap">Reportes IPV</TabsTrigger>
-                    <TabsTrigger value="adjustments" className="px-4 text-[10px] sm:text-xs font-bold uppercase tracking-widest">Ajustes</TabsTrigger>
-                    <TabsTrigger value="rules" className="px-4 text-[10px] sm:text-xs font-bold uppercase tracking-widest">Reglas</TabsTrigger>
+            <div className="flex overflow-x-auto pb-3 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent sm:pb-0">
+                <TabsList className="flex w-max min-w-full lg:grid lg:grid-cols-7 lg:max-w-[1200px] bg-muted/50 p-1 rounded-xl h-auto sm:h-10">
+                    <TabsTrigger value="transactions" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest">Transacciones</TabsTrigger>
+                    <TabsTrigger value="pivot" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest">Consolidado</TabsTrigger>
+                    <TabsTrigger value="catalog" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest">Catálogo</TabsTrigger>
+                    <TabsTrigger value="ingestion" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest text-nowrap">Extracto</TabsTrigger>
+                    <TabsTrigger value="reports" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest text-nowrap">Reportes IPV</TabsTrigger>
+                    <TabsTrigger value="adjustments" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest">Ajustes</TabsTrigger>
+                    <TabsTrigger value="rules" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest">Reglas</TabsTrigger>
                 </TabsList>
             </div>
             <div className="absolute right-0 top-0 bottom-2 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none lg:hidden" />

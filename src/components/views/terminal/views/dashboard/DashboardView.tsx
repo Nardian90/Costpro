@@ -15,13 +15,16 @@ import { useCanAccess, useUIStore } from '@/store';
 import { useProducts } from '@/hooks/api/useProducts';
 import { StateRenderer } from '@/components/ui/StateRenderer';
 import type { DashboardKPIs, Product, SalesSummary } from '@/types';
-import { useDashboardView } from './useDashboardView';
+import { useDashboardView, type DashboardTimeRange } from './useDashboardView';
 import { useAuthStore } from '@/store';
 import { SecurityScrollContainer } from '@/components/ui/SecurityScrollContainer';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 export default function DashboardView() {
   const { user } = useAuthStore();
-  const { summary, kpis, isLoading } = useDashboardView();
+  const { summary, kpis, isLoading, timeRange, setTimeRange } = useDashboardView();
   const { setCurrentView } = useUIStore();
 
   const {
@@ -33,11 +36,34 @@ export default function DashboardView() {
 
   return (
     <div className="space-y-6">
-      <div className="hidden sm:flex items-center justify-between mb-8">
-        <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase">Panel de Control</h2>
-        <div className="flex items-center gap-2 py-1.5 px-3 rounded-lg border border-border bg-card/50 text-xs font-bold">
-          <Calendar className="w-3 h-3" />
-          Hoy: {formatDate(new Date())}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+        <div>
+          <h2 className="text-2xl sm:text-3xl font-black text-foreground tracking-tighter uppercase">Panel de Control</h2>
+          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1 opacity-70">Indicadores de rendimiento</p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+            <ToggleGroup
+              type="single"
+              value={timeRange}
+              onValueChange={(v) => v && setTimeRange(v as any)}
+              className="bg-card border border-border p-1 rounded-xl w-full sm:w-auto"
+            >
+              <ToggleGroupItem value="day" className="flex-1 sm:flex-none text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-lg data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                Hoy
+              </ToggleGroupItem>
+              <ToggleGroupItem value="month" className="flex-1 sm:flex-none text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-lg data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                Mes
+              </ToggleGroupItem>
+              <ToggleGroupItem value="year" className="flex-1 sm:flex-none text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-lg data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                Año
+              </ToggleGroupItem>
+            </ToggleGroup>
+
+            <div className="hidden lg:flex items-center gap-2 py-2 px-3 rounded-xl border border-border bg-card/50 text-[10px] font-black uppercase tracking-widest text-muted-foreground min-w-[140px] justify-center">
+              <Calendar className="w-3 h-3" />
+              {timeRange === 'day' ? formatDate(new Date()) : (timeRange === 'month' ? format(new Date(), 'MMMM yyyy', { locale: es }) : format(new Date(), 'yyyy'))}
+            </div>
         </div>
       </div>
 
@@ -50,8 +76,8 @@ export default function DashboardView() {
           const { kpis, summary } = data[0];
           return (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <DashboardKpisSection kpis={kpis} />
-              <DashboardSummarySection summary={summary} />
+              <DashboardKpisSection kpis={kpis} timeRange={timeRange} />
+              <DashboardSummarySection summary={summary} timeRange={timeRange} />
               <DashboardAlertsSection
                 products={products}
                 onViewInventory={() => setCurrentView('inventory')}
@@ -65,8 +91,9 @@ export default function DashboardView() {
   );
 }
 
-function DashboardKpisSection({ kpis }: { kpis: DashboardKPIs }) {
+function DashboardKpisSection({ kpis, timeRange }: { kpis: DashboardKPIs, timeRange: DashboardTimeRange }) {
   const canViewFinancials = useCanAccess('warehouse');
+  const rangeLabel = timeRange === 'day' ? 'Diaria' : (timeRange === 'month' ? 'Mensual' : 'Anual');
 
   // Treat 0 as missing data if there are sales (prevents 100% margin on missing costs)
   const hasCostData = kpis.cost_of_goods !== null &&
@@ -129,7 +156,7 @@ function DashboardKpisSection({ kpis }: { kpis: DashboardKPIs }) {
               {hasProfitData ? formatCurrency(kpis.profit!) : "N/D"}
             </div>
             <div className={cn("text-xs font-black mt-2 uppercase tracking-widest whitespace-nowrap", hasProfitData ? "text-primary" : "text-muted-foreground/80")}>
-              {hasProfitData ? "Utilidad Diaria (Real)" : "Datos insuficientes"}
+              {hasProfitData ? `Utilidad ${rangeLabel} (Real)` : "Datos insuficientes"}
             </div>
           </div>
         </>
@@ -138,7 +165,9 @@ function DashboardKpisSection({ kpis }: { kpis: DashboardKPIs }) {
   );
 }
 
-function DashboardSummarySection({ summary }: { summary: SalesSummary }) {
+function DashboardSummarySection({ summary, timeRange }: { summary: SalesSummary, timeRange: DashboardTimeRange }) {
+  const rangeLabel = timeRange === 'day' ? 'Hoy' : (timeRange === 'month' ? 'Mes' : 'Año');
+
   return (
     <div className="md:col-span-2 p-6 rounded-xl border border-border bg-card shadow-sm">
       <div className="flex items-center justify-between mb-8">
@@ -150,7 +179,7 @@ function DashboardSummarySection({ summary }: { summary: SalesSummary }) {
       <SecurityScrollContainer minWidth="300px">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
           {[
-            { label: 'Transacciones', value: summary?.transaction_count || 0, sub: 'Hoy' },
+            { label: 'Transacciones', value: summary?.transaction_count || 0, sub: rangeLabel },
             { label: 'Ticket Promedio', value: formatCurrency(summary?.average_ticket || 0), sub: 'ARS' },
             { label: 'Efectivo', value: formatCurrency(summary?.total_cash || 0), sub: 'Recaudado', color: 'text-green-500' },
             { label: 'Transferencia', value: formatCurrency(summary?.total_transfer || 0), sub: 'Banco', color: 'text-primary' },

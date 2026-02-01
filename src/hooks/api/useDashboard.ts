@@ -8,16 +8,25 @@ import {
 import { withLogging, getCleanStoreId } from './base';
 import type { DashboardKPIs, SalesSummary } from '@/types';
 
-export async function prefetchDashboardData(queryClient: QueryClient, storeId: string, isAdmin = false) {
+export async function prefetchDashboardData(
+  queryClient: QueryClient,
+  storeId: string,
+  isAdmin = false,
+  dateFrom?: string,
+  dateTo?: string
+) {
   const rpcName = 'get_dashboard_kpis';
   const cleanStoreId = getCleanStoreId(storeId);
   const isValidUuid = cleanStoreId && isUuidRegex.test(cleanStoreId);
-  const params = isAdmin ? {} : { p_store_id: isValidUuid ? cleanStoreId : null };
+
+  const params: any = isAdmin ? {} : { p_store_id: isValidUuid ? cleanStoreId : null };
+  if (dateFrom) params.p_date_from = dateFrom;
+  if (dateTo) params.p_date_to = dateTo;
 
   if (!isAdmin && !isValidUuid) return;
 
   return queryClient.prefetchQuery({
-    queryKey: ['dashboard-kpis', cleanStoreId, isAdmin],
+    queryKey: ['dashboard-kpis', cleanStoreId, isAdmin, dateFrom, dateTo],
     queryFn: async () => {
       const { data, error } = await supabase.rpc(rpcName, params);
       if (error) throw error;
@@ -51,11 +60,16 @@ export async function prefetchDashboardData(queryClient: QueryClient, storeId: s
   });
 }
 
-export function useSuspenseDashboardData(storeId?: string | null, isAdmin = false) {
+export function useSuspenseDashboardData(
+  storeId?: string | null,
+  isAdmin = false,
+  dateFrom?: string,
+  dateTo?: string
+) {
   const cleanStoreId = getCleanStoreId(storeId);
 
   return useSuspenseQuery({
-    queryKey: ['dashboard-kpis', cleanStoreId, isAdmin],
+    queryKey: ['dashboard-kpis', cleanStoreId, isAdmin, dateFrom, dateTo],
     queryFn: async () => {
       const isValidUuid = cleanStoreId && isUuidRegex.test(cleanStoreId);
 
@@ -67,7 +81,10 @@ export function useSuspenseDashboardData(storeId?: string | null, isAdmin = fals
       }
 
       const rpcName = 'get_dashboard_kpis';
-      const params = isAdmin ? {} : { p_store_id: isValidUuid ? cleanStoreId : null };
+      const params: any = isAdmin ? {} : { p_store_id: isValidUuid ? cleanStoreId : null };
+      if (dateFrom) params.p_date_from = dateFrom;
+      if (dateTo) params.p_date_to = dateTo;
+
       const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params), 'dashboard');
 
       const validatedData = await validateRPCArrayResponse(
@@ -101,18 +118,26 @@ export function useSuspenseDashboardData(storeId?: string | null, isAdmin = fals
   });
 }
 
-export function useDashboardData(storeId?: string | null, isAdmin = false) {
+export function useDashboardData(
+  storeId?: string | null,
+  isAdmin = false,
+  dateFrom?: string,
+  dateTo?: string
+) {
   const cleanStoreId = getCleanStoreId(storeId);
 
   return useQuery({
-    queryKey: ['dashboard-kpis', cleanStoreId, isAdmin],
+    queryKey: ['dashboard-kpis', cleanStoreId, isAdmin, dateFrom, dateTo],
     queryFn: async () => {
       const isValidUuid = cleanStoreId && isUuidRegex.test(cleanStoreId);
 
       if (!isAdmin && !isValidUuid) return null;
 
       const rpcName = 'get_dashboard_kpis';
-      const params = isAdmin ? {} : { p_store_id: isValidUuid ? cleanStoreId : null };
+      const params: any = isAdmin ? {} : { p_store_id: isValidUuid ? cleanStoreId : null };
+      if (dateFrom) params.p_date_from = dateFrom;
+      if (dateTo) params.p_date_to = dateTo;
+
       const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params), 'dashboard');
 
       const validatedData = await validateRPCArrayResponse(
