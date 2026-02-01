@@ -7,7 +7,7 @@ import { useCostSheetCalculator } from '@/hooks/logic/useCostSheetCalculator';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Trash2, Plus, Database } from 'lucide-react';
+import { Trash2, Plus, Database, FunctionSquare } from 'lucide-react';
 import { CostSheetAnnex, CostSheetColumn } from '@/types/cost-sheet';
 import ProductInventoryPicker from './ProductInventoryPicker';
 import { useAuthStore } from '@/store';
@@ -33,8 +33,18 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = ({ activeAnnex
   const { calculatedAnnexes } = useCostSheetCalculator(data);
 
   const handleInputChange = (path: (string | number)[], value: any) => {
-    const isNumeric = typeof value === 'string' && /^-?\d*\.?\d*$/.test(value) && value !== '';
-    updateValue(path, isNumeric ? parseFloat(value) : value);
+    if (typeof value === 'string') {
+        const trimmed = value.trim();
+        // If it's a simple number, store as number
+        if (/^-?\d*\.?\d+$/.test(trimmed)) {
+            updateValue(path, parseFloat(trimmed));
+            return;
+        }
+        // Otherwise store as string (could be a formula)
+        updateValue(path, value);
+    } else {
+        updateValue(path, value);
+    }
   };
 
   const annex = data.annexes.find((a: CostSheetAnnex) => a.id === activeAnnexId);
@@ -144,16 +154,27 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = ({ activeAnnex
                             {annex.columns.map((col: CostSheetColumn) => (
                                 <TableCell key={col.key} data-label={col.label || col.title || col.key} className="p-3 sm:p-4">
                                     {col.formula ? (
-                                        <div className="neu-inset-sm px-3 py-2 font-mono text-right bg-primary/5 text-primary font-black min-w-[100px] border border-primary/10">
-                                            {formatCurrency(row[col.key] ?? 0).replace('$', '').trim()}
+                                        <div className="relative group/cell">
+                                            <div className="neu-inset-sm px-3 py-2 font-mono text-right bg-primary/5 text-primary font-black min-w-[100px] border border-primary/10">
+                                                {formatCurrency(row[col.key] ?? 0).replace('$', '').trim()}
+                                            </div>
+                                            <FunctionSquare className="absolute -top-1 -right-1 w-2.5 h-2.5 text-primary/30" />
                                         </div>
                                     ) : (
-                                        <Input
-                                            type={typeof (data.annexes[annexIndex].data[rowIndex][col.key]) === 'number' ? 'number' : 'text'}
-                                            value={data.annexes[annexIndex].data[rowIndex][col.key] ?? ''}
-                                            onChange={(e) => handleInputChange(['annexes', annexIndex, 'data', rowIndex, col.key], e.target.value)}
-                                            className="neu-input !p-2 min-w-[140px] text-xs font-bold text-slate-700 dark:text-slate-200 border-transparent hover:border-primary/20 focus:border-primary bg-white/50 dark:bg-slate-900/50"
-                                        />
+                                        <div className="relative group/cell">
+                                            <Input
+                                                type={typeof (data.annexes[annexIndex].data[rowIndex][col.key]) === 'number' ? 'number' : 'text'}
+                                                value={data.annexes[annexIndex].data[rowIndex][col.key] ?? ''}
+                                                onChange={(e) => handleInputChange(['annexes', annexIndex, 'data', rowIndex, col.key], e.target.value)}
+                                                className={cn(
+                                                    "neu-input !p-2 min-w-[140px] text-xs font-bold text-slate-700 dark:text-slate-200 border-transparent hover:border-primary/20 focus:border-primary bg-white/50 dark:bg-slate-900/50",
+                                                    typeof data.annexes[annexIndex].data[rowIndex][col.key] === 'string' && data.annexes[annexIndex].data[rowIndex][col.key] !== '' && "border-primary/20 bg-primary/5"
+                                                )}
+                                            />
+                                            {typeof data.annexes[annexIndex].data[rowIndex][col.key] === 'string' && data.annexes[annexIndex].data[rowIndex][col.key] !== '' && (
+                                                <FunctionSquare className="absolute top-1 right-1 w-2.5 h-2.5 text-primary/40" />
+                                            )}
+                                        </div>
                                     )}
                                 </TableCell>
                             ))}
