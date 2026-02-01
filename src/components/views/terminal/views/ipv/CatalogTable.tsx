@@ -14,6 +14,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 import { Trash2, Search, HelpCircle, Info, Edit2, Check, X, Plus, RefreshCw, LayoutGrid, List } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { formatCurrency } from '@/lib/utils';

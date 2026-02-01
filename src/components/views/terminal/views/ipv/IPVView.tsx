@@ -307,7 +307,7 @@ function StatCard({ title, value, icon, trend, subtitle }: { title: string, valu
         {subtitle && <p className="text-[9px] sm:text-[10px] text-muted-foreground font-bold uppercase opacity-60">{subtitle}</p>}
       </div>
       <div className="p-2 sm:p-3 bg-background rounded-xl sm:rounded-2xl shadow-inner">
-        {React.cloneElement(icon as React.ReactElement, { className: 'w-4 h-4 sm:w-5 sm:h-5' })}
+        {React.cloneElement(icon as React.ReactElement<any>, { className: 'w-4 h-4 sm:w-5 sm:h-5' })}
       </div>
     </Card>
   );
