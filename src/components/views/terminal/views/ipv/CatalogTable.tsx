@@ -31,6 +31,38 @@ export function CatalogTable() {
   const [editForm, setEditForm] = useState<Partial<Product>>({});
 
   const products = useLiveQuery(() => db.products.toArray());
+  const reports = useLiveQuery(() => db.ipv_reports.orderBy('fecha_reporte').reverse().toArray());
+  const reconciliationLines = useLiveQuery(() => db.reconciliation_lines.toArray());
+
+  const inventoryStats = React.useMemo(() => {
+    if (!products || !reports || !reconciliationLines) return {};
+
+    const stats: Record<string, { initial: number; sales: number; final: number }> = {};
+    const lastClosedReport = reports.find(r => r.estado === 'CERRADO');
+
+    products.forEach(p => {
+        // Saldo Inicial: Buscar en el último reporte cerrado
+        let initial = 0;
+        if (lastClosedReport) {
+            const reportRow = lastClosedReport.filas.find(f => f.cod === p.cod);
+            if (reportRow) initial = reportRow.existencia_final_qty;
+        }
+
+        // Ventas: Sumar líneas de conciliación posteriores al último reporte (o todas si no hay reporte)
+        const reportDate = lastClosedReport ? lastClosedReport.fecha_reporte : '0000-00-00';
+        const sales = reconciliationLines
+            .filter(l => l.product_cod === p.cod && l.fecha_operacion > reportDate)
+            .reduce((sum, l) => sum + l.cantidad, 0);
+
+        stats[p.cod] = {
+            initial,
+            sales,
+            final: initial - sales
+        };
+    });
+
+    return stats;
+  }, [products, reports, reconciliationLines]);
 
   const filtered = products?.filter(p =>
     p.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -165,6 +197,9 @@ export function CatalogTable() {
               <TableHead>UM</TableHead>
               <TableHead className="text-center">Paquete</TableHead>
               <TableHead className="text-right">Precio</TableHead>
+              <TableHead className="text-right">Inicial</TableHead>
+              <TableHead className="text-right">Ventas</TableHead>
+              <TableHead className="text-right">Final</TableHead>
               <TableHead className="text-center">Prioridad</TableHead>
               <TableHead className="text-center">Estado</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
@@ -173,7 +208,7 @@ export function CatalogTable() {
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                <TableCell colSpan={11} className="h-24 text-center text-muted-foreground">
                   No hay productos en el catálogo.
                 </TableCell>
               </TableRow>
@@ -231,6 +266,7 @@ export function CatalogTable() {
                             />
                         </div>
                     </TableCell>
+                    <TableCell colSpan={3}></TableCell>
                     <TableCell className="text-center">
                         <select
                             value={editForm.prioridad_algoritmo}
@@ -260,6 +296,7 @@ export function CatalogTable() {
               )}
               {filtered.map((p) => {
                 const isEditing = editingId === p.cod;
+                const stats = inventoryStats[p.cod] || { initial: 0, sales: 0, final: 0 };
 
                 return (
                   <TableRow key={p.cod} className={isEditing ? "bg-primary/5" : ""}>
@@ -337,6 +374,12 @@ export function CatalogTable() {
                       ) : (
                         <div className="font-black">{formatCurrency(p.precio_cents / 100)}</div>
                       )}
+                    </TableCell>
+
+                    <TableCell className="text-right font-bold text-muted-foreground">{stats.initial}</TableCell>
+                    <TableCell className="text-right font-bold text-orange-500">{stats.sales}</TableCell>
+                    <TableCell className={`text-right font-black ${stats.final < 0 ? 'text-red-500' : 'text-primary'}`}>
+                        {stats.final}
                     </TableCell>
 
                     <TableCell className="text-center">
