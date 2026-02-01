@@ -179,6 +179,7 @@ export function BankIngestion() {
             activo: row.activo === true || String(row.activo).toLowerCase() === 'true' || row.activo === 1,
             es_paquete: row.es_paquete === true || String(row.es_paquete).toLowerCase() === 'true' || row.es_paquete === 1,
             contenido_paquete: Number(row.contenido_paquete || 1),
+            stock_inicial_manual: Number(row.stock_inicial_manual || 0),
             created_at: new Date().toISOString()
         }));
 
@@ -353,17 +354,17 @@ export function BankIngestion() {
 
   const importDefaultProducts = async () => {
       const defaultProducts = [
-          { cod: '1', descripcion: 'Cerveza Windmil', um: 'Unidades', precio_cents: 26000, prioridad_algoritmo: 1, activo: true, es_paquete: false, contenido_paquete: 1 },
-          { cod: '1-C', descripcion: 'Cerveza Windmil Caja', um: 'Caja (24Unid)', precio_cents: 576000, prioridad_algoritmo: 1, activo: true, es_paquete: true, contenido_paquete: 24 },
-          { cod: '2', descripcion: 'Cerveza 8,6', um: 'Unidades', precio_cents: 50000, prioridad_algoritmo: 2, activo: true, es_paquete: false, contenido_paquete: 1 },
-          { cod: '2-C', descripcion: 'Cerveza 8,6 Caja', um: 'Caja (24Unid)', precio_cents: 1080000, prioridad_algoritmo: 2, activo: true, es_paquete: true, contenido_paquete: 24 },
-          { cod: '3', descripcion: 'Tigon', um: 'Unidades', precio_cents: 32000, prioridad_algoritmo: 3, activo: true, es_paquete: false, contenido_paquete: 1 },
-          { cod: '3-C', descripcion: 'Tigon Caja', um: 'Caja (24Unid)', precio_cents: 720000, prioridad_algoritmo: 3, activo: true, es_paquete: true, contenido_paquete: 24 },
-          { cod: '4', descripcion: 'Bavaria', um: 'Unidades', precio_cents: 26000, prioridad_algoritmo: 4, activo: true, es_paquete: false, contenido_paquete: 1 },
-          { cod: '4-C', descripcion: 'Bavaria Caja', um: 'Caja (24Unid)', precio_cents: 600000, prioridad_algoritmo: 4, activo: true, es_paquete: true, contenido_paquete: 24 },
-          { cod: '5', descripcion: 'Wiski', um: 'Unidades', precio_cents: 150000, prioridad_algoritmo: 5, activo: true, es_paquete: false, contenido_paquete: 1 },
-          { cod: '5-C', descripcion: 'Wiski Caja', um: 'Caja (6Unidades)', precio_cents: 810000, prioridad_algoritmo: 5, activo: true, es_paquete: true, contenido_paquete: 6 },
-          { cod: 'CASH', descripcion: 'Venta Manual / Varios', um: 'U', precio_cents: 0, prioridad_algoritmo: 99, activo: true, es_paquete: false, contenido_paquete: 1 },
+          { cod: '1', descripcion: 'Cerveza Windmil', um: 'Unidades', precio_cents: 26000, prioridad_algoritmo: 1, activo: true, es_paquete: false, contenido_paquete: 1, stock_inicial_manual: 100 },
+          { cod: '1-C', descripcion: 'Cerveza Windmil Caja', um: 'Caja (24Unid)', precio_cents: 576000, prioridad_algoritmo: 1, activo: true, es_paquete: true, contenido_paquete: 24, stock_inicial_manual: 10 },
+          { cod: '2', descripcion: 'Cerveza 8,6', um: 'Unidades', precio_cents: 50000, prioridad_algoritmo: 2, activo: true, es_paquete: false, contenido_paquete: 1, stock_inicial_manual: 50 },
+          { cod: '2-C', descripcion: 'Cerveza 8,6 Caja', um: 'Caja (24Unid)', precio_cents: 1080000, prioridad_algoritmo: 2, activo: true, es_paquete: true, contenido_paquete: 24, stock_inicial_manual: 5 },
+          { cod: '3', descripcion: 'Tigon', um: 'Unidades', precio_cents: 32000, prioridad_algoritmo: 3, activo: true, es_paquete: false, contenido_paquete: 1, stock_inicial_manual: 200 },
+          { cod: '3-C', descripcion: 'Tigon Caja', um: 'Caja (24Unid)', precio_cents: 720000, prioridad_algoritmo: 3, activo: true, es_paquete: true, contenido_paquete: 24, stock_inicial_manual: 20 },
+          { cod: '4', descripcion: 'Bavaria', um: 'Unidades', precio_cents: 26000, prioridad_algoritmo: 4, activo: true, es_paquete: false, contenido_paquete: 1, stock_inicial_manual: 150 },
+          { cod: '4-C', descripcion: 'Bavaria Caja', um: 'Caja (24Unid)', precio_cents: 600000, prioridad_algoritmo: 4, activo: true, es_paquete: true, contenido_paquete: 24, stock_inicial_manual: 15 },
+          { cod: '5', descripcion: 'Wiski', um: 'Unidades', precio_cents: 150000, prioridad_algoritmo: 5, activo: true, es_paquete: false, contenido_paquete: 1, stock_inicial_manual: 40 },
+          { cod: '5-C', descripcion: 'Wiski Caja', um: 'Caja (6Unidades)', precio_cents: 810000, prioridad_algoritmo: 5, activo: true, es_paquete: true, contenido_paquete: 6, stock_inicial_manual: 8 },
+          { cod: 'CASH', descripcion: 'Venta Manual / Varios', um: 'U', precio_cents: 0, prioridad_algoritmo: 99, activo: true, es_paquete: false, contenido_paquete: 1, stock_inicial_manual: 0 },
       ];
 
       try {
