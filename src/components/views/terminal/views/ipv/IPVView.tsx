@@ -72,10 +72,12 @@ export default function IPVView() {
         for (const res of results) {
           if (res.lines.length > 0) {
             await db.reconciliation_lines.bulkAdd(res.lines);
-            await db.bank_statements.update(res.transactionId, {
-              estado_conciliacion: res.status
-            });
           }
+
+          // Actualizamos estado independientemente de si hay líneas (ej: comisiones auto-completadas)
+          await db.bank_statements.update(res.transactionId, {
+            estado_conciliacion: res.status
+          });
         }
 
         toast.success(`Proceso completado: ${results.length} transacciones analizadas`);

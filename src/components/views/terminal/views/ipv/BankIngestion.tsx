@@ -173,6 +173,22 @@ export function BankIngestion() {
     }
   };
 
+  const standardizeDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    // Handle DD/MM/YYYY
+    if (dateStr.includes('/')) {
+        const parts = dateStr.split('/');
+        if (parts.length === 3) {
+            const day = parts[0].padStart(2, '0');
+            const month = parts[1].padStart(2, '0');
+            const year = parts[2].length === 2 ? `20${parts[2]}` : parts[2];
+            return `${year}-${month}-${day}`;
+        }
+    }
+    // Already YYYY-MM-DD or other
+    return dateStr;
+  };
+
   const processBankData = async (data: any[]) => {
     let imported = 0;
     let skipped = 0;
@@ -180,7 +196,8 @@ export function BankIngestion() {
     for (const row of data) {
       try {
         // Mapeo flexible basado en los nombres de columnas del ejemplo
-        const fecha = row['Fecha'] || row['fecha'];
+        const fechaRaw = row['Fecha'] || row['fecha'];
+        const fecha = standardizeDate(fechaRaw);
         const ref_origen = row['Ref_Origen'] || row['Ref_origen'] || row['referencia_origen'];
         const importe_str = String(row['Importe'] || row['importe'] || '0').replace(/[^0-9.,]/g, '');
         const tipo = row['Tipo'] || row['tipo'];
@@ -230,9 +247,9 @@ export function BankIngestion() {
       const today = new Date();
       const demoTxs: BankTransaction[] = [];
 
-      // Función para generar fecha en formato DD/MM/YYYY
+      // Estandarizado a YYYY-MM-DD
       const fmtDate = (date: Date) => {
-          return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
+          return date.toISOString().split('T')[0];
       };
 
       // 1. Transacción con Referencia Directa (HARD_REF)
@@ -329,6 +346,7 @@ export function BankIngestion() {
           { cod: '4-C', descripcion: 'Bavaria Caja', um: 'Caja (24Unid)', precio_cents: 600000, prioridad_algoritmo: 4, activo: true, es_paquete: true, contenido_paquete: 24 },
           { cod: '5', descripcion: 'Wiski', um: 'Unidades', precio_cents: 150000, prioridad_algoritmo: 5, activo: true, es_paquete: false, contenido_paquete: 1 },
           { cod: '5-C', descripcion: 'Wiski Caja', um: 'Caja (6Unidades)', precio_cents: 810000, prioridad_algoritmo: 5, activo: true, es_paquete: true, contenido_paquete: 6 },
+          { cod: 'CASH', descripcion: 'Venta Manual / Varios', um: 'U', precio_cents: 0, prioridad_algoritmo: 99, activo: true, es_paquete: false, contenido_paquete: 1 },
       ];
 
       try {
