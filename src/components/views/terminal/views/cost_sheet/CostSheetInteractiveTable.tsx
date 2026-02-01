@@ -140,20 +140,20 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6 text-primary hover:bg-primary/10"
+                    className="h-10 w-10 sm:h-6 sm:w-6 text-primary hover:bg-primary/10"
                     onClick={() => addMainRow([...path, 'children'])}
                     title="Añadir hijo"
                 >
-                    <Plus className="h-3 w-3" />
+                    <Plus className="h-4 w-4 sm:h-3 sm:w-3" />
                 </Button>
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6 text-destructive hover:bg-destructive/10"
+                    className="h-10 w-10 sm:h-6 sm:w-6 text-destructive hover:bg-destructive/10"
                     onClick={() => removeMainRow(path)}
                     title="Eliminar fila"
                 >
-                    <Trash2 className="h-3 w-3" />
+                    <Trash2 className="h-4 w-4 sm:h-3 sm:w-3" />
                 </Button>
             </div>
           </div>
@@ -388,7 +388,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                             <Button
                                 size="sm"
                                 variant="outline"
-                                className="h-8 rounded-xl font-bold gap-2 text-[10px] uppercase tracking-wider"
+                                className="h-11 sm:h-8 rounded-xl font-bold gap-2 text-[10px] uppercase tracking-wider"
                                 onClick={() => addMainRow(['sections', sectionIndex, 'rows'])}
                             >
                                 <Plus className="w-3.5 h-3.5" />
