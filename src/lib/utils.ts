@@ -2,6 +2,7 @@ import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { supabase } from './supabaseClient';
 import { type Product } from '@/types';
+import Decimal from 'decimal.js';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -45,11 +46,14 @@ export const resolveProductImage = (product: Product | null | undefined): string
  * Utility to format currency in Spanish (Argentina).
  */
 export const formatCurrency = (amount: number): string => {
+  // Use decimal.js to handle precision safely before formatting
+  const preciseAmount = new Decimal(amount).toNumber();
+
   return new Intl.NumberFormat('es-AR', {
     style: 'currency',
     currency: 'ARS',
     minimumFractionDigits: 2,
-  }).format(amount);
+  }).format(preciseAmount);
 };
 
 /**

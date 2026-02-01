@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type DailyIPVReport } from '@/lib/dexie';
 import {
@@ -19,16 +19,53 @@ import {
   Plus,
   Calendar,
   Lock,
-  RotateCcw
+  RotateCcw,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { toast } from 'sonner';
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { v4 as uuidv4 } from 'uuid';
 
 export function IPVReportView() {
-  const reports = useLiveQuery(() => db.ipv_reports.orderBy('fecha_reporte').reverse().toArray());
+  const reports = useLiveQuery(() => db.ipv_reports.toArray());
+  const [sortConfig, setSortConfig] = useState<{ key: keyof DailyIPVReport; direction: 'asc' | 'desc' } | null>({ key: 'fecha_reporte', direction: 'desc' });
+
+  const handleSort = (key: keyof DailyIPVReport) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedData = React.useMemo(() => {
+    if (!reports) return [];
+    const data = [...reports];
+    if (sortConfig !== null) {
+      data.sort((a, b) => {
+        const aValue = a[sortConfig.key];
+        const bValue = b[sortConfig.key];
+
+        if (aValue === undefined || bValue === undefined) return 0;
+
+        if (aValue < bValue) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return data;
+  }, [reports, sortConfig]);
+
+  const getSortIcon = (key: keyof DailyIPVReport) => {
+    if (!sortConfig || sortConfig.key !== key) return <ArrowUpDown className="ml-2 h-4 w-4" />;
+    return sortConfig.direction === 'asc' ? <ArrowUp className="ml-2 h-4 w-4" /> : <ArrowDown className="ml-2 h-4 w-4" />;
+  };
 
   const generateReportForToday = async () => {
     const today = new Date().toISOString().split('T')[0];
@@ -104,70 +141,34 @@ export function IPVReportView() {
 
   const exportPDF = async (report: DailyIPVReport) => {
     try {
-      toast.loading('Generando PDF...', { id: 'pdf-gen' });
+      toast.loading('Solicitando PDF al servidor...', { id: 'pdf-gen' });
 
-      const doc = new jsPDF();
-      const pageWidth = doc.internal.pageSize.width;
-
-      // Header
-      doc.setFontSize(18);
-      doc.text('REPORTE IPV DIARIO', pageWidth / 2, 20, { align: 'center' });
-
-      doc.setFontSize(10);
-      doc.text(`Fecha del Reporte: ${report.fecha_reporte}`, 14, 30);
-      doc.text(`Estado: ${report.estado}`, 14, 35);
-      doc.text(`Generado el: ${new Date().toLocaleString()}`, 14, 40);
-
-      // Summary
-      doc.setFontSize(12);
-      doc.text('RESUMEN MONETARIO', 14, 50);
-
-      autoTable(doc, {
-        startY: 55,
-        head: [['Concepto', 'Monto']],
-        body: [
-          ['Total Ventas', `$ ${(report.total_ventas_cents / 100).toFixed(2)}`],
-          ['Resumen Efectivo', `$ ${(report.resumen_efectivo_cents / 100).toFixed(2)}`],
-          ['Resumen Transferencia', `$ ${(report.resumen_transferencia_cents / 100).toFixed(2)}`],
-        ],
-        theme: 'grid',
-        headStyles: { fillColor: [22, 163, 74] }
+      const response = await fetch('/api/ipv/pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(report),
       });
 
-      // Details Table
-      const tableData = report.filas.map((f: any) => [
-        f.cod,
-        f.descripcion,
-        f.um,
-        f.saldo_inicial_qty,
-        f.entrada_salida_qty,
-        f.venta_cantidad_qty,
-        `$ ${(f.precio_unitario_cents / 100).toFixed(2)}`,
-        `$ ${(f.importe_cents / 100).toFixed(2)}`,
-        f.existencia_final_qty
-      ]);
+      if (!response.ok) {
+        throw new Error('Error en la respuesta del servidor');
+      }
 
-      autoTable(doc, {
-        startY: (doc as any).lastAutoTable.finalY + 15,
-        head: [['Cod', 'Producto', 'UM', 'Inicial', 'E/S', 'Venta', 'Precio', 'Importe', 'Final']],
-        body: tableData,
-        theme: 'striped',
-        headStyles: { fillColor: [22, 163, 74] },
-        styles: { fontSize: 8 }
-      });
-
-      // Footer / Signatures
-      const finalY = (doc as any).lastAutoTable.finalY + 20;
-      doc.text('__________________________', 14, finalY);
-      doc.text('Firma Responsable', 14, finalY + 5);
-      doc.text(`Realizado por: ${report.firmas?.realizado_por || 'Sistema'}`, 14, finalY + 10);
-
-      doc.save(`IPV_${report.fecha_reporte}.pdf`);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `IPV_${report.fecha_reporte}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
 
       toast.success('PDF descargado exitosamente', { id: 'pdf-gen' });
     } catch (error) {
       console.error(error);
-      toast.error('Error al generar el PDF', { id: 'pdf-gen' });
+      toast.error('Error al generar el PDF en servidor', { id: 'pdf-gen' });
     }
   };
 
@@ -202,23 +203,33 @@ export function IPVReportView() {
         <Table className="data-table">
           <TableHeader>
             <TableRow>
-              <TableHead className="sticky-column-1">Fecha</TableHead>
-              <TableHead className="text-right">Total Ventas</TableHead>
-              <TableHead className="text-right">Efectivo</TableHead>
-              <TableHead className="text-right">Transferencias</TableHead>
-              <TableHead>Estado</TableHead>
+              <TableHead className="sticky-column-1 cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort('fecha_reporte')}>
+                <div className="flex items-center">Fecha {getSortIcon('fecha_reporte')}</div>
+              </TableHead>
+              <TableHead className="text-right cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort('total_ventas_cents')}>
+                <div className="flex items-center justify-end">Total Ventas {getSortIcon('total_ventas_cents')}</div>
+              </TableHead>
+              <TableHead className="text-right cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort('resumen_efectivo_cents')}>
+                <div className="flex items-center justify-end">Efectivo {getSortIcon('resumen_efectivo_cents')}</div>
+              </TableHead>
+              <TableHead className="text-right cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort('resumen_transferencia_cents')}>
+                <div className="flex items-center justify-end">Transferencias {getSortIcon('resumen_transferencia_cents')}</div>
+              </TableHead>
+              <TableHead className="cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort('estado')}>
+                <div className="flex items-center">Estado {getSortIcon('estado')}</div>
+              </TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {!reports || reports.length === 0 ? (
+            {sortedData.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                   No hay reportes generados.
                 </TableCell>
               </TableRow>
             ) : (
-              reports.map((r) => (
+              sortedData.map((r) => (
                 <TableRow key={r.id}>
                   <TableCell className="sticky-column-1 font-bold">
                     {formatDate(r.fecha_reporte)}

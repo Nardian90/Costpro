@@ -43,9 +43,12 @@ export class MatchingEngine {
 
     // PASS 0: Debitos (Comisiones)
     if (transaction.tipo === 'Db') {
-        const isCommission = transaction.observaciones.toLowerCase().includes('comision') ||
-                            transaction.observaciones.toLowerCase().includes('banca remota') ||
-                            transaction.observaciones.toLowerCase().includes('virtualbandec');
+        const obs = transaction.observaciones.toLowerCase();
+        const isCommission = obs.includes('comision') ||
+                            obs.includes('comisión') ||
+                            obs.includes('banca remota') ||
+                            obs.includes('virtualbandec') ||
+                            obs.includes('vbandec');
 
         if (isCommission) {
             logs.push(`PASS 0: Detectada comisión bancaria. Marcando como COMPLETO.`);

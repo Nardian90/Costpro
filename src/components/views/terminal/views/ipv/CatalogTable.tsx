@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Trash2, Search, HelpCircle, Info, Edit2, Check, X, Plus } from 'lucide-react';
+import { Trash2, Search, HelpCircle, Info, Edit2, Check, X, Plus, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { formatCurrency } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
@@ -29,13 +29,47 @@ export function CatalogTable() {
   const [searchTerm, setSearchTerm] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Product>>({});
+  const [sortConfig, setSortConfig] = useState<{ key: keyof Product; direction: 'asc' | 'desc' } | null>(null);
 
   const products = useLiveQuery(() => db.products.toArray());
 
-  const filtered = products?.filter(p =>
-    p.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.cod.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  const handleSort = (key: keyof Product) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedData = React.useMemo(() => {
+    let data = products?.filter(p =>
+        p.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.cod.toLowerCase().includes(searchTerm.toLowerCase())
+    ) || [];
+
+    if (sortConfig !== null) {
+      data.sort((a, b) => {
+        const aValue = a[sortConfig.key];
+        const bValue = b[sortConfig.key];
+
+        if (aValue === undefined || bValue === undefined) return 0;
+
+        if (aValue < bValue) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return data;
+  }, [products, searchTerm, sortConfig]);
+
+  const getSortIcon = (key: keyof Product) => {
+    if (!sortConfig || sortConfig.key !== key) return <ArrowUpDown className="ml-2 h-3 w-3" />;
+    return sortConfig.direction === 'asc' ? <ArrowUp className="ml-2 h-3 w-3" /> : <ArrowDown className="ml-2 h-3 w-3" />;
+  };
 
   const handleDelete = async (cod: string) => {
     if (confirm('¿Eliminar este producto del catálogo?')) {
@@ -160,18 +194,32 @@ export function CatalogTable() {
         <Table className="data-table">
           <TableHeader>
             <TableRow>
-              <TableHead className="sticky-column-1">Código</TableHead>
-              <TableHead>Descripción</TableHead>
-              <TableHead>UM</TableHead>
-              <TableHead className="text-center">Paquete</TableHead>
-              <TableHead className="text-right">Precio</TableHead>
-              <TableHead className="text-center">Prioridad</TableHead>
-              <TableHead className="text-center">Estado</TableHead>
+              <TableHead className="sticky-column-1 cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort('cod')}>
+                <div className="flex items-center">Código {getSortIcon('cod')}</div>
+              </TableHead>
+              <TableHead className="cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort('descripcion')}>
+                <div className="flex items-center">Descripción {getSortIcon('descripcion')}</div>
+              </TableHead>
+              <TableHead className="cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort('um')}>
+                <div className="flex items-center">UM {getSortIcon('um')}</div>
+              </TableHead>
+              <TableHead className="text-center cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort('es_paquete')}>
+                <div className="flex items-center justify-center">Paquete {getSortIcon('es_paquete')}</div>
+              </TableHead>
+              <TableHead className="text-right cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort('precio_cents')}>
+                <div className="flex items-center justify-end">Precio {getSortIcon('precio_cents')}</div>
+              </TableHead>
+              <TableHead className="text-center cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort('prioridad_algoritmo')}>
+                <div className="flex items-center justify-center">Prioridad {getSortIcon('prioridad_algoritmo')}</div>
+              </TableHead>
+              <TableHead className="text-center cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort('activo')}>
+                <div className="flex items-center justify-center">Estado {getSortIcon('activo')}</div>
+              </TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.length === 0 ? (
+            {sortedData.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
                   No hay productos en el catálogo.
@@ -258,7 +306,7 @@ export function CatalogTable() {
                     </TableCell>
                   </TableRow>
               )}
-              {filtered.map((p) => {
+              {sortedData.map((p) => {
                 const isEditing = editingId === p.cod;
 
                 return (

@@ -238,100 +238,24 @@ export function BankIngestion() {
   };
 
   const loadDemoStatement = async () => {
-      const products = await db.products.toArray();
-      if (products.length === 0) {
-          toast.error('Primero debes cargar el catálogo (puedes usar el botón Productos Demo)');
-          return;
-      }
-
-      const today = new Date();
-      const demoTxs: BankTransaction[] = [];
-
-      // Estandarizado a YYYY-MM-DD
-      const fmtDate = (date: Date) => {
-          return date.toISOString().split('T')[0];
-      };
-
-      // 1. Transacción con Referencia Directa (HARD_REF)
-      const beer = products.find(p => p.cod === '1');
-      if (beer) {
-          const ref = `VB${Math.random().toString(36).substring(7).toUpperCase()}`;
-          const cents = beer.precio_cents * 5; // 5 cervezas
-          demoTxs.push({
-              id: uuidv4(),
-              fecha: fmtDate(today),
-              referencia_corta: ref,
-              referencia_origen: ref,
-              observaciones: `PAGO A COMERCIO: 4277505 - COMPRA 5 UNID COD:${beer.cod}`,
-              importe_cents: cents,
-              tipo: 'Cr',
-              estado_conciliacion: 'PENDIENTE',
-              created_at: new Date().toISOString(),
-              ingestion_hash: await generateHash(`DEMO-HARD-${ref}`)
-          });
-      }
-
-      // 2. Transacción para Suma Exacta (EXACT_SUM)
-      // Buscamos una combinación: 1 Caja de Windmil ($5,760) + 1 Tigon ($320) = $6,080
-      const box = products.find(p => p.cod === '1-C');
-      const tigon = products.find(p => p.cod === '3');
-      if (box && tigon) {
-          const ref = `VB${Math.random().toString(36).substring(7).toUpperCase()}`;
-          const cents = box.precio_cents + tigon.precio_cents;
-          demoTxs.push({
-              id: uuidv4(),
-              fecha: fmtDate(today),
-              referencia_corta: ref,
-              referencia_origen: ref,
-              observaciones: `TRANSFERENCIA RECIBIDA - CLIENTE: JUAN PEREZ`,
-              importe_cents: cents,
-              tipo: 'Cr',
-              estado_conciliacion: 'PENDIENTE',
-              created_at: new Date().toISOString(),
-              ingestion_hash: await generateHash(`DEMO-SUM-${ref}`)
-          });
-      }
-
-      // 3. Comisión Bancaria (Debito)
-      const refDb = `VB${Math.random().toString(36).substring(7).toUpperCase()}`;
-      demoTxs.push({
-          id: uuidv4(),
-          fecha: fmtDate(today),
-          referencia_corta: refDb,
-          referencia_origen: refDb,
-          observaciones: `Cobro por utilizacion del Servicio de Banca Remota. Comision 100.00`,
-          importe_cents: 10000,
-          tipo: 'Db',
-          estado_conciliacion: 'PENDIENTE',
-          created_at: new Date().toISOString(),
-          ingestion_hash: await generateHash(`DEMO-DB-${refDb}`)
-      });
-
-      // 4. Transacción con Tolerancia
-      // Caja Bavaria ($6,000) pero recibimos $5,999 (-$1.00 de supuesta comisión extra)
-      const bavaria = products.find(p => p.cod === '4-C');
-      if (bavaria) {
-          const ref = `VB${Math.random().toString(36).substring(7).toUpperCase()}`;
-          demoTxs.push({
-              id: uuidv4(),
-              fecha: fmtDate(today),
-              referencia_corta: ref,
-              referencia_origen: ref,
-              observaciones: `PAGO QR COMERCIO - REF: ${ref}`,
-              importe_cents: bavaria.precio_cents - 100, // Falta $1.00
-              tipo: 'Cr',
-              estado_conciliacion: 'PENDIENTE',
-              created_at: new Date().toISOString(),
-              ingestion_hash: await generateHash(`DEMO-TOL-${ref}`)
-          });
-      }
-
-      try {
-          await db.bank_statements.bulkAdd(demoTxs);
-          toast.success(`Se han generado ${demoTxs.length} transacciones demo`);
-      } catch (error) {
-          toast.error('Error al generar transacciones demo');
-      }
+      const demoTxs = [
+          { Fecha: '01/08/2025', Ref_Corriente: 'HC50000147646', Ref_Origen: 'HC50000147646', Observaciones: 'CIERRE DE LA CUENTA 40311950016301 A NOMBRE DE: Jesús Alejandro Morales Agramonte No. IDENT:97122416786 FECHA DE CIERRE: 01/08/25 Que se acredita a cuenta corriente de la MPM JESMARKMC SURL 40313480004217', Importe: '150,000.00', Tipo: 'Cr' },
+          { Fecha: '11/09/2025', Ref_Corriente: 'VB50052672646', Ref_Origen: 'VB50052672646', Observaciones: 'Ordenante: jesmarkmc S.U.R.L. Acreditando a: 0664642122740113 Detalles: UPR ingreso registro central comercial Las tunas Firma: 67D1342C55DA523BF1F1A6E58E91F024 Ejecutado por: JESÚS ALEJANDRO MORALES AGRAMONTE Autorizado por: JESÚS ALEJANDRO MORALES AGRAMONTE', Importe: '2,040.00', Tipo: 'Db' },
+          { Fecha: '11/09/2025', Ref_Corriente: 'VB50052681646', Ref_Origen: 'VB50052681646', Observaciones: 'Ordenante: jesmarkmc S.U.R.L. Acreditando a: 0664642122740113 Detalles: UPR ingreso registro central comercial las tunas Firma: D8B0E9DCA56C6DFD75F776335F06EB7C Ejecutado por: JESÚS ALEJANDRO MORALES AGRAMONTE Autorizado por: JESÚS ALEJANDRO MORALES AGRAMONTE', Importe: '150.00', Tipo: 'Db' },
+          { Fecha: '12/09/2025', Ref_Corriente: 'VB50053024646', Ref_Origen: 'C525527238646', Observaciones: 'Cobro por utilizacion del Servicio de Banca Remota (VirtualBANDEC) correspondiente a Septiembre/2025. Comision (052) 100.00', Importe: '100.00', Tipo: 'Db' },
+          { Fecha: '16/09/2025', Ref_Corriente: 'VB50054287646', Ref_Origen: 'VB50054287646', Observaciones: 'Ordenante: jesmarkmc S.U.R.L. Acreditando a: 0664655210964619 Detalles: Comisión por personalizar 4 tarjetas de salario mypime jesmarkmc Firma: 0ED0CBA2B8E6D6C718A40A1877993DE0 Ejecutado por: JESÚS ALEJANDRO MORALES AGRAMONTE Autorizado por: JESÚS ALEJANDRO MORALES AGRAMONTE', Importe: '60.00', Tipo: 'Db' },
+          { Fecha: '13/10/2025', Ref_Corriente: 'VB50058853646', Ref_Origen: 'C528630901646', Observaciones: 'Cobro por utilizacion del Servicio de Banca Remota (VirtualBANDEC) correspondiente a Octubre/2025. Comision (052) 100.00', Importe: '100.00', Tipo: 'Db' },
+          { Fecha: '09/09/2025', Ref_Corriente: 'YR50003264646', Ref_Origen: '98025A4426808', Observaciones: '[COD_ORIGEN:12]<RCSLBTR_102><ID_MENSAJE>000625009R8L</ID_MENSAJE><REF_TRASOC>98025A4426808</REF_TRASOC><REF_UNICA>98025A4426808</REF_UNICA><MON_TRANSA MONEDA="CUP" IMPORTE="0.98"/><CLI_ORDENA COD_SUCU="997" NUM_CUENTA="" OTR_DATOS="@|31|@"/><CLI_BENEFI COD_SUCU="646" NUM_CUENTA="0664634000421716" OTR_DATOS="BPA. PAGO A COMERCIO:4277505"/><DET_PAGO>BPA. PAGO A COMERCIO:4277505-JESMARKMC SURL. FECHA:08/09/25. CANT OPE:1 IMP:1.00. COMI:0.02. PAGO SERVICIO 20-PAGO EN LINEA</DET_PAGO><IMP_ORIGIN MONEDA=" " IMPORTE="0.00"/><DET_GASTO>SHA</DET_GASTO><TASA_CAMBIO>0.00000</TASA_CAMBIO></RCSLBTR_102>', Importe: '0.98', Tipo: 'Cr' },
+          { Fecha: '17/10/2025', Ref_Corriente: 'YY50110793646', Ref_Origen: 'KW502013PU999', Observaciones: 'CREDITO RECIBIDO POR CORREO ELECTRONICO [DEBITO:40311150851399] TRANSFERENCIA EMITIDA POR BANCA MOVIL Tarjeta#: 922406XXXXXX3995ID:0664634000421716IDCUBACEL:2824577444TS:07-TransferenciaFECHA FACTURA: 1025INF_RECIBO:TRANSFERENCIA A TERCEROS MEDIANTE TARJETA MAGNETICA ORDENANTE NOMBRE:BEXI C. CALDERON TAMAYO| CI:94072441791 | Tarjeta RED:9224069997513995', Importe: '800.00', Tipo: 'Cr' },
+          { Fecha: '17/10/2025', Ref_Corriente: 'YY50110803646', Ref_Origen: 'KW50201E99999', Observaciones: 'CREDITO RECIBIDO POR CORREO ELECTRONICO [DEBITO:40311250397534] TRANSFERENCIA EMITIDA POR BANCA MOVIL Tarjeta#: 920406XXXXXX8559ID:0664634000421716IDCUBACEL:2824800874TS:07-TransferenciaFECHA FACTURA: 1025INF_RECIBO:TRANSFERENCIA A TERCEROS MEDIANTE TARJETA MAGNETICA ORDENANTE NOMBRE:YORDANI NAPOLES TORRES| CI:85032819947 | Tarjeta RED:9204069995478559', Importe: '600.00', Tipo: 'Cr' },
+          { Fecha: '17/10/2025', Ref_Corriente: 'YY50110833646', Ref_Origen: 'KW50201S2Q999', Observaciones: 'CREDITO RECIBIDO POR CORREO ELECTRONICO [DEBITO:40311250274353] TRANSFERENCIA EMITIDA POR BANCA MOVIL Tarjeta#: 920406XXXXXX8330ID:0664634000421716IDCUBACEL:2825115624TS:07-TransferenciaFECHA FACTURA: 1025INF_RECIBO:TRANSFERENCIA A TERCEROS MEDIANTE TARJETA MAGNETICA ORDENANTE NOMBRE:ALICIA YABOR PALOMO| CI:61100603319 | Tarjeta RED:9204069993868330', Importe: '980.00', Tipo: 'Cr' },
+          { Fecha: '17/10/2025', Ref_Corriente: 'YY50110874646', Ref_Origen: 'KW50200HAZ999', Observaciones: 'CREDITO RECIBIDO POR CORREO ELECTRONICO [DEBITO:40311250596029] TRANSFERENCIA EMITIDA POR BANCA MOVIL Tarjeta#: 920406XXXXXX7861ID:0664634000421716IDCUBACEL:2824043522TS:07-TransferenciaFECHA FACTURA: 1025INF_RECIBO:TRANSFERENCIA A TERCEROS MEDIANTE TARJETA MAGNETICA ORDENANTE NOMBRE:YOEL O. MONTAQUE PEREZ| CI:75022317107 | Tarjeta RED:9204069998237861', Importe: '1,550.00', Tipo: 'Cr' },
+          { Fecha: '17/10/2025', Ref_Corriente: 'YR50003746646', Ref_Origen: '98025A5075166', Observaciones: '[COD_ORIGEN:12]<RCSLBTR_102><ID_MENSAJE>00062500B0RF</ID_MENSAJE><REF_TRASOC>98025A5075166</REF_TRASOC><REF_UNICA>98025A5075166</REF_UNICA><MON_TRANSA MONEDA="CUP" IMPORTE="920.00"/><CLI_ORDENA COD_SUCU="997" NUM_CUENTA="9204129978181644" OTR_DATOS=""/><CLI_BENEFI COD_SUCU="646" NUM_CUENTA="0664634000421716" OTR_DATOS=""/><DET_PAGO>TRANSFERENCIA POR BANCAMOVIL-BPA. ORDENADA POR: JORGE J. FERNANDEZ T. PAN: 920412XXXXXX1644 ID_CUBACEL: 2825128684 5358156312 BENEFICIARIO: 0664634000421716</DET_PAGO><IMP_ORIGIN MONEDA=" " IMPORTE="0.00"/><DET_GASTO>SHA</DET_GASTO><TASA_CAMBIO>0.00000</TASA_CAMBIO></RCSLBTR_102>', Importe: '920.00', Tipo: 'Cr' },
+          { Fecha: '20/10/2025', Ref_Corriente: 'YY50111409646', Ref_Origen: 'KW5020BL19999', Observaciones: 'CREDITO RECIBIDO POR CORREO ELECTRONICO [DEBITO:40311250643636] TRANSFERENCIA EMITIDA POR BANCA MOVIL Tarjeta#: 920406XXXXXX0800ID:0664634000421716IDCUBACEL:2833096714TS:07-TransferenciaFECHA FACTURA: 1025INF_RECIBO:TRANSFERENCIA A TERCEROS MEDIANTE TARJETA MAGNETICA ORDENANTE NOMBRE:MAGDELIVIA CRUZ DURAnON| CI:78090623854 | Tarjeta RED:9204069998890800', Importe: '520.00', Tipo: 'Cr' },
+          { Fecha: '20/10/2025', Ref_Corriente: 'YY50111424646', Ref_Origen: 'KW5020C8G4999', Observaciones: 'CREDITO RECIBIDO POR CORREO ELECTRONICO [DEBITO:40311250576143] TRANSFERENCIA EMITIDA POR BANCA MOVIL Tarjeta#: 920406XXXXXX2749ID:0664634000421716IDCUBACEL:2833622842TS:07-TransferenciaFECHA FACTURA: 1025INF_RECIBO:TRANSFERENCIA A TERCEROS MEDIANTE TARJETA MAGNETICA ORDENANTE NOMBRE:ANGEL M. VERANES ALONSO| CI:77090121269 | Tarjeta RED:9204069997982749', Importe: '1,470.00', Tipo: 'Cr' },
+          { Fecha: '20/10/2025', Ref_Corriente: 'YY50111433646', Ref_Origen: 'KW5020CDXW999', Observaciones: 'CREDITO RECIBIDO POR CORREO ELECTRONICO [DEBITO:40313180209529] TRANSFERENCIA EMITIDA POR BANCA MOVIL Tarjeta#: 921206XXXXXX7748ID:0664634000421716IDCUBACEL:2833755982TS:07-TransferenciaFECHA FACTURA: 1025INF_RECIBO:TRANSFERENCIA A TERCEROS MEDIANTE TARJETA MAGNETICA ORDENANTE NOMBRE:YULEISIS WATSON GOULET| CI:80041817410 | Tarjeta RED:9212069991527748', Importe: '1,650.00', Tipo: 'Cr' },
+      ];
+      await processBankData(demoTxs);
   };
 
   const importDefaultProducts = async () => {
