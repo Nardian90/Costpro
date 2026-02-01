@@ -9,6 +9,8 @@ export interface BankTransaction {
   referencia_origen: string;   // UNIQUE
   observaciones: string;
   importe_cents: number;       // EN CENTAVOS (integer)
+  comision_cents?: number;     // Extraído de observaciones "comis X.XX"
+  importe_venta_cents?: number; // importe_cents + comision_cents
   tipo: 'Cr' | 'Db';
   estado_conciliacion: 'PENDIENTE' | 'PARCIAL' | 'COMPLETO';
   ipv_id?: string;             // FK ipv_reports.id
@@ -130,7 +132,7 @@ export class IPVDatabase extends Dexie {
 
   constructor() {
     super('IPVDB');
-    this.version(3).stores({
+    this.version(4).stores({
       bank_statements: '&referencia_origen, fecha, importe_cents, ingestion_hash',
       products: '&cod, descripcion, precio_cents, prioridad_algoritmo, activo, stock_inicial_manual',
       matching_rules: '&id, tipo, prioridad',

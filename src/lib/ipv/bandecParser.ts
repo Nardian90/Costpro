@@ -103,6 +103,19 @@ async function finalizeTx(tx: BankTransaction, buffer: string[]): Promise<BankTr
         .trim();
 
     tx.observaciones = cleanObs;
+
+    // Extract commission "comis X.XX"
+    const comisMatch = cleanObs.match(/comis\s*([0-9,.]+)/i);
+    if (comisMatch) {
+        const comisStr = comisMatch[1].replace(/,/g, '');
+        const comisCents = Math.round(parseFloat(comisStr) * 100);
+        tx.comision_cents = comisCents;
+        tx.importe_venta_cents = tx.importe_cents + comisCents;
+    } else {
+        tx.comision_cents = 0;
+        tx.importe_venta_cents = tx.importe_cents;
+    }
+
     tx.ingestion_hash = await generateHash(`${tx.referencia_origen}-${tx.fecha}-${tx.importe_cents}`);
 
     return tx;
