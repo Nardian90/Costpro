@@ -643,3 +643,24 @@ export const getAuditLogsParamsSchema = z.object({
   p_date_to: z.string().nullable(),
   p_limit: z.number().int().positive().optional().default(1000),
 });
+
+export const getTransactionsParamsSchema = z.object({
+  p_store_id: resilientUuid,
+  p_limit: z.number().int().positive().optional().default(1000),
+});
+
+export const getDashboardKpisParamsSchema = z.object({
+  p_store_id: resilientUuid,
+  p_date_from: z.string().nullable().optional(),
+  p_date_to: z.string().nullable().optional(),
+});
+
+export const taxConfigurationSchema = z.object({
+  id: z.string().regex(uuidRegex),
+  name: z.string(),
+  type: z.enum(['fixed', 'percentage']),
+  value: z.coerce.number(),
+  min_exempt: z.coerce.number().optional().nullable(),
+  is_active: z.boolean().default(true),
+  store_id: optionalResilientUuid,
+});
