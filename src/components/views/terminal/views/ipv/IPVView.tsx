@@ -20,6 +20,8 @@ import {
 import { BankIngestion } from './BankIngestion';
 import { TransactionTable } from './TransactionTable';
 import { CatalogTable } from './CatalogTable';
+import { MatchingSimulation } from './MatchingSimulation';
+import { TransactionBreakdown } from './TransactionBreakdown';
 import { IPVReportView } from './IPVReportView';
 import { MatchingRulesEditor } from './MatchingRulesEditor';
 import { CashAdjustmentsTable } from './CashAdjustmentsTable';
@@ -280,6 +282,8 @@ export default function IPVView() {
             <div className="flex overflow-x-auto pb-3 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent sm:pb-0">
                 <TabsList className="flex w-max min-w-full lg:grid lg:grid-cols-8 lg:max-w-[1300px] bg-muted/50 p-1 rounded-xl h-auto sm:h-10">
                     <TabsTrigger value="transactions" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest">Transacciones</TabsTrigger>
+                    <TabsTrigger value="sim" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest">Simulación</TabsTrigger>
+                    <TabsTrigger value="breakdown" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest">Desglose</TabsTrigger>
                     <TabsTrigger value="pivot" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest">Consolidado</TabsTrigger>
                     <TabsTrigger value="catalog" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest">Catálogo</TabsTrigger>
                     <TabsTrigger value="ingestion" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest text-nowrap">Extracto</TabsTrigger>
@@ -306,6 +310,14 @@ export default function IPVView() {
               kpiFilter={kpiFilter}
               txReconciliationTotals={txTotals}
             />
+          </TabsContent>
+
+          <TabsContent value="sim" className="m-0">
+            <MatchingSimulation products={products || []} rules={rules || []} />
+          </TabsContent>
+
+          <TabsContent value="breakdown" className="m-0">
+            <TransactionBreakdown />
           </TabsContent>
 
           <TabsContent value="pivot" className="m-0">

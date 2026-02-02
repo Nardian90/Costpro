@@ -15,7 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Trash2, Search, HelpCircle, Info, Edit2, Check, X, Plus, RefreshCw, LayoutGrid, List, AlertTriangle } from 'lucide-react';
+import { Trash2, Search, HelpCircle, Info, Edit2, Check, X, Plus, RefreshCw, LayoutGrid, List, AlertTriangle, Brain, Sparkles, Star } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { formatCurrency } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
@@ -24,6 +24,12 @@ import { supabase } from '@/lib/supabaseClient';
 import { useStores } from '@/hooks/api/useStores';
 import { useAuthStore } from '@/store';
 import { hasRole } from '@/lib/roles';
+import {
+    calculatePriceEffectiveness,
+    suggestAlternativePrice,
+    checkWildcardCandidate,
+    calculateDynamicPriority
+} from '@/lib/ipv/intelligence';
 import {
   Tooltip,
   TooltipContent,
@@ -120,10 +126,12 @@ export function CatalogTable() {
           es_paquete: false,
           contenido_paquete: 1,
           precio_cents: 0,
-          prioridad_algoritmo: 1,
+          prioridad_algoritmo: 3,
           activo: true,
           stock_inicial_manual: 0,
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
+          priorityMode: 'manual',
+          isWildcardCandidate: false
       };
       setEditingId('NEW');
       setEditForm(newProd);
@@ -162,6 +170,43 @@ export function CatalogTable() {
   const clearCatalog = async () => {
     if (confirm('¿ESTÁS SEGURO? Se borrará TODO el catálogo cargado actualmente.')) {
         await db.products.clear();
+    }
+  };
+
+  const handleRecalculateIntelligence = async () => {
+    if (!products || !reconciliationLines) return;
+
+    setIsSyncing(true);
+    toast.loading('Analizando catálogo...', { id: 'intel' });
+
+    try {
+        for (const p of products) {
+            const score = calculatePriceEffectiveness(p, reconciliationLines);
+            const suggestion = suggestAlternativePrice(p);
+            const isWildcard = checkWildcardCandidate(p);
+
+            const stats = inventoryStats[p.cod] || { initial: 0, sales: 0, final: 0 };
+            const autoPriority = calculateDynamicPriority(p, {
+                stock: stats.final,
+                salesQty: stats.sales,
+                salesValue: stats.sales * p.precio_cents
+            });
+
+            await db.products.update(p.cod, {
+                priceEffectivenessScore: score,
+                suggestedPrice: suggestion.price,
+                suggestionReason: suggestion.reason,
+                isWildcardCandidate: isWildcard,
+                prioridad_algoritmo: p.priorityMode === 'auto' || p.priorityMode === 'hybrid' ? autoPriority : p.prioridad_algoritmo,
+                ventas_qty_historico: stats.sales,
+                ventas_valor_historico: stats.sales * p.precio_cents
+            });
+        }
+        toast.success('Inteligencia de catálogo actualizada', { id: 'intel' });
+    } catch (error) {
+        toast.error('Error al calcular inteligencia');
+    } finally {
+        setIsSyncing(false);
     }
   };
 
@@ -335,6 +380,17 @@ export function CatalogTable() {
                 <span className="hidden sm:inline">Recalcular IPVs</span>
                 <span className="sm:hidden">Recalcular</span>
             </Button>
+
+            <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRecalculateIntelligence}
+                disabled={isSyncing}
+                className="h-12 sm:h-10 text-[10px] uppercase font-black tracking-widest gap-2 text-purple-500 border-purple-200 hover:bg-purple-50 flex-1 sm:flex-none"
+            >
+                <Brain className={`w-4 h-4 ${isSyncing ? 'animate-pulse' : ''}`} />
+                <span>Inteligencia</span>
+            </Button>
         </div>
       </div>
 
@@ -352,13 +408,12 @@ export function CatalogTable() {
                 <TableRow>
                 <TableHead className="sticky-column-1">Código</TableHead>
                 <TableHead>Descripción</TableHead>
-                <TableHead>UM</TableHead>
-                <TableHead className="text-center">Paquete</TableHead>
+                <TableHead>Efectividad</TableHead>
+                <TableHead>Sugerencia</TableHead>
                 <TableHead className="text-right">Precio</TableHead>
-                <TableHead className="text-right">Inicial</TableHead>
-                <TableHead className="text-right">Ventas</TableHead>
-                <TableHead className="text-right">Final</TableHead>
+                <TableHead className="text-right">Stock Final</TableHead>
                 <TableHead className="text-center">Prioridad</TableHead>
+                <TableHead className="text-center">Comodín</TableHead>
                 <TableHead className="text-center">Estado</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
@@ -465,46 +520,58 @@ export function CatalogTable() {
 
                         <TableCell>
                         {isEditing ? (
-                            <Input
-                                value={editForm.descripcion}
-                                onChange={e => setEditForm({...editForm, descripcion: e.target.value})}
-                                className="h-8 text-xs min-w-[200px]"
-                            />
+                            <div className="space-y-2">
+                                <Input
+                                    value={editForm.descripcion}
+                                    onChange={e => setEditForm({...editForm, descripcion: e.target.value})}
+                                    className="h-8 text-xs min-w-[200px]"
+                                />
+                                <div className="flex gap-2">
+                                    <Input
+                                        placeholder="Categoría"
+                                        value={editForm.categoria || ''}
+                                        onChange={e => setEditForm({...editForm, categoria: e.target.value})}
+                                        className="h-7 text-[10px] w-full"
+                                    />
+                                </div>
+                            </div>
                         ) : (
-                            <div className="text-xs font-bold">{p.descripcion}</div>
+                            <div>
+                                <div className="text-xs font-bold">{p.descripcion}</div>
+                                {p.categoria && <Badge variant="secondary" className="text-[8px] h-3 px-1 mt-1 opacity-70 uppercase">{p.categoria}</Badge>}
+                            </div>
                         )}
                         </TableCell>
 
                         <TableCell>
-                            {isEditing ? (
-                                <Input
-                                    value={editForm.um}
-                                    onChange={e => setEditForm({...editForm, um: e.target.value})}
-                                    className="h-8 w-24 text-[10px] uppercase"
-                                />
-                            ) : (
-                                <Badge variant="outline" className="text-[10px] uppercase font-bold">{p.um}</Badge>
+                            {!isEditing && p.priceEffectivenessScore !== undefined && (
+                                <div className="flex items-center gap-2">
+                                    <div className="w-12 h-1.5 bg-muted rounded-full overflow-hidden">
+                                        <div
+                                            className={`h-full ${p.priceEffectivenessScore > 70 ? 'bg-green-500' : p.priceEffectivenessScore > 40 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                                            style={{ width: `${p.priceEffectivenessScore}%` }}
+                                        />
+                                    </div>
+                                    <span className="text-[10px] font-black">{p.priceEffectivenessScore}</span>
+                                </div>
                             )}
                         </TableCell>
 
-                        <TableCell className="text-center">
-                            {isEditing ? (
-                                <div className="flex flex-col items-center gap-1">
-                                    <Switch
-                                        checked={editForm.es_paquete}
-                                        onCheckedChange={checked => setEditForm({...editForm, es_paquete: checked})}
-                                    />
-                                    {editForm.es_paquete && (
-                                        <Input
-                                            type="number"
-                                            value={editForm.contenido_paquete}
-                                            onChange={e => setEditForm({...editForm, contenido_paquete: Number(e.target.value)})}
-                                            className="h-7 w-12 text-[10px] text-center"
-                                        />
-                                    )}
-                                </div>
-                            ) : (
-                                p.es_paquete ? <span className="text-[10px] font-black text-primary">X{p.contenido_paquete}</span> : <span className="text-[10px] text-muted-foreground opacity-20">-</span>
+                        <TableCell>
+                            {!isEditing && p.suggestedPrice && (
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Badge className="bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 border-purple-500/20 gap-1 cursor-help">
+                                                <Sparkles className="w-3 h-3" />
+                                                {p.suggestedPrice}
+                                            </Badge>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p className="text-xs max-w-xs">{p.suggestionReason}</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
                             )}
                         </TableCell>
 
@@ -525,36 +592,51 @@ export function CatalogTable() {
                             )}
                         </TableCell>
 
-                        <TableCell className="text-right">
-                            {isEditing ? (
-                                <Input
-                                    type="number"
-                                    value={editForm.stock_inicial_manual || 0}
-                                    onChange={e => setEditForm({...editForm, stock_inicial_manual: Number(e.target.value)})}
-                                    className="h-8 w-16 text-right text-xs"
-                                />
-                            ) : (
-                                <span className="text-xs font-bold text-muted-foreground">{stats.initial}</span>
-                            )}
-                        </TableCell>
-                        <TableCell className="text-right text-xs font-bold text-orange-500">{stats.sales}</TableCell>
                         <TableCell className={`text-right text-xs font-black ${stats.final < 0 ? 'text-red-500' : 'text-primary'}`}>
                             {stats.final}
                         </TableCell>
 
                         <TableCell className="text-center">
                             {isEditing ? (
-                                <select
-                                    value={editForm.prioridad_algoritmo}
-                                    onChange={e => setEditForm({...editForm, prioridad_algoritmo: Number(e.target.value)})}
-                                    className="h-8 rounded-md border border-input bg-background px-2 text-xs"
-                                >
-                                    {[1, 2, 3, 4, 5].map(v => <option key={v} value={v}>{v}</option>)}
-                                </select>
+                                <div className="flex flex-col gap-1 items-center">
+                                    <select
+                                        value={editForm.priorityMode || 'manual'}
+                                        onChange={e => setEditForm({...editForm, priorityMode: e.target.value as any})}
+                                        className="h-7 rounded border bg-background px-1 text-[9px] uppercase font-bold"
+                                    >
+                                        <option value="manual">Manual</option>
+                                        <option value="auto">Auto</option>
+                                        <option value="hybrid">Híbrido</option>
+                                    </select>
+                                    <select
+                                        value={editForm.prioridad_algoritmo}
+                                        onChange={e => setEditForm({...editForm, prioridad_algoritmo: Number(e.target.value)})}
+                                        className="h-7 rounded-md border border-input bg-background px-2 text-xs"
+                                        disabled={editForm.priorityMode === 'auto'}
+                                    >
+                                        {[1, 2, 3, 4, 5].map(v => <option key={v} value={v}>{v}</option>)}
+                                    </select>
+                                </div>
                             ) : (
-                                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-[10px] font-black">
-                                    {p.prioridad_algoritmo}
-                                </span>
+                                <div className="flex flex-col items-center gap-1">
+                                    <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full ${p.priorityMode === 'auto' ? 'bg-purple-100 text-purple-700' : 'bg-primary/10 text-primary'} text-[10px] font-black shadow-sm`}>
+                                        {p.prioridad_algoritmo}
+                                    </span>
+                                    {p.priorityMode && p.priorityMode !== 'manual' && (
+                                        <span className="text-[8px] font-bold text-muted-foreground uppercase opacity-50">{p.priorityMode}</span>
+                                    )}
+                                </div>
+                            )}
+                        </TableCell>
+
+                        <TableCell className="text-center">
+                            {isEditing ? (
+                                <Switch
+                                    checked={editForm.isWildcardCandidate}
+                                    onCheckedChange={checked => setEditForm({...editForm, isWildcardCandidate: checked})}
+                                />
+                            ) : (
+                                p.isWildcardCandidate ? <Star className="w-4 h-4 text-yellow-500 fill-yellow-500 mx-auto" /> : <span className="opacity-10">-</span>
                             )}
                         </TableCell>
 
@@ -616,9 +698,21 @@ export function CatalogTable() {
 function ProductCard({ product, stats, isEditing, editForm, setEditForm, onSave, onCancel, onEdit, onDelete }: any) {
     return (
         <Card className={`p-4 space-y-4 border-none shadow-md bg-card/50 backdrop-blur-sm relative overflow-hidden ${isEditing ? 'ring-2 ring-primary' : ''}`}>
+            {product.isWildcardCandidate && (
+                <div className="absolute top-0 right-0 p-1">
+                    <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                </div>
+            )}
             <div className="flex justify-between items-start">
                 <div>
-                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">{product.cod}</p>
+                    <div className="flex items-center gap-2">
+                        <p className="text-[10px] font-black text-primary uppercase tracking-widest">{product.cod}</p>
+                        {product.priceEffectivenessScore !== undefined && (
+                            <Badge variant="outline" className="text-[8px] h-3 px-1 border-primary/20 bg-primary/5">
+                                Eff: {product.priceEffectivenessScore}%
+                            </Badge>
+                        )}
+                    </div>
                     {isEditing ? (
                         <Input
                             value={editForm.descripcion}
