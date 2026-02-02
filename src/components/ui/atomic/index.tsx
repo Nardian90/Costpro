@@ -145,7 +145,7 @@ export const CategoryChips: React.FC<{
         type="button"
         onClick={() => onCategoryChange('')}
         className={cn(
-          "px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border shrink-0",
+          "px-5 py-3 min-h-[44px] rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border shrink-0 flex items-center justify-center",
           selectedCategory === ''
             ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20"
             : "bg-background text-muted-foreground border-border hover:bg-muted"
@@ -159,7 +159,7 @@ export const CategoryChips: React.FC<{
           type="button"
           onClick={() => onCategoryChange(cat)}
           className={cn(
-            "px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border shrink-0",
+            "px-5 py-3 min-h-[44px] rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border shrink-0 flex items-center justify-center",
             selectedCategory === cat
               ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20"
               : "bg-background text-muted-foreground border-border hover:bg-muted"
