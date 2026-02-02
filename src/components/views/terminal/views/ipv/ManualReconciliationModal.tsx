@@ -181,11 +181,11 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                             </DialogDescription>
                         </div>
                         <div className="text-right">
-                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Importe Meta (Venta)</p>
-                            <p className="text-2xl font-black text-primary">{formatCurrency(targetAmount / 100)}</p>
+                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Importe Meta (Cents)</p>
+                            <p className="text-2xl font-black text-primary">{targetAmount}</p>
                             {transaction.comision_cents ? (
                                 <p className="text-[10px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded mt-1">
-                                    Banco: {formatCurrency(transaction.importe_cents / 100)} + Comis: {formatCurrency(transaction.comision_cents / 100)}
+                                    Banco: {transaction.importe_cents} + Comis: {transaction.comision_cents}
                                 </p>
                             ) : null}
                         </div>
@@ -193,13 +193,13 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
 
                     <div className="flex gap-3 md:gap-4 mt-4">
                         <div className="flex-1 p-3 md:p-4 bg-primary/5 rounded-2xl border border-primary/10 flex flex-col">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Monto Conciliado</span>
-                            <span className="text-xl font-black text-green-600">{formatCurrency(currentTotal / 100)}</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Cents Conciliados</span>
+                            <span className="text-xl font-black text-green-600">{currentTotal}</span>
                         </div>
                         <div className="flex-1 p-3 md:p-4 bg-orange-500/5 rounded-2xl border border-orange-500/10 flex flex-col">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Restante por Asignar</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Restante (Cents)</span>
                             <span className={`text-xl font-black ${remaining === 0 ? 'text-green-600' : 'text-orange-600'}`}>
-                                {formatCurrency(remaining / 100)}
+                                {remaining}
                             </span>
                         </div>
                     </div>
@@ -244,7 +244,7 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-3">
-                                            <span className="font-black text-sm text-foreground">{formatCurrency(p.precio_cents / 100)}</span>
+                                            <span className="font-black text-sm text-foreground">{p.precio_cents}</span>
                                             <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <Plus className="w-4 h-4 text-primary" />
                                             </div>
@@ -268,11 +268,11 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                                         <div className="flex-1">
                                             <p className="font-black text-xs text-foreground mb-0.5">{l.product_cod}</p>
                                             <p className="text-[10px] font-medium text-muted-foreground uppercase">
-                                                {l.cantidad} {l.product_um} × {formatCurrency(l.precio_unitario_cents / 100)}
+                                                {l.cantidad} {l.product_um} × {l.precio_unitario_cents}
                                             </p>
                                         </div>
                                         <div className="flex items-center gap-4">
-                                            <span className="font-black text-sm text-green-600">{formatCurrency(l.importe_linea_cents / 100)}</span>
+                                            <span className="font-black text-sm text-green-600">{l.importe_linea_cents}</span>
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
@@ -317,7 +317,7 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                                             </div>
                                             <div className="text-right">
                                                 <span className="text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-1 block">Subtotal</span>
-                                                <span className="font-black text-base text-primary">{formatCurrency((l.importe_linea_cents || 0) / 100)}</span>
+                                                <span className="font-black text-base text-primary">{(l.importe_linea_cents || 0)}</span>
                                             </div>
                                         </div>
                                     </div>
