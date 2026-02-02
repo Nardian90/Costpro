@@ -15,7 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Trash2, Search, HelpCircle, Info, Edit2, Check, X, Plus, RefreshCw, LayoutGrid, List } from 'lucide-react';
+import { Trash2, Search, HelpCircle, Info, Edit2, Check, X, Plus, RefreshCw, LayoutGrid, List, AlertTriangle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { formatCurrency } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
@@ -127,6 +127,36 @@ export function CatalogTable() {
       };
       setEditingId('NEW');
       setEditForm(newProd);
+  };
+
+  const handleNormalizeNegatives = async () => {
+    const negativeProducts = products?.filter(p => {
+        const stats = inventoryStats[p.cod] || { final: 0 };
+        return stats.final < 0;
+    });
+
+    if (!negativeProducts || negativeProducts.length === 0) {
+        toast.info('No hay productos con existencias negativas');
+        return;
+    }
+
+    if (!confirm(`¿Normalizar ${negativeProducts.length} productos con stock negativo? Se ajustará el stock inicial para que el final sea positivo.`)) return;
+
+    try {
+        for (const p of negativeProducts) {
+            const stats = inventoryStats[p.cod];
+            const currentNegative = stats.final;
+            const adjustment = Math.abs(currentNegative);
+            const newInitial = (p.stock_inicial_manual || 0) + adjustment;
+
+            await db.products.update(p.cod, {
+                stock_inicial_manual: newInitial
+            });
+        }
+        toast.success('Existencias normalizadas exitosamente');
+    } catch (error) {
+        toast.error('Error al normalizar existencias');
+    }
   };
 
   const clearCatalog = async () => {
@@ -261,6 +291,17 @@ export function CatalogTable() {
                     </TooltipContent>
                 </Tooltip>
             </TooltipProvider>
+
+            <Button
+                variant="outline"
+                size="sm"
+                onClick={handleNormalizeNegatives}
+                className="h-12 sm:h-10 text-[10px] uppercase font-black tracking-widest gap-2 text-red-500 border-red-200 hover:bg-red-50 flex-1 sm:flex-none"
+            >
+                <AlertTriangle className="w-4 h-4" />
+                <span className="hidden sm:inline">Normalizar Negativos</span>
+                <span className="sm:hidden">Normalizar</span>
+            </Button>
 
             <Button
                 variant="outline"

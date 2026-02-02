@@ -2,13 +2,13 @@
 /**
  * Extract commission from bank observations string.
  * Supports formats like "comis 10.50" or "Comis: 10.50"
+ * Spec Regex: Comis:\s*([0-9]+(?:\.[0-9]{1,2})?)
  */
 export function extractCommissionCents(observations: string): number {
     if (!observations) return 0;
-    const comisMatch = observations.match(/comis:?\s*([0-9,.]+)/i);
+    const comisMatch = observations.match(/Comis:?\s*([0-9]+(?:\.[0-9]{1,2})?)/i);
     if (comisMatch) {
-        const comisStr = comisMatch[1].replace(/,/g, '');
-        return Math.round(parseFloat(comisStr) * 100);
+        return Math.round(parseFloat(comisMatch[1]) * 100);
     }
     return 0;
 }
@@ -30,4 +30,31 @@ export function standardizeDate(dateStr: string): string {
     }
     // Already YYYY-MM-DD or other
     return dateStr;
+}
+
+/**
+ * Verifica si un producto es "A Medida" (requiere stock no negativo)
+ */
+export function isProductAMedida(um: string): boolean {
+    if (!um) return false;
+    const umLower = um.toLowerCase();
+    return umLower === 'm' || umLower === 'm2' || umLower === 'm3' || umLower === 'kg' || umLower === 'lb';
+}
+
+/**
+ * Calcula la existencia actual de un producto basándose en su stock inicial y movimientos
+ */
+export async function calculateCurrentStock(db: any, productCod: string): Promise<number> {
+    const product = await db.products.where('cod').equals(productCod).first();
+    if (!product) return 0;
+
+    const initialStock = product.stock_inicial_manual || 0;
+
+    // Sumar ventas (salidas)
+    const sales = await db.reconciliation_lines.where('product_cod').equals(productCod).toArray();
+    const totalSold = sales.reduce((sum: number, line: any) => sum + (line.cantidad || 0), 0);
+
+    // TODO: En el futuro sumar entradas (ajustes/compras)
+
+    return initialStock - totalSold;
 }

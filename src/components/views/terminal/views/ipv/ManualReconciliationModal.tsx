@@ -15,11 +15,12 @@ import { formatCurrency } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
-import { Search, Plus, Trash2, CheckCircle2, Info } from 'lucide-react';
+import { Search, Plus, Trash2, CheckCircle2, Info, AlertTriangle } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { generateHash } from '@/lib/ipv/engine';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
+import { isProductAMedida, calculateCurrentStock } from '@/lib/ipv/utils';
 
 interface Props {
     transaction: BankTransaction | null;
@@ -59,7 +60,19 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
 
     const remaining = targetAmount - currentTotal;
 
-    const addProduct = (product: Product) => {
+    const addProduct = async (product: Product) => {
+        // Regla: Bloqueo de Existencias Negativas en Productos a Medida
+        if (isProductAMedida(product.um)) {
+            const currentStock = await calculateCurrentStock(db, product.cod);
+            if (currentStock <= 0) {
+                toast.error(`BLOQUEO: El producto ${product.descripcion} no tiene existencias (${currentStock}).`, {
+                    icon: <AlertTriangle className="text-red-500" />,
+                    duration: 5000
+                });
+                return;
+            }
+        }
+
         const newLine: Partial<ReconciliationLine> = {
             id: uuidv4(),
             product_cod: product.cod,
@@ -158,76 +171,83 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0 overflow-hidden">
-                <DialogHeader className="p-4 md:p-6 border-b shrink-0">
+            <DialogContent className="max-w-5xl h-[95vh] md:h-[90vh] flex flex-col p-0 overflow-hidden shadow-2xl">
+                <DialogHeader className="p-4 md:p-6 border-b shrink-0 bg-background/95 backdrop-blur-md sticky top-0 z-20">
                     <div className="flex justify-between items-start">
                         <div>
-                            <DialogTitle className="text-2xl font-black uppercase text-primary">Conciliación Manual</DialogTitle>
-                            <DialogDescription className="font-medium">
+                            <DialogTitle className="text-2xl font-black uppercase text-primary tracking-tighter">Conciliación Manual</DialogTitle>
+                            <DialogDescription className="font-medium text-xs md:text-sm mt-1">
                                 {transaction.observaciones}
                             </DialogDescription>
                         </div>
                         <div className="text-right">
-                            <p className="text-xs font-bold text-muted-foreground uppercase">Target (Venta)</p>
+                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Importe Meta (Venta)</p>
                             <p className="text-2xl font-black text-primary">{formatCurrency(targetAmount / 100)}</p>
                             {transaction.comision_cents ? (
-                                <p className="text-[10px] text-muted-foreground">
-                                    Importe: {formatCurrency(transaction.importe_cents / 100)} + Comis: {formatCurrency(transaction.comision_cents / 100)}
+                                <p className="text-[10px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded mt-1">
+                                    Banco: {formatCurrency(transaction.importe_cents / 100)} + Comis: {formatCurrency(transaction.comision_cents / 100)}
                                 </p>
                             ) : null}
                         </div>
                     </div>
 
-                    <div className="flex gap-4 mt-4">
-                        <div className="flex-1 p-3 bg-muted rounded-xl flex justify-between items-center">
-                            <span className="text-xs font-bold uppercase">Conciliado</span>
-                            <span className="font-bold text-green-500">{formatCurrency(currentTotal / 100)}</span>
+                    <div className="flex gap-3 md:gap-4 mt-4">
+                        <div className="flex-1 p-3 md:p-4 bg-primary/5 rounded-2xl border border-primary/10 flex flex-col">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Monto Conciliado</span>
+                            <span className="text-xl font-black text-green-600">{formatCurrency(currentTotal / 100)}</span>
                         </div>
-                        <div className="flex-1 p-3 bg-muted rounded-xl flex justify-between items-center">
-                            <span className="text-xs font-bold uppercase">Restante</span>
-                            <span className={`font-bold ${remaining === 0 ? 'text-green-500' : 'text-orange-500'}`}>
+                        <div className="flex-1 p-3 md:p-4 bg-orange-500/5 rounded-2xl border border-orange-500/10 flex flex-col">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Restante por Asignar</span>
+                            <span className={`text-xl font-black ${remaining === 0 ? 'text-green-600' : 'text-orange-600'}`}>
                                 {formatCurrency(remaining / 100)}
                             </span>
                         </div>
                     </div>
                 </DialogHeader>
 
-                <div className="flex-1 flex flex-col md:flex-row overflow-hidden bg-background">
+                <div className="flex-1 flex flex-col md:flex-row overflow-hidden bg-background max-h-[60vh]">
                     {/* Left: Product Selection */}
-                    <div className="w-full md:w-1/2 border-r flex flex-col h-1/2 md:h-full overflow-hidden">
-                        <div className="p-4 border-b">
+                    <div className="w-full md:w-1/2 border-r flex flex-col h-full overflow-hidden bg-background">
+                        <div className="p-4 border-b bg-muted/20 sticky top-0 z-10 backdrop-blur-sm">
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                                 <Input
-                                    placeholder="Buscar producto..."
-                                    className="pl-10"
+                                    placeholder="Buscar por descripción o código..."
+                                    className="pl-10 h-10 rounded-xl bg-background border-muted-foreground/20"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
                             </div>
                         </div>
-                        <ScrollArea className="flex-1">
+                        <ScrollArea className="flex-1 overflow-x-auto">
                             <div className="p-4 space-y-2">
                                 <div className="p-3 bg-primary/5 rounded-xl border border-primary/20 flex gap-3 mb-4">
                                     <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                                     <p className="text-[10px] text-muted-foreground leading-tight">
-                                        <span className="font-bold text-primary uppercase">Guía:</span> Selecciona productos para asignar a esta transferencia.
-                                        Puedes ajustar cantidades para lograr el <strong>Cuadre Perfecto</strong>.
+                                        <span className="font-black text-primary uppercase">Sugerencia:</span> Busca y añade productos.
+                                        Los productos a medida (KG, M, etc.) requieren stock positivo.
                                     </p>
                                 </div>
                                 {filteredProducts.map(p => (
                                     <div
                                         key={p.cod}
-                                        className="p-3 border rounded-xl hover:bg-primary/5 cursor-pointer transition-colors flex justify-between items-center group"
+                                        className="p-3 border rounded-xl hover:border-primary/50 hover:bg-primary/5 cursor-pointer transition-all flex justify-between items-center group shadow-sm active:scale-95"
                                         onClick={() => addProduct(p)}
                                     >
                                         <div>
-                                            <p className="font-bold text-sm">{p.descripcion}</p>
-                                            <p className="text-[10px] text-muted-foreground uppercase">{p.cod} • {p.um}</p>
+                                            <p className="font-bold text-sm text-foreground">{p.descripcion}</p>
+                                            <div className="flex items-center gap-2 mt-0.5">
+                                                <Badge variant="outline" className="text-[9px] px-1.5 h-4 font-black uppercase border-primary/20 bg-primary/5 text-primary">
+                                                    {p.cod}
+                                                </Badge>
+                                                <span className="text-[10px] text-muted-foreground font-bold uppercase">{p.um}</span>
+                                            </div>
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-black text-sm">{formatCurrency(p.precio_cents / 100)}</span>
-                                            <Plus className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        <div className="flex items-center gap-3">
+                                            <span className="font-black text-sm text-foreground">{formatCurrency(p.precio_cents / 100)}</span>
+                                            <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <Plus className="w-4 h-4 text-primary" />
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
@@ -236,28 +256,30 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                     </div>
 
                     {/* Right: Selected Lines */}
-                    <div className="w-full md:w-1/2 bg-muted/30 flex flex-col border-t md:border-t-0 h-1/2 md:h-full overflow-hidden">
-                        <div className="p-4 border-b bg-background">
-                            <h4 className="font-black text-xs uppercase tracking-widest text-muted-foreground">Líneas de Conciliación</h4>
+                    <div className="w-full md:w-1/2 bg-muted/30 flex flex-col border-t md:border-t-0 h-full overflow-hidden">
+                        <div className="p-4 border-b bg-background sticky top-0 z-10">
+                            <h4 className="font-black text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Panel de Conciliación</h4>
                         </div>
-                        <ScrollArea className="flex-1">
+                        <ScrollArea className="flex-1 overflow-x-auto">
                             <div className="p-4 space-y-3">
                                 {/* Existing Lines */}
                                 {existingLines?.map(l => (
-                                    <div key={l.id} className="p-3 bg-background border rounded-xl flex justify-between items-center group/exist">
-                                        <div>
-                                            <p className="font-bold text-xs">{l.product_cod}</p>
-                                            <p className="text-[10px] uppercase">{l.cantidad} {l.product_um} x {formatCurrency(l.precio_unitario_cents / 100)}</p>
+                                    <div key={l.id} className="p-4 bg-background border rounded-2xl flex justify-between items-center group/exist shadow-sm border-l-4 border-l-green-500">
+                                        <div className="flex-1">
+                                            <p className="font-black text-xs text-foreground mb-0.5">{l.product_cod}</p>
+                                            <p className="text-[10px] font-medium text-muted-foreground uppercase">
+                                                {l.cantidad} {l.product_um} × {formatCurrency(l.precio_unitario_cents / 100)}
+                                            </p>
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-black text-xs">{formatCurrency(l.importe_linea_cents / 100)}</span>
+                                        <div className="flex items-center gap-4">
+                                            <span className="font-black text-sm text-green-600">{formatCurrency(l.importe_linea_cents / 100)}</span>
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
-                                                className="h-6 w-6 text-destructive opacity-0 group-hover/exist:opacity-100 transition-opacity"
+                                                className="h-8 w-8 text-destructive opacity-0 group-hover/exist:opacity-100 transition-opacity hover:bg-red-50"
                                                 onClick={() => removeExistingLine(l.id)}
                                             >
-                                                <Trash2 className="w-3 h-3" />
+                                                <Trash2 className="w-4 h-4" />
                                             </Button>
                                         </div>
                                     </div>
@@ -265,37 +287,51 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
 
                                 {/* New Manual Lines */}
                                 {manualLines.map(l => (
-                                    <div key={l.id} className="p-3 bg-primary/5 border border-primary/20 rounded-xl space-y-2">
-                                        <div className="flex justify-between items-start">
-                                            <p className="font-bold text-xs text-primary">{l.product_cod}</p>
+                                    <div key={l.id} className="p-4 bg-primary/5 border border-primary/20 rounded-2xl space-y-4 shadow-sm relative overflow-hidden group/manual animate-in slide-in-from-right-4 duration-300">
+                                        <div className="flex justify-between items-start relative z-10">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                                                <p className="font-black text-xs text-primary uppercase tracking-widest">{l.product_cod}</p>
+                                            </div>
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
-                                                className="h-6 w-6 text-destructive hover:bg-destructive/10"
+                                                className="h-8 w-8 text-destructive hover:bg-red-100/50 rounded-full"
                                                 onClick={() => removeManualLine(l.id!)}
                                             >
-                                                <Trash2 className="w-3 h-3" />
+                                                <Trash2 className="w-4 h-4" />
                                             </Button>
                                         </div>
-                                        <div className="flex justify-between items-center">
-                                            <div className="flex items-center gap-2">
-                                                <Input
-                                                    type="number"
-                                                    className="w-16 h-7 text-xs text-center"
-                                                    value={l.cantidad}
-                                                    onChange={(e) => updateQty(l.id!, parseInt(e.target.value))}
-                                                />
-                                                <span className="text-[10px] uppercase font-bold text-muted-foreground">{l.product_um}</span>
+                                        <div className="flex justify-between items-center relative z-10">
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex flex-col">
+                                                    <span className="text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-1">Cantidad</span>
+                                                    <Input
+                                                        type="number"
+                                                        className="w-20 h-9 text-sm font-black text-center rounded-lg bg-background"
+                                                        value={l.cantidad}
+                                                        onChange={(e) => updateQty(l.id!, parseInt(e.target.value))}
+                                                    />
+                                                </div>
+                                                <span className="text-[10px] uppercase font-black text-muted-foreground mt-5 tracking-widest">{l.product_um}</span>
                                             </div>
-                                            <span className="font-black text-sm">{formatCurrency((l.importe_linea_cents || 0) / 100)}</span>
+                                            <div className="text-right">
+                                                <span className="text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-1 block">Subtotal</span>
+                                                <span className="font-black text-base text-primary">{formatCurrency((l.importe_linea_cents || 0) / 100)}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
 
                                 {existingLines?.length === 0 && manualLines.length === 0 && (
-                                    <div className="h-32 flex flex-col items-center justify-center text-muted-foreground text-center">
-                                        <Plus className="w-8 h-8 mb-2 opacity-20" />
-                                        <p className="text-xs font-medium uppercase tracking-tighter">No hay líneas. Selecciona productos a la izquierda.</p>
+                                    <div className="h-48 flex flex-col items-center justify-center text-muted-foreground text-center px-8">
+                                        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                                            <Plus className="w-8 h-8 opacity-20" />
+                                        </div>
+                                        <p className="text-xs font-black uppercase tracking-[0.2em]">Esperando Selección</p>
+                                        <p className="text-[10px] font-medium mt-2 leading-relaxed opacity-60 italic">
+                                            Añade productos de la lista izquierda para iniciar la conciliación de esta transacción.
+                                        </p>
                                     </div>
                                 )}
                             </div>
@@ -303,20 +339,20 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                     </div>
                 </div>
 
-                <DialogFooter className="p-4 md:p-6 border-t bg-background shrink-0">
+                <DialogFooter className="p-4 md:p-6 border-t bg-background/95 backdrop-blur-md shrink-0 z-20">
                     <div className="flex flex-col sm:flex-row justify-between w-full items-center gap-4">
-                        <Button variant="outline" onClick={markAsCommission} className="w-full sm:w-auto text-[10px] md:text-xs uppercase font-black tracking-widest h-9 md:h-10">
-                            Es Comisión / No Reconciliable
+                        <Button variant="outline" onClick={markAsCommission} className="w-full sm:w-auto text-[10px] uppercase font-black tracking-widest h-10 border-muted-foreground/20 hover:bg-muted">
+                            Marcar como Comisión
                         </Button>
                         <div className="flex gap-2 w-full sm:w-auto">
-                            <Button variant="ghost" className="flex-1 sm:flex-none h-9 md:h-10" onClick={() => onOpenChange(false)}>Cancelar</Button>
+                            <Button variant="ghost" className="flex-1 sm:flex-none h-10 text-[10px] font-black uppercase tracking-widest" onClick={() => onOpenChange(false)}>Cerrar</Button>
                             <Button
                                 onClick={handleSave}
-                                className="neu-btn-primary flex-1 sm:flex-none px-4 md:px-8 h-9 md:h-10 text-xs md:text-sm"
+                                className="neu-btn-primary flex-1 sm:flex-none px-8 md:px-12 h-10 text-[10px] font-black uppercase tracking-widest"
                                 disabled={manualLines.length === 0}
                             >
-                                <CheckCircle2 className="w-4 h-4 mr-1 md:mr-2" />
-                                Guardar
+                                <CheckCircle2 className="w-4 h-4 mr-2" />
+                                Confirmar Conciliación
                             </Button>
                         </div>
                     </div>
