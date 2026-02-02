@@ -5,7 +5,7 @@ import { useDropzone } from 'react-dropzone';
 import { db, type BankTransaction } from '@/lib/dexie';
 import { generateHash } from '@/lib/ipv/engine';
 import { parseBandecTxt } from '@/lib/ipv/bandecParser';
-import { extractCommissionCents, standardizeDate } from '@/lib/ipv/utils';
+import { extractCommission, standardizeDate } from '@/lib/ipv/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { FileUp, Download, Info, FileSpreadsheet, FileText, Upload, HelpCircle, Trash2, RefreshCw, Plus } from 'lucide-react';
@@ -214,15 +214,9 @@ export function BankIngestion() {
         data.forEach((row, index) => {
             try {
                 const cod = row.cod || row.COD || row.Código || `Fila ${index + 1}`;
-                const precio_raw = String(row.precio_cents !== undefined ? row.precio_cents : (row.precio || 0)).trim();
+                const precio_raw = String(row.precio_cents !== undefined ? row.precio_cents : (row.precio || 0)).trim().replace(',', '.');
 
-                // Regla 8.1: precio_cents siempre entero, sin decimales ni separadores.
-                if (precio_raw.includes('.') || precio_raw.includes(',')) {
-                    errors.push(`Producto ${cod}: El precio (${precio_raw}) no debe tener decimales ni separadores.`);
-                    return;
-                }
-
-                const precio_cents = parseInt(precio_raw, 10);
+                const precio_cents = parseFloat(precio_raw);
                 if (isNaN(precio_cents)) {
                     errors.push(`Producto ${cod}: Precio inválido (${precio_raw}).`);
                     return;
@@ -283,10 +277,10 @@ export function BankIngestion() {
 
         if (!fecha || !ref_origen || !importe_str) continue;
 
-        // Convertir importe a centavos
-        const importe_cents = Math.round(parseFloat(importe_str.replace(',', '')) * 100);
+        // Importe en pesos (decimal)
+        const importe_cents = parseFloat(importe_str.replace(',', ''));
 
-        const comision_cents = extractCommissionCents(observaciones);
+        const comision_cents = extractCommission(observaciones);
         const importe_venta_cents = importe_cents + comision_cents;
 
         const ingestion_hash = await generateHash(`${ref_origen}-${fecha}-${importe_cents}`);
@@ -319,7 +313,7 @@ export function BankIngestion() {
             referencia_corta: row['Ref_Corriente'] || row['Ref_Origen'] || row['referencia_origen'],
             referencia_origen: row['Ref_Origen'] || row['Ref_origen'] || row['referencia_origen'],
             observaciones: row['Observaciones'] || row['observaciones'] || '',
-            importe_cents: Math.round(parseFloat(String(row['Importe'] || row['importe'] || '0').replace(/[^0-9.,]/g, '').replace(',', '')) * 100),
+            importe_cents: parseFloat(String(row['Importe'] || row['importe'] || '0').replace(/[^0-9.,]/g, '').replace(',', '')),
             tipo: (row['Tipo'] || row['tipo']) === 'Cr' ? 'Cr' : 'Db',
             error_note: 'Referencia de origen duplicada',
             raw_data: row,
@@ -397,7 +391,7 @@ export function BankIngestion() {
           referencia_corta: refDb,
           referencia_origen: refDb,
           observaciones: `Cobro por utilizacion del Servicio de Banca Remota. Comision 100.00`,
-          importe_cents: 10000,
+          importe_cents: 100,
           tipo: 'Db',
           estado_conciliacion: 'PENDIENTE',
           created_at: new Date().toISOString(),
@@ -415,7 +409,7 @@ export function BankIngestion() {
               referencia_corta: ref,
               referencia_origen: ref,
               observaciones: `PAGO QR COMERCIO - REF: ${ref}`,
-              importe_cents: bavaria.precio_cents - 100, // Falta $1.00
+              importe_cents: bavaria.precio_cents - 1, // Falta $1.00
               tipo: 'Cr',
               estado_conciliacion: 'PENDIENTE',
               created_at: new Date().toISOString(),
@@ -433,16 +427,16 @@ export function BankIngestion() {
 
   const importDefaultProducts = async () => {
       const defaultProducts = [
-          { cod: '1', descripcion: 'Cerveza Windmil', um: 'Unidades', precio_cents: 26000, prioridad_algoritmo: 1, activo: true, es_paquete: false, contenido_paquete: 1, stock_inicial_manual: 100 },
-          { cod: '1-C', descripcion: 'Cerveza Windmil Caja', um: 'Caja (24Unid)', precio_cents: 576000, prioridad_algoritmo: 1, activo: true, es_paquete: true, contenido_paquete: 24, stock_inicial_manual: 10 },
-          { cod: '2', descripcion: 'Cerveza 8,6', um: 'Unidades', precio_cents: 50000, prioridad_algoritmo: 2, activo: true, es_paquete: false, contenido_paquete: 1, stock_inicial_manual: 50 },
-          { cod: '2-C', descripcion: 'Cerveza 8,6 Caja', um: 'Caja (24Unid)', precio_cents: 1080000, prioridad_algoritmo: 2, activo: true, es_paquete: true, contenido_paquete: 24, stock_inicial_manual: 5 },
-          { cod: '3', descripcion: 'Tigon', um: 'Unidades', precio_cents: 32000, prioridad_algoritmo: 3, activo: true, es_paquete: false, contenido_paquete: 1, stock_inicial_manual: 200 },
-          { cod: '3-C', descripcion: 'Tigon Caja', um: 'Caja (24Unid)', precio_cents: 720000, prioridad_algoritmo: 3, activo: true, es_paquete: true, contenido_paquete: 24, stock_inicial_manual: 20 },
-          { cod: '4', descripcion: 'Bavaria', um: 'Unidades', precio_cents: 26000, prioridad_algoritmo: 4, activo: true, es_paquete: false, contenido_paquete: 1, stock_inicial_manual: 150 },
-          { cod: '4-C', descripcion: 'Bavaria Caja', um: 'Caja (24Unid)', precio_cents: 600000, prioridad_algoritmo: 4, activo: true, es_paquete: true, contenido_paquete: 24, stock_inicial_manual: 15 },
-          { cod: '5', descripcion: 'Wiski', um: 'Unidades', precio_cents: 150000, prioridad_algoritmo: 5, activo: true, es_paquete: false, contenido_paquete: 1, stock_inicial_manual: 40 },
-          { cod: '5-C', descripcion: 'Wiski Caja', um: 'Caja (6Unidades)', precio_cents: 810000, prioridad_algoritmo: 5, activo: true, es_paquete: true, contenido_paquete: 6, stock_inicial_manual: 8 },
+          { cod: '1', descripcion: 'Cerveza Windmil', um: 'Unidades', precio_cents: 260, prioridad_algoritmo: 1, activo: true, es_paquete: false, contenido_paquete: 1, stock_inicial_manual: 100 },
+          { cod: '1-C', descripcion: 'Cerveza Windmil Caja', um: 'Caja (24Unid)', precio_cents: 5760, prioridad_algoritmo: 1, activo: true, es_paquete: true, contenido_paquete: 24, stock_inicial_manual: 10 },
+          { cod: '2', descripcion: 'Cerveza 8,6', um: 'Unidades', precio_cents: 500, prioridad_algoritmo: 2, activo: true, es_paquete: false, contenido_paquete: 1, stock_inicial_manual: 50 },
+          { cod: '2-C', descripcion: 'Cerveza 8,6 Caja', um: 'Caja (24Unid)', precio_cents: 10800, prioridad_algoritmo: 2, activo: true, es_paquete: true, contenido_paquete: 24, stock_inicial_manual: 5 },
+          { cod: '3', descripcion: 'Tigon', um: 'Unidades', precio_cents: 320, prioridad_algoritmo: 3, activo: true, es_paquete: false, contenido_paquete: 1, stock_inicial_manual: 200 },
+          { cod: '3-C', descripcion: 'Tigon Caja', um: 'Caja (24Unid)', precio_cents: 7200, prioridad_algoritmo: 3, activo: true, es_paquete: true, contenido_paquete: 24, stock_inicial_manual: 20 },
+          { cod: '4', descripcion: 'Bavaria', um: 'Unidades', precio_cents: 260, prioridad_algoritmo: 4, activo: true, es_paquete: false, contenido_paquete: 1, stock_inicial_manual: 150 },
+          { cod: '4-C', descripcion: 'Bavaria Caja', um: 'Caja (24Unid)', precio_cents: 6000, prioridad_algoritmo: 4, activo: true, es_paquete: true, contenido_paquete: 24, stock_inicial_manual: 15 },
+          { cod: '5', descripcion: 'Wiski', um: 'Unidades', precio_cents: 1500, prioridad_algoritmo: 5, activo: true, es_paquete: false, contenido_paquete: 1, stock_inicial_manual: 40 },
+          { cod: '5-C', descripcion: 'Wiski Caja', um: 'Caja (6Unidades)', precio_cents: 8100, prioridad_algoritmo: 5, activo: true, es_paquete: true, contenido_paquete: 6, stock_inicial_manual: 8 },
           { cod: 'CASH', descripcion: 'Venta Manual / Varios', um: 'U', precio_cents: 0, prioridad_algoritmo: 99, activo: true, es_paquete: false, contenido_paquete: 1, stock_inicial_manual: 0 },
       ];
 
