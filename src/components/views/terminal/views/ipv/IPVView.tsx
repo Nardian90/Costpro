@@ -27,6 +27,9 @@ import { MatchingRulesEditor } from './MatchingRulesEditor';
 import { CashAdjustmentsTable } from './CashAdjustmentsTable';
 import { PivotStatementView } from './PivotStatementView';
 import { IngestionErrorsTable } from './IngestionErrorsTable';
+import { IPVControlPanel } from './IPVControlPanel';
+import { IPVRightSidebar } from './IPVRightSidebar';
+import { exportFullBackup } from '@/lib/ipv/backup';
 import { toast } from 'sonner';
 import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
 import {
@@ -37,7 +40,7 @@ import {
 } from '@/components/ui/tooltip';
 
 export default function IPVView() {
-  const [activeTab, setActiveTab] = useState('transactions');
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [isMatching, setIsMatching] = useState(false);
   const [matchMessage, setMatchMessage] = useState('');
   const [matchProgress, setMatchProgress] = useState(0);
@@ -207,9 +210,21 @@ export default function IPVView() {
       </Card>
 
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 px-1">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-primary uppercase">IPV Builder</h1>
-          <p className="text-xs sm:text-sm text-muted-foreground font-medium">Conciliación bancaria y generación de IPV</p>
+        <div className="flex items-center gap-4">
+            {activeTab !== 'dashboard' && (
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setActiveTab('dashboard')}
+                    className="h-10 w-10 rounded-xl hover:bg-primary/10 hover:text-primary transition-all shadow-sm active:scale-95"
+                >
+                    <Settings className="w-5 h-5 rotate-180" />
+                </Button>
+            )}
+            <div>
+                <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-primary uppercase">IPV Builder</h1>
+                <p className="text-xs sm:text-sm text-muted-foreground font-medium">Conciliación bancaria y generación de IPV</p>
+            </div>
         </div>
 
         <div className="flex gap-2 w-full lg:w-auto">
@@ -277,33 +292,40 @@ export default function IPVView() {
         />
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <div className="relative">
-            <div className="flex overflow-x-auto pb-3 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent sm:pb-0">
-                <TabsList className="flex w-max min-w-full lg:grid lg:grid-cols-8 lg:max-w-[1300px] bg-muted/50 p-1 rounded-xl h-auto sm:h-10">
-                    <TabsTrigger value="transactions" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest">Transacciones</TabsTrigger>
-                    <TabsTrigger value="sim" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest">Simulación</TabsTrigger>
-                    <TabsTrigger value="breakdown" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest">Desglose</TabsTrigger>
-                    <TabsTrigger value="pivot" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest">Consolidado</TabsTrigger>
-                    <TabsTrigger value="catalog" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest">Catálogo</TabsTrigger>
-                    <TabsTrigger value="ingestion" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest text-nowrap">Extracto</TabsTrigger>
-                    <TabsTrigger value="errors" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest relative">
-                        Errores
-                        {ingestionErrorsCount > 0 && (
-                            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[8px] text-white font-black shadow-sm animate-pulse">
-                                {ingestionErrorsCount}
-                            </span>
-                        )}
-                    </TabsTrigger>
-                    <TabsTrigger value="reports" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest text-nowrap">Reportes IPV</TabsTrigger>
-                    <TabsTrigger value="adjustments" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest">Ajustes</TabsTrigger>
-                    <TabsTrigger value="rules" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest">Reglas</TabsTrigger>
-                </TabsList>
-            </div>
-            <div className="absolute right-0 top-0 bottom-2 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none lg:hidden" />
-        </div>
+      <IPVRightSidebar activeTab={activeTab} onSelect={setActiveTab} onExportBackup={() => exportFullBackup(db)} />
 
-        <Card className="mt-6 p-0 overflow-hidden border-none shadow-xl bg-card/50 backdrop-blur-sm">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        {activeTab !== 'dashboard' && (
+            <div className="relative mb-6">
+                <div className="flex overflow-x-auto pb-3 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent sm:pb-0">
+                    <TabsList className="flex w-max min-w-full lg:grid lg:grid-cols-10 lg:max-w-[1300px] bg-muted/50 p-1 rounded-xl h-auto sm:h-10">
+                        <TabsTrigger value="dashboard" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest">Panel</TabsTrigger>
+                        <TabsTrigger value="transactions" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest">Transacciones</TabsTrigger>
+                        <TabsTrigger value="sim" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest">Simulación</TabsTrigger>
+                        <TabsTrigger value="breakdown" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest">Desglose</TabsTrigger>
+                        <TabsTrigger value="pivot" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest">Consolidado</TabsTrigger>
+                        <TabsTrigger value="catalog" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest">Catálogo</TabsTrigger>
+                        <TabsTrigger value="ingestion" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest text-nowrap">Extracto</TabsTrigger>
+                        <TabsTrigger value="errors" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest relative">
+                            Errores
+                            {ingestionErrorsCount > 0 && (
+                                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[8px] text-white font-black shadow-sm animate-pulse">
+                                    {ingestionErrorsCount}
+                                </span>
+                            )}
+                        </TabsTrigger>
+                        <TabsTrigger value="reports" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest text-nowrap">Reportes IPV</TabsTrigger>
+                        <TabsTrigger value="rules" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest">Reglas</TabsTrigger>
+                    </TabsList>
+                </div>
+                <div className="absolute right-0 top-0 bottom-2 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none lg:hidden" />
+            </div>
+        )}
+
+        <div className={activeTab === 'dashboard' ? '' : 'mt-6 p-0 overflow-hidden border-none shadow-xl bg-card/50 backdrop-blur-sm rounded-3xl'}>
+          <TabsContent value="dashboard" className="m-0">
+            <IPVControlPanel onSelect={setActiveTab} onExportBackup={() => exportFullBackup(db)} />
+          </TabsContent>
           <TabsContent value="transactions" className="m-0">
             <TransactionTable
               transactions={transactions || []}
@@ -347,7 +369,7 @@ export default function IPVView() {
           <TabsContent value="errors" className="m-0">
             <IngestionErrorsTable />
           </TabsContent>
-        </Card>
+        </div>
       </Tabs>
     </div>
   );
