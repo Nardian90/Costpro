@@ -8,8 +8,8 @@ export interface BankTransaction {
   referencia_corta: string;
   referencia_origen: string;   // UNIQUE
   observaciones: string;
-  importe_cents: number;       // EN CENTAVOS (integer)
-  comision_cents?: number;     // Extraído de observaciones "comis X.XX"
+  importe_cents: number;       // En Pesos (decimal)
+  comision_cents?: number;     // Extraído de observaciones
   importe_venta_cents?: number; // importe_cents + comision_cents
   tipo: 'Cr' | 'Db';
   estado_conciliacion: 'PENDIENTE' | 'PARCIAL' | 'COMPLETO';
@@ -26,7 +26,7 @@ export interface Product {
   um: string;
   es_paquete: boolean;
   contenido_paquete: number;
-  precio_cents: number;        // EN CENTAVOS
+  precio_cents: number;        // En Pesos (decimal)
   prioridad_algoritmo: number; // 1..5
   activo: boolean;
   stock_inicial_manual: number;
@@ -37,7 +37,7 @@ export interface Product {
 export interface MatchingRule {
   id: string;
   tipo: 'HARD_REF' | 'EXACT_SUM' | 'TOLERANCE' | 'CASH_FILL';
-  tolerancia_cents?: number;   // en centavos, aplicable a TOLERANCE
+  tolerancia_cents?: number;   // en pesos, aplicable a TOLERANCE
   prioridad: number;
   activo: boolean;
   meta?: Record<string, any>;
@@ -53,9 +53,9 @@ export interface ReconciliationLine {
   product_cod: string;
   product_um: string;
   cantidad: number;
-  precio_unitario_cents: number;
-  importe_linea_cents: number;
-  cuadre_cents: number;
+  precio_unitario_cents: number; // En Pesos
+  importe_linea_cents: number;  // En Pesos
+  cuadre_cents: number;         // En Pesos
   clasificacion: 'Transferencia' | 'Efectivo' | 'QR';
   origen_dato: 'AUTO_MATCH' | 'MANUAL_USER' | 'CASH_FILLER';
   reconciliation_hash: string; // hash(transaction_ref + detalle) -> idempotencia
@@ -65,9 +65,9 @@ export interface ReconciliationLine {
 export interface DailyIPVReport {
   id: string;
   fecha_reporte: string;
-  total_ventas_cents: number;
-  resumen_efectivo_cents: number;
-  resumen_transferencia_cents: number;
+  total_ventas_cents: number;         // En Pesos
+  resumen_efectivo_cents: number;      // En Pesos
+  resumen_transferencia_cents: number; // En Pesos
   filas: {
     cod: string;
     descripcion: string;
@@ -76,8 +76,8 @@ export interface DailyIPVReport {
     entrada_salida_qty: number;
     total_disponible_qty: number;
     venta_cantidad_qty: number;
-    precio_unitario_cents: number;
-    importe_cents: number;
+    precio_unitario_cents: number;    // En Pesos
+    importe_cents: number;            // En Pesos
     existencia_final_qty: number;
   }[];
   firmas: {
@@ -92,7 +92,7 @@ export interface DailyIPVReport {
 export interface CashAdjustment {
   id: string;
   fecha: string;
-  monto_cents: number;
+  monto_cents: number; // En Pesos
   motivo: string;
   aprobado_por: string;
   created_at: string;
@@ -104,7 +104,7 @@ export interface IngestionError {
   referencia_corta: string;
   referencia_origen: string;
   observaciones: string;
-  importe_cents: number;
+  importe_cents: number; // En Pesos
   tipo: 'Cr' | 'Db';
   error_note: string;
   raw_data: any;
@@ -113,17 +113,17 @@ export interface IngestionError {
 
 export interface DailyAggregate {
   fecha: string;
-  total_cents: number;
+  total_cents: number; // En Pesos
   by_product: {
     cod: string;
     descripcion: string;
     cantidad: number;
-    importe_cents: number;
+    importe_cents: number; // En Pesos
   }[];
 }
 
 export interface MatchingCache {
-  importe_cents: number;
+  importe_cents: number; // En Pesos
   catalog_hash: string;
   results: {
     product_cod: string;

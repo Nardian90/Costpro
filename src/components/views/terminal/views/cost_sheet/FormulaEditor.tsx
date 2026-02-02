@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
-import { Command, HelpCircle, Maximize2, Check, X, Info } from 'lucide-react';
+import { Command, HelpCircle, Maximize2, Check, X, Info, Sparkles, Code } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Popover,
@@ -18,6 +18,9 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { FormulaBuilder } from './FormulaBuilder';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from "@/components/ui/badge";
 
 interface FormulaEditorProps {
   initialValue: string;
@@ -40,6 +43,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
   const [cursorPosition, setCursorPosition] = useState(0);
   const [isFocused, setIsFocused] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [mode, setMode] = useState<'assisted' | 'expert'>('assisted');
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const hasSavedRef = useRef(false);
@@ -265,46 +269,100 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
 
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[600px] z-[200]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Command className="w-5 h-5 text-primary" />
-              Editor de Fórmula Avanzado
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Fórmula</label>
-              <textarea
-                className="w-full h-48 p-4 font-mono text-base bg-muted/50 border rounded-lg focus:ring-2 focus:ring-primary outline-none resize-none"
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-                placeholder="Escriba su fórmula aquí (ej. = AnexoI + AnexoII)"
-                autoFocus
-              />
+        <DialogContent className="sm:max-w-[700px] z-[200] p-0 overflow-hidden rounded-2xl border-none shadow-2xl">
+          <div className="bg-primary/10 px-6 py-4 flex items-center justify-between border-b border-primary/10">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20">
+                <Command className="w-5 h-5" />
+              </div>
+              <div>
+                <DialogTitle className="text-lg font-black uppercase tracking-tight italic">Editor de Cálculo</DialogTitle>
+                <p className="text-[10px] font-bold text-primary/60 uppercase tracking-widest leading-none">v5.7.22 • Motor de Costos Avanzado</p>
+              </div>
             </div>
 
-            <div className="bg-primary/5 p-4 rounded-lg border border-primary/10">
-                <div className="flex items-center gap-2 mb-2 text-primary font-bold text-xs uppercase">
-                    <Info className="w-3 h-3" />
-                    Sugerencias rápidas
-                </div>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[11px]">
-                    <div className="flex justify-between"><span>Suma:</span> <code className="bg-white px-1 rounded">SUMA(a, b)</code></div>
-                    <div className="flex justify-between"><span>Promedio:</span> <code className="bg-white px-1 rounded">PROMEDIO(a, b)</code></div>
-                    <div className="flex justify-between"><span>Anexos:</span> <code className="bg-white px-1 rounded">AnexoI, AnexoII...</code></div>
-                    <div className="flex justify-between"><span>Ref Fila:</span> <code className="bg-white px-1 rounded">ref('1.1')</code></div>
-                </div>
-            </div>
+            <Tabs value={mode} onValueChange={(v: any) => setMode(v)} className="w-auto">
+              <TabsList className="bg-black/5 p-1 h-10 rounded-xl border border-black/5">
+                <TabsTrigger value="assisted" className="rounded-lg px-4 gap-2 text-[10px] font-black uppercase tracking-wider data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all">
+                  <Sparkles className="w-3 h-3" />
+                  Asistido
+                </TabsTrigger>
+                <TabsTrigger value="expert" className="rounded-lg px-4 gap-2 text-[10px] font-black uppercase tracking-wider data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all">
+                  <Code className="w-3 h-3" />
+                  Experto
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
 
-          <DialogFooter className="gap-2">
-            <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
-            <Button onClick={() => { handleSave(value); setIsModalOpen(false); }}>
-                Aplicar Fórmula
-            </Button>
-          </DialogFooter>
+          <div className="p-6">
+            {mode === 'assisted' ? (
+              <div className="animate-in fade-in zoom-in-95 duration-300">
+                <FormulaBuilder
+                    initialValue={value}
+                    suggestions={suggestions}
+                    onSave={(newVal) => setValue(newVal)}
+                />
+              </div>
+            ) : (
+              <div className="space-y-4 animate-in fade-in zoom-in-95 duration-300">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                        <Code className="w-3 h-3" />
+                        Código de Fórmula
+                    </label>
+                    <Badge variant="outline" className="text-[9px] font-mono opacity-50">expr-eval enabled</Badge>
+                  </div>
+                  <textarea
+                    className="w-full h-64 p-6 font-mono text-base bg-muted/30 border-2 border-border rounded-2xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none resize-none transition-all shadow-inner"
+                    value={value}
+                    onChange={(e) => setValue(e.target.value)}
+                    placeholder="Escriba su fórmula aquí (ej. = AnexoI + AnexoII)"
+                    autoFocus
+                  />
+                </div>
+
+                <div className="bg-amber-500/5 p-4 rounded-xl border border-amber-500/20">
+                    <div className="flex items-center gap-2 mb-2 text-amber-700 font-black text-[10px] uppercase tracking-wider">
+                        <Info className="w-3.5 h-3.5" />
+                        Guía de Referencia Rápida
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-[11px]">
+                        <div className="flex justify-between items-center py-1 border-b border-amber-500/10">
+                            <span className="font-medium text-amber-900/60">Suma Total</span>
+                            <code className="bg-amber-500/10 text-amber-700 px-1.5 py-0.5 rounded font-bold">SUMA(a, b)</code>
+                        </div>
+                        <div className="flex justify-between items-center py-1 border-b border-amber-500/10">
+                            <span className="font-medium text-amber-900/60">Anexos</span>
+                            <code className="bg-amber-500/10 text-amber-700 px-1.5 py-0.5 rounded font-bold">AnexoI, AnexoII</code>
+                        </div>
+                        <div className="flex justify-between items-center py-1 border-b border-amber-500/10">
+                            <span className="font-medium text-amber-900/60">Referencia Fila</span>
+                            <code className="bg-amber-500/10 text-amber-700 px-1.5 py-0.5 rounded font-bold">ref('1.1')</code>
+                        </div>
+                        <div className="flex justify-between items-center py-1 border-b border-amber-500/10">
+                            <span className="font-medium text-amber-900/60">Porcentaje</span>
+                            <code className="bg-amber-500/10 text-amber-700 px-1.5 py-0.5 rounded font-bold">PCT(val, 15)</code>
+                        </div>
+                    </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="px-6 py-4 bg-muted/30 flex items-center justify-between border-t border-border">
+            <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-medium italic">
+                <Info className="w-3 h-3" />
+                Los cambios se aplican al cerrar o guardar.
+            </div>
+            <div className="flex gap-3">
+                <Button variant="ghost" className="rounded-xl h-11 px-6 font-bold uppercase tracking-widest text-[10px]" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
+                <Button className="rounded-xl h-11 px-8 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20" onClick={() => { onSave(value); setIsModalOpen(false); }}>
+                    Aplicar Fórmula
+                </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import {
   FileText,
   Download,
@@ -28,11 +29,16 @@ import { toast } from 'sonner';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { v4 as uuidv4 } from 'uuid';
+import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
 
 export function IPVReportView() {
   const reports = useLiveQuery(() => db.ipv_reports.orderBy('fecha_reporte').reverse().toArray());
   const [selectedMonth, setSelectedMonth] = React.useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = React.useState(new Date().getFullYear());
+  const [dateFrom, setDateFrom] = React.useState(new Date().toISOString().split('T')[0]);
+  const [dateTo, setDateTo] = React.useState(new Date().toISOString().split('T')[0]);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [loadingMessage, setLoadingMessage] = React.useState('');
 
   const years = React.useMemo(() => {
     const currentYear = new Date().getFullYear();
@@ -165,12 +171,175 @@ export function IPVReportView() {
       }
   };
 
+  const generateRangeReports = async () => {
+    if (dateFrom > dateTo) {
+      toast.error('La fecha inicial no puede ser mayor a la final');
+      return;
+    }
+
+    if (!confirm(`¿Generar reportes desde ${dateFrom} hasta ${dateTo}? Se omitirán los días existentes.`)) return;
+
+    setIsLoading(true);
+    setLoadingMessage('Generando reportes del rango...');
+
+    try {
+      const products = await db.products.toArray();
+      let current = new Date(dateFrom + 'T12:00:00');
+      const end = new Date(dateTo + 'T12:00:00');
+
+      let generated = 0;
+      while (current <= end) {
+        const dateStr = current.toISOString().split('T')[0];
+        const existing = await db.ipv_reports.where('fecha_reporte').equals(dateStr).first();
+
+        if (!existing) {
+          const lastReport = await db.ipv_reports
+            .where('fecha_reporte').below(dateStr)
+            .sortBy('fecha_reporte')
+            .then(list => list.reverse()[0]);
+
+          await createReportForDate(dateStr, products, lastReport || null);
+          generated++;
+        }
+        current.setDate(current.getDate() + 1);
+      }
+
+      toast.success(`Generación completada: ${generated} nuevos reportes`);
+    } catch (error) {
+      console.error(error);
+      toast.error('Error durante la generación por rango');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const deleteRangeReports = async () => {
+    if (dateFrom > dateTo) {
+      toast.error('Rango de fechas inválido');
+      return;
+    }
+
+    if (!confirm(`¿ELIMINAR TODOS los reportes IPV entre ${dateFrom} y ${dateTo}? Esta acción es irreversible.`)) return;
+
+    try {
+      const toDelete = await db.ipv_reports
+        .where('fecha_reporte').between(dateFrom, dateTo, true, true)
+        .toArray();
+
+      if (toDelete.length === 0) {
+        toast.info('No hay reportes en el rango seleccionado');
+        return;
+      }
+
+      await db.ipv_reports.bulkDelete(toDelete.map(r => r.id));
+      toast.success(`${toDelete.length} reportes eliminados`);
+    } catch (error) {
+      toast.error('Error al eliminar reportes');
+    }
+  };
+
+  const exportRangePDF = async () => {
+    if (dateFrom > dateTo) {
+      toast.error('Rango de fechas inválido');
+      return;
+    }
+
+    const rangeReports = reports?.filter(r =>
+      r.fecha_reporte >= dateFrom && r.fecha_reporte <= dateTo
+    ).sort((a,b) => b.fecha_reporte.localeCompare(a.fecha_reporte)); // DESC as per spec
+
+    if (!rangeReports || rangeReports.length === 0) {
+      toast.error('No hay reportes en el rango para exportar');
+      return;
+    }
+
+    if (!confirm(`¿Exportar ${rangeReports.length} reportes en un único PDF consolidado?`)) return;
+
+    setIsLoading(true);
+    setLoadingMessage('Generando PDF consolidado...');
+
+    try {
+      const doc = new jsPDF();
+
+      rangeReports.forEach((report, index) => {
+        if (index > 0) doc.addPage();
+
+        const pageWidth = doc.internal.pageSize.width;
+
+        // Branding
+        doc.setFontSize(10);
+        doc.setTextColor(150);
+        doc.text('CostPro', 14, 15);
+        doc.setTextColor(0);
+
+        // Header
+        doc.setFontSize(18);
+        doc.text('REPORTE IPV DIARIO', pageWidth / 2, 20, { align: 'center' });
+
+        doc.setFontSize(10);
+        doc.text(`Fecha del Reporte: ${report.fecha_reporte}`, 14, 30);
+        doc.text(`Estado: ${report.estado}`, 14, 35);
+        doc.text(`Generado el: ${new Date().toLocaleString()}`, 14, 40);
+
+        autoTable(doc, {
+          startY: 55,
+          head: [['Concepto', 'Monto']],
+          body: [
+            ['Total Ventas', `$ ${(report.total_ventas_cents).toFixed(2)}`],
+            ['Resumen Efectivo', `$ ${(report.resumen_efectivo_cents).toFixed(2)}`],
+            ['Resumen Transferencia', `$ ${(report.resumen_transferencia_cents).toFixed(2)}`],
+          ],
+          theme: 'grid',
+          headStyles: { fillColor: [22, 163, 74] }
+        });
+
+        const tableData = report.filas.map((f: any) => [
+          f.cod,
+          f.descripcion,
+          f.um,
+          f.saldo_inicial_qty,
+          f.entrada_salida_qty,
+          f.venta_cantidad_qty,
+          `$ ${(f.precio_unitario_cents).toFixed(2)}`,
+          `$ ${(f.importe_cents).toFixed(2)}`,
+          f.existencia_final_qty
+        ]);
+
+        autoTable(doc, {
+          startY: (doc as any).lastAutoTable.finalY + 15,
+          head: [['Cod', 'Producto', 'UM', 'Inicial', 'E/S', 'Venta', 'Precio', 'Importe', 'Final']],
+          body: tableData,
+          theme: 'striped',
+          headStyles: { fillColor: [22, 163, 74] },
+          styles: { fontSize: 8 }
+        });
+
+        const finalY = (doc as any).lastAutoTable.finalY + 20;
+        doc.text('__________________________', 14, finalY);
+        doc.text('Firma Responsable', 14, finalY + 5);
+      });
+
+      doc.save(`IPV_RANGO_${dateFrom}_${dateTo}.pdf`);
+      toast.success('PDF de rango generado');
+    } catch (error) {
+      toast.error('Error al generar PDF de rango');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const exportPDF = async (report: DailyIPVReport) => {
     try {
       toast.loading('Generando PDF...', { id: 'pdf-gen' });
 
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.width;
+
+      // Branding
+      doc.setFontSize(10);
+      doc.setTextColor(150);
+      doc.text('CostPro', 14, 15);
+      doc.setTextColor(0);
 
       // Header
       doc.setFontSize(18);
@@ -191,9 +360,9 @@ export function IPVReportView() {
         startY: 55,
         head: [['Concepto', 'Monto']],
         body: [
-          ['Total Ventas', `$ ${(report.total_ventas_cents / 100).toFixed(2)}`],
-          ['Resumen Efectivo', `$ ${(report.resumen_efectivo_cents / 100).toFixed(2)}`],
-          ['Resumen Transferencia', `$ ${(report.resumen_transferencia_cents / 100).toFixed(2)}`],
+          ['Total Ventas', `$ ${(report.total_ventas_cents).toFixed(2)}`],
+          ['Resumen Efectivo', `$ ${(report.resumen_efectivo_cents).toFixed(2)}`],
+          ['Resumen Transferencia', `$ ${(report.resumen_transferencia_cents).toFixed(2)}`],
         ],
         theme: 'grid',
         headStyles: { fillColor: [22, 163, 74] }
@@ -207,8 +376,8 @@ export function IPVReportView() {
         f.saldo_inicial_qty,
         f.entrada_salida_qty,
         f.venta_cantidad_qty,
-        `$ ${(f.precio_unitario_cents / 100).toFixed(2)}`,
-        `$ ${(f.importe_cents / 100).toFixed(2)}`,
+        `$ ${(f.precio_unitario_cents).toFixed(2)}`,
+        `$ ${(f.importe_cents).toFixed(2)}`,
         f.existencia_final_qty
       ]);
 
@@ -307,9 +476,9 @@ export function IPVReportView() {
             startY: 30,
             head: [['Concepto', 'Total Mensual']],
             body: [
-                ['Total Ventas Brutas', formatCurrency(totalVentas / 100)],
-                ['Total Efectivo', formatCurrency(totalEfectivo / 100)],
-                ['Total Transferencias', formatCurrency(totalTransferencia / 100)],
+                ['Total Ventas Brutas', formatCurrency(totalVentas)],
+                ['Total Efectivo', formatCurrency(totalEfectivo)],
+                ['Total Transferencias', formatCurrency(totalTransferencia)],
                 ['Días Reportados', monthReports.length]
             ],
             theme: 'grid',
@@ -336,8 +505,8 @@ export function IPVReportView() {
             f.um,
             f.saldo_inicial_qty, // Ojo: este debería ser el inicial del primer día del mes
             f.venta_cantidad_qty,
-            formatCurrency(f.precio_unitario_cents / 100),
-            formatCurrency(f.importe_cents / 100),
+            formatCurrency(f.precio_unitario_cents),
+            formatCurrency(f.importe_cents),
             f.existencia_final_qty
         ]);
 
@@ -427,10 +596,36 @@ export function IPVReportView() {
 
   return (
     <div className="space-y-6">
+      <LoadingOverlay isVisible={isLoading} message={loadingMessage} />
+      {/* Panel de rango de fechas */}
+      <div className="px-6 py-4 bg-primary/5 border-b flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex flex-col gap-1">
+            <label className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">Desde</label>
+            <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="h-9 w-40 text-xs font-bold" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">Hasta</label>
+            <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="h-9 w-40 text-xs font-bold" />
+          </div>
+          <div className="flex gap-2 mt-auto pb-0.5">
+            <Button onClick={generateRangeReports} variant="outline" className="h-9 text-[10px] font-black uppercase border-primary/20 text-primary hover:bg-primary/5">
+              Generar IPV (Rango)
+            </Button>
+            <Button onClick={exportRangePDF} variant="outline" className="h-9 text-[10px] font-black uppercase border-primary/20 text-primary hover:bg-primary/5">
+              Exportar PDF (Rango)
+            </Button>
+            <Button onClick={deleteRangeReports} variant="outline" className="h-9 text-[10px] font-black uppercase border-red-200 text-red-500 hover:bg-red-50">
+              Borrar IPV (Rango)
+            </Button>
+          </div>
+        </div>
+      </div>
+
       <div className="p-4 flex flex-col md:flex-row justify-between items-center bg-background/50 border-b gap-4">
         <h3 className="font-black uppercase text-sm tracking-widest text-primary flex items-center gap-2">
             <Calendar className="w-4 h-4" />
-            Historial de Cierres
+            Cierres por Mes
         </h3>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -503,9 +698,9 @@ export function IPVReportView() {
                   <TableCell className="sticky-column-1 font-bold">
                     {formatDate(r.fecha_reporte)}
                   </TableCell>
-                  <TableCell className="text-right font-black">{formatCurrency(r.total_ventas_cents / 100)}</TableCell>
-                  <TableCell className="text-right">{formatCurrency(r.resumen_efectivo_cents / 100)}</TableCell>
-                  <TableCell className="text-right">{formatCurrency(r.resumen_transferencia_cents / 100)}</TableCell>
+                  <TableCell className="text-right font-black">{formatCurrency(r.total_ventas_cents)}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(r.resumen_efectivo_cents)}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(r.resumen_transferencia_cents)}</TableCell>
                   <TableCell>
                     <Badge variant={r.estado === 'CERRADO' ? 'default' : 'outline'} className={r.estado === 'CERRADO' ? 'bg-green-500' : ''}>
                         {r.estado}
