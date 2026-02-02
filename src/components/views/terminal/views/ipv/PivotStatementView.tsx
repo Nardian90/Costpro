@@ -97,9 +97,9 @@ export function PivotStatementView() {
             const tableBody = pivotData.map(g => [
                 g.label,
                 g.count,
-                formatCurrency(g.totalCr / 100),
-                formatCurrency(g.totalDb / 100),
-                formatCurrency(g.netAmount / 100)
+                formatCurrency(g.totalCr),
+                formatCurrency(g.totalDb),
+                formatCurrency(g.netAmount)
             ]);
 
             autoTable(doc, {
@@ -109,9 +109,9 @@ export function PivotStatementView() {
                 theme: 'grid',
                 headStyles: { fillColor: [22, 163, 74] },
                 foot: [['TOTAL', '',
-                    formatCurrency(pivotData.reduce((s, g) => s + g.totalCr, 0) / 100),
-                    formatCurrency(pivotData.reduce((s, g) => s + g.totalDb, 0) / 100),
-                    formatCurrency(pivotData.reduce((s, g) => s + g.netAmount, 0) / 100)
+                    formatCurrency(pivotData.reduce((s, g) => s + g.totalCr, 0)),
+                    formatCurrency(pivotData.reduce((s, g) => s + g.totalDb, 0)),
+                    formatCurrency(pivotData.reduce((s, g) => s + g.netAmount, 0))
                 ]],
                 footStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' }
             });
@@ -213,13 +213,13 @@ export function PivotStatementView() {
                                             {g.count}
                                         </TableCell>
                                         <TableCell className="text-right font-bold text-green-600">
-                                            {formatCurrency(g.totalCr / 100)}
+                                            {formatCurrency(g.totalCr)}
                                         </TableCell>
                                         <TableCell className="text-right font-bold text-red-600">
-                                            {formatCurrency(g.totalDb / 100)}
+                                            {formatCurrency(g.totalDb)}
                                         </TableCell>
                                         <TableCell className="text-right font-black text-primary">
-                                            {formatCurrency(g.netAmount / 100)}
+                                            {formatCurrency(g.netAmount)}
                                         </TableCell>
                                     </TableRow>
                                     {expandedGroups.includes(g.key) && (
@@ -239,7 +239,7 @@ export function PivotStatementView() {
                                                                 <span className="text-muted-foreground truncate" title={t.observaciones}>{t.observaciones}</span>
                                                             </div>
                                                             <span className={`text-right font-black ${t.tipo === 'Cr' ? 'text-green-500' : 'text-red-500'}`}>
-                                                                {t.tipo === 'Db' ? '-' : ''}{formatCurrency(t.importe_cents / 100)}
+                                                                {t.tipo === 'Db' ? '-' : ''}{formatCurrency(t.importe_cents)}
                                                             </span>
                                                         </div>
                                                     ))}
@@ -255,9 +255,9 @@ export function PivotStatementView() {
                                 <TableRow>
                                     <TableCell colSpan={2} className="text-xs font-black uppercase">Totales Generales</TableCell>
                                     <TableCell className="text-center font-black">{pivotData.reduce((s, g) => s + g.count, 0)}</TableCell>
-                                    <TableCell className="text-right font-black text-green-600">{formatCurrency(pivotData.reduce((s, g) => s + g.totalCr, 0) / 100)}</TableCell>
-                                    <TableCell className="text-right font-black text-red-600">{formatCurrency(pivotData.reduce((s, g) => s + g.totalDb, 0) / 100)}</TableCell>
-                                    <TableCell className="text-right font-black text-primary">{formatCurrency(pivotData.reduce((s, g) => s + g.netAmount, 0) / 100)}</TableCell>
+                                    <TableCell className="text-right font-black text-green-600">{formatCurrency(pivotData.reduce((s, g) => s + g.totalCr, 0))}</TableCell>
+                                    <TableCell className="text-right font-black text-red-600">{formatCurrency(pivotData.reduce((s, g) => s + g.totalDb, 0))}</TableCell>
+                                    <TableCell className="text-right font-black text-primary">{formatCurrency(pivotData.reduce((s, g) => s + g.netAmount, 0))}</TableCell>
                                 </TableRow>
                             </TableFooter>
                         )}

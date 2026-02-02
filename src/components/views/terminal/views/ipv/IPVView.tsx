@@ -64,7 +64,7 @@ export default function IPVView() {
 
         if (matched === 0) {
             pending++;
-        } else if (diff === 0) {
+        } else if (Math.abs(diff) < 0.001) {
             squared++;
         } else {
             inProcess++;
@@ -104,7 +104,7 @@ export default function IPVView() {
     const txToReset = transactions.filter(t => {
         const matched = txTotals[t.referencia_origen] || 0;
         const target = t.importe_venta_cents || t.importe_cents;
-        return (target - matched) !== 0;
+        return Math.abs(target - matched) >= 0.001;
     });
 
     if (txToReset.length > 0) {

@@ -169,7 +169,7 @@ function SortableRuleItem({ rule, toggleRule, updateTolerance, updatePriority, t
                             <Input
                                 type="number"
                                 className="w-16 sm:w-20 h-8 text-xs"
-                                defaultValue={(rule.tolerancia_cents || 0) / 100}
+                                defaultValue={(rule.tolerancia_cents || 0)}
                                 onBlur={(e) => updateTolerance(rule.id, e.target.value)}
                             />
                         </div>
@@ -205,7 +205,7 @@ export function MatchingRulesEditor() {
     const defaults: MatchingRule[] = [
       { id: '1', tipo: 'HARD_REF', prioridad: 1, activo: true },
       { id: '2', tipo: 'EXACT_SUM', prioridad: 2, activo: true },
-      { id: '3', tipo: 'TOLERANCE', prioridad: 3, activo: true, tolerancia_cents: 100 }, // $1.00
+      { id: '3', tipo: 'TOLERANCE', prioridad: 3, activo: true, tolerancia_cents: 1 }, // $1.00
       { id: '4', tipo: 'CASH_FILL', prioridad: 4, activo: false }
     ];
     await db.matching_rules.bulkPut(defaults);
@@ -217,9 +217,9 @@ export function MatchingRulesEditor() {
   };
 
   const updateTolerance = async (id: string, value: string) => {
-    const cents = Math.round(parseFloat(value) * 100);
-    if (!isNaN(cents)) {
-        await db.matching_rules.update(id, { tolerancia_cents: cents });
+    const val = parseFloat(value);
+    if (!isNaN(val)) {
+        await db.matching_rules.update(id, { tolerancia_cents: val });
     }
   };
 
