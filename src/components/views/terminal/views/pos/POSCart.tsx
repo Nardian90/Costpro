@@ -99,9 +99,10 @@ export const POSCart = ({
                         </div>
                         <button
                           onClick={() => onRemoveItem(item.product_id, item.variant_id)}
-                          className="absolute top-2 right-2 text-muted-foreground hover:text-destructive p-2 rounded-full hover:bg-destructive/5 transition-all"
+                          className="absolute top-1 right-1 text-muted-foreground hover:text-destructive p-3 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full hover:bg-destructive/5 transition-all"
+                          aria-label="Eliminar producto"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-5 h-5" />
                         </button>
                       </div>
                       <div className="flex items-center justify-between">
@@ -168,7 +169,7 @@ export const POSCart = ({
                           setDiscount({ type: discount?.type || 'percentage', value: d });
                         }}
                         className={cn(
-                          "flex-1 py-2 rounded-lg border font-black text-[10px] uppercase transition-all",
+                          "flex-1 py-3 min-h-[44px] rounded-lg border font-black text-[10px] uppercase transition-all flex items-center justify-center",
                           discount?.value === d && discount?.type === 'percentage' ? "bg-primary text-white border-primary" : "bg-background text-muted-foreground border-border"
                         )}
                       >

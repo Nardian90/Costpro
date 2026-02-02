@@ -160,7 +160,7 @@ export default function InventoryView() {
 
             <QueryInspector />
 
-            <div className="space-y-4">
+            <div className="space-y-4 sticky top-[76px] z-20 bg-background/95 backdrop-blur-md pb-4 pt-2 -mx-4 px-4 shadow-md sm:relative sm:top-0 sm:bg-transparent sm:pb-0 sm:pt-0 sm:mx-0 sm:px-0 sm:shadow-none">
                 <SearchBar
                     value={searchTerm}
                     onChange={setSearchTerm}
