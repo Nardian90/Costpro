@@ -25,8 +25,8 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
     layoutMode = 'grid',
     calculatedAnnexes: providedCalculatedAnnexes
 }) => {
-  const annexes = useCostSheetStore(state => state.data.annexes);
-  const header = useCostSheetStore(state => state.data.header);
+  const annexes = useCostSheetStore(state => state.data?.annexes ?? []);
+  const header = useCostSheetStore(state => state.data?.header);
   const updateValue = useCostSheetStore(state => state.updateValue);
   const addRow = useCostSheetStore(state => state.addRow);
   const removeRow = useCostSheetStore(state => state.removeRow);
@@ -56,17 +56,27 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
     }
   }, [updateValue]);
 
-  const annex = React.useMemo(() => annexes.find((a: CostSheetAnnex) => a.id === activeAnnexId), [annexes, activeAnnexId]);
-  const calculatedAnnex = React.useMemo(() => calculatedAnnexes.find((a: any) => a.id === activeAnnexId), [calculatedAnnexes, activeAnnexId]);
+  const annex = React.useMemo(() => (annexes || []).find((a: CostSheetAnnex) => a.id === activeAnnexId), [annexes, activeAnnexId]);
+  const calculatedAnnex = React.useMemo(() => (calculatedAnnexes || []).find((a: any) => a.id === activeAnnexId), [calculatedAnnexes, activeAnnexId]);
 
   if (!annex) {
-      return <p className="text-center py-12 text-muted-foreground italic">Anexo no encontrado.</p>;
+      return (
+        <div className="flex flex-col items-center justify-center py-12 px-4 text-center animate-in fade-in duration-500">
+            <div className="w-16 h-16 bg-muted rounded-2xl flex items-center justify-center mb-4">
+                <Database className="w-8 h-8 text-muted-foreground opacity-20" />
+            </div>
+            <p className="text-muted-foreground font-bold uppercase tracking-widest text-xs">Anexo no disponible</p>
+            <p className="text-[10px] text-muted-foreground/60 mt-1 uppercase">Verifique la configuración de la ficha</p>
+        </div>
+      );
   }
 
-  const displayData = calculatedAnnex ? calculatedAnnex.data : annex.data;
+  const displayData = calculatedAnnex ? calculatedAnnex.data : (annex?.data || []);
   const annexIndex = React.useMemo(() => annexes.indexOf(annex), [annexes, annex]);
 
   const totalValue = React.useMemo(() => {
+    if (!annex?.columns || !displayData) return 0;
+
     const totalCol = annex.columns.find((c: CostSheetColumn) =>
         ['total', 'amount', 'depreciation_cost', 'price_total'].includes(c.key)
     );
@@ -76,7 +86,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
     return displayData.reduce((acc: number, row: any) => {
         return acc + (Number(row[key]) || 0);
     }, 0);
-  }, [displayData, annex.columns]);
+  }, [displayData, annex?.columns]);
 
   const handleProductSelect = React.useCallback((product: any) => {
     if (targetRowIndex === null) return;

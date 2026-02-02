@@ -62,7 +62,7 @@ const CostSheetView = () => {
     );
   }
 
-  const isAnnexActive = React.useMemo(() => data.annexes.some((a: any) => a.id === activeSection), [data.annexes, activeSection]);
+  const isAnnexActive = React.useMemo(() => (data?.annexes || []).some((a: any) => a.id === activeSection), [data?.annexes, activeSection]);
 
   const handleExportPDF = React.useCallback(async () => {
     const toastId = toast.loading("Generando PDF profesional... por favor espere.");
@@ -80,7 +80,7 @@ const CostSheetView = () => {
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `ficha-${data.header.code || 'export'}.pdf`;
+            a.download = `ficha-${data?.header?.code || 'export'}.pdf`;
             document.body.appendChild(a);
             a.click();
             a.remove();
@@ -97,7 +97,7 @@ const CostSheetView = () => {
         calculatedValues: calculatedValues,
         calculatedAnnexes: calculatedAnnexes,
         store_id: useAuthStore.getState().user?.activeStoreId,
-        name: data.header.name || 'Ficha de Costo'
+        name: data?.header?.name || 'Ficha de Costo'
       }, useAuthStore.getState().token || '');
 
       if (response.url) {
@@ -113,7 +113,7 @@ const CostSheetView = () => {
   }, [calculationResult, data, calculatedValues, calculatedAnnexes]);
 
   const handleExportExcel = React.useCallback(() => {
-    const fileName = data.header.name ? `Ficha de Costo - ${data.header.name}` : 'Ficha de Costo';
+    const fileName = data?.header?.name ? `Ficha de Costo - ${data.header.name}` : 'Ficha de Costo';
     exportToCSV(data, calculatedValues, fileName);
   }, [data, calculatedValues]);
 
@@ -141,7 +141,7 @@ const CostSheetView = () => {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href",     dataStr);
-    downloadAnchorNode.setAttribute("download", `ficha-${data.header.code || 'export'}.json`);
+    downloadAnchorNode.setAttribute("download", `ficha-${data?.header?.code || 'export'}.json`);
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
@@ -196,7 +196,7 @@ const CostSheetView = () => {
         onClose={() => setIsSectionsSidebarOpen(false)}
         title="Secciones de la Ficha"
         type="sections"
-        items={data.sections}
+        items={data?.sections || []}
         activeId={activeSubSectionId}
         onSelect={(id) => {
             setActiveSubSectionId(id);
@@ -209,7 +209,7 @@ const CostSheetView = () => {
         onClose={() => setIsAnnexesSidebarOpen(false)}
         title="Anexos Disponibles"
         type="annexes"
-        items={data.annexes}
+        items={data?.annexes || []}
         activeId={activeSection}
         onSelect={setActiveSection}
       />
@@ -266,9 +266,9 @@ const CostSheetView = () => {
                     )}
                     {activeSection === 'main' && (
                         <CostSheetInteractiveTable
-                            sections={data.sections}
+                            sections={data?.sections || []}
                             calculatedValues={calculatedValues}
-                            annexes={data.annexes}
+                            annexes={data?.annexes || []}
                             activeSubSectionId={activeSubSectionId}
                             setActiveSubSectionId={setActiveSubSectionId}
                             onOpenSections={() => setIsSectionsSidebarOpen(true)}
