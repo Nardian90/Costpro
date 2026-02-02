@@ -11,6 +11,8 @@ export function translateFormulaFromSpanish(formula: string): string {
     'PROMEDIO': 'average',
     'MAX': 'max',
     'MIN': 'min',
+    'PCT': 'pct',
+    'ROUND2': 'round2',
   };
 
   let translated = formula;

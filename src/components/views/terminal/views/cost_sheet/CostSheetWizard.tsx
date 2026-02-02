@@ -34,10 +34,10 @@ const CostSheetWizard: React.FC<CostSheetWizardProps> = ({ data, calculatedValue
 
   // Auto-select first section when wizard reaches the main step
   React.useEffect(() => {
-    if (data?.sections?.length > 0 && !activeSubSectionId) {
-      setActiveSubSectionId(data.sections[0].id);
+    if (data?.sections && data.sections.length > 0 && !activeSubSectionId) {
+       setActiveSubSectionId(data.sections[0]?.id || '');
     }
-  }, [data, activeSubSectionId]);
+  }, [data?.sections, activeSubSectionId]);
 
   const step = steps[currentStep];
   const progress = ((currentStep + 1) / steps.length) * 100;
@@ -91,9 +91,9 @@ const CostSheetWizard: React.FC<CostSheetWizardProps> = ({ data, calculatedValue
                  <p>En este paso puede revisar los cálculos automáticos y ajustar valores históricos o métodos de prorrateo para los gastos indirectos.</p>
               </div>
               <CostSheetInteractiveTable
-                sections={data.sections}
+                sections={data?.sections || []}
                 calculatedValues={calculatedValues}
-                annexes={data.annexes}
+                annexes={data?.annexes || []}
                 activeSubSectionId={activeSubSectionId}
                 setActiveSubSectionId={setActiveSubSectionId}
                 onOpenSections={() => setIsSectionsSidebarOpen(true)}
@@ -104,7 +104,7 @@ const CostSheetWizard: React.FC<CostSheetWizardProps> = ({ data, calculatedValue
                 onClose={() => setIsSectionsSidebarOpen(false)}
                 title="Secciones de la Ficha"
                 type="sections"
-                items={data.sections}
+                items={data?.sections || []}
                 activeId={activeSubSectionId}
                 onSelect={setActiveSubSectionId}
               />

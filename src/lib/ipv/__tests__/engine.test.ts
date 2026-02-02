@@ -21,8 +21,8 @@ vi.mock('../../dexie', () => ({
 
 describe('MatchingEngine', () => {
   const products: Product[] = [
-    { cod: '1', descripcion: 'Cerveza', um: 'U', precio_cents: 260, prioridad_algoritmo: 1, activo: true, es_paquete: false, contenido_paquete: 1, created_at: '' },
-    { cod: '1-C', descripcion: 'Cerveza Caja', um: 'Caja', precio_cents: 5760, prioridad_algoritmo: 1, activo: true, es_paquete: true, contenido_paquete: 24, created_at: '' },
+    { cod: '1', descripcion: 'Cerveza', um: 'U', precio_cents: 26000, prioridad_algoritmo: 1, activo: true, es_paquete: false, contenido_paquete: 1, stock_inicial_manual: 0, created_at: '' },
+    { cod: '1-C', descripcion: 'Cerveza Caja', um: 'Caja', precio_cents: 576000, prioridad_algoritmo: 1, activo: true, es_paquete: true, contenido_paquete: 24, stock_inicial_manual: 0, created_at: '' },
   ];
 
   const rules: MatchingRule[] = [
