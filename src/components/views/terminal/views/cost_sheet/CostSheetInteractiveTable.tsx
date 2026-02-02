@@ -256,12 +256,12 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
         </TableCell>
       </TableRow>
 
-      {isExpanded && hasChildren && row.children?.map((child, index) => (
+      {isExpanded && hasChildren && (row.children || []).filter(c => !!c).map((child, index) => (
         <CostSheetRow
           key={child.id}
           row={child}
           level={level + 1}
-          calculated={calculatedValues[child.id]}
+          calculated={calculatedValues?.[child.id] || {} as any}
           calculatedValues={calculatedValues}
           path={[...path, 'children', index]}
           annexes={annexes}
@@ -292,6 +292,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
   const allRows = useMemo(() => {
     const all: RowData[] = [];
     const flatten = (rows: RowData[]) => {
+      if (!rows) return;
       for (const row of rows) {
         all.push(row);
         if (row.children && row.children.length > 0) {
@@ -299,7 +300,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
         }
       }
     };
-    flatten(sections.flatMap(s => s.rows));
+    flatten((sections || []).flatMap(s => s?.rows || []));
     return all;
   }, [sections]);
 
@@ -421,12 +422,12 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {section.rows.map((row: RowData, rowIndex: number) => (
+                                {(section?.rows || []).filter(r => !!r).map((row: RowData, rowIndex: number) => (
                                     <CostSheetRow
                                         key={row.id}
                                         row={row}
                                         level={0}
-                                        calculated={calculatedValues[row.id]}
+                                        calculated={calculatedValues?.[row.id] || {} as any}
                                         calculatedValues={calculatedValues}
                                         path={['sections', sectionIndex, 'rows', rowIndex]}
                                         annexes={annexes}

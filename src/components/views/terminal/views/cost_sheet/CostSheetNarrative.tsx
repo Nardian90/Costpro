@@ -11,7 +11,8 @@ interface CostSheetNarrativeProps {
 }
 
 const CostSheetNarrative: React.FC<CostSheetNarrativeProps> = ({ data, calculatedValues }) => {
-  const getVal = (id: string) => calculatedValues[id]?.total || 0;
+  if (!data?.header) return null;
+  const getVal = (id: string) => calculatedValues?.[id]?.total || 0;
   const format = (val: number) => formatCurrency(val);
 
   const costoTotal = getVal('5');
@@ -46,10 +47,10 @@ const CostSheetNarrative: React.FC<CostSheetNarrativeProps> = ({ data, calculate
         </div>
 
         <p className="text-slate-700 dark:text-slate-300 leading-relaxed mb-6">
-          Para el producto <span className="font-bold text-foreground">"{data.header.name}"</span>,
-          se ha determinado un <span className="font-bold">Costo Total de Producción</span> de <span className="text-primary font-bold whitespace-nowrap">{data.header.currency} {format(costoTotal)}</span>.
-          A este valor se le adicionan gastos indirectos por un total de <span className="font-bold whitespace-nowrap">{data.header.currency} {format(gastosTotales)}</span>,
-          resultando en un costo y gasto total de <span className="font-bold whitespace-nowrap">{data.header.currency} {format(costoYGastoTotal)}</span>.
+          Para el producto <span className="font-bold text-foreground">"{data?.header?.name || 'Sin nombre'}"</span>,
+          se ha determinado un <span className="font-bold">Costo Total de Producción</span> de <span className="text-primary font-bold whitespace-nowrap">{data?.header?.currency || ''} {format(costoTotal)}</span>.
+          A este valor se le adicionan gastos indirectos por un total de <span className="font-bold whitespace-nowrap">{data?.header?.currency || ''} {format(gastosTotales)}</span>,
+          resultando en un costo y gasto total de <span className="font-bold whitespace-nowrap">{data?.header?.currency || ''} {format(costoYGastoTotal)}</span>.
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -67,7 +68,7 @@ const CostSheetNarrative: React.FC<CostSheetNarrativeProps> = ({ data, calculate
              <Info className="w-5 h-5 text-primary mt-1" />
              <div>
                 <p className="text-xs text-slate-500 uppercase font-bold tracking-wider whitespace-nowrap">Precio Final Sugerido</p>
-                <p className="text-lg font-bold text-primary whitespace-nowrap">{data.header.currency} {format(precioFinal)}</p>
+                <p className="text-lg font-bold text-primary whitespace-nowrap">{data?.header?.currency || ''} {format(precioFinal)}</p>
              </div>
           </div>
         </div>
@@ -109,7 +110,7 @@ const CostSheetNarrative: React.FC<CostSheetNarrativeProps> = ({ data, calculate
           <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
             El punto de equilibrio se sitúa en un precio unitario de <span className="font-bold text-foreground">{format(getVal('15'))}</span>.
             Para alcanzar la rentabilidad proyectada del {costoYGastoTotal > 0 ? ((utilidad/costoYGastoTotal)*100).toFixed(0) : '0'}%, se recomienda establecer la tarifa de venta en
-            <span className="font-bold text-foreground"> {format(getVal('16'))} {data.header.currency} por {data.header.unit}</span>.
+            <span className="font-bold text-foreground"> {format(getVal('16'))} {data?.header?.currency || ''} por {data?.header?.unit || 'unidad'}</span>.
           </p>
         </section>
       </div>
