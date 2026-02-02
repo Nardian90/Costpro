@@ -165,11 +165,13 @@ export default function IPVView() {
                   <CheckCircle2 className="w-5 h-5" />
                   <h2 className="font-black uppercase tracking-widest text-sm">Flujo de Trabajo Profesional</h2>
               </div>
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                  <FlowStep number="1" title="Catálogo" desc="Carga productos y precios base." />
-                  <FlowStep number="2" title="Ingesta" desc="Arrastra el estado de cuenta." />
-                  <FlowStep number="3" title="Matching" desc="Ejecuta el motor de búsqueda." />
-                  <FlowStep number="4" title="Cuadre" desc="Ajusta manualmente si es necesario." />
+              <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 sm:gap-6">
+                  <FlowStep number="1" title="Catálogo" desc="Carga productos y precios." />
+                  <FlowStep number="2" title="Reglas" desc="Configura el motor de matching." />
+                  <FlowStep number="3" title="Movimientos" desc="Ingesta de extractos bancarios." />
+                  <FlowStep number="4" title="Validación" desc="Revisión y cuadre manual." />
+                  <FlowStep number="5" title="IPV" desc="Generación de reportes diarios." />
+                  <FlowStep number="6" title="Auditoría" desc="Exportación y control fiscal." />
               </div>
           </div>
       </Card>
