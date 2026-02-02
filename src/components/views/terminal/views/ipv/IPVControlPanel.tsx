@@ -35,10 +35,10 @@ const SectionCard = ({ id, title, description, icon, onClick, color }: SectionCa
         className="group p-6 border-2 border-transparent hover:border-primary/20 bg-card/50 backdrop-blur-sm transition-all cursor-pointer relative overflow-hidden flex flex-col h-full shadow-md hover:shadow-xl active:scale-95"
     >
         <div className={`absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity ${color}`}>
-            {React.cloneElement(icon as React.ReactElement, { size: 80 })}
+            {React.cloneElement(icon as React.ReactElement<any>, { size: 80 })}
         </div>
         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 ${color} bg-opacity-10 shadow-inner`}>
-            {React.cloneElement(icon as React.ReactElement, { size: 24, className: color })}
+            {React.cloneElement(icon as React.ReactElement<any>, { size: 24, className: color })}
         </div>
         <h3 className="text-sm font-black uppercase tracking-widest mb-2 flex items-center gap-2">
             {title}
