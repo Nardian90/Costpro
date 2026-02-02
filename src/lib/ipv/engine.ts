@@ -258,15 +258,23 @@ export class MatchingEngine {
     return solve(target, 0, 0) || [];
   }
 
-  async reconcileAll(transactions: BankTransaction[]): Promise<any[]> {
+  async reconcileAll(transactions: BankTransaction[], onProgress?: (percentage: number) => void): Promise<any[]> {
     const results = [];
-    for (const tx of transactions) {
+    const total = transactions.length;
+
+    for (let i = 0; i < total; i++) {
+        const tx = transactions[i];
         const res = await this.matchTransaction(tx);
         results.push({
-            transactionId: tx.id,
+            transactionId: tx.referencia_origen,
             status: res.status,
             lines: res.lines
         });
+
+        if (onProgress) {
+            const percentage = Math.round(((i + 1) / total) * 100);
+            onProgress(percentage);
+        }
     }
     return results;
   }

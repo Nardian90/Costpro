@@ -1,6 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
 import { logger } from '@/lib/logger';
+import { storeSchema } from '@/validation/schemas';
+import { validateRPCArrayResponse } from '@/lib/rpc-validator';
+import { withTableLogging } from './base';
 import type { Store } from '@/types';
 
 export function useStores(userId: string, isAdmin: boolean, isEncargado: boolean) {
@@ -11,25 +14,23 @@ export function useStores(userId: string, isAdmin: boolean, isEncargado: boolean
       if (!isAdmin && (!userId || userId.length < 5)) return [];
 
       const storeColumns = 'id, name, address, logo_url, is_active, created_at';
-      const [storesResponse, membershipsResponse] = await Promise.all([
-        supabase.from('stores').select(storeColumns).order('name'),
-        supabase.from('user_store_memberships').select('store_id, role').eq('user_id', userId).eq('status', 'active')
-      ]);
 
-      if (storesResponse.error) {
-        logger.error('DATABASE', 'FETCH_STORES_FAILED', { error: storesResponse.error });
-        return [];
-      }
+      const storesData = await withTableLogging('select', 'stores', () =>
+        supabase.from('stores').select(storeColumns).order('name')
+      );
 
-      const allStores = storesResponse.data || [];
+      const membershipsData = await withTableLogging('select', 'user_store_memberships', () =>
+        supabase.from('user_store_memberships')
+          .select('store_id, role')
+          .eq('user_id', userId)
+          .eq('status', 'active')
+      );
+
+      const validatedStores = await validateRPCArrayResponse(storesData, storeSchema, 'stores');
+      const allStores = validatedStores || [];
       if (isAdmin) return allStores;
 
-      if (membershipsResponse.error) {
-        logger.error('DATABASE', 'FETCH_MEMBERSHIPS_FAILED', { error: membershipsResponse.error });
-        return [];
-      }
-
-      const memberships = membershipsResponse.data || [];
+      const memberships = membershipsData || [];
       const assignedStoreIds = memberships.map(m => m.store_id);
 
       if (isEncargado) {

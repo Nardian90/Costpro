@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { supabase } from '@/lib/supabaseClient';
 import { validateRPCArrayResponse } from '@/lib/rpc-validator';
 import { auditLogSchema, getAuditLogsParamsSchema } from '@/validation/schemas';
-import { withLogging } from './base';
+import { withLogging, withTableLogging } from './base';
 
 export interface AuditLogFilters {
   store_id?: string | null;
@@ -47,13 +47,7 @@ export function useAuditLogs(filters: AuditLogFilters = {}) {
 
         if (store_id) query.eq('store_id', store_id);
 
-        const { data: fallbackRows, error: fallbackError } = await query;
-
-        if (fallbackError) {
-          console.error('[AuditLogs] Fallback also failed:', fallbackError);
-          // If fallback fails (likely permissions), we return empty to avoid crashing
-          return [];
-        }
+        const fallbackRows = await withTableLogging('select', 'audit_logs', () => query);
 
         finalData = (fallbackRows || []).map((row: any) => ({
           ...row,
@@ -97,8 +91,7 @@ export async function prefetchAuditLogs(queryClient: QueryClient, filters: Audit
 
       let finalData: any[] = [];
       try {
-        const { data, error } = await supabase.rpc(rpcName, params);
-        if (error) throw error;
+        const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
         finalData = data || [];
       } catch (err) {
         // Prefetch fallback
@@ -107,7 +100,7 @@ export async function prefetchAuditLogs(queryClient: QueryClient, filters: Audit
           profile:profiles(full_name, role)
         `).order('created_at', { ascending: false }).limit(limit);
         if (store_id) query.eq('store_id', store_id);
-        const { data: fallbackRows } = await query;
+        const fallbackRows = await withTableLogging('select', 'audit_logs', () => query);
         finalData = (fallbackRows || []).map((row: any) => ({
           ...row,
           profile: Array.isArray(row.profile) ? row.profile[0] : row.profile

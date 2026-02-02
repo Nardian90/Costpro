@@ -233,7 +233,7 @@ export interface TaxConfiguration {
   name: string;
   type: 'fixed' | 'percentage';
   value: number;
-  min_exempt?: number;
+  min_exempt?: number | null;
   is_active: boolean;
   store_id?: string | null;
 }
