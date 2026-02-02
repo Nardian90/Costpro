@@ -150,6 +150,7 @@ export function TransactionTable({ transactions }: { transactions: BankTransacti
                 <TableHead>Referencia</TableHead>
                 <TableHead className="max-w-md">Observaciones</TableHead>
                 <TableHead className="text-right">Importe</TableHead>
+                <TableHead className="text-right text-orange-600">Comisión</TableHead>
                 <TableHead className="text-right">Venta</TableHead>
                 <TableHead className="text-right">Diferencia</TableHead>
                 <TableHead>Tipo</TableHead>
@@ -207,6 +208,9 @@ export function TransactionTable({ transactions }: { transactions: BankTransacti
                     </TableCell>
                     <TableCell className="text-right font-medium text-muted-foreground text-xs">
                       {formatCurrency(tx.importe_cents / 100)}
+                    </TableCell>
+                    <TableCell className="text-right font-bold text-orange-500 text-xs">
+                      {formatCurrency((tx.comision_cents || 0) / 100)}
                     </TableCell>
                     <TableCell className="text-right font-black text-sm">
                       {formatCurrency(targetAmount / 100)}
@@ -296,11 +300,22 @@ export function TransactionTable({ transactions }: { transactions: BankTransacti
                                 {tx.observaciones}
                             </p>
 
-                            <div className="grid grid-cols-2 gap-4 pt-2 border-t border-border/50">
+                            <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border/50">
                                 <div>
-                                    <p className="text-[9px] font-bold text-muted-foreground uppercase">Importe Venta</p>
-                                    <p className="text-lg font-black">{formatCurrency(targetAmount / 100)}</p>
+                                    <p className="text-[8px] font-bold text-muted-foreground uppercase">Importe</p>
+                                    <p className="text-sm font-bold">{formatCurrency(tx.importe_cents / 100)}</p>
                                 </div>
+                                <div className="text-center">
+                                    <p className="text-[8px] font-bold text-orange-500 uppercase">Comisión</p>
+                                    <p className="text-sm font-bold text-orange-500">{formatCurrency((tx.comision_cents || 0) / 100)}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[8px] font-bold text-primary uppercase">Total Venta</p>
+                                    <p className="text-sm font-black">{formatCurrency(targetAmount / 100)}</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 pt-2">
                                 <div className="text-right">
                                     <p className="text-[9px] font-bold text-muted-foreground uppercase">Diferencia</p>
                                     <p className={`text-lg font-black ${diff === 0 ? 'text-green-500' : (diff < 0 ? 'text-red-500' : 'text-orange-500')}`}>

@@ -22,8 +22,9 @@ import { toast } from 'sonner';
 
 export function PivotStatementView() {
     const transactions = useLiveQuery(() => db.bank_statements.toArray());
-    const [expandedMonths, setExpandedMonths] = useState<string[]>([]);
+    const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
     const [filterType, setFilterType] = useState<'ALL' | 'Cr' | 'Db'>('ALL');
+    const [groupBy, setGroupBy] = useState<'day' | 'month' | 'year'>('month');
 
     const pivotData = useMemo(() => {
         if (!transactions) return [];
@@ -31,9 +32,8 @@ export function PivotStatementView() {
         const filtered = transactions.filter(t => filterType === 'ALL' || t.tipo === filterType);
 
         const groups: Record<string, {
-            monthKey: string;
-            monthName: string;
-            year: number;
+            key: string;
+            label: string;
             count: number;
             totalCr: number;
             totalDb: number;
@@ -43,13 +43,24 @@ export function PivotStatementView() {
 
         filtered.forEach(t => {
             const date = new Date(t.fecha + 'T12:00:00');
-            const monthKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+            let key = '';
+            let label = '';
 
-            if (!groups[monthKey]) {
-                groups[monthKey] = {
-                    monthKey,
-                    monthName: date.toLocaleString('es', { month: 'long' }).toUpperCase(),
-                    year: date.getFullYear(),
+            if (groupBy === 'year') {
+                key = `${date.getFullYear()}`;
+                label = key;
+            } else if (groupBy === 'month') {
+                key = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+                label = `${date.toLocaleString('es', { month: 'long' }).toUpperCase()} ${date.getFullYear()}`;
+            } else {
+                key = t.fecha;
+                label = formatDate(t.fecha);
+            }
+
+            if (!groups[key]) {
+                groups[key] = {
+                    key,
+                    label,
                     count: 0,
                     totalCr: 0,
                     totalDb: 0,
@@ -58,7 +69,7 @@ export function PivotStatementView() {
                 };
             }
 
-            const g = groups[monthKey];
+            const g = groups[key];
             g.count++;
             if (t.tipo === 'Cr') g.totalCr += t.importe_cents;
             else g.totalDb += t.importe_cents;
@@ -66,12 +77,12 @@ export function PivotStatementView() {
             g.transactions.push(t);
         });
 
-        return Object.values(groups).sort((a, b) => b.monthKey.localeCompare(a.monthKey));
-    }, [transactions, filterType]);
+        return Object.values(groups).sort((a, b) => b.key.localeCompare(a.key));
+    }, [transactions, filterType, groupBy]);
 
-    const toggleMonth = (monthKey: string) => {
-        setExpandedMonths(prev =>
-            prev.includes(monthKey) ? prev.filter(k => k !== monthKey) : [...prev, monthKey]
+    const toggleGroup = (key: string) => {
+        setExpandedGroups(prev =>
+            prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
         );
     };
 
@@ -84,7 +95,7 @@ export function PivotStatementView() {
             doc.text(`Generado el: ${new Date().toLocaleString()}`, 14, 28);
 
             const tableBody = pivotData.map(g => [
-                `${g.monthName} ${g.year}`,
+                g.label,
                 g.count,
                 formatCurrency(g.totalCr / 100),
                 formatCurrency(g.totalDb / 100),
@@ -93,7 +104,7 @@ export function PivotStatementView() {
 
             autoTable(doc, {
                 startY: 35,
-                head: [['Mes/Año', 'Cant.', 'Créditos (+)', 'Débitos (-)', 'Balance']],
+                head: [[groupBy === 'day' ? 'Fecha' : (groupBy === 'month' ? 'Mes' : 'Año'), 'Cant.', 'Créditos (+)', 'Débitos (-)', 'Balance']],
                 body: tableBody,
                 theme: 'grid',
                 headStyles: { fillColor: [22, 163, 74] },
@@ -125,7 +136,34 @@ export function PivotStatementView() {
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap justify-center">
+                    <div className="flex bg-muted p-1 rounded-lg">
+                        <Button
+                            variant={groupBy === 'day' ? 'secondary' : 'ghost'}
+                            size="sm"
+                            className="h-7 text-[10px] font-black uppercase px-2"
+                            onClick={() => setGroupBy('day')}
+                        >
+                            Día
+                        </Button>
+                        <Button
+                            variant={groupBy === 'month' ? 'secondary' : 'ghost'}
+                            size="sm"
+                            className="h-7 text-[10px] font-black uppercase px-2"
+                            onClick={() => setGroupBy('month')}
+                        >
+                            Mes
+                        </Button>
+                        <Button
+                            variant={groupBy === 'year' ? 'secondary' : 'ghost'}
+                            size="sm"
+                            className="h-7 text-[10px] font-black uppercase px-2"
+                            onClick={() => setGroupBy('year')}
+                        >
+                            Año
+                        </Button>
+                    </div>
+
                     <select
                         value={filterType}
                         onChange={(e) => setFilterType(e.target.value as any)}
@@ -163,13 +201,13 @@ export function PivotStatementView() {
                                     </TableCell>
                                 </TableRow>
                             ) : pivotData.map(g => (
-                                <React.Fragment key={g.monthKey}>
-                                    <TableRow className="cursor-pointer hover:bg-muted/30" onClick={() => toggleMonth(g.monthKey)}>
+                                <React.Fragment key={g.key}>
+                                    <TableRow className="cursor-pointer hover:bg-muted/30" onClick={() => toggleGroup(g.key)}>
                                         <TableCell>
-                                            {expandedMonths.includes(g.monthKey) ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                                            {expandedGroups.includes(g.key) ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                                         </TableCell>
                                         <TableCell className="font-black text-sm">
-                                            {g.monthName} {g.year}
+                                            {g.label}
                                         </TableCell>
                                         <TableCell className="text-center font-bold">
                                             {g.count}
@@ -184,7 +222,7 @@ export function PivotStatementView() {
                                             {formatCurrency(g.netAmount / 100)}
                                         </TableCell>
                                     </TableRow>
-                                    {expandedMonths.includes(g.monthKey) && (
+                                    {expandedGroups.includes(g.key) && (
                                         <TableRow className="bg-muted/10">
                                             <TableCell colSpan={6} className="p-0">
                                                 <div className="p-4 border-l-4 border-primary ml-8 my-2 space-y-2">
