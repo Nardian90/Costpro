@@ -26,6 +26,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
     calculatedAnnexes: providedCalculatedAnnexes
 }) => {
   const annexes = useCostSheetStore(state => state.data?.annexes ?? []);
+  const sections = useCostSheetStore(state => state.data?.sections ?? []);
   const header = useCostSheetStore(state => state.data?.header);
   const updateValue = useCostSheetStore(state => state.updateValue);
 
@@ -66,6 +67,25 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
 
   const annex = React.useMemo(() => (annexes || []).find((a: CostSheetAnnex) => a?.id === activeAnnexId), [annexes, activeAnnexId]);
   const calculatedAnnex = React.useMemo(() => (calculatedAnnexes || []).find((a: any) => a?.id === activeAnnexId), [calculatedAnnexes, activeAnnexId]);
+
+  // Extract classifications from Section 1 for suggestions
+  const classificationSuggestions = React.useMemo(() => {
+    const s1 = sections.find(s => s.id === 's1' || s.label.toLowerCase().includes('gasto material'));
+    if (!s1) return [];
+
+    const suggestions: { id: string, label: string }[] = [];
+    const traverse = (rows: any[]) => {
+        rows.forEach(r => {
+            if (r.children && r.children.length > 0) {
+                traverse(r.children);
+            } else {
+                suggestions.push({ id: r.id, label: r.label });
+            }
+        });
+    };
+    traverse(s1.rows || []);
+    return suggestions;
+  }, [sections]);
 
   if (!annex) {
       return (
@@ -193,6 +213,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                                                 type={typeof (annexes[annexIndex].data[rowIndex][col.key]) === 'number' ? 'number' : 'text'}
                                                 value={annexes[annexIndex].data[rowIndex][col.key] ?? ''}
                                                 onChange={(e) => handleInputChange(['annexes', annexIndex, 'data', rowIndex, col.key], e.target.value)}
+                                                list={col.key === 'classification' ? 'classification-suggestions' : undefined}
                                                 className={cn(
                                                     "neu-input !p-2 min-w-[140px] text-xs font-bold text-slate-700 dark:text-slate-200 border-transparent hover:border-primary/20 focus:border-primary bg-white/50 dark:bg-slate-900/50",
                                                     typeof annexes[annexIndex].data[rowIndex][col.key] === 'string' && annexes[annexIndex].data[rowIndex][col.key] !== '' && "border-primary/20 bg-primary/5"
@@ -251,6 +272,13 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
             </Table>
          </div>
        </div>
+
+       {/* Global suggestions for classification column */}
+       <datalist id="classification-suggestions">
+          {classificationSuggestions.map(s => (
+              <option key={s.id} value={`${s.id} - ${s.label}`} />
+          ))}
+       </datalist>
 
        {/* Annex Total for Grid Mode (Mobile Cards) */}
        {layoutMode === 'grid' && (

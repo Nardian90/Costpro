@@ -244,9 +244,13 @@ export function calculateFicha(
 
             // Add annex totals to context (e.g., AnexoI, AnexoII)
             annexTotals.forEach((total, id) => {
-                context[id] = total;
+                // Smart Resolve: if current row has a classification, try to get the specific sum for that class in this annex
+                const classSum = annexSumMap.get(id)?.get(row.classification);
+                const valueToUse = classSum !== undefined ? classSum.toNumber() : total;
+
+                context[id] = valueToUse;
                 // Also support AnexoI, AnexoII style for clarity
-                context[`Anexo${id}`] = total;
+                context[`Anexo${id}`] = valueToUse;
             });
 
             const result = expr.evaluate(context);
