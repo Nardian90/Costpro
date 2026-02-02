@@ -95,18 +95,27 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
     }
   };
 
-  const toggleExclusion = async (tx: BankTransaction) => {
+  const toggleExclusion = async (tx: BankTransaction, forcedValue?: boolean) => {
+      // Si forcedValue viene de Radix Checkbox, invertimos su lógica (Checked = !Excluido)
+      const newValue = forcedValue !== undefined ? !forcedValue : !tx.excluido;
+
       await db.bank_statements.update(tx.referencia_origen, {
-          excluido: !tx.excluido
+          excluido: newValue,
+          updated_at: new Date().toISOString()
       });
   };
 
   const bulkResetMatching = async () => {
-    if (confirm('¿REINICIAR CONCILIACIÓN de todas las transacciones visibles? Se borrarán los productos asociados.')) {
+    if (filtered.length === 0) return;
+    if (confirm(`¿REINICIAR CONCILIACIÓN de ${filtered.length} transacciones visibles? Se borrarán todos los productos asociados.`)) {
         const ids = filtered.map(t => t.referencia_origen);
-        await db.reconciliation_lines.where('transaction_ref').anyOf(ids).delete();
-        await db.bank_statements.where('referencia_origen').anyOf(ids).modify({
-            estado_conciliacion: 'PENDIENTE'
+
+        // Ejecutar en una transacción de Dexie para asegurar consistencia
+        await db.transaction('rw', [db.reconciliation_lines, db.bank_statements], async () => {
+            await db.reconciliation_lines.where('transaction_ref').anyOf(ids).delete();
+            await db.bank_statements.where('referencia_origen').anyOf(ids).modify({
+                estado_conciliacion: 'PENDIENTE'
+            });
         });
     }
   };
@@ -145,14 +154,15 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
             </select>
 
             <div className="flex items-center gap-4 bg-muted/30 px-3 py-1.5 rounded-xl border border-border/50">
-                <div className="flex items-center gap-2">
+                <div className={`flex items-center gap-2 px-3 py-1 rounded-full transition-colors ${showExcluded ? 'bg-primary/10 border border-primary/20' : 'bg-muted'}`}>
                     <Switch
                         id="show-excluded"
                         checked={showExcluded}
                         onCheckedChange={setShowExcluded}
+                        className="scale-75"
                     />
-                    <Label htmlFor="show-excluded" className="text-[10px] font-black uppercase cursor-pointer">
-                        Ver Excluidos
+                    <Label htmlFor="show-excluded" className={`text-[9px] font-black uppercase cursor-pointer tracking-tighter ${showExcluded ? 'text-primary' : 'text-muted-foreground'}`}>
+                        {showExcluded ? 'Mostrando Excluidos' : 'Ocultando Excluidos'}
                     </Label>
                 </div>
 
@@ -245,7 +255,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
               ) : (
                 filtered.map((tx) => (
                     <TransactionRow
-                        key={tx.id}
+                        key={tx.referencia_origen}
                         tx={tx}
                         matchedTotal={txReconciliationTotals[tx.referencia_origen] || 0}
                         onView={() => {
@@ -254,7 +264,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                         }}
                         onReset={() => handleResetReconciliation(tx)}
                         onDelete={() => handleDelete(tx.referencia_origen)}
-                        onToggleExclusion={() => toggleExclusion(tx)}
+                        onToggleExclusion={(val: boolean) => toggleExclusion(tx, val)}
                         getStatusBadge={getStatusBadge}
                     />
                 ))
@@ -282,7 +292,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                                 <div className="flex items-start gap-3">
                                     <Checkbox
                                         checked={!tx.excluido}
-                                        onCheckedChange={() => toggleExclusion(tx)}
+                                        onCheckedChange={(val: boolean) => toggleExclusion(tx, val)}
                                         className="mt-1"
                                     />
                                     <div>
@@ -441,9 +451,11 @@ const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onDelete
           <TableCell className="sticky-column-1 font-medium whitespace-nowrap text-xs">
             {formatDate(tx.fecha)}
           </TableCell>
-          <TableCell className="font-mono text-[10px]">{tx.referencia_origen}</TableCell>
-          <TableCell className="text-[10px] truncate max-w-[200px]" title={tx.observaciones}>
-            {tx.observaciones}
+          <TableCell className="font-mono text-[10px] max-w-[120px] truncate">{tx.referencia_origen}</TableCell>
+          <TableCell className="text-[10px] max-w-[180px]">
+            <div className="truncate" title={tx.observaciones}>
+                {tx.observaciones}
+            </div>
           </TableCell>
           <TableCell className="text-right font-medium text-muted-foreground text-xs">
             {formatCurrency(tx.importe_cents)}

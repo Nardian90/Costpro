@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback } from 'react';
+import { motion } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
 import { db, type BankTransaction } from '@/lib/dexie';
 import { generateHash } from '@/lib/ipv/engine';
@@ -244,12 +245,13 @@ export function BankIngestion() {
 
     for (const row of data) {
       try {
-        const fechaRaw = row['Fecha'] || row['fecha'];
+        const fechaRaw = row['Fecha'] || row['fecha'] || row['FECHA'];
         const fecha = standardizeDate(fechaRaw);
-        const ref_origen = row['Ref_Origen'] || row['Ref_origen'] || row['referencia_origen'];
-        const importe_str = String(row['Importe'] || row['importe'] || '0').replace(/[^0-9.,]/g, '');
-        const tipo = row['Tipo'] || row['tipo'];
-        const observaciones = row['Observaciones'] || row['observaciones'] || '';
+        const raw_ref = row['Ref_Origen'] || row['Ref_origen'] || row['referencia_origen'] || row['REF_ORIGEN'];
+        const ref_origen = String(raw_ref || '').trim();
+        const importe_str = String(row['Importe'] || row['importe'] || row['IMPORTE'] || '0').replace(/[^0-9.,-]/g, '');
+        const tipo = row['Tipo'] || row['tipo'] || row['TIPO'];
+        const observaciones = String(row['Observaciones'] || row['observaciones'] || row['OBSERVACIONES'] || '').trim();
 
         if (!fecha || !ref_origen || !importe_str) continue;
 
@@ -347,30 +349,61 @@ export function BankIngestion() {
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-            <div className="bg-primary/5 rounded-3xl border-2 border-dashed border-primary/20 p-10 text-center transition-all hover:bg-primary/10 hover:border-primary/40 group">
-                <div {...getRootProps()} className="cursor-pointer">
+            <div className="bg-gradient-to-br from-primary/10 via-background to-primary/5 rounded-[2.5rem] border-2 border-dashed border-primary/20 p-12 text-center transition-all hover:border-primary/40 group relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl" />
+                <div className="absolute bottom-0 left-0 w-32 h-32 bg-primary/5 rounded-full -ml-16 -mb-16 blur-3xl" />
+
+                <div {...getRootProps()} className="cursor-pointer relative z-10">
                     <input {...getInputProps()} />
-                    <div className="flex flex-col items-center gap-4">
-                        <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                            <FileUp className="w-10 h-10 text-primary" />
+                    <div className="flex flex-col items-center gap-6">
+                        <div className="relative">
+                            <motion.div
+                                animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.6, 0.3] }}
+                                transition={{ duration: 4, repeat: Infinity }}
+                                className="absolute -inset-4 bg-primary/20 rounded-full blur-xl"
+                            />
+                            <div className="w-24 h-24 rounded-3xl bg-primary shadow-2xl shadow-primary/20 flex items-center justify-center group-hover:rotate-6 transition-transform">
+                                <Upload className="w-10 h-10 text-primary-foreground" />
+                            </div>
                         </div>
-                        <div className="space-y-1">
-                            <p className="text-2xl font-black uppercase tracking-tight text-primary italic">Central de Inteligencia de Datos</p>
-                            <p className="text-sm text-muted-foreground font-medium">Suelta aquí tu <span className="text-primary font-bold">Catálogo</span> o tu <span className="text-primary font-bold">Extracto</span></p>
-                            <p className="text-[10px] text-muted-foreground/60 uppercase font-black tracking-widest mt-2">Soporta CSV, XLSX, XLS y TXT</p>
+                        <div className="space-y-2">
+                            <h3 className="text-3xl font-black uppercase tracking-tight text-primary italic leading-tight">
+                                Central de <span className="text-foreground">Inteligencia</span> de Datos
+                            </h3>
+                            <p className="text-base text-muted-foreground font-medium max-w-md mx-auto">
+                                Suelta aquí tu <span className="text-primary font-bold">Catálogo de Productos</span> o tu <span className="text-primary font-bold">Extracto Bancario</span>. El sistema los distinguirá automáticamente.
+                            </p>
+                            <div className="flex justify-center gap-3 mt-4">
+                                <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm text-[10px] font-black px-3 py-1">CSV</Badge>
+                                <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm text-[10px] font-black px-3 py-1">XLSX</Badge>
+                                <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm text-[10px] font-black px-3 py-1">TXT (BANDEC)</Badge>
+                            </div>
                         </div>
-                        <Button className="neu-btn-primary mt-4 h-12 px-8 text-xs">Seleccionar Archivo</Button>
+                        <Button className="neu-btn-primary mt-2 h-14 px-10 text-sm font-black uppercase tracking-widest shadow-xl">
+                            Explorar Archivos
+                        </Button>
                     </div>
                 </div>
             </div>
 
-            <div className="px-6 py-4 bg-primary/5 border-l-4 border-primary rounded-r-2xl flex items-start gap-4">
-                <Info className="w-6 h-6 text-primary mt-1 shrink-0" />
-                <div className="space-y-1">
-                    <h4 className="font-black text-primary uppercase text-xs tracking-widest italic">Inteligencia Artificial de Matching</h4>
-                    <p className="text-[11px] text-muted-foreground leading-relaxed">
-                        El sistema detecta automáticamente el tipo de archivo y realiza un <strong>upsert</strong> (actualiza si ya existe).
-                    </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-6 bg-primary/5 border-l-4 border-primary rounded-2xl flex items-start gap-4 shadow-sm hover:bg-primary/[0.07] transition-colors">
+                    <RefreshCw className="w-6 h-6 text-primary mt-1 shrink-0 animate-spin-slow" />
+                    <div className="space-y-1">
+                        <h4 className="font-black text-primary uppercase text-[10px] tracking-widest italic">Tecnología Upsert Inteligente</h4>
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                            Si una transacción o producto ya existe, el sistema <strong>actualizará</strong> su información preservando estados previos de conciliación.
+                        </p>
+                    </div>
+                </div>
+                <div className="p-6 bg-green-500/5 border-l-4 border-green-500 rounded-2xl flex items-start gap-4 shadow-sm hover:bg-green-500/[0.07] transition-colors">
+                    <Info className="w-6 h-6 text-green-600 mt-1 shrink-0" />
+                    <div className="space-y-1">
+                        <h4 className="font-black text-green-600 uppercase text-[10px] tracking-widest italic">Auto-Detección de Archivos</h4>
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                            No te preocupes por el orden. Nuestra IA analiza los encabezados para enrutar los datos al destino correcto.
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>

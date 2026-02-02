@@ -47,12 +47,15 @@ export default function IPVView() {
   const reconciliationLines = useLiveQuery(() => db.reconciliation_lines.toArray());
   const ingestionErrorsCount = useLiveQuery(() => db.ingestion_errors.count()) || 0;
 
+  // Optimización: Cálculos pesados de conciliación movidos a useMemo con dependencias granulares
   const txTotals = useMemo(() => {
     if (!reconciliationLines) return {} as Record<string, number>;
-    return reconciliationLines.reduce((acc, line) => {
-        acc[line.transaction_ref] = (acc[line.transaction_ref] || 0) + line.importe_linea_cents;
-        return acc;
-    }, {} as Record<string, number>);
+    const totals: Record<string, number> = {};
+    for (let i = 0; i < reconciliationLines.length; i++) {
+        const line = reconciliationLines[i];
+        totals[line.transaction_ref] = (totals[line.transaction_ref] || 0) + line.importe_linea_cents;
+    }
+    return totals;
   }, [reconciliationLines]);
 
   const stats = useMemo(() => {
@@ -62,7 +65,8 @@ export default function IPVView() {
     let inProcess = 0;
     let pending = 0;
 
-    transactions.forEach(t => {
+    for (let i = 0; i < transactions.length; i++) {
+        const t = transactions[i];
         const matched = txTotals[t.referencia_origen] || 0;
         const target = t.importe_venta_cents || t.importe_cents;
         const diff = target - matched;
@@ -74,7 +78,7 @@ export default function IPVView() {
         } else {
             inProcess++;
         }
-    });
+    }
 
     return {
       total: transactions.length,
