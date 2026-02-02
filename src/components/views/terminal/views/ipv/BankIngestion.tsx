@@ -5,6 +5,7 @@ import { useDropzone } from 'react-dropzone';
 import { db, type BankTransaction } from '@/lib/dexie';
 import { generateHash } from '@/lib/ipv/engine';
 import { parseBandecTxt } from '@/lib/ipv/bandecParser';
+import { extractCommissionCents, standardizeDate } from '@/lib/ipv/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { FileUp, Download, Info, FileSpreadsheet, FileText, Upload, HelpCircle, Trash2, RefreshCw, Plus } from 'lucide-react';
@@ -57,10 +58,22 @@ export function BankIngestion() {
               } catch (error: any) {
                 if (error.name === 'ConstraintError') {
                   skipped++;
+                  await db.ingestion_errors.add({
+                    id: uuidv4(),
+                    fecha: tx.fecha,
+                    referencia_corta: tx.referencia_corta,
+                    referencia_origen: tx.referencia_origen,
+                    observaciones: tx.observaciones,
+                    importe_cents: tx.importe_cents,
+                    tipo: tx.tipo,
+                    error_note: 'Referencia duplicada (BANDEC TXT)',
+                    raw_data: tx,
+                    created_at: new Date().toISOString()
+                  });
                 }
               }
             }
-            toast.success(`BANDEC TXT: ${imported} importados, ${skipped} omitidos`);
+            toast.success(`BANDEC TXT: ${imported} importados, ${skipped} duplicados guardados para revisión`);
           } else {
             toast.error('No se encontraron transacciones válidas en el archivo TXT');
           }
@@ -216,21 +229,6 @@ export function BankIngestion() {
     }
   };
 
-  const standardizeDate = (dateStr: string) => {
-    if (!dateStr) return '';
-    // Handle DD/MM/YYYY
-    if (dateStr.includes('/')) {
-        const parts = dateStr.split('/');
-        if (parts.length === 3) {
-            const day = parts[0].padStart(2, '0');
-            const month = parts[1].padStart(2, '0');
-            const year = parts[2].length === 2 ? `20${parts[2]}` : parts[2];
-            return `${year}-${month}-${day}`;
-        }
-    }
-    // Already YYYY-MM-DD or other
-    return dateStr;
-  };
 
   const processBankData = async (data: any[]) => {
     let imported = 0;
@@ -251,9 +249,7 @@ export function BankIngestion() {
         // Convertir importe a centavos
         const importe_cents = Math.round(parseFloat(importe_str.replace(',', '')) * 100);
 
-        // Extract commission "comis X.XX"
-        const comisMatch = observaciones.match(/comis\s*([0-9,.]+)/i);
-        const comision_cents = comisMatch ? Math.round(parseFloat(comisMatch[1].replace(/,/g, '')) * 100) : 0;
+        const comision_cents = extractCommissionCents(observaciones);
         const importe_venta_cents = importe_cents + comision_cents;
 
         const ingestion_hash = await generateHash(`${ref_origen}-${fecha}-${importe_cents}`);
@@ -279,6 +275,19 @@ export function BankIngestion() {
       } catch (error: any) {
         if (error.name === 'ConstraintError') {
           skipped++;
+          // Save to ingestion_errors for later review
+          await db.ingestion_errors.add({
+            id: uuidv4(),
+            fecha: standardizeDate(row['Fecha'] || row['fecha']),
+            referencia_corta: row['Ref_Corriente'] || row['Ref_Origen'] || row['referencia_origen'],
+            referencia_origen: row['Ref_Origen'] || row['Ref_origen'] || row['referencia_origen'],
+            observaciones: row['Observaciones'] || row['observaciones'] || '',
+            importe_cents: Math.round(parseFloat(String(row['Importe'] || row['importe'] || '0').replace(/[^0-9.,]/g, '').replace(',', '')) * 100),
+            tipo: (row['Tipo'] || row['tipo']) === 'Cr' ? 'Cr' : 'Db',
+            error_note: 'Referencia de origen duplicada',
+            raw_data: row,
+            created_at: new Date().toISOString()
+          });
         } else {
           console.error('Error processing row:', error);
         }

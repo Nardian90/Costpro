@@ -147,13 +147,17 @@ export function CatalogTable() {
     toast.loading('Sincronizando catálogo...', { id: 'sync-catalog' });
 
     try {
+        console.log('Sincronizando con tienda:', stores[0].name, stores[0].id);
         const { data, error } = await supabase.rpc('get_products_for_pos', {
             p_store_id: stores[0].id,
             p_search_term: '',
             p_category: ''
         });
 
-        if (error) throw error;
+        if (error) {
+            console.error('RPC Error:', error);
+            throw new Error(`Error del servidor: ${error.message}`);
+        }
 
         const systemProducts = (data || []).map((p: any) => ({
             cod: p.sku || p.id, // Preferir SKU si existe
