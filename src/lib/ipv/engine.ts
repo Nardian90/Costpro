@@ -184,7 +184,7 @@ export class MatchingEngine {
       }
     }
 
-    // PASS 6: CASH_FILL
+    // PASS 6: AJUSTE AUTOMÁTICO (Rebajas/Descuentos)
     const cashFillRule = this.rules.find(r => r.tipo === 'CASH_FILL');
     if (cashFillRule && remaining_cents > 0) {
       const dailyLimit = cashFillRule.meta?.dailyLimitCents || Infinity;
@@ -197,9 +197,11 @@ export class MatchingEngine {
         .then(lines => lines.reduce((sum, l) => sum + l.importe_linea_cents, 0));
 
       if (usedToday + remaining_cents > dailyLimit) {
-        logs.push(`PASS 4 (CASH_FILL): Límite diario excedido. Saldo restante: ${remaining_cents} cts`);
+        logs.push(`PASS 6 (AJUSTE): Límite diario excedido. Saldo restante: ${remaining_cents} cts`);
       } else {
-        // El excedente se marca como ajuste de efectivo si la regla está activa
+        // Buscamos un producto comodín para el ajuste, si no hay usamos 'CASH' (mejorado)
+        const adjProduct = this.products.find(p => p.isWildcardCandidate || p.cod.includes('PQT')) || { cod: 'CASH', um: 'U', precio_cents: 0 } as Product;
+
         const line: ReconciliationLine = {
         id: uuidv4(),
         transaction_ref: transaction.referencia_origen,
@@ -207,20 +209,20 @@ export class MatchingEngine {
         ingreso_banco_cents: 0,
         venta_real_calculada_cents: remaining_cents,
         comision_banco_cents: 0,
-        product_cod: 'CASH',
-        product_um: 'U',
+        product_cod: adjProduct.cod,
+        product_um: adjProduct.um || 'U',
         cantidad: 1,
         precio_unitario_cents: remaining_cents,
         importe_linea_cents: remaining_cents,
         cuadre_cents: 0,
-        clasificacion: 'Efectivo',
+        clasificacion: 'Rebaja/Ajuste',
         origen_dato: 'CASH_FILLER',
-        reconciliation_hash: await generateHash(transaction.referencia_origen + 'CASH_FILL' + remaining_cents),
+        reconciliation_hash: await generateHash(transaction.referencia_origen + 'AJUSTE' + remaining_cents),
         created_at: new Date().toISOString()
       };
         lines.push(line);
         remaining_cents = 0;
-        logs.push(`PASS 4 (CASH_FILL): Cubierto gap de ${line.importe_linea_cents} cts con efectivo`);
+        logs.push(`PASS 6 (AJUSTE): Cubierto gap de ${line.importe_linea_cents} cts como ${line.clasificacion} (${line.product_cod})`);
       }
     }
 
@@ -277,8 +279,10 @@ export class MatchingEngine {
         }
       }
 
-      // El resto del día lo ponemos como efectivo genérico
+      // El resto del día lo ponemos como ajuste/rebaja usando un producto real
       if (remainingDay > 0.01) {
+        const adjProduct = this.products.find(p => p.isWildcardCandidate || p.cod.includes('PQT')) || { cod: 'CASH', um: 'U' } as Product;
+
         lines.push({
           id: uuidv4(),
           transaction_ref: `GOAL-${date}`,
@@ -286,15 +290,15 @@ export class MatchingEngine {
           ingreso_banco_cents: 0,
           venta_real_calculada_cents: remainingDay,
           comision_banco_cents: 0,
-          product_cod: 'CASH',
-          product_um: 'U',
+          product_cod: adjProduct.cod,
+          product_um: adjProduct.um || 'U',
           cantidad: 1,
           precio_unitario_cents: remainingDay,
           importe_linea_cents: remainingDay,
           cuadre_cents: 0,
-          clasificacion: 'Efectivo',
+          clasificacion: 'Ajuste Global',
           origen_dato: 'CASH_FILLER',
-          reconciliation_hash: await generateHash(`GOAL-${date}-CASH-${remainingDay}`),
+          reconciliation_hash: await generateHash(`GOAL-${date}-ADJ-${remainingDay}`),
           created_at: new Date().toISOString()
         });
       }

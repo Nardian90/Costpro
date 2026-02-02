@@ -216,8 +216,8 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
       </div>
 
       {layoutMode === 'table' ? (
-        <div className="table-scroll-wrapper">
-          <Table className="data-table">
+        <div className="table-scroll-wrapper overflow-x-auto">
+          <Table className="data-table min-w-[1000px]">
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[40px] text-center">

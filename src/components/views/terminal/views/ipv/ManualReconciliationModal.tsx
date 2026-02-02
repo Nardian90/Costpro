@@ -158,13 +158,42 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
         }
     };
 
-    const markAsCommission = async () => {
-        if (!transaction) return;
-        await db.bank_statements.update(transaction.referencia_origen, {
-            estado_conciliacion: 'COMPLETO'
-        });
-        toast.success('Marcada como comisión (COMPLETO)');
-        onOpenChange(false);
+    const markAsRebate = async () => {
+        if (!transaction || Math.abs(remaining) < 0.001) return;
+
+        try {
+            // Buscamos un producto comodín o PQT
+            const adjProduct = products?.find(p => p.isWildcardCandidate || p.cod.includes('PQT')) || { cod: 'ADJ', um: 'U', precio_cents: 0 } as Product;
+
+            const line: ReconciliationLine = {
+                id: uuidv4(),
+                transaction_ref: transaction.referencia_origen,
+                fecha_operacion: transaction.fecha,
+                ingreso_banco_cents: transaction.importe_cents,
+                venta_real_calculada_cents: remaining,
+                comision_banco_cents: 0,
+                product_cod: adjProduct.cod,
+                product_um: adjProduct.um || 'U',
+                cantidad: 1,
+                precio_unitario_cents: remaining,
+                importe_linea_cents: remaining,
+                cuadre_cents: 0,
+                clasificacion: 'Rebaja/Ajuste',
+                origen_dato: 'MANUAL_USER',
+                reconciliation_hash: await generateHash(`${transaction.referencia_origen}-REBAJA-${Date.now()}`),
+                created_at: new Date().toISOString()
+            };
+
+            await db.reconciliation_lines.add(line);
+            await db.bank_statements.update(transaction.referencia_origen, {
+                estado_conciliacion: 'COMPLETO'
+            });
+
+            toast.success('Transacción cuadrada como Rebaja/Ajuste');
+            onOpenChange(false);
+        } catch (error) {
+            toast.error('Error al aplicar rebaja');
+        }
     };
 
     if (!transaction) return null;
@@ -341,8 +370,14 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
 
                 <DialogFooter className="p-4 md:p-6 border-t bg-background/95 backdrop-blur-md shrink-0 z-20">
                     <div className="flex flex-col sm:flex-row justify-between w-full items-center gap-4">
-                        <Button variant="outline" onClick={markAsCommission} className="w-full sm:w-auto text-[10px] uppercase font-black tracking-widest h-10 border-muted-foreground/20 hover:bg-muted">
-                            Marcar como Comisión
+                        <Button
+                            variant="outline"
+                            onClick={markAsRebate}
+                            disabled={Math.abs(remaining) < 0.001}
+                            className="w-full sm:w-auto text-[10px] uppercase font-black tracking-widest h-10 border-orange-200 text-orange-600 hover:bg-orange-50"
+                        >
+                            <AlertTriangle className="w-3 h-3 mr-2" />
+                            Cuadrar como Rebaja/Ajuste
                         </Button>
                         <div className="flex gap-2 w-full sm:w-auto">
                             <Button variant="ghost" className="flex-1 sm:flex-none h-10 text-[10px] font-black uppercase tracking-widest" onClick={() => onOpenChange(false)}>Cerrar</Button>

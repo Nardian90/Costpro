@@ -77,7 +77,7 @@ function SortableRuleItem({ rule, toggleRule, updateTolerance, updatePriority, t
             case 'HARD_REF': return 'Referencia Directa';
             case 'EXACT_SUM': return 'Suma Exacta (Greedy)';
             case 'TOLERANCE': return 'Margen de Tolerancia';
-            case 'CASH_FILL': return 'Ajuste Automático Efectivo';
+            case 'CASH_FILL': return 'Ajuste Automático (Rebajas)';
             default: return tipo;
         }
     };
@@ -87,7 +87,7 @@ function SortableRuleItem({ rule, toggleRule, updateTolerance, updatePriority, t
             case 'HARD_REF': return 'Busca códigos de producto o descripciones en las observaciones de la transacción.';
             case 'EXACT_SUM': return 'Busca combinaciones de productos que sumen exactamente el importe recibido.';
             case 'TOLERANCE': return 'Permite un descuadre controlado si la suma se acerca al importe.';
-            case 'CASH_FILL': return 'Cubre cualquier faltante restante marcándolo como venta en efectivo.';
+            case 'CASH_FILL': return 'Cuadra transacciones pendientes agregando ajustes como si fueran rebajas/descuentos.';
             default: return '';
         }
     };

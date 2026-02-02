@@ -131,10 +131,15 @@ export function MatchingSimulation({ products, rules }: { products: Product[], r
                         className="text-lg font-black"
                     />
                 </div>
-                <Button onClick={handleGlobalGoal} disabled={isDistributing} className="w-full bg-purple-600 hover:bg-purple-700 text-white uppercase font-black text-xs gap-2">
-                    <Save className="w-4 h-4" />
-                    Distribuir y Aplicar
-                </Button>
+                <div className="flex gap-2">
+                    <Button onClick={handleGlobalGoal} disabled={isDistributing} className="flex-1 bg-purple-600 hover:bg-purple-700 text-white uppercase font-black text-xs gap-2">
+                        <Save className="w-4 h-4" />
+                        Distribuir y Aplicar
+                    </Button>
+                    <Button variant="outline" onClick={() => setGlobalTarget(0)} className="neu-btn uppercase font-bold text-xs border-purple-200 text-purple-600">
+                        <RotateCcw className="w-4 h-4" />
+                    </Button>
+                </div>
             </Card>
         </div>
 
@@ -180,7 +185,7 @@ export function MatchingSimulation({ products, rules }: { products: Product[], r
                       return (
                         <TableRow key={i}>
                           <TableCell>
-                            <div className="font-bold text-xs">{l.product_cod === 'CASH' ? 'AJUSTE EFECTIVO' : (product?.descripcion || l.product_cod)}</div>
+                            <div className="font-bold text-xs">{product?.descripcion || (l.product_cod === 'CASH' ? 'AJUSTE EFECTIVO' : l.product_cod)}</div>
                             {isAdjusted && (
                               <Badge className="bg-purple-500/10 text-purple-600 text-[8px] h-3 px-1 mt-1 font-black gap-1">
                                 <Sparkles className="w-2 h-2" />

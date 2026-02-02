@@ -26,8 +26,9 @@ import { useAuthStore } from '@/store';
 import { calculateFicha } from '@/lib/cost-engine';
 import { FichaJSON, CostRow, RowSemanticType, FormaCalculo, BaseRef } from '@/lib/cost-engine/types';
 import { toast } from 'sonner';
-import { Play, Pause, RotateCcw, Download, FileSpreadsheet, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Play, Pause, RotateCcw, Download, FileSpreadsheet, Loader2, CheckCircle2, AlertCircle, FileArchive } from 'lucide-react';
 import { exportToExcel } from '@/services/export-service';
+import JSZip from 'jszip';
 
 interface MassiveResult {
   sku: string;
@@ -56,6 +57,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<MassiveResult[]>([]);
   const [currentIndex, setCurrentIndex] = useState(-1);
+  const [zipBlob, setZipBlob] = useState<Blob | null>(null);
 
   // We fetch a large number of products for massive generation
   // In a real scenario, we might want to fetch all pages sequentially
@@ -204,6 +206,8 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
 
     setIsProcessing(true);
     isProcessingRef.current = true;
+    setZipBlob(null);
+
     const initialResults: MassiveResult[] = products.map(p => ({
       sku: p.sku || 'N/A',
       name: p.name,
@@ -213,6 +217,9 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
       status: 'pending'
     }));
     setResults(initialResults);
+
+    const zip = new JSZip();
+    let generatedCount = 0;
 
     for (let i = 0; i < products.length; i++) {
       if (!isProcessingRef.current) {
@@ -232,7 +239,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
         // 2. Calculate
         const result = calculateFicha(ficha);
 
-        // 3. Export PDF
+        // 3. Generate PDF Blob via API
         const response = await fetch('/api/cost-sheets/export-pdf', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -241,19 +248,14 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
 
         if (response.ok) {
           const blob = await response.blob();
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `${product.sku || 'ficha'}.pdf`;
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          window.URL.revokeObjectURL(url);
+          // Add to ZIP instead of direct download
+          zip.file(`${product.sku || `PRODUCTO-${i}`}.pdf`, blob);
+          generatedCount++;
         } else {
             throw new Error("Failed to generate PDF");
         }
 
-        // 4. Update Result
+        // 4. Update Result Table
         setResults(prev => prev.map((r, idx) => idx === i ? {
           ...r,
           status: 'completed',
@@ -269,13 +271,30 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
 
       setProgress(((i + 1) / products.length) * 100);
 
-      // Small delay to prevent blocking the UI thread and allow browser to breathe
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Minimal delay to maintain responsiveness without dragging too much
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+
+    if (generatedCount > 0) {
+      const content = await zip.generateAsync({ type: 'blob' });
+      setZipBlob(content);
+      toast.success(`Generación masiva finalizada. ${generatedCount} archivos listos.`);
     }
 
     setIsProcessing(false);
     isProcessingRef.current = false;
-    toast.success("Generación masiva finalizada");
+  };
+
+  const handleDownloadZip = () => {
+    if (!zipBlob) return;
+    const url = window.URL.createObjectURL(zipBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Fichas-Masivas-${new Date().toISOString().split('T')[0]}.zip`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
   };
 
   const handleCancel = () => {
@@ -300,6 +319,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
       setResults([]);
       setProgress(0);
       setCurrentIndex(-1);
+      setZipBlob(null);
       setIsProcessing(false);
   };
 
@@ -427,7 +447,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                     className="rounded-2xl border-sidebar-border hover:bg-sidebar/50"
                 >
                     <FileSpreadsheet className="w-4 h-4 mr-2" />
-                    Exportar Tabla
+                    Exportar Excel
                 </Button>
             </div>
 
@@ -443,6 +463,15 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                     </Button>
                 ) : (
                     <>
+                        {zipBlob && (
+                             <Button
+                                onClick={handleDownloadZip}
+                                className="rounded-2xl bg-success hover:bg-success/90 text-success-foreground font-black uppercase tracking-widest px-8"
+                            >
+                                <FileArchive className="w-4 h-4 mr-2" />
+                                Descargar ZIP
+                            </Button>
+                        )}
                         <Button
                             variant="outline"
                             onClick={onClose}
@@ -457,7 +486,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                             className="rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground font-black uppercase tracking-widest px-8"
                         >
                             <Play className="w-4 h-4 mr-2" />
-                            Iniciar Generación
+                            {results.length > 0 ? 'Reiniciar Proceso' : 'Iniciar Generación'}
                         </Button>
                     </>
                 )}

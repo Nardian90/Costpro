@@ -107,8 +107,11 @@ export function TransactionBreakdown() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="text-xs font-bold">{prod?.descripcion || (l.product_cod === 'CASH' ? 'EFECTIVO' : l.product_cod)}</div>
+                      <div className="text-xs font-bold">{prod?.descripcion || (l.product_cod === 'CASH' ? 'AJUSTE/REBAJA' : l.product_cod)}</div>
                       <div className="text-[9px] text-muted-foreground font-mono">{l.product_cod}</div>
+                      {l.clasificacion === 'Rebaja/Ajuste' && (
+                          <Badge className="bg-orange-500/10 text-orange-600 text-[8px] h-3 px-1 mt-1 font-black">REBAJA</Badge>
+                      )}
                     </TableCell>
                     <TableCell className="text-center font-bold text-xs">{l.cantidad}</TableCell>
                     <TableCell className="text-right">
