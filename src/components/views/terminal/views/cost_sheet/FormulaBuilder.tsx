@@ -48,7 +48,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from '@/lib/utils';
 import { Parser } from 'expr-eval';
 import { translateFormulaFromSpanish } from '@/lib/cost-engine/formula-utils';
-import { v4 as uuidv4 } from 'uuid';
 
 // Types
 export type TokenType = 'function' | 'operator' | 'reference' | 'variable' | 'literal' | 'punctuation';
@@ -97,6 +96,7 @@ const tokenize = (formula: string, suggestions: any[]): FormulaToken[] => {
   // 6. Punctuation ( ( ) , )
   const regex = /ref\s*\(\s*['"][^'"]*['"]\s*\)|Anexo[A-Z]+|[a-zA-Z_][a-zA-Z0-9_]*|[0-9]+(?:\.[0-9]+)?|[\+\-\*\/\(\),]/g;
   let match;
+  let index = 0;
 
   while ((match = regex.exec(str)) !== null) {
     const value = match[0];
@@ -131,11 +131,12 @@ const tokenize = (formula: string, suggestions: any[]): FormulaToken[] => {
     }
 
     tokens.push({
-      id: uuidv4(),
+      id: `${type}-${value}-${index}`,
       type,
       value: (type === 'function') ? (SPANISH_TO_ENGLISH[label] || value.toLowerCase()) : value,
       label
     });
+    index++;
   }
 
   return tokens;
@@ -216,6 +217,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
   const [tokens, setTokens] = useState<FormulaToken[]>(() => tokenize(initialValue, suggestions));
   const [activeId, setActiveId] = useState<string | null>(null);
   const [validation, setValidation] = useState<{ status: 'ok' | 'error' | 'warning', message?: string }>({ status: 'ok' });
+  const lastSavedValueRef = React.useRef(initialValue);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -266,18 +268,26 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
   }, [tokens]);
 
   useEffect(() => {
-      onSave(formulaString);
+      // Only trigger onSave if the value actually changed from what we last sent
+      // or from the initial value to prevent infinite render loops
+      if (formulaString !== lastSavedValueRef.current) {
+          lastSavedValueRef.current = formulaString;
+          onSave(formulaString);
+      }
   }, [formulaString, onSave]);
 
   // Sync tokens when initialValue changes externally (e.g. from Expert Mode)
   useEffect(() => {
-    if (initialValue !== formulaString) {
+    // Normalize both for comparison to avoid loops on minor formatting differences
+    const normalize = (s: string) => s.replace(/\s+/g, '').replace(/^=/, '');
+    if (normalize(initialValue) !== normalize(formulaString)) {
       setTokens(tokenize(initialValue, suggestions));
+      lastSavedValueRef.current = initialValue;
     }
   }, [initialValue, suggestions, formulaString]);
 
   const addToken = (type: TokenType, value: string, label: string) => {
-    setTokens(prev => [...prev, { id: uuidv4(), type, value, label }]);
+    setTokens(prev => [...prev, { id: `${type}-${value}-${prev.length}-${Date.now()}`, type, value, label }]);
   };
 
   const removeToken = (id: string) => {

@@ -120,7 +120,10 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setValue(e.target.value);
+    const newVal = e.target.value;
+    if (newVal !== value) {
+      setValue(newVal);
+    }
     setCursorPosition(e.target.selectionStart || 0);
   };
 
@@ -301,7 +304,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                 <FormulaBuilder
                     initialValue={value}
                     suggestions={suggestions}
-                    onSave={(newVal) => setValue(newVal)}
+                    onSave={setValue}
                 />
               </div>
             ) : (
