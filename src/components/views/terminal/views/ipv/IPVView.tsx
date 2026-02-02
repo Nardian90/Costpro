@@ -26,6 +26,7 @@ import { CashAdjustmentsTable } from './CashAdjustmentsTable';
 import { PivotStatementView } from './PivotStatementView';
 import { IngestionErrorsTable } from './IngestionErrorsTable';
 import { toast } from 'sonner';
+import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
 import {
   Tooltip,
   TooltipContent,
@@ -35,6 +36,8 @@ import {
 
 export default function IPVView() {
   const [activeTab, setActiveTab] = useState('transactions');
+  const [isMatching, setIsMatching] = useState(false);
+  const [matchMessage, setMatchMessage] = useState('');
 
   const transactions = useLiveQuery(() => db.bank_statements.orderBy('fecha').toArray());
   const rules = useLiveQuery(() => db.matching_rules.toArray());
@@ -88,7 +91,8 @@ export default function IPVView() {
         return;
     }
 
-    toast.info('Iniciando proceso de matching...');
+    setIsMatching(true);
+    setMatchMessage('Iniciando proceso de matching...');
 
     // RESET LOGIC: Reiniciar conciliación para transacciones que no estén cuadradas (diff != 0)
     const allLines = await db.reconciliation_lines.toArray();
@@ -104,16 +108,16 @@ export default function IPVView() {
     });
 
     if (txToReset.length > 0) {
-        toast.loading(`Reiniciando ${txToReset.length} transacciones no cuadradas...`, { id: 'reset-matching' });
+        setMatchMessage(`Reiniciando ${txToReset.length} transacciones no cuadradas...`);
         for (const tx of txToReset) {
             await db.reconciliation_lines.where('transaction_ref').equals(tx.referencia_origen).delete();
             await db.bank_statements.update(tx.id, { estado_conciliacion: 'PENDIENTE' });
         }
-        toast.success('Reset completado', { id: 'reset-matching' });
     }
 
     // Volvemos a obtener transacciones actualizadas para enviar al worker
     const updatedTransactions = await db.bank_statements.toArray();
+    setMatchMessage('Ejecutando algoritmos de matching...');
 
     // Aquí invocaríamos al Worker
     const worker = new Worker(new URL('@/lib/ipv/matching.worker.ts', import.meta.url));
@@ -143,6 +147,7 @@ export default function IPVView() {
 
         toast.success(`Proceso completado: ${results.length} transacciones analizadas`);
         worker.terminate();
+        setIsMatching(false);
       }
     };
 
@@ -150,11 +155,13 @@ export default function IPVView() {
       console.error('Worker error:', err);
       toast.error('Error en el motor de matching');
       worker.terminate();
+      setIsMatching(false);
     };
   };
 
   return (
     <div className="space-y-6">
+      <LoadingOverlay isVisible={isMatching} message={matchMessage} />
       {/* Help Section: Professional Flow */}
       <Card className="p-6 bg-primary/5 border-none shadow-none rounded-3xl overflow-hidden relative group">
           <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
