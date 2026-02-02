@@ -394,7 +394,11 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                                     <TableCell className="text-center">
                                         {result.status === 'processing' && <Loader2 className="w-4 h-4 animate-spin mx-auto text-primary" />}
                                         {result.status === 'completed' && <CheckCircle2 className="w-4 h-4 mx-auto text-success" />}
-                                        {result.status === 'error' && <AlertCircle className="w-4 h-4 mx-auto text-danger" title={result.error} />}
+                                        {result.status === 'error' && (
+                                            <div title={result.error}>
+                                                <AlertCircle className="w-4 h-4 mx-auto text-danger" />
+                                            </div>
+                                        )}
                                         {result.status === 'pending' && <div className="w-2 h-2 rounded-full bg-muted-foreground/30 mx-auto" />}
                                     </TableCell>
                                 </TableRow>
