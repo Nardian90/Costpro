@@ -28,6 +28,7 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
   };
 
   const renderHeaderForm = () => {
+    if (!data?.header) return null;
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {[
@@ -48,7 +49,7 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
               id={`header-${field.id}`}
               className="neu-input w-full"
               type={field.type}
-              value={(data.header as any)[field.id]}
+              value={(data.header as any)?.[field.id] ?? ''}
               onChange={(e) => handleInputChange(['header', field.id], e.target.value)}
             />
           </div>
@@ -58,9 +59,10 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
   };
 
  const renderSignatureForm = () => {
+    if (!data?.signature) return null;
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        {Object.entries(data.signature).map(([key, value]) => (
+        {Object.entries(data?.signature || {}).map(([key, value]) => (
           <div key={key} className="space-y-1.5">
             <Label htmlFor={`signature-${key}`} className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">
                 {key === 'prepared_by' ? 'Elaborado por' : 'Aprobado por'}
@@ -108,7 +110,7 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
                             id={`section-${section.id}-${rowIndex}`}
                             type="number"
                             value={row.value}
-                            onChange={(e) => handleInputChange(['sections', data.sections.indexOf(section), 'rows', rowIndex, 'value'], e.target.value)}
+                            onChange={(e) => handleInputChange(['sections', (data?.sections || []).indexOf(section), 'rows', rowIndex, 'value'], e.target.value)}
                             className="neu-input !pr-10 text-right font-mono text-lg font-bold"
                         />
                         <div className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary font-bold">
@@ -172,7 +174,7 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
                                       ) : (
                                           <Input
                                               type={typeof row[col.key] === 'number' ? 'number' : 'text'}
-                                              value={data.annexes[annexIndex].data[rowIndex][col.key]}
+                                              value={data?.annexes?.[annexIndex]?.data?.[rowIndex]?.[col.key] ?? ''}
                                               onChange={(e) => handleInputChange(['annexes', annexIndex, 'data', rowIndex, col.key], e.target.value)}
                                               className="neu-input !p-2 min-w-[120px] text-sm font-medium border-transparent hover:border-primary/20 focus:border-primary"
                                           />

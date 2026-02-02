@@ -23,14 +23,14 @@ const CostSheetPreview = React.forwardRef<HTMLDivElement, CostSheetPreviewProps>
            <div className="text-xs font-bold opacity-50 uppercase tracking-widest">Documento Oficial de Costos</div>
         </div>
         <div className="p-4 sm:p-10 lg:p-12 space-y-10">
-            <CostSheetHeader header={data.header} />
+            {data?.header && <CostSheetHeader header={data.header} />}
             <div className="space-y-4">
               <div className="text-xs font-black uppercase tracking-widest text-primary pb-2 border-b-2 border-primary/20 whitespace-nowrap">
                 Resumen de Operación
               </div>
               <SecurityScrollContainer minWidth="600px">
                 <CostSheetBody
-                    sections={data.sections}
+                    sections={data?.sections || []}
                     calculatedValues={calculatedValues}
                 />
               </SecurityScrollContainer>
@@ -46,7 +46,7 @@ const CostSheetPreview = React.forwardRef<HTMLDivElement, CostSheetPreviewProps>
               </SecurityScrollContainer>
             </div>
             <div className="pt-10 border-t border-slate-100 dark:border-slate-800">
-               <CostSheetSignature {...data.signature} />
+               {data?.signature && <CostSheetSignature {...data.signature} />}
             </div>
         </div>
         <div className="bg-slate-50 dark:bg-slate-950 p-4 text-[10px] text-center text-slate-400 font-bold uppercase tracking-widest">

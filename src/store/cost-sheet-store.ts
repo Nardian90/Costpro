@@ -82,8 +82,10 @@ export const useCostSheetStore = create<CostSheetState>()(
       updateValue: (path, value) =>
         set(
           produce((draft: CostSheetState) => {
+            if (!draft.data) return;
             let current: any = draft.data;
             for (let i = 0; i < path.length - 1; i++) {
+              if (current[path[i]] === undefined) return;
               current = current[path[i]];
             }
             current[path[path.length - 1]] = value;
@@ -92,6 +94,7 @@ export const useCostSheetStore = create<CostSheetState>()(
       addMainSection: () =>
         set(
           produce((draft: CostSheetState) => {
+            if (!draft.data?.sections) return;
             const nextId = (draft.data.sections.length + 1).toString();
             draft.data.sections.push({
               id: nextId,
@@ -103,7 +106,7 @@ export const useCostSheetStore = create<CostSheetState>()(
       removeMainSection: (index) =>
         set(
           produce((draft: CostSheetState) => {
-            if (draft.data.sections[index]) {
+            if (draft.data?.sections?.[index]) {
               draft.data.sections.splice(index, 1);
             }
           })
@@ -111,8 +114,10 @@ export const useCostSheetStore = create<CostSheetState>()(
       addMainRow: (parentPath) =>
         set(
           produce((draft: CostSheetState) => {
+            if (!draft.data) return;
             let current: any = draft.data;
             for (const p of parentPath) {
+              if (current[p] === undefined) return;
               current = current[p];
             }
             // current should be an array (rows or children)
@@ -135,10 +140,12 @@ export const useCostSheetStore = create<CostSheetState>()(
       removeMainRow: (path) =>
         set(
           produce((draft: CostSheetState) => {
+            if (!draft.data) return;
             const parentPath = path.slice(0, -1);
             const index = path[path.length - 1] as number;
             let current: any = draft.data;
             for (const p of parentPath) {
+              if (current[p] === undefined) return;
               current = current[p];
             }
             if (Array.isArray(current) && current[index]) {
@@ -149,6 +156,7 @@ export const useCostSheetStore = create<CostSheetState>()(
       addRow: (annexId) =>
         set(
           produce((draft: CostSheetState) => {
+            if (!draft.data?.annexes) return;
             const annex = draft.data.annexes.find(
               (a: CostSheetAnnexContract) => a.id === annexId
             );
@@ -190,6 +198,7 @@ export const useCostSheetStore = create<CostSheetState>()(
       removeRow: (annexId, rowIndex) =>
         set(
           produce((draft: CostSheetState) => {
+            if (!draft.data?.annexes) return;
             const annex = draft.data.annexes.find(
               (a: CostSheetAnnexContract) => a.id === annexId
             );
