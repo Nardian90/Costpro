@@ -80,23 +80,23 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
     });
   }, [transactions, searchTerm, typeFilter, kpiFilter, txReconciliationTotals]);
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (referencia: string) => {
     if (confirm('¿Eliminar esta transacción?')) {
-      await db.bank_statements.delete(id);
+      await db.bank_statements.delete(referencia);
     }
   };
 
   const handleResetReconciliation = async (tx: BankTransaction) => {
     if (confirm(`¿Reiniciar conciliación para ${tx.referencia_origen}? Se borrarán todos los productos asociados.`)) {
         await db.reconciliation_lines.where('transaction_ref').equals(tx.referencia_origen).delete();
-        await db.bank_statements.update(tx.id, {
+        await db.bank_statements.update(tx.referencia_origen, {
             estado_conciliacion: 'PENDIENTE'
         });
     }
   };
 
   const toggleExclusion = async (tx: BankTransaction) => {
-      await db.bank_statements.update(tx.id, {
+      await db.bank_statements.update(tx.referencia_origen, {
           excluido: !tx.excluido
       });
   };
@@ -105,8 +105,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
     if (confirm('¿REINICIAR CONCILIACIÓN de todas las transacciones visibles? Se borrarán los productos asociados.')) {
         const ids = filtered.map(t => t.referencia_origen);
         await db.reconciliation_lines.where('transaction_ref').anyOf(ids).delete();
-        const statementIds = filtered.map(t => t.id);
-        await db.bank_statements.where('id').anyOf(statementIds).modify({
+        await db.bank_statements.where('referencia_origen').anyOf(ids).modify({
             estado_conciliacion: 'PENDIENTE'
         });
     }
@@ -254,7 +253,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                             setModalOpen(true);
                         }}
                         onReset={() => handleResetReconciliation(tx)}
-                        onDelete={() => handleDelete(tx.id)}
+                        onDelete={() => handleDelete(tx.referencia_origen)}
                         onToggleExclusion={() => toggleExclusion(tx)}
                         getStatusBadge={getStatusBadge}
                     />
@@ -343,7 +342,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                                         variant="outline"
                                         size="icon"
                                         className="h-11 w-11 text-destructive border-destructive/20 hover:bg-destructive/10"
-                                        onClick={() => handleDelete(tx.id)}
+                                        onClick={() => handleDelete(tx.referencia_origen)}
                                     >
                                         <Trash2 className="w-3 h-3" />
                                     </Button>
