@@ -69,7 +69,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
         icon: FileSpreadsheet,
         onClick: () => onOpenAnnexes?.(),
         variant: 'outline' as const,
-        active: (annexes || []).some(a => a.id === activeSection)
+        active: (annexes || []).some(a => a?.id === activeSection)
     },
     {
         id: 'signature',

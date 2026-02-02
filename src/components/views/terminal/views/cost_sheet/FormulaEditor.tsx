@@ -46,6 +46,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
   const [mode, setMode] = useState<'assisted' | 'expert'>('assisted');
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
+  const hasSavedRef = useRef(false);
 
   useEffect(() => {
     if (inputRef.current) {
@@ -76,7 +77,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
         e.preventDefault();
         applySuggestion(filteredSuggestions[selectedIndex]);
       } else {
-        onSave(value);
+        handleSave(value);
       }
     } else if (e.key === 'Escape') {
       onCancel();
@@ -91,6 +92,12 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
       applySuggestion(filteredSuggestions[selectedIndex]);
     }
   };
+
+  const handleSave = React.useCallback((val: string) => {
+    if (hasSavedRef.current) return;
+    hasSavedRef.current = true;
+    onSave(val);
+  }, [onSave]);
 
   const applySuggestion = (suggestion: { value: string }) => {
     const before = value.slice(0, cursorPosition);
@@ -127,7 +134,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
         // as the modal handles its own state
         if (!isInteractingWithSuggestions && !isModalOpen) {
             setIsFocused(false);
-            onSave(value);
+            handleSave(value);
         }
     }, 200);
   };
@@ -243,7 +250,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
              </button>
 
              <button
-               onMouseDown={(e) => { e.preventDefault(); onSave(value); }}
+               onMouseDown={(e) => { e.preventDefault(); handleSave(value); }}
                className="p-1 hover:bg-green-500/20 text-green-600 rounded"
                title="Guardar (Enter)"
              >

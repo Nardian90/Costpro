@@ -12,7 +12,7 @@ interface CostSheetSummaryProps {
 
 const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({ calculatedValues, data }) => {
   // Helper to get total for a row ID
-  const getTotal = (id: string) => calculatedValues[id]?.total || 0;
+  const getTotal = (id: string) => calculatedValues?.[id]?.total || 0;
 
   const directCost = getTotal('1') + getTotal('2') + getTotal('3');
   const indirectCost = getTotal('4');
