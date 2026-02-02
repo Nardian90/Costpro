@@ -56,50 +56,66 @@ export const formatCurrency = (amount: number): string => {
  * Utility to format dates in Spanish (Argentina) format DD/MM/YYYY.
  */
 export const formatDate = (date: string | Date | null | undefined): string => {
-  if (!date) return '—';
-  const d = typeof date === 'string' && date.includes('-')
-    ? new Date(date + 'T12:00:00') // Force mid-day to avoid TZ shifts
-    : new Date(date);
+  try {
+    if (!date) return '—';
+    const d = typeof date === 'string' && date.includes('-')
+      ? new Date(date + 'T12:00:00') // Force mid-day to avoid TZ shifts
+      : new Date(date);
 
-  if (isNaN(d.getTime())) return '—';
+    if (isNaN(d.getTime())) return '—';
 
-  return new Intl.DateTimeFormat('es-AR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  }).format(d);
+    return new Intl.DateTimeFormat('es-AR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    }).format(d);
+  } catch (e) {
+    console.error('Error formatting date:', e);
+    return '—';
+  }
 };
 
 /**
  * Utility to format time in Spanish (Argentina) format HH:MM:SS.
  */
 export const formatTime = (date: string | Date | null | undefined): string => {
-  if (!date) return '—';
-  const d = new Date(date);
-  if (isNaN(d.getTime())) return '—';
+  try {
+    if (!date) return '—';
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return '—';
 
-  return new Intl.DateTimeFormat('es-AR', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  }).format(d);
+    return new Intl.DateTimeFormat('es-AR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    }).format(d);
+  } catch (e) {
+    console.error('Error formatting time:', e);
+    return '—';
+  }
 };
 
 /**
  * Safely formats a date, preventing runtime crashes on invalid values.
+ * Standard implementation as per team requirements.
  */
 export function safeFormatDate(
   value: string | number | Date | null | undefined,
   locale = "es-ES"
 ): string {
-  if (!value) return "—";
+  if (value === null || value === undefined || value === "") return "—";
 
-  const date = new Date(value);
-  if (isNaN(date.getTime())) return "—";
+  try {
+    const date = new Date(value);
+    if (isNaN(date.getTime())) return "—";
 
-  return new Intl.DateTimeFormat(locale, {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit"
-  }).format(date);
+    return new Intl.DateTimeFormat(locale, {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }).format(date);
+  } catch (error) {
+    console.error("safeFormatDate error:", error);
+    return "—";
+  }
 }

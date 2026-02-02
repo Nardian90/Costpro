@@ -28,6 +28,14 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
   const annexes = useCostSheetStore(state => state.data?.annexes ?? []);
   const header = useCostSheetStore(state => state.data?.header);
   const updateValue = useCostSheetStore(state => state.updateValue);
+
+  if (!activeAnnexId) {
+    return (
+        <div className="flex flex-col items-center justify-center py-12 px-4 text-center animate-in fade-in duration-500">
+            <p className="text-muted-foreground font-bold uppercase tracking-widest text-xs">Anexo no seleccionado</p>
+        </div>
+    );
+  }
   const addRow = useCostSheetStore(state => state.addRow);
   const removeRow = useCostSheetStore(state => state.removeRow);
 
@@ -56,8 +64,8 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
     }
   }, [updateValue]);
 
-  const annex = React.useMemo(() => (annexes || []).find((a: CostSheetAnnex) => a.id === activeAnnexId), [annexes, activeAnnexId]);
-  const calculatedAnnex = React.useMemo(() => (calculatedAnnexes || []).find((a: any) => a.id === activeAnnexId), [calculatedAnnexes, activeAnnexId]);
+  const annex = React.useMemo(() => (annexes || []).find((a: CostSheetAnnex) => a?.id === activeAnnexId), [annexes, activeAnnexId]);
+  const calculatedAnnex = React.useMemo(() => (calculatedAnnexes || []).find((a: any) => a?.id === activeAnnexId), [calculatedAnnexes, activeAnnexId]);
 
   if (!annex) {
       return (
@@ -71,8 +79,8 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
       );
   }
 
-  const displayData = calculatedAnnex ? calculatedAnnex.data : (annex?.data || []);
-  const annexIndex = React.useMemo(() => annexes.indexOf(annex), [annexes, annex]);
+  const displayData = calculatedAnnex ? (calculatedAnnex.data ?? []) : (annex?.data ?? []);
+  const annexIndex = React.useMemo(() => annexes.indexOf(annex!), [annexes, annex]);
 
   const totalValue = React.useMemo(() => {
     if (!annex?.columns || !displayData) return 0;

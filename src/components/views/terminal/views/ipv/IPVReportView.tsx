@@ -179,7 +179,9 @@ export function IPVReportView() {
       doc.setFontSize(10);
       doc.text(`Fecha del Reporte: ${report.fecha_reporte}`, 14, 30);
       doc.text(`Estado: ${report.estado}`, 14, 35);
-      doc.text(`Generado el: ${new Date().toLocaleString()}`, 14, 40);
+      const now = new Date();
+      const nowStr = isNaN(now.getTime()) ? '—' : now.toLocaleString();
+      doc.text(`Generado el: ${nowStr}`, 14, 40);
 
       // Summary
       doc.setFontSize(12);
@@ -290,7 +292,8 @@ export function IPVReportView() {
     try {
         toast.loading('Generando Consolidado Mensual...', { id: 'consolidated-gen' });
         const doc = new jsPDF();
-        const monthName = new Date(selectedYear, selectedMonth - 1).toLocaleString('es', { month: 'long' }).toUpperCase();
+        const monthDate = new Date(selectedYear, selectedMonth - 1);
+        const monthName = isNaN(monthDate.getTime()) ? 'DESCONOCIDO' : monthDate.toLocaleString('es', { month: 'long' }).toUpperCase();
 
         doc.setFontSize(18);
         doc.text(`REPORTE IPV CONSOLIDADO - ${monthName} ${selectedYear}`, 105, 20, { align: 'center' });
@@ -437,11 +440,15 @@ export function IPVReportView() {
                     onChange={(e) => setSelectedMonth(Number(e.target.value))}
                     className="bg-transparent text-xs font-bold focus:outline-none"
                 >
-                    {Array.from({ length: 12 }, (_, i) => (
-                        <option key={i + 1} value={i + 1}>
-                            {new Date(0, i).toLocaleString('es', { month: 'long' }).toUpperCase()}
-                        </option>
-                    ))}
+                    {Array.from({ length: 12 }, (_, i) => {
+                        const d = new Date(2000, i);
+                        const label = isNaN(d.getTime()) ? `MES ${i+1}` : d.toLocaleString('es', { month: 'long' }).toUpperCase();
+                        return (
+                            <option key={i + 1} value={i + 1}>
+                                {label}
+                            </option>
+                        );
+                    })}
                 </select>
                 <select
                     value={selectedYear}

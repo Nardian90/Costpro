@@ -50,6 +50,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
   const [isEditingTotal, setIsEditingTotal] = useState(false);
   const [isEditingLabel, setIsEditingLabel] = useState(false);
   const updateValue = useCostSheetStore(state => state.updateValue);
+  const updateValues = useCostSheetStore(state => state.updateValues);
   const addMainRow = useCostSheetStore(state => state.addMainRow);
   const removeMainRow = useCostSheetStore(state => state.removeMainRow);
 
@@ -85,14 +86,18 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
     // However, per user request and memory, we should persist formulas even without '='.
     // If it's a number, we also save it as formula to keep it in the Total column.
 
-    updateValue([...path, 'formula'], trimmedVal);
-    updateValue([...path, 'calculationMethod'], 'FORMULA');
+    const updates: { path: (string | number)[], value: string | number | boolean }[] = [
+        { path: [...path, 'formula'], value: trimmedVal },
+        { path: [...path, 'calculationMethod'], value: 'FORMULA' }
+    ];
 
     // If it's a number and it was a percentage row, clear is_percent to ensure fixed value is respected
     if (row.is_percent && !isNaN(Number(trimmedVal))) {
-      updateValue([...path, 'is_percent'], false);
+        updates.push({ path: [...path, 'is_percent'], value: false });
     }
-  }, [path, updateValue, row.is_percent]);
+
+    updateValues(updates);
+  }, [path, updateValues, row.is_percent]);
 
 
   const isResultRow = row.is_percent || ['5', '12', '13', '13.1', '13.2', '14'].includes(row.id);
@@ -287,6 +292,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
   const addMainSection = useCostSheetStore(state => state.addMainSection);
   const removeMainSection = useCostSheetStore(state => state.removeMainSection);
   const updateValue = useCostSheetStore(state => state.updateValue);
+  const updateValues = useCostSheetStore(state => state.updateValues);
   const addMainRow = useCostSheetStore(state => state.addMainRow);
 
   const allRows = useMemo(() => {

@@ -46,7 +46,10 @@ export function PivotStatementView() {
             let key = '';
             let label = '';
 
-            if (groupBy === 'year') {
+            if (isNaN(date.getTime())) {
+                key = 'unknown';
+                label = '—';
+            } else if (groupBy === 'year') {
                 key = `${date.getFullYear()}`;
                 label = key;
             } else if (groupBy === 'month') {
@@ -92,7 +95,9 @@ export function PivotStatementView() {
             doc.setFontSize(16);
             doc.text('RESUMEN CONSOLIDADO DE CUENTA', 14, 20);
             doc.setFontSize(10);
-            doc.text(`Generado el: ${new Date().toLocaleString()}`, 14, 28);
+            const now = new Date();
+            const nowStr = isNaN(now.getTime()) ? '—' : now.toLocaleString();
+            doc.text(`Generado el: ${nowStr}`, 14, 28);
 
             const tableBody = pivotData.map(g => [
                 g.label,
