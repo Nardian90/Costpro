@@ -11,7 +11,7 @@ interface CostSheetNarrativeProps {
 }
 
 const CostSheetNarrative: React.FC<CostSheetNarrativeProps> = ({ data, calculatedValues }) => {
-  if (!data?.header) return null;
+  if (!data || !data.header) return null;
   const getVal = (id: string) => calculatedValues?.[id]?.total || 0;
   const format = (val: number) => formatCurrency(val);
 

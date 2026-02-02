@@ -59,7 +59,10 @@ export const CostSheetAuditLog: React.FC<CostSheetAuditLogProps> = memo(({ audit
                    )}
                  </div>
                  <div className="text-[9px] font-bold text-muted-foreground/50 tabular-nums">
-                   {new Date(audit.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                   {(() => {
+                      const d = new Date(audit.ts);
+                      return isNaN(d.getTime()) ? '--:--:--' : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                   })()}
                  </div>
               </div>
             ))}

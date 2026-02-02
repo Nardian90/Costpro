@@ -16,8 +16,8 @@ import {
 import { useIncomingTransfers, useOutgoingTransfers } from '@/hooks/api/useTransfers';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
 import { StateRenderer } from '@/components/ui/StateRenderer';
-import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { cn, formatDate, safeFormatDate } from '@/lib/utils';
+import { format, isValid } from 'date-fns';
 import { es } from 'date-fns/locale';
 import CreateTransferModal from './CreateTransferModal';
 import TransferDetailsModal from './TransferDetailsModal';
@@ -153,7 +153,7 @@ export default function TransferenciasView() {
                          <span>•</span>
                          <span>Solicitado por: {t.creator?.full_name}</span>
                          <span>•</span>
-                         <span>{format(new Date(t.created_at), 'PPPp', { locale: es })}</span>
+                         <span>{isValid(new Date(t.created_at)) ? format(new Date(t.created_at), 'PPPp', { locale: es }) : '—'}</span>
                       </div>
                    </div>
                 </div>

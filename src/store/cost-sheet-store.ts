@@ -64,6 +64,7 @@ const blankSheet = clearTemplate(originalTemplate);
 interface CostSheetState {
   data: CostSheetDataContract;
   updateValue: (path: (string | number)[], value: string | number | boolean) => void;
+  updateValues: (updates: { path: (string | number)[], value: string | number | boolean }[]) => void;
   addRow: (annexId: string) => void;
   removeRow: (annexId: string, rowIndex: number) => void;
   addMainSection: () => void;
@@ -88,7 +89,26 @@ export const useCostSheetStore = create<CostSheetState>()(
               if (current[path[i]] === undefined) return;
               current = current[path[i]];
             }
-            current[path[path.length - 1]] = value;
+            // Only update if value actually changed to prevent redundant renders
+            if (current[path[path.length - 1]] !== value) {
+              current[path[path.length - 1]] = value;
+            }
+          })
+        ),
+      updateValues: (updates) =>
+        set(
+          produce((draft: CostSheetState) => {
+            if (!draft.data) return;
+            updates.forEach(({ path, value }) => {
+                let current: any = draft.data;
+                for (let i = 0; i < path.length - 1; i++) {
+                  if (current[path[i]] === undefined) return;
+                  current = current[path[i]];
+                }
+                if (current[path[path.length - 1]] !== value) {
+                    current[path[path.length - 1]] = value;
+                }
+            });
           })
         ),
       addMainSection: () =>
