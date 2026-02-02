@@ -119,8 +119,13 @@ export function TransactionBreakdown() {
                         <div className="text-[8px] line-through opacity-50">{formatCurrency(prod.precio_cents)}</div>
                       )}
                     </TableCell>
-                    <TableCell className="text-right font-black text-xs">
-                        {formatCurrency(l.importe_linea_cents)}
+                    <TableCell className="text-right">
+                        <div className="font-black text-xs">{formatCurrency(l.importe_linea_cents)}</div>
+                        {l.cuadre_cents && l.cuadre_cents !== 0 ? (
+                            <div className="text-[8px] font-black text-orange-600 uppercase">
+                                {l.cuadre_cents > 0 ? '+' : ''}{l.cuadre_cents} Cts
+                            </div>
+                        ) : null}
                     </TableCell>
                     <TableCell>
                         <Badge variant="outline" className={`text-[8px] font-black uppercase ${
