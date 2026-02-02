@@ -17,6 +17,7 @@ import { CostSheetModeSwitcher } from './CostSheetModeSwitcher';
 import { CostSheetAuditLog } from './CostSheetAuditLog';
 import { CostSheetActionsPanel } from './CostSheetActionsPanel';
 import { CostSheetSidebarNav } from './CostSheetSidebarNav';
+import { CostSheetMassiveGenerator } from './CostSheetMassiveGenerator';
 import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
 import ActionMenu from '@/components/ui/ActionMenu';
 import { Eye, Edit, FileText, Trash2, Download, FileSpreadsheet, Upload, Save, BarChart3, Activity, MoreVertical } from 'lucide-react';
@@ -39,6 +40,7 @@ const CostSheetView = () => {
   const [isActionsPanelOpen, setIsActionsPanelOpen] = useState(false);
   const [isSectionsSidebarOpen, setIsSectionsSidebarOpen] = useState(false);
   const [isAnnexesSidebarOpen, setIsAnnexesSidebarOpen] = useState(false);
+  const [isMassiveGeneratorOpen, setIsMassiveGeneratorOpen] = useState(false);
 
   const previewRef = useRef(null);
   const exportRef = useRef(null);
@@ -164,6 +166,7 @@ const CostSheetView = () => {
     { id: 'export-json', label: 'Guardar', icon: Save, onClick: handleExportJSON, variant: 'outline' as const },
     { id: 'export-excel', label: 'Excel', icon: FileSpreadsheet, onClick: handleExportExcel, variant: 'primary' as const },
     { id: 'export-pdf', label: 'PDF', icon: Download, onClick: handleExportPDF, variant: 'success' as const },
+    { id: 'massive-gen', label: 'Gen. Masiva', icon: FileText, onClick: () => setIsMassiveGeneratorOpen(true), variant: 'outline' as const },
   ], [isEditing, loadExample, reset, handleImportJSON, handleExportJSON, handleExportExcel, handleExportPDF]);
 
   const mainActions = React.useMemo(() => [
@@ -228,6 +231,11 @@ const CostSheetView = () => {
       <div className="flex flex-col gap-6 mb-8 sm:mb-12">
         <ActionMenu actions={mainActions} position="bottom" />
       </div>
+
+      <CostSheetMassiveGenerator
+        isOpen={isMassiveGeneratorOpen}
+        onClose={() => setIsMassiveGeneratorOpen(false)}
+      />
 
       {isEditing ? (
         <div className="animate-in fade-in duration-700 space-y-6">
