@@ -144,6 +144,38 @@ describe('Cost Engine', () => {
     expect(validation.errors[0]).toContain('non-existent classification');
   });
 
+  it('should support smart Annex references in formulas', () => {
+    const smartFicha: FichaJSON = {
+        ...mockFicha,
+        rows: [
+            {
+                id: 'r_smart_filtered',
+                classification: '1.1',
+                type: 'COST',
+                label: 'Smart Filtered',
+                formaCalculo: 'FORMULA',
+                formula: '=AnexoA1'
+            },
+            {
+                id: 'r_smart_total',
+                classification: '9.9', // Non-existent in annex
+                type: 'COST',
+                label: 'Smart Total',
+                formaCalculo: 'FORMULA',
+                formula: '=AnexoA1'
+            }
+        ]
+    };
+    const result = calculateFicha(smartFicha);
+    const rFiltered = result.rows.find(r => r.id === 'r_smart_filtered');
+    const rTotal = result.rows.find(r => r.id === 'r_smart_total');
+
+    // Should be subtotal for 1.1 (100 + 50 = 150)
+    expect(rFiltered?.total).toBe(150);
+    // Should be total for annex (100 + 50 + 200 = 350)
+    expect(rTotal?.total).toBe(350);
+  });
+
   it('should calculate the FC-DEMO-243 fixture correctly', () => {
     const result = calculateFicha(demoFixture as any);
     expect(result.fichaId).toBe('FC-DEMO-243');

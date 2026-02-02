@@ -222,7 +222,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
           name: a.title,
           rows: (a.data || []).filter((d: any) => !!d).map((d: any) => ({
             // Normalize classification by taking the prefix before ' - ' (e.g. "1.1 - Insumos" -> "1.1")
-            classification: (d.classification || d.label || '').split(' - ')[0].trim(),
+            classification: String(d.classification || d.label || '').split(' - ')[0].trim(),
             importe: d.total || d.amount || d.depreciation_cost || d.price_total || 0
           }))
         })),
