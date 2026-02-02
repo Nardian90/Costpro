@@ -71,10 +71,12 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
       );
   }
 
-  const displayData = calculatedAnnex ? calculatedAnnex.data : annex.data;
+  const displayData = calculatedAnnex ? calculatedAnnex.data : (annex?.data || []);
   const annexIndex = React.useMemo(() => annexes.indexOf(annex), [annexes, annex]);
 
   const totalValue = React.useMemo(() => {
+    if (!annex?.columns || !displayData) return 0;
+
     const totalCol = annex.columns.find((c: CostSheetColumn) =>
         ['total', 'amount', 'depreciation_cost', 'price_total'].includes(c.key)
     );
@@ -84,7 +86,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
     return displayData.reduce((acc: number, row: any) => {
         return acc + (Number(row[key]) || 0);
     }, 0);
-  }, [displayData, annex.columns]);
+  }, [displayData, annex?.columns]);
 
   const handleProductSelect = React.useCallback((product: any) => {
     if (targetRowIndex === null) return;

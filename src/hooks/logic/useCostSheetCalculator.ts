@@ -76,7 +76,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
                lowerKey.includes('cost');
     };
 
-    return template.annexes.map(annex => ({
+    return (template?.annexes || []).map(annex => ({
       ...annex,
       data: (annex.data || []).map(row => produce(row, (draft: any) => {
         // First, pass through non-formula columns to see if they contain manual formulas
@@ -85,7 +85,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
           if (!col.formula && isNumericColumn(col.key)) {
             const val = draft[col.key];
             if (typeof val === 'string' && val.length > 0 && isNaN(Number(val))) {
-                draft[col.key] = evaluateAnnexExpression(val, row, template.header);
+                draft[col.key] = evaluateAnnexExpression(val, row, template?.header);
             }
           }
         }
@@ -93,12 +93,12 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
         // Then apply column-level formulas (which might depend on the calculated cell values above)
         for (const col of annex.columns) {
           if (col.formula) {
-            draft[col.key] = evaluateAnnexExpression(col.formula, draft, template.header);
+            draft[col.key] = evaluateAnnexExpression(col.formula, draft, template?.header);
           }
         }
       }))
     }));
-  }, [template.annexes, template.header]);
+  }, [template?.annexes, template?.header]);
 
   const annexTotals = useMemo(() => {
     const totals: { [key: string]: number } = {};
@@ -123,7 +123,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
       // Pre-calculate recursive Valor Histórico for parents
       const vhSums: Record<string, number> = {};
       const calculateVH = (rows: CostSheetRow[]) => {
-          rows.forEach(r => {
+          (rows || []).forEach(r => {
               if (r.children && r.children.length > 0) {
                   calculateVH(r.children);
                   vhSums[r.id] = r.children.reduce((sum, child) => {
@@ -135,10 +135,10 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
               }
           });
       };
-      template.sections.forEach(s => calculateVH(s.rows));
+      (template?.sections || []).forEach(s => calculateVH(s?.rows));
 
       const flatten = (uiRows: CostSheetRow[]) => {
-        uiRows.forEach(r => {
+        (uiRows || []).forEach(r => {
           // Infer semantic type
           let type: RowSemanticType = 'COST';
           if (['13', '13.1'].includes(r.id)) type = 'MARGIN';
@@ -164,7 +164,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
           const baseRefId = r.baseDeCalculoRef || r.base_ref;
           if (baseRefId) {
               // Check if it's an Annex ID (match explicit annexes or Roman numerals)
-              const isAnnex = template.annexes.some(a => a.id === baseRefId) || /^[IVXLC]+$/.test(baseRefId);
+              const isAnnex = (template?.annexes || []).some(a => a.id === baseRefId) || /^[IVXLC]+$/.test(baseRefId);
               if (isAnnex) {
                   baseCalculo = { type: 'ANEXO', anexoId: baseRefId };
                   // If pointing to annex without specific formula, it's an import
@@ -198,20 +198,20 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
           if (r.children) flatten(r.children);
         });
       };
-      template.sections.forEach(s => flatten(s.rows));
+      (template?.sections || []).forEach(s => flatten(s?.rows));
 
       const ficha: FichaJSON = {
         meta: {
-          id: template.header.code || 'default',
-          name: template.header.name || 'Ficha',
-          currency: template.header.currency || 'CUP',
+          id: template?.header?.code || 'default',
+          name: template?.header?.name || 'Ficha',
+          currency: template?.header?.currency || 'CUP',
           decimals: 2,
           settings: { allowFormulas: true }
         },
-        anexos: calculatedAnnexes.map((a: any) => ({
+        anexos: (calculatedAnnexes || []).filter((a: any) => !!a).map((a: any) => ({
           id: a.id,
           name: a.title,
-          rows: (a.data || []).map((d: any) => ({
+          rows: (a.data || []).filter((d: any) => !!d).map((d: any) => ({
             // Normalize classification by taking the prefix before ' - ' (e.g. "1.1 - Insumos" -> "1.1")
             classification: (d.classification || d.label || '').split(' - ')[0].trim(),
             importe: d.total || d.amount || d.depreciation_cost || d.price_total || 0

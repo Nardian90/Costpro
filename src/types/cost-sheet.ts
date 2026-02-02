@@ -17,7 +17,7 @@ export interface CostSheetRow {
   value?: number;
   baseDeCalculoRef?: string | null;
   base_ref?: string | null;
-  calculationMethod?: 'Prorrateo' | 'ValorFijo';
+  calculationMethod?: 'Prorrateo' | 'ValorFijo' | 'FORMULA';
   totalFormula?: string | null;
   formula?: string;
   is_percent?: boolean;

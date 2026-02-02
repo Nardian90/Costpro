@@ -8,7 +8,9 @@ import { PenTool } from 'lucide-react';
 
 const CostSheetSignatureEditor = () => {
   const { data, updateValue } = useCostSheetStore();
-  const signature = data.signature;
+  const signature = data?.signature;
+
+  if (!signature) return null;
 
   const handleChange = (field: string, value: string) => {
     updateValue(['signature', field], value);
@@ -32,7 +34,7 @@ const CostSheetSignatureEditor = () => {
             Elaborado por (Nombre y Cargo)
           </label>
           <Input
-            value={signature.prepared_by || ''}
+            value={signature?.prepared_by || ''}
             onChange={(e) => handleChange('prepared_by', e.target.value)}
             className="neu-input h-12 text-lg font-bold"
             placeholder="Ej: Ing. Juan Pérez - Especialista B en Costos"
@@ -44,7 +46,7 @@ const CostSheetSignatureEditor = () => {
             Aprobado por (Nombre y Cargo)
           </label>
           <Input
-            value={signature.approved_by || ''}
+            value={signature?.approved_by || ''}
             onChange={(e) => handleChange('approved_by', e.target.value)}
             className="neu-input h-12 text-lg font-bold"
             placeholder="Ej: Lic. Ana García - Directora Económica"
