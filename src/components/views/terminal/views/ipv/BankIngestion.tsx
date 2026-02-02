@@ -208,22 +208,36 @@ export function BankIngestion() {
 
   const processCatalogData = async (data: any[]) => {
     try {
-        const productsToImport = data.map(row => ({
-            cod: String(row.cod),
-            descripcion: String(row.descripcion),
-            um: String(row.um),
-            precio_cents: Math.round(Number(row.precio_cents || 0)),
-            prioridad_algoritmo: Number(row.prioridad_algoritmo || 1),
-            activo: row.activo === true || String(row.activo).toLowerCase() === 'true' || row.activo === 1,
-            es_paquete: row.es_paquete === true || String(row.es_paquete).toLowerCase() === 'true' || row.es_paquete === 1,
-            contenido_paquete: Number(row.contenido_paquete || 1),
-            stock_inicial_manual: Number(row.stock_inicial_manual || 0),
-            created_at: new Date().toISOString()
-        }));
+        const productsToImport = data.map(row => {
+            const precio_raw = String(row.precio_cents || 0);
+
+            // Regla 8.1: precio_cents siempre entero, sin decimales ni separadores.
+            if (precio_raw.includes('.') || precio_raw.includes(',')) {
+                throw new Error(`Error en producto ${row.cod}: precio_cents (${precio_raw}) no puede contener decimales ni separadores.`);
+            }
+
+            const precio_cents = parseInt(precio_raw, 10);
+            if (isNaN(precio_cents)) {
+                throw new Error(`Error en producto ${row.cod}: precio_cents inválido.`);
+            }
+
+            return {
+                cod: String(row.cod),
+                descripcion: String(row.descripcion),
+                um: String(row.um),
+                precio_cents: precio_cents,
+                prioridad_algoritmo: Number(row.prioridad_algoritmo || 1),
+                activo: row.activo === true || String(row.activo).toLowerCase() === 'true' || row.activo === 1,
+                es_paquete: row.es_paquete === true || String(row.es_paquete).toLowerCase() === 'true' || row.es_paquete === 1,
+                contenido_paquete: Number(row.contenido_paquete || 1),
+                stock_inicial_manual: Number(row.stock_inicial_manual || 0),
+                created_at: new Date().toISOString()
+            };
+        });
 
         await db.products.bulkPut(productsToImport);
         toast.success(`${productsToImport.length} productos importados al catálogo`);
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error importing catalog:', error);
         toast.error('Error al importar el catálogo. Verifica el formato.');
     }
