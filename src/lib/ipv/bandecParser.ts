@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { type BankTransaction } from '../dexie';
 import { generateHash } from './engine';
+import { extractCommissionCents, standardizeDate } from './utils';
 
 /**
  * Parses a BANDEC (Banco de Crédito y Comercio) TXT bank statement.
@@ -79,18 +80,6 @@ export async function parseBandecTxt(text: string): Promise<BankTransaction[]> {
     return transactions;
 }
 
-function standardizeDate(dateStr: string): string {
-    // Input: DD/MM/YY
-    const parts = dateStr.split('/');
-    if (parts.length === 3) {
-        const day = parts[0].padStart(2, '0');
-        const month = parts[1].padStart(2, '0');
-        const year = `20${parts[2]}`; // Assuming 20xx
-        return `${year}-${month}-${day}`;
-    }
-    return dateStr;
-}
-
 async function finalizeTx(tx: BankTransaction, buffer: string[]): Promise<BankTransaction> {
     // Process observations buffer to make it cleaner
     // We can extract specific info from XML tags if needed later,
@@ -105,17 +94,9 @@ async function finalizeTx(tx: BankTransaction, buffer: string[]): Promise<BankTr
 
     tx.observaciones = cleanObs;
 
-    // Extract commission "comis X.XX"
-    const comisMatch = cleanObs.match(/comis\s*([0-9,.]+)/i);
-    if (comisMatch) {
-        const comisStr = comisMatch[1].replace(/,/g, '');
-        const comisCents = Math.round(parseFloat(comisStr) * 100);
-        tx.comision_cents = comisCents;
-        tx.importe_venta_cents = tx.importe_cents + comisCents;
-    } else {
-        tx.comision_cents = 0;
-        tx.importe_venta_cents = tx.importe_cents;
-    }
+    const comisCents = extractCommissionCents(cleanObs);
+    tx.comision_cents = comisCents;
+    tx.importe_venta_cents = tx.importe_cents + comisCents;
 
     tx.ingestion_hash = await generateHash(`${tx.referencia_origen}-${tx.fecha}-${tx.importe_cents}`);
 

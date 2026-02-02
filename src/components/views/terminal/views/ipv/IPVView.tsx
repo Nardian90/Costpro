@@ -24,6 +24,7 @@ import { IPVReportView } from './IPVReportView';
 import { MatchingRulesEditor } from './MatchingRulesEditor';
 import { CashAdjustmentsTable } from './CashAdjustmentsTable';
 import { PivotStatementView } from './PivotStatementView';
+import { IngestionErrorsTable } from './IngestionErrorsTable';
 import { toast } from 'sonner';
 import {
   Tooltip,
@@ -39,6 +40,7 @@ export default function IPVView() {
   const rules = useLiveQuery(() => db.matching_rules.toArray());
   const products = useLiveQuery(() => db.products.toArray());
   const reconciliationLines = useLiveQuery(() => db.reconciliation_lines.toArray());
+  const ingestionErrorsCount = useLiveQuery(() => db.ingestion_errors.count()) || 0;
 
   const stats = useMemo(() => {
     if (!transactions || !reconciliationLines) return { total: 0, squared: 0, inProcess: 0, pending: 0, percentage: 0 };
@@ -238,11 +240,19 @@ export default function IPVView() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="relative">
             <div className="flex overflow-x-auto pb-3 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent sm:pb-0">
-                <TabsList className="flex w-max min-w-full lg:grid lg:grid-cols-7 lg:max-w-[1200px] bg-muted/50 p-1 rounded-xl h-auto sm:h-10">
+                <TabsList className="flex w-max min-w-full lg:grid lg:grid-cols-8 lg:max-w-[1300px] bg-muted/50 p-1 rounded-xl h-auto sm:h-10">
                     <TabsTrigger value="transactions" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest">Transacciones</TabsTrigger>
                     <TabsTrigger value="pivot" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest">Consolidado</TabsTrigger>
                     <TabsTrigger value="catalog" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest">Catálogo</TabsTrigger>
                     <TabsTrigger value="ingestion" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest text-nowrap">Extracto</TabsTrigger>
+                    <TabsTrigger value="errors" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest relative">
+                        Errores
+                        {ingestionErrorsCount > 0 && (
+                            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[8px] text-white font-black shadow-sm animate-pulse">
+                                {ingestionErrorsCount}
+                            </span>
+                        )}
+                    </TabsTrigger>
                     <TabsTrigger value="reports" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest text-nowrap">Reportes IPV</TabsTrigger>
                     <TabsTrigger value="adjustments" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest">Ajustes</TabsTrigger>
                     <TabsTrigger value="rules" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest">Reglas</TabsTrigger>
@@ -278,6 +288,10 @@ export default function IPVView() {
 
           <TabsContent value="adjustments" className="m-0">
             <CashAdjustmentsTable />
+          </TabsContent>
+
+          <TabsContent value="errors" className="m-0">
+            <IngestionErrorsTable />
           </TabsContent>
         </Card>
       </Tabs>

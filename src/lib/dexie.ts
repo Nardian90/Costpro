@@ -98,6 +98,19 @@ export interface CashAdjustment {
   created_at: string;
 }
 
+export interface IngestionError {
+  id: string;
+  fecha: string;
+  referencia_corta: string;
+  referencia_origen: string;
+  observaciones: string;
+  importe_cents: number;
+  tipo: 'Cr' | 'Db';
+  error_note: string;
+  raw_data: any;
+  created_at: string;
+}
+
 export interface DailyAggregate {
   fecha: string;
   total_cents: number;
@@ -130,10 +143,11 @@ export class IPVDatabase extends Dexie {
   cash_adjustments!: Table<CashAdjustment>;
   daily_aggregates!: Table<DailyAggregate>;
   matching_cache!: Table<MatchingCache>;
+  ingestion_errors!: Table<IngestionError>;
 
   constructor() {
     super('IPVDB');
-    this.version(4).stores({
+    this.version(5).stores({
       bank_statements: '&referencia_origen, fecha, importe_cents, ingestion_hash',
       products: '&cod, descripcion, precio_cents, prioridad_algoritmo, activo, stock_inicial_manual',
       matching_rules: '&id, tipo, prioridad',
@@ -141,7 +155,8 @@ export class IPVDatabase extends Dexie {
       ipv_reports: '&id, fecha_reporte, estado',
       cash_adjustments: '&id, fecha',
       daily_aggregates: '&fecha',
-      matching_cache: '&importe_cents'
+      matching_cache: '&importe_cents',
+      ingestion_errors: 'id, fecha, referencia_origen'
     });
   }
 }
