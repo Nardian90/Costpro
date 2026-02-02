@@ -56,10 +56,12 @@ export const formatCurrency = (amount: number): string => {
  * Utility to format dates in Spanish (Argentina) format DD/MM/YYYY.
  */
 export const formatDate = (date: string | Date | null | undefined): string => {
-  if (!date) return 'N/A';
+  if (!date) return '—';
   const d = typeof date === 'string' && date.includes('-')
     ? new Date(date + 'T12:00:00') // Force mid-day to avoid TZ shifts
     : new Date(date);
+
+  if (isNaN(d.getTime())) return '—';
 
   return new Intl.DateTimeFormat('es-AR', {
     day: '2-digit',
@@ -72,10 +74,32 @@ export const formatDate = (date: string | Date | null | undefined): string => {
  * Utility to format time in Spanish (Argentina) format HH:MM:SS.
  */
 export const formatTime = (date: string | Date | null | undefined): string => {
-  if (!date) return 'N/A';
+  if (!date) return '—';
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return '—';
+
   return new Intl.DateTimeFormat('es-AR', {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
-  }).format(new Date(date));
+  }).format(d);
 };
+
+/**
+ * Safely formats a date, preventing runtime crashes on invalid values.
+ */
+export function safeFormatDate(
+  value: string | number | Date | null | undefined,
+  locale = "es-ES"
+): string {
+  if (!value) return "—";
+
+  const date = new Date(value);
+  if (isNaN(date.getTime())) return "—";
+
+  return new Intl.DateTimeFormat(locale, {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(date);
+}
