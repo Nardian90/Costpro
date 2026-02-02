@@ -64,9 +64,15 @@ export default function IPVView() {
     let squared = 0;
     let inProcess = 0;
     let pending = 0;
+    let activeTotal = 0;
 
     for (let i = 0; i < transactions.length; i++) {
         const t = transactions[i];
+
+        // Omitir excluidas de las estadísticas de KPI
+        if (t.excluido || t.estado_conciliacion === 'NO_PROCESAR') continue;
+
+        activeTotal++;
         const matched = txTotals[t.referencia_origen] || 0;
         const target = t.importe_venta_cents || t.importe_cents;
         const diff = target - matched;
@@ -81,11 +87,11 @@ export default function IPVView() {
     }
 
     return {
-      total: transactions.length,
+      total: activeTotal,
       squared,
       inProcess,
       pending,
-      percentage: transactions.length > 0 ? Math.round((squared / transactions.length) * 100) : 0
+      percentage: activeTotal > 0 ? Math.round((squared / activeTotal) * 100) : 0
     };
   }, [transactions, txTotals]);
 
