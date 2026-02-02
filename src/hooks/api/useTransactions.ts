@@ -1,7 +1,13 @@
 import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
 import { validateRPCArrayResponse, validateRPCResponse } from '@/lib/rpc-validator';
-import { transactionSchema, transactionItemSchema, createSaleParamsSchema, uuidRegex } from '@/validation/schemas';
+import {
+  transactionSchema,
+  transactionItemSchema,
+  createSaleParamsSchema,
+  getTransactionsParamsSchema,
+  uuidRegex
+} from '@/validation/schemas';
 import { withLogging, withTableLogging, getCleanStoreId } from './base';
 import { z } from 'zod';
 import { useSyncContext } from '@/components/providers/SyncProvider';
@@ -15,10 +21,10 @@ export function useTransactions(storeId?: string | null, isAdmin = false) {
       if (!isAdmin && !cleanStoreId) return [];
 
       const rpcName = 'get_transactions';
-      const params = {
+      const params = getTransactionsParamsSchema.parse({
         p_store_id: cleanStoreId,
         p_limit: 1000
-      };
+      });
 
       try {
         const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
@@ -34,7 +40,7 @@ export function useTransactions(storeId?: string | null, isAdmin = false) {
         return await validateRPCArrayResponse(data, transactionSchema, 'transactions_fallback');
       }
     },
-    enabled: isAdmin || !!storeId,
+    enabled: isAdmin || (storeId !== undefined && storeId !== null),
     staleTime: 30 * 1000,
   });
 }
@@ -51,8 +57,7 @@ export async function prefetchTransactions(queryClient: QueryClient, storeId: st
       if (!isAdmin && cleanStoreId) {
         query = query.eq('store_id', cleanStoreId);
       }
-      const { data, error } = await query.order('created_at', { ascending: false });
-      if (error) throw error;
+      const data = await withTableLogging('select', 'transactions', () => query.order('created_at', { ascending: false }));
 
       return await validateRPCArrayResponse(data, transactionSchema, 'transactions');
     },

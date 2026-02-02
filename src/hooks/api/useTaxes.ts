@@ -1,6 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
-import { TaxConfiguration } from '@/types';
+import { taxConfigurationSchema } from '@/validation/schemas';
+import { validateRPCArrayResponse } from '@/lib/rpc-validator';
+import { withTableLogging } from './base';
+import type { TaxConfiguration } from '@/types';
 
 export function useTaxes(storeId?: string | null) {
   return useQuery({
@@ -17,9 +20,11 @@ export function useTaxes(storeId?: string | null) {
         query = query.is('store_id', null);
       }
 
-      const { data, error } = await query.order('name', { ascending: true });
-      if (error) throw error;
-      return data as TaxConfiguration[];
+      const data = await withTableLogging('select', 'tax_configurations', () =>
+        query.order('name', { ascending: true })
+      );
+
+      return await validateRPCArrayResponse(data, taxConfigurationSchema, 'tax_configurations');
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
   });

@@ -4,6 +4,7 @@ import { uuidRegex as isUuidRegex } from '@/validation/schemas';
 import { validateRPCArrayResponse } from '@/lib/rpc-validator';
 import {
   dashboardKpiResponseSchema,
+  getDashboardKpisParamsSchema,
 } from '@/validation/schemas';
 import { withLogging, getCleanStoreId } from './base';
 import type { DashboardKPIs, SalesSummary } from '@/types';
@@ -19,17 +20,18 @@ export async function prefetchDashboardData(
   const cleanStoreId = getCleanStoreId(storeId);
   const isValidUuid = cleanStoreId && isUuidRegex.test(cleanStoreId);
 
-  const params: any = isAdmin ? {} : { p_store_id: isValidUuid ? cleanStoreId : null };
-  if (dateFrom) params.p_date_from = dateFrom;
-  if (dateTo) params.p_date_to = dateTo;
+  const params = getDashboardKpisParamsSchema.parse({
+    p_store_id: isAdmin ? null : (isValidUuid ? cleanStoreId : null),
+    p_date_from: dateFrom || null,
+    p_date_to: dateTo || null
+  });
 
   if (!isAdmin && !isValidUuid) return;
 
   return queryClient.prefetchQuery({
     queryKey: ['dashboard-kpis', cleanStoreId, isAdmin, dateFrom, dateTo],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc(rpcName, params);
-      if (error) throw error;
+      const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params), 'dashboard');
 
       const validatedData = await validateRPCArrayResponse(
         data,
@@ -81,9 +83,11 @@ export function useSuspenseDashboardData(
       }
 
       const rpcName = 'get_dashboard_kpis';
-      const params: any = isAdmin ? {} : { p_store_id: isValidUuid ? cleanStoreId : null };
-      if (dateFrom) params.p_date_from = dateFrom;
-      if (dateTo) params.p_date_to = dateTo;
+      const params = getDashboardKpisParamsSchema.parse({
+        p_store_id: isAdmin ? null : (isValidUuid ? cleanStoreId : null),
+        p_date_from: dateFrom || null,
+        p_date_to: dateTo || null
+      });
 
       const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params), 'dashboard');
 
@@ -134,9 +138,11 @@ export function useDashboardData(
       if (!isAdmin && !isValidUuid) return null;
 
       const rpcName = 'get_dashboard_kpis';
-      const params: any = isAdmin ? {} : { p_store_id: isValidUuid ? cleanStoreId : null };
-      if (dateFrom) params.p_date_from = dateFrom;
-      if (dateTo) params.p_date_to = dateTo;
+      const params = getDashboardKpisParamsSchema.parse({
+        p_store_id: isAdmin ? null : (isValidUuid ? cleanStoreId : null),
+        p_date_from: dateFrom || null,
+        p_date_to: dateTo || null
+      });
 
       const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params), 'dashboard');
 
