@@ -78,10 +78,10 @@ export function TransactionTable({ transactions }: { transactions: BankTransacti
   };
 
   const getStatusBadge = (status: string, diffCents: number, matchedTotal: number) => {
-    if (matchedTotal > 0 && diffCents === 0) {
+    if (matchedTotal > 0 && Math.abs(diffCents) < 0.001) {
       return <Badge className="bg-green-500 text-white border-green-600 shadow-sm text-[10px] font-black uppercase tracking-tighter">CUADRADA</Badge>;
     }
-    if (matchedTotal > 0 && diffCents !== 0) {
+    if (matchedTotal > 0 && Math.abs(diffCents) >= 0.001) {
       return <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20 text-[10px] font-black uppercase tracking-tighter">EN PROCESO</Badge>;
     }
     return <Badge className="bg-gray-500/10 text-gray-500 border-gray-500/20 text-[10px] font-black uppercase tracking-tighter">PENDIENTE</Badge>;
@@ -207,16 +207,16 @@ export function TransactionTable({ transactions }: { transactions: BankTransacti
                       {tx.observaciones}
                     </TableCell>
                     <TableCell className="text-right font-medium text-muted-foreground text-xs">
-                      {formatCurrency(tx.importe_cents / 100)}
+                      {formatCurrency(tx.importe_cents)}
                     </TableCell>
                     <TableCell className="text-right font-bold text-orange-500 text-xs">
-                      {formatCurrency((tx.comision_cents || 0) / 100)}
+                      {formatCurrency((tx.comision_cents || 0))}
                     </TableCell>
                     <TableCell className="text-right font-black text-sm">
-                      {formatCurrency(targetAmount / 100)}
+                      {formatCurrency(targetAmount)}
                     </TableCell>
-                    <TableCell className={`text-right font-bold text-sm ${diff === 0 ? 'text-green-500' : (diff < 0 ? 'text-red-500' : 'text-orange-500')}`}>
-                      {formatCurrency(diff / 100)}
+                    <TableCell className={`text-right font-bold text-sm ${Math.abs(diff) < 0.001 ? 'text-green-500' : (diff < -0.001 ? 'text-red-500' : 'text-orange-500')}`}>
+                      {formatCurrency(diff)}
                     </TableCell>
                     <TableCell>
                       <span className={`text-[10px] font-black ${tx.tipo === 'Cr' ? 'text-green-500' : 'text-red-500'}`}>
@@ -303,23 +303,23 @@ export function TransactionTable({ transactions }: { transactions: BankTransacti
                             <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border/50">
                                 <div>
                                     <p className="text-[8px] font-bold text-muted-foreground uppercase">Importe</p>
-                                    <p className="text-sm font-bold">{formatCurrency(tx.importe_cents / 100)}</p>
+                                    <p className="text-sm font-bold">{formatCurrency(tx.importe_cents)}</p>
                                 </div>
                                 <div className="text-center">
                                     <p className="text-[8px] font-bold text-orange-500 uppercase">Comisión</p>
-                                    <p className="text-sm font-bold text-orange-500">{formatCurrency((tx.comision_cents || 0) / 100)}</p>
+                                    <p className="text-sm font-bold text-orange-500">{formatCurrency((tx.comision_cents || 0))}</p>
                                 </div>
                                 <div className="text-right">
                                     <p className="text-[8px] font-bold text-primary uppercase">Total Venta</p>
-                                    <p className="text-sm font-black">{formatCurrency(targetAmount / 100)}</p>
+                                    <p className="text-sm font-black">{formatCurrency(targetAmount)}</p>
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-1 pt-2">
                                 <div className="text-right">
                                     <p className="text-[9px] font-bold text-muted-foreground uppercase">Diferencia</p>
-                                    <p className={`text-lg font-black ${diff === 0 ? 'text-green-500' : (diff < 0 ? 'text-red-500' : 'text-orange-500')}`}>
-                                        {formatCurrency(diff / 100)}
+                                    <p className={`text-lg font-black ${Math.abs(diff) < 0.001 ? 'text-green-500' : (diff < -0.001 ? 'text-red-500' : 'text-orange-500')}`}>
+                                        {formatCurrency(diff)}
                                     </p>
                                 </div>
                             </div>

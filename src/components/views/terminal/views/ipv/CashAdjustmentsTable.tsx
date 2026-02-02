@@ -46,7 +46,7 @@ export function CashAdjustmentsTable() {
               adjustments.map((a) => (
                 <TableRow key={a.id}>
                   <TableCell>{a.fecha}</TableCell>
-                  <TableCell className="font-black text-orange-500">{formatCurrency(a.monto_cents / 100)}</TableCell>
+                  <TableCell className="font-black text-orange-500">{formatCurrency(a.monto_cents)}</TableCell>
                   <TableCell className="text-xs">{a.motivo}</TableCell>
                   <TableCell className="font-bold">{a.aprobado_por}</TableCell>
                 </TableRow>

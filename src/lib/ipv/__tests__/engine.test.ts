@@ -21,14 +21,14 @@ vi.mock('../../dexie', () => ({
 
 describe('MatchingEngine', () => {
   const products: Product[] = [
-    { cod: '1', descripcion: 'Cerveza', um: 'U', precio_cents: 26000, prioridad_algoritmo: 1, activo: true, es_paquete: false, contenido_paquete: 1, created_at: '' },
-    { cod: '1-C', descripcion: 'Cerveza Caja', um: 'Caja', precio_cents: 576000, prioridad_algoritmo: 1, activo: true, es_paquete: true, contenido_paquete: 24, created_at: '' },
+    { cod: '1', descripcion: 'Cerveza', um: 'U', precio_cents: 260, prioridad_algoritmo: 1, activo: true, es_paquete: false, contenido_paquete: 1, created_at: '' },
+    { cod: '1-C', descripcion: 'Cerveza Caja', um: 'Caja', precio_cents: 5760, prioridad_algoritmo: 1, activo: true, es_paquete: true, contenido_paquete: 24, created_at: '' },
   ];
 
   const rules: MatchingRule[] = [
     { id: '1', tipo: 'HARD_REF', prioridad: 1, activo: true },
     { id: '2', tipo: 'EXACT_SUM', prioridad: 2, activo: true },
-    { id: '3', tipo: 'TOLERANCE', prioridad: 3, activo: true, tolerancia_cents: 100 },
+    { id: '3', tipo: 'TOLERANCE', prioridad: 3, activo: true, tolerancia_cents: 1 },
   ];
 
   const engine = new MatchingEngine(products, rules);
@@ -40,7 +40,7 @@ describe('MatchingEngine', () => {
       referencia_corta: 'REF1',
       referencia_origen: 'REF1',
       observaciones: 'PAGO COD:1',
-      importe_cents: 26000,
+      importe_cents: 260,
       tipo: 'Cr',
       estado_conciliacion: 'PENDIENTE',
       created_at: '',
@@ -60,7 +60,7 @@ describe('MatchingEngine', () => {
       referencia_corta: 'REF2',
       referencia_origen: 'REF2',
       observaciones: 'TRANSFERENCIA',
-      importe_cents: 52000, // 2 cervezas
+      importe_cents: 520, // 2 cervezas
       tipo: 'Cr',
       estado_conciliacion: 'PENDIENTE',
       created_at: '',
@@ -80,7 +80,7 @@ describe('MatchingEngine', () => {
       referencia_corta: 'REF3',
       referencia_origen: 'REF3',
       observaciones: 'COMISION BANCARIA',
-      importe_cents: 10000,
+      importe_cents: 100,
       tipo: 'Db',
       estado_conciliacion: 'PENDIENTE',
       created_at: '',

@@ -195,7 +195,7 @@ export function CatalogTable() {
             um: 'UNIDADES', // Valor por defecto
             es_paquete: false,
             contenido_paquete: 1,
-            precio_cents: Math.round((p.price || 0) * 100),
+            precio_cents: p.price || 0,
             prioridad_algoritmo: 3,
             activo: true,
             stock_inicial_manual: Math.round(p.stock_quantity || 0),
@@ -408,11 +408,11 @@ export function CatalogTable() {
                         <TableCell className="text-right">
                             <Input
                                 type="number"
+                                step="0.01"
                                 value={editForm.precio_cents || 0}
                                 onChange={e => {
                                     const val = e.target.value;
-                                    if (val.includes('.') || val.includes(',')) return;
-                                    setEditForm({...editForm, precio_cents: parseInt(val, 10) || 0});
+                                    setEditForm({...editForm, precio_cents: parseFloat(val) || 0});
                                 }}
                                 className="h-8 w-24 text-right text-xs font-black"
                             />
@@ -512,11 +512,11 @@ export function CatalogTable() {
                             {isEditing ? (
                                 <Input
                                     type="number"
+                                    step="0.01"
                                     value={editForm.precio_cents || 0}
                                     onChange={e => {
                                         const val = e.target.value;
-                                        if (val.includes('.') || val.includes(',')) return;
-                                        setEditForm({...editForm, precio_cents: parseInt(val, 10) || 0});
+                                        setEditForm({...editForm, precio_cents: parseFloat(val) || 0});
                                     }}
                                     className="h-8 w-24 text-right text-xs font-black"
                                 />
@@ -709,16 +709,16 @@ function ProductCard({ product, stats, isEditing, editForm, setEditForm, onSave,
 
             <div className="flex justify-between items-center">
                 <div>
-                    <p className="text-[8px] font-bold text-muted-foreground uppercase">Precio (Cents)</p>
+                    <p className="text-[8px] font-bold text-muted-foreground uppercase">Precio</p>
                     {isEditing ? (
                          <div className="flex items-center gap-1">
                             <Input
                                 type="number"
+                                step="0.01"
                                 value={editForm.precio_cents || 0}
                                 onChange={e => {
                                     const val = e.target.value;
-                                    if (val.includes('.') || val.includes(',')) return;
-                                    setEditForm({...editForm, precio_cents: parseInt(val, 10) || 0});
+                                    setEditForm({...editForm, precio_cents: parseFloat(val) || 0});
                                 }}
                                 className="h-7 text-[10px] w-24 font-black"
                             />
@@ -759,14 +759,14 @@ function NewProductCard({ editForm, setEditForm, onSave, onCancel }: any) {
             </div>
             <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                    <Label className="text-[9px] uppercase font-black">Precio (Cents)</Label>
+                    <Label className="text-[9px] uppercase font-black">Precio de Venta</Label>
                     <Input
                         type="number"
+                        step="0.01"
                         value={editForm.precio_cents || 0}
                         onChange={e => {
                             const val = e.target.value;
-                            if (val.includes('.') || val.includes(',')) return;
-                            setEditForm({...editForm, precio_cents: parseInt(val, 10) || 0});
+                            setEditForm({...editForm, precio_cents: parseFloat(val) || 0});
                         }}
                         className="h-8 text-xs font-black"
                     />

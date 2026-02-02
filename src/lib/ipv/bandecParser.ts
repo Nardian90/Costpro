@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { type BankTransaction } from '../dexie';
 import { generateHash } from './engine';
-import { extractCommissionCents, standardizeDate } from './utils';
+import { extractCommission, standardizeDate } from './utils';
 
 /**
  * Parses a BANDEC (Banco de Crédito y Comercio) TXT bank statement.
@@ -45,7 +45,7 @@ export async function parseBandecTxt(text: string): Promise<BankTransaction[]> {
             const refCorriente = txMatch[1];
             const refOriginal = txMatch[2];
             const importeStr = txMatch[3].replace(/,/g, '');
-            const importeCents = Math.round(parseFloat(importeStr) * 100);
+            const importeCents = parseFloat(importeStr);
             const tipo = txMatch[4] as 'Cr' | 'Db';
 
             currentTx = {
@@ -94,7 +94,7 @@ async function finalizeTx(tx: BankTransaction, buffer: string[]): Promise<BankTr
 
     tx.observaciones = cleanObs;
 
-    const comisCents = extractCommissionCents(cleanObs);
+    const comisCents = extractCommission(cleanObs);
     tx.comision_cents = comisCents;
     tx.importe_venta_cents = tx.importe_cents + comisCents;
 
