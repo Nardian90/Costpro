@@ -26,7 +26,8 @@ export interface Product {
   um: string;
   es_paquete: boolean;
   contenido_paquete: number;
-  precio_cents: number;        // En Pesos (decimal)
+  precio_cents: number;        // En Pesos (decimal) - PRECIO ACTUAL/AJUSTADO
+  precio_base_cents?: number;  // Precio original de catálogo
   prioridad_algoritmo: number; // 1..5
   activo: boolean;
   stock_inicial_manual: number;

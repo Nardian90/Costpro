@@ -15,7 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Trash2, Search, HelpCircle, Info, Edit2, Check, X, Plus, RefreshCw, LayoutGrid, List, AlertTriangle, Brain, Sparkles, Star } from 'lucide-react';
+import { Trash2, Search, HelpCircle, Info, Edit2, Check, X, Plus, RefreshCw, LayoutGrid, List, AlertTriangle, Brain, Sparkles, Star, Percent, RotateCcw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { formatCurrency } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
@@ -43,6 +43,7 @@ export function CatalogTable() {
   const [editForm, setEditForm] = useState<Partial<Product>>({});
   const [layoutMode, setLayoutMode] = useState<'table' | 'cards'>('table');
   const [isSyncing, setIsSyncing] = useState(false);
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
 
   const user = useAuthStore(state => state.user);
   const isAdmin = hasRole(user, 'admin');
@@ -171,6 +172,95 @@ export function CatalogTable() {
     if (confirm('¿ESTÁS SEGURO? Se borrará TODO el catálogo cargado actualmente.')) {
         await db.products.clear();
     }
+  };
+
+  const handleAcceptSuggestions = async () => {
+    if (!products) return;
+    const withSuggestions = products.filter(p => p.suggestedPrice && p.suggestedPrice !== p.precio_cents);
+    if (withSuggestions.length === 0) {
+        toast.info('No hay sugerencias de precio pendientes');
+        return;
+    }
+
+    if (!confirm(`¿Aplicar ${withSuggestions.length} sugerencias de precio inteligentes? Se respaldará el precio actual como base.`)) return;
+
+    try {
+        const updates = withSuggestions.map(p => ({
+            ...p,
+            precio_base_cents: p.precio_base_cents || p.precio_cents,
+            precio_cents: p.suggestedPrice as number,
+            updated_at: new Date().toISOString()
+        }));
+        await db.products.bulkPut(updates);
+        toast.success('Sugerencias aplicadas');
+    } catch (error) {
+        toast.error('Error al aplicar sugerencias');
+    }
+  };
+
+  const handleBulkPriority = async (mode: 'auto' | 'hybrid' | 'manual') => {
+    if (!products) return;
+    if (!confirm(`¿Establecer todos los productos en modo de prioridad "${mode}"?`)) return;
+
+    try {
+        const updates = products.map(p => ({ ...p, priorityMode: mode }));
+        await db.products.bulkPut(updates);
+        toast.success(`Prioridad ${mode} aplicada a todo el catálogo`);
+        handleRecalculateIntelligence(); // Recalcular para aplicar la lógica auto
+    } catch (error) {
+        toast.error('Error al actualizar prioridades');
+    }
+  };
+
+  const handleBulkPercentageAdjustment = async () => {
+    const targetProducts = selectedProductIds.length > 0
+        ? products?.filter(p => selectedProductIds.includes(p.cod)) || []
+        : products || [];
+
+    if (targetProducts.length === 0) return;
+
+    const percentStr = prompt(`Aplicar ajuste porcentual a ${targetProducts.length} productos. Ejemplo: 50 para el 50% del valor, 110 para incremento del 10%.`, "100");
+    if (percentStr === null) return;
+
+    const factor = parseFloat(percentStr) / 100;
+    if (isNaN(factor)) {
+        toast.error('Porcentaje inválido');
+        return;
+    }
+
+    try {
+        const updates = targetProducts.map(p => ({
+            ...p,
+            precio_base_cents: p.precio_base_cents || p.precio_cents,
+            precio_cents: parseFloat((p.precio_cents * factor).toFixed(2)),
+            updated_at: new Date().toISOString()
+        }));
+        await db.products.bulkPut(updates);
+        toast.success(`Ajuste del ${percentStr}% aplicado correctamente`);
+        setSelectedProductIds([]);
+    } catch (error) {
+        toast.error('Error al aplicar ajuste masivo');
+    }
+  };
+
+  const handleResetPrices = async () => {
+      if (!confirm('¿Restablecer todos los precios a su valor base original?')) return;
+      try {
+          const updates = (products || [])
+              .filter(p => p.precio_base_cents !== undefined)
+              .map(p => ({
+                  ...p,
+                  precio_cents: p.precio_base_cents as number,
+                  precio_base_cents: undefined
+              }));
+
+          if (updates.length > 0) {
+              await db.products.bulkPut(updates);
+          }
+          toast.success('Precios restablecidos');
+      } catch (error) {
+          toast.error('Error al restablecer precios');
+      }
   };
 
   const handleRecalculateIntelligence = async () => {
@@ -391,6 +481,55 @@ export function CatalogTable() {
                 <Brain className={`w-4 h-4 ${isSyncing ? 'animate-pulse' : ''}`} />
                 <span>Inteligencia</span>
             </Button>
+
+            <div className="flex gap-1 bg-purple-50 p-1 rounded-xl border border-purple-100">
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button variant="ghost" size="sm" onClick={handleAcceptSuggestions} className="h-8 text-[9px] font-black uppercase text-purple-600 hover:bg-purple-100">
+                                <Sparkles className="w-3 h-3 mr-1" />
+                                Aceptar Todo
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Aplicar todas las sugerencias inteligentes</TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button variant="ghost" size="sm" onClick={() => handleBulkPriority('auto')} className="h-8 text-[9px] font-black uppercase text-purple-600 hover:bg-purple-100">
+                                <Star className="w-3 h-3 mr-1" />
+                                Prio Auto
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Poner todo en Prioridad Automática</TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button variant="ghost" size="sm" onClick={handleBulkPercentageAdjustment} className="h-8 text-[9px] font-black uppercase text-purple-600 hover:bg-purple-100">
+                                <Percent className="w-3 h-3 mr-1" />
+                                Ajuste %
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Ajuste masivo por porcentaje</TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button variant="ghost" size="sm" onClick={handleResetPrices} className="h-8 text-[9px] font-black uppercase text-red-600 hover:bg-red-50">
+                                <RotateCcw className="w-3 h-3" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Restablecer Precios Base</TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+            </div>
         </div>
       </div>
 
@@ -406,6 +545,16 @@ export function CatalogTable() {
             <Table className="data-table">
             <TableHeader>
                 <TableRow>
+                <TableHead className="w-8">
+                    <input
+                        type="checkbox"
+                        onChange={(e) => {
+                            if (e.target.checked) setSelectedProductIds(filtered.map(p => p.cod));
+                            else setSelectedProductIds([]);
+                        }}
+                        checked={selectedProductIds.length === filtered.length && filtered.length > 0}
+                    />
+                </TableHead>
                 <TableHead className="sticky-column-1">Código</TableHead>
                 <TableHead>Descripción</TableHead>
                 <TableHead>Efectividad</TableHead>
@@ -511,9 +660,20 @@ export function CatalogTable() {
                 {filtered.map((p) => {
                     const isEditing = editingId === p.cod;
                     const stats = inventoryStats[p.cod] || { initial: 0, sales: 0, final: 0 };
+                    const isSelected = selectedProductIds.includes(p.cod);
 
                     return (
-                    <TableRow key={p.cod} className={isEditing ? "bg-primary/5" : ""}>
+                    <TableRow key={p.cod} className={`${isEditing ? "bg-primary/5" : ""} ${isSelected ? "bg-purple-50" : ""}`}>
+                        <TableCell>
+                            <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={(e) => {
+                                    if (e.target.checked) setSelectedProductIds([...selectedProductIds, p.cod]);
+                                    else setSelectedProductIds(selectedProductIds.filter(id => id !== p.cod));
+                                }}
+                            />
+                        </TableCell>
                         <TableCell className="sticky-column-1 font-mono text-[10px] font-bold text-primary">
                         {p.cod}
                         </TableCell>
@@ -588,7 +748,12 @@ export function CatalogTable() {
                                     className="h-8 w-24 text-right text-xs font-black"
                                 />
                             ) : (
-                                <span className="font-black text-xs">{p.precio_cents}</span>
+                                <div className="flex flex-col items-end">
+                                    <span className={`font-black text-xs ${p.precio_base_cents ? 'text-purple-600' : ''}`}>{p.precio_cents}</span>
+                                    {p.precio_base_cents && (
+                                        <span className="text-[8px] text-muted-foreground line-through">Base: {p.precio_base_cents}</span>
+                                    )}
+                                </div>
                             )}
                         </TableCell>
 
@@ -818,7 +983,12 @@ function ProductCard({ product, stats, isEditing, editForm, setEditForm, onSave,
                             />
                          </div>
                     ) : (
-                        <p className="font-black text-base">{product.precio_cents}</p>
+                        <div className="flex flex-col items-end">
+                            <p className={`font-black text-base ${product.precio_base_cents ? 'text-purple-600' : ''}`}>{product.precio_cents}</p>
+                            {product.precio_base_cents && (
+                                <p className="text-[9px] text-muted-foreground line-through">Base: {product.precio_base_cents}</p>
+                            )}
+                        </div>
                     )}
                 </div>
                 <div className="flex gap-2">
