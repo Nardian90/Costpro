@@ -58,7 +58,7 @@ export function IPVRightSidebar({ activeTab, onSelect, onExportBackup }: Props) 
                                         : 'hover:bg-primary/10 hover:text-primary'
                                 }`}
                             >
-                                {React.cloneElement(item.icon as React.ReactElement, { size: 18 })}
+                                {React.cloneElement(item.icon as React.ReactElement<any>, { size: 18 })}
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent side="left">
