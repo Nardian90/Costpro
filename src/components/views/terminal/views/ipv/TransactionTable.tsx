@@ -15,8 +15,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Eye, Trash2, Search, RotateCcw, LayoutGrid, List, CheckCircle2, XCircle } from 'lucide-react';
+import { Eye, Trash2, Search, RotateCcw, LayoutGrid, List, CheckCircle2, XCircle, HelpCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { ManualReconciliationModal } from './ManualReconciliationModal';
 import {
@@ -25,56 +27,97 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Info } from 'lucide-react';
 
-export function TransactionTable({ transactions }: { transactions: BankTransaction[] }) {
+interface TransactionTableProps {
+    transactions: BankTransaction[];
+    kpiFilter: 'ALL' | 'CUADRADAS' | 'EN_PROCESO' | 'PENDIENTES';
+    txReconciliationTotals: Record<string, number>;
+}
+
+export function TransactionTable({ transactions, kpiFilter, txReconciliationTotals }: TransactionTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTx, setSelectedTx] = useState<BankTransaction | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [layoutMode, setLayoutMode] = useState<'table' | 'cards'>('table');
   const [typeFilter, setTypeFilter] = useState<'ALL' | 'Cr' | 'Db'>('ALL');
+  const [showExcluded, setShowExcluded] = useState(true);
 
-  const reconciliationLines = useLiveQuery(() => db.reconciliation_lines.toArray());
+  const filtered = React.useMemo(() => {
+    return transactions.filter(t => {
+        // Excluded Filter
+        if (!showExcluded && t.excluido) return false;
 
-  const txReconciliationTotals = React.useMemo(() => {
-    if (!reconciliationLines) return {};
-    return reconciliationLines.reduce((acc, line) => {
-      acc[line.transaction_ref] = (acc[line.transaction_ref] || 0) + line.importe_linea_cents;
-      return acc;
-    }, {} as Record<string, number>);
-  }, [reconciliationLines]);
+        // Text Search
+        const matchesSearch = t.referencia_origen.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                             t.observaciones.toLowerCase().includes(searchTerm.toLowerCase());
 
-  const filtered = transactions.filter(t => {
-    const matchesSearch = t.referencia_origen.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         t.observaciones.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = typeFilter === 'ALL' || t.tipo === typeFilter;
-    return matchesSearch && matchesType;
-  });
+        // Type Filter
+        const matchesType = typeFilter === 'ALL' || t.tipo === typeFilter;
 
-  const handleDelete = async (id: string) => {
+        // KPI Filter
+        const matched = txReconciliationTotals[t.referencia_origen] || 0;
+        const target = t.importe_venta_cents || t.importe_cents;
+        const diff = target - matched;
+
+        let matchesKpi = true;
+        if (kpiFilter === 'CUADRADAS') {
+            matchesKpi = matched > 0 && Math.abs(diff) < 0.001;
+        } else if (kpiFilter === 'EN_PROCESO') {
+            matchesKpi = matched > 0 && Math.abs(diff) >= 0.001;
+        } else if (kpiFilter === 'PENDIENTES') {
+            matchesKpi = matched === 0;
+        }
+
+        return matchesSearch && matchesType && matchesKpi;
+    });
+  }, [transactions, searchTerm, typeFilter, kpiFilter, txReconciliationTotals]);
+
+  const handleDelete = async (referencia: string) => {
     if (confirm('¿Eliminar esta transacción?')) {
-      await db.bank_statements.delete(id);
+      await db.bank_statements.delete(referencia);
     }
   };
 
   const handleResetReconciliation = async (tx: BankTransaction) => {
     if (confirm(`¿Reiniciar conciliación para ${tx.referencia_origen}? Se borrarán todos los productos asociados.`)) {
         await db.reconciliation_lines.where('transaction_ref').equals(tx.referencia_origen).delete();
-        await db.bank_statements.update(tx.id, {
+        await db.bank_statements.update(tx.referencia_origen, {
             estado_conciliacion: 'PENDIENTE'
         });
     }
   };
 
-  const toggleExclusion = async (tx: BankTransaction) => {
-      await db.bank_statements.update(tx.id, {
-          excluido: !tx.excluido
+  const toggleExclusion = async (tx: BankTransaction, forcedValue?: boolean) => {
+      // Si forcedValue viene de Radix Checkbox, invertimos su lógica (Checked = !Excluido)
+      const newValue = forcedValue !== undefined ? !forcedValue : !tx.excluido;
+
+      await db.bank_statements.update(tx.referencia_origen, {
+          excluido: newValue,
+          updated_at: new Date().toISOString()
       });
   };
 
-  const bulkToggleExclusion = async (exclude: boolean) => {
-      const ids = filtered.map(t => t.id);
-      await db.bank_statements.where('id').anyOf(ids).modify({ excluido: exclude });
+  const bulkResetMatching = async () => {
+    if (filtered.length === 0) return;
+    if (confirm(`¿REINICIAR CONCILIACIÓN de ${filtered.length} transacciones visibles? Se borrarán todos los productos asociados.`)) {
+        const ids = filtered.map(t => t.referencia_origen);
+
+        // Ejecutar en una transacción de Dexie para asegurar consistencia
+        await db.transaction('rw', [db.reconciliation_lines, db.bank_statements], async () => {
+            await db.reconciliation_lines.where('transaction_ref').anyOf(ids).delete();
+            await db.bank_statements.where('referencia_origen').anyOf(ids).modify({
+                estado_conciliacion: 'PENDIENTE'
+            });
+        });
+    }
   };
 
   const getStatusBadge = (status: string, diffCents: number, matchedTotal: number) => {
@@ -110,14 +153,39 @@ export function TransactionTable({ transactions }: { transactions: BankTransacti
                 <option value="Db">SOLO DÉBITOS (GASTOS)</option>
             </select>
 
-            <div className="flex gap-1 bg-muted/50 p-1 rounded-lg">
-                <Button variant="ghost" size="sm" onClick={() => bulkToggleExclusion(false)} className="h-8 text-[10px] font-black uppercase hover:bg-green-500/10 hover:text-green-600">
-                    <CheckCircle2 className="w-3 h-3 mr-1" /> Incluir Filtro
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => bulkToggleExclusion(true)} className="h-8 text-[10px] font-black uppercase hover:bg-red-500/10 hover:text-red-600">
-                    <XCircle className="w-3 h-3 mr-1" /> Excluir Filtro
+            <div className="flex items-center gap-4 bg-muted/30 px-3 py-1.5 rounded-xl border border-border/50">
+                <div className={`flex items-center gap-2 px-3 py-1 rounded-full transition-colors ${showExcluded ? 'bg-primary/10 border border-primary/20' : 'bg-muted'}`}>
+                    <Switch
+                        id="show-excluded"
+                        checked={showExcluded}
+                        onCheckedChange={setShowExcluded}
+                        className="scale-75"
+                    />
+                    <Label htmlFor="show-excluded" className={`text-[9px] font-black uppercase cursor-pointer tracking-tighter ${showExcluded ? 'text-primary' : 'text-muted-foreground'}`}>
+                        {showExcluded ? 'Mostrando Excluidos' : 'Ocultando Excluidos'}
+                    </Label>
+                </div>
+
+                <div className="h-4 w-px bg-border mx-1" />
+
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={bulkResetMatching}
+                    className="h-7 text-[10px] font-black uppercase text-orange-600 hover:bg-orange-500/10"
+                >
+                    <RotateCcw className="w-3 h-3 mr-1" /> Reset Matching
                 </Button>
             </div>
+
+            <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setHelpOpen(true)}
+                className="h-10 w-10 text-primary border-primary/20 hover:bg-primary/5"
+            >
+                <HelpCircle className="w-4 h-4" />
+            </Button>
 
             <Button
                 variant="outline"
@@ -180,87 +248,26 @@ export function TransactionTable({ transactions }: { transactions: BankTransacti
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
-                    No se encontraron transacciones.
+                  <TableCell colSpan={11} className="h-24 text-center text-muted-foreground font-medium">
+                    No se encontraron transacciones que coincidan con los filtros.
                   </TableCell>
                 </TableRow>
               ) : (
-                filtered.map((tx) => {
-                  const matchedTotal = txReconciliationTotals[tx.referencia_origen] || 0;
-                  const targetAmount = tx.importe_venta_cents ?? tx.importe_cents;
-                  const diff = targetAmount - matchedTotal;
-
-                  return (
-                  <TableRow key={tx.id} className={tx.excluido ? 'opacity-40 grayscale bg-muted/20' : ''}>
-                    <TableCell className="text-center">
-                        <Checkbox
-                            checked={!tx.excluido}
-                            onCheckedChange={() => toggleExclusion(tx)}
-                            className="translate-y-0.5"
-                        />
-                    </TableCell>
-                    <TableCell className="sticky-column-1 font-medium whitespace-nowrap">
-                      {formatDate(tx.fecha)}
-                    </TableCell>
-                    <TableCell className="font-mono text-[10px]">{tx.referencia_origen}</TableCell>
-                    <TableCell className="text-[10px] truncate max-w-md" title={tx.observaciones}>
-                      {tx.observaciones}
-                    </TableCell>
-                    <TableCell className="text-right font-medium text-muted-foreground text-xs">
-                      {formatCurrency(tx.importe_cents)}
-                    </TableCell>
-                    <TableCell className="text-right font-bold text-orange-500 text-xs">
-                      {formatCurrency((tx.comision_cents || 0))}
-                    </TableCell>
-                    <TableCell className="text-right font-black text-sm">
-                      {formatCurrency(targetAmount)}
-                    </TableCell>
-                    <TableCell className={`text-right font-bold text-sm ${Math.abs(diff) < 0.001 ? 'text-green-500' : (diff < -0.001 ? 'text-red-500' : 'text-orange-500')}`}>
-                      {formatCurrency(diff)}
-                    </TableCell>
-                    <TableCell>
-                      <span className={`text-[10px] font-black ${tx.tipo === 'Cr' ? 'text-green-500' : 'text-red-500'}`}>
-                          {tx.tipo}
-                      </span>
-                    </TableCell>
-                    <TableCell>{getStatusBadge(tx.estado_conciliacion, diff, matchedTotal)}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 hover:bg-primary/10 hover:text-primary"
-                            onClick={() => {
-                              setSelectedTx(tx);
-                              setModalOpen(true);
-                            }}
-                          >
-                              <Eye className="w-4 h-4" />
-                          </Button>
-                          {matchedTotal > 0 && (
-                              <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 hover:bg-orange-500/10 hover:text-orange-500"
-                                  onClick={() => handleResetReconciliation(tx)}
-                                  title="Reiniciar Conciliación"
-                              >
-                                  <RotateCcw className="w-4 h-4" />
-                              </Button>
-                          )}
-                          <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"
-                              onClick={() => handleDelete(tx.id)}
-                          >
-                              <Trash2 className="w-4 h-4" />
-                          </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                  );
-                })
+                filtered.map((tx) => (
+                    <TransactionRow
+                        key={tx.referencia_origen}
+                        tx={tx}
+                        matchedTotal={txReconciliationTotals[tx.referencia_origen] || 0}
+                        onView={() => {
+                            setSelectedTx(tx);
+                            setModalOpen(true);
+                        }}
+                        onReset={() => handleResetReconciliation(tx)}
+                        onDelete={() => handleDelete(tx.referencia_origen)}
+                        onToggleExclusion={(val: boolean) => toggleExclusion(tx, val)}
+                        getStatusBadge={getStatusBadge}
+                    />
+                ))
               )}
             </TableBody>
           </Table>
@@ -285,7 +292,7 @@ export function TransactionTable({ transactions }: { transactions: BankTransacti
                                 <div className="flex items-start gap-3">
                                     <Checkbox
                                         checked={!tx.excluido}
-                                        onCheckedChange={() => toggleExclusion(tx)}
+                                        onCheckedChange={(val: boolean) => toggleExclusion(tx, val)}
                                         className="mt-1"
                                     />
                                     <div>
@@ -345,7 +352,7 @@ export function TransactionTable({ transactions }: { transactions: BankTransacti
                                         variant="outline"
                                         size="icon"
                                         className="h-11 w-11 text-destructive border-destructive/20 hover:bg-destructive/10"
-                                        onClick={() => handleDelete(tx.id)}
+                                        onClick={() => handleDelete(tx.referencia_origen)}
                                     >
                                         <Trash2 className="w-3 h-3" />
                                     </Button>
@@ -363,6 +370,144 @@ export function TransactionTable({ transactions }: { transactions: BankTransacti
         open={modalOpen}
         onOpenChange={setModalOpen}
       />
+
+      <ColumnHelpModal open={helpOpen} onOpenChange={setHelpOpen} />
     </div>
   );
 }
+
+function ColumnHelpModal({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) {
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                    <div className="flex items-center gap-2 text-primary border-b pb-4">
+                        <HelpCircle className="w-6 h-6" />
+                        <DialogTitle className="text-xl font-black uppercase tracking-tight">Guía de Columnas (Estado de Cuenta)</DialogTitle>
+                    </div>
+                </DialogHeader>
+            <div className="space-y-6 pt-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <HelpItem
+                        title="Fecha"
+                        desc="Fecha de la operación (ej: 17/10/2025). El sistema la normaliza automáticamente al formato YYYY-MM-DD."
+                    />
+                    <HelpItem
+                        title="Ref_Origen"
+                        desc="Identificador único del banco (Número de transferencia o ID de mensaje). Es vital para la idempotencia."
+                    />
+                    <HelpItem
+                        title="Ref_Corriente"
+                        desc="Referencia corta para visualización rápida en tablas y búsqueda."
+                    />
+                    <HelpItem
+                        title="Importe"
+                        desc="Monto con decimales (ej: 1,500.00). Los créditos son positivos y los débitos negativos en el balance."
+                    />
+                    <HelpItem
+                        title="Tipo"
+                        desc="'Cr' para Créditos (Ingresos) y 'Db' para Débitos (Gastos/Comisiones)."
+                    />
+                    <HelpItem
+                        title="Observaciones"
+                        desc="Detalle del banco. Aquí el motor busca códigos de producto (ej: 'COD:1') para el matching automático."
+                    />
+                </div>
+
+                <div className="p-4 bg-primary/5 rounded-2xl border border-primary/20">
+                    <p className="text-xs font-bold text-primary mb-2 uppercase tracking-widest">💡 Tip Pro:</p>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                        Si exportas tus movimientos desde BANDEC en formato .txt, el sistema los reconocerá y parseará automáticamente sin necesidad de usar la plantilla CSV.
+                    </p>
+                </div>
+            </div>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+function HelpItem({ title, desc }: { title: string, desc: string }) {
+    return (
+        <div className="space-y-1">
+            <p className="text-sm font-black text-primary uppercase tracking-tighter">{title}</p>
+            <p className="text-xs text-muted-foreground leading-relaxed font-medium">{desc}</p>
+        </div>
+    );
+}
+
+const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onDelete, onToggleExclusion, getStatusBadge }: any) => {
+    const targetAmount = tx.importe_venta_cents ?? tx.importe_cents;
+    const diff = targetAmount - matchedTotal;
+
+    return (
+        <TableRow className={`${tx.excluido ? 'opacity-40 grayscale bg-muted/20' : ''} transition-colors`}>
+          <TableCell className="text-center">
+              <Checkbox
+                  checked={!tx.excluido}
+                  onCheckedChange={onToggleExclusion}
+                  className="translate-y-0.5"
+              />
+          </TableCell>
+          <TableCell className="sticky-column-1 font-medium whitespace-nowrap text-xs">
+            {formatDate(tx.fecha)}
+          </TableCell>
+          <TableCell className="font-mono text-[10px] max-w-[120px] truncate">{tx.referencia_origen}</TableCell>
+          <TableCell className="text-[10px] max-w-[180px]">
+            <div className="truncate" title={tx.observaciones}>
+                {tx.observaciones}
+            </div>
+          </TableCell>
+          <TableCell className="text-right font-medium text-muted-foreground text-xs">
+            {formatCurrency(tx.importe_cents)}
+          </TableCell>
+          <TableCell className="text-right font-bold text-orange-500 text-xs">
+            {formatCurrency((tx.comision_cents || 0))}
+          </TableCell>
+          <TableCell className="text-right font-black text-sm">
+            {formatCurrency(targetAmount)}
+          </TableCell>
+          <TableCell className={`text-right font-bold text-sm ${Math.abs(diff) < 0.001 ? 'text-green-500' : (diff < -0.001 ? 'text-red-500' : 'text-orange-500')}`}>
+            {formatCurrency(diff)}
+          </TableCell>
+          <TableCell>
+            <span className={`text-[10px] font-black ${tx.tipo === 'Cr' ? 'text-green-500' : 'text-red-500'}`}>
+                {tx.tipo}
+            </span>
+          </TableCell>
+          <TableCell>{getStatusBadge(tx.estado_conciliacion, diff, matchedTotal)}</TableCell>
+          <TableCell className="text-right">
+            <div className="flex justify-end gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 hover:bg-primary/10 hover:text-primary"
+                  onClick={onView}
+                >
+                    <Eye className="w-4 h-4" />
+                </Button>
+                {matchedTotal > 0 && (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 hover:bg-orange-500/10 hover:text-orange-500"
+                        onClick={onReset}
+                        title="Reiniciar Conciliación"
+                    >
+                        <RotateCcw className="w-4 h-4" />
+                    </Button>
+                )}
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"
+                    onClick={onDelete}
+                >
+                    <Trash2 className="w-4 h-4" />
+                </Button>
+            </div>
+          </TableCell>
+        </TableRow>
+    );
+});
+
+TransactionRow.displayName = 'TransactionRow';

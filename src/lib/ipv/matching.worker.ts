@@ -6,7 +6,9 @@ self.onmessage = async (e) => {
 
   if (type === 'RECONCILE_BATCH') {
     const engine = new MatchingEngine(products, rules);
-    const results = await engine.reconcileAll(transactions);
+    const results = await engine.reconcileAll(transactions, (percentage) => {
+        self.postMessage({ type: 'PROGRESS', percentage });
+    });
 
     self.postMessage({
       type: 'BATCH_COMPLETE',
