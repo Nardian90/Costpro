@@ -408,9 +408,13 @@ export function CatalogTable() {
                         <TableCell className="text-right">
                             <Input
                                 type="number"
-                                value={(editForm.precio_cents || 0) / 100}
-                                onChange={e => setEditForm({...editForm, precio_cents: Math.round(Number(e.target.value) * 100)})}
-                                className="h-8 w-24 text-right text-xs"
+                                value={editForm.precio_cents || 0}
+                                onChange={e => {
+                                    const val = e.target.value;
+                                    if (val.includes('.') || val.includes(',')) return;
+                                    setEditForm({...editForm, precio_cents: parseInt(val, 10) || 0});
+                                }}
+                                className="h-8 w-24 text-right text-xs font-black"
                             />
                         </TableCell>
                         <TableCell className="text-right">
@@ -480,7 +484,7 @@ export function CatalogTable() {
                         </TableCell>
 
                         <TableCell className="text-right font-black text-xs">
-                            {formatCurrency(p.precio_cents / 100)}
+                            {p.precio_cents}
                         </TableCell>
 
                         <TableCell className="text-right">
@@ -609,19 +613,22 @@ function ProductCard({ product, stats, isEditing, editForm, setEditForm, onSave,
 
             <div className="flex justify-between items-center">
                 <div>
-                    <p className="text-[8px] font-bold text-muted-foreground uppercase">Precio Unitario</p>
+                    <p className="text-[8px] font-bold text-muted-foreground uppercase">Precio (Cents)</p>
                     {isEditing ? (
                          <div className="flex items-center gap-1">
-                            <span className="text-xs font-bold">$</span>
                             <Input
                                 type="number"
-                                value={(editForm.precio_cents || 0) / 100}
-                                onChange={e => setEditForm({...editForm, precio_cents: Math.round(Number(e.target.value) * 100)})}
-                                className="h-7 text-[10px] w-20"
+                                value={editForm.precio_cents || 0}
+                                onChange={e => {
+                                    const val = e.target.value;
+                                    if (val.includes('.') || val.includes(',')) return;
+                                    setEditForm({...editForm, precio_cents: parseInt(val, 10) || 0});
+                                }}
+                                className="h-7 text-[10px] w-24 font-black"
                             />
                          </div>
                     ) : (
-                        <p className="font-black text-base">{formatCurrency(product.precio_cents / 100)}</p>
+                        <p className="font-black text-base">{product.precio_cents}</p>
                     )}
                 </div>
                 <div className="flex gap-2">
@@ -656,8 +663,17 @@ function NewProductCard({ editForm, setEditForm, onSave, onCancel }: any) {
             </div>
             <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                    <Label className="text-[9px] uppercase font-black">Precio ($)</Label>
-                    <Input type="number" value={(editForm.precio_cents || 0) / 100} onChange={e => setEditForm({...editForm, precio_cents: Math.round(Number(e.target.value) * 100)})} className="h-8 text-xs font-black" />
+                    <Label className="text-[9px] uppercase font-black">Precio (Cents)</Label>
+                    <Input
+                        type="number"
+                        value={editForm.precio_cents || 0}
+                        onChange={e => {
+                            const val = e.target.value;
+                            if (val.includes('.') || val.includes(',')) return;
+                            setEditForm({...editForm, precio_cents: parseInt(val, 10) || 0});
+                        }}
+                        className="h-8 text-xs font-black"
+                    />
                 </div>
                 <div className="space-y-1">
                     <Label className="text-[9px] uppercase font-black">Stock Inicial</Label>
