@@ -68,12 +68,17 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
         const diff = target - matched;
 
         let matchesKpi = true;
-        if (kpiFilter === 'CUADRADAS') {
-            matchesKpi = matched > 0 && Math.abs(diff) < 0.001;
-        } else if (kpiFilter === 'EN_PROCESO') {
-            matchesKpi = matched > 0 && Math.abs(diff) >= 0.001;
-        } else if (kpiFilter === 'PENDIENTES') {
-            matchesKpi = matched === 0;
+        if (t.excluido || t.estado_conciliacion === 'NO_PROCESAR') {
+            // Excluded transactions only match 'ALL' filter
+            matchesKpi = kpiFilter === 'ALL';
+        } else {
+            if (kpiFilter === 'CUADRADAS') {
+                matchesKpi = matched > 0 && Math.abs(diff) < 0.001;
+            } else if (kpiFilter === 'EN_PROCESO') {
+                matchesKpi = matched > 0 && Math.abs(diff) >= 0.001;
+            } else if (kpiFilter === 'PENDIENTES') {
+                matchesKpi = matched === 0;
+            }
         }
 
         return matchesSearch && matchesType && matchesKpi;
@@ -101,6 +106,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
 
       await db.bank_statements.update(tx.referencia_origen, {
           excluido: newValue,
+          estado_conciliacion: newValue ? 'NO_PROCESAR' : 'PENDIENTE',
           updated_at: new Date().toISOString()
       });
   };
@@ -121,6 +127,9 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
   };
 
   const getStatusBadge = (status: string, diffCents: number, matchedTotal: number) => {
+    if (status === 'NO_PROCESAR') {
+        return <Badge className="bg-slate-400/10 text-slate-500 border-slate-500/20 text-[10px] font-black uppercase tracking-tighter">NO PROCESAR</Badge>;
+    }
     if (matchedTotal > 0 && Math.abs(diffCents) < 0.001) {
       return <Badge className="bg-green-500 text-white border-green-600 shadow-sm text-[10px] font-black uppercase tracking-tighter">CUADRADA</Badge>;
     }
