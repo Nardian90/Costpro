@@ -15,7 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Trash2, Search, HelpCircle, Info, Edit2, Check, X, Plus, RefreshCw, LayoutGrid, List } from 'lucide-react';
+import { Trash2, Search, HelpCircle, Info, Edit2, Check, X, Plus, RefreshCw, LayoutGrid, List, AlertTriangle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { formatCurrency } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
@@ -129,6 +129,36 @@ export function CatalogTable() {
       setEditForm(newProd);
   };
 
+  const handleNormalizeNegatives = async () => {
+    const negativeProducts = products?.filter(p => {
+        const stats = inventoryStats[p.cod] || { final: 0 };
+        return stats.final < 0;
+    });
+
+    if (!negativeProducts || negativeProducts.length === 0) {
+        toast.info('No hay productos con existencias negativas');
+        return;
+    }
+
+    if (!confirm(`¿Normalizar ${negativeProducts.length} productos con stock negativo? Se ajustará el stock inicial para que el final sea positivo.`)) return;
+
+    try {
+        for (const p of negativeProducts) {
+            const stats = inventoryStats[p.cod];
+            const currentNegative = stats.final;
+            const adjustment = Math.abs(currentNegative);
+            const newInitial = (p.stock_inicial_manual || 0) + adjustment;
+
+            await db.products.update(p.cod, {
+                stock_inicial_manual: newInitial
+            });
+        }
+        toast.success('Existencias normalizadas exitosamente');
+    } catch (error) {
+        toast.error('Error al normalizar existencias');
+    }
+  };
+
   const clearCatalog = async () => {
     if (confirm('¿ESTÁS SEGURO? Se borrará TODO el catálogo cargado actualmente.')) {
         await db.products.clear();
@@ -165,7 +195,7 @@ export function CatalogTable() {
             um: 'UNIDADES', // Valor por defecto
             es_paquete: false,
             contenido_paquete: 1,
-            precio_cents: Math.round((p.price || 0) * 100),
+            precio_cents: p.price || 0,
             prioridad_algoritmo: 3,
             activo: true,
             stock_inicial_manual: Math.round(p.stock_quantity || 0),
@@ -261,6 +291,17 @@ export function CatalogTable() {
                     </TooltipContent>
                 </Tooltip>
             </TooltipProvider>
+
+            <Button
+                variant="outline"
+                size="sm"
+                onClick={handleNormalizeNegatives}
+                className="h-12 sm:h-10 text-[10px] uppercase font-black tracking-widest gap-2 text-red-500 border-red-200 hover:bg-red-50 flex-1 sm:flex-none"
+            >
+                <AlertTriangle className="w-4 h-4" />
+                <span className="hidden sm:inline">Normalizar Negativos</span>
+                <span className="sm:hidden">Normalizar</span>
+            </Button>
 
             <Button
                 variant="outline"
@@ -367,9 +408,13 @@ export function CatalogTable() {
                         <TableCell className="text-right">
                             <Input
                                 type="number"
-                                value={(editForm.precio_cents || 0) / 100}
-                                onChange={e => setEditForm({...editForm, precio_cents: Math.round(Number(e.target.value) * 100)})}
-                                className="h-8 w-24 text-right text-xs"
+                                step="0.01"
+                                value={editForm.precio_cents || 0}
+                                onChange={e => {
+                                    const val = e.target.value;
+                                    setEditForm({...editForm, precio_cents: parseFloat(val) || 0});
+                                }}
+                                className="h-8 w-24 text-right text-xs font-black"
                             />
                         </TableCell>
                         <TableCell className="text-right">
@@ -431,15 +476,53 @@ export function CatalogTable() {
                         </TableCell>
 
                         <TableCell>
-                            <Badge variant="outline" className="text-[10px] uppercase font-bold">{p.um}</Badge>
+                            {isEditing ? (
+                                <Input
+                                    value={editForm.um}
+                                    onChange={e => setEditForm({...editForm, um: e.target.value})}
+                                    className="h-8 w-24 text-[10px] uppercase"
+                                />
+                            ) : (
+                                <Badge variant="outline" className="text-[10px] uppercase font-bold">{p.um}</Badge>
+                            )}
                         </TableCell>
 
                         <TableCell className="text-center">
-                            {p.es_paquete ? <span className="text-[10px] font-black text-primary">X{p.contenido_paquete}</span> : <span className="text-[10px] text-muted-foreground opacity-20">-</span>}
+                            {isEditing ? (
+                                <div className="flex flex-col items-center gap-1">
+                                    <Switch
+                                        checked={editForm.es_paquete}
+                                        onCheckedChange={checked => setEditForm({...editForm, es_paquete: checked})}
+                                    />
+                                    {editForm.es_paquete && (
+                                        <Input
+                                            type="number"
+                                            value={editForm.contenido_paquete}
+                                            onChange={e => setEditForm({...editForm, contenido_paquete: Number(e.target.value)})}
+                                            className="h-7 w-12 text-[10px] text-center"
+                                        />
+                                    )}
+                                </div>
+                            ) : (
+                                p.es_paquete ? <span className="text-[10px] font-black text-primary">X{p.contenido_paquete}</span> : <span className="text-[10px] text-muted-foreground opacity-20">-</span>
+                            )}
                         </TableCell>
 
-                        <TableCell className="text-right font-black text-xs">
-                            {formatCurrency(p.precio_cents / 100)}
+                        <TableCell className="text-right">
+                            {isEditing ? (
+                                <Input
+                                    type="number"
+                                    step="0.01"
+                                    value={editForm.precio_cents || 0}
+                                    onChange={e => {
+                                        const val = e.target.value;
+                                        setEditForm({...editForm, precio_cents: parseFloat(val) || 0});
+                                    }}
+                                    className="h-8 w-24 text-right text-xs font-black"
+                                />
+                            ) : (
+                                <span className="font-black text-xs">{p.precio_cents}</span>
+                            )}
                         </TableCell>
 
                         <TableCell className="text-right">
@@ -460,9 +543,19 @@ export function CatalogTable() {
                         </TableCell>
 
                         <TableCell className="text-center">
-                            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-[10px] font-black">
-                                {p.prioridad_algoritmo}
-                            </span>
+                            {isEditing ? (
+                                <select
+                                    value={editForm.prioridad_algoritmo}
+                                    onChange={e => setEditForm({...editForm, prioridad_algoritmo: Number(e.target.value)})}
+                                    className="h-8 rounded-md border border-input bg-background px-2 text-xs"
+                                >
+                                    {[1, 2, 3, 4, 5].map(v => <option key={v} value={v}>{v}</option>)}
+                                </select>
+                            ) : (
+                                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-[10px] font-black">
+                                    {p.prioridad_algoritmo}
+                                </span>
+                            )}
                         </TableCell>
 
                         <TableCell className="text-center">
@@ -537,8 +630,28 @@ function ProductCard({ product, stats, isEditing, editForm, setEditForm, onSave,
                     )}
                 </div>
                 <div className="flex flex-col items-end gap-1">
-                    <Badge variant="outline" className="text-[9px] uppercase font-black">{product.um}</Badge>
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase opacity-50">Prio {product.prioridad_algoritmo}</span>
+                    {isEditing ? (
+                        <div className="flex flex-col items-end gap-1">
+                            <Input
+                                value={editForm.um}
+                                onChange={e => setEditForm({...editForm, um: e.target.value})}
+                                className="h-7 w-20 text-[9px] uppercase text-right"
+                                placeholder="UM"
+                            />
+                            <select
+                                value={editForm.prioridad_algoritmo}
+                                onChange={e => setEditForm({...editForm, prioridad_algoritmo: Number(e.target.value)})}
+                                className="h-7 rounded-md border border-input bg-background px-1 text-[9px]"
+                            >
+                                {[1, 2, 3, 4, 5].map(v => <option key={v} value={v}>Prio {v}</option>)}
+                            </select>
+                        </div>
+                    ) : (
+                        <>
+                            <Badge variant="outline" className="text-[9px] uppercase font-black">{product.um}</Badge>
+                            <span className="text-[10px] font-bold text-muted-foreground uppercase opacity-50">Prio {product.prioridad_algoritmo}</span>
+                        </>
+                    )}
                 </div>
             </div>
 
@@ -567,20 +680,51 @@ function ProductCard({ product, stats, isEditing, editForm, setEditForm, onSave,
             </div>
 
             <div className="flex justify-between items-center">
+                <div className="flex flex-col gap-2">
+                    {isEditing ? (
+                        <div className="flex items-center gap-2">
+                            <Switch
+                                checked={editForm.es_paquete}
+                                onCheckedChange={checked => setEditForm({...editForm, es_paquete: checked})}
+                            />
+                            <Label className="text-[8px] uppercase font-black">Paquete</Label>
+                            {editForm.es_paquete && (
+                                <Input
+                                    type="number"
+                                    value={editForm.contenido_paquete}
+                                    onChange={e => setEditForm({...editForm, contenido_paquete: Number(e.target.value)})}
+                                    className="h-7 w-12 text-[10px] text-center"
+                                />
+                            )}
+                        </div>
+                    ) : (
+                        product.es_paquete && (
+                            <div className="flex items-center gap-1">
+                                <Badge className="bg-primary/10 text-primary text-[8px] font-black uppercase">Pack X{product.contenido_paquete}</Badge>
+                            </div>
+                        )
+                    )}
+                </div>
+            </div>
+
+            <div className="flex justify-between items-center">
                 <div>
-                    <p className="text-[8px] font-bold text-muted-foreground uppercase">Precio Unitario</p>
+                    <p className="text-[8px] font-bold text-muted-foreground uppercase">Precio</p>
                     {isEditing ? (
                          <div className="flex items-center gap-1">
-                            <span className="text-xs font-bold">$</span>
                             <Input
                                 type="number"
-                                value={(editForm.precio_cents || 0) / 100}
-                                onChange={e => setEditForm({...editForm, precio_cents: Math.round(Number(e.target.value) * 100)})}
-                                className="h-7 text-[10px] w-20"
+                                step="0.01"
+                                value={editForm.precio_cents || 0}
+                                onChange={e => {
+                                    const val = e.target.value;
+                                    setEditForm({...editForm, precio_cents: parseFloat(val) || 0});
+                                }}
+                                className="h-7 text-[10px] w-24 font-black"
                             />
                          </div>
                     ) : (
-                        <p className="font-black text-base">{formatCurrency(product.precio_cents / 100)}</p>
+                        <p className="font-black text-base">{product.precio_cents}</p>
                     )}
                 </div>
                 <div className="flex gap-2">
@@ -615,12 +759,51 @@ function NewProductCard({ editForm, setEditForm, onSave, onCancel }: any) {
             </div>
             <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                    <Label className="text-[9px] uppercase font-black">Precio ($)</Label>
-                    <Input type="number" value={(editForm.precio_cents || 0) / 100} onChange={e => setEditForm({...editForm, precio_cents: Math.round(Number(e.target.value) * 100)})} className="h-8 text-xs font-black" />
+                    <Label className="text-[9px] uppercase font-black">Precio de Venta</Label>
+                    <Input
+                        type="number"
+                        step="0.01"
+                        value={editForm.precio_cents || 0}
+                        onChange={e => {
+                            const val = e.target.value;
+                            setEditForm({...editForm, precio_cents: parseFloat(val) || 0});
+                        }}
+                        className="h-8 text-xs font-black"
+                    />
                 </div>
+                <div className="space-y-1">
+                    <Label className="text-[9px] uppercase font-black">Prioridad</Label>
+                    <select
+                        value={editForm.prioridad_algoritmo}
+                        onChange={e => setEditForm({...editForm, prioridad_algoritmo: Number(e.target.value)})}
+                        className="w-full h-8 rounded-md border border-input bg-background px-3 py-1 text-xs"
+                    >
+                        {[1, 2, 3, 4, 5].map(v => <option key={v} value={v}>Prioridad {v}</option>)}
+                    </select>
+                </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                     <Label className="text-[9px] uppercase font-black">Stock Inicial</Label>
                     <Input type="number" value={editForm.stock_inicial_manual} onChange={e => setEditForm({...editForm, stock_inicial_manual: Number(e.target.value)})} className="h-8 text-xs" />
+                </div>
+                <div className="space-y-1 flex flex-col justify-end">
+                    <div className="flex items-center gap-2 pb-1">
+                        <Switch
+                            checked={editForm.es_paquete}
+                            onCheckedChange={checked => setEditForm({...editForm, es_paquete: checked})}
+                        />
+                        <Label className="text-[9px] uppercase font-black">¿Es Paquete?</Label>
+                    </div>
+                    {editForm.es_paquete && (
+                        <Input
+                            type="number"
+                            placeholder="Contenido..."
+                            value={editForm.contenido_paquete}
+                            onChange={e => setEditForm({...editForm, contenido_paquete: Number(e.target.value)})}
+                            className="h-7 text-xs"
+                        />
+                    )}
                 </div>
             </div>
             <div className="flex gap-2 pt-2">

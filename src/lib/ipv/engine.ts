@@ -67,7 +67,7 @@ export class MatchingEngine {
           remaining_cents -= line.importe_linea_cents;
         }
       }
-      if (remaining_cents === 0) {
+      if (Math.abs(remaining_cents) < 0.001) {
         return { lines, status: 'COMPLETO', logs };
       }
     }
@@ -173,7 +173,7 @@ export class MatchingEngine {
       }
     }
 
-    const status = remaining_cents === 0 ? 'COMPLETO' : (lines.length > 0 ? 'PARCIAL' : 'PENDIENTE');
+    const status = Math.abs(remaining_cents) < 0.001 ? 'COMPLETO' : (lines.length > 0 ? 'PARCIAL' : 'PENDIENTE');
 
     return {
       lines,
@@ -231,8 +231,8 @@ export class MatchingEngine {
     const startTime = Date.now();
 
     const solve = (remaining: number, index: number, depth: number): { product: Product, qty: number }[] | null => {
-      // Base case: target reached
-      if (remaining === 0) return [];
+      // Base case: target reached (using epsilon for float precision)
+      if (Math.abs(remaining) < 0.001) return [];
 
       // Constraints: depth limit, exhausted products, or timeout
       if (depth >= MAX_DEPTH || index >= sortedProducts.length || (Date.now() - startTime) > TIMEOUT_MS) {
@@ -243,7 +243,7 @@ export class MatchingEngine {
       if (p.precio_cents <= 0) return solve(remaining, index + 1, depth);
 
       // Try using this product (from max possible quantity down to 1)
-      const maxQty = Math.floor(remaining / p.precio_cents);
+      const maxQty = Math.floor((remaining + 0.001) / p.precio_cents);
       for (let qty = maxQty; qty >= 1; qty--) {
         const sub = solve(remaining - qty * p.precio_cents, index + 1, depth + 1);
         if (sub) {
