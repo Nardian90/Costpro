@@ -79,7 +79,7 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
   };
 
   const renderSectionForm = () => {
-    const section = data.sections.find((s: any) => s.id === activeSection);
+    const section = (data?.sections || []).find((s: any) => s.id === activeSection);
     if (!section) return null;
 
     return (
@@ -124,12 +124,12 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
   };
 
   const renderAnnexForm = () => {
-    const annex = data.annexes.find((a: any) => a.id === activeSection);
-    const calculatedAnnex = calculatedAnnexes.find((a: any) => a.id === activeSection);
+    const annex = (data?.annexes || []).find((a: any) => a.id === activeSection);
+    const calculatedAnnex = (calculatedAnnexes || []).find((a: any) => a.id === activeSection);
     if (!annex) return null;
 
     const displayData = calculatedAnnex ? calculatedAnnex.data : annex.data;
-    const annexIndex = data.annexes.indexOf(annex);
+    const annexIndex = (data?.annexes || []).indexOf(annex);
 
     return (
       <div className="space-y-6">
@@ -216,8 +216,8 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
   const getActiveContent = () => {
     if (activeSection === 'header') return renderHeaderForm();
     if (activeSection === 'signature') return renderSignatureForm();
-    if (data.sections.some((s: any) => s.id === activeSection)) return renderSectionForm();
-    if (data.annexes.some((a: any) => a.id === activeSection)) return renderAnnexForm();
+    if ((data?.sections || []).some((s: any) => s.id === activeSection)) return renderSectionForm();
+    if ((data?.annexes || []).some((a: any) => a.id === activeSection)) return renderAnnexForm();
     return <p className="text-center py-12 text-muted-foreground italic">Selecciona una sección para comenzar a editar.</p>;
   };
 

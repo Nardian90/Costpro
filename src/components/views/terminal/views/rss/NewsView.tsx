@@ -13,7 +13,7 @@ import {
   DollarSign,
   ChevronRight
 } from 'lucide-react';
-import { cn, formatDate, formatTime } from '@/lib/utils';
+import { cn, formatDate, formatTime, safeFormatDate } from '@/lib/utils';
 import { useRSSNews } from '@/hooks/api/useRSS';
 import { StateRenderer } from '@/components/ui/StateRenderer';
 import { RSSNewsItem } from '@/types';
@@ -102,7 +102,7 @@ export default function NewsView() {
               )}
               <div className="mt-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1">
                 <Clock className="w-3 h-3" />
-                Publicado: {formatDate(exchangeRateNews.pubDate)} {formatTime(exchangeRateNews.pubDate)}
+                Publicado: {safeFormatDate(exchangeRateNews.pubDate)} {formatTime(exchangeRateNews.pubDate)}
               </div>
             </div>
           </div>
@@ -205,7 +205,7 @@ function NewsCard({ item }: { item: RSSNewsItem }) {
           </div>
           <div className="text-[9px] font-bold text-muted-foreground uppercase flex items-center gap-1">
             <Clock className="w-3 h-3" />
-            {formatDate(item.pubDate)}
+            {safeFormatDate(item.pubDate)}
           </div>
         </div>
 

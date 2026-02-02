@@ -62,7 +62,7 @@ const CostSheetView = () => {
     );
   }
 
-  const isAnnexActive = React.useMemo(() => data.annexes.some((a: any) => a.id === activeSection), [data.annexes, activeSection]);
+  const isAnnexActive = React.useMemo(() => (data?.annexes || []).some((a: any) => a.id === activeSection), [data?.annexes, activeSection]);
 
   const handleExportPDF = React.useCallback(async () => {
     const toastId = toast.loading("Generando PDF profesional... por favor espere.");
@@ -196,7 +196,7 @@ const CostSheetView = () => {
         onClose={() => setIsSectionsSidebarOpen(false)}
         title="Secciones de la Ficha"
         type="sections"
-        items={data.sections}
+        items={data?.sections || []}
         activeId={activeSubSectionId}
         onSelect={(id) => {
             setActiveSubSectionId(id);
@@ -209,7 +209,7 @@ const CostSheetView = () => {
         onClose={() => setIsAnnexesSidebarOpen(false)}
         title="Anexos Disponibles"
         type="annexes"
-        items={data.annexes}
+        items={data?.annexes || []}
         activeId={activeSection}
         onSelect={setActiveSection}
       />
