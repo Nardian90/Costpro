@@ -101,7 +101,7 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
             const target = transaction.importe_venta_cents || transaction.importe_cents;
             const newStatus = (newTotal + 0.001) >= target ? 'COMPLETO' : (newTotal > 0.001 ? 'PARCIAL' : 'PENDIENTE');
 
-            await db.bank_statements.update(transaction.id, {
+            await db.bank_statements.update(transaction.referencia_origen, {
                 estado_conciliacion: newStatus
             });
 
@@ -145,7 +145,7 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
             const target = transaction.importe_venta_cents || transaction.importe_cents;
             const newStatus = (currentTotal + 0.001) >= target ? 'COMPLETO' : (currentTotal > 0.001 ? 'PARCIAL' : 'PENDIENTE');
 
-            await db.bank_statements.update(transaction.id, {
+            await db.bank_statements.update(transaction.referencia_origen, {
                 estado_conciliacion: newStatus
             });
 
@@ -160,7 +160,7 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
 
     const markAsCommission = async () => {
         if (!transaction) return;
-        await db.bank_statements.update(transaction.id, {
+        await db.bank_statements.update(transaction.referencia_origen, {
             estado_conciliacion: 'COMPLETO'
         });
         toast.success('Marcada como comisión (COMPLETO)');

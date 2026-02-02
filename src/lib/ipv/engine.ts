@@ -266,7 +266,7 @@ export class MatchingEngine {
         const tx = transactions[i];
         const res = await this.matchTransaction(tx);
         results.push({
-            transactionId: tx.id,
+            transactionId: tx.referencia_origen,
             status: res.status,
             lines: res.lines
         });

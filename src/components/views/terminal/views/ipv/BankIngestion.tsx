@@ -183,42 +183,47 @@ export function BankIngestion() {
 
   const processCatalogData = async (data: any[]) => {
     try {
-        const productsToImport: any[] = [];
+        let imported = 0;
         const errors: string[] = [];
 
-        data.forEach((row, index) => {
+        for (const row of data) {
             try {
                 const cod = String(row.cod || row.COD || row.Código || row.codigo || '').trim();
-                if (!cod) return;
+                if (!cod) continue;
 
                 const precio_raw = String(row.precio_cents !== undefined ? row.precio_cents : (row.precio || row.Precio || 0)).trim().replace(',', '.');
 
                 const precio_cents = parseFloat(precio_raw);
                 if (isNaN(precio_cents)) {
                     errors.push(`Producto ${cod}: Precio inválido (${precio_raw}).`);
-                    return;
+                    continue;
                 }
 
-                productsToImport.push({
-                    cod: cod,
-                    descripcion: String(row.descripcion || row.Descripción || row.desc || ''),
-                    um: String(row.um || row.UM || 'Unidades'),
-                    precio_cents: precio_cents,
-                    prioridad_algoritmo: Number(row.prioridad_algoritmo || row.prioridad || 1),
-                    activo: row.activo === true || String(row.activo).toLowerCase() === 'true' || row.activo === 1 || row.activo === undefined,
-                    es_paquete: row.es_paquete === true || String(row.es_paquete).toLowerCase() === 'true' || row.es_paquete === 1,
-                    contenido_paquete: Number(row.contenido_paquete || 1),
-                    stock_inicial_manual: Number(row.stock_inicial_manual || row.stock || 0),
-                    created_at: new Date().toISOString()
-                });
-            } catch (err: any) {
-                errors.push(`Fila ${index + 1}: ${err.message}`);
-            }
-        });
+                const existing = await db.products.get(cod);
 
-        if (productsToImport.length > 0) {
-            await db.products.bulkPut(productsToImport);
-            toast.success(`${productsToImport.length} productos procesados/actualizados.`);
+                const product = {
+                    cod: cod,
+                    descripcion: String(row.descripcion || row.Descripción || row.desc || existing?.descripcion || ''),
+                    um: String(row.um || row.UM || existing?.um || 'Unidades'),
+                    precio_cents: precio_cents,
+                    prioridad_algoritmo: Number(row.prioridad_algoritmo || row.prioridad || existing?.prioridad_algoritmo || 1),
+                    activo: row.activo !== undefined ? (row.activo === true || String(row.activo).toLowerCase() === 'true' || row.activo === 1) : (existing?.activo ?? true),
+                    es_paquete: row.es_paquete !== undefined ? (row.es_paquete === true || String(row.es_paquete).toLowerCase() === 'true' || row.es_paquete === 1) : (existing?.es_paquete ?? false),
+                    contenido_paquete: Number(row.contenido_paquete || row.contenido || existing?.contenido_paquete || 1),
+                    stock_inicial_manual: Number(row.stock_inicial_manual || row.stock || existing?.stock_inicial_manual || 0),
+                    created_at: existing?.created_at || new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                };
+
+                await db.products.put(product);
+                imported++;
+            } catch (err: any) {
+                errors.push(`Error en fila: ${err.message}`);
+            }
+        }
+
+        if (imported > 0) {
+            toast.success(`${imported} productos procesados/actualizados.`);
         }
 
         if (errors.length > 0) {
@@ -253,8 +258,11 @@ export function BankIngestion() {
         const importe_venta_cents = importe_cents + comision_cents;
         const ingestion_hash = await generateHash(`${ref_origen}-${fecha}-${importe_cents}`);
 
+        // Verificamos si ya existe para preservar estados
+        const existing = await db.bank_statements.get(ref_origen);
+
         const tx: BankTransaction = {
-          id: uuidv4(),
+          id: existing?.id || uuidv4(),
           fecha,
           referencia_corta: row['Ref_Corriente'] || ref_origen,
           referencia_origen: ref_origen,
@@ -263,9 +271,11 @@ export function BankIngestion() {
           comision_cents,
           importe_venta_cents,
           tipo: tipo === 'Cr' ? 'Cr' : 'Db',
-          estado_conciliacion: 'PENDIENTE',
-          excluido: false,
-          created_at: new Date().toISOString(),
+          estado_conciliacion: existing?.estado_conciliacion || 'PENDIENTE',
+          excluido: existing?.excluido || false,
+          ipv_id: existing?.ipv_id,
+          created_at: existing?.created_at || new Date().toISOString(),
+          updated_at: new Date().toISOString(),
           ingestion_hash
         };
 

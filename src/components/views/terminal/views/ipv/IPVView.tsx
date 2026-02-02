@@ -116,7 +116,7 @@ export default function IPVView() {
         setMatchMessage(`Reiniciando ${txToReset.length} transacciones no cuadradas...`);
         for (const tx of txToReset) {
             await db.reconciliation_lines.where('transaction_ref').equals(tx.referencia_origen).delete();
-            await db.bank_statements.update(tx.id, { estado_conciliacion: 'PENDIENTE' });
+            await db.bank_statements.update(tx.referencia_origen, { estado_conciliacion: 'PENDIENTE' });
         }
     }
 
