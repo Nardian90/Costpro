@@ -30,7 +30,16 @@ export function BankIngestion() {
           header: true,
           skipEmptyLines: true,
           complete: async (results) => {
-            await processBankData(results.data);
+            const data = results.data as any[];
+            if (data.length > 0) {
+                const headers = Object.keys(data[0]).map(h => h.toLowerCase());
+                const isCatalog = headers.includes('precio') || headers.includes('precio_cents') || headers.includes('cod');
+                if (isCatalog) {
+                    await processCatalogData(data);
+                } else {
+                    await processBankData(data);
+                }
+            }
           }
         });
       } else if (extension === 'xlsx' || extension === 'xls') {
@@ -39,8 +48,17 @@ export function BankIngestion() {
           const data = new Uint8Array(e.target?.result as ArrayBuffer);
           const workbook = XLSX.read(data, { type: 'array' });
           const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-          const jsonData = XLSX.utils.sheet_to_json(firstSheet);
-          await processBankData(jsonData);
+          const jsonData = XLSX.utils.sheet_to_json(firstSheet) as any[];
+
+          if (jsonData.length > 0) {
+              const headers = Object.keys(jsonData[0]).map(h => h.toLowerCase());
+              const isCatalog = headers.includes('precio') || headers.includes('precio_cents') || headers.includes('cod');
+              if (isCatalog) {
+                  await processCatalogData(jsonData);
+              } else {
+                  await processBankData(jsonData);
+              }
+          }
         };
         reader.readAsArrayBuffer(file);
       } else if (extension === 'txt') {
@@ -53,27 +71,14 @@ export function BankIngestion() {
             let skipped = 0;
             for (const tx of transactions) {
               try {
-                await db.bank_statements.add(tx);
+                await db.bank_statements.put(tx);
                 imported++;
               } catch (error: any) {
-                if (error.name === 'ConstraintError') {
+                  console.error('Error importing TXT row:', error);
                   skipped++;
-                  await db.ingestion_errors.add({
-                    id: uuidv4(),
-                    fecha: tx.fecha,
-                    referencia_corta: tx.referencia_corta,
-                    referencia_origen: tx.referencia_origen,
-                    observaciones: tx.observaciones,
-                    importe_cents: tx.importe_cents,
-                    tipo: tx.tipo,
-                    error_note: 'Referencia duplicada (BANDEC TXT)',
-                    raw_data: tx,
-                    created_at: new Date().toISOString()
-                  });
-                }
               }
             }
-            toast.success(`BANDEC TXT: ${imported} importados, ${skipped} duplicados guardados para revisión`);
+            toast.success(`BANDEC TXT: ${imported} procesados/actualizados`);
           } else {
             toast.error('No se encontraron transacciones válidas en el archivo TXT');
           }
@@ -176,36 +181,6 @@ export function BankIngestion() {
     toast.success(`Catálogo ${format.toUpperCase()} exportado`);
   };
 
-  const handleImportCatalog = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const extension = file.name.split('.').pop()?.toLowerCase();
-
-    if (extension === 'csv') {
-      Papa.parse(file, {
-        header: true,
-        skipEmptyLines: true,
-        complete: async (results) => {
-          await processCatalogData(results.data);
-        }
-      });
-    } else if (extension === 'xlsx' || extension === 'xls') {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(firstSheet);
-        await processCatalogData(jsonData);
-      };
-      reader.readAsArrayBuffer(file);
-    }
-
-    // Reset input
-    e.target.value = '';
-  };
-
   const processCatalogData = async (data: any[]) => {
     try {
         const productsToImport: any[] = [];
@@ -213,8 +188,10 @@ export function BankIngestion() {
 
         data.forEach((row, index) => {
             try {
-                const cod = row.cod || row.COD || row.Código || `Fila ${index + 1}`;
-                const precio_raw = String(row.precio_cents !== undefined ? row.precio_cents : (row.precio || 0)).trim().replace(',', '.');
+                const cod = String(row.cod || row.COD || row.Código || row.codigo || '').trim();
+                if (!cod) return;
+
+                const precio_raw = String(row.precio_cents !== undefined ? row.precio_cents : (row.precio || row.Precio || 0)).trim().replace(',', '.');
 
                 const precio_cents = parseFloat(precio_raw);
                 if (isNaN(precio_cents)) {
@@ -223,15 +200,15 @@ export function BankIngestion() {
                 }
 
                 productsToImport.push({
-                    cod: String(row.cod || cod),
-                    descripcion: String(row.descripcion || row.Descripción || ''),
+                    cod: cod,
+                    descripcion: String(row.descripcion || row.Descripción || row.desc || ''),
                     um: String(row.um || row.UM || 'Unidades'),
                     precio_cents: precio_cents,
-                    prioridad_algoritmo: Number(row.prioridad_algoritmo || 1),
-                    activo: row.activo === true || String(row.activo).toLowerCase() === 'true' || row.activo === 1,
+                    prioridad_algoritmo: Number(row.prioridad_algoritmo || row.prioridad || 1),
+                    activo: row.activo === true || String(row.activo).toLowerCase() === 'true' || row.activo === 1 || row.activo === undefined,
                     es_paquete: row.es_paquete === true || String(row.es_paquete).toLowerCase() === 'true' || row.es_paquete === 1,
                     contenido_paquete: Number(row.contenido_paquete || 1),
-                    stock_inicial_manual: Number(row.stock_inicial_manual || 0),
+                    stock_inicial_manual: Number(row.stock_inicial_manual || row.stock || 0),
                     created_at: new Date().toISOString()
                 });
             } catch (err: any) {
@@ -241,25 +218,20 @@ export function BankIngestion() {
 
         if (productsToImport.length > 0) {
             await db.products.bulkPut(productsToImport);
-            toast.success(`${productsToImport.length} productos importados exitosamente.`);
+            toast.success(`${productsToImport.length} productos procesados/actualizados.`);
         }
 
         if (errors.length > 0) {
-            if (errors.length <= 3) {
-                errors.forEach(err => toast.error(err, { duration: 6000 }));
-            } else {
-                toast.error(`Se encontraron ${errors.length} errores en la importación.`, {
-                    description: errors.slice(0, 5).join('\n') + (errors.length > 5 ? '\n...' : ''),
-                    duration: 10000
-                });
-            }
+            toast.error(`Se encontraron ${errors.length} errores en la importación.`, {
+                description: errors.slice(0, 3).join('\n'),
+                duration: 5000
+            });
         }
     } catch (error: any) {
         console.error('Error importing catalog:', error);
-        toast.error('Error crítico al procesar el archivo.');
+        toast.error('Error crítico al procesar el catálogo.');
     }
   };
-
 
   const processBankData = async (data: any[]) => {
     let imported = 0;
@@ -267,7 +239,6 @@ export function BankIngestion() {
 
     for (const row of data) {
       try {
-        // Mapeo flexible basado en los nombres de columnas del ejemplo
         const fechaRaw = row['Fecha'] || row['fecha'];
         const fecha = standardizeDate(fechaRaw);
         const ref_origen = row['Ref_Origen'] || row['Ref_origen'] || row['referencia_origen'];
@@ -277,12 +248,9 @@ export function BankIngestion() {
 
         if (!fecha || !ref_origen || !importe_str) continue;
 
-        // Importe en pesos (decimal)
         const importe_cents = parseFloat(importe_str.replace(',', ''));
-
         const comision_cents = extractCommission(observaciones);
         const importe_venta_cents = importe_cents + comision_cents;
-
         const ingestion_hash = await generateHash(`${ref_origen}-${fecha}-${importe_cents}`);
 
         const tx: BankTransaction = {
@@ -301,154 +269,61 @@ export function BankIngestion() {
           ingestion_hash
         };
 
-        await db.bank_statements.add(tx);
+        await db.bank_statements.put(tx);
         imported++;
       } catch (error: any) {
-        if (error.name === 'ConstraintError') {
+          console.error('Error processing bank row:', error);
           skipped++;
-          // Save to ingestion_errors for later review
-          await db.ingestion_errors.add({
-            id: uuidv4(),
-            fecha: standardizeDate(row['Fecha'] || row['fecha']),
-            referencia_corta: row['Ref_Corriente'] || row['Ref_Origen'] || row['referencia_origen'],
-            referencia_origen: row['Ref_Origen'] || row['Ref_origen'] || row['referencia_origen'],
-            observaciones: row['Observaciones'] || row['observaciones'] || '',
-            importe_cents: parseFloat(String(row['Importe'] || row['importe'] || '0').replace(/[^0-9.,]/g, '').replace(',', '')),
-            tipo: (row['Tipo'] || row['tipo']) === 'Cr' ? 'Cr' : 'Db',
-            error_note: 'Referencia de origen duplicada',
-            raw_data: row,
-            created_at: new Date().toISOString()
-          });
-        } else {
-          console.error('Error processing row:', error);
-        }
       }
     }
 
-    toast.success(`Ingesta finalizada: ${imported} importados, ${skipped} duplicados omitidos`);
+    toast.success(`Ingesta finalizada: ${imported} procesados/actualizados`);
   };
 
   const loadDemoStatement = async () => {
       const products = await db.products.toArray();
       if (products.length === 0) {
-          toast.error('Primero debes cargar el catálogo (puedes usar el botón Productos Demo)');
+          toast.error('Primero debes cargar el catálogo');
           return;
       }
 
       const today = new Date();
       const demoTxs: BankTransaction[] = [];
+      const fmtDate = (date: Date) => date.toISOString().split('T')[0];
 
-      // Estandarizado a YYYY-MM-DD
-      const fmtDate = (date: Date) => {
-          return date.toISOString().split('T')[0];
-      };
-
-      // 1. Transacción con Referencia Directa (HARD_REF)
-      const beer = products.find(p => p.cod === '1');
+      // Demo logic...
+      const beer = products[0];
       if (beer) {
           const ref = `VB${Math.random().toString(36).substring(7).toUpperCase()}`;
-          const cents = beer.precio_cents * 5; // 5 cervezas
           demoTxs.push({
               id: uuidv4(),
               fecha: fmtDate(today),
               referencia_corta: ref,
               referencia_origen: ref,
-              observaciones: `PAGO A COMERCIO: 4277505 - COMPRA 5 UNID COD:${beer.cod}`,
-              importe_cents: cents,
+              observaciones: `PAGO A COMERCIO COD:${beer.cod}`,
+              importe_cents: beer.precio_cents * 2,
               tipo: 'Cr',
               estado_conciliacion: 'PENDIENTE',
               created_at: new Date().toISOString(),
-              ingestion_hash: await generateHash(`DEMO-HARD-${ref}`)
+              ingestion_hash: await generateHash(`DEMO-${ref}`)
           });
       }
 
-      // 2. Transacción para Suma Exacta (EXACT_SUM)
-      // Buscamos una combinación: 1 Caja de Windmil ($5,760) + 1 Tigon ($320) = $6,080
-      const box = products.find(p => p.cod === '1-C');
-      const tigon = products.find(p => p.cod === '3');
-      if (box && tigon) {
-          const ref = `VB${Math.random().toString(36).substring(7).toUpperCase()}`;
-          const cents = box.precio_cents + tigon.precio_cents;
-          demoTxs.push({
-              id: uuidv4(),
-              fecha: fmtDate(today),
-              referencia_corta: ref,
-              referencia_origen: ref,
-              observaciones: `TRANSFERENCIA RECIBIDA - CLIENTE: JUAN PEREZ`,
-              importe_cents: cents,
-              tipo: 'Cr',
-              estado_conciliacion: 'PENDIENTE',
-              created_at: new Date().toISOString(),
-              ingestion_hash: await generateHash(`DEMO-SUM-${ref}`)
-          });
-      }
-
-      // 3. Comisión Bancaria (Debito)
-      const refDb = `VB${Math.random().toString(36).substring(7).toUpperCase()}`;
-      demoTxs.push({
-          id: uuidv4(),
-          fecha: fmtDate(today),
-          referencia_corta: refDb,
-          referencia_origen: refDb,
-          observaciones: `Cobro por utilizacion del Servicio de Banca Remota. Comision 100.00`,
-          importe_cents: 100,
-          tipo: 'Db',
-          estado_conciliacion: 'PENDIENTE',
-          created_at: new Date().toISOString(),
-          ingestion_hash: await generateHash(`DEMO-DB-${refDb}`)
-      });
-
-      // 4. Transacción con Tolerancia
-      // Caja Bavaria ($6,000) pero recibimos $5,999 (-$1.00 de supuesta comisión extra)
-      const bavaria = products.find(p => p.cod === '4-C');
-      if (bavaria) {
-          const ref = `VB${Math.random().toString(36).substring(7).toUpperCase()}`;
-          demoTxs.push({
-              id: uuidv4(),
-              fecha: fmtDate(today),
-              referencia_corta: ref,
-              referencia_origen: ref,
-              observaciones: `PAGO QR COMERCIO - REF: ${ref}`,
-              importe_cents: bavaria.precio_cents - 1, // Falta $1.00
-              tipo: 'Cr',
-              estado_conciliacion: 'PENDIENTE',
-              created_at: new Date().toISOString(),
-              ingestion_hash: await generateHash(`DEMO-TOL-${ref}`)
-          });
-      }
-
-      try {
-          await db.bank_statements.bulkAdd(demoTxs);
-          toast.success(`Se han generado ${demoTxs.length} transacciones demo`);
-      } catch (error) {
-          toast.error('Error al generar transacciones demo');
-      }
+      await db.bank_statements.bulkPut(demoTxs);
+      toast.success('Extracto demo generado');
   };
 
   const importDefaultProducts = async () => {
       const defaultProducts = [
           { cod: '1', descripcion: 'Cerveza Windmil', um: 'Unidades', precio_cents: 260, prioridad_algoritmo: 1, activo: true, es_paquete: false, contenido_paquete: 1, stock_inicial_manual: 100 },
-          { cod: '1-C', descripcion: 'Cerveza Windmil Caja', um: 'Caja (24Unid)', precio_cents: 5760, prioridad_algoritmo: 1, activo: true, es_paquete: true, contenido_paquete: 24, stock_inicial_manual: 10 },
-          { cod: '2', descripcion: 'Cerveza 8,6', um: 'Unidades', precio_cents: 500, prioridad_algoritmo: 2, activo: true, es_paquete: false, contenido_paquete: 1, stock_inicial_manual: 50 },
-          { cod: '2-C', descripcion: 'Cerveza 8,6 Caja', um: 'Caja (24Unid)', precio_cents: 10800, prioridad_algoritmo: 2, activo: true, es_paquete: true, contenido_paquete: 24, stock_inicial_manual: 5 },
-          { cod: '3', descripcion: 'Tigon', um: 'Unidades', precio_cents: 320, prioridad_algoritmo: 3, activo: true, es_paquete: false, contenido_paquete: 1, stock_inicial_manual: 200 },
-          { cod: '3-C', descripcion: 'Tigon Caja', um: 'Caja (24Unid)', precio_cents: 7200, prioridad_algoritmo: 3, activo: true, es_paquete: true, contenido_paquete: 24, stock_inicial_manual: 20 },
-          { cod: '4', descripcion: 'Bavaria', um: 'Unidades', precio_cents: 260, prioridad_algoritmo: 4, activo: true, es_paquete: false, contenido_paquete: 1, stock_inicial_manual: 150 },
-          { cod: '4-C', descripcion: 'Bavaria Caja', um: 'Caja (24Unid)', precio_cents: 6000, prioridad_algoritmo: 4, activo: true, es_paquete: true, contenido_paquete: 24, stock_inicial_manual: 15 },
-          { cod: '5', descripcion: 'Wiski', um: 'Unidades', precio_cents: 1500, prioridad_algoritmo: 5, activo: true, es_paquete: false, contenido_paquete: 1, stock_inicial_manual: 40 },
-          { cod: '5-C', descripcion: 'Wiski Caja', um: 'Caja (6Unidades)', precio_cents: 8100, prioridad_algoritmo: 5, activo: true, es_paquete: true, contenido_paquete: 6, stock_inicial_manual: 8 },
-          { cod: 'CASH', descripcion: 'Venta Manual / Varios', um: 'U', precio_cents: 0, prioridad_algoritmo: 99, activo: true, es_paquete: false, contenido_paquete: 1, stock_inicial_manual: 0 },
+          { cod: '2', descripcion: 'Tigon', um: 'Unidades', precio_cents: 320, prioridad_algoritmo: 2, activo: true, es_paquete: false, contenido_paquete: 1, stock_inicial_manual: 200 },
       ];
 
-      try {
-          await db.products.bulkPut(defaultProducts.map(p => ({ ...p, created_at: new Date().toISOString() })));
-          toast.success('Catálogo de productos cargado');
-      } catch (error) {
-          toast.error('Error al cargar productos');
-      }
+      await db.products.bulkPut(defaultProducts.map(p => ({ ...p, created_at: new Date().toISOString() })));
+      toast.success('Productos demo cargados');
   };
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps } = useDropzone({
     onDrop,
     accept: {
       'text/csv': ['.csv'],
@@ -459,224 +334,85 @@ export function BankIngestion() {
   });
 
   return (
-    <div className="space-y-8">
-      {/* Guía Profesional Principal */}
-      <div className="px-6 py-4 bg-primary/5 border-l-4 border-primary mx-4 rounded-r-2xl flex items-start gap-4">
-        <Info className="w-6 h-6 text-primary mt-1 shrink-0" />
-        <div className="space-y-1">
-            <h4 className="font-black text-primary uppercase text-xs tracking-widest">Guía Profesional: Flujo de Ingesta</h4>
-            <p className="text-[11px] text-muted-foreground leading-relaxed">
-                El flujo ideal comienza cargando el <strong>Catálogo de Productos</strong>. Una vez listo, arrastra tu <strong>Estado de Cuenta</strong>.
-                El sistema aplicará ingeniería inversa para encontrar combinaciones de productos que cuadren con cada transferencia.
-                Si el match no es exacto, podrás realizar <strong>Ajustes Manuales</strong> para lograr el cuadre perfecto.
-            </p>
-        </div>
-      </div>
-
-      <div className="bg-primary/5 rounded-3xl border-2 border-dashed border-primary/20 p-12 text-center transition-colors hover:bg-primary/10">
-        <div {...getRootProps()} className="cursor-pointer">
-          <input {...getInputProps()} />
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-              <FileUp className="w-8 h-8 text-primary" />
-            </div>
-            <div>
-              <p className="text-xl font-black uppercase tracking-tight text-primary">Arrastra tu extracto bancario</p>
-              <p className="text-sm text-muted-foreground font-medium">Soporta CSV, XLSX, XLS y TXT (BANDEC)</p>
-            </div>
-            <Button className="neu-btn-primary mt-4">
-                Seleccionar Archivo
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Card: Catálogo */}
-        <div className="p-6 bg-card/50 rounded-3xl border border-border/50 space-y-6 flex flex-col">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-primary">
-                    <FileSpreadsheet className="w-5 h-5" />
-                    <h4 className="font-black uppercase text-sm tracking-widest">Maestro de Catálogo</h4>
-                </div>
-                <Badge variant="outline" className="text-[10px] uppercase font-bold">Paso 1</Badge>
-            </div>
-
-            <p className="text-xs text-muted-foreground font-medium leading-relaxed">
-                Define los productos, precios y prioridades. El algoritmo usará estos datos para "reconstruir" las ventas.
-            </p>
-
-            <div className="grid grid-cols-2 gap-3 flex-1">
-                <Button variant="outline" className="neu-btn text-[10px]" onClick={importDefaultProducts} title="Carga un set de productos de prueba">
-                    <Plus className="w-3 h-3 mr-2" />
-                    Productos Demo
-                </Button>
-
-                <label className="cursor-pointer">
-                    <div className="flex items-center justify-center h-full px-2 py-2 border border-input bg-background rounded-xl hover:bg-accent hover:text-accent-foreground text-[10px] font-bold transition-colors uppercase">
-                        <Upload className="w-3 h-3 mr-2" />
-                        Importar CSV
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+            <div className="bg-primary/5 rounded-3xl border-2 border-dashed border-primary/20 p-10 text-center transition-all hover:bg-primary/10 hover:border-primary/40 group">
+                <div {...getRootProps()} className="cursor-pointer">
+                    <input {...getInputProps()} />
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <FileUp className="w-10 h-10 text-primary" />
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-2xl font-black uppercase tracking-tight text-primary italic">Central de Inteligencia de Datos</p>
+                            <p className="text-sm text-muted-foreground font-medium">Suelta aquí tu <span className="text-primary font-bold">Catálogo</span> o tu <span className="text-primary font-bold">Extracto</span></p>
+                            <p className="text-[10px] text-muted-foreground/60 uppercase font-black tracking-widest mt-2">Soporta CSV, XLSX, XLS y TXT</p>
+                        </div>
+                        <Button className="neu-btn-primary mt-4 h-12 px-8 text-xs">Seleccionar Archivo</Button>
                     </div>
-                    <input type="file" className="hidden" accept=".csv,.xlsx,.xls" onChange={handleImportCatalog} />
-                </label>
-
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="neu-btn w-full text-[10px]">
-                            <Download className="w-3 h-3 mr-2" />
-                            Exportar
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="rounded-xl border-primary/20">
-                        <DropdownMenuItem onClick={() => exportCatalog('csv')} className="cursor-pointer gap-2">
-                            <FileText className="w-4 h-4 text-primary" />
-                            <span>Exportar como CSV</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => exportCatalog('xlsx')} className="cursor-pointer gap-2">
-                            <FileSpreadsheet className="w-4 h-4 text-primary" />
-                            <span>Exportar como Excel</span>
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-
-                <Button variant="outline" className="neu-btn text-[10px] text-destructive hover:bg-destructive/5" onClick={resetCatalog}>
-                    <Trash2 className="w-3 h-3 mr-2" />
-                    Vaciar
-                </Button>
-            </div>
-
-            <div className="p-3 bg-primary/5 rounded-xl border-l-2 border-primary text-[10px] text-muted-foreground">
-                <span className="font-bold text-primary">TIP:</span> Exporta el catálogo actual para usarlo como plantilla de importación.
-            </div>
-        </div>
-
-        {/* Card: Estado de Cuenta */}
-        <div className="p-6 bg-card/50 rounded-3xl border border-border/50 space-y-6 flex flex-col">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-primary">
-                    <FileText className="w-5 h-5" />
-                    <h4 className="font-black uppercase text-sm tracking-widest">Estado de Cuenta</h4>
                 </div>
-                <Badge variant="outline" className="text-[10px] uppercase font-bold">Paso 2</Badge>
             </div>
 
-            <p className="text-xs text-muted-foreground font-medium leading-relaxed">
-                Descarga la plantilla o carga transacciones de prueba para validar el motor de matching.
-            </p>
-
-            <div className="grid grid-cols-2 gap-3 flex-1">
-                <Button variant="outline" className="neu-btn text-[10px]" onClick={loadDemoStatement}>
-                    <RefreshCw className="w-3 h-3 mr-2 text-primary" />
-                    Extracto Demo
-                </Button>
-
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="neu-btn w-full text-[10px]">
-                            <Download className="w-3 h-3 mr-2" />
-                            Plantillas
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="rounded-xl">
-                        <DropdownMenuItem onClick={() => downloadTemplate('csv')} className="cursor-pointer gap-2">
-                            <FileText className="w-4 h-4" />
-                            <span>Descargar CSV</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => downloadTemplate('xlsx')} className="cursor-pointer gap-2">
-                            <FileSpreadsheet className="w-4 h-4" />
-                            <span>Descargar Excel</span>
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-
-                <Button variant="outline" className="neu-btn text-[10px]" onClick={resetAllMatching}>
-                    <RefreshCw className="w-3 h-3 mr-2" />
-                    Reset Matching
-                </Button>
-
-                <Button variant="outline" className="neu-btn text-[10px] text-destructive hover:bg-destructive/5" onClick={resetBankData}>
-                    <Trash2 className="w-3 h-3 mr-2" />
-                    Limpiar Banco
-                </Button>
-            </div>
-
-            <div className="p-3 bg-orange-500/5 rounded-xl border-l-2 border-orange-500 text-[10px] text-muted-foreground">
-                <span className="font-bold text-orange-500">IMPORTANTE:</span> El motor requiere que la columna <strong>Ref_Origen</strong> sea única por transacción.
+            <div className="px-6 py-4 bg-primary/5 border-l-4 border-primary rounded-r-2xl flex items-start gap-4">
+                <Info className="w-6 h-6 text-primary mt-1 shrink-0" />
+                <div className="space-y-1">
+                    <h4 className="font-black text-primary uppercase text-xs tracking-widest italic">Inteligencia Artificial de Matching</h4>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                        El sistema detecta automáticamente el tipo de archivo y realiza un <strong>upsert</strong> (actualiza si ya existe).
+                    </p>
+                </div>
             </div>
         </div>
 
-        <div className="p-6 bg-destructive/5 rounded-3xl border border-destructive/20 space-y-4 md:col-span-2">
-            <div className="flex items-center gap-2 text-destructive">
-                <Trash2 className="w-5 h-5" />
-                <h4 className="font-black uppercase text-sm tracking-widest">Zona de Peligro / Mantenimiento</h4>
+        <div className="space-y-4">
+            <div className="p-6 bg-card border rounded-3xl shadow-sm space-y-4">
+                <h4 className="font-black uppercase text-xs tracking-[0.2em] text-muted-foreground border-b pb-2">Acciones Rápidas</h4>
+                <div className="grid grid-cols-1 gap-2">
+                    <Button variant="outline" className="neu-btn justify-start h-12 text-[10px] font-black uppercase" onClick={importDefaultProducts}>
+                        <Plus className="w-4 h-4 mr-3 text-primary" /> Cargar Productos Demo
+                    </Button>
+                    <Button variant="outline" className="neu-btn justify-start h-12 text-[10px] font-black uppercase" onClick={loadDemoStatement}>
+                        <RefreshCw className="w-4 h-4 mr-3 text-primary" /> Generar Extracto Demo
+                    </Button>
+                    <div className="pt-2 flex gap-2">
+                        <Button variant="outline" className="neu-btn flex-1 h-10 text-[10px]" onClick={() => downloadTemplate('xlsx')}>
+                            <Download className="w-3 h-3 mr-2" /> Plantilla
+                        </Button>
+                        <Button variant="outline" className="neu-btn flex-1 h-10 text-[10px]" onClick={() => exportCatalog('xlsx')}>
+                            <Download className="w-3 h-3 mr-2" /> Backup
+                        </Button>
+                    </div>
+                </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                <Button variant="destructive" className="w-full text-[10px] font-bold gap-2" onClick={resetEverything}>
-                    <Trash2 className="w-4 h-4" />
-                    REINICIO TOTAL
-                </Button>
-                <Button variant="destructive" className="w-full text-[10px] font-bold gap-2" onClick={resetBankData}>
-                    <Trash2 className="w-4 h-4" />
-                    Limpiar Banco
-                </Button>
-                <Button variant="destructive" className="w-full text-[10px] font-bold gap-2" onClick={resetCatalog}>
-                    <Trash2 className="w-4 h-4" />
-                    Vaciar Catálogo
-                </Button>
-                <Button variant="outline" className="w-full text-[10px] font-bold gap-2 border-destructive/30 text-destructive hover:bg-destructive/10" onClick={resetAllMatching}>
+
+            <div className="p-6 bg-orange-500/5 border border-orange-500/20 rounded-3xl space-y-3">
+                <div className="flex items-center gap-2 text-orange-600">
                     <RefreshCw className="w-4 h-4" />
-                    Resetear Matching
-                </Button>
+                    <h4 className="font-black uppercase text-[10px] tracking-widest">Mantenimiento</h4>
+                </div>
+                <div className="grid grid-cols-1 gap-2">
+                    <Button variant="outline" className="h-9 text-[9px] font-bold border-orange-200 text-orange-700 hover:bg-orange-50" onClick={resetAllMatching}>
+                        Resetear Todas las Conciliaciones
+                    </Button>
+                    <Button variant="outline" className="h-9 text-[9px] font-bold border-red-200 text-red-700 hover:bg-red-50" onClick={resetBankData}>
+                        Limpiar Historial Bancario
+                    </Button>
+                </div>
             </div>
         </div>
       </div>
 
-      {/* Column Help Section */}
-      <div className="p-6 bg-card/50 rounded-3xl border border-border/50 space-y-4">
-        <div className="flex items-center gap-2 text-primary">
-            <HelpCircle className="w-5 h-5" />
-            <h4 className="font-black uppercase text-sm tracking-widest">Guía de Columnas (Estado de Cuenta)</h4>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <HelpItem
-                title="Fecha"
-                desc="Fecha de la operación (ej: 17/10/2025). El sistema la normaliza automáticamente."
-            />
-            <HelpItem
-                title="Ref_Origen"
-                desc="Identificador único del banco (Número de transferencia o ID de mensaje)."
-            />
-            <HelpItem
-                title="Ref_Corriente"
-                desc="Referencia corta para visualización rápida en tablas."
-            />
-            <HelpItem
-                title="Importe"
-                desc="Monto con decimales (ej: 1,500.00). Se convierte a centavos internamente."
-            />
-            <HelpItem
-                title="Tipo"
-                desc="'Cr' para Créditos (Ingresos) y 'Db' para Débitos (Gastos/Comisiones)."
-            />
-            <HelpItem
-                title="Observaciones"
-                desc="Detalle del banco. Aquí se buscan códigos de producto para el matching automático."
-            />
-            <HelpItem
-                title="Soporte BANDEC"
-                desc="Los archivos .txt exportados de la Banca Remota BANDEC son compatibles y se parsean automáticamente."
-            />
-        </div>
+      <div className="p-6 bg-destructive/5 rounded-3xl border border-destructive/20 space-y-4">
+          <div className="flex items-center gap-2 text-destructive">
+              <Trash2 className="w-5 h-5" />
+              <h4 className="font-black uppercase text-sm tracking-widest">Zona de Peligro</h4>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Button variant="destructive" className="text-[10px] font-bold" onClick={resetEverything}>REINICIO TOTAL</Button>
+              <Button variant="outline" className="text-[10px] font-bold border-destructive text-destructive hover:bg-destructive/10" onClick={resetCatalog}>VACIAR CATÁLOGO</Button>
+          </div>
       </div>
     </div>
   );
-}
-
-function HelpItem({ title, desc }: { title: string, desc: string }) {
-    return (
-        <div className="space-y-1">
-            <p className="text-xs font-bold text-primary uppercase tracking-tighter">{title}</p>
-            <p className="text-[11px] text-muted-foreground leading-relaxed font-medium">{desc}</p>
-        </div>
-    );
 }

@@ -38,6 +38,8 @@ export default function IPVView() {
   const [activeTab, setActiveTab] = useState('transactions');
   const [isMatching, setIsMatching] = useState(false);
   const [matchMessage, setMatchMessage] = useState('');
+  const [matchProgress, setMatchProgress] = useState(0);
+  const [kpiFilter, setKpiFilter] = useState<'ALL' | 'CUADRADAS' | 'EN_PROCESO' | 'PENDIENTES'>('ALL');
 
   const transactions = useLiveQuery(() => db.bank_statements.orderBy('fecha').toArray());
   const rules = useLiveQuery(() => db.matching_rules.toArray());
@@ -45,13 +47,16 @@ export default function IPVView() {
   const reconciliationLines = useLiveQuery(() => db.reconciliation_lines.toArray());
   const ingestionErrorsCount = useLiveQuery(() => db.ingestion_errors.count()) || 0;
 
-  const stats = useMemo(() => {
-    if (!transactions || !reconciliationLines) return { total: 0, squared: 0, inProcess: 0, pending: 0, percentage: 0 };
-
-    const txTotals = reconciliationLines.reduce((acc, line) => {
+  const txTotals = useMemo(() => {
+    if (!reconciliationLines) return {} as Record<string, number>;
+    return reconciliationLines.reduce((acc, line) => {
         acc[line.transaction_ref] = (acc[line.transaction_ref] || 0) + line.importe_linea_cents;
         return acc;
     }, {} as Record<string, number>);
+  }, [reconciliationLines]);
+
+  const stats = useMemo(() => {
+    if (!transactions) return { total: 0, squared: 0, inProcess: 0, pending: 0, percentage: 0 };
 
     let squared = 0;
     let inProcess = 0;
@@ -78,7 +83,7 @@ export default function IPVView() {
       pending,
       percentage: transactions.length > 0 ? Math.round((squared / transactions.length) * 100) : 0
     };
-  }, [transactions, reconciliationLines]);
+  }, [transactions, txTotals]);
 
   const handleRunMatching = async () => {
     if (!transactions || transactions.length === 0) {
@@ -130,6 +135,11 @@ export default function IPVView() {
     });
 
     worker.onmessage = async (e) => {
+      if (e.data.type === 'PROGRESS') {
+          setMatchProgress(e.data.percentage);
+          setMatchMessage(`Procesando: ${e.data.percentage}%`);
+      }
+
       if (e.data.type === 'BATCH_COMPLETE') {
         const { results } = e.data;
 
@@ -148,6 +158,7 @@ export default function IPVView() {
         toast.success(`Proceso completado: ${results.length} transacciones analizadas`);
         worker.terminate();
         setIsMatching(false);
+        setMatchProgress(0);
       }
     };
 
@@ -161,7 +172,7 @@ export default function IPVView() {
 
   return (
     <div className="space-y-6">
-      <LoadingOverlay isVisible={isMatching} message={matchMessage} />
+      <LoadingOverlay isVisible={isMatching} message={matchMessage} progress={matchProgress} />
       {/* Help Section: Professional Flow */}
       <Card className="p-6 bg-primary/5 border-none shadow-none rounded-3xl overflow-hidden relative group">
           <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
@@ -224,6 +235,8 @@ export default function IPVView() {
             value={stats.total}
             icon={<History className="text-blue-500" />}
             subtitle="Transacciones"
+            active={kpiFilter === 'ALL'}
+            onClick={() => setKpiFilter('ALL')}
         />
         <StatCard
             title="Cuadradas"
@@ -231,18 +244,24 @@ export default function IPVView() {
             icon={<CheckCircle2 className="text-green-500" />}
             trend={`${stats.percentage}%`}
             subtitle="Completadas"
+            active={kpiFilter === 'CUADRADAS'}
+            onClick={() => setKpiFilter('CUADRADAS')}
         />
         <StatCard
             title="En Proceso"
             value={stats.inProcess}
             icon={<AlertCircle className="text-yellow-500" />}
             subtitle="Con Diferencia"
+            active={kpiFilter === 'EN_PROCESO'}
+            onClick={() => setKpiFilter('EN_PROCESO')}
         />
         <StatCard
             title="Pendientes"
             value={stats.pending}
             icon={<Clock className="text-orange-500" />}
             subtitle="Sin Matching"
+            active={kpiFilter === 'PENDIENTES'}
+            onClick={() => setKpiFilter('PENDIENTES')}
         />
       </div>
 
@@ -272,7 +291,11 @@ export default function IPVView() {
 
         <Card className="mt-6 p-0 overflow-hidden border-none shadow-xl bg-card/50 backdrop-blur-sm">
           <TabsContent value="transactions" className="m-0">
-            <TransactionTable transactions={transactions || []} />
+            <TransactionTable
+              transactions={transactions || []}
+              kpiFilter={kpiFilter}
+              txReconciliationTotals={txTotals}
+            />
           </TabsContent>
 
           <TabsContent value="pivot" className="m-0">
@@ -320,9 +343,12 @@ function FlowStep({ number, title, desc }: { number: string, title: string, desc
     );
 }
 
-function StatCard({ title, value, icon, trend, subtitle }: { title: string, value: number, icon: React.ReactNode, trend?: string, subtitle?: string }) {
+function StatCard({ title, value, icon, trend, subtitle, active, onClick }: { title: string, value: number, icon: React.ReactNode, trend?: string, subtitle?: string, active?: boolean, onClick?: () => void }) {
   return (
-    <Card className="p-3 sm:p-4 flex flex-col sm:flex-row items-center sm:justify-between border-none shadow-md bg-card/50 backdrop-blur-sm gap-2">
+    <Card
+        onClick={onClick}
+        className={`p-3 sm:p-4 flex flex-col sm:flex-row items-center sm:justify-between border-2 transition-all cursor-pointer gap-2 ${active ? 'border-primary bg-primary/5 shadow-lg scale-[1.02]' : 'border-transparent bg-card/50 backdrop-blur-sm shadow-md hover:border-primary/20'}`}
+    >
       <div className="flex flex-col items-center sm:items-start space-y-0.5 sm:space-y-1">
         <p className="text-[10px] sm:text-xs font-black text-muted-foreground uppercase tracking-widest">{title}</p>
         <div className="flex items-baseline gap-1.5 sm:gap-2">

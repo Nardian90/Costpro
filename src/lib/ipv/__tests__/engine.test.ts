@@ -21,8 +21,8 @@ vi.mock('../../dexie', () => ({
 
 describe('MatchingEngine', () => {
   const products: Product[] = [
-    { cod: '1', descripcion: 'Cerveza', um: 'U', precio_cents: 26000, prioridad_algoritmo: 1, activo: true, es_paquete: false, contenido_paquete: 1, stock_inicial_manual: 0, created_at: '' },
-    { cod: '1-C', descripcion: 'Cerveza Caja', um: 'Caja', precio_cents: 576000, prioridad_algoritmo: 1, activo: true, es_paquete: true, contenido_paquete: 24, stock_inicial_manual: 0, created_at: '' },
+    { cod: '1', descripcion: 'Cerveza', um: 'U', precio_cents: 260, prioridad_algoritmo: 1, activo: true, es_paquete: false, contenido_paquete: 1, stock_inicial_manual: 0, created_at: '' },
+    { cod: '1-C', descripcion: 'Cerveza Caja', um: 'Caja', precio_cents: 5760, prioridad_algoritmo: 1, activo: true, es_paquete: true, contenido_paquete: 24, stock_inicial_manual: 0, created_at: '' },
   ];
 
   const rules: MatchingRule[] = [
@@ -90,5 +90,41 @@ describe('MatchingEngine', () => {
     const result = await engine.matchTransaction(tx);
     expect(result.status).toBe('COMPLETO');
     expect(result.lines).toHaveLength(0);
+  });
+
+  it('should report progress during reconcileAll', async () => {
+    const txs: BankTransaction[] = [
+      {
+        id: 'tx1',
+        fecha: '2025-08-01',
+        referencia_corta: 'REF1',
+        referencia_origen: 'REF1',
+        observaciones: 'PAGO COD:1',
+        importe_cents: 260,
+        tipo: 'Cr',
+        estado_conciliacion: 'PENDIENTE',
+        created_at: '',
+        ingestion_hash: ''
+      },
+      {
+        id: 'tx2',
+        fecha: '2025-08-01',
+        referencia_corta: 'REF2',
+        referencia_origen: 'REF2',
+        observaciones: 'TRANSFERENCIA',
+        importe_cents: 520,
+        tipo: 'Cr',
+        estado_conciliacion: 'PENDIENTE',
+        created_at: '',
+        ingestion_hash: ''
+      }
+    ];
+
+    const onProgress = vi.fn();
+    await engine.reconcileAll(txs, onProgress);
+
+    expect(onProgress).toHaveBeenCalledTimes(2);
+    expect(onProgress).toHaveBeenNthCalledWith(1, 50);
+    expect(onProgress).toHaveBeenNthCalledWith(2, 100);
   });
 });
