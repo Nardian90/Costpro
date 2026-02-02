@@ -93,14 +93,14 @@ export class MatchingEngine {
       }
     }
 
-    // PASS 2: EXACT_SUM (Backtracking)
+    // PASS 2: EXACT_SUM / EXACT_MATCH
     const exactSumRule = this.rules.find(r => r.tipo === 'EXACT_SUM');
     if (exactSumRule && remaining_cents > 0) {
       const combination = this.findExactCombination(remaining_cents);
       if (combination.length > 0) {
         // Guardar en caché
         await db.matching_cache.put({
-          importe_cents: remaining_cents, // Usamos el restante por si hubo PASS 1
+          importe_cents: remaining_cents,
           catalog_hash: catalogHash,
           results: combination.map(c => ({ product_cod: c.product.cod, cantidad: c.qty })),
           updated_at: new Date().toISOString()
@@ -111,29 +111,80 @@ export class MatchingEngine {
           lines.push(line);
           remaining_cents -= line.importe_linea_cents;
         }
-        logs.push(`PASS 2 (EXACT_SUM): Encontrada combinación de ${combination.length} productos`);
+        logs.push(`PASS 2 (EXACT_SUM): Encontrada combinación exacta`);
       }
     }
 
-    // PASS 3: TOLERANCE
+    // PASS 3: PRICE_FLEX (Ajuste táctico de precio)
+    const priceFlexRule = this.rules.find(r => r.tipo === 'PRICE_FLEX');
+    if (priceFlexRule && remaining_cents > 0) {
+        const maxAbs = priceFlexRule.meta?.maxAbs || 10;
+        const maxPercent = priceFlexRule.meta?.maxPercent || 20;
+
+        // Intentamos encontrar un producto de categoría flexible que al añadirlo y ajustar su precio cierre el gap
+        const flexProduct = this.products.find(p =>
+            p.categoria?.toLowerCase().includes('flexible') ||
+            p.categoria?.toLowerCase().includes('caramelo') ||
+            p.isWildcardCandidate
+        );
+
+        if (flexProduct) {
+            const basePrice = flexProduct.precio_cents;
+            // Necesitamos cubrir 'remaining_cents'.
+            // Si usamos 1 unidad de flexProduct, el nuevo precio sería remaining_cents.
+            // Pero Price Flex suele actuar sobre un mismatch PEQUEÑO después de un match parcial.
+            // Si remaining_cents es pequeño, podemos "vender" el producto flexible a ese precio.
+
+            const adjustment = remaining_cents - basePrice;
+            const maxPercentAbs = basePrice * (maxPercent / 100);
+
+            if (adjustment > 0 && adjustment <= maxAbs && adjustment <= maxPercentAbs) {
+                // El ajuste es válido
+                const line = await this.createLine(transaction, flexProduct, 1, 'AUTO_MATCH', 'Transferencia');
+                line.precio_unitario_cents = remaining_cents;
+                line.importe_linea_cents = remaining_cents;
+                    line.cuadre_cents = 0;
+                    line.origen_dato = 'AUTO_MATCH';
+                    // Nota: createLine usa el precio base del producto, aquí sobreescribimos
+                    lines.push(line);
+                    remaining_cents = 0;
+                    logs.push(`PASS 3 (PRICE_FLEX): Ajustado precio de ${flexProduct.descripcion} de ${basePrice} a ${line.precio_unitario_cents}`);
+            }
+        }
+    }
+
+    // PASS 4: WILDCARDS (Productos estratégicos)
+    const wildcardsRule = this.rules.find(r => r.tipo === 'WILDCARDS');
+    if (wildcardsRule && remaining_cents > 0) {
+        const wildcards = this.products.filter(p => p.isWildcardCandidate).sort((a,b) => b.precio_cents - a.precio_cents);
+        for (const p of wildcards) {
+            if (p.precio_cents <= remaining_cents && p.precio_cents > 0) {
+                const qty = Math.floor(remaining_cents / p.precio_cents);
+                const line = await this.createLine(transaction, p, qty, 'AUTO_MATCH', 'Transferencia');
+                lines.push(line);
+                remaining_cents -= line.importe_linea_cents;
+                logs.push(`PASS 4 (WILDCARDS): Añadido ${qty}x ${p.descripcion} como comodín`);
+            }
+        }
+    }
+
+    // PASS 5: TOLERANCE
     const toleranceRule = this.rules.find(r => r.tipo === 'TOLERANCE');
     if (toleranceRule && remaining_cents > 0 && toleranceRule.tolerancia_cents) {
-      // Intentamos ver si con un producto más nos acercamos dentro de la tolerancia
       for (const product of this.products.sort((a,b) => b.precio_cents - a.precio_cents)) {
         const diff = Math.abs(remaining_cents - product.precio_cents);
         if (diff <= toleranceRule.tolerancia_cents) {
           const line = await this.createLine(transaction, product, 1, 'AUTO_MATCH', 'Transferencia');
-          // Ajustamos el cuadre en la última línea o registramos la diferencia
           line.cuadre_cents = remaining_cents - product.precio_cents;
           lines.push(line);
           remaining_cents = 0;
-          logs.push(`PASS 3 (TOLERANCE): Matched ${product.descripcion} con cuadre de ${line.cuadre_cents} cts`);
+          logs.push(`PASS 5 (TOLERANCE): Matched ${product.descripcion} con cuadre de ${line.cuadre_cents}`);
           break;
         }
       }
     }
 
-    // PASS 4: CASH_FILL
+    // PASS 6: CASH_FILL
     const cashFillRule = this.rules.find(r => r.tipo === 'CASH_FILL');
     if (cashFillRule && remaining_cents > 0) {
       const dailyLimit = cashFillRule.meta?.dailyLimitCents || Infinity;
@@ -182,6 +233,76 @@ export class MatchingEngine {
     };
   }
 
+  /**
+   * Realiza una simulación de matching para un objetivo monetario arbitrario.
+   */
+  async matchSimulation(targetAmount: number): Promise<MatchingResult> {
+    const mockTx: BankTransaction = {
+      id: 'sim',
+      fecha: new Date().toISOString().split('T')[0],
+      referencia_corta: 'SIM',
+      referencia_origen: 'SIM-' + Date.now(),
+      observaciones: 'Simulación de matching',
+      importe_cents: targetAmount,
+      tipo: 'Cr',
+      estado_conciliacion: 'PENDIENTE',
+      created_at: new Date().toISOString(),
+      ingestion_hash: 'sim'
+    };
+    return this.matchTransaction(mockTx);
+  }
+
+  /**
+   * Distribuye una diferencia de objetivo global entre varios días.
+   * Útil para llegar a una meta mensual/semanal repartiendo el faltante como efectivo.
+   */
+  async distributeGlobalGoal(targetTotal: number, currentTotal: number, dates: string[]): Promise<ReconciliationLine[]> {
+    const diff = targetTotal - currentTotal;
+    if (diff <= 0 || dates.length === 0) return [];
+
+    const perDay = diff / dates.length;
+    const lines: ReconciliationLine[] = [];
+    const wildcards = this.products.filter(p => p.isWildcardCandidate).sort((a,b) => b.precio_cents - a.precio_cents);
+
+    for (const date of dates) {
+      let remainingDay = perDay;
+
+      // Intentamos usar wildcards para cubrir la parte proporcional del día
+      for (const p of wildcards) {
+        if (p.precio_cents <= remainingDay && p.precio_cents > 0) {
+          const qty = Math.floor(remainingDay / p.precio_cents);
+          const line = await this.createLine({ fecha: date, referencia_origen: `GOAL-${date}` } as any, p, qty, 'CASH_FILLER', 'Efectivo');
+          lines.push(line);
+          remainingDay -= line.importe_linea_cents;
+        }
+      }
+
+      // El resto del día lo ponemos como efectivo genérico
+      if (remainingDay > 0.01) {
+        lines.push({
+          id: uuidv4(),
+          transaction_ref: `GOAL-${date}`,
+          fecha_operacion: date,
+          ingreso_banco_cents: 0,
+          venta_real_calculada_cents: remainingDay,
+          comision_banco_cents: 0,
+          product_cod: 'CASH',
+          product_um: 'U',
+          cantidad: 1,
+          precio_unitario_cents: remainingDay,
+          importe_linea_cents: remainingDay,
+          cuadre_cents: 0,
+          clasificacion: 'Efectivo',
+          origen_dato: 'CASH_FILLER',
+          reconciliation_hash: await generateHash(`GOAL-${date}-CASH-${remainingDay}`),
+          created_at: new Date().toISOString()
+        });
+      }
+    }
+
+    return lines;
+  }
+
   private async createLine(
     transaction: BankTransaction,
     product: Product,
@@ -212,14 +333,17 @@ export class MatchingEngine {
 
   /**
    * Busca una combinación exacta de productos que sumen el monto.
-   * Algoritmo con backtracking limitado para balancear precisión y performance.
+   * Considera la prioridad dinámica/manual de los productos.
    */
   private findExactCombination(target: number): { product: Product, qty: number }[] {
     const sortedProducts = [...this.products].sort((a, b) => {
-        // Prioridad algoritmo asc, luego precio desc, luego cod para determinismo
-        if (a.prioridad_algoritmo !== b.prioridad_algoritmo) {
-            return a.prioridad_algoritmo - b.prioridad_algoritmo;
-        }
+        // Modo híbrido/automático: Priorizar según prioridad_algoritmo (1 mejor)
+        const pA = a.prioridad_algoritmo || 3;
+        const pB = b.prioridad_algoritmo || 3;
+
+        if (pA !== pB) return pA - pB;
+
+        // Desempate por precio (mayor primero)
         if (b.precio_cents !== a.precio_cents) {
             return b.precio_cents - a.precio_cents;
         }

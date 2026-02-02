@@ -32,11 +32,20 @@ export interface Product {
   stock_inicial_manual: number;
   created_at: string;
   updated_at?: string;
+  // Inteligencia de precios
+  categoria?: string;
+  isWildcardCandidate?: boolean;
+  priceEffectivenessScore?: number;
+  suggestedPrice?: number;
+  suggestionReason?: string;
+  priorityMode?: 'manual' | 'auto' | 'hybrid';
+  ventas_qty_historico?: number;
+  ventas_valor_historico?: number;
 }
 
 export interface MatchingRule {
   id: string;
-  tipo: 'HARD_REF' | 'EXACT_SUM' | 'TOLERANCE' | 'CASH_FILL';
+  tipo: 'HARD_REF' | 'EXACT_SUM' | 'TOLERANCE' | 'CASH_FILL' | 'PRICE_FLEX' | 'WILDCARDS' | 'GOAL_WITH_TOLERANCE';
   tolerancia_cents?: number;   // en pesos, aplicable a TOLERANCE
   prioridad: number;
   activo: boolean;
@@ -147,9 +156,9 @@ export class IPVDatabase extends Dexie {
 
   constructor() {
     super('IPVDB');
-    this.version(5).stores({
+    this.version(6).stores({
       bank_statements: '&referencia_origen, fecha, importe_cents, ingestion_hash',
-      products: '&cod, descripcion, precio_cents, prioridad_algoritmo, activo, stock_inicial_manual',
+      products: '&cod, descripcion, precio_cents, prioridad_algoritmo, activo, stock_inicial_manual, isWildcardCandidate',
       matching_rules: '&id, tipo, prioridad',
       reconciliation_lines: '&id, transaction_ref, reconciliation_hash, fecha_operacion',
       ipv_reports: '&id, fecha_reporte, estado',
