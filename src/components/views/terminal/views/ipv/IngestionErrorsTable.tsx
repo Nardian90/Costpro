@@ -18,7 +18,7 @@ import { Trash2, RefreshCw, Edit2, Check, X, AlertCircle } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { toast } from 'sonner';
 import { generateHash } from '@/lib/ipv/engine';
-import { extractCommissionCents } from '@/lib/ipv/utils';
+import { extractCommission } from '@/lib/ipv/utils';
 
 export function IngestionErrorsTable() {
   const errors = useLiveQuery(() => db.ingestion_errors.orderBy('fecha').toArray());
@@ -44,7 +44,7 @@ export function IngestionErrorsTable() {
 
   const handleRetry = async (err: IngestionError) => {
     try {
-        const comision_cents = extractCommissionCents(err.observaciones);
+        const comision_cents = extractCommission(err.observaciones);
         const targetAmount = err.importe_cents + comision_cents;
 
         const tx: BankTransaction = {
@@ -154,7 +154,7 @@ export function IngestionErrorsTable() {
                             {err.observaciones}
                         </TableCell>
                         <TableCell className="text-right font-black text-xs">
-                            {formatCurrency(err.importe_cents / 100)}
+                            {formatCurrency(err.importe_cents)}
                         </TableCell>
                         <TableCell className="text-right">
                             <div className="flex justify-end gap-1">

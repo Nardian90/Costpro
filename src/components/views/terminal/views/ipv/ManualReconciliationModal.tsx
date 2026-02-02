@@ -99,7 +99,7 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
             const lines = await db.reconciliation_lines.where('transaction_ref').equals(transaction.referencia_origen).toArray();
             const newTotal = lines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
             const target = transaction.importe_venta_cents || transaction.importe_cents;
-            const newStatus = newTotal >= target ? 'COMPLETO' : (newTotal > 0 ? 'PARCIAL' : 'PENDIENTE');
+            const newStatus = (newTotal + 0.001) >= target ? 'COMPLETO' : (newTotal > 0.001 ? 'PARCIAL' : 'PENDIENTE');
 
             await db.bank_statements.update(transaction.id, {
                 estado_conciliacion: newStatus
@@ -143,7 +143,7 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
             }
 
             const target = transaction.importe_venta_cents || transaction.importe_cents;
-            const newStatus = currentTotal >= target ? 'COMPLETO' : (currentTotal > 0 ? 'PARCIAL' : 'PENDIENTE');
+            const newStatus = (currentTotal + 0.001) >= target ? 'COMPLETO' : (currentTotal > 0.001 ? 'PARCIAL' : 'PENDIENTE');
 
             await db.bank_statements.update(transaction.id, {
                 estado_conciliacion: newStatus
@@ -198,8 +198,8 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                         </div>
                         <div className="flex-1 p-3 md:p-4 bg-orange-500/5 rounded-2xl border border-orange-500/10 flex flex-col">
                             <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Restante (Cents)</span>
-                            <span className={`text-xl font-black ${remaining === 0 ? 'text-green-600' : 'text-orange-600'}`}>
-                                {remaining}
+                            <span className={`text-xl font-black ${Math.abs(remaining) < 0.001 ? 'text-green-600' : 'text-orange-600'}`}>
+                                {remaining.toFixed(2)}
                             </span>
                         </div>
                     </div>

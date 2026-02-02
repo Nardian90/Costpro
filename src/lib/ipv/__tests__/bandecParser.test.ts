@@ -1,7 +1,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { parseBandecTxt } from '../bandecParser';
-import { extractCommissionCents } from '../utils';
+import { extractCommission } from '../utils';
 
 describe('bandecParser', () => {
   it('should extract commission with colon', async () => {
@@ -12,8 +12,8 @@ describe('bandecParser', () => {
 `;
     const txs = await parseBandecTxt(mockTxt);
     expect(txs).toHaveLength(1);
-    expect(txs[0].comision_cents).toBe(1050);
-    expect(txs[0].importe_venta_cents).toBe(133000 + 1050);
+    expect(txs[0].comision_cents).toBe(10.50);
+    expect(txs[0].importe_venta_cents).toBe(1330 + 10.50);
   });
 
   it('should extract commission without colon', async () => {
@@ -24,12 +24,12 @@ describe('bandecParser', () => {
 `;
       const txs = await parseBandecTxt(mockTxt);
       expect(txs).toHaveLength(1);
-      expect(txs[0].comision_cents).toBe(500);
+      expect(txs[0].comision_cents).toBe(5);
   });
 
   it('should extract commission from raw string using utility', () => {
-    expect(extractCommissionCents("Comis: 10.50")).toBe(1050);
-    expect(extractCommissionCents("comis 5")).toBe(500);
-    expect(extractCommissionCents("no commission")).toBe(0);
+    expect(extractCommission("Comis: 10.50")).toBe(10.50);
+    expect(extractCommission("comis 5")).toBe(5);
+    expect(extractCommission("no commission")).toBe(0);
   });
 });

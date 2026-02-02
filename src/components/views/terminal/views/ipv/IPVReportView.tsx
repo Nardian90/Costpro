@@ -285,9 +285,9 @@ export function IPVReportView() {
           startY: 55,
           head: [['Concepto', 'Monto']],
           body: [
-            ['Total Ventas', `$ ${(report.total_ventas_cents / 100).toFixed(2)}`],
-            ['Resumen Efectivo', `$ ${(report.resumen_efectivo_cents / 100).toFixed(2)}`],
-            ['Resumen Transferencia', `$ ${(report.resumen_transferencia_cents / 100).toFixed(2)}`],
+            ['Total Ventas', `$ ${(report.total_ventas_cents).toFixed(2)}`],
+            ['Resumen Efectivo', `$ ${(report.resumen_efectivo_cents).toFixed(2)}`],
+            ['Resumen Transferencia', `$ ${(report.resumen_transferencia_cents).toFixed(2)}`],
           ],
           theme: 'grid',
           headStyles: { fillColor: [22, 163, 74] }
@@ -300,8 +300,8 @@ export function IPVReportView() {
           f.saldo_inicial_qty,
           f.entrada_salida_qty,
           f.venta_cantidad_qty,
-          `$ ${(f.precio_unitario_cents / 100).toFixed(2)}`,
-          `$ ${(f.importe_cents / 100).toFixed(2)}`,
+          `$ ${(f.precio_unitario_cents).toFixed(2)}`,
+          `$ ${(f.importe_cents).toFixed(2)}`,
           f.existencia_final_qty
         ]);
 
@@ -358,9 +358,9 @@ export function IPVReportView() {
         startY: 55,
         head: [['Concepto', 'Monto']],
         body: [
-          ['Total Ventas', `$ ${(report.total_ventas_cents / 100).toFixed(2)}`],
-          ['Resumen Efectivo', `$ ${(report.resumen_efectivo_cents / 100).toFixed(2)}`],
-          ['Resumen Transferencia', `$ ${(report.resumen_transferencia_cents / 100).toFixed(2)}`],
+          ['Total Ventas', `$ ${(report.total_ventas_cents).toFixed(2)}`],
+          ['Resumen Efectivo', `$ ${(report.resumen_efectivo_cents).toFixed(2)}`],
+          ['Resumen Transferencia', `$ ${(report.resumen_transferencia_cents).toFixed(2)}`],
         ],
         theme: 'grid',
         headStyles: { fillColor: [22, 163, 74] }
@@ -374,8 +374,8 @@ export function IPVReportView() {
         f.saldo_inicial_qty,
         f.entrada_salida_qty,
         f.venta_cantidad_qty,
-        `$ ${(f.precio_unitario_cents / 100).toFixed(2)}`,
-        `$ ${(f.importe_cents / 100).toFixed(2)}`,
+        `$ ${(f.precio_unitario_cents).toFixed(2)}`,
+        `$ ${(f.importe_cents).toFixed(2)}`,
         f.existencia_final_qty
       ]);
 
@@ -473,9 +473,9 @@ export function IPVReportView() {
             startY: 30,
             head: [['Concepto', 'Total Mensual']],
             body: [
-                ['Total Ventas Brutas', formatCurrency(totalVentas / 100)],
-                ['Total Efectivo', formatCurrency(totalEfectivo / 100)],
-                ['Total Transferencias', formatCurrency(totalTransferencia / 100)],
+                ['Total Ventas Brutas', formatCurrency(totalVentas)],
+                ['Total Efectivo', formatCurrency(totalEfectivo)],
+                ['Total Transferencias', formatCurrency(totalTransferencia)],
                 ['Días Reportados', monthReports.length]
             ],
             theme: 'grid',
@@ -502,8 +502,8 @@ export function IPVReportView() {
             f.um,
             f.saldo_inicial_qty, // Ojo: este debería ser el inicial del primer día del mes
             f.venta_cantidad_qty,
-            formatCurrency(f.precio_unitario_cents / 100),
-            formatCurrency(f.importe_cents / 100),
+            formatCurrency(f.precio_unitario_cents),
+            formatCurrency(f.importe_cents),
             f.existencia_final_qty
         ]);
 
@@ -691,9 +691,9 @@ export function IPVReportView() {
                   <TableCell className="sticky-column-1 font-bold">
                     {formatDate(r.fecha_reporte)}
                   </TableCell>
-                  <TableCell className="text-right font-black">{formatCurrency(r.total_ventas_cents / 100)}</TableCell>
-                  <TableCell className="text-right">{formatCurrency(r.resumen_efectivo_cents / 100)}</TableCell>
-                  <TableCell className="text-right">{formatCurrency(r.resumen_transferencia_cents / 100)}</TableCell>
+                  <TableCell className="text-right font-black">{formatCurrency(r.total_ventas_cents)}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(r.resumen_efectivo_cents)}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(r.resumen_transferencia_cents)}</TableCell>
                   <TableCell>
                     <Badge variant={r.estado === 'CERRADO' ? 'default' : 'outline'} className={r.estado === 'CERRADO' ? 'bg-green-500' : ''}>
                         {r.estado}

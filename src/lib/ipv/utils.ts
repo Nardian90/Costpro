@@ -4,11 +4,11 @@
  * Supports formats like "comis 10.50" or "Comis: 10.50"
  * Spec Regex: Comis:\s*([0-9]+(?:\.[0-9]{1,2})?)
  */
-export function extractCommissionCents(observations: string): number {
+export function extractCommission(observations: string): number {
     if (!observations) return 0;
     const comisMatch = observations.match(/Comis:?\s*([0-9]+(?:\.[0-9]{1,2})?)/i);
     if (comisMatch) {
-        return Math.round(parseFloat(comisMatch[1]) * 100);
+        return parseFloat(comisMatch[1]);
     }
     return 0;
 }
