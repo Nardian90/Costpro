@@ -184,7 +184,7 @@ export class MatchingEngine {
       }
     }
 
-    // PASS 6: CASH_FILL
+    // PASS 6: CASH_FILL (Justified with real products if possible)
     const cashFillRule = this.rules.find(r => r.tipo === 'CASH_FILL');
     if (cashFillRule && remaining_cents > 0) {
       const dailyLimit = cashFillRule.meta?.dailyLimitCents || Infinity;
@@ -197,30 +197,54 @@ export class MatchingEngine {
         .then(lines => lines.reduce((sum, l) => sum + l.importe_linea_cents, 0));
 
       if (usedToday + remaining_cents > dailyLimit) {
-        logs.push(`PASS 4 (CASH_FILL): Límite diario excedido. Saldo restante: ${remaining_cents} cts`);
+        logs.push(`PASS 6 (CASH_FILL): Límite diario excedido. Saldo restante: ${remaining_cents} cts`);
       } else {
-        // El excedente se marca como ajuste de efectivo si la regla está activa
-        const line: ReconciliationLine = {
-        id: uuidv4(),
-        transaction_ref: transaction.referencia_origen,
-        fecha_operacion: transaction.fecha,
-        ingreso_banco_cents: 0,
-        venta_real_calculada_cents: remaining_cents,
-        comision_banco_cents: 0,
-        product_cod: 'CASH',
-        product_um: 'U',
-        cantidad: 1,
-        precio_unitario_cents: remaining_cents,
-        importe_linea_cents: remaining_cents,
-        cuadre_cents: 0,
-        clasificacion: 'Efectivo',
-        origen_dato: 'CASH_FILLER',
-        reconciliation_hash: await generateHash(transaction.referencia_origen + 'CASH_FILL' + remaining_cents),
-        created_at: new Date().toISOString()
-      };
-        lines.push(line);
-        remaining_cents = 0;
-        logs.push(`PASS 4 (CASH_FILL): Cubierto gap de ${line.importe_linea_cents} cts con efectivo`);
+        // Justificación: Intentamos usar productos comodín primero para "disfrazar" el cash fill
+        const wildcards = this.products.filter(p => p.isWildcardCandidate).sort((a,b) => b.precio_cents - a.precio_cents);
+        let justified = false;
+
+        for (const p of wildcards) {
+          if (p.precio_cents <= remaining_cents && p.precio_cents > 0) {
+            const qty = Math.floor(remaining_cents / p.precio_cents);
+            const line = await this.createLine(transaction, p, qty, 'CASH_FILLER', 'Efectivo');
+            lines.push(line);
+            remaining_cents -= line.importe_linea_cents;
+            logs.push(`PASS 6 (CASH_FILL): Justificado con ${qty}x ${p.descripcion}`);
+
+            // Si después de esto queda un residuo pequeño, lo ajustamos con Price Flex automático sobre esta misma línea
+            if (remaining_cents > 0 && remaining_cents < p.precio_cents * 0.5) {
+                line.precio_unitario_cents += Math.floor(remaining_cents / qty);
+                line.importe_linea_cents += remaining_cents;
+                remaining_cents = 0;
+                logs.push(`PASS 6 (CASH_FILL): Residuo ajustado en la línea de ${p.descripcion}`);
+            }
+          }
+        }
+
+        if (remaining_cents > 0) {
+            // El excedente final se marca como ajuste de efectivo genérico si no se pudo justificar todo
+            const line: ReconciliationLine = {
+                id: uuidv4(),
+                transaction_ref: transaction.referencia_origen,
+                fecha_operacion: transaction.fecha,
+                ingreso_banco_cents: 0,
+                venta_real_calculada_cents: remaining_cents,
+                comision_banco_cents: 0,
+                product_cod: 'CASH',
+                product_um: 'U',
+                cantidad: 1,
+                precio_unitario_cents: remaining_cents,
+                importe_linea_cents: remaining_cents,
+                cuadre_cents: 0,
+                clasificacion: 'Efectivo',
+                origen_dato: 'CASH_FILLER',
+                reconciliation_hash: await generateHash(transaction.referencia_origen + 'CASH_FILL' + remaining_cents),
+                created_at: new Date().toISOString()
+            };
+            lines.push(line);
+            logs.push(`PASS 6 (CASH_FILL): Cubierto gap residual de ${remaining_cents} cts con efectivo genérico`);
+            remaining_cents = 0;
+        }
       }
     }
 
@@ -255,17 +279,23 @@ export class MatchingEngine {
   /**
    * Distribuye una diferencia de objetivo global entre varios días.
    * Útil para llegar a una meta mensual/semanal repartiendo el faltante como efectivo.
+   * Implementa aleatoriedad para evitar una distribución plana sospechosa.
    */
   async distributeGlobalGoal(targetTotal: number, currentTotal: number, dates: string[]): Promise<ReconciliationLine[]> {
     const diff = targetTotal - currentTotal;
     if (diff <= 0 || dates.length === 0) return [];
 
-    const perDay = diff / dates.length;
+    // Generar pesos aleatorios para cada día
+    const weights = dates.map(() => 0.5 + Math.random());
+    const totalWeight = weights.reduce((a, b) => a + b, 0);
+
     const lines: ReconciliationLine[] = [];
     const wildcards = this.products.filter(p => p.isWildcardCandidate).sort((a,b) => b.precio_cents - a.precio_cents);
 
-    for (const date of dates) {
-      let remainingDay = perDay;
+    for (let i = 0; i < dates.length; i++) {
+      const date = dates[i];
+      const weight = weights[i];
+      let remainingDay = Math.floor((diff * weight) / totalWeight);
 
       // Intentamos usar wildcards para cubrir la parte proporcional del día
       for (const p of wildcards) {
@@ -277,26 +307,35 @@ export class MatchingEngine {
         }
       }
 
-      // El resto del día lo ponemos como efectivo genérico
+      // El resto del día lo ponemos como efectivo genérico o intentamos "inflar" un producto
       if (remainingDay > 0.01) {
-        lines.push({
-          id: uuidv4(),
-          transaction_ref: `GOAL-${date}`,
-          fecha_operacion: date,
-          ingreso_banco_cents: 0,
-          venta_real_calculada_cents: remainingDay,
-          comision_banco_cents: 0,
-          product_cod: 'CASH',
-          product_um: 'U',
-          cantidad: 1,
-          precio_unitario_cents: remainingDay,
-          importe_linea_cents: remainingDay,
-          cuadre_cents: 0,
-          clasificacion: 'Efectivo',
-          origen_dato: 'CASH_FILLER',
-          reconciliation_hash: await generateHash(`GOAL-${date}-CASH-${remainingDay}`),
-          created_at: new Date().toISOString()
-        });
+        // Justificación: Si queda poco, buscamos el producto más barato y ajustamos su precio
+        const cheapest = wildcards[wildcards.length - 1];
+        if (cheapest && remainingDay < cheapest.precio_cents * 2) {
+            const line = await this.createLine({ fecha: date, referencia_origen: `GOAL-${date}` } as any, cheapest, 1, 'CASH_FILLER', 'Efectivo');
+            line.precio_unitario_cents = remainingDay;
+            line.importe_linea_cents = remainingDay;
+            lines.push(line);
+        } else {
+            lines.push({
+                id: uuidv4(),
+                transaction_ref: `GOAL-${date}`,
+                fecha_operacion: date,
+                ingreso_banco_cents: 0,
+                venta_real_calculada_cents: remainingDay,
+                comision_banco_cents: 0,
+                product_cod: 'CASH',
+                product_um: 'U',
+                cantidad: 1,
+                precio_unitario_cents: remainingDay,
+                importe_linea_cents: remainingDay,
+                cuadre_cents: 0,
+                clasificacion: 'Efectivo',
+                origen_dato: 'CASH_FILLER',
+                reconciliation_hash: await generateHash(`GOAL-${date}-CASH-${remainingDay}`),
+                created_at: new Date().toISOString()
+            });
+        }
       }
     }
 

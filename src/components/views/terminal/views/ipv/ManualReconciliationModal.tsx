@@ -60,6 +60,40 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
 
     const remaining = targetAmount - currentTotal;
 
+    const applyRebate = () => {
+        if (manualLines.length === 0) {
+            toast.error('Añada al menos un producto para aplicar una rebaja o ajuste.');
+            return;
+        }
+
+        // Aplicamos el ajuste a la última línea manual añadida
+        const lastLineIndex = manualLines.length - 1;
+        const lastLine = manualLines[lastLineIndex];
+
+        const adjustment = remaining;
+        const newTotalLine = (lastLine.importe_linea_cents || 0) + adjustment;
+
+        if (newTotalLine < 0) {
+            toast.error('El ajuste resultaría en un precio negativo.');
+            return;
+        }
+
+        const updatedLines = [...manualLines];
+        updatedLines[lastLineIndex] = {
+            ...lastLine,
+            importe_linea_cents: newTotalLine,
+            // Si es 1 unidad, ajustamos el unitario. Si son varias, el unitario queda como "promedio" o lo dejamos así
+            precio_unitario_cents: lastLine.cantidad === 1 ? newTotalLine : lastLine.precio_unitario_cents,
+            cuadre_cents: (lastLine.cuadre_cents || 0) + adjustment,
+            origen_dato: 'MANUAL_USER' // Se mantiene
+        };
+
+        setManualLines(updatedLines);
+        toast.success(`Ajuste de ${adjustment} cts aplicado a ${lastLine.product_cod}`, {
+            icon: <CheckCircle2 className="text-primary" />
+        });
+    };
+
     const addProduct = async (product: Product) => {
         // Regla: Bloqueo de Existencias Negativas en Productos a Medida
         if (isProductAMedida(product.um)) {
@@ -196,11 +230,26 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                             <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Cents Conciliados</span>
                             <span className="text-xl font-black text-green-600">{currentTotal}</span>
                         </div>
-                        <div className="flex-1 p-3 md:p-4 bg-orange-500/5 rounded-2xl border border-orange-500/10 flex flex-col">
+                        <div className="flex-1 p-3 md:p-4 bg-orange-500/5 rounded-2xl border border-orange-500/10 flex flex-col group relative overflow-hidden">
                             <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Restante (Cents)</span>
-                            <span className={`text-xl font-black ${Math.abs(remaining) < 0.001 ? 'text-green-600' : 'text-orange-600'}`}>
-                                {remaining.toFixed(2)}
-                            </span>
+                            <div className="flex items-center justify-between">
+                                <span className={`text-xl font-black ${Math.abs(remaining) < 0.001 ? 'text-green-600' : 'text-orange-600'}`}>
+                                    {remaining.toFixed(2)}
+                                </span>
+                                {Math.abs(remaining) > 0.001 && manualLines.length > 0 && (
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-7 text-[9px] font-black uppercase px-2 bg-background border-orange-200 text-orange-600 hover:bg-orange-500 hover:text-white transition-all animate-in zoom-in duration-300"
+                                        onClick={applyRebate}
+                                    >
+                                        Cuadrar
+                                    </Button>
+                                )}
+                            </div>
+                            <div className="absolute -right-2 -bottom-2 opacity-10 group-hover:scale-110 transition-transform">
+                                <AlertTriangle className="w-12 h-12 text-orange-500" />
+                            </div>
                         </div>
                     </div>
                 </DialogHeader>
@@ -317,7 +366,14 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                                             </div>
                                             <div className="text-right">
                                                 <span className="text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-1 block">Subtotal</span>
-                                                <span className="font-black text-base text-primary">{(l.importe_linea_cents || 0)}</span>
+                                                <div className="flex flex-col items-end">
+                                                    <span className="font-black text-base text-primary">{(l.importe_linea_cents || 0)}</span>
+                                                    {l.cuadre_cents && l.cuadre_cents !== 0 ? (
+                                                        <Badge variant="outline" className="text-[8px] font-black uppercase py-0 px-1 border-orange-200 text-orange-600 bg-orange-50">
+                                                            {l.cuadre_cents > 0 ? '+' : ''}{l.cuadre_cents} Ajuste
+                                                        </Badge>
+                                                    ) : null}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

@@ -22,9 +22,11 @@ import {
   Lock,
   RotateCcw,
   Trash2,
-  RefreshCw
+  RefreshCw,
+  Eye
 } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { IPVPreviewModal } from './IPVPreviewModal';
 import { toast } from 'sonner';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -39,6 +41,8 @@ export function IPVReportView() {
   const [dateTo, setDateTo] = React.useState(new Date().toISOString().split('T')[0]);
   const [isLoading, setIsLoading] = React.useState(false);
   const [loadingMessage, setLoadingMessage] = React.useState('');
+  const [previewReport, setPreviewReport] = React.useState<DailyIPVReport | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = React.useState(false);
 
   const years = React.useMemo(() => {
     const currentYear = new Date().getFullYear();
@@ -328,7 +332,7 @@ export function IPVReportView() {
     }
   };
 
-  const exportPDF = async (report: DailyIPVReport) => {
+  const exportPDF = async (report: DailyIPVReport, includeDetails: boolean = false) => {
     try {
       toast.loading('Generando PDF...', { id: 'pdf-gen' });
 
@@ -396,7 +400,35 @@ export function IPVReportView() {
       doc.text('Firma Responsable', 14, finalY + 5);
       doc.text(`Realizado por: ${report.firmas?.realizado_por || 'Sistema'}`, 14, finalY + 10);
 
-      doc.save(`IPV_${report.fecha_reporte}.pdf`);
+      // Annex: Transaction Details if requested
+      if (includeDetails) {
+          doc.addPage();
+          doc.setFontSize(14);
+          doc.text('ANEXO: DESGLOSE TRANSACCIONAL', pageWidth / 2, 20, { align: 'center' });
+          doc.setFontSize(10);
+          doc.text(`Fecha: ${report.fecha_reporte}`, 14, 30);
+
+          const lines = await db.reconciliation_lines.where('fecha_operacion').equals(report.fecha_reporte).toArray();
+          const detailData = lines.map(l => [
+              l.transaction_ref.substring(0, 15),
+              l.product_cod,
+              l.cantidad,
+              formatCurrency(l.precio_unitario_cents),
+              formatCurrency(l.importe_linea_cents),
+              l.clasificacion
+          ]);
+
+          autoTable(doc, {
+              startY: 40,
+              head: [['Ref. Trans.', 'Producto', 'Cant.', 'Precio', 'Importe', 'Clasif.']],
+              body: detailData,
+              theme: 'striped',
+              headStyles: { fillColor: [59, 130, 246] },
+              styles: { fontSize: 7 }
+          });
+      }
+
+      doc.save(`IPV_${report.fecha_reporte}${includeDetails ? '_CON_DETALLE' : ''}.pdf`);
 
       toast.success('PDF descargado exitosamente', { id: 'pdf-gen' });
     } catch (error) {
@@ -708,6 +740,12 @@ export function IPVReportView() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => {
+                            setPreviewReport(r);
+                            setIsPreviewOpen(true);
+                        }} title="Ver Vista Previa">
+                            <Eye className="w-4 h-4" />
+                        </Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => exportPDF(r)}>
                             <Download className="w-4 h-4" />
                         </Button>
@@ -741,6 +779,13 @@ export function IPVReportView() {
           </TableBody>
         </Table>
       </div>
+
+      <IPVPreviewModal
+        report={previewReport}
+        open={isPreviewOpen}
+        onOpenChange={setIsPreviewOpen}
+        onExportPDF={exportPDF}
+      />
     </div>
   );
 }
