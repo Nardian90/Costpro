@@ -304,7 +304,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
   }, [sections]);
 
   const suggestions = useMemo(() => [
-    ...annexes.map(a => ({ label: `Anexo ${a.id}`, value: `Anexo${a.id}`, description: a.title })),
+    ...(annexes || []).map(a => ({ label: `Anexo ${a.id}`, value: `Anexo${a.id}`, description: a.title })),
     ...allRows.map(r => ({ label: `Fila ${r.id}`, value: `ref('${r.id}')`, description: r.label })),
     { label: 'SUMA', value: 'SUMA(', description: 'Suma de valores' },
     { label: 'PROMEDIO', value: 'PROMEDIO(', description: 'Promedio de valores' },
