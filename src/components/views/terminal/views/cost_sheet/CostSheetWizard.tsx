@@ -35,7 +35,10 @@ const CostSheetWizard: React.FC<CostSheetWizardProps> = ({ data, calculatedValue
   // Auto-select first section when wizard reaches the main step
   React.useEffect(() => {
     if (data?.sections && data.sections.length > 0 && !activeSubSectionId) {
-       setActiveSubSectionId(data.sections[0]?.id || '');
+       const firstId = data.sections[0]?.id;
+       if (firstId && firstId !== activeSubSectionId) {
+         setActiveSubSectionId(firstId);
+       }
     }
   }, [data?.sections, activeSubSectionId]);
 

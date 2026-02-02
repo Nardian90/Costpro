@@ -54,10 +54,17 @@ const evaluateAnnexExpression = (expression: string, rowData: any, header: any):
 };
 
 export const useCostSheetCalculator = (template: CostSheetData) => {
-  const [calculatedValues, setCalculatedValues] = useState<{ [key: string]: CalculatedRowValue }>({});
-  const [calculationResult, setCalculationResult] = useState<CalculationResult | null>(null);
-  const [audits, setAudits] = useState<AuditEntry[]>([]);
-  const [error, setError] = useState<Error | null>(null);
+  const [resultState, setResultState] = useState<{
+      calculatedValues: { [key: string]: CalculatedRowValue };
+      calculationResult: CalculationResult | null;
+      audits: AuditEntry[];
+      error: Error | null;
+  }>({
+      calculatedValues: {},
+      calculationResult: null,
+      audits: [],
+      error: null
+  });
 
   // 1. Calculate Annexes first (internal formulas)
   const calculatedAnnexes = useMemo(() => {
@@ -115,7 +122,9 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
   // 2. Run the declarative Engine for the main rows
   useEffect(() => {
     try {
-      if (!template || !template.header || !template.sections) return;
+      if (!template || !template.header || !template.sections) {
+          return;
+      }
 
       // Map UI state to Engine-compatible JSON
       const engineRows: CostRow[] = [];
@@ -242,15 +251,24 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
           };
       });
 
-      setCalculatedValues(newCalculatedValues);
-      setCalculationResult(result);
-      setAudits(result.audits);
-      setError(null);
+      setResultState({
+          calculatedValues: newCalculatedValues,
+          calculationResult: result,
+          audits: result.audits,
+          error: null
+      });
     } catch (e) {
-      setError(e as Error);
+      setResultState(prev => ({ ...prev, error: e as Error }));
       console.error("Error in unified cost calculator:", e);
     }
   }, [template, calculatedAnnexes]);
 
-  return { calculatedValues, calculatedAnnexes, annexTotals, audits, calculationResult, error };
+  return {
+      calculatedValues: resultState.calculatedValues,
+      calculatedAnnexes,
+      annexTotals,
+      audits: resultState.audits,
+      calculationResult: resultState.calculationResult,
+      error: resultState.error
+  };
 };

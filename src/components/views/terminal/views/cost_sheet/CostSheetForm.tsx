@@ -28,7 +28,14 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
   };
 
   const renderHeaderForm = () => {
-    if (!data?.header) return null;
+    if (!data?.header) {
+      return (
+        <div className="p-8 text-center bg-muted/20 rounded-2xl border border-dashed">
+          <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Datos de encabezado no disponibles</p>
+        </div>
+      );
+    }
+
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {[
@@ -49,7 +56,7 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
               id={`header-${field.id}`}
               className="neu-input w-full"
               type={field.type}
-              value={(data.header as any)?.[field.id] ?? ''}
+              value={(data?.header as any)?.[field.id] ?? ''}
               onChange={(e) => handleInputChange(['header', field.id], e.target.value)}
             />
           </div>
@@ -81,12 +88,15 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
   };
 
   const renderSectionForm = () => {
-    const section = (data?.sections || []).find((s: any) => s.id === activeSection);
+    const sections = data?.sections ?? [];
+    const section = sections.find((s: any) => s?.id === activeSection);
     if (!section) return null;
+
+    const rows = section.rows ?? [];
 
     return (
       <div className="space-y-4 sm:space-y-6">
-        {section.rows.map((row: any, rowIndex: number) => (
+        {rows.map((row: any, rowIndex: number) => (
           <div key={row.id} className="neu-card !p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-white/5">
             <div className="flex-1">
                 <Label htmlFor={`section-${section.id}-${rowIndex}`} className="font-black text-sm sm:text-base block mb-1">
@@ -109,7 +119,7 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
                         <Input
                             id={`section-${section.id}-${rowIndex}`}
                             type="number"
-                            value={row.value}
+                            value={row.value ?? 0}
                             onChange={(e) => handleInputChange(['sections', (data?.sections || []).indexOf(section), 'rows', rowIndex, 'value'], e.target.value)}
                             className="neu-input !pr-10 text-right font-mono text-lg font-bold"
                         />
@@ -126,12 +136,13 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
   };
 
   const renderAnnexForm = () => {
-    const annex = (data?.annexes || []).find((a: any) => a.id === activeSection);
-    const calculatedAnnex = (calculatedAnnexes || []).find((a: any) => a.id === activeSection);
+    const annexes = data?.annexes ?? [];
+    const annex = annexes.find((a: any) => a?.id === activeSection);
+    const calculatedAnnex = (calculatedAnnexes || []).find((a: any) => a?.id === activeSection);
     if (!annex) return null;
 
-    const displayData = calculatedAnnex ? calculatedAnnex.data : annex.data;
-    const annexIndex = (data?.annexes || []).indexOf(annex);
+    const displayData = calculatedAnnex ? (calculatedAnnex.data ?? []) : (annex.data ?? []);
+    const annexIndex = annexes.indexOf(annex);
 
     return (
       <div className="space-y-6">
@@ -165,17 +176,17 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
                   <TableBody>
                       {displayData.map((row: any, rowIndex: number) => (
                           <TableRow key={rowIndex} className="border-b border-border/30 hover:bg-primary/5 transition-colors group">
-                              {annex.columns.map((col: any) => (
-                                  <TableCell key={col.key} data-label={col.label} className="p-3 sm:p-4">
-                                      {col.formula ? (
+                              {(annex.columns ?? []).map((col: any) => (
+                                  <TableCell key={col?.key} data-label={col?.label} className="p-3 sm:p-4">
+                                      {col?.formula ? (
                                           <div className="neu-inset-sm px-3 py-2 font-mono text-right bg-primary/5 text-primary font-black min-w-[100px] border border-primary/10">
-                                              {formatCurrency(row[col.key] || 0).replace('$', '').trim()}
+                                              {formatCurrency(row?.[col.key] || 0).replace('$', '').trim()}
                                           </div>
                                       ) : (
                                           <Input
-                                              type={typeof row[col.key] === 'number' ? 'number' : 'text'}
-                                              value={data?.annexes?.[annexIndex]?.data?.[rowIndex]?.[col.key] ?? ''}
-                                              onChange={(e) => handleInputChange(['annexes', annexIndex, 'data', rowIndex, col.key], e.target.value)}
+                                              type={typeof row?.[col?.key] === 'number' ? 'number' : 'text'}
+                                              value={data?.annexes?.[annexIndex]?.data?.[rowIndex]?.[col?.key] ?? ''}
+                                              onChange={(e) => handleInputChange(['annexes', annexIndex, 'data', rowIndex, col?.key], e.target.value)}
                                               className="neu-input !p-2 min-w-[120px] text-sm font-medium border-transparent hover:border-primary/20 focus:border-primary"
                                           />
                                       )}
