@@ -19,7 +19,7 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onA
     const isLowStock = product.stock_current <= product.min_stock;
     return (
         <tr ref={ref} className="border-b last:border-0 hover:bg-accent/5 transition-colors">
-            <td className="p-4">
+            <td className="p-4" data-label="Producto">
                 <div className="flex items-center gap-3">
                     <div className="neu-raised-sm w-12 h-12 flex items-center justify-center overflow-hidden shrink-0">
                         <ProductImage
@@ -34,11 +34,11 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onA
                     </div>
                 </div>
             </td>
-            <td className="p-4 text-xs font-mono text-muted-foreground">{product.sku || '-'}</td>
-            <td className="p-4 text-right font-black text-lg">{product.stock_current}</td>
-            <td className="p-4 text-right font-bold text-primary">{formatCurrency(product.price || 0)}</td>
-            <td className="p-4 text-right text-muted-foreground">{formatCurrency(product.cost_price || 0)}</td>
-            <td className="p-4 text-center">
+            <td className="p-4 text-xs font-mono text-muted-foreground" data-label="SKU">{product.sku || '-'}</td>
+            <td className="p-4 text-right font-black text-lg" data-label="Stock">{product.stock_current}</td>
+            <td className="p-4 text-right font-bold text-primary" data-label="Precio">{formatCurrency(product.price || 0)}</td>
+            <td className="p-4 text-right text-muted-foreground" data-label="Costo">{formatCurrency(product.cost_price || 0)}</td>
+            <td className="p-4 text-center" data-label="Estado">
                 <span className={cn(
                     "neu-badge text-[9px] px-2 py-0.5",
                     isLowStock ? "text-danger" : "text-success"
@@ -46,14 +46,14 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onA
                     {isLowStock ? 'Stock Bajo' : 'Normal'}
                 </span>
             </td>
-            <td className="p-4">
+            <td className="p-4" data-label="Acciones">
                 <div className="flex justify-center">
                     <button
                         onClick={() => onAdjust?.(product)}
-                        className="neu-btn min-h-[44px] min-w-[44px] !px-4 flex items-center justify-center gap-2 hover:neu-raised-sm"
+                        className="neu-btn min-h-[44px] min-w-[44px] !px-4 flex items-center justify-center gap-2 hover:neu-raised-sm w-full sm:w-auto"
                     >
                         <Edit className="w-4 h-4" />
-                        <span className="hidden sm:inline text-xs font-black uppercase tracking-widest">Ajustar</span>
+                        <span className="text-xs font-black uppercase tracking-widest">Ajustar</span>
                     </button>
                 </div>
             </td>
@@ -76,7 +76,7 @@ export default function InventoryTableView({ products, loadMore, hasMore, isLoad
     }, [isLoading, hasMore, loadMore]);
 
     return (
-        <div className="overflow-x-auto table-to-cards rounded-2xl shadow-xl border border-white/5 force-table">
+        <div className="overflow-x-auto table-to-cards rounded-2xl shadow-xl border border-white/5">
             <table className="w-full min-w-[1024px] grid-table-inventory">
                 <thead className="bg-muted/30 border-b sticky-header">
                     <tr className="text-left text-muted-foreground uppercase text-[10px] font-bold">
