@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { DollarSign, CreditCard, Layers, Edit, History, Eye, CheckCircle2, RefreshCw } from 'lucide-react';
 import { cn, formatCurrency, formatDate, formatTime } from '@/lib/utils';
-import ActionMenu from '@/components/ui/ActionMenu';
+import ActionMenu, { Action } from '@/components/ui/ActionMenu';
 
 import { useCashClosures, useCreateCashClosure, useUpdateCashClosure, useSalesSinceLastClosure } from '@/hooks/api/useCashClosures';
 import { useAuthStore } from '@/store';
@@ -115,9 +115,9 @@ export default function CashClosureView() {
       : 'Actualizar Declaración';
 
   const buttonIcon = !pendingClosure ? DollarSign : CheckCircle2;
-  const buttonVariant = pendingClosure && canClose ? 'success' : 'primary';
+  const buttonVariant = (pendingClosure && canClose ? 'success' : 'primary') as 'success' | 'primary';
 
-  const actions = [
+  const actions: Action[] = [
     {
       id: 'refresh',
       label: isRefreshing ? 'Actualizando...' : 'Actualizar',
