@@ -51,6 +51,14 @@ export function CatalogTable() {
 
   const { data: stores } = useStores(user?.id || '', isAdmin, isEncargado);
   const products = useLiveQuery(() => db.products.toArray());
+
+  // Default selection: all products
+  React.useEffect(() => {
+    if (products && products.length > 0 && selectedProductIds.length === 0) {
+        setSelectedProductIds(products.map(p => p.cod));
+    }
+  }, [products]);
+
   const reports = useLiveQuery(() => db.ipv_reports.orderBy('fecha_reporte').reverse().toArray());
   const reconciliationLines = useLiveQuery(() => db.reconciliation_lines.toArray());
 
@@ -176,13 +184,16 @@ export function CatalogTable() {
 
   const handleAcceptSuggestions = async () => {
     if (!products) return;
-    const withSuggestions = products.filter(p => p.suggestedPrice && p.suggestedPrice !== p.precio_cents);
+
+    const targetProducts = products.filter(p => selectedProductIds.includes(p.cod));
+    const withSuggestions = targetProducts.filter(p => p.suggestedPrice && p.suggestedPrice !== p.precio_cents);
+
     if (withSuggestions.length === 0) {
-        toast.info('No hay sugerencias de precio pendientes');
+        toast.info('No hay sugerencias de precio pendientes para los productos seleccionados');
         return;
     }
 
-    if (!confirm(`¿Aplicar ${withSuggestions.length} sugerencias de precio inteligentes? Se respaldará el precio actual como base.`)) return;
+    if (!confirm(`¿Aplicar ${withSuggestions.length} sugerencias de precio inteligentes a los productos seleccionados?`)) return;
 
     try {
         const updates = withSuggestions.map(p => ({
@@ -200,13 +211,20 @@ export function CatalogTable() {
 
   const handleBulkPriority = async (mode: 'auto' | 'hybrid' | 'manual') => {
     if (!products) return;
-    if (!confirm(`¿Establecer todos los productos en modo de prioridad "${mode}"?`)) return;
+
+    const targetProducts = products.filter(p => selectedProductIds.includes(p.cod));
+    if (targetProducts.length === 0) {
+        toast.error('Selecciona al menos un producto');
+        return;
+    }
+
+    if (!confirm(`¿Establecer modo de prioridad "${mode}" para ${targetProducts.length} productos seleccionados?`)) return;
 
     try {
-        const updates = products.map(p => ({ ...p, priorityMode: mode }));
+        const updates = targetProducts.map(p => ({ ...p, priorityMode: mode }));
         await db.products.bulkPut(updates);
-        toast.success(`Prioridad ${mode} aplicada a todo el catálogo`);
-        handleRecalculateIntelligence(); // Recalcular para aplicar la lógica auto
+        toast.success(`Prioridad ${mode} aplicada`);
+        handleRecalculateIntelligence();
     } catch (error) {
         toast.error('Error al actualizar prioridades');
     }
@@ -244,9 +262,12 @@ export function CatalogTable() {
   };
 
   const handleResetPrices = async () => {
-      if (!confirm('¿Restablecer todos los precios a su valor base original?')) return;
+      const targetProducts = (products || []).filter(p => selectedProductIds.includes(p.cod));
+      if (targetProducts.length === 0) return;
+
+      if (!confirm(`¿Restablecer precios base para ${targetProducts.length} productos seleccionados?`)) return;
       try {
-          const updates = (products || [])
+          const updates = targetProducts
               .filter(p => p.precio_base_cents !== undefined)
               .map(p => ({
                   ...p,
@@ -266,11 +287,17 @@ export function CatalogTable() {
   const handleRecalculateIntelligence = async () => {
     if (!products || !reconciliationLines) return;
 
+    const targetProducts = products.filter(p => selectedProductIds.includes(p.cod));
+    if (targetProducts.length === 0) {
+        toast.error('Selecciona productos para analizar');
+        return;
+    }
+
     setIsSyncing(true);
     toast.loading('Analizando catálogo...', { id: 'intel' });
 
     try {
-        for (const p of products) {
+        for (const p of targetProducts) {
             const score = calculatePriceEffectiveness(p, reconciliationLines);
             const suggestion = suggestAlternativePrice(p);
             const isWildcard = checkWildcardCandidate(p);
