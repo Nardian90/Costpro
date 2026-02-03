@@ -24,7 +24,6 @@ import { MatchingSimulation } from './MatchingSimulation';
 import { TransactionBreakdown } from './TransactionBreakdown';
 import { IPVReportView } from './IPVReportView';
 import { MatchingRulesEditor } from './MatchingRulesEditor';
-import { CashAdjustmentsTable } from './CashAdjustmentsTable';
 import { PivotStatementView } from './PivotStatementView';
 import { IngestionErrorsTable } from './IngestionErrorsTable';
 import { IPVControlPanel } from './IPVControlPanel';
@@ -146,37 +145,28 @@ export default function IPVView() {
     setIsMatching(true);
     setMatchMessage('Iniciando proceso de matching...');
 
-    // RESET LOGIC: Reiniciar conciliación para transacciones que no estén cuadradas (diff != 0)
+    // Preparar transacciones para el worker, incluyendo el total ya conciliado
     const allLines = await db.reconciliation_lines.toArray();
-    const txTotals = allLines.reduce((acc, line) => {
+    const txTotalsMap = allLines.reduce((acc, line) => {
         acc[line.transaction_ref] = (acc[line.transaction_ref] || 0) + line.importe_linea_cents;
         return acc;
     }, {} as Record<string, number>);
 
-    const txToReset = transactions.filter(t => {
-        const matched = txTotals[t.referencia_origen] || 0;
-        const target = t.importe_venta_cents || t.importe_cents;
-        return Math.abs(target - matched) >= 0.001;
-    });
-
-    if (txToReset.length > 0) {
-        setMatchMessage(`Reiniciando ${txToReset.length} transacciones no cuadradas...`);
-        for (const tx of txToReset) {
-            await db.reconciliation_lines.where('transaction_ref').equals(tx.referencia_origen).delete();
-            await db.bank_statements.update(tx.referencia_origen, { estado_conciliacion: 'PENDIENTE' });
-        }
-    }
-
-    // Volvemos a obtener transacciones actualizadas para enviar al worker
-    const updatedTransactions = await db.bank_statements.toArray();
     setMatchMessage('Ejecutando algoritmos de matching...');
+
+    const transactionsToProcess = transactions
+        .filter(t => t.estado_conciliacion !== 'COMPLETO' && !t.excluido)
+        .map(t => ({
+            ...t,
+            current_reconciled_cents: txTotalsMap[t.referencia_origen] || 0
+        }));
 
     // Aquí invocaríamos al Worker
     const worker = new Worker(new URL('@/lib/ipv/matching.worker.ts', import.meta.url));
 
     worker.postMessage({
       type: 'RECONCILE_BATCH',
-      transactions: updatedTransactions.filter(t => t.estado_conciliacion !== 'COMPLETO' && !t.excluido),
+      transactions: transactionsToProcess,
       products,
       rules
     });
@@ -368,10 +358,6 @@ export default function IPVView() {
 
           <TabsContent value="rules" className="m-0 p-6">
             <MatchingRulesEditor />
-          </TabsContent>
-
-          <TabsContent value="adjustments" className="m-0">
-            <CashAdjustmentsTable />
           </TabsContent>
 
           <TabsContent value="errors" className="m-0">

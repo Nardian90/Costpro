@@ -169,7 +169,7 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                     ingreso_banco_cents: transaction.importe_cents,
                     venta_real_calculada_cents: line.importe_linea_cents || 0,
                     comision_banco_cents: 0,
-                    cuadre_cents: 0,
+                    cuadre_cents: line.cuadre_cents || 0,
                     reconciliation_hash: await generateHash(`${transaction.referencia_origen}-${line.product_cod}-${line.cantidad}-${Date.now()}`),
                     created_at: new Date().toISOString()
                 };
@@ -190,15 +190,6 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
             console.error(error);
             toast.error('Error al guardar la conciliación');
         }
-    };
-
-    const markAsCommission = async () => {
-        if (!transaction) return;
-        await db.bank_statements.update(transaction.referencia_origen, {
-            estado_conciliacion: 'COMPLETO'
-        });
-        toast.success('Marcada como comisión (COMPLETO)');
-        onOpenChange(false);
     };
 
     if (!transaction) return null;
@@ -242,8 +233,9 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                                         variant="outline"
                                         className="h-7 text-[9px] font-black uppercase px-2 bg-background border-orange-200 text-orange-600 hover:bg-orange-500 hover:text-white transition-all animate-in zoom-in duration-300"
                                         onClick={applyRebate}
+                                        title="Ajustar la última línea para cuadrar el total"
                                     >
-                                        Cuadrar
+                                        Auto-Cuadrar
                                     </Button>
                                 )}
                             </div>
@@ -363,6 +355,28 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                                                     />
                                                 </div>
                                                 <span className="text-[10px] uppercase font-black text-muted-foreground mt-5 tracking-widest">{l.product_um}</span>
+
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    className="h-7 text-[8px] font-black uppercase px-2 mt-4 hover:bg-orange-500/10 text-orange-600"
+                                                    onClick={() => {
+                                                        const idx = manualLines.findIndex(ml => ml.id === l.id);
+                                                        if (idx !== -1) {
+                                                            const updated = [...manualLines];
+                                                            const adjustment = remaining;
+                                                            updated[idx] = {
+                                                                ...updated[idx],
+                                                                importe_linea_cents: (updated[idx].importe_linea_cents || 0) + adjustment,
+                                                                cuadre_cents: (updated[idx].cuadre_cents || 0) + adjustment
+                                                            };
+                                                            setManualLines(updated);
+                                                        }
+                                                    }}
+                                                    disabled={Math.abs(remaining) < 0.001}
+                                                >
+                                                    Cuadrar Aquí
+                                                </Button>
                                             </div>
                                             <div className="text-right">
                                                 <span className="text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-1 block">Subtotal</span>
@@ -370,7 +384,7 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                                                     <span className="font-black text-base text-primary">{(l.importe_linea_cents || 0)}</span>
                                                     {l.cuadre_cents && l.cuadre_cents !== 0 ? (
                                                         <Badge variant="outline" className="text-[8px] font-black uppercase py-0 px-1 border-orange-200 text-orange-600 bg-orange-50">
-                                                            {l.cuadre_cents > 0 ? '+' : ''}{l.cuadre_cents} Ajuste
+                                                            {l.cuadre_cents > 0 ? '+' : ''}{l.cuadre_cents} Ajuste (Rebaja)
                                                         </Badge>
                                                     ) : null}
                                                 </div>
@@ -396,10 +410,7 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                 </div>
 
                 <DialogFooter className="p-4 md:p-6 border-t bg-background/95 backdrop-blur-md shrink-0 z-20">
-                    <div className="flex flex-col sm:flex-row justify-between w-full items-center gap-4">
-                        <Button variant="outline" onClick={markAsCommission} className="w-full sm:w-auto text-[10px] uppercase font-black tracking-widest h-10 border-muted-foreground/20 hover:bg-muted">
-                            Marcar como Comisión
-                        </Button>
+                    <div className="flex flex-col sm:flex-row justify-end w-full items-center gap-4">
                         <div className="flex gap-2 w-full sm:w-auto">
                             <Button variant="ghost" className="flex-1 sm:flex-none h-10 text-[10px] font-black uppercase tracking-widest" onClick={() => onOpenChange(false)}>Cerrar</Button>
                             <Button

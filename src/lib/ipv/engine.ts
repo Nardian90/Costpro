@@ -34,25 +34,13 @@ export class MatchingEngine {
     this.rules = rules.filter(r => r.activo).sort((a, b) => a.prioridad - b.prioridad);
   }
 
-  async matchTransaction(transaction: BankTransaction): Promise<MatchingResult> {
+  async matchTransaction(transaction: BankTransaction, current_reconciled_cents: number = 0): Promise<MatchingResult> {
     const logs: string[] = [];
     const targetAmount = transaction.importe_venta_cents || transaction.importe_cents;
-    let remaining_cents = targetAmount;
+    let remaining_cents = targetAmount - current_reconciled_cents;
     const lines: ReconciliationLine[] = [];
 
-    logs.push(`Iniciando matching para transacción ${transaction.referencia_origen} (Importe: ${transaction.importe_cents}, Venta: ${targetAmount} cts)`);
-
-    // PASS 0: Debitos (Comisiones)
-    if (transaction.tipo === 'Db') {
-        const isCommission = transaction.observaciones.toLowerCase().includes('comision') ||
-                            transaction.observaciones.toLowerCase().includes('banca remota') ||
-                            transaction.observaciones.toLowerCase().includes('virtualbandec');
-
-        if (isCommission) {
-            logs.push(`PASS 0: Detectada comisión bancaria. Marcando como COMPLETO.`);
-            return { lines: [], status: 'COMPLETO', logs };
-        }
-    }
+    logs.push(`Iniciando matching para transacción ${transaction.referencia_origen} (Importe: ${transaction.importe_cents}, Venta: ${targetAmount} cts, Restante: ${remaining_cents} cts)`);
 
     // Intentar recuperación desde caché (sólo para PASS 2 EXACT_SUM)
     const catalogHash = await generateHash(JSON.stringify(this.products.map(p => ({ cod: p.cod, price: p.precio_cents }))));
@@ -222,28 +210,17 @@ export class MatchingEngine {
         }
 
         if (remaining_cents > 0) {
-            // El excedente final se marca como ajuste de efectivo genérico si no se pudo justificar todo
-            const line: ReconciliationLine = {
-                id: uuidv4(),
-                transaction_ref: transaction.referencia_origen,
-                fecha_operacion: transaction.fecha,
-                ingreso_banco_cents: 0,
-                venta_real_calculada_cents: remaining_cents,
-                comision_banco_cents: 0,
-                product_cod: 'CASH',
-                product_um: 'U',
-                cantidad: 1,
-                precio_unitario_cents: remaining_cents,
-                importe_linea_cents: remaining_cents,
-                cuadre_cents: 0,
-                clasificacion: 'Efectivo',
-                origen_dato: 'CASH_FILLER',
-                reconciliation_hash: await generateHash(transaction.referencia_origen + 'CASH_FILL' + remaining_cents),
-                created_at: new Date().toISOString()
-            };
-            lines.push(line);
-            logs.push(`PASS 6 (CASH_FILL): Cubierto gap residual de ${remaining_cents} cts con efectivo genérico`);
-            remaining_cents = 0;
+            // REBAJA LOGIC: Usar un comodín y ajustar su precio (rebaja/ajuste) para cubrir el faltante exacto
+            const fillerProduct = wildcards[0] || this.products[0];
+            if (fillerProduct) {
+                const line = await this.createLine(transaction, fillerProduct, 1, 'CASH_FILLER', 'Efectivo');
+                const diff = remaining_cents - fillerProduct.precio_cents;
+                line.importe_linea_cents = remaining_cents;
+                line.cuadre_cents = diff;
+                lines.push(line);
+                logs.push(`PASS 6 (CASH_FILL): Cubierto gap residual de ${remaining_cents} cts con ${fillerProduct.descripcion} (Ajuste: ${diff})`);
+                remaining_cents = 0;
+            }
         }
       }
     }
@@ -307,34 +284,15 @@ export class MatchingEngine {
         }
       }
 
-      // El resto del día lo ponemos como efectivo genérico o intentamos "inflar" un producto
+      // El resto del día lo ponemos usando un producto comodín con rebaja/ajuste
       if (remainingDay > 0.01) {
-        // Justificación: Si queda poco, buscamos el producto más barato y ajustamos su precio
-        const cheapest = wildcards[wildcards.length - 1];
-        if (cheapest && remainingDay < cheapest.precio_cents * 2) {
-            const line = await this.createLine({ fecha: date, referencia_origen: `GOAL-${date}` } as any, cheapest, 1, 'CASH_FILLER', 'Efectivo');
-            line.precio_unitario_cents = remainingDay;
+        const fillerProduct = wildcards[0] || this.products[0];
+        if (fillerProduct) {
+            const line = await this.createLine({ fecha: date, referencia_origen: `GOAL-${date}` } as any, fillerProduct, 1, 'CASH_FILLER', 'Efectivo');
+            const diff = remainingDay - fillerProduct.precio_cents;
             line.importe_linea_cents = remainingDay;
+            line.cuadre_cents = diff;
             lines.push(line);
-        } else {
-            lines.push({
-                id: uuidv4(),
-                transaction_ref: `GOAL-${date}`,
-                fecha_operacion: date,
-                ingreso_banco_cents: 0,
-                venta_real_calculada_cents: remainingDay,
-                comision_banco_cents: 0,
-                product_cod: 'CASH',
-                product_um: 'U',
-                cantidad: 1,
-                precio_unitario_cents: remainingDay,
-                importe_linea_cents: remainingDay,
-                cuadre_cents: 0,
-                clasificacion: 'Efectivo',
-                origen_dato: 'CASH_FILLER',
-                reconciliation_hash: await generateHash(`GOAL-${date}-CASH-${remainingDay}`),
-                created_at: new Date().toISOString()
-            });
         }
       }
     }
@@ -421,13 +379,13 @@ export class MatchingEngine {
     return solve(target, 0, 0) || [];
   }
 
-  async reconcileAll(transactions: BankTransaction[], onProgress?: (percentage: number) => void): Promise<any[]> {
+  async reconcileAll(transactions: (BankTransaction & { current_reconciled_cents?: number })[], onProgress?: (percentage: number) => void): Promise<any[]> {
     const results = [];
     const total = transactions.length;
 
     for (let i = 0; i < total; i++) {
         const tx = transactions[i];
-        const res = await this.matchTransaction(tx);
+        const res = await this.matchTransaction(tx, tx.current_reconciled_cents || 0);
         results.push({
             transactionId: tx.referencia_origen,
             status: res.status,
