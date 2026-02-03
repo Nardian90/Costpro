@@ -28,10 +28,18 @@ export interface MatchingResult {
 export class MatchingEngine {
   private products: Product[];
   private rules: MatchingRule[];
+  private stockMap: Map<string, number> = new Map();
+  private useStockLimit: boolean = false;
 
   constructor(products: Product[], rules: MatchingRule[]) {
     this.products = products.filter(p => p.activo);
     this.rules = rules.filter(r => r.activo).sort((a, b) => a.prioridad - b.prioridad);
+    this.useStockLimit = this.rules.some(r => r.tipo === 'STOCK_LIMIT');
+
+    // Inicializar mapa de inventario virtual para la sesión de matching
+    for (const p of this.products) {
+        this.stockMap.set(p.cod, p.stock_inicial_manual || 0);
+    }
   }
 
   async matchTransaction(transaction: BankTransaction, current_reconciled_cents: number = 0): Promise<MatchingResult> {
@@ -41,6 +49,16 @@ export class MatchingEngine {
     const lines: ReconciliationLine[] = [];
 
     logs.push(`Iniciando matching para transacción ${transaction.referencia_origen} (Importe: ${transaction.importe_cents}, Venta: ${targetAmount} cts, Restante: ${remaining_cents} cts)`);
+
+    // PASS 0: AUTO-COMPLETE DEBITS OR EXCLUDED (Commissions/Expenses/Excluded)
+    if (transaction.tipo === 'Db' || transaction.estado_conciliacion === 'NO_PROCESAR') {
+      logs.push(`PASS 0: Transacción ${transaction.tipo === 'Db' ? 'Débito' : 'Excluida'} auto-finalizada sin productos.`);
+      return {
+          lines: [],
+          status: 'COMPLETO',
+          logs
+      };
+    }
 
     // Intentar recuperación desde caché (sólo para PASS 2 EXACT_SUM)
     const catalogHash = await generateHash(JSON.stringify(this.products.map(p => ({ cod: p.cod, price: p.precio_cents }))));
@@ -63,15 +81,23 @@ export class MatchingEngine {
     // PASS 1: HARD_REF
     const hardRefRule = this.rules.find(r => r.tipo === 'HARD_REF');
     if (hardRefRule && remaining_cents > 0) {
-      const matchedProduct = this.products.find(p =>
-        transaction.observaciones.includes(p.cod) ||
-        transaction.observaciones.toLowerCase().includes(p.descripcion.toLowerCase())
-      );
+      const matchedProduct = this.products.find(p => {
+        // Si hay límite de stock, ignorar productos sin existencia
+        if (this.useStockLimit && (this.stockMap.get(p.cod) || 0) <= 0) return false;
+
+        return transaction.observaciones.includes(p.cod) ||
+               transaction.observaciones.toLowerCase().includes(p.descripcion.toLowerCase());
+      });
 
       if (matchedProduct) {
-        // En un caso real, HARD_REF podría implicar una cantidad específica si viene en la obs.
-        // Por ahora, si hay match de referencia, intentamos cubrir lo más posible.
-        const qty = Math.floor(remaining_cents / matchedProduct.precio_cents);
+        let qty = Math.floor(remaining_cents / matchedProduct.precio_cents);
+
+        // Ajustar cantidad al stock disponible si aplica
+        if (this.useStockLimit) {
+            const available = this.stockMap.get(matchedProduct.cod) || 0;
+            qty = Math.min(qty, available);
+        }
+
         if (qty > 0) {
           const line = await this.createLine(transaction, matchedProduct, qty, 'AUTO_MATCH', 'Transferencia');
           lines.push(line);
@@ -144,14 +170,26 @@ export class MatchingEngine {
     // PASS 4: WILDCARDS (Productos estratégicos)
     const wildcardsRule = this.rules.find(r => r.tipo === 'WILDCARDS');
     if (wildcardsRule && remaining_cents > 0) {
-        const wildcards = this.products.filter(p => p.isWildcardCandidate).sort((a,b) => b.precio_cents - a.precio_cents);
+        const wildcards = this.products
+            .filter(p => p.isWildcardCandidate)
+            .filter(p => !this.useStockLimit || (this.stockMap.get(p.cod) || 0) > 0)
+            .sort((a,b) => b.precio_cents - a.precio_cents);
+
         for (const p of wildcards) {
             if (p.precio_cents <= remaining_cents && p.precio_cents > 0) {
-                const qty = Math.floor(remaining_cents / p.precio_cents);
-                const line = await this.createLine(transaction, p, qty, 'AUTO_MATCH', 'Transferencia');
-                lines.push(line);
-                remaining_cents -= line.importe_linea_cents;
-                logs.push(`PASS 4 (WILDCARDS): Añadido ${qty}x ${p.descripcion} como comodín`);
+                let qty = Math.floor(remaining_cents / p.precio_cents);
+
+                if (this.useStockLimit) {
+                    const available = this.stockMap.get(p.cod) || 0;
+                    qty = Math.min(qty, available);
+                }
+
+                if (qty > 0) {
+                    const line = await this.createLine(transaction, p, qty, 'AUTO_MATCH', 'Transferencia');
+                    lines.push(line);
+                    remaining_cents -= line.importe_linea_cents;
+                    logs.push(`PASS 4 (WILDCARDS): Añadido ${qty}x ${p.descripcion} como comodín`);
+                }
             }
         }
     }
@@ -159,7 +197,11 @@ export class MatchingEngine {
     // PASS 5: TOLERANCE
     const toleranceRule = this.rules.find(r => r.tipo === 'TOLERANCE');
     if (toleranceRule && remaining_cents > 0 && toleranceRule.tolerancia_cents) {
-      for (const product of this.products.sort((a,b) => b.precio_cents - a.precio_cents)) {
+      const candidateProducts = this.products
+        .filter(p => !this.useStockLimit || (this.stockMap.get(p.cod) || 0) > 0)
+        .sort((a,b) => b.precio_cents - a.precio_cents);
+
+      for (const product of candidateProducts) {
         const diff = Math.abs(remaining_cents - product.precio_cents);
         if (diff <= toleranceRule.tolerancia_cents) {
           const line = await this.createLine(transaction, product, 1, 'AUTO_MATCH', 'Transferencia');
@@ -188,30 +230,42 @@ export class MatchingEngine {
         logs.push(`PASS 6 (CASH_FILL): Límite diario excedido. Saldo restante: ${remaining_cents} cts`);
       } else {
         // Justificación: Intentamos usar productos comodín primero para "disfrazar" el cash fill
-        const wildcards = this.products.filter(p => p.isWildcardCandidate).sort((a,b) => b.precio_cents - a.precio_cents);
-        let justified = false;
+        const wildcards = this.products
+            .filter(p => p.isWildcardCandidate)
+            .filter(p => !this.useStockLimit || (this.stockMap.get(p.cod) || 0) > 0)
+            .sort((a,b) => b.precio_cents - a.precio_cents);
 
         for (const p of wildcards) {
           if (p.precio_cents <= remaining_cents && p.precio_cents > 0) {
-            const qty = Math.floor(remaining_cents / p.precio_cents);
-            const line = await this.createLine(transaction, p, qty, 'CASH_FILLER', 'Efectivo');
-            lines.push(line);
-            remaining_cents -= line.importe_linea_cents;
-            logs.push(`PASS 6 (CASH_FILL): Justificado con ${qty}x ${p.descripcion}`);
+            let qty = Math.floor(remaining_cents / p.precio_cents);
 
-            // Si después de esto queda un residuo pequeño, lo ajustamos con Price Flex automático sobre esta misma línea
-            if (remaining_cents > 0 && remaining_cents < p.precio_cents * 0.5) {
-                line.precio_unitario_cents += Math.floor(remaining_cents / qty);
-                line.importe_linea_cents += remaining_cents;
-                remaining_cents = 0;
-                logs.push(`PASS 6 (CASH_FILL): Residuo ajustado en la línea de ${p.descripcion}`);
+            if (this.useStockLimit) {
+                const available = this.stockMap.get(p.cod) || 0;
+                qty = Math.min(qty, available);
+            }
+
+            if (qty > 0) {
+                const line = await this.createLine(transaction, p, qty, 'CASH_FILLER', 'Efectivo');
+                lines.push(line);
+                remaining_cents -= line.importe_linea_cents;
+                logs.push(`PASS 6 (CASH_FILL): Justificado con ${qty}x ${p.descripcion}`);
+
+                // Si después de esto queda un residuo pequeño, lo ajustamos con Price Flex automático sobre esta misma línea
+                if (remaining_cents > 0 && remaining_cents < p.precio_cents * 0.5) {
+                    line.precio_unitario_cents += Math.floor(remaining_cents / qty);
+                    line.importe_linea_cents += remaining_cents;
+                    remaining_cents = 0;
+                    logs.push(`PASS 6 (CASH_FILL): Residuo ajustado en la línea de ${p.descripcion}`);
+                }
             }
           }
         }
 
         if (remaining_cents > 0) {
             // REBAJA LOGIC: Usar un comodín y ajustar su precio (rebaja/ajuste) para cubrir el faltante exacto
-            const fillerProduct = wildcards[0] || this.products[0];
+            const fillerProduct = wildcards.find(p => !this.useStockLimit || (this.stockMap.get(p.cod) || 0) > 0)
+                               || this.products.find(p => !this.useStockLimit || (this.stockMap.get(p.cod) || 0) > 0);
+
             if (fillerProduct) {
                 const line = await this.createLine(transaction, fillerProduct, 1, 'CASH_FILLER', 'Efectivo');
                 const diff = remaining_cents - fillerProduct.precio_cents;
@@ -308,6 +362,13 @@ export class MatchingEngine {
     clasificacion: 'Transferencia' | 'Efectivo' | 'QR'
   ): Promise<ReconciliationLine> {
     const importe = product.precio_cents * qty;
+
+    // Descontar del inventario virtual de la sesión si aplica
+    if (this.useStockLimit) {
+        const current = this.stockMap.get(product.cod) || 0;
+        this.stockMap.set(product.cod, Math.max(0, current - qty));
+    }
+
     return {
       id: uuidv4(),
       transaction_ref: transaction.referencia_origen,
@@ -365,8 +426,30 @@ export class MatchingEngine {
 
       // Try using this product (from max possible quantity down to 1)
       const maxQty = Math.floor((remaining + 0.001) / p.precio_cents);
-      for (let qty = maxQty; qty >= 1; qty--) {
+
+      // Ajuste por Stock Limit
+      let actualMaxQty = maxQty;
+      if (this.useStockLimit) {
+          const available = this.stockMap.get(p.cod) || 0;
+          actualMaxQty = Math.min(maxQty, available);
+      }
+
+      for (let qty = actualMaxQty; qty >= 1; qty--) {
+        // Al usar una cantidad en la recursión, debemos descontarla temporalmente del stockMap
+        // si queremos ser estrictos en la combinación.
+        if (this.useStockLimit) {
+            const current = this.stockMap.get(p.cod) || 0;
+            this.stockMap.set(p.cod, current - qty);
+        }
+
         const sub = solve(remaining - qty * p.precio_cents, index + 1, depth + 1);
+
+        // Restaurar stock tras la prueba (backtracking)
+        if (this.useStockLimit) {
+            const current = this.stockMap.get(p.cod) || 0;
+            this.stockMap.set(p.cod, current + qty);
+        }
+
         if (sub) {
           return [{ product: p, qty }, ...sub];
         }

@@ -263,6 +263,8 @@ export function BankIngestion() {
         // Verificamos si ya existe para preservar estados
         const existing = await db.bank_statements.get(ref_origen);
 
+        const isDb = tipo === 'Db' || String(tipo).toLowerCase() === 'db' || importe_cents < 0;
+
         const tx: BankTransaction = {
           id: existing?.id || uuidv4(),
           fecha,
@@ -272,9 +274,9 @@ export function BankIngestion() {
           importe_cents,
           comision_cents,
           importe_venta_cents,
-          tipo: tipo === 'Cr' ? 'Cr' : 'Db',
-          estado_conciliacion: existing?.estado_conciliacion || 'PENDIENTE',
-          excluido: existing?.excluido || false,
+          tipo: isDb ? 'Db' : 'Cr',
+          estado_conciliacion: existing?.estado_conciliacion || (isDb ? 'NO_PROCESAR' : 'PENDIENTE'),
+          excluido: existing?.excluido || isDb,
           ipv_id: existing?.ipv_id,
           created_at: existing?.created_at || new Date().toISOString(),
           updated_at: new Date().toISOString(),
