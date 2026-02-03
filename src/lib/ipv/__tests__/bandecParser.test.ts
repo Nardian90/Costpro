@@ -30,6 +30,9 @@ describe('bandecParser', () => {
   it('should extract commission from raw string using utility', () => {
     expect(extractCommission("Comis: 10.50")).toBe(10.50);
     expect(extractCommission("comis 5")).toBe(5);
+    expect(extractCommission("comi 7.25")).toBe(7.25);
+    expect(extractCommission("Comisión: 12.00")).toBe(12.00);
+    expect(extractCommission("comision 8")).toBe(8);
     expect(extractCommission("no commission")).toBe(0);
   });
 });
