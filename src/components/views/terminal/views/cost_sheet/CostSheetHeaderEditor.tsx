@@ -5,8 +5,13 @@ import { useCostSheetStore } from '@/store/cost-sheet-store';
 import { Button } from '@/components/ui/button';
 import { Download, Upload } from 'lucide-react';
 import { exportHeaderToExcel, importHeaderFromExcel } from '@/services/excel-service';
+import { cn } from '@/lib/utils';
 
-const CostSheetHeaderEditor = () => {
+interface CostSheetHeaderEditorProps {
+    compact?: boolean;
+}
+
+const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({ compact = false }) => {
   const { data, updateValue, updateValues } = useCostSheetStore();
   const header = data?.header;
 
@@ -38,52 +43,72 @@ const CostSheetHeaderEditor = () => {
   };
 
   return (
-    <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-inner animate-in slide-in-from-top duration-500">
-      <div className="flex flex-col gap-6">
-        <div className="flex justify-end gap-2 mb-2">
-            <Button
-                size="sm"
-                variant="outline"
-                className="h-9 rounded-xl font-bold gap-2 text-[10px] uppercase tracking-wider bg-white/50 dark:bg-slate-900/50"
-                onClick={() => exportHeaderToExcel(header)}
-            >
-                <Download className="w-3.5 h-3.5 text-primary" />
-                Exportar Excel
-            </Button>
-            <div className="relative">
+    <div className={cn(
+        "bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-inner animate-in slide-in-from-top duration-500",
+        compact ? "p-3" : "p-6"
+    )}>
+      <div className={cn("flex flex-col", compact ? "gap-2" : "gap-6")}>
+        {!compact && (
+            <div className="flex justify-end gap-2 mb-2">
                 <Button
                     size="sm"
                     variant="outline"
                     className="h-9 rounded-xl font-bold gap-2 text-[10px] uppercase tracking-wider bg-white/50 dark:bg-slate-900/50"
-                    onClick={() => headerInputRef.current?.click()}
+                    onClick={() => exportHeaderToExcel(header)}
                 >
-                    <Upload className="w-3.5 h-3.5 text-primary" />
-                    Importar Excel
+                    <Download className="w-3.5 h-3.5 text-primary" />
+                    Exportar Excel
                 </Button>
-                <input
-                    type="file"
-                    ref={headerInputRef}
-                    className="hidden"
-                    accept=".xlsx,.xls"
-                    onChange={handleImportExcel}
-                />
+                <div className="relative">
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-9 rounded-xl font-bold gap-2 text-[10px] uppercase tracking-wider bg-white/50 dark:bg-slate-900/50"
+                        onClick={() => headerInputRef.current?.click()}
+                    >
+                        <Upload className="w-3.5 h-3.5 text-primary" />
+                        Importar Excel
+                    </Button>
+                    <input
+                        type="file"
+                        ref={headerInputRef}
+                        className="hidden"
+                        accept=".xlsx,.xls"
+                        onChange={handleImportExcel}
+                    />
+                </div>
             </div>
-        </div>
-        <div>
-          <label htmlFor="name" className="text-[10px] font-black uppercase tracking-[0.2em] text-primary block mb-1">
-            Nombre del Recurso
-          </label>
-          <input
-            id="name"
-            name="name"
-            type="text"
-            value={header?.name || ''}
-            onChange={handleChange}
-            className="w-full px-3 py-2 text-2xl font-black text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-primary focus:border-primary"
-          />
+        )}
+        <div className={cn("flex items-center gap-4", compact && "justify-between")}>
+          <div className="flex-1">
+            {!compact && (
+                <label htmlFor="name" className="text-[10px] font-black uppercase tracking-[0.2em] text-primary block mb-1">
+                    Nombre del Recurso
+                </label>
+            )}
+            <input
+                id="name"
+                name="name"
+                type="text"
+                value={header?.name || ''}
+                onChange={handleChange}
+                placeholder="Nombre del Recurso"
+                className={cn(
+                    "w-full px-3 py-2 font-black text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-primary focus:border-primary transition-all",
+                    compact ? "text-sm bg-transparent border-none py-1 px-1" : "text-2xl"
+                )}
+            />
+          </div>
+          {compact && (
+              <div className="flex items-center gap-4 px-4 py-1 bg-primary/10 rounded-full">
+                  <span className="text-[10px] font-black text-primary uppercase tracking-widest">{header?.code}</span>
+                  <span className="text-[10px] font-bold text-muted-foreground">{header?.unit}</span>
+              </div>
+          )}
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-6">
+        {!compact && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-6">
           {[
             { id: 'code', label: 'Código' },
             { id: 'date', label: 'Fecha', type: 'date' },
@@ -108,6 +133,7 @@ const CostSheetHeaderEditor = () => {
             </div>
           ))}
         </div>
+        )}
       </div>
     </div>
   );

@@ -181,24 +181,24 @@ const template = {
       ],
     },
     {
-      id: "s10",
-      label: "Sección 10: GASTOS TRIBUTARIOS",
+      id: "s7",
+      label: "Sección 7: GASTOS TRIBUTARIOS",
       rows: [
         {
-          id: "10",
+          id: "7",
           code: "gastos_tributarios_total",
           label: "GASTOS TRIBUTARIOS",
           formula: "=sum(children)",
           children: [
             {
-              id: "10.1",
+              id: "7.1",
               label: "De ello: -Contrib. Seg. Social (14%)",
               valorHistorico: 0,
               formula: "=round2(pct(ref('2.1') + ref('4.1'), 14))",
               helpText: "14% del total de salarios directos y asociados."
             },
             {
-              id: "10.2",
+              id: "7.2",
               label: "-Imp. Fuerza Trabajo (5%)",
               valorHistorico: 0,
               formula: "=round2(pct(ref('2.1') + ref('4.1'), 5))",
@@ -209,20 +209,20 @@ const template = {
       ],
     },
     {
-      id: "s12",
-      label: "Sección 12: TOTAL COSTOS Y GASTOS",
+      id: "s8",
+      label: "Sección 8: TOTAL COSTOS Y GASTOS",
       rows: [
-        { id: "12", label: "TOTAL COSTOS Y GASTOS", formula: "=sum(ref('5'), ref('6'), ref('10'))" }
+        { id: "8", label: "TOTAL COSTOS Y GASTOS", formula: "=sum(ref('5'), ref('6'), ref('7'))" }
       ],
     },
     {
-        id: "s13",
-        label: "Sección 13: RESULTADO FINAL",
+        id: "s9",
+        label: "Sección 9: RESULTADO FINAL",
         rows: [
-            { id: "13", label: "Utilidad", valorHistorico: 0.20, is_percent: true, base_ref: '12', helpText: "Margen de utilidad." },
-            { id: "13.1", label: "Precio antes de Impuesto", formula: "=sum(ref('12'), ref('13'))" },
-            { id: "13.2", label: "Imp s/Ventas y Serv", valorHistorico: 0.10, is_percent: true, base_ref: '13.1', helpText: "Impuesto sobre ventas." },
-            { id: "14", label: "Precio o Tarifa Final", formula: "=sum(ref('13.1'), ref('13.2'))" }
+            { id: "9", label: "Utilidad", valorHistorico: 0.20, is_percent: true, base_ref: '8', helpText: "Margen de utilidad." },
+            { id: "9.1", label: "Precio antes de Impuesto", formula: "=sum(ref('8'), ref('9'))" },
+            { id: "9.2", label: "Imp s/Ventas y Serv", valorHistorico: 0.10, is_percent: true, base_ref: '9.1', helpText: "Impuesto sobre ventas." },
+            { id: "9.3", label: "Precio o Tarifa Final", formula: "=sum(ref('9.1'), ref('9.2'))" }
         ]
     }
   ],
