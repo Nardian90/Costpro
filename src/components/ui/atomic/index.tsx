@@ -5,6 +5,7 @@ import { cn, resolveProductImage, formatCurrency } from '@/lib/utils';
 import { Slot } from '@radix-ui/react-slot';
 import { LucideIcon, Search, X, Edit, DollarSign, Package, Trash2, RefreshCw } from 'lucide-react';
 import ProductImage from '../ProductImage';
+import { HorizontalScroll } from '../HorizontalScroll';
 import type { Product } from '@/types';
 
 // --- BUTTONS ---
@@ -140,7 +141,7 @@ export const CategoryChips: React.FC<{
   className?: string;
 }> = ({ categories, selectedCategory, onCategoryChange, className }) => {
   return (
-    <div className={cn("w-full overflow-x-auto no-scrollbar flex flex-row gap-2 py-2 items-center", className)}>
+    <HorizontalScroll className={cn("gap-2 py-2", className)}>
       <button
         type="button"
         onClick={() => onCategoryChange('')}
@@ -168,7 +169,7 @@ export const CategoryChips: React.FC<{
           {cat}
         </button>
       ))}
-    </div>
+    </HorizontalScroll>
   );
 };
 

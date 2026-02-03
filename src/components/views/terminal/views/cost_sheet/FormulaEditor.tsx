@@ -20,6 +20,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { FormulaBuilder } from './FormulaBuilder';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { HorizontalScroll } from '@/components/ui/HorizontalScroll';
 import { Badge } from "@/components/ui/badge";
 
 interface FormulaEditorProps {
@@ -285,16 +286,18 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
             </div>
 
             <Tabs value={mode} onValueChange={(v: any) => setMode(v)} className="w-auto">
-              <TabsList className="bg-black/5 p-1 h-10 rounded-xl border border-black/5">
-                <TabsTrigger value="assisted" className="rounded-lg px-4 gap-2 text-[10px] font-black uppercase tracking-wider data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all">
-                  <Sparkles className="w-3 h-3" />
-                  Asistido
-                </TabsTrigger>
-                <TabsTrigger value="expert" className="rounded-lg px-4 gap-2 text-[10px] font-black uppercase tracking-wider data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all">
-                  <Code className="w-3 h-3" />
-                  Experto
-                </TabsTrigger>
-              </TabsList>
+              <HorizontalScroll containerClassName="bg-black/5 rounded-xl p-1 border border-black/5">
+                <TabsList className="flex bg-transparent border-none w-max min-w-full h-auto p-0 gap-1">
+                  <TabsTrigger value="assisted" className="rounded-lg px-4 py-2 gap-2 text-[10px] font-black uppercase tracking-wider data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all shrink-0">
+                    <Sparkles className="w-3 h-3" />
+                    Asistido
+                  </TabsTrigger>
+                  <TabsTrigger value="expert" className="rounded-lg px-4 py-2 gap-2 text-[10px] font-black uppercase tracking-wider data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all shrink-0">
+                    <Code className="w-3 h-3" />
+                    Experto
+                  </TabsTrigger>
+                </TabsList>
+              </HorizontalScroll>
             </Tabs>
           </div>
 

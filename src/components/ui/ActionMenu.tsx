@@ -3,10 +3,17 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 export interface Action {
   id: string;
   label: string;
+  tooltip?: React.ReactNode;
   icon?: React.ElementType;
   onClick: () => void;
   variant?: 'default' | 'primary' | 'success' | 'danger' | 'warning' | 'outline';
@@ -54,28 +61,39 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
     >
       <div className="neu-card !p-2 sm:!p-3 !rounded-2xl sm:!rounded-3xl shadow-2xl border-white/10 bg-background/95 backdrop-blur-md relative overflow-hidden">
         <div className="w-full overflow-x-auto no-scrollbar flex flex-row flex-nowrap items-center gap-3 p-1 pr-12 sm:pr-1">
-          {actions.map((action) => (
-            <React.Fragment key={action.id}>
-              {action.component ? (
-                  action.component
-              ) : (
-                <button
-                  onClick={action.onClick}
-                  disabled={action.disabled}
-                  className={cn(
-                    'flex items-center gap-2 px-4 py-2.5 text-sm sm:text-base rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shrink-0 whitespace-nowrap',
-                    getVariantClass(action.variant, action.active),
-                    !action.active && !action.variant && 'hover:neu-raised-sm',
-                    action.className
-                  )}
-                  aria-label={action.label}
-                >
-                  {action.icon && <action.icon className="w-4 h-4 sm:w-5 sm:h-5" />}
-                  <span className="font-semibold">{action.label}</span>
-                </button>
-              )}
-            </React.Fragment>
-          ))}
+          <TooltipProvider>
+            {actions.map((action) => (
+              <React.Fragment key={action.id}>
+                {action.component ? (
+                    action.component
+                ) : (
+                  <Tooltip delayDuration={300}>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={action.onClick}
+                        disabled={action.disabled}
+                        className={cn(
+                          'flex items-center gap-2 px-4 py-2.5 text-sm sm:text-base rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shrink-0 whitespace-nowrap',
+                          getVariantClass(action.variant, action.active),
+                          !action.active && !action.variant && 'hover:neu-raised-sm',
+                          action.className
+                        )}
+                        aria-label={action.label}
+                      >
+                        {action.icon && <action.icon className="w-4 h-4 sm:w-5 sm:h-5" />}
+                        <span className="font-semibold">{action.label}</span>
+                      </button>
+                    </TooltipTrigger>
+                    {action.tooltip && (
+                      <TooltipContent className="max-w-xs p-4 space-y-2">
+                        {action.tooltip}
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                )}
+              </React.Fragment>
+            ))}
+          </TooltipProvider>
         </div>
 
         {/* Scroll Indicator (Fade effect) */}
