@@ -30,6 +30,7 @@ import {
     checkWildcardCandidate,
     calculateDynamicPriority
 } from '@/lib/ipv/intelligence';
+import { recalculateIPVReportsChain } from '@/lib/ipv/utils';
 import {
   Tooltip,
   TooltipContent,
@@ -377,24 +378,7 @@ export function CatalogTable() {
   const handleRecalculateReportsChain = async () => {
     if (confirm('¿Recalcular toda la cadena de reportes IPV?')) {
         try {
-            const allProducts = await db.products.toArray();
-            const productMap = new Map(allProducts.map(p => [p.cod, p]));
-            const allReports = await db.ipv_reports.orderBy('fecha_reporte').toArray();
-            for (let i = 0; i < allReports.length; i++) {
-                const report = allReports[i];
-                const prevReport = i > 0 ? allReports[i - 1] : null;
-                const updatedFilas = report.filas.map(f => {
-                    const product = productMap.get(f.cod);
-                    const initial = prevReport
-                        ? (prevReport.filas.find(pf => pf.cod === f.cod)?.existencia_final_qty || 0)
-                        : (product?.stock_inicial_manual || 0);
-                    const venta = f.venta_cantidad_qty;
-                    const final = initial - venta;
-                    return { ...f, saldo_inicial_qty: initial, total_disponible_qty: initial, existencia_final_qty: final };
-                });
-                await db.ipv_reports.update(report.id, { filas: updatedFilas, updated_at: new Date().toISOString() });
-                allReports[i].filas = updatedFilas;
-            }
+            await recalculateIPVReportsChain(db);
             toast.success('Cadena de reportes recalculada exitosamente');
         } catch (error) {
             toast.error('Error al recalcular los reportes');
