@@ -209,13 +209,13 @@ export default function CatalogView() {
     };
 
     const actions: Action[] = [
-        { id: 'create', label: 'Nuevo Producto', icon: PlusCircle, onClick: () => setIsCreateProductModalOpen(true), variant: 'primary' },
-        { id: 'export', label: 'Exportar Precios', icon: Download, onClick: () => catalogService.exportCatalog(products), variant: 'outline' },
+        { id: 'create', label: 'Nuevo Producto', icon: PlusCircle, onClick: () => setIsCreateProductModalOpen(true), variant: 'primary' as const },
+        { id: 'export', label: 'Exportar Precios', icon: Download, onClick: () => catalogService.exportCatalog(products), variant: 'outline' as const },
         {
-            id: 'import', label: 'Importar Precios', icon: Upload, variant: 'outline',
+            id: 'import', label: 'Importar Precios', icon: Upload, variant: 'outline' as const,
             onClick: () => { setImportErrors([]); fileInputRef.current?.click(); },
         },
-        { id: 'help', label: 'Ayuda', icon: HelpCircle, onClick: () => modals.setIsHelpModalOpen(true), variant: 'outline' },
+        { id: 'help', label: 'Ayuda', icon: HelpCircle, onClick: () => modals.setIsHelpModalOpen(true), variant: 'outline' as const },
     ];
 
     if (loading && products.length === 0) {

@@ -143,7 +143,7 @@ export default function ReportsView() {
         icon: isSaving ? Loader2 : Save,
         onClick: handleSave,
         disabled: isSaving,
-        variant: 'outline',
+        variant: 'outline' as const,
         className: 'border-primary/20 font-bold uppercase tracking-widest text-[10px]'
     },
     {
@@ -152,7 +152,7 @@ export default function ReportsView() {
         icon: isExportingExcel ? Loader2 : FileSpreadsheet,
         onClick: handleExportExcel,
         disabled: isExportingExcel,
-        variant: 'outline',
+        variant: 'outline' as const,
         className: 'border-success/20 text-success hover:bg-success/10 font-bold uppercase tracking-widest text-[10px]'
     },
     {
@@ -160,7 +160,7 @@ export default function ReportsView() {
         label: 'Auditoría',
         icon: History,
         onClick: () => setIsAuditModalOpen(true),
-        variant: 'outline',
+        variant: 'outline' as const,
         className: 'hover:bg-primary/10 text-primary font-bold uppercase tracking-widest text-[10px]'
     },
     {
@@ -169,7 +169,7 @@ export default function ReportsView() {
         icon: isGenerating ? Loader2 : Play,
         onClick: handleGenerate,
         disabled: isGenerating,
-        variant: 'primary',
+        variant: 'primary' as const,
         className: 'font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20'
     }
   ], [isSaving, isExportingExcel, isGenerating]);
