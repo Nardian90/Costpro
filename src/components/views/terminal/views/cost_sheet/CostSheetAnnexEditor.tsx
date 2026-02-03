@@ -92,9 +92,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
     let targetSectionId = '';
     if (activeAnnexId === 'I') targetSectionId = 's1';
     else if (activeAnnexId === 'II') targetSectionId = 's2';
-    else if (activeAnnexId === 'III') targetSectionId = 's3';
-    else if (activeAnnexId === 'IV') targetSectionId = 's4';
-    else if (activeAnnexId === 'V') targetSectionId = 's5';
+    else if (activeAnnexId === 'III' || activeAnnexId === 'IV' || activeAnnexId === 'V') targetSectionId = 's3';
     else {
         const roman = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
         const num = roman.indexOf(activeAnnexId) + 1;
@@ -274,7 +272,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                                                 type={typeof (annexes[annexIndex].data[rowIndex][col.key]) === 'number' ? 'number' : 'text'}
                                                 value={annexes[annexIndex].data[rowIndex][col.key] ?? ''}
                                                 onChange={(e) => handleInputChange(['annexes', annexIndex, 'data', rowIndex, col.key], e.target.value)}
-                                                list={(col.key === 'classification' || col.key === 'description') ? 'classification-suggestions' : undefined}
+                                                list={(col.key === 'classification' || (col.key === 'description' && activeAnnexId !== 'II')) ? 'classification-suggestions' : undefined}
                                                 className={cn(
                                                     "neu-input !p-2 min-w-[140px] text-xs font-bold text-slate-700 dark:text-slate-200 border-transparent hover:border-primary/20 focus:border-primary bg-white/50 dark:bg-slate-900/50",
                                                     typeof annexes[annexIndex].data[rowIndex][col.key] === 'string' && annexes[annexIndex].data[rowIndex][col.key] !== '' && "border-primary/20 bg-primary/5"
