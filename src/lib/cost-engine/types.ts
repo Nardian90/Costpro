@@ -75,6 +75,7 @@ export interface CalculationResult {
   fichaId: string;
   rows: CalculatedRow[];
   audits: AuditEntry[];
+  validationErrors?: string[];
   summary: {
     totalCost: number;
     totalMargin: number;
