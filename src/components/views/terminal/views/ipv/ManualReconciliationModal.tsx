@@ -274,12 +274,12 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                         </div>
                     </div>
 
-                    <div className="flex gap-3 md:gap-4 mt-4">
-                        <div className="flex-1 p-3 md:p-4 bg-primary/5 rounded-2xl border border-primary/10 flex flex-col">
+                    <div className="flex gap-3 md:gap-4 mt-4 overflow-x-auto pb-2 no-scrollbar">
+                        <div className="flex-1 min-w-[140px] p-3 md:p-4 bg-primary/5 rounded-2xl border border-primary/10 flex flex-col">
                             <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Cents Conciliados</span>
                             <span className="text-xl font-black text-green-600">{currentTotal}</span>
                         </div>
-                        <div className="flex-1 p-3 md:p-4 bg-orange-500/5 rounded-2xl border border-orange-500/10 flex flex-col group relative overflow-hidden">
+                        <div className="flex-1 min-w-[180px] p-3 md:p-4 bg-orange-500/5 rounded-2xl border border-orange-500/10 flex flex-col group relative overflow-hidden">
                             <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Restante (Cents)</span>
                             <div className="flex items-center justify-between">
                                 <span className={`text-xl font-black ${Math.abs(remaining) < 0.001 ? 'text-green-600' : 'text-orange-600'}`}>
@@ -318,8 +318,8 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                                 />
                             </div>
                         </div>
-                        <ScrollArea className="flex-1 overflow-x-auto">
-                            <div className="p-4 space-y-2">
+                        <ScrollArea className="flex-1">
+                            <div className="p-4 space-y-2 min-w-[300px]">
                                 <div className="p-3 bg-primary/5 rounded-xl border border-primary/20 flex gap-3 mb-4">
                                     <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                                     <p className="text-[10px] text-muted-foreground leading-tight">
@@ -359,8 +359,8 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                         <div className="p-4 border-b bg-background sticky top-0 z-10">
                             <h4 className="font-black text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Panel de Conciliación</h4>
                         </div>
-                        <ScrollArea className="flex-1 overflow-x-auto">
-                            <div className="p-4 space-y-3">
+                        <ScrollArea className="flex-1">
+                            <div className="p-4 space-y-3 min-w-[350px]">
                                 {/* Existing Lines */}
                                 {existingLines?.map(l => (
                                     <div key={l.id} className="p-4 bg-background border rounded-2xl flex flex-col group/exist shadow-sm border-l-4 border-l-green-500 gap-2">
