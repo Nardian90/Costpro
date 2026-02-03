@@ -28,48 +28,11 @@ const template = {
           code: "gasto_material_total",
           label: "GASTO MATERIAL",
           formula: "=sum(children)",
-          helpText: "Total de gastos materiales directos.",
           children: [
-            {
-              id: "1.1",
-              code: "gasto_material_insumos",
-              label: "De ello: - Insumos (MP)",
-              valorHistorico: 0,
-              baseDeCalculoRef: "I",
-              base_display_override: "1,00",
-              calculationMethod: "ValorFijo",
-              helpText: "Derivado del Anexo I."
-            },
-            {
-              id: "1.2",
-              code: "gasto_material_combustibles",
-              label: "- Combustibles y lubricantes",
-              valorHistorico: 0,
-              base_display_override: "1,00",
-              calculationMethod: "ValorFijo",
-              totalFormula: "128749.02",
-              helpText: "Gastos de combustibles asociados."
-            },
-            {
-              id: "1.3",
-              code: "gasto_material_energia",
-              label: "- Energía",
-              valorHistorico: 0,
-              base_display_override: "1,00",
-              calculationMethod: "ValorFijo",
-              totalFormula: "68483.52",
-              helpText: "Energía eléctrica directa."
-            },
-            {
-              id: "1.4",
-              code: "gasto_material_agua",
-              label: "- Agua",
-              valorHistorico: 0,
-              base_display_override: "1,00",
-              calculationMethod: "ValorFijo",
-              totalFormula: "0.00",
-              helpText: "Agua para procesos productivos."
-            }
+            { id: "1.1", label: "De ello: - Insumos (MP)", valorHistorico: 0, baseDeCalculoRef: "I", calculationMethod: "ValorFijo" },
+            { id: "1.2", label: "- Combustibles y lubricantes", valorHistorico: 0, totalFormula: "128749.02", calculationMethod: "ValorFijo" },
+            { id: "1.3", label: "- Energía", valorHistorico: 0, totalFormula: "68483.52", calculationMethod: "ValorFijo" },
+            { id: "1.4", label: "- Agua", valorHistorico: 0, totalFormula: "0.00", calculationMethod: "ValorFijo" }
           ]
         },
       ],
@@ -83,28 +46,9 @@ const template = {
           code: "salario_directo_total",
           label: "SALARIO DIRECTO",
           formula: "=sum(children)",
-          helpText: "Total de salarios directos.",
           children: [
-             {
-              id: "2.1",
-              code: "salario_directo_obreros",
-              label: "De ello: Salarios",
-              valorHistorico: 0,
-              baseDeCalculoRef: "II",
-              base_display_override: "1,00",
-              calculationMethod: "ValorFijo",
-              helpText: "Derivado del Anexo II."
-            },
-            {
-              id: "2.2",
-              code: "salario_directo_vacaciones",
-              label: "Vacaciones",
-              formula: "=pct(ref('2.1'), 9.09)",
-              value: 0.0909,
-              is_percent: true,
-              base_ref: "2.1",
-              helpText: "9.09% de los salarios directos."
-            }
+             { id: "2.1", label: "De ello: Salarios", valorHistorico: 0, baseDeCalculoRef: "II", calculationMethod: "ValorFijo" },
+             { id: "2.2", label: "Vacaciones", formula: "=pct(ref('2.1'), 9.09)", value: 0.0909, is_percent: true, base_ref: "2.1" }
           ]
         },
       ],
@@ -121,13 +65,12 @@ const template = {
           children: [
             {
               id: "3.1",
-              code: "otros_gastos_depreciacion_total",
               label: "DE ELLO: DEPRECIACIÓN (TOTAL)",
               baseDeCalculoRef: "III",
               calculationMethod: "ValorFijo",
               children: [
-                { id: "3.1.1", label: "-Otras Construcciones", valorHistorico: 0, calculationMethod: "ValorFijo" },
-                { id: "3.1.2", label: "-Edificios", valorHistorico: 24.65, calculationMethod: "ValorFijo", totalFormula: "valorHistorico" },
+                { id: "3.1.1", label: "-Edificios", valorHistorico: 24.65, calculationMethod: "ValorFijo", totalFormula: "valorHistorico" },
+                { id: "3.1.2", label: "-Otras Construcciones", valorHistorico: 0, calculationMethod: "ValorFijo" },
                 { id: "3.1.3", label: "-Maquinas y eq. energéticos", valorHistorico: 0, calculationMethod: "ValorFijo" },
                 { id: "3.1.4", label: "-Maquinas y eq. productivos", valorHistorico: 0, calculationMethod: "ValorFijo" },
                 { id: "3.1.5", label: "-Aparatos y eq. técnicos", valorHistorico: 0, calculationMethod: "ValorFijo" },
@@ -138,18 +81,17 @@ const template = {
             { id: "3.4", label: "-Medios de protección", valorHistorico: 13165.29, calculationMethod: "ValorFijo", totalFormula: "valorHistorico" },
             { id: "3.5", label: "-Alquiler locales", valorHistorico: 0, calculationMethod: "ValorFijo" },
             { id: "3.6", label: "-Alimentación", valorHistorico: 0, calculationMethod: "ValorFijo" },
-            { id: "3.7", label: "-Dietas", valorHistorico: 0, baseDeCalculoRef: "V", calculationMethod: "ValorFijo", helpText: "Derivado del Anexo V." },
+            { id: "3.7", label: "-Dietas", valorHistorico: 0, baseDeCalculoRef: "V", calculationMethod: "ValorFijo" },
           ]
         },
       ],
     },
     {
       id: "s4",
-      label: "Sección 4: GASTOS ASOCIADOS A LA PRODUCCIÓN",
+      label: "Sección 4: Gastos Asociados Prod.",
       rows: [
         {
           id: "4",
-          code: "gastos_asociados_prod_total",
           label: "GASTOS ASOCIADOS PROD.",
           formula: "=sum(children)",
           children: [
@@ -163,66 +105,129 @@ const template = {
       id: "s5",
       label: "Sección 5: COSTO TOTAL",
       rows: [
-        { id: "5", code: "costo_total", label: "COSTO TOTAL (1+2+3+4)", formula: "=sum(ref('1'), ref('2'), ref('3'), ref('4'))" },
+        { id: "5", label: "COSTO TOTAL (1+2+3+4)", formula: "=sum(ref('1'), ref('2'), ref('3'), ref('4'))" },
       ],
     },
     {
       id: "s6",
-      label: "Sección 6: GTOS. GRALES Y ADMÓN.",
+      label: "Sección 6: Gtos. Grales y Admón.",
       rows: [
         {
           id: "6",
-          code: "gtos_grales_admon_total",
           label: "GTOS. GRALES Y ADMÓN.",
-          calculationMethod: "ValorFijo",
-          totalFormula: "30000.00",
-          valorHistorico: 30000.00
+          formula: "=sum(children)",
+          children: [
+              { id: "6.1", label: "- Salarios", valorHistorico: 30000.00, calculationMethod: "ValorFijo", totalFormula: "valorHistorico" },
+              { id: "6.2", label: "- Comunicación", valorHistorico: 0, calculationMethod: "ValorFijo" },
+              { id: "6.3", label: "- Depreciacion", valorHistorico: 0, calculationMethod: "ValorFijo" },
+              { id: "6.4", label: "- Energia", valorHistorico: 0, calculationMethod: "ValorFijo" },
+              { id: "6.5", label: "- Otros Gastos Admin.", valorHistorico: 0, calculationMethod: "ValorFijo" }
+          ]
         },
       ],
     },
     {
-      id: "s7",
-      label: "Sección 7: GASTOS TRIBUTARIOS",
+        id: "s7",
+        label: "Sección 7: Gtos. Dist. y Venta",
+        rows: [
+            {
+                id: "7",
+                label: "GTOS. DIST. Y VENTA",
+                formula: "=sum(children)",
+                children: [
+                    { id: "7.1", label: "- Salarios", valorHistorico: 0, calculationMethod: "ValorFijo" },
+                    { id: "7.2", label: "- Otros gastos", valorHistorico: 0, calculationMethod: "ValorFijo" }
+                ]
+            }
+        ]
+    },
+    {
+        id: "s8",
+        label: "Sección 8: Gastos Financieros",
+        rows: [
+            {
+                id: "8",
+                label: "GASTOS FINANCIEROS",
+                formula: "=sum(children)",
+                children: [
+                    { id: "8.1", label: "- Intereses y comisiones", valorHistorico: 0, calculationMethod: "ValorFijo" },
+                    { id: "8.2", label: "- Otros Gastos Financ.", valorHistorico: 0, calculationMethod: "ValorFijo" }
+                ]
+            }
+        ]
+    },
+    {
+        id: "s9",
+        label: "Sección 9: Gasto Financ. OSDE",
+        rows: [
+            { id: "9", label: "GASTO FINANC. OSDE", valorHistorico: 0, calculationMethod: "ValorFijo" }
+        ]
+    },
+    {
+      id: "s10",
+      label: "Sección 10: Gastos Tributarios",
       rows: [
         {
-          id: "7",
-          code: "gastos_tributarios_total",
+          id: "10",
           label: "GASTOS TRIBUTARIOS",
           formula: "=sum(children)",
           children: [
             {
-              id: "7.1",
+              id: "10.1",
               label: "De ello: -Contrib. Seg. Social (14%)",
-              valorHistorico: 0,
-              formula: "=round2(pct(ref('2.1') + ref('4.1'), 14))",
-              helpText: "14% del total de salarios directos y asociados."
+              formula: "=round2(pct(ref('2.1') + ref('4.1') + ref('6.1') + ref('7.1'), 14))"
             },
             {
-              id: "7.2",
+              id: "10.2",
               label: "-Imp. Fuerza Trabajo (5%)",
-              valorHistorico: 0,
-              formula: "=round2(pct(ref('2.1') + ref('4.1'), 5))",
-              helpText: "5% del total de salarios directos y asociados."
+              formula: "=round2(pct(ref('2.1') + ref('4.1') + ref('6.1') + ref('7.1'), 5))"
             }
           ]
         },
       ],
     },
     {
-      id: "s8",
-      label: "Sección 8: TOTAL COSTOS Y GASTOS",
+      id: "s11",
+      label: "Sección 11: TOTAL DE GASTOS",
       rows: [
-        { id: "8", label: "TOTAL COSTOS Y GASTOS", formula: "=sum(ref('5'), ref('6'), ref('7'))" }
+        { id: "11", label: "TOTAL DE GASTOS (6+7+8+9+10)", formula: "=sum(ref('6'), ref('7'), ref('8'), ref('9'), ref('10'))" }
       ],
     },
     {
-        id: "s9",
-        label: "Sección 9: RESULTADO FINAL",
+      id: "s12",
+      label: "Sección 12: TOTAL COSTOS Y GASTOS",
+      rows: [
+        { id: "12", label: "TOTAL COSTOS Y GASTOS (5+11)", formula: "=sum(ref('5'), ref('11'))" }
+      ],
+    },
+    {
+        id: "s13",
+        label: "Sección 13: Utilidad",
         rows: [
-            { id: "9", label: "Utilidad", valorHistorico: 0.20, is_percent: true, base_ref: '8', helpText: "Margen de utilidad." },
-            { id: "9.1", label: "Precio antes de Impuesto", formula: "=sum(ref('8'), ref('9'))" },
-            { id: "9.2", label: "Imp s/Ventas y Serv", valorHistorico: 0.10, is_percent: true, base_ref: '9.1', helpText: "Impuesto sobre ventas." },
-            { id: "9.3", label: "Precio o Tarifa Final", formula: "=sum(ref('9.1'), ref('9.2'))" }
+            { id: "13", label: "Utilidad", valorHistorico: 0.20, is_percent: true, base_ref: '12' },
+            { id: "13.1", label: "Precio antes de Impuesto", formula: "=sum(ref('12'), ref('13'))" },
+            { id: "13.2", label: "Imp s/Ventas y Serv", valorHistorico: 0.10, is_percent: true, base_ref: '13.1' }
+        ]
+    },
+    {
+        id: "s14",
+        label: "Sección 14: Precio o Tarifa Final",
+        rows: [
+            { id: "14", label: "Precio o Tarifa Final", formula: "=sum(ref('13.1'), ref('13.2'))" }
+        ]
+    },
+    {
+        id: "s15",
+        label: "Sección 15: Costo y gasto UNITARIO",
+        rows: [
+            { id: "15", label: "Costo y gasto UNITARIO", formula: "=ref('12') / header.quantity" }
+        ]
+    },
+    {
+        id: "s16",
+        label: "Sección 16: VENTA UNITARIA",
+        rows: [
+            { id: "16", label: "VENTA UNITARIA", formula: "=ref('14') / header.quantity" }
         ]
     }
   ],
