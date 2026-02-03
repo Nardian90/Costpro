@@ -166,10 +166,9 @@ export function calculateFicha(
               total = classSum;
               note += `Imported from ${base.anexoId} for class ${row.classification}.`;
           } else {
-              // Fallback to total of annex
-              const annexTotal = Array.from(classSumMap?.values() || []).reduce((acc, val) => acc.plus(val), new Decimal(0));
-              total = annexTotal;
-              note += `Imported from ${base.anexoId} (Total fallback, class ${row.classification} not found).`;
+              // Removed total fallback to ensure smart matching is respected
+              total = new Decimal(0);
+              note += `Imported from ${base.anexoId} (Class ${row.classification} not found, using 0).`;
           }
 
           baseTotalValue = total;
@@ -263,9 +262,14 @@ export function calculateFicha(
 
             // Add annex totals to context (e.g., AnexoI, AnexoII)
             annexTotals.forEach((total, id) => {
+                // Support explicit total access
+                context[`TotalAnexo${id}`] = total;
+                context[`Total${id}`] = total;
+
                 // Smart Resolve: if current row has a classification, try to get the specific sum for that class in this annex
                 const classSum = annexSumMap.get(id)?.get(row.classification);
-                const valueToUse = classSum !== undefined ? classSum.toNumber() : total;
+                // We return 0 if no match found for smart resolve, instead of falling back to total
+                const valueToUse = classSum !== undefined ? classSum.toNumber() : 0;
 
                 context[id] = valueToUse;
                 // Also support AnexoI, AnexoII style for clarity

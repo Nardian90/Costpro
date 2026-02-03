@@ -40,9 +40,18 @@ const evaluateAnnexExpression = (expression: string, rowData: any, header: any, 
     expr = expr.replace(/header\(['"]([^'"]+)['"]\)/g, (_, key) => String(header[key] || 0));
 
     // Annex replacements (e.g. AnexoI) with Smart Resolve
-    expr = expr.replace(/Anexo([IVXLC]+)/g, (_, id) => {
+    // Note: We also handle TotalAnexo[ID] here for explicit total access
+    expr = expr.replace(/(Total)?Anexo([IVXLC]+)/g, (match, totalPrefix, id) => {
         const targetAnnex = calculatedAnnexes.find(a => a.id === id);
         if (!targetAnnex) return '0';
+
+        // Calculate total regardless (used for fallback or explicit TotalAnexo request)
+        const total = targetAnnex.data.reduce((sum: number, r: any) => {
+             const val = r.total || r.amount || r.depreciation_cost || r.price_total || 0;
+             return sum + (typeof val === 'number' ? val : 0);
+        }, 0);
+
+        if (totalPrefix) return String(total);
 
         // Smart Resolve: if current row has a classification, try to get the specific sum for that class in this annex
         const rowClass = String(rowData.classification || '').split(' - ')[0].trim();
@@ -57,12 +66,8 @@ const evaluateAnnexExpression = (expression: string, rowData: any, header: any, 
             }
         }
 
-        // Fallback to total of target annex
-        const total = targetAnnex.data.reduce((sum: number, r: any) => {
-             const val = r.total || r.amount || r.depreciation_cost || r.price_total || 0;
-             return sum + (typeof val === 'number' ? val : 0);
-        }, 0);
-        return String(total);
+        // Removed fallback to total to match engine logic
+        return '0';
     });
 
     // Basic arithmetic evaluation
