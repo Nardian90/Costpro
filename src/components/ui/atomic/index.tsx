@@ -213,10 +213,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           name={product.name}
           className="w-full h-full"
         />
-        <div className="absolute top-2 right-2 flex flex-col gap-1">
+        <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
           {!product.is_active && (
             <div className="bg-danger text-white text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-lg">
               Inactivo
+            </div>
+          )}
+          {product.price < (product.cost_price || 0) && (
+            <div className="bg-danger text-white text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-lg border border-white/20 animate-pulse">
+              ALERTA: Margen Negativo
             </div>
           )}
           {variant === 'inventory' && (
