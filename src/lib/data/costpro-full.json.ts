@@ -2,12 +2,6 @@
 import { CostSheetData } from '@/types/cost-sheet';
 
 const template: CostSheetData = {
-  "id": "costpro-full-v5",
-  "name": "Producción de Pan Artistas",
-  "version": "5.0.0",
-  "metadata": {
-    "author": "CostPro Enterprise"
-  },
   "header": {
     "code": "FC-PAN-2026",
     "name": "Producción de Pan Artistas (1kg)",
