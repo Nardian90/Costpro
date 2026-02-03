@@ -56,13 +56,16 @@ const evaluateAnnexExpression = (expression: string, rowData: any, header: any, 
         // Smart Resolve: if current row has a classification, try to get the specific sum for that class in this annex
         const rowClass = String(rowData.classification || '').split(' - ')[0].trim();
         if (rowClass) {
-            const classMatch = targetAnnex.data.find((d: any) =>
+            const matches = targetAnnex.data.filter((d: any) =>
                 String(d.classification || d.label || '').split(' - ')[0].trim() === rowClass
             );
 
-            if (classMatch) {
-                const val = classMatch.total || classMatch.amount || classMatch.depreciation_cost || classMatch.price_total || 0;
-                return String(val);
+            if (matches.length > 0) {
+                const sum = matches.reduce((acc: number, d: any) => {
+                    const val = d.total || d.amount || d.depreciation_cost || d.price_total || 0;
+                    return acc + (typeof val === 'number' ? val : 0);
+                }, 0);
+                return String(sum);
             }
         }
 

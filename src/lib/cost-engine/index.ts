@@ -18,14 +18,19 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
   ficha.rows.forEach((row) => {
     if (ids.has(row.id)) errors.push(`Duplicate row ID: ${row.id}`);
     ids.add(row.id);
+
+    // Warn about duplicate classifications in main rows (they cause summing in ref())
+    if (classifications.has(row.classification)) {
+        errors.push(`Duplicate classification detected: ${row.classification}. ref() will sum all matching rows.`);
+    }
     classifications.add(row.classification);
   });
 
   ficha.rows.forEach((row) => {
     const base = row.baseCalculo;
     if (base?.type === 'FILA') {
-      if (!classifications.has(base.classification)) {
-        errors.push(`Row ${row.id} ${row.label} references non-existent classification: ${base.classification}`);
+      if (!classifications.has(base.classification) && !ids.has(base.classification)) {
+        errors.push(`Row ${row.id} ${row.label} references non-existent classification or ID: ${base.classification}`);
       }
     } else if (base?.type === 'ANEXO') {
       if (!ficha.anexos.find((a) => a.id === base.anexoId)) {
@@ -47,7 +52,9 @@ export function calculateFicha(
   const maxIter = options?.maxIter ?? ficha.meta.settings?.maxIter ?? 10;
   const dampingValue = options?.damping ?? ficha.meta.settings?.damping ?? 0.6;
   const damping = new Decimal(dampingValue);
-  const audits: AuditEntry[] = [];
+
+  // 0. Pre-validate
+  const { errors: validationErrors } = validateFicha(ficha);
 
   // 1. Prepare maps for O(1) lookup
   const annexSumMap = new Map<string, Map<string, Decimal>>();
@@ -55,7 +62,7 @@ export function calculateFicha(
     const classMap = new Map<string, Decimal>();
     anexo.rows.forEach((row) => {
       const current = classMap.get(row.classification) || new Decimal(0);
-      classMap.set(row.classification, current.plus(new Decimal(row.importe)));
+      classMap.set(row.classification, current.plus(new Decimal(row.importe || 0)));
     });
     annexSumMap.set(anexo.id, classMap);
   });
@@ -92,6 +99,8 @@ export function calculateFicha(
   });
 
   const parser = new Parser();
+
+  // Use Decimal for high precision in parser functions
   parser.functions.SUM_ANEXO = (anexoId: string, classification: string) => {
     return annexSumMap.get(anexoId)?.get(classification)?.toNumber() || 0;
   };
@@ -101,26 +110,27 @@ export function calculateFicha(
       const targets = rowsByClass.get(classification) || [];
       const val = targets.reduce((acc, t) => {
           const calculated = calculatedRows.get(t.id);
-          return acc + (calculated?.total || 0);
-      }, 0);
-      return val;
+          return acc.plus(new Decimal(calculated?.total || 0));
+      }, new Decimal(0));
+      return val.toNumber();
   };
 
   parser.functions.pct = (value: number, percentage: number) => {
-      return value * (percentage / 100);
+      return new Decimal(value || 0).times(new Decimal(percentage || 0).div(100)).toNumber();
   };
 
   parser.functions.round2 = (value: number) => {
-      return Math.round(value * 100) / 100;
+      return new Decimal(value || 0).toDecimalPlaces(2, Decimal.ROUND_HALF_UP).toNumber();
   };
 
-  parser.functions.sum = (...args: number[]) => {
-      return args.reduce((a, b) => a + b, 0);
+  parser.functions.sum = (...args: any[]) => {
+      return args.reduce((a, b) => a.plus(new Decimal(b || 0)), new Decimal(0)).toNumber();
   };
 
-  parser.functions.average = (...args: number[]) => {
+  parser.functions.average = (...args: any[]) => {
       if (args.length === 0) return 0;
-      return args.reduce((a, b) => a + b, 0) / args.length;
+      const sum = args.reduce((a, b) => a.plus(new Decimal(b || 0)), new Decimal(0));
+      return sum.div(args.length).toNumber();
   };
 
   const computeRowTotal = (
@@ -176,7 +186,6 @@ export function calculateFicha(
               total = classSum;
               note += `Imported from ${base.anexoId} for class ${row.classification}.`;
           } else {
-              // Removed total fallback to ensure smart matching is respected
               total = new Decimal(0);
               note += `Imported from ${base.anexoId} (Class ${row.classification} not found, using 0).`;
           }
@@ -248,9 +257,7 @@ export function calculateFicha(
               ? formulaToUse!.trim().substring(1)
               : formulaToUse;
 
-            // Translate Spanish functions to English before parsing
             const formulaStr = translateFormulaFromSpanish(formulaStrRaw || '0');
-
             const expr = parser.parse(formulaStr);
 
             if (base?.type === 'ANEXO') {
@@ -270,19 +277,14 @@ export function calculateFicha(
                 COEF: row.coeficiente || 0
             };
 
-            // Add annex totals to context (e.g., AnexoI, AnexoII)
             annexTotals.forEach((total, id) => {
-                // Support explicit total access
                 context[`TotalAnexo${id}`] = total;
                 context[`Total${id}`] = total;
 
-                // Smart Resolve: if current row has a classification, try to get the specific sum for that class in this annex
                 const classSum = annexSumMap.get(id)?.get(row.classification);
-                // We return 0 if no match found for smart resolve, instead of falling back to total
                 const valueToUse = classSum !== undefined ? classSum.toNumber() : 0;
 
                 context[id] = valueToUse;
-                // Also support AnexoI, AnexoII style for clarity
                 context[`Anexo${id}`] = valueToUse;
             });
 
@@ -319,8 +321,6 @@ export function calculateFicha(
         converged = false;
 
         let nextValue = targetTotal;
-        // Apply damping ONLY if we are halfway through maxIter and haven't converged
-        // or if explicitly needed for stability in cycles.
         if (iterations > maxIter / 2 && maxIter > 2) {
             nextValue = currentTotal.times(damping).plus(targetTotal.times(new Decimal(1).minus(damping)));
         }
@@ -368,6 +368,7 @@ export function calculateFicha(
     rows: Array.from(calculatedRows.values()),
     audits: Array.from(calculatedRows.values()).flatMap(r => r.audit),
     summary,
+    validationErrors,
     elapsedMs: Date.now() - startTime,
   };
 }
