@@ -199,23 +199,33 @@ export function MatchingSimulation({ products, rules }: { products: Product[], r
                         </TableRow>
                     ) : result.lines.map((l, i) => {
                       const product = products.find(p => p.cod === l.product_cod);
-                      const isAdjusted = product && Math.abs(l.precio_unitario_cents - product.precio_cents) > 0.001;
+                      const adjustment = l.cuadre_cents || (product ? l.precio_unitario_cents - product.precio_cents : 0);
+                      const isAdjusted = Math.abs(adjustment) > 0.001;
 
                       return (
                         <TableRow key={i}>
                           <TableCell>
                             <div className="font-bold text-xs">{product?.descripcion || l.product_cod}</div>
                             {isAdjusted && (
-                              <Badge className="bg-purple-500/10 text-purple-600 text-[8px] h-3 px-1 mt-1 font-black gap-1">
+                              <Badge
+                                variant="outline"
+                                className={`text-[8px] h-3 px-1 mt-1 font-black gap-1 uppercase ${
+                                    adjustment > 0
+                                        ? 'border-green-200 text-green-600 bg-green-50'
+                                        : 'border-red-200 text-red-600 bg-red-50'
+                                }`}
+                              >
                                 <Sparkles className="w-2 h-2" />
-                                PRICE FLEX (+{(l.precio_unitario_cents - product.precio_cents).toFixed(2)})
+                                {adjustment > 0 ? `+${adjustment.toFixed(2)} Propina` : `${adjustment.toFixed(2)} Descuento`}
                               </Badge>
                             )}
                           </TableCell>
                           <TableCell className="text-center font-bold text-xs">{l.cantidad}</TableCell>
                           <TableCell className="text-right">
-                            <span className={isAdjusted ? "text-purple-600 font-black" : ""}>{l.precio_unitario_cents.toFixed(2)}</span>
-                            {isAdjusted && <div className="text-[8px] line-through opacity-50">{product.precio_cents.toFixed(2)}</div>}
+                            <span className={isAdjusted ? (adjustment > 0 ? "text-green-600 font-black" : "text-red-600 font-black") : ""}>
+                                {l.precio_unitario_cents.toFixed(2)}
+                            </span>
+                            {isAdjusted && <div className="text-[8px] line-through opacity-50">{product?.precio_cents?.toFixed(2)}</div>}
                           </TableCell>
                           <TableCell className="text-right font-black text-xs">{l.importe_linea_cents.toFixed(2)}</TableCell>
                         </TableRow>
