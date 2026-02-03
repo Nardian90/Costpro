@@ -44,8 +44,8 @@ export function IngestionErrorsTable() {
 
   const handleRetry = async (err: IngestionError) => {
     try {
-        const comision_cents = extractCommission(err.observaciones);
-        const targetAmount = err.importe_cents + comision_cents;
+        const comision_cents = 0;
+        const targetAmount = err.importe_cents;
 
         const tx: BankTransaction = {
             id: err.id,
@@ -54,7 +54,7 @@ export function IngestionErrorsTable() {
             referencia_origen: err.referencia_origen,
             observaciones: err.observaciones,
             importe_cents: err.importe_cents,
-            comision_cents: comision_cents,
+            comision_cents: 0,
             importe_venta_cents: targetAmount,
             tipo: err.tipo,
             estado_conciliacion: 'PENDIENTE',
