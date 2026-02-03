@@ -61,6 +61,11 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
       toast.error('Selecciona un almacén destino');
       return;
     }
+
+    if (destinationStoreId === user?.activeStoreId) {
+      toast.error('El almacén destino no puede ser igual al origen');
+      return;
+    }
     if (selectedItems.size === 0) {
       toast.error('Agrega al menos un producto');
       return;

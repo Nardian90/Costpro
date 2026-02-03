@@ -484,13 +484,26 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                                             />
                                         </td>
                                         <td className="py-4 px-2 w-32">
-                                            <input
-                                                type="number"
-                                                value={cost}
-                                                step="0.01"
-                                                onChange={(e) => updateReceptionItem(product.id, 'cost', parseFloat(e.target.value) || 0)}
-                                                className="neu-inset-sm w-full text-center font-bold !py-1 text-sm"
-                                            />
+                                            <div className="space-y-1">
+                                                <input
+                                                    type="number"
+                                                    value={cost}
+                                                    step="0.01"
+                                                    onChange={(e) => updateReceptionItem(product.id, 'cost', parseFloat(e.target.value) || 0)}
+                                                    className={cn(
+                                                        "neu-inset-sm w-full text-center font-bold !py-1 text-sm",
+                                                        (product.cost_price || 0) > 0 && Math.abs(cost - (product.cost_price || 0)) / (product.cost_price || 1) > 0.5 && "border-danger text-danger bg-danger/5"
+                                                    )}
+                                                />
+                                                {(product.cost_price || 0) > 0 && Math.abs(cost - (product.cost_price || 0)) / (product.cost_price || 1) > 0.5 && (
+                                                    <div className="text-[8px] text-danger font-black uppercase text-center animate-pulse">
+                                                        Var. Crítica (&gt;50%)
+                                                    </div>
+                                                )}
+                                                <div className="text-[8px] text-muted-foreground font-bold text-center uppercase tracking-tighter">
+                                                    Hist: {formatCurrency(product.cost_price || 0)}
+                                                </div>
+                                            </div>
                                         </td>
                                         <td className="py-4 px-2 text-right font-bold text-primary">
                                             {formatCurrency(quantity * cost)}
