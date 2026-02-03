@@ -7,10 +7,11 @@ import { useCostSheetCalculator } from '@/hooks/logic/useCostSheetCalculator';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Trash2, Plus, Database, FunctionSquare, ChevronUp, ChevronDown } from 'lucide-react';
+import { Trash2, Plus, Database, FunctionSquare, ChevronUp, ChevronDown, Download, Upload } from 'lucide-react';
 import { CostSheetAnnex, CostSheetColumn } from '@/types/cost-sheet';
 import ProductInventoryPicker from './ProductInventoryPicker';
 import { useAuthStore } from '@/store';
+import { exportAnnexToExcel, importAnnexFromExcel } from '@/services/excel-service';
 import { cn, formatCurrency } from '@/lib/utils';
 import { ViewMode } from '@/components/ui/ViewSwitcher';
 
@@ -44,6 +45,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
   const { user } = useAuthStore();
   const [isPickerOpen, setIsPickerOpen] = React.useState(false);
   const [targetRowIndex, setTargetRowIndex] = React.useState<number | null>(null);
+  const annexInputRef = React.useRef<HTMLInputElement>(null);
 
   // Fallback to internal calculator only if not provided by parent (optimization)
   const internalData = React.useMemo(() => ({ annexes, header, sections: [] } as any), [annexes, header]);
@@ -155,6 +157,19 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
     setTargetRowIndex(null);
   }, [targetRowIndex, annexIndex, updateValue]);
 
+  const handleImportExcel = React.useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && annex) {
+      try {
+        const newData = await importAnnexFromExcel(file, annex);
+        updateValue(['annexes', annexIndex, 'data'], newData);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    e.target.value = '';
+  }, [annex, annexIndex, updateValue]);
+
   return (
     <div data-testid="cost-sheet-annex-editor" className="space-y-6 animate-in fade-in duration-500">
       <ProductInventoryPicker
@@ -168,7 +183,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
               <h3 className="text-xl font-black text-primary">Anexo {annex.id}</h3>
               <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{annex.title}</p>
           </div>
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
               {annex.id === 'I' && (
                 <Button
                     onClick={() => {
@@ -184,6 +199,34 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                     Importar Inventario
                 </Button>
               )}
+
+              <Button
+                onClick={() => exportAnnexToExcel(annex)}
+                variant="outline"
+                className="neu-button flex-1 sm:flex-none flex items-center justify-center gap-2 font-bold text-sm min-h-[44px] px-5"
+              >
+                  <Download className="w-4 h-4 text-primary" />
+                  Exportar
+              </Button>
+
+              <div className="relative flex-1 sm:flex-none">
+                <Button
+                  onClick={() => annexInputRef.current?.click()}
+                  variant="outline"
+                  className="neu-button w-full flex items-center justify-center gap-2 font-bold text-sm min-h-[44px] px-5"
+                >
+                    <Upload className="w-4 h-4 text-primary" />
+                    Importar
+                </Button>
+                <input
+                  type="file"
+                  ref={annexInputRef}
+                  className="hidden"
+                  accept=".xlsx,.xls"
+                  onChange={handleImportExcel}
+                />
+              </div>
+
               <Button
                 onClick={() => addRow(annex.id)}
                 className="neu-btn-primary !py-3 !px-5 rounded-xl flex-1 sm:flex-none flex items-center justify-center gap-2 font-bold text-sm shadow-lg min-h-[44px]"

@@ -3,7 +3,7 @@
 
 import React, { useState, useMemo, memo } from 'react';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
-import { ChevronRight, HelpCircle, CornerDownRight, AlertTriangle, ListFilter, LayoutGrid, ArrowRight, FunctionSquare, Plus, Trash2, Edit2, ChevronUp, ChevronDown } from 'lucide-react';
+import { ChevronRight, HelpCircle, CornerDownRight, AlertTriangle, ListFilter, LayoutGrid, ArrowRight, FunctionSquare, Plus, Trash2, Edit2, ChevronUp, ChevronDown, Download, Upload } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { cn, formatCurrency } from '@/lib/utils';
 import { FormulaEditor } from './FormulaEditor';
+import { exportSectionToExcel, importSectionFromExcel } from '@/services/excel-service';
 import {
   CostSheetRow as RowData,
   CostSheetSection,
@@ -322,6 +323,21 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
   const updateValue = useCostSheetStore(state => state.updateValue);
   const updateValues = useCostSheetStore(state => state.updateValues);
   const addMainRow = useCostSheetStore(state => state.addMainRow);
+  const sectionInputRef = React.useRef<HTMLInputElement>(null);
+  const [importingSectionIndex, setImportingSectionIndex] = useState<number | null>(null);
+
+  const handleImportSectionExcel = React.useCallback(async (e: React.ChangeEvent<HTMLInputElement>, sectionIndex: number) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      try {
+        const newRows = await importSectionFromExcel(file);
+        updateValue(['sections', sectionIndex, 'rows'], newRows);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    e.target.value = '';
+  }, [updateValue]);
 
   const allRows = useMemo(() => {
     const all: RowData[] = [];
@@ -407,6 +423,18 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
 
   return (
     <div data-testid="cost-sheet-interactive-table" className="space-y-6">
+        <input
+            type="file"
+            ref={sectionInputRef}
+            className="hidden"
+            accept=".xlsx,.xls"
+            onChange={(e) => {
+                if (importingSectionIndex !== null) {
+                    handleImportSectionExcel(e, importingSectionIndex);
+                    setImportingSectionIndex(null);
+                }
+            }}
+        />
         {sections.map((section, sectionIndex) => (
             section.id === activeSubSectionId && (
                 <div key={section.id} className="animate-in fade-in slide-in-from-bottom-2 duration-500">
@@ -419,7 +447,32 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                                 onChange={(e) => updateValue(['sections', sectionIndex, 'label'], e.target.value)}
                             />
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-11 sm:h-8 rounded-xl font-bold gap-2 text-[10px] uppercase tracking-wider"
+                                onClick={() => exportSectionToExcel(section, calculatedValues)}
+                            >
+                                <Download className="w-3.5 h-3.5" />
+                                Exportar
+                            </Button>
+
+                            <div className="relative">
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-11 sm:h-8 rounded-xl font-bold gap-2 text-[10px] uppercase tracking-wider"
+                                    onClick={() => {
+                                        setImportingSectionIndex(sectionIndex);
+                                        setTimeout(() => sectionInputRef.current?.click(), 0);
+                                    }}
+                                >
+                                    <Upload className="w-3.5 h-3.5" />
+                                    Importar
+                                </Button>
+                            </div>
+
                             <Button
                                 size="sm"
                                 variant="outline"
