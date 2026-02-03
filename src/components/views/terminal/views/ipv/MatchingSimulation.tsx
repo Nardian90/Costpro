@@ -79,6 +79,19 @@ export function MatchingSimulation({ products, rules }: { products: Product[], r
     setResult(null);
   };
 
+  const handleResetGlobalGoal = async () => {
+    if (!confirm('¿Estás seguro de que deseas reiniciar el objetivo global? Se eliminarán todas las líneas autogeneradas por el sistema (Efectivo/CASH_FILLER).')) {
+      return;
+    }
+
+    try {
+      await db.reconciliation_lines.where('origen_dato').equals('CASH_FILLER').delete();
+      toast.success('Líneas de objetivo global eliminadas');
+    } catch (error) {
+      toast.error('Error al reiniciar objetivo global');
+    }
+  };
+
   return (
     <div className="p-6 space-y-8">
       {/* Sección 1: Simulación Unitaria */}
@@ -113,11 +126,22 @@ export function MatchingSimulation({ products, rules }: { products: Product[], r
             </div>
             </Card>
 
-            <Card className="p-6 space-y-4 border-purple-100 bg-purple-50/30">
-                <h3 className="text-sm font-black uppercase tracking-widest text-purple-600 flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
-                    Objetivo Global (Mes)
-                </h3>
+            <Card className="p-6 space-y-4 border-purple-100 bg-purple-50/30 relative">
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="text-sm font-black uppercase tracking-widest text-purple-600 flex items-center gap-2">
+                      <Calendar className="w-4 h-4" />
+                      Objetivo Global (Mes)
+                  </h3>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleResetGlobalGoal}
+                    className="h-6 w-6 text-purple-600 hover:bg-purple-100"
+                    title="Reiniciar objetivo global"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                  </Button>
+                </div>
                 <p className="text-[10px] text-muted-foreground font-medium uppercase leading-tight">
                     Reparte la diferencia entre el total actual y tu meta mensual usando productos comodín.
                 </p>
@@ -180,7 +204,7 @@ export function MatchingSimulation({ products, rules }: { products: Product[], r
                       return (
                         <TableRow key={i}>
                           <TableCell>
-                            <div className="font-bold text-xs">{l.product_cod === 'CASH' ? 'AJUSTE EFECTIVO' : (product?.descripcion || l.product_cod)}</div>
+                            <div className="font-bold text-xs">{product?.descripcion || l.product_cod}</div>
                             {isAdjusted && (
                               <Badge className="bg-purple-500/10 text-purple-600 text-[8px] h-3 px-1 mt-1 font-black gap-1">
                                 <Sparkles className="w-2 h-2" />
