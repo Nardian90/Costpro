@@ -254,36 +254,9 @@ export default function CatalogView() {
                     </button>
                 </div>
 
-                {/* Primary Actions - Column on mobile, ActionMenu on desktop */}
+                {/* Primary Actions - Using standardized ActionMenu for horizontal scrolling on mobile */}
                 <div className="w-full lg:w-auto">
-                    {isMobile ? (
-                        <div className="flex flex-col gap-3 w-full">
-                            <PrimaryButton
-                                label="Nuevo Producto"
-                                icon={PlusCircle}
-                                onClick={() => setIsCreateProductModalOpen(true)}
-                            />
-                            <div className="grid grid-cols-3 gap-2">
-                                <IconButton
-                                    icon={Download}
-                                    onClick={() => catalogService.exportCatalog(products)}
-                                    className="w-full"
-                                />
-                                <IconButton
-                                    icon={Upload}
-                                    onClick={() => { setImportErrors([]); fileInputRef.current?.click(); }}
-                                    className="w-full"
-                                />
-                                <IconButton
-                                    icon={HelpCircle}
-                                    onClick={() => modals.setIsHelpModalOpen(true)}
-                                    className="w-full"
-                                />
-                            </div>
-                        </div>
-                    ) : (
-                        <ActionMenu actions={actions} className="lg:w-auto" />
-                    )}
+                    <ActionMenu actions={actions} sticky={false} className="shadow-none bg-transparent" />
                 </div>
             </div>
 

@@ -1,10 +1,11 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FileText, Download, Play, Save, Loader2, AlertTriangle, FileSpreadsheet, History } from 'lucide-react';
+import ActionMenu, { Action } from '@/components/ui/ActionMenu';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store';
 import { ReportConfigPanel } from './ReportConfigPanel';
@@ -32,7 +33,7 @@ export default function ReportsView() {
   const [isExportingExcel, setIsExportingExcel] = useState(false);
   const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
 
-  const handleSave = async () => {
+  async function handleSave() {
     if (!user?.activeStoreId) {
       toast.error('Seleccione una tienda activa');
       return;
@@ -135,6 +136,44 @@ export default function ReportsView() {
     }
   };
 
+  const actions: Action[] = useMemo(() => [
+    {
+        id: 'save',
+        label: isSaving ? 'Guardando...' : 'Guardar Plantilla',
+        icon: isSaving ? Loader2 : Save,
+        onClick: handleSave,
+        disabled: isSaving,
+        variant: 'outline',
+        className: 'border-primary/20 font-bold uppercase tracking-widest text-[10px]'
+    },
+    {
+        id: 'export-excel',
+        label: isExportingExcel ? 'Preparando...' : 'Exportar Excel',
+        icon: isExportingExcel ? Loader2 : FileSpreadsheet,
+        onClick: handleExportExcel,
+        disabled: isExportingExcel,
+        variant: 'outline',
+        className: 'border-success/20 text-success hover:bg-success/10 font-bold uppercase tracking-widest text-[10px]'
+    },
+    {
+        id: 'audit',
+        label: 'Auditoría',
+        icon: History,
+        onClick: () => setIsAuditModalOpen(true),
+        variant: 'outline',
+        className: 'hover:bg-primary/10 text-primary font-bold uppercase tracking-widest text-[10px]'
+    },
+    {
+        id: 'generate',
+        label: isGenerating ? 'Procesando...' : 'Generar Reporte',
+        icon: isGenerating ? Loader2 : Play,
+        onClick: handleGenerate,
+        disabled: isGenerating,
+        variant: 'primary',
+        className: 'font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20'
+    }
+  ], [isSaving, isExportingExcel, isGenerating]);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -145,50 +184,8 @@ export default function ReportsView() {
           </h1>
           <p className="text-muted-foreground font-medium">Diseña y genera documentos profesionales para auditoría y gestión.</p>
         </div>
-        <div className="flex items-center gap-2">
-           <Button
-             onClick={handleSave}
-             disabled={isSaving}
-             variant="outline"
-             className="rounded-xl border-primary/20 font-bold uppercase tracking-widest text-[10px]"
-           >
-             {isSaving ? (
-                <> <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Guardando... </>
-             ) : (
-                <> <Save className="w-4 h-4 mr-2" /> Guardar Plantilla </>
-             )}
-           </Button>
-           <Button
-             onClick={handleExportExcel}
-             disabled={isExportingExcel}
-             variant="outline"
-             className="rounded-xl border-success/20 text-success hover:bg-success/10 font-bold uppercase tracking-widest text-[10px]"
-           >
-             {isExportingExcel ? (
-                <> <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Preparando... </>
-             ) : (
-                <> <FileSpreadsheet className="w-4 h-4 mr-2" /> Exportar Excel </>
-             )}
-           </Button>
-           <Button
-             onClick={() => setIsAuditModalOpen(true)}
-             variant="ghost"
-             className="rounded-xl hover:bg-primary/10 text-primary font-bold uppercase tracking-widest text-[10px]"
-           >
-             <History className="w-4 h-4 mr-2" />
-             Auditoría
-           </Button>
-           <Button
-             onClick={handleGenerate}
-             disabled={isGenerating}
-             className="rounded-xl bg-primary text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20"
-           >
-             {isGenerating ? (
-               <> <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Procesando... </>
-             ) : (
-               <> <Play className="w-4 h-4 mr-2" /> Generar Reporte </>
-             )}
-           </Button>
+        <div className="w-full md:w-auto">
+           <ActionMenu actions={actions} sticky={false} className="shadow-none bg-transparent" />
         </div>
       </div>
 
