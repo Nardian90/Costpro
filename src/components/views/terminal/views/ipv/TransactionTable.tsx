@@ -100,6 +100,14 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
     }
   };
 
+  const handleUpdateCommission = async (tx: BankTransaction, newComision: number) => {
+      await db.bank_statements.update(tx.referencia_origen, {
+          comision_cents: newComision,
+          importe_venta_cents: tx.importe_cents + newComision,
+          updated_at: new Date().toISOString()
+      });
+  };
+
   const toggleExclusion = async (tx: BankTransaction, forcedValue?: boolean) => {
       // Si forcedValue viene de Radix Checkbox, invertimos su lógica (Checked = !Excluido)
       const newValue = forcedValue !== undefined ? !forcedValue : !tx.excluido;
@@ -227,6 +235,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                 <TableHead>Referencia</TableHead>
                 <TableHead className="max-w-md">Observaciones</TableHead>
                 <TableHead className="text-right">Importe</TableHead>
+                <TableHead className="text-right">Comisión</TableHead>
                 <TableHead className="text-right">Venta</TableHead>
                 <TableHead className="text-right">Diferencia</TableHead>
                 <TableHead>Tipo</TableHead>
@@ -273,6 +282,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                         onReset={() => handleResetReconciliation(tx)}
                         onDelete={() => handleDelete(tx.referencia_origen)}
                         onToggleExclusion={(val: boolean) => toggleExclusion(tx, val)}
+                        onUpdateCommission={handleUpdateCommission}
                         getStatusBadge={getStatusBadge}
                     />
                 ))
@@ -315,10 +325,20 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                                 {tx.observaciones}
                             </p>
 
-                            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border/50">
+                            <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border/50">
                                 <div>
                                     <p className="text-[8px] font-bold text-muted-foreground uppercase">Importe</p>
                                     <p className="text-sm font-bold">{formatCurrency(tx.importe_cents)}</p>
+                                </div>
+                                <div className="text-center">
+                                    <p className="text-[8px] font-bold text-muted-foreground uppercase">Comisión</p>
+                                    <Input
+                                        type="number"
+                                        step="0.01"
+                                        className="h-7 w-full text-center text-[10px] font-bold bg-muted/30 border-none focus-visible:ring-1"
+                                        defaultValue={tx.comision_cents || 0}
+                                        onBlur={(e) => handleUpdateCommission(tx, parseFloat(e.target.value) || 0)}
+                                    />
                                 </div>
                                 <div className="text-right">
                                     <p className="text-[8px] font-bold text-primary uppercase">Total Venta</p>
@@ -439,7 +459,7 @@ function HelpItem({ title, desc }: { title: string, desc: string }) {
     );
 }
 
-const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onDelete, onToggleExclusion, getStatusBadge }: any) => {
+const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onDelete, onToggleExclusion, onUpdateCommission, getStatusBadge }: any) => {
     const targetAmount = tx.importe_venta_cents ?? tx.importe_cents;
     const diff = targetAmount - matchedTotal;
 
@@ -463,6 +483,15 @@ const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onDelete
           </TableCell>
           <TableCell className="text-right font-medium text-muted-foreground text-xs">
             {formatCurrency(tx.importe_cents)}
+          </TableCell>
+          <TableCell className="text-right">
+             <Input
+                type="number"
+                step="0.01"
+                className="h-8 w-24 ml-auto text-right text-[10px] font-bold bg-muted/30 border-none focus-visible:ring-1"
+                defaultValue={tx.comision_cents || 0}
+                onBlur={(e) => onUpdateCommission(tx, parseFloat(e.target.value) || 0)}
+             />
           </TableCell>
           <TableCell className="text-right font-black text-sm">
             {formatCurrency(targetAmount)}

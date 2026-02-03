@@ -1,12 +1,12 @@
 
 /**
  * Extract commission from bank observations string.
- * Supports formats like "comis 10.50" or "Comis: 10.50"
- * Spec Regex: Comis:\s*([0-9]+(?:\.[0-9]{1,2})?)
+ * Supports formats like "comi 10.50", "comis 10.50" or "Comisión: 10.50"
+ * Spec Regex: Comi(?:s(?:i[óo]n)?)?:?\s*([0-9]+(?:\.[0-9]{1,2})?)
  */
 export function extractCommission(observations: string): number {
     if (!observations) return 0;
-    const comisMatch = observations.match(/Comis:?\s*([0-9]+(?:\.[0-9]{1,2})?)/i);
+    const comisMatch = observations.match(/Comi(?:s(?:i[óo]n)?)?:?\s*([0-9]+(?:\.[0-9]{1,2})?)/i);
     if (comisMatch) {
         return parseFloat(comisMatch[1]);
     }
