@@ -252,6 +252,7 @@ const template = {
         title: "II - DESGLOSE DE LOS GASTOS DE SALARIO DE LOS OBREROS",
         columns: [
             { key: "no", label: "NO" },
+            { key: "classification", label: "Clasificación" },
             { key: "description", label: "Descripción del Puesto" },
             { key: "time_norm", label: "Horas Mensuales" },
             { key: "hourly_rate", label: "Tarifa $/h" },
@@ -299,6 +300,7 @@ const template = {
         id: "V",
         title: "V - ANEXO DE DIETAS DE TRABAJADORES",
         columns: [
+            { key: "classification", label: "Clasificación" },
             { key: "code", label: "Código" },
             { key: "worker_name", label: "Nombre del Trabajador" },
             { key: "daily_allowance", label: "Gasto de Dieta Diario" },
