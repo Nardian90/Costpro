@@ -78,6 +78,7 @@ export function TransactionBreakdown() {
               <TableHead>Producto</TableHead>
               <TableHead className="text-center">Cant.</TableHead>
               <TableHead className="text-right">Precio</TableHead>
+              <TableHead className="text-right">Ajuste (Rebaja)</TableHead>
               <TableHead className="text-right">Importe</TableHead>
               <TableHead>Tipo</TableHead>
             </TableRow>
@@ -120,12 +121,14 @@ export function TransactionBreakdown() {
                       )}
                     </TableCell>
                     <TableCell className="text-right">
-                        <div className="font-black text-xs">{formatCurrency(l.importe_linea_cents)}</div>
                         {l.cuadre_cents && l.cuadre_cents !== 0 ? (
-                            <div className="text-[8px] font-black text-orange-600 uppercase">
-                                {l.cuadre_cents > 0 ? '+' : ''}{l.cuadre_cents} Cts
+                            <div className="text-xs font-black text-orange-600">
+                                {formatCurrency(l.cuadre_cents)}
                             </div>
-                        ) : null}
+                        ) : <span className="text-muted-foreground opacity-30 text-[10px]">—</span>}
+                    </TableCell>
+                    <TableCell className="text-right">
+                        <div className="font-black text-xs">{formatCurrency(l.importe_linea_cents)}</div>
                     </TableCell>
                     <TableCell>
                         <Badge variant="outline" className={`text-[8px] font-black uppercase ${

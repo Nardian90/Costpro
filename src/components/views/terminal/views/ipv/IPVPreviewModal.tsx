@@ -89,7 +89,8 @@ export function IPVPreviewModal({ report, open, onOpenChange, onExportPDF }: Pro
                                 </Badge>
                             </div>
 
-                            <Table className="border rounded-xl overflow-hidden">
+                            <div className="table-scroll-wrapper overflow-x-auto border rounded-xl">
+                            <Table className="min-w-[800px]">
                                 <TableHeader className="bg-muted/50">
                                     <TableRow>
                                         <TableHead className="text-[10px] font-black uppercase">Código</TableHead>
@@ -115,6 +116,7 @@ export function IPVPreviewModal({ report, open, onOpenChange, onExportPDF }: Pro
                                     ))}
                                 </TableBody>
                             </Table>
+                            </div>
 
                             <div className="mt-12 grid grid-cols-2 gap-24 px-12">
                                 <div className="text-center">
