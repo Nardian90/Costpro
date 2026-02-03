@@ -46,7 +46,7 @@ export interface Product {
 
 export interface MatchingRule {
   id: string;
-  tipo: 'HARD_REF' | 'EXACT_SUM' | 'TOLERANCE' | 'CASH_FILL' | 'PRICE_FLEX' | 'WILDCARDS' | 'GOAL_WITH_TOLERANCE';
+  tipo: 'HARD_REF' | 'EXACT_SUM' | 'TOLERANCE' | 'CASH_FILL' | 'PRICE_FLEX' | 'WILDCARDS' | 'GOAL_WITH_TOLERANCE' | 'STOCK_LIMIT';
   tolerancia_cents?: number;   // en pesos, aplicable a TOLERANCE
   prioridad: number;
   activo: boolean;

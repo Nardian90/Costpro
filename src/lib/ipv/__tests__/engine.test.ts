@@ -33,6 +33,43 @@ describe('MatchingEngine', () => {
 
   const engine = new MatchingEngine(products, rules);
 
+  it('should respect STOCK_LIMIT rule', async () => {
+    const limitedRules: MatchingRule[] = [
+      { id: 'stock', tipo: 'STOCK_LIMIT', prioridad: 1, activo: true },
+      { id: 'exact', tipo: 'EXACT_SUM', prioridad: 2, activo: true }
+    ];
+
+    const productsWithNoStock: Product[] = [
+        { cod: '1', descripcion: 'Cerveza', um: 'U', precio_cents: 260, prioridad_algoritmo: 1, activo: true, es_paquete: false, contenido_paquete: 1, stock_inicial_manual: 1, created_at: '' },
+    ];
+
+    const engineLimited = new MatchingEngine(productsWithNoStock, limitedRules);
+
+    const tx: BankTransaction = {
+      id: 'tx_stock_1',
+      fecha: '2025-08-01',
+      referencia_corta: 'S1',
+      referencia_origen: 'S1',
+      observaciones: 'T1',
+      importe_cents: 260,
+      tipo: 'Cr',
+      estado_conciliacion: 'PENDIENTE',
+      created_at: '',
+      ingestion_hash: ''
+    };
+
+    // First match should succeed (we have 1 in stock)
+    const res1 = await engineLimited.matchTransaction(tx);
+    expect(res1.status).toBe('COMPLETO');
+    expect(res1.lines).toHaveLength(1);
+
+    // Second match with SAME engine instance (stock should be depleted)
+    const tx2 = { ...tx, id: 'tx_stock_2', referencia_origen: 'S2' };
+    const res2 = await engineLimited.matchTransaction(tx2);
+    expect(res2.status).toBe('PENDIENTE');
+    expect(res2.lines).toHaveLength(0);
+  });
+
   it('should match a simple product by HARD_REF', async () => {
     const tx: BankTransaction = {
       id: 'tx1',
