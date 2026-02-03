@@ -62,9 +62,17 @@ export function calculateFicha(
 
   const rowsByClass = new Map<string, CostRow[]>();
   ficha.rows.forEach((row) => {
+    // Index by classification
     const list = rowsByClass.get(row.classification) || [];
     list.push(row);
     rowsByClass.set(row.classification, list);
+
+    // Also index by ID to support direct ref('UUID') which is common in UI suggestions
+    if (row.id !== row.classification) {
+        const idList = rowsByClass.get(row.id) || [];
+        idList.push(row);
+        rowsByClass.set(row.id, idList);
+    }
   });
 
   const annexTotals = new Map<string, number>();
