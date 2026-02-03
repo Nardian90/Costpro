@@ -70,7 +70,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
 
         // KPI Filter
         const matched = txReconciliationTotals[t.referencia_origen] || 0;
-        const target = t.importe_cents;
+        const target = t.importe_venta_cents || t.importe_cents;
         const diff = target - matched;
 
         let matchesKpi = true;
@@ -233,7 +233,9 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                 <TableHead className="sticky-column-1">Fecha</TableHead>
                 <TableHead>Referencia</TableHead>
                 <TableHead className="max-w-md">Observaciones</TableHead>
-                <TableHead className="text-right">Importe</TableHead>
+                <TableHead className="text-right">Neto</TableHead>
+                <TableHead className="text-right">Comis.</TableHead>
+                <TableHead className="text-right">Venta</TableHead>
                 <TableHead className="text-right">Diferencia</TableHead>
                 <TableHead>Tipo</TableHead>
                 <TableHead>
@@ -322,10 +324,14 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                                 {tx.observaciones}
                             </p>
 
-                            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border/50">
+                            <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border/50">
                                 <div>
-                                    <p className="text-[8px] font-bold text-muted-foreground uppercase">Importe</p>
-                                    <p className="text-sm font-bold">{formatCurrency(tx.importe_cents)}</p>
+                                    <p className="text-[8px] font-bold text-muted-foreground uppercase">Neto</p>
+                                    <p className="text-xs font-bold">{formatCurrency(tx.importe_cents)}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[8px] font-bold text-muted-foreground uppercase">Comis.</p>
+                                    <p className="text-xs font-bold text-red-500">{formatCurrency(tx.comision_cents || 0)}</p>
                                 </div>
                                 <div className="text-right">
                                     <p className="text-[8px] font-bold text-primary uppercase">Objetivo</p>
@@ -454,7 +460,7 @@ function HelpItem({ title, desc }: { title: string, desc: string }) {
 }
 
 const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onDelete, onToggleExclusion, getStatusBadge }: any) => {
-    const targetAmount = tx.importe_cents;
+    const targetAmount = tx.importe_venta_cents || tx.importe_cents;
     const diff = targetAmount - matchedTotal;
     const isEnProceso = matchedTotal > 0 && Math.abs(diff) >= 0.001;
 
@@ -471,13 +477,19 @@ const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onDelete
             {formatDate(tx.fecha)}
           </TableCell>
           <TableCell className="font-mono text-[10px] max-w-[120px] truncate">{tx.referencia_origen}</TableCell>
-          <TableCell className="text-[10px] max-w-[180px]">
+          <TableCell className="text-[10px] max-w-[150px]">
             <div className="truncate" title={tx.observaciones}>
                 {tx.observaciones}
             </div>
           </TableCell>
-          <TableCell className="text-right font-black text-sm">
+          <TableCell className="text-right font-bold text-xs text-muted-foreground">
             {formatCurrency(tx.importe_cents)}
+          </TableCell>
+          <TableCell className="text-right font-bold text-xs text-red-500">
+            {formatCurrency(tx.comision_cents || 0)}
+          </TableCell>
+          <TableCell className="text-right font-black text-sm text-primary">
+            {formatCurrency(targetAmount)}
           </TableCell>
           <TableCell className={`text-right font-bold text-sm ${Math.abs(diff) < 0.001 ? 'text-green-500' : (diff < -0.001 ? 'text-red-500' : 'text-orange-500')}`}>
             {formatCurrency(diff)}
@@ -553,7 +565,7 @@ function QuickAdjustPopover({ transaction, remaining, onSuccess }: { transaction
 
         const txLines = await db.reconciliation_lines.where('transaction_ref').equals(transaction.referencia_origen).toArray();
         const newTotal = txLines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
-        const target = transaction.importe_cents;
+        const target = transaction.importe_venta_cents || transaction.importe_cents;
         const newStatus = Math.abs(newTotal - target) < 0.001 ? 'COMPLETO' : 'PARCIAL';
 
         await db.bank_statements.update(transaction.referencia_origen, {
