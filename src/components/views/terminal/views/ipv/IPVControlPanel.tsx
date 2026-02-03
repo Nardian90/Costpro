@@ -15,7 +15,8 @@ import {
     ChevronRight,
     ArrowRightCircle,
     Database,
-    Download
+    Download,
+    Upload
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -53,9 +54,20 @@ const SectionCard = ({ id, title, description, icon, onClick, color }: SectionCa
 interface Props {
     onSelect: (id: string) => void;
     onExportBackup: () => void;
+    onImportBackup: (file: File) => void;
 }
 
-export function IPVControlPanel({ onSelect, onExportBackup }: Props) {
+export function IPVControlPanel({ onSelect, onExportBackup, onImportBackup }: Props) {
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            onImportBackup(file);
+            // Reset input
+            if (event.target) event.target.value = '';
+        }
+    };
     const sections = [
         {
             id: 'transactions',
@@ -132,16 +144,6 @@ export function IPVControlPanel({ onSelect, onExportBackup }: Props) {
                     </div>
                     <p className="text-sm text-muted-foreground font-medium">Seleccione una sección para comenzar el flujo de trabajo.</p>
                 </div>
-
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={onExportBackup}
-                    className="h-10 text-[10px] font-black uppercase tracking-widest gap-2 bg-background shadow-sm hover:bg-primary hover:text-white transition-all border-primary/20"
-                >
-                    <Download className="w-4 h-4" />
-                    Respaldar Estado (JSON)
-                </Button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -154,25 +156,56 @@ export function IPVControlPanel({ onSelect, onExportBackup }: Props) {
                 ))}
             </div>
 
-            <Card className="p-6 bg-gradient-to-r from-primary/10 to-transparent border-none rounded-3xl flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden relative">
+            <Card className="p-6 bg-gradient-to-r from-primary/10 to-transparent border-none rounded-3xl flex flex-col xl:flex-row items-center justify-between gap-6 overflow-hidden relative">
                 <div className="absolute -left-4 top-0 bottom-0 w-24 bg-primary/5 blur-3xl rounded-full" />
-                <div className="space-y-2 relative z-10">
+                <div className="space-y-2 relative z-10 flex-1">
                     <div className="flex items-center gap-3">
                         <Database className="w-6 h-6 text-primary" />
                         <h3 className="text-lg font-black uppercase tracking-tight">Base de Datos Local</h3>
                     </div>
-                    <p className="text-xs text-muted-foreground font-medium max-w-md">
+                    <p className="text-xs text-muted-foreground font-medium max-w-xl">
                         Toda la información reside exclusivamente en su navegador. Se recomienda realizar respaldos periódicos si planea limpiar su caché de navegación.
                     </p>
                 </div>
-                <div className="flex gap-4 relative z-10">
-                    <div className="text-center">
-                        <p className="text-[10px] font-black text-muted-foreground uppercase mb-1">Caché</p>
-                        <Badge variant="outline" className="font-black text-primary border-primary/20">ACTIVA</Badge>
+
+                <div className="flex flex-col sm:flex-row items-center gap-6 relative z-10">
+                    <div className="flex gap-4">
+                        <div className="text-center">
+                            <p className="text-[10px] font-black text-muted-foreground uppercase mb-1">Caché</p>
+                            <Badge variant="outline" className="font-black text-primary border-primary/20">ACTIVA</Badge>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-[10px] font-black text-muted-foreground uppercase mb-1">Sincronización</p>
+                            <Badge variant="outline" className="font-black text-blue-500 border-blue-200">LOCAL-ONLY</Badge>
+                        </div>
                     </div>
-                    <div className="text-center">
-                        <p className="text-[10px] font-black text-muted-foreground uppercase mb-1">Sincronización</p>
-                        <Badge variant="outline" className="font-black text-blue-500 border-blue-200">LOCAL-ONLY</Badge>
+
+                    <div className="flex gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={onExportBackup}
+                            className="h-10 text-[10px] font-black uppercase tracking-widest gap-2 bg-background/50 shadow-sm hover:bg-primary hover:text-white transition-all border-primary/20 rounded-xl"
+                        >
+                            <Download className="w-4 h-4" />
+                            Respaldar
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="h-10 text-[10px] font-black uppercase tracking-widest gap-2 bg-background/50 shadow-sm hover:bg-emerald-500 hover:text-white transition-all border-emerald-500/20 rounded-xl"
+                        >
+                            <Upload className="w-4 h-4" />
+                            Cargar Respaldo
+                        </Button>
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleFileChange}
+                            accept=".json"
+                            className="hidden"
+                        />
                     </div>
                 </div>
             </Card>
