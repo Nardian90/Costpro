@@ -224,7 +224,7 @@ export default function IPVView() {
       worker.terminate();
       setIsMatching(false);
     };
-  }, [transactions, products, productsWithStock, rules]);
+  }, [transactions, products, currentStockMap, rules]);
 
   const topActions: Action[] = useMemo(() => [
     {
