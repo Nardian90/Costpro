@@ -22,5 +22,31 @@ export const auditService = {
       console.error('[AuditService] Error logging invoice_without_price:', error);
       // We don't throw here to avoid blocking the main flow if auditing fails
     }
+  },
+
+  /**
+   * Logs an event when a product is sold below its cost.
+   */
+  async logSaleBelowCost(userId: string, productId: string, storeId: string, price: number, cost: number) {
+    const { error } = await supabase.from('audit_logs').insert({
+      user_id: userId,
+      action: 'sale_below_cost',
+      table_name: 'transactions',
+      record_id: productId,
+      store_id: storeId,
+      metadata: {
+        product_id: productId,
+        price,
+        cost,
+        margin: price - cost,
+        timestamp: new Date().toISOString(),
+        warning: 'Product sold with negative margin'
+      }
+    });
+
+    if (error) {
+      console.error('[AuditService] Error logging invoice_without_price:', error);
+      // We don't throw here to avoid blocking the main flow if auditing fails
+    }
   }
 };

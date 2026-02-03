@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
+import { formatCurrency } from '@/lib/utils';
 import { useAuthStore, useCartStore } from '@/store';
 import { useProducts } from '@/hooks/api/useProducts';
 import { useCreateSale } from '@/hooks/api/useTransactions';
@@ -43,6 +44,23 @@ export function usePOSView() {
       toast.error(`${product.name} no tiene stock disponible.`);
       return;
     }
+
+    if (product.price < (product.cost_price || product.cost_average || 0)) {
+      toast.warning(`Atención: ${product.name} tiene precio inferior al costo (${formatCurrency(product.cost_price || product.cost_average || 0)})`, {
+        duration: 5000,
+      });
+      // Log to audit if we have user info
+      if (user) {
+        auditService.logSaleBelowCost(
+          user.id,
+          product.id,
+          user.activeStoreId!,
+          product.price,
+          product.cost_price || product.cost_average || 0
+        );
+      }
+    }
+
     const item: CartItem = {
         product_id: product.id,
         variant_id: null,
