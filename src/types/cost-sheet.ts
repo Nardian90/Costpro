@@ -52,10 +52,16 @@ export interface CostSheetSignature {
 }
 
 export interface CostSheetData {
+  id?: string;
+  name?: string;
+  version?: string;
+  metadata?: any;
   header: CostSheetHeader;
   sections: CostSheetSection[];
   annexes: CostSheetAnnex[];
   signature: CostSheetSignature;
+  footer?: string;
+  [key: string]: any;
 }
 
 export interface CalculatedRowValue {
