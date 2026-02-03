@@ -321,33 +321,27 @@ export class MatchingEngine {
     const totalWeight = weights.reduce((a, b) => a + b, 0);
 
     const lines: ReconciliationLine[] = [];
-    const wildcards = this.products.filter(p => p.isWildcardCandidate).sort((a,b) => b.precio_cents - a.precio_cents);
 
     for (let i = 0; i < dates.length; i++) {
       const date = dates[i];
       const weight = weights[i];
-      let remainingDay = Math.floor((diff * weight) / totalWeight);
+      const targetForDay = Math.floor((diff * weight) / totalWeight);
 
-      // Intentamos usar wildcards para cubrir la parte proporcional del día
-      for (const p of wildcards) {
-        if (p.precio_cents <= remainingDay && p.precio_cents > 0) {
-          const qty = Math.floor(remainingDay / p.precio_cents);
-          const line = await this.createLine({ fecha: date, referencia_origen: `GOAL-${date}` } as any, p, qty, 'CASH_FILLER', 'Efectivo');
-          lines.push(line);
-          remainingDay -= line.importe_linea_cents;
-        }
-      }
+      if (targetForDay <= 0) continue;
 
-      // El resto del día lo ponemos usando un producto comodín con rebaja/ajuste
-      if (remainingDay > 0.01) {
-        const fillerProduct = wildcards[0] || this.products[0];
-        if (fillerProduct) {
-            const line = await this.createLine({ fecha: date, referencia_origen: `GOAL-${date}` } as any, fillerProduct, 1, 'CASH_FILLER', 'Efectivo');
-            const diff = remainingDay - fillerProduct.precio_cents;
-            line.importe_linea_cents = remainingDay;
-            line.cuadre_cents = diff;
-            lines.push(line);
-        }
+      // Usar findExactCombination para encontrar productos reales que sumen el objetivo del día
+      // sin usar descuentos ni propinas (cuadre_cents).
+      const combination = this.findExactCombination(targetForDay);
+
+      for (const item of combination) {
+        const line = await this.createLine(
+            { fecha: date, referencia_origen: `GOAL-${date}` } as any,
+            item.product,
+            item.qty,
+            'CASH_FILLER',
+            'Efectivo'
+        );
+        lines.push(line);
       }
     }
 
@@ -462,9 +456,17 @@ export class MatchingEngine {
     return solve(target, 0, 0) || [];
   }
 
-  async reconcileAll(transactions: (BankTransaction & { current_reconciled_cents?: number })[], onProgress?: (percentage: number) => void): Promise<any[]> {
+  async reconcileAll(
+    transactions: (BankTransaction & { current_reconciled_cents?: number })[],
+    onProgress?: (percentage: number) => void,
+    customStockMap?: Map<string, number>
+  ): Promise<any[]> {
     const results = [];
     const total = transactions.length;
+
+    if (customStockMap) {
+        this.stockMap = new Map(customStockMap);
+    }
 
     for (let i = 0; i < total; i++) {
         const tx = transactions[i];

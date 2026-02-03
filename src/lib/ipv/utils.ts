@@ -61,6 +61,25 @@ export async function calculateCurrentStock(db: any, productCod: string): Promis
 }
 
 /**
+ * Calcula el mapa de stock completo para todos los productos activos.
+ * Útil para alimentar el motor de matching con datos en tiempo real.
+ */
+export async function getCompleteStockMap(db: any): Promise<Map<string, number>> {
+    const products = await db.products.toArray();
+    const lines = await db.reconciliation_lines.toArray();
+    const map = new Map<string, number>();
+
+    for (const p of products) {
+        const sold = lines
+            .filter((l: any) => l.product_cod === p.cod)
+            .reduce((sum: number, l: any) => sum + l.cantidad, 0);
+        map.set(p.cod, (p.stock_inicial_manual || 0) - sold);
+    }
+
+    return map;
+}
+
+/**
  * Recalcula toda la cadena de reportes IPV basándose en el stock inicial y las conciliaciones actuales.
  */
 export async function recalculateIPVReportsChain(db: any) {
