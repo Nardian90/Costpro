@@ -40,42 +40,70 @@ const CostSheetView = () => {
   // Grouping logic for "Smart Grouping" of small sections
   const groupedSections = React.useMemo(() => {
     if (!data?.sections) return [];
+
+    // Specific logical blocks requested by the user: [1-3], [4-5], [6-7], [8-10], [11-16]
+    const predefinedBlocks = [
+        { start: 1, end: 3 },
+        { start: 4, end: 5 },
+        { start: 6, end: 7 },
+        { start: 8, end: 10 },
+        { start: 11, end: 16 }
+    ];
+
+    const getSectionNumber = (id: string) => {
+        const num = id.replace('s', '');
+        return parseInt(num, 10);
+    };
+
+    const getSectionName = (label: string) => {
+        const match = label.match(/Sección\s+\d+:\s*(.*)/i);
+        return match ? match[1].trim() : label.trim();
+    };
+
     const groups: { id: string, label: string, sectionIds: string[] }[] = [];
 
-    data.sections.forEach((section) => {
-        const rowCount = section.rows?.length || 0;
-        const lastGroup = groups[groups.length - 1];
-        const threshold = 3;
+    predefinedBlocks.forEach((block) => {
+        const blockSections = data.sections.filter(s => {
+            const n = getSectionNumber(s.id);
+            return n >= block.start && n <= block.end;
+        });
 
-        const getSectionInfo = (label: string) => {
-            const match = label.match(/Sección\s+(\d+):\s*(.*)/i);
-            if (match) return { num: match[1], name: match[2].trim() };
-            return { num: '', name: label.trim() };
-        };
+        if (blockSections.length > 0) {
+            const first = blockSections[0];
+            const last = blockSections[blockSections.length - 1];
 
-        if (lastGroup && rowCount < threshold) {
-            lastGroup.sectionIds.push(section.id);
-
-            // Build dynamic header for merged sections
-            const firstSection = data.sections.find(s => s.id === lastGroup.sectionIds[0]);
-            const lastSection = section;
-
-            const firstInfo = getSectionInfo(firstSection?.label || '');
-            const lastInfo = getSectionInfo(lastSection.label || '');
-
-            if (firstInfo.num && lastInfo.num) {
-                lastGroup.label = `SECCIÓN ${firstInfo.num} - ${lastInfo.num}: ${firstInfo.name} y ${lastInfo.name}`;
+            let label = "";
+            if (blockSections.length === 1) {
+                label = first.label;
             } else {
-                lastGroup.label = `${lastGroup.label} + ${section.label}`;
+                const startNum = getSectionNumber(first.id);
+                const endNum = getSectionNumber(last.id);
+                const firstName = getSectionName(first.label);
+                const lastName = getSectionName(last.label);
+                label = `SECCIONES ${startNum} - ${endNum}: ${firstName} ... ${lastName}`;
             }
-        } else {
+
             groups.push({
-                id: section.id,
-                label: section.label || `Sección ${section.id}`,
-                sectionIds: [section.id]
+                id: `group-${block.start}-${block.end}`,
+                label,
+                sectionIds: blockSections.map(s => s.id)
             });
         }
     });
+
+    // Handle any sections not in predefined blocks
+    data.sections.forEach(s => {
+        const n = getSectionNumber(s.id);
+        const isInBlock = predefinedBlocks.some(b => n >= b.start && n <= b.end);
+        if (!isInBlock) {
+            groups.push({
+                id: s.id,
+                label: s.label,
+                sectionIds: [s.id]
+            });
+        }
+    });
+
     return groups;
   }, [data?.sections]);
 
