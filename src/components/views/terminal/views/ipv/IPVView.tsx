@@ -28,7 +28,7 @@ import { PivotStatementView } from './PivotStatementView';
 import { IngestionErrorsTable } from './IngestionErrorsTable';
 import { IPVControlPanel } from './IPVControlPanel';
 import { IPVRightSidebar } from './IPVRightSidebar';
-import { exportFullBackup } from '@/lib/ipv/backup';
+import { exportFullBackup, importFullBackup } from '@/lib/ipv/backup';
 import { toast } from 'sonner';
 import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
 import { HorizontalScroll } from '@/components/ui/HorizontalScroll';
@@ -130,6 +130,21 @@ export default function IPVView() {
         )
     }
   ], []);
+
+  async function handleImportBackup(file: File) {
+    const loadingToast = toast.loading('Restaurando base de datos...');
+    try {
+      await importFullBackup(db, file);
+      toast.success('Base de datos restaurada correctamente', { id: loadingToast });
+      // Reload page to refresh all live queries and state
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+    } catch (error) {
+      console.error('Error importing backup:', error);
+      toast.error('Error al restaurar la base de datos', { id: loadingToast });
+    }
+  }
 
   async function handleRunMatching() {
     if (!transactions || transactions.length === 0) {
@@ -322,7 +337,11 @@ export default function IPVView() {
 
         <div className={activeTab === 'dashboard' ? '' : 'mt-6 p-0 overflow-hidden border-none shadow-xl bg-card/50 backdrop-blur-sm rounded-3xl'}>
           <TabsContent value="dashboard" className="m-0">
-            <IPVControlPanel onSelect={setActiveTab} onExportBackup={() => exportFullBackup(db)} />
+            <IPVControlPanel
+              onSelect={setActiveTab}
+              onExportBackup={() => exportFullBackup(db)}
+              onImportBackup={handleImportBackup}
+            />
           </TabsContent>
           <TabsContent value="transactions" className="m-0">
             <TransactionTable
