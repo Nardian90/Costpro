@@ -69,7 +69,7 @@ export const reportService = {
   /**
    * Fetch raw data for a report.
    */
-  async fetchReportData(type: ReportType, filters: any, date_range: any, store_id: string) {
+  async fetchReportData(type: ReportType, filters: any, date_range: any, store_id: string, limit?: number) {
     let data: any[] = [];
     const { from, to } = date_range || {};
 
@@ -77,16 +77,12 @@ export const reportService = {
       case 'sales':
         const { data: salesData, error: salesError } = await supabase.rpc('get_transactions', {
           p_store_id: store_id,
+          p_date_from: from ? from + 'T00:00:00' : null,
+          p_date_to: to ? to + 'T23:59:59' : null,
           p_limit: 10000
         });
         if (salesError) throw salesError;
         data = salesData || [];
-        if (from && to) {
-            data = data.filter((item: any) => {
-                const date = new Date(item.created_at);
-                return date >= new Date(from) && date <= new Date(to);
-            });
-        }
         break;
 
       case 'inventory':
@@ -127,35 +123,70 @@ export const reportService = {
       case 'audit':
         const { data: auditData, error: auditError } = await supabase.rpc('get_audit_logs', {
           p_store_id: store_id,
+          p_date_from: from ? from + 'T00:00:00' : null,
+          p_date_to: to ? to + 'T23:59:59' : null,
           p_limit: 10000
         });
         if (auditError) throw auditError;
         data = auditData || [];
-        if (from && to) {
-            data = data.filter((item: any) => {
-                const date = new Date(item.created_at);
-                return date >= new Date(from) && date <= new Date(to);
-            });
-        }
         break;
 
       case 'profit':
         const { data: profitData, error: profitError } = await supabase.rpc('get_transactions', {
           p_store_id: store_id,
+          p_date_from: from ? from + 'T00:00:00' : null,
+          p_date_to: to ? to + 'T23:59:59' : null,
           p_limit: 10000
         });
         if (profitError) throw profitError;
         data = profitData || [];
-        if (from && to) {
-            data = data.filter((item: any) => {
-                const date = new Date(item.created_at);
-                return date >= new Date(from) && date <= new Date(to);
-            });
-        }
+        break;
+
+      case 'daily_income':
+        const { data: incomeData, error: incomeError } = await supabase.rpc('get_transactions', {
+          p_store_id: store_id,
+          p_date_from: from ? from + 'T00:00:00' : null,
+          p_date_to: to ? to + 'T23:59:59' : null,
+          p_limit: 10000
+        });
+        if (incomeError) throw incomeError;
+        const groupedIncome = (incomeData || []).reduce((acc: any, curr: any) => {
+            const date = curr.created_at.split('T')[0];
+            if (!acc[date]) acc[date] = 0;
+            acc[date] += Number(curr.total_amount);
+            return acc;
+        }, {});
+        data = Object.keys(groupedIncome).map(date => ({
+            date,
+            total_income: groupedIncome[date]
+        })).sort((a, b) => b.date.localeCompare(a.date));
+        break;
+
+      case 'daily_expenses':
+        let expQuery = supabase.from('receipts').select('*');
+        if (store_id) expQuery = expQuery.eq('store_id', store_id);
+        if (from) expQuery = expQuery.gte('created_at', from);
+        if (to) expQuery = expQuery.lte('created_at', to);
+        const { data: expData, error: expError } = await expQuery.order('created_at', { ascending: false }).limit(1000);
+        if (expError) throw expError;
+        const groupedExp = (expData || []).reduce((acc: any, curr: any) => {
+            const date = curr.created_at.split('T')[0];
+            if (!acc[date]) acc[date] = 0;
+            acc[date] += Number(curr.total_cost);
+            return acc;
+        }, {});
+        data = Object.keys(groupedExp).map(date => ({
+            date,
+            total_expenses: groupedExp[date]
+        })).sort((a, b) => b.date.localeCompare(a.date));
         break;
 
       default:
         throw new Error(`Tipo de reporte no soportado: ${type}`);
+    }
+
+    if (limit) {
+        return data.slice(0, limit);
     }
 
     return data;
