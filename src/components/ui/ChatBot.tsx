@@ -243,7 +243,7 @@ export function ChatBot() {
                             </div>
                           ) : (
                             <p className="text-xs text-muted-foreground font-medium leading-relaxed">
-                              Soy Jules. ¿Necesitas un reporte de ventas o revisar el stock crítico? Estoy listo para analizar tus datos.
+                              Soy Jules. Puedo ayudarte con reportes de ventas, stock crítico o incluso a configurar tus fórmulas en la ficha de costo.
                             </p>
                           )}
                         </div>
