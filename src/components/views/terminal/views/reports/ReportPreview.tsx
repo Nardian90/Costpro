@@ -1,18 +1,49 @@
 
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
-import { ReportDefinition } from '@/types';
+import { ReportDefinition, ReportType } from '@/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { COLUMN_LABELS } from '@/contracts/reports';
+import { useAuthStore } from '@/store';
+import { Loader2 } from 'lucide-react';
 
 interface ReportPreviewProps {
   config: Partial<ReportDefinition>;
 }
 
 export const ReportPreview = ({ config }: ReportPreviewProps) => {
+  const { user } = useAuthStore();
+  const [data, setData] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchData() {
+      if (!config.type || !user?.activeStoreId) return;
+      setIsLoading(true);
+      try {
+        const { reportService } = await import('@/services/report-service');
+        const previewData = await reportService.fetchReportData(
+          config.type as ReportType,
+          config.filters,
+          config.date_range,
+          user.activeStoreId,
+          5
+        );
+        if (isMounted) setData(previewData);
+      } catch (error) {
+        console.error('Error fetching preview data:', error);
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }
+    fetchData();
+    return () => { isMounted = false; };
+  }, [config.type, config.filters, config.date_range, user?.activeStoreId]);
+
   const orientation = config.layout?.orientation || 'portrait';
 
   return (
@@ -45,34 +76,67 @@ export const ReportPreview = ({ config }: ReportPreviewProps) => {
             </div>
           </div>
 
-          {/* Table Placeholder */}
-          <div className="mt-12 flex-1 overflow-hidden">
+          {/* Table Preview */}
+          <div className="mt-12 flex-1 overflow-hidden relative">
+             {isLoading && (
+               <div className="absolute inset-0 bg-white/50 backdrop-blur-[2px] z-10 flex items-center justify-center rounded-xl">
+                 <Loader2 className="w-8 h-8 text-primary animate-spin" />
+               </div>
+             )}
+
              <div className="w-full">
-                <div className="flex gap-4 border-b border-slate-200 pb-4 mb-4">
+                <div className="flex gap-4 border-b-2 border-slate-800 pb-4 mb-4">
                     {(config.columns || []).map(col => (
-                        <div key={col} className="flex-1 min-w-[60px] text-[8px] font-black text-slate-400 uppercase tracking-widest truncate">
+                        <div key={col} className="flex-1 min-w-[60px] text-[8px] font-black text-slate-800 uppercase tracking-widest truncate">
                             {COLUMN_LABELS[col] || col}
                         </div>
                     ))}
                 </div>
-                {[1, 2, 3, 4, 5].map(i => (
+
+                {data.length > 0 ? (
+                  data.map((row, i) => (
+                    <div key={i} className="flex gap-4 py-3 border-b border-slate-100 animate-in fade-in slide-in-from-top-1 duration-300" style={{ animationDelay: `${i * 50}ms` }}>
+                        {(config.columns || []).map(col => {
+                            const val = row[col];
+                            let displayVal = val?.toString() || '-';
+                            if (col.includes('amount') || col.includes('price') || col.includes('cost') || col.includes('profit') || col.includes('income') || col.includes('expenses')) {
+                                displayVal = typeof val === 'number' ? `$ ${val.toLocaleString('es-ES', { minimumFractionDigits: 2 })}` : val;
+                            }
+                            if (col === 'created_at' || col === 'date') {
+                                try {
+                                    // Handle both ISO strings and YYYY-MM-DD strings to avoid timezone shifts
+                                    const dateObj = typeof val === 'string' && val.length === 10 ? new Date(val + 'T00:00:00') : new Date(val);
+                                    displayVal = format(dateObj, 'dd/MM/yyyy');
+                                } catch(e) {}
+                            }
+                            return (
+                                <div key={col} className="flex-1 text-[9px] font-bold text-slate-600 truncate min-w-[60px]">
+                                    {displayVal}
+                                </div>
+                            );
+                        })}
+                    </div>
+                  ))
+                ) : (
+                  [1, 2, 3, 4, 5].map(i => (
                     <div key={i} className="flex gap-4 py-3 border-b border-slate-50 opacity-40">
                         {(config.columns || []).map(col => (
                             <div key={col} className="flex-1 h-2 bg-slate-100 rounded min-w-[60px]" />
                         ))}
                     </div>
-                ))}
+                  ))
+                )}
              </div>
 
              <div className="mt-8 flex justify-end">
                 <div className="w-48 space-y-2">
                     <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase">
-                        <span>Subtotal</span>
-                        <span>$ 0.00</span>
+                        <span>Subtotal (Vista)</span>
+                        <span>$ {data.reduce((acc, row) => acc + (Number(row.total_amount || row.subtotal || row.total_income || row.total_expenses || row.total_cost || 0)), 0).toLocaleString('es-ES', { minimumFractionDigits: 2 })}</span>
                     </div>
                     <div className="flex justify-between text-[10px] font-black text-slate-800 uppercase pt-2 border-t border-slate-100">
-                        <span>Total Final</span>
-                        <span>$ 0.00</span>
+                        <span>Total Final (Vista)</span>
+                        <span>$ {data.reduce((acc, row) => acc + (Number(row.total_amount || row.total_income || row.total_expenses || row.total_cost || 0)), 0).toLocaleString('es-ES', { minimumFractionDigits: 2 })}</span>
                     </div>
                 </div>
              </div>
@@ -89,8 +153,8 @@ export const ReportPreview = ({ config }: ReportPreviewProps) => {
         </div>
       </Card>
 
-      <p className="text-center text-[10px] font-bold text-muted-foreground uppercase tracking-widest animate-pulse">
-        * Los datos mostrados en la vista previa son ficticios para propósitos de diseño.
+      <p className="text-center text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+        * Mostrando los primeros 5 registros encontrados.
       </p>
     </div>
   );

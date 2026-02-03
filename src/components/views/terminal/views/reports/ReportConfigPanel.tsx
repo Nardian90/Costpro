@@ -42,6 +42,8 @@ const REPORT_TYPES = [
   { id: 'purchases', label: 'Compras / Recepciones' },
   { id: 'audit', label: 'Auditoría / Logs' },
   { id: 'cost_sheet', label: 'Ficha de Costo' },
+  { id: 'daily_income', label: 'Ingresos por Día' },
+  { id: 'daily_expenses', label: 'Gastos/Costos por Día' },
 ];
 
 const ALL_COLUMNS: Record<ReportType, string[]> = {
@@ -51,7 +53,9 @@ const ALL_COLUMNS: Record<ReportType, string[]> = {
   kardex: ['created_at', 'movement_type', 'quantity_change', 'balance_after', 'unit_cost', 'reference_doc'],
   purchases: ['id', 'created_at', 'supplier', 'total_cost', 'status', 'reference_doc', 'notes'],
   audit: ['created_at', 'action', 'table_name', 'store_name', 'profile'],
-  cost_sheet: ['id', 'created_at', 'name', 'code', 'total_cost']
+  cost_sheet: ['id', 'created_at', 'name', 'code', 'total_cost'],
+  daily_income: ['date', 'total_income'],
+  daily_expenses: ['date', 'total_expenses']
 };
 
 export const ReportConfigPanel = ({ config, setConfig }: ReportConfigPanelProps) => {
