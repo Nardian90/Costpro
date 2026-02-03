@@ -1,7 +1,7 @@
 
 import { CostSheetData } from '@/types/cost-sheet';
 
-export const costproFullTemplate: CostSheetData = {
+const template: CostSheetData = {
   "id": "costpro-full-v5",
   "name": "Producción de Pan Artistas",
   "version": "5.0.0",
@@ -530,3 +530,5 @@ export const costproFullTemplate: CostSheetData = {
   },
   "footer": "FIN DEL DOCUMENTO • GENERADO AUTOMÁTICAMENTE POR COSTPRO V1.0"
 };
+
+export default template;
