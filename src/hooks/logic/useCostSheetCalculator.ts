@@ -179,8 +179,13 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
       };
       (template?.sections || []).forEach(s => calculateVH(s?.rows));
 
-      const flatten = (uiRows: CostSheetRow[]) => {
-        (uiRows || []).forEach(r => {
+      const flatten = (uiRows: CostSheetRow[], sectionIdx: number, parentNumbering?: string) => {
+        (uiRows || []).forEach((r, rowIdx) => {
+          // Calculate visual numbering (e.g. "1.1", "1.1.1")
+          const currentNumbering = parentNumbering
+            ? `${parentNumbering}.${rowIdx + 1}`
+            : `${sectionIdx + 1}.${rowIdx + 1}`;
+
           // Infer semantic type
           let type: RowSemanticType = 'COST';
           if (['13', '13.1'].includes(r.id)) type = 'MARGIN';
@@ -227,7 +232,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
           engineRows.push({
             id: r.id,
             parentId: null, // We could pass it but ref based formula is enough
-            classification: r.id,
+            classification: currentNumbering, // Use visual numbering for smart matching
             label: r.label,
             type,
             formaCalculo,
@@ -237,10 +242,10 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
             formula: formula,
           });
 
-          if (r.children) flatten(r.children);
+          if (r.children) flatten(r.children, sectionIdx, currentNumbering);
         });
       };
-      (template?.sections || []).forEach(s => flatten(s?.rows));
+      (template?.sections || []).forEach((s, sIdx) => flatten(s?.rows, sIdx));
 
       const ficha: FichaJSON = {
         meta: {
