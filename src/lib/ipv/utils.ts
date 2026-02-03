@@ -58,3 +58,42 @@ export async function calculateCurrentStock(db: any, productCod: string): Promis
 
     return initialStock - totalSold;
 }
+
+/**
+ * Recalcula toda la cadena de reportes IPV basándose en el stock inicial y las conciliaciones actuales.
+ */
+export async function recalculateIPVReportsChain(db: any) {
+    const allProducts = await db.products.toArray();
+    const productMap = new Map(allProducts.map((p: any) => [p.cod, p]));
+    const allReports = await db.ipv_reports.orderBy('fecha_reporte').toArray();
+
+    for (let i = 0; i < allReports.length; i++) {
+        const report = allReports[i];
+        const prevReport = i > 0 ? allReports[i - 1] : null;
+
+        const updatedFilas = report.filas.map((f: any) => {
+            const product = productMap.get(f.cod);
+            const initial = prevReport
+                ? (prevReport.filas.find((pf: any) => pf.cod === f.cod)?.existencia_final_qty || 0)
+                : (product?.stock_inicial_manual || 0);
+
+            const venta = f.venta_cantidad_qty;
+            const final = initial - venta;
+
+            return {
+                ...f,
+                saldo_inicial_qty: initial,
+                total_disponible_qty: initial,
+                existencia_final_qty: final
+            };
+        });
+
+        await db.ipv_reports.update(report.id, {
+            filas: updatedFilas,
+            updated_at: new Date().toISOString()
+        });
+
+        // Actualizamos el objeto en memoria para el siguiente paso del bucle
+        allReports[i].filas = updatedFilas;
+    }
+}
