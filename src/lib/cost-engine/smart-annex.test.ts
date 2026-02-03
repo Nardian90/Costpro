@@ -25,7 +25,7 @@ describe('Cost Engine Smart Annex', () => {
     rows: []
   };
 
-  it('should support smart Annex lookup with fallback for IMPORTAR_ANEXO, PRORRATEO and COEFICIENTE', () => {
+  it('should support smart Annex lookup without fallback for IMPORTAR_ANEXO, PRORRATEO and COEFICIENTE', () => {
     const smartFicha: FichaJSON = {
         ...mockFicha,
         rows: [
@@ -38,10 +38,10 @@ describe('Cost Engine Smart Annex', () => {
                 baseCalculo: { type: 'ANEXO', anexoId: 'A1' }
             },
             {
-                id: 'import_fallback',
+                id: 'import_no_fallback',
                 classification: '9.9',
                 type: 'COST',
-                label: 'Import Fallback',
+                label: 'Import No Fallback',
                 formaCalculo: 'IMPORTAR_ANEXO',
                 baseCalculo: { type: 'ANEXO', anexoId: 'A1' }
             },
@@ -67,15 +67,15 @@ describe('Cost Engine Smart Annex', () => {
     };
     const result = calculateFicha(smartFicha);
     const importMatch = result.rows.find(r => r.id === 'import_match');
-    const importFallback = result.rows.find(r => r.id === 'import_fallback');
+    const importNoFallback = result.rows.find(r => r.id === 'import_no_fallback');
     const prorrateoMatch = result.rows.find(r => r.id === 'prorrateo_match');
     const coeficienteMatch = result.rows.find(r => r.id === 'coeficiente_match');
 
     // 1.1 in A1 is 100 + 50 = 150
     expect(importMatch?.total).toBe(150);
 
-    // 9.9 not in A1, fallback to A1 total = 100 + 50 + 200 = 350
-    expect(importFallback?.total).toBe(350);
+    // 9.9 not in A1, should be 0 (no more fallback)
+    expect(importNoFallback?.total).toBe(0);
 
     // Prorrateo match: classification 1.2 in A1 is 200.
     // VH = 100. BaseHist = 200. BaseTotal = 200.
