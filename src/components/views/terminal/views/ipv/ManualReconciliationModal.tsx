@@ -89,7 +89,8 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
         };
 
         setManualLines(updatedLines);
-        toast.success(`Ajuste de ${adjustment} cts aplicado a ${lastLine.product_cod}`, {
+        const label = adjustment > 0 ? 'Propina' : 'Descuento';
+        toast.success(`${label} de ${Math.abs(adjustment)} cts aplicado a ${lastLine.product_cod}`, {
             icon: <CheckCircle2 className="text-primary" />
         });
     };
@@ -114,7 +115,7 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
             cantidad: 1,
             precio_unitario_cents: product.precio_cents,
             importe_linea_cents: product.precio_cents,
-            clasificacion: 'Transferencia',
+            clasificacion: transaction?.tipo === 'Cr' ? 'Transferencia' : 'Efectivo',
             origen_dato: 'MANUAL_USER'
         };
         setManualLines([...manualLines, newLine]);
@@ -233,7 +234,7 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                                         variant="outline"
                                         className="h-7 text-[9px] font-black uppercase px-2 bg-background border-orange-200 text-orange-600 hover:bg-orange-500 hover:text-white transition-all animate-in zoom-in duration-300"
                                         onClick={applyRebate}
-                                        title="Ajustar la última línea para cuadrar el total"
+                                        title="Ajustar la última línea para cuadrar el total (Genera Propina o Descuento)"
                                     >
                                         Auto-Cuadrar
                                     </Button>
@@ -360,6 +361,7 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                                                     size="sm"
                                                     variant="ghost"
                                                     className="h-7 text-[8px] font-black uppercase px-2 mt-4 hover:bg-orange-500/10 text-orange-600"
+                                                    title="Ajustar esta línea para cuadrar el restante (Propina/Descuento)"
                                                     onClick={() => {
                                                         const idx = manualLines.findIndex(ml => ml.id === l.id);
                                                         if (idx !== -1) {
@@ -383,8 +385,15 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                                                 <div className="flex flex-col items-end">
                                                     <span className="font-black text-base text-primary">{(l.importe_linea_cents || 0)}</span>
                                                     {l.cuadre_cents && l.cuadre_cents !== 0 ? (
-                                                        <Badge variant="outline" className="text-[8px] font-black uppercase py-0 px-1 border-orange-200 text-orange-600 bg-orange-50">
-                                                            {l.cuadre_cents > 0 ? '+' : ''}{l.cuadre_cents} Ajuste (Rebaja)
+                                                        <Badge
+                                                            variant="outline"
+                                                            className={`text-[8px] font-black uppercase py-0 px-1 ${
+                                                                l.cuadre_cents > 0
+                                                                    ? 'border-green-200 text-green-600 bg-green-50'
+                                                                    : 'border-red-200 text-red-600 bg-red-50'
+                                                            }`}
+                                                        >
+                                                            {l.cuadre_cents > 0 ? `+${l.cuadre_cents} Propina` : `${l.cuadre_cents} Descuento`}
                                                         </Badge>
                                                     ) : null}
                                                 </div>
