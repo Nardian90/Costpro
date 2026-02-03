@@ -45,12 +45,29 @@ const CostSheetView = () => {
     data.sections.forEach((section) => {
         const rowCount = section.rows?.length || 0;
         const lastGroup = groups[groups.length - 1];
+        const threshold = 3;
 
-        // If section is small (< 4 rows) and we have a previous group that is also small
-        // or just group it if it's very small and we want to avoid over-segmentation
-        if (lastGroup && rowCount < 4 && data.sections.find(s => s.id === lastGroup.id)?.rows?.length! < 8) {
+        const getSectionInfo = (label: string) => {
+            const match = label.match(/Sección\s+(\d+):\s*(.*)/i);
+            if (match) return { num: match[1], name: match[2].trim() };
+            return { num: '', name: label.trim() };
+        };
+
+        if (lastGroup && rowCount < threshold) {
             lastGroup.sectionIds.push(section.id);
-            lastGroup.label = `${lastGroup.label} + ${section.label}`;
+
+            // Build dynamic header for merged sections
+            const firstSection = data.sections.find(s => s.id === lastGroup.sectionIds[0]);
+            const lastSection = section;
+
+            const firstInfo = getSectionInfo(firstSection?.label || '');
+            const lastInfo = getSectionInfo(lastSection.label || '');
+
+            if (firstInfo.num && lastInfo.num) {
+                lastGroup.label = `SECCIÓN ${firstInfo.num} - ${lastInfo.num}: ${firstInfo.name} y ${lastInfo.name}`;
+            } else {
+                lastGroup.label = `${lastGroup.label} + ${section.label}`;
+            }
         } else {
             groups.push({
                 id: section.id,
@@ -224,7 +241,7 @@ const CostSheetView = () => {
         onClose={() => setIsSectionsSidebarOpen(false)}
         title="Secciones de la Ficha"
         type="sections"
-        items={data?.sections || []}
+        items={groupedSections}
         activeId={activeSubSectionId}
         onSelect={(id) => {
             setActiveSubSectionId(id);
@@ -292,8 +309,13 @@ const CostSheetView = () => {
                         </div>
                     )}
                     {activeSection === 'main' && (
-                        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            {/* Always show header editor at the top of the main sheet */}
+                        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
+                            {/* Sticky Compact Header for Contextualization */}
+                            <div className="sticky top-[-1px] z-40 bg-background/95 backdrop-blur-md -mx-2 px-2 py-3 border-b border-border/50 shadow-sm mb-4 animate-in slide-in-from-top duration-300">
+                                <CostSheetHeaderEditor compact />
+                            </div>
+
+                            {/* Full Header Editor */}
                             <CostSheetHeaderEditor />
 
                             <CostSheetInteractiveTable

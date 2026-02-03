@@ -105,7 +105,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
   }, [path, updateValues, row.is_percent]);
 
 
-  const isResultRow = row.is_percent || ['5', '12', '13', '13.1', '13.2', '14'].includes(row.id);
+  const isResultRow = row.is_percent || ['5', '7', '8', '9', '9.1', '9.2', '9.3', '12', '13', '13.1', '13.2', '14'].includes(String(row.id));
   const safeCalculated = calculated || { total: 0, valorHistorico: 0, baseTotal: 0, coeficiente: 0, hasWarnings: false, audits: [] };
   const showWarning = safeCalculated.hasWarnings || (!hasChildren && !row.is_percent && safeCalculated.total === 0 && ((row.valorHistorico ?? 0) > 0 || !!row.baseDeCalculoRef));
 
@@ -328,6 +328,20 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
   const sectionInputRef = React.useRef<HTMLInputElement>(null);
   const [importingSectionIndex, setImportingSectionIndex] = useState<number | null>(null);
 
+  // Smooth scroll to active section/group when selected
+  React.useEffect(() => {
+    if (activeSubSectionId) {
+      // Small delay to allow for rendering if it was filtered
+      const timer = setTimeout(() => {
+        const element = document.getElementById(activeSubSectionId);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [activeSubSectionId]);
+
   const handleImportSectionExcel = React.useCallback(async (e: React.ChangeEvent<HTMLInputElement>, sectionIndex: number) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -445,7 +459,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
 
             return sections.map((section, sectionIndex) => (
                 targetSectionIds.includes(section.id) && (
-                <div key={section.id} className="animate-in fade-in slide-in-from-bottom-2 duration-500 mb-12 last:mb-0">
+                <div key={section.id} id={section.id} className="animate-in fade-in slide-in-from-bottom-2 duration-500 mb-12 last:mb-0 scroll-mt-24">
                     <div className="flex items-center justify-between mb-4 px-1">
                         <div className="flex items-center gap-3">
                             <div className="w-1.5 h-6 bg-primary rounded-full" />
@@ -505,11 +519,11 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                         </div>
                     </div>
 
-                    <div className="neu-card p-0 overflow-hidden border-border/50 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="table-scroll-wrapper">
-                        <Table className="w-full min-w-[500px] sm:min-w-[700px]">
-                            <TableHeader className="bg-muted/30 text-muted-foreground font-black uppercase text-[9px] sm:text-[10px] tracking-widest border-b border-border">
-                                <TableRow>
+                    <div className="neu-card p-0 border-border/50 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="table-scroll-wrapper rounded-2xl overflow-hidden">
+                        <Table className="w-full min-w-[500px] sm:min-w-[700px] border-collapse">
+                            <TableHeader className="bg-muted/90 backdrop-blur-md sticky top-0 z-20 text-muted-foreground font-black uppercase text-[9px] sm:text-[10px] tracking-widest border-b border-border shadow-sm">
+                                <TableRow className="hover:bg-transparent border-none">
                                     <TableHead className="w-12 px-2 py-3 sm:px-4 sm:py-4 text-center font-black uppercase tracking-widest">No.</TableHead>
                                     <TableHead className="px-2 py-3 sm:px-4 sm:py-4 text-left font-black uppercase tracking-widest min-w-[180px] sm:min-w-[250px]">Concepto</TableHead>
                                     <TableHead className="px-2 py-3 sm:px-4 sm:py-4 text-right font-black uppercase tracking-widest w-32 sm:w-40">Valor Histórico</TableHead>
