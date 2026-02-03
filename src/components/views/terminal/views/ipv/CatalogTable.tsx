@@ -571,6 +571,8 @@ export function CatalogTable() {
                 <TableHead>Efectividad</TableHead>
                 <TableHead>Sugerencia</TableHead>
                 <TableHead className="text-right">Precio</TableHead>
+                <TableHead className="text-right">Inicial</TableHead>
+                <TableHead className="text-right">Ventas</TableHead>
                 <TableHead className="text-right">Stock Final</TableHead>
                 <TableHead className="text-center">Prioridad</TableHead>
                 <TableHead className="text-center">Comodín</TableHead>
@@ -769,8 +771,19 @@ export function CatalogTable() {
                             )}
                         </TableCell>
 
+                        <TableCell className="text-right text-xs font-bold text-muted-foreground">
+                            {stats.initial}
+                        </TableCell>
+
+                        <TableCell className="text-right text-xs font-bold text-orange-500">
+                            {stats.sales}
+                        </TableCell>
+
                         <TableCell className={`text-right text-xs font-black ${stats.final < 0 ? 'text-red-500' : 'text-primary'}`}>
-                            {stats.final}
+                            <div className="flex items-center justify-end gap-1">
+                                {stats.final < 0 && <AlertTriangle className="w-3 h-3" />}
+                                {stats.final}
+                            </div>
                         </TableCell>
 
                         <TableCell className="text-center">

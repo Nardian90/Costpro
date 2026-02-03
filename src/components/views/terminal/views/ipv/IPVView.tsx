@@ -55,17 +55,17 @@ export default function IPVView() {
   const ingestionErrorsCount = useLiveQuery(() => db.ingestion_errors.count()) || 0;
 
   // Mapa de stock actual para el motor de matching y simulación
-  const productsWithStock = useMemo(() => {
-    if (!products) return [];
-    return products.map(p => {
-        const sold = (reconciliationLines || [])
+  const currentStockMap = useMemo(() => {
+    const map = new Map<string, number>();
+    if (!products || !reconciliationLines) return map;
+
+    products.forEach(p => {
+        const sold = reconciliationLines
             .filter(l => l.product_cod === p.cod)
             .reduce((sum, l) => sum + l.cantidad, 0);
-        return {
-            ...p,
-            stock_inicial_manual: (p.stock_inicial_manual || 0) - sold
-        };
+        map.set(p.cod, (p.stock_inicial_manual || 0) - sold);
     });
+    return map;
   }, [products, reconciliationLines]);
 
   // Optimización: Cálculos pesados de conciliación movidos a useMemo con dependencias granulares
@@ -185,8 +185,9 @@ export default function IPVView() {
     worker.postMessage({
       type: 'RECONCILE_BATCH',
       transactions: transactionsToProcess,
-      products: productsWithStock,
-      rules
+      products: products,
+      rules,
+      stockMap: currentStockMap
     });
 
     worker.onmessage = async (e) => {
@@ -393,7 +394,7 @@ export default function IPVView() {
           </TabsContent>
 
           <TabsContent value="sim" className="m-0">
-            <MatchingSimulation products={productsWithStock} rules={rules || []} />
+            <MatchingSimulation products={products || []} rules={rules || []} />
           </TabsContent>
 
           <TabsContent value="breakdown" className="m-0">
