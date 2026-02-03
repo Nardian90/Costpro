@@ -159,12 +159,22 @@ export function calculateFicha(
 
       case 'IMPORTAR_ANEXO':
         if (base?.type === 'ANEXO') {
-          const classSum = annexSumMap.get(base.anexoId)?.get(row.classification) || new Decimal(0);
-          total = classSum;
-          baseTotalValue = classSum;
-          baseHistValue = classSum;
+          const classSumMap = annexSumMap.get(base.anexoId);
+          const classSum = classSumMap?.get(row.classification);
+
+          if (classSum !== undefined) {
+              total = classSum;
+              note += `Imported from ${base.anexoId} for class ${row.classification}.`;
+          } else {
+              // Fallback to total of annex
+              const annexTotal = Array.from(classSumMap?.values() || []).reduce((acc, val) => acc.plus(val), new Decimal(0));
+              total = annexTotal;
+              note += `Imported from ${base.anexoId} (Total fallback, class ${row.classification} not found).`;
+          }
+
+          baseTotalValue = total;
+          baseHistValue = total;
           fuenteParts.push(base.anexoId);
-          note += `Imported from ${base.anexoId} for class ${row.classification}.`;
         } else {
           type = 'WARNING';
           note += `Missing ANEXO reference.`;
@@ -176,8 +186,17 @@ export function calculateFicha(
         let baseRefName = '';
 
         if (base?.type === 'ANEXO') {
-            const anexo = annexSumMap.get(base.anexoId);
-            baseTotalValue = Array.from(anexo?.values() || []).reduce((acc, val) => acc.plus(val), new Decimal(0));
+            const classSumMap = annexSumMap.get(base.anexoId);
+            const classSum = classSumMap?.get(row.classification);
+
+            if (classSum !== undefined) {
+                baseTotalValue = classSum;
+                note += `Using class ${row.classification} from ${base.anexoId} as base. `;
+            } else {
+                baseTotalValue = Array.from(classSumMap?.values() || []).reduce((acc, val) => acc.plus(val), new Decimal(0));
+                note += `Using total of ${base.anexoId} as base (class ${row.classification} not found). `;
+            }
+
             baseHistValue = baseTotalValue;
             baseRefName = `Anexo:${base.anexoId}`;
         } else if (base?.type === 'FILA') {

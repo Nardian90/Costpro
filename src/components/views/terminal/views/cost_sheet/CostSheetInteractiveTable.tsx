@@ -3,7 +3,7 @@
 
 import React, { useState, useMemo, memo } from 'react';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
-import { ChevronRight, HelpCircle, CornerDownRight, AlertTriangle, ListFilter, LayoutGrid, ArrowRight, FunctionSquare, Plus, Trash2, Edit2 } from 'lucide-react';
+import { ChevronRight, HelpCircle, CornerDownRight, AlertTriangle, ListFilter, LayoutGrid, ArrowRight, FunctionSquare, Plus, Trash2, Edit2, ChevronUp, ChevronDown } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -35,6 +35,8 @@ interface CostSheetInteractiveTableProps {
 interface RowProps {
   row: RowData;
   level: number;
+  index: number;
+  numbering: string;
   calculated: CalculatedRowValue;
   calculatedValues: CalculatedValues;
   path: (string | number)[]; // Path to this row in the Zustand store
@@ -45,7 +47,7 @@ interface RowProps {
 /**
  * Renders a single, potentially recursive, row in the cost sheet table.
  */
-const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calculatedValues, path, annexes, suggestions }) => {
+const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, calculated, calculatedValues, path, annexes, suggestions }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isEditingTotal, setIsEditingTotal] = useState(false);
   const [isEditingLabel, setIsEditingLabel] = useState(false);
@@ -53,6 +55,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
   const updateValues = useCostSheetStore(state => state.updateValues);
   const addMainRow = useCostSheetStore(state => state.addMainRow);
   const removeMainRow = useCostSheetStore(state => state.removeMainRow);
+  const reorderMainRow = useCostSheetStore(state => state.reorderMainRow);
 
   const hasChildren = row.children && row.children.length > 0;
 
@@ -110,6 +113,11 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
         "border-t border-border/50 hover:bg-primary/5 transition-colors group",
         isResultRow && "bg-primary/5 font-bold"
       )}>
+        {/* No. */}
+        <TableCell className="w-12 px-2 py-2 text-center text-[10px] font-black text-muted-foreground/60 tabular-nums">
+            {numbering}
+        </TableCell>
+
         {/* Concepto */}
         <TableCell style={{ paddingLeft: `${level * 24 + 12}px` }} className="px-2 py-2 sm:px-4 sm:py-2.5 font-medium text-[13px] sm:text-sm text-foreground min-w-[180px] sm:min-w-[250px]">
           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 group/row">
@@ -141,11 +149,29 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
             )}
 
             {/* Row Actions */}
-            <div className="hidden group-hover/row:flex items-center gap-1 ml-auto shrink-0 animate-in fade-in slide-in-from-right-2">
+            <div className="hidden group-hover/row:flex items-center gap-0.5 ml-auto shrink-0 animate-in fade-in slide-in-from-right-2">
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="h-10 w-10 sm:h-6 sm:w-6 text-primary hover:bg-primary/10"
+                    className="h-8 w-8 sm:h-6 sm:w-6 text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                    onClick={() => reorderMainRow(path, 'up')}
+                    title="Mover arriba"
+                >
+                    <ChevronUp className="h-4 w-4 sm:h-3 sm:w-3" />
+                </Button>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 sm:h-6 sm:w-6 text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                    onClick={() => reorderMainRow(path, 'down')}
+                    title="Mover abajo"
+                >
+                    <ChevronDown className="h-4 w-4 sm:h-3 sm:w-3" />
+                </Button>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 sm:h-6 sm:w-6 text-primary hover:bg-primary/10"
                     onClick={() => addMainRow([...path, 'children'])}
                     title="Añadir hijo"
                 >
@@ -154,7 +180,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="h-10 w-10 sm:h-6 sm:w-6 text-destructive hover:bg-destructive/10"
+                    className="h-8 w-8 sm:h-6 sm:w-6 text-destructive hover:bg-destructive/10"
                     onClick={() => removeMainRow(path)}
                     title="Eliminar fila"
                 >
@@ -261,14 +287,16 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, calculated, calcula
         </TableCell>
       </TableRow>
 
-      {isExpanded && hasChildren && (row.children || []).filter(c => !!c).map((child, index) => (
+      {isExpanded && hasChildren && (row.children || []).filter(c => !!c).map((child, childIndex) => (
         <CostSheetRow
           key={child.id}
           row={child}
           level={level + 1}
+          index={childIndex}
+          numbering={`${numbering}.${childIndex + 1}`}
           calculated={calculatedValues?.[child.id] || {} as any}
           calculatedValues={calculatedValues}
-          path={[...path, 'children', index]}
+          path={[...path, 'children', childIndex]}
           annexes={annexes}
           suggestions={suggestions}
         />
@@ -421,6 +449,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                         <Table className="w-full min-w-[500px] sm:min-w-[700px]">
                             <TableHeader className="bg-muted/30 text-muted-foreground font-black uppercase text-[9px] sm:text-[10px] tracking-widest border-b border-border">
                                 <TableRow>
+                                    <TableHead className="w-12 px-2 py-3 sm:px-4 sm:py-4 text-center font-black uppercase tracking-widest">No.</TableHead>
                                     <TableHead className="px-2 py-3 sm:px-4 sm:py-4 text-left font-black uppercase tracking-widest min-w-[180px] sm:min-w-[250px]">Concepto</TableHead>
                                     <TableHead className="px-2 py-3 sm:px-4 sm:py-4 text-right font-black uppercase tracking-widest w-32 sm:w-40">Valor Histórico</TableHead>
                                     <TableHead className="px-2 py-3 sm:px-4 sm:py-4 text-right font-black uppercase tracking-widest w-36 sm:w-48">Total</TableHead>
@@ -433,6 +462,8 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                                         key={row.id}
                                         row={row}
                                         level={0}
+                                        index={rowIndex}
+                                        numbering={String(rowIndex + 1)}
                                         calculated={calculatedValues?.[row.id] || {} as any}
                                         calculatedValues={calculatedValues}
                                         path={['sections', sectionIndex, 'rows', rowIndex]}
