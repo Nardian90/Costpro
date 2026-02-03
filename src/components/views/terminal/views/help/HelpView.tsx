@@ -11,6 +11,7 @@ import {
   Baby, Zap, Cpu, WifiOff, Search, Newspaper
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { HorizontalScroll } from '@/components/ui/HorizontalScroll';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -53,44 +54,48 @@ export default function HelpView() {
       </div>
 
       <Tabs defaultValue="roles" className="w-full">
-        <TabsList className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-9 h-auto p-1 bg-muted/50 rounded-2xl mb-8">
-          <TabsTrigger value="onboarding" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs">
-            <Baby className="w-4 h-4 mr-2 hidden sm:block" />
-            Niños
-          </TabsTrigger>
-          <TabsTrigger value="roles" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs">
-            <Users className="w-4 h-4 mr-2 hidden sm:block" />
-            Jerarquía
-          </TabsTrigger>
-          <TabsTrigger value="admin" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs">
-            <Settings className="w-4 h-4 mr-2 hidden sm:block" />
-            Gestión
-          </TabsTrigger>
-          <TabsTrigger value="costs" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs">
-            <FileText className="w-4 h-4 mr-2 hidden sm:block" />
-            Costos
-          </TabsTrigger>
-          <TabsTrigger value="pos" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs">
-            <ShoppingCart className="w-4 h-4 mr-2 hidden sm:block" />
-            Ventas
-          </TabsTrigger>
-          <TabsTrigger value="inventory" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs">
-            <Package className="w-4 h-4 mr-2 hidden sm:block" />
-            Almacén
-          </TabsTrigger>
-          <TabsTrigger value="innovation" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs">
-            <Zap className="w-4 h-4 mr-2 hidden sm:block" />
-            Innovación
-          </TabsTrigger>
-          <TabsTrigger value="security" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs">
-            <Shield className="w-4 h-4 mr-2 hidden sm:block" />
-            Seguridad
-          </TabsTrigger>
-          <TabsTrigger value="history" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs">
-            <History className="w-4 h-4 mr-2 hidden sm:block" />
-            Historial
-          </TabsTrigger>
-        </TabsList>
+        <div className="mb-8">
+          <HorizontalScroll containerClassName="bg-muted/50 rounded-2xl p-1">
+            <TabsList className="flex bg-transparent border-none w-max min-w-full h-auto p-0 gap-1">
+              <TabsTrigger value="onboarding" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+                <Baby className="w-4 h-4 mr-2 hidden sm:block" />
+                Niños
+              </TabsTrigger>
+              <TabsTrigger value="roles" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+                <Users className="w-4 h-4 mr-2 hidden sm:block" />
+                Jerarquía
+              </TabsTrigger>
+              <TabsTrigger value="admin" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+                <Settings className="w-4 h-4 mr-2 hidden sm:block" />
+                Gestión
+              </TabsTrigger>
+              <TabsTrigger value="costs" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+                <FileText className="w-4 h-4 mr-2 hidden sm:block" />
+                Costos
+              </TabsTrigger>
+              <TabsTrigger value="pos" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+                <ShoppingCart className="w-4 h-4 mr-2 hidden sm:block" />
+                Ventas
+              </TabsTrigger>
+              <TabsTrigger value="inventory" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+                <Package className="w-4 h-4 mr-2 hidden sm:block" />
+                Almacén
+              </TabsTrigger>
+              <TabsTrigger value="innovation" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+                <Zap className="w-4 h-4 mr-2 hidden sm:block" />
+                Innovación
+              </TabsTrigger>
+              <TabsTrigger value="security" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+                <Shield className="w-4 h-4 mr-2 hidden sm:block" />
+                Seguridad
+              </TabsTrigger>
+              <TabsTrigger value="history" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+                <History className="w-4 h-4 mr-2 hidden sm:block" />
+                Historial
+              </TabsTrigger>
+            </TabsList>
+          </HorizontalScroll>
+        </div>
 
         {/* --- COSTPRO PARA NIÑOS (ONBOARDING) --- */}
         <TabsContent value="onboarding" className="space-y-8">

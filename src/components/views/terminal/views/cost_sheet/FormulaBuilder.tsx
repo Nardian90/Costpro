@@ -45,6 +45,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { HorizontalScroll } from '@/components/ui/HorizontalScroll';
 import { cn } from '@/lib/utils';
 import { Parser } from 'expr-eval';
 import { translateFormulaFromSpanish } from '@/lib/cost-engine/formula-utils';
@@ -401,14 +402,18 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
         </label>
 
         <Tabs defaultValue="functions" className="w-full">
-            <TabsList className="w-full grid grid-cols-4 h-9 bg-muted/50 p-1 rounded-lg">
-                <TabsTrigger value="functions" className="text-[10px] font-bold uppercase tracking-tight data-[state=active]:bg-background data-[state=active]:shadow-sm">Funciones</TabsTrigger>
-                <TabsTrigger value="refs" className="text-[10px] font-bold uppercase tracking-tight data-[state=active]:bg-background data-[state=active]:shadow-sm">Referencias</TabsTrigger>
-                <TabsTrigger value="ops" className="text-[10px] font-bold uppercase tracking-tight data-[state=active]:bg-background data-[state=active]:shadow-sm">Operadores</TabsTrigger>
-                <TabsTrigger value="vars" className="text-[10px] font-bold uppercase tracking-tight data-[state=active]:bg-background data-[state=active]:shadow-sm">Variables</TabsTrigger>
-            </TabsList>
+            <div className="mb-2">
+                <HorizontalScroll containerClassName="bg-muted/50 rounded-xl p-1">
+                    <TabsList className="flex bg-transparent border-none w-max min-w-full h-auto p-0 gap-1">
+                        <TabsTrigger value="functions" className="px-4 py-2 text-[10px] font-bold uppercase tracking-tight data-[state=active]:bg-background data-[state=active]:shadow-sm shrink-0 rounded-lg">Funciones</TabsTrigger>
+                        <TabsTrigger value="refs" className="px-4 py-2 text-[10px] font-bold uppercase tracking-tight data-[state=active]:bg-background data-[state=active]:shadow-sm shrink-0 rounded-lg">Referencias</TabsTrigger>
+                        <TabsTrigger value="ops" className="px-4 py-2 text-[10px] font-bold uppercase tracking-tight data-[state=active]:bg-background data-[state=active]:shadow-sm shrink-0 rounded-lg">Operadores</TabsTrigger>
+                        <TabsTrigger value="vars" className="px-4 py-2 text-[10px] font-bold uppercase tracking-tight data-[state=active]:bg-background data-[state=active]:shadow-sm shrink-0 rounded-lg">Variables</TabsTrigger>
+                    </TabsList>
+                </HorizontalScroll>
+            </div>
 
-            <ScrollArea className="h-48 mt-2 border rounded-xl bg-muted/10">
+            <ScrollArea className="h-48 border rounded-xl bg-muted/10">
                 <TabsContent value="functions" className="p-3 m-0">
                     <div className="grid grid-cols-2 gap-2">
                         {Object.keys(SPANISH_TO_ENGLISH).map(func => (

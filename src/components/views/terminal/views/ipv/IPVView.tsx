@@ -32,6 +32,8 @@ import { IPVRightSidebar } from './IPVRightSidebar';
 import { exportFullBackup } from '@/lib/ipv/backup';
 import { toast } from 'sonner';
 import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
+import { HorizontalScroll } from '@/components/ui/HorizontalScroll';
+import ActionMenu, { Action } from '@/components/ui/ActionMenu';
 import {
   Tooltip,
   TooltipContent,
@@ -100,7 +102,37 @@ export default function IPVView() {
     };
   }, [transactions, txTotals]);
 
-  const handleRunMatching = async () => {
+  const topActions: Action[] = useMemo(() => [
+    {
+        id: 'rules',
+        label: 'Reglas',
+        icon: Settings,
+        onClick: () => setActiveTab('rules'),
+        variant: 'outline'
+    },
+    {
+        id: 'matching',
+        label: 'Ejecutar Matching',
+        icon: Play,
+        onClick: () => handleRunMatching(),
+        variant: 'primary',
+        className: 'font-black',
+        tooltip: (
+            <>
+                <p className="font-bold text-primary">Motor de Matching Pro:</p>
+                <p className="text-[10px] leading-relaxed">
+                    Procesa transacciones en 4 pasos automáticos:
+                    <br/>1. <strong>Hard Ref:</strong> Match por código en obs.
+                    <br/>2. <strong>Exact Sum:</strong> Combinación exacta de productos.
+                    <br/>3. <strong>Tolerance:</strong> Match con pequeño margen de error.
+                    <br/>4. <strong>Cash Fill:</strong> Cubre el resto con ajuste de caja.
+                </p>
+            </>
+        )
+    }
+  ], []);
+
+  async function handleRunMatching() {
     if (!transactions || transactions.length === 0) {
       toast.error('No hay transacciones para procesar');
       return;
@@ -227,31 +259,8 @@ export default function IPVView() {
             </div>
         </div>
 
-        <div className="flex gap-2 w-full lg:w-auto">
-            <Button variant="outline" className="neu-btn flex-1 lg:flex-none h-12 lg:h-10 text-xs font-bold uppercase" onClick={() => setActiveTab('rules')}>
-                <Settings className="w-4 h-4 mr-2 shrink-0" />
-                Reglas
-            </Button>
-            <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button onClick={handleRunMatching} className="neu-btn-primary flex-[2] lg:flex-none h-12 lg:h-10 font-black text-xs uppercase">
-                            <Play className="w-4 h-4 mr-2 shrink-0" />
-                            Ejecutar Matching
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-xs p-4 space-y-2">
-                        <p className="font-bold text-primary">Motor de Matching Pro:</p>
-                        <p className="text-[10px] leading-relaxed">
-                            Procesa transacciones en 4 pasos automáticos:
-                            <br/>1. <strong>Hard Ref:</strong> Match por código en obs.
-                            <br/>2. <strong>Exact Sum:</strong> Combinación exacta de productos.
-                            <br/>3. <strong>Tolerance:</strong> Match con pequeño margen de error.
-                            <br/>4. <strong>Cash Fill:</strong> Cubre el resto con ajuste de caja.
-                        </p>
-                    </TooltipContent>
-                </Tooltip>
-            </TooltipProvider>
+        <div className="w-full lg:w-auto">
+            <ActionMenu actions={topActions} sticky={false} className="shadow-none bg-transparent" />
         </div>
       </div>
 
@@ -296,17 +305,17 @@ export default function IPVView() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         {activeTab !== 'dashboard' && (
-            <div className="relative mb-6">
-                <div className="flex overflow-x-auto pb-3 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent sm:pb-0">
-                    <TabsList className="flex w-max min-w-full lg:grid lg:grid-cols-10 lg:max-w-[1300px] bg-muted/50 p-1 rounded-xl h-auto sm:h-10">
-                        <TabsTrigger value="dashboard" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest">Panel</TabsTrigger>
-                        <TabsTrigger value="transactions" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest">Transacciones</TabsTrigger>
-                        <TabsTrigger value="sim" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest">Simulación</TabsTrigger>
-                        <TabsTrigger value="breakdown" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest">Desglose</TabsTrigger>
-                        <TabsTrigger value="pivot" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest">Consolidado</TabsTrigger>
-                        <TabsTrigger value="catalog" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest">Catálogo</TabsTrigger>
-                        <TabsTrigger value="ingestion" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest text-nowrap">Extracto</TabsTrigger>
-                        <TabsTrigger value="errors" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest relative">
+            <div className="mb-6">
+                <HorizontalScroll containerClassName="bg-muted/50 rounded-2xl p-1">
+                    <TabsList className="flex bg-transparent border-none w-max min-w-full h-auto p-0 gap-1">
+                        <TabsTrigger value="dashboard" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Panel</TabsTrigger>
+                        <TabsTrigger value="transactions" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Transacciones</TabsTrigger>
+                        <TabsTrigger value="sim" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Simulación</TabsTrigger>
+                        <TabsTrigger value="breakdown" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Desglose</TabsTrigger>
+                        <TabsTrigger value="pivot" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Consolidado</TabsTrigger>
+                        <TabsTrigger value="catalog" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Catálogo</TabsTrigger>
+                        <TabsTrigger value="ingestion" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest text-nowrap shrink-0 rounded-xl">Extracto</TabsTrigger>
+                        <TabsTrigger value="errors" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest relative shrink-0 rounded-xl">
                             Errores
                             {ingestionErrorsCount > 0 && (
                                 <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[8px] text-white font-black shadow-sm animate-pulse">
@@ -314,11 +323,10 @@ export default function IPVView() {
                                 </span>
                             )}
                         </TabsTrigger>
-                        <TabsTrigger value="reports" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest text-nowrap">Reportes IPV</TabsTrigger>
-                        <TabsTrigger value="rules" className="px-4 py-2.5 sm:py-1.5 text-[11px] sm:text-xs font-black uppercase tracking-widest">Reglas</TabsTrigger>
+                        <TabsTrigger value="reports" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest text-nowrap shrink-0 rounded-xl">Reportes IPV</TabsTrigger>
+                        <TabsTrigger value="rules" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Reglas</TabsTrigger>
                     </TabsList>
-                </div>
-                <div className="absolute right-0 top-0 bottom-2 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none lg:hidden" />
+                </HorizontalScroll>
             </div>
         )}
 

@@ -117,31 +117,34 @@ export default function CashClosureView() {
   const buttonIcon = !pendingClosure ? DollarSign : CheckCircle2;
   const buttonVariant = pendingClosure && canClose ? 'success' : 'primary';
 
+  const actions = [
+    {
+      id: 'refresh',
+      label: isRefreshing ? 'Actualizando...' : 'Actualizar',
+      icon: RefreshCw,
+      onClick: handleRefresh,
+      disabled: isRefreshing,
+      className: isRefreshing ? "animate-spin-slow" : ""
+    },
+    {
+      id: 'process',
+      label: buttonLabel,
+      icon: buttonIcon,
+      onClick: handleProcessClosure,
+      variant: buttonVariant,
+      disabled: isProcessing || isLoadingSales
+    }
+  ];
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase">Cierre de Caja</h2>
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <button
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border bg-card hover:bg-accent transition-all text-xs font-black uppercase tracking-widest disabled:opacity-50 h-[46px] text-foreground"
-          >
-            <RefreshCw className={cn("w-3.5 h-3.5", isRefreshing && "animate-spin")} />
-            {isRefreshing ? 'Actualizando...' : 'Actualizar'}
-          </button>
+        <div className="w-full sm:w-auto">
           <ActionMenu
-            actions={[
-              {
-                id: 'process',
-                label: buttonLabel,
-                icon: buttonIcon,
-                onClick: handleProcessClosure,
-                variant: buttonVariant,
-                disabled: isProcessing || isLoadingSales
-              }
-            ]}
-            className="flex-1 sm:flex-initial"
+            actions={actions}
+            sticky={false}
+            className="shadow-none bg-transparent"
           />
         </div>
       </div>
