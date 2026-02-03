@@ -96,12 +96,14 @@ export function calculateFicha(
     return annexSumMap.get(anexoId)?.get(classification)?.toNumber() || 0;
   };
 
-  parser.functions.ref = (classification: string) => {
+  parser.functions.ref = (arg: any) => {
+      const classification = String(arg);
       const targets = rowsByClass.get(classification) || [];
-      return targets.reduce((acc, t) => {
+      const val = targets.reduce((acc, t) => {
           const calculated = calculatedRows.get(t.id);
           return acc + (calculated?.total || 0);
       }, 0);
+      return val;
   };
 
   parser.functions.pct = (value: number, percentage: number) => {
