@@ -12,7 +12,7 @@ import { calculateFicha } from '@/lib/cost-engine';
 import { FichaJSON, CostRow, Anexo, RowSemanticType, FormaCalculo, BaseRef, AuditEntry, CalculationResult } from '@/lib/cost-engine/types';
 
 // Helper to safely evaluate a formula string for ANNEXES (keeping it simple for annex rows)
-const evaluateAnnexExpression = (expression: string, rowData: any, header: any): number => {
+const evaluateAnnexExpression = (expression: string, rowData: any, header: any, calculatedAnnexes: any[] = []): number => {
   if (expression === undefined || expression === null || expression === '') return 0;
 
   // If it's already a number, return it
@@ -39,11 +39,34 @@ const evaluateAnnexExpression = (expression: string, rowData: any, header: any):
     // Header replacements
     expr = expr.replace(/header\(['"]([^'"]+)['"]\)/g, (_, key) => String(header[key] || 0));
 
+    // Annex replacements (e.g. AnexoI) with Smart Resolve
+    expr = expr.replace(/Anexo([IVXLC]+)/g, (_, id) => {
+        const targetAnnex = calculatedAnnexes.find(a => a.id === id);
+        if (!targetAnnex) return '0';
+
+        // Smart Resolve: if current row has a classification, try to get the specific sum for that class in this annex
+        const rowClass = String(rowData.classification || '').split(' - ')[0].trim();
+        if (rowClass) {
+            const classMatch = targetAnnex.data.find((d: any) =>
+                String(d.classification || d.label || '').split(' - ')[0].trim() === rowClass
+            );
+
+            if (classMatch) {
+                const val = classMatch.total || classMatch.amount || classMatch.depreciation_cost || classMatch.price_total || 0;
+                return String(val);
+            }
+        }
+
+        // Fallback to total of target annex
+        const total = targetAnnex.data.reduce((sum: number, r: any) => {
+             const val = r.total || r.amount || r.depreciation_cost || r.price_total || 0;
+             return sum + (typeof val === 'number' ? val : 0);
+        }, 0);
+        return String(total);
+    });
+
     // Basic arithmetic evaluation
-    // We use a limited set of characters for safety in this simple evaluator
     if (!/^[0-9.+\-*/() ]+$/.test(expr)) {
-        // If it contains non-arithmetic chars after replacement, it might be an invalid formula
-        // or a string that shouldn't be evaluated.
         return isNaN(Number(trimmed)) ? 0 : Number(trimmed);
     }
 
@@ -70,6 +93,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
   const calculatedAnnexes = useMemo(() => {
     if (!template || !template.annexes) return [];
 
+    const results: any[] = [];
     const isNumericColumn = (key: string) => {
         const lowerKey = key.toLowerCase();
         return lowerKey === 'no' ||
@@ -83,28 +107,32 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
                lowerKey.includes('cost');
     };
 
-    return (template?.annexes || []).map(annex => ({
-      ...annex,
-      data: (annex.data || []).map(row => produce(row, (draft: any) => {
-        // First, pass through non-formula columns to see if they contain manual formulas
-        // ONLY for columns that are supposed to be numeric to avoid zeroing out descriptions
-        for (const col of annex.columns) {
-          if (!col.formula && isNumericColumn(col.key)) {
-            const val = draft[col.key];
-            if (typeof val === 'string' && val.length > 0 && isNaN(Number(val))) {
-                draft[col.key] = evaluateAnnexExpression(val, row, template?.header);
+    (template?.annexes || []).forEach(annex => {
+      const calculatedAnnex = {
+        ...annex,
+        data: (annex.data || []).map(row => produce(row, (draft: any) => {
+          // First, pass through non-formula columns to see if they contain manual formulas
+          for (const col of annex.columns) {
+            if (!col.formula && isNumericColumn(col.key)) {
+              const val = draft[col.key];
+              if (typeof val === 'string' && val.length > 0 && isNaN(Number(val))) {
+                  draft[col.key] = evaluateAnnexExpression(val, row, template?.header, results);
+              }
             }
           }
-        }
 
-        // Then apply column-level formulas (which might depend on the calculated cell values above)
-        for (const col of annex.columns) {
-          if (col.formula) {
-            draft[col.key] = evaluateAnnexExpression(col.formula, draft, template?.header);
+          // Then apply column-level formulas
+          for (const col of annex.columns) {
+            if (col.formula) {
+              draft[col.key] = evaluateAnnexExpression(col.formula, draft, template?.header, results);
+            }
           }
-        }
-      }))
-    }));
+        }))
+      };
+      results.push(calculatedAnnex);
+    });
+
+    return results;
   }, [template?.annexes, template?.header]);
 
   const annexTotals = useMemo(() => {

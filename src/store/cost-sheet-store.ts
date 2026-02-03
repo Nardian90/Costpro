@@ -67,10 +67,12 @@ interface CostSheetState {
   updateValues: (updates: { path: (string | number)[], value: string | number | boolean }[]) => void;
   addRow: (annexId: string) => void;
   removeRow: (annexId: string, rowIndex: number) => void;
+  reorderRow: (annexId: string, rowIndex: number, direction: 'up' | 'down') => void;
   addMainSection: () => void;
   removeMainSection: (index: number) => void;
   addMainRow: (parentPath: (string | number)[]) => void;
   removeMainRow: (path: (string | number)[]) => void;
+  reorderMainRow: (path: (string | number)[], direction: 'up' | 'down') => void;
   setSheet: (data: CostSheetDataContract) => void;
   loadExample: () => void;
   reset: () => void;
@@ -92,6 +94,44 @@ export const useCostSheetStore = create<CostSheetState>()(
             // Only update if value actually changed to prevent redundant renders
             if (current[path[path.length - 1]] !== value) {
               current[path[path.length - 1]] = value;
+            }
+          })
+        ),
+      reorderRow: (annexId, rowIndex, direction) =>
+        set(
+          produce((draft: CostSheetState) => {
+            if (!draft.data?.annexes) return;
+            const annex = draft.data.annexes.find(
+              (a: CostSheetAnnexContract) => a.id === annexId
+            );
+            if (annex && annex.data) {
+              const newIndex = direction === 'up' ? rowIndex - 1 : rowIndex + 1;
+              if (newIndex >= 0 && newIndex < annex.data.length) {
+                const temp = annex.data[rowIndex];
+                annex.data[rowIndex] = annex.data[newIndex];
+                annex.data[newIndex] = temp;
+              }
+            }
+          })
+        ),
+      reorderMainRow: (path, direction) =>
+        set(
+          produce((draft: CostSheetState) => {
+            if (!draft.data) return;
+            const parentPath = path.slice(0, -1);
+            const index = path[path.length - 1] as number;
+            let current: any = draft.data;
+            for (const p of parentPath) {
+              if (current[p] === undefined) return;
+              current = current[p];
+            }
+            if (Array.isArray(current)) {
+              const newIndex = direction === 'up' ? index - 1 : index + 1;
+              if (newIndex >= 0 && newIndex < current.length) {
+                const temp = current[index];
+                current[index] = current[newIndex];
+                current[newIndex] = temp;
+              }
             }
           })
         ),
