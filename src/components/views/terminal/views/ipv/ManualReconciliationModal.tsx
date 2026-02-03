@@ -49,7 +49,7 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
 
     const targetAmount = useMemo(() => {
         if (!transaction) return 0;
-        return transaction.importe_venta_cents || transaction.importe_cents;
+        return transaction.importe_cents;
     }, [transaction]);
 
     const currentTotal = useMemo(() => {
@@ -125,6 +125,39 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
         setManualLines(manualLines.filter(l => l.id !== id));
     };
 
+    const adjustExistingLine = async (line: ReconciliationLine) => {
+        if (!transaction) return;
+
+        const adjustment = remaining;
+        const newTotalLine = line.importe_linea_cents + adjustment;
+
+        if (newTotalLine < 0) {
+            toast.error('El ajuste resultaría en un precio negativo.');
+            return;
+        }
+
+        await db.reconciliation_lines.update(line.id, {
+            importe_linea_cents: newTotalLine,
+            precio_unitario_cents: line.cantidad === 1 ? newTotalLine : line.precio_unitario_cents,
+            cuadre_cents: (line.cuadre_cents || 0) + adjustment
+        });
+
+        // Actualizar estado de la transacción
+        const lines = await db.reconciliation_lines.where('transaction_ref').equals(transaction.referencia_origen).toArray();
+        const newTotal = lines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
+        const target = transaction.importe_cents;
+        const newStatus = Math.abs(newTotal - target) < 0.001 ? 'COMPLETO' : (newTotal > 0.001 ? 'PARCIAL' : 'PENDIENTE');
+
+        await db.bank_statements.update(transaction.referencia_origen, {
+            estado_conciliacion: newStatus
+        });
+
+        const label = adjustment > 0 ? 'Propina' : 'Descuento';
+        toast.success(`${label} de ${Math.abs(adjustment)} cts aplicado a ${line.product_cod}`, {
+            icon: <CheckCircle2 className="text-primary" />
+        });
+    };
+
     const removeExistingLine = async (id: string) => {
         if (!transaction) return;
         if (confirm('¿Eliminar esta línea de conciliación?')) {
@@ -133,7 +166,7 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
             // Actualizar estado de la transacción
             const lines = await db.reconciliation_lines.where('transaction_ref').equals(transaction.referencia_origen).toArray();
             const newTotal = lines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
-            const target = transaction.importe_venta_cents || transaction.importe_cents;
+            const target = transaction.importe_cents;
             const newStatus = (newTotal + 0.001) >= target ? 'COMPLETO' : (newTotal > 0.001 ? 'PARCIAL' : 'PENDIENTE');
 
             await db.bank_statements.update(transaction.referencia_origen, {
@@ -177,7 +210,7 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                 await db.reconciliation_lines.add(fullLine);
             }
 
-            const target = transaction.importe_venta_cents || transaction.importe_cents;
+            const target = transaction.importe_cents;
             const newStatus = (currentTotal + 0.001) >= target ? 'COMPLETO' : (currentTotal > 0.001 ? 'PARCIAL' : 'PENDIENTE');
 
             await db.bank_statements.update(transaction.referencia_origen, {
@@ -209,11 +242,6 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                         <div className="text-right">
                             <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Importe Meta (Cents)</p>
                             <p className="text-2xl font-black text-primary">{targetAmount}</p>
-                            {transaction.comision_cents ? (
-                                <p className="text-[10px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded mt-1">
-                                    Banco: {transaction.importe_cents} + Comis: {transaction.comision_cents}
-                                </p>
-                            ) : null}
                         </div>
                     </div>
 
@@ -306,22 +334,50 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                             <div className="p-4 space-y-3">
                                 {/* Existing Lines */}
                                 {existingLines?.map(l => (
-                                    <div key={l.id} className="p-4 bg-background border rounded-2xl flex justify-between items-center group/exist shadow-sm border-l-4 border-l-green-500">
-                                        <div className="flex-1">
-                                            <p className="font-black text-xs text-foreground mb-0.5">{l.product_cod}</p>
-                                            <p className="text-[10px] font-medium text-muted-foreground uppercase">
-                                                {l.cantidad} {l.product_um} × {l.precio_unitario_cents}
-                                            </p>
+                                    <div key={l.id} className="p-4 bg-background border rounded-2xl flex flex-col group/exist shadow-sm border-l-4 border-l-green-500 gap-2">
+                                        <div className="flex justify-between items-center">
+                                            <div className="flex-1">
+                                                <p className="font-black text-xs text-foreground mb-0.5">{l.product_cod}</p>
+                                                <p className="text-[10px] font-medium text-muted-foreground uppercase">
+                                                    {l.cantidad} {l.product_um} × {l.precio_unitario_cents}
+                                                </p>
+                                            </div>
+                                            <div className="flex items-center gap-4">
+                                                <div className="text-right">
+                                                    <span className="font-black text-sm text-green-600 block">{l.importe_linea_cents}</span>
+                                                    {l.cuadre_cents && l.cuadre_cents !== 0 ? (
+                                                        <Badge
+                                                            variant="outline"
+                                                            className={`text-[8px] font-black uppercase py-0 px-1 ${
+                                                                l.cuadre_cents > 0
+                                                                    ? 'border-green-200 text-green-600 bg-green-50'
+                                                                    : 'border-red-200 text-red-600 bg-red-50'
+                                                            }`}
+                                                        >
+                                                            {l.cuadre_cents > 0 ? `+${l.cuadre_cents} Propina` : `${l.cuadre_cents} Descuento`}
+                                                        </Badge>
+                                                    ) : null}
+                                                </div>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 text-destructive opacity-0 group-hover/exist:opacity-100 transition-opacity hover:bg-red-50"
+                                                    onClick={() => removeExistingLine(l.id)}
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </Button>
+                                            </div>
                                         </div>
-                                        <div className="flex items-center gap-4">
-                                            <span className="font-black text-sm text-green-600">{l.importe_linea_cents}</span>
+                                        <div className="flex justify-end">
                                             <Button
+                                                size="sm"
                                                 variant="ghost"
-                                                size="icon"
-                                                className="h-8 w-8 text-destructive opacity-0 group-hover/exist:opacity-100 transition-opacity hover:bg-red-50"
-                                                onClick={() => removeExistingLine(l.id)}
+                                                className="h-7 text-[8px] font-black uppercase px-2 hover:bg-orange-500/10 text-orange-600 opacity-0 group-hover/exist:opacity-100 transition-opacity"
+                                                title="Ajustar esta línea para cuadrar el restante (Propina/Descuento)"
+                                                onClick={() => adjustExistingLine(l)}
+                                                disabled={Math.abs(remaining) < 0.001}
                                             >
-                                                <Trash2 className="w-4 h-4" />
+                                                Cuadrar Aquí
                                             </Button>
                                         </div>
                                     </div>
