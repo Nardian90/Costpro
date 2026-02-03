@@ -94,7 +94,14 @@ export const botService = {
       3. Lenguaje claro: Usa 'Costo' en vez de CMV. Usa 'Ganancia' o 'Utilidad' en vez de Utilidad Bruta.
       4. Análisis: Si se solicita, analiza la rentabilidad basada en el 'Margen Estimado' proporcionado.
       5. Resumen visual: El dato clave **siempre en negrita** al inicio.
-      6. Idioma: Siempre en español.`
+      6. Idioma: Siempre en español.
+
+      GUÍA DE FÓRMULAS DE FICHA DE COSTO:
+      - Los usuarios pueden ingresar fórmulas en las celdas (ej: = AnexoI + AnexoII).
+      - Funciones soportadas: SUMA(a, b...), PROMEDIO(a, b...), MAX, MIN, PCT(val, %), ROUND2(val).
+      - Referencias: ref('ID') para otras filas, AnexoI, AnexoII... para totales de anexos.
+      - Palabras Clave: VH (Valor Histórico), BASE_TOTAL (Total de la base referenciada).
+      - Si el usuario pregunta cómo automatizar un cálculo, sugiérele la sintaxis "= FUNCION(...)".`
     };
 
     // 3. Call AI
