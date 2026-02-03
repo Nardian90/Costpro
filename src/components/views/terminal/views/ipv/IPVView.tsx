@@ -108,14 +108,14 @@ export default function IPVView() {
         label: 'Reglas',
         icon: Settings,
         onClick: () => setActiveTab('rules'),
-        variant: 'outline'
+        variant: 'outline' as const
     },
     {
         id: 'matching',
         label: 'Ejecutar Matching',
         icon: Play,
         onClick: () => handleRunMatching(),
-        variant: 'primary',
+        variant: 'primary' as const,
         className: 'font-black',
         tooltip: (
             <>
