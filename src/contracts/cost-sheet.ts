@@ -73,10 +73,16 @@ export interface CostSheetSignatureContract {
 }
 
 export interface CostSheetDataContract {
+  id?: string;
+  name?: string;
+  version?: string;
+  metadata?: any;
   header: CostSheetHeaderContract;
   sections: CostSheetSectionContract[];
   annexes: CostSheetAnnexContract[];
   signature: CostSheetSignatureContract;
+  footer?: string;
+  [key: string]: any;
 }
 
 // ============================================
