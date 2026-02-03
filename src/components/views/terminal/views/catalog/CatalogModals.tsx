@@ -70,6 +70,41 @@ export const CatalogModals = ({
             <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Precio</label>
             <input type="number" value={modals.editingProduct?.price || 0} onChange={(e) => modals.setEditingProduct({ ...modals.editingProduct, price: parseFloat(e.target.value) || 0 })} className="neu-input w-full font-bold" />
           </div>
+
+          {/* Price Simulator */}
+          <div className="neu-card !p-4 bg-primary/5 border border-primary/10 space-y-3">
+            <label className="text-[10px] font-black uppercase text-primary tracking-widest flex items-center gap-2">
+              <DollarSign className="w-3 h-3" /> Simulador de Precios / Margen
+            </label>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <span className="text-[8px] font-black uppercase text-muted-foreground tracking-tighter">Utilidad Bruta</span>
+                <div className={cn(
+                  "font-black text-sm",
+                  (modals.editingProduct?.price - modals.editingProduct?.cost_price) < 0 ? "text-danger" : "text-success"
+                )}>
+                  {formatCurrency((modals.editingProduct?.price || 0) - (modals.editingProduct?.cost_price || 0))}
+                </div>
+              </div>
+              <div className="space-y-1">
+                <span className="text-[8px] font-black uppercase text-muted-foreground tracking-tighter">% Margen</span>
+                <div className={cn(
+                  "font-black text-sm",
+                  ((modals.editingProduct?.price || 0) - (modals.editingProduct?.cost_price || 0)) < 0 ? "text-danger" : "text-success"
+                )}>
+                  {modals.editingProduct?.price > 0
+                    ? ((((modals.editingProduct.price || 0) - (modals.editingProduct.cost_price || 0)) / modals.editingProduct.price) * 100).toFixed(2)
+                    : '0.00'}%
+                </div>
+              </div>
+            </div>
+            {(modals.editingProduct?.price || 0) < (modals.editingProduct?.cost_price || 0) && (
+              <div className="bg-danger/10 border border-danger/20 p-2 rounded-lg text-danger text-[9px] font-bold text-center animate-pulse">
+                ALERTA: PRECIO POR DEBAJO DEL COSTO
+              </div>
+            )}
+          </div>
+
           <div className="space-y-1.5">
             <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Imagen</label>
             <div className="flex flex-col items-center gap-6 p-6 neu-inset-sm bg-background/50 rounded-3xl">
