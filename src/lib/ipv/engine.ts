@@ -44,7 +44,7 @@ export class MatchingEngine {
 
   async matchTransaction(transaction: BankTransaction, current_reconciled_cents: number = 0): Promise<MatchingResult> {
     const logs: string[] = [];
-    const targetAmount = transaction.importe_cents;
+    const targetAmount = transaction.importe_venta_cents || transaction.importe_cents;
     let remaining_cents = targetAmount - current_reconciled_cents;
     const lines: ReconciliationLine[] = [];
 
