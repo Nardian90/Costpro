@@ -41,7 +41,8 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
   const navigationSequence = React.useMemo(() => {
     const sequence: { section: string, subSectionId?: string }[] = [
         { section: 'kpis' },
-        { section: 'header' },
+        // Header is now integrated into the 'main' section view
+        { section: 'main', subSectionId: '' }, // Step for the Header/Selection grid
         ...(subSections || []).map(s => ({ section: 'main', subSectionId: s.id })),
         ...(annexes || []).map(a => ({ section: a.id })),
         { section: 'signature' },

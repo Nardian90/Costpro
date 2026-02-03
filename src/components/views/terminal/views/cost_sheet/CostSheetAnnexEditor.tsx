@@ -73,22 +73,6 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
 
   // Extract classifications from sections based on annex ID
   const classificationSuggestions = React.useMemo(() => {
-    const getLeafRows = (rows: any[]) => {
-        const suggestions: { id: string, label: string }[] = [];
-        const traverse = (rows: any[]) => {
-            rows.forEach(r => {
-                if (r.children && r.children.length > 0) {
-                    suggestions.push({ id: r.id, label: r.label });
-                    traverse(r.children);
-                } else {
-                    suggestions.push({ id: r.id, label: r.label });
-                }
-            });
-        };
-        traverse(rows);
-        return suggestions;
-    };
-
     let targetSectionId = '';
     if (activeAnnexId === 'I') targetSectionId = 's1';
     else if (activeAnnexId === 'II') targetSectionId = 's2';
@@ -101,6 +85,24 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
 
     const section = sections.find(s => s.id === targetSectionId || s.id === targetSectionId.replace('s', ''));
     if (!section) return [];
+
+    const getLeafRows = (rows: any[]) => {
+        const suggestions: { id: string, label: string }[] = [];
+        const traverse = (rows: any[], parentNumbering?: string) => {
+            rows.forEach((r, idx) => {
+                const numbering = parentNumbering
+                    ? `${parentNumbering}.${idx + 1}`
+                    : `${targetSectionId.replace('s','')}.${idx + 1}`;
+
+                suggestions.push({ id: numbering, label: r.label });
+                if (r.children && r.children.length > 0) {
+                    traverse(r.children, numbering);
+                }
+            });
+        };
+        traverse(rows || []);
+        return suggestions;
+    };
 
     return getLeafRows(section.rows || []);
   }, [sections, activeAnnexId]);
@@ -272,7 +274,13 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                                                 type={typeof (annexes[annexIndex].data[rowIndex][col.key]) === 'number' ? 'number' : 'text'}
                                                 value={annexes[annexIndex].data[rowIndex][col.key] ?? ''}
                                                 onChange={(e) => handleInputChange(['annexes', annexIndex, 'data', rowIndex, col.key], e.target.value)}
-                                                list={(col.key === 'classification' || (col.key === 'description' && activeAnnexId !== 'II')) ? 'classification-suggestions' : undefined}
+                                                list={(() => {
+                                                    const isDescriptionColumn = col.key === 'description' || col.label === 'DESCRIPCIÓN DEL PUESTO';
+                                                    if (activeAnnexId === 'II' && isDescriptionColumn) return undefined;
+                                                    if (['IV', 'V'].includes(activeAnnexId) && isDescriptionColumn) return undefined;
+                                                    if (col.key === 'classification' || col.key === 'description') return 'classification-suggestions';
+                                                    return undefined;
+                                                })()}
                                                 className={cn(
                                                     "neu-input !p-2 min-w-[140px] text-xs font-bold text-slate-700 dark:text-slate-200 border-transparent hover:border-primary/20 focus:border-primary bg-white/50 dark:bg-slate-900/50",
                                                     typeof annexes[annexIndex].data[rowIndex][col.key] === 'string' && annexes[annexIndex].data[rowIndex][col.key] !== '' && "border-primary/20 bg-primary/5"
