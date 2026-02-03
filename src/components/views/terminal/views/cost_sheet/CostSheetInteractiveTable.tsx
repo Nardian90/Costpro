@@ -313,6 +313,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
  */
 const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo(({
     sections,
+    groupedSections,
     calculatedValues,
     annexes,
     activeSubSectionId,
@@ -535,7 +536,6 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                         </Table>
                         </div>
                     </div>
-                </div>
                 </div>
                 )
             ));
