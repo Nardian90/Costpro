@@ -12,11 +12,11 @@ describe('bandecParser', () => {
 `;
     const txs = await parseBandecTxt(mockTxt);
     expect(txs).toHaveLength(1);
-    expect(txs[0].comision_cents).toBe(0);
-    expect(txs[0].importe_venta_cents).toBe(1330);
+    expect(txs[0].comision_cents).toBe(10.50);
+    expect(txs[0].importe_venta_cents).toBe(1330 + 10.50);
   });
 
-  it('should not extract commission (deprecated logic)', async () => {
+  it('should extract commission (reactive logic)', async () => {
       const mockTxt = `
 01/08/25
       YR60000008646   98025A6248224                                              1,330.00 Cr
@@ -24,7 +24,8 @@ describe('bandecParser', () => {
 `;
       const txs = await parseBandecTxt(mockTxt);
       expect(txs).toHaveLength(1);
-      expect(txs[0].comision_cents).toBe(0);
+      expect(txs[0].comision_cents).toBe(5);
+      expect(txs[0].importe_venta_cents).toBe(1330 + 5);
   });
 
   it('should extract commission from raw string using utility', () => {

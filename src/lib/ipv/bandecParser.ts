@@ -94,8 +94,9 @@ async function finalizeTx(tx: BankTransaction, buffer: string[]): Promise<BankTr
 
     tx.observaciones = cleanObs;
 
-    tx.comision_cents = 0;
-    tx.importe_venta_cents = tx.importe_cents;
+    const commission = extractCommission(cleanObs);
+    tx.comision_cents = commission;
+    tx.importe_venta_cents = tx.importe_cents + commission;
 
     tx.ingestion_hash = await generateHash(`${tx.referencia_origen}-${tx.fecha}-${tx.importe_cents}`);
 
