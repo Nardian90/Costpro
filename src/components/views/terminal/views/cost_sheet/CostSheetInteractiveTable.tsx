@@ -105,7 +105,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
   }, [path, updateValues, row.is_percent]);
 
 
-  const isResultRow = row.is_percent || ['5', '7', '8', '9', '9.1', '9.2', '9.3', '12', '13', '13.1', '13.2', '14'].includes(String(row.id));
+  const isResultRow = row.is_percent || ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '13.1', '13.2', '14', '15', '16'].includes(String(row.id));
   const safeCalculated = calculated || { total: 0, valorHistorico: 0, baseTotal: 0, coeficiente: 0, hasWarnings: false, audits: [] };
   const showWarning = safeCalculated.hasWarnings || (!hasChildren && !row.is_percent && safeCalculated.total === 0 && ((row.valorHistorico ?? 0) > 0 || !!row.baseDeCalculoRef));
 
