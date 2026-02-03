@@ -37,6 +37,31 @@ const CostSheetView = () => {
   const [activeSection, setActiveSection] = useState('kpis');
   const [activeSubSectionId, setActiveSubSectionId] = useState('');
 
+  // Grouping logic for "Smart Grouping" of small sections
+  const groupedSections = React.useMemo(() => {
+    if (!data?.sections) return [];
+    const groups: { id: string, label: string, sectionIds: string[] }[] = [];
+
+    data.sections.forEach((section) => {
+        const rowCount = section.rows?.length || 0;
+        const lastGroup = groups[groups.length - 1];
+
+        // If section is small (< 4 rows) and we have a previous group that is also small
+        // or just group it if it's very small and we want to avoid over-segmentation
+        if (lastGroup && rowCount < 4 && data.sections.find(s => s.id === lastGroup.id)?.rows?.length! < 8) {
+            lastGroup.sectionIds.push(section.id);
+            lastGroup.label = `${lastGroup.label} + ${section.label}`;
+        } else {
+            groups.push({
+                id: section.id,
+                label: section.label || `Sección ${section.id}`,
+                sectionIds: [section.id]
+            });
+        }
+    });
+    return groups;
+  }, [data?.sections]);
+
   const [isActionsPanelOpen, setIsActionsPanelOpen] = useState(false);
   const [isSectionsSidebarOpen, setIsSectionsSidebarOpen] = useState(false);
   const [isAnnexesSidebarOpen, setIsAnnexesSidebarOpen] = useState(false);
@@ -244,11 +269,10 @@ const CostSheetView = () => {
                 <CostSheetNav
                     navItems={React.useMemo(() => [
                         { id: 'kpis', label: 'KPIs', icon: BarChart3 },
-                        { id: 'header', label: 'Encabezado' },
-                        { id: 'main', label: 'Tabla Principal' },
+                        { id: 'main', label: 'Ficha Principal', icon: FileSpreadsheet },
                         { id: 'audit', label: 'Auditoría', icon: Activity }
                     ], [])}
-                    subSections={data?.sections || []}
+                    subSections={groupedSections}
                     activeSubSectionId={activeSubSectionId}
                     setActiveSubSectionId={setActiveSubSectionId}
                     annexes={data?.annexes || []}
@@ -267,20 +291,21 @@ const CostSheetView = () => {
                             />
                         </div>
                     )}
-                    {activeSection === 'header' && (
-                        <div className="space-y-6">
-                            <CostSheetHeaderEditor />
-                        </div>
-                    )}
                     {activeSection === 'main' && (
-                        <CostSheetInteractiveTable
-                            sections={data?.sections || []}
-                            calculatedValues={calculatedValues}
-                            annexes={data?.annexes || []}
-                            activeSubSectionId={activeSubSectionId}
-                            setActiveSubSectionId={setActiveSubSectionId}
-                            onOpenSections={() => setIsSectionsSidebarOpen(true)}
-                        />
+                        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            {/* Always show header editor at the top of the main sheet */}
+                            <CostSheetHeaderEditor />
+
+                            <CostSheetInteractiveTable
+                                sections={data?.sections || []}
+                                groupedSections={groupedSections}
+                                calculatedValues={calculatedValues}
+                                annexes={data?.annexes || []}
+                                activeSubSectionId={activeSubSectionId}
+                                setActiveSubSectionId={setActiveSubSectionId}
+                                onOpenSections={() => setIsSectionsSidebarOpen(true)}
+                            />
+                        </div>
                     )}
                     {isAnnexActive && (
                         <CostSheetAnnexEditor
