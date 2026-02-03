@@ -55,8 +55,8 @@ export async function parseBandecTxt(text: string): Promise<BankTransaction[]> {
                 referencia_origen: refOriginal,
                 importe_cents: importeCents,
                 tipo: tipo,
-                estado_conciliacion: 'PENDIENTE',
-                excluido: false,
+                estado_conciliacion: tipo === 'Db' ? 'NO_PROCESAR' : 'PENDIENTE',
+                excluido: tipo === 'Db',
                 created_at: new Date().toISOString(),
             };
             observationsBuffer = [];

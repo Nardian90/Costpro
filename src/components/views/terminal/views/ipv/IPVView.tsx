@@ -29,6 +29,7 @@ import { IngestionErrorsTable } from './IngestionErrorsTable';
 import { IPVControlPanel } from './IPVControlPanel';
 import { IPVRightSidebar } from './IPVRightSidebar';
 import { exportFullBackup, importFullBackup } from '@/lib/ipv/backup';
+import { recalculateIPVReportsChain } from '@/lib/ipv/utils';
 import { toast } from 'sonner';
 import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
 import { HorizontalScroll } from '@/components/ui/HorizontalScroll';
@@ -52,6 +53,20 @@ export default function IPVView() {
   const products = useLiveQuery(() => db.products.toArray());
   const reconciliationLines = useLiveQuery(() => db.reconciliation_lines.toArray());
   const ingestionErrorsCount = useLiveQuery(() => db.ingestion_errors.count()) || 0;
+
+  // Mapa de stock actual para el motor de matching y simulación
+  const productsWithStock = useMemo(() => {
+    if (!products) return [];
+    return products.map(p => {
+        const sold = (reconciliationLines || [])
+            .filter(l => l.product_cod === p.cod)
+            .reduce((sum, l) => sum + l.cantidad, 0);
+        return {
+            ...p,
+            stock_inicial_manual: (p.stock_inicial_manual || 0) - sold
+        };
+    });
+  }, [products, reconciliationLines]);
 
   // Optimización: Cálculos pesados de conciliación movidos a useMemo con dependencias granulares
   const txTotals = useMemo(() => {
@@ -103,6 +118,14 @@ export default function IPVView() {
 
   const topActions: Action[] = useMemo(() => [
     {
+        id: 'sync',
+        label: 'Sincronizar IPV',
+        icon: History,
+        onClick: () => handleGlobalRecalculate(),
+        variant: 'outline' as const,
+        tooltip: 'Recalcula la cadena de reportes IPV y actualiza estadísticas para asegurar coherencia total.'
+    },
+    {
         id: 'rules',
         label: 'Reglas',
         icon: Settings,
@@ -129,7 +152,7 @@ export default function IPVView() {
             </>
         )
     }
-  ], []);
+  ], [transactions, products, productsWithStock, rules]);
 
   async function handleImportBackup(file: File) {
     const loadingToast = toast.loading('Restaurando base de datos...');
@@ -143,6 +166,17 @@ export default function IPVView() {
     } catch (error) {
       console.error('Error importing backup:', error);
       toast.error('Error al restaurar la base de datos', { id: loadingToast });
+    }
+  }
+
+  async function handleGlobalRecalculate() {
+    const loadingToast = toast.loading('Sincronizando datos del sistema...');
+    try {
+        await recalculateIPVReportsChain(db);
+        toast.success('Sincronización completa: IPV, Desglose y Catálogo alineados.', { id: loadingToast });
+    } catch (error) {
+        console.error('Error in global recalculate:', error);
+        toast.error('Error al sincronizar datos', { id: loadingToast });
     }
   }
 
@@ -176,13 +210,19 @@ export default function IPVView() {
             current_reconciled_cents: txTotalsMap[t.referencia_origen] || 0
         }));
 
+    if (transactionsToProcess.length === 0) {
+        toast.info('Todas las transacciones ya están completadas o excluidas.');
+        setIsMatching(false);
+        return;
+    }
+
     // Aquí invocaríamos al Worker
     const worker = new Worker(new URL('@/lib/ipv/matching.worker.ts', import.meta.url));
 
     worker.postMessage({
       type: 'RECONCILE_BATCH',
       transactions: transactionsToProcess,
-      products,
+      products: productsWithStock,
       rules
     });
 
@@ -352,7 +392,7 @@ export default function IPVView() {
           </TabsContent>
 
           <TabsContent value="sim" className="m-0">
-            <MatchingSimulation products={products || []} rules={rules || []} />
+            <MatchingSimulation products={productsWithStock} rules={rules || []} />
           </TabsContent>
 
           <TabsContent value="breakdown" className="m-0">

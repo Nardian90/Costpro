@@ -14,7 +14,8 @@ import {
   ShieldCheck,
   Zap,
   Percent,
-  Coins
+  Coins,
+  Box
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -68,6 +69,7 @@ function SortableRuleItem({ rule, toggleRule, updateTolerance, updatePriority, t
             case 'EXACT_SUM': return <Zap className="text-yellow-500" />;
             case 'TOLERANCE': return <Percent className="text-green-500" />;
             case 'CASH_FILL': return <Coins className="text-orange-500" />;
+            case 'STOCK_LIMIT': return <Box className="text-purple-500" />;
             default: return <Info />;
         }
     };
@@ -78,6 +80,7 @@ function SortableRuleItem({ rule, toggleRule, updateTolerance, updatePriority, t
             case 'EXACT_SUM': return 'Suma Exacta (Greedy)';
             case 'TOLERANCE': return 'Margen de Tolerancia';
             case 'CASH_FILL': return 'Ajuste Automático Efectivo';
+            case 'STOCK_LIMIT': return 'Control de Inventario';
             default: return tipo;
         }
     };
@@ -88,6 +91,7 @@ function SortableRuleItem({ rule, toggleRule, updateTolerance, updatePriority, t
             case 'EXACT_SUM': return 'Busca combinaciones de productos que sumen exactamente el importe recibido.';
             case 'TOLERANCE': return 'Permite un descuadre controlado si la suma se acerca al importe.';
             case 'CASH_FILL': return 'Cubre cualquier faltante restante marcándolo como venta en efectivo.';
+            case 'STOCK_LIMIT': return 'Impide que el algoritmo asigne productos que no tengan existencia física disponible.';
             default: return '';
         }
     };
@@ -203,10 +207,11 @@ export function MatchingRulesEditor() {
 
   const initializeDefaultRules = async () => {
     const defaults: MatchingRule[] = [
-      { id: '1', tipo: 'HARD_REF', prioridad: 1, activo: true },
-      { id: '2', tipo: 'EXACT_SUM', prioridad: 2, activo: true },
-      { id: '3', tipo: 'TOLERANCE', prioridad: 3, activo: true, tolerancia_cents: 1 }, // $1.00
-      { id: '4', tipo: 'CASH_FILL', prioridad: 4, activo: false }
+      { id: '1', tipo: 'STOCK_LIMIT', prioridad: 1, activo: true },
+      { id: '2', tipo: 'HARD_REF', prioridad: 2, activo: true },
+      { id: '3', tipo: 'EXACT_SUM', prioridad: 3, activo: true },
+      { id: '4', tipo: 'TOLERANCE', prioridad: 4, activo: true, tolerancia_cents: 1 }, // $1.00
+      { id: '5', tipo: 'CASH_FILL', prioridad: 5, activo: false }
     ];
     await db.matching_rules.bulkPut(defaults);
     toast.success('Reglas inicializadas');
