@@ -33,6 +33,23 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
     const [manualLines, setManualLines] = useState<Partial<ReconciliationLine>[]>([]);
 
     const products = useLiveQuery(() => db.products.toArray().then(prods => prods.filter(p => p.activo)));
+    const reconciliationLines = useLiveQuery(() => db.reconciliation_lines.toArray());
+    const rules = useLiveQuery(() => db.matching_rules.toArray());
+
+    const isInventoryRuleActive = useMemo(() => rules?.find(r => r.tipo === 'STOCK_LIMIT' && r.activo), [rules]);
+
+    const currentStockMap = useMemo(() => {
+        const map = new Map<string, number>();
+        if (!products || !reconciliationLines) return map;
+
+        products.forEach(p => {
+            const sold = reconciliationLines
+                .filter(l => l.product_cod === p.cod)
+                .reduce((sum, l) => sum + l.cantidad, 0);
+            map.set(p.cod, (p.stock_inicial_manual || 0) - sold);
+        });
+        return map;
+    }, [products, reconciliationLines]);
 
     const existingLines = useLiveQuery(
         () => transaction ? db.reconciliation_lines.where('transaction_ref').equals(transaction.referencia_origen).toArray() : [],
@@ -96,7 +113,19 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
     };
 
     const addProduct = async (product: Product) => {
-        // Regla: Bloqueo de Existencias Negativas en Productos a Medida
+        // Regla: CONTROL DE INVENTARIO (Nivel Global)
+        if (isInventoryRuleActive) {
+            const stock = currentStockMap.get(product.cod) || 0;
+            if (stock <= 0) {
+                toast.error(`BLOQUEO DE INVENTARIO: No hay existencias para ${product.descripcion}.`, {
+                    icon: <AlertTriangle className="text-red-500" />,
+                    duration: 5000
+                });
+                return;
+            }
+        }
+
+        // Regla: Bloqueo de Existencias Negativas en Productos a Medida (Legacy check)
         if (isProductAMedida(product.um)) {
             const currentStock = await calculateCurrentStock(db, product.cod);
             if (currentStock <= 0) {
@@ -361,7 +390,7 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    className="h-8 w-8 text-destructive opacity-0 group-hover/exist:opacity-100 transition-opacity hover:bg-red-50"
+                                                    className="h-8 w-8 text-destructive hover:bg-red-50"
                                                     onClick={() => removeExistingLine(l.id)}
                                                 >
                                                     <Trash2 className="w-4 h-4" />
