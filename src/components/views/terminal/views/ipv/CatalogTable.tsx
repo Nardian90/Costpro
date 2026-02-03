@@ -624,8 +624,9 @@ export function CatalogTable() {
                         <TableCell className="text-right">
                             <Input
                                 type="number"
+                                min="0"
                                 value={editForm.stock_inicial_manual || 0}
-                                onChange={e => setEditForm({...editForm, stock_inicial_manual: Number(e.target.value)})}
+                                onChange={e => setEditForm({...editForm, stock_inicial_manual: Math.max(0, Number(e.target.value))})}
                                 className="h-8 w-16 text-right text-xs"
                             />
                         </TableCell>
@@ -920,8 +921,9 @@ function ProductCard({ product, stats, isEditing, editForm, setEditForm, onSave,
                     {isEditing ? (
                         <Input
                             type="number"
+                            min="0"
                             value={editForm.stock_inicial_manual}
-                            onChange={e => setEditForm({...editForm, stock_inicial_manual: Number(e.target.value)})}
+                            onChange={e => setEditForm({...editForm, stock_inicial_manual: Math.max(0, Number(e.target.value))})}
                             className="h-7 text-[10px] text-center"
                         />
                     ) : (
@@ -1049,7 +1051,7 @@ function NewProductCard({ editForm, setEditForm, onSave, onCancel }: any) {
             <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                     <Label className="text-[9px] uppercase font-black">Stock Inicial</Label>
-                    <Input type="number" value={editForm.stock_inicial_manual} onChange={e => setEditForm({...editForm, stock_inicial_manual: Number(e.target.value)})} className="h-8 text-xs" />
+                    <Input type="number" min="0" value={editForm.stock_inicial_manual} onChange={e => setEditForm({...editForm, stock_inicial_manual: Math.max(0, Number(e.target.value))})} className="h-8 text-xs" />
                 </div>
                 <div className="space-y-1 flex flex-col justify-end">
                     <div className="flex items-center gap-2 pb-1">

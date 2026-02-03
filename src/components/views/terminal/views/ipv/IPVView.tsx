@@ -306,7 +306,7 @@ export default function IPVView() {
         />
       </div>
 
-      <IPVRightSidebar activeTab={activeTab} onSelect={setActiveTab} onExportBackup={() => exportFullBackup(db)} />
+      <IPVRightSidebar activeTab={activeTab} onSelect={setActiveTab} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         {activeTab !== 'dashboard' && (
