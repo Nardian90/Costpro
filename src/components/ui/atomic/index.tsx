@@ -132,6 +132,7 @@ interface ProductCardProps {
   onClick?: (product: Product) => void;
   className?: string;
   variant?: 'catalog' | 'pos' | 'inventory';
+  cartQuantity?: number;
 }
 
 export const CategoryChips: React.FC<{
@@ -174,7 +175,7 @@ export const CategoryChips: React.FC<{
 };
 
 export const ProductCard: React.FC<ProductCardProps> = ({
-  product, onEdit, onViewPrices, onDelete, onToggleActive, onClick, className, variant = 'catalog'
+  product, onEdit, onViewPrices, onDelete, onToggleActive, onClick, className, variant = 'catalog', cartQuantity = 0
 }) => {
   const isOutOfStock = product.stock_current <= 0;
   const isLowStock = product.stock_current <= (product.min_stock || 0);
@@ -185,17 +186,38 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         type="button"
         onClick={() => !isOutOfStock && onClick?.(product)}
         className={cn(
-          "flex flex-row items-center gap-4 p-3 rounded-2xl border border-border bg-card transition-all w-full text-left",
+          "flex flex-row items-center gap-4 p-3 rounded-2xl border border-border bg-card transition-all w-full text-left relative",
           isOutOfStock ? "opacity-60 cursor-not-allowed" : "hover:shadow-md active:scale-[0.98]",
+          cartQuantity > 0 && "border-primary/50 bg-primary/5 ring-1 ring-primary/20",
           className
         )}
       >
-        <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0 bg-muted">
+        <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0 bg-muted relative">
            <ProductImage src={resolveProductImage(product)} alt={product.name} name={product.name} className="w-full h-full object-cover" />
+           {cartQuantity > 0 && (
+             <div className="absolute inset-0 bg-primary/10 flex items-center justify-center backdrop-blur-[1px]">
+                <div className="bg-primary text-white text-[10px] font-black w-7 h-7 flex items-center justify-center rounded-full shadow-lg border-2 border-white animate-in zoom-in-50 duration-200">
+                  {cartQuantity}
+                </div>
+             </div>
+           )}
         </div>
         <div className="flex-1 min-w-0">
-          <h4 className="font-black text-xs uppercase truncate mb-1">{product.name}</h4>
+          <div className="flex justify-between items-start mb-0.5">
+            <h4 className="font-black text-xs uppercase truncate flex-1">{product.name}</h4>
+            {isLowStock && !isOutOfStock && (
+              <span className="text-[8px] font-black text-amber-500 uppercase ml-2 shrink-0">Bajo Stock</span>
+            )}
+            {isOutOfStock && (
+              <span className="text-[8px] font-black text-danger uppercase ml-2 shrink-0">Agotado</span>
+            )}
+          </div>
           <div className="text-lg font-black text-primary">{formatCurrency(product.price)}</div>
+          {cartQuantity > 0 && (
+            <div className="text-[9px] font-bold text-primary uppercase tracking-tighter mt-1">
+              En Carrito: {formatCurrency(product.price * cartQuantity)}
+            </div>
+          )}
         </div>
       </button>
     );
@@ -207,7 +229,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       !product.is_active && "opacity-75 grayscale-[0.3] bg-muted/20",
       className
     )}>
-      <div className="w-full aspect-square sm:aspect-video rounded-xl overflow-hidden bg-background/50 flex items-center justify-center shrink-0 relative group">
+      <div className="w-full aspect-[4/3] sm:aspect-video rounded-xl overflow-hidden bg-background/50 flex items-center justify-center shrink-0 relative group">
         <ProductImage
           src={resolveProductImage(product)}
           alt={product.name}

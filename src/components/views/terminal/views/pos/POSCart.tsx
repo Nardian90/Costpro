@@ -250,17 +250,27 @@ export const POSCart = ({
                   {isProcessing ? 'PROCESANDO...' : 'FINALIZAR VENTA'}
                 </button>
 
-                <button
-                  onClick={() => {
-                    if (confirm('¿Anular el carrito?')) {
-                      onClearCart();
-                      onClose();
-                    }
-                  }}
-                  className="w-full py-2 text-[10px] font-black text-foreground uppercase tracking-widest hover:text-destructive transition-colors"
-                >
-                  Anular Carrito
-                </button>
+                <div className="flex flex-col gap-2">
+                  <button
+                    onClick={() => onClose()}
+                    className="w-full py-3 rounded-xl bg-muted text-foreground font-black text-[10px] uppercase tracking-widest border border-border hover:bg-muted/80 transition-all flex items-center justify-center gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Continuar Comprando
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      if (confirm('¿Anular el carrito?')) {
+                        onClearCart();
+                        onClose();
+                      }
+                    }}
+                    className="w-full py-2 text-[10px] font-black text-foreground/40 hover:text-destructive uppercase tracking-widest transition-colors"
+                  >
+                    Anular Carrito
+                  </button>
+                </div>
               </div>
             </>
           )}

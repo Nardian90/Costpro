@@ -30,6 +30,7 @@ import KidsOnboarding from './help/KidsOnboarding';
 import OfflineSyncDiagram from './help/OfflineSyncDiagram';
 import JulesDiagram from './help/JulesDiagram';
 import StickyCartFlowDiagram from './help/StickyCartFlowDiagram';
+import MobileOptimizedFlowDiagram from './help/MobileOptimizedFlowDiagram';
 
 export default function HelpView() {
   return (
@@ -47,9 +48,9 @@ export default function HelpView() {
         </div>
         <div className="flex flex-col items-end">
           <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-black">
-            VERSIÓN 5.7.22 (UX HARDENING)
+            VERSIÓN 5.8.0 (MOBILE OPTIMIZED)
           </Badge>
-          <span className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Última actualización: 01 Mar 2026</span>
+          <span className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Última actualización: 03 Mar 2026</span>
         </div>
       </div>
 
@@ -412,19 +413,22 @@ export default function HelpView() {
                   <div className="space-y-4">
                     <h3 className="font-bold text-lg flex items-center gap-2 text-primary uppercase tracking-tighter">
                       <ShoppingCart className="w-5 h-5" />
-                        Arquitectura Móvil Primero
+                        Arquitectura Móvil Primero (v5.8.0)
                     </h3>
                     <p className="text-sm font-medium leading-relaxed">
-                        En la v5.4.0, el TPV ha sido rediseñado para una operativa fluida en dispositivos táctiles. El carrito de compras ahora reside en un <span className="font-bold text-primary">Panel Inferior</span> accesible desde la zona de alcance del pulgar.
+                        El TPV ha sido optimizado para una operativa de alta velocidad. Implementamos la <span className="font-bold text-primary">Zona del Pulgar</span> para todas las acciones críticas, eliminando la necesidad de scroll excesivo.
                     </p>
                     <div className="bg-primary/5 p-4 rounded-xl border-l-4 border-primary">
-                       <p className="text-[10px] font-black uppercase text-primary mb-1">Optimización UX (Nueva Estructura):</p>
-                       <p className="text-xs italic">"Menos clics, más velocidad. El selector de productos y el cierre de venta están optimizados para uso a una sola mano mediante un footer sticky."</p>
+                       <p className="text-[10px] font-black uppercase text-primary mb-1">Hardenización Móvil:</p>
+                       <p className="text-xs italic">"Targets táctiles ≥44px, feedback instantáneo mediante badges reactivos y totales en tiempo real directamente en el botón de caja."</p>
                     </div>
                   </div>
                   <div className="space-y-4">
-                    <StickyCartFlowDiagram />
-                    <MobilePosDiagram />
+                    <MobileOptimizedFlowDiagram />
+                    <div className="grid grid-cols-2 gap-4">
+                        <StickyCartFlowDiagram />
+                        <MobilePosDiagram />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -687,12 +691,30 @@ export default function HelpView() {
             </CardHeader>
             <CardContent className="px-0">
               <div className="space-y-8">
-                {/* --- v5.7.18 --- */}
+                {/* --- v5.8.0 --- */}
                 <div className="relative pl-8 border-l-2 border-primary/20 space-y-4">
                   <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary border-4 border-background" />
                   <div className="flex items-center gap-3">
-                    <Badge className="bg-primary">v5.7.18</Badge>
-                    <span className="text-xs font-black text-muted-foreground uppercase">27 de Febrero, 2026 (Actual)</span>
+                    <Badge className="bg-primary">v5.8.0</Badge>
+                    <span className="text-xs font-black text-muted-foreground uppercase">03 de Marzo, 2026 (Actual)</span>
+                  </div>
+                  <div className="bg-muted/30 rounded-2xl p-6 space-y-4 border border-primary/10">
+                    <h4 className="font-black text-sm uppercase text-primary">Hardenización UX Móvil & TPV</h4>
+                    <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Optimización de Thumb-Zone y targets táctiles de 44px.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Badges de stock y contadores de carrito en tiempo real.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Integración de feedback visual inmediato (Toasts/Animations).</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Nuevo diagrama de arquitectura móvil optimizada.</li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* --- v5.7.18 --- */}
+                <div className="relative pl-8 border-l-2 border-primary/20 space-y-4 opacity-90">
+                  <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-muted border-4 border-background" />
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline">v5.7.18</Badge>
+                    <span className="text-xs font-black text-muted-foreground uppercase">27 de Febrero, 2026</span>
                   </div>
                   <div className="bg-muted/30 rounded-2xl p-6 space-y-4 border border-primary/10">
                     <h4 className="font-black text-sm uppercase text-primary">Refactor de Flujo en Ficha de Costo</h4>

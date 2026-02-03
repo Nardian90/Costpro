@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { ShoppingCart, Search, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 import { toast } from 'sonner';
 import SearchBar from '@/components/ui/SearchBar';
 import ActionMenu from '@/components/ui/ActionMenu';
@@ -114,7 +114,9 @@ export default function POSView() {
             actions={[
               {
                 id: 'cart',
-                label: `Caja (${getItemCount()})`,
+                label: getItemCount() > 0
+                  ? `Caja (${getItemCount()}) - ${formatCurrency(getTotal())}`
+                  : `Caja (${getItemCount()})`,
                 icon: ShoppingCart,
                 onClick: () => setShowCart(!showCart),
                 variant: getItemCount() > 0 ? 'primary' : 'outline',
@@ -247,17 +249,21 @@ export default function POSView() {
               {(data) => (
                 posLayoutMode === 'grid' ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-                    {data.map(product => (
-                      <ProductCard
-                        key={product.id}
-                        product={product}
-                        onClick={(p) => {
-                          handleAddItem(p);
-                          toast.success(`${p.name} añadido`);
-                        }}
-                        variant="pos"
-                      />
-                    ))}
+                    {data.map(product => {
+                      const quantity = items.find(i => i.product_id === product.id)?.quantity || 0;
+                      return (
+                        <ProductCard
+                          key={product.id}
+                          product={product}
+                          cartQuantity={quantity}
+                          onClick={(p) => {
+                            handleAddItem(p);
+                            toast.success(`${p.name} añadido`);
+                          }}
+                          variant="pos"
+                        />
+                      );
+                    })}
                   </div>
                 ) : (
                   <POSTableView products={data} onAddToCart={(p) => {
@@ -276,11 +282,14 @@ export default function POSView() {
           actions={[
             {
               id: 'cart',
-              label: `Caja (${getItemCount()})`,
+              label: getItemCount() > 0
+                ? `Caja (${getItemCount()}) - ${formatCurrency(getTotal())}`
+                : `Caja Vacía`,
               icon: ShoppingCart,
               onClick: () => setShowCart(!showCart),
               variant: getItemCount() > 0 ? 'primary' : 'outline',
-              active: showCart
+              active: showCart,
+              className: getItemCount() > 0 ? "neu-pulse" : ""
             }
           ]}
           className="w-full"
