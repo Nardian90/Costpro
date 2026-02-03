@@ -1,3 +1,4 @@
+import { Product } from '../dexie';
 
 /**
  * Extract commission from bank observations string.
@@ -63,8 +64,8 @@ export async function calculateCurrentStock(db: any, productCod: string): Promis
  * Recalcula toda la cadena de reportes IPV basándose en el stock inicial y las conciliaciones actuales.
  */
 export async function recalculateIPVReportsChain(db: any) {
-    const allProducts = await db.products.toArray();
-    const productMap = new Map(allProducts.map((p: any) => [p.cod, p]));
+    const allProducts: Product[] = await db.products.toArray();
+    const productMap = new Map<string, Product>(allProducts.map((p) => [p.cod, p]));
     const allReports = await db.ipv_reports.orderBy('fecha_reporte').toArray();
 
     for (let i = 0; i < allReports.length; i++) {
