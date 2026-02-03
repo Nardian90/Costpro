@@ -66,7 +66,7 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
 
     const targetAmount = useMemo(() => {
         if (!transaction) return 0;
-        return transaction.importe_cents;
+        return transaction.importe_venta_cents || transaction.importe_cents;
     }, [transaction]);
 
     const currentTotal = useMemo(() => {
@@ -174,7 +174,7 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
         // Actualizar estado de la transacción
         const lines = await db.reconciliation_lines.where('transaction_ref').equals(transaction.referencia_origen).toArray();
         const newTotal = lines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
-        const target = transaction.importe_cents;
+        const target = transaction.importe_venta_cents || transaction.importe_cents;
         const newStatus = Math.abs(newTotal - target) < 0.001 ? 'COMPLETO' : (newTotal > 0.001 ? 'PARCIAL' : 'PENDIENTE');
 
         await db.bank_statements.update(transaction.referencia_origen, {
@@ -195,7 +195,7 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
             // Actualizar estado de la transacción
             const lines = await db.reconciliation_lines.where('transaction_ref').equals(transaction.referencia_origen).toArray();
             const newTotal = lines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
-            const target = transaction.importe_cents;
+            const target = transaction.importe_venta_cents || transaction.importe_cents;
             const newStatus = (newTotal + 0.001) >= target ? 'COMPLETO' : (newTotal > 0.001 ? 'PARCIAL' : 'PENDIENTE');
 
             await db.bank_statements.update(transaction.referencia_origen, {
@@ -231,7 +231,7 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                     fecha_operacion: transaction.fecha,
                     ingreso_banco_cents: transaction.importe_cents,
                     venta_real_calculada_cents: line.importe_linea_cents || 0,
-                    comision_banco_cents: 0,
+                    comision_banco_cents: transaction.comision_cents || 0,
                     cuadre_cents: line.cuadre_cents || 0,
                     reconciliation_hash: await generateHash(`${transaction.referencia_origen}-${line.product_cod}-${line.cantidad}-${Date.now()}`),
                     created_at: new Date().toISOString()
@@ -239,7 +239,7 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                 await db.reconciliation_lines.add(fullLine);
             }
 
-            const target = transaction.importe_cents;
+            const target = transaction.importe_venta_cents || transaction.importe_cents;
             const newStatus = (currentTotal + 0.001) >= target ? 'COMPLETO' : (currentTotal > 0.001 ? 'PARCIAL' : 'PENDIENTE');
 
             await db.bank_statements.update(transaction.referencia_origen, {
