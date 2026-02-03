@@ -116,43 +116,6 @@ export default function IPVView() {
     };
   }, [transactions, txTotals]);
 
-  const topActions: Action[] = useMemo(() => [
-    {
-        id: 'sync',
-        label: 'Sincronizar IPV',
-        icon: History,
-        onClick: () => handleGlobalRecalculate(),
-        variant: 'outline' as const,
-        tooltip: 'Recalcula la cadena de reportes IPV y actualiza estadísticas para asegurar coherencia total.'
-    },
-    {
-        id: 'rules',
-        label: 'Reglas',
-        icon: Settings,
-        onClick: () => setActiveTab('rules'),
-        variant: 'outline' as const
-    },
-    {
-        id: 'matching',
-        label: 'Ejecutar Matching',
-        icon: Play,
-        onClick: () => handleRunMatching(),
-        variant: 'primary' as const,
-        className: 'font-black',
-        tooltip: (
-            <>
-                <p className="font-bold text-primary">Motor de Matching Pro:</p>
-                <p className="text-[10px] leading-relaxed">
-                    Procesa transacciones en 4 pasos automáticos:
-                    <br/>1. <strong>Hard Ref:</strong> Match por código en obs.
-                    <br/>2. <strong>Exact Sum:</strong> Combinación exacta de productos.
-                    <br/>3. <strong>Tolerance:</strong> Match con pequeño margen de error.
-                    <br/>4. <strong>Cash Fill:</strong> Cubre el resto con ajuste de caja.
-                </p>
-            </>
-        )
-    }
-  ], [transactions, products, productsWithStock, rules]);
 
   async function handleImportBackup(file: File) {
     const loadingToast = toast.loading('Restaurando base de datos...');
@@ -169,7 +132,7 @@ export default function IPVView() {
     }
   }
 
-  async function handleGlobalRecalculate() {
+  const handleGlobalRecalculate = React.useCallback(async () => {
     const loadingToast = toast.loading('Sincronizando datos del sistema...');
     try {
         await recalculateIPVReportsChain(db);
@@ -178,9 +141,9 @@ export default function IPVView() {
         console.error('Error in global recalculate:', error);
         toast.error('Error al sincronizar datos', { id: loadingToast });
     }
-  }
+  }, []);
 
-  async function handleRunMatching() {
+  const handleRunMatching = React.useCallback(async () => {
     if (!transactions || transactions.length === 0) {
       toast.error('No hay transacciones para procesar');
       return;
@@ -260,7 +223,45 @@ export default function IPVView() {
       worker.terminate();
       setIsMatching(false);
     };
-  };
+  }, [transactions, products, productsWithStock, rules]);
+
+  const topActions: Action[] = useMemo(() => [
+    {
+        id: 'sync',
+        label: 'Sincronizar IPV',
+        icon: History,
+        onClick: handleGlobalRecalculate,
+        variant: 'outline' as const,
+        tooltip: 'Recalcula la cadena de reportes IPV y actualiza estadísticas para asegurar coherencia total.'
+    },
+    {
+        id: 'rules',
+        label: 'Reglas',
+        icon: Settings,
+        onClick: () => setActiveTab('rules'),
+        variant: 'outline' as const
+    },
+    {
+        id: 'matching',
+        label: 'Ejecutar Matching',
+        icon: Play,
+        onClick: handleRunMatching,
+        variant: 'primary' as const,
+        className: 'font-black',
+        tooltip: (
+            <>
+                <p className="font-bold text-primary">Motor de Matching Pro:</p>
+                <p className="text-[10px] leading-relaxed">
+                    Procesa transacciones en 4 pasos automáticos:
+                    <br/>1. <strong>Hard Ref:</strong> Match por código en obs.
+                    <br/>2. <strong>Exact Sum:</strong> Combinación exacta de productos.
+                    <br/>3. <strong>Tolerance:</strong> Match con pequeño margen de error.
+                    <br/>4. <strong>Cash Fill:</strong> Cubre el resto con ajuste de caja.
+                </p>
+            </>
+        )
+    }
+  ], [handleGlobalRecalculate, handleRunMatching]);
 
   return (
     <div className="space-y-6">
