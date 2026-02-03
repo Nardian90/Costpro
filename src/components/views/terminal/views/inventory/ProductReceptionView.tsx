@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { Save, Search, Plus, Trash2, Package, Upload, Download, HelpCircle, FileText, AlertTriangle, PlusCircle } from 'lucide-react';
 import { useInventory, useRegisterReception } from '@/hooks/api/useInventory';
 import { useDebounce } from '@/hooks/ui/useDebounce';
-import { formatCurrency } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
 import { SearchInput, PrimaryButton } from '@/components/ui/atomic';
 import { SecurityScrollContainer } from '@/components/ui/SecurityScrollContainer';
