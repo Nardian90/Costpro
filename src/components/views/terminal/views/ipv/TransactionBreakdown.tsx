@@ -67,7 +67,7 @@ export function TransactionBreakdown() {
     const txTotal = txLines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
     const tx = await db.bank_statements.get(line.transaction_ref);
     if (tx) {
-        const target = tx.importe_venta_cents || tx.importe_cents;
+        const target = tx.importe_cents;
         const newStatus = txTotal >= target - 0.001 ? 'COMPLETO' : (txTotal > 0 ? 'PARCIAL' : 'PENDIENTE');
         await db.bank_statements.update(tx.referencia_origen, { estado_conciliacion: newStatus });
     }
@@ -94,7 +94,7 @@ export function TransactionBreakdown() {
     const txTotal = txLines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
     const tx = await db.bank_statements.get(editingLine.transaction_ref);
     if (tx) {
-        const target = tx.importe_venta_cents || tx.importe_cents;
+        const target = tx.importe_cents;
         const newStatus = txTotal >= target - 0.001 ? 'COMPLETO' : (txTotal > 0 ? 'PARCIAL' : 'PENDIENTE');
         await db.bank_statements.update(tx.referencia_origen, { estado_conciliacion: newStatus });
     }
