@@ -25,5 +25,10 @@ export const COLUMN_LABELS: Record<string, string> = {
   reference_doc: 'Doc. Referencia',
   notes: 'Notas',
   profit: 'Utilidad',
-  margin_percentage: '% Margen'
+  margin_percentage: '% Margen',
+  date: 'Fecha',
+  income: 'Ingreso',
+  expenses: 'Gasto/Costo',
+  total_income: 'Total Ingresos',
+  total_expenses: 'Total Gastos/Costos'
 };
