@@ -144,7 +144,7 @@ describe('Cost Engine', () => {
     expect(validation.errors[0]).toContain('non-existent classification');
   });
 
-  it('should support smart Annex references in formulas', () => {
+  it('should support smart Annex references in formulas without fallback', () => {
     const smartFicha: FichaJSON = {
         ...mockFicha,
         rows: [
@@ -157,23 +157,34 @@ describe('Cost Engine', () => {
                 formula: '=AnexoA1'
             },
             {
-                id: 'r_smart_total',
+                id: 'r_smart_no_fallback',
                 classification: '9.9', // Non-existent in annex
                 type: 'COST',
-                label: 'Smart Total',
+                label: 'Smart No Fallback',
                 formaCalculo: 'FORMULA',
                 formula: '=AnexoA1'
+            },
+            {
+                id: 'r_explicit_total',
+                classification: '1.1',
+                type: 'COST',
+                label: 'Explicit Total',
+                formaCalculo: 'FORMULA',
+                formula: '=TotalAnexoA1'
             }
         ]
     };
     const result = calculateFicha(smartFicha);
     const rFiltered = result.rows.find(r => r.id === 'r_smart_filtered');
-    const rTotal = result.rows.find(r => r.id === 'r_smart_total');
+    const rNoFallback = result.rows.find(r => r.id === 'r_smart_no_fallback');
+    const rExplicitTotal = result.rows.find(r => r.id === 'r_explicit_total');
 
     // Should be subtotal for 1.1 (100 + 50 = 150)
     expect(rFiltered?.total).toBe(150);
-    // Should be total for annex (100 + 50 + 200 = 350)
-    expect(rTotal?.total).toBe(350);
+    // Should be 0 now (no fallback)
+    expect(rNoFallback?.total).toBe(0);
+    // Should be total of annex explicitly (100 + 50 + 200 = 350)
+    expect(rExplicitTotal?.total).toBe(350);
   });
 
   it('should calculate the FC-DEMO-243 fixture correctly', () => {
