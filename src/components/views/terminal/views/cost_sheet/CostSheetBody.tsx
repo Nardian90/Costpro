@@ -30,7 +30,7 @@ type CostSheetBodyProps = {
 };
 
 const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValues }) => {
-  const renderRow = (row: any, level: number = 0) => {
+  const renderRow = (row: any, level: number = 0, numbering: string) => {
       const calc = calculatedValues[row.id] || { total: 0, valorHistorico: 0, baseTotal: 0, coeficiente: 0 };
       const hasChildren = row.children && row.children.length > 0;
 
@@ -40,9 +40,9 @@ const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValue
                 "border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors",
                 hasChildren && "bg-slate-50/30 dark:bg-slate-900/30"
             )}>
-                {/* Fila */}
+                {/* No. */}
                 <td className="p-3 text-center font-mono text-[10px] text-slate-400">
-                    {row.id}
+                    {numbering}
                 </td>
 
                 {/* Concepto */}
@@ -75,7 +75,7 @@ const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValue
                     {formatCurrency(calc.total).replace('$', '').trim()}
                 </td>
             </tr>
-            {row.children?.map((child: any) => renderRow(child, level + 1))}
+            {row.children?.map((child: any, idx: number) => renderRow(child, level + 1, `${numbering}.${idx + 1}`))}
         </React.Fragment>
       );
   };
@@ -85,7 +85,7 @@ const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValue
       <table className="w-full text-sm">
         <thead className="bg-slate-800 text-white hidden sm:table-header-group">
           <tr>
-            <th className="p-4 text-center font-black uppercase tracking-widest text-[9px] w-16">Fila</th>
+            <th className="p-4 text-center font-black uppercase tracking-widest text-[9px] w-16">No.</th>
             <th className="p-4 text-left font-black uppercase tracking-widest text-[9px]">Concepto</th>
             <th className="p-4 text-right font-black uppercase tracking-widest text-[9px] w-40">Valor Histórico</th>
             <th className="p-4 text-right font-black uppercase tracking-widest text-[9px] w-48">Total</th>
@@ -99,7 +99,7 @@ const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValue
                       {section.label}
                   </td>
               </tr>
-              {section.rows.map((row) => renderRow(row))}
+              {section.rows.map((row, idx) => renderRow(row, 0, String(idx + 1)))}
             </React.Fragment>
           ))}
         </tbody>

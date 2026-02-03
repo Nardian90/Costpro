@@ -7,7 +7,7 @@ import { useCostSheetCalculator } from '@/hooks/logic/useCostSheetCalculator';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Trash2, Plus, Database, FunctionSquare } from 'lucide-react';
+import { Trash2, Plus, Database, FunctionSquare, ChevronUp, ChevronDown } from 'lucide-react';
 import { CostSheetAnnex, CostSheetColumn } from '@/types/cost-sheet';
 import ProductInventoryPicker from './ProductInventoryPicker';
 import { useAuthStore } from '@/store';
@@ -39,6 +39,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
   }
   const addRow = useCostSheetStore(state => state.addRow);
   const removeRow = useCostSheetStore(state => state.removeRow);
+  const reorderRow = useCostSheetStore(state => state.reorderRow);
 
   const { user } = useAuthStore();
   const [isPickerOpen, setIsPickerOpen] = React.useState(false);
@@ -228,6 +229,26 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                             ))}
                             <TableCell data-label="Acciones" className="text-center p-3 sm:p-4">
                                 <div className="flex items-center justify-center gap-1">
+                                <div className="flex flex-col sm:flex-row items-center gap-1">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => reorderRow(annex.id, rowIndex, 'up')}
+                                        className="p-1 h-8 w-8 text-muted-foreground hover:text-primary transition-all"
+                                        title="Subir"
+                                    >
+                                        <ChevronUp className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => reorderRow(annex.id, rowIndex, 'down')}
+                                        className="p-1 h-8 w-8 text-muted-foreground hover:text-primary transition-all"
+                                        title="Bajar"
+                                    >
+                                        <ChevronDown className="h-4 w-4" />
+                                    </Button>
+                                </div>
                                 {annex.id === 'I' && (
                                     <Button
                                         variant="ghost"
