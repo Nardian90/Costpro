@@ -26,3 +26,30 @@ export async function exportFullBackup(db: Dexie) {
         throw error;
     }
 }
+
+export async function importFullBackup(db: Dexie, file: File) {
+    return new Promise<void>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const json = e.target?.result as string;
+                const backupData = JSON.parse(json);
+
+                await db.transaction('rw', db.tables, async () => {
+                    for (const table of db.tables) {
+                        if (backupData[table.name]) {
+                            await table.clear();
+                            await table.bulkAdd(backupData[table.name]);
+                        }
+                    }
+                });
+                resolve();
+            } catch (error) {
+                console.error('Error importing backup:', error);
+                reject(error);
+            }
+        };
+        reader.onerror = (error) => reject(error);
+        reader.readAsText(file);
+    });
+}
