@@ -44,11 +44,11 @@ export class MatchingEngine {
 
   async matchTransaction(transaction: BankTransaction, current_reconciled_cents: number = 0): Promise<MatchingResult> {
     const logs: string[] = [];
-    const targetAmount = transaction.importe_venta_cents || transaction.importe_cents;
+    const targetAmount = transaction.importe_cents;
     let remaining_cents = targetAmount - current_reconciled_cents;
     const lines: ReconciliationLine[] = [];
 
-    logs.push(`Iniciando matching para transacción ${transaction.referencia_origen} (Importe: ${transaction.importe_cents}, Venta: ${targetAmount} cts, Restante: ${remaining_cents} cts)`);
+    logs.push(`Iniciando matching para transacción ${transaction.referencia_origen} (Importe: ${targetAmount} cts, Restante: ${remaining_cents} cts)`);
 
     // PASS 0: AUTO-COMPLETE DEBITS OR EXCLUDED (Commissions/Expenses/Excluded)
     if (transaction.tipo === 'Db' || transaction.estado_conciliacion === 'NO_PROCESAR') {
