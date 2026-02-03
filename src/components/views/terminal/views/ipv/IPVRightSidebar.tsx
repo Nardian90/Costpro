@@ -25,10 +25,9 @@ import {
 interface Props {
     activeTab: string;
     onSelect: (id: string) => void;
-    onExportBackup: () => void;
 }
 
-export function IPVRightSidebar({ activeTab, onSelect, onExportBackup }: Props) {
+export function IPVRightSidebar({ activeTab, onSelect }: Props) {
     const items = [
         { id: 'dashboard', icon: <Home />, label: 'Inicio' },
         { id: 'transactions', icon: <History />, label: 'Transacciones' },
@@ -67,23 +66,6 @@ export function IPVRightSidebar({ activeTab, onSelect, onExportBackup }: Props) 
                     </Tooltip>
                 ))}
 
-                <div className="h-px bg-border my-2 mx-2" />
-
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={onExportBackup}
-                            className="w-10 h-10 rounded-xl hover:bg-green-50 hover:text-green-600"
-                        >
-                            <Download size={18} />
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="left">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-green-600">Exportar JSON</p>
-                    </TooltipContent>
-                </Tooltip>
             </TooltipProvider>
         </div>
     );

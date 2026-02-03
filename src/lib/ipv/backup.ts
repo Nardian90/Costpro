@@ -37,8 +37,8 @@ export async function importFullBackup(db: Dexie, file: File) {
 
                 await db.transaction('rw', db.tables, async () => {
                     for (const table of db.tables) {
+                        await table.clear();
                         if (backupData[table.name]) {
-                            await table.clear();
                             await table.bulkAdd(backupData[table.name]);
                         }
                     }
