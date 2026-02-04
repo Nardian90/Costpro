@@ -136,6 +136,7 @@ export function TransactionBreakdown() {
               <TableHead>Producto</TableHead>
               <TableHead className="text-center">Cant.</TableHead>
               <TableHead className="text-right">Precio Base</TableHead>
+              <TableHead className="text-right text-red-500">Comis.</TableHead>
               <TableHead className="text-right text-green-600">Propina</TableHead>
               <TableHead className="text-right text-red-600">Descuento</TableHead>
               <TableHead className="text-right">Importe Real</TableHead>
@@ -181,6 +182,13 @@ export function TransactionBreakdown() {
                       <div className="text-xs font-bold text-muted-foreground">
                         {formatCurrency(basePrice)}
                       </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                        {l.comision_banco_cents > 0 ? (
+                            <div className="text-xs font-bold text-red-500">
+                                {formatCurrency(l.comision_banco_cents)}
+                            </div>
+                        ) : <span className="text-muted-foreground opacity-30 text-[10px]">—</span>}
                     </TableCell>
                     <TableCell className="text-right">
                         {propina > 0 ? (
