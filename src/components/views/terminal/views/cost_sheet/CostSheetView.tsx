@@ -20,7 +20,7 @@ import { CostSheetSidebarNav } from './CostSheetSidebarNav';
 import { CostSheetMassiveGenerator } from './CostSheetMassiveGenerator';
 import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
 import ActionMenu from '@/components/ui/ActionMenu';
-import { Eye, Edit, FileText, Trash2, Download, FileSpreadsheet, Upload, Save, BarChart3, Activity, MoreVertical, AlertTriangle } from 'lucide-react';
+import { Layout, Eye, Edit, FileText, Trash2, Download, FileSpreadsheet, Upload, Save, BarChart3, Activity, MoreVertical, AlertTriangle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -251,6 +251,21 @@ const CostSheetView = () => {
     { id: 'audit', label: 'Auditoría', icon: Activity }
   ], []);
 
+  const subSectionActions = React.useMemo(() => {
+    return groupedSections.map(group => ({
+        id: group.id,
+        label: group.label.split(':')[0], // Short label like "SECCIONES 1-3"
+        tooltip: group.label,
+        icon: Layout,
+        onClick: () => {
+            setActiveSubSectionId(group.id);
+            setActiveSection('main');
+        },
+        active: activeSubSectionId === group.id,
+        variant: 'outline' as const
+    }));
+  }, [groupedSections, activeSubSectionId]);
+
   const onOpenAnnexes = React.useCallback(() => setIsAnnexesSidebarOpen(true), []);
   const onOpenSections = React.useCallback(() => setIsSectionsSidebarOpen(true), []);
 
@@ -337,17 +352,14 @@ const CostSheetView = () => {
         <div className="animate-in fade-in duration-700 space-y-6">
           {viewMode === 'expert' && (
             <>
-                <CostSheetNav
-                    navItems={navItems}
-                    subSections={groupedSections}
-                    activeSubSectionId={activeSubSectionId}
-                    setActiveSubSectionId={setActiveSubSectionId}
-                    annexes={data?.annexes || []}
-                    activeSection={activeSection}
-                    setActiveSection={setActiveSection}
-                    onOpenAnnexes={onOpenAnnexes}
-                    onOpenSections={onOpenSections}
-                />
+                <div className="sticky top-[60px] z-30 py-2 bg-background/50 backdrop-blur-sm -mx-4 px-4 overflow-hidden">
+                    <CostSheetNav
+                        navItems={navItems}
+                        annexes={data?.annexes || []}
+                        activeSection={activeSection}
+                        setActiveSection={setActiveSection}
+                    />
+                </div>
 
                 <div className="mt-4">
                     {activeSection === 'kpis' && (
@@ -363,6 +375,15 @@ const CostSheetView = () => {
                             {/* Sticky Compact Header for Contextualization */}
                             <div className="sticky top-[-1px] z-40 bg-background/95 backdrop-blur-md -mx-2 px-2 py-3 border-b border-border/50 shadow-sm mb-4 animate-in slide-in-from-top duration-300">
                                 <CostSheetHeaderEditor compact />
+                            </div>
+
+                            {/* Horizontal Sub-navigation for Sections */}
+                            <div className="py-2 overflow-hidden">
+                                <ActionMenu
+                                    actions={subSectionActions}
+                                    sticky={false}
+                                    className="shadow-none bg-transparent -mx-4 px-4"
+                                />
                             </div>
 
                             {/* Full Header Editor */}
