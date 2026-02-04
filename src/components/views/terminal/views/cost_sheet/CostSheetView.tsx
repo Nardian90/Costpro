@@ -372,11 +372,6 @@ const CostSheetView = () => {
                     )}
                     {activeSection === 'main' && (
                         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
-                            {/* Sticky Compact Header for Contextualization */}
-                            <div className="sticky top-[-1px] z-40 bg-background/95 backdrop-blur-md -mx-2 px-2 py-3 border-b border-border/50 shadow-sm mb-4 animate-in slide-in-from-top duration-300">
-                                <CostSheetHeaderEditor compact />
-                            </div>
-
                             {/* Horizontal Sub-navigation for Sections */}
                             <div className="py-2 overflow-hidden">
                                 <ActionMenu
