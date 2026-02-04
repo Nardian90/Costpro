@@ -319,7 +319,10 @@ export default function IPVView() {
             icon={<History className="text-blue-500" />}
             subtitle="Transacciones"
             active={kpiFilter === 'ALL'}
-            onClick={() => setKpiFilter('ALL')}
+            onClick={() => {
+                setKpiFilter('ALL');
+                setActiveTab('transactions');
+            }}
         />
         <StatCard
             title="Cuadradas"
@@ -328,7 +331,10 @@ export default function IPVView() {
             trend={`${stats.percentage}%`}
             subtitle="Completadas"
             active={kpiFilter === 'CUADRADAS'}
-            onClick={() => setKpiFilter('CUADRADAS')}
+            onClick={() => {
+                setKpiFilter('CUADRADAS');
+                setActiveTab('transactions');
+            }}
         />
         <StatCard
             title="En Proceso"
@@ -336,7 +342,10 @@ export default function IPVView() {
             icon={<AlertCircle className="text-yellow-500" />}
             subtitle="Con Diferencia"
             active={kpiFilter === 'EN_PROCESO'}
-            onClick={() => setKpiFilter('EN_PROCESO')}
+            onClick={() => {
+                setKpiFilter('EN_PROCESO');
+                setActiveTab('transactions');
+            }}
         />
         <StatCard
             title="Pendientes"
@@ -344,7 +353,10 @@ export default function IPVView() {
             icon={<Clock className="text-orange-500" />}
             subtitle="Sin Matching"
             active={kpiFilter === 'PENDIENTES'}
-            onClick={() => setKpiFilter('PENDIENTES')}
+            onClick={() => {
+                setKpiFilter('PENDIENTES');
+                setActiveTab('transactions');
+            }}
         />
       </div>
 
