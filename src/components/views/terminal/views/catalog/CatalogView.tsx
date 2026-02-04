@@ -262,12 +262,14 @@ export default function CatalogView() {
 
             <QueryInspector />
 
-            <SearchInput
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onClear={() => setSearchTerm('')}
-                placeholder="BUSCAR PRODUCTOS..."
-            />
+            <div className="sticky top-[76px] z-40 bg-background/95 backdrop-blur-md pb-4 pt-2 -mx-4 px-4 shadow-lg sm:relative sm:top-0 sm:bg-transparent sm:pb-0 sm:pt-0 sm:mx-0 sm:px-0 sm:shadow-none">
+                <SearchInput
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onClear={() => setSearchTerm('')}
+                    placeholder="BUSCAR PRODUCTOS..."
+                />
+            </div>
 
             {importErrors.length > 0 && (
                 <div className="neu-card border-danger/20 bg-danger/5 !p-4">
