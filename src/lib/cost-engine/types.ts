@@ -1,6 +1,6 @@
 import Decimal from 'decimal.js';
 
-export type FormaCalculo = 'FIJO'|'IMPORTAR_ANEXO'|'PRORRATEO'|'COEFICIENTE'|'FORMULA';
+export type FormaCalculo = 'FIJO'|'IMPORTAR_ANEXO'|'PRORRATEO'|'COEFICIENTE'|'FORMULA'|'ANEXO';
 export type BaseRef = { type: 'ANEXO'; anexoId: string } | { type: 'FILA'; classification: string };
 export type RowSemanticType = 'COST' | 'MARGIN' | 'TAX' | 'TOTAL' | 'INFO';
 
@@ -71,11 +71,19 @@ export interface FichaJSON {
   rules?: CalculationRule[];
 }
 
+export interface ValidationError {
+  rowId: string;
+  message: string;
+  type: 'CRITICAL' | 'WARNING';
+  code: 'CYCLE' | 'MISSING_REF' | 'SEMANTIC_DISCREPANCY' | 'INVALID_FORMULA' | 'HARD_RULE_VIOLATION' | 'TRIVIAL_FORMULA';
+}
+
 export interface CalculationResult {
   fichaId: string;
   rows: CalculatedRow[];
   audits: AuditEntry[];
   validationErrors?: string[];
+  deepValidationErrors?: ValidationError[];
   summary: {
     totalCost: number;
     totalMargin: number;

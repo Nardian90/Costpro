@@ -90,11 +90,15 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
       calculationResult: CalculationResult | null;
       audits: AuditEntry[];
       error: Error | null;
+      isBlocked: boolean;
+      deepValidationErrors: any[];
   }>({
       calculatedValues: {},
       calculationResult: null,
       audits: [],
-      error: null
+      error: null,
+      isBlocked: false,
+      deepValidationErrors: []
   });
 
   // 1. Calculate Annexes first (internal formulas)
@@ -206,6 +210,8 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
 
           let formaCalculo: FormaCalculo = 'FIJO';
           if (r.calculationMethod === 'Prorrateo') formaCalculo = 'PRORRATEO';
+          if (r.calculationMethod === 'ANEXO') formaCalculo = 'ANEXO';
+          if (r.calculationMethod === 'ValorFijo') formaCalculo = 'FIJO';
           if (r.is_percent) formaCalculo = 'COEFICIENTE';
           if (formula) formaCalculo = 'FORMULA';
 
@@ -250,6 +256,9 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
       };
       (template?.sections || []).forEach((s, sIdx) => flatten(s?.rows, sIdx));
 
+      // Handle Section 13/14 Hard Rules mapping from UI to Engine types if needed
+      // Engine already has some hardcoded IDs for Margin and Tax
+
       const ficha: FichaJSON = {
         meta: {
           id: template?.header?.code || 'default',
@@ -276,8 +285,8 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
       // Map back to UI values
       const newCalculatedValues: { [key: string]: CalculatedRowValue } = {};
       result.rows.forEach(r => {
-          // We need to approximate baseTotal and coeficiente for the UI table display
-          // The engine doesn't explicitly return baseTotal in the row object, but we can infer or leave it
+          const rowValidationErrors = (result.deepValidationErrors || []).filter(ve => ve.rowId === r.id);
+
           newCalculatedValues[r.id] = {
               total: r.total,
               valorHistorico: r.valorHistorico || 0,
@@ -288,15 +297,24 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
                 ? (r.baseHist ? (r.valorHistorico || 0) / r.baseHist : 0)
                 : (r.coeficiente || 0),
               audits: r.audit,
-              hasWarnings: r.audit.some(a => a.type === 'WARNING' || a.type === 'ERROR' || a.type === 'CYCLE_DETECTED')
+              hasWarnings: r.audit.some(a => a.type === 'WARNING' || a.type === 'ERROR' || a.type === 'CYCLE_DETECTED') || rowValidationErrors.length > 0,
+              validationErrors: rowValidationErrors.map(ve => ({
+                  message: ve.message,
+                  type: ve.type,
+                  code: ve.code
+              }))
           };
       });
+
+      const isBlocked = (result.deepValidationErrors || []).some(e => e.type === 'CRITICAL');
 
       setResultState({
           calculatedValues: newCalculatedValues,
           calculationResult: result,
           audits: result.audits,
-          error: null
+          error: null,
+          isBlocked,
+          deepValidationErrors: result.deepValidationErrors || []
       });
     } catch (e) {
       setResultState(prev => ({ ...prev, error: e as Error }));
@@ -310,6 +328,8 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
       annexTotals,
       audits: resultState.audits,
       calculationResult: resultState.calculationResult,
-      error: resultState.error
+      error: resultState.error,
+      isBlocked: resultState.isBlocked,
+      deepValidationErrors: resultState.deepValidationErrors
   };
 };
