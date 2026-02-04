@@ -108,10 +108,16 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
 
   const handleUpdateCommission = async (tx: BankTransaction, newComision: number) => {
       const newImporteVenta = tx.importe_cents + newComision;
-      await db.bank_statements.update(tx.referencia_origen, {
-          comision_cents: newComision,
-          importe_venta_cents: newImporteVenta,
-          updated_at: new Date().toISOString()
+      await db.transaction('rw', [db.bank_statements, db.reconciliation_lines], async () => {
+          await db.bank_statements.update(tx.referencia_origen, {
+              comision_cents: newComision,
+              importe_venta_cents: newImporteVenta,
+              updated_at: new Date().toISOString()
+          });
+          // Sincronizar la comisión en todas las líneas ya conciliadas de esta transacción
+          await db.reconciliation_lines.where('transaction_ref').equals(tx.referencia_origen).modify({
+              comision_banco_cents: newComision
+          });
       });
   };
 

@@ -34,7 +34,7 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
 
     // Usar una query en vivo para la transacción para evitar datos obsoletos al editar comisiones
     const liveTx = useLiveQuery(
-        () => transaction ? db.bank_statements.get(transaction.referencia_origen) : null,
+        () => transaction ? db.bank_statements.get(transaction.referencia_origen) : undefined,
         [transaction]
     );
 
@@ -296,9 +296,14 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                                     onChange={async (e) => {
                                         const tx = liveTx || transaction;
                                         const val = parseFloat(e.target.value) || 0;
-                                        await db.bank_statements.update(tx.referencia_origen, {
-                                            comision_cents: val,
-                                            importe_venta_cents: tx.importe_cents + val
+                                        await db.transaction('rw', [db.bank_statements, db.reconciliation_lines], async () => {
+                                            await db.bank_statements.update(tx.referencia_origen, {
+                                                comision_cents: val,
+                                                importe_venta_cents: tx.importe_cents + val
+                                            });
+                                            await db.reconciliation_lines.where('transaction_ref').equals(tx.referencia_origen).modify({
+                                                comision_banco_cents: val
+                                            });
                                         });
                                     }}
                                 />
