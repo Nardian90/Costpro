@@ -31,7 +31,7 @@ interface Props {
 export function ManualReconciliationModal({ transaction, open, onOpenChange }: Props) {
     const [searchTerm, setSearchTerm] = useState('');
     const [manualLines, setManualLines] = useState<Partial<ReconciliationLine>[]>([]);
-    const [forceProducts, setForceProducts] = useState<Product[] | null>(null);
+    const [forceProducts, setForceProducts] = useState<Product[] | undefined>(undefined);
 
     // Usar una query en vivo para la transacción para evitar datos obsoletos al editar comisiones
     const liveTx = useLiveQuery(
@@ -88,14 +88,19 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
     );
 
     const filteredProducts = useMemo(() => {
-        console.log('[ManualReconciliationModal] Filtering products, count:', products?.length);
-        if (!products) return [];
+        if (!products) {
+            console.log('[ManualReconciliationModal] No products to filter (products is undefined or null)');
+            return [];
+        }
+        console.log('[ManualReconciliationModal] Filtering products, total count:', products.length);
+        const term = searchTerm.toLowerCase();
         const res = products
-            .filter(p => p.activo)
-            .filter(p =>
-                p.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                p.cod.toLowerCase().includes(searchTerm.toLowerCase())
-            );
+            .filter(p => p && p.activo)
+            .filter(p => {
+                const desc = (p.descripcion || '').toLowerCase();
+                const cod = (p.cod || '').toLowerCase();
+                return desc.includes(term) || cod.includes(term);
+            });
         console.log('[ManualReconciliationModal] Filtered products count:', res.length);
         return res;
     }, [products, searchTerm]);
@@ -402,8 +407,9 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                                     </p>
                                 </div>
                                 {products === undefined && (
-                                    <div className="flex items-center justify-center p-12">
+                                    <div className="flex items-center justify-center p-12 flex-col gap-4">
                                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                                        <p className="text-[10px] font-black uppercase text-muted-foreground animate-pulse">Cargando Catálogo...</p>
                                     </div>
                                 )}
                                 {products !== undefined && filteredProducts.map(p => (
