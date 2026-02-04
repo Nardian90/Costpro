@@ -26,6 +26,7 @@ import { IPVReportView } from './IPVReportView';
 import { MatchingRulesEditor } from './MatchingRulesEditor';
 import { PivotStatementView } from './PivotStatementView';
 import { IngestionErrorsTable } from './IngestionErrorsTable';
+import { ManualReconciliationView } from './ManualReconciliationView';
 import { IPVControlPanel } from './IPVControlPanel';
 import { IPVRightSidebar } from './IPVRightSidebar';
 import { exportFullBackup, importFullBackup } from '@/lib/ipv/backup';
@@ -43,6 +44,7 @@ export default function IPVView() {
   const [matchMessage, setMatchMessage] = useState('');
   const [matchProgress, setMatchProgress] = useState(0);
   const [kpiFilter, setKpiFilter] = useState<'ALL' | 'CUADRADAS' | 'EN_PROCESO' | 'PENDIENTES'>('ALL');
+  const [selectedReconTx, setSelectedReconTx] = useState<BankTransaction | null>(null);
 
   const transactions = useLiveQuery(() => db.bank_statements.orderBy('fecha').toArray());
   const rules = useLiveQuery(() => db.matching_rules.toArray());
@@ -384,6 +386,11 @@ export default function IPVView() {
                         </TabsTrigger>
                         <TabsTrigger value="reports" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest text-nowrap shrink-0 rounded-xl">Reportes IPV</TabsTrigger>
                         <TabsTrigger value="rules" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Reglas</TabsTrigger>
+                        {selectedReconTx && (
+                            <TabsTrigger value="manual-recon" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl border-2 border-primary/20 bg-primary/5 text-primary">
+                                Conciliación
+                            </TabsTrigger>
+                        )}
                     </TabsList>
                 </HorizontalScroll>
             </div>
@@ -402,6 +409,20 @@ export default function IPVView() {
               transactions={transactions || []}
               kpiFilter={kpiFilter}
               txReconciliationTotals={txTotals}
+              onReconcile={(tx) => {
+                setSelectedReconTx(tx);
+                setActiveTab('manual-recon');
+              }}
+            />
+          </TabsContent>
+
+          <TabsContent value="manual-recon" className="m-0">
+            <ManualReconciliationView
+                transaction={selectedReconTx}
+                onBack={() => {
+                    setActiveTab('transactions');
+                    setSelectedReconTx(null);
+                }}
             />
           </TabsContent>
 
