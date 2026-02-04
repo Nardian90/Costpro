@@ -39,6 +39,7 @@ export interface CostRow {
   coeficiente?: number | null;      // decimal (ej 0.2)
   formula?: string | null;          // expresión segura para FORMULA
   fuente?: string;                  // texto explicativo
+  metadata?: Record<string, any>;   // audit rules, base legal, etc.
 }
 
 export interface CalculatedRow extends CostRow {
