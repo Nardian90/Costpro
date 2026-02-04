@@ -71,11 +71,28 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
     adj.set(row.id, deps);
   });
 
-  // DFS for Cycle Detection
+  // DFS for Cycle Detection (DAG validation)
   const visited = new Set<string>();
   const recStack = new Set<string>();
 
-  function hasCycle(u: string): boolean {
+  function validateNoCycles(u: string): boolean {
+    if (recStack.has(u)) {
+      const row = rowMap.get(u);
+      const isTotal = row?.nodeType === 'TOTAL' || row?.type === 'TOTAL';
+
+      validationErrors.push({
+        rowId: u,
+        message: isTotal
+          ? `ERROR_CRÍTICO (CYCLE): El totalizador '${row?.label || u}' se autorreferencia directa o indirectamente. Un total no puede formar parte de su propio cálculo.`
+          : `ERROR_CRÍTICO (CYCLE): Bucle de cálculo detectado en '${row?.label || u}'.`,
+        type: 'CRITICAL',
+        code: 'CYCLE'
+      });
+      return true;
+    }
+
+    if (visited.has(u)) return false;
+
     visited.add(u);
     recStack.add(u);
 
@@ -84,27 +101,8 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
       // vId could be an ID or a classification. Map it to actual row IDs
       const targetIds = ficha.rows.filter(r => r.id === vId || r.classification === vId).map(r => r.id);
 
-      if (targetIds.length === 0) {
-          // Missing reference is caught here or later
-          continue;
-      }
-
       for (const v of targetIds) {
-          if (recStack.has(v)) {
-              const isSelf = v === u;
-              validationErrors.push({
-                rowId: u,
-                message: isSelf
-                  ? `Autorreferencia crítica detectada: La fila '${rowMap.get(u)?.label || u}' intenta calcularse usando su propio valor, lo cual es matemáticamente imposible.`
-                  : `Ciclo de dependencia detectado: La fila '${rowMap.get(u)?.label || u}' depende de '${rowMap.get(v)?.label || v}' (directa o indirectamente), lo cual genera un bucle infinito de cálculo.`,
-                type: 'CRITICAL',
-                code: 'CYCLE'
-              });
-              return true;
-          }
-          if (!visited.has(v)) {
-              if (hasCycle(v)) return true;
-          }
+          if (validateNoCycles(v)) return true;
       }
     }
 
@@ -114,7 +112,7 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
 
   ficha.rows.forEach((row) => {
     if (!visited.has(row.id)) {
-      hasCycle(row.id);
+      validateNoCycles(row.id);
     }
   });
 
