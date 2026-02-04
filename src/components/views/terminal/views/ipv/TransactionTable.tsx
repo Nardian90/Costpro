@@ -106,21 +106,6 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
     }
   };
 
-  const handleUpdateCommission = async (tx: BankTransaction, newComision: number) => {
-      const newImporteVenta = tx.importe_cents + newComision;
-      await db.transaction('rw', [db.bank_statements, db.reconciliation_lines], async () => {
-          await db.bank_statements.update(tx.referencia_origen, {
-              comision_cents: newComision,
-              importe_venta_cents: newImporteVenta,
-              updated_at: new Date().toISOString()
-          });
-          // Sincronizar la comisión en todas las líneas ya conciliadas de esta transacción
-          await db.reconciliation_lines.where('transaction_ref').equals(tx.referencia_origen).modify({
-              comision_banco_cents: newComision
-          });
-      });
-  };
-
 
   const toggleExclusion = async (tx: BankTransaction, forcedValue?: boolean) => {
       // Si forcedValue viene de Radix Checkbox, invertimos su lógica (Checked = !Excluido)
@@ -294,7 +279,6 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                             setModalOpen(true);
                         }}
                         onReset={() => handleResetReconciliation(tx)}
-                        onUpdateCommission={handleUpdateCommission}
                         onDelete={() => handleDelete(tx.referencia_origen)}
                         onToggleExclusion={(val: boolean) => toggleExclusion(tx, val)}
                         getStatusBadge={getStatusBadge}
@@ -313,7 +297,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
             ) : (
                 filtered.map((tx) => {
                     const matchedTotal = txReconciliationTotals[tx.referencia_origen] || 0;
-                    const targetAmount = tx.importe_venta_cents || tx.importe_cents;
+                    const targetAmount = tx.importe_cents;
                     const diff = targetAmount - matchedTotal;
                     const isEnProceso = matchedTotal > 0 && Math.abs(diff) >= 0.001;
 
@@ -347,12 +331,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                                 </div>
                                 <div>
                                     <p className="text-[8px] font-bold text-muted-foreground uppercase">Comis.</p>
-                                    <Input
-                                        type="number"
-                                        className="h-6 w-20 text-[10px] bg-transparent border-none font-bold text-red-500 p-0"
-                                        value={tx.comision_cents || 0}
-                                        onChange={(e) => handleUpdateCommission(tx, parseFloat(e.target.value) || 0)}
-                                    />
+                                    <p className="text-xs font-bold text-red-500">{formatCurrency(tx.comision_cents || 0)}</p>
                                 </div>
                                 <div className="text-right">
                                     <p className="text-[8px] font-bold text-primary uppercase">Objetivo</p>
@@ -480,7 +459,7 @@ function HelpItem({ title, desc }: { title: string, desc: string }) {
     );
 }
 
-const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onUpdateCommission, onDelete, onToggleExclusion, getStatusBadge }: any) => {
+const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onDelete, onToggleExclusion, getStatusBadge }: any) => {
     const targetAmount = tx.importe_venta_cents || tx.importe_cents;
     const diff = targetAmount - matchedTotal;
     const isEnProceso = matchedTotal > 0 && Math.abs(diff) >= 0.001;
@@ -506,13 +485,8 @@ const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onUpdate
           <TableCell className="text-right font-bold text-xs text-muted-foreground">
             {formatCurrency(tx.importe_cents)}
           </TableCell>
-          <TableCell className="text-right">
-            <Input
-                type="number"
-                className="w-20 h-8 text-right bg-transparent border-none font-bold text-xs text-red-500 focus-visible:ring-1 focus-visible:ring-primary rounded p-1"
-                value={tx.comision_cents || 0}
-                onChange={(e) => onUpdateCommission(tx, parseFloat(e.target.value) || 0)}
-            />
+          <TableCell className="text-right font-bold text-xs text-red-500">
+            {formatCurrency(tx.comision_cents || 0)}
           </TableCell>
           <TableCell className="text-right font-black text-sm text-primary">
             {formatCurrency(targetAmount)}
