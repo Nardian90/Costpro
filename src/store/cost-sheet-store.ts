@@ -5,8 +5,8 @@ import originalTemplate from '@/lib/data/costpro-full.json';
 import { produce } from 'immer';
 import {
   CostSheetDataContract,
-  CostSheetDataFactory,
   CostSheetAnnexContract,
+  CostSheetRowFactory,
 } from '@/contracts';
 import { costSheetDataSchema } from '@/validation/schemas';
 import { toast } from 'sonner';
@@ -24,22 +24,27 @@ const clearTemplate = (template: any) => {
     // Clear sections and rows
     const clearRows = (rows: any[]) => {
         rows.forEach(row => {
-            // Clear primary numeric values
-            if (row.hasOwnProperty('valorHistorico')) row.valorHistorico = 0;
-            if (row.hasOwnProperty('value')) row.value = 0;
+            // Clear primary numeric values (Standardized)
+            row.valor_historico = 0;
+
+            // Cleanup legacy fields if they exist
+            delete row.valorHistorico;
+            delete row.value;
 
             // Clear formulas if they are actually fixed numbers
             if (row.formula && !row.formula.startsWith('=')) {
                 row.formula = "0";
             }
-            if (row.totalFormula && !row.totalFormula.startsWith('=')) {
-                row.totalFormula = "0";
-            }
+
+            delete row.totalFormula;
 
             // Ensure calculation method reflects manual input if we cleared a fixed number
-            if (row.calculationMethod === 'ValorFijo' || (!row.formula?.startsWith('=') && !row.totalFormula?.startsWith('='))) {
-                // If it's not a real formula, ensure it's treated as a clean slate
+            // Standardized to calculation_method
+            if (row.calculation_method === 'ValorFijo' || !row.formula?.startsWith('=')) {
+                // Treated as clean slate
             }
+
+            delete row.calculationMethod;
 
             if (row.children) clearRows(row.children);
         });
@@ -49,14 +54,16 @@ const clearTemplate = (template: any) => {
         cleared.sections.forEach((s: any) => clearRows(s.rows));
     }
 
-    // Clear annexes - Total reset to empty data as requested
+    // Clear annexes
     if (cleared.annexes) {
         cleared.annexes.forEach((a: any) => {
             a.data = [];
         });
     }
 
-    return cleared;
+    // Final validation through Zod to ensure canonical form
+    const validated = costSheetDataSchema.safeParse(cleared);
+    return validated.success ? validated.data : cleared;
 };
 
 const blankSheet = clearTemplate(originalTemplate);
@@ -81,7 +88,7 @@ interface CostSheetState {
 export const useCostSheetStore = create<CostSheetState>()(
   persist(
     (set) => ({
-      data: blankSheet,
+      data: blankSheet as CostSheetDataContract,
       updateValue: (path, value) =>
         set(
           produce((draft: CostSheetState) => {
@@ -91,7 +98,6 @@ export const useCostSheetStore = create<CostSheetState>()(
               if (current[path[i]] === undefined) return;
               current = current[path[i]];
             }
-            // Only update if value actually changed to prevent redundant renders
             if (current[path[path.length - 1]] !== value) {
               current[path[path.length - 1]] = value;
             }
@@ -180,20 +186,10 @@ export const useCostSheetStore = create<CostSheetState>()(
               if (current[p] === undefined) return;
               current = current[p];
             }
-            // current should be an array (rows or children)
             if (Array.isArray(current)) {
-                const nextId = (current.length + 1).toString();
-                // We need to generate a somewhat unique ID for the engine
-                // Heuristic: use a timestamp or a combination
-                const uniqueId = `new-${Date.now()}-${nextId}`;
-
-                current.push({
-                    id: uniqueId,
+                current.push(CostSheetRowFactory.create({
                     label: "Nuevo Concepto",
-                    valorHistorico: 0,
-                    calculationMethod: 'ValorFijo',
-                    children: []
-                });
+                }));
             }
           })
         ),
@@ -223,7 +219,6 @@ export const useCostSheetStore = create<CostSheetState>()(
             if (annex) {
               const newRow: any = {};
               if (annex.data.length > 0) {
-                // Clone from first row structure
                 const firstRow = annex.data[0];
                 Object.keys(firstRow).forEach((key) => {
                   const column = annex.columns.find((c) => c.key === key);
@@ -232,13 +227,11 @@ export const useCostSheetStore = create<CostSheetState>()(
                   } else if (!column) {
                     newRow[key] = typeof firstRow[key] === 'number' ? 0 : '';
                   } else {
-                    newRow[key] = 0; // Formula column
+                    newRow[key] = 0;
                   }
                 });
               } else {
-                // Initialize from columns
                 annex.columns.forEach((col) => {
-                  // Heuristic for default values based on common key names
                   const isNumeric = col.key === 'no' ||
                                     col.key.includes('norm') ||
                                     col.key.includes('price') ||
@@ -289,14 +282,14 @@ export const useCostSheetStore = create<CostSheetState>()(
             '[Zod Validation Error] example data:',
             result.error.format()
           );
-          set({ data: example as CostSheetDataContract }); // Fallback
+          set({ data: example as CostSheetDataContract });
         }
       },
-      reset: () => set({ data: clearTemplate(originalTemplate) }), // Use fresh blank sheet on reset
+      reset: () => set({ data: clearTemplate(originalTemplate) }),
     }),
     {
-      name: 'cost-sheet-storage', // Name for the localStorage item
-      version: 2, // Versioning to avoid issues with older structures
+      name: 'cost-sheet-storage',
+      version: 3, // Increment version for storage migration
     }
   )
 );

@@ -417,28 +417,39 @@ export const costSheetHeaderSchema = z.object({
   unit: z.string(),
 }).catchall(z.any());
 
-export const costSheetRowSchema: z.ZodType<any> = z.lazy(() => z.object({
-  id: z.string(),
-  label: z.string(),
-  valorHistorico: z.number().optional(),
-  value: z.number().optional(),
-  baseDeCalculoRef: z.string().nullable().optional(),
-  base_ref: z.string().nullable().optional(),
-  calculationMethod: z.enum(['Prorrateo', 'ValorFijo', 'FORMULA', 'ANEXO']).optional(),
-  totalFormula: z.string().nullable().optional(),
-  formula: z.string().optional(),
-  is_percent: z.boolean().optional(),
-  children: z.array(costSheetRowSchema).optional(),
-}).catchall(z.any()));
+export const costSheetRowSchema: z.ZodType<any> = z.lazy(() => z.preprocess((val: any) => {
+  if (typeof val !== 'object' || val === null) return val;
+  const migrated = { ...val };
+
+  // Hardening: Migration of legacy fields to canonical snake_case
+  if (migrated.valorHistorico !== undefined && migrated.valor_historico === undefined) migrated.valor_historico = migrated.valorHistorico;
+  if (migrated.value !== undefined && migrated.valor_historico === undefined) migrated.valor_historico = migrated.value;
+  if (migrated.baseDeCalculoRef !== undefined && migrated.base_ref === undefined) migrated.base_ref = migrated.baseDeCalculoRef;
+  if (migrated.calculationMethod !== undefined && migrated.calculation_method === undefined) migrated.calculation_method = migrated.calculationMethod;
+  if (migrated.totalFormula !== undefined && migrated.formula === undefined) migrated.formula = migrated.totalFormula;
+  if (migrated.isPercent !== undefined && migrated.is_percent === undefined) migrated.is_percent = migrated.isPercent;
+
+  return migrated;
+}, z.object({
+  id: z.string().min(1),
+  label: z.string().default('Concepto sin nombre'),
+  valor_historico: z.coerce.number().default(0),
+  base_ref: z.string().nullable().optional().default(''),
+  calculation_method: z.enum(['Prorrateo', 'ValorFijo', 'FORMULA', 'ANEXO']).default('ValorFijo'),
+  formula: z.string().nullable().optional().default(''),
+  is_percent: z.boolean().default(false),
+  children: z.array(costSheetRowSchema).default([]),
+  helpText: z.string().optional().default(''),
+}).catchall(z.any())));
 
 export const costSheetSectionSchema = z.object({
-  id: z.string(),
-  label: z.string().optional(),
-  rows: z.array(costSheetRowSchema),
+  id: z.string().min(1),
+  label: z.string().default('Nueva Sección'),
+  rows: z.array(costSheetRowSchema).default([]),
 });
 
 export const costSheetColumnSchema = z.object({
-  key: z.string(),
+  key: z.string().min(1),
   label: z.string().optional(),
   title: z.string().optional(),
   formula: z.string().optional(),
@@ -446,22 +457,27 @@ export const costSheetColumnSchema = z.object({
 }).catchall(z.any());
 
 export const costSheetAnnexSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  columns: z.array(costSheetColumnSchema),
-  data: z.array(z.record(z.string(), z.any())),
+  id: z.string().min(1),
+  title: z.string().default('Nuevo Anexo'),
+  columns: z.array(costSheetColumnSchema).default([]),
+  data: z.array(z.record(z.string(), z.any())).default([]),
 }).catchall(z.any());
 
 export const costSheetSignatureSchema = z.object({
-  prepared_by: z.string(),
-  approved_by: z.string(),
-}).catchall(z.any());
+  prepared_by: z.string().default(''),
+  approved_by: z.string().default(''),
+});
 
 export const costSheetDataSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().optional(),
+  version: z.string().optional(),
+  metadata: z.any().optional(),
   header: costSheetHeaderSchema,
-  sections: z.array(costSheetSectionSchema),
-  annexes: z.array(costSheetAnnexSchema),
+  sections: z.array(costSheetSectionSchema).default([]),
+  annexes: z.array(costSheetAnnexSchema).default([]),
   signature: costSheetSignatureSchema,
+  footer: z.string().optional(),
 }).catchall(z.any());
 
 // ============================================

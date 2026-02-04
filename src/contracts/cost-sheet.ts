@@ -4,20 +4,16 @@
  * para una ficha de costo completa. Elimina `null` y `undefined`
  * para garantizar un estado predecible, especialmente en cálculos recursivos.
  *
- * @see {@link /docs/dias/dia-6-consolidacion.md}
- * @see {@link /src/types/cost-sheet.ts} - Definición original (ahora obsoleta)
- *
  * @author Jules
- * @version 1.0.0
- * @since 2024-01-22
+ * @version 1.1.0
+ * @since 2024-02-27
  */
 
 // ============================================
-// Tipos Base y Contratos
+// Tipos Base y Contratos (Hardened)
 // ============================================
 
 export interface CostSheetHeaderContract {
-  [key: string]: any;
   code: string;
   name: string;
   date: string;
@@ -26,22 +22,19 @@ export interface CostSheetHeaderContract {
   category: string;
   type: string;
   unit: string;
+  [key: string]: any;
 }
 
 export interface CostSheetRowContract {
   id: string;
   label: string;
-  valorHistorico: number;
-  value: number;
-  baseDeCalculoRef: string;
-  baseRef: string;
-  calculationMethod: 'Prorrateo' | 'ValorFijo' | 'FORMULA';
-  totalFormula: string;
+  valor_historico: number;
+  base_ref: string;
+  calculation_method: 'Prorrateo' | 'ValorFijo' | 'FORMULA' | 'ANEXO';
   formula: string;
-  isPercent: boolean;
+  is_percent: boolean;
   children: CostSheetRowContract[];
   helpText: string;
-  // Mantenemos flexibilidad para propiedades dinámicas, pero con un tipo más explícito.
   [key: string]: any;
 }
 
@@ -61,10 +54,10 @@ export interface CostSheetColumnContract {
 }
 
 export interface CostSheetAnnexContract {
-  id:string;
+  id: string;
   title: string;
   columns: CostSheetColumnContract[];
-  data: any[]; // Se mantiene flexible por su naturaleza dinámica.
+  data: any[];
 }
 
 export interface CostSheetSignatureContract {
@@ -93,16 +86,13 @@ export const CostSheetRowFactory = {
   create: (
     initialValues?: Partial<CostSheetRowContract>
   ): CostSheetRowContract => ({
-    id: `row-${Math.random().toString(36).substr(2, 9)}`,
+    id: `row-${Math.random().toString(36).substring(2, 11)}`,
     label: '',
-    valorHistorico: 0,
-    value: 0,
-    baseDeCalculoRef: '',
-    baseRef: '',
-    calculationMethod: 'Prorrateo',
-    totalFormula: '',
+    valor_historico: 0,
+    base_ref: '',
+    calculation_method: 'ValorFijo',
     formula: '',
-    isPercent: false,
+    is_percent: false,
     children: [],
     helpText: '',
     ...initialValues,
@@ -113,7 +103,7 @@ export const CostSheetSectionFactory = {
   create: (
     initialValues?: Partial<CostSheetSectionContract>
   ): CostSheetSectionContract => ({
-    id: `section-${Math.random().toString(36).substr(2, 9)}`,
+    id: `section-${Math.random().toString(36).substring(2, 11)}`,
     label: '',
     rows: [],
     ...initialValues,
@@ -150,7 +140,7 @@ export const CostSheetAnnexFactory = {
   create: (
     initialValues?: Partial<CostSheetAnnexContract>
   ): CostSheetAnnexContract => ({
-    id: `annex-${Math.random().toString(36).substr(2, 9)}`,
+    id: `annex-${Math.random().toString(36).substring(2, 11)}`,
     title: '',
     columns: [],
     data: [],
@@ -159,9 +149,6 @@ export const CostSheetAnnexFactory = {
 };
 
 export const CostSheetDataFactory = {
-  /**
-   * Crea una ficha de costo completa con valores por defecto.
-   */
   create: (
     initialValues?: Partial<CostSheetDataContract>
   ): CostSheetDataContract => ({

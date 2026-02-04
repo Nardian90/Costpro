@@ -1,72 +1,30 @@
-export interface CostSheetHeader {
-  code: string;
-  name: string;
-  date: string;
-  quantity: number;
-  currency: string;
-  category: string;
-  type: string;
-  unit: string;
-  [key: string]: any; // Allow for extra metadata
-}
+/**
+ * @file Tipos para la Ficha de Costo.
+ * @deprecated Use `src/contracts/cost-sheet.ts` para nuevos desarrollos.
+ * Esta interfaz se mantiene por compatibilidad mientras se completa la migración al Contrato Hardened.
+ */
 
-export interface CostSheetRow {
-  id: string;
-  label: string;
-  valorHistorico?: number;
-  value?: number;
-  baseDeCalculoRef?: string | null;
-  base_ref?: string | null;
-  calculationMethod?: 'Prorrateo' | 'ValorFijo' | 'FORMULA' | 'ANEXO';
-  totalFormula?: string | null;
-  formula?: string;
-  is_percent?: boolean;
-  children?: CostSheetRow[];
-  [key: string]: any;
-}
+import {
+  CostSheetHeaderContract,
+  CostSheetRowContract,
+  CostSheetSectionContract,
+  CostSheetColumnContract,
+  CostSheetAnnexContract,
+  CostSheetSignatureContract,
+  CostSheetDataContract
+} from '@/contracts/cost-sheet';
 
-export interface CostSheetSection {
-  id: string;
-  label?: string;
-  rows: CostSheetRow[];
-}
-
-export interface CostSheetColumn {
-  key: string;
-  label?: string;
-  title?: string;
-  formula?: string;
-  type?: 'number' | 'string' | 'formula' | 'text';
-}
-
-export interface CostSheetAnnex {
-  id: string;
-  title: string;
-  columns: CostSheetColumn[];
-  data: any[]; // Data rows can have dynamic keys based on columns
-}
-
-export interface CostSheetSignature {
-  prepared_by: string;
-  approved_by: string;
-}
-
-export interface CostSheetData {
-  id?: string;
-  name?: string;
-  version?: string;
-  metadata?: any;
-  header: CostSheetHeader;
-  sections: CostSheetSection[];
-  annexes: CostSheetAnnex[];
-  signature: CostSheetSignature;
-  footer?: string;
-  [key: string]: any;
-}
+export type CostSheetHeader = CostSheetHeaderContract;
+export type CostSheetRow = CostSheetRowContract;
+export type CostSheetSection = CostSheetSectionContract;
+export type CostSheetColumn = CostSheetColumnContract;
+export type CostSheetAnnex = CostSheetAnnexContract;
+export type CostSheetSignature = CostSheetSignatureContract;
+export type CostSheetData = CostSheetDataContract;
 
 export interface CalculatedRowValue {
-  valorHistorico: number;
-  baseDeCalculoRef: string | null;
+  valor_historico: number;
+  base_ref: string | null;
   baseTotal: number;
   baseValorHistorico: number;
   coeficiente: number;
@@ -74,4 +32,9 @@ export interface CalculatedRowValue {
   audits?: any[];
   hasWarnings?: boolean;
   validationErrors?: { message: string, type: 'CRITICAL' | 'WARNING', code: string }[];
+  // Fallbacks for legacy compatibility during transition
+  /** @deprecated */
+  valorHistorico?: number;
+  /** @deprecated */
+  baseDeCalculoRef?: string | null;
 }

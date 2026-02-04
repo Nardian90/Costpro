@@ -2,9 +2,9 @@
 import { CostSheetData } from '@/types/cost-sheet';
 
 const template: CostSheetData = {
-  "id": "costpro-full-v5",
+  "id": "costpro-full-v5.8",
   "name": "Producción de Pan Artistas",
-  "version": "5.0.0",
+  "version": "5.8.0",
   "metadata": {
     "author": "CostPro Enterprise"
   },
@@ -34,30 +34,30 @@ const template: CostSheetData = {
             {
               "id": "1.1",
               "label": "De ello: - Insumos (MP)",
-              "valorHistorico": 0,
-              "baseDeCalculoRef": "I",
-              "calculationMethod": "FORMULA",
+              "valor_historico": 0,
+              "base_ref": "I",
+              "calculation_method": "FORMULA",
               "formula": "AnexoI"
             },
             {
               "id": "1.2",
               "label": "- Combustibles y lubricantes",
-              "valorHistorico": 0,
-              "calculationMethod": "FORMULA",
+              "valor_historico": 0,
+              "calculation_method": "FORMULA",
               "formula": "AnexoI"
             },
             {
               "id": "1.3",
               "label": "- Energía",
-              "valorHistorico": 0,
-              "calculationMethod": "FORMULA",
+              "valor_historico": 0,
+              "calculation_method": "FORMULA",
               "formula": "AnexoI"
             },
             {
               "id": "1.4",
               "label": "- Agua",
-              "valorHistorico": 0,
-              "calculationMethod": "FORMULA",
+              "valor_historico": 0,
+              "calculation_method": "FORMULA",
               "formula": "AnexoI"
             }
           ]
@@ -76,16 +76,16 @@ const template: CostSheetData = {
             {
               "id": "2.1",
               "label": "De ello: Salarios",
-              "valorHistorico": 0,
-              "baseDeCalculoRef": "II",
-              "calculationMethod": "FORMULA",
+              "valor_historico": 0,
+              "base_ref": "II",
+              "calculation_method": "FORMULA",
               "formula": "AnexoII"
             },
             {
               "id": "2.2",
               "label": "Vacaciones",
               "formula": "=pct(ref('2.1'), 9.09)",
-              "valorHistorico": 0,
+              "valor_historico": 0,
               "is_percent": true,
               "base_ref": "2.1"
             }
@@ -105,42 +105,42 @@ const template: CostSheetData = {
             {
               "id": "3.1",
               "label": "DE ELLO: DEPRECIACIÓN (TOTAL)",
-              "calculationMethod": "FORMULA",
+              "calculation_method": "FORMULA",
               "formula": "=sum(children)",
               "children": [
                 {
                   "id": "3.1.1",
                   "label": "-Edificios",
-                  "valorHistorico": 0,
-                  "calculationMethod": "FORMULA",
+                  "valor_historico": 0,
+                  "calculation_method": "FORMULA",
                   "formula": "AnexoIII"
                 },
                 {
                   "id": "3.1.2",
                   "label": "-Otras Construcciones",
-                  "valorHistorico": 0,
-                  "calculationMethod": "FORMULA",
+                  "valor_historico": 0,
+                  "calculation_method": "FORMULA",
                   "formula": "AnexoIII"
                 },
                 {
                   "id": "3.1.3",
                   "label": "-Maquinas y eq. energéticos",
-                  "valorHistorico": 0,
-                  "calculationMethod": "FORMULA",
+                  "valor_historico": 0,
+                  "calculation_method": "FORMULA",
                   "formula": "AnexoIII"
                 },
                 {
                   "id": "3.1.4",
                   "label": "-Maquinas y eq. productivos",
-                  "valorHistorico": 0,
-                  "calculationMethod": "FORMULA",
+                  "valor_historico": 0,
+                  "calculation_method": "FORMULA",
                   "formula": "AnexoIII"
                 },
                 {
                   "id": "3.1.5",
                   "label": "-Aparatos y eq. técnicos",
-                  "valorHistorico": 0,
-                  "calculationMethod": "FORMULA",
+                  "valor_historico": 0,
+                  "calculation_method": "FORMULA",
                   "formula": "AnexoIII"
                 }
               ]
@@ -148,44 +148,44 @@ const template: CostSheetData = {
             {
               "id": "3.2",
               "label": "-Mantenimiento",
-              "valorHistorico": 0,
-              "calculationMethod": "FORMULA",
+              "valor_historico": 0,
+              "calculation_method": "FORMULA",
               "formula": "AnexoIV"
             },
             {
               "id": "3.3",
               "label": "-Servicios contratados",
-              "valorHistorico": 0,
-              "calculationMethod": "FORMULA",
+              "valor_historico": 0,
+              "calculation_method": "FORMULA",
               "formula": "AnexoIV"
             },
             {
               "id": "3.4",
               "label": "-Medios de protección",
-              "valorHistorico": 0,
-              "calculationMethod": "FORMULA",
+              "valor_historico": 0,
+              "calculation_method": "FORMULA",
               "formula": "AnexoIV"
             },
             {
               "id": "3.5",
               "label": "-Alquiler locales",
-              "valorHistorico": 0,
-              "calculationMethod": "FORMULA",
+              "valor_historico": 0,
+              "calculation_method": "FORMULA",
               "formula": "AnexoIV"
             },
             {
               "id": "3.6",
               "label": "-Alimentación",
-              "valorHistorico": 0,
-              "calculationMethod": "FORMULA",
+              "valor_historico": 0,
+              "calculation_method": "FORMULA",
               "formula": "AnexoIV"
             },
             {
               "id": "3.7",
               "label": "-Dietas",
-              "valorHistorico": 0,
-              "baseDeCalculoRef": "V",
-              "calculationMethod": "FORMULA",
+              "valor_historico": 0,
+              "base_ref": "V",
+              "calculation_method": "FORMULA",
               "formula": "AnexoV"
             }
           ]
@@ -204,14 +204,14 @@ const template: CostSheetData = {
             {
               "id": "4.1",
               "label": "De ello: Salarios",
-              "valorHistorico": 0,
-              "calculationMethod": "ValorFijo"
+              "valor_historico": 0,
+              "calculation_method": "ValorFijo"
             },
             {
               "id": "4.2",
               "label": "-Otros gastos",
-              "valorHistorico": 0,
-              "calculationMethod": "ValorFijo"
+              "valor_historico": 0,
+              "calculation_method": "ValorFijo"
             }
           ]
         }
@@ -225,7 +225,7 @@ const template: CostSheetData = {
           "id": "5",
           "label": "COSTO TOTAL (1+2+3+4)",
           "formula": "=SUMA ( ref('1') , ref('2') , ref('3') , ref('4') )",
-          "calculationMethod": "FORMULA"
+          "calculation_method": "FORMULA"
         }
       ]
     },
@@ -241,32 +241,32 @@ const template: CostSheetData = {
             {
               "id": "6.1",
               "label": "- Salarios",
-              "valorHistorico": 0,
-              "calculationMethod": "ValorFijo"
+              "valor_historico": 0,
+              "calculation_method": "ValorFijo"
             },
             {
               "id": "6.2",
               "label": "- Comunicación",
-              "valorHistorico": 0,
-              "calculationMethod": "ValorFijo"
+              "valor_historico": 0,
+              "calculation_method": "ValorFijo"
             },
             {
               "id": "6.3",
               "label": "- Depreciacion",
-              "valorHistorico": 0,
-              "calculationMethod": "ValorFijo"
+              "valor_historico": 0,
+              "calculation_method": "ValorFijo"
             },
             {
               "id": "6.4",
               "label": "- Energia",
-              "valorHistorico": 0,
-              "calculationMethod": "ValorFijo"
+              "valor_historico": 0,
+              "calculation_method": "ValorFijo"
             },
             {
               "id": "6.5",
               "label": "- Otros Gastos Admin.",
-              "valorHistorico": 0,
-              "calculationMethod": "ValorFijo"
+              "valor_historico": 0,
+              "calculation_method": "ValorFijo"
             }
           ]
         }
@@ -284,14 +284,14 @@ const template: CostSheetData = {
             {
               "id": "7.1",
               "label": "- Salarios",
-              "valorHistorico": 0,
-              "calculationMethod": "ValorFijo"
+              "valor_historico": 0,
+              "calculation_method": "ValorFijo"
             },
             {
               "id": "7.2",
               "label": "- Otros gastos",
-              "valorHistorico": 0,
-              "calculationMethod": "ValorFijo"
+              "valor_historico": 0,
+              "calculation_method": "ValorFijo"
             }
           ]
         }
@@ -309,14 +309,14 @@ const template: CostSheetData = {
             {
               "id": "8.1",
               "label": "- Intereses y comisiones",
-              "valorHistorico": 0,
-              "calculationMethod": "ValorFijo"
+              "valor_historico": 0,
+              "calculation_method": "ValorFijo"
             },
             {
               "id": "8.2",
               "label": "- Otros Gastos Financ.",
-              "valorHistorico": 0,
-              "calculationMethod": "ValorFijo"
+              "valor_historico": 0,
+              "calculation_method": "ValorFijo"
             }
           ]
         }
@@ -329,8 +329,8 @@ const template: CostSheetData = {
         {
           "id": "9",
           "label": "GASTO FINANC. OSDE",
-          "valorHistorico": 0,
-          "calculationMethod": "ValorFijo"
+          "valor_historico": 0,
+          "calculation_method": "ValorFijo"
         }
       ]
     },
@@ -376,7 +376,7 @@ const template: CostSheetData = {
           "id": "12",
           "label": "TOTAL COSTOS Y GASTOS (5+11)",
           "formula": "=SUMA ( ref('5') , ref('11') )",
-          "calculationMethod": "FORMULA"
+          "calculation_method": "FORMULA"
         }
       ]
     },
@@ -387,25 +387,25 @@ const template: CostSheetData = {
         {
           "id": "13",
           "label": "Utilidad",
-          "valorHistorico": 0,
+          "valor_historico": 0,
           "is_percent": false,
           "base_ref": "12",
           "formula": "ref('12') * 0.1",
-          "calculationMethod": "FORMULA"
+          "calculation_method": "FORMULA"
         },
         {
           "id": "13.1",
           "label": "Precio antes de Impuesto",
           "formula": "ref('12') + ref('13')",
-          "calculationMethod": "FORMULA"
+          "calculation_method": "FORMULA"
         },
         {
           "id": "13.2",
           "label": "Imp s/Ventas y Serv",
-          "valorHistorico": 0,
+          "valor_historico": 0,
           "is_percent": false,
           "formula": "0",
-          "calculationMethod": "FORMULA"
+          "calculation_method": "FORMULA"
         }
       ]
     },
@@ -417,7 +417,7 @@ const template: CostSheetData = {
           "id": "14",
           "label": "Precio o Tarifa Final",
           "formula": "=sum(ref('13.1'), ref('13.2'))",
-          "calculationMethod": "FORMULA"
+          "calculation_method": "FORMULA"
         }
       ]
     },

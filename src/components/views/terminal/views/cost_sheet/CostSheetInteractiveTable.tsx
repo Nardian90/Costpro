@@ -76,10 +76,9 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
 
     const trimmedVal = val.trim();
     if (trimmedVal === '') {
-        // Reset to 0 if empty
-        const field = row.hasOwnProperty('valorHistorico') ? 'valorHistorico' : 'value';
-        updateValue([...path, field], 0);
-        updateValue([...path, 'calculationMethod'], 'ValorFijo');
+        // Reset to 0 if empty (Hardened Standard)
+        updateValue([...path, 'valor_historico'], 0);
+        updateValue([...path, 'calculation_method'], 'ValorFijo');
         updateValue([...path, 'formula'], '');
         if (row.is_percent) {
           updateValue([...path, 'is_percent'], false);
@@ -88,12 +87,9 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
     }
 
     // Cost Sheet Logic: Any non-empty input is treated as a formula unless it's a simple number.
-    // However, per user request and memory, we should persist formulas even without '='.
-    // If it's a number, we also save it as formula to keep it in the Total column.
-
     const updates: { path: (string | number)[], value: string | number | boolean }[] = [
         { path: [...path, 'formula'], value: trimmedVal },
-        { path: [...path, 'calculationMethod'], value: 'FORMULA' }
+        { path: [...path, 'calculation_method'], value: 'FORMULA' }
     ];
 
     // If it's a number and it was a percentage row, clear is_percent to ensure fixed value is respected
@@ -106,11 +102,11 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
 
 
   const isResultRow = row.is_percent || ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '13.1', '13.2', '14', '15', '16'].includes(String(row.id));
-  const safeCalculated = calculated || { total: 0, valorHistorico: 0, baseTotal: 0, coeficiente: 0, hasWarnings: false, audits: [], validationErrors: [] };
+  const safeCalculated = calculated || { total: 0, valor_historico: 0, baseTotal: 0, coeficiente: 0, hasWarnings: false, audits: [], validationErrors: [] };
 
   const criticalErrors = (safeCalculated.validationErrors || []).filter(e => e.type === 'CRITICAL');
   const warningErrors = (safeCalculated.validationErrors || []).filter(e => e.type === 'WARNING');
-  const hasEngineWarnings = safeCalculated.hasWarnings || (!hasChildren && !row.is_percent && safeCalculated.total === 0 && ((row.valorHistorico ?? 0) > 0 || !!row.baseDeCalculoRef));
+  const hasEngineWarnings = safeCalculated.hasWarnings || (!hasChildren && !row.is_percent && safeCalculated.total === 0 && ((row.valor_historico ?? 0) > 0 || !!row.base_ref));
 
   return (
     <>
@@ -207,19 +203,19 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                   hasChildren && "bg-muted/30 font-bold border-dashed cursor-default"
                 )}
                 value={hasChildren
-                  ? (safeCalculated.valorHistorico ?? 0).toFixed(row.is_percent ? 3 : 2)
-                  : (row.hasOwnProperty('valorHistorico') ? (row.valorHistorico ?? 0) : (row.is_percent ? ((row.value ?? 0) * 100) : (row.value ?? 0)))}
+                  ? (safeCalculated.valor_historico ?? 0).toFixed(row.is_percent ? 3 : 2)
+                  : (row.valor_historico ?? 0) * (row.is_percent ? 100 : 1)}
                 readOnly={hasChildren}
                 onChange={(e) => {
                   if (hasChildren) return;
                   const val = e.target.value;
                   const numVal = parseFloat(val) || 0;
                   handleValueChange(
-                    row.hasOwnProperty('valorHistorico') ? 'valorHistorico' : 'value',
+                    'valor_historico',
                     row.is_percent ? numVal / 100 : numVal
                   );
-                  // Ensure engine respects manual changes
-                  handleValueChange('calculationMethod', 'ValorFijo');
+                  // Ensure engine respects manual changes (Standardized names)
+                  handleValueChange('calculation_method', 'ValorFijo');
                   handleValueChange('formula', '');
                 }}
                 onFocus={(e) => !hasChildren && e.target.select()}
@@ -288,8 +284,8 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                                 </div>
                             ))}
 
-                            {/* Legacy Warning */}
-                            {!hasChildren && !row.is_percent && safeCalculated.total === 0 && ((row.valorHistorico ?? 0) > 0 || !!row.baseDeCalculoRef) && (
+                            {/* Integrity Warning */}
+                            {!hasChildren && !row.is_percent && safeCalculated.total === 0 && ((row.valor_historico ?? 0) > 0 || !!row.base_ref) && (
                                 <p className="text-[10px] text-slate-500 italic p-1">
                                     Esta fila tiene un total de 0.00 pero tiene una base de cálculo o valor histórico asignado. Verifique el prorrateo o la fórmula.
                                 </p>
