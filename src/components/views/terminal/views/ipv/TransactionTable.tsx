@@ -313,7 +313,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
             ) : (
                 filtered.map((tx) => {
                     const matchedTotal = txReconciliationTotals[tx.referencia_origen] || 0;
-                    const targetAmount = tx.importe_cents;
+                    const targetAmount = tx.importe_venta_cents || tx.importe_cents;
                     const diff = targetAmount - matchedTotal;
                     const isEnProceso = matchedTotal > 0 && Math.abs(diff) >= 0.001;
 
