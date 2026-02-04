@@ -192,7 +192,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                             <RotateCcw className="w-3 h-3 mr-1" /> Reset Matching
                         </Button>
                     </TooltipTrigger>
-                    <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                    <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
                         Elimina todas las líneas de reconciliación de las transacciones visibles actualmente. ¡Acción destructiva!
                     </TooltipContent>
                 </Tooltip>
@@ -209,7 +209,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                         <HelpCircle className="w-4 h-4" />
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
                     Ver ayuda detallada sobre las columnas y el proceso de importación de extractos.
                 </TooltipContent>
             </Tooltip>
@@ -225,7 +225,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                         <List className="w-4 h-4" />
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
                     Vista de tabla detallada.
                 </TooltipContent>
             </Tooltip>
@@ -241,7 +241,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                         <LayoutGrid className="w-4 h-4" />
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
                     Vista de tarjetas optimizada para móviles.
                 </TooltipContent>
             </Tooltip>
@@ -533,7 +533,7 @@ const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onDelete
                             <Eye className="w-4 h-4" />
                         </Button>
                     </TooltipTrigger>
-                    <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                    <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
                         Ver detalles y gestionar reconciliación manual.
                     </TooltipContent>
                 </Tooltip>
@@ -550,7 +550,7 @@ const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onDelete
                                 <RotateCcw className="w-4 h-4" />
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                        <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
                             Reiniciar Conciliación: Borra los productos asociados a esta transacción.
                         </TooltipContent>
                     </Tooltip>
@@ -567,7 +567,7 @@ const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onDelete
                             <Trash2 className="w-4 h-4" />
                         </Button>
                     </TooltipTrigger>
-                    <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2 text-destructive">
+                    <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
                         Eliminar Transacción permanentemente.
                     </TooltipContent>
                 </Tooltip>
@@ -625,7 +625,7 @@ function QuickAdjustPopover({ transaction, remaining, onSuccess }: { transaction
                         </Button>
                     </PopoverTrigger>
                 </TooltipTrigger>
-                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
                     Ajuste Rápido: Distribuye la diferencia restante como propina o descuento en un producto existente.
                 </TooltipContent>
             </Tooltip>

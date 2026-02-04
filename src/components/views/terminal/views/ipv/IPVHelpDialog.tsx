@@ -19,21 +19,29 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-export function IPVHelpDialog() {
+interface Props {
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
+    showTrigger?: boolean;
+}
+
+export function IPVHelpDialog({ open, onOpenChange, showTrigger = true }: Props) {
   return (
-    <Dialog>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <DialogTrigger asChild>
-            <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10 transition-colors">
-              <HelpCircle className="w-5 h-5 text-primary" />
-            </Button>
-          </DialogTrigger>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p className="text-xs font-bold">Ayuda y Guía Operativa (SOP)</p>
-        </TooltipContent>
-      </Tooltip>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {showTrigger && (
+        <Tooltip>
+            <TooltipTrigger asChild>
+            <DialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10 transition-colors">
+                <HelpCircle className="w-5 h-5 text-primary" />
+                </Button>
+            </DialogTrigger>
+            </TooltipTrigger>
+            <TooltipContent className="bg-popover text-popover-foreground border shadow-xl">
+            <p className="text-xs font-bold">Ayuda y Guía Operativa (SOP)</p>
+            </TooltipContent>
+        </Tooltip>
+      )}
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col rounded-3xl border-none shadow-2xl">
         <DialogHeader className="bg-primary p-6 text-primary-foreground shrink-0">
           <div className="flex items-center gap-3">

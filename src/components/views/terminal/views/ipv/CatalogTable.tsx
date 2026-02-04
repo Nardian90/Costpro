@@ -514,7 +514,7 @@ export function CatalogTable() {
                         <HelpCircle className="w-4 h-4" />
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent className="max-w-xs p-4">
+                <TooltipContent className="max-w-xs p-4 bg-popover text-popover-foreground border shadow-xl">
                     <p className="font-bold text-primary mb-2">Ayuda de Columnas:</p>
                     <ul className="text-[10px] space-y-1 list-disc pl-4 uppercase font-bold">
                         <li><strong>cod:</strong> Identificador único.</li>
@@ -538,7 +538,7 @@ export function CatalogTable() {
                         <span className="sm:hidden">Normalizar</span>
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
                     Ajusta automáticamente el stock inicial de productos con existencia negativa para que su saldo final sea cero o superior.
                 </TooltipContent>
             </Tooltip>
@@ -556,7 +556,7 @@ export function CatalogTable() {
                         Catálogo Real
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
                     Sincroniza los precios y stock inicial con la base de datos central de la tienda activa.
                 </TooltipContent>
             </Tooltip>
@@ -574,7 +574,7 @@ export function CatalogTable() {
                         <span className="sm:hidden">Nuevo</span>
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
                     Añade manualmente un producto temporal al catálogo local para procesos de conciliación específicos.
                 </TooltipContent>
             </Tooltip>
@@ -592,7 +592,7 @@ export function CatalogTable() {
                         <span className="sm:hidden">Recalcular</span>
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
                     Fuerza el recalculo de la existencia inicial de cada día basándose en el cierre del día anterior para toda la historia del reporte.
                 </TooltipContent>
             </Tooltip>
@@ -610,7 +610,7 @@ export function CatalogTable() {
                         <span>Inteligencia</span>
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
                     Analiza patrones de venta históricos para sugerir precios óptimos y ajustar prioridades de matching automáticamente.
                 </TooltipContent>
             </Tooltip>
@@ -623,7 +623,7 @@ export function CatalogTable() {
                             Aceptar Todo
                         </Button>
                     </TooltipTrigger>
-                    <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                    <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
                         Aplica masivamente el precio sugerido por el motor de inteligencia a todos los productos seleccionados.
                     </TooltipContent>
                 </Tooltip>
@@ -635,7 +635,7 @@ export function CatalogTable() {
                             Prio Auto
                         </Button>
                     </TooltipTrigger>
-                    <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                    <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
                         Cambia el modo de prioridad a "Automático" para los productos seleccionados, permitiendo que el sistema decida según el volumen de ventas.
                     </TooltipContent>
                 </Tooltip>
@@ -647,7 +647,7 @@ export function CatalogTable() {
                             Ajuste %
                         </Button>
                     </TooltipTrigger>
-                    <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                    <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
                         Modifica el precio de venta actual aplicando un factor porcentual (ej: 110% para subir un 10%).
                     </TooltipContent>
                 </Tooltip>
@@ -658,7 +658,7 @@ export function CatalogTable() {
                             <RotateCcw className="w-3 h-3" />
                         </Button>
                     </TooltipTrigger>
-                    <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                    <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
                         Revierte los precios modificados a su valor original de la última sincronización.
                     </TooltipContent>
                 </Tooltip>
@@ -878,7 +878,7 @@ export function CatalogTable() {
                                             {p.suggestedPrice}
                                         </Badge>
                                     </TooltipTrigger>
-                                    <TooltipContent>
+                            <TooltipContent className="bg-popover text-popover-foreground border shadow-xl">
                                         <p className="text-xs max-w-xs">{p.suggestionReason}</p>
                                     </TooltipContent>
                                 </Tooltip>
