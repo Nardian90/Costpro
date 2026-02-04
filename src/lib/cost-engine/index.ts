@@ -93,15 +93,13 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
 
     const neighbors = adj.get(u) || [];
     for (const vId of neighbors) {
-      // Priority 1: Exact ID match
-      let targetIds = ficha.rows.filter(r => r.id === vId).map(r => r.id);
+      // Priority 1: Classification match (Visual Numbering)
+      // Users primarily reference what they see in the "NO." column.
+      let targetIds = ficha.rows.filter(r => r.classification === vId).map(r => r.id);
 
-      // Priority 2: Classification match (only if no ID match, or if we want to be inclusive)
-      // Actually, ref() in engine sums all matches. So we MUST be inclusive if it's from a ref().
-      // BUT for children dependency, it's definitely IDs.
-
+      // Priority 2: ID match (UUID or template ID)
       if (targetIds.length === 0) {
-          targetIds = ficha.rows.filter(r => r.classification === vId).map(r => r.id);
+          targetIds = ficha.rows.filter(r => r.id === vId).map(r => r.id);
       }
 
       if (targetIds.length === 0) {
@@ -242,18 +240,18 @@ export function calculateFicha(
   });
 
   const rowsByClass = new Map<string, CostRow[]>();
+  const rowsById = new Map<string, CostRow[]>();
+
   ficha.rows.forEach((row) => {
     // Index by classification
-    const list = rowsByClass.get(row.classification) || [];
-    list.push(row);
-    rowsByClass.set(row.classification, list);
+    const classList = rowsByClass.get(row.classification) || [];
+    classList.push(row);
+    rowsByClass.set(row.classification, classList);
 
-    // Also index by ID to support direct ref('UUID') which is common in UI suggestions
-    if (row.id !== row.classification) {
-        const idList = rowsByClass.get(row.id) || [];
-        idList.push(row);
-        rowsByClass.set(row.id, idList);
-    }
+    // Index by ID
+    const idList = rowsById.get(row.id) || [];
+    idList.push(row);
+    rowsById.set(row.id, idList);
   });
 
   const annexTotals = new Map<string, number>();
@@ -276,8 +274,8 @@ export function calculateFicha(
     if (row) {
       const deps = extractDependencies(row, ficha.rows);
       for (const dId of deps) {
-        let targets = ficha.rows.filter(r => r.id === dId).map(r => r.id);
-        if (targets.length === 0) targets = ficha.rows.filter(r => r.classification === dId).map(r => r.id);
+        let targets = ficha.rows.filter(r => r.classification === dId).map(r => r.id);
+        if (targets.length === 0) targets = ficha.rows.filter(r => r.id === dId).map(r => r.id);
         for (const t of targets) {
           if (t !== uId) sortVisit(t);
         }
@@ -311,8 +309,14 @@ export function calculateFicha(
   };
 
   parser.functions.ref = (arg: any) => {
-      const classification = String(arg);
-      const targets = rowsByClass.get(classification) || [];
+      const search = String(arg);
+      // Priority 1: Classification (Visual Numbering)
+      // Priority 2: ID (UUID or template ID)
+      let targets = rowsByClass.get(search);
+      if (!targets || targets.length === 0) {
+          targets = rowsById.get(search) || [];
+      }
+
       const val = targets.reduce((acc, t) => {
           const calculated = calculatedRows.get(t.id);
           return acc.plus(new Decimal(calculated?.total || 0));
