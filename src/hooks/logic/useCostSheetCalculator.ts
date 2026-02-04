@@ -199,6 +199,9 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
           if (r.id === '13.2') type = 'TAX';
           if (['14', '12', '5'].includes(r.id)) type = 'TOTAL';
 
+          // Structural classification (BASE/TOTAL) per CARTA TÉCNICA
+          const nodeType: 'BASE' | 'TOTAL' = (r.children && r.children.length > 0) || type === 'TOTAL' ? 'TOTAL' : 'BASE';
+
           // Map calculation method
           let formula = r.formula || r.totalFormula;
 
@@ -246,6 +249,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
             classification: currentNumbering, // Use visual numbering for smart matching
             label: r.label,
             type,
+            nodeType,
             formaCalculo,
             valorHistorico: vhSums[r.id] ?? r.valorHistorico ?? r.value,
             baseCalculo,

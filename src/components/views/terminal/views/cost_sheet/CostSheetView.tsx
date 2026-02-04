@@ -31,6 +31,16 @@ const CostSheetView = () => {
   const { data, loadExample, reset, setSheet } = useCostSheetStore();
   const { calculatedValues, calculatedAnnexes, audits, calculationResult, isBlocked, deepValidationErrors } = useCostSheetCalculator(data);
 
+  // Immediate feedback on critical errors
+  React.useEffect(() => {
+    if (isBlocked) {
+      toast.error("Error Crítico: Ciclo de autorreferencia detectado. La ficha ha sido bloqueada para prevenir corrupción de datos.", {
+        id: 'cycle-error-toast',
+        duration: 5000
+      });
+    }
+  }, [isBlocked]);
+
   const [isEditing, setIsEditing] = useState(true);
   const [viewMode, setViewMode] = useState<'expert' | 'assisted' | 'reading'>('expert');
   const [layoutMode, setLayoutMode] = useState<ViewMode>('grid');
