@@ -45,6 +45,7 @@ export default function IPVView() {
   const [matchProgress, setMatchProgress] = useState(0);
   const [kpiFilter, setKpiFilter] = useState<'ALL' | 'CUADRADAS' | 'EN_PROCESO' | 'PENDIENTES'>('ALL');
   const [selectedReconTx, setSelectedReconTx] = useState<BankTransaction | null>(null);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
 
   const transactions = useLiveQuery(() => db.bank_statements.orderBy('fecha').toArray());
   const rules = useLiveQuery(() => db.matching_rules.toArray());
@@ -231,7 +232,12 @@ export default function IPVView() {
         icon: History,
         onClick: handleGlobalRecalculate,
         variant: 'outline' as const,
-        tooltip: 'Recalcula la cadena de reportes IPV y actualiza estadísticas para asegurar coherencia total.'
+        tooltip: (
+            <div className="space-y-1">
+                <p className="font-bold text-primary">Sincronizar IPV</p>
+                <p className="text-[10px] leading-relaxed">Recalcula la cadena de reportes IPV y actualiza estadísticas para asegurar coherencia total.</p>
+            </div>
+        )
     },
     {
         id: 'rules',
@@ -302,7 +308,7 @@ export default function IPVView() {
             <div>
                 <div className="flex items-center gap-2">
                     <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-primary uppercase">IPV Builder</h1>
-                    <IPVHelpDialog />
+                    <IPVHelpDialog open={isHelpOpen} onOpenChange={setIsHelpOpen} />
                 </div>
                 <p className="text-xs sm:text-sm text-muted-foreground font-medium">Conciliación bancaria y generación de IPV</p>
             </div>
@@ -315,51 +321,89 @@ export default function IPVView() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <StatCard
-            title="Total"
-            value={stats.total}
-            icon={<History className="text-blue-500" />}
-            subtitle="Transacciones"
-            active={kpiFilter === 'ALL'}
-            onClick={() => {
-                setKpiFilter('ALL');
-                setActiveTab('transactions');
-            }}
-        />
-        <StatCard
-            title="Cuadradas"
-            value={stats.squared}
-            icon={<CheckCircle2 className="text-green-500" />}
-            trend={`${stats.percentage}%`}
-            subtitle="Completadas"
-            active={kpiFilter === 'CUADRADAS'}
-            onClick={() => {
-                setKpiFilter('CUADRADAS');
-                setActiveTab('transactions');
-            }}
-        />
-        <StatCard
-            title="En Proceso"
-            value={stats.inProcess}
-            icon={<AlertCircle className="text-yellow-500" />}
-            subtitle="Con Diferencia"
-            active={kpiFilter === 'EN_PROCESO'}
-            onClick={() => {
-                setKpiFilter('EN_PROCESO');
-                setActiveTab('transactions');
-            }}
-        />
-        <StatCard
-            title="Pendientes"
-            value={stats.pending}
-            icon={<Clock className="text-orange-500" />}
-            subtitle="Sin Matching"
-            active={kpiFilter === 'PENDIENTES'}
-            onClick={() => {
-                setKpiFilter('PENDIENTES');
-                setActiveTab('transactions');
-            }}
-        />
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <div className="flex-1">
+                    <StatCard
+                        title="Total"
+                        value={stats.total}
+                        icon={<History className="text-blue-500" />}
+                        subtitle="Transacciones"
+                        active={kpiFilter === 'ALL'}
+                        onClick={() => {
+                            setKpiFilter('ALL');
+                            setActiveTab('transactions');
+                        }}
+                    />
+                </div>
+            </TooltipTrigger>
+            <TooltipContent className="bg-popover text-popover-foreground border shadow-lg">
+                <p className="text-[10px] font-bold">Total de movimientos activos (no excluidos) en el período actual.</p>
+            </TooltipContent>
+        </Tooltip>
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <div className="flex-1">
+                    <StatCard
+                        title="Cuadradas"
+                        value={stats.squared}
+                        icon={<CheckCircle2 className="text-green-500" />}
+                        trend={`${stats.percentage}%`}
+                        subtitle="Completadas"
+                        active={kpiFilter === 'CUADRADAS'}
+                        onClick={() => {
+                            setKpiFilter('CUADRADAS');
+                            setActiveTab('transactions');
+                        }}
+                    />
+                </div>
+            </TooltipTrigger>
+            <TooltipContent className="bg-popover text-popover-foreground border shadow-lg">
+                <p className="text-[10px] font-bold">Transacciones cuyo desglose de productos coincide exactamente con el importe neto.</p>
+            </TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <div className="flex-1">
+                    <StatCard
+                        title="En Proceso"
+                        value={stats.inProcess}
+                        icon={<AlertCircle className="text-yellow-500" />}
+                        subtitle="Con Diferencia"
+                        active={kpiFilter === 'EN_PROCESO'}
+                        onClick={() => {
+                            setKpiFilter('EN_PROCESO');
+                            setActiveTab('transactions');
+                        }}
+                    />
+                </div>
+            </TooltipTrigger>
+            <TooltipContent className="bg-popover text-popover-foreground border shadow-lg">
+                <p className="text-[10px] font-bold">Transacciones con productos asociados pero que aún tienen una diferencia pendiente por cuadrar.</p>
+            </TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <div className="flex-1">
+                    <StatCard
+                        title="Pendientes"
+                        value={stats.pending}
+                        icon={<Clock className="text-orange-500" />}
+                        subtitle="Sin Matching"
+                        active={kpiFilter === 'PENDIENTES'}
+                        onClick={() => {
+                            setKpiFilter('PENDIENTES');
+                            setActiveTab('transactions');
+                        }}
+                    />
+                </div>
+            </TooltipTrigger>
+            <TooltipContent className="bg-popover text-popover-foreground border shadow-lg">
+                <p className="text-[10px] font-bold">Transacciones que no han sido procesadas o no encontraron coincidencias automáticas.</p>
+            </TooltipContent>
+        </Tooltip>
       </div>
 
       <IPVRightSidebar activeTab={activeTab} onSelect={setActiveTab} />
@@ -399,7 +443,10 @@ export default function IPVView() {
         <div className={activeTab === 'dashboard' ? '' : 'mt-6 p-0 overflow-hidden border-none shadow-xl bg-card/50 backdrop-blur-sm rounded-3xl'}>
           <TabsContent value="dashboard" className="m-0">
             <IPVControlPanel
-              onSelect={setActiveTab}
+              onSelect={(id) => {
+                  if (id === 'help') setIsHelpOpen(true);
+                  else setActiveTab(id);
+              }}
               onExportBackup={() => exportFullBackup(db)}
               onImportBackup={handleImportBackup}
             />

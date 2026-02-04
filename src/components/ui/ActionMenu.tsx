@@ -85,7 +85,7 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
                       </button>
                     </TooltipTrigger>
                     {action.tooltip && (
-                      <TooltipContent className="max-w-xs p-4 space-y-2">
+                      <TooltipContent className="max-w-xs p-4 space-y-2 bg-popover text-popover-foreground border shadow-xl">
                         {action.tooltip}
                       </TooltipContent>
                     )}
