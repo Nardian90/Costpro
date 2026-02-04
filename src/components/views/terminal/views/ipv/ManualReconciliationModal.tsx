@@ -261,28 +261,28 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-5xl h-[95vh] md:h-[90vh] flex flex-col p-0 overflow-hidden shadow-2xl">
                 <DialogHeader className="p-4 md:p-6 border-b shrink-0 bg-background/95 backdrop-blur-md sticky top-0 z-20">
-                    <div className="flex justify-between items-start">
-                        <div>
+                    <div className="flex justify-between items-start gap-4">
+                        <div className="flex-1 min-w-0">
                             <DialogTitle className="text-2xl font-black uppercase text-primary tracking-tighter">Conciliación Manual</DialogTitle>
-                            <DialogDescription className="font-medium text-xs md:text-sm mt-1">
+                            <DialogDescription className="font-medium text-[10px] md:text-xs mt-1 text-muted-foreground bg-muted/30 p-2 rounded-lg max-h-24 overflow-y-auto leading-relaxed border border-border/50">
                                 {transaction.observaciones}
                             </DialogDescription>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right shrink-0">
                             <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Importe Meta (Cents)</p>
                             <p className="text-2xl font-black text-primary">{targetAmount}</p>
                         </div>
                     </div>
 
-                    <div className="flex gap-3 md:gap-4 mt-4 overflow-x-auto pb-2 no-scrollbar">
-                        <div className="flex-1 min-w-[140px] p-3 md:p-4 bg-primary/5 rounded-2xl border border-primary/10 flex flex-col">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Cents Conciliados</span>
-                            <span className="text-xl font-black text-green-600">{currentTotal}</span>
+                    <div className="flex gap-2 md:gap-4 mt-4 overflow-x-auto pb-2 no-scrollbar">
+                        <div className="flex-1 min-w-[120px] p-2 md:p-4 bg-primary/5 rounded-2xl border border-primary/10 flex flex-col">
+                            <span className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Conciliado</span>
+                            <span className="text-lg md:text-xl font-black text-green-600">{currentTotal}</span>
                         </div>
-                        <div className="flex-1 min-w-[180px] p-3 md:p-4 bg-orange-500/5 rounded-2xl border border-orange-500/10 flex flex-col group relative overflow-hidden">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Restante (Cents)</span>
-                            <div className="flex items-center justify-between">
-                                <span className={`text-xl font-black ${Math.abs(remaining) < 0.001 ? 'text-green-600' : 'text-orange-600'}`}>
+                        <div className="flex-1 min-w-[160px] p-2 md:p-4 bg-orange-500/5 rounded-2xl border border-orange-500/10 flex flex-col group relative overflow-hidden">
+                            <span className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Restante</span>
+                            <div className="flex items-center justify-between gap-2">
+                                <span className={`text-lg md:text-xl font-black ${Math.abs(remaining) < 0.001 ? 'text-green-600' : 'text-orange-600'}`}>
                                     {remaining.toFixed(2)}
                                 </span>
                                 {Math.abs(remaining) > 0.001 && manualLines.length > 0 && (
@@ -304,10 +304,10 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                     </div>
                 </DialogHeader>
 
-                <div className="flex-1 flex flex-col md:flex-row overflow-hidden bg-background max-h-[60vh]">
+                <div className="flex-1 flex flex-col md:flex-row overflow-hidden bg-background min-h-0">
                     {/* Left: Product Selection */}
-                    <div className="w-full md:w-1/2 border-r flex flex-col h-full overflow-hidden bg-background">
-                        <div className="p-4 border-b bg-muted/20 sticky top-0 z-10 backdrop-blur-sm">
+                    <div className="flex-1 md:w-1/2 border-r flex flex-col min-h-[30vh] md:h-full overflow-hidden bg-background">
+                        <div className="p-3 md:p-4 border-b bg-muted/20 sticky top-0 z-10 backdrop-blur-sm">
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                                 <Input
@@ -355,8 +355,8 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                     </div>
 
                     {/* Right: Selected Lines */}
-                    <div className="w-full md:w-1/2 bg-muted/30 flex flex-col border-t md:border-t-0 h-full overflow-hidden">
-                        <div className="p-4 border-b bg-background sticky top-0 z-10">
+                    <div className="flex-[1.2] md:w-1/2 bg-muted/30 flex flex-col border-t md:border-t-0 min-h-[40vh] md:h-full overflow-hidden">
+                        <div className="p-3 md:p-4 border-b bg-background sticky top-0 z-10">
                             <h4 className="font-black text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Panel de Conciliación</h4>
                         </div>
                         <ScrollArea className="flex-1">

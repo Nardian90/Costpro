@@ -15,7 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Trash2, Search, HelpCircle, Info, Edit2, Check, X, Plus, RefreshCw, LayoutGrid, List, AlertTriangle, Brain, Sparkles, Star, Percent, RotateCcw } from 'lucide-react';
+import { Trash2, Search, HelpCircle, Info, Edit2, Check, X, Plus, RefreshCw, LayoutGrid, List, AlertTriangle, Brain, Sparkles, Star, Percent, RotateCcw, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { formatCurrency } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
@@ -44,6 +44,8 @@ export function CatalogTable() {
   const [layoutMode, setLayoutMode] = useState<'table' | 'cards'>('table');
   const [isSyncing, setIsSyncing] = useState(false);
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
+  const [stockFilter, setStockFilter] = useState<'all' | 'with_stock' | 'without_stock'>('all');
 
   const user = useAuthStore(state => state.user);
   const isAdmin = hasRole(user, 'admin');
@@ -90,10 +92,76 @@ export function CatalogTable() {
     return stats;
   }, [products, reports, reconciliationLines]);
 
-  const filtered = products?.filter(p =>
-    p.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.cod.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  const sortedAndFiltered = React.useMemo(() => {
+    let result = products?.filter(p =>
+      p.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.cod.toLowerCase().includes(searchTerm.toLowerCase())
+    ) || [];
+
+    if (stockFilter !== 'all') {
+        result = result.filter(p => {
+            const stats = inventoryStats[p.cod] || { final: 0 };
+            return stockFilter === 'with_stock' ? stats.final > 0 : stats.final <= 0;
+        });
+    }
+
+    if (sortConfig) {
+        result.sort((a, b) => {
+            let aValue: any;
+            let bValue: any;
+
+            if (sortConfig.key === 'final_stock') {
+                aValue = inventoryStats[a.cod]?.final || 0;
+                bValue = inventoryStats[b.cod]?.final || 0;
+            } else if (sortConfig.key === 'sales') {
+                aValue = inventoryStats[a.cod]?.sales || 0;
+                bValue = inventoryStats[b.cod]?.sales || 0;
+            } else if (sortConfig.key === 'initial') {
+                aValue = inventoryStats[a.cod]?.initial || 0;
+                bValue = inventoryStats[b.cod]?.initial || 0;
+            } else {
+                aValue = (a as any)[sortConfig.key];
+                bValue = (b as any)[sortConfig.key];
+            }
+
+            if (aValue === undefined) return 1;
+            if (bValue === undefined) return -1;
+
+            if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+            if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+            return 0;
+        });
+    }
+
+    return result;
+  }, [products, searchTerm, stockFilter, sortConfig, inventoryStats]);
+
+  const handleSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const SortButton = ({ column, label, className = "" }: { column: string, label: string, className?: string }) => {
+    const isActive = sortConfig?.key === column;
+    return (
+        <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleSort(column)}
+            className={`h-7 px-2 text-[10px] font-black uppercase tracking-widest hover:bg-primary/5 gap-1 ${isActive ? 'text-primary' : 'text-muted-foreground'} ${className}`}
+        >
+            {label}
+            {isActive ? (
+                sortConfig.direction === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+            ) : (
+                <ArrowUpDown className="w-3 h-3 opacity-30" />
+            )}
+        </Button>
+    );
+  };
 
   const handleDelete = async (cod: string) => {
     if (confirm('¿Eliminar este producto del catálogo?')) {
@@ -388,14 +456,36 @@ export function CatalogTable() {
   return (
     <div className="space-y-4">
       <div className="p-3 sm:p-4 flex flex-col lg:flex-row gap-4 bg-background/50 border-b items-center justify-between">
-        <div className="relative flex-1 w-full lg:max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por código o descripción..."
-            className="pl-10 h-10 text-sm"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="flex flex-col sm:flex-row gap-4 flex-1 w-full lg:max-w-3xl items-center">
+            <div className="relative w-full sm:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                    placeholder="Buscar..."
+                    className="pl-10 h-10 text-sm"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
+
+            <div className="flex bg-muted/50 p-1 rounded-xl border w-full sm:w-auto overflow-x-auto no-scrollbar">
+                {[
+                    { id: 'all', label: 'Todos' },
+                    { id: 'with_stock', label: 'Con Stock' },
+                    { id: 'without_stock', label: 'Sin Stock' }
+                ].map((f) => (
+                    <button
+                        key={f.id}
+                        onClick={() => setStockFilter(f.id as any)}
+                        className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-tighter transition-all whitespace-nowrap flex-1 sm:flex-none ${
+                            stockFilter === f.id
+                                ? 'bg-background text-primary shadow-sm'
+                                : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                    >
+                        {f.label}
+                    </button>
+                ))}
+            </div>
         </div>
 
         <div className="flex flex-wrap gap-2 w-full lg:w-auto justify-end">
@@ -592,31 +682,47 @@ export function CatalogTable() {
                     <input
                         type="checkbox"
                         onChange={(e) => {
-                            if (e.target.checked) setSelectedProductIds(filtered.map(p => p.cod));
+                            if (e.target.checked) setSelectedProductIds(sortedAndFiltered.map(p => p.cod));
                             else setSelectedProductIds([]);
                         }}
-                        checked={selectedProductIds.length === filtered.length && filtered.length > 0}
+                        checked={selectedProductIds.length === sortedAndFiltered.length && sortedAndFiltered.length > 0}
                     />
                 </TableHead>
-                <TableHead className="sticky-column-1">Código</TableHead>
-                <TableHead>Descripción</TableHead>
-                <TableHead>Efectividad</TableHead>
+                <TableHead className="sticky-column-1">
+                    <SortButton column="cod" label="Código" />
+                </TableHead>
+                <TableHead>
+                    <SortButton column="descripcion" label="Descripción" />
+                </TableHead>
+                <TableHead>
+                    <SortButton column="priceEffectivenessScore" label="Efectividad" />
+                </TableHead>
                 <TableHead>Sugerencia</TableHead>
-                <TableHead className="text-right">Precio</TableHead>
-                <TableHead className="text-right">Inicial</TableHead>
-                <TableHead className="text-right">Ventas</TableHead>
-                <TableHead className="text-right">Stock Final</TableHead>
-                <TableHead className="text-center">Prioridad</TableHead>
+                <TableHead className="text-right">
+                    <SortButton column="precio_cents" label="Precio" className="justify-end w-full" />
+                </TableHead>
+                <TableHead className="text-right">
+                    <SortButton column="initial" label="Inicial" className="justify-end w-full" />
+                </TableHead>
+                <TableHead className="text-right">
+                    <SortButton column="sales" label="Ventas" className="justify-end w-full" />
+                </TableHead>
+                <TableHead className="text-right">
+                    <SortButton column="final_stock" label="Stock Final" className="justify-end w-full" />
+                </TableHead>
+                <TableHead className="text-center">
+                    <SortButton column="prioridad_algoritmo" label="Prio" className="justify-center w-full" />
+                </TableHead>
                 <TableHead className="text-center">Comodín</TableHead>
                 <TableHead className="text-center">Estado</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {filtered.length === 0 && editingId !== 'NEW' ? (
+                {sortedAndFiltered.length === 0 && editingId !== 'NEW' ? (
                 <TableRow>
-                    <TableCell colSpan={11} className="h-24 text-center text-muted-foreground font-bold uppercase text-[10px]">
-                    No hay productos en el catálogo.
+                    <TableCell colSpan={13} className="h-24 text-center text-muted-foreground font-bold uppercase text-[10px]">
+                        {searchTerm || stockFilter !== 'all' ? 'No hay productos que coincidan con los filtros.' : 'No hay productos en el catálogo.'}
                     </TableCell>
                 </TableRow>
                 ) : (
@@ -888,12 +994,12 @@ export function CatalogTable() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
-            {filtered.length === 0 && editingId !== 'NEW' ? (
+            {sortedAndFiltered.length === 0 && editingId !== 'NEW' ? (
                 <div className="h-24 flex items-center justify-center text-muted-foreground uppercase font-black text-xs">No hay productos</div>
             ) : (
                 <>
                 {editingId === 'NEW' && <NewProductCard editForm={editForm} setEditForm={setEditForm} onSave={saveEditing} onCancel={cancelEditing} />}
-                {filtered.map(p => (
+                {sortedAndFiltered.map(p => (
                     <ProductCard
                         key={p.cod}
                         product={p}
