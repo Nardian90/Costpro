@@ -3,8 +3,8 @@ import Parser from 'rss-parser';
 import { createClient } from '@supabase/supabase-js';
 import { RSSNewsItem } from '@/types';
 
-// Cache results for 60 minutes
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 
 const parser = new Parser();
 
