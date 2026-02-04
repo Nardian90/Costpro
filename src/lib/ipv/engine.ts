@@ -341,27 +341,50 @@ export class MatchingEngine {
     const totalWeight = weights.reduce((a, b) => a + b, 0);
 
     const lines: ReconciliationLine[] = [];
+    let remainingTotal = diff;
 
     for (let i = 0; i < dates.length; i++) {
       const date = dates[i];
       const weight = weights[i];
-      const targetForDay = Math.floor((diff * weight) / totalWeight);
+      // Para el último día, usamos exactamente lo que falta para asegurar que cuadre perfecto
+      const targetForDay = (i === dates.length - 1)
+        ? remainingTotal
+        : Math.floor((diff * weight) / totalWeight);
 
       if (targetForDay <= 0) continue;
 
       // Usar findExactCombination para encontrar productos reales que sumen el objetivo del día
-      // sin usar descuentos ni propinas (cuadre_cents).
       const combination = this.findExactCombination(targetForDay);
 
-      for (const item of combination) {
-        const line = await this.createLine(
-            { fecha: date, referencia_origen: `GOAL-${date}` } as any,
-            item.product,
-            item.qty,
-            'CASH_FILLER',
-            'Efectivo'
-        );
-        lines.push(line);
+      if (combination.length > 0) {
+        for (const item of combination) {
+            const line = await this.createLine(
+                { fecha: date, referencia_origen: `GOAL-${date}` } as any,
+                item.product,
+                item.qty,
+                'CASH_FILLER',
+                'Efectivo'
+            );
+            lines.push(line);
+            remainingTotal -= line.importe_linea_cents;
+        }
+      } else {
+        // FALLBACK: Si no encuentra combinación exacta, usamos un producto comodín o el de mayor precio
+        // y ajustamos su precio para cubrir el objetivo del día.
+        const filler = this.products.find(p => p.isWildcardCandidate) || this.products[0];
+        if (filler) {
+            const line = await this.createLine(
+                { fecha: date, referencia_origen: `GOAL-${date}` } as any,
+                filler,
+                1,
+                'CASH_FILLER',
+                'Efectivo'
+            );
+            line.importe_linea_cents = targetForDay;
+            line.cuadre_cents = targetForDay - filler.precio_cents;
+            lines.push(line);
+            remainingTotal -= targetForDay;
+        }
       }
     }
 
@@ -427,8 +450,8 @@ export class MatchingEngine {
         return a.cod.localeCompare(b.cod);
     });
 
-    const MAX_DEPTH = 6;
-    const TIMEOUT_MS = 500;
+    const MAX_DEPTH = 12;
+    const TIMEOUT_MS = 2000;
     const startTime = Date.now();
 
     const solve = (remaining: number, index: number, depth: number): { product: Product, qty: number }[] | null => {

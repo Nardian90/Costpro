@@ -35,7 +35,7 @@ import { toast } from 'sonner';
 import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
 import { HorizontalScroll } from '@/components/ui/HorizontalScroll';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
-import { TooltipProvider } from '@/components/ui/tooltip';
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { IPVHelpDialog } from './IPVHelpDialog';
 
 export default function IPVView() {
@@ -79,12 +79,13 @@ export default function IPVView() {
   }, [reconciliationLines]);
 
   const stats = useMemo(() => {
-    if (!transactions) return { total: 0, squared: 0, inProcess: 0, pending: 0, percentage: 0 };
+    if (!transactions) return { total: 0, squared: 0, inProcess: 0, pending: 0, percentage: 0, totalSales: 0 };
 
     let squared = 0;
     let inProcess = 0;
     let pending = 0;
     let activeTotal = 0;
+    let totalSales = 0;
 
     for (let i = 0; i < transactions.length; i++) {
         const t = transactions[i];
@@ -93,8 +94,10 @@ export default function IPVView() {
         if (t.excluido || t.estado_conciliacion === 'NO_PROCESAR') continue;
 
         activeTotal++;
-        const matched = txTotals[t.referencia_origen] || 0;
         const target = t.importe_venta_cents || t.importe_cents;
+        totalSales += target;
+
+        const matched = txTotals[t.referencia_origen] || 0;
         const diff = target - matched;
 
         if (matched === 0) {
@@ -111,7 +114,8 @@ export default function IPVView() {
       squared,
       inProcess,
       pending,
-      percentage: activeTotal > 0 ? Math.round((squared / activeTotal) * 100) : 0
+      percentage: activeTotal > 0 ? Math.round((squared / activeTotal) * 100) : 0,
+      totalSales
     };
   }, [transactions, txTotals]);
 
@@ -320,7 +324,25 @@ export default function IPVView() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <div className="flex-1">
+                    <StatCard
+                        title="Venta Total"
+                        value={stats.totalSales}
+                        icon={<FileText className="text-primary" />}
+                        subtitle="Monto Neto"
+                        active={false}
+                        isCurrency={true}
+                    />
+                </div>
+            </TooltipTrigger>
+            <TooltipContent className="bg-popover text-popover-foreground border shadow-lg">
+                <p className="text-[10px] font-bold">Sumatoria de todos los ingresos (Cr) menos los gastos directos (Db) procesados.</p>
+            </TooltipContent>
+        </Tooltip>
+
         <Tooltip>
             <TooltipTrigger asChild>
                 <div className="flex-1">
@@ -523,7 +545,7 @@ function FlowStep({ number, title, desc }: { number: string, title: string, desc
     );
 }
 
-function StatCard({ title, value, icon, trend, subtitle, active, onClick }: { title: string, value: number, icon: React.ReactNode, trend?: string, subtitle?: string, active?: boolean, onClick?: () => void }) {
+function StatCard({ title, value, icon, trend, subtitle, active, onClick, isCurrency = false }: { title: string, value: number, icon: React.ReactNode, trend?: string, subtitle?: string, active?: boolean, onClick?: () => void, isCurrency?: boolean }) {
   return (
     <Card
         onClick={onClick}
@@ -532,7 +554,7 @@ function StatCard({ title, value, icon, trend, subtitle, active, onClick }: { ti
       <div className="flex flex-col items-center sm:items-start space-y-0.5 sm:space-y-1">
         <p className="text-[10px] sm:text-xs font-black text-muted-foreground uppercase tracking-widest">{title}</p>
         <div className="flex items-baseline gap-1.5 sm:gap-2">
-            <h3 className="text-xl sm:text-2xl font-black">{value}</h3>
+            <h3 className="text-xl sm:text-2xl font-black">{isCurrency ? formatCurrency(value) : value}</h3>
             {trend && (
                 <Badge variant="outline" className="text-[10px] h-4 px-1 font-bold text-green-600 bg-green-500/10 border-green-500/20">
                     {trend}

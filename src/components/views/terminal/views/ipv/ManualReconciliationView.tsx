@@ -101,6 +101,21 @@ export function ManualReconciliationView({ transaction, onBack }: Props) {
         });
     };
 
+    const addManualCash = () => {
+        const newLine: Partial<ReconciliationLine> = {
+            id: uuidv4(),
+            product_cod: 'CASH_MANUAL',
+            product_um: 'UNIDADES',
+            cantidad: 1,
+            precio_unitario_cents: remaining > 0 ? remaining : 0,
+            importe_linea_cents: remaining > 0 ? remaining : 0,
+            clasificacion: 'Efectivo',
+            origen_dato: 'MANUAL_USER'
+        };
+        setManualLines([...manualLines, newLine]);
+        toast.success('Línea de efectivo manual añadida');
+    };
+
     const addProduct = async (product: Product) => {
         if (isInventoryRuleActive) {
             const stock = currentStockMap.get(product.cod) || 0;
@@ -315,11 +330,22 @@ export function ManualReconciliationView({ transaction, onBack }: Props) {
                     </div>
                     <ScrollArea className="flex-1">
                         <div className="p-4 space-y-2 min-w-[300px]">
-                            <div className="p-3 bg-primary/5 rounded-xl border border-primary/20 flex gap-3 mb-4">
-                                <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                                <p className="text-[10px] text-muted-foreground leading-tight">
-                                    <span className="font-black text-primary uppercase">Sugerencia:</span> Busca y añade productos.
-                                </p>
+                            <div className="p-3 bg-primary/5 rounded-xl border border-primary/20 flex flex-col gap-3 mb-4">
+                                <div className="flex gap-3">
+                                    <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                                    <p className="text-[10px] text-muted-foreground leading-tight">
+                                        <span className="font-black text-primary uppercase">Sugerencia:</span> Busca y añade productos.
+                                    </p>
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={addManualCash}
+                                    className="w-full h-8 text-[9px] font-black uppercase border-orange-200 text-orange-600 hover:bg-orange-50 gap-2"
+                                >
+                                    <Plus className="w-3 h-3" />
+                                    Añadir Venta en Efectivo (CASH)
+                                </Button>
                             </div>
                             {filteredProducts.map(p => (
                                 <div
@@ -403,9 +429,17 @@ export function ManualReconciliationView({ transaction, onBack }: Props) {
                                         <div className="flex items-center gap-3">
                                             <div className="flex flex-col">
                                                 <span className="text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-1">Cantidad</span>
-                                                <Input type="number" className="w-20 h-9 text-sm font-black text-center rounded-lg bg-background" value={l.cantidad} onChange={(e) => updateQty(l.id!, parseInt(e.target.value))} />
+                                                <Input
+                                                    type="number"
+                                                    className="w-20 h-9 text-sm font-black text-center rounded-lg bg-background"
+                                                    value={l.cantidad}
+                                                    onChange={(e) => updateQty(l.id!, parseInt(e.target.value))}
+                                                    disabled={l.product_cod === 'CASH_MANUAL'}
+                                                />
                                             </div>
-                                            <span className="text-[10px] uppercase font-black text-muted-foreground mt-5 tracking-widest">{l.product_um}</span>
+                                            <span className="text-[10px] uppercase font-black text-muted-foreground mt-5 tracking-widest">
+                                                {l.product_cod === 'CASH_MANUAL' ? 'VALOR' : l.product_um}
+                                            </span>
                                             <Button size="sm" variant="ghost" className="h-7 text-[8px] font-black uppercase px-2 mt-4 hover:bg-orange-500/10 text-orange-600" onClick={() => {
                                                 const idx = manualLines.findIndex(ml => ml.id === l.id);
                                                 if (idx !== -1) {
@@ -425,7 +459,20 @@ export function ManualReconciliationView({ transaction, onBack }: Props) {
                                         <div className="text-right">
                                             <span className="text-[9px] font-black uppercase text-muted-foreground tracking-widest mb-1 block">Subtotal</span>
                                             <div className="flex flex-col items-end">
-                                                <span className="font-black text-base text-primary">{(l.importe_linea_cents || 0)}</span>
+                                                {l.product_cod === 'CASH_MANUAL' ? (
+                                                    <Input
+                                                        type="number"
+                                                        step="0.01"
+                                                        value={l.importe_linea_cents || 0}
+                                                        onChange={(e) => {
+                                                            const val = parseFloat(e.target.value) || 0;
+                                                            setManualLines(manualLines.map(ml => ml.id === l.id ? { ...ml, importe_linea_cents: val, precio_unitario_cents: val } : ml));
+                                                        }}
+                                                        className="w-24 h-9 text-right font-black text-primary bg-background"
+                                                    />
+                                                ) : (
+                                                    <span className="font-black text-base text-primary">{(l.importe_linea_cents || 0)}</span>
+                                                )}
                                                 {l.cuadre_cents && l.cuadre_cents !== 0 ? (
                                                     <Badge variant="outline" className={`text-[8px] font-black uppercase py-0 px-1 ${l.cuadre_cents > 0 ? 'border-green-200 text-green-600 bg-green-50' : 'border-red-200 text-red-600 bg-red-50'}`}>
                                                         {l.cuadre_cents > 0 ? `+${l.cuadre_cents} Propina` : `${l.cuadre_cents} Descuento`}
