@@ -79,6 +79,75 @@ export const importAnnexFromExcel = (file: File, annex: CostSheetAnnex): Promise
 };
 
 /**
+ * Utility to export a template for massive cost sheet generation
+ */
+export const exportMassiveTemplate = () => {
+  try {
+    const template = [
+      {
+        'SKU': 'SKU001',
+        'Nombre': 'Producto Ejemplo 1',
+        'Precio': 100.00,
+        'Costo Fijo (opcional)': 0,
+        'Categoría (opcional)': 'General'
+      },
+      {
+        'SKU': 'SKU002',
+        'Nombre': 'Producto Ejemplo 2',
+        'Precio': 250.50,
+        'Costo Fijo (opcional)': 50,
+        'Categoría (opcional)': 'Especial'
+      }
+    ];
+
+    const worksheet = XLSX.utils.json_to_sheet(template);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Plantilla Importación");
+
+    XLSX.writeFile(workbook, `Plantilla_Importacion_Fichas.xlsx`);
+    toast.success("Plantilla de importación descargada");
+  } catch (error) {
+    console.error("Error exporting template:", error);
+    toast.error("Error al exportar la plantilla");
+  }
+};
+
+/**
+ * Utility to import product list for massive generation
+ */
+export const importMassiveProducts = (file: File): Promise<any[]> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = e.target?.result;
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const json: any[] = XLSX.utils.sheet_to_json(worksheet);
+
+        const mapped = json.map(row => ({
+          sku: row.SKU || row.sku || '',
+          name: row.Nombre || row.nombre || row.Name || row.name || 'Sin nombre',
+          price: parseFloat(row.Precio || row.precio || row.Price || row.price) || 0,
+          cost: parseFloat(row['Costo Fijo (opcional)'] || row.cost || 0) || 0,
+          category: row['Categoría (opcional)'] || row.category || 'Importado'
+        })).filter(p => p.sku || p.name);
+
+        resolve(mapped);
+        toast.success(`${mapped.length} productos importados correctamente`);
+      } catch (err) {
+        console.error("Error importing products:", err);
+        toast.error("Error al importar el listado de productos");
+        reject(err);
+      }
+    };
+    reader.onerror = (err) => reject(err);
+    reader.readAsArrayBuffer(file);
+  });
+};
+
+/**
  * Utility to export the header to Excel
  */
 export const exportHeaderToExcel = (header: CostSheetHeader, fileName?: string) => {
