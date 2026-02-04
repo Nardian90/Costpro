@@ -20,7 +20,7 @@ import { CostSheetSidebarNav } from './CostSheetSidebarNav';
 import { CostSheetMassiveGenerator } from './CostSheetMassiveGenerator';
 import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
 import ActionMenu from '@/components/ui/ActionMenu';
-import { Eye, Edit, FileText, Trash2, Download, FileSpreadsheet, Upload, Save, BarChart3, Activity, MoreVertical } from 'lucide-react';
+import { Eye, Edit, FileText, Trash2, Download, FileSpreadsheet, Upload, Save, BarChart3, Activity, MoreVertical, AlertTriangle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -29,7 +29,7 @@ import { exportToPDF, exportToCSV } from '@/services/export-service';
 
 const CostSheetView = () => {
   const { data, loadExample, reset, setSheet } = useCostSheetStore();
-  const { calculatedValues, calculatedAnnexes, audits, calculationResult } = useCostSheetCalculator(data);
+  const { calculatedValues, calculatedAnnexes, audits, calculationResult, isBlocked, deepValidationErrors } = useCostSheetCalculator(data);
 
   const [isEditing, setIsEditing] = useState(true);
   const [viewMode, setViewMode] = useState<'expert' | 'assisted' | 'reading'>('expert');
@@ -137,6 +137,10 @@ const CostSheetView = () => {
   const isAnnexActive = React.useMemo(() => (data?.annexes || []).some((a: any) => a.id === activeSection), [data?.annexes, activeSection]);
 
   const handleExportPDF = React.useCallback(async () => {
+    if (isBlocked) {
+        toast.error("No se puede exportar: La ficha contiene errores críticos de validación.");
+        return;
+    }
     const toastId = toast.loading("Generando PDF profesional... por favor espere.");
     try {
       // Prioritize the declarative engine export
@@ -185,9 +189,13 @@ const CostSheetView = () => {
   }, [calculationResult, data, calculatedValues, calculatedAnnexes]);
 
   const handleExportExcel = React.useCallback(() => {
+    if (isBlocked) {
+        toast.error("No se puede exportar: La ficha contiene errores críticos de validación.");
+        return;
+    }
     const fileName = data?.header?.name ? `Ficha de Costo - ${data.header.name}` : 'Ficha de Costo';
     exportToCSV(data, calculatedValues, fileName);
-  }, [data, calculatedValues]);
+  }, [data, calculatedValues, isBlocked]);
 
   const handleImportJSON = React.useCallback(() => {
     const input = document.createElement('input');
@@ -210,6 +218,10 @@ const CostSheetView = () => {
   }, [setSheet]);
 
   const handleExportJSON = React.useCallback(() => {
+    if (isBlocked) {
+        toast.error("No se puede guardar: La ficha contiene errores críticos de validación.");
+        return;
+    }
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href",     dataStr);
@@ -226,6 +238,9 @@ const CostSheetView = () => {
         label: isEditing ? 'Ver Resultado' : 'Seguir Editando',
         icon: isEditing ? Eye : Edit,
         onClick: () => {
+            if (isEditing && isBlocked) {
+                toast.warning("La ficha tiene errores críticos, la visualización puede ser inconsistente.");
+            }
             setIsEditing(!isEditing);
         },
         variant: 'primary' as const,
@@ -233,11 +248,11 @@ const CostSheetView = () => {
     { id: 'load-example', label: 'Ejemplo', icon: FileText, onClick: loadExample, variant: 'outline' as const },
     { id: 'reset', label: 'Reiniciar', icon: Trash2, onClick: reset, variant: 'danger' as const },
     { id: 'import-json', label: 'Importar', icon: Upload, onClick: handleImportJSON, variant: 'outline' as const },
-    { id: 'export-json', label: 'Guardar', icon: Save, onClick: handleExportJSON, variant: 'outline' as const },
-    { id: 'export-excel', label: 'Excel', icon: FileSpreadsheet, onClick: handleExportExcel, variant: 'primary' as const },
-    { id: 'export-pdf', label: 'PDF', icon: Download, onClick: handleExportPDF, variant: 'success' as const },
+    { id: 'export-json', label: 'Guardar', icon: Save, onClick: handleExportJSON, variant: isBlocked ? 'ghost' : 'outline' as const, disabled: isBlocked },
+    { id: 'export-excel', label: 'Excel', icon: FileSpreadsheet, onClick: handleExportExcel, variant: isBlocked ? 'ghost' : 'primary' as const, disabled: isBlocked },
+    { id: 'export-pdf', label: 'PDF', icon: Download, onClick: handleExportPDF, variant: isBlocked ? 'ghost' : 'success' as const, disabled: isBlocked },
     { id: 'massive-gen', label: 'Gen. Masiva', icon: FileText, onClick: () => setIsMassiveGeneratorOpen(true), variant: 'outline' as const },
-  ], [isEditing, loadExample, reset, handleImportJSON, handleExportJSON, handleExportExcel, handleExportPDF]);
+  ], [isEditing, loadExample, reset, handleImportJSON, handleExportJSON, handleExportExcel, handleExportPDF, isBlocked]);
 
   const mainActions = React.useMemo(() => [
     ...allActions.filter(a => ['toggle-mode'].includes(a.id)),
@@ -297,6 +312,20 @@ const CostSheetView = () => {
       </div>
 
       <CostSheetBanner />
+
+      {isBlocked && (
+          <div className="mb-6 animate-in slide-in-from-top duration-500">
+              <div className="bg-destructive/10 border border-destructive/20 rounded-2xl p-4 flex items-start gap-4 shadow-sm">
+                  <div className="bg-destructive text-white p-2 rounded-xl">
+                      <AlertTriangle className="w-5 h-5" />
+                  </div>
+                  <div>
+                      <h4 className="text-destructive font-black uppercase tracking-tight text-sm">Ficha Bloqueada</h4>
+                      <p className="text-destructive/80 text-xs font-medium">Se han detectado {deepValidationErrors.filter(e => e.type === 'CRITICAL').length} errores críticos que impiden el guardado y exportación. Por favor, revise las filas marcadas con ❌.</p>
+                  </div>
+              </div>
+          </div>
+      )}
 
       <div className="flex flex-col gap-6 mb-8 sm:mb-12">
         <ActionMenu actions={mainActions} position="bottom" />

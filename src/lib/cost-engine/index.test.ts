@@ -141,7 +141,7 @@ describe('Cost Engine', () => {
     };
     const validation = validateFicha(invalidFicha);
     expect(validation.valid).toBe(false);
-    expect(validation.errors[0]).toContain('non-existent classification');
+    expect(validation.errors[0]).toContain('Referencia inexistente');
   });
 
   it('should support smart Annex references in formulas without fallback', () => {
