@@ -3,7 +3,7 @@
 
 import React, { useState, useMemo, memo } from 'react';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
-import { ChevronRight, HelpCircle, CornerDownRight, AlertTriangle, ListFilter, LayoutGrid, ArrowRight, FunctionSquare, Plus, Trash2, Edit2, ChevronUp, ChevronDown, Download, Upload } from 'lucide-react';
+import { ChevronRight, HelpCircle, CornerDownRight, AlertTriangle, ListFilter, LayoutGrid, ArrowRight, FunctionSquare, Plus, Trash2, Edit2, ChevronUp, ChevronDown, Download, Upload, CheckCircle2, XCircle } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -106,8 +106,11 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
 
 
   const isResultRow = row.is_percent || ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '13.1', '13.2', '14', '15', '16'].includes(String(row.id));
-  const safeCalculated = calculated || { total: 0, valorHistorico: 0, baseTotal: 0, coeficiente: 0, hasWarnings: false, audits: [] };
-  const showWarning = safeCalculated.hasWarnings || (!hasChildren && !row.is_percent && safeCalculated.total === 0 && ((row.valorHistorico ?? 0) > 0 || !!row.baseDeCalculoRef));
+  const safeCalculated = calculated || { total: 0, valorHistorico: 0, baseTotal: 0, coeficiente: 0, hasWarnings: false, audits: [], validationErrors: [] };
+
+  const criticalErrors = (safeCalculated.validationErrors || []).filter(e => e.type === 'CRITICAL');
+  const warningErrors = (safeCalculated.validationErrors || []).filter(e => e.type === 'WARNING');
+  const hasEngineWarnings = safeCalculated.hasWarnings || (!hasChildren && !row.is_percent && safeCalculated.total === 0 && ((row.valorHistorico ?? 0) > 0 || !!row.baseDeCalculoRef));
 
   return (
     <>
@@ -240,30 +243,65 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
             />
           ) : (
             <div className="flex items-center justify-end gap-2 group-hover:scale-105 transition-transform origin-right">
-                {showWarning && (
-                    <Popover>
-                        <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
-                            <AlertTriangle className={cn("w-4 h-4 cursor-help animate-pulse", calculated.hasWarnings ? "text-destructive" : "text-amber-500")} />
-                        </PopoverTrigger>
-                        <PopoverContent className="w-80" onClick={(e) => e.stopPropagation()}>
-                            <p className={cn("text-xs font-bold mb-1", calculated.hasWarnings ? "text-destructive" : "text-amber-600")}>
-                                {calculated.hasWarnings ? "Errores de Motor" : "Advertencia de Cálculo"}
-                            </p>
-                            <div className="space-y-2">
-                                {calculated.audits && calculated.audits.length > 0 ? (
-                                    calculated.audits.map((a: any, idx: number) => (
-                                        <div key={idx} className="text-[10px] bg-muted p-1.5 rounded border border-border">
-                                            <span className="font-bold uppercase text-[8px] block opacity-50">{a.type}</span>
-                                            {a.note}
-                                        </div>
-                                    ))
-                                ) : (
-                                    <p className="text-[10px] text-slate-500">Esta fila tiene un total de 0.00 pero tiene una base de cálculo o valor histórico asignado. Verifique el prorrateo o la fórmula.</p>
-                                )}
-                            </div>
-                        </PopoverContent>
-                    </Popover>
-                )}
+                {/* Validation Status Icons */}
+                <Popover>
+                    <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
+                        <div className="cursor-help flex items-center">
+                            {criticalErrors.length > 0 ? (
+                                <XCircle className="w-4 h-4 text-destructive animate-pulse" />
+                            ) : (warningErrors.length > 0 || hasEngineWarnings) ? (
+                                <AlertTriangle className="w-4 h-4 text-amber-500 animate-bounce" />
+                            ) : isResultRow ? (
+                                <CheckCircle2 className="w-4 h-4 text-emerald-500 opacity-40 group-hover:opacity-100 transition-opacity" />
+                            ) : null}
+                        </div>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80" onClick={(e) => e.stopPropagation()}>
+                        <p className={cn(
+                            "text-xs font-bold mb-2 uppercase tracking-tight",
+                            criticalErrors.length > 0 ? "text-destructive" : (warningErrors.length > 0 || hasEngineWarnings) ? "text-amber-600" : "text-emerald-600"
+                        )}>
+                            {criticalErrors.length > 0 ? "Errores Críticos" : (warningErrors.length > 0 || hasEngineWarnings) ? "Advertencias" : "Estado Correcto"}
+                        </p>
+                        <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+                            {/* Deep Validation Errors */}
+                            {(safeCalculated.validationErrors || []).map((ve, idx) => (
+                                <div key={`ve-${idx}`} className={cn(
+                                    "text-[10px] p-2 rounded border flex gap-2",
+                                    ve.type === 'CRITICAL' ? "bg-destructive/5 border-destructive/20 text-destructive" : "bg-amber-50 border-amber-200 text-amber-800"
+                                )}>
+                                    <div className="mt-0.5">
+                                        {ve.type === 'CRITICAL' ? <XCircle className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
+                                    </div>
+                                    <div>
+                                        <span className="font-bold uppercase text-[8px] block opacity-70">{ve.code}</span>
+                                        {ve.message}
+                                    </div>
+                                </div>
+                            ))}
+
+                            {/* Engine Audits */}
+                            {safeCalculated.audits && safeCalculated.audits.filter(a => a.type === 'ERROR' || a.type === 'WARNING' || a.type === 'CYCLE_DETECTED').map((a: any, idx: number) => (
+                                <div key={`audit-${idx}`} className="text-[10px] bg-muted p-1.5 rounded border border-border">
+                                    <span className="font-bold uppercase text-[8px] block opacity-50">{a.type}</span>
+                                    {a.note}
+                                </div>
+                            ))}
+
+                            {/* Legacy Warning */}
+                            {!hasChildren && !row.is_percent && safeCalculated.total === 0 && ((row.valorHistorico ?? 0) > 0 || !!row.baseDeCalculoRef) && (
+                                <p className="text-[10px] text-slate-500 italic p-1">
+                                    Esta fila tiene un total de 0.00 pero tiene una base de cálculo o valor histórico asignado. Verifique el prorrateo o la fórmula.
+                                </p>
+                            )}
+
+                            {criticalErrors.length === 0 && warningErrors.length === 0 && !hasEngineWarnings && (
+                                <p className="text-[10px] text-emerald-600 font-medium">Los cálculos de esta fila son consistentes con sus dependencias y reglas contables.</p>
+                            )}
+                        </div>
+                    </PopoverContent>
+                </Popover>
+
                 <div className="flex items-center gap-1">
                     {row.formula && <FunctionSquare className="w-3 h-3 text-primary/40" />}
                     <span className={cn(row.formula && "underline decoration-dotted decoration-primary/30")}>

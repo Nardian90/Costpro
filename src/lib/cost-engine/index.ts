@@ -7,17 +7,25 @@ import {
   AuditEntry,
   CostRow,
   BaseRef,
+  ValidationError,
 } from './types';
 import { translateFormulaFromSpanish } from './formula-utils';
 
-export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: string[] } {
+export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: string[]; validationErrors: ValidationError[] } {
   const errors: string[] = [];
+  const validationErrors: ValidationError[] = [];
   const ids = new Set<string>();
   const classifications = new Set<string>();
+  const rowMap = new Map<string, CostRow>();
 
   ficha.rows.forEach((row) => {
-    if (ids.has(row.id)) errors.push(`Duplicate row ID: ${row.id}`);
+    if (ids.has(row.id)) {
+        const msg = `Duplicate row ID: ${row.id}`;
+        errors.push(msg);
+        validationErrors.push({ rowId: row.id, message: msg, type: 'CRITICAL', code: 'INVALID_FORMULA' });
+    }
     ids.add(row.id);
+    rowMap.set(row.id, row);
 
     // Warn about duplicate classifications in main rows (they cause summing in ref())
     if (classifications.has(row.classification)) {
@@ -26,20 +34,153 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
     classifications.add(row.classification);
   });
 
+  // 1. Dependency Graph & Cycle Detection
+  const adj = new Map<string, string[]>();
+  const parser = new Parser();
+
+  ficha.rows.forEach((row) => {
+    const deps: string[] = [];
+
+    // Extract dependencies from formula
+    if (row.formaCalculo === 'FORMULA' && row.formula) {
+        try {
+            const formulaStr = translateFormulaFromSpanish(row.formula.startsWith('=') ? row.formula.substring(1) : row.formula);
+            const expr = parser.parse(formulaStr);
+            // expr-eval doesn't directly expose refs easily without evaluation,
+            // but we can use a regex for ref('...') or look at variables
+            const formulaContent = row.formula;
+            const refMatches = formulaContent.matchAll(/ref\(['"]([^'"]+)['"]\)/g);
+            for (const match of refMatches) {
+                deps.push(match[1]);
+            }
+
+            // check for trivial formulas
+            if (formulaStr.trim() === "0" || formulaStr.trim() === "") {
+                validationErrors.push({ rowId: row.id, message: "Fórmula trivial o vacía", type: 'WARNING', code: 'TRIVIAL_FORMULA' });
+            }
+        } catch (e) {
+            validationErrors.push({ rowId: row.id, message: `Fórmula inválida: ${e}`, type: 'CRITICAL', code: 'INVALID_FORMULA' });
+        }
+    }
+
+    // Dependencies from baseCalculo
+    if (row.baseCalculo?.type === 'FILA') {
+        deps.push(row.baseCalculo.classification);
+    }
+
+    adj.set(row.id, deps);
+  });
+
+  // DFS for Cycle Detection
+  const visited = new Set<string>();
+  const recStack = new Set<string>();
+
+  function hasCycle(u: string): boolean {
+    visited.add(u);
+    recStack.add(u);
+
+    const neighbors = adj.get(u) || [];
+    for (const vId of neighbors) {
+      // vId could be an ID or a classification. Map it to actual row IDs
+      const targetIds = ficha.rows.filter(r => r.id === vId || r.classification === vId).map(r => r.id);
+
+      if (targetIds.length === 0) {
+          // Missing reference is caught here or later
+          continue;
+      }
+
+      for (const v of targetIds) {
+          if (recStack.has(v)) {
+              validationErrors.push({
+                rowId: u,
+                message: `Ciclo de dependencia detectado: la fila ${u} depende de ${v} (directa o indirectamente), lo cual genera un bucle infinito.`,
+                type: 'CRITICAL',
+                code: 'CYCLE'
+              });
+              return true;
+          }
+          if (!visited.has(v)) {
+              if (hasCycle(v)) return true;
+          }
+      }
+    }
+
+    recStack.delete(u);
+    return false;
+  }
+
+  ficha.rows.forEach((row) => {
+    if (!visited.has(row.id)) {
+      hasCycle(row.id);
+    }
+  });
+
+  // 2. Reference Existence Check
   ficha.rows.forEach((row) => {
     const base = row.baseCalculo;
     if (base?.type === 'FILA') {
       if (!classifications.has(base.classification) && !ids.has(base.classification)) {
-        errors.push(`Row ${row.id} ${row.label} references non-existent classification or ID: ${base.classification}`);
+        const msg = `Referencia inexistente: ${base.classification}`;
+        errors.push(msg);
+        validationErrors.push({ rowId: row.id, message: msg, type: 'CRITICAL', code: 'MISSING_REF' });
       }
     } else if (base?.type === 'ANEXO') {
       if (!ficha.anexos.find((a) => a.id === base.anexoId)) {
-        errors.push(`Row ${row.id} ${row.label} references non-existent anexo: ${base.anexoId}`);
+        const msg = `Anexo inexistente: ${base.anexoId}`;
+        errors.push(msg);
+        validationErrors.push({ rowId: row.id, message: msg, type: 'CRITICAL', code: 'MISSING_REF' });
       }
+    }
+
+    // Check ref() in formulas
+    if (row.formaCalculo === 'FORMULA' && row.formula) {
+        const refMatches = row.formula.matchAll(/ref\(['"]([^'"]+)['"]\)/g);
+        for (const match of refMatches) {
+            const refId = match[1];
+            if (!ids.has(refId) && !classifications.has(refId)) {
+                const msg = `Referencia en fórmula inexistente: ${refId}`;
+                errors.push(msg);
+                validationErrors.push({ rowId: row.id, message: msg, type: 'CRITICAL', code: 'MISSING_REF' });
+            }
+        }
     }
   });
 
-  return { valid: errors.length === 0, errors };
+  // 3. Hard Rules (Section 13, Taxes, etc)
+  ficha.rows.forEach(row => {
+      // 8.1 Utility (Section 13) - No self reference (already caught by cycle but being explicit)
+      // Section 13 should depend on consolidated sections
+      const isUtility = row.id.startsWith('13') || row.classification.startsWith('13');
+      if (isUtility) {
+          if (row.formula && (row.formula.includes(`ref('${row.id}')`) || row.formula.includes(`ref('${row.classification}')`))) {
+              validationErrors.push({
+                rowId: row.id,
+                message: "Regla Crítica: La sección de Utilidad (13) no puede contener autorreferencias.",
+                type: 'CRITICAL',
+                code: 'HARD_RULE_VIOLATION'
+              });
+          }
+      }
+
+      // 8.2 Taxes - Base imponible > 0 warning (semantic, done during calculation or here if VH)
+      if (row.id === '13.2' || row.classification === '13.2') {
+          const deps = adj.get(row.id) || [];
+          if (deps.length === 0 && (row.valorHistorico || 0) === 0 && row.formaCalculo === 'FIJO') {
+            validationErrors.push({
+                rowId: row.id,
+                message: "Advertencia: La base imponible para impuestos es 0.",
+                type: 'WARNING',
+                code: 'HARD_RULE_VIOLATION'
+            });
+          }
+      }
+  });
+
+  return {
+    valid: !validationErrors.some(e => e.type === 'CRITICAL'),
+    errors,
+    validationErrors
+  };
 }
 
 export function calculateFicha(
@@ -54,7 +195,7 @@ export function calculateFicha(
   const damping = new Decimal(dampingValue);
 
   // 0. Pre-validate
-  const { errors: validationErrors } = validateFicha(ficha);
+  const { validationErrors, errors: legacyErrors } = validateFicha(ficha);
 
   // 1. Prepare maps for O(1) lookup
   const annexSumMap = new Map<string, Map<string, Decimal>>();
@@ -177,6 +318,7 @@ export function calculateFicha(
         note += `Used VH ${vh.toFixed(decimals)}.`;
         break;
 
+      case 'ANEXO':
       case 'IMPORTAR_ANEXO':
         if (base?.type === 'ANEXO') {
           const classSumMap = annexSumMap.get(base.anexoId);
@@ -363,12 +505,33 @@ export function calculateFicha(
 
   summary.grandTotal = new Decimal(summary.totalCost).plus(summary.totalMargin).plus(summary.totalTax).toDecimalPlaces(decimals).toNumber();
 
+  // 5. Semantic Validation (Totals vs Children)
+  ficha.rows.forEach(row => {
+      const children = ficha.rows.filter(r => r.parentId === row.id);
+      // We check if it's a sum row. If it has children and calculation is FORMULA with sum, it MUST match.
+      if (children.length > 0 && (row.formula?.toLowerCase().includes('sum') || row.formula?.includes('SUMA'))) {
+          const calcRow = calculatedRows.get(row.id)!;
+          const childrenSum = children.reduce((acc, child) => acc.plus(new Decimal(calculatedRows.get(child.id)?.total || 0)), new Decimal(0));
+
+          const diff = Math.abs(calcRow.total - childrenSum.toNumber());
+          if (diff > 0.01) {
+              validationErrors.push({
+                  rowId: row.id,
+                  message: `Error Contable: El total de '${row.label}' (${calcRow.total}) no cuadra con la suma de sus componentes (${childrenSum.toNumber()}). Diferencia: ${diff.toFixed(2)}`,
+                  type: 'CRITICAL',
+                  code: 'SEMANTIC_DISCREPANCY'
+              });
+          }
+      }
+  });
+
   return {
     fichaId: ficha.meta.id,
     rows: Array.from(calculatedRows.values()),
     audits: Array.from(calculatedRows.values()).flatMap(r => r.audit),
     summary,
-    validationErrors,
+    validationErrors: validationErrors.map(e => e.message),
+    deepValidationErrors: validationErrors,
     elapsedMs: Date.now() - startTime,
   };
 }
