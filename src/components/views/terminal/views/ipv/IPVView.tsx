@@ -59,10 +59,15 @@ export default function IPVView() {
     const map = new Map<string, number>();
     if (!products || !reconciliationLines) return map;
 
+    // Optimización: Agrupar ventas por producto primero (O(M))
+    const salesByProduct = new Map<string, number>();
+    for (const l of reconciliationLines) {
+        salesByProduct.set(l.product_cod, (salesByProduct.get(l.product_cod) || 0) + l.cantidad);
+    }
+
+    // Calcular stock final (O(N))
     products.forEach(p => {
-        const sold = reconciliationLines
-            .filter(l => l.product_cod === p.cod)
-            .reduce((sum, l) => sum + l.cantidad, 0);
+        const sold = salesByProduct.get(p.cod) || 0;
         map.set(p.cod, (p.stock_inicial_manual || 0) - sold);
     });
     return map;

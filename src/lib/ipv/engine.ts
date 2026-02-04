@@ -369,7 +369,7 @@ export class MatchingEngine {
       fecha_operacion: transaction.fecha,
       ingreso_banco_cents: transaction.importe_cents, // Simplificación: asociamos el ingreso original
       venta_real_calculada_cents: importe,
-      comision_banco_cents: 0,
+      comision_banco_cents: transaction.comision_cents || 0,
       product_cod: product.cod,
       product_um: product.um,
       cantidad: qty,

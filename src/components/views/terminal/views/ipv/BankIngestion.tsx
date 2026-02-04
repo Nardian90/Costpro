@@ -256,8 +256,8 @@ export function BankIngestion() {
         if (!fecha || !ref_origen || !importe_str) continue;
 
         const importe_cents = parseFloat(importe_str.replace(',', ''));
-        const comision_cents = 0;
-        const importe_venta_cents = importe_cents;
+        const comision_cents = extractCommission(observaciones);
+        const importe_venta_cents = importe_cents + comision_cents;
         const ingestion_hash = await generateHash(`${ref_origen}-${fecha}-${importe_cents}`);
 
         // Verificamos si ya existe para preservar estados
