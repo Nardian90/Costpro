@@ -32,7 +32,13 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
     const [searchTerm, setSearchTerm] = useState('');
     const [manualLines, setManualLines] = useState<Partial<ReconciliationLine>[]>([]);
 
-    const products = useLiveQuery(() => db.products.toArray().then(prods => prods.filter(p => p.activo)));
+    // Usar una query en vivo para la transacción para evitar datos obsoletos al editar comisiones
+    const liveTx = useLiveQuery(
+        () => transaction ? db.bank_statements.get(transaction.referencia_origen) : null,
+        [transaction]
+    );
+
+    const products = useLiveQuery(() => db.products.toArray());
     const reconciliationLines = useLiveQuery(() => db.reconciliation_lines.toArray());
     const rules = useLiveQuery(() => db.matching_rules.toArray());
 
@@ -42,10 +48,15 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
         const map = new Map<string, number>();
         if (!products || !reconciliationLines) return map;
 
+        // Optimización: Agrupar ventas por producto primero (O(M))
+        const salesByProduct = new Map<string, number>();
+        for (const l of reconciliationLines) {
+            salesByProduct.set(l.product_cod, (salesByProduct.get(l.product_cod) || 0) + l.cantidad);
+        }
+
+        // Calcular stock final (O(N))
         products.forEach(p => {
-            const sold = reconciliationLines
-                .filter(l => l.product_cod === p.cod)
-                .reduce((sum, l) => sum + l.cantidad, 0);
+            const sold = salesByProduct.get(p.cod) || 0;
             map.set(p.cod, (p.stock_inicial_manual || 0) - sold);
         });
         return map;
@@ -58,16 +69,19 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
 
     const filteredProducts = useMemo(() => {
         if (!products) return [];
-        return products.filter(p =>
-            p.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            p.cod.toLowerCase().includes(searchTerm.toLowerCase())
-        );
+        return products
+            .filter(p => p.activo)
+            .filter(p =>
+                p.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                p.cod.toLowerCase().includes(searchTerm.toLowerCase())
+            );
     }, [products, searchTerm]);
 
     const targetAmount = useMemo(() => {
-        if (!transaction) return 0;
-        return transaction.importe_venta_cents || transaction.importe_cents;
-    }, [transaction]);
+        const tx = liveTx || transaction;
+        if (!tx) return 0;
+        return tx.importe_venta_cents || tx.importe_cents;
+    }, [liveTx, transaction]);
 
     const currentTotal = useMemo(() => {
         const existingTotal = existingLines?.reduce((sum, l) => sum + l.importe_linea_cents, 0) || 0;
@@ -113,6 +127,7 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
     };
 
     const addProduct = async (product: Product) => {
+        const tx = liveTx || transaction;
         // Regla: CONTROL DE INVENTARIO (Nivel Global)
         if (isInventoryRuleActive) {
             const stock = currentStockMap.get(product.cod) || 0;
@@ -144,7 +159,7 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
             cantidad: 1,
             precio_unitario_cents: product.precio_cents,
             importe_linea_cents: product.precio_cents,
-            clasificacion: transaction?.tipo === 'Cr' ? 'Transferencia' : 'Efectivo',
+            clasificacion: tx?.tipo === 'Cr' ? 'Transferencia' : 'Efectivo',
             origen_dato: 'MANUAL_USER'
         };
         setManualLines([...manualLines, newLine]);
@@ -155,7 +170,8 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
     };
 
     const adjustExistingLine = async (line: ReconciliationLine) => {
-        if (!transaction) return;
+        const tx = liveTx || transaction;
+        if (!tx) return;
 
         const adjustment = remaining;
         const newTotalLine = line.importe_linea_cents + adjustment;
@@ -172,12 +188,12 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
         });
 
         // Actualizar estado de la transacción
-        const lines = await db.reconciliation_lines.where('transaction_ref').equals(transaction.referencia_origen).toArray();
+        const lines = await db.reconciliation_lines.where('transaction_ref').equals(tx.referencia_origen).toArray();
         const newTotal = lines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
-        const target = transaction.importe_venta_cents || transaction.importe_cents;
+        const target = tx.importe_venta_cents || tx.importe_cents;
         const newStatus = Math.abs(newTotal - target) < 0.001 ? 'COMPLETO' : (newTotal > 0.001 ? 'PARCIAL' : 'PENDIENTE');
 
-        await db.bank_statements.update(transaction.referencia_origen, {
+        await db.bank_statements.update(tx.referencia_origen, {
             estado_conciliacion: newStatus
         });
 
@@ -188,17 +204,18 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
     };
 
     const removeExistingLine = async (id: string) => {
-        if (!transaction) return;
+        const tx = liveTx || transaction;
+        if (!tx) return;
         if (confirm('¿Eliminar esta línea de conciliación?')) {
             await db.reconciliation_lines.delete(id);
 
             // Actualizar estado de la transacción
-            const lines = await db.reconciliation_lines.where('transaction_ref').equals(transaction.referencia_origen).toArray();
+            const lines = await db.reconciliation_lines.where('transaction_ref').equals(tx.referencia_origen).toArray();
             const newTotal = lines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
-            const target = transaction.importe_venta_cents || transaction.importe_cents;
+            const target = tx.importe_venta_cents || tx.importe_cents;
             const newStatus = (newTotal + 0.001) >= target ? 'COMPLETO' : (newTotal > 0.001 ? 'PARCIAL' : 'PENDIENTE');
 
-            await db.bank_statements.update(transaction.referencia_origen, {
+            await db.bank_statements.update(tx.referencia_origen, {
                 estado_conciliacion: newStatus
             });
 
@@ -221,28 +238,29 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
     };
 
     const handleSave = async () => {
-        if (!transaction) return;
+        const tx = liveTx || transaction;
+        if (!tx) return;
 
         try {
             for (const line of manualLines) {
                 const fullLine: ReconciliationLine = {
                     ...line as ReconciliationLine,
-                    transaction_ref: transaction.referencia_origen,
-                    fecha_operacion: transaction.fecha,
-                    ingreso_banco_cents: transaction.importe_cents,
+                    transaction_ref: tx.referencia_origen,
+                    fecha_operacion: tx.fecha,
+                    ingreso_banco_cents: tx.importe_cents,
                     venta_real_calculada_cents: line.importe_linea_cents || 0,
-                    comision_banco_cents: transaction.comision_cents || 0,
+                    comision_banco_cents: tx.comision_cents || 0,
                     cuadre_cents: line.cuadre_cents || 0,
-                    reconciliation_hash: await generateHash(`${transaction.referencia_origen}-${line.product_cod}-${line.cantidad}-${Date.now()}`),
+                    reconciliation_hash: await generateHash(`${tx.referencia_origen}-${line.product_cod}-${line.cantidad}-${Date.now()}`),
                     created_at: new Date().toISOString()
                 };
                 await db.reconciliation_lines.add(fullLine);
             }
 
-            const target = transaction.importe_venta_cents || transaction.importe_cents;
+            const target = tx.importe_venta_cents || tx.importe_cents;
             const newStatus = (currentTotal + 0.001) >= target ? 'COMPLETO' : (currentTotal > 0.001 ? 'PARCIAL' : 'PENDIENTE');
 
-            await db.bank_statements.update(transaction.referencia_origen, {
+            await db.bank_statements.update(tx.referencia_origen, {
                 estado_conciliacion: newStatus
             });
 
@@ -265,12 +283,30 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                         <div>
                             <DialogTitle className="text-2xl font-black uppercase text-primary tracking-tighter">Conciliación Manual</DialogTitle>
                             <DialogDescription className="font-medium text-xs md:text-sm mt-1">
-                                {transaction.observaciones}
+                                {(liveTx || transaction).observaciones}
                             </DialogDescription>
                         </div>
-                        <div className="text-right">
-                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Importe Meta (Cents)</p>
-                            <p className="text-2xl font-black text-primary">{targetAmount}</p>
+                        <div className="flex items-center gap-6">
+                            <div className="text-right">
+                                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Comisión (Cents)</p>
+                                <Input
+                                    type="number"
+                                    className="w-24 h-8 text-right bg-primary/5 border-primary/20 font-black text-red-500"
+                                    value={(liveTx || transaction).comision_cents || 0}
+                                    onChange={async (e) => {
+                                        const tx = liveTx || transaction;
+                                        const val = parseFloat(e.target.value) || 0;
+                                        await db.bank_statements.update(tx.referencia_origen, {
+                                            comision_cents: val,
+                                            importe_venta_cents: tx.importe_cents + val
+                                        });
+                                    }}
+                                />
+                            </div>
+                            <div className="text-right">
+                                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Importe Meta (Cents)</p>
+                                <p className="text-2xl font-black text-primary">{targetAmount}</p>
+                            </div>
                         </div>
                     </div>
 
@@ -350,6 +386,18 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                                         </div>
                                     </div>
                                 ))}
+
+                                {filteredProducts.length === 0 && (
+                                    <div className="p-12 text-center space-y-3">
+                                        <div className="w-12 h-12 rounded-2xl bg-muted mx-auto flex items-center justify-center">
+                                            <Search className="w-6 h-6 opacity-20" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Sin Resultados</p>
+                                            <p className="text-[10px] text-muted-foreground/60 mt-1">No hay productos que coincidan con su búsqueda o no hay productos activos.</p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </ScrollArea>
                     </div>
