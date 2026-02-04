@@ -3,7 +3,6 @@ import Decimal from 'decimal.js';
 export type FormaCalculo = 'FIJO'|'IMPORTAR_ANEXO'|'PRORRATEO'|'COEFICIENTE'|'FORMULA'|'ANEXO';
 export type BaseRef = { type: 'ANEXO'; anexoId: string } | { type: 'FILA'; classification: string };
 export type RowSemanticType = 'COST' | 'MARGIN' | 'TAX' | 'TOTAL' | 'INFO';
-export type RowType = 'BASE' | 'TOTAL';
 
 export interface AuditEntry {
   ts: string;
@@ -33,7 +32,6 @@ export interface CostRow {
   parentId?: string | null;
   classification: string;           // ej "1","1.1","3.2"
   type: RowSemanticType;            // Semantic classification
-  nodeType?: RowType;               // Structural classification (BASE/TOTAL)
   label: string;
   valorHistorico?: number | null;   // input del usuario (acepta 0.01)
   formaCalculo: FormaCalculo;

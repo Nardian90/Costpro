@@ -4,6 +4,7 @@ import React from 'react';
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
@@ -46,6 +47,9 @@ export const CostSheetSidebarNav: React.FC<CostSheetSidebarNavProps> = ({
                 <SheetTitle className="text-xs font-black uppercase tracking-[0.2em] text-foreground">
                     {title}
                 </SheetTitle>
+                <SheetDescription className="sr-only">
+                    Navegación lateral para seleccionar {type === 'sections' ? 'secciones de la ficha' : 'anexos disponibles'}.
+                </SheetDescription>
             </div>
             <Button
                 variant="ghost"

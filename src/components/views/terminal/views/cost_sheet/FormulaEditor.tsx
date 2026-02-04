@@ -13,12 +13,12 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 import { FormulaBuilder } from './FormulaBuilder';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { HorizontalScroll } from '@/components/ui/HorizontalScroll';
@@ -30,7 +30,6 @@ interface FormulaEditorProps {
   onCancel: () => void;
   suggestions: { label: string; value: string; description?: string }[];
   className?: string;
-  selfRef?: string; // e.g. "ref('1.1')"
 }
 
 export const FormulaEditor: React.FC<FormulaEditorProps> = ({
@@ -38,8 +37,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
   onSave,
   onCancel,
   suggestions,
-  className,
-  selfRef
+  className
 }) => {
   const [value, setValue] = useState(initialValue);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -99,16 +97,9 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
 
   const handleSave = React.useCallback((val: string) => {
     if (hasSavedRef.current) return;
-
-    // Preventive validation: check for direct self-reference
-    if (selfRef && val.includes(selfRef)) {
-        toast.error(`Configuración inválida: Un total no puede formar parte de su propio cálculo.`);
-        return;
-    }
-
     hasSavedRef.current = true;
     onSave(val);
-  }, [onSave, selfRef]);
+  }, [onSave]);
 
   const applySuggestion = (suggestion: { value: string }) => {
     const before = value.slice(0, cursorPosition);
@@ -291,6 +282,9 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
               </div>
               <div>
                 <DialogTitle className="text-lg font-black uppercase tracking-tight italic">Editor de Cálculo</DialogTitle>
+                <DialogDescription className="sr-only">
+                  Editor avanzado para configurar fórmulas y cálculos personalizados en la ficha de costo.
+                </DialogDescription>
                 <p className="text-[10px] font-bold text-primary/60 uppercase tracking-widest leading-none">v5.7.22 • Motor de Costos Avanzado</p>
               </div>
             </div>

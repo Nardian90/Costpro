@@ -31,16 +31,6 @@ const CostSheetView = () => {
   const { data, loadExample, reset, setSheet } = useCostSheetStore();
   const { calculatedValues, calculatedAnnexes, audits, calculationResult, isBlocked, deepValidationErrors } = useCostSheetCalculator(data);
 
-  // Immediate feedback on critical errors
-  React.useEffect(() => {
-    if (isBlocked) {
-      toast.error("Error Crítico: Ciclo de autorreferencia detectado. La ficha ha sido bloqueada para prevenir corrupción de datos.", {
-        id: 'cycle-error-toast',
-        duration: 5000
-      });
-    }
-  }, [isBlocked]);
-
   const [isEditing, setIsEditing] = useState(true);
   const [viewMode, setViewMode] = useState<'expert' | 'assisted' | 'reading'>('expert');
   const [layoutMode, setLayoutMode] = useState<ViewMode>('grid');
@@ -121,28 +111,6 @@ const CostSheetView = () => {
   const [isSectionsSidebarOpen, setIsSectionsSidebarOpen] = useState(false);
   const [isAnnexesSidebarOpen, setIsAnnexesSidebarOpen] = useState(false);
   const [isMassiveGeneratorOpen, setIsMassiveGeneratorOpen] = useState(false);
-
-  const previewRef = useRef(null);
-  const exportRef = useRef(null);
-
-  if (!data || !data.header || !data.annexes || !data.sections) {
-    return (
-      <div className="w-full max-w-7xl mx-auto px-1 sm:px-6 lg:px-8 pb-32 pt-4">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8 px-2">
-          <div className="flex items-center gap-4">
-            <Skeleton className="w-12 h-12 rounded-2xl" />
-            <div>
-              <Skeleton className="h-8 w-48 mb-2" />
-              <Skeleton className="h-4 w-32" />
-            </div>
-          </div>
-          <Skeleton className="h-8 w-24" />
-        </div>
-        <Skeleton className="h-12 w-full mb-8" />
-        <Skeleton className="h-96 w-full" />
-      </div>
-    );
-  }
 
   const isAnnexActive = React.useMemo(() => (data?.annexes || []).some((a: any) => a.id === activeSection), [data?.annexes, activeSection]);
 
@@ -277,6 +245,34 @@ const CostSheetView = () => {
 
   const secondaryActions = React.useMemo(() => allActions.filter(a => !['toggle-mode'].includes(a.id)), [allActions]);
 
+  const navItems = React.useMemo(() => [
+    { id: 'kpis', label: 'KPIs', icon: BarChart3 },
+    { id: 'main', label: 'Ficha Principal', icon: FileSpreadsheet },
+    { id: 'audit', label: 'Auditoría', icon: Activity }
+  ], []);
+
+  const onOpenAnnexes = React.useCallback(() => setIsAnnexesSidebarOpen(true), []);
+  const onOpenSections = React.useCallback(() => setIsSectionsSidebarOpen(true), []);
+
+  if (!data || !data.header || !data.annexes || !data.sections) {
+    return (
+      <div className="w-full max-w-7xl mx-auto px-1 sm:px-6 lg:px-8 pb-32 pt-4">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8 px-2">
+          <div className="flex items-center gap-4">
+            <Skeleton className="w-12 h-12 rounded-2xl" />
+            <div>
+              <Skeleton className="h-8 w-48 mb-2" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+          </div>
+          <Skeleton className="h-8 w-24" />
+        </div>
+        <Skeleton className="h-12 w-full mb-8" />
+        <Skeleton className="h-96 w-full" />
+      </div>
+    );
+  }
+
   return (
     <div className="w-full max-w-7xl mx-auto px-1 sm:px-6 lg:px-8 pb-32 pt-4">
       <CostSheetActionsPanel
@@ -312,15 +308,6 @@ const CostSheetView = () => {
         onSelect={setActiveSection}
       />
 
-      <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', width: '1024px', opacity: 0, pointerEvents: 'none' }}>
-          <CostSheetPreview
-            ref={exportRef}
-            data={data}
-            calculatedValues={calculatedValues}
-            calculatedAnnexes={calculatedAnnexes}
-          />
-      </div>
-
       <CostSheetBanner />
 
       {isBlocked && (
@@ -351,19 +338,15 @@ const CostSheetView = () => {
           {viewMode === 'expert' && (
             <>
                 <CostSheetNav
-                    navItems={React.useMemo(() => [
-                        { id: 'kpis', label: 'KPIs', icon: BarChart3 },
-                        { id: 'main', label: 'Ficha Principal', icon: FileSpreadsheet },
-                        { id: 'audit', label: 'Auditoría', icon: Activity }
-                    ], [])}
+                    navItems={navItems}
                     subSections={groupedSections}
                     activeSubSectionId={activeSubSectionId}
                     setActiveSubSectionId={setActiveSubSectionId}
                     annexes={data?.annexes || []}
                     activeSection={activeSection}
                     setActiveSection={setActiveSection}
-                    onOpenAnnexes={React.useCallback(() => setIsAnnexesSidebarOpen(true), [])}
-                    onOpenSections={React.useCallback(() => setIsSectionsSidebarOpen(true), [])}
+                    onOpenAnnexes={onOpenAnnexes}
+                    onOpenSections={onOpenSections}
                 />
 
                 <div className="mt-4">
@@ -424,7 +407,6 @@ const CostSheetView = () => {
       ) : (
         <div className="animate-in zoom-in-95 duration-500">
             <CostSheetPreview
-                ref={previewRef}
                 data={data}
                 calculatedValues={calculatedValues}
                 calculatedAnnexes={calculatedAnnexes}
