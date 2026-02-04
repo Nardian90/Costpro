@@ -493,6 +493,19 @@ export function CatalogTable() {
                 <span>Inteligencia</span>
             </Button>
 
+            <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                    const p = await db.products.toArray();
+                    toast.success(`Catálogo verificado: ${p.length} productos.`);
+                }}
+                className="h-12 sm:h-10 text-[10px] uppercase font-black tracking-widest gap-2 text-blue-500 border-blue-200 hover:bg-blue-50 flex-1 sm:flex-none"
+            >
+                <RefreshCw className="w-4 h-4" />
+                <span>Verificar</span>
+            </Button>
+
             <div className="flex gap-1 bg-purple-50 p-1 rounded-xl border border-purple-100">
                 <TooltipProvider>
                     <Tooltip>

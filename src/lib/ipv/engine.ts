@@ -48,6 +48,19 @@ export class MatchingEngine {
     let remaining_cents = targetAmount - current_reconciled_cents;
     const lines: ReconciliationLine[] = [];
 
+    console.log(`[MatchingEngine] Processing Tx: ${transaction.referencia_origen}`, {
+        importe_cents: transaction.importe_cents,
+        comision_cents: transaction.comision_cents,
+        targetAmount,
+        current_reconciled_cents,
+        remaining_cents
+    });
+
+    if (Math.abs(remaining_cents) < 0.001) {
+        console.log(`[MatchingEngine] Tx ${transaction.referencia_origen} is already complete.`);
+        return { lines: [], status: 'COMPLETO', logs: ['Transacción ya completada'] };
+    }
+
     logs.push(`Iniciando matching para transacción ${transaction.referencia_origen} (Importe: ${targetAmount} cts, Restante: ${remaining_cents} cts)`);
 
     // PASS 0: AUTO-COMPLETE DEBITS OR EXCLUDED (Commissions/Expenses/Excluded)
