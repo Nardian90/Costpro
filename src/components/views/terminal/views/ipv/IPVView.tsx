@@ -175,13 +175,6 @@ export default function IPVView() {
             current_reconciled_cents: txTotalsMap[t.referencia_origen] || 0
         }));
 
-    console.log('[IPVView] Transactions to process:', transactionsToProcess.length);
-    if (transactionsToProcess.length > 0) {
-        console.log('[IPVView] Example Tx target:',
-            transactionsToProcess[0].importe_venta_cents || transactionsToProcess[0].importe_cents
-        );
-    }
-
     if (transactionsToProcess.length === 0) {
         toast.info('Todas las transacciones ya están completadas o excluidas.');
         setIsMatching(false);
