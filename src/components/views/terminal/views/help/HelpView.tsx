@@ -30,6 +30,7 @@ import KidsOnboarding from './help/KidsOnboarding';
 import OfflineSyncDiagram from './help/OfflineSyncDiagram';
 import JulesDiagram from './help/JulesDiagram';
 import StickyCartFlowDiagram from './help/StickyCartFlowDiagram';
+import InventoryAdjustmentFlowDiagram from './help/InventoryAdjustmentFlowDiagram';
 
 export default function HelpView() {
   return (
@@ -491,6 +492,26 @@ export default function HelpView() {
             </CardHeader>
             <CardContent className="px-0 space-y-12">
               <InventoryFlowDiagram />
+
+              <div className="bg-primary/5 p-6 rounded-3xl border border-primary/10">
+                <h4 className="font-black text-primary text-xs uppercase mb-4 flex items-center gap-2">
+                  <Package className="w-4 h-4" />
+                  Nuevo: Ajuste Rápido de Inventario
+                </h4>
+                <div className="grid lg:grid-cols-2 gap-8 items-center">
+                   <div className="space-y-4">
+                      <p className="text-sm font-medium leading-relaxed">
+                        Optimizado para la operación en almacén, el ajuste de stock ahora utiliza un <span className="font-bold text-primary">Panel Inferior</span> con controles táctiles de gran tamaño.
+                      </p>
+                      <ul className="text-xs space-y-2 font-medium">
+                        <li className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> <strong>Botones Stepper:</strong> Incrementa o decrementa unidades sin usar el teclado.</li>
+                        <li className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> <strong>Motivos Quick-Pick:</strong> Botones rápidos para Merma, Error de Conteo o Venta Omitida.</li>
+                        <li className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> <strong>Feedback Inmediato:</strong> Visualiza la variación porcentual del costo antes de confirmar.</li>
+                      </ul>
+                   </div>
+                   <InventoryAdjustmentFlowDiagram />
+                </div>
+              </div>
 
               <div className="space-y-6 pt-8 border-t border-primary/10">
                 <h3 className="font-bold text-lg flex items-center gap-2 text-primary uppercase tracking-tighter">
