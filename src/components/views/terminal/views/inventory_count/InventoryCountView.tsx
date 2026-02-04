@@ -13,6 +13,8 @@ import {
   Save,
   Search,
   ClipboardList,
+  LayoutGrid,
+  List,
 } from 'lucide-react';
 import { Product, ProductVariant } from '@/types';
 import { toast } from 'sonner';
@@ -21,8 +23,13 @@ import SearchBar from '@/components/ui/SearchBar';
 import { QueryInspector } from '@/components/ui/QueryInspector';
 import { cn } from '@/lib/utils';
 import { SecurityScrollContainer } from '@/components/ui/SecurityScrollContainer';
+import { useIsMobile } from '@/hooks/ui/useMobile';
+import { motion, AnimatePresence } from 'framer-motion';
 
-interface ExtendedProduct extends Product {
+import InventoryCountCardView from './InventoryCountCardView';
+import InventoryCountTableView from './InventoryCountTableView';
+
+export interface ExtendedProduct extends Product {
   product_variants: ProductVariant[];
 }
 
@@ -45,10 +52,20 @@ interface Difference {
 export default function InventoryCountView() {
   const user = useAuthStore((state) => state.user);
   const token = useAuthStore((state) => state.token);
+  const isMobile = useIsMobile();
   const [products, setProducts] = useState<ExtendedProduct[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [countedQuantities, setCountedQuantities] = useState<{ [key: string]: number }>({});
   const [loading, setLoading] = useState(true);
+  const [layoutMode, setLayoutMode] = useState<'table' | 'card'>('table');
+
+  useEffect(() => {
+    if (isMobile) {
+      setLayoutMode('card');
+    } else {
+      setLayoutMode('table');
+    }
+  }, [isMobile]);
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -275,7 +292,7 @@ export default function InventoryCountView() {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-0 pb-20 sm:pb-0">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
@@ -283,98 +300,98 @@ export default function InventoryCountView() {
           </div>
           <h2 className="text-2xl font-black text-foreground tracking-tighter uppercase leading-tight">Auditoría de Stock</h2>
         </div>
-        <ActionMenu
-          actions={[
-            { id: 'submit', label: 'Finalizar Conteo', icon: Check, onClick: handleInitialSubmit, variant: 'primary', disabled: loading }
-          ]}
-          className="sm:w-auto"
-        />
+        {!isMobile && (
+          <ActionMenu
+            actions={[
+              {
+                id: 'toggle-layout',
+                label: layoutMode === 'table' ? 'Tarjetas' : 'Tabla',
+                icon: layoutMode === 'table' ? LayoutGrid : List,
+                onClick: () => setLayoutMode(prev => prev === 'table' ? 'card' : 'table'),
+                variant: 'outline',
+                className: 'hidden sm:flex'
+              },
+              { id: 'submit', label: 'Finalizar', icon: Check, onClick: handleInitialSubmit, variant: 'primary', disabled: loading }
+            ]}
+            className="sm:w-auto"
+          />
+        )}
       </div>
 
       <QueryInspector />
 
       <SearchBar value={searchTerm} onChange={setSearchTerm} placeholder="Buscar por producto, SKU o categoría..." />
 
-      <div className="overflow-x-auto table-to-cards rounded-2xl shadow-xl border border-white/5 overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="bg-muted/50 text-muted-foreground font-black uppercase text-[10px] tracking-widest">
-              <th className="p-4 text-left">Producto / SKU</th>
-              <th className="p-4 text-right">Stock Teórico</th>
-              <th className="p-4 text-center">Stock Físico (Contado)</th>
-              <th className="p-4 text-right">Desviación</th>
-            </tr>
-          </thead>
-          <tbody className="bg-background/30 backdrop-blur-sm">
-            {loading ? (
-              <tr>
-                <td colSpan={4} className="p-20 text-center">
-                  <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                  <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Cargando catálogo...</p>
-                </td>
-              </tr>
-            ) : filteredProducts.length === 0 ? (
-              <tr>
-                <td colSpan={4} className="p-20 text-center">
-                  <Package className="w-16 h-16 mx-auto mb-4 opacity-5" />
-                  <p className="font-black uppercase text-muted-foreground text-sm tracking-widest">No se encontraron productos</p>
-                </td>
-              </tr>
-            ) : (
-              filteredProducts.map(product => {
-                const counted = countedQuantities[product.id] ?? product.stock_current;
-                const diff = counted - product.stock_current;
-
-                return (
-                  <tr key={product.id} className="border-b border-white/5 hover:bg-primary/5 transition-colors group">
-                    <td data-label="Producto" className="p-4">
-                      <div className="font-black text-sm uppercase tracking-tight">{product.name}</div>
-                      <div className="text-[9px] font-mono text-muted-foreground mt-1">{product.sku || '-'} • {product.category || 'General'}</div>
-                    </td>
-                    <td data-label="Teórico" className="p-4 text-right font-black text-lg text-muted-foreground">{product.stock_current}</td>
-                    <td data-label="Contado" className="p-4">
-                      <div className="flex justify-center">
-                        <input
-                          type="number"
-                          value={counted}
-                          onChange={(e) => handleQuantityChange(product.id, parseInt(e.target.value) || 0)}
-                          className="neu-input w-28 text-center font-black text-xl text-primary bg-primary/5 border-primary/20"
-                        />
-                      </div>
-                    </td>
-                    <td data-label="Diferencia" className="p-4 text-right">
-                      <span className={cn(
-                        "text-lg font-black",
-                        diff === 0 ? "text-muted-foreground/30" :
-                        diff > 0 ? "text-success" : "text-danger"
-                      )}>
-                        {diff > 0 ? `+${diff}` : diff}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+      <div className="relative min-h-[400px]">
+        <AnimatePresence mode="wait">
+          {layoutMode === 'card' ? (
+            <motion.div
+              key="card-view"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.2 }}
+            >
+              <InventoryCountCardView
+                products={filteredProducts}
+                countedQuantities={countedQuantities}
+                onQuantityChange={handleQuantityChange}
+                loading={loading}
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="table-view"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.2 }}
+            >
+              <InventoryCountTableView
+                products={filteredProducts}
+                countedQuantities={countedQuantities}
+                onQuantityChange={handleQuantityChange}
+                loading={loading}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
+
+      {isMobile && (
+        <ActionMenu
+          actions={[
+            {
+              id: 'toggle-layout',
+              label: layoutMode === 'table' ? 'Tarjetas' : 'Tabla',
+              icon: layoutMode === 'table' ? LayoutGrid : List,
+              onClick: () => setLayoutMode(prev => prev === 'table' ? 'card' : 'table'),
+              variant: 'outline',
+            },
+            { id: 'submit', label: 'Finalizar', icon: Check, onClick: handleInitialSubmit, variant: 'primary', disabled: loading }
+          ]}
+          position="bottom"
+        />
+      )}
 
       {/* Confirmation Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-background/90 backdrop-blur-xl flex items-center justify-center z-50 p-4">
           <div className="neu-card max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden !p-0 border-primary/20 shadow-2xl">
-            <div className="p-8 border-b border-white/5 bg-primary/5 flex justify-between items-center">
-              <h3 className="text-2xl font-black text-foreground uppercase tracking-tighter flex items-center gap-3 whitespace-nowrap">
-                <AlertTriangle className="w-8 h-8 text-warning" />
-                Resumen de Discrepancias
-              </h3>
+            <div className="p-6 sm:p-8 border-b border-white/5 bg-primary/5 flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <AlertTriangle className="w-6 h-6 sm:w-8 sm:h-8 text-warning" />
+                <h3 className="text-xl sm:text-2xl font-black text-foreground uppercase tracking-tighter whitespace-nowrap">
+                  Resumen
+                </h3>
+              </div>
               <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-danger/10 text-muted-foreground hover:text-danger rounded-full transition-colors">
-                <X className="w-8 h-8" />
+                <X className="w-6 h-6 sm:w-8 sm:h-8" />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-8 space-y-8 no-scrollbar">
-              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+            <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6 sm:space-y-8 no-scrollbar">
+              <p className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-muted-foreground leading-relaxed">
                 Se han detectado las siguientes diferencias. Confirma las acciones de ajuste para proceder:
               </p>
 
@@ -416,17 +433,17 @@ export default function InventoryCountView() {
               </div>
             </div>
 
-            <div className="p-8 border-t border-white/5 bg-muted/10 flex gap-4">
+            <div className="p-6 sm:p-8 border-t border-white/5 bg-muted/10 flex flex-col sm:flex-row gap-4">
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="neu-btn flex-1 !py-4 font-black uppercase text-xs tracking-[0.2em]"
+                className="neu-btn w-full sm:flex-1 !py-4 font-black uppercase text-[10px] sm:text-xs tracking-[0.2em]"
                 disabled={processing}
               >
                 Cancelar
               </button>
               <button
                 onClick={handleFinalSubmit}
-                className="neu-btn-primary flex-1 flex items-center justify-center gap-3 font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-primary/20"
+                className="neu-btn-primary w-full sm:flex-1 flex items-center justify-center gap-3 font-black uppercase text-[10px] sm:text-xs tracking-[0.2em] shadow-xl shadow-primary/20"
                 disabled={processing || !isAdjustmentValid}
               >
                 {processing ? (
