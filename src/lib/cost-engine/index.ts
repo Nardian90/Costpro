@@ -91,9 +91,12 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
 
       for (const v of targetIds) {
           if (recStack.has(v)) {
+              const isSelf = v === u;
               validationErrors.push({
                 rowId: u,
-                message: `Ciclo de dependencia detectado: la fila ${u} depende de ${v} (directa o indirectamente), lo cual genera un bucle infinito.`,
+                message: isSelf
+                  ? `Autorreferencia crítica detectada: La fila '${rowMap.get(u)?.label || u}' intenta calcularse usando su propio valor, lo cual es matemáticamente imposible.`
+                  : `Ciclo de dependencia detectado: La fila '${rowMap.get(u)?.label || u}' depende de '${rowMap.get(v)?.label || v}' (directa o indirectamente), lo cual genera un bucle infinito de cálculo.`,
                 type: 'CRITICAL',
                 code: 'CYCLE'
               });
