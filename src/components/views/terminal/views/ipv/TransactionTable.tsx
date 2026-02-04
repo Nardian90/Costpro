@@ -21,7 +21,6 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { toast } from 'sonner';
-import { ManualReconciliationModal } from './ManualReconciliationModal';
 import {
     Popover,
     PopoverContent,
@@ -44,12 +43,11 @@ interface TransactionTableProps {
     transactions: BankTransaction[];
     kpiFilter: 'ALL' | 'CUADRADAS' | 'EN_PROCESO' | 'PENDIENTES';
     txReconciliationTotals: Record<string, number>;
+    onReconcile: (tx: BankTransaction) => void;
 }
 
-export function TransactionTable({ transactions, kpiFilter, txReconciliationTotals }: TransactionTableProps) {
+export function TransactionTable({ transactions, kpiFilter, txReconciliationTotals, onReconcile }: TransactionTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedTx, setSelectedTx] = useState<BankTransaction | null>(null);
-  const [modalOpen, setModalOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [layoutMode, setLayoutMode] = useState<'table' | 'cards'>('table');
   const [typeFilter, setTypeFilter] = useState<'ALL' | 'Cr' | 'Db'>('ALL');
@@ -300,10 +298,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                         key={tx.referencia_origen}
                         tx={tx}
                         matchedTotal={txReconciliationTotals[tx.referencia_origen] || 0}
-                        onView={() => {
-                            setSelectedTx(tx);
-                            setModalOpen(true);
-                        }}
+                        onView={() => onReconcile(tx)}
                         onReset={() => handleResetReconciliation(tx)}
                         onDelete={() => handleDelete(tx.referencia_origen)}
                         onToggleExclusion={(val: boolean) => toggleExclusion(tx, val)}
@@ -390,10 +385,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                                         variant="outline"
                                         size="sm"
                                         className="h-11 px-4 text-xs font-bold uppercase gap-2 neu-btn"
-                                        onClick={() => {
-                                            setSelectedTx(tx);
-                                            setModalOpen(true);
-                                        }}
+                                        onClick={() => onReconcile(tx)}
                                     >
                                         <Eye className="w-3 h-3" />
                                         Ver / Cuadrar
@@ -415,11 +407,6 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
         </div>
       )}
 
-      <ManualReconciliationModal
-        transaction={selectedTx}
-        open={modalOpen}
-        onOpenChange={setModalOpen}
-      />
 
       <ColumnHelpModal open={helpOpen} onOpenChange={setHelpOpen} />
     </div>
