@@ -157,11 +157,14 @@ export class MatchingEngine {
         const maxPercent = priceFlexRule.meta?.maxPercent || 20;
 
         // Intentamos encontrar un producto de categoría flexible que al añadirlo y ajustar su precio cierre el gap
-        const flexProduct = this.products.find(p =>
-            p.categoria?.toLowerCase().includes('flexible') ||
-            p.categoria?.toLowerCase().includes('caramelo') ||
-            p.isWildcardCandidate
-        );
+        const flexProduct = this.products.find(p => {
+            // Si hay límite de stock, ignorar productos sin existencia
+            if (this.useStockLimit && (this.stockMap.get(p.cod) || 0) <= 0) return false;
+
+            return p.categoria?.toLowerCase().includes('flexible') ||
+                   p.categoria?.toLowerCase().includes('caramelo') ||
+                   p.isWildcardCandidate;
+        });
 
         if (flexProduct) {
             const basePrice = flexProduct.precio_cents;
@@ -388,6 +391,11 @@ export class MatchingEngine {
     origen: 'AUTO_MATCH' | 'MANUAL_USER' | 'CASH_FILLER',
     clasificacion: 'Transferencia' | 'Efectivo' | 'QR'
   ): Promise<ReconciliationLine> {
+    // Business Rule: Never match with zero stock if STOCK_LIMIT is active
+    if (this.useStockLimit && (this.stockMap.get(product.cod) || 0) <= 0) {
+        throw new Error(`Business Rule Violation: Product ${product.cod} has no stock but matching was attempted.`);
+    }
+
     const importe = product.precio_cents * qty;
 
     // Descontar del inventario virtual de la sesión si aplica
@@ -503,12 +511,21 @@ export class MatchingEngine {
 
     for (let i = 0; i < total; i++) {
         const tx = transactions[i];
-        const res = await this.matchTransaction(tx, tx.current_reconciled_cents || 0);
-        results.push({
-            transactionId: tx.referencia_origen,
-            status: res.status,
-            lines: res.lines
-        });
+        try {
+            const res = await this.matchTransaction(tx, tx.current_reconciled_cents || 0);
+            results.push({
+                transactionId: tx.referencia_origen,
+                status: res.status,
+                lines: res.lines
+            });
+        } catch (error) {
+            console.error(`[MatchingEngine] Error processing transaction ${tx.referencia_origen}:`, error);
+            results.push({
+                transactionId: tx.referencia_origen,
+                status: 'PENDIENTE',
+                lines: []
+            });
+        }
 
         if (onProgress) {
             const percentage = Math.round(((i + 1) / total) * 100);

@@ -35,12 +35,8 @@ import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
 import { Bug } from 'lucide-react';
 import { HorizontalScroll } from '@/components/ui/HorizontalScroll';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { IPVHelpDialog } from './IPVHelpDialog';
 
 export default function IPVView() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -278,6 +274,7 @@ export default function IPVView() {
   ], [handleGlobalRecalculate, handleRunMatching]);
 
   return (
+    <TooltipProvider delayDuration={200}>
     <div className="space-y-6">
       <LoadingOverlay isVisible={isMatching} message={matchMessage} progress={matchProgress} />
       {/* Help Section: Professional Flow */}
@@ -314,7 +311,10 @@ export default function IPVView() {
                 </Button>
             )}
             <div>
-                <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-primary uppercase">IPV Builder</h1>
+                <div className="flex items-center gap-2">
+                    <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-primary uppercase">IPV Builder</h1>
+                    <IPVHelpDialog />
+                </div>
                 <p className="text-xs sm:text-sm text-muted-foreground font-medium">Conciliación bancaria y generación de IPV</p>
             </div>
         </div>
@@ -440,6 +440,7 @@ export default function IPVView() {
         </div>
       </Tabs>
     </div>
+    </TooltipProvider>
   );
 }
 

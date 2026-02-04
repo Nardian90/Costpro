@@ -20,6 +20,11 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface SectionCardProps {
     id: string;
@@ -181,24 +186,39 @@ export function IPVControlPanel({ onSelect, onExportBackup, onImportBackup }: Pr
                     </div>
 
                     <div className="flex gap-2">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={onExportBackup}
-                            className="h-10 text-[10px] font-black uppercase tracking-widest gap-2 bg-background/50 shadow-sm hover:bg-primary hover:text-white transition-all border-primary/20 rounded-xl"
-                        >
-                            <Download className="w-4 h-4" />
-                            Respaldar
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => fileInputRef.current?.click()}
-                            className="h-10 text-[10px] font-black uppercase tracking-widest gap-2 bg-background/50 shadow-sm hover:bg-emerald-500 hover:text-white transition-all border-emerald-500/20 rounded-xl"
-                        >
-                            <Upload className="w-4 h-4" />
-                            Cargar Respaldo
-                        </Button>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={onExportBackup}
+                                    className="h-10 text-[10px] font-black uppercase tracking-widest gap-2 bg-background/50 shadow-sm hover:bg-primary hover:text-white transition-all border-primary/20 rounded-xl"
+                                >
+                                    <Download className="w-4 h-4" />
+                                    Respaldar
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                                Exporta todos los datos locales (transacciones, catálogo, reglas y reportes) a un archivo JSON para respaldo externo.
+                            </TooltipContent>
+                        </Tooltip>
+
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="h-10 text-[10px] font-black uppercase tracking-widest gap-2 bg-background/50 shadow-sm hover:bg-emerald-500 hover:text-white transition-all border-emerald-500/20 rounded-xl"
+                                >
+                                    <Upload className="w-4 h-4" />
+                                    Cargar Respaldo
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                                Importa un archivo de respaldo JSON. ¡Atención! Esto sobreescribirá todos los datos actuales de su base de datos local.
+                            </TooltipContent>
+                        </Tooltip>
                         <input
                             type="file"
                             ref={fileInputRef}

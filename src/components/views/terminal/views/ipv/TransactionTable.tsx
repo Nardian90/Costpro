@@ -30,7 +30,6 @@ import {
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import {
@@ -199,41 +198,70 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
 
                 <div className="h-4 w-px bg-border mx-1" />
 
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={bulkResetMatching}
-                    className="h-7 text-[10px] font-black uppercase text-orange-600 hover:bg-orange-500/10"
-                >
-                    <RotateCcw className="w-3 h-3 mr-1" /> Reset Matching
-                </Button>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={bulkResetMatching}
+                            className="h-7 text-[10px] font-black uppercase text-orange-600 hover:bg-orange-500/10"
+                        >
+                            <RotateCcw className="w-3 h-3 mr-1" /> Reset Matching
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                        Elimina todas las líneas de reconciliación de las transacciones visibles actualmente. ¡Acción destructiva!
+                    </TooltipContent>
+                </Tooltip>
             </div>
 
-            <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setHelpOpen(true)}
-                className="h-10 w-10 text-primary border-primary/20 hover:bg-primary/5"
-            >
-                <HelpCircle className="w-4 h-4" />
-            </Button>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setHelpOpen(true)}
+                        className="h-10 w-10 text-primary border-primary/20 hover:bg-primary/5"
+                    >
+                        <HelpCircle className="w-4 h-4" />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                    Ver ayuda detallada sobre las columnas y el proceso de importación de extractos.
+                </TooltipContent>
+            </Tooltip>
 
-            <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setLayoutMode('table')}
-                className={`h-10 w-10 ${layoutMode === 'table' ? 'bg-primary/10 text-primary border-primary/20' : ''}`}
-            >
-                <List className="w-4 h-4" />
-            </Button>
-            <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setLayoutMode('cards')}
-                className={`h-10 w-10 ${layoutMode === 'cards' ? 'bg-primary/10 text-primary border-primary/20' : ''}`}
-            >
-                <LayoutGrid className="w-4 h-4" />
-            </Button>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setLayoutMode('table')}
+                        className={`h-10 w-10 ${layoutMode === 'table' ? 'bg-primary/10 text-primary border-primary/20' : ''}`}
+                    >
+                        <List className="w-4 h-4" />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                    Vista de tabla detallada.
+                </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setLayoutMode('cards')}
+                        className={`h-10 w-10 ${layoutMode === 'cards' ? 'bg-primary/10 text-primary border-primary/20' : ''}`}
+                    >
+                        <LayoutGrid className="w-4 h-4" />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                    Vista de tarjetas optimizada para móviles.
+                </TooltipContent>
+            </Tooltip>
         </div>
       </div>
 
@@ -256,21 +284,19 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                 <TableHead>
                   <div className="flex items-center gap-1">
                       Estado
-                      <TooltipProvider>
-                          <Tooltip>
-                              <TooltipTrigger>
-                                  <Info className="w-3 h-3 text-muted-foreground" />
-                              </TooltipTrigger>
-                              <TooltipContent className="text-[10px] max-w-xs p-3">
-                                  <p className="font-black mb-1 text-primary">Estados de Conciliación:</p>
-                                  <ul className="space-y-1">
-                                      <li><strong>CUADRADA:</strong> Diferencia es $0.00. Listo para el IPV.</li>
-                                      <li><strong>EN PROCESO:</strong> Tiene productos pero aún no cuadra.</li>
-                                      <li><strong>PENDIENTE:</strong> Sin productos asociados.</li>
-                                  </ul>
-                              </TooltipContent>
-                          </Tooltip>
-                      </TooltipProvider>
+                      <Tooltip>
+                          <TooltipTrigger>
+                              <Info className="w-3 h-3 text-muted-foreground" />
+                          </TooltipTrigger>
+                          <TooltipContent className="text-[10px] max-w-xs p-3">
+                              <p className="font-black mb-1 text-primary">Estados de Conciliación:</p>
+                              <ul className="space-y-1">
+                                  <li><strong>CUADRADA:</strong> Diferencia es $0.00. Listo para el IPV.</li>
+                                  <li><strong>EN PROCESO:</strong> Tiene productos pero aún no cuadra.</li>
+                                  <li><strong>PENDIENTE:</strong> Sin productos asociados.</li>
+                              </ul>
+                          </TooltipContent>
+                      </Tooltip>
                   </div>
                 </TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
@@ -535,33 +561,55 @@ const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onUpdate
                         onSuccess={() => {}}
                     />
                 )}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 hover:bg-primary/10 hover:text-primary"
-                  onClick={onView}
-                >
-                    <Eye className="w-4 h-4" />
-                </Button>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 hover:bg-primary/10 hover:text-primary"
+                          onClick={onView}
+                        >
+                            <Eye className="w-4 h-4" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                        Ver detalles y gestionar reconciliación manual.
+                    </TooltipContent>
+                </Tooltip>
+
                 {matchedTotal > 0 && (
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 hover:bg-orange-500/10 hover:text-orange-500"
-                        onClick={onReset}
-                        title="Reiniciar Conciliación"
-                    >
-                        <RotateCcw className="w-4 h-4" />
-                    </Button>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 hover:bg-orange-500/10 hover:text-orange-500"
+                                onClick={onReset}
+                            >
+                                <RotateCcw className="w-4 h-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                            Reiniciar Conciliación: Borra los productos asociados a esta transacción.
+                        </TooltipContent>
+                    </Tooltip>
                 )}
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"
-                    onClick={onDelete}
-                >
-                    <Trash2 className="w-4 h-4" />
-                </Button>
+
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"
+                            onClick={onDelete}
+                        >
+                            <Trash2 className="w-4 h-4" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2 text-destructive">
+                        Eliminar Transacción permanentemente.
+                    </TooltipContent>
+                </Tooltip>
             </div>
           </TableCell>
         </TableRow>
@@ -604,16 +652,22 @@ function QuickAdjustPopover({ transaction, remaining, onSuccess }: { transaction
 
     return (
         <Popover>
-            <PopoverTrigger asChild>
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-orange-600 hover:bg-orange-500/10 hover:text-orange-600"
-                    title="Ajuste Rápido (Cuadrar diferencia)"
-                >
-                    <Wand2 className="w-4 h-4" />
-                </Button>
-            </PopoverTrigger>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <PopoverTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-orange-600 hover:bg-orange-500/10 hover:text-orange-600"
+                        >
+                            <Wand2 className="w-4 h-4" />
+                        </Button>
+                    </PopoverTrigger>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                    Ajuste Rápido: Distribuye la diferencia restante como propina o descuento en un producto existente.
+                </TooltipContent>
+            </Tooltip>
             <PopoverContent className="w-64 p-3 shadow-2xl rounded-2xl border-primary/20" align="end">
                 <div className="space-y-3">
                     <div className="flex justify-between items-center border-b pb-2">
