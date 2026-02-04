@@ -209,9 +209,10 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
           }
 
           let formaCalculo: FormaCalculo = 'FIJO';
-          if (r.calculationMethod === 'Prorrateo') formaCalculo = 'PRORRATEO';
-          if (r.calculationMethod === 'ANEXO') formaCalculo = 'ANEXO';
-          if (r.calculationMethod === 'ValorFijo') formaCalculo = 'FIJO';
+          const method = r.calculationMethod || '';
+          if (['Prorrateo', 'PRORRATEO'].includes(method)) formaCalculo = 'PRORRATEO';
+          if (['ANEXO', 'ANEXO_REF'].includes(method)) formaCalculo = 'ANEXO';
+          if (['ValorFijo', 'FIJO', 'MANUAL'].includes(method)) formaCalculo = 'FIJO';
           if (r.is_percent) formaCalculo = 'COEFICIENTE';
           if (formula) formaCalculo = 'FORMULA';
 
@@ -249,6 +250,8 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
             baseCalculo,
             coeficiente: r.is_percent ? (r.value ?? r.valorHistorico) : r.coeficiente,
             formula: formula,
+            fuente: r.note || r.fuente,
+            metadata: r.metadata
           });
 
           if (r.children) flatten(r.children, sectionIdx, currentNumbering, r.id);
@@ -296,6 +299,8 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
               coeficiente: r.formaCalculo === 'PRORRATEO'
                 ? (r.baseHist ? (r.valorHistorico || 0) / r.baseHist : 0)
                 : (r.coeficiente || 0),
+              fuente: r.fuente,
+              metadata: r.metadata,
               audits: r.audit,
               hasWarnings: r.audit.some(a => a.type === 'WARNING' || a.type === 'ERROR' || a.type === 'CYCLE_DETECTED') || rowValidationErrors.length > 0,
               validationErrors: rowValidationErrors.map(ve => ({
