@@ -17,7 +17,7 @@ export interface CostSheetRow {
   value?: number;
   baseDeCalculoRef?: string | null;
   base_ref?: string | null;
-  calculationMethod?: 'Prorrateo' | 'ValorFijo' | 'FORMULA';
+  calculationMethod?: 'Prorrateo' | 'ValorFijo' | 'FORMULA' | 'ANEXO';
   totalFormula?: string | null;
   formula?: string;
   is_percent?: boolean;
@@ -73,4 +73,5 @@ export interface CalculatedRowValue {
   total: number;
   audits?: any[];
   hasWarnings?: boolean;
+  validationErrors?: { message: string, type: 'CRITICAL' | 'WARNING', code: string }[];
 }
