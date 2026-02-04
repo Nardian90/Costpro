@@ -36,9 +36,6 @@ export class MatchingEngine {
     this.rules = rules.filter(r => r.activo).sort((a, b) => a.prioridad - b.prioridad);
     this.useStockLimit = this.rules.some(r => r.tipo === 'STOCK_LIMIT');
 
-    console.log(`[MatchingEngine] Initialized with ${products.length} total products, ${this.products.length} active.`);
-    console.log(`[MatchingEngine] Active rules:`, this.rules.map(r => r.tipo));
-
     // Inicializar mapa de inventario virtual para la sesión de matching
     for (const p of this.products) {
         this.stockMap.set(p.cod, p.stock_inicial_manual || 0);
@@ -51,16 +48,7 @@ export class MatchingEngine {
     let remaining_cents = targetAmount - current_reconciled_cents;
     const lines: ReconciliationLine[] = [];
 
-    console.log(`[MatchingEngine] Processing Tx: ${transaction.referencia_origen}`, {
-        importe_cents: transaction.importe_cents,
-        comision_cents: transaction.comision_cents,
-        targetAmount,
-        current_reconciled_cents,
-        remaining_cents
-    });
-
     if (Math.abs(remaining_cents) < 0.001) {
-        console.log(`[MatchingEngine] Tx ${transaction.referencia_origen} is already complete.`);
         return { lines: [], status: 'COMPLETO', logs: ['Transacción ya completada'] };
     }
 
@@ -97,7 +85,6 @@ export class MatchingEngine {
     // PASS 1: HARD_REF
     const hardRefRule = this.rules.find(r => r.tipo === 'HARD_REF');
     if (hardRefRule && remaining_cents > 0) {
-      console.log(`[MatchingEngine] [${transaction.referencia_origen}] PASS 1 (HARD_REF) starting...`);
       const matchedProduct = this.products.find(p => {
         // Si hay límite de stock, ignorar productos sin existencia
         if (this.useStockLimit && (this.stockMap.get(p.cod) || 0) <= 0) return false;
@@ -120,7 +107,6 @@ export class MatchingEngine {
           lines.push(line);
           remaining_cents -= line.importe_linea_cents;
           logs.push(`PASS 1 (HARD_REF): Matched ${qty}x ${matchedProduct.descripcion}`);
-          console.log(`[MatchingEngine] [${transaction.referencia_origen}] PASS 1 Matched ${qty}x ${matchedProduct.descripcion}`);
         }
       }
     }
@@ -128,7 +114,6 @@ export class MatchingEngine {
     // PASS 2: EXACT_SUM / EXACT_MATCH
     const exactSumRule = this.rules.find(r => r.tipo === 'EXACT_SUM');
     if (exactSumRule && remaining_cents > 0) {
-      console.log(`[MatchingEngine] [${transaction.referencia_origen}] PASS 2 (EXACT_SUM) starting for ${remaining_cents}...`);
       const combination = this.findExactCombination(remaining_cents);
       if (combination.length > 0) {
         // Guardar en caché
@@ -145,14 +130,12 @@ export class MatchingEngine {
           remaining_cents -= line.importe_linea_cents;
         }
         logs.push(`PASS 2 (EXACT_SUM): Encontrada combinación exacta`);
-        console.log(`[MatchingEngine] [${transaction.referencia_origen}] PASS 2 Found exact combination!`);
       }
     }
 
     // PASS 3: PRICE_FLEX (Ajuste táctico de precio)
     const priceFlexRule = this.rules.find(r => r.tipo === 'PRICE_FLEX');
     if (priceFlexRule && remaining_cents > 0) {
-        console.log(`[MatchingEngine] [${transaction.referencia_origen}] PASS 3 (PRICE_FLEX) starting...`);
         const maxAbs = priceFlexRule.meta?.maxAbs || 10;
         const maxPercent = priceFlexRule.meta?.maxPercent || 20;
 
@@ -187,7 +170,6 @@ export class MatchingEngine {
                     lines.push(line);
                     remaining_cents = 0;
                     logs.push(`PASS 3 (PRICE_FLEX): Ajustado precio de ${flexProduct.descripcion} de ${basePrice} a ${line.precio_unitario_cents}`);
-                    console.log(`[MatchingEngine] [${transaction.referencia_origen}] PASS 3 Price flex applied on ${flexProduct.descripcion}`);
             }
         }
     }
@@ -195,7 +177,6 @@ export class MatchingEngine {
     // PASS 4: WILDCARDS (Productos estratégicos)
     const wildcardsRule = this.rules.find(r => r.tipo === 'WILDCARDS');
     if (wildcardsRule && remaining_cents > 0) {
-        console.log(`[MatchingEngine] [${transaction.referencia_origen}] PASS 4 (WILDCARDS) starting...`);
         const wildcards = this.products
             .filter(p => p.isWildcardCandidate)
             .filter(p => !this.useStockLimit || (this.stockMap.get(p.cod) || 0) > 0)
@@ -223,7 +204,6 @@ export class MatchingEngine {
     // PASS 5: TOLERANCE
     const toleranceRule = this.rules.find(r => r.tipo === 'TOLERANCE');
     if (toleranceRule && remaining_cents > 0 && toleranceRule.tolerancia_cents) {
-      console.log(`[MatchingEngine] [${transaction.referencia_origen}] PASS 5 (TOLERANCE) starting...`);
       const candidateProducts = this.products
         .filter(p => !this.useStockLimit || (this.stockMap.get(p.cod) || 0) > 0)
         .sort((a,b) => b.precio_cents - a.precio_cents);
@@ -244,7 +224,6 @@ export class MatchingEngine {
     // PASS 6: CASH_FILL (Justified with real products if possible)
     const cashFillRule = this.rules.find(r => r.tipo === 'CASH_FILL');
     if (cashFillRule && remaining_cents > 0) {
-      console.log(`[MatchingEngine] [${transaction.referencia_origen}] PASS 6 (CASH_FILL) starting...`);
       const dailyLimit = cashFillRule.meta?.dailyLimitCents || Infinity;
 
       // Consultar cuánto se ha usado hoy en CASH_FILLER
@@ -308,8 +287,6 @@ export class MatchingEngine {
     }
 
     const status = Math.abs(remaining_cents) < 0.001 ? 'COMPLETO' : (lines.length > 0 ? 'PARCIAL' : 'PENDIENTE');
-
-    console.log(`[MatchingEngine] [${transaction.referencia_origen}] Finished. Status: ${status}, Lines: ${lines.length}, Remaining: ${remaining_cents}`);
 
     return {
       lines,
