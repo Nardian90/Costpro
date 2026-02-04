@@ -112,6 +112,12 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
   const warningErrors = (safeCalculated.validationErrors || []).filter(e => e.type === 'WARNING');
   const hasEngineWarnings = safeCalculated.hasWarnings || (!hasChildren && !row.is_percent && safeCalculated.total === 0 && ((row.valorHistorico ?? 0) > 0 || !!row.baseDeCalculoRef));
 
+  // Filter out self-reference from suggestions to prevent direct circular dependencies
+  const rowSuggestions = useMemo(() =>
+    suggestions.filter(s => s.value !== `ref('${row.id}')`),
+    [suggestions, row.id]
+  );
+
   return (
     <>
       <TableRow className={cn(
@@ -239,7 +245,8 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
               initialValue={row.formula || String(safeCalculated.total)}
               onSave={handleTotalSave}
               onCancel={() => setIsEditingTotal(false)}
-              suggestions={suggestions}
+              suggestions={rowSuggestions}
+              selfRef={`ref('${row.id}')`}
             />
           ) : (
             <div className="flex items-center justify-end gap-2 group-hover:scale-105 transition-transform origin-right">
