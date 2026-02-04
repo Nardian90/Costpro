@@ -809,7 +809,7 @@ export function CatalogTable() {
                         </TableCell>
                     </TableRow>
                 )}
-                {filtered.map((p) => {
+                {sortedAndFiltered.map((p) => {
                     const isEditing = editingId === p.cod;
                     const stats = inventoryStats[p.cod] || { initial: 0, sales: 0, final: 0 };
                     const isSelected = selectedProductIds.includes(p.cod);
