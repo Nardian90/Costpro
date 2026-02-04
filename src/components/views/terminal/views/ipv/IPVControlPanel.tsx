@@ -75,6 +75,13 @@ export function IPVControlPanel({ onSelect, onExportBackup, onImportBackup }: Pr
     };
     const sections = [
         {
+            id: 'help',
+            title: 'Guía de Flujo',
+            description: 'Protocolo estándar y flujo de trabajo recomendado para una conciliación 100% precisa.',
+            icon: <ClipboardList />,
+            color: 'text-primary'
+        },
+        {
             id: 'transactions',
             title: 'Transacciones',
             description: 'Gestión y validación de movimientos bancarios. Aquí se realiza la conciliación manual y automática.',
