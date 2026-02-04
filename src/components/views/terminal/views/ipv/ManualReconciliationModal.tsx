@@ -31,6 +31,7 @@ interface Props {
 export function ManualReconciliationModal({ transaction, open, onOpenChange }: Props) {
     const [searchTerm, setSearchTerm] = useState('');
     const [manualLines, setManualLines] = useState<Partial<ReconciliationLine>[]>([]);
+    const [forceProducts, setForceProducts] = useState<Product[] | null>(null);
 
     // Usar una query en vivo para la transacción para evitar datos obsoletos al editar comisiones
     const liveTx = useLiveQuery(
@@ -38,7 +39,26 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
         [transaction]
     );
 
-    const products = useLiveQuery(() => db.products.toArray());
+    const products = useLiveQuery(() => {
+        console.log('[ManualReconciliationModal] Fetching products from db...');
+        return db.products.toArray().then(p => {
+            console.log(`[ManualReconciliationModal] Loaded ${p.length} products`);
+            return p;
+        }).catch(err => {
+            console.error('[ManualReconciliationModal] Error loading products:', err);
+            return [];
+        });
+    }) || forceProducts;
+
+    const handleForceLoad = async () => {
+        try {
+            const p = await db.products.toArray();
+            setForceProducts(p);
+            toast.success(`Cargados ${p.length} productos manualmente`);
+        } catch (err) {
+            toast.error('Error al forzar carga de productos');
+        }
+    };
     const reconciliationLines = useLiveQuery(() => db.reconciliation_lines.toArray());
     const rules = useLiveQuery(() => db.matching_rules.toArray());
 
@@ -68,13 +88,16 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
     );
 
     const filteredProducts = useMemo(() => {
+        console.log('[ManualReconciliationModal] Filtering products, count:', products?.length);
         if (!products) return [];
-        return products
+        const res = products
             .filter(p => p.activo)
             .filter(p =>
                 p.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 p.cod.toLowerCase().includes(searchTerm.toLowerCase())
             );
+        console.log('[ManualReconciliationModal] Filtered products count:', res.length);
+        return res;
     }, [products, searchTerm]);
 
     const targetAmount = useMemo(() => {
@@ -357,6 +380,16 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
+                                {(!products || products.length === 0) && (
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] h-7"
+                                        onClick={handleForceLoad}
+                                    >
+                                        Recargar
+                                    </Button>
+                                )}
                             </div>
                         </div>
                         <ScrollArea className="flex-1">
@@ -368,7 +401,12 @@ export function ManualReconciliationModal({ transaction, open, onOpenChange }: P
                                         Los productos a medida (KG, M, etc.) requieren stock positivo.
                                     </p>
                                 </div>
-                                {filteredProducts.map(p => (
+                                {products === undefined && (
+                                    <div className="flex items-center justify-center p-12">
+                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                                    </div>
+                                )}
+                                {products !== undefined && filteredProducts.map(p => (
                                     <div
                                         key={p.cod}
                                         className="p-3 border rounded-xl hover:border-primary/50 hover:bg-primary/5 cursor-pointer transition-all flex justify-between items-center group shadow-sm active:scale-95"
