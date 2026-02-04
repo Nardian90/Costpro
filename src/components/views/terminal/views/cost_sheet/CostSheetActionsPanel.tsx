@@ -12,6 +12,7 @@ interface ActionItem {
   icon: React.ElementType;
   onClick: () => void;
   variant?: 'default' | 'primary' | 'success' | 'danger' | 'warning' | 'outline';
+  disabled?: boolean;
 }
 
 import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
@@ -120,12 +121,14 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
                       {group.items.map(item => (
                         <button
                           key={item.id}
+                          disabled={item.disabled}
                           onClick={() => {
                             item.onClick();
                             if (window.innerWidth < 1024) onClose();
                           }}
                           className={cn(
                             "w-full flex items-center gap-4 p-4 rounded-2xl transition-all group active:scale-95 text-left",
+                            "disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100",
                             item.variant === 'danger'
                               ? "hover:bg-danger/10 text-danger"
                               : item.variant === 'success'

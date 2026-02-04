@@ -248,9 +248,9 @@ const CostSheetView = () => {
     { id: 'load-example', label: 'Ejemplo', icon: FileText, onClick: loadExample, variant: 'outline' as const },
     { id: 'reset', label: 'Reiniciar', icon: Trash2, onClick: reset, variant: 'danger' as const },
     { id: 'import-json', label: 'Importar', icon: Upload, onClick: handleImportJSON, variant: 'outline' as const },
-    { id: 'export-json', label: 'Guardar', icon: Save, onClick: handleExportJSON, variant: isBlocked ? 'ghost' : 'outline' as const, disabled: isBlocked },
-    { id: 'export-excel', label: 'Excel', icon: FileSpreadsheet, onClick: handleExportExcel, variant: isBlocked ? 'ghost' : 'primary' as const, disabled: isBlocked },
-    { id: 'export-pdf', label: 'PDF', icon: Download, onClick: handleExportPDF, variant: isBlocked ? 'ghost' : 'success' as const, disabled: isBlocked },
+    { id: 'export-json', label: 'Guardar', icon: Save, onClick: handleExportJSON, variant: 'outline' as const, disabled: isBlocked },
+    { id: 'export-excel', label: 'Excel', icon: FileSpreadsheet, onClick: handleExportExcel, variant: (isBlocked ? 'outline' : 'primary') as any, disabled: isBlocked },
+    { id: 'export-pdf', label: 'PDF', icon: Download, onClick: handleExportPDF, variant: (isBlocked ? 'outline' : 'success') as any, disabled: isBlocked },
     { id: 'massive-gen', label: 'Gen. Masiva', icon: FileText, onClick: () => setIsMassiveGeneratorOpen(true), variant: 'outline' as const },
   ], [isEditing, loadExample, reset, handleImportJSON, handleExportJSON, handleExportExcel, handleExportPDF, isBlocked]);
 
