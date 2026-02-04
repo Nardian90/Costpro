@@ -186,7 +186,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
       };
       (template?.sections || []).forEach(s => calculateVH(s?.rows));
 
-      const flatten = (uiRows: CostSheetRow[], sectionIdx: number, parentNumbering?: string) => {
+      const flatten = (uiRows: CostSheetRow[], sectionIdx: number, parentNumbering?: string, parentId: string | null = null) => {
         (uiRows || []).forEach((r, rowIdx) => {
           // Calculate visual numbering (e.g. "1.1", "1.1.1")
           const currentNumbering = parentNumbering
@@ -234,13 +234,15 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
 
           // Map =sum(children) to a specific engine-compatible formula
           if (formula?.trim() === '=sum(children)' && r.children) {
-              const childRefs = r.children.map(c => `ref('${c.id}')`).join(', ');
+              // Filter out recursive children just in case (though UI should prevent this)
+              const validChildren = r.children.filter(c => c.id !== r.id);
+              const childRefs = validChildren.map(c => `ref('${c.id}')`).join(', ');
               formula = `sum(${childRefs})`;
           }
 
           engineRows.push({
             id: r.id,
-            parentId: null, // We could pass it but ref based formula is enough
+            parentId: parentId, // Correctly pass parentId for semantic validation
             classification: currentNumbering, // Use visual numbering for smart matching
             label: r.label,
             type,
@@ -251,10 +253,10 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
             formula: formula,
           });
 
-          if (r.children) flatten(r.children, sectionIdx, currentNumbering);
+          if (r.children) flatten(r.children, sectionIdx, currentNumbering, r.id);
         });
       };
-      (template?.sections || []).forEach((s, sIdx) => flatten(s?.rows, sIdx));
+      (template?.sections || []).forEach((s, sIdx) => flatten(s?.rows, sIdx, undefined, null));
 
       // Handle Section 13/14 Hard Rules mapping from UI to Engine types if needed
       // Engine already has some hardcoded IDs for Margin and Tax
