@@ -11,6 +11,31 @@ import {
 } from './types';
 import { translateFormulaFromSpanish } from './formula-utils';
 
+export function extractDependencies(row: CostRow, allRows: CostRow[]): string[] {
+  const deps: string[] = [];
+
+  if (row.formaCalculo === 'FORMULA' && row.formula) {
+    const formula = row.formula;
+    // Extract ref('...')
+    const refMatches = formula.matchAll(/ref\(['"]([^'"]+)['"]\)/g);
+    for (const match of refMatches) {
+        deps.push(match[1]);
+    }
+
+    // Extract children
+    if (formula.toLowerCase().includes('children')) {
+        const childrenIds = allRows.filter(r => r.parentId === row.id).map(r => r.id);
+        deps.push(...childrenIds);
+    }
+  }
+
+  if (row.baseCalculo?.type === 'FILA') {
+    deps.push(row.baseCalculo.classification);
+  }
+
+  return deps;
+}
+
 export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: string[]; validationErrors: ValidationError[] } {
   const errors: string[] = [];
   const validationErrors: ValidationError[] = [];
@@ -39,26 +64,12 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
   const parser = new Parser();
 
   ficha.rows.forEach((row) => {
-    const deps: string[] = [];
+    const deps = extractDependencies(row, ficha.rows);
 
-    // Extract dependencies from formula
     if (row.formaCalculo === 'FORMULA' && row.formula) {
         try {
             const formulaStr = translateFormulaFromSpanish(row.formula.startsWith('=') ? row.formula.substring(1) : row.formula);
-            const expr = parser.parse(formulaStr);
-            // expr-eval doesn't directly expose refs easily without evaluation,
-            // but we can use a regex for ref('...') or look at variables
-            const formulaContent = row.formula;
-            const refMatches = formulaContent.matchAll(/ref\(['"]([^'"]+)['"]\)/g);
-            for (const match of refMatches) {
-                deps.push(match[1]);
-            }
-
-            // If formula uses 'children', it depends on all rows that have this row as parent
-            if (formulaContent.toLowerCase().includes('children')) {
-                const childrenIds = ficha.rows.filter(r => r.parentId === row.id).map(r => r.id);
-                deps.push(...childrenIds);
-            }
+            parser.parse(formulaStr);
 
             // check for trivial formulas
             if (formulaStr.trim() === "0" || formulaStr.trim() === "") {
@@ -67,11 +78,6 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
         } catch (e) {
             validationErrors.push({ rowId: row.id, message: `Fórmula inválida: ${e}`, type: 'CRITICAL', code: 'INVALID_FORMULA' });
         }
-    }
-
-    // Dependencies from baseCalculo
-    if (row.baseCalculo?.type === 'FILA') {
-        deps.push(row.baseCalculo.classification);
     }
 
     adj.set(row.id, deps);
@@ -170,9 +176,16 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
   ficha.rows.forEach(row => {
       // 8.1 Utility (Section 13) - No self reference (already caught by cycle but being explicit)
       // Section 13 should depend on consolidated sections
-      const isUtility = row.id.startsWith('13') || row.classification.startsWith('13');
-      if (isUtility) {
-          if (row.formula && (row.formula.includes(`ref('${row.id}')`) || row.formula.includes(`ref('${row.classification}')`))) {
+      const isUtility = row.id === '13' || row.id.startsWith('13.') || row.classification === '13' || row.classification.startsWith('13.');
+      if (isUtility && row.formula) {
+          const selfRefs = [row.id, row.classification].filter(Boolean);
+          const hasSelfRef = selfRefs.some(refId => {
+              // Exact match for ref('ID') or ref("ID")
+              const regex = new RegExp(`ref\\(['"]${refId}['"]\\)`, 'g');
+              return regex.test(row.formula!);
+          });
+
+          if (hasSelfRef) {
               validationErrors.push({
                 rowId: row.id,
                 message: "Regla Crítica: La sección de Utilidad (13) no puede contener autorreferencias.",
@@ -254,20 +267,6 @@ export function calculateFicha(
   const visitedSort = new Set<string>();
   const visiting = new Set<string>();
 
-  const getRowDeps = (row: CostRow): string[] => {
-    const deps: string[] = [];
-    if (row.formaCalculo === 'FORMULA' && row.formula) {
-      const formula = row.formula;
-      const matches = formula.matchAll(/ref\(['"]([^'"]+)['"]\)/g);
-      for (const m of matches) deps.push(m[1]);
-      if (formula.toLowerCase().includes('children')) {
-        deps.push(...ficha.rows.filter(r => r.parentId === row.id).map(r => r.id));
-      }
-    }
-    if (row.baseCalculo?.type === 'FILA') deps.push(row.baseCalculo.classification);
-    return deps;
-  };
-
   const sortVisit = (uId: string) => {
     if (visitedSort.has(uId)) return;
     if (visiting.has(uId)) return; // Cycle handled by validation
@@ -275,7 +274,7 @@ export function calculateFicha(
 
     const row = ficha.rows.find(r => r.id === uId);
     if (row) {
-      const deps = getRowDeps(row);
+      const deps = extractDependencies(row, ficha.rows);
       for (const dId of deps) {
         let targets = ficha.rows.filter(r => r.id === dId).map(r => r.id);
         if (targets.length === 0) targets = ficha.rows.filter(r => r.classification === dId).map(r => r.id);
@@ -463,7 +462,8 @@ export function calculateFicha(
         break;
 
       case 'FORMULA':
-        if (!ficha.meta.settings?.allowFormulas && !ruleOverride) {
+        const allowFormulas = ficha.meta.settings?.allowFormulas !== false;
+        if (!allowFormulas && !ruleOverride) {
             total = new Decimal(0);
             type = 'ERROR';
             note += `Formulas are disabled.`;
