@@ -54,6 +54,12 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
                 deps.push(match[1]);
             }
 
+            // If formula uses 'children', it depends on all rows that have this row as parent
+            if (formulaContent.toLowerCase().includes('children')) {
+                const childrenIds = ficha.rows.filter(r => r.parentId === row.id).map(r => r.id);
+                deps.push(...childrenIds);
+            }
+
             // check for trivial formulas
             if (formulaStr.trim() === "0" || formulaStr.trim() === "") {
                 validationErrors.push({ rowId: row.id, message: "Fórmula trivial o vacía", type: 'WARNING', code: 'TRIVIAL_FORMULA' });
@@ -71,38 +77,51 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
     adj.set(row.id, deps);
   });
 
-  // DFS for Cycle Detection (DAG validation)
+  // DFS for Cycle Detection
   const visited = new Set<string>();
   const recStack = new Set<string>();
 
-  function validateNoCycles(u: string): boolean {
-    if (recStack.has(u)) {
-      const row = rowMap.get(u);
-      const isTotal = row?.nodeType === 'TOTAL' || row?.type === 'TOTAL';
-
-      validationErrors.push({
-        rowId: u,
-        message: isTotal
-          ? `ERROR_CRÍTICO (CYCLE): El totalizador '${row?.label || u}' se autorreferencia directa o indirectamente. Un total no puede formar parte de su propio cálculo.`
-          : `ERROR_CRÍTICO (CYCLE): Bucle de cálculo detectado en '${row?.label || u}'.`,
-        type: 'CRITICAL',
-        code: 'CYCLE'
-      });
-      return true;
-    }
-
-    if (visited.has(u)) return false;
-
+  function hasCycle(u: string): boolean {
     visited.add(u);
     recStack.add(u);
 
     const neighbors = adj.get(u) || [];
     for (const vId of neighbors) {
-      // vId could be an ID or a classification. Map it to actual row IDs
-      const targetIds = ficha.rows.filter(r => r.id === vId || r.classification === vId).map(r => r.id);
+      // Priority 1: Exact ID match
+      let targetIds = ficha.rows.filter(r => r.id === vId).map(r => r.id);
+
+      // Priority 2: Classification match (only if no ID match, or if we want to be inclusive)
+      // Actually, ref() in engine sums all matches. So we MUST be inclusive if it's from a ref().
+      // BUT for children dependency, it's definitely IDs.
+
+      if (targetIds.length === 0) {
+          targetIds = ficha.rows.filter(r => r.classification === vId).map(r => r.id);
+      }
+
+      if (targetIds.length === 0) {
+          // Missing reference is caught here or later
+          continue;
+      }
 
       for (const v of targetIds) {
-          if (validateNoCycles(v)) return true;
+          // Avoid false self-cycle when an ID of a child happens to match parent's classification
+          if (v === u && vId !== u) continue;
+
+          if (recStack.has(v)) {
+              const isSelf = v === u;
+              validationErrors.push({
+                rowId: u,
+                message: isSelf
+                  ? `Autorreferencia crítica detectada: La fila '${rowMap.get(u)?.label || u}' intenta calcularse usando su propio valor, lo cual es matemáticamente imposible.`
+                  : `Ciclo de dependencia detectado: La fila '${rowMap.get(u)?.label || u}' depende de '${rowMap.get(v)?.label || v}' (directa o indirectamente), lo cual genera un bucle infinito de cálculo.`,
+                type: 'CRITICAL',
+                code: 'CYCLE'
+              });
+              return true;
+          }
+          if (!visited.has(v)) {
+              if (hasCycle(v)) return true;
+          }
       }
     }
 
@@ -112,7 +131,7 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
 
   ficha.rows.forEach((row) => {
     if (!visited.has(row.id)) {
-      validateNoCycles(row.id);
+      hasCycle(row.id);
     }
   });
 
@@ -230,7 +249,52 @@ export function calculateFicha(
     annexTotals.set(anexoId, total);
   });
 
-  // 2. Initialize calculated rows
+  // 2. Topological Sort (Optimizes convergence to 1-pass for DAGs)
+  const sortedRows: CostRow[] = [];
+  const visitedSort = new Set<string>();
+  const visiting = new Set<string>();
+
+  const getRowDeps = (row: CostRow): string[] => {
+    const deps: string[] = [];
+    if (row.formaCalculo === 'FORMULA' && row.formula) {
+      const formula = row.formula;
+      const matches = formula.matchAll(/ref\(['"]([^'"]+)['"]\)/g);
+      for (const m of matches) deps.push(m[1]);
+      if (formula.toLowerCase().includes('children')) {
+        deps.push(...ficha.rows.filter(r => r.parentId === row.id).map(r => r.id));
+      }
+    }
+    if (row.baseCalculo?.type === 'FILA') deps.push(row.baseCalculo.classification);
+    return deps;
+  };
+
+  const sortVisit = (uId: string) => {
+    if (visitedSort.has(uId)) return;
+    if (visiting.has(uId)) return; // Cycle handled by validation
+    visiting.add(uId);
+
+    const row = ficha.rows.find(r => r.id === uId);
+    if (row) {
+      const deps = getRowDeps(row);
+      for (const dId of deps) {
+        let targets = ficha.rows.filter(r => r.id === dId).map(r => r.id);
+        if (targets.length === 0) targets = ficha.rows.filter(r => r.classification === dId).map(r => r.id);
+        for (const t of targets) {
+          if (t !== uId) sortVisit(t);
+        }
+      }
+      sortedRows.push(row);
+    }
+    visiting.delete(uId);
+    visitedSort.add(uId);
+  };
+
+  ficha.rows.forEach(r => sortVisit(r.id));
+
+  // If sorting failed somehow, fallback to original order to avoid losing data
+  const finalComputeOrder = sortedRows.length === ficha.rows.length ? sortedRows : ficha.rows;
+
+  // 3. Initialize calculated rows
   const calculatedRows = new Map<string, CalculatedRow>();
   ficha.rows.forEach((row) => {
     calculatedRows.set(row.id, {
@@ -266,13 +330,23 @@ export function calculateFicha(
   };
 
   parser.functions.sum = (...args: any[]) => {
-      return args.reduce((a, b) => a.plus(new Decimal(b || 0)), new Decimal(0)).toNumber();
+      let flatArgs: any[] = [];
+      args.forEach(arg => {
+          if (Array.isArray(arg)) flatArgs = flatArgs.concat(arg);
+          else flatArgs.push(arg);
+      });
+      return flatArgs.reduce((a, b) => a.plus(new Decimal(b || 0)), new Decimal(0)).toNumber();
   };
 
   parser.functions.average = (...args: any[]) => {
-      if (args.length === 0) return 0;
-      const sum = args.reduce((a, b) => a.plus(new Decimal(b || 0)), new Decimal(0));
-      return sum.div(args.length).toNumber();
+      let flatArgs: any[] = [];
+      args.forEach(arg => {
+          if (Array.isArray(arg)) flatArgs = flatArgs.concat(arg);
+          else flatArgs.push(arg);
+      });
+      if (flatArgs.length === 0) return 0;
+      const sum = flatArgs.reduce((a, b) => a.plus(new Decimal(b || 0)), new Decimal(0));
+      return sum.div(flatArgs.length).toNumber();
   };
 
   const computeRowTotal = (
@@ -417,7 +491,10 @@ export function calculateFicha(
             const context: any = {
                 VH: vh.toNumber(),
                 BASE_TOTAL: baseTotalValue.toNumber(),
-                COEF: row.coeficiente || 0
+                COEF: row.coeficiente || 0,
+                children: ficha.rows
+                    .filter(r => r.parentId === row.id)
+                    .map(r => calculatedRows.get(r.id)?.total || 0)
             };
 
             annexTotals.forEach((total, id) => {
@@ -445,7 +522,7 @@ export function calculateFicha(
     return { total, note, type, fuente: fuenteParts.join('|'), baseTotal: baseTotalValue, baseHist: baseHistValue };
   };
 
-  // 3. Iterative Solver
+  // 4. Iterative Solver
   let converged = false;
   let iterations = 0;
 
@@ -453,7 +530,7 @@ export function calculateFicha(
     iterations++;
     converged = true;
 
-    ficha.rows.forEach((row) => {
+    finalComputeOrder.forEach((row) => {
       const current = calculatedRows.get(row.id)!;
       const { total: computedTotal, note, type, fuente, baseTotal, baseHist } = computeRowTotal(row, calculatedRows);
 

@@ -26,8 +26,9 @@ import { useAuthStore } from '@/store';
 import { calculateFicha } from '@/lib/cost-engine';
 import { FichaJSON, CostRow, RowSemanticType, FormaCalculo, BaseRef } from '@/lib/cost-engine/types';
 import { toast } from 'sonner';
-import { Play, Pause, RotateCcw, Download, FileSpreadsheet, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Play, Pause, RotateCcw, Download, FileSpreadsheet, Loader2, CheckCircle2, AlertCircle, Upload } from 'lucide-react';
 import { exportToExcel } from '@/services/export-service';
+import { exportMassiveTemplate, importMassiveProducts } from '@/services/excel-service';
 
 interface MassiveResult {
   sku: string;
@@ -56,6 +57,8 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<MassiveResult[]>([]);
   const [currentIndex, setCurrentIndex] = useState(-1);
+  const [importedProducts, setImportedProducts] = useState<any[]>([]);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   // We fetch a large number of products for massive generation
   // In a real scenario, we might want to fetch all pages sequentially
@@ -67,8 +70,27 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
   );
 
   const products = useMemo(() => {
+    if (importedProducts.length > 0) return importedProducts;
     return inventoryData?.pages.flatMap(page => page.products) || [];
-  }, [inventoryData]);
+  }, [inventoryData, importedProducts]);
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      try {
+        const imported = await importMassiveProducts(file);
+        setImportedProducts(imported);
+        reset();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    e.target.value = '';
+  };
 
   const prepareFichaForProduct = useCallback((baseSheet: any, product: any): FichaJSON => {
     // 1. Map UI state to Engine-compatible JSON
@@ -166,6 +188,27 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                         price: product.price || 0,
                         importe: product.price || 0,
                         total: product.price || 0
+                    }
+                ]
+            };
+        }
+        if (product.cost > 0 && (a.id === 'IV' || a.id === '4')) {
+            const existingRows = (a.data || []).map((d: any) => ({
+                ...d,
+                classification: String(d.classification || d.label || '').split(' - ')[0].trim(),
+                importe: d.total || d.amount || d.depreciation_cost || d.price_total || 0
+            }));
+
+            return {
+                ...a,
+                rows: [
+                    ...existingRows,
+                    {
+                        classification: "3.1.3", // Contracted services/Other
+                        code: "FIXED_COST",
+                        description: `Costo Fijo Importado: ${product.name}`,
+                        amount: product.cost,
+                        importe: product.cost
                     }
                 ]
             };
@@ -305,6 +348,13 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !isProcessing && !open && onClose()}>
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept=".xlsx,.xls"
+        className="hidden"
+      />
       <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col overflow-hidden bg-sidebar/95 backdrop-blur-2xl border-sidebar-border shadow-2xl rounded-3xl">
         <DialogHeader className="p-6 border-b border-sidebar-border/50">
           <div className="flex items-center gap-4">
@@ -323,6 +373,50 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
+            {/* Source Selection */}
+            <div className="flex flex-wrap items-center gap-4 mb-2">
+                <div className={cn(
+                    "flex-1 p-4 rounded-2xl border transition-all flex items-center justify-between",
+                    importedProducts.length > 0 ? "bg-sidebar/20 border-sidebar-border" : "bg-primary/5 border-primary/20"
+                )}>
+                    <div>
+                        <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Origen de Datos</div>
+                        <div className="text-sm font-bold">{importedProducts.length > 0 ? "Listado Importado" : "Catálogo del Sistema"}</div>
+                    </div>
+                    <div className="flex gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={exportMassiveTemplate}
+                            className="h-8 rounded-xl text-[10px] font-black uppercase tracking-tighter"
+                        >
+                            <Download className="w-3 h-3 mr-1" />
+                            Plantilla
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleImportClick}
+                            className="h-8 rounded-xl text-[10px] font-black uppercase tracking-tighter"
+                        >
+                            <Upload className="w-3 h-3 mr-1" />
+                            Importar
+                        </Button>
+                        {importedProducts.length > 0 && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => { setImportedProducts([]); reset(); }}
+                                className="h-8 rounded-xl text-[10px] font-black uppercase tracking-tighter text-danger hover:bg-danger/10"
+                            >
+                                <RotateCcw className="w-3 h-3 mr-1" />
+                                Limpiar
+                            </Button>
+                        )}
+                    </div>
+                </div>
+            </div>
+
             {/* Stats / Progress */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10">
