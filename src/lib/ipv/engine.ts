@@ -205,13 +205,30 @@ export class MatchingEngine {
         .sort((a,b) => b.precio_cents - a.precio_cents);
 
       for (const product of candidateProducts) {
-        const diff = Math.abs(remaining_cents - product.precio_cents);
+        if (product.precio_cents <= 0) continue;
+
+        // Buscamos la cantidad que más se acerque al importe restante
+        let qty = Math.round(remaining_cents / product.precio_cents);
+        if (qty <= 0) qty = 1;
+
+        // Ajustar cantidad al stock disponible si aplica
+        if (this.useStockLimit) {
+            const available = this.stockMap.get(product.cod) || 0;
+            qty = Math.min(qty, available);
+        }
+
+        if (qty <= 0) continue;
+
+        const diff = Math.abs(remaining_cents - (product.precio_cents * qty));
         if (diff <= toleranceRule.tolerancia_cents) {
-          const line = await this.createLine(transaction, product, 1, 'AUTO_MATCH', 'Transferencia');
-          line.cuadre_cents = remaining_cents - product.precio_cents;
+          const line = await this.createLine(transaction, product, qty, 'AUTO_MATCH', 'Transferencia');
+          line.cuadre_cents = remaining_cents - (product.precio_cents * qty);
+          // IMPORTANTE: El importe de la línea debe ser el total incluyendo el descuadre
+          // para que el UI y los totales cuadren a 0.
+          line.importe_linea_cents = remaining_cents;
           lines.push(line);
           remaining_cents = 0;
-          logs.push(`PASS 5 (TOLERANCE): Matched ${product.descripcion} con cuadre de ${line.cuadre_cents}`);
+          logs.push(`PASS 5 (TOLERANCE): Matched ${qty}x ${product.descripcion} con cuadre de ${line.cuadre_cents}`);
           break;
         }
       }
