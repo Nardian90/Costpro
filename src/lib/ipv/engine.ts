@@ -48,10 +48,6 @@ export class MatchingEngine {
     let remaining_cents = targetAmount - current_reconciled_cents;
     const lines: ReconciliationLine[] = [];
 
-    if (Math.abs(remaining_cents) < 0.001) {
-        return { lines: [], status: 'COMPLETO', logs: ['Transacción ya completada'] };
-    }
-
     logs.push(`Iniciando matching para transacción ${transaction.referencia_origen} (Importe: ${targetAmount} cts, Restante: ${remaining_cents} cts)`);
 
     // PASS 0: AUTO-COMPLETE DEBITS OR EXCLUDED (Commissions/Expenses/Excluded)
@@ -336,26 +332,20 @@ export class MatchingEngine {
 
       if (targetForDay <= 0) continue;
 
-      // Usar el motor de matching para encontrar la mejor combinación de productos
-      // que sumen el objetivo del día, permitiendo ajustes residuales si es necesario.
-      const res = await this.matchTransaction({
-          fecha: date,
-          referencia_origen: `GOAL-${date}-${Math.random().toString(36).substring(7)}`,
-          importe_cents: 0,
-          importe_venta_cents: targetForDay,
-          tipo: 'Cr',
-          observaciones: 'Distribución de objetivo global',
-          estado_conciliacion: 'PENDIENTE'
-      } as any);
+      // Usar findExactCombination para encontrar productos reales que sumen el objetivo del día
+      // sin usar descuentos ni propinas (cuadre_cents).
+      const combination = this.findExactCombination(targetForDay);
 
-      // Aseguramos que el origen de dato sea CASH_FILLER para estas líneas
-      const processedLines = res.lines.map(l => ({
-          ...l,
-          origen_dato: 'CASH_FILLER' as const,
-          clasificacion: 'Efectivo' as const
-      }));
-
-      lines.push(...processedLines);
+      for (const item of combination) {
+        const line = await this.createLine(
+            { fecha: date, referencia_origen: `GOAL-${date}` } as any,
+            item.product,
+            item.qty,
+            'CASH_FILLER',
+            'Efectivo'
+        );
+        lines.push(line);
+      }
     }
 
     return lines;
@@ -387,7 +377,7 @@ export class MatchingEngine {
       fecha_operacion: transaction.fecha,
       ingreso_banco_cents: transaction.importe_cents, // Simplificación: asociamos el ingreso original
       venta_real_calculada_cents: importe,
-      comision_banco_cents: transaction.comision_cents || 0,
+      comision_banco_cents: 0,
       product_cod: product.cod,
       product_um: product.um,
       cantidad: qty,

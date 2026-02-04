@@ -67,7 +67,7 @@ export function TransactionBreakdown() {
     const txTotal = txLines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
     const tx = await db.bank_statements.get(line.transaction_ref);
     if (tx) {
-        const target = tx.importe_venta_cents || tx.importe_cents;
+        const target = tx.importe_cents;
         const newStatus = txTotal >= target - 0.001 ? 'COMPLETO' : (txTotal > 0 ? 'PARCIAL' : 'PENDIENTE');
         await db.bank_statements.update(tx.referencia_origen, { estado_conciliacion: newStatus });
     }
@@ -94,7 +94,7 @@ export function TransactionBreakdown() {
     const txTotal = txLines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
     const tx = await db.bank_statements.get(editingLine.transaction_ref);
     if (tx) {
-        const target = tx.importe_venta_cents || tx.importe_cents;
+        const target = tx.importe_cents;
         const newStatus = txTotal >= target - 0.001 ? 'COMPLETO' : (txTotal > 0 ? 'PARCIAL' : 'PENDIENTE');
         await db.bank_statements.update(tx.referencia_origen, { estado_conciliacion: newStatus });
     }
@@ -136,7 +136,6 @@ export function TransactionBreakdown() {
               <TableHead>Producto</TableHead>
               <TableHead className="text-center">Cant.</TableHead>
               <TableHead className="text-right">Precio Base</TableHead>
-              <TableHead className="text-right text-red-500">Comis.</TableHead>
               <TableHead className="text-right text-green-600">Propina</TableHead>
               <TableHead className="text-right text-red-600">Descuento</TableHead>
               <TableHead className="text-right">Importe Real</TableHead>
@@ -182,13 +181,6 @@ export function TransactionBreakdown() {
                       <div className="text-xs font-bold text-muted-foreground">
                         {formatCurrency(basePrice)}
                       </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                        {l.comision_banco_cents > 0 ? (
-                            <div className="text-xs font-bold text-red-500">
-                                {formatCurrency(l.comision_banco_cents)}
-                            </div>
-                        ) : <span className="text-muted-foreground opacity-30 text-[10px]">—</span>}
                     </TableCell>
                     <TableCell className="text-right">
                         {propina > 0 ? (

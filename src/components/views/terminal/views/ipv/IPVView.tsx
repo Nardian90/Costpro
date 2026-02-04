@@ -32,7 +32,6 @@ import { exportFullBackup, importFullBackup } from '@/lib/ipv/backup';
 import { recalculateIPVReportsChain } from '@/lib/ipv/utils';
 import { toast } from 'sonner';
 import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
-import { Bug } from 'lucide-react';
 import { HorizontalScroll } from '@/components/ui/HorizontalScroll';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -56,15 +55,10 @@ export default function IPVView() {
     const map = new Map<string, number>();
     if (!products || !reconciliationLines) return map;
 
-    // Optimización: Agrupar ventas por producto primero (O(M))
-    const salesByProduct = new Map<string, number>();
-    for (const l of reconciliationLines) {
-        salesByProduct.set(l.product_cod, (salesByProduct.get(l.product_cod) || 0) + l.cantidad);
-    }
-
-    // Calcular stock final (O(N))
     products.forEach(p => {
-        const sold = salesByProduct.get(p.cod) || 0;
+        const sold = reconciliationLines
+            .filter(l => l.product_cod === p.cod)
+            .reduce((sum, l) => sum + l.cantidad, 0);
         map.set(p.cod, (p.stock_inicial_manual || 0) - sold);
     });
     return map;

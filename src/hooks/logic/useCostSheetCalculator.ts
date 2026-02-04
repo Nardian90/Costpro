@@ -199,9 +199,6 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
           if (r.id === '13.2') type = 'TAX';
           if (['14', '12', '5'].includes(r.id)) type = 'TOTAL';
 
-          // Structural classification (BASE/TOTAL) per CARTA TÉCNICA
-          const nodeType: 'BASE' | 'TOTAL' = (r.children && r.children.length > 0) || type === 'TOTAL' ? 'TOTAL' : 'BASE';
-
           // Map calculation method
           let formula = r.formula || r.totalFormula;
 
@@ -236,11 +233,9 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
           }
 
           // Map =sum(children) to a specific engine-compatible formula
-          if (formula?.trim() === '=sum(children)' && r.children) {
-              // Filter out recursive children just in case (though UI should prevent this)
-              const validChildren = r.children.filter(c => c.id !== r.id);
-              const childRefs = validChildren.map(c => `ref('${c.id}')`).join(', ');
-              formula = `sum(${childRefs})`;
+          // The engine now handles 'children' keyword natively in context
+          if (formula?.trim() === '=sum(children)' || formula?.trim() === 'sum(children)') {
+              formula = 'sum(children)';
           }
 
           engineRows.push({
@@ -249,7 +244,6 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
             classification: currentNumbering, // Use visual numbering for smart matching
             label: r.label,
             type,
-            nodeType,
             formaCalculo,
             valorHistorico: vhSums[r.id] ?? r.valorHistorico ?? r.value,
             baseCalculo,
