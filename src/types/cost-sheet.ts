@@ -71,6 +71,8 @@ export interface CalculatedRowValue {
   baseValorHistorico: number;
   coeficiente: number;
   total: number;
+  fuente?: string;
+  metadata?: Record<string, any>;
   audits?: any[];
   hasWarnings?: boolean;
   validationErrors?: { message: string, type: 'CRITICAL' | 'WARNING', code: string }[];

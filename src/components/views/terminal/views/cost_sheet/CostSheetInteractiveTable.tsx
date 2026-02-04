@@ -106,7 +106,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
 
 
   const isResultRow = row.is_percent || ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '13.1', '13.2', '14', '15', '16'].includes(String(row.id));
-  const safeCalculated = calculated || { total: 0, valorHistorico: 0, baseTotal: 0, coeficiente: 0, hasWarnings: false, audits: [], validationErrors: [] };
+  const safeCalculated = calculated || { total: 0, valorHistorico: 0, baseTotal: 0, coeficiente: 0, hasWarnings: false, audits: [], validationErrors: [], fuente: '', metadata: {} };
 
   const criticalErrors = (safeCalculated.validationErrors || []).filter(e => e.type === 'CRITICAL');
   const warningErrors = (safeCalculated.validationErrors || []).filter(e => e.type === 'WARNING');
@@ -279,6 +279,15 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                                     </div>
                                 </div>
                             ))}
+
+                            {/* Calculation Context / Auditability */}
+                            {(safeCalculated.fuente || safeCalculated.metadata?.rule) && (
+                                <div className="text-[10px] bg-primary/5 p-2 rounded border border-primary/20 mb-2">
+                                    <span className="font-bold uppercase text-[8px] block text-primary opacity-70">Contexto / Base Legal</span>
+                                    {safeCalculated.metadata?.rule && <div className="font-black mb-1">{safeCalculated.metadata.rule}</div>}
+                                    {safeCalculated.fuente && <div className="italic text-muted-foreground">{safeCalculated.fuente}</div>}
+                                </div>
+                            )}
 
                             {/* Engine Audits */}
                             {safeCalculated.audits && safeCalculated.audits.filter(a => a.type === 'ERROR' || a.type === 'WARNING' || a.type === 'CYCLE_DETECTED').map((a: any, idx: number) => (
