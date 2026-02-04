@@ -32,6 +32,7 @@ import { exportFullBackup, importFullBackup } from '@/lib/ipv/backup';
 import { recalculateIPVReportsChain } from '@/lib/ipv/utils';
 import { toast } from 'sonner';
 import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
+import { Bug } from 'lucide-react';
 import { HorizontalScroll } from '@/components/ui/HorizontalScroll';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
 import {
