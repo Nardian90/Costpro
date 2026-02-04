@@ -268,6 +268,10 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                                             </div>
                                             <FunctionSquare className="absolute -top-1 -right-1 w-2.5 h-2.5 text-primary/30" />
                                         </div>
+                                    ) : col.key === 'no' ? (
+                                        <div className="neu-inset-sm px-3 py-2 font-black text-center bg-muted/20 text-muted-foreground w-12 border border-border/50 mx-auto">
+                                            {rowIndex + 1}
+                                        </div>
                                     ) : (
                                         <div className="relative group/cell">
                                             <Input
@@ -276,6 +280,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                                                 onChange={(e) => handleInputChange(['annexes', annexIndex, 'data', rowIndex, col.key], e.target.value)}
                                                 list={(() => {
                                                     const isDescriptionColumn = col.key === 'description' || col.label === 'DESCRIPCIÓN DEL PUESTO';
+                                                    if (activeAnnexId === 'I' && col.key === 'description') return undefined;
                                                     if (activeAnnexId === 'II' && isDescriptionColumn) return undefined;
                                                     if (['IV', 'V'].includes(activeAnnexId) && isDescriptionColumn) return undefined;
                                                     if (col.key === 'classification' || col.key === 'description') return 'classification-suggestions';
