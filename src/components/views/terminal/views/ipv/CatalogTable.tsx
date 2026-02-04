@@ -34,7 +34,6 @@ import { recalculateIPVReportsChain } from '@/lib/ipv/utils';
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
@@ -419,79 +418,112 @@ export function CatalogTable() {
                 </Button>
             </div>
 
-            <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button variant="outline" size="icon" className="rounded-full h-10 w-10">
-                            <HelpCircle className="w-4 h-4" />
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-xs p-4">
-                        <p className="font-bold text-primary mb-2">Ayuda de Columnas:</p>
-                        <ul className="text-[10px] space-y-1 list-disc pl-4 uppercase font-bold">
-                            <li><strong>cod:</strong> Identificador único.</li>
-                            <li><strong>Precio:</strong> Valor unitario en centavos.</li>
-                            <li><strong>Prioridad:</strong> 1-5 (Menor es mayor prioridad).</li>
-                            <li><strong>Stock Inicial:</strong> Punto de partida manual.</li>
-                        </ul>
-                    </TooltipContent>
-                </Tooltip>
-            </TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="outline" size="icon" className="rounded-full h-10 w-10">
+                        <HelpCircle className="w-4 h-4" />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs p-4">
+                    <p className="font-bold text-primary mb-2">Ayuda de Columnas:</p>
+                    <ul className="text-[10px] space-y-1 list-disc pl-4 uppercase font-bold">
+                        <li><strong>cod:</strong> Identificador único.</li>
+                        <li><strong>Precio:</strong> Valor unitario en centavos.</li>
+                        <li><strong>Prioridad:</strong> 1-5 (Menor es mayor prioridad).</li>
+                        <li><strong>Stock Inicial:</strong> Punto de partida manual.</li>
+                    </ul>
+                </TooltipContent>
+            </Tooltip>
 
-            <Button
-                variant="outline"
-                size="sm"
-                onClick={handleNormalizeNegatives}
-                className="h-12 sm:h-10 text-[10px] uppercase font-black tracking-widest gap-2 text-red-500 border-red-200 hover:bg-red-50 flex-1 sm:flex-none"
-            >
-                <AlertTriangle className="w-4 h-4" />
-                <span className="hidden sm:inline">Normalizar Negativos</span>
-                <span className="sm:hidden">Normalizar</span>
-            </Button>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleNormalizeNegatives}
+                        className="h-12 sm:h-10 text-[10px] uppercase font-black tracking-widest gap-2 text-red-500 border-red-200 hover:bg-red-50 flex-1 sm:flex-none"
+                    >
+                        <AlertTriangle className="w-4 h-4" />
+                        <span className="hidden sm:inline">Normalizar Negativos</span>
+                        <span className="sm:hidden">Normalizar</span>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                    Ajusta automáticamente el stock inicial de productos con existencia negativa para que su saldo final sea cero o superior.
+                </TooltipContent>
+            </Tooltip>
 
-            <Button
-                variant="outline"
-                size="sm"
-                onClick={syncWithSystemCatalog}
-                disabled={isSyncing}
-                className="h-12 sm:h-10 text-[10px] uppercase font-black tracking-widest gap-2 text-primary border-primary/20 flex-1 sm:flex-none"
-            >
-                <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
-                Catálogo Real
-            </Button>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={syncWithSystemCatalog}
+                        disabled={isSyncing}
+                        className="h-12 sm:h-10 text-[10px] uppercase font-black tracking-widest gap-2 text-primary border-primary/20 flex-1 sm:flex-none"
+                    >
+                        <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                        Catálogo Real
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                    Sincroniza los precios y stock inicial con la base de datos central de la tienda activa.
+                </TooltipContent>
+            </Tooltip>
 
-            <Button
-                variant="outline"
-                size="sm"
-                onClick={handleAddNew}
-                className="h-12 sm:h-10 text-[10px] uppercase font-black tracking-widest gap-2 flex-1 sm:flex-none"
-            >
-                <Plus className="w-4 h-4" />
-                <span className="hidden sm:inline">Nuevo Producto</span>
-                <span className="sm:hidden">Nuevo</span>
-            </Button>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleAddNew}
+                        className="h-12 sm:h-10 text-[10px] uppercase font-black tracking-widest gap-2 flex-1 sm:flex-none"
+                    >
+                        <Plus className="w-4 h-4" />
+                        <span className="hidden sm:inline">Nuevo Producto</span>
+                        <span className="sm:hidden">Nuevo</span>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                    Añade manualmente un producto temporal al catálogo local para procesos de conciliación específicos.
+                </TooltipContent>
+            </Tooltip>
 
-            <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRecalculateReportsChain}
-                className="h-12 sm:h-10 text-[10px] uppercase font-black tracking-widest gap-2 text-primary border-primary/20 flex-1 sm:flex-none"
-            >
-                <RefreshCw className="w-4 h-4" />
-                <span className="hidden sm:inline">Recalcular IPVs</span>
-                <span className="sm:hidden">Recalcular</span>
-            </Button>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleRecalculateReportsChain}
+                        className="h-12 sm:h-10 text-[10px] uppercase font-black tracking-widest gap-2 text-primary border-primary/20 flex-1 sm:flex-none"
+                    >
+                        <RefreshCw className="w-4 h-4" />
+                        <span className="hidden sm:inline">Recalcular IPVs</span>
+                        <span className="sm:hidden">Recalcular</span>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                    Fuerza el recalculo de la existencia inicial de cada día basándose en el cierre del día anterior para toda la historia del reporte.
+                </TooltipContent>
+            </Tooltip>
 
-            <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRecalculateIntelligence}
-                disabled={isSyncing}
-                className="h-12 sm:h-10 text-[10px] uppercase font-black tracking-widest gap-2 text-purple-500 border-purple-200 hover:bg-purple-50 flex-1 sm:flex-none"
-            >
-                <Brain className={`w-4 h-4 ${isSyncing ? 'animate-pulse' : ''}`} />
-                <span>Inteligencia</span>
-            </Button>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleRecalculateIntelligence}
+                        disabled={isSyncing}
+                        className="h-12 sm:h-10 text-[10px] uppercase font-black tracking-widest gap-2 text-purple-500 border-purple-200 hover:bg-purple-50 flex-1 sm:flex-none"
+                    >
+                        <Brain className={`w-4 h-4 ${isSyncing ? 'animate-pulse' : ''}`} />
+                        <span>Inteligencia</span>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                    Analiza patrones de venta históricos para sugerir precios óptimos y ajustar prioridades de matching automáticamente.
+                </TooltipContent>
+            </Tooltip>
 
             <Button
                 variant="outline"
@@ -507,52 +539,52 @@ export function CatalogTable() {
             </Button>
 
             <div className="flex gap-1 bg-purple-50 p-1 rounded-xl border border-purple-100">
-                <TooltipProvider>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button variant="ghost" size="sm" onClick={handleAcceptSuggestions} className="h-8 text-[9px] font-black uppercase text-purple-600 hover:bg-purple-100">
-                                <Sparkles className="w-3 h-3 mr-1" />
-                                Aceptar Todo
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Aplicar todas las sugerencias inteligentes</TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button variant="ghost" size="sm" onClick={handleAcceptSuggestions} className="h-8 text-[9px] font-black uppercase text-purple-600 hover:bg-purple-100">
+                            <Sparkles className="w-3 h-3 mr-1" />
+                            Aceptar Todo
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                        Aplica masivamente el precio sugerido por el motor de inteligencia a todos los productos seleccionados.
+                    </TooltipContent>
+                </Tooltip>
 
-                <TooltipProvider>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button variant="ghost" size="sm" onClick={() => handleBulkPriority('auto')} className="h-8 text-[9px] font-black uppercase text-purple-600 hover:bg-purple-100">
-                                <Star className="w-3 h-3 mr-1" />
-                                Prio Auto
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Poner todo en Prioridad Automática</TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button variant="ghost" size="sm" onClick={() => handleBulkPriority('auto')} className="h-8 text-[9px] font-black uppercase text-purple-600 hover:bg-purple-100">
+                            <Star className="w-3 h-3 mr-1" />
+                            Prio Auto
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                        Cambia el modo de prioridad a "Automático" para los productos seleccionados, permitiendo que el sistema decida según el volumen de ventas.
+                    </TooltipContent>
+                </Tooltip>
 
-                <TooltipProvider>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button variant="ghost" size="sm" onClick={handleBulkPercentageAdjustment} className="h-8 text-[9px] font-black uppercase text-purple-600 hover:bg-purple-100">
-                                <Percent className="w-3 h-3 mr-1" />
-                                Ajuste %
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Ajuste masivo por porcentaje</TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button variant="ghost" size="sm" onClick={handleBulkPercentageAdjustment} className="h-8 text-[9px] font-black uppercase text-purple-600 hover:bg-purple-100">
+                            <Percent className="w-3 h-3 mr-1" />
+                            Ajuste %
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                        Modifica el precio de venta actual aplicando un factor porcentual (ej: 110% para subir un 10%).
+                    </TooltipContent>
+                </Tooltip>
 
-                <TooltipProvider>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button variant="ghost" size="sm" onClick={handleResetPrices} className="h-8 text-[9px] font-black uppercase text-red-600 hover:bg-red-50">
-                                <RotateCcw className="w-3 h-3" />
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Restablecer Precios Base</TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button variant="ghost" size="sm" onClick={handleResetPrices} className="h-8 text-[9px] font-black uppercase text-red-600 hover:bg-red-50">
+                            <RotateCcw className="w-3 h-3" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                        Revierte los precios modificados a su valor original de la última sincronización.
+                    </TooltipContent>
+                </Tooltip>
             </div>
         </div>
       </div>
@@ -746,19 +778,17 @@ export function CatalogTable() {
 
                         <TableCell>
                             {!isEditing && p.suggestedPrice && (
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <Badge className="bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 border-purple-500/20 gap-1 cursor-help">
-                                                <Sparkles className="w-3 h-3" />
-                                                {p.suggestedPrice}
-                                            </Badge>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p className="text-xs max-w-xs">{p.suggestionReason}</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Badge className="bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 border-purple-500/20 gap-1 cursor-help">
+                                            <Sparkles className="w-3 h-3" />
+                                            {p.suggestedPrice}
+                                        </Badge>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p className="text-xs max-w-xs">{p.suggestionReason}</p>
+                                    </TooltipContent>
+                                </Tooltip>
                             )}
                         </TableCell>
 
