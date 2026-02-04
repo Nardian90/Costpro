@@ -236,11 +236,9 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
           }
 
           // Map =sum(children) to a specific engine-compatible formula
-          if (formula?.trim() === '=sum(children)' && r.children) {
-              // Filter out recursive children just in case (though UI should prevent this)
-              const validChildren = r.children.filter(c => c.id !== r.id);
-              const childRefs = validChildren.map(c => `ref('${c.id}')`).join(', ');
-              formula = `sum(${childRefs})`;
+          // The engine now handles 'children' keyword natively in context
+          if (formula?.trim() === '=sum(children)' || formula?.trim() === 'sum(children)') {
+              formula = 'sum(children)';
           }
 
           engineRows.push({
