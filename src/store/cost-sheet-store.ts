@@ -19,6 +19,15 @@ const clearTemplate = (template: any) => {
         cleared.header.code = "";
         cleared.header.name = "";
         cleared.header.quantity = 0;
+        cleared.header.product_code = "";
+        cleared.header.company = "";
+        cleared.header.organism = "";
+        cleared.header.union = "";
+        cleared.header.destination = "";
+        cleared.header.production_level = 0;
+        cleared.header.capacity_utilization = 0;
+        cleared.header.sale_price = 0;
+        cleared.header.client = "";
     }
 
     // Clear sections and rows

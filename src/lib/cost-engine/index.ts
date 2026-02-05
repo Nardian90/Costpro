@@ -742,7 +742,10 @@ export function calculateFicha(
 
   return {
     fichaId: ficha.meta.id,
+    fichaName: ficha.meta.name,
+    metadata: { header: ficha.meta },
     rows: Array.from(calculatedRows.values()),
+    anexos: ficha.anexos,
     audits: Array.from(calculatedRows.values()).flatMap(r => r.audit),
     summary,
     validationErrors: validationErrors.map(e => e.message),
