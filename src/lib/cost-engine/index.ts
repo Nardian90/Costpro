@@ -366,7 +366,6 @@ export function calculateFicha(
   };
 
   parser.functions.header = (key: string) => {
-      if (key === 'quantity') return ficha.meta.quantity || 0;
       // Handle other meta fields if needed
       if (key === 'decimals') return ficha.meta.decimals;
       return 0;
@@ -582,8 +581,8 @@ export function calculateFicha(
                 BASE_TOTAL: baseTotalValue.toNumber(),
                 COEF: row.coeficiente || 0,
                 QUANTITY: ficha.meta.quantity || 0,
+                cantidad: ficha.meta.quantity || 0,
                 header: {
-                    quantity: ficha.meta.quantity || 0
                 },
                 children: ficha.rows
                     .filter(r => r.parentId === row.id)
@@ -641,8 +640,8 @@ export function calculateFicha(
             const vhContext: any = {
                 VH: row.valorHistorico || 0,
                 QUANTITY: ficha.meta.quantity || 0,
+                cantidad: ficha.meta.quantity || 0,
                 header: {
-                    quantity: ficha.meta.quantity || 0
                 },
                 children: ficha.rows
                     .filter(r => r.parentId === row.id)
