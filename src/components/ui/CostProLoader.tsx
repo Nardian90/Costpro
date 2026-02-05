@@ -13,12 +13,11 @@ interface CostProLoaderProps {
 }
 
 /**
- * CostProLoader - "Ultra-Fluid International" Edition
- * Diseñado para ser visualmente impresionante y técnicamente invulnerable al lag.
- * Emplea capas de composición separadas (Hardware Acceleration).
+ * CostProLoader - "Minimalist Splash" Edition
+ * Basado únicamente en la identidad "C" con su efecto característico.
  */
 export const CostProLoader: React.FC<CostProLoaderProps> = ({
-  size = 180,
+  size = 120,
   text,
   subtext,
   showText = !!text,
@@ -28,27 +27,20 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
   const id = React.useId().replace(/:/g, '');
 
   return (
-    <div className={cn("flex flex-col items-center justify-center gap-8", className)}>
+    <div className={cn("flex flex-col items-center justify-center gap-6", className)}>
       <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes cp-orbit-${id} {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-
-        @keyframes cp-inner-spin-${id} {
-          0% { transform: rotate(0deg) scale(1); }
-          50% { transform: rotate(-180deg) scale(1.1); }
-          100% { transform: rotate(-360deg) scale(1); }
-        }
-
         @keyframes cp-breathe-${id} {
-          0%, 100% { transform: scale(1); opacity: 0.7; }
-          50% { transform: scale(1.1); opacity: 1; }
+          0%, 100% { transform: scale(1); opacity: 0.8; }
+          50% { transform: scale(1.05); opacity: 1; filter: drop-shadow(0 0 20px rgba(34, 197, 94, 0.4)); }
         }
 
-        @keyframes cp-glow-pulse-${id} {
-          0%, 100% { box-shadow: 0 0 20px rgba(34, 197, 94, 0.2); }
-          50% { box-shadow: 0 0 40px rgba(34, 197, 94, 0.4); }
+        @keyframes cp-spin-slow-${id} {
+          from { transform: rotate(135deg); }
+          to { transform: rotate(495deg); }
+        }
+
+        @keyframes cp-shimmer-${id} {
+          to { background-position: 200% center; }
         }
 
         .cp-viewport-${id} {
@@ -56,47 +48,20 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
           display: flex;
           align-items: center;
           justify-content: center;
-          isolation: isolate;
-        }
-
-        .cp-layer-main-${id} {
-          position: absolute;
-          width: 100%;
-          height: 100%;
-          animation: cp-orbit-${id} 1.8s cubic-bezier(0.65, 0, 0.35, 1) infinite;
-          will-change: transform;
-        }
-
-        .cp-layer-secondary-${id} {
-          position: absolute;
-          width: 90%;
-          height: 90%;
-          animation: cp-inner-spin-${id} 4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
-          opacity: 0.3;
-          will-change: transform;
-        }
-
-        .cp-core-identity-${id} {
-          position: relative;
-          z-index: 10;
-          animation: cp-breathe-${id} 2s ease-in-out infinite;
-          filter: drop-shadow(0 0 15px rgba(34, 197, 94, 0.5));
+          animation: cp-breathe-${id} 2.5s ease-in-out infinite;
           will-change: transform, opacity;
         }
 
-        .cp-text-wrap-${id} {
-          text-align: center;
-          display: flex;
-          flex-direction: column;
-          gap: 0.5rem;
-          perspective: 1000px;
+        .cp-logo-c-${id} {
+          transform: rotate(135deg);
+          /* animation: cp-spin-slow-${id} 3s linear infinite; */ /* Descomentar si se prefiere rotación */
         }
 
-        .cp-brand-h1-${id} {
+        .cp-brand-text-${id} {
           font-family: 'Segoe UI', system-ui, sans-serif;
           font-weight: 950;
-          font-size: 1.1rem;
-          letter-spacing: 0.5em;
+          font-size: 1rem;
+          letter-spacing: 0.4em;
           text-transform: uppercase;
           background: linear-gradient(135deg, #059669 0%, #10b981 50%, #059669 100%);
           background-size: 200% auto;
@@ -105,12 +70,8 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
           animation: cp-shimmer-${id} 3s linear infinite;
         }
 
-        @keyframes cp-shimmer-${id} {
-          to { background-position: 200% center; }
-        }
-
         .cp-sub-info-${id} {
-          font-size: 10px;
+          font-size: 9px;
           font-weight: 800;
           color: #94a3b8;
           text-transform: uppercase;
@@ -120,51 +81,45 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
       `}} />
 
       <div className={`cp-viewport-${id}`} style={{ width: size, height: size }}>
-        {/* Capa de composición 1: El Chaser de alto contraste */}
-        <div className={`cp-layer-main-${id}`}>
-          <svg viewBox="0 0 100 100" fill="none" className="w-full h-full">
-            <defs>
-              <linearGradient id={`grad1-${id}`} x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#22c55e" stopOpacity="0" />
-                <stop offset="50%" stopColor="#22c55e" stopOpacity="0.5" />
-                <stop offset="100%" stopColor="#22c55e" />
-              </linearGradient>
-            </defs>
-            <circle
-              cx="50" cy="50" r="45"
-              stroke={`url(#grad1-${id})`}
-              strokeWidth="4"
-              strokeLinecap="round"
-              strokeDasharray="140 140"
-            />
-          </svg>
-        </div>
+        {/* Resplandor sutil (Glow) de fondo */}
+        <div className="absolute inset-0 bg-green-500/10 dark:bg-green-400/10 blur-[30px] rounded-full" />
 
-        {/* Capa de composición 2: Geometría técnica sutil */}
-        <div className={`cp-layer-secondary-${id}`}>
-          <svg viewBox="0 0 100 100" fill="none" className="w-full h-full">
-            <circle cx="50" cy="50" r="48" stroke="#10b981" strokeWidth="0.5" strokeDasharray="1 6" />
-            <circle cx="50" cy="50" r="40" stroke="#10b981" strokeWidth="0.5" strokeDasharray="4 8" />
-          </svg>
-        </div>
+        <svg
+          viewBox="0 0 100 100"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className={`relative z-10 w-full h-full cp-logo-c-${id}`}
+        >
+          <defs>
+            <linearGradient id={`grad-${id}`} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#22c55e" />
+              <stop offset="100%" stopColor="#10b981" />
+            </linearGradient>
 
-        {/* Identidad Central: La "C" Premium */}
-        <div className={`cp-core-identity-${id}`} style={{ width: size * 0.35 }}>
-            <svg viewBox="0 0 100 100" fill="none">
-                <path
-                    d="M68 32 A25 25 0 1 0 68 68"
-                    fill="none"
-                    stroke="#047857"
-                    strokeWidth="14"
-                    strokeLinecap="round"
-                />
-            </svg>
-        </div>
+            <filter id={`glow-${id}`}>
+              <feGaussianBlur stdDeviation="1.5" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+
+          {/* El trazo de la C pura, minimalista e invertida */}
+          <path
+            d="M 50, 50 m -35, 0 a 35,35 0 1,0 70,0 a 35,35 0 1,0 -70,0"
+            stroke={`url(#grad-${id})`}
+            strokeWidth="9"
+            strokeLinecap="round"
+            strokeDasharray="175 220" /* Mantiene la apertura característica (aprox 80%) */
+            filter={`url(#glow-${id})`}
+          />
+        </svg>
       </div>
 
       {(showText || showSubtext) && (
-        <div className="flex flex-col items-center gap-2">
-          {showText && <div className={`cp-brand-h1-${id}`}>{text}</div>}
+        <div className="flex flex-col items-center gap-1.5">
+          {showText && <div className={`cp-brand-text-${id}`}>{text}</div>}
           {showSubtext && <div className={`cp-sub-info-${id}`}>{subtext}</div>}
         </div>
       )}
