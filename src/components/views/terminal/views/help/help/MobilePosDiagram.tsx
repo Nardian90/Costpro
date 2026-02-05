@@ -35,22 +35,26 @@ export default function MobilePosDiagram() {
         <rect x="275" y="150" width="120" height="80" rx="10" className="fill-primary/5 stroke-primary/10" />
         <rect x="405" y="150" width="120" height="80" rx="10" className="fill-primary/5 stroke-primary/10" />
 
-        {/* Mobile Drawer (Bottom Sheet) */}
+        {/* Sticky Cart Summary Bar (New Mobile Feature) */}
         <motion.g
-          initial={{ y: 150 }}
-          animate={{ y: 0 }}
-          transition={{ duration: 1, repeat: Infinity, repeatType: "reverse", repeatDelay: 1 }}
+          initial={{ y: 80, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.8 }}
         >
-          <path
-            d="M260 250 L540 250 L540 370 L260 370 Z"
-            className="fill-background stroke-primary shadow-2xl"
-            strokeWidth="2"
-          />
-          <rect x="375" y="260" width="50" height="4" rx="2" className="fill-primary/20" />
-          <text x="400" y="285" textAnchor="middle" className="fill-primary font-black text-[10px] uppercase">Carrito (1-Tap Discount)</text>
+          <rect x="260" y="280" width="280" height="90" className="fill-background/95 backdrop-blur-md stroke-primary/20" strokeWidth="1" />
+          <rect x="270" y="295" width="260" height="55" rx="16" className="fill-primary shadow-xl" />
 
-          <rect x="275" y="300" width="250" height="30" rx="8" className="fill-primary" />
-          <text x="400" y="320" textAnchor="middle" className="fill-white font-black text-[10px] uppercase tracking-widest">Pagar $450.00</text>
+          {/* Icon & Count */}
+          <circle cx="300" cy="322" r="15" className="fill-white/20" />
+          <text x="300" y="326" textAnchor="middle" className="fill-white font-black text-[10px]">1</text>
+
+          {/* Amount */}
+          <text x="380" y="318" className="fill-white/70 font-black text-[8px] uppercase">Total Carrito</text>
+          <text x="380" y="335" className="fill-white font-black text-sm">$450.00</text>
+
+          {/* Action */}
+          <rect x="460" y="308" width="55" height="30" rx="8" className="fill-white/20" />
+          <text x="487" y="327" textAnchor="middle" className="fill-white font-black text-[8px] uppercase">Revisar</text>
         </motion.g>
 
         {/* Action Menu (Bottom Bar) */}

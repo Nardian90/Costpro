@@ -23,6 +23,7 @@ import { PrimaryButton, SecondaryButton } from '@/components/ui/atomic';
 import { POSCart } from './POSCart';
 import { usePOSView } from './usePOSView';
 import { QueryInspector } from '@/components/ui/QueryInspector';
+import { StickyCartSummary } from './StickyCartSummary';
 
 const EmptyProductsComponent = ({ onClearSearch }: { onClearSearch?: () => void }) => (
   <div className="col-span-full py-32 text-center border-2 border-dashed border-border rounded-xl bg-card/50">
@@ -272,20 +273,28 @@ export default function POSView() {
       </div>
 
       {isMobile && (
-        <ActionMenu
-          actions={[
-            {
-              id: 'cart',
-              label: `Caja (${getItemCount()})`,
-              icon: ShoppingCart,
-              onClick: () => setShowCart(!showCart),
-              variant: getItemCount() > 0 ? 'primary' : 'outline',
-              active: showCart
-            }
-          ]}
-          className="w-full"
-          position="bottom"
-        />
+        getItemCount() > 0 ? (
+          <StickyCartSummary
+            itemCount={getItemCount()}
+            totalAmount={getTotal()}
+            onClick={() => setShowCart(true)}
+          />
+        ) : (
+          <ActionMenu
+            actions={[
+              {
+                id: 'cart',
+                label: `Caja (${getItemCount()})`,
+                icon: ShoppingCart,
+                onClick: () => setShowCart(!showCart),
+                variant: getItemCount() > 0 ? 'primary' : 'outline',
+                active: showCart
+              }
+            ]}
+            className="w-full"
+            position="bottom"
+          />
+        )
       )}
     </div>
   );

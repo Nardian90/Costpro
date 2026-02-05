@@ -10,6 +10,8 @@ import { PaymentMethod, TaxConfiguration } from '@/types';
 import { useIsMobile } from '@/hooks/ui/useMobile';
 import { useTaxes } from '@/hooks/api/useTaxes';
 import { useAuthStore } from '@/store';
+import { BaseModal } from '@/components/ui/BaseModal';
+import { PrimaryButton, SecondaryButton } from '@/components/ui/atomic';
 
 interface POSCartProps {
   items: any[];
@@ -49,6 +51,7 @@ export const POSCart = ({
   const { user } = useAuthStore();
   const { data: taxes = [] } = useTaxes(user?.activeStoreId);
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>('cash');
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
   const isMobile = useIsMobile();
 
   const Container = isMobile ? 'div' : motion.div;
@@ -100,7 +103,7 @@ export const POSCart = ({
                         </div>
                         <button
                           onClick={() => onRemoveItem(item.product_id, item.variant_id)}
-                          className="absolute top-1 right-1 text-muted-foreground hover:text-destructive p-3 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full hover:bg-destructive/5 transition-all"
+                          className="absolute -top-2 -right-2 text-muted-foreground hover:text-destructive bg-background border border-border shadow-sm w-12 h-12 flex items-center justify-center rounded-full hover:bg-destructive/5 transition-all z-10 active:scale-90"
                           aria-label="Eliminar producto"
                         >
                           <Trash2 className="w-5 h-5" />
@@ -241,7 +244,10 @@ export const POSCart = ({
                 <button
                   onClick={() => onCheckout(selectedPayment, (discount && discount.value > 0) ? discount : null)}
                   disabled={isProcessing || items.length === 0}
-                  className="w-full py-5 rounded-xl bg-primary text-white font-black text-lg shadow-2xl disabled:opacity-50 flex items-center justify-center gap-3 transition-transform active:scale-[0.98]"
+                  className={cn(
+                    "w-full py-5 rounded-xl bg-primary text-white font-black text-lg shadow-2xl disabled:opacity-50 flex items-center justify-center gap-3 transition-transform active:scale-[0.98]",
+                    items.length > 0 && !isProcessing && "neu-pulse"
+                  )}
                 >
                   {isProcessing ? (
                     <CostProLoader size={24} showText={false} showSubtext={false} />
@@ -252,16 +258,41 @@ export const POSCart = ({
                 </button>
 
                 <button
-                  onClick={() => {
-                    if (confirm('¿Anular el carrito?')) {
-                      onClearCart();
-                      onClose();
-                    }
-                  }}
+                  onClick={() => setShowClearConfirm(true)}
                   className="w-full py-2 text-[10px] font-black text-foreground uppercase tracking-widest hover:text-destructive transition-colors"
                 >
                   Anular Carrito
                 </button>
+
+                <BaseModal
+                  open={showClearConfirm}
+                  onOpenChange={setShowClearConfirm}
+                  title="¿Anular Carrito?"
+                  maxWidth="sm:max-w-xs"
+                  footer={
+                    <div className="flex w-full gap-2">
+                      <SecondaryButton
+                        label="Volver"
+                        onClick={() => setShowClearConfirm(false)}
+                        className="flex-1"
+                      />
+                      <PrimaryButton
+                        label="Sí, Anular"
+                        onClick={() => {
+                          onClearCart();
+                          onClose();
+                          setShowClearConfirm(false);
+                        }}
+                        className="flex-1 bg-destructive hover:bg-destructive/90 text-white border-none shadow-destructive/20"
+                        icon={Trash2}
+                      />
+                    </div>
+                  }
+                >
+                  <p className="text-sm text-center text-muted-foreground py-4">
+                    Esta acción eliminará todos los productos del carrito actual.
+                  </p>
+                </BaseModal>
               </div>
             </>
           )}
