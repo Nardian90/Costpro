@@ -39,6 +39,10 @@ const evaluateAnnexExpression = (expression: string, rowData: any, header: any, 
     // Header replacements
     expr = expr.replace(/header\(['"]([^'"]+)['"]\)/g, (_, key) => String(header[key] || 0));
 
+    // Cantidad replacement
+    expr = expr.replace(/\bcantidad\b/g, String(header.quantity || 0));
+    expr = expr.replace(/\bQUANTITY\b/g, String(header.quantity || 0));
+
     // Annex replacements (e.g. AnexoI) with Smart Resolve
     // Note: We also handle TotalAnexo[ID] here for explicit total access
     expr = expr.replace(/(Total)?Anexo([IVXLC]+)/g, (match, totalPrefix, id) => {
