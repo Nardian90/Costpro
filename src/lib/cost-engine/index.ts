@@ -25,8 +25,8 @@ export function extractDependencies(row: CostRow, allRows: CostRow[]): string[] 
     for (const match of vhMatches) {
         deps.push(match[1]);
     }
-    // Extract children
-    if (formula.toLowerCase().includes('children')) {
+    // Extract children/hijos
+    if (formula.toLowerCase().includes('children') || formula.toLowerCase().includes('hijos')) {
         const childrenIds = allRows.filter(r => r.parentId === row.id).map(r => r.id);
         deps.push(...childrenIds);
     }
@@ -584,6 +584,9 @@ export function calculateFicha(
                 QUANTITY: ficha.meta.quantity || 0,
                 children: ficha.rows
                     .filter(r => r.parentId === row.id)
+                    .map(r => calculatedRows.get(r.id)?.total || 0),
+                hijos: ficha.rows
+                    .filter(r => r.parentId === row.id)
                     .map(r => calculatedRows.get(r.id)?.total || 0)
             };
 
@@ -637,7 +640,10 @@ export function calculateFicha(
                 QUANTITY: ficha.meta.quantity || 0,
                 children: ficha.rows
                     .filter(r => r.parentId === row.id)
-                    .map(r => calculatedRows.get(r.id)?.total || 0)
+                    .map(r => calculatedRows.get(r.id)?.calculatedVH || r.valorHistorico || 0),
+                hijos: ficha.rows
+                    .filter(r => r.parentId === row.id)
+                    .map(r => calculatedRows.get(r.id)?.calculatedVH || r.valorHistorico || 0)
             };
 
             annexTotals.forEach((total, id) => {
