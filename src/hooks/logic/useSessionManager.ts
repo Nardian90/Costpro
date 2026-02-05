@@ -22,6 +22,15 @@ export function useSessionManager() {
 
     const checkSession = useCallback(async (force = false) => {
         const now = Date.now();
+        const currentState = useAuthStore.getState();
+
+        // Bypass session check if we are in mock mode
+        if (currentState.isMocked) {
+            setAuthStatus('authenticated_valid');
+            setLoading(false);
+            return;
+        }
+
         // Prevent check if offline, another check is in progress, or within throttle period (unless forced)
         if (!isOnline || isCheckingSession || (!force && now - lastChecked < SESSION_CHECK_THROTTLE)) {
             if (!user && !isCheckingSession) {

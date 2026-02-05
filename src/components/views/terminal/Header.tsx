@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { Menu, X, HelpCircle, Bell, Building as BuildingIcon } from 'lucide-react';
+import { Menu, X, HelpCircle, Bell, Building as BuildingIcon, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ViewType } from '@/store';
+import { useAuthStore, ViewType } from '@/store';
 import { UserContract } from '@/contracts/user';
 import { NavigationItem } from '@/hooks/ui/useTerminalNavigation';
 import { SyncStatusBadge } from '@/components/ui/SyncStatusBadge';
 import { SyncConflictModal } from '@/components/modals/SyncConflictModal';
+import { toast } from 'sonner';
 
 interface HeaderProps {
   sidebarOpen: boolean;
@@ -28,6 +29,8 @@ export const Header = ({
   user,
   handleSetActiveStore
 }: HeaderProps) => {
+  const isMocked = useAuthStore(state => state.isMocked);
+
   return (
     <header className="bg-background/80 backdrop-blur-xl p-4 sm:p-6 sticky top-0 z-30 border-b border-white/5 w-full">
       <div className="flex items-center justify-between gap-4">
@@ -86,12 +89,30 @@ export const Header = ({
             <HelpCircle className="w-5 h-5" />
           </button>
           <button
-            className="neu-raised-sm w-11 h-11 flex items-center justify-center relative active:scale-90 transition-transform"
+            onClick={() => {
+              if (isMocked) {
+                toast.info('Conectado solo Front (Modo Offline)', {
+                  description: 'Estás utilizando una cuenta de bypass local. Los cambios no se sincronizarán con Supabase.',
+                  icon: <AlertTriangle className="w-4 h-4 text-warning" />,
+                  duration: 5000,
+                });
+              }
+            }}
+            className={cn(
+              "neu-raised-sm w-11 h-11 flex items-center justify-center relative active:scale-90 transition-transform",
+              isMocked && "text-danger"
+            )}
             aria-label="Alertas"
           >
             <Bell className="w-5 h-5" />
-            <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-primary rounded-full animate-ping" />
-            <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-primary rounded-full shadow-[0_0_8px_rgba(99,102,241,0.8)]" />
+            <span className={cn(
+              "absolute top-2.5 right-2.5 w-2 h-2 rounded-full animate-ping",
+              isMocked ? "bg-danger" : "bg-primary"
+            )} />
+            <span className={cn(
+              "absolute top-2.5 right-2.5 w-2 h-2 rounded-full shadow-[0_0_8px_rgba(99,102,241,0.8)]",
+              isMocked ? "bg-danger" : "bg-primary"
+            )} />
           </button>
         </div>
       </div>

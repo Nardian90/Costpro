@@ -39,6 +39,33 @@ export default function LoginPage() {
         throw new Error('Por favor completa todos los campos');
       }
 
+      // BYPASS: Mock login for admin/demo1234
+      if (email.toLowerCase().trim() === 'admin' && password === 'demo1234') {
+        logger.warn('AUTH', 'MOCK_LOGIN_TRIGGERED', { email });
+
+        const mockUser = UserFactory.create({
+          id: 'mock-admin-id',
+          email: 'admin@local.test',
+          fullName: 'Administrador Local',
+          role: 'admin',
+          roles: ['admin'],
+          isActive: true,
+          activeStoreId: 'mock-store-id',
+          memberships: [
+            {
+              store_id: 'mock-store-id',
+              role: 'admin',
+              store: { name: 'Sucursal Local (Mock)' }
+            } as any
+          ]
+        });
+
+        login(mockUser, 'mock-token', 'authenticated_valid', true);
+        toast.success('¡Bienvenido (Modo Local)!');
+        safeNavigate.push(router, '/');
+        return;
+      }
+
       // 1. Authenticate with Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: email.toLowerCase().trim(),
@@ -113,7 +140,7 @@ export default function LoginPage() {
               </label>
               <input
                 id="email"
-                type="email"
+                type="text"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="neu-input w-full"
