@@ -329,79 +329,63 @@ export class MatchingEngine {
 
   /**
    * Distribuye una diferencia de objetivo global entre varios días.
-   * Útil para llegar a una meta mensual/semanal repartiendo el faltante como efectivo.
-   * Implementa aleatoriedad para evitar una distribución plana sospechosa.
+   * Prioriza productos con stock bajo y evita el uso de ajustes (propina/descuento).
    *
-   * Nota sobre unidades: Aunque las variables terminan en '_cents', el sistema almacena
-   * valores en Pesos (decimales). targetTotal y currentTotal deben estar en la misma unidad.
+   * Nota: El proceso es puramente aditivo basado en (Precio * Cantidad) para
+   * garantizar que no existan "valores irracionales" de cuadre.
    */
   async distributeGlobalGoal(targetTotal: number, currentTotal: number, dates: string[]): Promise<ReconciliationLine[]> {
-    const diff = targetTotal - currentTotal;
-    if (diff <= 0 || dates.length === 0) return [];
-
-    // Generar pesos aleatorios para cada día
-    // Priorizamos días que ya tienen movimientos
-    const weights = dates.map(() => 0.5 + Math.random());
-    const totalWeight = weights.reduce((a, b) => a + b, 0);
+    let remainingDiff = targetTotal - currentTotal;
+    if (remainingDiff <= 0 || dates.length === 0) return [];
 
     const lines: ReconciliationLine[] = [];
-    let remainingTotal = diff;
+    const shuffledDates = [...dates].sort(() => Math.random() - 0.5);
 
-    for (let i = 0; i < dates.length; i++) {
-      const date = dates[i];
-      const weight = weights[i];
+    // Greedy distribution across dates
+    for (const date of shuffledDates) {
+      if (remainingDiff <= 0) break;
 
-      // Para el último día, usamos exactamente lo que falta para asegurar que cuadre perfecto
-      let targetForDay = (i === dates.length - 1)
-        ? remainingTotal
-        : Math.floor((diff * weight) / totalWeight);
+      // Refrescamos y ordenamos candidatos por stock (menos stock primero)
+      const candidates = [...this.products]
+        .filter(p => p.precio_cents > 0 && p.precio_cents <= remainingDiff)
+        .filter(p => !this.useStockLimit || (this.stockMap.get(p.cod) || 0) > 0)
+        .sort((a, b) => {
+          const sA = this.stockMap.get(a.cod) || 0;
+          const sB = this.stockMap.get(b.cod) || 0;
+          // Prioridad 1: Menos stock (pero > 0)
+          if (sA !== sB) return sA - sB;
+          // Prioridad 2: Precio mayor para minimizar número de líneas
+          return b.precio_cents - a.precio_cents;
+        });
 
-      if (targetForDay <= 0) continue;
+      for (const p of candidates) {
+        if (remainingDiff <= 0) break;
 
-      // Usar findExactCombination para encontrar productos reales que sumen el objetivo del día
-      // Priorizando productos con poca existencia (low stock)
-      const combination = this.findExactCombination(targetForDay, { prioritizeLowStock: true });
+        let availableStock = this.stockMap.get(p.cod) || 0;
+        if (!this.useStockLimit) availableStock = 999999;
+        if (availableStock <= 0) continue;
 
-      if (combination.length > 0) {
-        for (const item of combination) {
-            const line = await this.createLine(
-                { fecha: date, referencia_origen: `GOAL-${date}` } as any,
-                item.product,
-                item.qty,
-                'CASH_FILLER',
-                'Efectivo'
-            );
-            // Asegurar ID único si hay varias líneas el mismo día
-            line.id = uuidv4();
-            lines.push(line);
-            remainingTotal -= line.importe_linea_cents;
-        }
-      } else {
-        // FALLBACK: Si no encuentra combinación exacta, usamos un producto comodín que tenga STOCK
-        // y ajustamos su precio para cubrir el objetivo del día.
-        const filler = this.products
-            .filter(p => !this.useStockLimit || (this.stockMap.get(p.cod) || 0) > 0)
-            .sort((a, b) => {
-                const sA = this.stockMap.get(a.cod) || 0;
-                const sB = this.stockMap.get(b.cod) || 0;
-                return sA - sB; // Priorizar menor stock disponible
-            })
-            .find(p => p.isWildcardCandidate) ||
-            this.products.find(p => !this.useStockLimit || (this.stockMap.get(p.cod) || 0) > 0);
+        const maxQtyPossible = Math.floor(remainingDiff / p.precio_cents);
+        if (maxQtyPossible <= 0) continue;
 
-        if (filler) {
-            const line = await this.createLine(
-                { fecha: date, referencia_origen: `GOAL-${date}` } as any,
-                filler,
-                1,
-                'CASH_FILLER',
-                'Efectivo'
-            );
-            line.id = uuidv4();
-            line.importe_linea_cents = targetForDay;
-            line.cuadre_cents = targetForDay - filler.precio_cents;
-            lines.push(line);
-            remainingTotal -= targetForDay;
+        // Intentamos no saturar un día con un solo producto, repartiendo entre fechas
+        const idealQtyForThisDay = Math.max(1, Math.floor(maxQtyPossible / (shuffledDates.length / 2)));
+        const qtyToPick = Math.min(availableStock, maxQtyPossible, idealQtyForThisDay);
+
+        if (qtyToPick > 0) {
+          const line = await this.createLine(
+            { fecha: date, referencia_origen: `GOAL-${date}` } as any,
+            p,
+            qtyToPick,
+            'CASH_FILLER',
+            'Efectivo'
+          );
+          line.id = uuidv4();
+          line.cuadre_cents = 0; // Obligatorio: Sin propinas ni descuentos
+          line.importe_linea_cents = p.precio_cents * qtyToPick;
+
+          lines.push(line);
+          remainingDiff -= line.importe_linea_cents;
         }
       }
     }
