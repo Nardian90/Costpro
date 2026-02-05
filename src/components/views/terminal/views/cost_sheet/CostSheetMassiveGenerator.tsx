@@ -27,7 +27,7 @@ import { useAuthStore } from '@/store';
 import { calculateFicha } from '@/lib/cost-engine';
 import { FichaJSON, CostRow, RowSemanticType, FormaCalculo, BaseRef } from '@/lib/cost-engine/types';
 import { toast } from 'sonner';
-import { Play, Pause, RotateCcw, Download, FileSpreadsheet, CheckCircle2, AlertCircle, Upload, X } from 'lucide-react';
+import { Play, Pause, RotateCcw, Download, FileSpreadsheet, CheckCircle2, AlertCircle, Upload, X as XIcon } from 'lucide-react';
 import { CostProLoader } from '@/components/ui/CostProLoader';
 import JSZip from 'jszip';
 import { exportToExcel } from '@/services/export-service';
@@ -501,7 +501,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                                         onClick={() => { setImportedProducts([]); reset(); }}
                                         className="h-10 rounded-xl text-[10px] font-black uppercase tracking-widest text-danger hover:bg-danger/10"
                                     >
-                                        <X className="w-3 h-3 mr-2" />
+                                        <XIcon className="w-3 h-3 mr-2" />
                                         Quitar
                                     </Button>
                                 </div>
