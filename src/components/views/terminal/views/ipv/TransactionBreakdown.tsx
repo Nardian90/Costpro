@@ -22,6 +22,7 @@ export function TransactionBreakdown() {
   const [searchTerm, setSearchTerm] = useState('');
   const [editingLine, setEditingLine] = useState<any>(null);
   const [editAmount, setEditAmount] = useState<number>(0);
+  const [editDate, setEditDate] = useState<string>('');
 
   const lines = useLiveQuery(() => db.reconciliation_lines.toArray());
   const products = useLiveQuery(() => db.products.toArray());
@@ -126,6 +127,7 @@ export function TransactionBreakdown() {
     await db.reconciliation_lines.update(editingLine.id, {
         importe_linea_cents: editAmount,
         cuadre_cents: newCuadre,
+        fecha_operacion: editDate,
         // Si cantidad es 1, ajustamos unitario para que cuadre
         precio_unitario_cents: editingLine.cantidad === 1 ? editAmount : editingLine.precio_unitario_cents
     });
@@ -144,35 +146,117 @@ export function TransactionBreakdown() {
     setEditingLine(null);
   };
 
+  const handleRandomizeDates = async () => {
+    if (!confirm('¿Deseas reacomodar aleatoriamente las fechas de todos los registros de efectivo? Se priorizarán los días con menos transferencias para un look natural.')) {
+        return;
+    }
+
+    try {
+        const allCashLines = lines?.filter(l =>
+            l.clasificacion === 'Efectivo' ||
+            l.origen_dato === 'CASH_FILLER' ||
+            l.product_cod === 'CASH_MANUAL'
+        ) || [];
+
+        if (allCashLines.length === 0) {
+            toast.info('No hay registros de efectivo para reacomodar.');
+            return;
+        }
+
+        // 1. Obtener fechas disponibles y sus volúmenes de transferencias
+        const dailyVolumes: Record<string, number> = {};
+        for (const tx of transactions || []) {
+            if (tx.tipo === 'Cr') {
+                dailyVolumes[tx.fecha] = (dailyVolumes[tx.fecha] || 0) + 1;
+            }
+        }
+
+        const availableDates = Object.keys(dailyVolumes).length > 0
+            ? Object.keys(dailyVolumes)
+            : Array.from(new Set(lines?.map(l => l.fecha_operacion) || []));
+
+        if (availableDates.length === 0) {
+            toast.error('No se detectaron fechas disponibles para reacomodar.');
+            return;
+        }
+
+        // 2. Ordenar fechas por volumen (menor primero)
+        const sortedDates = [...availableDates].sort((a, b) => (dailyVolumes[a] || 0) - (dailyVolumes[b] || 0));
+
+        // 3. Reasignar fechas a las líneas de efectivo
+        const shuffledLines = [...allCashLines].sort(() => Math.random() - 0.5);
+
+        for (let i = 0; i < shuffledLines.length; i++) {
+            // Round robin sobre sortedDates
+            const dateIndex = i % sortedDates.length;
+            const newDate = sortedDates[dateIndex];
+
+            await db.reconciliation_lines.update(shuffledLines[i].id, {
+                fecha_operacion: newDate
+            });
+        }
+
+        toast.success(`Fechas reacomodadas para ${shuffledLines.length} registros.`);
+    } catch (error) {
+        console.error('Error randomizing dates:', error);
+        toast.error('Error al reacomodar fechas');
+    }
+  };
+
   return (
-    <div className="space-y-4">
-      <div className="p-4 bg-background/50 border-b flex flex-col md:flex-row justify-between items-center gap-4">
+    <div className="space-y-6 animate-in fade-in duration-500">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-xl">
+                    <Search className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                    <h3 className="text-lg font-black uppercase tracking-tight">Análisis de Desglose</h3>
+                    <p className="text-xs text-muted-foreground font-medium">Justificación detallada por producto</p>
+                </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRandomizeDates}
+                    className="h-11 px-4 rounded-xl border-primary/20 bg-primary/5 text-primary font-black uppercase tracking-widest text-[10px] gap-2 hover:bg-primary hover:text-white transition-all shadow-sm active:scale-95"
+                >
+                    <RotateCcw className="w-4 h-4" />
+                    Reacomodar Fechas
+                </Button>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleResetCash}
+                    className="h-11 px-4 rounded-xl border-red-500/20 bg-red-500/5 text-red-500 font-black uppercase tracking-widest text-[10px] gap-2 hover:bg-red-500 hover:text-white transition-all shadow-sm active:scale-95"
+                >
+                    <Trash2 className="w-4 h-4" />
+                    Reset Efectivo
+                </Button>
+                <Badge variant="outline" className="h-11 px-4 rounded-xl border-primary/20 bg-primary/5">
+                    <div className="flex flex-col items-end">
+                        <span className="text-[10px] font-black text-muted-foreground uppercase leading-none">Total Filtrado</span>
+                        <span className="text-sm font-black text-primary">{formatCurrency(total)}</span>
+                    </div>
+                </Badge>
+            </div>
+        </div>
+
+      <div className="p-4 bg-background/50 border-b flex flex-col md:flex-row justify-between items-center gap-4 rounded-2xl">
         <div className="relative flex-1 w-full max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Buscar por transacción, producto o descripción..."
-            className="pl-10 h-10 text-xs"
+            className="pl-10 h-10 font-medium"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
         <div className="flex items-center gap-4">
-            <Button
-                variant="outline"
-                size="sm"
-                onClick={handleResetCash}
-                className="h-10 px-4 text-[10px] font-black uppercase tracking-widest gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 transition-all shadow-sm"
-            >
-                <RotateCcw className="w-3 h-3" />
-                Reset Efectivo
-            </Button>
-            <div className="h-8 w-px bg-border mx-2" />
-            <div className="text-right">
-                <p className="text-[10px] font-black text-muted-foreground uppercase">Total Filtrado</p>
-                <p className="text-lg font-black text-primary">{formatCurrency(total)}</p>
-            </div>
-            <Badge variant="outline" className="h-10 px-4 font-black text-xs gap-2">
-                <Filter className="w-3 h-3" />
+            <Badge variant="outline" className="h-10 px-4 font-black text-xs gap-2 bg-background/50 border-primary/20">
+                <Filter className="w-3 h-3 text-primary" />
                 {filteredLines.length} Líneas
             </Badge>
         </div>
@@ -269,6 +353,7 @@ export function TransactionBreakdown() {
                                 onClick={() => {
                                     setEditingLine(l);
                                     setEditAmount(l.importe_linea_cents);
+                                    setEditDate(l.fecha_operacion);
                                 }}
                             >
                                 <Edit2 className="w-3 h-3" />
@@ -304,14 +389,28 @@ export function TransactionBreakdown() {
                     <p className="text-[10px] text-muted-foreground">{editingLine?.transaction_ref}</p>
                 </div>
 
-                <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-muted-foreground">Importe Total (Cents)</label>
-                    <Input
-                        type="number"
-                        value={editAmount}
-                        onChange={(e) => setEditAmount(Number(e.target.value))}
-                        className="h-12 text-lg font-black"
-                    />
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase text-muted-foreground">Importe Total (Cents)</label>
+                        <Input
+                            type="number"
+                            value={editAmount}
+                            onChange={(e) => setEditAmount(Number(e.target.value))}
+                            className="h-12 text-lg font-black"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase text-muted-foreground">Fecha Operación</label>
+                        <Input
+                            type="date"
+                            value={editDate}
+                            onChange={(e) => setEditDate(e.target.value)}
+                            className="h-12 font-bold"
+                        />
+                    </div>
+                </div>
+
+                <div className="p-4 bg-primary/5 rounded-xl border border-primary/10">
                     <p className="text-[10px] text-muted-foreground italic">
                         El precio base es {formatCurrency(productMap.get(editingLine?.product_cod)?.precio_cents || editingLine?.precio_unitario_cents)}.
                         Cualquier diferencia se guardará como Propina o Descuento.
