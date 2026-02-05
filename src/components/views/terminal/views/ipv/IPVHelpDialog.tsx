@@ -83,33 +83,33 @@ export function IPVHelpDialog({ open, onOpenChange, showTrigger = true }: Props)
               <div className="grid gap-4">
                 <StepItem
                   number="1"
-                  title="Cargar Transferencias"
-                  desc="Verificar que todas las transferencias del período estén completas para asegurar stock real."
+                  title="Ingesta (Extracto)"
+                  desc="Carga de archivos bancarios para obtener la base de transferencias a conciliar."
                 />
                 <StepItem
                   number="2"
-                  title="Cargar Catálogo"
-                  desc="Validar productos, categorías y existencias iniciales. Sin stock real, no hay matching."
+                  title="Catálogo"
+                  desc="Validar productos, precios y existencias. El stock es crítico para el matching automático."
                 />
                 <StepItem
                   number="3"
-                  title="Configurar Reglas"
-                  desc="Confirmar que 'No matching con inventario cero' esté activa en la pestaña de Reglas."
+                  title="Ejecutar Matching"
+                  desc="Procesar transacciones. El sistema asocia productos automáticamente según las reglas."
                 />
                 <StepItem
                   number="4"
-                  title="Optimizar Catálogo"
-                  desc="Ajustar prioridades y equivalencias para mejorar la precisión del motor (Matching 100%)."
+                  title="Análisis y Cuadre"
+                  desc="Revisión manual en Desglose o Consolidado para asegurar que todo esté cuadrado."
                 />
                 <StepItem
                   number="5"
-                  title="Ejecutar Matching"
-                  desc="Procesar transacciones. Recomendamos activar solo Créditos (CR) para el matching inicial."
+                  title="Reportes IPV"
+                  desc="Generación de documentos fiscales diarios y mensuales una vez finalizado el cuadre."
                 />
                 <StepItem
                   number="6"
-                  title="Validación y Reportes"
-                  desc="Confirmar que no existan negativos antes de generar el reporte IPV y exportar a PDF."
+                  title="Auditoría y Soporte"
+                  desc="Control de errores de ingesta, simulación de metas y respaldos de seguridad."
                 />
               </div>
             </div>
