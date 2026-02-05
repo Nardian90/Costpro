@@ -81,26 +81,34 @@ export default function IPVView() {
   }, [reconciliationLines]);
 
   const stats = useMemo(() => {
-    if (!transactions) return { total: 0, squared: 0, inProcess: 0, pending: 0, percentage: 0, totalSales: 0 };
+    if (!transactions) return { total: 0, squared: 0, inProcess: 0, pending: 0, percentage: 0, totalSales: 0, totalTransferencias: 0, totalEfectivo: 0 };
 
     let squared = 0;
     let inProcess = 0;
     let pending = 0;
     let activeTotal = 0;
-    let totalSales = 0;
+    let totalTransferencias = 0;
+    let totalEfectivo = 0;
+    const checkedTxRefs = new Set<string>();
 
+    // 1. Procesar transacciones bancarias (Transferencias)
     for (let i = 0; i < transactions.length; i++) {
         const t = transactions[i];
 
         // Omitir excluidas de las estadísticas de KPI
         if (t.excluido || t.estado_conciliacion === 'NO_PROCESAR') continue;
 
+        checkedTxRefs.add(t.referencia_origen);
         activeTotal++;
-        const target = t.importe_venta_cents || t.importe_cents;
-        totalSales += target;
 
+        const target = t.importe_venta_cents || t.importe_cents;
         const matched = txTotals[t.referencia_origen] || 0;
         const diff = target - matched;
+
+        // Si es un ingreso (Cr), lo sumamos como transferencia base
+        if (t.tipo === 'Cr') {
+            totalTransferencias += target;
+        }
 
         if (matched === 0) {
             pending++;
@@ -111,15 +119,38 @@ export default function IPVView() {
         }
     }
 
+    // 2. Procesar líneas de reconciliación para capturar Efectivo (incluyendo CASH_FILLER)
+    if (reconciliationLines) {
+        for (let i = 0; i < reconciliationLines.length; i++) {
+            const l = reconciliationLines[i];
+
+            // Si la línea NO pertenece a una transacción bancaria activa, es venta en efectivo independiente
+            if (!checkedTxRefs.has(l.transaction_ref)) {
+                if (l.importe_linea_cents > 0) {
+                    totalEfectivo += l.importe_linea_cents;
+                }
+            } else {
+                // Si pertenece a una transacción bancaria, pero está clasificada como Efectivo (ej: Cash Fill de una transferencia)
+                // Restamos del total de transferencias y sumamos a efectivo para el desglose real
+                if (l.clasificacion === 'Efectivo') {
+                    totalEfectivo += l.importe_linea_cents;
+                    totalTransferencias -= l.importe_linea_cents;
+                }
+            }
+        }
+    }
+
     return {
       total: activeTotal,
       squared,
       inProcess,
       pending,
       percentage: activeTotal > 0 ? Math.round((squared / activeTotal) * 100) : 0,
-      totalSales
+      totalSales: totalTransferencias + totalEfectivo,
+      totalTransferencias,
+      totalEfectivo
     };
-  }, [transactions, txTotals]);
+  }, [transactions, txTotals, reconciliationLines]);
 
 
   async function handleImportBackup(file: File) {
@@ -366,14 +397,19 @@ export default function IPVView() {
                         title="Venta Total"
                         value={stats.totalSales}
                         icon={<FileText className="text-primary" />}
-                        subtitle="Monto Neto"
+                        subtitle={`T: ${formatCurrency(stats.totalTransferencias)} | E: ${formatCurrency(stats.totalEfectivo)}`}
                         active={false}
                         isCurrency={true}
                     />
                 </div>
             </TooltipTrigger>
             <TooltipContent className="bg-popover text-popover-foreground border shadow-lg">
-                <p className="text-[10px] font-bold">Sumatoria de todos los ingresos (Cr) menos los gastos directos (Db) procesados.</p>
+                <p className="text-[10px] font-bold text-primary mb-1 uppercase">Desglose de Venta Real:</p>
+                <div className="space-y-1">
+                    <p className="text-[10px]"><strong>Transferencias:</strong> {formatCurrency(stats.totalTransferencias)}</p>
+                    <p className="text-[10px]"><strong>Efectivo:</strong> {formatCurrency(stats.totalEfectivo)}</p>
+                </div>
+                <p className="text-[10px] mt-2 opacity-70 italic border-t pt-1">Incluye transacciones bancarias procesadas y ajustes de caja global.</p>
             </TooltipContent>
         </Tooltip>
 
