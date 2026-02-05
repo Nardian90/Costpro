@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table,
   TableBody,
@@ -28,6 +29,7 @@ import { FichaJSON, CostRow, RowSemanticType, FormaCalculo, BaseRef } from '@/li
 import { toast } from 'sonner';
 import { Play, Pause, RotateCcw, Download, FileSpreadsheet, CheckCircle2, AlertCircle, Upload } from 'lucide-react';
 import { CostProLoader } from '@/components/ui/CostProLoader';
+import JSZip from 'jszip';
 import { exportToExcel } from '@/services/export-service';
 import { exportMassiveTemplate, importMassiveProducts } from '@/services/excel-service';
 
@@ -229,6 +231,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
         name: `Ficha: ${product.name}`,
         currency: baseSheet?.header?.currency || 'CUP',
         decimals: 2,
+        quantity: baseSheet?.header?.quantity || 1,
         settings: { allowFormulas: true }
       },
       anexos: annexes.map((a: any) => ({
@@ -258,6 +261,9 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
     }));
     setResults(initialResults);
 
+    const zip = new JSZip();
+    const blobs: { name: string, blob: Blob }[] = [];
+
     for (let i = 0; i < products.length; i++) {
       if (!isProcessingRef.current) {
         toast.info("Proceso cancelado por el usuario");
@@ -285,14 +291,11 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
 
         if (response.ok) {
           const blob = await response.blob();
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `${product.sku || 'ficha'}.pdf`;
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          window.URL.revokeObjectURL(url);
+          const fileName = `${product.sku || product.name || 'ficha'}.pdf`;
+          blobs.push({ name: fileName, blob });
+
+          // If only 1 or 2 products, we can download immediately or wait
+          // But user wants a zip if more than 2. Let's always collect and decide at the end.
         } else {
             throw new Error("Failed to generate PDF");
         }
@@ -315,6 +318,36 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
 
       // Small delay to prevent blocking the UI thread and allow browser to breathe
       await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
+    // Process Downloads
+    if (blobs.length > 2) {
+        toast.info("Comprimiendo fichas en un archivo ZIP...");
+        blobs.forEach(item => {
+            zip.file(item.name, item.blob);
+        });
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
+        const url = window.URL.createObjectURL(zipBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Fichas_Costo_Masivas_${new Date().toISOString().split('T')[0]}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        toast.success("Archivo ZIP descargado con éxito");
+    } else {
+        // Individual downloads for 1 or 2 files
+        blobs.forEach(item => {
+            const url = window.URL.createObjectURL(item.blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = item.name;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        });
     }
 
     setIsProcessing(false);
@@ -375,47 +408,131 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
             {/* Source Selection */}
-            <div className="flex flex-wrap items-center gap-4 mb-2">
-                <div className={cn(
-                    "flex-1 p-4 rounded-2xl border transition-all flex items-center justify-between",
-                    importedProducts.length > 0 ? "bg-sidebar/20 border-sidebar-border" : "bg-primary/5 border-primary/20"
-                )}>
-                    <div>
-                        <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Origen de Datos</div>
-                        <div className="text-sm font-bold">{importedProducts.length > 0 ? "Listado Importado" : "Catálogo del Sistema"}</div>
-                    </div>
-                    <div className="flex gap-2">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={exportMassiveTemplate}
-                            className="h-8 rounded-xl text-[10px] font-black uppercase tracking-tighter"
+            <div className="space-y-4">
+                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/70 mb-2 px-1">
+                    Selección de Catálogo (Origen de Datos)
+                </div>
+
+                <Tabs
+                    defaultValue={importedProducts.length > 0 ? "imported" : "system"}
+                    value={importedProducts.length > 0 ? "imported" : "system"}
+                    onValueChange={(v) => {
+                        if (v === "system") {
+                            setImportedProducts([]);
+                            reset();
+                        }
+                    }}
+                    className="w-full"
+                >
+                    <TabsList className="grid grid-cols-2 h-14 bg-sidebar/40 p-1 rounded-2xl border border-sidebar-border/50">
+                        <TabsTrigger
+                            value="system"
+                            className="rounded-xl font-black uppercase tracking-widest text-[10px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground shadow-none transition-all"
                         >
-                            <Download className="w-3 h-3 mr-1" />
-                            Plantilla
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleImportClick}
-                            className="h-8 rounded-xl text-[10px] font-black uppercase tracking-tighter"
+                            Catálogo del Sistema
+                        </TabsTrigger>
+                        <TabsTrigger
+                            value="imported"
+                            className="rounded-xl font-black uppercase tracking-widest text-[10px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground shadow-none transition-all"
                         >
-                            <Upload className="w-3 h-3 mr-1" />
-                            Importar
-                        </Button>
-                        {importedProducts.length > 0 && (
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => { setImportedProducts([]); reset(); }}
-                                className="h-8 rounded-xl text-[10px] font-black uppercase tracking-tighter text-danger hover:bg-danger/10"
-                            >
-                                <RotateCcw className="w-3 h-3 mr-1" />
-                                Limpiar
-                            </Button>
+                            Listado Importado (Excel)
+                        </TabsTrigger>
+                    </TabsList>
+
+                    <div className="mt-4">
+                        {importedProducts.length === 0 ? (
+                            <div className="p-6 rounded-2xl border border-dashed border-primary/20 bg-primary/5 flex flex-col items-center justify-center text-center gap-3">
+                                <div className="p-3 rounded-full bg-primary/10">
+                                    <FileSpreadsheet className="w-6 h-6 text-primary" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-bold">Usando Catálogo del Sistema</p>
+                                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-1">
+                                        Se procesarán los productos activos de la tienda actual.
+                                    </p>
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleImportClick}
+                                    className="mt-2 rounded-xl text-[10px] font-black uppercase tracking-widest border-primary/30 text-primary hover:bg-primary/10"
+                                >
+                                    <Upload className="w-3 h-3 mr-2" />
+                                    ¿Prefieres importar un Excel?
+                                </Button>
+
+                                <div className="mt-4 pt-4 border-t border-primary/10 w-full flex justify-center">
+                                    <Button
+                                        onClick={runMassiveGeneration}
+                                        disabled={isProcessing || products.length === 0}
+                                        className="rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground font-black uppercase tracking-widest px-12 h-12 shadow-lg shadow-primary/20 scale-110"
+                                    >
+                                        <Play className="w-4 h-4 mr-2" />
+                                        Comenzar Procesamiento
+                                    </Button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="p-6 rounded-2xl border border-success/20 bg-success/5 flex items-center justify-between gap-4">
+                                <div className="flex items-center gap-4">
+                                    <div className="p-3 rounded-full bg-success/10">
+                                        <CheckCircle2 className="w-6 h-6 text-success" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-bold text-success">Listado Importado Exitosamente</p>
+                                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-1">
+                                            Se han cargado {importedProducts.length} productos desde el archivo.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handleImportClick}
+                                        className="h-10 rounded-xl text-[10px] font-black uppercase tracking-widest"
+                                    >
+                                        <RotateCcw className="w-3 h-3 mr-2" />
+                                        Cambiar
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => { setImportedProducts([]); reset(); }}
+                                        className="h-10 rounded-xl text-[10px] font-black uppercase tracking-widest text-danger hover:bg-danger/10"
+                                    >
+                                        <X className="w-3 h-3 mr-2" />
+                                        Quitar
+                                    </Button>
+                                </div>
+                                <div className="ml-4 pl-4 border-l border-success/20">
+                                    <Button
+                                        onClick={runMassiveGeneration}
+                                        disabled={isProcessing || products.length === 0}
+                                        className="rounded-2xl bg-success hover:bg-success/90 text-success-foreground font-black uppercase tracking-widest px-8 h-12 shadow-lg shadow-success/20"
+                                    >
+                                        <Play className="w-4 h-4 mr-2" />
+                                        Procesar Importados
+                                    </Button>
+                                </div>
+                            </div>
                         )}
                     </div>
-                </div>
+                </Tabs>
+
+                {importedProducts.length === 0 && (
+                    <div className="flex justify-end px-1">
+                        <Button
+                            variant="link"
+                            size="sm"
+                            onClick={exportMassiveTemplate}
+                            className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary h-auto p-0"
+                        >
+                            <Download className="w-3 h-3 mr-2" />
+                            Descargar Plantilla de Importación
+                        </Button>
+                    </div>
+                )}
             </div>
 
             {/* Stats / Progress */}
