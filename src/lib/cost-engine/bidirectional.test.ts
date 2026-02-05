@@ -13,7 +13,7 @@ describe('Bidirectional and Section 13 validations', () => {
                     classification: '13',
                     label: 'Utility',
                     type: 'MARGIN',
-                    formaCalculo: 'FORMULA',
+                    calculation_method: 'FORMULA',
                     formula: "ref('13.1') * 2",
                 },
                 {
@@ -22,14 +22,14 @@ describe('Bidirectional and Section 13 validations', () => {
                     classification: '13.1',
                     label: 'Sub-utility',
                     type: 'MARGIN',
-                    formaCalculo: 'FIJO',
-                    valorHistorico: 100,
+                    calculation_method: 'FIJO',
+                    valor_historico: 100,
                 }
             ]
         };
 
         const validation = validateFicha(ficha);
-        const hardRuleErrors = validation.validationErrors.filter(e => e.code === 'HARD_RULE_VIOLATION');
+        const hardRuleErrors = validation.validation_errors.filter(e => e.code === 'HARD_RULE_VIOLATION');
         expect(hardRuleErrors.length).toBe(0);
 
         const result = calculateFicha(ficha);
@@ -37,7 +37,7 @@ describe('Bidirectional and Section 13 validations', () => {
         expect(row13?.total).toBe(200);
     });
 
-    it('should support vh() function and vhFormula', () => {
+    it('should support vh() function and vh_formula', () => {
         const ficha: FichaJSON = {
             meta: { id: 'test', name: 'test', currency: 'CUP', decimals: 2 },
             anexos: [],
@@ -47,8 +47,8 @@ describe('Bidirectional and Section 13 validations', () => {
                     classification: '1',
                     label: 'Row 1',
                     type: 'COST',
-                    formaCalculo: 'FORMULA',
-                    vhFormula: "ref('2') * 0.5", // VH of 1 depends on Total of 2
+                    calculation_method: 'FORMULA',
+                    vh_formula: "ref('2') * 0.5", // VH of 1 depends on Total of 2
                     formula: "VH * 2", // Total of 1 depends on its own VH
                 },
                 {
@@ -56,8 +56,8 @@ describe('Bidirectional and Section 13 validations', () => {
                     classification: '2',
                     label: 'Row 2',
                     type: 'COST',
-                    formaCalculo: 'FIJO',
-                    valorHistorico: 100,
+                    calculation_method: 'FIJO',
+                    valor_historico: 100,
                 }
             ]
         };
@@ -66,7 +66,7 @@ describe('Bidirectional and Section 13 validations', () => {
         const row1 = result.rows.find(r => r.id === '1');
         // VH of 1 = Total of 2 * 0.5 = 100 * 0.5 = 50
         // Total of 1 = VH of 1 * 2 = 50 * 2 = 100
-        expect(row1?.calculatedVH).toBe(50);
+        expect(row1?.calculated_vh).toBe(50);
         expect(row1?.total).toBe(100);
     });
 
@@ -80,7 +80,7 @@ describe('Bidirectional and Section 13 validations', () => {
                     classification: 'A',
                     label: 'Row A',
                     type: 'COST',
-                    formaCalculo: 'FORMULA',
+                    calculation_method: 'FORMULA',
                     formula: "vh('B') * 0.1 + 10", // Total A depends on VH B
                 },
                 {
@@ -88,8 +88,8 @@ describe('Bidirectional and Section 13 validations', () => {
                     classification: 'B',
                     label: 'Row B',
                     type: 'COST',
-                    formaCalculo: 'FORMULA',
-                    vhFormula: "ref('A') * 2", // VH B depends on Total A
+                    calculation_method: 'FORMULA',
+                    vh_formula: "ref('A') * 2", // VH B depends on Total A
                     formula: "VH",
                 }
             ]
@@ -107,6 +107,6 @@ describe('Bidirectional and Section 13 validations', () => {
         const rowB = result.rows.find(r => r.id === 'B');
 
         expect(rowA?.total).toBeCloseTo(12.5);
-        expect(rowB?.calculatedVH).toBeCloseTo(25);
+        expect(rowB?.calculated_vh).toBeCloseTo(25);
     });
 });

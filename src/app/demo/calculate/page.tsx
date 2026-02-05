@@ -196,8 +196,8 @@ export default function CostEngineDemo() {
                     </TableCell>
                     <TableCell>
                         <Select
-                            value={row.formaCalculo}
-                            onValueChange={(val: FormaCalculo) => handleRowChange(row.id, 'formaCalculo', val)}
+                            value={row.calculation_method}
+                            onValueChange={(val: FormaCalculo) => handleRowChange(row.id, 'calculation_method', val)}
                         >
                             <SelectTrigger className="h-8 text-xs">
                                 <SelectValue />
@@ -216,12 +216,12 @@ export default function CostEngineDemo() {
                             type="number"
                             step="0.01"
                             className="h-8 text-right font-mono"
-                            value={row.valorHistorico || 0}
-                            onChange={e => handleRowChange(row.id, 'valorHistorico', parseFloat(e.target.value) || 0)}
+                            value={row.valor_historico || 0}
+                            onChange={e => handleRowChange(row.id, 'valor_historico', parseFloat(e.target.value) || 0)}
                         />
                     </TableCell>
                     <TableCell className="text-right">
-                        {row.formaCalculo === 'COEFICIENTE' ? (
+                        {row.calculation_method === 'COEFICIENTE' ? (
                             <Input
                                 type="number"
                                 step="0.001"

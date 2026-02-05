@@ -33,10 +33,10 @@ export interface CostRow {
   classification: string;           // ej "1","1.1","3.2"
   type: RowSemanticType;            // Semantic classification
   label: string;
-  valorHistorico?: number | null;   // input del usuario (acepta 0.01)
-  vhFormula?: string | null;        // expresión para Valor Histórico
-  formaCalculo: FormaCalculo;
-  baseCalculo?: BaseRef | null;
+  valor_historico?: number | null;   // input del usuario (acepta 0.01)
+  vh_formula?: string | null;        // expresión para Valor Histórico
+  calculation_method: FormaCalculo;
+  base_ref?: BaseRef | null;
   coeficiente?: number | null;      // decimal (ej 0.2)
   formula?: string | null;          // expresión segura para FORMULA
   fuente?: string;                  // texto explicativo
@@ -45,9 +45,9 @@ export interface CostRow {
 
 export interface CalculatedRow extends CostRow {
   total: number;
-  calculatedVH: number;
-  baseTotal?: number;
-  baseHist?: number;
+  calculated_vh: number;
+  base_total?: number;
+  base_hist?: number;
   audit: AuditEntry[];
 }
 
@@ -85,7 +85,7 @@ export interface CalculationResult {
   fichaId: string;
   rows: CalculatedRow[];
   audits: AuditEntry[];
-  validationErrors?: string[];
+  validation_errors?: string[];
   deepValidationErrors?: ValidationError[];
   summary: {
     totalCost: number;

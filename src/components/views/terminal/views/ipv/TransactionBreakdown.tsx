@@ -79,8 +79,8 @@ export function TransactionBreakdown() {
 
     const prod = productMap.get(editingLine.product_cod);
     const basePrice = prod?.precio_cents || editingLine.precio_unitario_cents;
-    const baseTotal = basePrice * editingLine.cantidad;
-    const newCuadre = editAmount - baseTotal;
+    const base_total = basePrice * editingLine.cantidad;
+    const newCuadre = editAmount - base_total;
 
     await db.reconciliation_lines.update(editingLine.id, {
         importe_linea_cents: editAmount,

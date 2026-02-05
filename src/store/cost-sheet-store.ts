@@ -25,19 +25,19 @@ const clearTemplate = (template: any) => {
     const clearRows = (rows: any[]) => {
         rows.forEach(row => {
             // Clear primary numeric values
-            if (row.hasOwnProperty('valorHistorico')) row.valorHistorico = 0;
+            if (row.hasOwnProperty('valor_historico')) row.valor_historico = 0;
             if (row.hasOwnProperty('value')) row.value = 0;
 
             // Clear formulas if they are actually fixed numbers
             if (row.formula && !row.formula.startsWith('=')) {
                 row.formula = "0";
             }
-            if (row.totalFormula && !row.totalFormula.startsWith('=')) {
-                row.totalFormula = "0";
+            if (row.total_formula && !row.total_formula.startsWith('=')) {
+                row.total_formula = "0";
             }
 
             // Ensure calculation method reflects manual input if we cleared a fixed number
-            if (row.calculationMethod === 'ValorFijo' || (!row.formula?.startsWith('=') && !row.totalFormula?.startsWith('='))) {
+            if (row.calculation_method === 'ValorFijo' || (!row.formula?.startsWith('=') && !row.total_formula?.startsWith('='))) {
                 // If it's not a real formula, ensure it's treated as a clean slate
             }
 
@@ -190,8 +190,8 @@ export const useCostSheetStore = create<CostSheetState>()(
                 current.push({
                     id: uniqueId,
                     label: "Nuevo Concepto",
-                    valorHistorico: 0,
-                    calculationMethod: 'ValorFijo',
+                    valor_historico: 0,
+                    calculation_method: 'ValorFijo',
                     children: []
                 });
             }

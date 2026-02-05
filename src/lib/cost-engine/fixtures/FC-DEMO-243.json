@@ -25,27 +25,27 @@
         "classification": "1",
         "type": "COST",
         "label": "Gasto Material",
-        "formaCalculo": "PRORRATEO",
-        "valorHistorico": 1615551.74,
-        "baseCalculo": {"type": "ANEXO", "anexoId": "Anexo1"}
+        "calculation_method": "PRORRATEO",
+        "valor_historico": 1615551.74,
+        "base_ref": {"type": "ANEXO", "anexoId": "Anexo1"}
     },
     {
         "id": "r1.1",
         "classification": "1.1",
         "type": "COST",
         "label": "Insumos MP",
-        "formaCalculo": "IMPORTAR_ANEXO",
-        "baseCalculo": {"type": "ANEXO", "anexoId": "Anexo1"},
-        "valorHistorico": 150000
+        "calculation_method": "IMPORTAR_ANEXO",
+        "base_ref": {"type": "ANEXO", "anexoId": "Anexo1"},
+        "valor_historico": 150000
     },
     {
         "id": "util",
         "classification": "U",
         "type": "MARGIN",
         "label": "Utilidad",
-        "formaCalculo": "COEFICIENTE",
+        "calculation_method": "COEFICIENTE",
         "coeficiente": 0.20,
-        "baseCalculo": {"type": "FILA", "classification": "1"}
+        "base_ref": {"type": "FILA", "classification": "1"}
     }
   ]
 }

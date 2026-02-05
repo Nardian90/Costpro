@@ -104,11 +104,11 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
             if (r.children && r.children.length > 0) {
                 calculateVH(r.children);
                 vhSums[r.id] = r.children.reduce((sum: number, child: any) => {
-                    const val = vhSums[child.id] ?? child.valorHistorico ?? child.value ?? 0;
+                    const val = vhSums[child.id] ?? child.valor_historico ?? child.value ?? 0;
                     return sum + val;
                 }, 0);
             } else {
-                vhSums[r.id] = r.valorHistorico ?? r.value ?? 0;
+                vhSums[r.id] = r.valor_historico ?? r.value ?? 0;
             }
         });
     };
@@ -121,27 +121,27 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
         if (r.id === '13.2') type = 'TAX';
         if (['14', '12', '5'].includes(r.id)) type = 'TOTAL';
 
-        let formula = r.formula || r.totalFormula;
-        if (!formula && r.children && r.children.length > 0 && r.calculationMethod !== 'ValorFijo') {
+        let formula = r.formula || r.total_formula;
+        if (!formula && r.children && r.children.length > 0 && r.calculation_method !== 'ValorFijo') {
             formula = '=sum(children)';
         }
 
-        let formaCalculo: FormaCalculo = 'FIJO';
-        if (r.calculationMethod === 'Prorrateo') formaCalculo = 'PRORRATEO';
-        if (r.is_percent) formaCalculo = 'COEFICIENTE';
-        if (formula) formaCalculo = 'FORMULA';
+        let calculation_method: FormaCalculo = 'FIJO';
+        if (r.calculation_method === 'Prorrateo') calculation_method = 'PRORRATEO';
+        if (r.is_percent) calculation_method = 'COEFICIENTE';
+        if (formula) calculation_method = 'FORMULA';
 
-        let baseCalculo: BaseRef | null = null;
-        const baseRefId = r.baseDeCalculoRef || r.base_ref;
+        let base_ref: BaseRef | null = null;
+        const baseRefId = r.base_ref || r.base_ref;
         if (baseRefId) {
             const isAnnex = (baseSheet?.annexes || []).some((a: any) => a.id === baseRefId) || /^[IVXLC]+$/.test(baseRefId);
             if (isAnnex) {
-                baseCalculo = { type: 'ANEXO', anexoId: baseRefId };
-                if (r.calculationMethod !== 'Prorrateo' && !r.formula && !r.totalFormula) {
-                    formaCalculo = 'IMPORTAR_ANEXO';
+                base_ref = { type: 'ANEXO', anexoId: baseRefId };
+                if (r.calculation_method !== 'Prorrateo' && !r.formula && !r.total_formula) {
+                    calculation_method = 'IMPORTAR_ANEXO';
                 }
             } else {
-                baseCalculo = { type: 'FILA', classification: baseRefId };
+                base_ref = { type: 'FILA', classification: baseRefId };
             }
         }
 
@@ -155,10 +155,10 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
           classification: r.id,
           label: r.label,
           type,
-          formaCalculo,
-          valorHistorico: vhSums[r.id] ?? r.valorHistorico ?? r.value,
-          baseCalculo,
-          coeficiente: r.is_percent ? (r.value ?? r.valorHistorico) : r.coeficiente,
+          calculation_method,
+          valor_historico: vhSums[r.id] ?? r.valor_historico ?? r.value,
+          base_ref,
+          coeficiente: r.is_percent ? (r.value ?? r.valor_historico) : r.coeficiente,
           formula: formula,
         });
 

@@ -26,7 +26,7 @@ describe('Cost Engine Accuracy', () => {
         classification: '1.1',
         type: 'COST',
         label: 'GASTO MATERIAL',
-        formaCalculo: 'FORMULA',
+        calculation_method: 'FORMULA',
         formula: 'AnexoI'
       },
       {
@@ -34,7 +34,7 @@ describe('Cost Engine Accuracy', () => {
         classification: '12.1',
         type: 'TOTAL',
         label: 'TOTAL COSTOS Y GASTOS',
-        formaCalculo: 'FORMULA',
+        calculation_method: 'FORMULA',
         formula: 'ref("1.1")' // ref by classification
       },
       {
@@ -42,7 +42,7 @@ describe('Cost Engine Accuracy', () => {
         classification: '13.1',
         type: 'MARGIN',
         label: 'Utilidad',
-        formaCalculo: 'FORMULA',
+        calculation_method: 'FORMULA',
         formula: 'ref("12") * 0.1' // ref by ID
       },
       {
@@ -50,7 +50,7 @@ describe('Cost Engine Accuracy', () => {
         classification: '13.2',
         type: 'TOTAL',
         label: 'Precio antes de Impuesto',
-        formaCalculo: 'FORMULA',
+        calculation_method: 'FORMULA',
         formula: 'ref("12") + ref("13")'
       }
     ]
@@ -78,15 +78,15 @@ describe('Cost Engine Accuracy', () => {
           classification: 'B',
           type: 'COST',
           label: 'Base',
-          formaCalculo: 'FIJO',
-          valorHistorico: 1000.33
+          calculation_method: 'FIJO',
+          valor_historico: 1000.33
         },
         {
           id: 'tax',
           classification: 'T',
           type: 'TAX',
           label: 'Tax',
-          formaCalculo: 'FORMULA',
+          calculation_method: 'FORMULA',
           formula: 'round2(pct(ref("base"), 14.5))'
         }
       ]
@@ -102,9 +102,9 @@ describe('Cost Engine Accuracy', () => {
       const multiFicha: FichaJSON = {
           ...panArtistasFicha,
           rows: [
-              { id: 'a1', classification: 'A', type: 'COST', label: 'A1', formaCalculo: 'FIJO', valorHistorico: 100 },
-              { id: 'a2', classification: 'A', type: 'COST', label: 'A2', formaCalculo: 'FIJO', valorHistorico: 200 },
-              { id: 'sum', classification: 'S', type: 'TOTAL', label: 'Sum', formaCalculo: 'FORMULA', formula: 'ref("A")' }
+              { id: 'a1', classification: 'A', type: 'COST', label: 'A1', calculation_method: 'FIJO', valor_historico: 100 },
+              { id: 'a2', classification: 'A', type: 'COST', label: 'A2', calculation_method: 'FIJO', valor_historico: 200 },
+              { id: 'sum', classification: 'S', type: 'TOTAL', label: 'Sum', calculation_method: 'FORMULA', formula: 'ref("A")' }
           ]
       };
       const result = calculateFicha(multiFicha);

@@ -34,34 +34,34 @@ describe('Cost Engine Smart Annex', () => {
                 classification: '1.1',
                 type: 'COST',
                 label: 'Import Match',
-                formaCalculo: 'IMPORTAR_ANEXO',
-                baseCalculo: { type: 'ANEXO', anexoId: 'A1' }
+                calculation_method: 'IMPORTAR_ANEXO',
+                base_ref: { type: 'ANEXO', anexoId: 'A1' }
             },
             {
                 id: 'import_no_fallback',
                 classification: '9.9',
                 type: 'COST',
                 label: 'Import No Fallback',
-                formaCalculo: 'IMPORTAR_ANEXO',
-                baseCalculo: { type: 'ANEXO', anexoId: 'A1' }
+                calculation_method: 'IMPORTAR_ANEXO',
+                base_ref: { type: 'ANEXO', anexoId: 'A1' }
             },
             {
                 id: 'prorrateo_match',
                 classification: '1.2',
                 type: 'COST',
                 label: 'Prorrateo Match',
-                formaCalculo: 'PRORRATEO',
-                valorHistorico: 100,
-                baseCalculo: { type: 'ANEXO', anexoId: 'A1' }
+                calculation_method: 'PRORRATEO',
+                valor_historico: 100,
+                base_ref: { type: 'ANEXO', anexoId: 'A1' }
             },
             {
                 id: 'coeficiente_match',
                 classification: '1.1',
                 type: 'COST',
                 label: 'Coeficiente Match',
-                formaCalculo: 'COEFICIENTE',
+                calculation_method: 'COEFICIENTE',
                 coeficiente: 0.1,
-                baseCalculo: { type: 'ANEXO', anexoId: 'A1' }
+                base_ref: { type: 'ANEXO', anexoId: 'A1' }
             }
         ]
     };

@@ -78,9 +78,9 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
     const trimmedVal = val.trim();
     if (trimmedVal === '') {
         // Reset to 0 if empty
-        const field = row.hasOwnProperty('valorHistorico') ? 'valorHistorico' : 'value';
+        const field = row.hasOwnProperty('valor_historico') ? 'valor_historico' : 'value';
         updateValue([...path, field], 0);
-        updateValue([...path, 'calculationMethod'], 'ValorFijo');
+        updateValue([...path, 'calculation_method'], 'ValorFijo');
         updateValue([...path, 'formula'], '');
         if (row.is_percent) {
           updateValue([...path, 'is_percent'], false);
@@ -94,7 +94,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
 
     const updates: { path: (string | number)[], value: string | number | boolean }[] = [
         { path: [...path, 'formula'], value: trimmedVal },
-        { path: [...path, 'calculationMethod'], value: 'FORMULA' }
+        { path: [...path, 'calculation_method'], value: 'FORMULA' }
     ];
 
     // If it's a number and it was a percentage row, clear is_percent to ensure fixed value is respected
@@ -109,27 +109,27 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
     setIsEditingVH(false);
     const trimmedVal = val.trim();
     if (trimmedVal === '') {
-        updateValue([...path, 'valorHistorico'], 0);
-        updateValue([...path, 'vhFormula'], '');
+        updateValue([...path, 'valor_historico'], 0);
+        updateValue([...path, 'vh_formula'], '');
         return;
     }
 
     if (trimmedVal.startsWith('=') || isNaN(Number(trimmedVal))) {
-        updateValue([...path, 'vhFormula'], trimmedVal);
+        updateValue([...path, 'vh_formula'], trimmedVal);
     } else {
-        updateValue([...path, 'valorHistorico'], parseFloat(trimmedVal));
-        updateValue([...path, 'vhFormula'], '');
+        updateValue([...path, 'valor_historico'], parseFloat(trimmedVal));
+        updateValue([...path, 'vh_formula'], '');
     }
   }, [path, updateValue]);
 
 
   const isResultRow = row.is_percent || ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '13.1', '13.2', '14', '15', '16'].includes(String(row.id));
-  const safeCalculated = calculated || { total: 0, valorHistorico: 0, baseTotal: 0, coeficiente: 0, hasWarnings: false, audits: [], validationErrors: [], fuente: '', metadata: {} };
+  const safeCalculated = calculated || { total: 0, valor_historico: 0, base_total: 0, coeficiente: 0, has_warnings: false, audits: [], validation_errors: [], fuente: '', metadata: {} };
 
-  const criticalErrors = (safeCalculated.validationErrors || []).filter(e => e.type === 'CRITICAL');
-  const warningErrors = (safeCalculated.validationErrors || []).filter(e => e.type === 'WARNING');
-  const infoErrors = (safeCalculated.validationErrors || []).filter(e => e.type === 'INFO');
-  const hasEngineWarnings = safeCalculated.hasWarnings || (!hasChildren && !row.is_percent && safeCalculated.total === 0 && ((row.valorHistorico ?? 0) > 0 || !!row.baseDeCalculoRef));
+  const criticalErrors = (safeCalculated.validation_errors || []).filter(e => e.type === 'CRITICAL');
+  const warningErrors = (safeCalculated.validation_errors || []).filter(e => e.type === 'WARNING');
+  const infoErrors = (safeCalculated.validation_errors || []).filter(e => e.type === 'INFO');
+  const hasEngineWarnings = safeCalculated.has_warnings || (!hasChildren && !row.is_percent && safeCalculated.total === 0 && ((row.valor_historico ?? 0) > 0 || !!row.base_ref));
 
   return (
     <>
@@ -219,7 +219,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
             <div className="relative">
                 {isEditingVH ? (
                     <FormulaEditor
-                        initialValue={row.vhFormula || String(row.valorHistorico || 0)}
+                        initialValue={row.vh_formula || String(row.valor_historico || 0)}
                         onSave={handleVHSave}
                         onCancel={() => setIsEditingVH(false)}
                         suggestions={suggestions}
@@ -231,18 +231,18 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                         className={cn(
                         "neu-input text-right h-8 transition-all text-xs sm:text-sm px-2 cursor-pointer flex-1",
                         row.is_percent && "pr-6",
-                        (hasChildren || row.vhFormula) && "bg-muted/30 font-bold border-dashed"
+                        (hasChildren || row.vh_formula) && "bg-muted/30 font-bold border-dashed"
                         )}
                         value={hasChildren
-                        ? (safeCalculated.calculatedVH ?? safeCalculated.valorHistorico ?? 0).toFixed(row.is_percent ? 3 : 2)
-                        : (row.vhFormula
-                            ? (safeCalculated.calculatedVH ?? 0).toFixed(row.is_percent ? 3 : 2)
-                            : (row.hasOwnProperty('valorHistorico') ? (row.valorHistorico ?? 0) : (row.is_percent ? ((row.value ?? 0) * 100) : (row.value ?? 0))))}
+                        ? (safeCalculated.calculated_vh ?? safeCalculated.valor_historico ?? 0).toFixed(row.is_percent ? 3 : 2)
+                        : (row.vh_formula
+                            ? (safeCalculated.calculated_vh ?? 0).toFixed(row.is_percent ? 3 : 2)
+                            : (row.hasOwnProperty('valor_historico') ? (row.valor_historico ?? 0) : (row.is_percent ? ((row.value ?? 0) * 100) : (row.value ?? 0))))}
                         readOnly={true}
                         />
-                        {row.vhFormula && <FunctionSquare className="w-3 h-3 text-primary/40 absolute left-2" />}
+                        {row.vh_formula && <FunctionSquare className="w-3 h-3 text-primary/40 absolute left-2" />}
                         {row.is_percent && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">%</span>}
-                        {(hasChildren || row.vhFormula) && <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full animate-pulse" title="Calculado automáticamente" />}
+                        {(hasChildren || row.vh_formula) && <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full animate-pulse" title="Calculado automáticamente" />}
                     </div>
                 )}
             </div>
@@ -286,7 +286,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                         </p>
                         <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
                             {/* Deep Validation Errors */}
-                            {(safeCalculated.validationErrors || []).map((ve, idx) => (
+                            {(safeCalculated.validation_errors || []).map((ve, idx) => (
                                 <div key={`ve-${idx}`} className={cn(
                                     "text-[10px] p-2 rounded border flex gap-2",
                                     ve.type === 'CRITICAL' ? "bg-destructive/5 border-destructive/20 text-destructive" :
@@ -323,7 +323,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                             ))}
 
                             {/* Legacy Warning */}
-                            {!hasChildren && !row.is_percent && safeCalculated.total === 0 && ((row.valorHistorico ?? 0) > 0 || !!row.baseDeCalculoRef) && (
+                            {!hasChildren && !row.is_percent && safeCalculated.total === 0 && ((row.valor_historico ?? 0) > 0 || !!row.base_ref) && (
                                 <p className="text-[10px] text-slate-500 italic p-1">
                                     Esta fila tiene un total de 0.00 pero tiene una base de cálculo o valor histórico asignado. Verifique el prorrateo o la fórmula.
                                 </p>
@@ -348,14 +348,14 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
 
         {/* Ayuda - Hidden on very small screens */}
         <TableCell className="px-4 py-2 text-center w-12 sm:w-20 hidden sm:table-cell">
-          {row.helpText && (
+          {row.help_text && (
             <Popover>
               <PopoverTrigger asChild>
                  <button className="p-2 rounded-full hover:bg-primary/10 text-primary/50 hover:text-primary transition-colors">
                     <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5" />
                  </button>
               </PopoverTrigger>
-              <PopoverContent className="w-72 sm:w-80"><p className="text-sm">{row.helpText}</p></PopoverContent>
+              <PopoverContent className="w-72 sm:w-80"><p className="text-sm">{row.help_text}</p></PopoverContent>
             </Popover>
           )}
         </TableCell>

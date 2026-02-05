@@ -13,8 +13,8 @@ describe('Cost Engine - Topological Sorting & DAGs', () => {
             classification: '13.1',
             label: 'Utilidad',
             type: 'MARGIN',
-            formaCalculo: 'FIJO',
-            valorHistorico: 5000,
+            calculation_method: 'FIJO',
+            valor_historico: 5000,
             audit: []
         },
         {
@@ -22,7 +22,7 @@ describe('Cost Engine - Topological Sorting & DAGs', () => {
             classification: '13.2',
             label: 'Precio antes de Impuesto',
             type: 'INFO',
-            formaCalculo: 'FORMULA',
+            calculation_method: 'FORMULA',
             formula: "ref('13.1') + 10000",
             audit: []
         },
@@ -31,7 +31,7 @@ describe('Cost Engine - Topological Sorting & DAGs', () => {
             classification: '13.3',
             label: 'Imp s/Ventas y Serv',
             type: 'TAX',
-            formaCalculo: 'FORMULA',
+            calculation_method: 'FORMULA',
             formula: "ref('14.1') - ref('13.2')",
             audit: []
         },
@@ -40,7 +40,7 @@ describe('Cost Engine - Topological Sorting & DAGs', () => {
             classification: '14.1',
             label: 'Precio o Tarifa Final',
             type: 'INFO',
-            formaCalculo: 'FORMULA',
+            calculation_method: 'FORMULA',
             formula: "ref('13.2') / 0.9",
             audit: []
         }
@@ -49,9 +49,9 @@ describe('Cost Engine - Topological Sorting & DAGs', () => {
     };
 
     const validation = validateFicha(ficha);
-    expect(validation.valid, `Validation failed: ${JSON.stringify(validation.validationErrors)}`).toBe(true);
+    expect(validation.valid, `Validation failed: ${JSON.stringify(validation.validation_errors)}`).toBe(true);
     // Should have 2 INFO messages for external links (13.3 -> 14.1 and 14.1 -> 13.2)
-    expect(validation.validationErrors.filter(e => e.type !== 'INFO')).toHaveLength(0);
+    expect(validation.validation_errors.filter(e => e.type !== 'INFO')).toHaveLength(0);
 
     const result = calculateFicha(ficha);
     const r13_1 = result.rows.find(r => r.id === '13.1');
@@ -81,7 +81,7 @@ describe('Cost Engine - Topological Sorting & DAGs', () => {
             classification: '13.1',
             label: 'Utilidad',
             type: 'MARGIN',
-            formaCalculo: 'FORMULA',
+            calculation_method: 'FORMULA',
             formula: "ref('13.1') * 1.1", // SELF REFERENCE
             audit: []
         }
@@ -91,6 +91,6 @@ describe('Cost Engine - Topological Sorting & DAGs', () => {
 
     const validation = validateFicha(ficha);
     expect(validation.valid).toBe(false);
-    expect(validation.validationErrors.some(e => e.code === 'CYCLE')).toBe(true);
+    expect(validation.validation_errors.some(e => e.code === 'CYCLE')).toBe(true);
   });
 });

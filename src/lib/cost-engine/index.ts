@@ -32,24 +32,24 @@ export function extractDependencies(row: CostRow, allRows: CostRow[]): string[] 
     }
   };
 
-  if (row.formaCalculo === 'FORMULA' && row.formula) {
+  if (row.calculation_method === 'FORMULA' && row.formula) {
     extractFromFormula(row.formula);
   }
 
-  if (row.vhFormula) {
-    extractFromFormula(row.vhFormula);
+  if (row.vh_formula) {
+    extractFromFormula(row.vh_formula);
   }
 
-  if (row.baseCalculo?.type === 'FILA') {
-    deps.push(row.baseCalculo.classification);
+  if (row.base_ref?.type === 'FILA') {
+    deps.push(row.base_ref.classification);
   }
 
   return deps;
 }
 
-export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: string[]; validationErrors: ValidationError[] } {
+export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: string[]; validation_errors: ValidationError[] } {
   const errors: string[] = [];
-  const validationErrors: ValidationError[] = [];
+  const validation_errors: ValidationError[] = [];
   const ids = new Set<string>();
   const classifications = new Set<string>();
   const rowMap = new Map<string, CostRow>();
@@ -58,7 +58,7 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
     if (ids.has(row.id)) {
         const msg = `Duplicate row ID: ${row.id}`;
         errors.push(msg);
-        validationErrors.push({ rowId: row.id, message: msg, type: 'CRITICAL', code: 'INVALID_FORMULA' });
+        validation_errors.push({ rowId: row.id, message: msg, type: 'CRITICAL', code: 'INVALID_FORMULA' });
     }
     ids.add(row.id);
     rowMap.set(row.id, row);
@@ -77,17 +77,17 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
   ficha.rows.forEach((row) => {
     const deps = extractDependencies(row, ficha.rows);
 
-    if (row.formaCalculo === 'FORMULA' && row.formula) {
+    if (row.calculation_method === 'FORMULA' && row.formula) {
         try {
             const formulaStr = translateFormulaFromSpanish(row.formula.startsWith('=') ? row.formula.substring(1) : row.formula);
             parser.parse(formulaStr);
 
             // check for trivial formulas
             if (formulaStr.trim() === "0" || formulaStr.trim() === "") {
-                validationErrors.push({ rowId: row.id, message: "Fórmula trivial o vacía", type: 'WARNING', code: 'TRIVIAL_FORMULA' });
+                validation_errors.push({ rowId: row.id, message: "Fórmula trivial o vacía", type: 'WARNING', code: 'TRIVIAL_FORMULA' });
             }
         } catch (e) {
-            validationErrors.push({ rowId: row.id, message: `Fórmula inválida: ${e}`, type: 'CRITICAL', code: 'INVALID_FORMULA' });
+            validation_errors.push({ rowId: row.id, message: `Fórmula inválida: ${e}`, type: 'CRITICAL', code: 'INVALID_FORMULA' });
         }
     }
 
@@ -137,7 +137,7 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
               });
 
               if (isParentRef) {
-                  validationErrors.push({
+                  validation_errors.push({
                     rowId: u,
                     message: `Validación de Jerarquía: Esta fila ('${uRow?.label}') depende de un valor superior ('${vRow.label}'). Asegúrese de que no esté incluida en la sumatoria total del padre para evitar duplicidad.`,
                     type: 'WARNING',
@@ -145,7 +145,7 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
                   });
                   // Hierarchical references are not blocked as critical cycles
               } else if (isDirect) {
-                  validationErrors.push({
+                  validation_errors.push({
                     rowId: u,
                     message: `Referencia Circular Detectada: El cálculo no puede procesarse porque las celdas se llaman entre sí indefinidamente ('${uRow?.label}' <-> '${vRow.label}').`,
                     type: 'CRITICAL',
@@ -153,7 +153,7 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
                   });
                   return true;
               } else {
-                  validationErrors.push({
+                  validation_errors.push({
                     rowId: u,
                     message: `Ciclo de dependencia detectado: La fila '${uRow?.label}' depende de '${vRow.label}' en un bucle cerrado.`,
                     type: 'CRITICAL',
@@ -193,8 +193,8 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
             const uSec = getSectionPrefix(row);
             const vSec = getSectionPrefix(vRow);
             if (uSec !== vSec && uSec !== '' && vSec !== '') {
-                if (!validationErrors.some(e => e.rowId === row.id && e.code === 'EXTERNAL_LINK')) {
-                    validationErrors.push({
+                if (!validation_errors.some(e => e.rowId === row.id && e.code === 'EXTERNAL_LINK')) {
+                    validation_errors.push({
                         rowId: row.id,
                         message: `Vínculo Externo: El valor se calcula en base a la Sección ${vSec}.`,
                         type: 'INFO',
@@ -206,8 +206,8 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
             // Parent Ref (non-cycle or general hierarchy warning)
             const ancestors = getAncestors(row.id);
             if (ancestors.has(vRow.id)) {
-                if (!validationErrors.some(e => e.rowId === row.id && e.code === 'HIERARCHY')) {
-                    validationErrors.push({
+                if (!validation_errors.some(e => e.rowId === row.id && e.code === 'HIERARCHY')) {
+                    validation_errors.push({
                         rowId: row.id,
                         message: `Validación de Jerarquía: Esta fila depende de un valor superior ('${vRow.label}'). Asegúrese de que no esté incluida en la sumatoria total del padre para evitar duplicidad.`,
                         type: 'WARNING',
@@ -218,30 +218,30 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
         });
     });
 
-    const base = row.baseCalculo;
+    const base = row.base_ref;
     if (base?.type === 'FILA') {
       if (!classifications.has(base.classification) && !ids.has(base.classification)) {
         const msg = `Referencia inexistente: ${base.classification}`;
         errors.push(msg);
-        validationErrors.push({ rowId: row.id, message: msg, type: 'CRITICAL', code: 'MISSING_REF' });
+        validation_errors.push({ rowId: row.id, message: msg, type: 'CRITICAL', code: 'MISSING_REF' });
       }
     } else if (base?.type === 'ANEXO') {
       if (!ficha.anexos.find((a) => a.id === base.anexoId)) {
         const msg = `Anexo inexistente: ${base.anexoId}`;
         errors.push(msg);
-        validationErrors.push({ rowId: row.id, message: msg, type: 'CRITICAL', code: 'MISSING_REF' });
+        validation_errors.push({ rowId: row.id, message: msg, type: 'CRITICAL', code: 'MISSING_REF' });
       }
     }
 
     // Check ref() in formulas
-    if (row.formaCalculo === 'FORMULA' && row.formula) {
+    if (row.calculation_method === 'FORMULA' && row.formula) {
         const refMatches = row.formula.matchAll(/ref\(['"]([^'"]+)['"]\)/g);
         for (const match of refMatches) {
             const refId = match[1];
             if (!ids.has(refId) && !classifications.has(refId)) {
                 const msg = `Referencia en fórmula inexistente: ${refId}`;
                 errors.push(msg);
-                validationErrors.push({ rowId: row.id, message: msg, type: 'CRITICAL', code: 'MISSING_REF' });
+                validation_errors.push({ rowId: row.id, message: msg, type: 'CRITICAL', code: 'MISSING_REF' });
             }
         }
     }
@@ -252,8 +252,8 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
       // 8.2 Taxes - Base imponible > 0 warning (semantic, done during calculation or here if VH)
       if (row.id === '13.2' || row.classification === '13.2') {
           const deps = adj.get(row.id) || [];
-          if (deps.length === 0 && (row.valorHistorico || 0) === 0 && row.formaCalculo === 'FIJO') {
-            validationErrors.push({
+          if (deps.length === 0 && (row.valor_historico || 0) === 0 && row.calculation_method === 'FIJO') {
+            validation_errors.push({
                 rowId: row.id,
                 message: "Advertencia: La base imponible para impuestos es 0.",
                 type: 'WARNING',
@@ -264,9 +264,9 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
   });
 
   return {
-    valid: !validationErrors.some(e => e.type === 'CRITICAL'),
+    valid: !validation_errors.some(e => e.type === 'CRITICAL'),
     errors,
-    validationErrors
+    validation_errors
   };
 }
 
@@ -282,7 +282,7 @@ export function calculateFicha(
   const damping = new Decimal(dampingValue);
 
   // 0. Pre-validate
-  const { validationErrors, errors: legacyErrors } = validateFicha(ficha);
+  const { validation_errors, errors: legacyErrors } = validateFicha(ficha);
 
   // 1. Prepare maps for O(1) lookup
   const annexSumMap = new Map<string, Map<string, Decimal>>();
@@ -353,7 +353,7 @@ export function calculateFicha(
     calculatedRows.set(row.id, {
       ...row,
       total: 0,
-      calculatedVH: row.valorHistorico || 0,
+      calculated_vh: row.valor_historico || 0,
       audit: [],
     });
   });
@@ -389,7 +389,7 @@ export function calculateFicha(
       }
       const val = targets.reduce((acc, t) => {
           const calculated = calculatedRows.get(t.id);
-          return acc.plus(new Decimal(calculated?.calculatedVH || t.valorHistorico || 0));
+          return acc.plus(new Decimal(calculated?.calculated_vh || t.valor_historico || 0));
       }, new Decimal(0));
       return val.toNumber();
   };
@@ -425,16 +425,16 @@ export function calculateFicha(
   const computeRowTotal = (
     row: CostRow,
     currentRows: Map<string, CalculatedRow>
-  ): { total: Decimal; note: string; type: AuditEntry['type']; fuente: string; baseTotal: Decimal; baseHist: Decimal } => {
+  ): { total: Decimal; note: string; type: AuditEntry['type']; fuente: string; base_total: Decimal; base_hist: Decimal } => {
     let total = new Decimal(0);
     let note = '';
-    let baseTotalValue = new Decimal(0);
-    let baseHistValue = new Decimal(0);
+    let base_totalValue = new Decimal(0);
+    let base_histValue = new Decimal(0);
     let type: AuditEntry['type'] = 'INFO';
-    let fuenteParts: string[] = [row.formaCalculo];
+    let fuenteParts: string[] = [row.calculation_method];
 
     const currentCalculated = currentRows.get(row.id);
-    const vh = new Decimal(currentCalculated?.calculatedVH || row.valorHistorico || 0);
+    const vh = new Decimal(currentCalculated?.calculated_vh || row.valor_historico || 0);
 
     // Resolve Rules
     const activeRules = (ficha.rules || [])
@@ -448,20 +448,20 @@ export function calculateFicha(
 
     const ruleOverride = activeRules[0];
     let formulaToUse = row.formula;
-    let formaCalculoToUse = row.formaCalculo;
+    let calculation_methodToUse = row.calculation_method;
 
     if (ruleOverride) {
         if (ruleOverride.formulaOverride) {
             formulaToUse = ruleOverride.formulaOverride;
-            formaCalculoToUse = 'FORMULA';
+            calculation_methodToUse = 'FORMULA';
             note += `Rule '${ruleOverride.name}' v${ruleOverride.version} applied. `;
             type = 'RULE_APPLIED';
         }
     }
 
-    const base = row.baseCalculo;
+    const base = row.base_ref;
 
-    switch (formaCalculoToUse) {
+    switch (calculation_methodToUse) {
       case 'FIJO':
         total = vh;
         note += `Used VH ${vh.toFixed(decimals)}.`;
@@ -481,8 +481,8 @@ export function calculateFicha(
               note += `Imported from ${base.anexoId} (Class ${row.classification} not found, using 0).`;
           }
 
-          baseTotalValue = total;
-          baseHistValue = total;
+          base_totalValue = total;
+          base_histValue = total;
           fuenteParts.push(base.anexoId);
         } else {
           type = 'WARNING';
@@ -499,40 +499,43 @@ export function calculateFicha(
             const classSum = classSumMap?.get(row.classification);
 
             if (classSum !== undefined) {
-                baseTotalValue = classSum;
+                base_totalValue = classSum;
                 note += `Using class ${row.classification} from ${base.anexoId} as base. `;
             } else {
-                baseTotalValue = Array.from(classSumMap?.values() || []).reduce((acc, val) => acc.plus(val), new Decimal(0));
+                base_totalValue = Array.from(classSumMap?.values() || []).reduce((acc, val) => acc.plus(val), new Decimal(0));
                 note += `Using total of ${base.anexoId} as base (class ${row.classification} not found). `;
             }
 
-            baseHistValue = baseTotalValue;
+            base_histValue = base_totalValue;
             baseRefName = `Anexo:${base.anexoId}`;
         } else if (base?.type === 'FILA') {
-            const targets = rowsByClass.get(base.classification) || [];
-            targets.forEach(t => {
+            let targets = rowsByClass.get(base.classification);
+            if (!targets || (targets?.length === 0)) {
+                targets = rowsById.get(base.classification);
+            }
+            (targets || []).forEach(t => {
                 const calculated = currentRows.get(t.id);
-                baseTotalValue = baseTotalValue.plus(new Decimal(calculated?.total || 0));
-                baseHistValue = baseHistValue.plus(new Decimal(t.valorHistorico || 0));
+                base_totalValue = base_totalValue.plus(new Decimal(calculated?.total || 0));
+                base_histValue = base_histValue.plus(new Decimal(t.valor_historico || 0));
             });
             baseRefName = `Fila:${base.classification}`;
         }
         fuenteParts.push(baseRefName);
 
-        if (formaCalculoToUse === 'PRORRATEO') {
-            if (baseHistValue.isZero()) {
+        if (calculation_methodToUse === 'PRORRATEO') {
+            if (base_histValue.isZero()) {
                 total = new Decimal(0);
                 type = 'WARNING';
                 note += `BaseHist is zero for ${baseRefName}.`;
             } else {
-                const ratio = vh.div(baseHistValue);
-                total = ratio.times(baseTotalValue);
-                note += `Prorrated: (${vh}/${baseHistValue}) * ${baseTotalValue.toFixed(decimals)}.`;
+                const ratio = vh.div(base_histValue);
+                total = ratio.times(base_totalValue);
+                note += `Prorrated: (${vh}/${base_histValue}) * ${base_totalValue.toFixed(decimals)}.`;
             }
         } else {
             const coef = new Decimal(row.coeficiente ?? 0);
-            total = coef.times(baseTotalValue);
-            note += `Coefficient: ${coef} * ${baseTotalValue.toFixed(decimals)}.`;
+            total = coef.times(base_totalValue);
+            note += `Coefficient: ${coef} * ${base_totalValue.toFixed(decimals)}.`;
         }
         break;
 
@@ -554,18 +557,21 @@ export function calculateFicha(
 
             if (base?.type === 'ANEXO') {
                  const anexo = annexSumMap.get(base.anexoId);
-                 baseTotalValue = Array.from(anexo?.values() || []).reduce((acc, val) => acc.plus(val), new Decimal(0));
+                 base_totalValue = Array.from(anexo?.values() || []).reduce((acc, val) => acc.plus(val), new Decimal(0));
             } else if (base?.type === 'FILA') {
-                const targets = rowsByClass.get(base.classification) || [];
-                targets.forEach(t => {
+                let targets = rowsByClass.get(base.classification);
+                if (!targets || (targets?.length === 0)) {
+                    targets = rowsById.get(base.classification);
+                }
+                (targets || []).forEach(t => {
                     const calculated = currentRows.get(t.id);
-                    baseTotalValue = baseTotalValue.plus(new Decimal(calculated?.total || 0));
+                    base_totalValue = base_totalValue.plus(new Decimal(calculated?.total || 0));
                 });
             }
 
             const context: any = {
                 VH: vh.toNumber(),
-                BASE_TOTAL: baseTotalValue.toNumber(),
+                BASE_TOTAL: base_totalValue.toNumber(),
                 COEF: row.coeficiente || 0,
                 children: ficha.rows
                     .filter(r => r.parentId === row.id)
@@ -594,7 +600,7 @@ export function calculateFicha(
         break;
     }
 
-    return { total, note, type, fuente: fuenteParts.join('|'), baseTotal: baseTotalValue, baseHist: baseHistValue };
+    return { total, note, type, fuente: fuenteParts.join('|'), base_total: base_totalValue, base_hist: base_histValue };
   };
 
   // 4. Iterative Solver
@@ -609,16 +615,16 @@ export function calculateFicha(
       const current = calculatedRows.get(row.id)!;
 
       // Calculate VH if formula exists
-      if (row.vhFormula) {
+      if (row.vh_formula) {
         try {
-            const vhFormulaStrRaw = row.vhFormula.trim().startsWith('=')
-              ? row.vhFormula.trim().substring(1)
-              : row.vhFormula;
-            const vhFormulaStr = translateFormulaFromSpanish(vhFormulaStrRaw);
-            const vhExpr = parser.parse(vhFormulaStr);
+            const vh_formulaStrRaw = row.vh_formula.trim().startsWith('=')
+              ? row.vh_formula.trim().substring(1)
+              : row.vh_formula;
+            const vh_formulaStr = translateFormulaFromSpanish(vh_formulaStrRaw);
+            const vhExpr = parser.parse(vh_formulaStr);
 
             const vhContext: any = {
-                VH: row.valorHistorico || 0,
+                VH: row.valor_historico || 0,
                 children: ficha.rows
                     .filter(r => r.parentId === row.id)
                     .map(r => calculatedRows.get(r.id)?.total || 0)
@@ -633,16 +639,16 @@ export function calculateFicha(
             });
 
             const vhResult = new Decimal(vhExpr.evaluate(vhContext)).toDecimalPlaces(decimals).toNumber();
-            if (vhResult !== current.calculatedVH) {
-                current.calculatedVH = vhResult;
+            if (vhResult !== current.calculated_vh) {
+                current.calculated_vh = vhResult;
                 converged = false;
             }
         } catch (e) {
-            // keep existing calculatedVH or fallback
+            // keep existing calculated_vh or fallback
         }
       }
 
-      const { total: computedTotal, note, type, fuente, baseTotal, baseHist } = computeRowTotal(row, calculatedRows);
+      const { total: computedTotal, note, type, fuente, base_total, base_hist } = computeRowTotal(row, calculatedRows);
 
       const targetTotal = computedTotal.toDecimalPlaces(decimals);
       const currentTotal = new Decimal(current.total);
@@ -669,8 +675,8 @@ export function calculateFicha(
             });
             current.total = finalTotal;
             current.fuente = fuente;
-            current.baseTotal = baseTotal.toNumber();
-            current.baseHist = baseHist.toNumber();
+            current.base_total = base_total.toNumber();
+            current.base_hist = base_hist.toNumber();
         }
       }
     });
@@ -703,7 +709,7 @@ export function calculateFicha(
 
           const diff = Math.abs(calcRow.total - childrenSum.toNumber());
           if (diff > 0.01) {
-              validationErrors.push({
+              validation_errors.push({
                   rowId: row.id,
                   message: `Error Contable: El total de '${row.label}' (${calcRow.total}) no cuadra con la suma de sus componentes (${childrenSum.toNumber()}). Diferencia: ${diff.toFixed(2)}`,
                   type: 'CRITICAL',
@@ -718,8 +724,8 @@ export function calculateFicha(
     rows: Array.from(calculatedRows.values()),
     audits: Array.from(calculatedRows.values()).flatMap(r => r.audit),
     summary,
-    validationErrors: validationErrors.map(e => e.message),
-    deepValidationErrors: validationErrors,
+    validation_errors: validation_errors.map(e => e.message),
+    deepValidationErrors: validation_errors,
     elapsedMs: Date.now() - startTime,
   };
 }

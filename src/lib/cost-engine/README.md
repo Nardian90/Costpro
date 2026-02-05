@@ -20,8 +20,8 @@ Contiene metadatos como moneda, decimales y configuración del motor (`allowForm
 Listado de filas de costo. Campos clave:
 - `classification`: Identificador jerárquico (ej: "1.1").
 - `type`: `COST` | `MARGIN` | `TAX` | `TOTAL` | `INFO`.
-- `formaCalculo`: `FIJO`, `IMPORTAR_ANEXO`, `PRORRATEO`, `COEFICIENTE`, `FORMULA`.
-- `baseCalculo`: Referencia a un anexo o a otra fila por su clasificación.
+- `calculation_method`: `FIJO`, `IMPORTAR_ANEXO`, `PRORRATEO`, `COEFICIENTE`, `FORMULA`.
+- `base_ref`: Referencia a un anexo o a otra fila por su clasificación.
 
 ### `anexos`
 Datos brutos agrupados que alimentan las filas de costo.

@@ -417,19 +417,32 @@ export const costSheetHeaderSchema = z.object({
   unit: z.string(),
 }).catchall(z.any());
 
-export const costSheetRowSchema: z.ZodType<any> = z.lazy(() => z.object({
+export const costSheetRowSchema: z.ZodType<any> = z.lazy(() => z.preprocess((val: any) => {
+  if (val && (typeof val === 'object') && !Array.isArray(val)) {
+    return {
+      ...val,
+      valor_historico: val.valor_historico ?? val.valorHistorico ?? 0,
+      calculation_method: val.calculation_method ?? val.calculationMethod ?? 'ValorFijo',
+      base_ref: val.base_ref ?? val.baseDeCalculoRef ?? val.baseRef ?? null,
+      total_formula: val.total_formula ?? val.totalFormula ?? null,
+      vh_formula: val.vh_formula ?? val.vhFormula ?? null,
+      help_text: val.help_text ?? val.helpText ?? '',
+      is_percent: val.is_percent ?? val.isPercent ?? false,
+    };
+  }
+  return val;
+}, z.object({
   id: z.string(),
   label: z.string(),
-  valorHistorico: z.number().optional(),
-  value: z.number().optional(),
-  baseDeCalculoRef: z.string().nullable().optional(),
+  valor_historico: z.number().optional().default(0),
+  value: z.number().optional().default(0),
   base_ref: z.string().nullable().optional(),
-  calculationMethod: z.enum(['Prorrateo', 'ValorFijo', 'FORMULA', 'ANEXO']).optional(),
-  totalFormula: z.string().nullable().optional(),
-  formula: z.string().optional(),
-  is_percent: z.boolean().optional(),
-  children: z.array(costSheetRowSchema).optional(),
-}).catchall(z.any()));
+  calculation_method: z.enum(['Prorrateo', 'ValorFijo', 'FORMULA', 'ANEXO']).optional().default('ValorFijo'),
+  total_formula: z.string().nullable().optional(),
+  formula: z.string().optional().default(''),
+  is_percent: z.boolean().optional().default(false),
+  children: z.array(costSheetRowSchema).optional().default([]),
+}).catchall(z.any())));
 
 export const costSheetSectionSchema = z.object({
   id: z.string(),
