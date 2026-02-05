@@ -49,11 +49,17 @@ export function ManualReconciliationView({ transaction, onBack }: Props) {
 
     const filteredProducts = useMemo(() => {
         if (!products) return [];
-        return products.filter(p =>
-            p.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            p.cod.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-    }, [products, searchTerm]);
+        return products
+            .filter(p =>
+                p.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                p.cod.toLowerCase().includes(searchTerm.toLowerCase())
+            )
+            .sort((a, b) => {
+                const stockA = currentStockMap.get(a.cod) || 0;
+                const stockB = currentStockMap.get(b.cod) || 0;
+                return stockB - stockA; // Orden de cantidad de mayor a menor
+            });
+    }, [products, searchTerm, currentStockMap]);
 
     const targetAmount = useMemo(() => {
         if (!transaction) return 0;
@@ -319,7 +325,7 @@ export function ManualReconciliationView({ transaction, onBack }: Props) {
                                 className="h-7 text-[9px] font-black uppercase px-2 bg-background border-orange-200 text-orange-600 hover:bg-orange-500 hover:text-white transition-all"
                                 onClick={applyRebate}
                             >
-                                Auto-Cuadrar
+                                Ajustar Todo
                             </Button>
                         )}
                     </div>
@@ -362,14 +368,23 @@ export function ManualReconciliationView({ transaction, onBack }: Props) {
                                     <p className="flex-1 font-bold text-[11px] text-foreground truncate uppercase">{p.descripcion}</p>
 
                                     <div className="flex items-center gap-2 shrink-0">
+                                        <div className="flex flex-col items-end mr-2">
+                                            <span className="text-[8px] font-bold text-muted-foreground uppercase">Stock</span>
+                                            <span className={`text-[10px] font-black ${(currentStockMap.get(p.cod) || 0) <= 0 ? 'text-red-500' : 'text-foreground'}`}>
+                                                {currentStockMap.get(p.cod) || 0}
+                                            </span>
+                                        </div>
                                         <Badge variant="outline" className="text-[8px] px-1.5 h-4 font-black uppercase border-primary/10 bg-muted/50 text-muted-foreground">
                                             {p.cod}
                                         </Badge>
-                                        <span className="text-[9px] text-muted-foreground font-black uppercase w-10 text-center">{p.um}</span>
+                                        <span className="text-[9px] text-muted-foreground font-black uppercase w-8 text-center">{p.um}</span>
                                     </div>
 
                                     <div className="flex items-center gap-2 shrink-0">
-                                        <span className="font-black text-[11px] text-primary w-10 text-right">{p.precio_cents}</span>
+                                        <div className="flex flex-col items-end">
+                                            <span className="text-[8px] font-bold text-muted-foreground uppercase">Precio</span>
+                                            <span className="font-black text-[11px] text-primary">{p.precio_cents}</span>
+                                        </div>
                                         <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all">
                                             <Plus className="w-3.5 h-3.5" />
                                         </div>
