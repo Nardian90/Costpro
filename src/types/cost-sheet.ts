@@ -77,5 +77,5 @@ export interface CalculatedRowValue {
   metadata?: Record<string, any>;
   audits?: any[];
   hasWarnings?: boolean;
-  validationErrors?: { message: string, type: 'CRITICAL' | 'WARNING', code: string }[];
+  validationErrors?: { message: string, type: 'CRITICAL' | 'WARNING' | 'INFO', code: string }[];
 }
