@@ -269,6 +269,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
           name: template?.header?.name || 'Ficha',
           currency: template?.header?.currency || 'CUP',
           decimals: 2,
+          quantity: template?.header?.quantity || 0,
           settings: { allowFormulas: true }
         },
         anexos: (calculatedAnnexes || []).filter((a: any) => !!a).map((a: any) => ({

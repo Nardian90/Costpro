@@ -60,7 +60,7 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
       )}
     >
       <div className="neu-card !p-2 sm:!p-3 !rounded-2xl sm:!rounded-3xl shadow-2xl border-white/10 bg-background/95 backdrop-blur-md relative overflow-hidden">
-        <div className="w-full overflow-x-auto no-scrollbar flex flex-row flex-nowrap items-center gap-3 p-1 pr-12 sm:pr-1">
+        <div className="w-full overflow-x-auto flex flex-row flex-nowrap items-center gap-3 p-1 pr-12 sm:pr-1 pb-2">
           <TooltipProvider>
             {actions.map((action) => (
               <React.Fragment key={action.id}>
