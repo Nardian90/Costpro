@@ -152,7 +152,7 @@ export async function POST(req: NextRequest) {
         addHeader(doc, `ANEXO ${annex.id}`);
         doc.setFontSize(10);
         doc.setFont("helvetica", "bold");
-        doc.text(annex.name.toUpperCase(), 14, 38);
+        doc.text((annex.name || annex.id).toUpperCase(), 14, 38);
 
         const headers = Object.keys(annex.rows[0] || {}).filter(k => k !== 'importe');
         const body = annex.rows.map(r => headers.map(h => r[h]));

@@ -269,6 +269,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
 
       const ficha: FichaJSON = {
         meta: {
+          ...template?.header,
           id: template?.header?.code || 'default',
           name: template?.header?.name || 'Ficha',
           currency: template?.header?.currency || 'CUP',
