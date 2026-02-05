@@ -98,43 +98,70 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
   const visited = new Set<string>();
   const recStack = new Set<string>();
 
+  const getAncestors = (rowId: string): Set<string> => {
+    const ancestors = new Set<string>();
+    let curr = rowMap.get(rowId);
+    while (curr && curr.parentId) {
+      ancestors.add(curr.parentId);
+      curr = rowMap.get(curr.parentId);
+    }
+    return ancestors;
+  };
+
   function hasCycle(u: string): boolean {
     visited.add(u);
     recStack.add(u);
 
     const neighbors = adj.get(u) || [];
     for (const vId of neighbors) {
-      // Priority 1: Classification match (Visual Numbering)
-      // Users primarily reference what they see in the "NO." column.
-      let targetIds = ficha.rows.filter(r => r.classification === vId).map(r => r.id);
-
-      // Priority 2: ID match (UUID or template ID)
-      if (targetIds.length === 0) {
-          targetIds = ficha.rows.filter(r => r.id === vId).map(r => r.id);
+      // Priority 1: Classification match
+      let targetRows = ficha.rows.filter(r => r.classification === vId);
+      // Priority 2: ID match
+      if (targetRows.length === 0) {
+          targetRows = ficha.rows.filter(r => r.id === vId);
       }
 
-      if (targetIds.length === 0) {
-          // Missing reference is caught here or later
-          continue;
-      }
-
-      for (const v of targetIds) {
-          // Avoid false self-cycle when an ID of a child happens to match parent's classification
+      for (const vRow of targetRows) {
+          const v = vRow.id;
+          // Avoid false self-cycle
           if (v === u && vId !== u) continue;
 
           if (recStack.has(v)) {
-              const isSelf = v === u;
-              validationErrors.push({
-                rowId: u,
-                message: isSelf
-                  ? `Autorreferencia crítica detectada: La fila '${rowMap.get(u)?.label || u}' intenta calcularse usando su propio valor, lo cual es matemáticamente imposible.`
-                  : `Ciclo de dependencia detectado: La fila '${rowMap.get(u)?.label || u}' depende de '${rowMap.get(v)?.label || v}' (directa o indirectamente), lo cual genera un bucle infinito de cálculo.`,
-                type: 'CRITICAL',
-                code: 'CYCLE'
+              const uRow = rowMap.get(u);
+              const ancestorsOfU = getAncestors(u);
+              const isParentRef = ancestorsOfU.has(v);
+              const isDirect = v === u || (adj.get(v) || []).some(d => {
+                  let dTargets = ficha.rows.filter(r => r.classification === d).map(r => r.id);
+                  if (dTargets.length === 0) dTargets = ficha.rows.filter(r => r.id === d).map(r => r.id);
+                  return dTargets.includes(u);
               });
-              return true;
-          }
-          if (!visited.has(v)) {
+
+              if (isParentRef) {
+                  validationErrors.push({
+                    rowId: u,
+                    message: `Validación de Jerarquía: Esta fila ('${uRow?.label}') depende de un valor superior ('${vRow.label}'). Asegúrese de que no esté incluida en la sumatoria total del padre para evitar duplicidad.`,
+                    type: 'WARNING',
+                    code: 'HIERARCHY'
+                  });
+                  // Hierarchical references are not blocked as critical cycles
+              } else if (isDirect) {
+                  validationErrors.push({
+                    rowId: u,
+                    message: `Referencia Circular Detectada: El cálculo no puede procesarse porque las celdas se llaman entre sí indefinidamente ('${uRow?.label}' <-> '${vRow.label}').`,
+                    type: 'CRITICAL',
+                    code: 'CYCLE'
+                  });
+                  return true;
+              } else {
+                  validationErrors.push({
+                    rowId: u,
+                    message: `Ciclo de dependencia detectado: La fila '${uRow?.label}' depende de '${vRow.label}' en un bucle cerrado.`,
+                    type: 'CRITICAL',
+                    code: 'CYCLE'
+                  });
+                  return true;
+              }
+          } else if (!visited.has(v)) {
               if (hasCycle(v)) return true;
           }
       }
@@ -150,8 +177,47 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
     }
   });
 
-  // 2. Reference Existence Check
+  // 2. Reference Existence & Contextual Check
+  const getSectionPrefix = (r: CostRow) => r.classification.split('.')[0];
+
   ficha.rows.forEach((row) => {
+    const deps = adj.get(row.id) || [];
+    deps.forEach(vId => {
+        let targets = ficha.rows.filter(r => r.classification === vId);
+        if (targets.length === 0) targets = ficha.rows.filter(r => r.id === vId);
+
+        targets.forEach(vRow => {
+            if (vRow.id === row.id) return;
+
+            // External Ref (INFO-level Warning)
+            const uSec = getSectionPrefix(row);
+            const vSec = getSectionPrefix(vRow);
+            if (uSec !== vSec && uSec !== '' && vSec !== '') {
+                if (!validationErrors.some(e => e.rowId === row.id && e.code === 'EXTERNAL_LINK')) {
+                    validationErrors.push({
+                        rowId: row.id,
+                        message: `Vínculo Externo: El valor se calcula en base a la Sección ${vSec}.`,
+                        type: 'INFO',
+                        code: 'EXTERNAL_LINK'
+                    });
+                }
+            }
+
+            // Parent Ref (non-cycle or general hierarchy warning)
+            const ancestors = getAncestors(row.id);
+            if (ancestors.has(vRow.id)) {
+                if (!validationErrors.some(e => e.rowId === row.id && e.code === 'HIERARCHY')) {
+                    validationErrors.push({
+                        rowId: row.id,
+                        message: `Validación de Jerarquía: Esta fila depende de un valor superior ('${vRow.label}'). Asegúrese de que no esté incluida en la sumatoria total del padre para evitar duplicidad.`,
+                        type: 'WARNING',
+                        code: 'HIERARCHY'
+                    });
+                }
+            }
+        });
+    });
+
     const base = row.baseCalculo;
     if (base?.type === 'FILA') {
       if (!classifications.has(base.classification) && !ids.has(base.classification)) {

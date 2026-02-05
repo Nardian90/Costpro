@@ -128,6 +128,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
 
   const criticalErrors = (safeCalculated.validationErrors || []).filter(e => e.type === 'CRITICAL');
   const warningErrors = (safeCalculated.validationErrors || []).filter(e => e.type === 'WARNING');
+  const infoErrors = (safeCalculated.validationErrors || []).filter(e => e.type === 'INFO');
   const hasEngineWarnings = safeCalculated.hasWarnings || (!hasChildren && !row.is_percent && safeCalculated.total === 0 && ((row.valorHistorico ?? 0) > 0 || !!row.baseDeCalculoRef));
 
   return (
@@ -269,6 +270,8 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                                 <XCircle className="w-4 h-4 text-destructive animate-pulse" />
                             ) : (warningErrors.length > 0 || hasEngineWarnings) ? (
                                 <AlertTriangle className="w-4 h-4 text-amber-500 animate-bounce" />
+                            ) : infoErrors.length > 0 ? (
+                                <HelpCircle className="w-4 h-4 text-blue-500 opacity-70 group-hover:opacity-100 transition-opacity" />
                             ) : isResultRow ? (
                                 <CheckCircle2 className="w-4 h-4 text-emerald-500 opacity-40 group-hover:opacity-100 transition-opacity" />
                             ) : null}
@@ -277,19 +280,23 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                     <PopoverContent className="w-80" onClick={(e) => e.stopPropagation()}>
                         <p className={cn(
                             "text-xs font-bold mb-2 uppercase tracking-tight",
-                            criticalErrors.length > 0 ? "text-destructive" : (warningErrors.length > 0 || hasEngineWarnings) ? "text-amber-600" : "text-emerald-600"
+                            criticalErrors.length > 0 ? "text-destructive" : (warningErrors.length > 0 || hasEngineWarnings) ? "text-amber-600" : infoErrors.length > 0 ? "text-blue-600" : "text-emerald-600"
                         )}>
-                            {criticalErrors.length > 0 ? "Errores Críticos" : (warningErrors.length > 0 || hasEngineWarnings) ? "Advertencias" : "Estado Correcto"}
+                            {criticalErrors.length > 0 ? "Errores Críticos" : (warningErrors.length > 0 || hasEngineWarnings) ? "Advertencias" : infoErrors.length > 0 ? "Información" : "Estado Correcto"}
                         </p>
                         <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
                             {/* Deep Validation Errors */}
                             {(safeCalculated.validationErrors || []).map((ve, idx) => (
                                 <div key={`ve-${idx}`} className={cn(
                                     "text-[10px] p-2 rounded border flex gap-2",
-                                    ve.type === 'CRITICAL' ? "bg-destructive/5 border-destructive/20 text-destructive" : "bg-amber-50 border-amber-200 text-amber-800"
+                                    ve.type === 'CRITICAL' ? "bg-destructive/5 border-destructive/20 text-destructive" :
+                                    ve.type === 'WARNING' ? "bg-amber-50 border-amber-200 text-amber-800" :
+                                    "bg-blue-50 border-blue-200 text-blue-800"
                                 )}>
                                     <div className="mt-0.5">
-                                        {ve.type === 'CRITICAL' ? <XCircle className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
+                                        {ve.type === 'CRITICAL' ? <XCircle className="w-3 h-3" /> :
+                                         ve.type === 'WARNING' ? <AlertTriangle className="w-3 h-3" /> :
+                                         <HelpCircle className="w-3 h-3" />}
                                     </div>
                                     <div>
                                         <span className="font-bold uppercase text-[8px] block opacity-70">{ve.code}</span>
