@@ -334,15 +334,30 @@ export class MatchingEngine {
    * Nota: El proceso es puramente aditivo basado en (Precio * Cantidad) para
    * garantizar que no existan "valores irracionales" de cuadre.
    */
-  async distributeGlobalGoal(targetTotal: number, currentTotal: number, dates: string[]): Promise<ReconciliationLine[]> {
+  async distributeGlobalGoal(
+    targetTotal: number,
+    currentTotal: number,
+    dates: string[],
+    options?: { dayVolumes?: Record<string, number> }
+  ): Promise<ReconciliationLine[]> {
     let remainingDiff = targetTotal - currentTotal;
     if (remainingDiff <= 0 || dates.length === 0) return [];
 
     const lines: ReconciliationLine[] = [];
-    const shuffledDates = [...dates].sort(() => Math.random() - 0.5);
+
+    // Si tenemos volúmenes por día, priorizamos los días con menos transferencias
+    // para que la inyección de efectivo parezca más lógica/natural.
+    const sortedDates = [...dates].sort((a, b) => {
+      if (options?.dayVolumes) {
+        const volA = options.dayVolumes[a] || 0;
+        const volB = options.dayVolumes[b] || 0;
+        if (volA !== volB) return volA - volB;
+      }
+      return Math.random() - 0.5; // Empate o sin volúmenes: aleatorio
+    });
 
     // Greedy distribution across dates
-    for (const date of shuffledDates) {
+    for (const date of sortedDates) {
       if (remainingDiff <= 0) break;
 
       // Refrescamos y ordenamos candidatos por stock (menos stock primero)
@@ -369,7 +384,7 @@ export class MatchingEngine {
         if (maxQtyPossible <= 0) continue;
 
         // Intentamos no saturar un día con un solo producto, repartiendo entre fechas
-        const idealQtyForThisDay = Math.max(1, Math.floor(maxQtyPossible / (shuffledDates.length / 2)));
+        const idealQtyForThisDay = Math.max(1, Math.floor(maxQtyPossible / (sortedDates.length / 2)));
         const qtyToPick = Math.min(availableStock, maxQtyPossible, idealQtyForThisDay);
 
         if (qtyToPick > 0) {
