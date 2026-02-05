@@ -74,8 +74,8 @@ describe('User provided invalid JSON validation', () => {
     };
 
     const result = calculateFicha(ficha);
-    const hardRuleError = result.deepValidationErrors?.find(e => e.rowId === '13' && e.code === 'HARD_RULE_VIOLATION');
-    expect(hardRuleError).toBeDefined();
+    const cycleError = result.deepValidationErrors?.find(e => e.rowId === '13' && e.code === 'CYCLE');
+    expect(cycleError).toBeDefined();
   });
 
   it('should not detect cycle in nested sum of children', () => {
