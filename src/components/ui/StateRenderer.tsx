@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Loader2 } from 'lucide-react';
+import { CostProLoader } from './CostProLoader';
 
 interface StateRendererProps<T> {
   isLoading: boolean;
@@ -14,11 +14,8 @@ interface StateRendererProps<T> {
 }
 
 const DefaultLoadingComponent = () => (
-  <div className="flex flex-col items-center justify-center py-20 gap-4 w-full">
-    <Loader2 className="w-10 h-10 animate-spin text-primary" />
-    <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">
-      CARGANDO DATOS...
-    </p>
+  <div className="flex flex-col items-center justify-center py-20 w-full">
+    <CostProLoader size={160} text="CARGANDO" subtext="Sincronizando Datos" />
   </div>
 );
 

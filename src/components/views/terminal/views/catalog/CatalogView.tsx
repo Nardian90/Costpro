@@ -12,11 +12,11 @@ import {
     Upload,
     HelpCircle,
     Search,
-    Loader2,
     PlusCircle,
     Trash2,
     RefreshCw
 } from 'lucide-react';
+import { CostProLoader } from '@/components/ui/CostProLoader';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
 import {
     PrimaryButton,
@@ -220,9 +220,8 @@ export default function CatalogView() {
 
     if (loading && products.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center h-64 gap-4">
-                <Loader2 className="w-12 h-12 text-primary animate-spin" />
-                <p className="text-muted-foreground font-bold uppercase tracking-widest text-xs">Cargando catálogo...</p>
+            <div className="flex flex-col items-center justify-center h-64">
+                <CostProLoader size={180} text="CATÁLOGO" subtext="Cargando productos..." />
             </div>
         );
     }

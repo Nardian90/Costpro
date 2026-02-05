@@ -8,7 +8,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { COLUMN_LABELS } from '@/contracts/reports';
 import { useAuthStore } from '@/store';
-import { Loader2 } from 'lucide-react';
+import { CostProLoader } from '@/components/ui/CostProLoader';
 
 interface ReportPreviewProps {
   config: Partial<ReportDefinition>;
@@ -80,7 +80,7 @@ export const ReportPreview = ({ config }: ReportPreviewProps) => {
           <div className="mt-12 flex-1 overflow-hidden relative">
              {isLoading && (
                <div className="absolute inset-0 bg-white/50 backdrop-blur-[2px] z-10 flex items-center justify-center rounded-xl">
-                 <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                 <CostProLoader size={120} text="PREVISTA" subtext="Generando borrador..." />
                </div>
              )}
 
