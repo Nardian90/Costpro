@@ -110,11 +110,20 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({ compact =
         {!compact && (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-6">
           {[
-            { id: 'code', label: 'Código' },
+            { id: 'code', label: 'No. FC' },
+            { id: 'product_code', label: 'Cod. Producto' },
             { id: 'date', label: 'Fecha', type: 'date' },
-            { id: 'unit', label: 'Unidad' },
+            { id: 'unit', label: 'UM' },
             { id: 'quantity', label: 'Cantidad', type: 'number' },
             { id: 'currency', label: 'Moneda' },
+            { id: 'company', label: 'Empresa' },
+            { id: 'organism', label: 'Organismo' },
+            { id: 'union', label: 'Unión' },
+            { id: 'destination', label: 'Destino' },
+            { id: 'production_level', label: 'Nivel Prod.', type: 'number' },
+            { id: 'capacity_utilization', label: '% Capacidad', type: 'number' },
+            { id: 'sale_price', label: 'Precio Venta', type: 'number' },
+            { id: 'client', label: 'Cliente' },
             { id: 'category', label: 'Categoría' },
             { id: 'type', label: 'Tipo' },
           ].map((item) => (

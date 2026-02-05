@@ -18,6 +18,7 @@ import { CostSheetAuditLog } from './CostSheetAuditLog';
 import { CostSheetActionsPanel } from './CostSheetActionsPanel';
 import { CostSheetSidebarNav } from './CostSheetSidebarNav';
 import { CostSheetMassiveGenerator } from './CostSheetMassiveGenerator';
+import { CostSheetExportModal, ExportOptions } from './CostSheetExportModal';
 import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
 import ActionMenu from '@/components/ui/ActionMenu';
 import { Layout, Eye, Edit, FileText, Trash2, Download, FileSpreadsheet, Upload, Save, BarChart3, Activity, MoreVertical, AlertTriangle } from 'lucide-react';
@@ -111,21 +112,26 @@ const CostSheetView = () => {
   const [isSectionsSidebarOpen, setIsSectionsSidebarOpen] = useState(false);
   const [isAnnexesSidebarOpen, setIsAnnexesSidebarOpen] = useState(false);
   const [isMassiveGeneratorOpen, setIsMassiveGeneratorOpen] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
   const isAnnexActive = React.useMemo(() => (data?.annexes || []).some((a: any) => a.id === activeSection), [data?.annexes, activeSection]);
 
-  const handleExportPDF = React.useCallback(async () => {
+  const handleExportPDF = React.useCallback(async (options: ExportOptions) => {
+    setIsExportModalOpen(false);
     if (isBlocked) {
         toast.warning("Exportando con advertencias: La ficha contiene errores críticos de validación.");
     }
     const toastId = toast.loading("Generando PDF profesional... por favor espere.");
-    try {
-      // Prioritize the declarative engine export
-      if (calculationResult) {
+
+    const downloadPDF = async (opts: ExportOptions, filename: string) => {
+        if (!calculationResult) return false;
         const response = await fetch('/api/cost-sheets/export-pdf', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(calculationResult)
+            body: JSON.stringify({
+                ...calculationResult,
+                exportOptions: opts
+            })
         });
 
         if (response.ok) {
@@ -133,11 +139,44 @@ const CostSheetView = () => {
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `ficha-${data?.header?.code || 'export'}.pdf`;
+            a.download = filename;
             document.body.appendChild(a);
             a.click();
             a.remove();
-            toast.success("PDF generado con éxito", { id: toastId });
+            window.URL.revokeObjectURL(url);
+            return true;
+        }
+        return false;
+    };
+
+    try {
+      // Prioritize the declarative engine export
+      if (calculationResult) {
+        if (options.consolidated) {
+            const success = await downloadPDF(options, `ficha-consolidada-${data?.header?.code || 'export'}.pdf`);
+            if (success) {
+                toast.success("PDF consolidado generado con éxito", { id: toastId });
+                return;
+            }
+        } else {
+            // Separate export
+            let count = 0;
+            if (options.includeFC) {
+                await downloadPDF({ ...options, includeAudit: false, includeAnnexes: [] }, `ficha-${data?.header?.code || 'export'}.pdf`);
+                count++;
+            }
+
+            for (const annexId of options.includeAnnexes) {
+                await downloadPDF({ ...options, includeFC: false, includeAudit: false, includeAnnexes: [annexId] }, `anexo-${annexId}-${data?.header?.code || 'export'}.pdf`);
+                count++;
+            }
+
+            if (options.includeAudit) {
+                await downloadPDF({ ...options, includeFC: false, includeAnnexes: [] }, `auditoria-${data?.header?.code || 'export'}.pdf`);
+                count++;
+            }
+
+            toast.success(`${count} PDFs generados con éxito`, { id: toastId });
             return;
         }
       }
@@ -150,7 +189,8 @@ const CostSheetView = () => {
         calculatedValues: calculatedValues,
         calculatedAnnexes: calculatedAnnexes,
         store_id: useAuthStore.getState().user?.activeStoreId,
-        name: data?.header?.name || 'Ficha de Costo'
+        name: data?.header?.name || 'Ficha de Costo',
+        exportOptions: options
       }, useAuthStore.getState().token || '');
 
       if (response.url) {
@@ -163,7 +203,7 @@ const CostSheetView = () => {
       console.error("PDF Export error:", error);
       toast.error(`Error al generar el PDF: ${error.message}`, { id: toastId });
     }
-  }, [calculationResult, data, calculatedValues, calculatedAnnexes]);
+  }, [calculationResult, data, calculatedValues, calculatedAnnexes, isBlocked]);
 
   const handleExportExcel = React.useCallback(() => {
     if (isBlocked) {
@@ -225,7 +265,7 @@ const CostSheetView = () => {
     { id: 'import-json', label: 'Importar', icon: Upload, onClick: handleImportJSON, variant: 'outline' as const },
     { id: 'export-json', label: 'Guardar', icon: Save, onClick: handleExportJSON, variant: 'outline' as const, disabled: false },
     { id: 'export-excel', label: 'Excel', icon: FileSpreadsheet, onClick: handleExportExcel, variant: (isBlocked ? 'outline' : 'primary') as any, disabled: false },
-    { id: 'export-pdf', label: 'PDF', icon: Download, onClick: handleExportPDF, variant: (isBlocked ? 'outline' : 'success') as any, disabled: false },
+    { id: 'export-pdf', label: 'PDF', icon: Download, onClick: () => setIsExportModalOpen(true), variant: (isBlocked ? 'outline' : 'success') as any, disabled: false },
     { id: 'massive-gen', label: 'Gen. Masiva', icon: FileText, onClick: () => setIsMassiveGeneratorOpen(true), variant: 'outline' as const },
   ], [isEditing, loadExample, reset, handleImportJSON, handleExportJSON, handleExportExcel, handleExportPDF, isBlocked]);
 
@@ -344,6 +384,13 @@ const CostSheetView = () => {
       <CostSheetMassiveGenerator
         isOpen={isMassiveGeneratorOpen}
         onClose={() => setIsMassiveGeneratorOpen(false)}
+      />
+
+      <CostSheetExportModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        onExport={handleExportPDF}
+        annexes={data?.annexes || []}
       />
 
       {isEditing ? (

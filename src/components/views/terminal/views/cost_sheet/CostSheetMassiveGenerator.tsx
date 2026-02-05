@@ -29,6 +29,10 @@ import { FichaJSON, CostRow, RowSemanticType, FormaCalculo, BaseRef } from '@/li
 import { toast } from 'sonner';
 import { Play, Pause, RotateCcw, Download, FileSpreadsheet, CheckCircle2, AlertCircle, Upload, X as XIcon } from 'lucide-react';
 import { CostProLoader } from '@/components/ui/CostProLoader';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { ExportOptions } from './CostSheetExportModal';
 import JSZip from 'jszip';
 import { exportToExcel } from '@/services/export-service';
 import { exportMassiveTemplate, importMassiveProducts } from '@/services/excel-service';
@@ -61,6 +65,14 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
   const [results, setResults] = useState<MassiveResult[]>([]);
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [importedProducts, setImportedProducts] = useState<any[]>([]);
+  const [exportOptions, setExportOptions] = useState<ExportOptions>({
+    includeFC: true,
+    includeAudit: false,
+    includeAnnexes: currentSheet?.annexes?.map(a => a.id) || [],
+    consolidated: true,
+    skipZeros: true,
+    includeFinancialSummary: true
+  });
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   // We fetch a large number of products for massive generation
@@ -231,7 +243,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
         name: `Ficha: ${product.name}`,
         currency: baseSheet?.header?.currency || 'CUP',
         decimals: 2,
-        quantity: baseSheet?.header?.quantity || 1,
+        quantity: 1, // Mass export is always for 1 unit
         settings: { allowFormulas: true }
       },
       anexos: annexes.map((a: any) => ({
@@ -286,7 +298,10 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
         const response = await fetch('/api/cost-sheets/export-pdf', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(result)
+          body: JSON.stringify({
+            ...result,
+            exportOptions
+          })
         });
 
         if (response.ok) {
@@ -531,6 +546,72 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                             <Download className="w-3 h-3 mr-2" />
                             Descargar Plantilla de Importación
                         </Button>
+                    </div>
+                )}
+            </div>
+
+            {/* Export Options */}
+            <div className="p-4 rounded-2xl bg-sidebar/40 border border-sidebar-border/50 space-y-4">
+                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/70 px-1">
+                    Opciones de Exportación (PDF)
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div className="flex items-center gap-2">
+                        <Checkbox
+                            id="m-includeFC"
+                            checked={exportOptions.includeFC}
+                            onCheckedChange={(c) => setExportOptions(prev => ({ ...prev, includeFC: !!c }))}
+                        />
+                        <Label htmlFor="m-includeFC" className="text-[10px] font-bold uppercase cursor-pointer">Ficha (FC)</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Checkbox
+                            id="m-includeAudit"
+                            checked={exportOptions.includeAudit}
+                            onCheckedChange={(c) => setExportOptions(prev => ({ ...prev, includeAudit: !!c }))}
+                        />
+                        <Label htmlFor="m-includeAudit" className="text-[10px] font-bold uppercase cursor-pointer">Auditoría</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Switch
+                            id="m-skipZeros"
+                            checked={exportOptions.skipZeros}
+                            onCheckedChange={(c) => setExportOptions(prev => ({ ...prev, skipZeros: c }))}
+                        />
+                        <Label htmlFor="m-skipZeros" className="text-[10px] font-bold uppercase cursor-pointer">Omitir Ceros</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Switch
+                            id="m-consolidated"
+                            checked={exportOptions.consolidated}
+                            onCheckedChange={(c) => setExportOptions(prev => ({ ...prev, consolidated: c }))}
+                        />
+                        <Label htmlFor="m-consolidated" className="text-[10px] font-bold uppercase cursor-pointer">Consolidar</Label>
+                    </div>
+                </div>
+
+                {currentSheet?.annexes && currentSheet.annexes.length > 0 && (
+                    <div className="pt-2 border-t border-sidebar-border/30">
+                        <div className="text-[9px] font-bold uppercase text-muted-foreground mb-2">Anexos a incluir:</div>
+                        <div className="flex flex-wrap gap-3">
+                            {currentSheet.annexes.map(a => (
+                                <div key={a.id} className="flex items-center gap-2">
+                                    <Checkbox
+                                        id={`m-annex-${a.id}`}
+                                        checked={exportOptions.includeAnnexes.includes(a.id)}
+                                        onCheckedChange={(checked) => {
+                                            setExportOptions(prev => ({
+                                                ...prev,
+                                                includeAnnexes: checked
+                                                    ? [...prev.includeAnnexes, a.id]
+                                                    : prev.includeAnnexes.filter(id => id !== a.id)
+                                            }));
+                                        }}
+                                    />
+                                    <Label htmlFor={`m-annex-${a.id}`} className="text-[10px] font-medium cursor-pointer">{a.id}</Label>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 )}
             </div>
