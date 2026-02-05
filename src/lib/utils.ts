@@ -53,6 +53,20 @@ export const formatCurrency = (amount: number): string => {
 };
 
 /**
+ * Utility to format numbers with accounting format (US style):
+ * Thousands: comma (,)
+ * Decimal: dot (.)
+ * Precision: 2 decimal places
+ * Example: 2100 -> 2,100.00
+ */
+export const formatAccounting = (amount: number): string => {
+  return new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+};
+
+/**
  * Utility to format dates in Spanish (Argentina) format DD/MM/YYYY.
  */
 export const formatDate = (date: string | Date | null | undefined): string => {
