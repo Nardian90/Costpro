@@ -29,6 +29,7 @@ import { IngestionErrorsTable } from './IngestionErrorsTable';
 import { ManualReconciliationView } from './ManualReconciliationView';
 import { IPVControlPanel } from './IPVControlPanel';
 import { IPVRightSidebar } from './IPVRightSidebar';
+import { MatchingEngine } from '@/lib/ipv/engine';
 import { exportFullBackup, importFullBackup } from '@/lib/ipv/backup';
 import { recalculateIPVReportsChain } from '@/lib/ipv/utils';
 import { formatCurrency } from '@/lib/utils';
@@ -229,6 +230,38 @@ export default function IPVView() {
       setIsMatching(false);
     };
   }, [transactions, products, currentStockMap, rules]);
+
+  const handleForceMatch = React.useCallback(async (tx: BankTransaction) => {
+    if (!products || !rules) return;
+
+    const loadingToast = toast.loading(`Forzando matching para ${tx.referencia_origen}...`);
+
+    try {
+        const engine = new MatchingEngine(products, rules);
+        const currentReconciled = txTotals[tx.referencia_origen] || 0;
+
+        const result = await engine.matchTransaction(tx, currentReconciled);
+
+        if (result.lines.length > 0) {
+            await db.reconciliation_lines.bulkAdd(result.lines);
+        }
+
+        await db.bank_statements.update(tx.referencia_origen, {
+            estado_conciliacion: result.status
+        });
+
+        if (result.status === 'COMPLETO') {
+            toast.success('¡Transacción cuadradada exitosamente!', { id: loadingToast });
+        } else if (result.status === 'PARCIAL') {
+            toast.info('Matching parcial aplicado. Aún queda una diferencia.', { id: loadingToast });
+        } else {
+            toast.error('No se encontraron coincidencias automáticas para esta transacción.', { id: loadingToast });
+        }
+    } catch (error) {
+        console.error('Error in force match:', error);
+        toast.error('Error al ejecutar el matching', { id: loadingToast });
+    }
+  }, [products, rules, txTotals]);
 
   const topActions: Action[] = useMemo(() => [
     {
@@ -485,6 +518,7 @@ export default function IPVView() {
                 setSelectedReconTx(tx);
                 setActiveTab('manual-recon');
               }}
+              onForceMatch={handleForceMatch}
             />
           </TabsContent>
 
