@@ -4,7 +4,8 @@
 import React, { useRef, useCallback } from 'react';
 import type { Product } from '@/types';
 import { cn, resolveProductImage, formatCurrency } from '@/lib/utils';
-import { Package, Edit, Loader2 } from 'lucide-react';
+import { Package, Edit } from 'lucide-react';
+import { CostProLoader } from '@/components/ui/CostProLoader';
 import ProductImage from '@/components/ui/ProductImage';
 
 interface InventoryTableViewProps {
@@ -101,7 +102,9 @@ export default function InventoryTableView({ products, loadMore, hasMore, isLoad
                      {isLoading && (
                         <tr>
                             <td colSpan={7} className="p-8 text-center">
-                                <Loader2 className="w-8 h-8 text-primary animate-spin mx-auto" />
+                                <div className="flex justify-center py-4">
+                                    <CostProLoader size={120} text="CARGANDO" subtext="Buscando existencias..." />
+                                </div>
                             </td>
                         </tr>
                     )}

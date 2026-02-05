@@ -4,8 +4,9 @@
 import React, { useState, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Download, Play, Save, Loader2, AlertTriangle, FileSpreadsheet, History } from 'lucide-react';
+import { FileText, Download, Play, Save, AlertTriangle, FileSpreadsheet, History } from 'lucide-react';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
+import { CostProLoader } from '@/components/ui/CostProLoader';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store';
 import { ReportConfigPanel } from './ReportConfigPanel';
@@ -140,7 +141,7 @@ export default function ReportsView() {
     {
         id: 'save',
         label: isSaving ? 'Guardando...' : 'Guardar Plantilla',
-        icon: isSaving ? Loader2 : Save,
+        icon: isSaving ? (props: any) => <CostProLoader size={20} showText={false} showSubtext={false} {...props} /> : Save,
         onClick: handleSave,
         disabled: isSaving,
         variant: 'outline' as const,
@@ -149,7 +150,7 @@ export default function ReportsView() {
     {
         id: 'export-excel',
         label: isExportingExcel ? 'Preparando...' : 'Exportar Excel',
-        icon: isExportingExcel ? Loader2 : FileSpreadsheet,
+        icon: isExportingExcel ? (props: any) => <CostProLoader size={20} showText={false} showSubtext={false} {...props} /> : FileSpreadsheet,
         onClick: handleExportExcel,
         disabled: isExportingExcel,
         variant: 'outline' as const,
@@ -166,7 +167,7 @@ export default function ReportsView() {
     {
         id: 'generate',
         label: isGenerating ? 'Procesando...' : 'Generar Reporte',
-        icon: isGenerating ? Loader2 : Play,
+        icon: isGenerating ? (props: any) => <CostProLoader size={20} showText={false} showSubtext={false} {...props} /> : Play,
         onClick: handleGenerate,
         disabled: isGenerating,
         variant: 'primary' as const,
