@@ -288,12 +288,12 @@ export default function IPVView() {
                   <h2 className="font-black uppercase tracking-widest text-sm">Flujo de Trabajo Profesional</h2>
               </div>
               <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 sm:gap-6">
-                  <FlowStep number="1" title="Catálogo" desc="Carga productos y precios." />
-                  <FlowStep number="2" title="Reglas" desc="Configura el motor de matching." />
-                  <FlowStep number="3" title="Movimientos" desc="Ingesta de extractos bancarios." />
-                  <FlowStep number="4" title="Validación" desc="Revisión y cuadre manual." />
-                  <FlowStep number="5" title="IPV" desc="Generación de reportes diarios." />
-                  <FlowStep number="6" title="Auditoría" desc="Exportación y control fiscal." />
+                  <FlowStep number="1" title="Ingesta" desc="Carga de extractos bancarios." />
+                  <FlowStep number="2" title="Catálogo" desc="Productos, precios y stock." />
+                  <FlowStep number="3" title="Matching" desc="Ejecución del motor automático." />
+                  <FlowStep number="4" title="Análisis" desc="Revisión de desgloses y cuadre." />
+                  <FlowStep number="5" title="Reportes" desc="Generación de IPV fiscal." />
+                  <FlowStep number="6" title="Auditoría" desc="Control de errores y respaldo." />
               </div>
           </div>
       </Card>
@@ -472,6 +472,8 @@ export default function IPVView() {
               }}
               onExportBackup={() => exportFullBackup(db)}
               onImportBackup={handleImportBackup}
+              hasTransactions={!!transactions && transactions.length > 0}
+              hasProducts={!!products && products.length > 0}
             />
           </TabsContent>
           <TabsContent value="transactions" className="m-0">
