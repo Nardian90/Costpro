@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Play, RotateCcw, Target, Sparkles, TrendingUp, Calendar, Save } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatCurrency } from '@/lib/utils';
 
 export function MatchingSimulation({ products, rules }: { products: Product[], rules: MatchingRule[] }) {
   const [target, setTarget] = useState<number>(0);
@@ -49,25 +50,38 @@ export function MatchingSimulation({ products, rules }: { products: Product[], r
     try {
         const engine = new MatchingEngine(products, rules);
 
-        // Obtener fechas con movimientos
+        // Obtener fechas con movimientos y calcular Venta Total KPI
         const txs = await db.bank_statements.toArray();
         const dates = Array.from(new Set(txs.map(t => t.fecha))).sort();
 
-        const currentLines = await db.reconciliation_lines.toArray();
-        const currentTotal = currentLines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
+        let currentKpiTotal = 0;
+        for (const t of txs) {
+            if (t.excluido || t.estado_conciliacion === 'NO_PROCESAR') continue;
+            currentKpiTotal += (t.importe_venta_cents || t.importe_cents);
+        }
 
-        const extraLines = await engine.distributeGlobalGoal(globalTarget, currentTotal, dates);
-
-        if (extraLines.length === 0) {
-            toast.info('El objetivo ya se ha alcanzado o superado');
+        // Nota: currentKpiTotal está en Pesos (decimal), al igual que globalTarget.
+        if (globalTarget <= currentKpiTotal) {
+            toast.info(`El objetivo global debe ser mayor a la Venta Total actual (${formatCurrency(currentKpiTotal)})`);
+            setIsDistributing(false);
             return;
         }
 
-        if (confirm(`Se han generado ${extraLines.length} líneas de ajuste para cubrir $${(globalTarget - currentTotal).toFixed(2)} entre ${dates.length} días. ¿Deseas aplicarlas?`)) {
+        // El diferencial a repartir es Meta - Venta Total (Transferencias/etc)
+        const extraLines = await engine.distributeGlobalGoal(globalTarget, currentKpiTotal, dates);
+
+        if (extraLines.length === 0) {
+            toast.info('No se pudieron generar líneas de ajuste o el objetivo ya se alcanzó');
+            return;
+        }
+
+        const diff = globalTarget - currentKpiTotal;
+        if (confirm(`Se han generado ${extraLines.length} líneas de ajuste (CASH) para cubrir el faltante de ${formatCurrency(diff)} entre ${dates.length} días. ¿Deseas aplicarlas?`)) {
             await db.reconciliation_lines.bulkAdd(extraLines);
             toast.success('Ajuste global aplicado correctamente');
         }
     } catch (error) {
+        console.error('Error Global Goal:', error);
         toast.error('Error al distribuir objetivo global');
     } finally {
         setIsDistributing(false);
