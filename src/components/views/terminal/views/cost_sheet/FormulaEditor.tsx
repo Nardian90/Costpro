@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
-import { Command, HelpCircle, Maximize2, Check, X, Info, Sparkles, Code } from 'lucide-react';
+import { Command, HelpCircle, Maximize2, Check, X as XIcon, Info, Sparkles, Code } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Popover,
@@ -267,7 +267,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                className="p-1 hover:bg-red-500/20 text-red-600 rounded"
                title="Cancelar (Esc)"
              >
-                <X className="w-3.5 h-3.5" />
+                <XIcon className="w-3.5 h-3.5" />
              </button>
           </div>
         )}

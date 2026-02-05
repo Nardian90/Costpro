@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, FileText, Trash2, Upload, Save, FileSpreadsheet, Download, Settings } from 'lucide-react';
+import { X as XIcon, FileText, Trash2, Upload, Save, FileSpreadsheet, Download, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
@@ -84,7 +84,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
                 onClick={onClose}
                 className="p-2 rounded-xl hover:bg-primary/10 text-muted-foreground transition-colors active:scale-95"
               >
-                <X className="w-5 h-5" />
+                <XIcon className="w-5 h-5" />
               </button>
             </div>
 
