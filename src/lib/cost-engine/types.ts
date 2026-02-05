@@ -34,6 +34,7 @@ export interface CostRow {
   type: RowSemanticType;            // Semantic classification
   label: string;
   valorHistorico?: number | null;   // input del usuario (acepta 0.01)
+  vhFormula?: string | null;        // expresión para Valor Histórico
   formaCalculo: FormaCalculo;
   baseCalculo?: BaseRef | null;
   coeficiente?: number | null;      // decimal (ej 0.2)
@@ -44,6 +45,7 @@ export interface CostRow {
 
 export interface CalculatedRow extends CostRow {
   total: number;
+  calculatedVH: number;
   baseTotal?: number;
   baseHist?: number;
   audit: AuditEntry[];
