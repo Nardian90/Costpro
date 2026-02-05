@@ -52,6 +52,7 @@ interface RowProps {
 const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, calculated, calculatedValues, path, annexes, suggestions }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isEditingTotal, setIsEditingTotal] = useState(false);
+  const [isEditingVH, setIsEditingVH] = useState(false);
   const [isEditingLabel, setIsEditingLabel] = useState(false);
   const updateValue = useCostSheetStore(state => state.updateValue);
   const updateValues = useCostSheetStore(state => state.updateValues);
@@ -103,6 +104,23 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
 
     updateValues(updates);
   }, [path, updateValues, row.is_percent]);
+
+  const handleVHSave = React.useCallback((val: string) => {
+    setIsEditingVH(false);
+    const trimmedVal = val.trim();
+    if (trimmedVal === '') {
+        updateValue([...path, 'valorHistorico'], 0);
+        updateValue([...path, 'vhFormula'], '');
+        return;
+    }
+
+    if (trimmedVal.startsWith('=') || isNaN(Number(trimmedVal))) {
+        updateValue([...path, 'vhFormula'], trimmedVal);
+    } else {
+        updateValue([...path, 'valorHistorico'], parseFloat(trimmedVal));
+        updateValue([...path, 'vhFormula'], '');
+    }
+  }, [path, updateValue]);
 
 
   const isResultRow = row.is_percent || ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '13.1', '13.2', '14', '15', '16'].includes(String(row.id));
@@ -196,36 +214,36 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
         </TableCell>
 
         {/* Valor Histórico / % */}
-        <TableCell className="px-2 py-1.5 sm:px-4 sm:py-2 text-right w-32 sm:w-40">
+        <TableCell className="px-2 py-1.5 sm:px-4 sm:py-2 text-right w-32 sm:w-40 cursor-pointer" onClick={() => !hasChildren && setIsEditingVH(true)}>
             <div className="relative">
-                <Input
-                type="number"
-                step={row.is_percent ? "0.001" : "1"}
-                className={cn(
-                  "neu-input text-right h-8 transition-all text-xs sm:text-sm px-2",
-                  row.is_percent && "pr-6",
-                  hasChildren && "bg-muted/30 font-bold border-dashed cursor-default"
+                {isEditingVH ? (
+                    <FormulaEditor
+                        initialValue={row.vhFormula || String(row.valorHistorico || 0)}
+                        onSave={handleVHSave}
+                        onCancel={() => setIsEditingVH(false)}
+                        suggestions={suggestions}
+                    />
+                ) : (
+                    <div className="flex items-center justify-end gap-1">
+                        <Input
+                        type="text"
+                        className={cn(
+                        "neu-input text-right h-8 transition-all text-xs sm:text-sm px-2 cursor-pointer flex-1",
+                        row.is_percent && "pr-6",
+                        (hasChildren || row.vhFormula) && "bg-muted/30 font-bold border-dashed"
+                        )}
+                        value={hasChildren
+                        ? (safeCalculated.calculatedVH ?? safeCalculated.valorHistorico ?? 0).toFixed(row.is_percent ? 3 : 2)
+                        : (row.vhFormula
+                            ? (safeCalculated.calculatedVH ?? 0).toFixed(row.is_percent ? 3 : 2)
+                            : (row.hasOwnProperty('valorHistorico') ? (row.valorHistorico ?? 0) : (row.is_percent ? ((row.value ?? 0) * 100) : (row.value ?? 0))))}
+                        readOnly={true}
+                        />
+                        {row.vhFormula && <FunctionSquare className="w-3 h-3 text-primary/40 absolute left-2" />}
+                        {row.is_percent && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">%</span>}
+                        {(hasChildren || row.vhFormula) && <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full animate-pulse" title="Calculado automáticamente" />}
+                    </div>
                 )}
-                value={hasChildren
-                  ? (safeCalculated.valorHistorico ?? 0).toFixed(row.is_percent ? 3 : 2)
-                  : (row.hasOwnProperty('valorHistorico') ? (row.valorHistorico ?? 0) : (row.is_percent ? ((row.value ?? 0) * 100) : (row.value ?? 0)))}
-                readOnly={hasChildren}
-                onChange={(e) => {
-                  if (hasChildren) return;
-                  const val = e.target.value;
-                  const numVal = parseFloat(val) || 0;
-                  handleValueChange(
-                    row.hasOwnProperty('valorHistorico') ? 'valorHistorico' : 'value',
-                    row.is_percent ? numVal / 100 : numVal
-                  );
-                  // Ensure engine respects manual changes
-                  handleValueChange('calculationMethod', 'ValorFijo');
-                  handleValueChange('formula', '');
-                }}
-                onFocus={(e) => !hasChildren && e.target.select()}
-                />
-                {row.is_percent && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">%</span>}
-                {hasChildren && <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full animate-pulse" title="Calculado automáticamente" />}
             </div>
         </TableCell>
 
@@ -420,6 +438,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
   const suggestions = useMemo(() => [
     ...(annexes || []).map(a => ({ label: `Anexo ${a.id}`, value: `Anexo${a.id}`, description: a.title })),
     ...allRows.map(r => ({ label: `Fila ${r.id}`, value: `ref('${r.id}')`, description: r.label })),
+    ...allRows.map(r => ({ label: `VH Fila ${r.id}`, value: `vh('${r.id}')`, description: `Valor Histórico de ${r.label}` })),
     { label: 'SUMA', value: 'SUMA(', description: 'Suma de valores' },
     { label: 'PROMEDIO', value: 'PROMEDIO(', description: 'Promedio de valores' },
     { label: 'MAX', value: 'MAX(', description: 'Valor máximo' },
@@ -504,8 +523,14 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
             const currentGroup = groupedSections?.find(g => g.id === activeSubSectionId);
             const targetSectionIds = currentGroup ? currentGroup.sectionIds : [activeSubSectionId];
 
-            return sections.map((section, sectionIndex) => (
-                targetSectionIds.includes(section.id) && (
+            return sections.map((section, sectionIndex) => {
+                const isTarget = targetSectionIds.includes(section.id);
+                if (!isTarget) return null;
+
+                const sectionNum = parseInt(section.id.replace('s', ''), 10);
+                const isStickyHeaderSection = sectionNum >= 1 && sectionNum <= 3;
+
+                return (
                 <div key={section.id} id={section.id} className="animate-in fade-in slide-in-from-bottom-2 duration-500 mb-12 last:mb-0 scroll-mt-24">
                     <div className="flex items-center justify-between mb-4 px-1">
                         <div className="flex items-center gap-3">
@@ -569,7 +594,10 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                     <div className="neu-card p-0 border-border/50 shadow-sm hover:shadow-md transition-shadow">
                         <div className="table-scroll-wrapper rounded-2xl overflow-hidden">
                         <Table className="w-full min-w-[500px] sm:min-w-[700px] border-collapse">
-                            <TableHeader className="bg-muted/90 backdrop-blur-md sticky top-0 z-20 text-muted-foreground font-black uppercase text-[9px] sm:text-[10px] tracking-widest border-b border-border shadow-sm">
+                            <TableHeader className={cn(
+                                "bg-muted/90 backdrop-blur-md text-muted-foreground font-black uppercase text-[9px] sm:text-[10px] tracking-widest border-b border-border",
+                                isStickyHeaderSection ? "sticky top-0 z-20 shadow-sm" : "hidden"
+                            )}>
                                 <TableRow className="hover:bg-transparent border-none">
                                     <TableHead className="w-12 px-2 py-3 sm:px-4 sm:py-4 text-center font-black uppercase tracking-widest">No.</TableHead>
                                     <TableHead className="px-2 py-3 sm:px-4 sm:py-4 text-left font-black uppercase tracking-widest min-w-[180px] sm:min-w-[250px]">Concepto</TableHead>
@@ -598,8 +626,8 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                         </div>
                     </div>
                 </div>
-                )
-            ));
+                );
+            });
         })()}
     </div>
   );

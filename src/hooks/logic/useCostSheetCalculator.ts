@@ -247,6 +247,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
             type,
             formaCalculo,
             valorHistorico: vhSums[r.id] ?? r.valorHistorico ?? r.value,
+            vhFormula: r.vhFormula,
             baseCalculo,
             coeficiente: r.is_percent ? (r.value ?? r.valorHistorico) : r.coeficiente,
             formula: formula,
@@ -293,6 +294,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
           newCalculatedValues[r.id] = {
               total: r.total,
               valorHistorico: r.valorHistorico || 0,
+              calculatedVH: r.calculatedVH,
               baseDeCalculoRef: r.baseCalculo?.type === 'FILA' ? r.baseCalculo.classification : (r.baseCalculo?.anexoId || null),
               baseTotal: r.baseTotal || 0,
               baseValorHistorico: r.baseHist || 0,
