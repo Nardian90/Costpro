@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type BankTransaction } from '@/lib/dexie';
+import { db, type BankTransaction, type Product } from '@/lib/dexie';
 import {
   Table,
   TableBody,
@@ -184,21 +184,27 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
 
                 <div className="h-4 w-px bg-border mx-1" />
 
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={bulkResetMatching}
-                            className="h-7 text-[10px] font-black uppercase text-orange-600 hover:bg-orange-500/10"
-                        >
-                            <RotateCcw className="w-3 h-3 mr-1" /> Reset Matching
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
-                        Elimina todas las líneas de reconciliación de las transacciones visibles actualmente. ¡Acción destructiva!
-                    </TooltipContent>
-                </Tooltip>
+                <div className="flex gap-1 items-center">
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={bulkResetMatching}
+                                className="h-7 text-[10px] font-black uppercase text-orange-600 hover:bg-orange-500/10"
+                            >
+                                <RotateCcw className="w-3 h-3 mr-1" /> Reset
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
+                            Elimina todas las líneas de reconciliación de las transacciones visibles actualmente. ¡Acción destructiva!
+                        </TooltipContent>
+                    </Tooltip>
+
+                    <BulkForceMatchPopover
+                        transactions={filtered}
+                    />
+                </div>
             </div>
 
             <Tooltip>
@@ -306,6 +312,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                         onDelete={() => handleDelete(tx.referencia_origen)}
                         onToggleExclusion={(val: boolean) => toggleExclusion(tx, val)}
                         getStatusBadge={getStatusBadge}
+                        diff={ (tx.importe_venta_cents || tx.importe_cents) - (txReconciliationTotals[tx.referencia_origen] || 0)}
                     />
                 ))
               )}
@@ -321,7 +328,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
             ) : (
                 filtered.map((tx) => {
                     const matchedTotal = txReconciliationTotals[tx.referencia_origen] || 0;
-                    const targetAmount = tx.importe_cents;
+                    const targetAmount = tx.importe_venta_cents || tx.importe_cents;
                     const diff = targetAmount - matchedTotal;
                     const isEnProceso = matchedTotal > 0 && Math.abs(diff) >= 0.001;
 
@@ -613,9 +620,160 @@ function ForceMatchPopover({ transaction }: { transaction: BankTransaction }) {
     );
 }
 
-const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onDelete, onToggleExclusion, getStatusBadge }: any) => {
+function BulkForceMatchPopover({ transactions }: { transactions: BankTransaction[] }) {
+    const products = useLiveQuery(() => db.products.toArray().then(prods => prods.filter(p => p.activo)));
+    const reconciliationLines = useLiveQuery(() => db.reconciliation_lines.toArray());
+    const rules = useLiveQuery(() => db.matching_rules.toArray());
+    const [searchTerm, setSearchTerm] = useState('');
+
+    const useStockLimit = rules?.some(r => r.tipo === 'STOCK_LIMIT' && r.activo);
+
+    const currentStockMap = React.useMemo(() => {
+        const map = new Map<string, number>();
+        if (!products || !reconciliationLines) return map;
+        products.forEach(p => {
+            const sold = reconciliationLines
+                .filter(l => l.product_cod === p.cod)
+                .reduce((sum, l) => sum + l.cantidad, 0);
+            map.set(p.cod, (p.stock_inicial_manual || 0) - sold);
+        });
+        return map;
+    }, [products, reconciliationLines]);
+
+    const filteredProducts = React.useMemo(() => {
+        if (!products) return [];
+        return products.filter(p =>
+            p.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            p.cod.toLowerCase().includes(searchTerm.toLowerCase())
+        ).sort((a, b) => {
+            const sA = currentStockMap.get(a.cod) || 0;
+            const sB = currentStockMap.get(b.cod) || 0;
+            return sB - sA;
+        });
+    }, [products, searchTerm, currentStockMap]);
+
+    const handleBulkForceMatch = async (product: any) => {
+        const pendings = transactions.filter(t => t.estado_conciliacion === 'PENDIENTE');
+        if (pendings.length === 0) {
+            toast.error('No hay transacciones pendientes en la vista actual');
+            return;
+        }
+
+        const loadingToast = toast.loading(`Forzando matching para ${pendings.length} transacciones...`);
+
+        let processedCount = 0;
+        const localStockMap = new Map(currentStockMap);
+
+        try {
+            await db.transaction('rw', [db.reconciliation_lines, db.bank_statements], async () => {
+                for (const tx of pendings) {
+                    const target = tx.importe_venta_cents || tx.importe_cents;
+                    let qty = Math.floor(target / product.precio_cents);
+
+                    if (useStockLimit) {
+                        const available = localStockMap.get(product.cod) || 0;
+                        qty = Math.min(qty, available);
+                    }
+
+                    if (qty <= 0) continue;
+
+                    const importe = product.precio_cents * qty;
+                    const remaining = target - importe;
+
+                    const newLine: any = {
+                        id: uuidv4(),
+                        transaction_ref: tx.referencia_origen,
+                        fecha_operacion: tx.fecha,
+                        ingreso_banco_cents: tx.importe_cents,
+                        venta_real_calculada_cents: importe,
+                        comision_banco_cents: tx.comision_cents || 0,
+                        product_cod: product.cod,
+                        product_um: product.um,
+                        cantidad: qty,
+                        precio_unitario_cents: product.precio_cents,
+                        importe_linea_cents: importe,
+                        cuadre_cents: 0,
+                        clasificacion: tx.tipo === 'Cr' ? 'Transferencia' : 'Efectivo',
+                        origen_dato: 'MANUAL_USER',
+                        reconciliation_hash: await generateHash(`${tx.referencia_origen}-${product.cod}-${qty}-${Date.now()}`),
+                        created_at: new Date().toISOString()
+                    };
+
+                    await db.reconciliation_lines.add(newLine);
+                    await db.bank_statements.update(tx.referencia_origen, {
+                        estado_conciliacion: Math.abs(remaining) < 0.001 ? 'COMPLETO' : 'PARCIAL'
+                    });
+
+                    localStockMap.set(product.cod, (localStockMap.get(product.cod) || 0) - qty);
+                    processedCount++;
+                }
+            });
+
+            toast.success(`Matching forzado en ${processedCount} transacciones con ${product.descripcion}`, { id: loadingToast });
+        } catch (error) {
+            console.error(error);
+            toast.error('Error durante el proceso masivo', { id: loadingToast });
+        }
+    };
+
+    return (
+        <Popover>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <PopoverTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-[10px] font-black uppercase text-blue-600 hover:bg-blue-500/10"
+                        >
+                            <Target className="w-3 h-3 mr-1" /> Forzar Matching
+                        </Button>
+                    </PopoverTrigger>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
+                    Forzar Matching (Masivo): Aplica un producto a TODAS las transacciones pendientes filtradas. Respeta existencias si el límite está activo.
+                </TooltipContent>
+            </Tooltip>
+            <PopoverContent className="w-72 p-0 shadow-2xl rounded-2xl border-primary/20" align="end">
+                <div className="p-3 border-b bg-muted/20">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Forzar Matching Masivo</p>
+                    <div className="relative">
+                        <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+                        <Input
+                            placeholder="Buscar producto..."
+                            className="pl-7 h-8 text-[10px] rounded-lg"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                </div>
+                <ScrollArea className="h-64">
+                    <div className="p-1">
+                        {filteredProducts.map(p => (
+                            <button
+                                key={p.cod}
+                                className="w-full text-left p-2 hover:bg-primary/5 rounded-lg border border-transparent hover:border-primary/20 transition-all flex justify-between items-center group"
+                                onClick={() => handleBulkForceMatch(p)}
+                            >
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-[10px] font-black uppercase text-foreground truncate">{p.descripcion}</p>
+                                    <div className="flex gap-2">
+                                        <span className="text-[8px] text-muted-foreground font-bold uppercase">Stock: {currentStockMap.get(p.cod) || 0}</span>
+                                        <span className="text-[8px] text-primary font-bold uppercase">${p.precio_cents}</span>
+                                    </div>
+                                </div>
+                                <Plus className="w-3 h-3 text-primary opacity-0 group-hover:opacity-100 transition-opacity ml-2 shrink-0" />
+                            </button>
+                        ))}
+                    </div>
+                </ScrollArea>
+            </PopoverContent>
+        </Popover>
+    );
+}
+
+const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onDelete, onToggleExclusion, getStatusBadge, diff }: any) => {
     const targetAmount = tx.importe_venta_cents || tx.importe_cents;
-    const diff = targetAmount - matchedTotal;
     const isEnProceso = matchedTotal > 0 && Math.abs(diff) >= 0.001;
 
     return (
