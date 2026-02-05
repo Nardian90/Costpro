@@ -415,6 +415,15 @@ export const costSheetHeaderSchema = z.object({
   category: z.string(),
   type: z.string(),
   unit: z.string(),
+  product_code: z.string().optional().default(''),
+  company: z.string().optional().default(''),
+  organism: z.string().optional().default(''),
+  union: z.string().optional().default(''),
+  destination: z.string().optional().default(''),
+  production_level: z.number().optional().default(0),
+  capacity_utilization: z.number().optional().default(0),
+  sale_price: z.number().optional().default(0),
+  client: z.string().optional().default(''),
 }).catchall(z.any());
 
 export const costSheetRowSchema: z.ZodType<any> = z.lazy(() => z.object({
