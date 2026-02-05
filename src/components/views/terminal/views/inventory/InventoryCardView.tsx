@@ -4,7 +4,8 @@
 import React, { useRef, useCallback } from 'react';
 import type { Product } from '@/types';
 import { cn } from '@/lib/utils';
-import { Loader2, Package } from 'lucide-react';
+import { Package } from 'lucide-react';
+import { CostProLoader } from '@/components/ui/CostProLoader';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ProductCard } from '@/components/ui/atomic';
 
@@ -58,7 +59,7 @@ export default function InventoryCardView({ products, loadMore, hasMore, isLoadi
 
             {isLoading && (
                 <div className="flex justify-center items-center py-8">
-                    <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                    <CostProLoader size={120} text="CARGANDO" subtext="Obteniendo más productos..." />
                 </div>
             )}
 
