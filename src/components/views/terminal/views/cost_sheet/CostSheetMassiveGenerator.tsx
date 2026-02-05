@@ -239,6 +239,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
 
     return {
       meta: {
+        ...baseSheet?.header,
         id: product.sku || 'export',
         name: `Ficha: ${product.name}`,
         currency: baseSheet?.header?.currency || 'CUP',

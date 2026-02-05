@@ -69,6 +69,7 @@ export interface FichaJSON {
       allowFormulas?: boolean; // FORMULA restricted by default
       autoSave?: boolean;
     };
+    [key: string]: any;
   };
   rows: CostRow[];
   anexos: Anexo[];
@@ -84,7 +85,10 @@ export interface ValidationError {
 
 export interface CalculationResult {
   fichaId: string;
+  fichaName?: string;
+  metadata?: any;
   rows: CalculatedRow[];
+  anexos: Anexo[];
   audits: AuditEntry[];
   validationErrors?: string[];
   deepValidationErrors?: ValidationError[];
