@@ -116,8 +116,7 @@ const CostSheetView = () => {
 
   const handleExportPDF = React.useCallback(async () => {
     if (isBlocked) {
-        toast.error("No se puede exportar: La ficha contiene errores críticos de validación.");
-        return;
+        toast.warning("Exportando con advertencias: La ficha contiene errores críticos de validación.");
     }
     const toastId = toast.loading("Generando PDF profesional... por favor espere.");
     try {
@@ -168,8 +167,7 @@ const CostSheetView = () => {
 
   const handleExportExcel = React.useCallback(() => {
     if (isBlocked) {
-        toast.error("No se puede exportar: La ficha contiene errores críticos de validación.");
-        return;
+        toast.warning("Exportando con advertencias: La ficha contiene errores críticos de validación.");
     }
     const fileName = data?.header?.name ? `Ficha de Costo - ${data.header.name}` : 'Ficha de Costo';
     exportToCSV(data, calculatedValues, fileName);
@@ -226,8 +224,8 @@ const CostSheetView = () => {
     { id: 'reset', label: 'Reiniciar', icon: Trash2, onClick: reset, variant: 'danger' as const },
     { id: 'import-json', label: 'Importar', icon: Upload, onClick: handleImportJSON, variant: 'outline' as const },
     { id: 'export-json', label: 'Guardar', icon: Save, onClick: handleExportJSON, variant: 'outline' as const, disabled: false },
-    { id: 'export-excel', label: 'Excel', icon: FileSpreadsheet, onClick: handleExportExcel, variant: (isBlocked ? 'outline' : 'primary') as any, disabled: isBlocked },
-    { id: 'export-pdf', label: 'PDF', icon: Download, onClick: handleExportPDF, variant: (isBlocked ? 'outline' : 'success') as any, disabled: isBlocked },
+    { id: 'export-excel', label: 'Excel', icon: FileSpreadsheet, onClick: handleExportExcel, variant: (isBlocked ? 'outline' : 'primary') as any, disabled: false },
+    { id: 'export-pdf', label: 'PDF', icon: Download, onClick: handleExportPDF, variant: (isBlocked ? 'outline' : 'success') as any, disabled: false },
     { id: 'massive-gen', label: 'Gen. Masiva', icon: FileText, onClick: () => setIsMassiveGeneratorOpen(true), variant: 'outline' as const },
   ], [isEditing, loadExample, reset, handleImportJSON, handleExportJSON, handleExportExcel, handleExportPDF, isBlocked]);
 
@@ -332,8 +330,8 @@ const CostSheetView = () => {
                       <AlertTriangle className="w-5 h-5" />
                   </div>
                   <div>
-                      <h4 className="text-destructive font-black uppercase tracking-tight text-sm">Ficha Bloqueada</h4>
-                      <p className="text-destructive/80 text-xs font-medium">Se han detectado {deepValidationErrors.filter(e => e.type === 'CRITICAL').length} errores críticos que impiden el guardado y exportación. Por favor, revise las filas marcadas con ❌.</p>
+                      <h4 className="text-destructive font-black uppercase tracking-tight text-sm">Ficha con Errores</h4>
+                      <p className="text-destructive/80 text-xs font-medium">Se han detectado {deepValidationErrors.filter(e => e.type === 'CRITICAL').length} errores críticos. La exportación está disponible pero puede contener datos inconsistentes. Por favor, revise las filas marcadas con ❌.</p>
                   </div>
               </div>
           </div>
