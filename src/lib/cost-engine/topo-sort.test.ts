@@ -50,7 +50,8 @@ describe('Cost Engine - Topological Sorting & DAGs', () => {
 
     const validation = validateFicha(ficha);
     expect(validation.valid, `Validation failed: ${JSON.stringify(validation.validationErrors)}`).toBe(true);
-    expect(validation.validationErrors).toHaveLength(0);
+    // Should have 2 INFO messages for external links (13.3 -> 14.1 and 14.1 -> 13.2)
+    expect(validation.validationErrors.filter(e => e.type !== 'INFO')).toHaveLength(0);
 
     const result = calculateFicha(ficha);
     const r13_1 = result.rows.find(r => r.id === '13.1');
@@ -90,6 +91,6 @@ describe('Cost Engine - Topological Sorting & DAGs', () => {
 
     const validation = validateFicha(ficha);
     expect(validation.valid).toBe(false);
-    expect(validation.validationErrors.some(e => e.code === 'HARD_RULE_VIOLATION')).toBe(true);
+    expect(validation.validationErrors.some(e => e.code === 'CYCLE')).toBe(true);
   });
 });

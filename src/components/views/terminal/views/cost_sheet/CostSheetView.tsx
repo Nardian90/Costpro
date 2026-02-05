@@ -245,6 +245,7 @@ const CostSheetView = () => {
   const secondaryActions = React.useMemo(() => allActions.filter(a => !['toggle-mode'].includes(a.id)), [allActions]);
 
   const navItems = React.useMemo(() => [
+    { id: 'header', label: 'Encabezado', icon: Layout },
     { id: 'kpis', label: 'KPIs', icon: BarChart3 },
     { id: 'main', label: 'Ficha Principal', icon: FileSpreadsheet },
     { id: 'audit', label: 'Auditoría', icon: Activity }
@@ -369,6 +370,11 @@ const CostSheetView = () => {
                             />
                         </div>
                     )}
+                    {activeSection === 'header' && (
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <CostSheetHeaderEditor />
+                        </div>
+                    )}
                     {activeSection === 'main' && (
                         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
                             {/* Horizontal Sub-navigation for Sections */}
@@ -379,9 +385,6 @@ const CostSheetView = () => {
                                     className="shadow-none bg-transparent -mx-4 px-4"
                                 />
                             </div>
-
-                            {/* Full Header Editor */}
-                            <CostSheetHeaderEditor />
 
                             <CostSheetInteractiveTable
                                 sections={data?.sections || []}

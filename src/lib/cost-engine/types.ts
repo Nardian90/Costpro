@@ -77,8 +77,8 @@ export interface FichaJSON {
 export interface ValidationError {
   rowId: string;
   message: string;
-  type: 'CRITICAL' | 'WARNING';
-  code: 'CYCLE' | 'MISSING_REF' | 'SEMANTIC_DISCREPANCY' | 'INVALID_FORMULA' | 'HARD_RULE_VIOLATION' | 'TRIVIAL_FORMULA';
+  type: 'CRITICAL' | 'WARNING' | 'INFO';
+  code: 'CYCLE' | 'MISSING_REF' | 'SEMANTIC_DISCREPANCY' | 'INVALID_FORMULA' | 'HARD_RULE_VIOLATION' | 'TRIVIAL_FORMULA' | 'HIERARCHY' | 'EXTERNAL_LINK';
 }
 
 export interface CalculationResult {
