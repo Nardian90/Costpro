@@ -31,6 +31,7 @@ import { IPVControlPanel } from './IPVControlPanel';
 import { IPVRightSidebar } from './IPVRightSidebar';
 import { exportFullBackup, importFullBackup } from '@/lib/ipv/backup';
 import { recalculateIPVReportsChain } from '@/lib/ipv/utils';
+import { formatCurrency } from '@/lib/utils';
 import { toast } from 'sonner';
 import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
 import { HorizontalScroll } from '@/components/ui/HorizontalScroll';
