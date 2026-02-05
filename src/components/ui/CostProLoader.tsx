@@ -13,111 +13,115 @@ interface CostProLoaderProps {
 }
 
 /**
- * CostProLoader - Componente de carga premium de la marca CostPro.
- * Implementa una animación fluida con el núcleo de identidad de la marca.
+ * CostProLoader - Componente de carga minimalista de la marca CostPro.
+ * Basado en el isotipo refinado con efecto neon y persecución técnica.
  */
 export const CostProLoader: React.FC<CostProLoaderProps> = ({
-  size = 240,
-  text = "COSTPRO",
-  subtext = "Sincronizando Motor de Costos",
-  showText = true,
-  showSubtext = true,
+  size = 160,
+  text,
+  subtext,
+  showText = !!text,
+  showSubtext = !!subtext,
   className
 }) => {
   return (
     <div
-      className={cn("flex flex-col items-center justify-center", className)}
-      style={{ width: size, height: size }}
+      className={cn("flex flex-col items-center justify-center gap-4", className)}
     >
-      <svg
-        width="100%"
-        height="100%"
-        viewBox="0 0 240 240"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className="overflow-visible"
-      >
-        <defs>
-          <linearGradient id="brand-grad-loader" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#22c55e" />
-            <stop offset="100%" stopColor="#10b981" />
-          </linearGradient>
+      <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
+        <svg
+            viewBox="0 0 100 100"
+            className="w-full h-full"
+            style={{ overflow: 'visible' }}
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+        >
+            <defs>
+                {/* Filtro de resplandor para visibilidad en cualquier fondo */}
+                <filter id="neon-glow-loader" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="3.5" result="coloredBlur" />
+                    <feMerge>
+                        <feMergeNode in="coloredBlur" />
+                        <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                </filter>
 
-          <filter id="glow-loader" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="3" result="blur" />
-            <feComposite in="SourceGraphic" in2="blur" operator="over" />
-          </filter>
+                {/* Degradado Verde Fosforescente Pro */}
+                <linearGradient id="greenGradLoader" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#4ade80" />
+                    <stop offset="100%" stopColor="#22c55e" />
+                </linearGradient>
 
-          <style>{`
-            @keyframes chase {
-              0% { stroke-dasharray: 1, 300; stroke-dashoffset: 0; }
-              50% { stroke-dasharray: 150, 300; stroke-dashoffset: -100; }
-              100% { stroke-dasharray: 1, 300; stroke-dashoffset: -280; }
-            }
+                <style>{`
+                    @keyframes chase-new {
+                        0% { stroke-dasharray: 1, 300; stroke-dashoffset: 0; }
+                        50% { stroke-dasharray: 100, 300; stroke-dashoffset: -60; }
+                        100% { stroke-dasharray: 1, 300; stroke-dashoffset: -280; }
+                    }
 
-            @keyframes breathe {
-              0%, 100% { transform: scale(1); opacity: 0.8; }
-              50% { transform: scale(1.1); opacity: 1; }
-            }
+                    @keyframes rotate-new {
+                        from { transform: rotate(0deg); }
+                        to { transform: rotate(360deg); }
+                    }
 
-            @keyframes rotate {
-              from { transform: rotate(0deg); }
-              to { transform: rotate(360deg); }
-            }
+                    @keyframes breathe-new {
+                        0%, 100% { transform: scale(1); opacity: 0.85; }
+                        50% { transform: scale(1.05); opacity: 1; }
+                    }
 
-            .chaser {
-              transform-origin: center;
-              animation: rotate 2s linear infinite, chase 1.5s ease-in-out infinite;
-              stroke-linecap: round;
-            }
+                    .chaser-new {
+                        transform-origin: center;
+                        animation: rotate-new 2.5s linear infinite, chase-new 2.2s ease-in-out infinite;
+                        stroke-linecap: round;
+                        filter: url(#neon-glow-loader);
+                    }
 
-            .core-loader {
-              transform-origin: 120px 120px;
-              animation: breathe 3s ease-in-out infinite;
-            }
+                    .core-new {
+                        transform-origin: center;
+                        animation: breathe-new 3s ease-in-out infinite;
+                        filter: url(#neon-glow-loader);
+                    }
 
-            .brand-ui-text-loader {
-              font-family: 'Segoe UI', Roboto, Helvetica, sans-serif;
-              text-transform: uppercase;
-              letter-spacing: 0.2em;
-            }
-          `}</style>
-        </defs>
+                    .brand-text-new {
+                        font-family: 'Segoe UI', Roboto, Helvetica, sans-serif;
+                        text-transform: uppercase;
+                        letter-spacing: 0.3em;
+                    }
+                `}</style>
+            </defs>
 
-        {/* Anillo de Guía (Background) */}
-        <circle cx="120" cy="120" r="70" stroke="#f1f5f9" strokeWidth="2" />
+            {/* Guía circular técnica muy tenue */}
+            <circle cx="50" cy="50" r="42" stroke="currentColor" className="text-gray-400 opacity-5" strokeWidth="0.5" />
 
-        {/* Anillos Activos (Efecto Jules/Gemini) */}
-        <circle className="chaser" cx="120" cy="120" r="70" stroke="url(#brand-grad-loader)" strokeWidth="6" filter="url(#glow-loader)" />
+            {/* El Chaser: La carga animada exterior */}
+            <circle className="chaser-new" cx="50" cy="50" r="42" stroke="url(#greenGradLoader)" strokeWidth="3" />
 
-        {/* Núcleo de Identidad: La C de CostPro */}
-        <g className="core-loader">
-           <path
-            d="M 120, 120 m -35, 0 a 35,35 0 1,0 70,0 a 35,35 0 1,0 -70,0"
-            stroke="url(#brand-grad-loader)"
-            strokeWidth="8"
-            strokeLinecap="round"
-            style={{ transform: 'rotate(135deg)', transformOrigin: '120px 120px' }}
-            strokeDasharray="175 220"
-          />
-          {/* Sutil checkmark de validación */}
-          <path d="M116 120 L119 123 L125 117" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        </g>
+            {/* El Núcleo: La "C" de CostPro refinada */}
+            <g className="core-new">
+                <path
+                    d="M58 42 A12 12 0 1 0 58 58"
+                    stroke="#22c55e"
+                    strokeWidth="6.5"
+                    strokeLinecap="round"
+                />
+            </g>
+        </svg>
+      </div>
 
-        {/* Marca Centralizada */}
-        {showText && (
-          <text x="120" y="175" className="brand-ui-text-loader" textAnchor="middle" fontSize="16" fill="#065f46" fontWeight="800">
-            {text}
-          </text>
-        )}
-
-        {/* Subtexto Inferior de Sistema */}
-        {showSubtext && (
-          <text x="120" y="215" className="brand-ui-text-loader" textAnchor="middle" fontSize="8" fill="#94a3b8" fontWeight="600">
-            {subtext}
-          </text>
-        )}
-      </svg>
+      {(showText || showSubtext) && (
+        <div className="flex flex-col items-center gap-1">
+            {showText && (
+                <span className="brand-text-new text-sm font-black text-green-600 dark:text-green-500">
+                    {text}
+                </span>
+            )}
+            {showSubtext && (
+                <span className="brand-text-new text-[8px] font-bold text-slate-400">
+                    {subtext}
+                </span>
+            )}
+        </div>
+      )}
     </div>
   );
 };
