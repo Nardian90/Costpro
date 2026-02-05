@@ -44,9 +44,10 @@ interface TransactionTableProps {
     kpiFilter: 'ALL' | 'CUADRADAS' | 'EN_PROCESO' | 'PENDIENTES';
     txReconciliationTotals: Record<string, number>;
     onReconcile: (tx: BankTransaction) => void;
+    onForceMatch?: (tx: BankTransaction) => void;
 }
 
-export function TransactionTable({ transactions, kpiFilter, txReconciliationTotals, onReconcile }: TransactionTableProps) {
+export function TransactionTable({ transactions, kpiFilter, txReconciliationTotals, onReconcile, onForceMatch }: TransactionTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [helpOpen, setHelpOpen] = useState(false);
   const [layoutMode, setLayoutMode] = useState<'table' | 'cards'>('table');
@@ -299,6 +300,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                         tx={tx}
                         matchedTotal={txReconciliationTotals[tx.referencia_origen] || 0}
                         onView={() => onReconcile(tx)}
+                        onForceMatch={() => onForceMatch?.(tx)}
                         onReset={() => handleResetReconciliation(tx)}
                         onDelete={() => handleDelete(tx.referencia_origen)}
                         onToggleExclusion={(val: boolean) => toggleExclusion(tx, val)}
@@ -324,6 +326,16 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
 
                     return (
                         <Card key={tx.id} className="p-4 space-y-4 border-none shadow-md bg-card/50 backdrop-blur-sm relative overflow-hidden">
+                            {onForceMatch && !tx.excluido && tx.estado_conciliacion !== 'COMPLETO' && (
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="absolute top-2 right-2 h-8 w-8 text-primary hover:bg-primary/10 z-10"
+                                    onClick={() => onForceMatch(tx)}
+                                >
+                                    <Zap className="w-4 h-4 fill-primary/20" />
+                                </Button>
+                            )}
                             <div className={`absolute top-0 left-0 w-1 h-full ${tx.tipo === 'Cr' ? 'bg-green-500' : 'bg-red-500'}`} />
 
                             <div className="flex justify-between items-start">
@@ -472,10 +484,11 @@ function HelpItem({ title, desc }: { title: string, desc: string }) {
     );
 }
 
-const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onDelete, onToggleExclusion, getStatusBadge }: any) => {
+const TransactionRow = React.memo(({ tx, matchedTotal, onView, onForceMatch, onReset, onDelete, onToggleExclusion, getStatusBadge }: any) => {
     const targetAmount = tx.importe_venta_cents || tx.importe_cents;
     const diff = targetAmount - matchedTotal;
     const isEnProceso = matchedTotal > 0 && Math.abs(diff) >= 0.001;
+    const isPending = matchedTotal === 0;
 
     return (
         <TableRow className={`${tx.excluido ? 'opacity-40 grayscale bg-muted/20' : ''} transition-colors`}>
@@ -515,6 +528,24 @@ const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onDelete
           <TableCell>{getStatusBadge(tx.estado_conciliacion, diff, matchedTotal)}</TableCell>
           <TableCell className="text-right">
             <div className="flex justify-end gap-1 items-center">
+                {(isEnProceso || isPending) && !tx.excluido && (
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-primary hover:bg-primary/10"
+                                onClick={onForceMatch}
+                            >
+                                <Zap className="w-4 h-4 fill-primary/20" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
+                            <p className="font-black text-primary mb-1">FORZAR MATCHING</p>
+                            Ejecuta el algoritmo automático solo para esta transacción. Intentará buscar combinaciones de productos o aplicar reglas de tolerancia.
+                        </TooltipContent>
+                    </Tooltip>
+                )}
                 {isEnProceso && (
                     <QuickAdjustPopover
                         transaction={tx}
