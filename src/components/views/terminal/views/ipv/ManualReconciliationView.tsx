@@ -74,37 +74,50 @@ export function ManualReconciliationView({ transaction, onBack }: Props) {
 
     const remaining = targetAmount - currentTotal;
 
-    const applyRebate = () => {
-        if (manualLines.length === 0) {
-            toast.error('Añada al menos un producto para aplicar una rebaja o ajuste.');
-            return;
-        }
-
-        const lastLineIndex = manualLines.length - 1;
-        const lastLine = manualLines[lastLineIndex];
-
+    const applyRebate = async () => {
         const adjustment = remaining;
-        const newTotalLine = (lastLine.importe_linea_cents || 0) + adjustment;
 
-        if (newTotalLine < 0) {
-            toast.error('El ajuste resultaría en un precio negativo.');
+        // Caso 1: Hay líneas manuales nuevas (prioridad)
+        if (manualLines.length > 0) {
+            const lastLineIndex = manualLines.length - 1;
+            const lastLine = manualLines[lastLineIndex];
+
+            const newTotalLine = (lastLine.importe_linea_cents || 0) + adjustment;
+
+            if (newTotalLine < 0) {
+                toast.error('El ajuste resultaría en un precio negativo.');
+                return;
+            }
+
+            const updatedLines = [...manualLines];
+            updatedLines[lastLineIndex] = {
+                ...lastLine,
+                importe_linea_cents: newTotalLine,
+                precio_unitario_cents: lastLine.cantidad === 1 ? newTotalLine : lastLine.precio_unitario_cents,
+                cuadre_cents: (lastLine.cuadre_cents || 0) + adjustment,
+                origen_dato: 'MANUAL_USER'
+            };
+
+            setManualLines(updatedLines);
+            const label = adjustment > 0 ? 'Propina' : 'Descuento';
+            toast.success(`${label} de ${Math.abs(adjustment)} cts aplicado a ${lastLine.product_cod}`, {
+                icon: <CheckCircle2 className="text-primary" />
+            });
             return;
         }
 
-        const updatedLines = [...manualLines];
-        updatedLines[lastLineIndex] = {
-            ...lastLine,
-            importe_linea_cents: newTotalLine,
-            precio_unitario_cents: lastLine.cantidad === 1 ? newTotalLine : lastLine.precio_unitario_cents,
-            cuadre_cents: (lastLine.cuadre_cents || 0) + adjustment,
-            origen_dato: 'MANUAL_USER'
-        };
+        // Caso 2: Hay líneas existentes (ya persistidas)
+        if (existingLines && existingLines.length > 0) {
+            const lastLine = existingLines[existingLines.length - 1];
+            await adjustExistingLine(lastLine);
+            return;
+        }
 
-        setManualLines(updatedLines);
-        const label = adjustment > 0 ? 'Propina' : 'Descuento';
-        toast.success(`${label} de ${Math.abs(adjustment)} cts aplicado a ${lastLine.product_cod}`, {
-            icon: <CheckCircle2 className="text-primary" />
-        });
+        // Caso 3: No hay líneas (Pendiente), añadimos una de CASH automática
+        if (Math.abs(remaining) > 0) {
+            addManualCash();
+            toast.success('Se añadió una línea de ajuste automático (CASH).');
+        }
     };
 
     const addManualCash = () => {
@@ -305,7 +318,7 @@ export function ManualReconciliationView({ transaction, onBack }: Props) {
                                 {remaining.toFixed(2)}
                             </span>
                         </div>
-                        {Math.abs(remaining) > 0.001 && manualLines.length > 0 && (
+                        {Math.abs(remaining) > 0.001 && (
                             <Button
                                 size="sm"
                                 variant="outline"
