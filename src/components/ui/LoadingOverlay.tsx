@@ -18,71 +18,25 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ isVisible, messa
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/40 backdrop-blur-md"
-          style={{ backdropFilter: 'blur(8px) brightness(0.8)' }}
+          className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm"
         >
-          <div className="relative flex flex-col items-center p-8 rounded-[2.5rem] bg-white opacity-[0.98] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] border border-gray-100 overflow-hidden">
-            {/* Floating particles for innovation */}
-            <div className="absolute inset-0 pointer-events-none">
-                {[...Array(6)].map((_, i) => (
+          <div className="relative flex flex-col items-center gap-8">
+            <CostProLoader
+                size={140}
+                text={progress !== undefined ? `${Math.round(progress)}%` : "COSTPRO"}
+                subtext={message}
+                showSubtext={!!message}
+            />
+
+            {progress !== undefined && (
+                <div className="w-48 h-1 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
                     <motion.div
-                        key={i}
-                        animate={{
-                            y: [0, -20, 0],
-                            opacity: [0.1, 0.3, 0.1],
-                            scale: [1, 1.2, 1]
-                        }}
-                        transition={{
-                            duration: 3 + i,
-                            repeat: Infinity,
-                            ease: "easeInOut"
-                        }}
-                        className="absolute w-2 h-2 rounded-full bg-primary/20"
-                        style={{
-                            top: `${Math.random() * 100}%`,
-                            left: `${Math.random() * 100}%`
-                        }}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${progress}%` }}
+                        className="h-full bg-primary"
                     />
-                ))}
-            </div>
-
-            <div className="relative mb-2">
-                <CostProLoader
-                    size={220}
-                    text={progress !== undefined ? `${Math.round(progress)}%` : "COSTPRO"}
-                    subtext={message || "Sincronizando Motor de Costos"}
-                    showSubtext={false}
-                />
-            </div>
-
-            <div className="space-y-6 w-full max-w-xs text-center relative z-10">
-                {message && (
-                <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="space-y-1.5"
-                >
-                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500 opacity-80">
-                        Optimizando Finanzas
-                    </p>
-                    <p className="text-xs font-bold text-[#374151] italic px-4">
-                        {message}
-                    </p>
-                </motion.div>
-                )}
-
-                {progress !== undefined && (
-                    <div className="space-y-4">
-                        <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden border border-gray-200 relative">
-                            <motion.div
-                                initial={{ width: 0 }}
-                                animate={{ width: `${progress}%` }}
-                                className="h-full bg-primary shadow-[0_0_15px_#16a34a66]"
-                            />
-                        </div>
-                    </div>
-                )}
-            </div>
+                </div>
+            )}
           </div>
         </motion.div>
       )}
