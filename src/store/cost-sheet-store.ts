@@ -81,7 +81,7 @@ interface CostSheetState {
 export const useCostSheetStore = create<CostSheetState>()(
   persist(
     (set) => ({
-      data: blankSheet,
+      data: originalTemplate,
       updateValue: (path, value) =>
         set(
           produce((draft: CostSheetState) => {
