@@ -437,12 +437,14 @@ export default function IPVView() {
                 <HorizontalScroll containerClassName="bg-muted/50 rounded-2xl p-1">
                     <TabsList className="flex bg-transparent border-none w-max min-w-full h-auto p-0 gap-1">
                         <TabsTrigger value="dashboard" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Panel</TabsTrigger>
+                        <TabsTrigger value="ingestion" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest text-nowrap shrink-0 rounded-xl">Extracto</TabsTrigger>
+                        <TabsTrigger value="catalog" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Catálogo</TabsTrigger>
                         <TabsTrigger value="transactions" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Transacciones</TabsTrigger>
                         <TabsTrigger value="sim" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Simulación</TabsTrigger>
                         <TabsTrigger value="breakdown" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Desglose</TabsTrigger>
                         <TabsTrigger value="pivot" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Consolidado</TabsTrigger>
-                        <TabsTrigger value="catalog" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Catálogo</TabsTrigger>
-                        <TabsTrigger value="ingestion" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest text-nowrap shrink-0 rounded-xl">Extracto</TabsTrigger>
+                        <TabsTrigger value="reports" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest text-nowrap shrink-0 rounded-xl">Reportes IPV</TabsTrigger>
+                        <TabsTrigger value="rules" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Reglas</TabsTrigger>
                         <TabsTrigger value="errors" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest relative shrink-0 rounded-xl">
                             Errores
                             {ingestionErrorsCount > 0 && (
@@ -451,8 +453,6 @@ export default function IPVView() {
                                 </span>
                             )}
                         </TabsTrigger>
-                        <TabsTrigger value="reports" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest text-nowrap shrink-0 rounded-xl">Reportes IPV</TabsTrigger>
-                        <TabsTrigger value="rules" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Reglas</TabsTrigger>
                         {selectedReconTx && (
                             <TabsTrigger value="manual-recon" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl border-2 border-primary/20 bg-primary/5 text-primary">
                                 Conciliación
@@ -476,6 +476,14 @@ export default function IPVView() {
               hasProducts={!!products && products.length > 0}
             />
           </TabsContent>
+          <TabsContent value="ingestion" className="m-0 p-6">
+            <BankIngestion />
+          </TabsContent>
+
+          <TabsContent value="catalog" className="m-0">
+            <CatalogTable />
+          </TabsContent>
+
           <TabsContent value="transactions" className="m-0">
             <TransactionTable
               transactions={transactions || []}
@@ -508,14 +516,6 @@ export default function IPVView() {
 
           <TabsContent value="pivot" className="m-0">
             <PivotStatementView />
-          </TabsContent>
-
-          <TabsContent value="catalog" className="m-0">
-            <CatalogTable />
-          </TabsContent>
-
-          <TabsContent value="ingestion" className="m-0 p-6">
-            <BankIngestion />
           </TabsContent>
 
           <TabsContent value="reports" className="m-0">

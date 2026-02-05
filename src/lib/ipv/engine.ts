@@ -220,7 +220,8 @@ export class MatchingEngine {
         if (qty <= 0) continue;
 
         const diff = Math.abs(remaining_cents - (product.precio_cents * qty));
-        if (diff <= toleranceRule.tolerancia_cents) {
+        // Comparación inclusiva con un pequeño margen para errores de punto flotante
+        if (diff <= (toleranceRule.tolerancia_cents + 0.01)) {
           const line = await this.createLine(transaction, product, qty, 'AUTO_MATCH', 'Transferencia');
           line.cuadre_cents = remaining_cents - (product.precio_cents * qty);
           // IMPORTANTE: El importe de la línea debe ser el total incluyendo el descuadre
@@ -297,6 +298,17 @@ export class MatchingEngine {
             }
         }
       }
+    }
+
+    // AUTO-ADJUSTMENT / QUICK CLOSURE:
+    // Si después de todos los pases queda un remanente menor a la tolerancia y hay líneas,
+    // absorbemos el remanente en la última línea como un descuadre para forzar el cierre.
+    if (remaining_cents > 0 && lines.length > 0 && toleranceRule && remaining_cents <= (toleranceRule.tolerancia_cents + 0.01)) {
+        const lastLine = lines[lines.length - 1];
+        lastLine.cuadre_cents += remaining_cents;
+        lastLine.importe_linea_cents += remaining_cents;
+        logs.push(`QUICK CLOSURE: Remanente de ${remaining_cents} absorbido en última línea (${lastLine.product_cod})`);
+        remaining_cents = 0;
     }
 
     const status = Math.abs(remaining_cents) < 0.001 ? 'COMPLETO' : (lines.length > 0 ? 'PARCIAL' : 'PENDIENTE');
@@ -437,13 +449,17 @@ export class MatchingEngine {
    */
   private findExactCombination(target: number): { product: Product, qty: number }[] {
     const sortedProducts = [...this.products].sort((a, b) => {
-        // Modo híbrido/automático: Priorizar según prioridad_algoritmo (1 mejor)
+        // Prioridad 1: Effectiveness Score (descendente)
+        const effA = a.priceEffectivenessScore || 0;
+        const effB = b.priceEffectivenessScore || 0;
+        if (effB !== effA) return effB - effA;
+
+        // Prioridad 2: Modo híbrido/automático (prioridad_algoritmo, 1 mejor)
         const pA = a.prioridad_algoritmo || 3;
         const pB = b.prioridad_algoritmo || 3;
-
         if (pA !== pB) return pA - pB;
 
-        // Desempate por precio (mayor primero)
+        // Prioridad 3: Desempate por precio (mayor primero para reducir número de productos)
         if (b.precio_cents !== a.precio_cents) {
             return b.precio_cents - a.precio_cents;
         }
@@ -536,7 +552,10 @@ export class MatchingEngine {
 
         if (onProgress) {
             const percentage = Math.round(((i + 1) / total) * 100);
-            onProgress(percentage);
+            // Throttle progress updates to avoid UI freezing (every 5% or at least every 20 transactions)
+            if (percentage % 5 === 0 || i % 20 === 0 || i === total - 1) {
+                onProgress(percentage);
+            }
         }
     }
     return results;
