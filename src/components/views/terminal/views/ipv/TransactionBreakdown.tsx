@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Filter, Trash2, Edit2, CheckCircle2, X } from 'lucide-react';
+import { Search, Filter, Trash2, Edit2, CheckCircle2, X, RotateCcw } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { toast } from 'sonner';
 import {
@@ -67,11 +67,52 @@ export function TransactionBreakdown() {
     const txTotal = txLines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
     const tx = await db.bank_statements.get(line.transaction_ref);
     if (tx) {
-        const target = tx.importe_cents;
+        const target = tx.importe_venta_cents || tx.importe_cents;
         const newStatus = txTotal >= target - 0.001 ? 'COMPLETO' : (txTotal > 0 ? 'PARCIAL' : 'PENDIENTE');
         await db.bank_statements.update(tx.referencia_origen, { estado_conciliacion: newStatus });
     }
     toast.success('Línea eliminada');
+  };
+
+  const handleResetCash = async () => {
+    if (!confirm('¿Estás seguro de que deseas eliminar TODOS los registros en efectivo? Esto incluye ajustes globales y ventas manuales en cash.')) {
+        return;
+    }
+
+    try {
+        const allCashLines = lines?.filter(l =>
+            l.clasificacion === 'Efectivo' ||
+            l.origen_dato === 'CASH_FILLER' ||
+            l.product_cod === 'CASH_MANUAL'
+        ) || [];
+
+        if (allCashLines.length === 0) {
+            toast.info('No hay registros de efectivo para eliminar.');
+            return;
+        }
+
+        const ids = allCashLines.map(l => l.id);
+        const affectedTxRefs = Array.from(new Set(allCashLines.map(l => l.transaction_ref)));
+
+        await db.reconciliation_lines.bulkDelete(ids);
+
+        // Actualizar estados de transacciones afectadas
+        for (const ref of affectedTxRefs) {
+            const tx = await db.bank_statements.get(ref);
+            if (tx) {
+                const remainingLines = await db.reconciliation_lines.where('transaction_ref').equals(ref).toArray();
+                const txTotal = remainingLines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
+                const target = tx.importe_venta_cents || tx.importe_cents;
+                const newStatus = txTotal >= target - 0.001 ? 'COMPLETO' : (txTotal > 0 ? 'PARCIAL' : 'PENDIENTE');
+                await db.bank_statements.update(ref, { estado_conciliacion: newStatus });
+            }
+        }
+
+        toast.success(`${ids.length} registros de efectivo eliminados correctamente.`);
+    } catch (error) {
+        console.error('Error resetting cash:', error);
+        toast.error('Error al eliminar registros de efectivo');
+    }
   };
 
   const handleSaveEdit = async () => {
@@ -116,6 +157,16 @@ export function TransactionBreakdown() {
           />
         </div>
         <div className="flex items-center gap-4">
+            <Button
+                variant="outline"
+                size="sm"
+                onClick={handleResetCash}
+                className="h-10 px-4 text-[10px] font-black uppercase tracking-widest gap-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 transition-all shadow-sm"
+            >
+                <RotateCcw className="w-3 h-3" />
+                Reset Efectivo
+            </Button>
+            <div className="h-8 w-px bg-border mx-2" />
             <div className="text-right">
                 <p className="text-[10px] font-black text-muted-foreground uppercase">Total Filtrado</p>
                 <p className="text-lg font-black text-primary">{formatCurrency(total)}</p>
