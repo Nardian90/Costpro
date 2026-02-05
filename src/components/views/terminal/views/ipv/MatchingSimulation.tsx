@@ -50,15 +50,35 @@ export function MatchingSimulation({ products, rules }: { products: Product[], r
     try {
         const engine = new MatchingEngine(products, rules);
 
-        // Obtener fechas con movimientos y calcular Venta Total KPI
+        // Obtener fechas con movimientos y calcular Venta Total KPI (Transferencias + Efectivo)
         const txs = await db.bank_statements.toArray();
+        const reconLines = await db.reconciliation_lines.toArray();
         const dates = Array.from(new Set(txs.map(t => t.fecha))).sort();
 
-        let currentKpiTotal = 0;
+        let totalTransferencias = 0;
+        let totalEfectivo = 0;
+        const checkedTxRefs = new Set<string>();
+
         for (const t of txs) {
             if (t.excluido || t.estado_conciliacion === 'NO_PROCESAR') continue;
-            currentKpiTotal += (t.importe_venta_cents || t.importe_cents);
+            checkedTxRefs.add(t.referencia_origen);
+            if (t.tipo === 'Cr') {
+                totalTransferencias += (t.importe_venta_cents || t.importe_cents);
+            }
         }
+
+        for (const l of reconLines) {
+            if (!checkedTxRefs.has(l.transaction_ref)) {
+                if (l.importe_linea_cents > 0) totalEfectivo += l.importe_linea_cents;
+            } else {
+                if (l.clasificacion === 'Efectivo') {
+                    totalEfectivo += l.importe_linea_cents;
+                    totalTransferencias -= l.importe_linea_cents;
+                }
+            }
+        }
+
+        const currentKpiTotal = totalTransferencias + totalEfectivo;
 
         // Nota: currentKpiTotal está en Pesos (decimal), al igual que globalTarget.
         if (globalTarget <= currentKpiTotal) {
