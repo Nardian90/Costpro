@@ -26,6 +26,15 @@ export interface CostSheetHeaderContract {
   category: string;
   type: string;
   unit: string;
+  product_code: string;
+  company: string;
+  organism: string;
+  union: string;
+  destination: string;
+  production_level: number;
+  capacity_utilization: number;
+  sale_price: number;
+  client: string;
 }
 
 export interface CostSheetRowContract {
@@ -128,10 +137,19 @@ export const CostSheetHeaderFactory = {
     name: '',
     date: new Date().toISOString().split('T')[0],
     quantity: 1,
-    currency: 'USD',
+    currency: 'CUP',
     category: '',
     type: '',
     unit: 'unidad',
+    product_code: '',
+    company: '',
+    organism: '',
+    union: '',
+    destination: '',
+    production_level: 0,
+    capacity_utilization: 0,
+    sale_price: 0,
+    client: '',
     ...initialValues,
   }),
 };

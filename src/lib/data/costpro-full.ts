@@ -16,7 +16,16 @@ const template: CostSheetDataContract = {
     "quantity": 100,
     "currency": "CUP",
     "category": "ORGANISMO",
-    "type": "EMPRESA"
+    "type": "EMPRESA",
+    "product_code": "PROD-PAN-001",
+    "company": "EMPRESA ALIMENTARIA",
+    "organism": "MINAL",
+    "union": "UNION MOLINERA",
+    "destination": "Producción",
+    "production_level": 1000,
+    "capacity_utilization": 85.5,
+    "sale_price": 12.50,
+    "client": "Población"
   },
   "sections": [
     {
