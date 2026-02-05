@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ShoppingCart, X, Trash2, Minus, Plus, DollarSign, CreditCard, Loader2, Check } from 'lucide-react';
+import { ShoppingCart, X, Trash2, Minus, Plus, DollarSign, CreditCard, Check } from 'lucide-react';
+import { CostProLoader } from '@/components/ui/CostProLoader';
 import { cn, formatCurrency } from '@/lib/utils';
 import { toast } from 'sonner';
 import { PaymentMethod, TaxConfiguration } from '@/types';
@@ -243,7 +244,7 @@ export const POSCart = ({
                   className="w-full py-5 rounded-xl bg-primary text-white font-black text-lg shadow-2xl disabled:opacity-50 flex items-center justify-center gap-3 transition-transform active:scale-[0.98]"
                 >
                   {isProcessing ? (
-                    <Loader2 className="w-6 h-6 animate-spin" />
+                    <CostProLoader size={24} showText={false} showSubtext={false} />
                   ) : (
                     <Check className="w-6 h-6" />
                   )}

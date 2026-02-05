@@ -26,7 +26,8 @@ import { useAuthStore } from '@/store';
 import { calculateFicha } from '@/lib/cost-engine';
 import { FichaJSON, CostRow, RowSemanticType, FormaCalculo, BaseRef } from '@/lib/cost-engine/types';
 import { toast } from 'sonner';
-import { Play, Pause, RotateCcw, Download, FileSpreadsheet, Loader2, CheckCircle2, AlertCircle, Upload } from 'lucide-react';
+import { Play, Pause, RotateCcw, Download, FileSpreadsheet, CheckCircle2, AlertCircle, Upload } from 'lucide-react';
+import { CostProLoader } from '@/components/ui/CostProLoader';
 import { exportToExcel } from '@/services/export-service';
 import { exportMassiveTemplate, importMassiveProducts } from '@/services/excel-service';
 
@@ -465,9 +466,8 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                             <TableRow>
                                 <TableCell colSpan={6} className="h-32 text-center text-muted-foreground font-bold uppercase tracking-widest text-xs">
                                     {isLoadingInventory ? (
-                                        <div className="flex flex-col items-center gap-2">
-                                            <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                                            <span>Cargando catálogo...</span>
+                                        <div className="flex flex-col items-center py-4">
+                                            <CostProLoader size={120} text="CARGANDO" subtext="Obteniendo catálogo..." />
                                         </div>
                                     ) : (
                                         "No se ha iniciado el proceso"
@@ -486,7 +486,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                                     <TableCell className="text-right font-bold text-xs text-success">${result.salePrice.toLocaleString()}</TableCell>
                                     <TableCell className="text-right font-bold text-xs text-primary">${result.utility.toLocaleString()}</TableCell>
                                     <TableCell className="text-center">
-                                        {result.status === 'processing' && <Loader2 className="w-4 h-4 animate-spin mx-auto text-primary" />}
+                                        {result.status === 'processing' && <CostProLoader size={24} showText={false} showSubtext={false} className="mx-auto" />}
                                         {result.status === 'completed' && <CheckCircle2 className="w-4 h-4 mx-auto text-success" />}
                                         {result.status === 'error' && (
                                             <div title={result.error}>

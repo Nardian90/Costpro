@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore, useUIStore, type ViewType } from '@/store';
 import { useIsMobile } from '@/hooks/ui/useMobile';
-import { Loader2, Building as BuildingIcon } from 'lucide-react';
+import { Building as BuildingIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { userService } from '@/services/user-service';
@@ -22,7 +22,7 @@ import { prefetchReceptions } from '@/hooks/api/useReceptions';
 // Modular Components
 import { Sidebar } from './terminal/Sidebar';
 import { Header } from './terminal/Header';
-import CostProLogo from '@/components/CostProLogo';
+import { CostProLoader } from '@/components/ui/CostProLoader';
 import { CreateProductModal } from '@/components/modals/CreateProductModal';
 import { ChatBot } from '@/components/ui/ChatBot';
 
@@ -106,12 +106,8 @@ export default function TerminalShell() { // Renamed from TerminalView
 
   if (loading) {
     return (
-      <div className="h-screen w-full flex flex-col items-center justify-center gap-4 bg-background">
-        <CostProLogo size={80} animated={true} />
-        <div className="flex items-center gap-2 text-primary font-bold animate-pulse">
-          <Loader2 className="w-5 h-5 animate-spin" />
-          <span>INICIALIZANDO TERMINAL...</span>
-        </div>
+      <div className="h-screen w-full flex flex-col items-center justify-center bg-background">
+        <CostProLoader size={260} text="COSTPRO" subtext="INICIALIZANDO TERMINAL..." />
       </div>
     );
   }
@@ -261,9 +257,8 @@ export default function TerminalShell() { // Renamed from TerminalView
               className="max-w-7xl mx-auto"
             >
               <Suspense fallback={
-                <div className="flex flex-col items-center justify-center py-20 gap-4">
-                  <Loader2 className="w-10 h-10 animate-spin text-primary" />
-                  <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Cargando vista...</p>
+                <div className="flex flex-col items-center justify-center py-20">
+                  <CostProLoader size={180} text="CARGANDO" subtext="Preparando entorno..." />
                 </div>
               }>
                 <MobileSafeContainer>
