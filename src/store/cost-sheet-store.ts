@@ -1,7 +1,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import originalTemplate from '@/lib/data/costpro-full.json';
+import originalTemplate from '@/lib/data/costpro-full';
 import { produce } from 'immer';
 import {
   CostSheetDataContract,
