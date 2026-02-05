@@ -1,7 +1,4 @@
-
-import { CostSheetData } from '@/types/cost-sheet';
-
-const template: CostSheetData = {
+{
   "id": "costpro-full-v5",
   "name": "Producción de Pan Artistas",
   "version": "5.0.0",
@@ -10,10 +7,10 @@ const template: CostSheetData = {
   },
   "header": {
     "code": "FC-PAN-2026",
-    "name": "Producción de Pan Artistas (1kg)",
+    "name": "Producción de Pan Artistas",
     "date": "2026-02-27",
     "unit": "Kilogramos",
-    "quantity": 500,
+    "quantity": 100,
     "currency": "CUP",
     "category": "ORGANISMO",
     "type": "EMPRESA",
@@ -29,7 +26,7 @@ const template: CostSheetData = {
         {
           "id": "1",
           "label": "GASTO MATERIAL",
-          "formula": "=sum(children)",
+          "formula": "=SUMA(hijos)",
           "children": [
             {
               "id": "1.1",
@@ -71,7 +68,7 @@ const template: CostSheetData = {
         {
           "id": "2",
           "label": "SALARIO DIRECTO",
-          "formula": "=sum(children)",
+          "formula": "=SUMA(hijos)",
           "children": [
             {
               "id": "2.1",
@@ -84,7 +81,7 @@ const template: CostSheetData = {
             {
               "id": "2.2",
               "label": "Vacaciones",
-              "formula": "=pct(ref('2.1'), 9.09)",
+              "formula": "=PCT(ref('2.1'), 9.09)",
               "valorHistorico": 0,
               "is_percent": true,
               "base_ref": "2.1"
@@ -94,19 +91,19 @@ const template: CostSheetData = {
       ]
     },
     {
-      "id": "s3",
+      "id": "3",
       "label": "Sección 3: OTROS GASTOS DIRECTOS",
       "rows": [
         {
           "id": "3",
           "label": "OTROS GASTOS DIRECTOS",
-          "formula": "=sum(children)",
+          "formula": "=SUMA(hijos)",
           "children": [
             {
               "id": "3.1",
               "label": "DE ELLO: DEPRECIACIÓN (TOTAL)",
               "calculationMethod": "FORMULA",
-              "formula": "=sum(children)",
+              "formula": "=SUMA(hijos)",
               "children": [
                 {
                   "id": "3.1.1",
@@ -199,7 +196,7 @@ const template: CostSheetData = {
         {
           "id": "4",
           "label": "GASTOS ASOCIADOS PROD.",
-          "formula": "=sum(children)",
+          "formula": "=SUMA(hijos)",
           "children": [
             {
               "id": "4.1",
@@ -236,7 +233,7 @@ const template: CostSheetData = {
         {
           "id": "6",
           "label": "GTOS. GRALES Y ADMÓN.",
-          "formula": "=sum(children)",
+          "formula": "=SUMA(hijos)",
           "children": [
             {
               "id": "6.1",
@@ -279,7 +276,7 @@ const template: CostSheetData = {
         {
           "id": "7",
           "label": "GTOS. DIST. Y VENTA",
-          "formula": "=sum(children)",
+          "formula": "=SUMA(hijos)",
           "children": [
             {
               "id": "7.1",
@@ -304,7 +301,7 @@ const template: CostSheetData = {
         {
           "id": "8",
           "label": "GASTOS FINANCIEROS",
-          "formula": "=sum(children)",
+          "formula": "=SUMA(hijos)",
           "children": [
             {
               "id": "8.1",
@@ -341,17 +338,17 @@ const template: CostSheetData = {
         {
           "id": "10",
           "label": "GASTOS TRIBUTARIOS",
-          "formula": "=sum(children)",
+          "formula": "=SUMA(hijos)",
           "children": [
             {
               "id": "10.1",
               "label": "De ello: -Contrib. Seg. Social (14%)",
-              "formula": "=round2(pct(ref('2.1') + ref('4.1') + ref('6.1') + ref('7.1'), 14))"
+              "formula": "=ROUND2(PCT(ref('2.1') + ref('4.1') + ref('6.1') + ref('7.1'), 14))"
             },
             {
               "id": "10.2",
               "label": "-Imp. Fuerza Trabajo (5%)",
-              "formula": "=round2(pct(ref('2.1') + ref('4.1') + ref('6.1') + ref('7.1'), 5))"
+              "formula": "=ROUND2(PCT(ref('2.1') + ref('4.1') + ref('6.1') + ref('7.1'), 5))"
             }
           ]
         }
@@ -364,7 +361,7 @@ const template: CostSheetData = {
         {
           "id": "11",
           "label": "TOTAL DE GASTOS (6+7+8+9+10)",
-          "formula": "=sum(ref('6'), ref('7'), ref('8'), ref('9'), ref('10'))"
+          "formula": "=SUMA(ref('6'), ref('7'), ref('8'), ref('9'), ref('10'))"
         }
       ]
     },
@@ -390,7 +387,7 @@ const template: CostSheetData = {
           "valorHistorico": 0,
           "is_percent": false,
           "base_ref": "12",
-          "formula": "ref('12') * 0.1",
+          "formula": "ref('12') * 0.3",
           "calculationMethod": "FORMULA"
         },
         {
@@ -404,7 +401,7 @@ const template: CostSheetData = {
           "label": "Imp s/Ventas y Serv",
           "valorHistorico": 0,
           "is_percent": false,
-          "formula": "0",
+          "formula": "ref('14') - ref('13.1')",
           "calculationMethod": "FORMULA"
         }
       ]
@@ -416,7 +413,7 @@ const template: CostSheetData = {
         {
           "id": "14",
           "label": "Precio o Tarifa Final",
-          "formula": "=sum(ref('13.1'), ref('13.2'))",
+          "formula": "ref('13.1') / 0.9",
           "calculationMethod": "FORMULA"
         }
       ]
@@ -428,7 +425,8 @@ const template: CostSheetData = {
         {
           "id": "15",
           "label": "Costo y gasto UNITARIO",
-          "formula": "=ref('12') / header.quantity"
+          "formula": "=ref('12') / header.quantity",
+          "calculationMethod": "FORMULA"
         }
       ]
     },
@@ -439,7 +437,8 @@ const template: CostSheetData = {
         {
           "id": "16",
           "label": "VENTA UNITARIA",
-          "formula": "=ref('14') / header.quantity"
+          "formula": "=ref('14') / header.quantity",
+          "calculationMethod": "FORMULA"
         }
       ]
     }
@@ -461,13 +460,13 @@ const template: CostSheetData = {
       "data": [
         {
           "no": 1,
-          "classification": "1.1 - Insumos (MP)",
-          "code": "SKU002",
-          "description": "BIG BON CAJA",
-          "um": "Unidades",
-          "consumption_norm": 1,
-          "price": 15360,
-          "total": 15360
+          "classification": "1.1 - GASTO MATERIAL",
+          "code": "SKU001",
+          "description": "HARINA",
+          "um": "kg",
+          "consumption_norm": 100,
+          "price": 10,
+          "total": 0
         }
       ]
     },
@@ -483,7 +482,17 @@ const template: CostSheetData = {
         { "key": "worker_count", "label": "Cant. Obreros" },
         { "key": "total", "label": "Total", "formula": "time_norm * hourly_rate * worker_count" }
       ],
-      "data": []
+      "data": [
+        {
+          "no": 1,
+          "classification": "2.1 - De ello: Salarios",
+          "description": "Panadero",
+          "time_norm": 160,
+          "hourly_rate": 50,
+          "worker_count": 2,
+          "total": 0
+        }
+      ]
     },
     {
       "id": "III",
@@ -497,7 +506,17 @@ const template: CostSheetData = {
         { "key": "quantity", "label": "Tiempo Explot." },
         { "key": "depreciation_cost", "label": "Deprec.", "formula": "(initial_value * (useful_life / 100)) / quantity" }
       ],
-      "data": []
+      "data": [
+        {
+          "classification": "3.1.5 - -Aparatos y eq. técnicos",
+          "code": "1",
+          "name": "Horno",
+          "initial_value": 50000,
+          "useful_life": 10,
+          "quantity": 12,
+          "depreciation_cost": 0
+        }
+      ]
     },
     {
       "id": "IV",
@@ -508,7 +527,14 @@ const template: CostSheetData = {
         { "key": "description", "label": "Descripción" },
         { "key": "amount", "label": "Importe" }
       ],
-      "data": []
+      "data": [
+        {
+          "classification": "3.3 - -Servicios contratados",
+          "code": "1",
+          "description": "Mantenimiento",
+          "amount": 500
+        }
+      ]
     },
     {
       "id": "V",
@@ -521,7 +547,16 @@ const template: CostSheetData = {
         { "key": "days", "label": "Días" },
         { "key": "total", "label": "Total", "formula": "daily_allowance * days" }
       ],
-      "data": []
+      "data": [
+        {
+          "classification": "3.7 - -Dietas",
+          "code": "1",
+          "worker_name": "Juan",
+          "daily_allowance": 100,
+          "days": 2,
+          "total": 0
+        }
+      ]
     }
   ],
   "signature": {
@@ -529,6 +564,4 @@ const template: CostSheetData = {
     "approved_by": "Aprobado por:"
   },
   "footer": "FIN DEL DOCUMENTO • GENERADO AUTOMÁTICAMENTE POR COSTPRO V1.0"
-};
-
-export default template;
+}

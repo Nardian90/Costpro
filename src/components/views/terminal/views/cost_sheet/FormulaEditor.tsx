@@ -219,28 +219,29 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                     </div>
 
                     <div className="space-y-2">
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Ejemplos</p>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Ejemplos Comunes</p>
                       <div className="space-y-1 text-[11px] font-mono bg-muted p-2 rounded">
-                        <p className="text-primary">= AnexoI + AnexoII</p>
-                        <p className="text-primary">= SUMA(hijos)</p>
-                        <p className="text-primary">= BASE_TOTAL * 0.12</p>
-                        <p className="text-primary">= VH * 1.05</p>
+                        <p className="text-primary">= SUMA(hijos) <span className="text-[9px] text-muted-foreground opacity-70 ml-1">// Suma todos los sub-elementos</span></p>
+                        <p className="text-primary">= ref('1.1') + ref('2.1')</p>
+                        <p className="text-primary">= PCT(ref('12'), 10) <span className="text-[9px] text-muted-foreground opacity-70 ml-1">// 10% del total de sección 12</span></p>
+                        <p className="text-primary">= ref('12') / header.quantity</p>
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Funciones soportadas</p>
-                      <ul className="grid grid-cols-2 gap-1 text-[11px]">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Funciones y Variables</p>
+                      <ul className="grid grid-cols-2 gap-x-2 gap-y-1 text-[11px]">
                         <li><span className="font-bold">SUMA</span>(a, b...)</li>
-                        <li><span className="font-bold">PROMEDIO</span>(a, b...)</li>
-                        <li><span className="font-bold">MAX</span> / <span className="font-bold">MIN</span></li>
-                        <li><span className="font-bold">PCT</span>(val, %)</li>
-                        <li><span className="font-bold">ROUND2</span>(val)</li>
+                        <li><span className="font-bold">hijos</span> <span className="text-[9px] opacity-60">(Sub-filas)</span></li>
+                        <li><span className="font-bold">PCT</span>(valor, %)</li>
+                        <li><span className="font-bold">ROUND2</span>(valor)</li>
+                        <li><span className="font-bold">header.quantity</span></li>
+                        <li><span className="font-bold">ref</span>('ID')</li>
                       </ul>
                     </div>
 
-                    <div className="text-[10px] text-muted-foreground italic border-top pt-2">
-                      Use "ref('ID')" para referenciar otras filas de la ficha.
+                    <div className="text-[10px] text-muted-foreground italic border-top pt-2 leading-tight">
+                      Use <span className="font-bold text-primary">vh('ID')</span> para referenciar valores históricos de otras filas.
                     </div>
                   </div>
                 </PopoverContent>
@@ -340,20 +341,20 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                     </div>
                     <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-[11px]">
                         <div className="flex justify-between items-center py-1 border-b border-amber-500/10">
-                            <span className="font-medium text-amber-900/60">Suma Total</span>
+                            <span className="font-medium text-amber-900/60">Suma de Hijos</span>
                             <code className="bg-amber-500/10 text-amber-700 px-1.5 py-0.5 rounded font-bold">SUMA(hijos)</code>
                         </div>
                         <div className="flex justify-between items-center py-1 border-b border-amber-500/10">
-                            <span className="font-medium text-amber-900/60">Anexos</span>
-                            <code className="bg-amber-500/10 text-amber-700 px-1.5 py-0.5 rounded font-bold">AnexoI, AnexoII</code>
+                            <span className="font-medium text-amber-900/60">Uso de Anexos</span>
+                            <code className="bg-amber-500/10 text-amber-700 px-1.5 py-0.5 rounded font-bold">AnexoI + AnexoII</code>
                         </div>
                         <div className="flex justify-between items-center py-1 border-b border-amber-500/10">
-                            <span className="font-medium text-amber-900/60">Referencia Fila</span>
+                            <span className="font-medium text-amber-900/60">Ref. a Fila</span>
                             <code className="bg-amber-500/10 text-amber-700 px-1.5 py-0.5 rounded font-bold">ref('1.1')</code>
                         </div>
                         <div className="flex justify-between items-center py-1 border-b border-amber-500/10">
-                            <span className="font-medium text-amber-900/60">Porcentaje</span>
-                            <code className="bg-amber-500/10 text-amber-700 px-1.5 py-0.5 rounded font-bold">PCT(val, 15)</code>
+                            <span className="font-medium text-amber-900/60">Cálculo %</span>
+                            <code className="bg-amber-500/10 text-amber-700 px-1.5 py-0.5 rounded font-bold">PCT(total, 15)</code>
                         </div>
                     </div>
                 </div>

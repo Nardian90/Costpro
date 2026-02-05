@@ -582,6 +582,9 @@ export function calculateFicha(
                 BASE_TOTAL: baseTotalValue.toNumber(),
                 COEF: row.coeficiente || 0,
                 QUANTITY: ficha.meta.quantity || 0,
+                header: {
+                    quantity: ficha.meta.quantity || 0
+                },
                 children: ficha.rows
                     .filter(r => r.parentId === row.id)
                     .map(r => calculatedRows.get(r.id)?.total || 0),
@@ -638,6 +641,9 @@ export function calculateFicha(
             const vhContext: any = {
                 VH: row.valorHistorico || 0,
                 QUANTITY: ficha.meta.quantity || 0,
+                header: {
+                    quantity: ficha.meta.quantity || 0
+                },
                 children: ficha.rows
                     .filter(r => r.parentId === row.id)
                     .map(r => calculatedRows.get(r.id)?.calculatedVH || r.valorHistorico || 0),
