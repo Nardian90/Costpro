@@ -535,8 +535,11 @@ export class MatchingEngine {
         }
 
         if (onProgress) {
+            // Optimización: Solo notificar progreso cada 5% o cada 20 transacciones para no saturar el hilo principal
             const percentage = Math.round(((i + 1) / total) * 100);
-            onProgress(percentage);
+            if (i % 20 === 0 || percentage % 5 === 0 || i === total - 1) {
+                onProgress(percentage);
+            }
         }
     }
     return results;
