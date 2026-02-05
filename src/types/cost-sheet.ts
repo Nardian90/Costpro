@@ -14,6 +14,7 @@ export interface CostSheetRow {
   id: string;
   label: string;
   valorHistorico?: number;
+  vhFormula?: string | null;
   value?: number;
   baseDeCalculoRef?: string | null;
   base_ref?: string | null;
@@ -66,6 +67,7 @@ export interface CostSheetData {
 
 export interface CalculatedRowValue {
   valorHistorico: number;
+  calculatedVH: number;
   baseDeCalculoRef: string | null;
   baseTotal: number;
   baseValorHistorico: number;

@@ -14,19 +14,30 @@ import { translateFormulaFromSpanish } from './formula-utils';
 export function extractDependencies(row: CostRow, allRows: CostRow[]): string[] {
   const deps: string[] = [];
 
-  if (row.formaCalculo === 'FORMULA' && row.formula) {
-    const formula = row.formula;
+  const extractFromFormula = (formula: string) => {
     // Extract ref('...')
     const refMatches = formula.matchAll(/ref\(['"]([^'"]+)['"]\)/g);
     for (const match of refMatches) {
         deps.push(match[1]);
     }
-
+    // Extract vh('...')
+    const vhMatches = formula.matchAll(/vh\(['"]([^'"]+)['"]\)/g);
+    for (const match of vhMatches) {
+        deps.push(match[1]);
+    }
     // Extract children
     if (formula.toLowerCase().includes('children')) {
         const childrenIds = allRows.filter(r => r.parentId === row.id).map(r => r.id);
         deps.push(...childrenIds);
     }
+  };
+
+  if (row.formaCalculo === 'FORMULA' && row.formula) {
+    extractFromFormula(row.formula);
+  }
+
+  if (row.vhFormula) {
+    extractFromFormula(row.vhFormula);
   }
 
   if (row.baseCalculo?.type === 'FILA') {
@@ -172,27 +183,6 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
 
   // 3. Hard Rules (Section 13, Taxes, etc)
   ficha.rows.forEach(row => {
-      // 8.1 Utility (Section 13) - No self reference (already caught by cycle but being explicit)
-      // Section 13 should depend on consolidated sections
-      const isUtility = row.id === '13' || row.id.startsWith('13.') || row.classification === '13' || row.classification.startsWith('13.');
-      if (isUtility && row.formula) {
-          const selfRefs = [row.id, row.classification].filter(Boolean);
-          const hasSelfRef = selfRefs.some(refId => {
-              // Exact match for ref('ID') or ref("ID")
-              const regex = new RegExp(`ref\\(['"]${refId}['"]\\)`, 'g');
-              return regex.test(row.formula!);
-          });
-
-          if (hasSelfRef) {
-              validationErrors.push({
-                rowId: row.id,
-                message: "Regla Crítica: La sección de Utilidad (13) no puede contener autorreferencias.",
-                type: 'CRITICAL',
-                code: 'HARD_RULE_VIOLATION'
-              });
-          }
-      }
-
       // 8.2 Taxes - Base imponible > 0 warning (semantic, done during calculation or here if VH)
       if (row.id === '13.2' || row.classification === '13.2') {
           const deps = adj.get(row.id) || [];
@@ -297,6 +287,7 @@ export function calculateFicha(
     calculatedRows.set(row.id, {
       ...row,
       total: 0,
+      calculatedVH: row.valorHistorico || 0,
       audit: [],
     });
   });
@@ -320,6 +311,19 @@ export function calculateFicha(
       const val = targets.reduce((acc, t) => {
           const calculated = calculatedRows.get(t.id);
           return acc.plus(new Decimal(calculated?.total || 0));
+      }, new Decimal(0));
+      return val.toNumber();
+  };
+
+  parser.functions.vh = (arg: any) => {
+      const search = String(arg);
+      let targets = rowsByClass.get(search);
+      if (!targets || targets.length === 0) {
+          targets = rowsById.get(search) || [];
+      }
+      const val = targets.reduce((acc, t) => {
+          const calculated = calculatedRows.get(t.id);
+          return acc.plus(new Decimal(calculated?.calculatedVH || t.valorHistorico || 0));
       }, new Decimal(0));
       return val.toNumber();
   };
@@ -363,7 +367,8 @@ export function calculateFicha(
     let type: AuditEntry['type'] = 'INFO';
     let fuenteParts: string[] = [row.formaCalculo];
 
-    const vh = new Decimal(row.valorHistorico || 0);
+    const currentCalculated = currentRows.get(row.id);
+    const vh = new Decimal(currentCalculated?.calculatedVH || row.valorHistorico || 0);
 
     // Resolve Rules
     const activeRules = (ficha.rules || [])
@@ -536,6 +541,41 @@ export function calculateFicha(
 
     finalComputeOrder.forEach((row) => {
       const current = calculatedRows.get(row.id)!;
+
+      // Calculate VH if formula exists
+      if (row.vhFormula) {
+        try {
+            const vhFormulaStrRaw = row.vhFormula.trim().startsWith('=')
+              ? row.vhFormula.trim().substring(1)
+              : row.vhFormula;
+            const vhFormulaStr = translateFormulaFromSpanish(vhFormulaStrRaw);
+            const vhExpr = parser.parse(vhFormulaStr);
+
+            const vhContext: any = {
+                VH: row.valorHistorico || 0,
+                children: ficha.rows
+                    .filter(r => r.parentId === row.id)
+                    .map(r => calculatedRows.get(r.id)?.total || 0)
+            };
+
+            annexTotals.forEach((total, id) => {
+                vhContext[`TotalAnexo${id}`] = total;
+                vhContext[`Total${id}`] = total;
+                const classSum = annexSumMap.get(id)?.get(row.classification);
+                vhContext[id] = classSum !== undefined ? classSum.toNumber() : 0;
+                vhContext[`Anexo${id}`] = classSum !== undefined ? classSum.toNumber() : 0;
+            });
+
+            const vhResult = new Decimal(vhExpr.evaluate(vhContext)).toDecimalPlaces(decimals).toNumber();
+            if (vhResult !== current.calculatedVH) {
+                current.calculatedVH = vhResult;
+                converged = false;
+            }
+        } catch (e) {
+            // keep existing calculatedVH or fallback
+        }
+      }
+
       const { total: computedTotal, note, type, fuente, baseTotal, baseHist } = computeRowTotal(row, calculatedRows);
 
       const targetTotal = computedTotal.toDecimalPlaces(decimals);
