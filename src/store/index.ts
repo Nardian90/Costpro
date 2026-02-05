@@ -13,7 +13,8 @@ interface AuthState {
   token: string | null;
   loading: boolean;
   status: AuthStatus;
-  login: (user: UserContract, token: string, status?: AuthStatus) => void;
+  isMocked: boolean;
+  login: (user: UserContract, token: string, status?: AuthStatus, isMocked?: boolean) => void;
   logout: () => void;
   setLoading: (loading: boolean) => void;
   setStatus: (status: AuthStatus) => void;
@@ -25,9 +26,10 @@ export const useAuthStore = create<AuthState>((set) => ({
   token: null,
   loading: true,
   status: 'loading',
-  login: (user, token, status = 'authenticated_valid') =>
-    set({ user, token, loading: false, status }),
-  logout: () => set({ user: null, token: null, loading: false, status: 'unauthenticated' }),
+  isMocked: false,
+  login: (user, token, status = 'authenticated_valid', isMocked = false) =>
+    set({ user, token, loading: false, status, isMocked }),
+  logout: () => set({ user: null, token: null, loading: false, status: 'unauthenticated', isMocked: false }),
   setLoading: (loading) => set({ loading }),
   setStatus: (status) => set({ status, loading: status === 'loading' }),
   updateUser: (updatedFields) => set((state) => ({
