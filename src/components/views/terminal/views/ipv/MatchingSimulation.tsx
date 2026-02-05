@@ -58,12 +58,15 @@ export function MatchingSimulation({ products, rules }: { products: Product[], r
         let totalTransferencias = 0;
         let totalEfectivo = 0;
         const checkedTxRefs = new Set<string>();
+        const dayVolumes: Record<string, number> = {};
 
         for (const t of txs) {
             if (t.excluido || t.estado_conciliacion === 'NO_PROCESAR') continue;
             checkedTxRefs.add(t.referencia_origen);
             if (t.tipo === 'Cr') {
-                totalTransferencias += (t.importe_venta_cents || t.importe_cents);
+                const vol = (t.importe_venta_cents || t.importe_cents);
+                totalTransferencias += vol;
+                dayVolumes[t.fecha] = (dayVolumes[t.fecha] || 0) + vol;
             }
         }
 
@@ -88,7 +91,7 @@ export function MatchingSimulation({ products, rules }: { products: Product[], r
         }
 
         // El diferencial a repartir es Meta - Venta Total (Transferencias/etc)
-        const extraLines = await engine.distributeGlobalGoal(globalTarget, currentKpiTotal, dates);
+        const extraLines = await engine.distributeGlobalGoal(globalTarget, currentKpiTotal, dates, { dayVolumes });
 
         if (extraLines.length === 0) {
             toast.info('No se pudieron generar líneas de ajuste o el objetivo ya se alcanzó');
