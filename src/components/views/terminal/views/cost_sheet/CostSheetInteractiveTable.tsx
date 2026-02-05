@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { cn, formatCurrency } from '@/lib/utils';
+import { cn, formatAccounting } from '@/lib/utils';
 import { FormulaEditor } from './FormulaEditor';
 import { exportSectionToExcel, importSectionFromExcel } from '@/services/excel-service';
 import {
@@ -215,7 +215,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
         </TableCell>
 
         {/* Valor Histórico / % */}
-        <TableCell className="px-2 py-1.5 sm:px-4 sm:py-2 text-right w-32 sm:w-40 cursor-pointer" onClick={() => !hasChildren && setIsEditingVH(true)}>
+        <TableCell className="px-2 py-1.5 sm:px-4 sm:py-2 text-right w-32 sm:w-40 cursor-pointer" onClick={() => setIsEditingVH(true)}>
             <div className="relative">
                 {isEditingVH ? (
                     <FormulaEditor
@@ -234,10 +234,10 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                         (hasChildren || row.vhFormula) && "bg-muted/30 font-bold border-dashed"
                         )}
                         value={hasChildren
-                        ? (safeCalculated.calculatedVH ?? safeCalculated.valorHistorico ?? 0).toFixed(row.is_percent ? 3 : 2)
+                        ? formatAccounting(safeCalculated.calculatedVH ?? safeCalculated.valorHistorico ?? 0)
                         : (row.vhFormula
-                            ? (safeCalculated.calculatedVH ?? 0).toFixed(row.is_percent ? 3 : 2)
-                            : (row.hasOwnProperty('valorHistorico') ? (row.valorHistorico ?? 0) : (row.is_percent ? ((row.value ?? 0) * 100) : (row.value ?? 0))))}
+                            ? formatAccounting(safeCalculated.calculatedVH ?? 0)
+                            : (row.hasOwnProperty('valorHistorico') ? formatAccounting(row.valorHistorico ?? 0) : (row.is_percent ? ((row.value ?? 0) * 100).toFixed(3) : formatAccounting(row.value ?? 0))))}
                         readOnly={true}
                         />
                         {row.vhFormula && <FunctionSquare className="w-3 h-3 text-primary/40 absolute left-2" />}
@@ -339,7 +339,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                 <div className="flex items-center gap-1">
                     {row.formula && <FunctionSquare className="w-3 h-3 text-primary/40" />}
                     <span className={cn(row.formula && "underline decoration-dotted decoration-primary/30")}>
-                        {formatCurrency(safeCalculated.total)}
+                        {formatAccounting(safeCalculated.total)}
                     </span>
                 </div>
             </div>

@@ -365,6 +365,13 @@ export function calculateFicha(
     return annexSumMap.get(anexoId)?.get(classification)?.toNumber() || 0;
   };
 
+  parser.functions.header = (key: string) => {
+      if (key === 'quantity') return ficha.meta.quantity || 0;
+      // Handle other meta fields if needed
+      if (key === 'decimals') return ficha.meta.decimals;
+      return 0;
+  };
+
   parser.functions.ref = (arg: any) => {
       const search = String(arg);
       // Priority 1: Classification (Visual Numbering)
@@ -509,7 +516,11 @@ export function calculateFicha(
             baseHistValue = baseTotalValue;
             baseRefName = `Anexo:${base.anexoId}`;
         } else if (base?.type === 'FILA') {
-            const targets = rowsByClass.get(base.classification) || [];
+            let targets = rowsByClass.get(base.classification);
+            if (!targets || targets.length === 0) {
+                targets = rowsById.get(base.classification) || [];
+            }
+
             targets.forEach(t => {
                 const calculated = currentRows.get(t.id);
                 baseTotalValue = baseTotalValue.plus(new Decimal(calculated?.total || 0));
@@ -556,7 +567,10 @@ export function calculateFicha(
                  const anexo = annexSumMap.get(base.anexoId);
                  baseTotalValue = Array.from(anexo?.values() || []).reduce((acc, val) => acc.plus(val), new Decimal(0));
             } else if (base?.type === 'FILA') {
-                const targets = rowsByClass.get(base.classification) || [];
+                let targets = rowsByClass.get(base.classification);
+                if (!targets || targets.length === 0) {
+                    targets = rowsById.get(base.classification) || [];
+                }
                 targets.forEach(t => {
                     const calculated = currentRows.get(t.id);
                     baseTotalValue = baseTotalValue.plus(new Decimal(calculated?.total || 0));
@@ -567,6 +581,7 @@ export function calculateFicha(
                 VH: vh.toNumber(),
                 BASE_TOTAL: baseTotalValue.toNumber(),
                 COEF: row.coeficiente || 0,
+                QUANTITY: ficha.meta.quantity || 0,
                 children: ficha.rows
                     .filter(r => r.parentId === row.id)
                     .map(r => calculatedRows.get(r.id)?.total || 0)
@@ -619,6 +634,7 @@ export function calculateFicha(
 
             const vhContext: any = {
                 VH: row.valorHistorico || 0,
+                QUANTITY: ficha.meta.quantity || 0,
                 children: ficha.rows
                     .filter(r => r.parentId === row.id)
                     .map(r => calculatedRows.get(r.id)?.total || 0)
