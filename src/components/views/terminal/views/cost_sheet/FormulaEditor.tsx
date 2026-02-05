@@ -222,7 +222,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Ejemplos</p>
                       <div className="space-y-1 text-[11px] font-mono bg-muted p-2 rounded">
                         <p className="text-primary">= AnexoI + AnexoII</p>
-                        <p className="text-primary">= SUMA(AnexoI, AnexoII)</p>
+                        <p className="text-primary">= SUMA(hijos)</p>
                         <p className="text-primary">= BASE_TOTAL * 0.12</p>
                         <p className="text-primary">= VH * 1.05</p>
                       </div>
@@ -341,7 +341,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                     <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-[11px]">
                         <div className="flex justify-between items-center py-1 border-b border-amber-500/10">
                             <span className="font-medium text-amber-900/60">Suma Total</span>
-                            <code className="bg-amber-500/10 text-amber-700 px-1.5 py-0.5 rounded font-bold">SUMA(a, b)</code>
+                            <code className="bg-amber-500/10 text-amber-700 px-1.5 py-0.5 rounded font-bold">SUMA(hijos)</code>
                         </div>
                         <div className="flex justify-between items-center py-1 border-b border-amber-500/10">
                             <span className="font-medium text-amber-900/60">Anexos</span>
