@@ -224,7 +224,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                         <p className="text-primary">= SUMA(hijos) <span className="text-[9px] text-muted-foreground opacity-70 ml-1">// Suma todos los sub-elementos</span></p>
                         <p className="text-primary">= ref('1.1') + ref('2.1')</p>
                         <p className="text-primary">= PCT(ref('12'), 10) <span className="text-[9px] text-muted-foreground opacity-70 ml-1">// 10% del total de sección 12</span></p>
-                        <p className="text-primary">= ref('12') / header.quantity</p>
+                        <p className="text-primary">= ref('12') / cantidad</p>
                       </div>
                     </div>
 
@@ -235,7 +235,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                         <li><span className="font-bold">hijos</span> <span className="text-[9px] opacity-60">(Sub-filas)</span></li>
                         <li><span className="font-bold">PCT</span>(valor, %)</li>
                         <li><span className="font-bold">ROUND2</span>(valor)</li>
-                        <li><span className="font-bold">header.quantity</span></li>
+                        <li><span className="font-bold">cantidad</span></li>
                         <li><span className="font-bold">ref</span>('ID')</li>
                       </ul>
                     </div>

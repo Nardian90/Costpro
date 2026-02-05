@@ -782,8 +782,8 @@ const template: CostSheetDataContract = {
           "baseDeCalculoRef": "",
           "baseRef": "",
           "calculationMethod": "FORMULA",
-          "totalFormula": "=ref('12') / QUANTITY",
-          "formula": "=ref('12') / QUANTITY",
+          "totalFormula": "=ref('12') / cantidad",
+          "formula": "=ref('12') / cantidad",
           "isPercent": false,
           "helpText": "",
           "children": []
@@ -802,8 +802,8 @@ const template: CostSheetDataContract = {
           "baseDeCalculoRef": "",
           "baseRef": "",
           "calculationMethod": "FORMULA",
-          "totalFormula": "=ref('14') / QUANTITY",
-          "formula": "=ref('14') / QUANTITY",
+          "totalFormula": "=ref('14') / cantidad",
+          "formula": "=ref('14') / cantidad",
           "isPercent": false,
           "helpText": "",
           "children": []

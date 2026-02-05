@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type BankTransaction } from '@/lib/dexie';
+import { db, type BankTransaction, type Product } from '@/lib/dexie';
 import {
   Table,
   TableBody,
@@ -15,8 +15,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Eye, Trash2, Search, RotateCcw, LayoutGrid, List, CheckCircle2, XCircle, HelpCircle, Wand2, Zap } from 'lucide-react';
+import { Eye, Trash2, Search, RotateCcw, LayoutGrid, List, CheckCircle2, XCircle, HelpCircle, Wand2, Zap, Target, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { generateHash } from '@/lib/ipv/engine';
+import { v4 as uuidv4 } from 'uuid';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { formatCurrency, formatDate } from '@/lib/utils';
@@ -182,21 +185,27 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
 
                 <div className="h-4 w-px bg-border mx-1" />
 
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={bulkResetMatching}
-                            className="h-7 text-[10px] font-black uppercase text-orange-600 hover:bg-orange-500/10"
-                        >
-                            <RotateCcw className="w-3 h-3 mr-1" /> Reset Matching
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
-                        Elimina todas las líneas de reconciliación de las transacciones visibles actualmente. ¡Acción destructiva!
-                    </TooltipContent>
-                </Tooltip>
+                <div className="flex gap-1 items-center">
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={bulkResetMatching}
+                                className="h-7 text-[10px] font-black uppercase text-orange-600 hover:bg-orange-500/10"
+                            >
+                                <RotateCcw className="w-3 h-3 mr-1" /> Reset
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
+                            Elimina todas las líneas de reconciliación de las transacciones visibles actualmente. ¡Acción destructiva!
+                        </TooltipContent>
+                    </Tooltip>
+
+                    <BulkForceMatchPopover
+                        transactions={filtered}
+                    />
+                </div>
             </div>
 
             <Tooltip>
@@ -305,6 +314,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                         onDelete={() => handleDelete(tx.referencia_origen)}
                         onToggleExclusion={(val: boolean) => toggleExclusion(tx, val)}
                         getStatusBadge={getStatusBadge}
+                        diff={ (tx.importe_venta_cents || tx.importe_cents) - (txReconciliationTotals[tx.referencia_origen] || 0)}
                     />
                 ))
               )}
@@ -320,7 +330,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
             ) : (
                 filtered.map((tx) => {
                     const matchedTotal = txReconciliationTotals[tx.referencia_origen] || 0;
-                    const targetAmount = tx.importe_cents;
+                    const targetAmount = tx.importe_venta_cents || tx.importe_cents;
                     const diff = targetAmount - matchedTotal;
                     const isEnProceso = matchedTotal > 0 && Math.abs(diff) >= 0.001;
 
@@ -386,12 +396,43 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                                     {tx.tipo === 'Cr' ? 'Crédito (Ingreso)' : 'Débito (Gasto)'}
                                 </span>
                                 <div className="flex gap-2 items-center">
-                                    {isEnProceso && (
-                                        <QuickAdjustPopover
+                                    {tx.estado_conciliacion === 'PENDIENTE' && (
+                                        <ForceMatchPopover
                                             transaction={tx}
-                                            remaining={diff}
-                                            onSuccess={() => {}}
                                         />
+                                    )}
+                                    {isEnProceso && (
+                                        <div className="flex gap-2">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="h-11 px-3 text-xs font-bold uppercase gap-2 text-green-600 border-green-200 hover:bg-green-50"
+                                                onClick={async () => {
+                                                    const lines = await db.reconciliation_lines.where('transaction_ref').equals(tx.referencia_origen).toArray();
+                                                    if (lines.length > 0) {
+                                                        const line = lines[0];
+                                                        const newTotalLine = line.importe_linea_cents + diff;
+                                                        await db.reconciliation_lines.update(line.id, {
+                                                            importe_linea_cents: newTotalLine,
+                                                            precio_unitario_cents: line.cantidad === 1 ? newTotalLine : line.precio_unitario_cents,
+                                                            cuadre_cents: (line.cuadre_cents || 0) + diff
+                                                        });
+                                                        await db.bank_statements.update(tx.referencia_origen, {
+                                                            estado_conciliacion: 'COMPLETO'
+                                                        });
+                                                        toast.success('Ajuste automático aplicado (Ajustar Todo)');
+                                                    }
+                                                }}
+                                            >
+                                                <CheckCircle2 className="w-3 h-3" />
+                                                Ajustar Todo
+                                            </Button>
+                                            <QuickAdjustPopover
+                                                transaction={tx}
+                                                remaining={diff}
+                                                onSuccess={() => {}}
+                                            />
+                                        </div>
                                     )}
                                     <Button
                                         variant="outline"
@@ -484,9 +525,267 @@ function HelpItem({ title, desc }: { title: string, desc: string }) {
     );
 }
 
-const TransactionRow = React.memo(({ tx, matchedTotal, onView, onForceMatch, onReset, onDelete, onToggleExclusion, getStatusBadge }: any) => {
+function ForceMatchPopover({ transaction }: { transaction: BankTransaction }) {
+    const products = useLiveQuery(() => db.products.toArray().then(prods => prods.filter(p => p.activo)));
+    const [searchTerm, setSearchTerm] = useState('');
+
+    const filtered = React.useMemo(() => {
+        if (!products) return [];
+        return products.filter(p =>
+            p.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            p.cod.toLowerCase().includes(searchTerm.toLowerCase())
+        ).sort((a, b) => (b.stock_inicial_manual || 0) - (a.stock_inicial_manual || 0));
+    }, [products, searchTerm]);
+
+    const handleForceMatch = async (product: any) => {
+        const target = transaction.importe_venta_cents || transaction.importe_cents;
+        const qty = Math.floor(target / product.precio_cents);
+
+        if (qty <= 0) {
+            toast.error('El precio del producto es mayor que el importe de la transacción');
+            return;
+        }
+
+        const importe = product.precio_cents * qty;
+        const remaining = target - importe;
+
+        const newLine: any = {
+            id: uuidv4(),
+            transaction_ref: transaction.referencia_origen,
+            fecha_operacion: transaction.fecha,
+            ingreso_banco_cents: transaction.importe_cents,
+            venta_real_calculada_cents: importe,
+            comision_banco_cents: transaction.comision_cents || 0,
+            product_cod: product.cod,
+            product_um: product.um,
+            cantidad: qty,
+            precio_unitario_cents: product.precio_cents,
+            importe_linea_cents: importe,
+            cuadre_cents: 0,
+            clasificacion: transaction.tipo === 'Cr' ? 'Transferencia' : 'Efectivo',
+            origen_dato: 'MANUAL_USER',
+            reconciliation_hash: await generateHash(`${transaction.referencia_origen}-${product.cod}-${qty}-${Date.now()}`),
+            created_at: new Date().toISOString()
+        };
+
+        await db.reconciliation_lines.add(newLine);
+        await db.bank_statements.update(transaction.referencia_origen, {
+            estado_conciliacion: Math.abs(remaining) < 0.001 ? 'COMPLETO' : 'PARCIAL'
+        });
+
+        toast.success(`Forzado Matching: ${qty}x ${product.descripcion}. Restante: ${remaining} cts`);
+    };
+
+    return (
+        <Popover>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <PopoverTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-blue-600 hover:bg-blue-500/10"
+                        >
+                            <Target className="w-4 h-4" />
+                        </Button>
+                    </PopoverTrigger>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
+                    Forzar Matching: Selecciona un producto para cubrir lo máximo posible de esta transacción.
+                </TooltipContent>
+            </Tooltip>
+            <PopoverContent className="w-72 p-0 shadow-2xl rounded-2xl border-primary/20" align="end">
+                <div className="p-3 border-b bg-muted/20">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Forzar Matching</p>
+                    <div className="relative">
+                        <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+                        <Input
+                            placeholder="Buscar producto..."
+                            className="pl-7 h-8 text-[10px] rounded-lg"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                </div>
+                <ScrollArea className="h-64">
+                    <div className="p-1">
+                        {filtered.map(p => (
+                            <button
+                                key={p.cod}
+                                className="w-full text-left p-2 hover:bg-primary/5 rounded-lg border border-transparent hover:border-primary/20 transition-all flex justify-between items-center group"
+                                onClick={() => handleForceMatch(p)}
+                            >
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-[10px] font-black uppercase text-foreground truncate">{p.descripcion}</p>
+                                    <div className="flex gap-2">
+                                        <span className="text-[8px] text-muted-foreground font-bold uppercase">Stock: {p.stock_inicial_manual}</span>
+                                        <span className="text-[8px] text-primary font-bold uppercase">${p.precio_cents}</span>
+                                    </div>
+                                </div>
+                                <Plus className="w-3 h-3 text-primary opacity-0 group-hover:opacity-100 transition-opacity ml-2 shrink-0" />
+                            </button>
+                        ))}
+                    </div>
+                </ScrollArea>
+            </PopoverContent>
+        </Popover>
+    );
+}
+
+function BulkForceMatchPopover({ transactions }: { transactions: BankTransaction[] }) {
+    const products = useLiveQuery(() => db.products.toArray().then(prods => prods.filter(p => p.activo)));
+    const reconciliationLines = useLiveQuery(() => db.reconciliation_lines.toArray());
+    const rules = useLiveQuery(() => db.matching_rules.toArray());
+    const [searchTerm, setSearchTerm] = useState('');
+
+    const useStockLimit = rules?.some(r => r.tipo === 'STOCK_LIMIT' && r.activo);
+
+    const currentStockMap = React.useMemo(() => {
+        const map = new Map<string, number>();
+        if (!products || !reconciliationLines) return map;
+        products.forEach(p => {
+            const sold = reconciliationLines
+                .filter(l => l.product_cod === p.cod)
+                .reduce((sum, l) => sum + l.cantidad, 0);
+            map.set(p.cod, (p.stock_inicial_manual || 0) - sold);
+        });
+        return map;
+    }, [products, reconciliationLines]);
+
+    const filteredProducts = React.useMemo(() => {
+        if (!products) return [];
+        return products.filter(p =>
+            p.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            p.cod.toLowerCase().includes(searchTerm.toLowerCase())
+        ).sort((a, b) => {
+            const sA = currentStockMap.get(a.cod) || 0;
+            const sB = currentStockMap.get(b.cod) || 0;
+            return sB - sA;
+        });
+    }, [products, searchTerm, currentStockMap]);
+
+    const handleBulkForceMatch = async (product: any) => {
+        const pendings = transactions.filter(t => t.estado_conciliacion === 'PENDIENTE');
+        if (pendings.length === 0) {
+            toast.error('No hay transacciones pendientes en la vista actual');
+            return;
+        }
+
+        const loadingToast = toast.loading(`Forzando matching para ${pendings.length} transacciones...`);
+
+        let processedCount = 0;
+        const localStockMap = new Map(currentStockMap);
+
+        try {
+            await db.transaction('rw', [db.reconciliation_lines, db.bank_statements], async () => {
+                for (const tx of pendings) {
+                    const target = tx.importe_venta_cents || tx.importe_cents;
+                    let qty = Math.floor(target / product.precio_cents);
+
+                    if (useStockLimit) {
+                        const available = localStockMap.get(product.cod) || 0;
+                        qty = Math.min(qty, available);
+                    }
+
+                    if (qty <= 0) continue;
+
+                    const importe = product.precio_cents * qty;
+                    const remaining = target - importe;
+
+                    const newLine: any = {
+                        id: uuidv4(),
+                        transaction_ref: tx.referencia_origen,
+                        fecha_operacion: tx.fecha,
+                        ingreso_banco_cents: tx.importe_cents,
+                        venta_real_calculada_cents: importe,
+                        comision_banco_cents: tx.comision_cents || 0,
+                        product_cod: product.cod,
+                        product_um: product.um,
+                        cantidad: qty,
+                        precio_unitario_cents: product.precio_cents,
+                        importe_linea_cents: importe,
+                        cuadre_cents: 0,
+                        clasificacion: tx.tipo === 'Cr' ? 'Transferencia' : 'Efectivo',
+                        origen_dato: 'MANUAL_USER',
+                        reconciliation_hash: await generateHash(`${tx.referencia_origen}-${product.cod}-${qty}-${Date.now()}`),
+                        created_at: new Date().toISOString()
+                    };
+
+                    await db.reconciliation_lines.add(newLine);
+                    await db.bank_statements.update(tx.referencia_origen, {
+                        estado_conciliacion: Math.abs(remaining) < 0.001 ? 'COMPLETO' : 'PARCIAL'
+                    });
+
+                    localStockMap.set(product.cod, (localStockMap.get(product.cod) || 0) - qty);
+                    processedCount++;
+                }
+            });
+
+            toast.success(`Matching forzado en ${processedCount} transacciones con ${product.descripcion}`, { id: loadingToast });
+        } catch (error) {
+            console.error(error);
+            toast.error('Error durante el proceso masivo', { id: loadingToast });
+        }
+    };
+
+    return (
+        <Popover>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <PopoverTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-[10px] font-black uppercase text-blue-600 hover:bg-blue-500/10"
+                        >
+                            <Target className="w-3 h-3 mr-1" /> Forzar Matching
+                        </Button>
+                    </PopoverTrigger>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
+                    Forzar Matching (Masivo): Aplica un producto a TODAS las transacciones pendientes filtradas. Respeta existencias si el límite está activo.
+                </TooltipContent>
+            </Tooltip>
+            <PopoverContent className="w-72 p-0 shadow-2xl rounded-2xl border-primary/20" align="end">
+                <div className="p-3 border-b bg-muted/20">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Forzar Matching Masivo</p>
+                    <div className="relative">
+                        <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+                        <Input
+                            placeholder="Buscar producto..."
+                            className="pl-7 h-8 text-[10px] rounded-lg"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                </div>
+                <ScrollArea className="h-64">
+                    <div className="p-1">
+                        {filteredProducts.map(p => (
+                            <button
+                                key={p.cod}
+                                className="w-full text-left p-2 hover:bg-primary/5 rounded-lg border border-transparent hover:border-primary/20 transition-all flex justify-between items-center group"
+                                onClick={() => handleBulkForceMatch(p)}
+                            >
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-[10px] font-black uppercase text-foreground truncate">{p.descripcion}</p>
+                                    <div className="flex gap-2">
+                                        <span className="text-[8px] text-muted-foreground font-bold uppercase">Stock: {currentStockMap.get(p.cod) || 0}</span>
+                                        <span className="text-[8px] text-primary font-bold uppercase">${p.precio_cents}</span>
+                                    </div>
+                                </div>
+                                <Plus className="w-3 h-3 text-primary opacity-0 group-hover:opacity-100 transition-opacity ml-2 shrink-0" />
+                            </button>
+                        ))}
+                    </div>
+                </ScrollArea>
+            </PopoverContent>
+        </Popover>
+    );
+}
+
+const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onDelete, onToggleExclusion, getStatusBadge, diff }: any) => {
     const targetAmount = tx.importe_venta_cents || tx.importe_cents;
-    const diff = targetAmount - matchedTotal;
     const isEnProceso = matchedTotal > 0 && Math.abs(diff) >= 0.001;
     const isPending = matchedTotal === 0;
 
@@ -528,30 +827,47 @@ const TransactionRow = React.memo(({ tx, matchedTotal, onView, onForceMatch, onR
           <TableCell>{getStatusBadge(tx.estado_conciliacion, diff, matchedTotal)}</TableCell>
           <TableCell className="text-right">
             <div className="flex justify-end gap-1 items-center">
-                {(isEnProceso || isPending) && !tx.excluido && (
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-primary hover:bg-primary/10"
-                                onClick={onForceMatch}
-                            >
-                                <Zap className="w-4 h-4 fill-primary/20" />
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
-                            <p className="font-black text-primary mb-1">FORZAR MATCHING</p>
-                            Ejecuta el algoritmo automático solo para esta transacción. Intentará buscar combinaciones de productos o aplicar reglas de tolerancia.
-                        </TooltipContent>
-                    </Tooltip>
+                {tx.estado_conciliacion === 'PENDIENTE' && (
+                    <ForceMatchPopover
+                        transaction={tx}
+                    />
                 )}
                 {isEnProceso && (
-                    <QuickAdjustPopover
-                        transaction={tx}
-                        remaining={diff}
-                        onSuccess={() => {}}
-                    />
+                    <div className="flex gap-1">
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-green-600 hover:bg-green-500/10"
+                                    onClick={async () => {
+                                        const lines = await db.reconciliation_lines.where('transaction_ref').equals(tx.referencia_origen).toArray();
+                                        if (lines.length > 0) {
+                                            const line = lines[0];
+                                            const newTotalLine = line.importe_linea_cents + diff;
+                                            await db.reconciliation_lines.update(line.id, {
+                                                importe_linea_cents: newTotalLine,
+                                                precio_unitario_cents: line.cantidad === 1 ? newTotalLine : line.precio_unitario_cents,
+                                                cuadre_cents: (line.cuadre_cents || 0) + diff
+                                            });
+                                            await db.bank_statements.update(tx.referencia_origen, {
+                                                estado_conciliacion: 'COMPLETO'
+                                            });
+                                            toast.success('Ajuste automático aplicado (Ajustar Todo)');
+                                        }
+                                    }}
+                                >
+                                    <CheckCircle2 className="w-4 h-4" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent className="text-[10px]">Ajustar Todo (Cerrar transacción)</TooltipContent>
+                        </Tooltip>
+                        <QuickAdjustPopover
+                            transaction={tx}
+                            remaining={diff}
+                            onSuccess={() => {}}
+                        />
+                    </div>
                 )}
                 <Tooltip>
                     <TooltipTrigger asChild>

@@ -13,12 +13,11 @@ interface CostProLoaderProps {
 }
 
 /**
- * CostProLoader - Componente de carga oficial de la marca CostPro.
- * Implementa la animación de "chaser" y rotación usando SMIL nativo para
- * garantizar el funcionamiento en todos los navegadores y entornos de ejecución.
+ * CostProLoader - "Minimalist Splash" Edition
+ * Basado únicamente en la identidad "C" con su efecto característico.
  */
 export const CostProLoader: React.FC<CostProLoaderProps> = ({
-  size = 180,
+  size = 120,
   text,
   subtext,
   showText = !!text,
@@ -28,15 +27,68 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
   const id = React.useId().replace(/:/g, '');
 
   return (
-    <div className={cn("flex flex-col items-center justify-center gap-4", className)}>
-      <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
+    <div className={cn("flex flex-col items-center justify-center gap-6", className)}>
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes cp-breathe-${id} {
+          0%, 100% { transform: scale(1); opacity: 0.8; }
+          50% { transform: scale(1.05); opacity: 1; filter: drop-shadow(0 0 20px rgba(34, 197, 94, 0.4)); }
+        }
+
+        @keyframes cp-spin-slow-${id} {
+          from { transform: rotate(135deg); }
+          to { transform: rotate(495deg); }
+        }
+
+        @keyframes cp-shimmer-${id} {
+          to { background-position: 200% center; }
+        }
+
+        .cp-viewport-${id} {
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          animation: cp-breathe-${id} 2.5s ease-in-out infinite;
+          will-change: transform, opacity;
+        }
+
+        .cp-logo-c-${id} {
+          transform: rotate(135deg);
+          /* animation: cp-spin-slow-${id} 3s linear infinite; */ /* Descomentar si se prefiere rotación */
+        }
+
+        .cp-brand-text-${id} {
+          font-family: 'Segoe UI', system-ui, sans-serif;
+          font-weight: 950;
+          font-size: 1rem;
+          letter-spacing: 0.4em;
+          text-transform: uppercase;
+          background: linear-gradient(135deg, #059669 0%, #10b981 50%, #059669 100%);
+          background-size: 200% auto;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          animation: cp-shimmer-${id} 3s linear infinite;
+        }
+
+        .cp-sub-info-${id} {
+          font-size: 9px;
+          font-weight: 800;
+          color: #94a3b8;
+          text-transform: uppercase;
+          letter-spacing: 0.3em;
+          opacity: 0.6;
+        }
+      `}} />
+
+      <div className={`cp-viewport-${id}`} style={{ width: size, height: size }}>
+        {/* Resplandor sutil (Glow) de fondo */}
+        <div className="absolute inset-0 bg-green-500/10 dark:bg-green-400/10 blur-[30px] rounded-full" />
+
         <svg
-            width="100%"
-            height="100%"
-            viewBox="0 0 240 240"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="overflow-visible"
+          viewBox="0 0 100 100"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className={`relative z-10 w-full h-full cp-logo-c-${id}`}
         >
           <defs>
             <linearGradient id={`grad-${id}`} x1="0%" y1="0%" x2="100%" y2="100%">
@@ -44,81 +96,31 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
               <stop offset="100%" stopColor="#10b981" />
             </linearGradient>
 
-            <filter id={`glow-${id}`} x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="3" result="blur" />
-              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            <filter id={`glow-${id}`}>
+              <feGaussianBlur stdDeviation="1.5" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
             </filter>
           </defs>
 
-          {/* Anillo de Guía Técnico (Background) */}
-          <circle cx="120" cy="120" r="70" stroke="#f1f5f9" strokeWidth="2" fill="none" />
-
-          {/* El Chaser: Anillo activo con animación de persistencia y rotación */}
-          <circle
-            cx="120" cy="120" r="70"
+          {/* El trazo de la C pura, minimalista e invertida */}
+          <path
+            d="M 50, 50 m -35, 0 a 35,35 0 1,0 70,0 a 35,35 0 1,0 -70,0"
             stroke={`url(#grad-${id})`}
-            strokeWidth="6"
+            strokeWidth="9"
             strokeLinecap="round"
+            strokeDasharray="175 220" /* Mantiene la apertura característica (aprox 80%) */
             filter={`url(#glow-${id})`}
-            fill="none"
-          >
-            {/* Animación: Rotación continua */}
-            <animateTransform
-                attributeName="transform"
-                type="rotate"
-                from="0 120 120"
-                to="360 120 120"
-                dur="2s"
-                repeatCount="indefinite"
-            />
-            {/* Animación: Efecto de estiramiento y contracción (Chase) */}
-            <animate
-                attributeName="stroke-dasharray"
-                values="1,300; 150,300; 1,300"
-                dur="1.5s"
-                repeatCount="indefinite"
-            />
-            {/* Animación: Desplazamiento del trazo */}
-            <animate
-                attributeName="stroke-dashoffset"
-                values="0; -100; -280"
-                dur="1.5s"
-                repeatCount="indefinite"
-            />
-          </circle>
-
-          {/* Núcleo de Identidad: La "C" de CostPro con efecto de respiración */}
-          <g>
-             <path
-                d="M132 108 A18 18 0 1 0 132 132"
-                fill="none"
-                stroke="#059669"
-                strokeWidth="10"
-                strokeLinecap="round"
-                filter={`url(#glow-${id})`}
-            />
-            <animate
-                attributeName="opacity"
-                values="0.6; 1; 0.6"
-                dur="3s"
-                repeatCount="indefinite"
-            />
-          </g>
+          />
         </svg>
       </div>
 
       {(showText || showSubtext) && (
-        <div className="flex flex-col items-center gap-1">
-            {showText && (
-                <span className="text-sm font-black text-green-700 dark:text-green-500 uppercase tracking-[0.2em] font-sans">
-                    {text}
-                </span>
-            )}
-            {showSubtext && (
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] font-sans">
-                    {subtext}
-                </span>
-            )}
+        <div className="flex flex-col items-center gap-1.5">
+          {showText && <div className={`cp-brand-text-${id}`}>{text}</div>}
+          {showSubtext && <div className={`cp-sub-info-${id}`}>{subtext}</div>}
         </div>
       )}
     </div>

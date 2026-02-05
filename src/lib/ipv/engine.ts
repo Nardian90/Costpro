@@ -331,12 +331,16 @@ export class MatchingEngine {
    * Distribuye una diferencia de objetivo global entre varios días.
    * Útil para llegar a una meta mensual/semanal repartiendo el faltante como efectivo.
    * Implementa aleatoriedad para evitar una distribución plana sospechosa.
+   *
+   * Nota sobre unidades: Aunque las variables terminan en '_cents', el sistema almacena
+   * valores en Pesos (decimales). targetTotal y currentTotal deben estar en la misma unidad.
    */
   async distributeGlobalGoal(targetTotal: number, currentTotal: number, dates: string[]): Promise<ReconciliationLine[]> {
     const diff = targetTotal - currentTotal;
     if (diff <= 0 || dates.length === 0) return [];
 
     // Generar pesos aleatorios para cada día
+    // Priorizamos días que ya tienen movimientos
     const weights = dates.map(() => 0.5 + Math.random());
     const totalWeight = weights.reduce((a, b) => a + b, 0);
 
@@ -346,15 +350,17 @@ export class MatchingEngine {
     for (let i = 0; i < dates.length; i++) {
       const date = dates[i];
       const weight = weights[i];
+
       // Para el último día, usamos exactamente lo que falta para asegurar que cuadre perfecto
-      const targetForDay = (i === dates.length - 1)
+      let targetForDay = (i === dates.length - 1)
         ? remainingTotal
         : Math.floor((diff * weight) / totalWeight);
 
       if (targetForDay <= 0) continue;
 
       // Usar findExactCombination para encontrar productos reales que sumen el objetivo del día
-      const combination = this.findExactCombination(targetForDay);
+      // Priorizando productos con poca existencia (low stock)
+      const combination = this.findExactCombination(targetForDay, { prioritizeLowStock: true });
 
       if (combination.length > 0) {
         for (const item of combination) {
@@ -365,13 +371,24 @@ export class MatchingEngine {
                 'CASH_FILLER',
                 'Efectivo'
             );
+            // Asegurar ID único si hay varias líneas el mismo día
+            line.id = uuidv4();
             lines.push(line);
             remainingTotal -= line.importe_linea_cents;
         }
       } else {
-        // FALLBACK: Si no encuentra combinación exacta, usamos un producto comodín o el de mayor precio
+        // FALLBACK: Si no encuentra combinación exacta, usamos un producto comodín que tenga STOCK
         // y ajustamos su precio para cubrir el objetivo del día.
-        const filler = this.products.find(p => p.isWildcardCandidate) || this.products[0];
+        const filler = this.products
+            .filter(p => !this.useStockLimit || (this.stockMap.get(p.cod) || 0) > 0)
+            .sort((a, b) => {
+                const sA = this.stockMap.get(a.cod) || 0;
+                const sB = this.stockMap.get(b.cod) || 0;
+                return sA - sB; // Priorizar menor stock disponible
+            })
+            .find(p => p.isWildcardCandidate) ||
+            this.products.find(p => !this.useStockLimit || (this.stockMap.get(p.cod) || 0) > 0);
+
         if (filler) {
             const line = await this.createLine(
                 { fecha: date, referencia_origen: `GOAL-${date}` } as any,
@@ -380,6 +397,7 @@ export class MatchingEngine {
                 'CASH_FILLER',
                 'Efectivo'
             );
+            line.id = uuidv4();
             line.importe_linea_cents = targetForDay;
             line.cuadre_cents = targetForDay - filler.precio_cents;
             lines.push(line);
@@ -405,7 +423,8 @@ export class MatchingEngine {
 
     const importe = product.precio_cents * qty;
 
-    // Descontar del inventario virtual de la sesión si aplica
+    // Descontar del inventario virtual de la sesión si aplica.
+    // Esto asegura que distribuciones globales respeten y consuman el stock disponible.
     if (this.useStockLimit) {
         const current = this.stockMap.get(product.cod) || 0;
         this.stockMap.set(product.cod, Math.max(0, current - qty));
@@ -435,8 +454,21 @@ export class MatchingEngine {
    * Busca una combinación exacta de productos que sumen el monto.
    * Considera la prioridad dinámica/manual de los productos.
    */
-  private findExactCombination(target: number): { product: Product, qty: number }[] {
+  private findExactCombination(target: number, options?: { prioritizeLowStock?: boolean }): { product: Product, qty: number }[] {
     const sortedProducts = [...this.products].sort((a, b) => {
+        // Si se pide priorizar poco stock, este criterio va primero (pero solo si tienen stock > 0)
+        if (options?.prioritizeLowStock) {
+            const sA = this.stockMap.get(a.cod) || 0;
+            const sB = this.stockMap.get(b.cod) || 0;
+
+            // Si uno no tiene stock y el otro sí, el que tiene stock va primero
+            if (sA > 0 && sB <= 0) return -1;
+            if (sB > 0 && sA <= 0) return 1;
+
+            // Si ambos tienen stock, el de menor stock va primero
+            if (sA > 0 && sB > 0 && sA !== sB) return sA - sB;
+        }
+
         // Modo híbrido/automático: Priorizar según prioridad_algoritmo (1 mejor)
         const pA = a.prioridad_algoritmo || 3;
         const pB = b.prioridad_algoritmo || 3;
@@ -535,8 +567,11 @@ export class MatchingEngine {
         }
 
         if (onProgress) {
+            // Optimización: Solo notificar progreso cada 5% o cada 20 transacciones para no saturar el hilo principal
             const percentage = Math.round(((i + 1) / total) * 100);
-            onProgress(percentage);
+            if (i % 20 === 0 || percentage % 5 === 0 || i === total - 1) {
+                onProgress(percentage);
+            }
         }
     }
     return results;
