@@ -84,8 +84,14 @@ export async function POST(req: NextRequest) {
             doc.setFont("helvetica", "bold");
             doc.text("RESUMEN FINANCIERO:", 14, currentY + 8);
 
+            const row13 = result.rows.find(r => r.classification === '13');
+            const row12 = result.rows.find(r => r.classification === '12');
+            const utilityPercent = (row13 && row12 && row12.total > 0) ? (row13.total / row12.total) * 100 : 0;
+
             const summaryData = [
                 ['Costo Total', result.summary.totalCost.toLocaleString('es-ES', { minimumFractionDigits: 2 })],
+                ['Utilidad', (row13?.total || 0).toLocaleString('es-ES', { minimumFractionDigits: 2 })],
+                ['% Utilidad / Costo', `${utilityPercent.toFixed(2)}%`],
                 ['Margen Comercial', result.summary.totalMargin.toLocaleString('es-ES', { minimumFractionDigits: 2 })],
                 ['Impuestos', result.summary.totalTax.toLocaleString('es-ES', { minimumFractionDigits: 2 })],
                 ['PRECIO FINAL', result.summary.grandTotal.toLocaleString('es-ES', { minimumFractionDigits: 2 })],
@@ -117,13 +123,23 @@ export async function POST(req: NextRequest) {
 
         const filteredRows = filterRows(result.rows);
 
-        const rowData = filteredRows.map(r => [
-            r.classification,
-            r.label.toUpperCase(),
-            r.calculation_method,
-            r.valor_historico?.toLocaleString('es-ES', { minimumFractionDigits: 2 }) || '0.00',
-            r.total.toLocaleString('es-ES', { minimumFractionDigits: 2 })
-        ]);
+        const row12Total = result.rows.find(r => r.classification === '12')?.total || 0;
+
+        const rowData = filteredRows.map(r => {
+            let label = r.label.toUpperCase();
+            if (r.classification === '13' && row12Total > 0) {
+                const p = (r.total / row12Total) * 100;
+                label += ` (${p.toFixed(1)}% S/ COSTO)`;
+            }
+
+            return [
+                r.classification,
+                label,
+                r.formaCalculo,
+                r.valorHistorico?.toLocaleString('es-ES', { minimumFractionDigits: 2 }) || '0.00',
+                r.total.toLocaleString('es-ES', { minimumFractionDigits: 2 })
+            ];
+        });
 
         autoTable(doc, {
             startY: currentY + 10,

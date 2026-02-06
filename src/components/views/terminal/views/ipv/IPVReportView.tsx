@@ -288,7 +288,7 @@ export function IPVReportView() {
         doc.setFontSize(10);
         doc.text(`Fecha del Reporte: ${report.fecha_reporte}`, 14, 30);
         doc.text(`Estado: ${report.estado}`, 14, 35);
-        doc.text(`Generado el: ${new Date().toLocaleString()}`, 14, 40);
+        doc.text(`Fecha de Confección: ${report.fecha_reporte}`, 14, 40);
 
         autoTable(doc, {
           startY: 55,
@@ -357,9 +357,7 @@ export function IPVReportView() {
       doc.setFontSize(10);
       doc.text(`Fecha del Reporte: ${report.fecha_reporte}`, 14, 30);
       doc.text(`Estado: ${report.estado}`, 14, 35);
-      const now = new Date();
-      const nowStr = isNaN(now.getTime()) ? '—' : now.toLocaleString();
-      doc.text(`Generado el: ${nowStr}`, 14, 40);
+      doc.text(`Fecha de Confección: ${report.fecha_reporte}`, 14, 40);
 
       // Summary
       doc.setFontSize(12);
@@ -403,7 +401,7 @@ export function IPVReportView() {
       const finalY = (doc as any).lastAutoTable.finalY + 20;
       doc.text('__________________________', 14, finalY);
       doc.text('Firma Responsable', 14, finalY + 5);
-      doc.text(`Realizado por: ${report.firmas?.realizado_por || 'Sistema'}`, 14, finalY + 10);
+      doc.text(`Realizado por: ${report.firmas?.realizado_por || ''}`, 14, finalY + 10);
 
       // Annex: Transaction Details if requested
       if (includeDetails) {

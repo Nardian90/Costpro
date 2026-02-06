@@ -366,10 +366,29 @@ export function calculateFicha(
     return annexSumMap.get(anexoId)?.get(classification)?.toNumber() || 0;
   };
 
+  parser.functions.GET_ANEXO_DATO = (anexoId: string, classification: string, field: string) => {
+    const anexo = ficha.anexos.find(a => a.id === anexoId);
+    if (!anexo) return null;
+    const row = anexo.rows.find(r => r.classification === classification);
+    return row ? row[field] : null;
+  };
+
+  parser.functions.GET_FILA_DATO = (search: string, field: string) => {
+    let targets = rowsByClass.get(search);
+    if (!targets || targets.length === 0) {
+        targets = rowsById.get(search) || [];
+    }
+    if (targets.length === 0) return null;
+    const row = targets[0];
+    if (field === 'total') return calculatedRows.get(row.id)?.total || 0;
+    if (field === 'valorHistorico') return calculatedRows.get(row.id)?.calculatedVH || row.valorHistorico || 0;
+    return (row as any)[field] || null;
+  };
+
   parser.functions.header = (key: string) => {
       // Handle other meta fields if needed
       if (key === 'decimals') return ficha.meta.decimals;
-      return 0;
+      return ficha.meta[key] || 0;
   };
 
   parser.functions.ref = (arg: any) => {
@@ -721,7 +740,40 @@ export function calculateFicha(
 
   summary.grandTotal = new Decimal(summary.totalCost).plus(summary.totalMargin).plus(summary.totalTax).toDecimalPlaces(decimals).toNumber();
 
-  // 5. Semantic Validation (Totals vs Children)
+  // 5. Evaluate Header Formulas
+  const evaluatedHeader = { ...ficha.meta };
+  Object.keys(ficha.meta).forEach(key => {
+    const value = ficha.meta[key];
+    if (typeof value === 'string' && value.startsWith('=')) {
+        try {
+            const formulaStr = translateFormulaFromSpanish(value.substring(1));
+            const expr = parser.parse(formulaStr);
+            const context: any = {
+                QUANTITY: ficha.meta.quantity || 0,
+                cantidad: ficha.meta.quantity || 0,
+                COSTO_TOTAL: summary.totalCost,
+                MARGEN_TOTAL: summary.totalMargin,
+                IMPUESTO_TOTAL: summary.totalTax,
+                PRECIO_FINAL: summary.grandTotal
+            };
+
+            // Map annex totals and values
+            annexTotals.forEach((total, id) => {
+                context[`TotalAnexo${id}`] = total;
+                context[`Total${id}`] = total;
+                // For header formulas, we don't have a "current row classification",
+                // but we can still provide GET_ANEXO_DATO
+            });
+
+            evaluatedHeader[key] = expr.evaluate(context);
+        } catch (e) {
+            console.error(`Error evaluating header formula for ${key}:`, e);
+            // Keep original formula string if it fails
+        }
+    }
+  });
+
+  // 6. Semantic Validation (Totals vs Children)
   ficha.rows.forEach(row => {
       const children = ficha.rows.filter(r => r.parentId === row.id);
       // We check if it's a sum row. If it has children and calculation is FORMULA with sum, it MUST match.
@@ -744,7 +796,7 @@ export function calculateFicha(
   return {
     fichaId: ficha.meta.id,
     fichaName: ficha.meta.name,
-    metadata: { header: ficha.meta },
+    metadata: { header: evaluatedHeader },
     rows: Array.from(calculatedRows.values()),
     anexos: ficha.anexos,
     audits: Array.from(calculatedRows.values()).flatMap(r => r.audit),

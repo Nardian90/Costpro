@@ -169,7 +169,14 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                     }}
                 />
             ) : (
-                <span className="truncate flex-1 cursor-text" onClick={() => setIsEditingLabel(true)}>{row.label}</span>
+                <span className="truncate flex-1 cursor-text" onClick={() => setIsEditingLabel(true)}>
+                    {row.label}
+                    {row.id === '13' && calculatedValues?.['12']?.total > 0 && (
+                        <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-black bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                            {((calculatedValues['13'].total / calculatedValues['12'].total) * 100).toFixed(1)}% s/ costo
+                        </span>
+                    )}
+                </span>
             )}
 
             {/* Row Actions */}
