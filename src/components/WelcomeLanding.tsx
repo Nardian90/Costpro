@@ -42,12 +42,12 @@ const ImportFlowSVG = () => (
 
     {/* System Core Area */}
     <rect x="170" y="60" width="60" height="80" rx="12" fill="#10b981" fillOpacity="0.2" stroke="#10b981" strokeWidth="2" />
-    <motion.div
+    <motion.g
       animate={{ rotate: 360 }}
       transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
     >
       <Cpu className="text-emerald-600" x="185" y="85" width="30" height="30" />
-    </motion.div>
+    </motion.g>
     <text x="200" y="160" textAnchor="middle" className="text-[10px] font-black fill-emerald-600 uppercase tracking-widest">CostPro Engine</text>
 
     {/* Fichas Area */}
@@ -217,7 +217,7 @@ export default function WelcomeLanding({ onStart, isAuthenticated = false }: Wel
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl h-[600px] bg-primary/5 blur-[120px] rounded-full -z-10" />
 
           <div className="max-w-4xl mx-auto text-center space-y-8">
-            <motion.div
+            <motion.g
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
@@ -232,9 +232,9 @@ export default function WelcomeLanding({ onStart, isAuthenticated = false }: Wel
               <p className="text-lg md:text-xl text-muted-foreground font-medium max-w-2xl mx-auto leading-relaxed">
                 La plataforma inteligente de ingeniería de costos y punto de venta diseñada para que las MiPyMEs operen con precisión matemática y agilidad digital.
               </p>
-            </motion.div>
+            </motion.g>
 
-            <motion.div
+            <motion.g
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
@@ -256,7 +256,7 @@ export default function WelcomeLanding({ onStart, isAuthenticated = false }: Wel
               >
                 Conocer Más
               </Button>
-            </motion.div>
+            </motion.g>
           </div>
         </section>
 
