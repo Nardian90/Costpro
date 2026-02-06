@@ -126,7 +126,7 @@ export default function LoginPage() {
   }
 
   const handleStart = () => {
-    if (status === 'authenticated_valid' || status === 'authenticated_invalid') {
+    if (status === 'authenticated_valid' || status === 'authenticated_invalid_profile') {
       safeNavigate.push(router, '/');
     } else {
       setShowLoginModal(true);
