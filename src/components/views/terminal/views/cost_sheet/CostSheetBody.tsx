@@ -5,8 +5,8 @@ import { cn, formatCurrency } from '@/lib/utils';
 
 // Define the richer structure for a single calculated value
 type CalculatedRowValue = {
-  valorHistorico: number;
-  baseTotal: number;
+  valor_historico: number;
+  base_total: number;
   coeficiente: number;
   total: number;
 };
@@ -31,7 +31,7 @@ type CostSheetBodyProps = {
 
 const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValues }) => {
   const renderRow = (row: any, level: number = 0, numbering: string) => {
-      const calc = calculatedValues[row.id] || { total: 0, valorHistorico: 0, baseTotal: 0, coeficiente: 0 };
+      const calc = calculatedValues[row.id] || { total: 0, valor_historico: 0, base_total: 0, coeficiente: 0 };
       const hasChildren = row.children && row.children.length > 0;
 
       return (
@@ -62,14 +62,14 @@ const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValue
                     )}
                     {row.is_percent && (
                         <span className="ml-2 text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
-                            {((row.value || calc.valorHistorico || 0) * 100).toFixed(2)}%
+                            {((row.value || calc.valor_historico || 0) * 100).toFixed(2)}%
                         </span>
                     )}
                 </td>
 
                 {/* Valor Histórico */}
                 <td data-label="Valor Histórico" className="p-3 text-right font-mono text-slate-500 text-xs">
-                    {calc.valorHistorico > 0 ? calc.valorHistorico.toLocaleString('es-ES', { minimumFractionDigits: 2 }) : '--'}
+                    {calc.valor_historico > 0 ? calc.valor_historico.toLocaleString('es-ES', { minimumFractionDigits: 2 }) : '--'}
                 </td>
 
                 {/* Total */}

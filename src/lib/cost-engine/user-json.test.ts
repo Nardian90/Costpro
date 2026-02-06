@@ -18,7 +18,7 @@ describe('User provided invalid JSON validation', () => {
           id: '12',
           classification: '12',
           label: 'TOTAL COSTOS Y GASTOS (5+11)',
-          formaCalculo: 'FORMULA',
+          calculation_method: 'FORMULA',
           formula: '0',
           type: 'TOTAL'
         },
@@ -26,7 +26,7 @@ describe('User provided invalid JSON validation', () => {
           id: '13',
           classification: '13',
           label: 'Utilidad',
-          formaCalculo: 'FORMULA',
+          calculation_method: 'FORMULA',
           formula: "ref('12.1')",
           type: 'MARGIN'
         },
@@ -34,7 +34,7 @@ describe('User provided invalid JSON validation', () => {
           id: '13.1',
           classification: '13.1',
           label: 'Precio antes de Impuesto',
-          formaCalculo: 'FORMULA',
+          calculation_method: 'FORMULA',
           formula: "ref('13.1')+ref('12.1')",
           type: 'MARGIN'
         }
@@ -65,7 +65,7 @@ describe('User provided invalid JSON validation', () => {
           id: '13',
           classification: '13',
           label: 'Utilidad',
-          formaCalculo: 'FORMULA',
+          calculation_method: 'FORMULA',
           formula: "ref('13')",
           type: 'MARGIN'
         }
@@ -92,7 +92,7 @@ describe('User provided invalid JSON validation', () => {
           id: '3',
           classification: '3',
           label: 'Total',
-          formaCalculo: 'FORMULA',
+          calculation_method: 'FORMULA',
           formula: "ref('3.1')",
           type: 'TOTAL'
         },
@@ -101,7 +101,7 @@ describe('User provided invalid JSON validation', () => {
           classification: '3.1',
           label: 'Subtotal 1',
           parentId: '3',
-          formaCalculo: 'FORMULA',
+          calculation_method: 'FORMULA',
           formula: "ref('3.1.1') + ref('3.1.2')",
           type: 'COST'
         },
@@ -110,8 +110,8 @@ describe('User provided invalid JSON validation', () => {
           classification: '3.1.1',
           label: 'Item 1.1',
           parentId: '3.1',
-          formaCalculo: 'FIJO',
-          valorHistorico: 10,
+          calculation_method: 'FIJO',
+          valor_historico: 10,
           type: 'COST'
         },
         {
@@ -119,8 +119,8 @@ describe('User provided invalid JSON validation', () => {
           classification: '3.1.2',
           label: 'Item 1.2',
           parentId: '3.1',
-          formaCalculo: 'FIJO',
-          valorHistorico: 20,
+          calculation_method: 'FIJO',
+          valor_historico: 20,
           type: 'COST'
         }
       ],

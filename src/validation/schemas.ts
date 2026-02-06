@@ -426,19 +426,32 @@ export const costSheetHeaderSchema = z.object({
   client: z.string().optional().default(''),
 }).catchall(z.any());
 
-export const costSheetRowSchema: z.ZodType<any> = z.lazy(() => z.object({
+export const costSheetRowSchema: z.ZodType<any> = z.lazy(() => z.preprocess((val: any) => {
+  if (!val || typeof val !== 'object') return val;
+  const migrated = { ...val };
+  if ('valorHistorico' in val && !('valor_historico' in val)) migrated.valor_historico = val.valorHistorico;
+  if ('baseDeCalculoRef' in val && !('base_ref' in val)) migrated.base_ref = val.baseDeCalculoRef;
+  if ('baseRef' in val && !('base_ref' in val)) migrated.base_ref = val.baseRef;
+  if ('calculationMethod' in val && !('calculation_method' in val)) migrated.calculation_method = val.calculationMethod;
+  if ('totalFormula' in val && !('total_formula' in val)) migrated.total_formula = val.totalFormula;
+  if ('isPercent' in val && !('is_percent' in val)) migrated.is_percent = val.isPercent;
+  if ('helpText' in val && !('help_text' in val)) migrated.help_text = val.helpText;
+  if ('vhFormula' in val && !('vh_formula' in val)) migrated.vh_formula = val.vhFormula;
+  return migrated;
+}, z.object({
   id: z.string(),
   label: z.string(),
-  valorHistorico: z.number().optional(),
+  valor_historico: z.number().optional(),
+  vh_formula: z.string().nullable().optional(),
   value: z.number().optional(),
-  baseDeCalculoRef: z.string().nullable().optional(),
   base_ref: z.string().nullable().optional(),
-  calculationMethod: z.enum(['Prorrateo', 'ValorFijo', 'FORMULA', 'ANEXO']).optional(),
-  totalFormula: z.string().nullable().optional(),
+  calculation_method: z.enum(['Prorrateo', 'ValorFijo', 'FORMULA', 'ANEXO']).optional(),
+  total_formula: z.string().nullable().optional(),
   formula: z.string().optional(),
   is_percent: z.boolean().optional(),
   children: z.array(costSheetRowSchema).optional(),
-}).catchall(z.any()));
+  help_text: z.string().optional(),
+}).catchall(z.any())));
 
 export const costSheetSectionSchema = z.object({
   id: z.string(),

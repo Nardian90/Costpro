@@ -234,18 +234,18 @@ export async function POST(req: NextRequest) {
 
       const processRows = (rows: any[], level = 0) => {
         rows.forEach(row => {
-          const calc = calcValues[row.id] || { total: 0, valorHistorico: 0, baseTotal: 0 };
+          const calc = calcValues[row.id] || { total: 0, valor_historico: 0, base_total: 0 };
           const prefix = "  ".repeat(level);
 
           let baseDisplay = '-';
           if (row.base_display_override) baseDisplay = row.base_display_override;
           else if (row.is_percent) baseDisplay = `${((row.value || 0) * 100).toFixed(2)}%`;
-          else if (calc.baseTotal > 0) baseDisplay = calc.baseTotal.toLocaleString('es-ES');
+          else if (calc.base_total > 0) baseDisplay = calc.base_total.toLocaleString('es-ES');
 
           mainRows.push([
             row.id,
             prefix + row.label.toUpperCase(),
-            calc.valorHistorico > 0 ? calc.valorHistorico.toLocaleString('es-ES', { minimumFractionDigits: 2 }) : '--',
+            calc.valor_historico > 0 ? calc.valor_historico.toLocaleString('es-ES', { minimumFractionDigits: 2 }) : '--',
             baseDisplay,
             calc.total.toLocaleString('es-ES', { minimumFractionDigits: 2 })
           ]);

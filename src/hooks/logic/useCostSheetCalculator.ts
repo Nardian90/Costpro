@@ -9,7 +9,7 @@ import {
   CalculatedRowValue
 } from '@/types/cost-sheet';
 import { calculateFicha } from '@/lib/cost-engine';
-import { FichaJSON, CostRow, Anexo, RowSemanticType, FormaCalculo, BaseRef, AuditEntry, CalculationResult } from '@/lib/cost-engine/types';
+import { FichaJSON, CostRow, Anexo, RowSemanticType, CalculationMethod, BaseRef, AuditEntry, CalculationResult } from '@/lib/cost-engine/types';
 
 // Helper to safely evaluate a formula string for ANNEXES (keeping it simple for annex rows)
 const evaluateAnnexExpression = (expression: string, rowData: any, header: any, calculatedAnnexes: any[] = []): number => {
@@ -182,11 +182,11 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
               if (r.children && r.children.length > 0) {
                   calculateVH(r.children);
                   vhSums[r.id] = r.children.reduce((sum, child) => {
-                      const val = vhSums[child.id] ?? child.valorHistorico ?? child.value ?? 0;
+                      const val = vhSums[child.id] ?? child.valor_historico ?? child.value ?? 0;
                       return sum + val;
                   }, 0);
               } else {
-                  vhSums[r.id] = r.valorHistorico ?? r.value ?? 0;
+                  vhSums[r.id] = r.valor_historico ?? r.value ?? 0;
               }
           });
       };
@@ -206,36 +206,36 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
           if (['14', '12', '5'].includes(r.id)) type = 'TOTAL';
 
           // Map calculation method
-          let formula = r.formula || r.totalFormula;
+          let formula = r.formula || r.total_formula;
 
           // If no formula but has children, default to sum(children) for compatibility
           // unless it's explicitly set to ValorFijo
-          if (!formula && r.children && r.children.length > 0 && r.calculationMethod !== 'ValorFijo') {
+          if (!formula && r.children && r.children.length > 0 && r.calculation_method !== 'ValorFijo') {
               formula = '=sum(children)';
           }
 
-          let formaCalculo: FormaCalculo = 'FIJO';
-          const method = r.calculationMethod || '';
-          if (['Prorrateo', 'PRORRATEO'].includes(method)) formaCalculo = 'PRORRATEO';
-          if (['ANEXO', 'ANEXO_REF'].includes(method)) formaCalculo = 'ANEXO';
-          if (['ValorFijo', 'FIJO', 'MANUAL'].includes(method)) formaCalculo = 'FIJO';
-          if (r.is_percent) formaCalculo = 'COEFICIENTE';
-          if (formula) formaCalculo = 'FORMULA';
+          let calculation_method: CalculationMethod = 'FIJO';
+          const method = r.calculation_method || '';
+          if (['Prorrateo', 'PRORRATEO'].includes(method)) calculation_method = 'PRORRATEO';
+          if (['ANEXO', 'ANEXO_REF'].includes(method)) calculation_method = 'ANEXO';
+          if (['ValorFijo', 'FIJO', 'MANUAL'].includes(method)) calculation_method = 'FIJO';
+          if (r.is_percent) calculation_method = 'COEFICIENTE';
+          if (formula) calculation_method = 'FORMULA';
 
           // Base Calculation mapping
-          let baseCalculo: BaseRef | null = null;
-          const baseRefId = r.baseDeCalculoRef || r.base_ref;
+          let base_calculation: BaseRef | null = null;
+          const baseRefId = r.base_ref;
           if (baseRefId) {
               // Check if it's an Annex ID (match explicit annexes or Roman numerals)
               const isAnnex = (template?.annexes || []).some(a => a.id === baseRefId) || /^[IVXLC]+$/.test(baseRefId);
               if (isAnnex) {
-                  baseCalculo = { type: 'ANEXO', anexoId: baseRefId };
+                  base_calculation = { type: 'ANEXO', anexoId: baseRefId };
                   // If pointing to annex without specific formula, it's an import
-                  if (r.calculationMethod !== 'Prorrateo' && !r.formula && !r.totalFormula) {
-                      formaCalculo = 'IMPORTAR_ANEXO';
+                  if (r.calculation_method !== 'Prorrateo' && !r.formula && !r.total_formula) {
+                      calculation_method = 'IMPORTAR_ANEXO';
                   }
               } else {
-                  baseCalculo = { type: 'FILA', classification: baseRefId };
+                  base_calculation = { type: 'FILA', classification: baseRefId };
               }
           }
 
@@ -251,11 +251,11 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
             classification: currentNumbering, // Use visual numbering for smart matching
             label: r.label,
             type,
-            formaCalculo,
-            valorHistorico: vhSums[r.id] ?? r.valorHistorico ?? r.value,
-            vhFormula: r.vhFormula,
-            baseCalculo,
-            coeficiente: r.is_percent ? (r.value ?? r.valorHistorico) : r.coeficiente,
+            calculation_method,
+            valor_historico: vhSums[r.id] ?? r.valor_historico ?? r.value,
+            vh_formula: r.vh_formula,
+            base_calculation,
+            coeficiente: r.is_percent ? (r.value ?? r.valor_historico) : r.coeficiente,
             formula: formula,
             fuente: r.note || r.fuente,
             metadata: r.metadata
@@ -302,19 +302,19 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
 
           newCalculatedValues[r.id] = {
               total: r.total,
-              valorHistorico: r.valorHistorico || 0,
-              calculatedVH: r.calculatedVH,
-              baseDeCalculoRef: r.baseCalculo?.type === 'FILA' ? r.baseCalculo.classification : (r.baseCalculo?.anexoId || null),
-              baseTotal: r.baseTotal || 0,
-              baseValorHistorico: r.baseHist || 0,
-              coeficiente: r.formaCalculo === 'PRORRATEO'
-                ? (r.baseHist ? (r.valorHistorico || 0) / r.baseHist : 0)
+              valor_historico: r.valor_historico || 0,
+              calculated_vh: r.calculated_vh,
+              base_ref: r.base_calculation?.type === 'FILA' ? r.base_calculation.classification : (r.base_calculation?.anexoId || null),
+              base_total: r.base_total || 0,
+              base_valor_historico: r.base_hist || 0,
+              coeficiente: r.calculation_method === 'PRORRATEO'
+                ? (r.base_hist ? (r.valor_historico || 0) / r.base_hist : 0)
                 : (r.coeficiente || 0),
               fuente: r.fuente,
               metadata: r.metadata,
               audits: r.audit,
-              hasWarnings: r.audit.some(a => a.type === 'WARNING' || a.type === 'ERROR' || a.type === 'CYCLE_DETECTED') || rowValidationErrors.length > 0,
-              validationErrors: rowValidationErrors.map(ve => ({
+              has_warnings: r.audit.some(a => a.type === 'WARNING' || a.type === 'ERROR' || a.type === 'CYCLE_DETECTED') || rowValidationErrors.length > 0,
+              validation_errors: rowValidationErrors.map(ve => ({
                   message: ve.message,
                   type: ve.type,
                   code: ve.code

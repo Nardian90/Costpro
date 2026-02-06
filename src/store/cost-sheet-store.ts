@@ -34,6 +34,7 @@ const clearTemplate = (template: any) => {
     const clearRows = (rows: any[]) => {
         rows.forEach(row => {
             // Clear primary numeric values
+            if (row.hasOwnProperty('valor_historico')) row.valor_historico = 0;
             if (row.hasOwnProperty('valorHistorico')) row.valorHistorico = 0;
             if (row.hasOwnProperty('value')) row.value = 0;
 
@@ -41,12 +42,15 @@ const clearTemplate = (template: any) => {
             if (row.formula && !row.formula.startsWith('=')) {
                 row.formula = "0";
             }
+            if (row.total_formula && !row.total_formula.startsWith('=')) {
+                row.total_formula = "0";
+            }
             if (row.totalFormula && !row.totalFormula.startsWith('=')) {
                 row.totalFormula = "0";
             }
 
             // Ensure calculation method reflects manual input if we cleared a fixed number
-            if (row.calculationMethod === 'ValorFijo' || (!row.formula?.startsWith('=') && !row.totalFormula?.startsWith('='))) {
+            if (row.calculation_method === 'ValorFijo' || row.calculationMethod === 'ValorFijo') {
                 // If it's not a real formula, ensure it's treated as a clean slate
             }
 
@@ -199,8 +203,8 @@ export const useCostSheetStore = create<CostSheetState>()(
                 current.push({
                     id: uniqueId,
                     label: "Nuevo Concepto",
-                    valorHistorico: 0,
-                    calculationMethod: 'ValorFijo',
+                    valor_historico: 0,
+                    calculation_method: 'ValorFijo',
                     children: []
                 });
             }
@@ -305,7 +309,32 @@ export const useCostSheetStore = create<CostSheetState>()(
     }),
     {
       name: 'cost-sheet-storage', // Name for the localStorage item
-      version: 2, // Versioning to avoid issues with older structures
+      version: 3, // Versioning for snake_case hardening
+      migrate: (persistedState: any, version: number) => {
+        if (version < 3) {
+            console.log(`[Migration] Migrating cost-sheet-storage from v${version} to v3`);
+            const migrateRows = (rows: any[]) => {
+                if (!rows) return;
+                rows.forEach(row => {
+                    if ('valorHistorico' in row && !('valor_historico' in row)) row.valor_historico = row.valorHistorico;
+                    if ('baseDeCalculoRef' in row && !('base_ref' in row)) row.base_ref = row.baseDeCalculoRef;
+                    if ('baseRef' in row && !('base_ref' in row)) row.base_ref = row.baseRef;
+                    if ('calculationMethod' in row && !('calculation_method' in row)) row.calculation_method = row.calculationMethod;
+                    if ('totalFormula' in row && !('total_formula' in row)) row.total_formula = row.totalFormula;
+                    if ('isPercent' in row && !('is_percent' in row)) row.is_percent = row.isPercent;
+                    if ('helpText' in row && !('help_text' in row)) row.help_text = row.helpText;
+                    if ('vhFormula' in row && !('vh_formula' in row)) row.vh_formula = row.vhFormula;
+
+                    if (row.children) migrateRows(row.children);
+                });
+            };
+
+            if (persistedState?.data?.sections) {
+                persistedState.data.sections.forEach((s: any) => migrateRows(s.rows));
+            }
+        }
+        return persistedState;
+      }
     }
   )
 );

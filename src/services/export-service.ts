@@ -63,9 +63,9 @@ export const exportToCSV = (data: any, calculatedValues: any, fileName: string) 
       rows.forEach(row => {
         const calc = calculatedValues[row.id] || {};
         const label = row.label.replace(/,/g, '');
-        const vh = calc.valorHistorico || 0;
-        const method = row.calculationMethod || (row.formula ? 'Fórmula' : 'Libre');
-        const base = row.baseDeCalculoRef || '-';
+        const vh = calc.valor_historico || 0;
+        const method = row.calculation_method || (row.formula ? 'Fórmula' : 'Libre');
+        const base = row.base_ref || '-';
         const coef = calc.coeficiente || 0;
         const total = calc.total || 0;
 

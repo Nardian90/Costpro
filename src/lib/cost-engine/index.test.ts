@@ -29,26 +29,26 @@ describe('Cost Engine', () => {
         classification: '1.1',
         type: 'COST',
         label: 'Material A',
-        formaCalculo: 'IMPORTAR_ANEXO',
-        baseCalculo: { type: 'ANEXO', anexoId: 'A1' }
+        calculation_method: 'IMPORTAR_ANEXO',
+        base_calculation: { type: 'ANEXO', anexoId: 'A1' }
       },
       {
         id: 'r2',
         classification: '1.2',
         type: 'COST',
         label: 'Material B',
-        formaCalculo: 'PRORRATEO',
-        valorHistorico: 50,
-        baseCalculo: { type: 'ANEXO', anexoId: 'A1' }
+        calculation_method: 'PRORRATEO',
+        valor_historico: 50,
+        base_calculation: { type: 'ANEXO', anexoId: 'A1' }
       },
       {
         id: 'r3',
         classification: '2',
         type: 'MARGIN',
         label: 'Utilidad',
-        formaCalculo: 'COEFICIENTE',
+        calculation_method: 'COEFICIENTE',
         coeficiente: 0.2,
-        baseCalculo: { type: 'FILA', classification: '1.1' }
+        base_calculation: { type: 'FILA', classification: '1.1' }
       }
     ]
   };
@@ -80,18 +80,18 @@ describe('Cost Engine', () => {
                 classification: 'A',
                 type: 'COST',
                 label: 'A',
-                formaCalculo: 'COEFICIENTE',
+                calculation_method: 'COEFICIENTE',
                 coeficiente: 0.5,
-                baseCalculo: { type: 'FILA', classification: 'B' }
+                base_calculation: { type: 'FILA', classification: 'B' }
             },
             {
                 id: 'b',
                 classification: 'B',
                 type: 'COST',
                 label: 'B',
-                formaCalculo: 'FORMULA',
+                calculation_method: 'FORMULA',
                 formula: 'BASE_TOTAL + 100',
-                baseCalculo: { type: 'FILA', classification: 'A' }
+                base_calculation: { type: 'FILA', classification: 'A' }
             }
         ]
     };
@@ -134,8 +134,8 @@ describe('Cost Engine', () => {
                 classification: 'X',
                 type: 'COST',
                 label: 'Bad',
-                formaCalculo: 'COEFICIENTE',
-                baseCalculo: { type: 'FILA', classification: 'NON_EXISTENT' }
+                calculation_method: 'COEFICIENTE',
+                base_calculation: { type: 'FILA', classification: 'NON_EXISTENT' }
             }
         ]
     };
@@ -153,7 +153,7 @@ describe('Cost Engine', () => {
                 classification: '1.1',
                 type: 'COST',
                 label: 'Smart Filtered',
-                formaCalculo: 'FORMULA',
+                calculation_method: 'FORMULA',
                 formula: '=AnexoA1'
             },
             {
@@ -161,7 +161,7 @@ describe('Cost Engine', () => {
                 classification: '9.9', // Non-existent in annex
                 type: 'COST',
                 label: 'Smart No Fallback',
-                formaCalculo: 'FORMULA',
+                calculation_method: 'FORMULA',
                 formula: '=AnexoA1'
             },
             {
@@ -169,7 +169,7 @@ describe('Cost Engine', () => {
                 classification: '1.1',
                 type: 'COST',
                 label: 'Explicit Total',
-                formaCalculo: 'FORMULA',
+                calculation_method: 'FORMULA',
                 formula: '=TotalAnexoA1'
             }
         ]

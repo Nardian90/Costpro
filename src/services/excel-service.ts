@@ -252,7 +252,7 @@ export const exportSectionToExcel = (section: CostSheetSection, calculatedValues
         flattened.push({
           'No.': num,
           'Concepto': "  ".repeat(level) + row.label,
-          'Valor Histórico': calc.valorHistorico || 0,
+          'Valor Histórico': calc.valor_historico || 0,
           'Formula': row.formula || '',
           'Total': calc.total || 0,
           'ID': row.id // Hidden or used for re-import
@@ -298,9 +298,9 @@ export const importSectionFromExcel = (file: File): Promise<CostSheetRow[]> => {
         const mappedRows: CostSheetRow[] = json.map((row, idx) => ({
           id: row.ID || `imported-${Date.now()}-${idx}`,
           label: (row.Concepto || '').trim(),
-          valorHistorico: parseFloat(row['Valor Histórico']) || 0,
+          valor_historico: parseFloat(row['Valor Histórico']) || 0,
           formula: row.Formula || '',
-          calculationMethod: row.Formula ? 'FORMULA' : 'ValorFijo',
+          calculation_method: row.Formula ? 'FORMULA' : 'ValorFijo',
           children: []
         }));
 
