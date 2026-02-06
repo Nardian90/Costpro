@@ -323,7 +323,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                         <Code className="w-3 h-3" />
                         Código de Fórmula
                     </label>
-                    <Badge variant="outline" className="text-[9px] font-mono opacity-50">expr-eval enabled</Badge>
+                    <Badge variant="outline" className="text-[9px] font-mono opacity-50">mathjs enabled</Badge>
                   </div>
                   <textarea
                     className="w-full h-64 p-6 font-mono text-base bg-muted/30 border-2 border-border rounded-2xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none resize-none transition-all shadow-inner"

@@ -47,8 +47,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { HorizontalScroll } from '@/components/ui/HorizontalScroll';
 import { cn } from '@/lib/utils';
-import { Parser } from 'expr-eval';
+import { create, all } from 'mathjs';
 import { translateFormulaFromSpanish } from '@/lib/cost-engine/formula-utils';
+
+const math = create(all);
 
 // Types
 export type TokenType = 'function' | 'operator' | 'reference' | 'variable' | 'literal' | 'punctuation';
@@ -248,20 +250,11 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
     }
 
     try {
-      const parser = new Parser();
-      // Add custom functions to parser for validation
-      parser.functions.sum = () => 0;
-      parser.functions.average = () => 0;
-      parser.functions.max = () => 0;
-      parser.functions.min = () => 0;
-      parser.functions.pct = () => 0;
-      parser.functions.round2 = () => 0;
-      parser.functions.ref = () => 0;
-      parser.functions.SUM_ANEXO = () => 0;
-
       const rawFormula = tokens.map(t => t.value).join(' ');
       const translated = translateFormulaFromSpanish(rawFormula);
-      parser.parse(translated);
+
+      // Basic parse validation
+      math.parse(translated);
       setValidation({ status: 'ok', message: 'Fórmula válida' });
     } catch (e: any) {
       setValidation({ status: 'error', message: e.message });

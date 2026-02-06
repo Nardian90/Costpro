@@ -1,7 +1,11 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { produce } from 'immer';
+import { create, all } from 'mathjs';
 import Decimal from 'decimal.js';
+
+const math = create(all);
+
 import {
   CostSheetData,
   CostSheetRow,
@@ -82,7 +86,12 @@ const evaluateAnnexExpression = (expression: string, rowData: any, header: any, 
         return isNaN(Number(trimmed)) ? 0 : Number(trimmed);
     }
 
-    return new Function(`return ${expr}`)();
+    try {
+      return math.evaluate(expr);
+    } catch (error) {
+      console.error("MathJS evaluation error:", error, "Expression:", expr);
+      return isNaN(Number(trimmed)) ? 0 : Number(trimmed);
+    }
   } catch (error) {
     return isNaN(Number(trimmed)) ? 0 : Number(trimmed);
   }
