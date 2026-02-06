@@ -1,4 +1,3 @@
-import jspdf from 'jspdf';
 import html2canvas from 'html2canvas';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
@@ -22,6 +21,10 @@ export const exportToPDF = async (element: HTMLElement, fileName: string) => {
     }
 
     const imgData = canvas.toDataURL('image/png');
+
+    // Dynamic import to avoid CSP issues in main bundle load
+    const { default: jspdf } = await import('jspdf');
+
     const pdf = new jspdf('p', 'mm', 'a4');
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
