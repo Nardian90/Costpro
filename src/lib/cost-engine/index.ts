@@ -1,5 +1,5 @@
 import Decimal from 'decimal.js';
-import { Parser } from 'expr-eval';
+import { create, all } from 'mathjs';
 import {
   FichaJSON,
   CalculationResult,
@@ -73,7 +73,7 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
 
   // 1. Dependency Graph & Cycle Detection
   const adj = new Map<string, string[]>();
-  const parser = new Parser();
+  const math = create(all);
 
   ficha.rows.forEach((row) => {
     const deps = extractDependencies(row, ficha.rows);
@@ -81,7 +81,7 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
     if (row.calculation_method === 'FORMULA' && row.formula) {
         try {
             const formulaStr = translateFormulaFromSpanish(row.formula.startsWith('=') ? row.formula.substring(1) : row.formula);
-            parser.parse(formulaStr);
+            math.parse(formulaStr);
 
             // check for trivial formulas
             if (formulaStr.trim() === "0" || formulaStr.trim() === "") {
@@ -359,94 +359,84 @@ export function calculateFicha(
     });
   });
 
-  const parser = new Parser();
+  const mathEngine = create(all);
 
-  // Use Decimal for high precision in parser functions
-  parser.functions.SUM_ANEXO = (anexoId: string, classification: string) => {
-    return annexSumMap.get(anexoId)?.get(classification)?.toNumber() || 0;
-  };
+  // Register custom functions in mathjs
+  mathEngine.import({
+    SUM_ANEXO: (anexoId: string, classification: string) => {
+      return annexSumMap.get(anexoId)?.get(classification)?.toNumber() || 0;
+    },
+    GET_ANEXO_DATO: (anexoId: string, classification: string, field: string) => {
+      const anexo = ficha.anexos.find(a => a.id === anexoId);
+      if (!anexo) return null;
+      const row = anexo.rows.find(r => r.classification === classification);
+      return row ? row[field] : null;
+    },
+    GET_FILA_DATO: (search: string, field: string) => {
+      let targets = rowsByClass.get(search);
+      if (!targets || targets.length === 0) {
+          targets = rowsById.get(search) || [];
+      }
+      if (targets.length === 0) return null;
+      const row = targets[0];
+      if (field === 'total') return calculatedRows.get(row.id)?.total || 0;
+      if (field === 'valorHistorico') return calculatedRows.get(row.id)?.calculated_vh || row.valor_historico || 0;
+      return (row as any)[field] || null;
+    },
+    header: (key: string) => {
+        if (key === 'decimals') return ficha.meta.decimals;
+        return ficha.meta[key] || 0;
+    },
+    ref: (arg: any) => {
+        const search = String(arg);
+        let targets = rowsByClass.get(search);
+        if (!targets || targets.length === 0) {
+            targets = rowsById.get(search) || [];
+        }
 
-  parser.functions.GET_ANEXO_DATO = (anexoId: string, classification: string, field: string) => {
-    const anexo = ficha.anexos.find(a => a.id === anexoId);
-    if (!anexo) return null;
-    const row = anexo.rows.find(r => r.classification === classification);
-    return row ? row[field] : null;
-  };
-
-  parser.functions.GET_FILA_DATO = (search: string, field: string) => {
-    let targets = rowsByClass.get(search);
-    if (!targets || targets.length === 0) {
-        targets = rowsById.get(search) || [];
+        const val = targets.reduce((acc, t) => {
+            const calculated = calculatedRows.get(t.id);
+            return acc.plus(new Decimal(calculated?.total || 0));
+        }, new Decimal(0));
+        return val.toNumber();
+    },
+    vh: (arg: any) => {
+        const search = String(arg);
+        let targets = rowsByClass.get(search);
+        if (!targets || targets.length === 0) {
+            targets = rowsById.get(search) || [];
+        }
+        const val = targets.reduce((acc, t) => {
+            const calculated = calculatedRows.get(t.id);
+            return acc.plus(new Decimal(calculated?.calculated_vh || t.valor_historico || 0));
+        }, new Decimal(0));
+        return val.toNumber();
+    },
+    pct: (value: number, percentage: number) => {
+        return new Decimal(value || 0).times(new Decimal(percentage || 0).div(100)).toNumber();
+    },
+    round2: (value: number) => {
+        return new Decimal(value || 0).toDecimalPlaces(2, Decimal.ROUND_HALF_UP).toNumber();
+    },
+    sum: (...args: any[]) => {
+        let flatArgs: any[] = [];
+        args.forEach(arg => {
+            if (Array.isArray(arg)) flatArgs = flatArgs.concat(arg);
+            else flatArgs.push(arg);
+        });
+        return flatArgs.reduce((a, b) => a.plus(new Decimal(b || 0)), new Decimal(0)).toNumber();
+    },
+    average: (...args: any[]) => {
+        let flatArgs: any[] = [];
+        args.forEach(arg => {
+            if (Array.isArray(arg)) flatArgs = flatArgs.concat(arg);
+            else flatArgs.push(arg);
+        });
+        if (flatArgs.length === 0) return 0;
+        const sum = flatArgs.reduce((a, b) => a.plus(new Decimal(b || 0)), new Decimal(0));
+        return sum.div(flatArgs.length).toNumber();
     }
-    if (targets.length === 0) return null;
-    const row = targets[0];
-    if (field === 'total') return calculatedRows.get(row.id)?.total || 0;
-    if (field === 'valorHistorico') return calculatedRows.get(row.id)?.calculated_vh || row.valor_historico || 0;
-    return (row as any)[field] || null;
-  };
-
-  parser.functions.header = (key: string) => {
-      // Handle other meta fields if needed
-      if (key === 'decimals') return ficha.meta.decimals;
-      return ficha.meta[key] || 0;
-  };
-
-  parser.functions.ref = (arg: any) => {
-      const search = String(arg);
-      // Priority 1: Classification (Visual Numbering)
-      // Priority 2: ID (UUID or template ID)
-      let targets = rowsByClass.get(search);
-      if (!targets || targets.length === 0) {
-          targets = rowsById.get(search) || [];
-      }
-
-      const val = targets.reduce((acc, t) => {
-          const calculated = calculatedRows.get(t.id);
-          return acc.plus(new Decimal(calculated?.total || 0));
-      }, new Decimal(0));
-      return val.toNumber();
-  };
-
-  parser.functions.vh = (arg: any) => {
-      const search = String(arg);
-      let targets = rowsByClass.get(search);
-      if (!targets || targets.length === 0) {
-          targets = rowsById.get(search) || [];
-      }
-      const val = targets.reduce((acc, t) => {
-          const calculated = calculatedRows.get(t.id);
-          return acc.plus(new Decimal(calculated?.calculated_vh || t.valor_historico || 0));
-      }, new Decimal(0));
-      return val.toNumber();
-  };
-
-  parser.functions.pct = (value: number, percentage: number) => {
-      return new Decimal(value || 0).times(new Decimal(percentage || 0).div(100)).toNumber();
-  };
-
-  parser.functions.round2 = (value: number) => {
-      return new Decimal(value || 0).toDecimalPlaces(2, Decimal.ROUND_HALF_UP).toNumber();
-  };
-
-  parser.functions.sum = (...args: any[]) => {
-      let flatArgs: any[] = [];
-      args.forEach(arg => {
-          if (Array.isArray(arg)) flatArgs = flatArgs.concat(arg);
-          else flatArgs.push(arg);
-      });
-      return flatArgs.reduce((a, b) => a.plus(new Decimal(b || 0)), new Decimal(0)).toNumber();
-  };
-
-  parser.functions.average = (...args: any[]) => {
-      let flatArgs: any[] = [];
-      args.forEach(arg => {
-          if (Array.isArray(arg)) flatArgs = flatArgs.concat(arg);
-          else flatArgs.push(arg);
-      });
-      if (flatArgs.length === 0) return 0;
-      const sum = flatArgs.reduce((a, b) => a.plus(new Decimal(b || 0)), new Decimal(0));
-      return sum.div(flatArgs.length).toNumber();
-  };
+  }, { override: true });
 
   const computeRowTotal = (
     row: CostRow,
@@ -580,7 +570,6 @@ export function calculateFicha(
               : formulaToUse;
 
             const formulaStr = translateFormulaFromSpanish(formulaStrRaw || '0');
-            const expr = parser.parse(formulaStr);
 
             if (base?.type === 'ANEXO') {
                  const anexo = annexSumMap.get(base.anexoId);
@@ -623,7 +612,7 @@ export function calculateFicha(
                 context[`Anexo${id}`] = valueToUse;
             });
 
-            const result = expr.evaluate(context);
+            const result = mathEngine.evaluate(formulaStr, context);
             total = new Decimal(result);
             note += `Evaluated: ${formulaToUse}.`;
         } catch (e: any) {
@@ -655,7 +644,6 @@ export function calculateFicha(
               ? row.vh_formula.trim().substring(1)
               : row.vh_formula;
             const vhFormulaStr = translateFormulaFromSpanish(vhFormulaStrRaw);
-            const vhExpr = parser.parse(vhFormulaStr);
 
             const vhContext: any = {
                 VH: row.valor_historico || 0,
@@ -679,7 +667,7 @@ export function calculateFicha(
                 vhContext[`Anexo${id}`] = classSum !== undefined ? classSum.toNumber() : 0;
             });
 
-            const vhResult = new Decimal(vhExpr.evaluate(vhContext)).toDecimalPlaces(decimals).toNumber();
+            const vhResult = new Decimal(mathEngine.evaluate(vhFormulaStr, vhContext)).toDecimalPlaces(decimals).toNumber();
             if (vhResult !== current.calculated_vh) {
                 current.calculated_vh = vhResult;
                 converged = false;
@@ -747,7 +735,6 @@ export function calculateFicha(
     if (typeof value === 'string' && value.startsWith('=')) {
         try {
             const formulaStr = translateFormulaFromSpanish(value.substring(1));
-            const expr = parser.parse(formulaStr);
             const context: any = {
                 QUANTITY: ficha.meta.quantity || 0,
                 cantidad: ficha.meta.quantity || 0,
@@ -765,7 +752,7 @@ export function calculateFicha(
                 // but we can still provide GET_ANEXO_DATO
             });
 
-            evaluatedHeader[key] = expr.evaluate(context);
+            evaluatedHeader[key] = mathEngine.evaluate(formulaStr, context);
         } catch (e) {
             console.error(`Error evaluating header formula for ${key}:`, e);
             // Keep original formula string if it fails
