@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingCart, X, Trash2, Minus, Plus, DollarSign, CreditCard, Check, AlertTriangle } from 'lucide-react';
+import { ShoppingCart, X, Trash2, Minus, Plus, DollarSign, CreditCard, Check, AlertTriangle, ChevronDown, Percent } from 'lucide-react';
 import { CostProLoader } from '@/components/ui/CostProLoader';
 import { cn, formatCurrency } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -52,6 +52,7 @@ export const POSCart = ({
   const { data: taxes = [] } = useTaxes(user?.activeStoreId);
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>('cash');
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [showDiscount, setShowDiscount] = useState(false);
   const isMobile = useIsMobile();
 
   const Container = isMobile ? 'div' : motion.div;
@@ -86,12 +87,13 @@ export const POSCart = ({
           <button
             onClick={onClose}
             className="p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-colors active:scale-90"
+            aria-label="Cerrar carrito"
           >
             <X className="w-6 h-6" />
           </button>
         </div>
 
-        <div className={cn("flex-1 flex flex-col overflow-hidden -mt-4 rounded-t-3xl bg-card relative z-10")}>
+        <div className={cn("flex-1 flex flex-col overflow-hidden -mt-6 rounded-t-3xl bg-card relative z-10")}>
           {items.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center p-6 text-muted-foreground">
               <ShoppingCart className="w-20 h-20 mx-auto mb-6 opacity-5" />
@@ -135,13 +137,15 @@ export const POSCart = ({
                               <button
                                 onClick={() => onUpdateQuantity(item.product_id, item.variant_id, item.quantity - 1)}
                                 className="w-12 h-12 flex items-center justify-center rounded-lg hover:bg-primary/10 hover:text-primary transition-all active:scale-90"
+                                aria-label="Disminuir cantidad"
                               >
                                 <Minus className="w-5 h-5" />
                               </button>
-                              <span className="w-10 text-center font-black text-sm">{item.quantity}</span>
+                              <span className="w-10 text-center font-black text-sm" aria-label={`Cantidad: ${item.quantity}`}>{item.quantity}</span>
                               <button
                                 onClick={() => onUpdateQuantity(item.product_id, item.variant_id, item.quantity + 1)}
                                 className="w-12 h-12 flex items-center justify-center rounded-lg hover:bg-primary/10 hover:text-primary transition-all active:scale-90"
+                                aria-label="Aumentar cantidad"
                               >
                                 <Plus className="w-5 h-5" />
                               </button>
@@ -161,68 +165,100 @@ export const POSCart = ({
               </div>
 
               <div className={cn(
-                "p-6 space-y-6 border-t border-border bg-card",
-                isMobile && "pb-10 shadow-[0_-20px_40px_rgba(0,0,0,0.05)] rounded-t-3xl"
+                "p-4 space-y-4 border-t border-border bg-card",
+                isMobile && "pb-8 shadow-[0_-20px_40px_rgba(0,0,0,0.05)] rounded-t-3xl"
               )}>
-                {/* Descuento Section */}
-                <div className="px-2 space-y-3">
-                  <div className="flex justify-between items-center">
-                    <label className="text-[9px] font-black uppercase text-muted-foreground tracking-widest block">Descuento</label>
-                    <div className="flex gap-1 bg-muted p-0.5 rounded-lg border border-border">
-                      <button
-                        onClick={() => setDiscount({ type: 'percentage', value: discount?.value || 0 })}
-                        className={cn(
-                          "px-2 py-0.5 rounded-md text-[9px] font-black uppercase transition-all",
-                          discount?.type === 'percentage' ? "bg-primary text-white" : "text-muted-foreground"
-                        )}
-                      >
-                        %
-                      </button>
-                      <button
-                        onClick={() => setDiscount({ type: 'fixed', value: discount?.value || 0 })}
-                        className={cn(
-                          "px-2 py-0.5 rounded-md text-[9px] font-black uppercase transition-all",
-                          discount?.type === 'fixed' ? "bg-primary text-white" : "text-muted-foreground"
-                        )}
-                      >
-                        $
-                      </button>
+                {/* Descuento Section Collapsible */}
+                <div className="px-2">
+                  <button
+                    onClick={() => setShowDiscount(!showDiscount)}
+                    className="w-full flex justify-between items-center py-2 group"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className={cn(
+                        "p-1.5 rounded-lg transition-colors",
+                        (discount?.value || 0) > 0 ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                      )}>
+                        <Percent className="w-3.5 h-3.5" />
+                      </div>
+                      <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">
+                        {(discount?.value || 0) > 0 ? `Descuento: ${discount?.type === 'percentage' ? `${discount.value}%` : formatCurrency(discount?.value || 0)}` : 'Aplicar Descuento'}
+                      </span>
                     </div>
-                  </div>
+                    <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform duration-300", showDiscount && "rotate-180")} />
+                  </button>
 
-                  <div className="flex gap-2">
-                    {[0, 5, 10, 15].map(d => (
-                      <button
-                        key={d}
-                        onClick={() => {
-                          setDiscount({ type: discount?.type || 'percentage', value: d });
-                        }}
-                        className={cn(
-                          "flex-1 py-3 min-h-[44px] rounded-lg border font-black text-[10px] uppercase transition-all flex items-center justify-center",
-                          discount?.value === d && discount?.type === 'percentage' ? "bg-primary text-white border-primary" : "bg-background text-muted-foreground border-border"
-                        )}
+                  <AnimatePresence>
+                    {showDiscount && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden"
                       >
-                        {d === 0 ? 'Sin' : `${d}%`}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-black text-xs">
-                      {discount?.type === 'percentage' ? '%' : '$'}
-                    </span>
-                    <input
-                      type="number"
-                      min="0"
-                      value={discount?.value || ''}
-                      onChange={(e) => setDiscount({ type: discount?.type || 'percentage', value: parseFloat(e.target.value) || 0 })}
-                      className="w-full pl-8 p-2 rounded-lg border border-border bg-background text-sm font-bold focus:ring-1 focus:ring-primary outline-none"
-                      placeholder="0"
-                    />
-                  </div>
+                        <div className="py-3 space-y-3">
+                          <div className="flex justify-end">
+                            <div className="flex gap-1 bg-muted p-0.5 rounded-lg border border-border">
+                              <button
+                                onClick={() => setDiscount({ type: 'percentage', value: discount?.value || 0 })}
+                                className={cn(
+                                  "px-2 py-0.5 rounded-md text-[9px] font-black uppercase transition-all",
+                                  discount?.type === 'percentage' ? "bg-primary text-white" : "text-muted-foreground"
+                                )}
+                                aria-label="Descuento por porcentaje"
+                              >
+                                %
+                              </button>
+                              <button
+                                onClick={() => setDiscount({ type: 'fixed', value: discount?.value || 0 })}
+                                className={cn(
+                                  "px-2 py-0.5 rounded-md text-[9px] font-black uppercase transition-all",
+                                  discount?.type === 'fixed' ? "bg-primary text-white" : "text-muted-foreground"
+                                )}
+                                aria-label="Descuento por monto fijo"
+                              >
+                                $
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="flex gap-2">
+                            {[0, 5, 10, 15].map(d => (
+                              <button
+                                key={d}
+                                onClick={() => {
+                                  setDiscount({ type: discount?.type || 'percentage', value: d });
+                                }}
+                                className={cn(
+                                  "flex-1 py-3 min-h-[44px] rounded-lg border font-black text-[10px] uppercase transition-all flex items-center justify-center",
+                                  discount?.value === d && discount?.type === 'percentage' ? "bg-primary text-white border-primary" : "bg-background text-muted-foreground border-border"
+                                )}
+                              >
+                                {d === 0 ? 'Sin' : `${d}%`}
+                              </button>
+                            ))}
+                          </div>
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-black text-xs">
+                              {discount?.type === 'percentage' ? '%' : '$'}
+                            </span>
+                            <input
+                              type="number"
+                              min="0"
+                              value={discount?.value || ''}
+                              onChange={(e) => setDiscount({ type: discount?.type || 'percentage', value: parseFloat(e.target.value) || 0 })}
+                              className="w-full pl-8 p-2 rounded-lg border border-border bg-background text-sm font-bold focus:ring-1 focus:ring-primary outline-none"
+                              placeholder="0"
+                            />
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 {/* Resumen de Totales */}
-                <div className="px-4 py-6 bg-muted/30 rounded-2xl border border-border/50 space-y-3">
+                <div className="px-4 py-4 bg-muted/30 rounded-2xl border border-border/50 space-y-2">
                   <div className="flex justify-between items-center text-[10px] font-black uppercase text-muted-foreground tracking-widest">
                     <span>Subtotal</span>
                     <span className="text-foreground">{formatCurrency(getSubtotal())}</span>
@@ -235,41 +271,41 @@ export const POSCart = ({
                     </div>
                   )}
 
-                  <div className="flex justify-between items-center pt-4 border-t-2 border-primary/20">
-                    <span className="text-xs font-black uppercase text-foreground tracking-widest">Total Final</span>
-                    <span className="text-4xl font-black text-primary tracking-tighter">
+                  <div className="flex justify-between items-center pt-3 border-t-2 border-primary/20">
+                    <span className="text-[10px] font-black uppercase text-foreground tracking-widest">Total Final</span>
+                    <span className="text-3xl font-black text-primary tracking-tighter leading-none">
                       {formatCurrency(Math.max(0, getSubtotal() - getDiscountAmount()))}
                     </span>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                    <button
                     onClick={() => setSelectedPayment('cash')}
                     className={cn(
-                      "p-4 rounded-xl flex flex-col items-center gap-2 border-2 transition-all bg-background",
+                      "p-3 rounded-xl flex flex-col items-center gap-1 border-2 transition-all bg-background",
                       selectedPayment === 'cash' ? "border-primary shadow-lg shadow-primary/10" : "border-transparent"
                     )}
                    >
-                     <DollarSign className={cn("w-6 h-6", selectedPayment === 'cash' ? "text-primary" : "text-muted-foreground")} />
-                     <span className="text-[10px] font-black uppercase tracking-widest text-foreground">Efectivo</span>
+                     <DollarSign className={cn("w-5 h-5", selectedPayment === 'cash' ? "text-primary" : "text-muted-foreground")} />
+                     <span className="text-[9px] font-black uppercase tracking-widest text-foreground">Efectivo</span>
                    </button>
                    <button
                     onClick={() => setSelectedPayment('transfer')}
                     className={cn(
-                      "p-4 rounded-xl flex flex-col items-center gap-2 border-2 transition-all bg-background",
+                      "p-3 rounded-xl flex flex-col items-center gap-1 border-2 transition-all bg-background",
                       selectedPayment === 'transfer' ? "border-primary shadow-lg shadow-primary/10" : "border-transparent"
                     )}
                    >
-                     <CreditCard className={cn("w-6 h-6", selectedPayment === 'transfer' ? "text-primary" : "text-muted-foreground")} />
-                     <span className="text-[10px] font-black uppercase tracking-widest text-foreground">Transf.</span>
+                     <CreditCard className={cn("w-5 h-5", selectedPayment === 'transfer' ? "text-primary" : "text-muted-foreground")} />
+                     <span className="text-[9px] font-black uppercase tracking-widest text-foreground">Transf.</span>
                    </button>
                 </div>
 
                 <button
                   onClick={() => onCheckout(selectedPayment, (discount && discount.value > 0) ? discount : null)}
                   disabled={isProcessing || items.length === 0}
-                  className="w-full py-5 rounded-xl bg-primary text-white font-black text-lg shadow-2xl disabled:opacity-50 flex items-center justify-center gap-3 transition-transform active:scale-[0.98]"
+                  className="w-full py-4 rounded-xl bg-primary text-white font-black text-lg shadow-2xl disabled:opacity-50 flex items-center justify-center gap-3 transition-transform active:scale-[0.98]"
                 >
                   {isProcessing ? (
                     <CostProLoader size={24} showText={false} showSubtext={false} />

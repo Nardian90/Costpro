@@ -17,6 +17,8 @@ import { useIsMobile } from '@/hooks/ui/useMobile';
 import {
   Drawer,
   DrawerContent,
+  DrawerTitle,
+  DrawerDescription,
 } from '@/components/ui/drawer';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { PrimaryButton, SecondaryButton } from '@/components/ui/atomic';
@@ -155,7 +157,11 @@ export default function POSView() {
 
         {isMobile && (
           <Drawer open={showCart} onOpenChange={setShowCart}>
-            <DrawerContent className="p-0 border-none bg-transparent max-h-[92vh]">
+            <DrawerContent className="p-0 border-none bg-transparent max-h-[85vh]">
+              <div className="sr-only">
+                <DrawerTitle>Caja Registradora</DrawerTitle>
+                <DrawerDescription>Listado de productos en el carrito y resumen de pago</DrawerDescription>
+              </div>
               <POSCart
                 items={items}
                 onRemoveItem={removeItem}
