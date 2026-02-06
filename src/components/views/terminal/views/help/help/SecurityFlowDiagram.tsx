@@ -14,10 +14,10 @@ export default function SecurityFlowDiagram() {
   };
 
   return (
-    <div className="w-full aspect-video bg-muted/30 rounded-3xl border border-primary/10 flex items-center justify-center p-4">
+    <div className="w-full aspect-video bg-muted/30 rounded-3xl border border-primary/10 flex items-center justify-center p-4 overflow-hidden">
       <motion.svg
-        viewBox="0 0 800 400"
-        className="w-full h-full max-w-3xl"
+        viewBox="0 0 800 420"
+        className="w-full h-full max-w-3xl overflow-visible"
         variants={container}
         initial="hidden"
         animate="show"
