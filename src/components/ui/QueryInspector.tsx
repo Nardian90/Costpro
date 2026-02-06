@@ -3,8 +3,6 @@
 
 import React, { useState } from 'react';
 import { useUIStore, useAuthStore } from '@/store';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Search, ChevronDown, ChevronUp, Code, Copy, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -64,22 +62,11 @@ export const QueryInspector: React.FC = () => {
                 {copied ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
               </button>
             </div>
-            <div className="p-1 bg-[#1e1e1e]">
+            <div className="p-4 bg-[#1e1e1e] overflow-x-auto">
               {lastQuery ? (
-                <SyntaxHighlighter
-                  language="sql"
-                  style={vscDarkPlus}
-                  customStyle={{
-                    margin: 0,
-                    padding: '1rem',
-                    fontSize: '0.8rem',
-                    backgroundColor: 'transparent',
-                  }}
-                  wrapLines={true}
-                  wrapLongLines={true}
-                >
-                  {lastQuery}
-                </SyntaxHighlighter>
+                <pre className="text-[0.8rem] font-mono text-emerald-400 whitespace-pre-wrap break-all">
+                  <code>{lastQuery}</code>
+                </pre>
               ) : (
                 <div className="p-8 text-center">
                   <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest italic">
