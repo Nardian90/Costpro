@@ -6,6 +6,7 @@ import { motion, Variants } from 'framer-motion';
 interface CostProLogoProps {
   size?: number;
   animated?: boolean;
+  className?: string;
 }
 
 /**
@@ -13,7 +14,7 @@ interface CostProLogoProps {
  * Un isotipo minimalista basado en una "C" perfecta e invertida.
  * Enfocado en la pureza geométrica y un diseño de vanguardia.
  */
-const CostProLogo: React.FC<CostProLogoProps> = ({ size = 120, animated = true }) => {
+const CostProLogo: React.FC<CostProLogoProps> = ({ size = 120, animated = true, className = "" }) => {
   // Animación de dibujo de la C invertida
   const pathVariants: Variants = {
     hidden: { pathLength: 0, opacity: 0 },
@@ -29,7 +30,7 @@ const CostProLogo: React.FC<CostProLogoProps> = ({ size = 120, animated = true }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center gap-6" translate="no">
+    <div className={`flex flex-col items-center justify-center gap-6 ${className}`} translate="no">
       <div className="relative" style={{ width: size, height: size }}>
         {/* Resplandor sutil (Glow) de fondo para profundidad */}
         <div className="absolute inset-0 bg-green-500/10 dark:bg-green-400/10 blur-[40px] rounded-full" />
