@@ -4,9 +4,11 @@ import { motion } from 'framer-motion';
 import {
   ArrowRight, CheckCircle2, ShoppingCart, Package,
   Shield, TrendingUp, BarChart3, FileText,
-  Check, Play, MousePointer2, ExternalLink
+  Check, Play, MousePointer2, ExternalLink,
+  Store, Utensils, Factory, Briefcase, Zap
 } from 'lucide-react';
 import CostProLogo from '@/components/CostProLogo';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import AutomationWorkflowDiagram from './diagrams/AutomationWorkflowDiagram';
 import SpeedScaleDiagram from './diagrams/SpeedScaleDiagram';
 
@@ -49,12 +51,17 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       {/* Header / Nav */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/50">
+      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-[10px] border-b border-border/50">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <CostProLogo size={40} animated={false} />
+          <div className="flex items-center gap-8">
+            <CostProLogo size={40} animated={false} />
+            <div className="hidden md:block">
+              <ThemeToggle />
+            </div>
+          </div>
           <button
             onClick={onLoginClick}
-            className="neu-btn neu-btn-primary px-8 py-2.5 text-xs font-black uppercase tracking-widest flex items-center gap-2 group"
+            className="neu-btn neu-btn-primary px-8 py-2.5 text-xs font-black uppercase tracking-widest flex items-center gap-2 group shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:shadow-[0_0_30px_rgba(16,185,129,0.4)] transition-all"
           >
             Acceso al Sistema
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -79,7 +86,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
             </div>
 
             <h1 className="text-5xl lg:text-7xl font-black tracking-tighter leading-[0.9] uppercase text-foreground">
-              Control <span className="text-primary italic">Total</span> <br />
+              Control <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-lime-400 italic">Total</span> <br />
               de su Negocio.
             </h1>
 
@@ -90,11 +97,11 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <button
                 onClick={onLoginClick}
-                className="neu-btn neu-btn-primary h-14 px-10 text-sm font-black uppercase tracking-widest"
+                className="neu-btn neu-btn-primary h-14 px-10 text-sm font-black uppercase tracking-widest shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:shadow-[0_0_40px_rgba(16,185,129,0.35)] transition-all"
               >
                 Comenzar Ahora
               </button>
-              <button className="neu-btn bg-muted/50 h-14 px-10 text-sm font-black uppercase tracking-widest hover:bg-muted transition-colors">
+              <button className="h-14 px-10 text-sm font-black uppercase tracking-widest border border-border rounded-xl hover:bg-muted/50 transition-colors">
                 Ver Demo Online
               </button>
             </div>
@@ -126,7 +133,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
               <motion.div
                 animate={{ y: [0, -10, 0] }}
                 transition={{ duration: 4, repeat: Infinity }}
-                className="absolute top-10 right-10 p-6 rounded-3xl bg-background/90 backdrop-blur-xl border border-border shadow-2xl space-y-4 w-64"
+                className="absolute top-10 right-10 p-6 rounded-3xl bg-background/80 backdrop-blur-2xl border border-border/50 shadow-[0_20px_50px_rgba(0,0,0,0.1)] space-y-4 w-64 z-10"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Ventas Hoy</span>
@@ -145,7 +152,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
               <motion.div
                 animate={{ y: [0, 10, 0] }}
                 transition={{ duration: 5, repeat: Infinity }}
-                className="absolute bottom-10 left-10 p-6 rounded-3xl bg-primary text-white shadow-2xl space-y-4 w-64"
+                className="absolute bottom-10 left-10 p-6 rounded-3xl bg-primary text-white shadow-[0_20px_50px_rgba(16,185,129,0.3)] space-y-4 w-64 z-10"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-black uppercase tracking-widest opacity-70">Stock Crítico</span>
@@ -154,14 +161,53 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
                 <div className="text-3xl font-black tracking-tight">12 Items</div>
                 <p className="text-[10px] font-bold opacity-80 uppercase leading-tight">Acción inmediata requerida en sucursal Norte.</p>
               </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 1 }}
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-6 rounded-3xl bg-background/40 backdrop-blur-xl border border-white/10 shadow-2xl w-48 text-center space-y-2"
+              >
+                <div className="w-10 h-10 rounded-full bg-violet-500/20 flex items-center justify-center mx-auto text-violet-500">
+                  <Zap className="w-5 h-5" />
+                </div>
+                <div className="text-xs font-black uppercase tracking-widest">Inteligencia AI</div>
+                <div className="text-[10px] text-muted-foreground font-medium">Jules analizando tendencias...</div>
+              </motion.div>
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Modules Grid */}
-      <section className="py-24 bg-muted/30">
-        <div className="max-w-7xl mx-auto px-6">
+      {/* Sectors Trust Signals */}
+      <section className="py-12 border-y border-border/50 bg-muted/10">
+        <div className="max-w-7xl mx-auto px-6 flex flex-wrap justify-center md:justify-between items-center gap-8 md:gap-4 opacity-50 grayscale">
+          <div className="flex items-center gap-3">
+            <Utensils className="w-5 h-5" />
+            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Restauración</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <Store className="w-5 h-5" />
+            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Retail & Comercio</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <Factory className="w-5 h-5" />
+            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Manufactura</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <Briefcase className="w-5 h-5" />
+            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Servicios Prof.</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <TrendingUp className="w-5 h-5" />
+            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Franquicias</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Modules Grid - Bento Layout */}
+      <section className="py-24 px-6">
+        <div className="max-w-7xl mx-auto">
           <div className="text-center space-y-4 mb-20">
             <h2 className="text-4xl font-black uppercase tracking-tighter">Ecosistema Integrado</h2>
             <p className="text-muted-foreground font-medium max-w-2xl mx-auto leading-relaxed">
@@ -169,25 +215,82 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {modules.map((m, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-                viewport={{ once: true }}
-                className="p-8 rounded-3xl bg-background border border-border hover:border-primary/20 hover:shadow-xl transition-all group"
-              >
-                <div className={`w-12 h-12 rounded-2xl ${m.bg} ${m.color} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
-                  {m.icon}
+          <div className="grid md:grid-cols-6 md:grid-rows-2 gap-4 h-full lg:h-[600px]">
+            {/* Main Feature - Bento 1 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="md:col-span-3 md:row-span-2 p-10 rounded-[2.5rem] bg-background border border-border hover:border-primary/20 transition-all group flex flex-col justify-between"
+            >
+              <div>
+                <div className="w-14 h-14 rounded-2xl bg-violet-500/10 text-violet-600 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
+                  <FileText className="w-7 h-7" />
                 </div>
-                <h3 className="text-lg font-black uppercase tracking-tight mb-2">{m.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed font-medium">
-                  {m.desc}
+                <h3 className="text-3xl font-black uppercase tracking-tight mb-4">Gestión de Costos</h3>
+                <p className="text-lg text-muted-foreground leading-relaxed font-medium mb-8">
+                  Motor de ingeniería con 14 secciones de gasto, 5 anexos técnicos y validación de ciclos en tiempo real.
                 </p>
-              </motion.div>
-            ))}
+              </div>
+              <div className="aspect-video rounded-2xl bg-muted/50 border border-border/50 overflow-hidden relative p-4">
+                <div className="absolute inset-0 bg-gradient-to-tr from-violet-500/5 to-transparent" />
+                <div className="space-y-2 relative z-10">
+                  <div className="h-4 w-3/4 bg-violet-500/20 rounded-full animate-pulse" />
+                  <div className="h-4 w-1/2 bg-violet-500/10 rounded-full animate-pulse delay-75" />
+                  <div className="h-4 w-2/3 bg-violet-500/10 rounded-full animate-pulse delay-150" />
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Bento 2 - POS */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className="md:col-span-3 md:row-span-1 p-8 rounded-[2.5rem] bg-background border border-border hover:border-primary/20 transition-all group flex gap-8 items-center"
+            >
+              <div className="shrink-0 w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center group-hover:rotate-12 transition-transform">
+                <ShoppingCart className="w-8 h-8" />
+              </div>
+              <div>
+                <h3 className="text-xl font-black uppercase tracking-tight mb-2">Punto de Venta</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed font-medium">
+                  TPV móvil optimizado para operaciones de alta velocidad con sincronización offline.
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Bento 3 - Inventory */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              className="md:col-span-3 md:row-span-1 lg:col-span-2 p-8 rounded-[2.5rem] bg-background border border-border hover:border-primary/20 transition-all group"
+            >
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center mb-4 group-hover:-translate-y-1 transition-transform">
+                <Package className="w-6 h-6" />
+              </div>
+              <h3 className="text-lg font-black uppercase tracking-tight mb-2">Inventario Multi-Sede</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed font-medium">
+                Control total de stock con aislamiento RLS.
+              </p>
+            </motion.div>
+
+             {/* Bento 4 - AI */}
+             <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 }}
+              className="md:col-span-3 md:row-span-1 lg:col-span-1 p-8 rounded-[2.5rem] bg-foreground text-background transition-all group flex items-center justify-center"
+            >
+              <div className="text-center">
+                <Zap className="w-8 h-8 mx-auto mb-2 text-primary animate-pulse" />
+                <div className="text-[10px] font-black uppercase tracking-widest">Jules AI</div>
+              </div>
+            </motion.div>
           </div>
         </div>
       </section>

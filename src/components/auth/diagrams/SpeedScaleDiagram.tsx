@@ -2,87 +2,91 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Timer, Zap, ArrowUpRight } from 'lucide-react';
+import { Timer, Zap, ArrowUpRight, TrendingUp } from 'lucide-react';
 
 export default function SpeedScaleDiagram() {
   return (
-    <div className="relative w-full aspect-[16/9] bg-violet-600/5 rounded-3xl border border-violet-500/10 overflow-hidden flex flex-col items-center justify-center p-8">
+    <div className="relative w-full aspect-[16/9] bg-gradient-to-br from-violet-600/5 to-primary/5 rounded-[3rem] border border-border/50 overflow-hidden flex flex-col items-center justify-center p-8 shadow-2xl">
       <div className="relative z-10 w-full max-w-md space-y-8">
 
         {/* Speed Header */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-violet-600 flex items-center justify-center text-white">
-              <Timer className="w-5 h-5" />
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-violet-600 flex items-center justify-center text-white shadow-lg shadow-violet-500/20">
+              <Timer className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-tighter text-violet-600/60">Tiempo de Procesamiento</p>
-              <p className="text-xl font-black text-violet-900 tracking-tighter">&lt; 5 MINUTOS</p>
+              <p className="text-[10px] font-black uppercase tracking-tighter text-muted-foreground">Tiempo de Procesamiento</p>
+              <p className="text-2xl font-black text-foreground tracking-tighter">
+                &lt; 5 <span className="text-violet-600 italic">MINUTOS</span>
+              </p>
             </div>
           </div>
           <motion.div
-            animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
+            animate={{ scale: [1, 1.05, 1], boxShadow: ['0 0 0px rgba(16,185,129,0)', '0 0 20px rgba(16,185,129,0.3)', '0 0 0px rgba(16,185,129,0)'] }}
             transition={{ duration: 2, repeat: Infinity }}
-            className="flex items-center gap-1 bg-emerald-500 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest"
+            className="flex items-center gap-1 bg-emerald-500 text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-emerald-500/20"
           >
             <Zap className="w-3 h-3" />
-            95% Más Rápido
+            95% Ahorro
           </motion.div>
         </div>
 
         {/* Scale Progress */}
-        <div className="space-y-4">
+        <div className="p-6 rounded-3xl bg-background/40 backdrop-blur-xl border border-white/10 shadow-xl space-y-6">
           <div className="flex justify-between items-end">
-            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Fichas de Costo Generadas</span>
-            <span className="text-3xl font-black text-primary tabular-nums">
-              <CountUp end={100} duration={3} />
-            </span>
+            <div className="space-y-1">
+               <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Capacidad Operativa</span>
+               <div className="flex items-center gap-2 text-primary">
+                 <TrendingUp className="w-4 h-4" />
+                 <span className="text-xs font-bold uppercase tracking-widest">Escala MiPyME</span>
+               </div>
+            </div>
+            <div className="text-right">
+              <span className="text-4xl font-black text-foreground tabular-nums tracking-tighter">
+                <CountUp end={100} duration={3} />
+              </span>
+              <span className="text-[10px] font-black text-muted-foreground block uppercase tracking-widest">Fichas / Lote</span>
+            </div>
           </div>
 
-          <div className="h-4 w-full bg-primary/10 rounded-full overflow-hidden border border-primary/5 p-1">
+          <div className="h-3 w-full bg-muted rounded-full overflow-hidden p-0.5 border border-border/50">
             <motion.div
               initial={{ width: "0%" }}
               animate={{ width: "100%" }}
               transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              className="h-full bg-primary rounded-full relative"
+              className="h-full bg-gradient-to-r from-violet-500 to-primary rounded-full relative shadow-[0_0_15px_rgba(16,185,129,0.5)]"
             >
-              <motion.div
-                animate={{ x: [0, 10, 0], opacity: [0.5, 1, 0.5] }}
-                transition={{ duration: 1, repeat: Infinity }}
-                className="absolute right-0 top-0 bottom-0 w-8 bg-white/30 blur-sm"
-              />
+              <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.2)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.2)_50%,rgba(255,255,255,0.2)_75%,transparent_75%,transparent)] bg-[length:20px_20px] animate-[shimmer_2s_linear_infinite]" />
             </motion.div>
           </div>
         </div>
 
-        {/* Benefits Grid */}
-        <div className="grid grid-cols-2 gap-4">
-          {[
-            { label: "Carga Masiva", val: "Excel Sync" },
-            { label: "Validación", val: "Automática" }
-          ].map((item, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.2 }}
-              className="p-3 rounded-2xl bg-white/50 border border-violet-100 backdrop-blur-sm"
-            >
-              <p className="text-[8px] font-black uppercase tracking-widest text-violet-400">{item.label}</p>
-              <p className="text-xs font-bold text-violet-900 flex items-center justify-between">
-                {item.val}
-                <ArrowUpRight className="w-3 h-3" />
-              </p>
-            </motion.div>
-          ))}
+        {/* Dynamic Badges */}
+        <div className="flex gap-4 justify-center">
+            <div className="px-4 py-2 rounded-xl bg-violet-500/5 border border-violet-500/10 flex items-center gap-2">
+              <ArrowUpRight className="w-3 h-3 text-violet-500" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-violet-600/70">Carga Masiva</span>
+            </div>
+            <div className="px-4 py-2 rounded-xl bg-emerald-500/5 border border-emerald-500/10 flex items-center gap-2">
+              <ArrowUpRight className="w-3 h-3 text-emerald-500" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600/70">Validación AI</span>
+            </div>
         </div>
       </div>
 
+      <style jsx>{`
+        @keyframes shimmer {
+          from { background-position: 0 0; }
+          to { background-position: 40px 0; }
+        }
+      `}</style>
+
       {/* Background pulses */}
       <motion.div
-        animate={{ scale: [1, 1.5], opacity: [0.1, 0] }}
-        transition={{ duration: 4, repeat: Infinity }}
-        className="absolute inset-0 bg-violet-500 rounded-full blur-[100px] pointer-events-none"
+        animate={{ scale: [1, 1.2], opacity: [0.05, 0] }}
+        transition={{ duration: 5, repeat: Infinity }}
+        className="absolute -top-20 -right-20 w-64 h-64 bg-primary rounded-full blur-[100px] pointer-events-none"
       />
     </div>
   );
@@ -103,11 +107,11 @@ function CountUp({ end, duration }: { end: number, duration: number }) {
       if (progress < 1) {
         request = window.requestAnimationFrame(step);
       } else {
-        // Reset after 1 second for looping
+        // Reset after 2 seconds for looping
         setTimeout(() => {
           startTimestamp = null;
           request = window.requestAnimationFrame(step);
-        }, 1000);
+        }, 2000);
       }
     };
 
