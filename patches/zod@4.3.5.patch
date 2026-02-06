@@ -1,0 +1,48 @@
+diff --git a/v4/core/util.cjs b/v4/core/util.cjs
+index c6bc2a7c6af354944eebd0821c629783c788781d..54abead1e809290c886b61b7323fd76b15b996e5 100644
+--- a/v4/core/util.cjs
++++ b/v4/core/util.cjs
+@@ -205,18 +205,7 @@ function isObject(data) {
+     return typeof data === "object" && data !== null && !Array.isArray(data);
+ }
+ exports.allowsEval = cached(() => {
+-    // @ts-ignore
+-    if (typeof navigator !== "undefined" && navigator?.userAgent?.includes("Cloudflare")) {
+-        return false;
+-    }
+-    try {
+-        const F = Function;
+-        new F("");
+-        return true;
+-    }
+-    catch (_) {
+-        return false;
+-    }
++    return false;
+ });
+ function isPlainObject(o) {
+     if (isObject(o) === false)
+diff --git a/v4/core/util.js b/v4/core/util.js
+index 3fc99ca9de705ba563a3221f0032f1372b8f8a53..4e8d88a54cdd380f109edcedba45efabb0ae1fb3 100644
+--- a/v4/core/util.js
++++ b/v4/core/util.js
+@@ -148,18 +148,7 @@ export function isObject(data) {
+     return typeof data === "object" && data !== null && !Array.isArray(data);
+ }
+ export const allowsEval = cached(() => {
+-    // @ts-ignore
+-    if (typeof navigator !== "undefined" && navigator?.userAgent?.includes("Cloudflare")) {
+-        return false;
+-    }
+-    try {
+-        const F = Function;
+-        new F("");
+-        return true;
+-    }
+-    catch (_) {
+-        return false;
+-    }
++    return false;
+ });
+ export function isPlainObject(o) {
+     if (isObject(o) === false)
