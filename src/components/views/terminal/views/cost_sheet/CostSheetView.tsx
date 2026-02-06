@@ -30,7 +30,15 @@ import { exportToPDF, exportToCSV } from '@/services/export-service';
 
 const CostSheetView = () => {
   const { data, loadExample, reset, setSheet } = useCostSheetStore();
-  const { calculatedValues, calculatedAnnexes, audits, calculationResult, isBlocked, deepValidationErrors } = useCostSheetCalculator(data);
+  const {
+    calculatedValues,
+    calculatedHeader,
+    calculatedAnnexes,
+    audits,
+    calculationResult,
+    isBlocked,
+    deepValidationErrors
+  } = useCostSheetCalculator(data);
 
   const [isEditing, setIsEditing] = useState(true);
   const [viewMode, setViewMode] = useState<'expert' | 'assisted' | 'reading'>('expert');
@@ -111,7 +119,6 @@ const CostSheetView = () => {
   const [isActionsPanelOpen, setIsActionsPanelOpen] = useState(false);
   const [isSectionsSidebarOpen, setIsSectionsSidebarOpen] = useState(false);
   const [isAnnexesSidebarOpen, setIsAnnexesSidebarOpen] = useState(false);
-  const [isMassiveGeneratorOpen, setIsMassiveGeneratorOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
   const isAnnexActive = React.useMemo(() => (data?.annexes || []).some((a: any) => a.id === activeSection), [data?.annexes, activeSection]);
@@ -266,7 +273,7 @@ const CostSheetView = () => {
     { id: 'export-json', label: 'Guardar', icon: Save, onClick: handleExportJSON, variant: 'outline' as const, disabled: false },
     { id: 'export-excel', label: 'Excel', icon: FileSpreadsheet, onClick: handleExportExcel, variant: (isBlocked ? 'outline' : 'primary') as any, disabled: false },
     { id: 'export-pdf', label: 'PDF', icon: Download, onClick: () => setIsExportModalOpen(true), variant: (isBlocked ? 'outline' : 'success') as any, disabled: false },
-    { id: 'massive-gen', label: 'Gen. Masiva', icon: FileText, onClick: () => setIsMassiveGeneratorOpen(true), variant: 'outline' as const },
+    { id: 'massive-gen', label: 'Gen. Masiva', icon: FileText, onClick: () => setActiveSection('massive'), variant: 'outline' as const },
   ], [isEditing, loadExample, reset, handleImportJSON, handleExportJSON, handleExportExcel, handleExportPDF, isBlocked]);
 
   const mainActions = React.useMemo(() => [
@@ -286,6 +293,7 @@ const CostSheetView = () => {
     { id: 'header', label: 'Encabezado', icon: Layout },
     { id: 'kpis', label: 'KPIs', icon: BarChart3 },
     { id: 'main', label: 'Ficha Principal', icon: FileSpreadsheet },
+    { id: 'massive', label: 'Gen. Masiva', icon: FileText },
     { id: 'audit', label: 'Auditoría', icon: Activity }
   ], []);
 
@@ -381,10 +389,6 @@ const CostSheetView = () => {
         <ActionMenu actions={mainActions} position="bottom" />
       </div>
 
-      <CostSheetMassiveGenerator
-        isOpen={isMassiveGeneratorOpen}
-        onClose={() => setIsMassiveGeneratorOpen(false)}
-      />
 
       <CostSheetExportModal
         isOpen={isExportModalOpen}
@@ -417,7 +421,7 @@ const CostSheetView = () => {
                     )}
                     {activeSection === 'header' && (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <CostSheetHeaderEditor />
+                            <CostSheetHeaderEditor calculatedHeader={calculatedHeader} />
                         </div>
                     )}
                     {activeSection === 'main' && (
@@ -450,6 +454,14 @@ const CostSheetView = () => {
                         />
                     )}
                     {activeSection === 'signature' && <CostSheetSignatureEditor />}
+                    {activeSection === 'massive' && (
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-[600px]">
+                            <CostSheetMassiveGenerator
+                                isOpen={false}
+                                onClose={() => setActiveSection('kpis')}
+                            />
+                        </div>
+                    )}
                     {activeSection === 'audit' && (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <CostSheetAuditLog audits={audits} />

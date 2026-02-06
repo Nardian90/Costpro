@@ -9,9 +9,13 @@ import { cn } from '@/lib/utils';
 
 interface CostSheetHeaderEditorProps {
     compact?: boolean;
+    calculatedHeader?: any;
 }
 
-const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({ compact = false }) => {
+const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({
+    compact = false,
+    calculatedHeader = null
+}) => {
   const { data, updateValue, updateValues } = useCostSheetStore();
   const header = data?.header;
 
@@ -86,11 +90,11 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({ compact =
                     Nombre del Recurso
                 </label>
             )}
-            <input
+            <HeaderInput
                 id="name"
                 name="name"
-                type="text"
                 value={header?.name || ''}
+                calculatedValue={calculatedHeader?.name}
                 onChange={handleChange}
                 placeholder="Nombre del Recurso"
                 className={cn(
@@ -131,11 +135,12 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({ compact =
               <label htmlFor={item.id} className="text-[9px] font-bold uppercase tracking-widest text-slate-400 block">
                 {item.label}
               </label>
-              <input
+              <HeaderInput
                 id={item.id}
                 name={item.id}
                 type={item.type || 'text'}
                 value={header?.[item.id] || ''}
+                calculatedValue={calculatedHeader?.[item.id]}
                 onChange={handleChange}
                 className="w-full px-2 py-1.5 text-sm font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-md focus:ring-primary focus:border-primary"
               />
@@ -146,6 +151,50 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({ compact =
       </div>
     </div>
   );
+};
+
+interface HeaderInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+    calculatedValue?: any;
+}
+
+const HeaderInput: React.FC<HeaderInputProps> = ({ value, calculatedValue, onFocus, onBlur, ...props }) => {
+    const [isFocused, setIsFocused] = React.useState(false);
+
+    const displayValue = React.useMemo(() => {
+        if (isFocused) return value;
+        if (calculatedValue !== undefined && calculatedValue !== null && String(value).startsWith('=')) {
+            return calculatedValue;
+        }
+        return value;
+    }, [isFocused, value, calculatedValue]);
+
+    const isFormula = String(value).startsWith('=');
+
+    return (
+        <div className="relative group">
+            <input
+                {...props}
+                value={displayValue || ''}
+                onFocus={(e) => {
+                    setIsFocused(true);
+                    onFocus?.(e);
+                }}
+                onBlur={(e) => {
+                    setIsFocused(false);
+                    onBlur?.(e);
+                }}
+                className={cn(
+                    props.className,
+                    isFormula && !isFocused && "text-primary font-bold bg-primary/5"
+                )}
+            />
+            {isFormula && !isFocused && (
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 text-[8px] font-black text-primary/40 uppercase tracking-tighter pointer-events-none">
+                    fx
+                </div>
+            )}
+        </div>
+    );
 };
 
 export default CostSheetHeaderEditor;

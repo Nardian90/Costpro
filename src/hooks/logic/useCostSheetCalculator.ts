@@ -91,6 +91,7 @@ const evaluateAnnexExpression = (expression: string, rowData: any, header: any, 
 export const useCostSheetCalculator = (template: CostSheetData) => {
   const [resultState, setResultState] = useState<{
       calculatedValues: { [key: string]: CalculatedRowValue };
+  calculatedHeader: any | null;
       calculationResult: CalculationResult | null;
       audits: AuditEntry[];
       error: Error | null;
@@ -98,6 +99,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
       deepValidationErrors: any[];
   }>({
       calculatedValues: {},
+  calculatedHeader: null,
       calculationResult: null,
       audits: [],
       error: null,
@@ -281,6 +283,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
           id: a.id,
           name: a.title,
           rows: (a.data || []).filter((d: any) => !!d).map((d: any) => ({
+            ...d,
             // Normalize classification by taking the prefix before ' - ' (e.g. "1.1 - Insumos" -> "1.1")
             classification: String(d.classification || d.label || '').split(' - ')[0].trim(),
             importe: d.total || d.amount || d.depreciation_cost || d.price_total || 0
@@ -323,6 +326,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
 
       setResultState({
           calculatedValues: newCalculatedValues,
+          calculatedHeader: result.metadata?.header || null,
           calculationResult: result,
           audits: result.audits,
           error: null,
@@ -337,6 +341,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
 
   return {
       calculatedValues: resultState.calculatedValues,
+      calculatedHeader: resultState.calculatedHeader,
       calculatedAnnexes,
       annexTotals,
       audits: resultState.audits,
