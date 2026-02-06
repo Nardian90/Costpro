@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { ShoppingCart, X, Trash2, Minus, Plus, DollarSign, CreditCard, Check } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ShoppingCart, X, Trash2, Minus, Plus, DollarSign, CreditCard, Check, AlertTriangle } from 'lucide-react';
 import { CostProLoader } from '@/components/ui/CostProLoader';
 import { cn, formatCurrency } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -10,6 +10,8 @@ import { PaymentMethod, TaxConfiguration } from '@/types';
 import { useIsMobile } from '@/hooks/ui/useMobile';
 import { useTaxes } from '@/hooks/api/useTaxes';
 import { useAuthStore } from '@/store';
+import { BaseModal } from '@/components/ui/BaseModal';
+import { PrimaryButton, SecondaryButton } from '@/components/ui/atomic';
 
 interface POSCartProps {
   items: any[];
@@ -49,6 +51,7 @@ export const POSCart = ({
   const { user } = useAuthStore();
   const { data: taxes = [] } = useTaxes(user?.activeStoreId);
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>('cash');
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
   const isMobile = useIsMobile();
 
   const Container = isMobile ? 'div' : motion.div;
@@ -68,19 +71,27 @@ export const POSCart = ({
     >
       <div className={cn(
         "border border-primary/20 bg-card overflow-hidden",
-        isMobile ? "rounded-t-2xl h-[85vh] flex flex-col" : "rounded-xl shadow-2xl"
+        isMobile ? "rounded-t-3xl h-[88vh] flex flex-col" : "rounded-xl shadow-2xl"
       )}>
-        <div className="bg-primary p-6 flex items-center justify-between text-white">
-          <h3 className="font-black text-lg uppercase tracking-widest flex items-center gap-3">
-            <ShoppingCart className="w-6 h-6" />
-            Caja Registradora
-          </h3>
-          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full">
+        <div className="bg-primary p-6 pb-8 flex items-center justify-between text-white relative">
+          <div className="flex flex-col gap-1">
+            <h3 className="font-black text-lg uppercase tracking-widest flex items-center gap-3">
+              <ShoppingCart className="w-6 h-6" />
+              Caja
+            </h3>
+            <span className="text-[10px] font-bold opacity-70 uppercase tracking-widest">
+              {items.length} {items.length === 1 ? 'Producto' : 'Productos'}
+            </span>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-colors active:scale-90"
+          >
             <X className="w-6 h-6" />
           </button>
         </div>
 
-        <div className={cn("flex-1 flex flex-col overflow-hidden")}>
+        <div className={cn("flex-1 flex flex-col overflow-hidden -mt-4 rounded-t-3xl bg-card relative z-10")}>
           {items.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center p-6 text-muted-foreground">
               <ShoppingCart className="w-20 h-20 mx-auto mb-6 opacity-5" />
@@ -88,53 +99,70 @@ export const POSCart = ({
             </div>
           ) : (
             <>
-              <div className="flex-1 relative overflow-hidden">
-                <div className={cn("h-full overflow-y-auto p-6 no-scrollbar", !isMobile && "max-h-[45vh]")}>
-                  <div className="space-y-4 pr-2 pb-8">
-                    {items.map(item => (
-                    <div key={`${item.product_id}-${item.variant_id}`} className="p-4 rounded-lg border border-border bg-background/50 group relative">
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="flex-1">
-                          <div className="font-black text-sm uppercase tracking-tight truncate pr-6">{item.product.name}</div>
-                          <div className="text-[10px] font-bold text-muted-foreground mt-1">{formatCurrency(item.price)} / unidad</div>
-                        </div>
-                        <button
-                          onClick={() => onRemoveItem(item.product_id, item.variant_id)}
-                          className="absolute top-1 right-1 text-muted-foreground hover:text-destructive p-3 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full hover:bg-destructive/5 transition-all"
-                          aria-label="Eliminar producto"
+              <div className="flex-1 relative overflow-hidden flex flex-col">
+                <div className={cn(
+                  "flex-1 overflow-y-auto p-4 no-scrollbar min-h-0",
+                  !isMobile && "max-h-[45vh]"
+                )}>
+                  <div className="space-y-3 pb-20">
+                    <AnimatePresence initial={false}>
+                      {items.map(item => (
+                        <motion.div
+                          key={`${item.product_id}-${item.variant_id}`}
+                          layout
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, x: -20 }}
+                          className="p-4 rounded-2xl border border-border bg-background/40 hover:bg-background/80 transition-colors group relative shadow-sm"
                         >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1 bg-background rounded-lg p-1 border border-border">
-                          <button
-                            onClick={() => onUpdateQuantity(item.product_id, item.variant_id, item.quantity - 1)}
-                            className="w-11 h-11 flex items-center justify-center rounded-md hover:bg-primary/10 hover:text-primary transition-colors"
-                          >
-                            <Minus className="w-4 h-4" />
-                          </button>
-                          <span className="w-8 text-center font-black text-sm">{item.quantity}</span>
-                          <button
-                            onClick={() => onUpdateQuantity(item.product_id, item.variant_id, item.quantity + 1)}
-                            className="w-11 h-11 flex items-center justify-center rounded-md hover:bg-primary/10 hover:text-primary transition-colors"
-                          >
-                            <Plus className="w-4 h-4" />
-                          </button>
-                        </div>
-                        <span className="font-black text-lg text-primary">{formatCurrency(item.subtotal)}</span>
-                      </div>
-                    </div>
-                    ))}
+                          <div className="flex justify-between items-start mb-3">
+                            <div className="flex-1 min-w-0 pr-12">
+                              <div className="font-black text-sm uppercase tracking-tight truncate text-foreground">{item.product.name}</div>
+                              <div className="text-[10px] font-bold text-muted-foreground mt-0.5">
+                                {formatCurrency(item.price)} <span className="opacity-50 mx-1">/</span> unid.
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => onRemoveItem(item.product_id, item.variant_id)}
+                              className="absolute top-2 right-2 text-muted-foreground/40 hover:text-destructive p-3 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl hover:bg-destructive/10 transition-all active:scale-90"
+                              aria-label="Eliminar producto"
+                            >
+                              <Trash2 className="w-5 h-5" />
+                            </button>
+                          </div>
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-1 bg-muted/50 rounded-xl p-1 border border-border/50">
+                              <button
+                                onClick={() => onUpdateQuantity(item.product_id, item.variant_id, item.quantity - 1)}
+                                className="w-12 h-12 flex items-center justify-center rounded-lg hover:bg-primary/10 hover:text-primary transition-all active:scale-90"
+                              >
+                                <Minus className="w-5 h-5" />
+                              </button>
+                              <span className="w-10 text-center font-black text-sm">{item.quantity}</span>
+                              <button
+                                onClick={() => onUpdateQuantity(item.product_id, item.variant_id, item.quantity + 1)}
+                                className="w-12 h-12 flex items-center justify-center rounded-lg hover:bg-primary/10 hover:text-primary transition-all active:scale-90"
+                              >
+                                <Plus className="w-5 h-5" />
+                              </button>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">Subtotal</div>
+                              <div className="font-black text-lg text-primary leading-none">{formatCurrency(item.subtotal)}</div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
                   </div>
                 </div>
                 {/* Scroll Indicator Gradient */}
-                <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-card to-transparent pointer-events-none z-10" />
+                <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-card via-card/80 to-transparent pointer-events-none z-10" />
               </div>
 
               <div className={cn(
                 "p-6 space-y-6 border-t border-border bg-card",
-                isMobile && "pb-10 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] rounded-t-3xl"
+                isMobile && "pb-10 shadow-[0_-20px_40px_rgba(0,0,0,0.05)] rounded-t-3xl"
               )}>
                 {/* Descuento Section */}
                 <div className="px-2 space-y-3">
@@ -252,20 +280,52 @@ export const POSCart = ({
                 </button>
 
                 <button
-                  onClick={() => {
-                    if (confirm('¿Anular el carrito?')) {
-                      onClearCart();
-                      onClose();
-                    }
-                  }}
-                  className="w-full py-2 text-[10px] font-black text-foreground uppercase tracking-widest hover:text-destructive transition-colors"
+                  onClick={() => setShowClearConfirm(true)}
+                  className="w-full py-2 text-[10px] font-black text-muted-foreground hover:text-destructive uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
                 >
+                  <Trash2 className="w-3.5 h-3.5" />
                   Anular Carrito
                 </button>
               </div>
             </>
           )}
         </div>
+
+        {/* Modal de confirmación para vaciar carrito */}
+        <BaseModal
+          open={showClearConfirm}
+          onOpenChange={setShowClearConfirm}
+          title={
+            <div className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="w-6 h-6" />
+              <span>Confirmar Anulación</span>
+            </div>
+          }
+          footer={
+            <>
+              <SecondaryButton
+                label="No, Volver"
+                onClick={() => setShowClearConfirm(false)}
+                className="flex-1"
+              />
+              <PrimaryButton
+                label="Sí, Anular Todo"
+                onClick={() => {
+                  onClearCart();
+                  onClose();
+                  setShowClearConfirm(false);
+                  toast.success('Carrito vaciado');
+                }}
+                className="flex-1 bg-destructive hover:bg-destructive/90 text-white shadow-destructive/20"
+              />
+            </>
+          }
+        >
+          <div className="py-4 space-y-3">
+            <p className="font-bold text-center">¿Estás seguro de que deseas anular todos los productos del carrito?</p>
+            <p className="text-sm text-muted-foreground text-center">Esta acción no se puede deshacer y perderás la selección actual.</p>
+          </div>
+        </BaseModal>
       </div>
     </Container>
   );
