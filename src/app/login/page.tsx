@@ -3,19 +3,25 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '@/store';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, LogIn } from 'lucide-react';
+import { Eye, EyeOff, LogIn, X } from 'lucide-react';
 import CostProLogo from '@/components/CostProLogo';
 import SplashScreen from '@/components/SplashScreen';
+import WelcomeLanding from '@/components/WelcomeLanding';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
-import { UserContract, UserFactory } from '@/contracts';
+import { UserFactory } from '@/contracts';
 import { safeNavigate } from '@/lib/navigation';
 import { userService } from '@/services/user-service';
 import { mapProfileToContract } from '@/contracts/user';
+import {
+  Dialog,
+  DialogContent,
+} from '@/components/ui/dialog';
 
 export default function LoginPage() {
   const [showSplash, setShowSplash] = useState(true);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -24,7 +30,7 @@ export default function LoginPage() {
   const [demoLoading, setDemoLoading] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
-  const login = useAuthStore((state) => state.login);
+  const { login, user, status } = useAuthStore();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -98,8 +104,6 @@ export default function LoginPage() {
       logger.info('AUTH', 'LOGIN_SUCCESS', { userId: userData.id, email: userData.email });
 
       toast.success(`¡Bienvenido, ${userData.fullName}!`);
-      // No manual push, let TerminalShell handle it or just wait for status change
-      // But actually, LoginPage is not inside TerminalShell, so it needs to go to /
       safeNavigate.push(router, '/');
     } catch (err: any) {
       logger.error('AUTH', 'LOGIN_FAILED', { email, error: err.message });
@@ -121,129 +125,157 @@ export default function LoginPage() {
     return <SplashScreen onFinish={() => setShowSplash(false)} />;
   }
 
+  const handleStart = () => {
+    if (status === 'authenticated_valid' || status === 'authenticated_invalid_profile') {
+      safeNavigate.push(router, '/');
+    } else {
+      setShowLoginModal(true);
+    }
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 animate-in fade-in duration-700 allow-animations">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8 space-y-4">
-          <CostProLogo size={80} animated={false} />
-        </div>
+    <>
+      <WelcomeLanding
+        onStart={handleStart}
+        isAuthenticated={status === 'authenticated_valid'}
+      />
 
-        <div className="neu-card">
-          <h2 className="text-xl font-semibold mb-6 text-center">
-            Iniciar Sesión
-          </h2>
-
-          <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium mb-2">
-                Correo Electrónico
-              </label>
-              <input
-                id="email"
-                type="text"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="neu-input w-full"
-                placeholder="tu@email.com"
-                autoComplete="email"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium mb-2">
-                Contraseña
-              </label>
-              <div className="relative">
-                <input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="neu-input w-full pr-12"
-                  placeholder="••••••••"
-                  autoComplete="current-password"
-                />
+      <Dialog open={showLoginModal} onOpenChange={setShowLoginModal}>
+        <DialogContent className="max-w-md p-0 overflow-hidden border-none bg-transparent shadow-2xl">
+          <div className="relative w-full p-4">
+             <div className="absolute top-8 right-8 z-10">
                 <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                  onClick={() => setShowLoginModal(false)}
+                  className="p-2 rounded-full hover:bg-muted transition-colors"
                 >
-                  {showPassword ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
+                  <X className="w-5 h-5" />
                 </button>
-              </div>
-            </div>
+             </div>
 
-            {error && (
-              <div className="neu-raised-sm p-3 text-danger text-sm">
-                {error}
-              </div>
-            )}
+             <div className="w-full max-w-md mx-auto pt-8">
+                <div className="text-center mb-8 space-y-4">
+                  <CostProLogo size={80} animated={false} />
+                </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="neu-btn neu-btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50"
-            >
-              {loading ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Cargando...
-                </>
-              ) : (
-                <>
-                  <LogIn className="w-5 h-5" />
-                  Iniciar Sesión
-                </>
-              )}
-            </button>
-          </form>
+                <div className="neu-card bg-background/95 backdrop-blur-xl border border-border shadow-2xl">
+                  <h2 className="text-xl font-black uppercase tracking-tight mb-6 text-center">
+                    Acceso al Sistema
+                  </h2>
 
-          <div className="mt-6 pt-6 border-t border-border" translate="no">
-            <p className="text-xs text-muted-foreground mb-3 text-center">
-              Cuentas de Demo (contraseña: demo123)
-            </p>
-            <div className="space-y-2">
-              {demoAccounts.map((account) => (
-                <button
-                  key={account.email}
-                  type="button"
-                  disabled={demoLoading === account.email}
-                  onClick={() => {
-                    setDemoLoading(account.email);
-                    setEmail(account.email);
-                    setPassword('demo123');
-                    setTimeout(() => {
-                      formRef.current?.requestSubmit();
-                    }, 100);
-                  }}
-                  className="neu-raised-sm w-full text-left p-2 hover:bg-accent transition-colors text-sm flex items-center justify-center disabled:opacity-75"
-                >
-                  {demoLoading === account.email ? (
-                    <div className="flex items-center justify-center gap-2 w-full">
-                      <div className="w-4 h-4 border-2 border-foreground border-t-transparent rounded-full animate-spin" />
-                      <span>Cargando...</span>
+                  <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                      <label htmlFor="email" className="block text-[10px] font-black uppercase tracking-widest mb-2 text-muted-foreground">
+                        Correo Electrónico
+                      </label>
+                      <input
+                        id="email"
+                        type="text"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="neu-input w-full bg-muted/30"
+                        placeholder="tu@email.com"
+                        autoComplete="email"
+                      />
                     </div>
-                  ) : (
-                    <div className="flex justify-between items-center w-full">
-                      <span className="font-medium">{account.email}</span>
-                      <span className="neu-badge">{account.role}</span>
+
+                    <div>
+                      <label htmlFor="password" className="block text-[10px] font-black uppercase tracking-widest mb-2 text-muted-foreground">
+                        Contraseña
+                      </label>
+                      <div className="relative">
+                        <input
+                          id="password"
+                          type={showPassword ? 'text' : 'password'}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className="neu-input w-full pr-12 bg-muted/30"
+                          placeholder="••••••••"
+                          autoComplete="current-password"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                          aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="w-5 h-5" />
+                          ) : (
+                            <Eye className="w-5 h-5" />
+                          )}
+                        </button>
+                      </div>
                     </div>
-                  )}
-                </button>
-              ))}
-            </div>
+
+                    {error && (
+                      <div className="neu-raised-sm p-3 text-danger text-xs font-bold uppercase border border-danger/20 bg-danger/5">
+                        {error}
+                      </div>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="neu-btn neu-btn-primary w-full h-12 flex items-center justify-center gap-2 disabled:opacity-50 font-black uppercase tracking-widest text-xs"
+                    >
+                      {loading ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          Procesando...
+                        </>
+                      ) : (
+                        <>
+                          <LogIn className="w-4 h-4" />
+                          Entrar
+                        </>
+                      )}
+                    </button>
+                  </form>
+
+                  <div className="mt-6 pt-6 border-t border-border" translate="no">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 text-center">
+                      Cuentas de Acceso Rápido (Demo)
+                    </p>
+                    <div className="grid grid-cols-1 gap-2">
+                      {demoAccounts.map((account) => (
+                        <button
+                          key={account.email}
+                          type="button"
+                          disabled={demoLoading === account.email}
+                          onClick={() => {
+                            setDemoLoading(account.email);
+                            setEmail(account.email);
+                            setPassword('demo123');
+                            setTimeout(() => {
+                              formRef.current?.requestSubmit();
+                            }, 100);
+                          }}
+                          className="neu-raised-sm w-full text-left p-3 hover:bg-accent transition-all text-xs flex items-center justify-between group disabled:opacity-75 rounded-xl border border-border"
+                        >
+                          {demoLoading === account.email ? (
+                            <div className="flex items-center justify-center gap-2 w-full">
+                              <div className="w-3 h-3 border-2 border-foreground border-t-transparent rounded-full animate-spin" />
+                              <span className="font-black uppercase tracking-widest text-[10px]">Cargando...</span>
+                            </div>
+                          ) : (
+                            <>
+                              <span className="font-bold text-muted-foreground group-hover:text-foreground">{account.email}</span>
+                              <span className="neu-badge scale-75 font-black uppercase tracking-tighter">{account.role}</span>
+                            </>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-center text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/50 mt-6">
+                  © 2026 CostPro Enterprise
+                </p>
+             </div>
           </div>
-        </div>
-
-        <p className="text-center text-sm text-muted-foreground mt-6">
-          © 2026 POS Enterprise. Todos los derechos reservados.
-        </p>
-      </div>
-    </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
