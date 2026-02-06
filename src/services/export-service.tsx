@@ -23,30 +23,28 @@ export const exportToPDF = async (element: HTMLElement, fileName: string) => {
     const imgData = canvas.toDataURL('image/png');
 
     // Dynamic import to avoid CSP issues in main bundle load
-    const { default: jspdf } = await import('jspdf');
+    const { pdf, Document, Page, Image } = await import('@react-pdf/renderer');
 
-    const pdf = new jspdf('p', 'mm', 'a4');
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
-    const canvasWidth = canvas.width;
-    const canvasHeight = canvas.height;
-    const ratio = canvasWidth / canvasHeight;
-    const imgHeight = pdfWidth / ratio;
+    const MyDoc = (
+      // @ts-ignore
+      <Document>
+        {/* @ts-ignore */}
+        <Page size="A4">
+          {/* @ts-ignore */}
+          <Image src={imgData} />
+        </Page>
+      </Document>
+    );
 
-    let heightLeft = imgHeight;
-    let position = 0;
-
-    pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-    heightLeft -= pdfHeight;
-
-    while (heightLeft >= 0) {
-      position = heightLeft - imgHeight;
-      pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-      heightLeft -= pdfHeight;
-    }
-
-    pdf.save(fileName.endsWith('.pdf') ? fileName : `${fileName}.pdf`);
+    const blob = await pdf(MyDoc).toBlob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName.endsWith('.pdf') ? fileName : `${fileName}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
     toast.success("PDF generado con éxito", { id: toastId });
   } catch (err) {
     console.error("PDF Export error:", err);

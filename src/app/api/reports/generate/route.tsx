@@ -1,7 +1,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import { renderToBuffer } from '@react-pdf/renderer';
+import { GenericReportPDF } from '@/components/pdf/GenericReportPDF';
+import { CostSheetPDF } from '@/components/pdf/CostSheetPDF';
+import React from 'react';
 import { getSupabaseAuthClient } from '@/lib/supabaseClient';
 import { ReportType } from '@/types';
 import { format } from 'date-fns';
@@ -176,200 +178,75 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. Generate PDF
-    const doc = new jsPDF({
-      orientation: body.orientation || 'portrait',
-      unit: 'mm',
-      format: body.format || 'a4'
-    });
-
-    const pageWidth = doc.internal.pageSize.getWidth();
     const timestamp = format(new Date(), "yyyy-MM-dd HH:mm:ss");
+    let pdfBuffer: Buffer | Uint8Array;
 
     if (type === 'cost_sheet') {
-      const costData = body.data;
-      const calcValues = body.calculatedValues;
-      const calcAnnexes = body.calculatedAnnexes;
+       // For cost_sheet in report generator, we try to use the same CostSheetPDF component
+       // if the data matches. If not, we might need another component.
+       // Based on the code, body.data.sections exists.
 
-      // --- CUSTOM COST SHEET GENERATOR ---
+       // Converting the specific format of reports/generate to CalculationResult-like format
+       const result: any = {
+           fichaId: body.data.header.code,
+           fichaName: body.data.header.name,
+           metadata: { header: body.data.header },
+           rows: [],
+           anexos: body.calculatedAnnexes.map((a: any) => ({
+               id: a.id,
+               name: a.title,
+               rows: a.data
+           })),
+           summary: {
+               totalCost: body.calculatedValues['12']?.total || 0,
+               totalMargin: body.calculatedValues['13.1']?.total || 0,
+               totalTax: body.calculatedValues['13.2']?.total || 0,
+               grandTotal: body.calculatedValues['14']?.total || 0,
+           },
+           audits: []
+       };
 
-      // Formal Ministry Header
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "bold");
-      doc.text("MINISTERIO DE FINANZAS Y PRECIOS", pageWidth / 2, 15, { align: "center" });
-      doc.setFontSize(8);
-      doc.text("FICHA DE COSTOS Y GASTOS DE PRODUCTOS Y SERVICIOS", pageWidth / 2, 20, { align: "center" });
-      doc.setFont("helvetica", "normal");
-      doc.text("PARA LA EVALUACIÓN DE PRECIOS Y TARIFAS", pageWidth / 2, 24, { align: "center" });
+       // Flatten rows
+       const flatten = (uiRows: any[]) => {
+           uiRows.forEach(r => {
+               const calc = body.calculatedValues[r.id] || {};
+               result.rows.push({
+                   ...r,
+                   total: calc.total || 0,
+                   valor_historico: calc.valor_historico || 0
+               });
+               if (r.children) flatten(r.children);
+           });
+       };
+       body.data.sections.forEach((s: any) => flatten(s.rows));
 
-      // Title
-      doc.setFontSize(16);
-      doc.setFont("helvetica", "bold");
-      doc.text(costData.header.name?.toUpperCase() || "FICHA DE COSTO", 14, 35);
-
-      // Metadata Grid
-      doc.setFontSize(8);
-      doc.setFont("helvetica", "bold");
-      doc.text("DATOS GENERALES:", 14, 42);
-      doc.line(14, 43, 50, 43);
-
-      const metadata = [
-        [`No. FC: ${costData.header.code}`, `Fecha: ${costData.header.date}`],
-        [`UM: ${costData.header.unit}`, `Cantidad: ${costData.header.quantity}`],
-        [`Moneda: ${costData.header.currency}`, `Organismo: ${costData.header.category}`],
-        [`Nivel Prod: ${costData.header.productionLevel || 'N/A'}`, `Utilización: ${costData.header.utilization || 'N/A'}`],
-        [`Precio Venta: ${costData.header.salePrice || 'N/A'}`, ""]
-      ];
-
-      let yPos = 48;
-      doc.setFont("helvetica", "normal");
-      metadata.forEach(row => {
-        doc.text(row[0], 14, yPos);
-        doc.text(row[1], pageWidth / 2, yPos);
-        yPos += 5;
-      });
-
-      // Main Table
-      const mainHeaders = ["FILA", "CONCEPTO", "VALOR HISTÓRICO", "BASE CÁLCULO", "TOTAL"];
-      const mainRows: any[] = [];
-
-      const processRows = (rows: any[], level = 0) => {
-        rows.forEach(row => {
-          const calc = calcValues[row.id] || { total: 0, valor_historico: 0, base_total: 0 };
-          const prefix = "  ".repeat(level);
-
-          let baseDisplay = '-';
-          if (row.base_display_override) baseDisplay = row.base_display_override;
-          else if (row.is_percent) baseDisplay = `${((row.value || 0) * 100).toFixed(2)}%`;
-          else if (calc.base_total > 0) baseDisplay = calc.base_total.toLocaleString('es-ES');
-
-          mainRows.push([
-            row.id,
-            prefix + row.label.toUpperCase(),
-            calc.valor_historico > 0 ? calc.valor_historico.toLocaleString('es-ES', { minimumFractionDigits: 2 }) : '--',
-            baseDisplay,
-            calc.total.toLocaleString('es-ES', { minimumFractionDigits: 2 })
-          ]);
-
-          if (row.children) processRows(row.children, level + 1);
-        });
-      };
-
-      costData.sections.forEach((section: any) => {
-        mainRows.push([{ content: section.label.toUpperCase(), colSpan: 5, styles: { fillColor: [240, 240, 240], fontStyle: 'bold' } }]);
-        processRows(section.rows);
-      });
-
-      autoTable(doc, {
-        startY: yPos + 5,
-        head: [mainHeaders],
-        body: mainRows,
-        theme: 'grid',
-        headStyles: { fillColor: [40, 40, 40], textColor: 255, fontSize: 7 },
-        styles: { fontSize: 7, cellPadding: 1.5 },
-        columnStyles: {
-          0: { cellWidth: 15, halign: 'center' },
-          2: { halign: 'right' },
-          3: { halign: 'right' },
-          4: { halign: 'right', fontStyle: 'bold' }
-        }
-      });
-
-      // Annexes
-      let finalY = (doc as any).lastAutoTable.finalY + 10;
-
-      calcAnnexes.forEach((annex: any) => {
-        if (finalY > doc.internal.pageSize.getHeight() - 40) {
-          doc.addPage();
-          finalY = 20;
-        }
-
-        doc.setFontSize(9);
-        doc.setFont("helvetica", "bold");
-        doc.text(`${annex.id || ''} - ${annex.title}`.toUpperCase(), 14, finalY);
-
-        const headers = annex.columns.map((c: any) => (c.label || c.title || c.key).toUpperCase());
-        const data = annex.data.map((row: any) => annex.columns.map((col: any) => {
-          const val = row[col.key];
-          if (typeof val === 'number') {
-              return val.toLocaleString('es-ES', {
-                  minimumFractionDigits: (col.key === 'no' || col.key === 'quantity' || col.key === 'days' || col.key === 'worker_count') ? 0 : 2,
-                  maximumFractionDigits: 4
-              });
-          }
-          return val || '-';
-        }));
-
-        autoTable(doc, {
-          startY: finalY + 2,
-          head: [headers],
-          body: data,
-          theme: 'striped',
-          headStyles: { fillColor: [80, 80, 80], textColor: 255, fontSize: 6 },
-          styles: { fontSize: 6, cellPadding: 1 },
-        });
-
-        finalY = (doc as any).lastAutoTable.finalY + 10;
-      });
-
-      // Signatures
-      if (finalY > doc.internal.pageSize.getHeight() - 30) {
-        doc.addPage();
-        finalY = 30;
-      }
-
-      doc.setFontSize(8);
-      doc.text("__________________________", 30, finalY + 15);
-      doc.text("Elaborado por", 30, finalY + 20);
-
-      doc.text("__________________________", pageWidth - 80, finalY + 15);
-      doc.text("Aprobado por", pageWidth - 80, finalY + 20);
-
+       pdfBuffer = await renderToBuffer(
+           <CostSheetPDF
+               result={result}
+               exportOptions={{
+                   includeFC: true,
+                   includeAudit: false,
+                   includeAnnexes: result.anexos.map((a: any) => a.id),
+                   consolidated: true,
+                   skipZeros: false,
+                   includeFinancialSummary: true
+               }}
+           /> as any
+       );
     } else {
-      // --- STANDARD REPORT GENERATOR ---
-      // Header
-      doc.setFontSize(20);
-      doc.setTextColor(40, 40, 40);
-      doc.text(name || 'Reporte de Sistema', 14, 22);
-
-      doc.setFontSize(10);
-      doc.setTextColor(100);
-      doc.text(`Tipo: ${type.toUpperCase()}`, 14, 30);
-      doc.text(`Periodo: ${from || 'N/A'} - ${to || 'N/A'}`, 14, 35);
-      doc.text(`Generado: ${timestamp}`, 14, 40);
-
-      // Separator Line
-      doc.setDrawColor(200);
-      doc.line(14, 45, pageWidth - 14, 45);
-
-      // Table
-      const tableHeaders: string[] = (columns && columns.length > 0) ? columns : Object.keys(data[0] || {}).slice(0, 7);
-      const tableData = data.map((row: any) => tableHeaders.map((col: string) => {
-          const val = row[col];
-          if (typeof val === 'object' && val !== null) return JSON.stringify(val);
-          return val?.toString() || '';
-      }));
-
-      const displayHeaders = tableHeaders.map(h => (COLUMN_LABELS[h] || h).toUpperCase());
-
-      autoTable(doc, {
-        startY: 50,
-        head: [displayHeaders],
-        body: tableData,
-        theme: 'striped',
-        headStyles: { fillColor: [41, 128, 185], textColor: 255 },
-        styles: { fontSize: 8, cellPadding: 2 },
-        margin: { top: 50 },
-        didDrawPage: (data) => {
-          // Footer
-          const str = `Página ${doc.getNumberOfPages()}`;
-          doc.setFontSize(8);
-          doc.text(str, pageWidth - 30, doc.internal.pageSize.getHeight() - 10);
-          doc.text('Documento generado automáticamente por CostPro', 14, doc.internal.pageSize.getHeight() - 10);
-        }
-      });
+        const tableHeaders: string[] = (columns && columns.length > 0) ? columns : Object.keys(data[0] || {}).slice(0, 7);
+        pdfBuffer = await renderToBuffer(
+            <GenericReportPDF
+                name={name}
+                type={type}
+                from={from}
+                to={to}
+                timestamp={timestamp}
+                columns={tableHeaders}
+                data={data}
+            /> as any
+        );
     }
-
-    const pdfBuffer = doc.output('arraybuffer');
 
     // 4. Upload to Storage
     if (!runData?.id) {
@@ -379,7 +256,7 @@ export async function POST(req: NextRequest) {
     const fileName = `reports/${type}/${runData.id}.pdf`;
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('reports')
-      .upload(fileName, pdfBuffer, {
+      .upload(fileName, pdfBuffer as any, {
         contentType: 'application/pdf',
         upsert: true
       });

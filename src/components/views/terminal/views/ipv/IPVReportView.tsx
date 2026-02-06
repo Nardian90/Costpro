@@ -28,8 +28,6 @@ import {
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { IPVPreviewModal } from './IPVPreviewModal';
 import { toast } from 'sonner';
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { v4 as uuidv4 } from 'uuid';
 import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
 import {
@@ -268,69 +266,23 @@ export function IPVReportView() {
     setLoadingMessage('Generando PDF consolidado...');
 
     try {
-      const doc = new jsPDF();
+      const { pdf } = await import('@react-pdf/renderer');
+      const { IPVReportPDF } = await import('@/components/pdf/IPVReportPDF');
 
-      rangeReports.forEach((report, index) => {
-        if (index > 0) doc.addPage();
+      const doc = <IPVReportPDF reports={rangeReports} />;
+      const blob = await pdf(doc).toBlob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `IPV_RANGO_${dateFrom}_${dateTo}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
 
-        const pageWidth = doc.internal.pageSize.width;
-
-        // Branding
-        doc.setFontSize(10);
-        doc.setTextColor(150);
-        doc.text('CostPro', 14, 15);
-        doc.setTextColor(0);
-
-        // Header
-        doc.setFontSize(18);
-        doc.text('REPORTE IPV DIARIO', pageWidth / 2, 20, { align: 'center' });
-
-        doc.setFontSize(10);
-        doc.text(`Fecha del Reporte: ${report.fecha_reporte}`, 14, 30);
-        doc.text(`Estado: ${report.estado}`, 14, 35);
-        doc.text(`Fecha de Confección: ${report.fecha_reporte}`, 14, 40);
-
-        autoTable(doc, {
-          startY: 55,
-          head: [['Concepto', 'Monto']],
-          body: [
-            ['Total Ventas', `$ ${(report.total_ventas_cents).toFixed(2)}`],
-            ['Resumen Efectivo', `$ ${(report.resumen_efectivo_cents).toFixed(2)}`],
-            ['Resumen Transferencia', `$ ${(report.resumen_transferencia_cents).toFixed(2)}`],
-          ],
-          theme: 'grid',
-          headStyles: { fillColor: [22, 163, 74] }
-        });
-
-        const tableData = report.filas.map((f: any) => [
-          f.cod,
-          f.descripcion,
-          f.um,
-          f.saldo_inicial_qty,
-          f.entrada_salida_qty,
-          f.venta_cantidad_qty,
-          `$ ${(f.precio_unitario_cents).toFixed(2)}`,
-          `$ ${(f.importe_cents).toFixed(2)}`,
-          f.existencia_final_qty
-        ]);
-
-        autoTable(doc, {
-          startY: (doc as any).lastAutoTable.finalY + 15,
-          head: [['Cod', 'Producto', 'UM', 'Inicial', 'E/S', 'Venta', 'Precio', 'Importe', 'Final']],
-          body: tableData,
-          theme: 'striped',
-          headStyles: { fillColor: [22, 163, 74] },
-          styles: { fontSize: 8 }
-        });
-
-        const finalY = (doc as any).lastAutoTable.finalY + 20;
-        doc.text('__________________________', 14, finalY);
-        doc.text('Firma Responsable', 14, finalY + 5);
-      });
-
-      doc.save(`IPV_RANGO_${dateFrom}_${dateTo}.pdf`);
       toast.success('PDF de rango generado');
     } catch (error) {
+        console.error(error);
       toast.error('Error al generar PDF de rango');
     } finally {
       setIsLoading(false);
@@ -341,97 +293,19 @@ export function IPVReportView() {
     try {
       toast.loading('Generando PDF...', { id: 'pdf-gen' });
 
-      const doc = new jsPDF();
-      const pageWidth = doc.internal.pageSize.width;
+      const { pdf } = await import('@react-pdf/renderer');
+      const { IPVReportPDF } = await import('@/components/pdf/IPVReportPDF');
 
-      // Branding
-      doc.setFontSize(10);
-      doc.setTextColor(150);
-      doc.text('CostPro', 14, 15);
-      doc.setTextColor(0);
-
-      // Header
-      doc.setFontSize(18);
-      doc.text('REPORTE IPV DIARIO', pageWidth / 2, 20, { align: 'center' });
-
-      doc.setFontSize(10);
-      doc.text(`Fecha del Reporte: ${report.fecha_reporte}`, 14, 30);
-      doc.text(`Estado: ${report.estado}`, 14, 35);
-      doc.text(`Fecha de Confección: ${report.fecha_reporte}`, 14, 40);
-
-      // Summary
-      doc.setFontSize(12);
-      doc.text('RESUMEN MONETARIO', 14, 50);
-
-      autoTable(doc, {
-        startY: 55,
-        head: [['Concepto', 'Monto']],
-        body: [
-          ['Total Ventas', `$ ${(report.total_ventas_cents).toFixed(2)}`],
-          ['Resumen Efectivo', `$ ${(report.resumen_efectivo_cents).toFixed(2)}`],
-          ['Resumen Transferencia', `$ ${(report.resumen_transferencia_cents).toFixed(2)}`],
-        ],
-        theme: 'grid',
-        headStyles: { fillColor: [22, 163, 74] }
-      });
-
-      // Details Table
-      const tableData = report.filas.map((f: any) => [
-        f.cod,
-        f.descripcion,
-        f.um,
-        f.saldo_inicial_qty,
-        f.entrada_salida_qty,
-        f.venta_cantidad_qty,
-        `$ ${(f.precio_unitario_cents).toFixed(2)}`,
-        `$ ${(f.importe_cents).toFixed(2)}`,
-        f.existencia_final_qty
-      ]);
-
-      autoTable(doc, {
-        startY: (doc as any).lastAutoTable.finalY + 15,
-        head: [['Cod', 'Producto', 'UM', 'Inicial', 'E/S', 'Venta', 'Precio', 'Importe', 'Final']],
-        body: tableData,
-        theme: 'striped',
-        headStyles: { fillColor: [22, 163, 74] },
-        styles: { fontSize: 8 }
-      });
-
-      // Footer / Signatures
-      const finalY = (doc as any).lastAutoTable.finalY + 20;
-      doc.text('__________________________', 14, finalY);
-      doc.text('Firma Responsable', 14, finalY + 5);
-      doc.text(`Realizado por: ${report.firmas?.realizado_por || ''}`, 14, finalY + 10);
-
-      // Annex: Transaction Details if requested
-      if (includeDetails) {
-          doc.addPage();
-          doc.setFontSize(14);
-          doc.text('ANEXO: DESGLOSE TRANSACCIONAL', pageWidth / 2, 20, { align: 'center' });
-          doc.setFontSize(10);
-          doc.text(`Fecha: ${report.fecha_reporte}`, 14, 30);
-
-          const lines = await db.reconciliation_lines.where('fecha_operacion').equals(report.fecha_reporte).toArray();
-          const detailData = lines.map(l => [
-              l.transaction_ref.substring(0, 15),
-              l.product_cod,
-              l.cantidad,
-              formatCurrency(l.precio_unitario_cents),
-              formatCurrency(l.importe_linea_cents),
-              l.clasificacion
-          ]);
-
-          autoTable(doc, {
-              startY: 40,
-              head: [['Ref. Trans.', 'Producto', 'Cant.', 'Precio', 'Importe', 'Clasif.']],
-              body: detailData,
-              theme: 'striped',
-              headStyles: { fillColor: [59, 130, 246] },
-              styles: { fontSize: 7 }
-          });
-      }
-
-      doc.save(`IPV_${report.fecha_reporte}${includeDetails ? '_CON_DETALLE' : ''}.pdf`);
+      const doc = <IPVReportPDF reports={[report]} />;
+      const blob = await pdf(doc).toBlob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `IPV_${report.fecha_reporte}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
 
       toast.success('PDF descargado exitosamente', { id: 'pdf-gen' });
     } catch (error) {
@@ -495,68 +369,57 @@ export function IPVReportView() {
 
     try {
         toast.loading('Generando Consolidado Mensual...', { id: 'consolidated-gen' });
-        const doc = new jsPDF();
+
+        const { pdf } = await import('@react-pdf/renderer');
+        const { IPVReportPDF } = await import('@/components/pdf/IPVReportPDF');
+
         const monthDate = new Date(selectedYear, selectedMonth - 1);
         const monthName = isNaN(monthDate.getTime()) ? 'DESCONOCIDO' : monthDate.toLocaleString('es', { month: 'long' }).toUpperCase();
 
-        doc.setFontSize(18);
-        doc.text(`REPORTE IPV CONSOLIDADO - ${monthName} ${selectedYear}`, 105, 20, { align: 'center' });
-
-        // Totales consolidados
         const totalVentas = monthReports.reduce((s, r) => s + r.total_ventas_cents, 0);
         const totalEfectivo = monthReports.reduce((s, r) => s + r.resumen_efectivo_cents, 0);
         const totalTransferencia = monthReports.reduce((s, r) => s + r.resumen_transferencia_cents, 0);
 
-        autoTable(doc, {
-            startY: 30,
-            head: [['Concepto', 'Total Mensual']],
-            body: [
-                ['Total Ventas Brutas', formatCurrency(totalVentas)],
-                ['Total Efectivo', formatCurrency(totalEfectivo)],
-                ['Total Transferencias', formatCurrency(totalTransferencia)],
-                ['Días Reportados', monthReports.length]
-            ],
-            theme: 'grid',
-            headStyles: { fillColor: [22, 163, 74] }
-        });
-
-        // Consolidación de filas por producto
-        const productSummary: Record<string, any> = {};
+        const productSummaryMap: Record<string, any> = {};
         monthReports.forEach(r => {
             r.filas.forEach(f => {
-                if (!productSummary[f.cod]) {
-                    productSummary[f.cod] = { ...f, saldo_inicial_qty: f.saldo_inicial_qty, venta_cantidad_qty: 0, importe_cents: 0 };
+                if (!productSummaryMap[f.cod]) {
+                    productSummaryMap[f.cod] = { ...f, saldo_inicial_qty: f.saldo_inicial_qty, venta_cantidad_qty: 0, importe_cents: 0 };
                 }
-                productSummary[f.cod].venta_cantidad_qty += f.venta_cantidad_qty;
-                productSummary[f.cod].importe_cents += f.importe_cents;
-                // La existencia final del último reporte es la final del mes
-                productSummary[f.cod].existencia_final_qty = f.existencia_final_qty;
+                productSummaryMap[f.cod].venta_cantidad_qty += f.venta_cantidad_qty;
+                productSummaryMap[f.cod].importe_cents += f.importe_cents;
+                productSummaryMap[f.cod].existencia_final_qty = f.existencia_final_qty;
             });
         });
 
-        const tableData = Object.values(productSummary).map((f: any) => [
-            f.cod,
-            f.descripcion,
-            f.um,
-            f.saldo_inicial_qty, // Ojo: este debería ser el inicial del primer día del mes
-            f.venta_cantidad_qty,
-            formatCurrency(f.precio_unitario_cents),
-            formatCurrency(f.importe_cents),
-            f.existencia_final_qty
-        ]);
+        const doc = (
+            <IPVReportPDF
+                reports={[]}
+                consolidated
+                consolidatedMeta={{
+                    title: `REPORTE IPV CONSOLIDADO - ${monthName} ${selectedYear}`,
+                    totalVentas,
+                    totalEfectivo,
+                    totalTransferencia,
+                    daysCount: monthReports.length,
+                    productSummary: Object.values(productSummaryMap)
+                }}
+            />
+        );
 
-        autoTable(doc, {
-            startY: (doc as any).lastAutoTable.finalY + 15,
-            head: [['Cod', 'Producto', 'UM', 'Ini Mes', 'Venta Mes', 'Precio', 'Imp Mes', 'Fin Mes']],
-            body: tableData,
-            theme: 'striped',
-            headStyles: { fillColor: [22, 163, 74] },
-            styles: { fontSize: 8 }
-        });
+        const blob = await pdf(doc).toBlob();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `IPV_CONSOLIDADO_${selectedYear}_${selectedMonth}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
 
-        doc.save(`IPV_CONSOLIDADO_${selectedYear}_${selectedMonth}.pdf`);
         toast.success('Reporte Consolidado generado', { id: 'consolidated-gen' });
     } catch (error) {
+        console.error(error);
         toast.error('Error al generar consolidado');
     }
   };

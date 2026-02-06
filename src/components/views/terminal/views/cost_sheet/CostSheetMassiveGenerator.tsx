@@ -310,9 +310,8 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
     setResults(initialResults);
 
     // Dynamic import to avoid CSP issues in initial load
-    const { default: JSZip } = await import('jszip');
+    const { zipSync } = await import('fflate');
 
-    const zip = new JSZip();
     const blobs: { name: string, blob: Blob }[] = [];
 
     for (let i = 0; i < toProcess.length; i++) {
@@ -375,10 +374,15 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
     // Process Downloads
     if (blobs.length > 2) {
         toast.info("Comprimiendo fichas en un archivo ZIP...");
-        blobs.forEach(item => {
-            zip.file(item.name, item.blob);
-        });
-        const zipBlob = await zip.generateAsync({ type: 'blob' });
+
+        const zipData: Record<string, Uint8Array> = {};
+        for (const item of blobs) {
+            const arrayBuffer = await item.blob.arrayBuffer();
+            zipData[item.name] = new Uint8Array(arrayBuffer);
+        }
+
+        const zipped = zipSync(zipData);
+        const zipBlob = new Blob([zipped as any], { type: 'application/zip' });
         const url = window.URL.createObjectURL(zipBlob);
         const a = document.createElement('a');
         a.href = url;

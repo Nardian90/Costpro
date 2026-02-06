@@ -16,8 +16,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Download, FileSpreadsheet, ChevronRight, ChevronDown, Calendar, Filter } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { toast } from 'sonner';
 
 export function PivotStatementView() {
@@ -91,39 +89,23 @@ export function PivotStatementView() {
 
     const exportPivotPDF = async () => {
         try {
-            const doc = new jsPDF();
-            doc.setFontSize(16);
-            doc.text('RESUMEN CONSOLIDADO DE CUENTA', 14, 20);
-            doc.setFontSize(10);
-            const now = new Date();
-            const nowStr = isNaN(now.getTime()) ? '—' : now.toLocaleString();
-            doc.text(`Generado el: ${nowStr}`, 14, 28);
+            const { pdf } = await import('@react-pdf/renderer');
+            const { PivotStatementPDF } = await import('@/components/pdf/PivotStatementPDF');
 
-            const tableBody = pivotData.map(g => [
-                g.label,
-                g.count,
-                formatCurrency(g.totalCr),
-                formatCurrency(g.totalDb),
-                formatCurrency(g.netAmount)
-            ]);
+            const doc = <PivotStatementPDF pivotData={pivotData} groupBy={groupBy} />;
+            const blob = await pdf(doc).toBlob();
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'Consolidado_Bancario.pdf';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
 
-            autoTable(doc, {
-                startY: 35,
-                head: [[groupBy === 'day' ? 'Fecha' : (groupBy === 'month' ? 'Mes' : 'Año'), 'Cant.', 'Créditos (+)', 'Débitos (-)', 'Balance']],
-                body: tableBody,
-                theme: 'grid',
-                headStyles: { fillColor: [22, 163, 74] },
-                foot: [['TOTAL', '',
-                    formatCurrency(pivotData.reduce((s, g) => s + g.totalCr, 0)),
-                    formatCurrency(pivotData.reduce((s, g) => s + g.totalDb, 0)),
-                    formatCurrency(pivotData.reduce((s, g) => s + g.netAmount, 0))
-                ]],
-                footStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' }
-            });
-
-            doc.save('Consolidado_Bancario.pdf');
             toast.success('PDF exportado');
         } catch (error) {
+            console.error(error);
             toast.error('Error al exportar PDF');
         }
     };

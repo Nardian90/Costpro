@@ -43,87 +43,31 @@ export const TaxCalculationModal = ({
   };
 
   const handleExportPDF = async () => {
-    const { default: jspdf } = await import('jspdf');
-    const { default: autoTable } = await import('jspdf-autotable');
+    const { pdf } = await import('@react-pdf/renderer');
+    const { TaxReportPDF } = await import('@/components/pdf/TaxReportPDF');
 
-    const doc = new jspdf();
-    const pageWidth = doc.internal.pageSize.getWidth();
+    const doc = (
+      <TaxReportPDF
+        selectedTransactions={selectedTransactions}
+        activeTaxes={activeTaxes}
+        totalSales={totalSales}
+        calculateTax={calculateTax}
+        user={user}
+        exportMode={exportMode}
+        includeAnnex={includeAnnex}
+      />
+    );
 
-    // Header
-    doc.setFontSize(18);
-    doc.text('Reporte de Cálculo de Impuestos', 14, 20);
-    doc.setFontSize(10);
-    doc.text(`Fecha de generación: ${new Date().toLocaleString()}`, 14, 28);
-    doc.text(`Usuario: ${user?.fullName || 'Admin'}`, 14, 34);
-    doc.text(`Facturas seleccionadas: ${selectedTransactions.length}`, 14, 40);
+    const blob = await pdf(doc).toBlob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `reporte-impuestos-${new Date().getTime()}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 
-    // Summary Table
-    autoTable(doc, {
-      startY: 50,
-      head: [['Concepto', 'Base de Cálculo', 'Cálculo', 'Total']],
-      body: [
-        ['Ventas Totales (Base)', formatCurrency(totalSales), '-', formatCurrency(totalSales)],
-        ...activeTaxes.map(tax => [
-          tax.name,
-          formatCurrency(totalSales),
-          tax.type === 'percentage' ? `${tax.value}%` : 'Fijo',
-          formatCurrency(calculateTax(totalSales, tax))
-        ]),
-        [{ content: 'Total con Impuestos', colSpan: 3, styles: { halign: 'right', fontStyle: 'bold' } },
-         formatCurrency(totalSales + activeTaxes.reduce((acc, t) => acc + calculateTax(totalSales, t), 0))]
-      ],
-      theme: 'striped',
-      headStyles: { fillColor: [16, 185, 129] }
-    });
-
-    if (exportMode === 'separate') {
-      activeTaxes.forEach((tax, index) => {
-        doc.addPage();
-        doc.setFontSize(16);
-        doc.text(`Detalle de Impuesto: ${tax.name}`, 14, 20);
-
-        autoTable(doc, {
-          startY: 30,
-          head: [['Concepto', 'Base', 'Tasa', 'Total']],
-          body: [
-            ['Base Imponible', formatCurrency(totalSales), '-', formatCurrency(totalSales)],
-            [tax.name, formatCurrency(totalSales), tax.type === 'percentage' ? `${tax.value}%` : 'Fijo', formatCurrency(calculateTax(totalSales, tax))],
-          ],
-          theme: 'grid',
-          headStyles: { fillColor: [59, 130, 246] }
-        });
-
-        if (includeAnnex) {
-          doc.setFontSize(12);
-          doc.text('Anexo de Facturas (esta sección)', 14, (doc as any).lastAutoTable.finalY + 15);
-          autoTable(doc, {
-            startY: (doc as any).lastAutoTable.finalY + 20,
-            head: [['Referencia', 'Monto']],
-            body: selectedTransactions.map(t => [t.id.split('-')[0].toUpperCase(), formatCurrency(t.total_amount)]),
-            theme: 'plain'
-          });
-        }
-      });
-    } else {
-      if (includeAnnex) {
-        doc.setFontSize(12);
-        doc.text('Anexo: Detalle de Facturas', 14, (doc as any).lastAutoTable.finalY + 15);
-
-        autoTable(doc, {
-          startY: (doc as any).lastAutoTable.finalY + 20,
-          head: [['Referencia', 'Fecha', 'Monto']],
-          body: selectedTransactions.map(t => [
-            t.id.split('-')[0].toUpperCase(),
-            formatDate(t.created_at),
-            formatCurrency(t.total_amount)
-          ]),
-          theme: 'plain',
-          headStyles: { fillColor: [100, 116, 139] }
-        });
-      }
-    }
-
-    doc.save(`reporte-impuestos-${new Date().getTime()}.pdf`);
     toast.success('PDF generado con éxito');
   };
 
