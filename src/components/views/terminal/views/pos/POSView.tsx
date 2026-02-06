@@ -21,6 +21,7 @@ import {
 import { BaseModal } from '@/components/ui/BaseModal';
 import { PrimaryButton, SecondaryButton } from '@/components/ui/atomic';
 import { POSCart } from './POSCart';
+import { StickyCartSummary } from './StickyCartSummary';
 import { usePOSView } from './usePOSView';
 import { QueryInspector } from '@/components/ui/QueryInspector';
 
@@ -154,7 +155,7 @@ export default function POSView() {
 
         {isMobile && (
           <Drawer open={showCart} onOpenChange={setShowCart}>
-            <DrawerContent className="p-0 border-none bg-transparent max-h-[85vh]">
+            <DrawerContent className="p-0 border-none bg-transparent max-h-[92vh]">
               <POSCart
                 items={items}
                 onRemoveItem={removeItem}
@@ -272,19 +273,10 @@ export default function POSView() {
       </div>
 
       {isMobile && (
-        <ActionMenu
-          actions={[
-            {
-              id: 'cart',
-              label: `Caja (${getItemCount()})`,
-              icon: ShoppingCart,
-              onClick: () => setShowCart(!showCart),
-              variant: getItemCount() > 0 ? 'primary' : 'outline',
-              active: showCart
-            }
-          ]}
-          className="w-full"
-          position="bottom"
+        <StickyCartSummary
+          itemCount={getItemCount()}
+          total={getTotal()}
+          onClick={() => setShowCart(true)}
         />
       )}
     </div>
