@@ -17,6 +17,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({ calculatedValu
   const directCost = getTotal('1') + getTotal('2') + getTotal('3');
   const indirectCost = getTotal('4');
   const totalCost = getTotal('12');
+  const utility = getTotal('13');
   const finalPrice = getTotal('14');
   const profit = getTotal('13');
 
@@ -50,15 +51,23 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({ calculatedValu
     {
       label: 'Precio Final',
       value: finalPrice,
+      icon: DollarSign,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50',
+      description: `Margen Comercial: ${margin.toFixed(2)}%`
+    },
+    {
+      label: 'Utilidad',
+      value: utility,
       icon: TrendingUp,
-      color: 'text-success-600',
-      bgColor: 'bg-success-50',
-      description: `Margen: ${margin.toFixed(2)}%`
+      color: 'text-emerald-600',
+      bgColor: 'bg-emerald-50',
+      description: totalCost > 0 ? `Rentabilidad: ${((utility / totalCost) * 100).toFixed(1)}% sobre costo` : 'Rentabilidad: 0% sobre costo'
     }
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
       {kpis.map((kpi, index) => (
         <div key={index} className="neu-card !p-5 flex flex-col justify-between hover:scale-[1.02] transition-transform duration-300">
           <div className="flex justify-between items-start mb-4">
