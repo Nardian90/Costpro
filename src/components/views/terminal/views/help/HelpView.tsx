@@ -48,49 +48,49 @@ export default function HelpView() {
         </div>
         <div className="flex flex-col items-end">
           <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-black">
-            VERSIÓN 5.7.22 (UX HARDENING)
+            VERSIÓN 5.7.24 (ENTERPRISE HARDENED)
           </Badge>
-          <span className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Última actualización: 01 Mar 2026</span>
+          <span className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Última actualización: 03 Mar 2026</span>
         </div>
       </div>
 
-      <Tabs defaultValue="roles" className="w-full">
-        <div className="mb-8">
-          <HorizontalScroll containerClassName="bg-muted/50 rounded-2xl p-1">
+      <Tabs defaultValue="onboarding" className="w-full">
+        <div className="mb-8" dir="rtl">
+          <HorizontalScroll containerClassName="bg-muted/50 rounded-2xl p-1" className="justify-start">
             <TabsList className="flex bg-transparent border-none w-max min-w-full h-auto p-0 gap-1">
-              <TabsTrigger value="onboarding" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+              <TabsTrigger value="onboarding" dir="ltr" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
                 <Baby className="w-4 h-4 mr-2 hidden sm:block" />
                 Niños
               </TabsTrigger>
-              <TabsTrigger value="roles" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+              <TabsTrigger value="roles" dir="ltr" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
                 <Users className="w-4 h-4 mr-2 hidden sm:block" />
                 Jerarquía
               </TabsTrigger>
-              <TabsTrigger value="admin" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+              <TabsTrigger value="admin" dir="ltr" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
                 <Settings className="w-4 h-4 mr-2 hidden sm:block" />
                 Gestión
               </TabsTrigger>
-              <TabsTrigger value="costs" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+              <TabsTrigger value="costs" dir="ltr" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
                 <FileText className="w-4 h-4 mr-2 hidden sm:block" />
                 Costos
               </TabsTrigger>
-              <TabsTrigger value="pos" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+              <TabsTrigger value="pos" dir="ltr" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
                 <ShoppingCart className="w-4 h-4 mr-2 hidden sm:block" />
                 Ventas
               </TabsTrigger>
-              <TabsTrigger value="inventory" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+              <TabsTrigger value="inventory" dir="ltr" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
                 <Package className="w-4 h-4 mr-2 hidden sm:block" />
                 Almacén
               </TabsTrigger>
-              <TabsTrigger value="innovation" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+              <TabsTrigger value="innovation" dir="ltr" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
                 <Zap className="w-4 h-4 mr-2 hidden sm:block" />
                 Innovación
               </TabsTrigger>
-              <TabsTrigger value="security" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+              <TabsTrigger value="security" dir="ltr" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
                 <Shield className="w-4 h-4 mr-2 hidden sm:block" />
                 Seguridad
               </TabsTrigger>
-              <TabsTrigger value="history" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+              <TabsTrigger value="history" dir="ltr" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
                 <History className="w-4 h-4 mr-2 hidden sm:block" />
                 Historial
               </TabsTrigger>
@@ -708,12 +708,29 @@ export default function HelpView() {
             </CardHeader>
             <CardContent className="px-0">
               <div className="space-y-8">
-                {/* --- v5.7.18 --- */}
+                {/* --- v5.7.24 --- */}
                 <div className="relative pl-8 border-l-2 border-primary/20 space-y-4">
                   <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary border-4 border-background" />
                   <div className="flex items-center gap-3">
-                    <Badge className="bg-primary">v5.7.18</Badge>
-                    <span className="text-xs font-black text-muted-foreground uppercase">27 de Febrero, 2026 (Actual)</span>
+                    <Badge className="bg-primary">v5.7.24</Badge>
+                    <span className="text-xs font-black text-muted-foreground uppercase">03 de Marzo, 2026 (Actual)</span>
+                  </div>
+                  <div className="bg-muted/30 rounded-2xl p-6 space-y-4 border border-primary/10">
+                    <h4 className="font-black text-sm uppercase text-primary">Refinamiento UI y Centro de Ayuda</h4>
+                    <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Navegación de secciones de derecha a izquierda (RTL Scroll).</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Perfeccionamiento de diagramas de seguridad (SVG fix).</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Actualización de manuales para entorno Enterprise Hardened.</li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* --- v5.7.18 --- */}
+                <div className="relative pl-8 border-l-2 border-primary/20 space-y-4 opacity-90">
+                  <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-muted border-4 border-background" />
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline">v5.7.18</Badge>
+                    <span className="text-xs font-black text-muted-foreground uppercase">27 de Febrero, 2026</span>
                   </div>
                   <div className="bg-muted/30 rounded-2xl p-6 space-y-4 border border-primary/10">
                     <h4 className="font-black text-sm uppercase text-primary">Refactor de Flujo en Ficha de Costo</h4>
@@ -868,7 +885,7 @@ export default function HelpView() {
            <button className="px-8 py-3 bg-background border border-border rounded-xl font-black text-xs uppercase tracking-widest hover:bg-primary hover:text-white transition-all">
              Abrir Ticket de Soporte
            </button>
-           <span className="text-[10px] font-bold text-muted-foreground">COSTPRO v5.7.18</span>
+           <span className="text-[10px] font-bold text-muted-foreground">COSTPRO v5.7.24</span>
         </div>
       </div>
     </div>
