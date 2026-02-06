@@ -122,7 +122,7 @@ export function IPVPreviewModal({ report, open, onOpenChange, onExportPDF }: Pro
                                 <div className="text-center">
                                     <div className="border-t-2 border-muted-foreground/30 pt-2">
                                         <p className="text-xs font-black uppercase text-muted-foreground">Realizado por</p>
-                                        <p className="text-[10px] font-medium opacity-50 mt-1">{report.firmas?.realizado_por || 'Sistema'}</p>
+                                        <p className="text-[10px] font-medium opacity-50 mt-1">{report.firmas?.realizado_por || ''}</p>
                                     </div>
                                 </div>
                                 <div className="text-center">
