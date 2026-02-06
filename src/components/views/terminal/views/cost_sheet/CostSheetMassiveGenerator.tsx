@@ -33,7 +33,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { ExportOptions } from './CostSheetExportModal';
-import JSZip from 'jszip';
 import { exportToExcel } from '@/services/export-service';
 import { exportMassiveTemplate, importMassiveProducts } from '@/services/excel-service';
 
@@ -309,6 +308,9 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
       status: 'pending'
     }));
     setResults(initialResults);
+
+    // Dynamic import to avoid CSP issues in initial load
+    const { default: JSZip } = await import('jszip');
 
     const zip = new JSZip();
     const blobs: { name: string, blob: Blob }[] = [];

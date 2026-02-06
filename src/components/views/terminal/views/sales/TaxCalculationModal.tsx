@@ -14,8 +14,6 @@ import { Transaction } from '@/types';
 import { useTaxes } from '@/hooks/api/useTaxes';
 import { useAuthStore } from '@/store';
 import { toast } from 'sonner';
-import jspdf from 'jspdf';
-import autoTable from 'jspdf-autotable';
 
 interface TaxCalculationModalProps {
   isOpen: boolean;
@@ -44,7 +42,10 @@ export const TaxCalculationModal = ({
     return tax.value;
   };
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
+    const { default: jspdf } = await import('jspdf');
+    const { default: autoTable } = await import('jspdf-autotable');
+
     const doc = new jspdf();
     const pageWidth = doc.internal.pageSize.getWidth();
 

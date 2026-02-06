@@ -8,6 +8,20 @@ const nextConfig: NextConfig = {
   },
   reactStrictMode: true,
   async headers() {
+    const isProd = process.env.NODE_ENV === 'production';
+
+    const cspDirectives = [
+      "default-src 'self'",
+      `script-src 'self' 'unsafe-inline' ${isProd ? '' : "'unsafe-eval'"} https://vercel.live https://vercel.com https://storage.googleapis.com`,
+      "worker-src 'self' blob:",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "img-src 'self' blob: data: https://wthkddeleylijmonclxg.supabase.co https://vercel.com https://vercel.live",
+      "font-src 'self' data: https://fonts.gstatic.com",
+      "connect-src 'self' https://wthkddeleylijmonclxg.supabase.co wss://wthkddeleylijmonclxg.supabase.co https://vercel.live https://vercel.com https://storage.googleapis.com",
+      "frame-src 'self' https://vercel.live https://vercel.com",
+      "frame-ancestors 'none'",
+    ];
+
     return [
       {
         source: '/(.*)',
@@ -38,17 +52,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: 'Content-Security-Policy',
-            value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' https://vercel.live https://vercel.com https://storage.googleapis.com",
-              "worker-src 'self' blob:",
-              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              "img-src 'self' blob: data: https://wthkddeleylijmonclxg.supabase.co https://vercel.com https://vercel.live",
-              "font-src 'self' data: https://fonts.gstatic.com",
-              "connect-src 'self' https://wthkddeleylijmonclxg.supabase.co wss://wthkddeleylijmonclxg.supabase.co https://vercel.live https://vercel.com https://storage.googleapis.com",
-              "frame-src 'self' https://vercel.live https://vercel.com",
-              "frame-ancestors 'none'",
-            ].join('; '),
+            value: cspDirectives.join('; ').replace(/\s{2,}/g, ' ').trim(),
           },
         ],
       },
