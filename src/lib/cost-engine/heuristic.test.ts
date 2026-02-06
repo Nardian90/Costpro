@@ -13,8 +13,8 @@ describe('Dependency Validation Heuristics', () => {
     const ficha: FichaJSON = {
       ...baseFicha,
       rows: [
-        { id: '1', classification: '1', label: 'Row A', formula: "ref('2')", formaCalculo: 'FORMULA', type: 'COST' },
-        { id: '2', classification: '2', label: 'Row B', formula: "ref('1')", formaCalculo: 'FORMULA', type: 'COST' },
+        { id: '1', classification: '1', label: 'Row A', formula: "ref('2')", calculation_method: 'FORMULA', type: 'COST' },
+        { id: '2', classification: '2', label: 'Row B', formula: "ref('1')", calculation_method: 'FORMULA', type: 'COST' },
       ]
     };
 
@@ -27,8 +27,8 @@ describe('Dependency Validation Heuristics', () => {
     const ficha: FichaJSON = {
       ...baseFicha,
       rows: [
-        { id: '1', classification: '1', label: 'Parent', formula: "sum(children)", formaCalculo: 'FORMULA', type: 'COST' },
-        { id: '1.1', parentId: '1', classification: '1.1', label: 'Child', formula: "ref('1') * 0.1", formaCalculo: 'FORMULA', type: 'COST' },
+        { id: '1', classification: '1', label: 'Parent', formula: "sum(children)", calculation_method: 'FORMULA', type: 'COST' },
+        { id: '1.1', parentId: '1', classification: '1.1', label: 'Child', formula: "ref('1') * 0.1", calculation_method: 'FORMULA', type: 'COST' },
       ]
     };
 
@@ -42,9 +42,9 @@ describe('Dependency Validation Heuristics', () => {
     const ficha: FichaJSON = {
       ...baseFicha,
       rows: [
-        { id: '1', classification: '1', label: 'Parent', formula: "sum(children)", formaCalculo: 'FORMULA', type: 'COST' },
-        { id: '1.1', parentId: '1', classification: '1.1', label: 'Child 1', valorHistorico: 100, formaCalculo: 'FIJO', type: 'COST' },
-        { id: '1.2', parentId: '1', classification: '1.2', label: 'Child 2', formula: "ref('1.1') * 0.5", formaCalculo: 'FORMULA', type: 'COST' },
+        { id: '1', classification: '1', label: 'Parent', formula: "sum(children)", calculation_method: 'FORMULA', type: 'COST' },
+        { id: '1.1', parentId: '1', classification: '1.1', label: 'Child 1', valor_historico: 100, calculation_method: 'FIJO', type: 'COST' },
+        { id: '1.2', parentId: '1', classification: '1.2', label: 'Child 2', formula: "ref('1.1') * 0.5", calculation_method: 'FORMULA', type: 'COST' },
       ]
     };
 
@@ -57,8 +57,8 @@ describe('Dependency Validation Heuristics', () => {
     const ficha: FichaJSON = {
       ...baseFicha,
       rows: [
-        { id: '1', classification: '1.1', label: 'Row in Sec 1', valorHistorico: 100, formaCalculo: 'FIJO', type: 'COST' },
-        { id: '2', classification: '2.1', label: 'Row in Sec 2', formula: "ref('1.1')", formaCalculo: 'FORMULA', type: 'COST' },
+        { id: '1', classification: '1.1', label: 'Row in Sec 1', valor_historico: 100, calculation_method: 'FIJO', type: 'COST' },
+        { id: '2', classification: '2.1', label: 'Row in Sec 2', formula: "ref('1.1')", calculation_method: 'FORMULA', type: 'COST' },
       ]
     };
 

@@ -8,7 +8,7 @@
  * @see {@link /src/types/cost-sheet.ts} - Definición original (ahora obsoleta)
  *
  * @author Jules
- * @version 1.0.0
+ * @version 1.1.0
  * @since 2024-01-22
  */
 
@@ -40,16 +40,15 @@ export interface CostSheetHeaderContract {
 export interface CostSheetRowContract {
   id: string;
   label: string;
-  valorHistorico: number;
+  valor_historico: number;
   value: number;
-  baseDeCalculoRef: string;
-  baseRef: string;
-  calculationMethod: 'Prorrateo' | 'ValorFijo' | 'FORMULA';
-  totalFormula: string;
+  base_ref: string;
+  calculation_method: 'Prorrateo' | 'ValorFijo' | 'FORMULA' | 'ANEXO';
+  total_formula: string;
   formula: string;
-  isPercent: boolean;
+  is_percent: boolean;
   children: CostSheetRowContract[];
-  helpText: string;
+  help_text: string;
   // Mantenemos flexibilidad para propiedades dinámicas, pero con un tipo más explícito.
   [key: string]: any;
 }
@@ -104,16 +103,15 @@ export const CostSheetRowFactory = {
   ): CostSheetRowContract => ({
     id: `row-${Math.random().toString(36).substr(2, 9)}`,
     label: '',
-    valorHistorico: 0,
+    valor_historico: 0,
     value: 0,
-    baseDeCalculoRef: '',
-    baseRef: '',
-    calculationMethod: 'Prorrateo',
-    totalFormula: '',
+    base_ref: '',
+    calculation_method: 'Prorrateo',
+    total_formula: '',
     formula: '',
-    isPercent: false,
+    is_percent: false,
     children: [],
-    helpText: '',
+    help_text: '',
     ...initialValues,
   }),
 };

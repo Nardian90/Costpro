@@ -11,7 +11,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import { toast } from 'sonner';
 import localforage from 'localforage';
 import demoFixture from '@/lib/cost-engine/fixtures/FC-DEMO-243.json';
-import { FichaJSON, FormaCalculo } from '@/lib/cost-engine/types';
+import { FichaJSON, CalculationMethod } from '@/lib/cost-engine/types';
 
 export default function CostEngineDemo() {
   const [ficha, setFicha] = useState<FichaJSON>(demoFixture as any);
@@ -196,8 +196,8 @@ export default function CostEngineDemo() {
                     </TableCell>
                     <TableCell>
                         <Select
-                            value={row.formaCalculo}
-                            onValueChange={(val: FormaCalculo) => handleRowChange(row.id, 'formaCalculo', val)}
+                            value={row.calculation_method}
+                            onValueChange={(val: CalculationMethod) => handleRowChange(row.id, 'calculation_method', val)}
                         >
                             <SelectTrigger className="h-8 text-xs">
                                 <SelectValue />
@@ -216,12 +216,12 @@ export default function CostEngineDemo() {
                             type="number"
                             step="0.01"
                             className="h-8 text-right font-mono"
-                            value={row.valorHistorico || 0}
-                            onChange={e => handleRowChange(row.id, 'valorHistorico', parseFloat(e.target.value) || 0)}
+                            value={row.valor_historico || 0}
+                            onChange={e => handleRowChange(row.id, 'valor_historico', parseFloat(e.target.value) || 0)}
                         />
                     </TableCell>
                     <TableCell className="text-right">
-                        {row.formaCalculo === 'COEFICIENTE' ? (
+                        {row.calculation_method === 'COEFICIENTE' ? (
                             <Input
                                 type="number"
                                 step="0.001"

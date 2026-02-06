@@ -13,16 +13,16 @@ export interface CostSheetHeader {
 export interface CostSheetRow {
   id: string;
   label: string;
-  valorHistorico?: number;
-  vhFormula?: string | null;
+  valor_historico?: number;
+  vh_formula?: string | null;
   value?: number;
-  baseDeCalculoRef?: string | null;
   base_ref?: string | null;
-  calculationMethod?: 'Prorrateo' | 'ValorFijo' | 'FORMULA' | 'ANEXO';
-  totalFormula?: string | null;
+  calculation_method?: 'Prorrateo' | 'ValorFijo' | 'FORMULA' | 'ANEXO';
+  total_formula?: string | null;
   formula?: string;
   is_percent?: boolean;
   children?: CostSheetRow[];
+  help_text?: string;
   [key: string]: any;
 }
 
@@ -66,16 +66,16 @@ export interface CostSheetData {
 }
 
 export interface CalculatedRowValue {
-  valorHistorico: number;
-  calculatedVH: number;
-  baseDeCalculoRef: string | null;
-  baseTotal: number;
-  baseValorHistorico: number;
+  valor_historico: number;
+  calculated_vh: number;
+  base_ref: string | null;
+  base_total: number;
+  base_valor_historico: number;
   coeficiente: number;
   total: number;
   fuente?: string;
   metadata?: Record<string, any>;
   audits?: any[];
-  hasWarnings?: boolean;
-  validationErrors?: { message: string, type: 'CRITICAL' | 'WARNING' | 'INFO', code: string }[];
+  has_warnings?: boolean;
+  validation_errors?: { message: string, type: 'CRITICAL' | 'WARNING' | 'INFO', code: string }[];
 }

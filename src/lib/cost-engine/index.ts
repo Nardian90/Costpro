@@ -8,6 +8,7 @@ import {
   CostRow,
   BaseRef,
   ValidationError,
+  CalculationMethod,
 } from './types';
 import { translateFormulaFromSpanish } from './formula-utils';
 
@@ -32,16 +33,16 @@ export function extractDependencies(row: CostRow, allRows: CostRow[]): string[] 
     }
   };
 
-  if (row.formaCalculo === 'FORMULA' && row.formula) {
+  if (row.calculation_method === 'FORMULA' && row.formula) {
     extractFromFormula(row.formula);
   }
 
-  if (row.vhFormula) {
-    extractFromFormula(row.vhFormula);
+  if (row.vh_formula) {
+    extractFromFormula(row.vh_formula);
   }
 
-  if (row.baseCalculo?.type === 'FILA') {
-    deps.push(row.baseCalculo.classification);
+  if (row.base_calculation?.type === 'FILA') {
+    deps.push(row.base_calculation.classification);
   }
 
   return deps;
@@ -77,7 +78,7 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
   ficha.rows.forEach((row) => {
     const deps = extractDependencies(row, ficha.rows);
 
-    if (row.formaCalculo === 'FORMULA' && row.formula) {
+    if (row.calculation_method === 'FORMULA' && row.formula) {
         try {
             const formulaStr = translateFormulaFromSpanish(row.formula.startsWith('=') ? row.formula.substring(1) : row.formula);
             parser.parse(formulaStr);
@@ -218,7 +219,7 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
         });
     });
 
-    const base = row.baseCalculo;
+    const base = row.base_calculation;
     if (base?.type === 'FILA') {
       if (!classifications.has(base.classification) && !ids.has(base.classification)) {
         const msg = `Referencia inexistente: ${base.classification}`;
@@ -234,7 +235,7 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
     }
 
     // Check ref() in formulas
-    if (row.formaCalculo === 'FORMULA' && row.formula) {
+    if (row.calculation_method === 'FORMULA' && row.formula) {
         const refMatches = row.formula.matchAll(/ref\(['"]([^'"]+)['"]\)/g);
         for (const match of refMatches) {
             const refId = match[1];
@@ -252,7 +253,7 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
       // 8.2 Taxes - Base imponible > 0 warning (semantic, done during calculation or here if VH)
       if (row.id === '13.2' || row.classification === '13.2') {
           const deps = adj.get(row.id) || [];
-          if (deps.length === 0 && (row.valorHistorico || 0) === 0 && row.formaCalculo === 'FIJO') {
+          if (deps.length === 0 && (row.valor_historico || 0) === 0 && row.calculation_method === 'FIJO') {
             validationErrors.push({
                 rowId: row.id,
                 message: "Advertencia: La base imponible para impuestos es 0.",
@@ -353,7 +354,7 @@ export function calculateFicha(
     calculatedRows.set(row.id, {
       ...row,
       total: 0,
-      calculatedVH: row.valorHistorico || 0,
+      calculated_vh: row.valor_historico || 0,
       audit: [],
     });
   });
@@ -395,7 +396,7 @@ export function calculateFicha(
       }
       const val = targets.reduce((acc, t) => {
           const calculated = calculatedRows.get(t.id);
-          return acc.plus(new Decimal(calculated?.calculatedVH || t.valorHistorico || 0));
+          return acc.plus(new Decimal(calculated?.calculated_vh || t.valor_historico || 0));
       }, new Decimal(0));
       return val.toNumber();
   };
@@ -437,10 +438,10 @@ export function calculateFicha(
     let baseTotalValue = new Decimal(0);
     let baseHistValue = new Decimal(0);
     let type: AuditEntry['type'] = 'INFO';
-    let fuenteParts: string[] = [row.formaCalculo];
+    let fuenteParts: string[] = [row.calculation_method];
 
     const currentCalculated = currentRows.get(row.id);
-    const vh = new Decimal(currentCalculated?.calculatedVH || row.valorHistorico || 0);
+    const vh = new Decimal(currentCalculated?.calculated_vh || row.valor_historico || 0);
 
     // Resolve Rules
     const activeRules = (ficha.rules || [])
@@ -454,20 +455,20 @@ export function calculateFicha(
 
     const ruleOverride = activeRules[0];
     let formulaToUse = row.formula;
-    let formaCalculoToUse = row.formaCalculo;
+    let calculationMethodToUse = row.calculation_method;
 
     if (ruleOverride) {
         if (ruleOverride.formulaOverride) {
             formulaToUse = ruleOverride.formulaOverride;
-            formaCalculoToUse = 'FORMULA';
+            calculationMethodToUse = 'FORMULA';
             note += `Rule '${ruleOverride.name}' v${ruleOverride.version} applied. `;
             type = 'RULE_APPLIED';
         }
     }
 
-    const base = row.baseCalculo;
+    const base = row.base_calculation;
 
-    switch (formaCalculoToUse) {
+    switch (calculationMethodToUse) {
       case 'FIJO':
         total = vh;
         note += `Used VH ${vh.toFixed(decimals)}.`;
@@ -523,13 +524,13 @@ export function calculateFicha(
             targets.forEach(t => {
                 const calculated = currentRows.get(t.id);
                 baseTotalValue = baseTotalValue.plus(new Decimal(calculated?.total || 0));
-                baseHistValue = baseHistValue.plus(new Decimal(t.valorHistorico || 0));
+                baseHistValue = baseHistValue.plus(new Decimal(t.valor_historico || 0));
             });
             baseRefName = `Fila:${base.classification}`;
         }
         fuenteParts.push(baseRefName);
 
-        if (formaCalculoToUse === 'PRORRATEO') {
+        if (calculationMethodToUse === 'PRORRATEO') {
             if (baseHistValue.isZero()) {
                 total = new Decimal(0);
                 type = 'WARNING';
@@ -629,26 +630,26 @@ export function calculateFicha(
       const current = calculatedRows.get(row.id)!;
 
       // Calculate VH if formula exists
-      if (row.vhFormula) {
+      if (row.vh_formula) {
         try {
-            const vhFormulaStrRaw = row.vhFormula.trim().startsWith('=')
-              ? row.vhFormula.trim().substring(1)
-              : row.vhFormula;
+            const vhFormulaStrRaw = row.vh_formula.trim().startsWith('=')
+              ? row.vh_formula.trim().substring(1)
+              : row.vh_formula;
             const vhFormulaStr = translateFormulaFromSpanish(vhFormulaStrRaw);
             const vhExpr = parser.parse(vhFormulaStr);
 
             const vhContext: any = {
-                VH: row.valorHistorico || 0,
+                VH: row.valor_historico || 0,
                 QUANTITY: ficha.meta.quantity || 0,
                 cantidad: ficha.meta.quantity || 0,
                 header: {
                 },
                 children: ficha.rows
                     .filter(r => r.parentId === row.id)
-                    .map(r => calculatedRows.get(r.id)?.calculatedVH || r.valorHistorico || 0),
+                    .map(r => calculatedRows.get(r.id)?.calculated_vh || r.valor_historico || 0),
                 hijos: ficha.rows
                     .filter(r => r.parentId === row.id)
-                    .map(r => calculatedRows.get(r.id)?.calculatedVH || r.valorHistorico || 0)
+                    .map(r => calculatedRows.get(r.id)?.calculated_vh || r.valor_historico || 0)
             };
 
             annexTotals.forEach((total, id) => {
@@ -660,8 +661,8 @@ export function calculateFicha(
             });
 
             const vhResult = new Decimal(vhExpr.evaluate(vhContext)).toDecimalPlaces(decimals).toNumber();
-            if (vhResult !== current.calculatedVH) {
-                current.calculatedVH = vhResult;
+            if (vhResult !== current.calculated_vh) {
+                current.calculated_vh = vhResult;
                 converged = false;
             }
         } catch (e) {
@@ -696,8 +697,8 @@ export function calculateFicha(
             });
             current.total = finalTotal;
             current.fuente = fuente;
-            current.baseTotal = baseTotal.toNumber();
-            current.baseHist = baseHist.toNumber();
+            current.base_total = baseTotal.toNumber();
+            current.base_hist = baseHist.toNumber();
         }
       }
     });

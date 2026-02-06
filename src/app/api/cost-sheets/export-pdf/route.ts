@@ -120,8 +120,8 @@ export async function POST(req: NextRequest) {
         const rowData = filteredRows.map(r => [
             r.classification,
             r.label.toUpperCase(),
-            r.formaCalculo,
-            r.valorHistorico?.toLocaleString('es-ES', { minimumFractionDigits: 2 }) || '0.00',
+            r.calculation_method,
+            r.valor_historico?.toLocaleString('es-ES', { minimumFractionDigits: 2 }) || '0.00',
             r.total.toLocaleString('es-ES', { minimumFractionDigits: 2 })
         ]);
 

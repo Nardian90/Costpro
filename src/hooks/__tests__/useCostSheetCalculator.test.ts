@@ -33,22 +33,22 @@ describe('useCostSheetCalculator', () => {
       sections: [{
         id: 's1',
         label: 'Section 1',
-        rows: [{ id: 'r1', label: 'Row 1', valorHistorico: 500, calculationMethod: 'ValorFijo' }]
+        rows: [{ id: 'r1', label: 'Row 1', valor_historico: 500, calculation_method: 'ValorFijo' }]
       }]
     };
     const { result } = renderHook(() => useCostSheetCalculator(template));
     expect(result.current.calculatedValues['r1'].total).toBe(500);
   });
 
-  it('should handle zero and large numbers for valorHistorico', () => {
+  it('should handle zero and large numbers for valor_historico', () => {
     const template: CostSheetData = {
       ...baseTemplate,
       sections: [{
         id: 's1',
         label: 'Section 1',
         rows: [
-          { id: 'r1', label: 'Row 1', valorHistorico: 0, calculationMethod: 'ValorFijo' },
-          { id: 'r2', label: 'Row 2', valorHistorico: 999999999, calculationMethod: 'ValorFijo' }
+          { id: 'r1', label: 'Row 1', valor_historico: 0, calculation_method: 'ValorFijo' },
+          { id: 'r2', label: 'Row 2', valor_historico: 999999999, calculation_method: 'ValorFijo' }
         ]
       }]
     };
@@ -64,7 +64,7 @@ describe('useCostSheetCalculator', () => {
             id: 's1',
             label: 'Section 1',
             rows: [
-                { id: 'r1', label: 'Row 1', valorHistorico: 1000, calculationMethod: 'ValorFijo' },
+                { id: 'r1', label: 'Row 1', valor_historico: 1000, calculation_method: 'ValorFijo' },
                 { id: 'r2', label: 'Row 2', formula: 'ref("r1") * 0.2' }
             ]
         }]
@@ -83,8 +83,8 @@ describe('useCostSheetCalculator', () => {
           id: 'parent',
           label: 'Parent',
           children: [
-            { id: 'c1', label: 'Child 1', valorHistorico: 150, calculationMethod: 'ValorFijo' },
-            { id: 'c2', label: 'Child 2', valorHistorico: 250, calculationMethod: 'ValorFijo' }
+            { id: 'c1', label: 'Child 1', valor_historico: 150, calculation_method: 'ValorFijo' },
+            { id: 'c2', label: 'Child 2', valor_historico: 250, calculation_method: 'ValorFijo' }
           ]
         }]
       }]
@@ -100,13 +100,13 @@ describe('useCostSheetCalculator', () => {
         id: 's1',
         label: 'Prorrateo Section',
         rows: [
-          { id: 'base_row', label: 'Base Row', valorHistorico: 10000, calculationMethod: 'ValorFijo' },
+          { id: 'base_row', label: 'Base Row', valor_historico: 10000, calculation_method: 'ValorFijo' },
           {
             id: 'prorrateo_row',
             label: 'Prorrateo Row',
-            valorHistorico: 2000,
-            calculationMethod: 'Prorrateo',
-            baseDeCalculoRef: 'base_row' // Referencing another row
+            valor_historico: 2000,
+            calculation_method: 'Prorrateo',
+            base_ref: 'base_row' // Referencing another row
           }
         ]
       }],
@@ -135,9 +135,9 @@ describe('useCostSheetCalculator', () => {
             rows: [{
                 id: 'annex_prorrateo',
                 label: 'Annex Prorrateo Row',
-                valorHistorico: 500,
-                calculationMethod: 'Prorrateo',
-                baseDeCalculoRef: 'annex1' // Referencing an annex
+                valor_historico: 500,
+                calculation_method: 'Prorrateo',
+                base_ref: 'annex1' // Referencing an annex
             }]
         }]
     };
@@ -176,8 +176,8 @@ describe('useCostSheetCalculator', () => {
             id: 's1',
             label: 'Section 1',
             rows: [
-                { id: 'r1', label: 'Row 1', formula: '100', calculationMethod: 'FORMULA' },
-                { id: 'r2', label: 'Row 2', formula: '0', calculationMethod: 'FORMULA' }
+                { id: 'r1', label: 'Row 1', formula: '100', calculation_method: 'FORMULA' },
+                { id: 'r2', label: 'Row 2', formula: '0', calculation_method: 'FORMULA' }
             ]
         }]
     };

@@ -13,36 +13,32 @@ describe('Cost Engine - Topological Sorting & DAGs', () => {
             classification: '13.1',
             label: 'Utilidad',
             type: 'MARGIN',
-            formaCalculo: 'FIJO',
-            valorHistorico: 5000,
-            audit: []
+            calculation_method: 'FIJO',
+            valor_historico: 5000
         },
         {
             id: '13.2',
             classification: '13.2',
             label: 'Precio antes de Impuesto',
             type: 'INFO',
-            formaCalculo: 'FORMULA',
-            formula: "ref('13.1') + 10000",
-            audit: []
+            calculation_method: 'FORMULA',
+            formula: "ref('13.1') + 10000"
         },
         {
             id: '13.3',
             classification: '13.3',
             label: 'Imp s/Ventas y Serv',
             type: 'TAX',
-            formaCalculo: 'FORMULA',
-            formula: "ref('14.1') - ref('13.2')",
-            audit: []
+            calculation_method: 'FORMULA',
+            formula: "ref('14.1') - ref('13.2')"
         },
         {
             id: '14.1',
             classification: '14.1',
             label: 'Precio o Tarifa Final',
             type: 'INFO',
-            formaCalculo: 'FORMULA',
-            formula: "ref('13.2') / 0.9",
-            audit: []
+            calculation_method: 'FORMULA',
+            formula: "ref('13.2') / 0.9"
         }
       ],
       anexos: []
@@ -81,9 +77,8 @@ describe('Cost Engine - Topological Sorting & DAGs', () => {
             classification: '13.1',
             label: 'Utilidad',
             type: 'MARGIN',
-            formaCalculo: 'FORMULA',
-            formula: "ref('13.1') * 1.1", // SELF REFERENCE
-            audit: []
+            calculation_method: 'FORMULA',
+            formula: "ref('13.1') * 1.1" // SELF REFERENCE
         }
       ],
       anexos: []
