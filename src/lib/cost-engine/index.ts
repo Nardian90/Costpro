@@ -381,7 +381,7 @@ export function calculateFicha(
     if (targets.length === 0) return null;
     const row = targets[0];
     if (field === 'total') return calculatedRows.get(row.id)?.total || 0;
-    if (field === 'valorHistorico') return calculatedRows.get(row.id)?.calculatedVH || row.valorHistorico || 0;
+    if (field === 'valorHistorico') return calculatedRows.get(row.id)?.calculated_vh || row.valor_historico || 0;
     return (row as any)[field] || null;
   };
 
@@ -685,7 +685,7 @@ export function calculateFicha(
                 converged = false;
             }
         } catch (e) {
-            // keep existing calculatedVH or fallback
+            // keep existing calculated_vh or fallback
         }
       }
 
