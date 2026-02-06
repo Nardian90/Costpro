@@ -238,8 +238,8 @@ export default function InventoryAdjustmentModal({
                     type="button"
                     onClick={() => setReason(r)}
                     className={cn(
-                      "px-3 py-1.5 rounded-full text-[9px] font-bold uppercase border transition-all active:scale-95",
-                      reason === r ? "bg-primary text-white border-primary" : "bg-muted text-muted-foreground border-border"
+                      "px-4 py-3 min-h-[44px] rounded-full text-[10px] font-bold uppercase border transition-all active:scale-95 flex items-center justify-center",
+                      reason === r ? "bg-primary text-white border-primary shadow-lg shadow-primary/20" : "bg-muted text-muted-foreground border-border hover:bg-muted/80"
                     )}
                   >
                     {r}
@@ -299,19 +299,19 @@ export default function InventoryAdjustmentModal({
 
       {/* Footer */}
       <div className={cn(
-        "p-6 border-t border-white/5 bg-muted/10 flex gap-4",
-        isMobile && "fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-md z-10"
+        "p-6 border-t border-white/5 bg-muted/10 flex gap-4 items-center",
+        isMobile && "fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-md z-10 h-24"
       )}>
         <button
           onClick={onClose}
-          className="neu-btn flex-1 !py-3 font-black uppercase text-xs tracking-widest"
+          className="neu-btn flex-1 h-14 font-black uppercase text-xs tracking-widest"
           disabled={isProcessing}
         >
           Cancelar
         </button>
         <button
           onClick={handleConfirm}
-          className="neu-btn-primary flex-1 flex items-center justify-center gap-2 !py-3 font-black uppercase text-xs tracking-widest"
+          className="neu-btn-primary flex-1 flex items-center justify-center gap-2 h-14 font-black uppercase text-xs tracking-widest"
           disabled={isProcessing}
         >
           {isProcessing ? (

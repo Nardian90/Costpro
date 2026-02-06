@@ -71,7 +71,10 @@ const StickyCartSummary = ({
              <div className="p-2 bg-primary/10 rounded-lg">
                 <ShoppingCart className="w-6 h-6 text-primary" />
              </div>
-             <span className="absolute -top-2 -right-2 bg-primary text-white text-[10px] font-black w-6 h-6 flex items-center justify-center rounded-full border-2 border-background shadow-sm">
+             <span
+               key={itemCount}
+               className="absolute -top-2 -right-2 bg-primary text-white text-[10px] font-black w-6 h-6 flex items-center justify-center rounded-full border-2 border-background shadow-sm neu-pulse"
+             >
                {itemCount}
              </span>
           </div>
