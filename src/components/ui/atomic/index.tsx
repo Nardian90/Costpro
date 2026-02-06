@@ -1,9 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn, resolveProductImage, formatCurrency } from '@/lib/utils';
 import { Slot } from '@radix-ui/react-slot';
-import { LucideIcon, Search, X, Edit, DollarSign, Package, Trash2, RefreshCw } from 'lucide-react';
+import { LucideIcon, Search, X, Edit, DollarSign, Package, Trash2, RefreshCw, Check } from 'lucide-react';
 import ProductImage from '../ProductImage';
 import { HorizontalScroll } from '../HorizontalScroll';
 import type { Product } from '@/types';
@@ -176,20 +177,44 @@ export const CategoryChips: React.FC<{
 export const ProductCard: React.FC<ProductCardProps> = ({
   product, onEdit, onViewPrices, onDelete, onToggleActive, onClick, className, variant = 'catalog'
 }) => {
+  const [isAdded, setIsAdded] = useState(false);
   const isOutOfStock = product.stock_current <= 0;
   const isLowStock = product.stock_current <= (product.min_stock || 0);
 
   if (variant === 'pos') {
     return (
-      <button
+      <motion.button
+        whileTap={{ scale: 0.95 }}
         type="button"
-        onClick={() => !isOutOfStock && onClick?.(product)}
+        onClick={() => {
+          if (!isOutOfStock) {
+            onClick?.(product);
+            setIsAdded(true);
+            setTimeout(() => setIsAdded(false), 800);
+          }
+        }}
         className={cn(
-          "flex flex-row items-center gap-4 p-3 rounded-2xl border border-border bg-card transition-all w-full text-left",
+          "flex flex-row items-center gap-4 p-3 rounded-2xl border border-border bg-card transition-all w-full text-left relative overflow-hidden",
           isOutOfStock ? "opacity-60 cursor-not-allowed" : "hover:shadow-md active:scale-[0.98]",
+          isAdded && "border-primary ring-2 ring-primary/20 bg-primary/5",
           className
         )}
       >
+        <AnimatePresence>
+          {isAdded && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.5 }}
+              className="absolute top-2 right-2 z-10"
+            >
+               <div className="bg-primary text-white p-1 rounded-full shadow-lg">
+                  <Check className="w-3 h-3 stroke-[4]" />
+               </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0 bg-muted">
            <ProductImage src={resolveProductImage(product)} alt={product.name} name={product.name} className="w-full h-full object-cover" />
         </div>
@@ -197,7 +222,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <h4 className="font-black text-xs uppercase truncate mb-1">{product.name}</h4>
           <div className="text-lg font-black text-primary">{formatCurrency(product.price)}</div>
         </div>
-      </button>
+      </motion.button>
     );
   }
 

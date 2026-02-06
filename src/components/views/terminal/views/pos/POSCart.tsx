@@ -2,10 +2,12 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ShoppingCart, X, Trash2, Minus, Plus, DollarSign, CreditCard, Check } from 'lucide-react';
+import { ShoppingCart, X, Trash2, Minus, Plus, DollarSign, CreditCard, Check, AlertCircle } from 'lucide-react';
 import { CostProLoader } from '@/components/ui/CostProLoader';
 import { cn, formatCurrency } from '@/lib/utils';
 import { toast } from 'sonner';
+import { BaseModal } from '@/components/ui/BaseModal';
+import { PrimaryButton, SecondaryButton } from '@/components/ui/atomic';
 import { PaymentMethod, TaxConfiguration } from '@/types';
 import { useIsMobile } from '@/hooks/ui/useMobile';
 import { useTaxes } from '@/hooks/api/useTaxes';
@@ -49,6 +51,7 @@ export const POSCart = ({
   const { user } = useAuthStore();
   const { data: taxes = [] } = useTaxes(user?.activeStoreId);
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>('cash');
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
   const isMobile = useIsMobile();
 
   const Container = isMobile ? 'div' : motion.div;
@@ -252,16 +255,47 @@ export const POSCart = ({
                 </button>
 
                 <button
-                  onClick={() => {
-                    if (confirm('¿Anular el carrito?')) {
-                      onClearCart();
-                      onClose();
-                    }
-                  }}
-                  className="w-full py-2 text-[10px] font-black text-foreground uppercase tracking-widest hover:text-destructive transition-colors"
+                  onClick={() => setShowClearConfirm(true)}
+                  className="w-full py-3 min-h-[44px] text-xs font-black text-foreground uppercase tracking-widest hover:text-destructive transition-all active:scale-95 flex items-center justify-center gap-2"
                 >
+                  <Trash2 className="w-3 h-3" />
                   Anular Carrito
                 </button>
+
+                <BaseModal
+                  open={showClearConfirm}
+                  onOpenChange={setShowClearConfirm}
+                  title={
+                    <div className="flex items-center gap-2 text-destructive">
+                      <AlertCircle className="w-5 h-5" />
+                      Anular Carrito
+                    </div>
+                  }
+                  footer={
+                    <div className="flex gap-3 w-full">
+                      <SecondaryButton
+                        label="Volver"
+                        onClick={() => setShowClearConfirm(false)}
+                        className="flex-1"
+                      />
+                      <PrimaryButton
+                        label="Anular Todo"
+                        onClick={() => {
+                          onClearCart();
+                          onClose();
+                          setShowClearConfirm(false);
+                        }}
+                        className="flex-1 bg-destructive hover:bg-destructive/90 text-white shadow-destructive/20"
+                      />
+                    </div>
+                  }
+                >
+                  <div className="py-4 text-center">
+                    <p className="text-muted-foreground font-medium">
+                      ¿Estás seguro de que deseas vaciar el carrito actual? Esta acción no se puede deshacer.
+                    </p>
+                  </div>
+                </BaseModal>
               </div>
             </>
           )}
