@@ -68,7 +68,7 @@ export const POSCart = ({
     >
       <div className={cn(
         "border border-primary/20 bg-card overflow-hidden",
-        isMobile ? "rounded-t-2xl h-[85vh] flex flex-col" : "rounded-xl shadow-2xl"
+        isMobile ? "rounded-t-3xl h-[88vh] flex flex-col shadow-2xl" : "rounded-xl shadow-2xl"
       )}>
         <div className="bg-primary p-6 flex items-center justify-between text-white">
           <h3 className="font-black text-lg uppercase tracking-widest flex items-center gap-3">
@@ -80,16 +80,16 @@ export const POSCart = ({
           </button>
         </div>
 
-        <div className={cn("flex-1 flex flex-col overflow-hidden")}>
+        <div className={cn("flex-1 flex flex-col min-h-0 overflow-hidden")}>
           {items.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center p-6 text-muted-foreground">
-              <ShoppingCart className="w-20 h-20 mx-auto mb-6 opacity-5" />
+              <ShoppingCart className="w-20 h-20 mx-auto mb-6 opacity-10" />
               <p className="font-black uppercase tracking-widest text-sm text-center">Carrito Vacío</p>
             </div>
           ) : (
             <>
-              <div className="flex-1 relative overflow-hidden">
-                <div className={cn("h-full overflow-y-auto p-6 no-scrollbar", !isMobile && "max-h-[45vh]")}>
+              <div className="flex-1 relative min-h-0 overflow-hidden">
+                <div className={cn("h-full overflow-y-auto p-4 sm:p-6", !isMobile && "max-h-[45vh]")}>
                   <div className="space-y-4 pr-2 pb-8">
                     {items.map(item => (
                     <div key={`${item.product_id}-${item.variant_id}`} className="p-4 rounded-lg border border-border bg-background/50 group relative">
@@ -133,7 +133,7 @@ export const POSCart = ({
               </div>
 
               <div className={cn(
-                "p-6 space-y-6 border-t border-border bg-card",
+                "p-4 sm:p-6 space-y-4 sm:space-y-6 border-t border-border bg-card",
                 isMobile && "pb-10 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] rounded-t-3xl"
               )}>
                 {/* Descuento Section */}

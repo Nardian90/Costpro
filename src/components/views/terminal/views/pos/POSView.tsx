@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { ShoppingCart, Search, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 import { toast } from 'sonner';
 import SearchBar from '@/components/ui/SearchBar';
 import ActionMenu from '@/components/ui/ActionMenu';
@@ -11,7 +11,7 @@ import POSTableView from './POSTableView';
 import ViewSwitcher from '@/components/ui/ViewSwitcher';
 import { StateRenderer } from '@/components/ui/StateRenderer';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { usePOSProducts } from '@/hooks/logic/usePOSProducts';
 import { useIsMobile } from '@/hooks/ui/useMobile';
 import {
@@ -39,6 +39,63 @@ const EmptyProductsComponent = ({ onClearSearch }: { onClearSearch?: () => void 
     )}
   </div>
 );
+
+const StickyCartSummary = ({
+  itemCount,
+  total,
+  onClick,
+  onCheckout,
+  isProcessing
+}: {
+  itemCount: number;
+  total: number;
+  onClick: () => void;
+  onCheckout: () => void;
+  isProcessing: boolean;
+}) => {
+  if (itemCount === 0) return null;
+
+  return (
+    <motion.div
+      initial={{ y: 100 }}
+      animate={{ y: 0 }}
+      exit={{ y: 100 }}
+      className="fixed bottom-0 left-0 right-0 z-[60] p-4 bg-background/80 backdrop-blur-lg border-t border-primary/20 sm:hidden"
+    >
+      <div className="flex items-center gap-3">
+        <button
+          onClick={onClick}
+          className="flex-1 flex items-center gap-3 p-3 rounded-2xl bg-card border border-border shadow-xl active:scale-95 transition-all"
+        >
+          <div className="relative">
+             <div className="p-2 bg-primary/10 rounded-lg">
+                <ShoppingCart className="w-6 h-6 text-primary" />
+             </div>
+             <span className="absolute -top-2 -right-2 bg-primary text-white text-[10px] font-black w-6 h-6 flex items-center justify-center rounded-full border-2 border-background shadow-sm">
+               {itemCount}
+             </span>
+          </div>
+          <div className="flex flex-col items-start overflow-hidden">
+             <span className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">Carrito Total</span>
+             <span className="text-base font-black text-foreground truncate">{formatCurrency(total)}</span>
+          </div>
+        </button>
+
+        <button
+          onClick={onCheckout}
+          disabled={isProcessing}
+          className="bg-primary text-white h-[58px] px-8 rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg shadow-primary/20 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center min-w-[120px]"
+        >
+          {isProcessing ? (
+            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          ) : (
+            'Pagar'
+          )}
+        </button>
+      </div>
+    </motion.div>
+  );
+};
 
 const POSLoadingSkeleton = ({ layoutMode }: { layoutMode: 'grid' | 'table' }) => {
   if (layoutMode === 'table') {
@@ -103,7 +160,7 @@ export default function POSView() {
   const { filteredProducts, categories, selectedCategory, handleCategoryChange, isPending } = usePOSProducts(products, searchTerm);
 
   return (
-    <div className="space-y-6">
+    <div className={cn("space-y-6", isMobile && getItemCount() > 0 && "pb-24")}>
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase hidden sm:block">TPV</h2>
@@ -154,7 +211,7 @@ export default function POSView() {
 
         {isMobile && (
           <Drawer open={showCart} onOpenChange={setShowCart}>
-            <DrawerContent className="p-0 border-none bg-transparent max-h-[85vh]">
+            <DrawerContent className="p-0 border-none bg-transparent max-h-[92vh]">
               <POSCart
                 items={items}
                 onRemoveItem={removeItem}
@@ -271,7 +328,22 @@ export default function POSView() {
         </div>
       </div>
 
-      {isMobile && (
+      <AnimatePresence>
+        {isMobile && getItemCount() > 0 && !showCart && (
+          <StickyCartSummary
+            itemCount={getItemCount()}
+            total={getTotal()}
+            onClick={() => setShowCart(true)}
+            onCheckout={() => {
+              // On checkout from sticky bar, we could open the cart or go directly to default payment
+              setShowCart(true);
+            }}
+            isProcessing={isProcessingSale}
+          />
+        )}
+      </AnimatePresence>
+
+      {isMobile && getItemCount() === 0 && (
         <ActionMenu
           actions={[
             {
