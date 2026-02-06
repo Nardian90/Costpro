@@ -53,7 +53,7 @@ interface CostSheetMassiveGeneratorProps {
 }
 
 export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps> = ({
-  isOpen,
+  isOpen, // Still used for compatibility but we will make it a section
   onClose
 }) => {
   const { data: currentSheet } = useCostSheetStore();
@@ -65,6 +65,9 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
   const [results, setResults] = useState<MassiveResult[]>([]);
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [importedProducts, setImportedProducts] = useState<any[]>([]);
+  const [selectedSkus, setSelectedSkus] = useState<Set<string>>(new Set());
+  const [searchTerm, setSearchTerm] = useState('');
+
   const [exportOptions, setExportOptions] = useState<ExportOptions>({
     includeFC: true,
     includeAudit: false,
@@ -84,10 +87,40 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
     1000 // High limit for massive generation
   );
 
-  const products = useMemo(() => {
+  const allAvailableProducts = useMemo(() => {
     if (importedProducts.length > 0) return importedProducts;
     return inventoryData?.pages.flatMap(page => page.products) || [];
   }, [inventoryData, importedProducts]);
+
+  const filteredProducts = useMemo(() => {
+    if (!searchTerm) return allAvailableProducts;
+    return allAvailableProducts.filter(p =>
+      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+  }, [allAvailableProducts, searchTerm]);
+
+  const selectedProducts = useMemo(() => {
+    return allAvailableProducts.filter(p => selectedSkus.has(p.sku || p.id));
+  }, [allAvailableProducts, selectedSkus]);
+
+  const toggleSelectAll = () => {
+    if (selectedSkus.size === filteredProducts.length) {
+      setSelectedSkus(new Set());
+    } else {
+      setSelectedSkus(new Set(filteredProducts.map(p => p.sku || p.id)));
+    }
+  };
+
+  const toggleSelect = (sku: string) => {
+    const newSelected = new Set(selectedSkus);
+    if (newSelected.has(sku)) {
+      newSelected.delete(sku);
+    } else {
+      newSelected.add(sku);
+    }
+    setSelectedSkus(newSelected);
+  };
 
   const handleImportClick = () => {
     fileInputRef.current?.click();
@@ -198,7 +231,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                         classification: "1.1", // Standard for raw material
                         code: product.sku || product.id,
                         description: product.name,
-                    um: product.unit_of_measure || "u",
+                        um: product.unit_of_measure || "u",
                         consumption_norm: 1,
                         price: product.price || 0,
                         importe: product.price || 0,
@@ -207,7 +240,8 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                 ]
             };
         }
-        if (product.cost > 0 && (a.id === 'IV' || a.id === '4')) {
+        const costPrice = product.cost_price ?? product.cost ?? 0;
+        if (costPrice > 0 && (a.id === 'IV' || a.id === '4')) {
             const existingRows = (a.data || []).map((d: any) => ({
                 ...d,
                 classification: String(d.classification || d.label || '').split(' - ')[0].trim(),
@@ -222,8 +256,8 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                         classification: "3.1.3", // Contracted services/Other
                         code: "FIXED_COST",
                         description: `Costo Fijo Importado: ${product.name}`,
-                        amount: product.cost,
-                        importe: product.cost
+                        amount: costPrice,
+                        importe: costPrice
                     }
                 ]
             };
@@ -257,14 +291,16 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
   }, []);
 
   const runMassiveGeneration = async () => {
-    if (products.length === 0) {
-      toast.error("No hay productos cargados para procesar.");
+    const toProcess = selectedSkus.size > 0 ? selectedProducts : allAvailableProducts;
+
+    if (toProcess.length === 0) {
+      toast.error("No hay productos seleccionados para procesar.");
       return;
     }
 
     setIsProcessing(true);
     isProcessingRef.current = true;
-    const initialResults: MassiveResult[] = products.map(p => ({
+    const initialResults: MassiveResult[] = toProcess.map(p => ({
       sku: p.sku || 'N/A',
       name: p.name,
       cost: 0,
@@ -277,14 +313,14 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
     const zip = new JSZip();
     const blobs: { name: string, blob: Blob }[] = [];
 
-    for (let i = 0; i < products.length; i++) {
+    for (let i = 0; i < toProcess.length; i++) {
       if (!isProcessingRef.current) {
         toast.info("Proceso cancelado por el usuario");
         break;
       }
 
       setCurrentIndex(i);
-      const product = products[i];
+      const product = toProcess[i];
 
       try {
         setResults(prev => prev.map((r, idx) => idx === i ? { ...r, status: 'processing' } : r));
@@ -307,11 +343,9 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
 
         if (response.ok) {
           const blob = await response.blob();
-          const fileName = `${product.sku || product.name || 'ficha'}.pdf`;
+          const fichaCode = result.metadata?.header?.code || product.sku || product.id || 'ficha';
+          const fileName = `${fichaCode}/${fichaCode}.pdf`;
           blobs.push({ name: fileName, blob });
-
-          // If only 1 or 2 products, we can download immediately or wait
-          // But user wants a zip if more than 2. Let's always collect and decide at the end.
         } else {
             throw new Error("Failed to generate PDF");
         }
@@ -330,7 +364,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
         setResults(prev => prev.map((r, idx) => idx === i ? { ...r, status: 'error', error: error.message } : r));
       }
 
-      setProgress(((i + 1) / products.length) * 100);
+      setProgress(((i + 1) / toProcess.length) * 100);
 
       // Small delay to prevent blocking the UI thread and allow browser to breathe
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -396,33 +430,32 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
       setIsProcessing(false);
   };
 
-  return (
-    <Dialog open={isOpen} onOpenChange={(open) => !isProcessing && !open && onClose()}>
-      <input
-        type="file"
-        ref={fileInputRef}
-        onChange={handleFileChange}
-        accept=".xlsx,.xls"
-        className="hidden"
-      />
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col overflow-hidden bg-sidebar/95 backdrop-blur-2xl border-sidebar-border shadow-2xl rounded-3xl">
-        <DialogHeader className="p-6 border-b border-sidebar-border/50">
+  const content = (
+    <div className="flex flex-col h-full bg-sidebar/50 backdrop-blur-xl border border-sidebar-border/50 shadow-2xl rounded-3xl overflow-hidden animate-in fade-in duration-500">
+        <div className="p-6 border-b border-sidebar-border/50 flex items-center justify-between bg-sidebar/30">
           <div className="flex items-center gap-4">
              <div className="p-3 rounded-2xl bg-primary/10">
                 <FileSpreadsheet className="w-6 h-6 text-primary" />
              </div>
              <div>
-                <DialogTitle className="text-xl font-black uppercase tracking-tight text-foreground">
+                <h2 className="text-xl font-black uppercase tracking-tight text-foreground">
                     Generación Masiva de Fichas
-                </DialogTitle>
-                <DialogDescription className="text-muted-foreground font-medium">
-                    Crea fichas de costo para todos los productos del catálogo usando la configuración actual.
-                </DialogDescription>
+                </h2>
+                <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest">
+                    Crea fichas de costo automatizadas para tu catálogo
+                </p>
              </div>
           </div>
-        </DialogHeader>
+          {!isOpen && (
+              <div className="flex gap-2">
+                  <Button variant="outline" size="sm" className="rounded-xl h-10 font-black uppercase tracking-widest text-[10px]" onClick={onClose}>
+                      Cerrar Vista
+                  </Button>
+              </div>
+          )}
+        </div>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
+        <div className="flex-1 overflow-y-auto p-6 space-y-8 no-scrollbar">
             {/* Source Selection */}
             <div className="space-y-4">
                 <div className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/70 mb-2 px-1">
@@ -480,11 +513,11 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                                 <div className="mt-4 pt-4 border-t border-primary/10 w-full flex justify-center">
                                     <Button
                                         onClick={runMassiveGeneration}
-                                        disabled={isProcessing || products.length === 0}
+                                        disabled={isProcessing || allAvailableProducts.length === 0}
                                         className="rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground font-black uppercase tracking-widest px-12 h-12 shadow-lg shadow-primary/20 scale-110"
                                     >
                                         <Play className="w-4 h-4 mr-2" />
-                                        Comenzar Procesamiento
+                                        {selectedSkus.size > 0 ? `Procesar Seleccionados (${selectedSkus.size})` : "Procesar Todo el Catálogo"}
                                     </Button>
                                 </div>
                             </div>
@@ -524,11 +557,11 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                                 <div className="ml-4 pl-4 border-l border-success/20">
                                     <Button
                                         onClick={runMassiveGeneration}
-                                        disabled={isProcessing || products.length === 0}
+                                        disabled={isProcessing || allAvailableProducts.length === 0}
                                         className="rounded-2xl bg-success hover:bg-success/90 text-success-foreground font-black uppercase tracking-widest px-8 h-12 shadow-lg shadow-success/20"
                                     >
                                         <Play className="w-4 h-4 mr-2" />
-                                        Procesar Importados
+                                        {selectedSkus.size > 0 ? `Procesar Seleccionados (${selectedSkus.size})` : `Procesar Importados (${importedProducts.length})`}
                                     </Button>
                                 </div>
                             </div>
@@ -617,11 +650,81 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                 )}
             </div>
 
+            {/* Catalog Selector / Filter */}
+            <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/70 px-1">
+                        Selección de Productos ({selectedSkus.size} seleccionados)
+                    </div>
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <input
+                            type="text"
+                            placeholder="Buscar en catálogo..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="bg-sidebar/50 border border-sidebar-border/50 rounded-xl px-3 py-1.5 text-xs focus:ring-1 focus:ring-primary outline-none w-full sm:w-64"
+                        />
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={toggleSelectAll}
+                            className="rounded-xl h-9 text-[10px] font-black uppercase tracking-widest whitespace-nowrap"
+                        >
+                            {selectedSkus.size === filteredProducts.length ? "Deseleccionar Todo" : "Seleccionar Todo"}
+                        </Button>
+                    </div>
+                </div>
+
+                <div className="rounded-2xl border border-sidebar-border/50 max-h-64 overflow-y-auto bg-background/30 no-scrollbar">
+                    <Table>
+                        <TableHeader className="sticky top-0 bg-sidebar/90 backdrop-blur-md z-10">
+                            <TableRow className="border-sidebar-border/50 hover:bg-transparent">
+                                <TableHead className="w-10"></TableHead>
+                                <TableHead className="text-[10px] font-black uppercase tracking-widest h-10">SKU</TableHead>
+                                <TableHead className="text-[10px] font-black uppercase tracking-widest h-10">Nombre</TableHead>
+                                <TableHead className="text-[10px] font-black uppercase tracking-widest h-10 text-right">Precio</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {filteredProducts.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="h-20 text-center text-muted-foreground text-[10px] font-bold uppercase">
+                                        No se encontraron productos
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                filteredProducts.map((p) => (
+                                    <TableRow
+                                        key={p.sku || p.id}
+                                        className={cn(
+                                            "border-sidebar-border/50 cursor-pointer transition-colors",
+                                            selectedSkus.has(p.sku || p.id) ? "bg-primary/10" : "hover:bg-sidebar/20"
+                                        )}
+                                        onClick={() => toggleSelect(p.sku || p.id)}
+                                    >
+                                        <TableCell>
+                                            <Checkbox
+                                                checked={selectedSkus.has(p.sku || p.id)}
+                                                onCheckedChange={() => toggleSelect(p.sku || p.id)}
+                                                onClick={(e) => e.stopPropagation()}
+                                            />
+                                        </TableCell>
+                                        <TableCell className="font-mono text-[10px]">{p.sku || 'N/A'}</TableCell>
+                                        <TableCell className="text-xs font-bold">{p.name}</TableCell>
+                                        <TableCell className="text-right text-xs font-black text-primary">${(p.price || 0).toLocaleString()}</TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
+            </div>
+
             {/* Stats / Progress */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10">
-                    <div className="text-[10px] font-black text-primary/70 tracking-[0.2em] uppercase mb-1">Total Productos</div>
-                    <div className="text-2xl font-black text-foreground">{products.length}</div>
+                    <div className="text-[10px] font-black text-primary/70 tracking-[0.2em] uppercase mb-1">Total Disponibles</div>
+                    <div className="text-2xl font-black text-foreground">{allAvailableProducts.length}</div>
                 </div>
                 <div className="p-4 rounded-2xl bg-success/5 border border-success/10">
                     <div className="text-[10px] font-black text-success/70 tracking-[0.2em] uppercase mb-1">Procesados</div>
@@ -702,13 +805,13 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
             </div>
         </div>
 
-        <DialogFooter className="p-6 border-t border-sidebar-border/50 bg-sidebar/5 flex sm:justify-between items-center">
-            <div className="flex gap-2">
+        <div className="p-6 border-t border-sidebar-border/50 bg-sidebar/5 flex flex-col sm:flex-row sm:justify-between items-center gap-4">
+            <div className="flex gap-2 w-full sm:w-auto">
                 <Button
                     variant="outline"
                     onClick={reset}
                     disabled={isProcessing || results.length === 0}
-                    className="rounded-2xl border-sidebar-border hover:bg-sidebar/50"
+                    className="flex-1 sm:flex-none rounded-2xl border-sidebar-border hover:bg-sidebar/50 font-bold uppercase tracking-widest text-[10px]"
                 >
                     <RotateCcw className="w-4 h-4 mr-2" />
                     Reiniciar
@@ -717,46 +820,54 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                     variant="outline"
                     onClick={handleExportResults}
                     disabled={isProcessing || results.length === 0}
-                    className="rounded-2xl border-sidebar-border hover:bg-sidebar/50"
+                    className="flex-1 sm:flex-none rounded-2xl border-sidebar-border hover:bg-sidebar/50 font-bold uppercase tracking-widest text-[10px]"
                 >
                     <FileSpreadsheet className="w-4 h-4 mr-2" />
                     Exportar Tabla
                 </Button>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 w-full sm:w-auto">
                 {isProcessing ? (
                     <Button
                         variant="destructive"
                         onClick={handleCancel}
-                        className="rounded-2xl font-black uppercase tracking-widest px-8"
+                        className="w-full sm:w-auto rounded-2xl font-black uppercase tracking-widest px-8 h-12"
                     >
                         <Pause className="w-4 h-4 mr-2" />
                         Detener
                     </Button>
                 ) : (
-                    <>
-                        <Button
-                            variant="outline"
-                            onClick={onClose}
-                            disabled={isProcessing}
-                            className="rounded-2xl border-sidebar-border hover:bg-sidebar/50"
-                        >
-                            Cerrar
-                        </Button>
-                        <Button
-                            onClick={runMassiveGeneration}
-                            disabled={isProcessing || products.length === 0}
-                            className="rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground font-black uppercase tracking-widest px-8"
-                        >
-                            <Play className="w-4 h-4 mr-2" />
-                            Iniciar Generación
-                        </Button>
-                    </>
+                    <Button
+                        onClick={runMassiveGeneration}
+                        disabled={isProcessing || allAvailableProducts.length === 0}
+                        className="w-full sm:w-auto rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground font-black uppercase tracking-widest px-12 h-12 shadow-lg shadow-primary/20"
+                    >
+                        <Play className="w-4 h-4 mr-2" />
+                        Iniciar Generación ({selectedSkus.size > 0 ? selectedSkus.size : allAvailableProducts.length})
+                    </Button>
                 )}
             </div>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </div>
+        <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept=".xlsx,.xls"
+            className="hidden"
+        />
+    </div>
   );
+
+  if (isOpen) {
+      return (
+        <Dialog open={isOpen} onOpenChange={(open) => !isProcessing && !open && onClose()}>
+            <DialogContent className="max-w-5xl max-h-[95vh] p-0 flex flex-col overflow-hidden bg-transparent border-none shadow-none">
+                {content}
+            </DialogContent>
+        </Dialog>
+      );
+  }
+
+  return content;
 };
