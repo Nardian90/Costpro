@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { produce } from 'immer';
 import { toast } from 'sonner';
 import type { Product, TaxConfiguration } from '@/types';
@@ -41,12 +42,14 @@ interface CartState {
   setCart: (saleId: string, items: CartItem[]) => void;
 }
 
-export const useCartStore = create<CartState>((set, get) => ({
-  items: [],
-  discount: null,
-  appliedTaxes: [],
+export const useCartStore = create<CartState>()(
+  persist(
+    (set, get) => ({
+      items: [],
+      discount: null,
+      appliedTaxes: [],
 
-  addItem: (item) =>
+      addItem: (item) =>
     set(produce((state: CartState) => {
       const existingItem = state.items.find(
         (i) => i.product_id === item.product_id && i.variant_id === item.variant_id
@@ -148,9 +151,15 @@ export const useCartStore = create<CartState>((set, get) => ({
 
   clearCart: () => set({ items: [], discount: null, appliedTaxes: [] }),
 
-  getItemCount: () => {
-    return get().items.reduce((acc, item) => acc + item.quantity, 0);
-  },
+      getItemCount: () => {
+        return get().items.reduce((acc, item) => acc + item.quantity, 0);
+      },
 
-  setCart: (_saleId, items) => set({ items }),
-}));
+      setCart: (_saleId, items) => set({ items }),
+    }),
+    {
+      name: 'pos-cart-storage',
+      storage: createJSONStorage(() => localStorage),
+    }
+  )
+);
