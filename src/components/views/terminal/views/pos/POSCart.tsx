@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, X, Trash2, Minus, Plus, DollarSign, CreditCard, Check, AlertTriangle, ChevronDown, Percent, FileText, Send, RefreshCw, Smartphone, QrCode, Image as ImageIcon } from 'lucide-react';
 import { CostProLoader } from '@/components/ui/CostProLoader';
+import ProductImage from '@/components/ui/ProductImage';
 import { cn, formatCurrency } from '@/lib/utils';
 import jspdf from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -334,17 +335,14 @@ export const POSCart = ({
                               "relative rounded-xl overflow-hidden bg-muted flex-shrink-0 border border-border shadow-inner",
                               isEasyReading ? "w-32 h-32" : "w-20 h-20"
                             )}>
-                              {item.product.public_image_url || item.product.image_url ? (
-                                <img
-                                  src={item.product.public_image_url || item.product.image_url}
-                                  alt={item.product.name}
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                <ShoppingCart className="w-1/2 h-1/2 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-20" />
-                              )}
+                              <ProductImage
+                                src={item.product.public_image_url || item.product.image_url}
+                                name={item.product.name}
+                                className="w-full h-full"
+                                forceShow
+                              />
                               {item.product.stock_current <= 5 && (
-                                <div className="absolute top-0 left-0 right-0 bg-destructive text-white text-[8px] font-black uppercase text-center py-0.5 tracking-tighter">
+                                <div className="absolute top-0 left-0 right-0 bg-destructive text-white text-[8px] font-black uppercase text-center py-0.5 tracking-tighter z-10">
                                   Bajo Stock
                                 </div>
                               )}
@@ -410,14 +408,14 @@ export const POSCart = ({
               </div>
 
               <div className={cn(
-                "p-6 space-y-6 border-t border-border bg-card/80 backdrop-blur-xl sticky bottom-0 z-20 shadow-[0_-10px_40px_rgba(0,0,0,0.1)]",
-                isMobile && "pb-10 rounded-t-[2.5rem]"
+                "p-4 sm:p-6 space-y-4 sm:space-y-6 border-t border-border bg-card/80 backdrop-blur-xl sticky bottom-0 z-20 shadow-[0_-10px_40px_rgba(0,0,0,0.1)]",
+                isMobile && "pb-6 rounded-t-[2.5rem]"
               )}>
                 {/* Descuento Section Collapsible */}
                 <div className="px-2">
                   <button
                     onClick={() => setShowDiscount(!showDiscount)}
-                    className="w-full flex justify-between items-center py-2 group"
+                    className="w-full flex justify-between items-center py-1 group"
                   >
                     <div className="flex items-center gap-2">
                       <div className={cn(
@@ -503,7 +501,7 @@ export const POSCart = ({
                 </div>
 
                 {/* Resumen de Totales */}
-                <div className="px-4 py-4 bg-muted/30 rounded-2xl border border-border/50 space-y-2">
+                <div className="px-4 py-3 bg-muted/30 rounded-2xl border border-border/50 space-y-1">
                   <div className="flex justify-between items-center text-[10px] font-black uppercase text-muted-foreground tracking-widest">
                     <span>Subtotal</span>
                     <span className="text-foreground">{formatCurrency(getSubtotal())}</span>
@@ -516,34 +514,34 @@ export const POSCart = ({
                     </div>
                   )}
 
-                  <div className="flex justify-between items-center pt-3 border-t-2 border-primary/20">
+                  <div className="flex justify-between items-center pt-2 border-t border-primary/20">
                     <span className="text-[10px] font-black uppercase text-foreground tracking-widest">Total Final</span>
-                    <span className="text-3xl font-black text-primary tracking-tighter leading-none">
+                    <span className="text-2xl font-black text-primary tracking-tighter leading-none">
                       {formatCurrency(Math.max(0, getSubtotal() - getDiscountAmount()))}
                     </span>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2">
                    <button
                     onClick={() => setSelectedPayment('cash')}
                     className={cn(
-                      "p-3 rounded-xl flex flex-col items-center gap-1 border-2 transition-all bg-background",
+                      "p-2 rounded-xl flex flex-col items-center gap-1 border-2 transition-all bg-background",
                       selectedPayment === 'cash' ? "border-primary shadow-lg shadow-primary/10" : "border-transparent"
                     )}
                    >
-                     <DollarSign className={cn("w-5 h-5", selectedPayment === 'cash' ? "text-primary" : "text-muted-foreground")} />
-                     <span className="text-[9px] font-black uppercase tracking-widest text-foreground">Efectivo</span>
+                     <DollarSign className={cn("w-4 h-4", selectedPayment === 'cash' ? "text-primary" : "text-muted-foreground")} />
+                     <span className="text-[8px] font-black uppercase tracking-widest text-foreground">Efectivo</span>
                    </button>
                    <button
                     onClick={() => setSelectedPayment('transfer')}
                     className={cn(
-                      "p-3 rounded-xl flex flex-col items-center gap-1 border-2 transition-all bg-background",
+                      "p-2 rounded-xl flex flex-col items-center gap-1 border-2 transition-all bg-background",
                       selectedPayment === 'transfer' ? "border-primary shadow-lg shadow-primary/10" : "border-transparent"
                     )}
                    >
-                     <CreditCard className={cn("w-5 h-5", selectedPayment === 'transfer' ? "text-primary" : "text-muted-foreground")} />
-                     <span className="text-[9px] font-black uppercase tracking-widest text-foreground">Transf.</span>
+                     <CreditCard className={cn("w-4 h-4", selectedPayment === 'transfer' ? "text-primary" : "text-muted-foreground")} />
+                     <span className="text-[8px] font-black uppercase tracking-widest text-foreground">Transf.</span>
                    </button>
                 </div>
 
