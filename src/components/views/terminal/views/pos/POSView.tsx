@@ -98,6 +98,8 @@ export default function POSView() {
     confirmUnpricedCheckout,
     showPriceWarning,
     setShowPriceWarning,
+    lastSale,
+    setLastSale,
     isProcessingSale,
   } = usePOSView();
 
@@ -134,7 +136,7 @@ export default function POSView() {
 
       <div className="flex flex-col lg:flex-row gap-8 items-start">
         <AnimatePresence>
-          {showCart && !isMobile && (
+          {(showCart || lastSale) && (
             <POSCart
               items={items}
               onRemoveItem={removeItem}
@@ -151,37 +153,14 @@ export default function POSView() {
               isProcessing={isProcessingSale}
               onCheckout={startCheckout}
               onClose={() => setShowCart(false)}
+              lastSale={lastSale}
+              onClearLastSale={() => {
+                setLastSale(null);
+                setShowCart(false);
+              }}
             />
           )}
         </AnimatePresence>
-
-        {isMobile && (
-          <Drawer open={showCart} onOpenChange={setShowCart}>
-            <DrawerContent className="p-0 border-none bg-transparent max-h-[85vh]">
-              <div className="sr-only">
-                <DrawerTitle>Caja Registradora</DrawerTitle>
-                <DrawerDescription>Listado de productos en el carrito y resumen de pago</DrawerDescription>
-              </div>
-              <POSCart
-                items={items}
-                onRemoveItem={removeItem}
-                onUpdateQuantity={updateQuantity}
-                onClearCart={clearCart}
-                getSubtotal={getSubtotal}
-                getDiscountAmount={getDiscountAmount}
-                getTaxAmount={getTaxAmount}
-                getTotal={getTotal}
-                discount={discount}
-                setDiscount={setDiscount}
-                appliedTaxes={appliedTaxes}
-                toggleTax={toggleTax}
-                isProcessing={isProcessingSale}
-                onCheckout={startCheckout}
-                onClose={() => setShowCart(false)}
-              />
-            </DrawerContent>
-          </Drawer>
-        )}
 
         {/* Modal de Advertencia de Precio */}
         <BaseModal

@@ -2,9 +2,12 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingCart, X, Trash2, Minus, Plus, DollarSign, CreditCard, Check, AlertTriangle, ChevronDown, Percent } from 'lucide-react';
+import { ShoppingCart, X, Trash2, Minus, Plus, DollarSign, CreditCard, Check, AlertTriangle, ChevronDown, Percent, FileText, Send, RefreshCw, Smartphone, QrCode, Image as ImageIcon } from 'lucide-react';
 import { CostProLoader } from '@/components/ui/CostProLoader';
 import { cn, formatCurrency } from '@/lib/utils';
+import jspdf from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import html2canvas from 'html2canvas';
 import { toast } from 'sonner';
 import { PaymentMethod, TaxConfiguration } from '@/types';
 import { useIsMobile } from '@/hooks/ui/useMobile';
@@ -29,6 +32,8 @@ interface POSCartProps {
   isProcessing: boolean;
   onCheckout: (paymentMethod: PaymentMethod, discount?: { type: 'fixed' | 'percentage', value: number } | null) => Promise<void>;
   onClose: () => void;
+  lastSale?: any;
+  onClearLastSale?: () => void;
 }
 
 export const POSCart = ({
@@ -46,14 +51,178 @@ export const POSCart = ({
   toggleTax,
   isProcessing,
   onCheckout,
-  onClose
+  onClose,
+  lastSale,
+  onClearLastSale
 }: POSCartProps) => {
   const { user } = useAuthStore();
   const { data: taxes = [] } = useTaxes(user?.activeStoreId);
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>('cash');
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showDiscount, setShowDiscount] = useState(false);
+  const [isEasyReading, setIsEasyReading] = useState(false);
   const isMobile = useIsMobile();
+
+  const generatePDF = () => {
+    if (!lastSale) return;
+    const doc = new jspdf();
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    // Header
+    doc.setFillColor(0, 150, 136); // Primary Color
+    doc.rect(0, 0, pageWidth, 40, 'F');
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(24);
+    doc.setFont('helvetica', 'bold');
+    doc.text('COMPROBANTE DE VENTA', 20, 25);
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`ID: ${lastSale.id}`, 20, 32);
+    doc.text(`Fecha: ${new Date(lastSale.date).toLocaleString()}`, pageWidth - 80, 32);
+
+    // Body
+    doc.setTextColor(33, 33, 33);
+    doc.setFontSize(14);
+    doc.text('Detalle de Compra', 20, 55);
+
+    autoTable(doc, {
+      startY: 60,
+      head: [['Producto', 'Cant.', 'Precio', 'Subtotal']],
+      body: lastSale.items.map((item: any) => [
+        item.product.name,
+        item.quantity,
+        formatCurrency(item.price),
+        formatCurrency(item.subtotal)
+      ]),
+      theme: 'striped',
+      headStyles: { fillColor: [0, 150, 136] },
+      margin: { left: 20, right: 20 }
+    });
+
+    const finalY = (doc as any).lastAutoTable.finalY + 10;
+
+    // Totals
+    doc.setFontSize(12);
+    doc.text(`Subtotal: ${formatCurrency(lastSale.subtotal)}`, pageWidth - 80, finalY);
+    if (lastSale.discount?.value > 0) {
+      doc.text(`Descuento: -${formatCurrency(lastSale.discount.type === 'percentage' ? (lastSale.subtotal * lastSale.discount.value) / 100 : lastSale.discount.value)}`, pageWidth - 80, finalY + 7);
+    }
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`TOTAL: ${formatCurrency(lastSale.total)}`, pageWidth - 80, finalY + 15);
+
+    // Footer with QR Placeholder
+    doc.setDrawColor(200, 200, 200);
+    doc.line(20, 260, pageWidth - 20, 260);
+    doc.setFontSize(8);
+    doc.setTextColor(150, 150, 150);
+    doc.text('Gracias por su preferencia.', pageWidth / 2, 270, { align: 'center' });
+    doc.text('Este es un comprobante electrónico generado por CostPro.', pageWidth / 2, 275, { align: 'center' });
+
+    doc.save(`venta-${lastSale.id.substring(0, 8)}.pdf`);
+    toast.success('PDF generado correctamente');
+  };
+
+  const shareWhatsApp = () => {
+    if (!lastSale) return;
+    const itemsList = lastSale.items.map((item: any) => `${item.product.name} x${item.quantity} - ${formatCurrency(item.subtotal)}`).join('%0A');
+    const message = `¡Hola!%0ADetalle de Venta:%0A${itemsList}%0A%0ATotal: ${formatCurrency(lastSale.total)}%0AMétodo: ${lastSale.paymentMethod === 'cash' ? 'Efectivo' : 'Transferencia'}%0A%0AGracias por su preferencia.`;
+    window.open(`https://wa.me/?text=${message}`, '_blank');
+  };
+
+  const exportAsImage = async () => {
+    const element = document.getElementById('sale-success-content');
+    if (!element) return;
+
+    const toastId = toast.loading('Generando imagen...');
+    try {
+      const canvas = await html2canvas(element, { scale: 2, backgroundColor: '#ffffff' });
+      const imgData = canvas.toDataURL('image/jpeg', 0.9);
+      const link = document.createElement('a');
+      link.href = imgData;
+      link.download = `venta-${lastSale?.id.substring(0, 8)}.jpg`;
+      link.click();
+      toast.success('Imagen guardada', { id: toastId });
+    } catch (error) {
+      toast.error('Error al generar imagen', { id: toastId });
+    }
+  };
+
+  const SuccessView = () => (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-8 max-w-2xl mx-auto w-full"
+      id="sale-success-content"
+    >
+      <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center shadow-xl shadow-green-500/20 relative">
+        <Check className="w-12 h-12 text-white" strokeWidth={3} />
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1.5, opacity: 0 }}
+          transition={{ repeat: Infinity, duration: 2 }}
+          className="absolute inset-0 bg-green-500 rounded-full"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <h2 className="text-4xl font-black text-foreground tracking-tighter uppercase">¡Venta Completada!</h2>
+        <p className="text-muted-foreground font-medium uppercase tracking-widest text-xs">La transacción ha sido registrada exitosamente</p>
+      </div>
+
+      <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <button
+          onClick={generatePDF}
+          className="flex items-center justify-between p-6 rounded-2xl bg-primary text-white shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform group"
+        >
+          <div className="text-left">
+            <div className="font-black uppercase tracking-widest text-xs opacity-70 mb-1">Exportar</div>
+            <div className="text-xl font-black">Recibo PDF</div>
+          </div>
+          <FileText className="w-8 h-8 group-hover:rotate-12 transition-transform" />
+        </button>
+
+        <button
+          onClick={shareWhatsApp}
+          className="flex items-center justify-between p-6 rounded-2xl bg-green-600 text-white shadow-xl shadow-green-600/20 hover:scale-[1.02] transition-transform group"
+        >
+          <div className="text-left">
+            <div className="font-black uppercase tracking-widest text-xs opacity-70 mb-1">Compartir</div>
+            <div className="text-xl font-black">WhatsApp</div>
+          </div>
+          <Send className="w-8 h-8 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+        </button>
+
+        <button
+          onClick={exportAsImage}
+          className="flex items-center justify-between p-6 rounded-2xl bg-slate-800 text-white shadow-xl shadow-slate-800/20 hover:scale-[1.02] transition-transform group sm:col-span-2"
+        >
+          <div className="text-left flex items-center gap-4">
+            <ImageIcon className="w-8 h-8 text-slate-400" />
+            <div>
+              <div className="font-black uppercase tracking-widest text-xs opacity-70 mb-1">Guardar como</div>
+              <div className="text-xl font-black">Imagen JPG</div>
+            </div>
+          </div>
+          <div className="px-3 py-1 bg-white/10 rounded-full text-[10px] font-black uppercase">Alta Calidad</div>
+        </button>
+      </div>
+
+      <div className="w-full p-6 rounded-3xl border-2 border-dashed border-border bg-muted/30 flex flex-col items-center gap-4">
+        <QrCode className="w-16 h-16 opacity-20" />
+        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Código de seguimiento disponible</p>
+      </div>
+
+      <PrimaryButton
+        label="Nueva Venta"
+        icon={RefreshCw}
+        onClick={onClearLastSale}
+        className="w-full max-w-sm h-16 text-xl rounded-2xl shadow-2xl"
+      />
+    </motion.div>
+  );
 
   const Container = isMobile ? 'div' : motion.div;
   const containerProps = isMobile ? {} : {
@@ -66,47 +235,74 @@ export const POSCart = ({
     <Container
       {...containerProps}
       className={cn(
-        "w-full shrink-0 z-20",
-        !isMobile && "lg:w-[400px] lg:sticky top-24 lg:order-last"
+        "fixed inset-0 z-[100] bg-background flex flex-col overflow-hidden",
+        isEasyReading && "text-xl"
       )}
     >
       <div className={cn(
-        "border border-primary/20 bg-card overflow-hidden",
-        isMobile ? "rounded-t-3xl h-[88vh] flex flex-col" : "rounded-xl shadow-2xl"
+        "flex-1 flex flex-col w-full max-w-5xl mx-auto bg-card shadow-2xl",
+        isMobile ? "" : "my-0 border-x border-border"
       )}>
-        <div className="bg-primary p-6 pb-8 flex items-center justify-between text-white relative">
+        <div className="bg-primary p-6 pb-10 flex items-center justify-between text-white relative">
           <div className="flex flex-col gap-1">
-            <h3 className="font-black text-lg uppercase tracking-widest flex items-center gap-3">
-              <ShoppingCart className="w-6 h-6" />
-              Caja
+            <h3 className={cn("font-black uppercase tracking-widest flex items-center gap-3", isEasyReading ? "text-2xl" : "text-lg")}>
+              <ShoppingCart className={cn(isEasyReading ? "w-8 h-8" : "w-6 h-6")} />
+              Caja Registradora
             </h3>
-            <span className="text-[10px] font-bold opacity-70 uppercase tracking-widest">
-              {items.length} {items.length === 1 ? 'Producto' : 'Productos'}
+            <span className={cn("font-bold opacity-70 uppercase tracking-widest", isEasyReading ? "text-sm" : "text-[10px]")}>
+              {items.length} {items.length === 1 ? 'Producto' : 'Productos'} seleccionados
             </span>
           </div>
-          <button
-            onClick={onClose}
-            className="p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-colors active:scale-90"
-            aria-label="Cerrar carrito"
-          >
-            <X className="w-6 h-6" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsEasyReading(!isEasyReading)}
+              className={cn(
+                "p-3 rounded-xl transition-all active:scale-90 flex items-center gap-2 font-black uppercase tracking-widest text-[10px]",
+                isEasyReading ? "bg-white text-primary" : "bg-white/10 hover:bg-white/20 text-white"
+              )}
+            >
+              <div className="w-5 h-5 flex items-center justify-center border-2 border-current rounded text-[10px]">A</div>
+              <span className="hidden sm:inline">Lectura Fácil</span>
+            </button>
+            <button
+              onClick={onClose}
+              className="p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-colors active:scale-90"
+              aria-label="Cerrar carrito"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
         </div>
 
         <div className={cn("flex-1 flex flex-col overflow-hidden -mt-6 rounded-t-3xl bg-card relative z-10")}>
-          {items.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center p-6 text-muted-foreground">
-              <ShoppingCart className="w-20 h-20 mx-auto mb-6 opacity-5" />
-              <p className="font-black uppercase tracking-widest text-sm text-center">Carrito Vacío</p>
+          {lastSale ? (
+            <SuccessView />
+          ) : items.length === 0 ? (
+            <div className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-4">
+              <div className="w-32 h-32 bg-muted rounded-full flex items-center justify-center mb-4">
+                <ShoppingCart className="w-16 h-16 opacity-10" />
+              </div>
+              <p className="font-black uppercase tracking-widest text-xl text-foreground">Carrito Vacío</p>
+              <p className="text-muted-foreground max-w-xs mx-auto">Agrega productos del catálogo para comenzar una nueva venta.</p>
+              <SecondaryButton label="Ir al Catálogo" onClick={onClose} className="mt-4" />
             </div>
           ) : (
             <>
               <div className="flex-1 relative overflow-hidden flex flex-col">
+                {items.some(i => i.product.stock_current <= 5) && !lastSale && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    className="bg-amber-500/10 border-b border-amber-500/20 px-6 py-2 flex items-center gap-2 text-amber-600 font-bold text-[10px] uppercase tracking-widest"
+                  >
+                    <AlertTriangle className="w-4 h-4" />
+                    ¡Atención! Algunos productos tienen poco stock. Finaliza tu compra pronto.
+                  </motion.div>
+                )}
                 <div className={cn(
-                  "flex-1 overflow-y-auto p-4 no-scrollbar min-h-0",
-                  !isMobile && "max-h-[45vh]"
+                  "flex-1 overflow-y-auto p-4 sm:p-8 no-scrollbar min-h-0"
                 )}>
-                  <div className="space-y-3 pb-20">
+                  <div className="space-y-4 pb-32">
                     <AnimatePresence initial={false}>
                       {items.map(item => (
                         <motion.div
@@ -115,44 +311,81 @@ export const POSCart = ({
                           initial={{ opacity: 0, scale: 0.95 }}
                           animate={{ opacity: 1, scale: 1 }}
                           exit={{ opacity: 0, x: -20 }}
-                          className="p-4 rounded-2xl border border-border bg-background/40 hover:bg-background/80 transition-colors group relative shadow-sm"
+                          className={cn(
+                            "p-4 rounded-2xl border-2 transition-all group relative shadow-md",
+                            isEasyReading ? "p-6" : "p-4",
+                            item.product.stock_current < 10 ? "border-amber-200 bg-amber-50/30" : "border-border bg-background"
+                          )}
                         >
-                          <div className="flex justify-between items-start mb-3">
-                            <div className="flex-1 min-w-0 pr-12">
-                              <div className="font-black text-sm uppercase tracking-tight truncate text-foreground">{item.product.name}</div>
-                              <div className="text-[10px] font-bold text-muted-foreground mt-0.5">
-                                {formatCurrency(item.price)} <span className="opacity-50 mx-1">/</span> unid.
+                          <div className="flex gap-4">
+                            <div className={cn(
+                              "relative rounded-xl overflow-hidden bg-muted flex-shrink-0 border border-border shadow-inner",
+                              isEasyReading ? "w-32 h-32" : "w-20 h-20"
+                            )}>
+                              {item.product.public_image_url || item.product.image_url ? (
+                                <img
+                                  src={item.product.public_image_url || item.product.image_url}
+                                  alt={item.product.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <ShoppingCart className="w-1/2 h-1/2 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-20" />
+                              )}
+                              {item.product.stock_current <= 5 && (
+                                <div className="absolute top-0 left-0 right-0 bg-destructive text-white text-[8px] font-black uppercase text-center py-0.5 tracking-tighter">
+                                  Bajo Stock
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="flex-1 min-w-0 flex flex-col justify-between py-1">
+                              <div>
+                                <div className="flex justify-between items-start">
+                                  <div className={cn("font-black uppercase tracking-tight truncate text-foreground", isEasyReading ? "text-xl" : "text-sm")}>
+                                    {item.product.name}
+                                  </div>
+                                  <button
+                                    onClick={() => onRemoveItem(item.product_id, item.variant_id)}
+                                    className="text-muted-foreground/40 hover:text-destructive p-2 -mt-2 -mr-2 transition-all active:scale-90"
+                                    aria-label="Eliminar producto"
+                                  >
+                                    <Trash2 className="w-5 h-5" />
+                                  </button>
+                                </div>
+                                <div className={cn("font-bold text-primary mt-1", isEasyReading ? "text-lg" : "text-xs")}>
+                                  {formatCurrency(item.price)} <span className="opacity-50 mx-1 text-[10px]">/</span> unidad
+                                </div>
                               </div>
-                            </div>
-                            <button
-                              onClick={() => onRemoveItem(item.product_id, item.variant_id)}
-                              className="absolute top-2 right-2 text-muted-foreground/40 hover:text-destructive p-3 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl hover:bg-destructive/10 transition-all active:scale-90"
-                              aria-label="Eliminar producto"
-                            >
-                              <Trash2 className="w-5 h-5" />
-                            </button>
-                          </div>
-                          <div className="flex items-center justify-between gap-4">
-                            <div className="flex items-center gap-1 bg-muted/50 rounded-xl p-1 border border-border/50">
-                              <button
-                                onClick={() => onUpdateQuantity(item.product_id, item.variant_id, item.quantity - 1)}
-                                className="w-12 h-12 flex items-center justify-center rounded-lg hover:bg-primary/10 hover:text-primary transition-all active:scale-90"
-                                aria-label="Disminuir cantidad"
-                              >
-                                <Minus className="w-5 h-5" />
-                              </button>
-                              <span className="w-10 text-center font-black text-sm" aria-label={`Cantidad: ${item.quantity}`}>{item.quantity}</span>
-                              <button
-                                onClick={() => onUpdateQuantity(item.product_id, item.variant_id, item.quantity + 1)}
-                                className="w-12 h-12 flex items-center justify-center rounded-lg hover:bg-primary/10 hover:text-primary transition-all active:scale-90"
-                                aria-label="Aumentar cantidad"
-                              >
-                                <Plus className="w-5 h-5" />
-                              </button>
-                            </div>
-                            <div className="text-right">
-                              <div className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">Subtotal</div>
-                              <div className="font-black text-lg text-primary leading-none">{formatCurrency(item.subtotal)}</div>
+
+                              <div className="flex items-center justify-between gap-4 mt-2">
+                                <div className="flex items-center gap-1 bg-muted/50 rounded-2xl p-1 border border-border/50">
+                                  <button
+                                    onClick={() => onUpdateQuantity(item.product_id, item.variant_id, item.quantity - 1)}
+                                    className={cn(
+                                      "flex items-center justify-center rounded-xl bg-background shadow-sm hover:bg-primary/10 hover:text-primary transition-all active:scale-90 border border-border/50",
+                                      isEasyReading ? "w-14 h-14" : "w-10 h-10"
+                                    )}
+                                    aria-label="Disminuir cantidad"
+                                  >
+                                    <Minus className="w-5 h-5" />
+                                  </button>
+                                  <span className={cn("text-center font-black", isEasyReading ? "w-14 text-xl" : "w-10 text-sm")} aria-label={`Cantidad: ${item.quantity}`}>{item.quantity}</span>
+                                  <button
+                                    onClick={() => onUpdateQuantity(item.product_id, item.variant_id, item.quantity + 1)}
+                                    className={cn(
+                                      "flex items-center justify-center rounded-xl bg-background shadow-sm hover:bg-primary/10 hover:text-primary transition-all active:scale-90 border border-border/50",
+                                      isEasyReading ? "w-14 h-14" : "w-10 h-10"
+                                    )}
+                                    aria-label="Aumentar cantidad"
+                                  >
+                                    <Plus className="w-5 h-5" />
+                                  </button>
+                                </div>
+                                <div className="text-right">
+                                  <div className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">Subtotal</div>
+                                  <div className={cn("font-black text-primary leading-none", isEasyReading ? "text-2xl" : "text-lg")}>{formatCurrency(item.subtotal)}</div>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </motion.div>
@@ -165,8 +398,8 @@ export const POSCart = ({
               </div>
 
               <div className={cn(
-                "p-4 space-y-4 border-t border-border bg-card",
-                isMobile && "pb-8 shadow-[0_-20px_40px_rgba(0,0,0,0.05)] rounded-t-3xl"
+                "p-6 space-y-6 border-t border-border bg-card/80 backdrop-blur-xl sticky bottom-0 z-20 shadow-[0_-10px_40px_rgba(0,0,0,0.1)]",
+                isMobile && "pb-10 rounded-t-[2.5rem]"
               )}>
                 {/* Descuento Section Collapsible */}
                 <div className="px-2">
