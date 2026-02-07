@@ -28,7 +28,7 @@ import SecurityFlowDiagram from './help/SecurityFlowDiagram';
 import CostFlowDiagram from './help/CostFlowDiagram';
 import KidsOnboarding from './help/KidsOnboarding';
 import OfflineSyncDiagram from './help/OfflineSyncDiagram';
-import JulesDiagram from './help/JulesDiagram';
+import EliDiagram from './help/EliDiagram';
 import StickyCartFlowDiagram from './help/StickyCartFlowDiagram';
 import InventoryAdjustmentFlowDiagram from './help/InventoryAdjustmentFlowDiagram';
 
@@ -598,18 +598,18 @@ export default function HelpView() {
                   <div className="p-6 rounded-3xl bg-violet-500/5 border border-violet-500/10">
                     <h4 className="text-lg font-black text-violet-600 uppercase mb-4 flex items-center gap-2">
                       <Cpu className="w-5 h-5" />
-                      Jules: Tu Asistente de IA
+                      Eli: Inteligencia Integrada
                     </h4>
                     <p className="text-sm font-medium leading-relaxed mb-4 text-muted-foreground">
-                      Jules es un asistente inteligente que analiza tus datos en tiempo real. Puede responder sobre stock crítico, ventas del día y darte consejos de optimización.
+                      Eli es tu asistente técnica experta. Analiza datos en tiempo real y consulta la base de normativas para ofrecerte respuestas precisas sobre tu inventario y métricas.
                     </p>
                     <div className="bg-background/50 p-4 rounded-xl border border-violet-200">
                        <p className="text-xs italic text-violet-800">
-                         "Juan ya no tiene que buscar en 10 reportes. Solo le pregunta a Jules: '¿Cuál fue mi producto más vendido hoy?' y obtiene la respuesta en 5 segundos."
+                         "Juan ya no tiene que buscar en 10 reportes. Solo le pregunta a Eli: '¿Cuál fue mi producto más vendido hoy?' y obtiene la respuesta en 5 segundos."
                        </p>
                     </div>
                   </div>
-                  <JulesDiagram />
+                  <EliDiagram />
                 </div>
 
                 <div className="space-y-6">
@@ -796,9 +796,9 @@ export default function HelpView() {
                     <span className="text-xs font-black text-muted-foreground uppercase">18 de Febrero, 2026</span>
                   </div>
                   <div className="bg-muted/30 rounded-2xl p-6 space-y-4 border border-primary/10">
-                    <h4 className="font-black text-sm uppercase text-primary">Lanzamiento de Jules AI Assistant</h4>
+                    <h4 className="font-black text-sm uppercase text-primary">Lanzamiento de Eli AI Assistant</h4>
                     <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
-                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Integración de chat flotante con Jules (Multi-AI Bot).</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Integración de chat flotante con Eli (Inteligencia Integrada).</li>
                       <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Auditoría automática de consultas IA.</li>
                     </ul>
                   </div>
