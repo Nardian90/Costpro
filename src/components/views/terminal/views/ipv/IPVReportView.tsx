@@ -91,16 +91,21 @@ export function IPVReportView() {
 
         // Si no hay reporte anterior, usar stock_inicial_manual
         const initial = prevRow ? prevRow.existencia_final_qty : (p.stock_inicial_manual || 0);
+        const entrada = 0;
+        const salida = 0;
         const venta = ventaInfo.venta_cantidad_qty;
-        const final = initial - venta;
+        const totalDisponible = initial + entrada;
+        const final = totalDisponible - salida - venta;
 
         return {
             cod: p.cod,
             descripcion: p.descripcion,
             um: p.um,
             saldo_inicial_qty: initial,
+            entrada_qty: entrada,
+            salida_qty: salida,
             entrada_salida_qty: 0,
-            total_disponible_qty: initial,
+            total_disponible_qty: totalDisponible,
             venta_cantidad_qty: venta,
             precio_unitario_cents: ventaInfo.precio_unitario_cents,
             importe_cents: ventaInfo.importe_cents,
@@ -307,7 +312,8 @@ export function IPVReportView() {
           f.descripcion,
           f.um,
           f.saldo_inicial_qty,
-          f.entrada_salida_qty,
+          f.entrada_qty || 0,
+          f.salida_qty || 0,
           f.venta_cantidad_qty,
           `$ ${(f.precio_unitario_cents).toFixed(2)}`,
           `$ ${(f.importe_cents).toFixed(2)}`,
@@ -316,11 +322,11 @@ export function IPVReportView() {
 
         autoTable(doc, {
           startY: (doc as any).lastAutoTable.finalY + 15,
-          head: [['Cod', 'Producto', 'UM', 'Inicial', 'E/S', 'Venta', 'Precio', 'Importe', 'Final']],
+          head: [['Cod', 'Producto', 'UM', 'Inicial', 'Entrada', 'Salida', 'Venta', 'Precio', 'Importe', 'Final']],
           body: tableData,
           theme: 'striped',
           headStyles: { fillColor: [22, 163, 74] },
-          styles: { fontSize: 8 }
+          styles: { fontSize: 7 }
         });
 
         const finalY = (doc as any).lastAutoTable.finalY + 20;
@@ -381,7 +387,8 @@ export function IPVReportView() {
         f.descripcion,
         f.um,
         f.saldo_inicial_qty,
-        f.entrada_salida_qty,
+        f.entrada_qty || 0,
+        f.salida_qty || 0,
         f.venta_cantidad_qty,
         `$ ${(f.precio_unitario_cents).toFixed(2)}`,
         `$ ${(f.importe_cents).toFixed(2)}`,
@@ -390,11 +397,11 @@ export function IPVReportView() {
 
       autoTable(doc, {
         startY: (doc as any).lastAutoTable.finalY + 15,
-        head: [['Cod', 'Producto', 'UM', 'Inicial', 'E/S', 'Venta', 'Precio', 'Importe', 'Final']],
+        head: [['Cod', 'Producto', 'UM', 'Inicial', 'Entrada', 'Salida', 'Venta', 'Precio', 'Importe', 'Final']],
         body: tableData,
         theme: 'striped',
         headStyles: { fillColor: [22, 163, 74] },
-        styles: { fontSize: 8 }
+        styles: { fontSize: 7 }
       });
 
       // Footer / Signatures
@@ -525,8 +532,17 @@ export function IPVReportView() {
         monthReports.forEach(r => {
             r.filas.forEach(f => {
                 if (!productSummary[f.cod]) {
-                    productSummary[f.cod] = { ...f, saldo_inicial_qty: f.saldo_inicial_qty, venta_cantidad_qty: 0, importe_cents: 0 };
+                    productSummary[f.cod] = {
+                        ...f,
+                        saldo_inicial_qty: f.saldo_inicial_qty,
+                        entrada_qty: 0,
+                        salida_qty: 0,
+                        venta_cantidad_qty: 0,
+                        importe_cents: 0
+                    };
                 }
+                productSummary[f.cod].entrada_qty += (f.entrada_qty || 0);
+                productSummary[f.cod].salida_qty += (f.salida_qty || 0);
                 productSummary[f.cod].venta_cantidad_qty += f.venta_cantidad_qty;
                 productSummary[f.cod].importe_cents += f.importe_cents;
                 // La existencia final del último reporte es la final del mes
@@ -538,7 +554,9 @@ export function IPVReportView() {
             f.cod,
             f.descripcion,
             f.um,
-            f.saldo_inicial_qty, // Ojo: este debería ser el inicial del primer día del mes
+            f.saldo_inicial_qty,
+            f.entrada_qty || 0,
+            f.salida_qty || 0,
             f.venta_cantidad_qty,
             formatCurrency(f.precio_unitario_cents),
             formatCurrency(f.importe_cents),
@@ -547,11 +565,11 @@ export function IPVReportView() {
 
         autoTable(doc, {
             startY: (doc as any).lastAutoTable.finalY + 15,
-            head: [['Cod', 'Producto', 'UM', 'Ini Mes', 'Venta Mes', 'Precio', 'Imp Mes', 'Fin Mes']],
+            head: [['Cod', 'Producto', 'UM', 'Ini Mes', 'Ent Mes', 'Sal Mes', 'Venta Mes', 'Precio', 'Imp Mes', 'Fin Mes']],
             body: tableData,
             theme: 'striped',
             headStyles: { fillColor: [22, 163, 74] },
-            styles: { fontSize: 8 }
+            styles: { fontSize: 7 }
         });
 
         doc.save(`IPV_CONSOLIDADO_${selectedYear}_${selectedMonth}.pdf`);
@@ -604,15 +622,20 @@ export function IPVReportView() {
         const updatedFilas = Object.values(productGroups).map(f => {
             const prevRow = lastReport?.filas.find((pr: any) => pr.cod === f.cod);
             const initial = prevRow?.existencia_final_qty || 0;
+            const entrada = 0;
+            const salida = 0;
             const venta = f.venta_cantidad_qty;
-            const final = initial - venta;
+            const totalDisponible = initial + entrada;
+            const final = totalDisponible - salida - venta;
 
             return {
                 ...f,
                 descripcion: productMap.get(f.cod) || 'Producto Desconocido',
                 saldo_inicial_qty: initial,
+                entrada_qty: entrada,
+                salida_qty: salida,
                 entrada_salida_qty: 0,
-                total_disponible_qty: initial,
+                total_disponible_qty: totalDisponible,
                 existencia_final_qty: final
             };
         });

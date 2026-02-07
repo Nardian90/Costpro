@@ -83,6 +83,8 @@ export interface DailyIPVReport {
     descripcion: string;
     um: string;
     saldo_inicial_qty: number;
+    entrada_qty: number;
+    salida_qty: number;
     entrada_salida_qty: number;
     total_disponible_qty: number;
     venta_cantidad_qty: number;
