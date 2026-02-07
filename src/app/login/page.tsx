@@ -40,14 +40,14 @@ export default function LoginPage() {
               initial={{ scale: 0.9, y: 20, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.9, y: 20, opacity: 0 }}
-              className="relative w-full max-w-md z-10"
+              className="relative w-full max-w-md z-[110]"
             >
               <button
                 onClick={() => setShowLoginForm(false)}
-                className="absolute -top-12 right-0 p-2 text-muted-foreground hover:text-foreground transition-colors"
+                className="absolute -top-4 -right-4 md:top-4 md:right-4 z-[120] w-11 h-11 flex items-center justify-center bg-background border border-border rounded-full shadow-xl text-muted-foreground hover:text-foreground hover:scale-110 active:scale-95 transition-all"
                 aria-label="Cerrar login"
               >
-                <X className="w-8 h-8" />
+                <X className="w-6 h-6" />
               </button>
 
               <div className="mb-8 flex justify-center">

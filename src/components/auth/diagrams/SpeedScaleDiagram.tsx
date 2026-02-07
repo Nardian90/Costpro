@@ -6,7 +6,10 @@ import { Timer, Zap, ArrowUpRight, TrendingUp } from 'lucide-react';
 
 export default function SpeedScaleDiagram() {
   return (
-    <div className="relative w-full aspect-[16/9] bg-gradient-to-br from-violet-600/5 to-primary/5 rounded-[3rem] border border-border/50 overflow-hidden flex flex-col items-center justify-center p-8 shadow-2xl">
+    <div
+      className="relative w-full aspect-[16/9] bg-gradient-to-br from-violet-600/5 to-primary/5 rounded-[3rem] border border-border/50 overflow-hidden flex flex-col items-center justify-center p-8 shadow-2xl"
+      style={{ willChange: 'transform', backfaceVisibility: 'hidden' }}
+    >
       <div className="relative z-10 w-full max-w-md space-y-8">
 
         {/* Speed Header */}
