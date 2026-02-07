@@ -5,7 +5,10 @@ import { FileSpreadsheet, Cpu, FileText, Zap } from 'lucide-react';
 
 export default function AutomationWorkflowDiagram() {
   return (
-    <div className="relative w-full aspect-[16/9] bg-gradient-to-br from-primary/5 via-transparent to-violet-500/5 rounded-[3rem] border border-border/50 overflow-hidden flex items-center justify-center p-8 shadow-2xl">
+    <div
+      className="relative w-full aspect-[16/9] bg-gradient-to-br from-primary/5 via-transparent to-violet-500/5 rounded-[3rem] border border-border/50 overflow-hidden flex items-center justify-center p-8 shadow-2xl"
+      style={{ willChange: 'transform', backfaceVisibility: 'hidden' }}
+    >
       <div className="flex items-center justify-between w-full max-w-3xl relative z-10">
 
         {/* Excel Side */}
