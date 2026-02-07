@@ -316,7 +316,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
       <section className="py-24 px-6 overflow-hidden">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-20 items-center">
-            <div className="order-2 lg:order-1 space-y-12">
+            <div className="order-1 lg:order-1 space-y-12">
               <div className="space-y-6">
                 <div className="inline-block px-4 py-2 rounded-xl bg-violet-500/10 text-violet-600 text-[10px] font-black uppercase tracking-widest">
                   Caso de Éxito MiPyME
@@ -364,7 +364,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
               </button>
             </div>
 
-            <div className="order-1 lg:order-2 space-y-8">
+            <div className="order-2 lg:order-2 space-y-8">
               <AutomationWorkflowDiagram />
               <SpeedScaleDiagram />
             </div>

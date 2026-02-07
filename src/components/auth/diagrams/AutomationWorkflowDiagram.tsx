@@ -6,22 +6,24 @@ import { FileSpreadsheet, Cpu, FileText, Zap } from 'lucide-react';
 export default function AutomationWorkflowDiagram() {
   return (
     <div
-      className="relative w-full aspect-[16/9] bg-gradient-to-br from-primary/5 via-transparent to-violet-500/5 rounded-[3rem] border border-border/50 overflow-hidden flex items-center justify-center p-8 shadow-2xl"
+      className="relative w-full min-h-[500px] lg:aspect-[16/9] bg-gradient-to-br from-primary/10 via-background to-violet-500/10 rounded-[2.5rem] sm:rounded-[3rem] border border-border/50 overflow-hidden flex items-center justify-center p-6 sm:p-12 shadow-2xl"
       style={{ willChange: 'transform', backfaceVisibility: 'hidden' }}
     >
-      <div className="flex items-center justify-between w-full max-w-3xl relative z-10">
+      <div className="flex flex-col sm:flex-row items-center justify-between w-full max-w-4xl relative z-10 gap-8 sm:gap-4">
 
         {/* Excel Side */}
         <motion.div
-          initial={{ opacity: 0, x: -40 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="relative group"
+          initial={{ opacity: 0, scale: 0.8 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          className="relative group shrink-0"
         >
-          <div className="w-20 h-20 rounded-3xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-xl group-hover:scale-110 transition-transform duration-500">
-            <FileSpreadsheet className="w-10 h-10 text-emerald-600" />
+          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-[2rem] bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-2xl group-hover:scale-110 transition-transform duration-500 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent" />
+            <FileSpreadsheet className="w-10 h-10 sm:w-12 sm:h-12 text-emerald-600 relative z-10" />
             <motion.div
-              className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg"
-              animate={{ scale: [1, 1.2, 1] }}
+              className="absolute -top-1 -right-1 w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg border-2 border-background z-20"
+              animate={{ scale: [1, 1.1, 1] }}
               transition={{ duration: 2, repeat: Infinity }}
             >
               <span className="text-[10px] font-black">CSV</span>
@@ -33,11 +35,16 @@ export default function AutomationWorkflowDiagram() {
         </motion.div>
 
         {/* Dynamic Connector 1 */}
-        <div className="flex-1 px-4 relative h-1">
+        <div className="w-1 sm:flex-1 h-12 sm:h-1 px-4 relative">
           <div className="absolute inset-0 bg-emerald-500/10 rounded-full overflow-hidden">
             <motion.div
-              className="h-full w-20 bg-gradient-to-r from-transparent via-emerald-500 to-transparent"
+              className="hidden sm:block h-full w-20 bg-gradient-to-r from-transparent via-emerald-500 to-transparent"
               animate={{ x: ['-100%', '200%'] }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+            />
+            <motion.div
+              className="sm:hidden w-full h-10 bg-gradient-to-b from-transparent via-emerald-500 to-transparent"
+              animate={{ y: ['-100%', '200%'] }}
               transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
             />
           </div>
@@ -48,28 +55,28 @@ export default function AutomationWorkflowDiagram() {
           animate={{
             boxShadow: [
               '0 0 0px rgba(16,185,129,0)',
-              '0 0 40px rgba(16,185,129,0.2)',
+              '0 0 50px rgba(16,185,129,0.25)',
               '0 0 0px rgba(16,185,129,0)'
             ]
           }}
           transition={{ duration: 3, repeat: Infinity }}
-          className="relative"
+          className="relative shrink-0"
         >
-          <div className="w-28 h-28 rounded-[2.5rem] bg-foreground flex items-center justify-center shadow-2xl relative z-10 overflow-hidden">
+          <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-[2.5rem] sm:rounded-[3rem] bg-foreground flex items-center justify-center shadow-2xl relative z-10 overflow-hidden">
              <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-              className="absolute inset-0 opacity-20 bg-[conic-gradient(from_0deg,transparent,theme(colors.primary.DEFAULT),transparent)]"
+              className="absolute inset-0 opacity-30 bg-[conic-gradient(from_0deg,transparent,theme(colors.primary.DEFAULT),transparent)]"
             />
-            <Cpu className="w-12 h-12 text-background relative z-20" />
+            <Cpu className="w-12 h-12 sm:w-16 sm:h-16 text-background relative z-20" />
             <motion.div
-              animate={{ opacity: [0.3, 0.7, 0.3] }}
+              animate={{ opacity: [0.4, 0.8, 0.4] }}
               transition={{ duration: 2, repeat: Infinity }}
-              className="absolute bottom-4 flex gap-1"
+              className="absolute bottom-6 flex gap-1.5"
             >
-              <div className="w-1 h-1 rounded-full bg-primary" />
-              <div className="w-1 h-1 rounded-full bg-primary" />
-              <div className="w-1 h-1 rounded-full bg-primary" />
+              <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+              <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              <div className="w-1.5 h-1.5 rounded-full bg-primary" />
             </motion.div>
           </div>
           <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap">
@@ -78,11 +85,16 @@ export default function AutomationWorkflowDiagram() {
         </motion.div>
 
         {/* Dynamic Connector 2 */}
-        <div className="flex-1 px-4 relative h-1">
+        <div className="w-1 sm:flex-1 h-12 sm:h-1 px-4 relative">
           <div className="absolute inset-0 bg-violet-500/10 rounded-full overflow-hidden">
             <motion.div
-              className="h-full w-20 bg-gradient-to-r from-transparent via-violet-500 to-transparent"
+              className="hidden sm:block h-full w-20 bg-gradient-to-r from-transparent via-violet-500 to-transparent"
               animate={{ x: ['-100%', '200%'] }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: "linear", delay: 0.75 }}
+            />
+            <motion.div
+              className="sm:hidden w-full h-10 bg-gradient-to-b from-transparent via-violet-500 to-transparent"
+              animate={{ y: ['-100%', '200%'] }}
               transition={{ duration: 1.5, repeat: Infinity, ease: "linear", delay: 0.75 }}
             />
           </div>
