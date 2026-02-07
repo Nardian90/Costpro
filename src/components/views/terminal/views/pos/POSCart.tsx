@@ -289,20 +289,32 @@ export const POSCart = ({
           ) : (
             <>
               <div className="flex-1 relative overflow-hidden flex flex-col">
-                {items.some(i => i.product.stock_current <= 5) && !lastSale && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    className="bg-amber-500/10 border-b border-amber-500/20 px-6 py-2 flex items-center gap-2 text-amber-600 font-bold text-[10px] uppercase tracking-widest"
+                <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-md border-b border-border p-4 flex gap-3 shadow-md">
+                  <button
+                    onClick={() => onCheckout(selectedPayment, (discount && discount.value > 0) ? discount : null)}
+                    disabled={isProcessing || items.length === 0}
+                    className="flex-1 h-14 rounded-2xl bg-primary text-white font-black text-sm shadow-xl shadow-primary/20 disabled:opacity-50 flex items-center justify-center gap-3 transition-all active:scale-[0.98]"
                   >
-                    <AlertTriangle className="w-4 h-4" />
-                    ¡Atención! Algunos productos tienen poco stock. Finaliza tu compra pronto.
-                  </motion.div>
-                )}
+                    {isProcessing ? (
+                      <CostProLoader size={20} showText={false} showSubtext={false} />
+                    ) : (
+                      <Check className="w-6 h-6" />
+                    )}
+                    {isProcessing ? 'PROCESANDO...' : 'CONFIRMAR VENTA'}
+                  </button>
+                  <button
+                    onClick={() => setShowClearConfirm(true)}
+                    className="w-14 h-14 rounded-2xl bg-destructive/10 text-destructive border-2 border-destructive/20 hover:bg-destructive/20 transition-all flex items-center justify-center active:scale-[0.95]"
+                    title="Anular Carrito"
+                  >
+                    <Trash2 className="w-6 h-6" />
+                  </button>
+                </div>
+
                 <div className={cn(
-                  "flex-1 overflow-y-auto p-4 sm:p-8 no-scrollbar min-h-0"
+                  "flex-1 overflow-y-auto p-4 sm:p-8 min-h-0"
                 )}>
-                  <div className="space-y-4 pb-32">
+                  <div className="space-y-4 pb-8">
                     <AnimatePresence initial={false}>
                       {items.map(item => (
                         <motion.div
@@ -535,26 +547,7 @@ export const POSCart = ({
                    </button>
                 </div>
 
-                <button
-                  onClick={() => onCheckout(selectedPayment, (discount && discount.value > 0) ? discount : null)}
-                  disabled={isProcessing || items.length === 0}
-                  className="w-full py-4 rounded-xl bg-primary text-white font-black text-lg shadow-2xl disabled:opacity-50 flex items-center justify-center gap-3 transition-transform active:scale-[0.98]"
-                >
-                  {isProcessing ? (
-                    <CostProLoader size={24} showText={false} showSubtext={false} />
-                  ) : (
-                    <Check className="w-6 h-6" />
-                  )}
-                  {isProcessing ? 'PROCESANDO...' : 'FINALIZAR VENTA'}
-                </button>
-
-                <button
-                  onClick={() => setShowClearConfirm(true)}
-                  className="w-full py-2 text-[10px] font-black text-muted-foreground hover:text-destructive uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  Anular Carrito
-                </button>
+                {/* Botones removidos de aquí y movidos a la parte superior pegajosa */}
               </div>
             </>
           )}
