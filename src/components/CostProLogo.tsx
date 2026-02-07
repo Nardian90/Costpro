@@ -76,12 +76,12 @@ const CostProLogo: React.FC<CostProLogoProps> = ({ size = 120, animated = true, 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1, delay: 0.5 }}
-        className="text-center"
+        className="text-center px-4"
       >
-        <h2 className="text-foreground font-black text-4xl uppercase tracking-tighter">
+        <h2 className="text-foreground font-black text-[clamp(1.5rem,8vw,2.25rem)] uppercase tracking-tighter leading-none">
           COST<span className="text-green-500 dark:text-green-400">PRO</span>
         </h2>
-        <p className="text-muted-foreground text-[10px] tracking-[0.2em] uppercase mt-2 font-bold">
+        <p className="text-muted-foreground text-[clamp(0.6rem,2vw,0.75rem)] tracking-[0.2em] uppercase mt-2 font-bold opacity-80">
           Protege tus costos y precios
         </p>
       </motion.div>
