@@ -186,9 +186,9 @@ export default function POSView() {
             </div>
         </BaseModal>
 
-        <div className="flex-1 w-full space-y-6 lg:order-first">
-          <div className="space-y-4 sticky top-[76px] z-40 bg-background/95 backdrop-blur-md pb-4 pt-2 -mx-4 px-4 shadow-xl">
-            <div className="flex items-center gap-2 sm:gap-4">
+        <div className="flex-1 w-full space-y-4 sm:space-y-6 lg:order-first">
+          <div className="space-y-3 sm:space-y-4 sticky top-[76px] z-40 bg-background/95 backdrop-blur-md pb-3 sm:pb-4 pt-2 -mx-4 px-4 shadow-xl">
+            <div className="flex items-center gap-2">
               <div className="flex-1">
                 <SearchBar
                   value={searchTerm}
