@@ -114,22 +114,6 @@ export default function POSView() {
           <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase hidden sm:block">TPV</h2>
           <ViewSwitcher currentView={posLayoutMode} onViewChange={setPosLayoutMode} />
         </div>
-        {!isMobile && (
-          <ActionMenu
-            actions={[
-              {
-                id: 'cart',
-                label: `Caja (${getItemCount()})`,
-                icon: ShoppingCart,
-                onClick: () => setShowCart(!showCart),
-                variant: getItemCount() > 0 ? 'primary' : 'outline',
-                active: showCart
-              }
-            ]}
-            className="sm:w-auto"
-            position="top"
-          />
-        )}
       </div>
 
       <QueryInspector />
@@ -203,13 +187,31 @@ export default function POSView() {
         </BaseModal>
 
         <div className="flex-1 w-full space-y-6 lg:order-first">
-          <div className="space-y-4 sticky top-[76px] z-40 bg-background/95 backdrop-blur-md pb-4 pt-2 -mx-4 px-4 shadow-xl sm:relative sm:top-0 sm:bg-transparent sm:pb-0 sm:pt-0 sm:mx-0 sm:px-0 sm:shadow-none">
-            <SearchBar
-              value={searchTerm}
-              onChange={setSearchTerm}
-              placeholder="Buscar productos..."
-              showSettings={false}
-            />
+          <div className="space-y-4 sticky top-[76px] z-40 bg-background/95 backdrop-blur-md pb-4 pt-2 -mx-4 px-4 shadow-xl">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <div className="flex-1">
+                <SearchBar
+                  value={searchTerm}
+                  onChange={setSearchTerm}
+                  placeholder="Buscar productos..."
+                  showSettings={false}
+                />
+              </div>
+              <ActionMenu
+                actions={[
+                  {
+                    id: 'cart',
+                    label: isMobile ? `(${getItemCount()})` : `Caja (${getItemCount()})`,
+                    icon: ShoppingCart,
+                    onClick: () => setShowCart(!showCart),
+                    variant: getItemCount() > 0 ? 'primary' : 'outline',
+                    active: showCart
+                  }
+                ]}
+                className="w-auto"
+                position="top"
+              />
+            </div>
 
             <CategoryChips
               categories={categories}
@@ -257,13 +259,6 @@ export default function POSView() {
         </div>
       </div>
 
-      {isMobile && (
-        <StickyCartSummary
-          itemCount={getItemCount()}
-          total={getTotal()}
-          onClick={() => setShowCart(true)}
-        />
-      )}
     </div>
   );
 }
