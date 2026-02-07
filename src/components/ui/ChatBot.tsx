@@ -59,7 +59,7 @@ export function ChatBot() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Error al conectar con Jules');
+        throw new Error(errorData.error || 'Error al conectar con Eli');
       }
 
       const data = await response.json();
@@ -105,12 +105,14 @@ export function ChatBot() {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
             onClick={() => setIsOpen(true)}
-            aria-label="Abrir chat con Jules"
-            className="w-14 h-14 rounded-full bg-primary shadow-lg flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-all border-4 border-background"
+            aria-label="Abrir chat con Eli"
+            className="w-14 h-14 rounded-full bg-primary shadow-lg flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-all border-4 border-background relative overflow-hidden group"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
           >
-            <MessageSquare className="w-6 h-6" />
+            <div className="absolute inset-0 bg-gradient-to-tr from-primary via-primary/80 to-violet-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <MessageSquare className="w-6 h-6 relative z-10" />
+            <Sparkles className="absolute -top-1 -right-1 w-4 h-4 text-amber-300 opacity-0 group-hover:opacity-100 transition-all duration-500 delay-100" />
           </motion.button>
         )}
 
@@ -137,10 +139,10 @@ export function ChatBot() {
                   <Bot className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="font-black text-xs uppercase tracking-tighter">Jules</h3>
+                  <h3 className="font-black text-xs uppercase tracking-tighter">Eli</h3>
                   <div className="flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                    <p className="text-xs opacity-80 uppercase tracking-widest font-bold">Analista de Tienda</p>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <p className="text-xs opacity-80 uppercase tracking-widest font-bold">Inteligencia Integrada</p>
                   </div>
                 </div>
               </div>
@@ -227,23 +229,23 @@ export function ChatBot() {
                           <Sparkles className="w-8 h-8 text-primary opacity-30" />
                         </div>
                         <div className="space-y-1">
-                          <p className="text-xs font-black uppercase text-primary tracking-widest">Bienvenido, {user?.fullName?.split(' ')[0]}</p>
+                          <p className="text-xs font-black uppercase text-primary tracking-widest">Hola, {user?.fullName?.split(' ')[0]}</p>
                           {!isConfigured ? (
                             <div className="p-4 rounded-2xl bg-warning/5 border border-warning/20 space-y-3 mt-4">
-                               <p className="text-xs text-warning font-bold uppercase tracking-tight">IA no configurada</p>
+                               <p className="text-xs text-warning font-bold uppercase tracking-tight">Eli no configurada</p>
                                <p className="text-xs text-muted-foreground font-medium">
-                                 Para chatear con Jules, primero debes ingresar tu API Key en la configuración (botón de engrane arriba).
+                                 Para interactuar conmigo, primero debes ingresar tu API Key en la configuración.
                                </p>
                                <button
                                  onClick={() => setIsSettingsOpen(true)}
                                  className="w-full py-2 bg-warning/10 text-warning rounded-lg text-xs font-black uppercase"
                                >
-                                 Ir a Configuración
+                                 Configurar Eli
                                </button>
                             </div>
                           ) : (
                             <p className="text-xs text-muted-foreground font-medium leading-relaxed">
-                              Soy Jules. Puedo ayudarte con reportes de ventas, stock crítico o incluso a configurar tus fórmulas en la ficha de costo.
+                              Soy Eli. Mi propósito es asistirte con precisión técnica sobre inventarios, ventas y normativas vigentes del sistema.
                             </p>
                           )}
                         </div>

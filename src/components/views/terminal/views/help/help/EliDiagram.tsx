@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 
-export default function JulesDiagram() {
+export default function EliDiagram() {
   const container = {
     hidden: { opacity: 0 },
     show: {
@@ -60,9 +60,9 @@ export default function JulesDiagram() {
           <text textAnchor="middle" y="5" className="fill-white font-black text-[8px] uppercase">Modelos</text>
         </motion.g>
 
-        {/* Jules Center */}
+        {/* Eli Center */}
         <motion.g transform="translate(400, 200)" variants={item}>
-          <text textAnchor="middle" y="8" className="fill-primary font-black text-xl uppercase tracking-widest">JULES</text>
+          <text textAnchor="middle" y="8" className="fill-primary font-black text-xl uppercase tracking-widest">ELI</text>
         </motion.g>
 
         {/* Lines connecting to center */}
