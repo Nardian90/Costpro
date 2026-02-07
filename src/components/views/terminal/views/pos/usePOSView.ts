@@ -25,6 +25,7 @@ export function usePOSView() {
   const [searchTerm, setSearchTerm] = useState('');
   const [posLayoutMode, setPosLayoutMode] = useState<'grid' | 'table'>('grid');
   const [showPriceWarning, setShowPriceWarning] = useState(false);
+  const [lastSale, setLastSale] = useState<any>(null);
   const [pendingCheckoutData, setPendingCheckoutData] = useState<{
     paymentMethod: PaymentMethod;
     discount: { type: 'fixed' | 'percentage', value: number } | null | undefined;
@@ -145,6 +146,16 @@ export function usePOSView() {
         saleId: result,
       });
 
+      setLastSale({
+        id: result,
+        items: [...items],
+        total: getTotal(),
+        subtotal: getSubtotal(),
+        discount: checkoutDiscount || discount,
+        paymentMethod,
+        date: new Date().toISOString()
+      });
+
       toast.success('Venta exitosa', { id: toastId });
       clearCart();
     } catch (error: any) {
@@ -191,6 +202,8 @@ export function usePOSView() {
     showPriceWarning,
     setShowPriceWarning,
     handleCheckout,
+    lastSale,
+    setLastSale,
     isProcessingSale: createSaleMutation.isPending,
   };
 }
