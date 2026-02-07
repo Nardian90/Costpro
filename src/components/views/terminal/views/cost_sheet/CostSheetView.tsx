@@ -30,7 +30,15 @@ import { exportToPDF, exportToCSV } from '@/services/export-service';
 
 const CostSheetView = () => {
   const { data, loadExample, reset, setSheet } = useCostSheetStore();
-  const { calculatedValues, calculatedAnnexes, audits, calculationResult, isBlocked, deepValidationErrors } = useCostSheetCalculator(data);
+  const {
+    calculatedValues,
+    calculatedHeader,
+    calculatedAnnexes,
+    audits,
+    calculationResult,
+    isBlocked,
+    deepValidationErrors
+  } = useCostSheetCalculator(data);
 
   const [isEditing, setIsEditing] = useState(true);
   const [viewMode, setViewMode] = useState<'expert' | 'assisted' | 'reading'>('expert');
@@ -417,7 +425,7 @@ const CostSheetView = () => {
                     )}
                     {activeSection === 'header' && (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <CostSheetHeaderEditor />
+                            <CostSheetHeaderEditor calculatedHeader={calculatedHeader} />
                         </div>
                     )}
                     {activeSection === 'main' && (

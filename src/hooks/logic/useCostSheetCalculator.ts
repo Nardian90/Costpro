@@ -31,6 +31,21 @@ const evaluateAnnexExpression = (expression: string, rowData: any, header: any, 
     let expr = trimmed;
     if (expr.startsWith('=')) expr = expr.substring(1);
 
+    // Support GET_ANEXO_DATO and GET_FILA_DATO even in annexes for consistency
+    // But since annexes are calculated first, GET_FILA_DATO might be limited here
+    expr = expr.replace(/GET_ANEXO_DATO\(['"]([^'"]+)['"]\s*,\s*['"]([^'"]+)['"]\s*,\s*['"]([^'"]+)['"]\)/g, (_, anexoId, classification, field) => {
+        const targetAnnex = calculatedAnnexes.find(a => a.id === anexoId);
+        if (!targetAnnex) return '0';
+        const matches = targetAnnex.data.filter((d: any) =>
+            String(d.classification || d.label || '').split(' - ')[0].trim() === classification
+        );
+        if (matches.length > 0) {
+            const sum = matches.reduce((acc: number, d: any) => acc + (parseFloat(d[field]) || 0), 0);
+            return String(sum);
+        }
+        return '0';
+    });
+
     const keys = Object.keys(rowData).sort((a, b) => b.length - a.length);
     for (const key of keys) {
       // Avoid replacing the key if it's currently being evaluated (prevents some recursion issues)
@@ -88,9 +103,76 @@ const evaluateAnnexExpression = (expression: string, rowData: any, header: any, 
   }
 };
 
+const evaluateHeaderExpression = (
+    expression: any,
+    header: any,
+    calculatedAnnexes: any[] = [],
+    calculatedValues: { [key: string]: CalculatedRowValue } = {}
+): any => {
+    if (expression === undefined || expression === null) return '';
+    if (typeof expression === 'number') return expression;
+    const trimmed = String(expression).trim();
+    if (!trimmed.startsWith('=')) return expression;
+
+    try {
+        let expr = trimmed.substring(1);
+
+        // GET_ANEXO_DATO(anexoId, classification, field)
+        expr = expr.replace(/GET_ANEXO_DATO\(['"]([^'"]+)['"]\s*,\s*['"]([^'"]+)['"]\s*,\s*['"]([^'"]+)['"]\)/g, (_, anexoId, classification, field) => {
+            const targetAnnex = calculatedAnnexes.find(a => a.id === anexoId);
+            if (!targetAnnex) {
+                return '0';
+            }
+            const matches = targetAnnex.data.filter((d: any) =>
+                String(d.classification || d.label || '').split(' - ')[0].trim() === classification
+            );
+            if (matches.length > 0) {
+                const val = matches[0][field];
+                return String(val ?? 0);
+            }
+            return '0';
+        });
+
+        // GET_FILA_DATO(search, field)
+        expr = expr.replace(/GET_FILA_DATO\(['"]([^'"]+)['"]\s*,\s*['"]([^'"]+)['"]\)/g, (_, search, field) => {
+            // Find row by classification or ID
+            const val = Object.values(calculatedValues).find(v => v.metadata?.id === search || v.metadata?.classification === search);
+            if (val) {
+                return String((val as any)[field] || 0);
+            }
+            // Fallback: try direct lookup if calculatedValues keys are IDs
+            const directVal = calculatedValues[search];
+            if (directVal) {
+                return String((directVal as any)[field] || 0);
+            }
+            return '0';
+        });
+
+        // Replace other header variables
+        const headerKeys = Object.keys(header).sort((a, b) => b.length - a.length);
+        for (const key of headerKeys) {
+            if (key !== 'quantity') { // handle quantity separately to avoid circularity if it's the one being evaluated
+                expr = expr.replace(new RegExp(`\\b${key}\\b`, 'g'), String(header[key] || 0));
+            }
+        }
+
+        // Basic arithmetic evaluation
+        if (/^[0-9.+\-*/() ]+$/.test(expr)) {
+            return new Function(`return ${expr}`)();
+        }
+
+        // If not simple arithmetic, just return the processed string if it's not a number
+        return expr;
+    } catch (e) {
+        console.error("Error evaluating header expression:", e);
+        return expression;
+    }
+};
+
 export const useCostSheetCalculator = (template: CostSheetData) => {
   const [resultState, setResultState] = useState<{
       calculatedValues: { [key: string]: CalculatedRowValue };
+      calculatedHeader: any | null;
       calculationResult: CalculationResult | null;
       audits: AuditEntry[];
       error: Error | null;
@@ -98,6 +180,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
       deepValidationErrors: any[];
   }>({
       calculatedValues: {},
+      calculatedHeader: null,
       calculationResult: null,
       audits: [],
       error: null,
@@ -131,8 +214,12 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
           for (const col of annex.columns) {
             if (!col.formula && isNumericColumn(col.key)) {
               const val = draft[col.key];
-              if (typeof val === 'string' && val.length > 0 && isNaN(Number(val))) {
-                  draft[col.key] = evaluateAnnexExpression(val, row, template?.header, results);
+              if (typeof val === 'string' && val.length > 0) {
+                  // Only evaluate if it looks like a formula (starts with =)
+                  // Otherwise, if it's just a string like "FC-999", keep it as is
+                  if (val.startsWith('=')) {
+                      draft[col.key] = evaluateAnnexExpression(val, row, template?.header, results);
+                  }
               }
             }
           }
@@ -168,6 +255,24 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
     try {
       if (!template || !template.header || !template.sections) {
           return;
+      }
+
+      // --- Calculate Early Header ---
+      const earlyHeader = { ...template.header };
+
+      // 1. Evaluate early formulas first (name, code, product_code, unit, quantity)
+      ['name', 'code', 'product_code', 'unit', 'quantity'].forEach(field => {
+          const val = (earlyHeader as any)[field];
+          if (typeof val === 'string' && val.startsWith('=')) {
+              (earlyHeader as any)[field] = evaluateHeaderExpression(val, earlyHeader, calculatedAnnexes, {});
+          }
+      });
+
+      // 2. Automatic % Capacidad (Quantity / Nivel Prod) - AFTER quantity formula is evaluated
+      const qVal = parseFloat(String(earlyHeader.quantity));
+      const pVal = parseFloat(String(earlyHeader.production_level));
+      if (!isNaN(qVal) && !isNaN(pVal) && pVal !== 0) {
+          earlyHeader.capacity_utilization = (qVal / pVal) * 100;
       }
 
       // Map UI state to Engine-compatible JSON
@@ -269,12 +374,12 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
 
       const ficha: FichaJSON = {
         meta: {
-          ...template?.header,
-          id: template?.header?.code || 'default',
-          name: template?.header?.name || 'Ficha',
-          currency: template?.header?.currency || 'CUP',
+          ...earlyHeader,
+          id: earlyHeader?.code || 'default',
+          name: earlyHeader?.name || 'Ficha',
+          currency: earlyHeader?.currency || 'CUP',
           decimals: 2,
-          quantity: template?.header?.quantity || 0,
+          quantity: earlyHeader?.quantity || 0,
           settings: { allowFormulas: true }
         },
         anexos: (calculatedAnnexes || []).filter((a: any) => !!a).map((a: any) => ({
@@ -321,8 +426,15 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
 
       const isBlocked = (result.deepValidationErrors || []).some(e => e.type === 'CRITICAL');
 
+      // --- Calculate Late Header ---
+      const finalHeader = { ...earlyHeader };
+      if (typeof finalHeader.sale_price === 'string' && String(finalHeader.sale_price).startsWith('=')) {
+          finalHeader.sale_price = evaluateHeaderExpression(finalHeader.sale_price, finalHeader, calculatedAnnexes, newCalculatedValues);
+      }
+
       setResultState({
           calculatedValues: newCalculatedValues,
+          calculatedHeader: finalHeader,
           calculationResult: result,
           audits: result.audits,
           error: null,
@@ -337,6 +449,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
 
   return {
       calculatedValues: resultState.calculatedValues,
+      calculatedHeader: resultState.calculatedHeader || template?.header,
       calculatedAnnexes,
       annexTotals,
       audits: resultState.audits,

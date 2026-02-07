@@ -9,11 +9,13 @@ import { cn } from '@/lib/utils';
 
 interface CostSheetHeaderEditorProps {
     compact?: boolean;
+    calculatedHeader?: any;
 }
 
-const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({ compact = false }) => {
+const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({ compact = false, calculatedHeader }) => {
   const { data, updateValue, updateValues } = useCostSheetStore();
   const header = data?.header;
+  const [focusedField, setFocusedField] = React.useState<string | null>(null);
 
   if (!header) return null;
 
@@ -21,6 +23,13 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({ compact =
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
+
+    // If it starts with =, it's a formula, store as string
+    if (typeof value === 'string' && value.startsWith('=')) {
+        updateValue(['header', name], value);
+        return;
+    }
+
     const finalValue = type === 'number' ? parseFloat(value) || 0 : value;
     updateValue(['header', name], finalValue);
   };
@@ -84,18 +93,22 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({ compact =
             {!compact && (
                 <label htmlFor="name" className="text-[10px] font-black uppercase tracking-[0.2em] text-primary block mb-1">
                     Nombre del Recurso
+                    {String(header?.name).startsWith('=') && focusedField !== 'name' && <span className="ml-1 text-primary-500 font-black">fx</span>}
                 </label>
             )}
             <input
                 id="name"
                 name="name"
                 type="text"
-                value={header?.name || ''}
+                value={(focusedField === 'name' || !calculatedHeader) ? (header?.name || '') : (calculatedHeader?.name || header?.name || '')}
                 onChange={handleChange}
+                onFocus={() => setFocusedField('name')}
+                onBlur={() => setFocusedField(null)}
                 placeholder="Nombre del Recurso"
                 className={cn(
                     "w-full px-3 py-2 font-black text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-primary focus:border-primary transition-all",
-                    compact ? "text-sm bg-transparent border-none py-1 px-1" : "text-2xl"
+                    compact ? "text-sm bg-transparent border-none py-1 px-1" : "text-2xl",
+                    String(header?.name).startsWith('=') && focusedField !== 'name' && "text-primary dark:text-primary-400"
                 )}
             />
           </div>
@@ -114,33 +127,52 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({ compact =
             { id: 'product_code', label: 'Cod. Producto' },
             { id: 'date', label: 'Fecha', type: 'date' },
             { id: 'unit', label: 'UM' },
-            { id: 'quantity', label: 'Cantidad', type: 'number' },
+            { id: 'quantity', label: 'Cantidad', type: 'text', isFormula: true },
             { id: 'currency', label: 'Moneda' },
             { id: 'company', label: 'Empresa' },
             { id: 'organism', label: 'Organismo' },
             { id: 'union', label: 'Unión' },
             { id: 'destination', label: 'Destino' },
             { id: 'production_level', label: 'Nivel Prod.', type: 'number' },
-            { id: 'capacity_utilization', label: '% Capacidad', type: 'number' },
-            { id: 'sale_price', label: 'Precio Venta', type: 'number' },
+            { id: 'capacity_utilization', label: '% Capacidad', type: 'text', readonly: true },
+            { id: 'sale_price', label: 'Precio Venta', type: 'text', isFormula: true },
             { id: 'client', label: 'Cliente' },
             { id: 'category', label: 'Categoría' },
             { id: 'type', label: 'Tipo' },
-          ].map((item) => (
-            <div key={item.id} className="space-y-1">
-              <label htmlFor={item.id} className="text-[9px] font-bold uppercase tracking-widest text-slate-400 block">
-                {item.label}
-              </label>
-              <input
-                id={item.id}
-                name={item.id}
-                type={item.type || 'text'}
-                value={header?.[item.id] || ''}
-                onChange={handleChange}
-                className="w-full px-2 py-1.5 text-sm font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-md focus:ring-primary focus:border-primary"
-              />
-            </div>
-          ))}
+          ].map((item) => {
+            const isEditing = focusedField === item.id;
+            const displayValue = (isEditing || !calculatedHeader)
+                ? (header?.[item.id] ?? '')
+                : (calculatedHeader?.[item.id] ?? header?.[item.id] ?? '');
+
+            const isFormula = String(header?.[item.id]).startsWith('=');
+
+            return (
+              <div key={item.id} className="space-y-1">
+                <label htmlFor={item.id} className="text-[9px] font-bold uppercase tracking-widest text-slate-400 block">
+                  {item.label}
+                  {isFormula && !isEditing && <span className="ml-1 text-primary-500 font-black">fx</span>}
+                </label>
+                <input
+                  id={item.id}
+                  name={item.id}
+                  type={(isEditing || isFormula) ? 'text' : (item.type || 'text')}
+                  value={displayValue}
+                  onChange={handleChange}
+                  onFocus={() => setFocusedField(item.id)}
+                  onBlur={() => setFocusedField(null)}
+                  readOnly={item.readonly}
+                  className={cn(
+                    "w-full px-2 py-1.5 text-sm font-bold border rounded-md focus:ring-primary focus:border-primary transition-colors",
+                    item.readonly
+                        ? "bg-slate-200 dark:bg-slate-800 text-slate-500 cursor-not-allowed"
+                        : "text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 border-slate-200 dark:border-slate-600",
+                    isFormula && !isEditing && "text-primary dark:text-primary-400"
+                  )}
+                />
+              </div>
+            );
+          })}
         </div>
         )}
       </div>
