@@ -96,6 +96,8 @@ export function IPVPreviewModal({ report, open, onOpenChange, onExportPDF }: Pro
                                         <TableHead className="text-[10px] font-black uppercase">Código</TableHead>
                                         <TableHead className="text-[10px] font-black uppercase">Producto</TableHead>
                                         <TableHead className="text-center text-[10px] font-black uppercase">Ini.</TableHead>
+                                        <TableHead className="text-center text-[10px] font-black uppercase">Entrada</TableHead>
+                                        <TableHead className="text-center text-[10px] font-black uppercase">Salida</TableHead>
                                         <TableHead className="text-center text-[10px] font-black uppercase">Venta</TableHead>
                                         <TableHead className="text-right text-[10px] font-black uppercase">Precio</TableHead>
                                         <TableHead className="text-right text-[10px] font-black uppercase">Importe</TableHead>
@@ -108,6 +110,8 @@ export function IPVPreviewModal({ report, open, onOpenChange, onExportPDF }: Pro
                                             <TableCell className="font-mono text-[10px] font-bold">{f.cod}</TableCell>
                                             <TableCell className="text-xs font-bold">{f.descripcion}</TableCell>
                                             <TableCell className="text-center text-xs font-medium">{f.saldo_inicial_qty}</TableCell>
+                                            <TableCell className="text-center text-xs font-medium">{f.entrada_qty || 0}</TableCell>
+                                            <TableCell className="text-center text-xs font-medium">{f.salida_qty || 0}</TableCell>
                                             <TableCell className="text-center font-black text-xs">{f.venta_cantidad_qty}</TableCell>
                                             <TableCell className="text-right text-xs">{formatCurrency(f.precio_unitario_cents)}</TableCell>
                                             <TableCell className="text-right font-black text-xs text-primary">{formatCurrency(f.importe_cents)}</TableCell>
