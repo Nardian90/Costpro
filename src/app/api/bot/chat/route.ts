@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
 
       // Return a structured error that the frontend can display nicely
       return NextResponse.json({
-        error: botError.message || 'Error al procesar la respuesta de Jules',
+        error: botError.message || 'Error al procesar la respuesta de Eli',
         provider: aiProvider,
         details: botError.message
       }, { status: 502 }); // Bad Gateway for upstream AI errors
