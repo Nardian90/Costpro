@@ -42,11 +42,11 @@ export const Header = ({
           >
             {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
-          <div className="flex items-center gap-3 overflow-hidden">
-            <h1 className="text-xl sm:text-2xl font-black uppercase tracking-tighter text-primary whitespace-nowrap truncate max-w-[150px] sm:max-w-none">
+          <div className="flex items-center gap-3 overflow-x-auto min-w-0 flex-1 no-scrollbar">
+            <h1 className="text-[clamp(1.125rem,4vw,1.5rem)] font-black uppercase tracking-tighter text-primary whitespace-nowrap min-w-0">
               {navigationItems.find(i => i.id === currentView)?.label || 'Panel'}
             </h1>
-            <div className="h-4 w-[1px] bg-white/10 hidden sm:block" />
+            <div className="h-4 w-[1px] bg-white/10 hidden sm:block shrink-0" />
 
             <div className="hidden sm:flex items-center gap-3">
               <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] truncate">
