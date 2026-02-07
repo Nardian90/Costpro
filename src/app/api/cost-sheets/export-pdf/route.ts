@@ -47,6 +47,11 @@ export async function POST(req: NextRequest) {
         doc.line(14, 32, pageWidth - 14, 32);
     };
 
+    const safeLocale = (val: any) => {
+        if (val === null || val === undefined || isNaN(Number(val))) return '0,00';
+        return Number(val).toLocaleString('es-ES', { minimumFractionDigits: 2 });
+    };
+
     const addDataSheetHeader = (doc: jsPDF, y: number) => {
         doc.setFontSize(9);
         doc.setFont("helvetica", "bold");
@@ -57,7 +62,7 @@ export async function POST(req: NextRequest) {
             [`No. FC: ${h.code || result.fichaId || 'N/A'}`, `Cod. Producto: ${h.product_code || 'N/A'}`, `Producto: ${h.name || result.fichaName || 'N/A'}`],
             [`UM: ${h.unit || 'N/A'}`, `Cantidad: ${h.quantity || 1}`, `EMPRESA: ${h.company || 'N/A'}`],
             [`ORGANISMO: ${h.organism || 'N/A'}`, `UNION: ${h.union || 'N/A'}`, `Destino: ${h.destination || 'N/A'}`],
-            [`Nivel de Producción: ${h.production_level || 'N/A'}`, `% Utilización capacidad: ${h.capacity_utilization || 0}%`, `Precio de Venta: ${h.sale_price?.toLocaleString('es-ES', { minimumFractionDigits: 2 }) || '0.00'}`],
+            [`Nivel de Producción: ${h.production_level || 'N/A'}`, `% Utilización capacidad: ${h.capacity_utilization || 0}%`, `Precio de Venta: ${safeLocale(h.sale_price)}`],
             [`Cliente: ${h.client || 'N/A'}`, `Moneda: ${h.currency || 'CUP'}`, `Fecha: ${h.date || format(new Date(), "yyyy-MM-dd")}`]
         ];
 
@@ -89,12 +94,12 @@ export async function POST(req: NextRequest) {
             const utilityPercent = (row13 && row12 && row12.total > 0) ? (row13.total / row12.total) * 100 : 0;
 
             const summaryData = [
-                ['Costo Total', result.summary.totalCost.toLocaleString('es-ES', { minimumFractionDigits: 2 })],
-                ['Utilidad', (row13?.total || 0).toLocaleString('es-ES', { minimumFractionDigits: 2 })],
-                ['% Utilidad / Costo', `${utilityPercent.toFixed(2)}%`],
-                ['Margen Comercial', result.summary.totalMargin.toLocaleString('es-ES', { minimumFractionDigits: 2 })],
-                ['Impuestos', result.summary.totalTax.toLocaleString('es-ES', { minimumFractionDigits: 2 })],
-                ['PRECIO FINAL', result.summary.grandTotal.toLocaleString('es-ES', { minimumFractionDigits: 2 })],
+                ['Costo Total', safeLocale(result.summary.totalCost)],
+                ['Utilidad', safeLocale(row13?.total || 0)],
+                ['% Utilidad / Costo', `${(utilityPercent || 0).toFixed(2)}%`],
+                ['Margen Comercial', safeLocale(result.summary.totalMargin)],
+                ['Impuestos', safeLocale(result.summary.totalTax)],
+                ['PRECIO FINAL', safeLocale(result.summary.grandTotal)],
             ];
 
             autoTable(doc, {
@@ -136,8 +141,8 @@ export async function POST(req: NextRequest) {
                 r.classification,
                 label,
                 r.formaCalculo,
-                r.valorHistorico?.toLocaleString('es-ES', { minimumFractionDigits: 2 }) || '0.00',
-                r.total.toLocaleString('es-ES', { minimumFractionDigits: 2 })
+                safeLocale(r.valorHistorico),
+                safeLocale(r.total)
             ];
         });
 

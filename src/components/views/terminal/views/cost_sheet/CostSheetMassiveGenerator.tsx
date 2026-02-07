@@ -128,21 +128,24 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
     };
     (baseSheet?.sections || []).forEach((s: any) => calculateVH(s?.rows));
 
-    const flatten = (uiRows: any[]) => {
+    const flatten = (uiRows: any[], parentId?: string) => {
       (uiRows || []).forEach(r => {
         let type: RowSemanticType = 'COST';
         if (['13', '13.1'].includes(r.id)) type = 'MARGIN';
         if (r.id === '13.2') type = 'TAX';
-        if (['14', '12', '5'].includes(r.id)) type = 'TOTAL';
+        if (['14', '12', '5', '11'].includes(r.id)) type = 'TOTAL';
 
         let formula = r.formula || r.totalFormula;
-        if (!formula && r.children && r.children.length > 0 && r.calculationMethod !== 'ValorFijo') {
+        const hasChildren = r.children && r.children.length > 0;
+        const isPercent = r.is_percent || r.isPercent;
+
+        if (!formula && hasChildren && r.calculationMethod !== 'ValorFijo') {
             formula = '=sum(children)';
         }
 
         let formaCalculo: FormaCalculo = 'FIJO';
         if (r.calculationMethod === 'Prorrateo') formaCalculo = 'PRORRATEO';
-        if (r.is_percent) formaCalculo = 'COEFICIENTE';
+        if (isPercent) formaCalculo = 'COEFICIENTE';
         if (formula) formaCalculo = 'FORMULA';
 
         let baseCalculo: BaseRef | null = null;
@@ -159,24 +162,27 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
             }
         }
 
-        if (formula?.trim() === '=sum(children)' && r.children) {
+        // Standardize formula for engine
+        let finalFormula = formula;
+        if (finalFormula?.trim() === '=sum(children)' && r.children) {
             const childRefs = r.children.map((c: any) => `ref('${c.id}')`).join(', ');
-            formula = `sum(${childRefs})`;
+            finalFormula = `sum(${childRefs})`;
         }
 
         engineRows.push({
           id: r.id,
+          parentId,
           classification: r.id,
           label: r.label,
           type,
           formaCalculo,
-          valorHistorico: vhSums[r.id] ?? r.valorHistorico ?? r.value,
+          valorHistorico: vhSums[r.id] ?? r.valorHistorico ?? r.value ?? 0,
           baseCalculo,
-          coeficiente: r.is_percent ? (r.value ?? r.valorHistorico) : r.coeficiente,
-          formula: formula,
+          coeficiente: isPercent ? (r.value ?? r.valorHistorico ?? 0) : (r.coeficiente ?? 0),
+          formula: finalFormula,
         });
 
-        if (r.children) flatten(r.children);
+        if (hasChildren) flatten(r.children, r.id);
       });
     };
     (baseSheet?.sections || []).forEach((s: any) => flatten(s?.rows));
@@ -207,7 +213,8 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                 ]
             };
         }
-        if (product.cost > 0 && (a.id === 'IV' || a.id === '4')) {
+        const productCost = product.cost ?? product.cost_price ?? 0;
+        if (productCost > 0 && (a.id === 'IV' || a.id === '4')) {
             const existingRows = (a.data || []).map((d: any) => ({
                 ...d,
                 classification: String(d.classification || d.label || '').split(' - ')[0].trim(),
@@ -222,8 +229,8 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                         classification: "3.1.3", // Contracted services/Other
                         code: "FIXED_COST",
                         description: `Costo Fijo Importado: ${product.name}`,
-                        amount: product.cost,
-                        importe: product.cost
+                        amount: productCost,
+                        importe: productCost
                     }
                 ]
             };
@@ -294,6 +301,12 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
 
         // 2. Calculate
         const result = calculateFicha(ficha);
+
+        // Sanity check: if grandTotal is NaN or 0, maybe there's an engine issue
+        const isInvalid = isNaN(result.summary.grandTotal) || result.summary.grandTotal === 0;
+        if (isInvalid && result.validationErrors.length > 0) {
+            throw new Error(`Error de cálculo: ${result.validationErrors[0]}`);
+        }
 
         // 3. Export PDF
         const response = await fetch('/api/cost-sheets/export-pdf', {
