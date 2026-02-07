@@ -8,7 +8,8 @@ import {
   Settings, Building2, Receipt, FileText, ChevronRight,
   UserPlus, Store, Key, ListChecks, HelpCircle,
   Wand2, Table2, FileSpreadsheet, History, Target,
-  Baby, Zap, Cpu, WifiOff, Search, Newspaper
+  Baby, Zap, Cpu, WifiOff, Search, Newspaper,
+  Activity, Scale, CreditCard
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { HorizontalScroll } from '@/components/ui/HorizontalScroll';
@@ -31,6 +32,7 @@ import OfflineSyncDiagram from './help/OfflineSyncDiagram';
 import EliDiagram from './help/EliDiagram';
 import StickyCartFlowDiagram from './help/StickyCartFlowDiagram';
 import InventoryAdjustmentFlowDiagram from './help/InventoryAdjustmentFlowDiagram';
+import IpvFlowDiagram from './help/IpvFlowDiagram';
 
 export default function HelpView() {
   return (
@@ -48,9 +50,9 @@ export default function HelpView() {
         </div>
         <div className="flex flex-col items-end">
           <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-black">
-            VERSIÓN 5.7.22 (UX HARDENING)
+            VERSIÓN 5.7.24 (IPV & LANDING)
           </Badge>
-          <span className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Última actualización: 01 Mar 2026</span>
+          <span className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Última actualización: 06 Mar 2026</span>
         </div>
       </div>
 
@@ -89,6 +91,10 @@ export default function HelpView() {
               <TabsTrigger value="security" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
                 <Shield className="w-4 h-4 mr-2 hidden sm:block" />
                 Seguridad
+              </TabsTrigger>
+              <TabsTrigger value="ipv" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+                <Activity className="w-4 h-4 mr-2 hidden sm:block" />
+                Conciliación (IPV)
               </TabsTrigger>
               <TabsTrigger value="history" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
                 <History className="w-4 h-4 mr-2 hidden sm:block" />
@@ -375,9 +381,9 @@ export default function HelpView() {
               Arquitectura Zero-Latency (v5.7.12)
             </h4>
             <p className="text-[10px] font-medium leading-relaxed text-primary/80">
-              <strong>Antes Juan hacía X:</strong> Cada búsqueda de producto requería una llamada a la nube, causando esperas.
+              <strong>Antes Juan hacía X:</strong> Cada búsqueda de producto requería una llamada a la nube, causando esperas y frustración si el internet fallaba.
               <br />
-              <strong>Ahora Juan hace Y:</strong> El TPV descarga todo el catálogo al inicio (como llenar los estantes al abrir la tienda). Las búsquedas son instantáneas y locales.
+              <strong>Ahora Juan hace Y:</strong> El TPV descarga todo el catálogo al inicio (como llenar los estantes al abrir la tienda). Las búsquedas son instantáneas, locales y funcionan incluso si el internet parpadea.
             </p>
           </div>
           <Card className="border-none shadow-none bg-transparent">
@@ -619,11 +625,13 @@ export default function HelpView() {
                       Sincronización Offline
                     </h4>
                     <p className="text-sm font-medium leading-relaxed mb-4 text-muted-foreground">
-                      ¿Sin internet? No hay problema. CostPro guarda tus operaciones localmente y las sincroniza automáticamente cuando vuelves a estar en línea.
+                      <strong>Antes Juan hacía X:</strong> Si se iba el internet, la tienda se detenía. No podía registrar ventas ni ver el inventario.
+                      <br />
+                      <strong>Ahora Juan hace Y:</strong> Sigue operando normalmente. CostPro guarda todo en un "cuaderno digital" (IndexedDB) y sincroniza automáticamente al recuperar la conexión.
                     </p>
                     <div className="bg-background/50 p-4 rounded-xl border border-amber-200">
                        <p className="text-xs italic text-amber-800">
-                         "Imagina que se va la luz. El cajero sigue vendiendo normalmente. El sistema anota todo en un 'cuaderno digital' invisible y lo sube a la nube después."
+                         "Es como tener un generador eléctrico: la luz se va, pero tu negocio sigue brillando."
                        </p>
                     </div>
                   </div>
@@ -697,6 +705,67 @@ export default function HelpView() {
           </Card>
         </TabsContent>
 
+        {/* --- IPV BUILDER FLOWS --- */}
+        <TabsContent value="ipv" className="space-y-8">
+          <Card className="border-none shadow-none bg-transparent">
+            <CardHeader className="px-0">
+              <CardTitle className="text-2xl font-black uppercase tracking-tight">Módulo IPV Builder (Conciliación Automática)</CardTitle>
+              <CardDescription className="text-base font-medium">
+                Sincroniza tus ventas registradas con los movimientos reales de tu banco en segundos.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-0 space-y-12">
+              <div className="bg-blue-500/10 border border-blue-500/20 p-6 rounded-3xl mb-8">
+                <h4 className="font-black text-blue-600 text-xs uppercase mb-4 flex items-center gap-2">
+                  <Activity className="w-4 h-4" />
+                  Evolución de la Conciliación
+                </h4>
+                <div className="grid md:grid-cols-2 gap-8">
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-black uppercase text-muted-foreground">Antes (Juan Manual):</p>
+                    <p className="text-xs font-medium leading-relaxed">
+                      Juan pasaba horas con una regla y un papel comparando cada transferencia del banco con sus vales de venta. Si se equivocaba en un peso, tenía que empezar de nuevo.
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-black uppercase text-blue-600">Ahora (Eli Automática):</p>
+                    <p className="text-xs font-medium leading-relaxed">
+                      Eli toma el archivo del banco (CSV/XLSX) y lo cruza instantáneamente con el sistema. Ella detecta montos exactos, referencias y hasta errores de centavos automáticamente.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <IpvFlowDiagram />
+
+              <div className="grid md:grid-cols-3 gap-6">
+                <div className="p-6 rounded-2xl bg-muted/30 border border-border space-y-3">
+                  <CreditCard className="w-6 h-6 text-primary" />
+                  <h5 className="font-black text-xs uppercase">Ingesta Inteligente</h5>
+                  <p className="text-[10px] text-muted-foreground leading-tight">Carga masiva de extractos con detección de duplicados por Hash SHA-256.</p>
+                </div>
+                <div className="p-6 rounded-2xl bg-muted/30 border border-border space-y-3">
+                  <Scale className="w-6 h-6 text-primary" />
+                  <h5 className="font-black text-xs uppercase">Motor Multi-Pass</h5>
+                  <p className="text-[10px] text-muted-foreground leading-tight">4 niveles de análisis: Referencia Exacta, Suma de Partes, Tolerancia y Ajuste de Caja.</p>
+                </div>
+                <div className="p-6 rounded-2xl bg-muted/30 border border-border space-y-3">
+                  <FileText className="w-6 h-6 text-primary" />
+                  <h5 className="font-black text-xs uppercase">Reportes IPV PDF</h5>
+                  <p className="text-[10px] text-muted-foreground leading-tight">Generación de informes de venta e inventario listos para imprimir o enviar.</p>
+                </div>
+              </div>
+
+              <div className="bg-amber-500/5 border border-amber-500/10 p-6 rounded-3xl">
+                <h4 className="font-black text-amber-600 text-xs uppercase mb-2">Privacidad de Datos (Local-First)</h4>
+                <p className="text-[10px] font-medium leading-relaxed text-amber-800/70">
+                  Tus transacciones bancarias <strong>nunca suben a la nube</strong> de forma cruda. Todo el proceso de matching ocurre en tu navegador usando IndexedDB. Solo el reporte final consolidado es almacenado para auditoría.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* --- VERSION HISTORY --- */}
         <TabsContent value="history" className="space-y-8">
           <Card className="border-none shadow-none bg-transparent">
@@ -708,12 +777,60 @@ export default function HelpView() {
             </CardHeader>
             <CardContent className="px-0">
               <div className="space-y-8">
-                {/* --- v5.7.18 --- */}
+                {/* --- v5.7.24 --- */}
                 <div className="relative pl-8 border-l-2 border-primary/20 space-y-4">
                   <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary border-4 border-background" />
                   <div className="flex items-center gap-3">
-                    <Badge className="bg-primary">v5.7.18</Badge>
-                    <span className="text-xs font-black text-muted-foreground uppercase">27 de Febrero, 2026 (Actual)</span>
+                    <Badge className="bg-primary">v5.7.24</Badge>
+                    <span className="text-xs font-black text-muted-foreground uppercase">06 de Marzo, 2026 (Actual)</span>
+                  </div>
+                  <div className="bg-muted/30 rounded-2xl p-6 space-y-4 border border-primary/10">
+                    <h4 className="font-black text-sm uppercase text-primary">Next-Gen Welcome Landing</h4>
+                    <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Nueva Landing Page con diseño Bento y Showcase de Producto.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Desacoplamiento total del flujo de Login.</li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* --- v5.7.23 --- */}
+                <div className="relative pl-8 border-l-2 border-primary/20 space-y-4 opacity-90">
+                  <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary border-4 border-background" />
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline">v5.7.23</Badge>
+                    <span className="text-xs font-black text-muted-foreground uppercase">02 de Marzo, 2026</span>
+                  </div>
+                  <div className="bg-muted/30 rounded-2xl p-6 space-y-4 border border-primary/10">
+                    <h4 className="font-black text-sm uppercase text-primary">Hardening de Contratos y Observabilidad</h4>
+                    <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Validación Zod en todos los RPCs de Dashboard y Ventas.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Trazabilidad total en el QueryInspector para administradores.</li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* --- v5.7.19 --- */}
+                <div className="relative pl-8 border-l-2 border-primary/20 space-y-4 opacity-90">
+                  <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary border-4 border-background" />
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline">v5.7.19</Badge>
+                    <span className="text-xs font-black text-muted-foreground uppercase">27 de Febrero, 2026</span>
+                  </div>
+                  <div className="bg-muted/30 rounded-2xl p-6 space-y-4 border border-primary/10">
+                    <h4 className="font-black text-sm uppercase text-primary">Lanzamiento IPV Builder (v10.0)</h4>
+                    <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Motor de Matching Multi-Pass para conciliación bancaria.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Generación local de reportes IPV en PDF.</li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* --- v5.7.18 --- */}
+                <div className="relative pl-8 border-l-2 border-primary/20 space-y-4 opacity-80">
+                  <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-muted border-4 border-background" />
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline">v5.7.18</Badge>
+                    <span className="text-xs font-black text-muted-foreground uppercase">27 de Febrero, 2026</span>
                   </div>
                   <div className="bg-muted/30 rounded-2xl p-6 space-y-4 border border-primary/10">
                     <h4 className="font-black text-sm uppercase text-primary">Refactor de Flujo en Ficha de Costo</h4>
@@ -868,7 +985,7 @@ export default function HelpView() {
            <button className="px-8 py-3 bg-background border border-border rounded-xl font-black text-xs uppercase tracking-widest hover:bg-primary hover:text-white transition-all">
              Abrir Ticket de Soporte
            </button>
-           <span className="text-[10px] font-bold text-muted-foreground">COSTPRO v5.7.18</span>
+           <span className="text-[10px] font-bold text-muted-foreground">COSTPRO v5.7.24</span>
         </div>
       </div>
     </div>
