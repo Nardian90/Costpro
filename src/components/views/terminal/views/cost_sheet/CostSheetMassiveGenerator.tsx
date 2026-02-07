@@ -304,7 +304,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
 
         // Sanity check: if grandTotal is NaN or 0, maybe there's an engine issue
         const isInvalid = isNaN(result.summary.grandTotal) || result.summary.grandTotal === 0;
-        if (isInvalid && result.validationErrors.length > 0) {
+        if (isInvalid && result.validationErrors && result.validationErrors.length > 0) {
             throw new Error(`Error de cálculo: ${result.validationErrors[0]}`);
         }
 
