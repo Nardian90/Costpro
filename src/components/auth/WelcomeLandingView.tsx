@@ -9,6 +9,7 @@ import {
   Store, Utensils, Factory, Briefcase, Zap,
   MessageCircle
 } from 'lucide-react';
+import Link from 'next/link';
 import CostProLogo from '@/components/CostProLogo';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import AutomationWorkflowDiagram from './diagrams/AutomationWorkflowDiagram';
@@ -109,9 +110,11 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
               >
                 Comenzar Ahora
               </button>
-              <button className="h-14 px-10 text-sm font-black uppercase tracking-widest border border-border rounded-xl hover:bg-muted/50 transition-colors">
-                Ver Demo Online
-              </button>
+              <Link href="/demo/executive">
+                <button className="h-14 px-10 text-sm font-black uppercase tracking-widest border border-border rounded-xl hover:bg-muted/50 transition-colors">
+                  Ver Demo Online
+                </button>
+              </Link>
             </div>
 
             <div className="flex items-center gap-6 pt-8 grayscale opacity-50">
@@ -355,13 +358,14 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
                 </div>
               </div>
 
-              <button
-                onClick={onLoginClick}
-                className="neu-btn border-2 border-violet-600 text-violet-600 h-14 px-10 text-sm font-black uppercase tracking-widest hover:bg-violet-600 hover:text-white transition-all flex items-center gap-2"
-              >
-                Ver esta funcionalidad
-                <ArrowRight className="w-4 h-4" />
-              </button>
+              <Link href="/demo/executive">
+                <button
+                  className="neu-btn border-2 border-violet-600 text-violet-600 h-14 px-10 text-sm font-black uppercase tracking-widest hover:bg-violet-600 hover:text-white transition-all flex items-center gap-2"
+                >
+                  Ver esta funcionalidad
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </Link>
             </div>
 
             <div className="order-1 lg:order-2 space-y-8">
