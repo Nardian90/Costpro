@@ -105,13 +105,6 @@ export default function LoginForm() {
     }
   };
 
-  const demoAccounts = [
-    { email: 'admin@demo.com', role: 'Admin' },
-    { email: 'encargado@demo.com', role: 'Encargado' },
-    { email: 'cajero@demo.com', role: 'Cajero' },
-    { email: 'almacen@demo.com', role: 'Almacén' },
-  ];
-
   return (
     <div className="neu-card w-full max-w-md mx-auto">
       <h2 className="text-xl font-semibold mb-6 text-center">
@@ -188,41 +181,6 @@ export default function LoginForm() {
         </button>
       </form>
 
-      <div className="mt-6 pt-6 border-t border-border" translate="no">
-        <p className="text-xs text-muted-foreground mb-3 text-center">
-          Cuentas de Demo (contraseña: demo123)
-        </p>
-        <div className="space-y-2">
-          {demoAccounts.map((account) => (
-            <button
-              key={account.email}
-              type="button"
-              disabled={demoLoading === account.email}
-              onClick={() => {
-                setDemoLoading(account.email);
-                setEmail(account.email);
-                setPassword('demo123');
-                setTimeout(() => {
-                  formRef.current?.requestSubmit();
-                }, 100);
-              }}
-              className="neu-raised-sm w-full text-left p-2 hover:bg-accent transition-colors text-sm flex items-center justify-center disabled:opacity-75"
-            >
-              {demoLoading === account.email ? (
-                <div className="flex items-center justify-center gap-2 w-full">
-                  <div className="w-4 h-4 border-2 border-foreground border-t-transparent rounded-full animate-spin" />
-                  <span>Cargando...</span>
-                </div>
-              ) : (
-                <div className="flex justify-between items-center w-full">
-                  <span className="font-medium">{account.email}</span>
-                  <span className="neu-badge">{account.role}</span>
-                </div>
-              )}
-            </button>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }

@@ -1,11 +1,13 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowRight, CheckCircle2, ShoppingCart, Package,
   Shield, TrendingUp, BarChart3, FileText,
   Check, Play, MousePointer2, ExternalLink,
-  Store, Utensils, Factory, Briefcase, Zap
+  Store, Utensils, Factory, Briefcase, Zap,
+  MessageCircle
 } from 'lucide-react';
 import CostProLogo from '@/components/CostProLogo';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -17,6 +19,12 @@ interface WelcomeLandingViewProps {
 }
 
 export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewProps) {
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+
   const modules = [
     {
       title: "Gestión de Costos",
@@ -51,7 +59,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       {/* Header / Nav */}
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-[10px] border-b border-border/50">
+      <header className={`sticky top-0 z-50 bg-background/80 ${isHydrated ? 'backdrop-blur-[10px]' : ''} border-b border-border/50 transition-all duration-500`}>
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-8">
             <CostProLogo size={40} animated={false} />
@@ -133,7 +141,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
               <motion.div
                 animate={{ y: [0, -10, 0] }}
                 transition={{ duration: 4, repeat: Infinity }}
-                className="absolute top-10 right-10 p-6 rounded-3xl bg-background/80 backdrop-blur-2xl border border-border/50 shadow-[0_20px_50px_rgba(0,0,0,0.1)] space-y-4 w-64 z-10"
+                className={`absolute top-10 right-10 p-6 rounded-3xl bg-background/80 ${isHydrated ? 'backdrop-blur-2xl' : ''} border border-border/50 shadow-[0_20px_50px_rgba(0,0,0,0.1)] space-y-4 w-64 z-10 transition-all duration-700`}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Ventas Hoy</span>
@@ -166,7 +174,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 1 }}
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-6 rounded-3xl bg-background/40 backdrop-blur-xl border border-white/10 shadow-2xl w-48 text-center space-y-2"
+                className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-6 rounded-3xl bg-background/40 ${isHydrated ? 'backdrop-blur-xl' : ''} border border-white/10 shadow-2xl w-48 text-center space-y-2 transition-all duration-700`}
               >
                 <div className="w-10 h-10 rounded-full bg-violet-500/20 flex items-center justify-center mx-auto text-violet-500">
                   <Zap className="w-5 h-5" />
@@ -180,29 +188,38 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
       </section>
 
       {/* Sectors Trust Signals */}
-      <section className="py-12 border-y border-border/50 bg-muted/10">
-        <div className="max-w-7xl mx-auto px-6 flex flex-wrap justify-center md:justify-between items-center gap-8 md:gap-4 opacity-50 grayscale">
-          <div className="flex items-center gap-3">
+      <section className="py-12 border-y border-border/50 bg-muted/10 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 flex overflow-x-auto md:flex-wrap justify-start md:justify-between items-center gap-8 md:gap-4 opacity-50 grayscale no-scrollbar scroll-smooth">
+          <div className="flex items-center gap-3 shrink-0">
             <Utensils className="w-5 h-5" />
             <span className="text-[10px] font-black uppercase tracking-[0.2em]">Restauración</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             <Store className="w-5 h-5" />
             <span className="text-[10px] font-black uppercase tracking-[0.2em]">Retail & Comercio</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             <Factory className="w-5 h-5" />
             <span className="text-[10px] font-black uppercase tracking-[0.2em]">Manufactura</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             <Briefcase className="w-5 h-5" />
             <span className="text-[10px] font-black uppercase tracking-[0.2em]">Servicios Prof.</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             <TrendingUp className="w-5 h-5" />
             <span className="text-[10px] font-black uppercase tracking-[0.2em]">Franquicias</span>
           </div>
         </div>
+        <style jsx>{`
+          .no-scrollbar::-webkit-scrollbar {
+            display: none;
+          }
+          .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+          }
+        `}</style>
       </section>
 
       {/* Modules Grid - Bento Layout */}
@@ -396,12 +413,40 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
             <span className="text-xs font-bold text-muted-foreground">© 2026 CostPro Enterprise. Todos los derechos reservados.</span>
           </div>
           <div className="flex gap-8 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-            <a href="#" className="hover:text-primary transition-colors">Ayuda</a>
+            <a
+              href="https://wa.me/5353183215"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-primary transition-colors flex items-center gap-1"
+            >
+              Soporte WhatsApp
+              <ExternalLink className="w-2.5 h-2.5" />
+            </a>
             <a href="#" className="hover:text-primary transition-colors">Términos</a>
             <a href="#" className="hover:text-primary transition-colors">Privacidad</a>
           </div>
         </div>
       </footer>
+
+      {/* Floating WhatsApp CTA */}
+      <AnimatePresence>
+        {isHydrated && (
+          <motion.a
+            initial={{ opacity: 0, scale: 0.5, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            href="https://wa.me/5353183215"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="fixed bottom-6 right-6 z-[60] bg-[#25D366] text-white p-4 rounded-full shadow-2xl hover:scale-110 active:scale-95 transition-all flex items-center justify-center group"
+            aria-label="Contactar por WhatsApp"
+          >
+            <MessageCircle className="w-6 h-6 fill-current" />
+            <span className="max-w-0 overflow-hidden group-hover:max-w-xs group-hover:ml-2 transition-all duration-500 whitespace-nowrap font-bold text-[10px] uppercase tracking-widest">
+              Soporte MiPyME
+            </span>
+          </motion.a>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
