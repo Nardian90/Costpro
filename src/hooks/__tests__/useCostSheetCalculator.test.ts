@@ -185,4 +185,36 @@ describe('useCostSheetCalculator', () => {
     expect(result.current.calculatedValues['r1'].total).toBe(100);
     expect(result.current.calculatedValues['r2'].total).toBe(0);
   });
+
+  it('should calculate header fields automatically and with formulas', () => {
+    const template: CostSheetData = {
+        ...baseTemplate,
+        header: {
+            ...baseTemplate.header,
+            quantity: 50,
+            production_level: 100,
+            capacity_utilization: 0, // Should be calculated to 0.5
+            code: '=GET_ANEXO_DATO("annex1", "1.1", "no")',
+            product_code: '=GET_ANEXO_DATO("annex1", "1.1", "desc")',
+            sale_price: '=GET_FILA_DATO("r1", "total")'
+        },
+        annexes: [{
+            id: 'annex1',
+            title: 'Annex 1',
+            columns: [{ key: 'classification', title: 'Class' }, { key: 'no', title: 'No' }, { key: 'desc', title: 'Desc' }],
+            data: [{ classification: '1.1', no: 'FC-999', desc: 'PROD-777' }]
+        }],
+        sections: [{
+            id: 's1',
+            rows: [{ id: 'r1', label: 'Row 1', valorHistorico: 1234.56, calculationMethod: 'ValorFijo' }]
+        }]
+    };
+
+    const { result } = renderHook(() => useCostSheetCalculator(template));
+
+    expect(result.current.calculatedHeader.capacity_utilization).toBe(50);
+    expect(result.current.calculatedHeader.code).toBe('FC-999');
+    expect(result.current.calculatedHeader.product_code).toBe('PROD-777');
+    expect(result.current.calculatedHeader.sale_price).toBe(1234.56);
+  });
 });
