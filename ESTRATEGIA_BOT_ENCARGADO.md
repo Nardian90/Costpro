@@ -1,7 +1,7 @@
-# Estrategia Integral: Bot de Gestión Inteligente CostPro
+# Estrategia Integral: Eli - Inteligencia Integrada CostPro
 
 ## 1. Visión General
-Propuesta estratégica para implementar un asistente virtual interno que empodere al **Encargado de Tienda**. El bot actúa como un analista de datos 24/7, transformando los registros operativos de CostPro en decisiones accionables para optimizar el inventario, reducir mermas y maximizar las ventas.
+Propuesta estratégica para implementar a Eli, el asistente virtual interno que empodere al **Encargado de Tienda**. Eli actúa como un analista de datos 24/7, transformando los registros operativos de CostPro en decisiones accionables para optimizar el inventario, reducir mermas y maximizar las ventas.
 
 ---
 
@@ -85,4 +85,4 @@ Propuesta estratégica para implementar un asistente virtual interno que empoder
 **Puntaje: 10/10**
 
 **Justificación:**
-CostPro cuenta con una base sólida de datos (Kardex, histórico de transacciones, RLS robusto). Como agente Jules, tengo acceso completo para implementar las funciones de base de datos (RPC), configurar las Edge Functions de Supabase y desarrollar la interfaz en React. La integración no requiere cambios estructurales masivos, sino "reforzar los pilares" existentes con una capa de inteligencia conversacional.
+CostPro cuenta con una base sólida de datos (Kardex, histórico de transacciones, RLS robusto). Como agente Eli, tengo acceso completo para implementar las funciones de base de datos (RPC), configurar las Edge Functions de Supabase y desarrollar la interfaz en React. La integración no requiere cambios estructurales masivos, sino "reforzar los pilares" existentes con una capa de inteligencia conversacional.

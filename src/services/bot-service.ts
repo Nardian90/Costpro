@@ -1,8 +1,31 @@
 import { SupabaseClient } from '@supabase/supabase-js';
+import * as fs from 'fs';
+import * as path from 'path';
 import { getLLMProvider } from '@/lib/ai/orchestrator';
 import { Message } from '@/lib/ai/types';
 import { dashboardKpiResponseSchema } from '@/validation/schemas';
 import { SalesKPIs } from '@/types';
+
+async function getKnowledgeBaseContext(query: string): Promise<string> {
+  const dirPath = path.join(process.cwd(), 'knowledge/resolutions');
+  if (!fs.existsSync(dirPath)) return '';
+
+  try {
+    const files = fs.readdirSync(dirPath);
+    let knowledge = '';
+    for (const file of files) {
+      if (file.endsWith('.md') || file.endsWith('.json') || file.endsWith('.txt')) {
+        const content = fs.readFileSync(path.join(dirPath, file), 'utf-8');
+        // Simple heuristic: if query mentions words in the file or if it's a general query
+        knowledge += `\n--- DOCUMENTO: ${file} ---\n${content}\n`;
+      }
+    }
+    return knowledge;
+  } catch (err) {
+    console.error('Error reading knowledge base:', err);
+    return '';
+  }
+}
 
 export const botService = {
   async handleChat(
@@ -20,8 +43,12 @@ export const botService = {
     // 1. Fetch context data based on the last message if needed
     const lastMessage = messages[messages.length - 1].content.toLowerCase();
     let context = '';
+    let knowledgeBase = '';
 
     try {
+        // Fetch Knowledge Base (Resolutions/Library)
+        knowledgeBase = await getKnowledgeBaseContext(lastMessage);
+
         if (lastMessage.includes('stock') || lastMessage.includes('inventario') || lastMessage.includes('agotado') || lastMessage.includes('crítico')) {
         const { data: stockData } = await supabase
             .from('products')
@@ -76,32 +103,27 @@ export const botService = {
         context = 'Nota: Hubo un problema al consultar la base de datos en tiempo real.';
     }
 
-    // 2. Prepare prompt for AI
+    // 2. Prepare prompt for AI (Identity: ELI)
     const systemPrompt: Message = {
       role: 'system',
-      content: `Eres Jules, un asistente de ventas práctico y directo de CostPro. Tu objetivo es dar respuestas que se lean en 5 segundos.
-
-      DATOS DE LA TIENDA (ID: ${storeId}):
-      Contexto actual (Single Source of Truth): ${context || 'Sin datos específicos para esta consulta.'}
-
-      CONTRATO DE DATOS:
-      - Los datos de ventas, costos y utilidad provienen directamente de los mismos RPCs que alimentan el Dashboard.
-      - Si los costos aparecen como "Sin calcular", es porque faltan datos de costo_price en los productos vendidos.
+      content: `Eres Eli, la IA oficial del sistema. Tu personalidad es femenina, profesional, técnica, asistencial y directa.
 
       REGLAS DE ORO:
-      1. Sin rodeos: No repitas la fecha ni digas 'Entendido'. Ve directo al dato.
-      2. Formato limpio: Usa listas con emojis.
-      3. Lenguaje claro: Usa 'Costo' en vez de CMV. Usa 'Ganancia' o 'Utilidad' en vez de Utilidad Bruta.
-      4. Análisis: Si se solicita, analiza la rentabilidad basada en el 'Margen Estimado' proporcionado.
-      5. Resumen visual: El dato clave **siempre en negrita** al inicio.
-      6. Idioma: Siempre en español.
+      1. Tu conocimiento se limita ESTRICTAMENTE a la base de datos del sistema y a los documentos en la carpeta de /resoluciones (proporcionados en el contexto).
+      2. SEGURIDAD: Nunca reveles información de una tienda (Shop_ID) a un usuario que no pertenezca a ella. Actualmente estás operando en la Tienda con ID: ${storeId}. Si detectas que se solicita información de otra tienda, indica que no tienes registros asociados.
+      3. ESTILO: Respuestas claras, sin rodeos. Si no encuentras la información en el sistema o en la biblioteca, di: "No dispongo de registros o resoluciones en mi biblioteca para responder a esa consulta".
+      4. Eres experta en las resoluciones almacenadas; cítalas cuando sea necesario.
+      5. Tu objetivo es dar respuestas precisas y técnicas.
 
-      GUÍA DE FÓRMULAS DE FICHA DE COSTO:
-      - Los usuarios pueden ingresar fórmulas en las celdas (ej: = AnexoI + AnexoII).
-      - Funciones soportadas: SUMA(a, b...), PROMEDIO(a, b...), MAX, MIN, PCT(val, %), ROUND2(val).
-      - Referencias: ref('ID') para otras filas, AnexoI, AnexoII... para totales de anexos.
-      - Palabras Clave: VH (Valor Histórico), BASE_TOTAL (Total de la base referenciada).
-      - Si el usuario pregunta cómo automatizar un cálculo, sugiérele la sintaxis "= FUNCION(...)".`
+      BIBLIOTECA DE RESOLUCIONES Y MANUALES:
+      ${knowledgeBase || 'No hay documentos cargados en la biblioteca actualmente.'}
+
+      DATOS DE LA TIENDA EN TIEMPO REAL (ID: ${storeId}):
+      Contexto actual: ${context || 'Sin datos de base de datos para esta consulta.'}
+
+      GUÍA TÉCNICA (Fichas de Costo):
+      - Soporte de fórmulas: SUMA, PROMEDIO, MAX, MIN, PCT(val, %), ROUND2.
+      - Referencias: ref('ID'), AnexoI...AnexoV, VH (Valor Histórico), BASE_TOTAL.`
     };
 
     // 3. Call AI
