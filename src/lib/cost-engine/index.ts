@@ -365,6 +365,30 @@ export function calculateFicha(
     return annexSumMap.get(anexoId)?.get(classification)?.toNumber() || 0;
   };
 
+  parser.functions.GET_ANEXO_DATO = (anexoId: string, classification: string, field: string) => {
+    const anexo = ficha.anexos.find(a => a.id === anexoId);
+    if (!anexo) return 0;
+    const row = anexo.rows.find(r => r.classification === classification);
+    if (!row) return 0;
+    return parseFloat(row[field]) || 0;
+  };
+
+  parser.functions.GET_FILA_DATO = (search: string, field: string) => {
+      // Priority 1: Classification (Visual Numbering)
+      // Priority 2: ID (UUID or template ID)
+      let targets = rowsByClass.get(search);
+      if (!targets || targets.length === 0) {
+          targets = rowsById.get(search) || [];
+      }
+      if (targets.length === 0) return 0;
+
+      const target = targets[0];
+      const calculated = calculatedRows.get(target.id);
+      if (!calculated) return 0;
+
+      return (calculated as any)[field] || 0;
+  };
+
   parser.functions.header = (key: string) => {
       // Handle other meta fields if needed
       if (key === 'decimals') return ficha.meta.decimals;
@@ -582,8 +606,7 @@ export function calculateFicha(
                 COEF: row.coeficiente || 0,
                 QUANTITY: ficha.meta.quantity || 0,
                 cantidad: ficha.meta.quantity || 0,
-                header: {
-                },
+                header: ficha.meta,
                 children: ficha.rows
                     .filter(r => r.parentId === row.id)
                     .map(r => calculatedRows.get(r.id)?.total || 0),
@@ -641,8 +664,7 @@ export function calculateFicha(
                 VH: row.valorHistorico || 0,
                 QUANTITY: ficha.meta.quantity || 0,
                 cantidad: ficha.meta.quantity || 0,
-                header: {
-                },
+                header: ficha.meta,
                 children: ficha.rows
                     .filter(r => r.parentId === row.id)
                     .map(r => calculatedRows.get(r.id)?.calculatedVH || r.valorHistorico || 0),
