@@ -185,18 +185,33 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         type="button"
         onClick={() => !isOutOfStock && onClick?.(product)}
         className={cn(
-          "flex flex-row items-center gap-4 p-3 rounded-2xl border border-border bg-card transition-all w-full text-left",
+          "flex flex-row items-center gap-3 sm:gap-4 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-border bg-card transition-all w-full text-left relative overflow-hidden",
           isOutOfStock ? "opacity-60 cursor-not-allowed" : "hover:shadow-md active:scale-[0.98]",
           className
         )}
       >
-        <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0 bg-muted">
+        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg sm:rounded-xl overflow-hidden shrink-0 bg-muted">
            <ProductImage src={resolveProductImage(product)} alt={product.name} name={product.name} className="w-full h-full object-cover" />
         </div>
         <div className="flex-1 min-w-0">
-          <h4 className="font-black text-xs uppercase truncate mb-1">{product.name}</h4>
-          <div className="text-lg font-black text-primary">{formatCurrency(product.price)}</div>
+          <h4 className="font-black text-[10px] sm:text-xs uppercase truncate mb-0.5 sm:mb-1">{product.name}</h4>
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-base sm:text-lg font-black text-primary leading-none">{formatCurrency(product.price)}</div>
+            <div className={cn(
+              "text-[8px] font-black uppercase tracking-tighter px-1.5 py-0.5 rounded border shrink-0",
+              isOutOfStock ? "bg-danger/10 text-danger border-danger/20" :
+              isLowStock ? "bg-amber-500/10 text-amber-600 border-amber-500/20" :
+              "bg-success/10 text-success border-success/20"
+            )}>
+              Stock: {product.stock_current}
+            </div>
+          </div>
         </div>
+        {isOutOfStock && (
+          <div className="absolute inset-0 bg-background/40 backdrop-blur-[1px] flex items-center justify-center">
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] bg-background px-3 py-1 rounded-full border border-border shadow-xl">Sin Stock</span>
+          </div>
+        )}
       </button>
     );
   }
