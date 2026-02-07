@@ -97,13 +97,18 @@ export async function recalculateIPVReportsChain(db: any) {
                 ? (prevReport.filas.find((pf: any) => pf.cod === f.cod)?.existencia_final_qty || 0)
                 : (product?.stock_inicial_manual || 0);
 
+            const entrada = f.entrada_qty || 0;
+            const salida = f.salida_qty || 0;
             const venta = f.venta_cantidad_qty;
-            const final = initial - venta;
+            const totalDisponible = initial + entrada;
+            const final = totalDisponible - salida - venta;
 
             return {
                 ...f,
                 saldo_inicial_qty: initial,
-                total_disponible_qty: initial,
+                entrada_qty: entrada,
+                salida_qty: salida,
+                total_disponible_qty: totalDisponible,
                 existencia_final_qty: final
             };
         });
