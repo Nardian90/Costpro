@@ -79,7 +79,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
       </header>
 
       {/* Hero Section */}
-      <section className="pt-40 pb-20 px-6">
+      <section className="pt-24 sm:pt-40 pb-20 px-6">
         <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -94,7 +94,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
               v5.7.24 Hardened Enterprise Release
             </div>
 
-            <h1 className="text-5xl lg:text-7xl font-black tracking-tighter leading-[0.9] uppercase text-foreground">
+            <h1 className="text-[clamp(2.5rem,12vw,4.5rem)] font-black tracking-tighter leading-[0.9] uppercase text-foreground">
               Control <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-lime-400 italic">Total</span> <br />
               de su Negocio.
             </h1>
@@ -144,7 +144,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
               <motion.div
                 animate={{ y: [0, -10, 0] }}
                 transition={{ duration: 4, repeat: Infinity }}
-                className={`absolute top-10 right-10 p-6 rounded-3xl bg-background/80 ${isHydrated ? 'backdrop-blur-2xl' : ''} border border-border/50 shadow-[0_20px_50px_rgba(0,0,0,0.1)] space-y-4 w-64 z-10 transition-all duration-700`}
+                className={`absolute top-6 sm:top-10 right-4 sm:right-10 p-4 sm:p-6 rounded-3xl bg-background/80 ${isHydrated ? 'backdrop-blur-2xl' : ''} border border-border/50 shadow-[0_20px_50px_rgba(0,0,0,0.1)] space-y-4 w-48 sm:w-64 z-10 transition-all duration-700`}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Ventas Hoy</span>
@@ -163,7 +163,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
               <motion.div
                 animate={{ y: [0, 10, 0] }}
                 transition={{ duration: 5, repeat: Infinity }}
-                className="absolute bottom-10 left-10 p-6 rounded-3xl bg-primary text-white shadow-[0_20px_50px_rgba(16,185,129,0.3)] space-y-4 w-64 z-10"
+                className="absolute bottom-6 sm:bottom-10 left-4 sm:left-10 p-4 sm:p-6 rounded-3xl bg-primary text-white shadow-[0_20px_50px_rgba(16,185,129,0.3)] space-y-4 w-48 sm:w-64 z-10"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-black uppercase tracking-widest opacity-70">Stock Crítico</span>
@@ -177,7 +177,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 1 }}
-                className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-6 rounded-3xl bg-background/40 ${isHydrated ? 'backdrop-blur-xl' : ''} border border-white/10 shadow-2xl w-48 text-center space-y-2 transition-all duration-700`}
+                className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-4 sm:p-6 rounded-3xl bg-background/40 ${isHydrated ? 'backdrop-blur-xl' : ''} border border-white/10 shadow-2xl w-32 sm:w-48 text-center space-y-2 transition-all duration-700`}
               >
                 <div className="w-10 h-10 rounded-full bg-violet-500/20 flex items-center justify-center mx-auto text-violet-500">
                   <Zap className="w-5 h-5" />
