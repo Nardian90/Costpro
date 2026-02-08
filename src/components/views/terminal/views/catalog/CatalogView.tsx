@@ -1,7 +1,7 @@
 // src/components/CatalogView.tsx
 'use client';
 
-import { useState, useEffect, useMemo, useRef, useDeferredValue } from 'react';
+import { useState, useMemo, useRef, useDeferredValue } from 'react';
 import { useAuthStore, useUIStore } from '@/store';
 import { useProducts, useUpdateProduct, useBulkUpdateProducts, useAddVariant, useDeleteVariant, useDeleteProduct, useToggleProductActive } from '@/hooks/api/useProducts';
 import { toast } from 'sonner';
@@ -19,22 +19,19 @@ import {
 import { CostProLoader } from '@/components/ui/CostProLoader';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
 import {
-    PrimaryButton,
-    SecondaryButton,
     IconButton,
     SearchInput,
     ProductCard
 } from '@/components/ui/atomic';
 import { MobileSafeContainer } from '@/components/ui/MobileSafeContainer';
-import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
 import { useIsMobile } from '@/hooks/ui/useMobile';
 import { catalogService } from '@/services/catalog-service';
 import { useCatalogModals } from '@/hooks/ui/useCatalogModals';
 import { CatalogModals } from './CatalogModals';
 import { cn, resolveProductImage, formatCurrency } from '@/lib/utils';
-import { Product } from '@/types';
 import ProductImage from '@/components/ui/ProductImage';
 import { QueryInspector } from '@/components/ui/QueryInspector';
+import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
 
 export default function CatalogView() {
     const { user } = useAuthStore();
@@ -52,14 +49,10 @@ export default function CatalogView() {
     const modals = useCatalogModals();
     const [searchTerm, setSearchTerm] = useState('');
     const deferredSearchTerm = useDeferredValue(searchTerm);
-    const [layoutMode, setLayoutMode] = useState<ViewMode>('grid');
+    const [viewMode, setViewMode] = useState<ViewMode>('grid');
     const [isAuditMode, setIsAuditMode] = useState(false);
     const [importErrors, setImportErrors] = useState<{ row: number; message: string }[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
-
-    useEffect(() => {
-        if (isMobile) setLayoutMode('grid');
-    }, [isMobile]);
 
     const filteredProducts = useMemo(() => {
         const lowerSearch = deferredSearchTerm.toLowerCase();
@@ -234,7 +227,7 @@ export default function CatalogView() {
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto flex-wrap">
                     <div className="flex items-center justify-between w-full sm:w-auto gap-4">
                         <h2 className="text-2xl sm:text-3xl font-black text-foreground tracking-tighter uppercase truncate hidden sm:block">Catálogo Global</h2>
-                        <ViewSwitcher currentView={layoutMode} onViewChange={setLayoutMode} />
+                        <ViewSwitcher currentView={viewMode} onViewChange={setViewMode} />
                     </div>
 
                     <button
@@ -253,7 +246,6 @@ export default function CatalogView() {
                     </button>
                 </div>
 
-                {/* Primary Actions - Using standardized ActionMenu for horizontal scrolling on mobile */}
                 <div className="w-full lg:w-auto">
                     <ActionMenu actions={actions} sticky={false} className="shadow-none bg-transparent" />
                 </div>
@@ -299,7 +291,7 @@ export default function CatalogView() {
                 </div>
             )}
 
-            {layoutMode === 'grid' ? (
+            {viewMode === 'grid' ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
                     {filteredProducts.map(product => (
                         <ProductCard
@@ -319,56 +311,82 @@ export default function CatalogView() {
                     )}
                 </div>
             ) : (
-                <div className="table-scroll-wrapper table-to-cards rounded-2xl shadow-xl border border-white/5">
-                    <table className="data-table sticky-column-1 w-full grid-table-catalog">
-                        <thead className="sticky-header">
-                            <tr className="bg-muted/50 text-muted-foreground font-black uppercase text-[10px] tracking-widest">
-                                <th className="p-4 pl-[68px] text-left">Producto</th>
-                                <th className="p-4 text-left">SKU</th>
-                                <th className="p-4 text-left">Categoría</th>
-                                <th className="p-4 text-right">Costo</th>
+                <div className="table-scroll-wrapper rounded-2xl shadow-xl border border-border overflow-hidden bg-background/50 backdrop-blur-sm">
+                    <table className="data-table sticky-column-1 w-full text-sm">
+                        <thead>
+                            <tr className="bg-muted/30 text-muted-foreground font-black uppercase text-[10px] tracking-widest border-b border-border">
+                                <th className="p-4 text-left">Producto</th>
+                                <th className="p-4 text-left priority-low">SKU</th>
+                                <th className="p-4 text-left priority-low">Categoría</th>
+                                <th className="p-4 text-right priority-low">Costo</th>
                                 <th className="p-4 text-right">Precio</th>
+                                <th className="p-4 text-right">Stock</th>
                                 <th className="p-4 text-center">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-background/30 backdrop-blur-sm">
+                        <tbody>
                             {filteredProducts.map(product => (
-                                <tr key={product.id} className="border-b border-border/50 hover:bg-muted/10 transition-colors">
+                                <tr key={product.id} className={cn(
+                                    "border-b border-border/50 hover:bg-muted/10 transition-colors",
+                                    !product.is_active && "opacity-50 grayscale-[0.5]"
+                                )}>
                                     <td className="p-4">
                                         <div className="flex items-center gap-3">
-                                            <div className="neu-raised-sm w-10 h-10 flex items-center justify-center overflow-hidden shrink-0">
+                                            <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 border border-border/50">
                                                 <ProductImage src={resolveProductImage(product)} name={product.name} className="w-full h-full object-cover" />
                                             </div>
-                                            <span className="font-bold text-sm truncate max-w-[200px]">{product.name}</span>
+                                            <div className="flex flex-col">
+                                                <span className="font-bold text-xs truncate max-w-[200px]">{product.name}</span>
+                                                {!product.is_active && (
+                                                    <span className="text-[8px] font-black uppercase text-danger tracking-tighter">Inactivo</span>
+                                                )}
+                                            </div>
                                         </div>
                                     </td>
-                                    <td className="p-4 font-mono text-xs">{product.sku || '-'}</td>
-                                    <td className="p-4 text-xs uppercase font-bold text-muted-foreground">{product.category || '-'}</td>
-                                    <td className="p-4 text-right font-bold">{formatCurrency(product.cost_price || 0)}</td>
-                                    <td className="p-4 text-right font-black text-primary">{formatCurrency(product.price || 0)}</td>
+                                    <td className="p-4 font-mono text-[10px] priority-low">{product.sku || '-'}</td>
+                                    <td className="p-4 text-[10px] uppercase font-bold text-muted-foreground priority-low">{product.category || '-'}</td>
+                                    <td className="p-4 text-right font-bold text-xs priority-low">{formatCurrency(product.cost_price || 0)}</td>
+                                    <td className="p-4 text-right font-black text-sm text-primary">{formatCurrency(product.price || 0)}</td>
+                                    <td className="p-4 text-right">
+                                        <div className={cn(
+                                            "inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase",
+                                            (product.stock_current || 0) <= 0 ? "bg-danger/10 text-danger" :
+                                            (product.stock_current || 0) <= 10 ? "bg-warning/10 text-warning" :
+                                            "bg-success/10 text-success"
+                                        )}>
+                                            {product.stock_current || 0} {product.unit_of_measure || 'UDS'}
+                                        </div>
+                                    </td>
                                     <td className="p-4">
                                         <div className="flex justify-center gap-2">
-                                            <IconButton onClick={() => { modals.setEditingProduct(product); modals.setIsEditProductModalOpen(true); }} icon={Edit} title="Editar" className="min-h-0 min-w-0 p-2" />
-                                            <IconButton onClick={() => { modals.setEditingProduct(product); modals.setIsVariantsModalOpen(true); }} icon={DollarSign} title="Precios" className="min-h-0 min-w-0 p-2" />
+                                            <IconButton onClick={() => { modals.setEditingProduct(product); modals.setIsEditProductModalOpen(true); }} icon={Edit} title="Editar" className="w-8 h-8 p-0" />
+                                            <IconButton onClick={() => { modals.setEditingProduct(product); modals.setIsVariantsModalOpen(true); }} icon={DollarSign} title="Precios" className="w-8 h-8 p-0" />
                                             {product.has_movements ? (
                                                 <IconButton
                                                     onClick={() => { modals.setProductToAction(product); modals.setIsDeactivateConfirmOpen(true); }}
                                                     icon={product.is_active ? Trash2 : RefreshCw}
                                                     title={product.is_active ? "Desactivar" : "Reactivar"}
-                                                    className={cn("min-h-0 min-w-0 p-2", !product.is_active && "text-success border-success/20 bg-success/5")}
+                                                    className={cn("w-8 h-8 p-0", !product.is_active && "text-success border-success/20 bg-success/5")}
                                                 />
                                             ) : (
                                                 <IconButton
                                                     onClick={() => { modals.setProductToAction(product); modals.setIsDeleteConfirmOpen(true); }}
                                                     icon={Trash2}
                                                     title="Eliminar"
-                                                    className="min-h-0 min-w-0 p-2 text-danger border-danger/20"
+                                                    className="w-8 h-8 p-0 text-danger border-danger/20 hover:bg-danger/10"
                                                 />
                                             )}
                                         </div>
                                     </td>
                                 </tr>
                             ))}
+                            {filteredProducts.length === 0 && (
+                                <tr>
+                                    <td colSpan={7} className="p-12 text-center text-muted-foreground font-bold uppercase tracking-widest opacity-50">
+                                        Sin resultados
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>
