@@ -1,17 +1,18 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Sun, Moon, Bell, Percent, ShieldCheck } from 'lucide-react';
+import { Sun, Moon, Bell, Percent, ShieldCheck, Code } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useTheme } from 'next-themes';
 import { useTaxes } from '@/hooks/api/useTaxes';
-import { useAuthStore } from '@/store';
+import { useAuthStore, useUIStore } from '@/store';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
 export default function SettingsView() {
   const { user } = useAuthStore();
+  const { showQueries, setShowQueries } = useUIStore();
   const queryClient = useQueryClient();
   const { data: taxes = [], isLoading: isLoadingTaxes } = useTaxes(user?.activeStoreId);
   const { setTheme, theme } = useTheme();
@@ -51,6 +52,32 @@ export default function SettingsView() {
                   <span className="text-[10px] font-black uppercase tracking-widest">{t.label}</span>
                 </button>
               ))}
+            </div>
+          </div>
+
+          <div className="mt-8 pt-8 border-t border-border">
+            <div className="flex items-center justify-between p-6 rounded-2xl border border-border bg-background/50">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Code className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <div className="font-black text-sm uppercase tracking-tight">Modo Desarrollador</div>
+                  <div className="text-[10px] font-bold text-muted-foreground uppercase mt-1 tracking-widest">
+                    Habilitar inspector de consultas SQL en las vistas
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowQueries(!showQueries)}
+                data-testid="toggle-show-queries"
+                className={cn(
+                  "px-4 py-2 rounded-lg font-black uppercase text-[10px] tracking-widest transition-all",
+                  showQueries ? "bg-primary/10 text-primary border border-primary/20" : "bg-muted text-muted-foreground border border-border"
+                )}
+              >
+                {showQueries ? 'Activado' : 'Desactivado'}
+              </button>
             </div>
           </div>
         </div>

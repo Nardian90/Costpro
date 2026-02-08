@@ -11,14 +11,14 @@ import { toast } from 'sonner';
 
 export const QueryInspector: React.FC = () => {
   const user = useAuthStore((state) => state.user);
-  const { viewQueries, currentView } = useUIStore();
+  const { viewQueries, currentView, showQueries } = useUIStore();
   const lastQuery = viewQueries[currentView];
   const [isOpen, setIsOpen] = useState(false);
 
   const isAdmin = user?.role === 'admin';
   const [copied, setCopied] = useState(false);
 
-  if (!isAdmin) return null;
+  if (!isAdmin || !showQueries) return null;
 
   const handleCopy = () => {
     if (!lastQuery) return;
@@ -33,6 +33,7 @@ export const QueryInspector: React.FC = () => {
       <div className="flex flex-col gap-2">
         <button
           onClick={() => setIsOpen(!isOpen)}
+          data-testid="query-inspector-trigger"
           className={cn(
             "flex items-center gap-2 px-4 py-2 rounded-lg border transition-all w-fit",
             isOpen
