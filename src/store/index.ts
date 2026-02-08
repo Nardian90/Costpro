@@ -52,7 +52,9 @@ interface UIState {
   initialProductName?: string;
   notifications: NotificationsConfig;
   viewQueries: Record<string, string | null>;
+  showQueries: boolean;
   setCurrentView: (view: ViewType) => void;
+  setShowQueries: (show: boolean) => void;
   setNotifications: (notifications: NotificationsConfig) => void;
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
@@ -71,7 +73,9 @@ export const useUIStore = create<UIState>((set) => ({
     salesAlerts: true
   },
   viewQueries: {},
+  showQueries: false,
   setCurrentView: (view) => set({ currentView: view }),
+  setShowQueries: (show) => set({ showQueries: show }),
   setNotifications: (notifications) => set({ notifications }),
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
