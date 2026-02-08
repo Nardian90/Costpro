@@ -9,6 +9,7 @@ import { NavigationItem } from '@/hooks/ui/useTerminalNavigation';
 import { SyncStatusBadge } from '@/components/ui/SyncStatusBadge';
 import { SyncConflictModal } from '@/components/modals/SyncConflictModal';
 import { toast } from 'sonner';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 
 interface HeaderProps {
   sidebarOpen: boolean;
@@ -88,32 +89,59 @@ export const Header = ({
           >
             <HelpCircle className="w-5 h-5" />
           </button>
-          <button
-            onClick={() => {
-              if (isMocked) {
-                toast.info('Conectado solo Front (Modo Offline)', {
-                  description: 'Estás utilizando una cuenta de bypass local. Los cambios no se sincronizarán con Supabase.',
-                  icon: <AlertTriangle className="w-4 h-4 text-warning" />,
-                  duration: 5000,
-                });
-              }
-            }}
-            className={cn(
-              "neu-raised-sm w-11 h-11 flex items-center justify-center relative active:scale-90 transition-transform",
-              isMocked && "text-danger"
-            )}
-            aria-label="Alertas"
-          >
-            <Bell className="w-5 h-5" />
-            <span className={cn(
-              "absolute top-2.5 right-2.5 w-2 h-2 rounded-full animate-ping",
-              isMocked ? "bg-danger" : "bg-primary"
-            )} />
-            <span className={cn(
-              "absolute top-2.5 right-2.5 w-2 h-2 rounded-full shadow-[0_0_8px_rgba(99,102,241,0.8)]",
-              isMocked ? "bg-danger" : "bg-primary"
-            )} />
-          </button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                className={cn(
+                  "neu-raised-sm w-11 h-11 flex items-center justify-center relative active:scale-90 transition-transform",
+                  isMocked && "text-danger"
+                )}
+                aria-label="Alertas"
+              >
+                <Bell className="w-5 h-5" />
+                <span className={cn(
+                  "absolute top-2.5 right-2.5 w-2 h-2 rounded-full animate-ping",
+                  isMocked ? "bg-danger" : "bg-primary"
+                )} />
+                <span className={cn(
+                  "absolute top-2.5 right-2.5 w-2 h-2 rounded-full shadow-[0_0_8px_rgba(99,102,241,0.8)]",
+                  isMocked ? "bg-danger" : "bg-primary"
+                )} />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-80 p-0 overflow-hidden border-primary/20 bg-background/95 backdrop-blur-xl">
+               <div className="p-4 border-b border-white/5 bg-primary/5">
+                 <h4 className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                   <Bell className="w-3 h-3" />
+                   Centro de Notificaciones
+                 </h4>
+               </div>
+               <div className="p-4 space-y-4">
+                 {isMocked ? (
+                   <div className="flex gap-3 p-3 rounded-xl bg-danger/5 border border-danger/20">
+                     <AlertTriangle className="w-5 h-5 text-danger shrink-0" />
+                     <div className="space-y-1">
+                       <p className="text-[10px] font-black uppercase tracking-tight text-danger">Modo Offline Detectado</p>
+                       <p className="text-[10px] text-muted-foreground leading-relaxed text-xs">
+                         Estás utilizando una cuenta de bypass local. Los cambios no se sincronizarán con la base de datos central.
+                       </p>
+                     </div>
+                   </div>
+                 ) : (
+                   <div className="py-8 text-center">
+                     <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-50 italic">
+                       No tienes notificaciones pendientes
+                     </p>
+                   </div>
+                 )}
+               </div>
+               <div className="p-3 bg-muted/30 border-t border-white/5">
+                  <p className="text-[8px] text-center font-bold text-muted-foreground uppercase tracking-tighter">
+                    Actualizado hace un momento
+                  </p>
+               </div>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
     </header>

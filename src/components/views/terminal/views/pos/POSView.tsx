@@ -107,13 +107,31 @@ export default function POSView() {
   const isMobile = useIsMobile();
   const { filteredProducts, categories, selectedCategory, handleCategoryChange, isPending } = usePOSProducts(products, searchTerm);
 
+  const cartButton = (
+    <ActionMenu
+      actions={[
+        {
+          id: 'cart',
+          label: isMobile ? `(${getItemCount()})` : `Caja (${getItemCount()})`,
+          icon: ShoppingCart,
+          onClick: () => setShowCart(!showCart),
+          variant: getItemCount() > 0 ? 'primary' : 'outline',
+          active: showCart
+        }
+      ]}
+      className="w-auto"
+      position="top"
+    />
+  );
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase hidden sm:block">TPV</h2>
           <ViewSwitcher currentView={posLayoutMode} onViewChange={setPosLayoutMode} />
         </div>
+        {isMobile && cartButton}
       </div>
 
       <QueryInspector />
@@ -197,20 +215,7 @@ export default function POSView() {
                   showSettings={false}
                 />
               </div>
-              <ActionMenu
-                actions={[
-                  {
-                    id: 'cart',
-                    label: isMobile ? `(${getItemCount()})` : `Caja (${getItemCount()})`,
-                    icon: ShoppingCart,
-                    onClick: () => setShowCart(!showCart),
-                    variant: getItemCount() > 0 ? 'primary' : 'outline',
-                    active: showCart
-                  }
-                ]}
-                className="w-auto"
-                position="top"
-              />
+              {!isMobile && cartButton}
             </div>
 
             <CategoryChips
