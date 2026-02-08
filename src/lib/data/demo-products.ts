@@ -19,7 +19,7 @@ export const generateDemoProducts = (): DemoProduct[] => {
   for (let i = 1; i <= 100; i++) {
     const isError = i > 90;
     let errorType: DemoProduct['errorType'];
-    let cost = 5 + Math.random() * 20;
+    let cost: number | undefined = 5 + Math.random() * 20;
     let stock = 10 + Math.floor(Math.random() * 100);
 
     if (isError) {
