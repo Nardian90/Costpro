@@ -169,7 +169,7 @@ export const POSCart = ({
       </div>
 
       <div className="space-y-2">
-        <h2 className="text-4xl font-black text-foreground tracking-tighter uppercase">¡Venta Completada!</h2>
+        <h2 className="text-[clamp(2rem,8vw,2.5rem)] font-black text-foreground tracking-tighter uppercase">¡Venta Completada!</h2>
         <p className="text-muted-foreground font-medium uppercase tracking-widest text-xs">La transacción ha sido registrada exitosamente</p>
       </div>
 

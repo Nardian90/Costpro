@@ -147,7 +147,7 @@ export default function InventoryView() {
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <h2 className="text-2xl font-bold border-l-4 border-primary pl-4 hidden sm:block">
+                <h2 className="text-[clamp(1.25rem,4vw,1.5rem)] font-bold border-l-4 border-primary pl-4 hidden sm:block">
                     Gestión de Inventario
                 </h2>
                 {!isMobile && (
