@@ -42,8 +42,10 @@ export interface User {
   full_name: string;
   role: UserRole;
   roles?: UserRole[]; // New: support for multiple roles (e.g. per store)
-  store_id: string | null;
-  active_store_id: string | null;
+  store_id?: string | null;
+  active_store_id?: string | null;
+  role_id?: string | null;
+  logo_url?: string | null;
   max_stores_limit?: number;
   max_users_limit?: number;
   created_by?: string | null;
@@ -492,8 +494,10 @@ export type Profile = {
   role: UserRole;
   roles?: UserRole[];
   is_active: boolean;
-  store_id: string | null;
-  active_store_id: string | null;
+  store_id?: string | null;
+  active_store_id?: string | null;
+  role_id?: string | null;
+  logo_url?: string | null;
   max_stores_limit?: number;
   max_users_limit?: number;
   created_by?: string | null;
