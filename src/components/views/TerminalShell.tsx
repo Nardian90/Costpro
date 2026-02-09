@@ -225,7 +225,7 @@ export default function TerminalShell() { // Renamed from TerminalView
         navRef={nav.navRef}
       />
 
-      <main className="flex-1 min-h-screen flex flex-col z-10">
+      <main className="flex-1 min-h-screen flex flex-col z-10 min-w-0">
         <Header
           sidebarOpen={sidebarOpen}
           toggleSidebar={toggleSidebar}

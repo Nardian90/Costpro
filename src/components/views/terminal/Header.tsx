@@ -3,6 +3,7 @@
 import React from 'react';
 import { Menu, X, HelpCircle, Bell, Building as BuildingIcon, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuthStore, ViewType } from '@/store';
 import { UserContract } from '@/contracts/user';
 import { NavigationItem } from '@/hooks/ui/useTerminalNavigation';
@@ -75,7 +76,8 @@ export const Header = ({
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          <div className="hidden xs:block">
+          <ThemeToggle />
+          <div className="hidden sm:block">
             <SyncStatusBadge />
           </div>
           <SyncConflictModal />
