@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowRight, CheckCircle2, ShoppingCart, Package,
@@ -24,10 +24,18 @@ interface WelcomeLandingViewProps {
 export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewProps) {
   const [isHydrated, setIsHydrated] = useState(false);
   const { isInstallable, installApp } = usePWA();
+  const installGuideRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     setIsHydrated(true);
   }, []);
+
+  const handleInstall = async () => {
+    const success = await installApp();
+    if (!success) {
+      installGuideRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   const modules = [
     {
@@ -71,12 +79,12 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
             <button
-              onClick={installApp}
+              onClick={handleInstall}
               className={cn(
                 "hidden md:flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all active:scale-95",
                 isInstallable
                   ? "bg-primary text-white shadow-[0_0_20px_rgba(16,185,129,0.3)]"
-                  : "bg-muted text-muted-foreground opacity-50 border border-border"
+                  : "bg-muted text-muted-foreground border border-border"
               )}
             >
               <Download className="w-3.5 h-3.5" />
@@ -127,12 +135,12 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
                 Comenzar Ahora
               </button>
               <button
-                onClick={installApp}
+                onClick={handleInstall}
                 className={cn(
                   "neu-btn h-14 px-10 text-sm font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2",
                   isInstallable
                     ? "neu-btn-primary shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:shadow-[0_0_40px_rgba(16,185,129,0.35)]"
-                    : "bg-muted text-muted-foreground opacity-50 border border-border cursor-not-allowed"
+                    : "bg-muted text-muted-foreground border border-border"
                 )}
               >
                 <Smartphone className="w-5 h-5" />
@@ -399,6 +407,63 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
             <div className="order-2 lg:order-2 space-y-8">
               <AutomationWorkflowDiagram />
               <SpeedScaleDiagram />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Installation Guide Section */}
+      <section id="install-guide" ref={installGuideRef} className="py-24 px-6 bg-muted/20 border-y border-border/50">
+        <div className="max-w-4xl mx-auto space-y-12">
+          <div className="text-center space-y-4">
+            <div className="inline-block px-4 py-2 rounded-xl bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest">
+              Acceso sin fricción
+            </div>
+            <h2 className="text-3xl font-black uppercase tracking-tighter">Guía de Instalación</h2>
+            <p className="text-muted-foreground font-medium max-w-xl mx-auto">Disfrute de la experiencia completa de CostPro instalando la aplicación en su dispositivo móvil o escritorio.</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Desktop / Android (Chrome) */}
+            <div className="p-8 rounded-[2.5rem] bg-background border border-border space-y-6 hover:border-primary/30 transition-colors group">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Download className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-xl font-black uppercase tracking-tight mb-2">Chrome / Android</h3>
+                <p className="text-xs text-muted-foreground font-medium mb-6">Instalación nativa mediante el motor del navegador.</p>
+              </div>
+              <ul className="space-y-4 text-sm font-medium">
+                <li className="flex gap-3 items-start">
+                  <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5 text-[10px] font-black">1</div>
+                  <span className="text-muted-foreground">Haga clic en el botón <strong className="text-foreground">"Instalar APP"</strong> en la parte superior de esta página.</span>
+                </li>
+                <li className="flex gap-3 items-start">
+                  <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5 text-[10px] font-black">2</div>
+                  <span className="text-muted-foreground">Confirme la instalación en la ventana emergente de su navegador.</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* iOS (Safari) */}
+            <div className="p-8 rounded-[2.5rem] bg-background border border-border space-y-6 hover:border-violet-500/30 transition-colors group">
+              <div className="w-12 h-12 rounded-2xl bg-violet-500/10 text-violet-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Smartphone className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-xl font-black uppercase tracking-tight mb-2">iPhone / iPad (Safari)</h3>
+                <p className="text-xs text-muted-foreground font-medium mb-6">Procedimiento manual requerido por las políticas de Apple.</p>
+              </div>
+              <ul className="space-y-4 text-sm font-medium">
+                <li className="flex gap-3 items-start">
+                  <div className="w-6 h-6 rounded-full bg-violet-500/10 text-violet-600 flex items-center justify-center shrink-0 mt-0.5 text-[10px] font-black">1</div>
+                  <span className="text-muted-foreground">Toque el botón <strong className="text-foreground">Compartir</strong> (icono de cuadrado con flecha) en Safari.</span>
+                </li>
+                <li className="flex gap-3 items-start">
+                  <div className="w-6 h-6 rounded-full bg-violet-500/10 text-violet-600 flex items-center justify-center shrink-0 mt-0.5 text-[10px] font-black">2</div>
+                  <span className="text-muted-foreground">Desplácese hacia abajo y seleccione <strong className="text-foreground">"Agregar a inicio"</strong>.</span>
+                </li>
+              </ul>
             </div>
           </div>
         </div>

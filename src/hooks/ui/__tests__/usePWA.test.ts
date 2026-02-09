@@ -63,11 +63,24 @@ describe('usePWA', () => {
       });
     });
 
+    let success = false;
     await act(async () => {
-      await result.current.installApp();
+      success = await result.current.installApp();
     });
 
+    expect(success).toBe(true);
     expect(mockPrompt).toHaveBeenCalled();
     expect(result.current.isInstallable).toBe(false);
+  });
+
+  it('should return false on installApp if deferredPrompt does not exist', async () => {
+    const { result } = renderHook(() => usePWA());
+
+    let success = true;
+    await act(async () => {
+      success = await result.current.installApp();
+    });
+
+    expect(success).toBe(false);
   });
 });

@@ -44,9 +44,9 @@ export function usePWA() {
 
   const installApp = useCallback(async () => {
     if (!deferredPrompt) {
-      // Fallback for browsers that don't support beforeinstallprompt (like iOS Safari)
-      window.open('https://support.google.com/chrome/answer/9658361', '_blank');
-      return;
+      // If native prompt is not available, we let the UI handle fallback
+      // (e.g. scrolling to instructions)
+      return false;
     }
 
     // Show the install prompt
@@ -59,6 +59,7 @@ export function usePWA() {
     // We've used the prompt, and can't use it again, throw it away
     setDeferredPrompt(null);
     setIsInstallable(false);
+    return true;
   }, [deferredPrompt]);
 
   return { isInstallable, installApp };
