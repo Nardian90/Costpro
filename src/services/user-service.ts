@@ -55,11 +55,11 @@ export const userService = {
   async getUserProfile(userId: string): Promise<Profile | null> {
     const profileColumns = 'id, full_name, email, role, roles, active_store_id, logo_url, is_active, store_id, created_at, ai_provider, ai_api_key';
     const storeColumns = 'id, name, address, logo_url, is_active, created_at';
-    const membershipColumns = `id, user_id, store_id, role, status, created_at, updated_at, store:stores(${storeColumns})`;
 
+    // Fetch profiles and memberships separately to avoid "memberships column not found" cache errors
     let result = await supabase
       .from('profiles')
-      .select(`${profileColumns}, memberships:user_store_memberships(${membershipColumns})`)
+      .select(`${profileColumns}, dynamic_role:roles(*)`)
       .eq('id', userId)
       .single();
 
@@ -68,7 +68,7 @@ export const userService = {
       logger.warn('DATABASE', 'GET_USER_PROFILE_COLUMN_MISSING_FALLBACK', { userId });
       result = await supabase
         .from('profiles')
-        .select(`id, full_name, email, role, is_active, created_at, memberships:user_store_memberships(${membershipColumns})`)
+        .select(`id, full_name, email, role, is_active, created_at`)
         .eq('id', userId)
         .single();
     }
@@ -79,6 +79,14 @@ export const userService = {
       logger.error('DATABASE', 'GET_USER_PROFILE_FAILED', { userId, error });
       return null;
     }
+
+    // Fetch memberships separately
+    const { data: membershipsData } = await supabase
+      .from('user_store_memberships')
+      .select(`id, user_id, store_id, role, status, created_at, updated_at, store:stores(${storeColumns})`)
+      .eq('user_id', userId);
+
+    (profileData as any).memberships = membershipsData || [];
 
     if (!profileData || !profileData.is_active) {
       return null;
