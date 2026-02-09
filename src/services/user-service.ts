@@ -75,9 +75,9 @@ export const userService = {
         .single();
     }
 
-    const { data: profileData, error } = result;
+    const { data: profileDataRaw, error } = result;
 
-    if (error) {
+    if (error || !profileDataRaw) {
       logger.error('DATABASE', 'GET_USER_PROFILE_FAILED', { userId, error });
       return null;
     }
@@ -88,9 +88,15 @@ export const userService = {
       .select(`id, user_id, store_id, role, status, created_at, updated_at, store:stores(${storeColumns})`)
       .eq('user_id', userId);
 
-    (profileData as any).memberships = membershipsData || [];
+    const memberships = (membershipsData || []) as any[];
 
-    if (!profileData || !profileData.is_active) {
+    // Correctly typed object including memberships
+    const profileData = {
+      ...profileDataRaw,
+      memberships
+    } as Profile;
+
+    if (!profileData.is_active) {
       return null;
     }
 
@@ -98,7 +104,7 @@ export const userService = {
 
     // AUTO-SELECT STORE si no tiene uno activo
     if (!effectiveActiveStoreId && profileData.memberships && profileData.memberships.length > 0) {
-      effectiveActiveStoreId = profileData.memberships[0].store_id;
+      effectiveActiveStoreId = profileData.memberships[0].store_id ?? null;
     }
 
     let activeRoles: UserRole[] = profileData.roles || [profileData.role];
