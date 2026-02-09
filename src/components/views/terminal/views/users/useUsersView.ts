@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { UserContract, mapProfileToContract, UserContractFactory } from '@/contracts/user';
 import { Profile, UserRole } from '@/types';
 import { getAllowedRoles } from '@/lib/roles';
+import { supabase } from '@/lib/supabaseClient';
 
 export function useUsersView() {
     const { user } = useAuthStore();
@@ -111,9 +112,20 @@ export function useUsersView() {
 
     const handleToggleUserStatus = async (userId: string, isActive: boolean) => {
         try {
+            // Get the access token from Supabase session
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+
+            if (!token) {
+                throw new Error('No hay sesión activa. Por favor, inicia sesión nuevamente.');
+            }
+
             const response = await fetch('/api/users/toggle-status', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({ user_id: userId, is_active: isActive })
             });
 
