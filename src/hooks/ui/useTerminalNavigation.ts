@@ -4,7 +4,7 @@ import {
   BarChart3, ShoppingCart, Package, Warehouse, Receipt,
   ClipboardList, FileText, History, Shield, DollarSign,
   Users, Building, Settings, HelpCircle, ArrowLeftRight,
-  Newspaper, Rss
+  Newspaper, Rss, TrendingUp
 } from 'lucide-react';
 import { type UserRole } from '@/types';
 import { UserContract } from '@/contracts/user';
@@ -28,28 +28,28 @@ export function useTerminalNavigation(user: UserContract | null, sidebarSearch: 
   const navigationItems = useMemo(() => {
     if (!user) return [];
     const all: NavigationItem[] = [
-      { id: 'dashboard', icon: BarChart3, label: 'Panel', roles: ['admin', 'manager', 'clerk', 'encargado'], category: 'OPERACIONES' },
+      { id: 'dashboard', icon: TrendingUp, label: 'KPI', roles: ['admin', 'manager', 'clerk', 'encargado'], category: 'OPERACIONES' },
       { id: 'news', icon: Newspaper, label: 'Noticias', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado'], category: 'OPERACIONES' },
-      { id: 'pos', icon: ShoppingCart, label: 'TPV', roles: ['clerk', 'manager', 'admin', 'encargado'], category: 'OPERACIONES' },
+      { id: 'pos', icon: ShoppingCart, label: 'Vender', roles: ['clerk', 'manager', 'admin', 'encargado'], category: 'OPERACIONES' },
       { id: 'sales', icon: Receipt, label: 'Ventas', roles: ['clerk', 'manager', 'encargado'], category: 'OPERACIONES' },
       { id: 'cash', icon: DollarSign, label: 'Caja', roles: ['manager', 'admin', 'encargado'], category: 'OPERACIONES' },
 
       { id: 'inventory', icon: Package, label: 'Inventario', roles: ['admin', 'manager', 'warehouse', 'encargado'], category: 'INVENTARIO' },
-      { id: 'recepcion', icon: Warehouse, label: 'Recepciones', roles: ['warehouse', 'manager', 'encargado'], category: 'INVENTARIO' },
-      { id: 'reception_list', icon: History, label: 'Historial Rec.', roles: ['warehouse', 'manager', 'encargado', 'admin'], category: 'INVENTARIO' },
+      { id: 'recepcion', icon: Warehouse, label: 'Recepcionar', roles: ['warehouse', 'manager', 'encargado'], category: 'INVENTARIO' },
+      { id: 'reception_list', icon: History, label: 'Recepciones', roles: ['warehouse', 'manager', 'encargado', 'admin'], category: 'INVENTARIO' },
       { id: 'transferencias', icon: ArrowLeftRight, label: 'Transferencias', roles: ['warehouse', 'manager', 'encargado', 'admin'], category: 'INVENTARIO' },
       { id: 'inventory_count', icon: ClipboardList, label: 'Conteo', roles: ['clerk', 'manager', 'admin', 'encargado'], category: 'INVENTARIO' },
       { id: 'catalog', icon: Package, label: 'Catálogo', roles: ['manager', 'admin', 'encargado'], category: 'INVENTARIO' },
-      { id: 'history', icon: History, label: 'Stock', roles: ['manager', 'admin', 'encargado'], category: 'INVENTARIO' },
+      { id: 'history', icon: History, label: 'Movimientos', roles: ['manager', 'admin', 'encargado'], category: 'INVENTARIO' },
 
       { id: 'cost-sheets', icon: FileText, label: 'Costos', roles: ['admin', 'manager', 'encargado'], category: 'GESTIÓN' },
       { id: 'reports', icon: FileText, label: 'Reportes', roles: ['admin', 'manager', 'encargado'], category: 'GESTIÓN' },
-      { id: 'ipv', icon: FileText, label: 'IPV Builder', roles: ['admin', 'manager', 'encargado'], category: 'GESTIÓN' },
+      { id: 'ipv', icon: FileText, label: 'IPV', roles: ['admin', 'manager', 'encargado'], category: 'GESTIÓN' },
       { id: 'audit', icon: Shield, label: 'Auditoría', roles: ['manager', 'admin', 'encargado'], category: 'GESTIÓN' },
       { id: 'users', icon: Users, label: 'Usuarios', roles: ['admin', 'encargado', 'manager'], category: 'GESTIÓN' },
       { id: 'roles', icon: Shield, label: 'Roles', roles: ['admin'], category: 'GESTIÓN' },
       { id: 'stores', icon: Building, label: 'Tiendas', roles: ['admin', 'encargado', 'manager'], category: 'GESTIÓN' },
-      { id: 'rss_management', icon: Rss, label: 'Gestión RSS', roles: ['admin'], category: 'GESTIÓN' },
+      { id: 'rss_management', icon: Rss, label: 'Feed RSS', roles: ['admin'], category: 'GESTIÓN' },
       { id: 'settings', icon: Settings, label: 'Configuración', roles: ['admin', 'manager', 'encargado'], category: 'GESTIÓN' },
 
       { id: 'help', icon: HelpCircle, label: 'Ayuda', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado'], category: 'SOPORTE' },
