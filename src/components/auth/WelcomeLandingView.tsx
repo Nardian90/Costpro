@@ -7,7 +7,7 @@ import {
   Shield, TrendingUp, BarChart3, FileText,
   Check, Play, MousePointer2, ExternalLink,
   Store, Utensils, Factory, Briefcase, Zap,
-  MessageCircle
+  MessageCircle, Smartphone, Download
 } from 'lucide-react';
 import Link from 'next/link';
 import CostProLogo from '@/components/CostProLogo';
@@ -19,12 +19,51 @@ interface WelcomeLandingViewProps {
   onLoginClick: () => void;
 }
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
 export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewProps) {
   const [isHydrated, setIsHydrated] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [isInstallable, setIsInstallable] = useState(true);
 
   useEffect(() => {
     setIsHydrated(true);
+
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
+      setIsInstallable(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    // Check if already in standalone mode
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsInstallable(false);
+    }
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
   }, []);
+
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setIsInstallable(false);
+      }
+      setDeferredPrompt(null);
+    } else {
+      // Si no es PWA nativa o no está disponible el prompt (ej: iOS)
+      // Redirigir a una sección de ayuda o mostrar instrucciones
+      window.open('https://support.google.com/chrome/answer/9658361', '_blank');
+    }
+  };
 
   const modules = [
     {
@@ -66,14 +105,25 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
             <CostProLogo size={36} animated={false} className="sm:scale-100 scale-90" />
             <ThemeToggle />
           </div>
-          <button
-            onClick={onLoginClick}
-            className="neu-btn neu-btn-primary px-4 sm:px-8 py-2.5 text-[10px] sm:text-xs font-black uppercase tracking-widest flex items-center gap-2 group shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:shadow-[0_0_30px_rgba(16,185,129,0.4)] transition-all shrink-0"
-          >
-            <span className="hidden sm:block">Acceso al Sistema</span>
-            <span className="sm:hidden">Acceso</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </button>
+          <div className="flex items-center gap-2 sm:gap-4">
+            {isInstallable && (
+              <button
+                onClick={handleInstallClick}
+                className="hidden md:flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary text-white text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] active:scale-95"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Instalar APP</span>
+              </button>
+            )}
+            <button
+              onClick={onLoginClick}
+              className="neu-btn neu-btn-primary px-4 sm:px-8 py-2.5 text-[10px] sm:text-xs font-black uppercase tracking-widest flex items-center gap-2 group shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:shadow-[0_0_30px_rgba(16,185,129,0.4)] transition-all shrink-0"
+            >
+              <span className="hidden sm:block">Acceso al Sistema</span>
+              <span className="sm:hidden">Acceso</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </button>
+          </div>
         </div>
       </header>
 
@@ -105,10 +155,19 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <button
                 onClick={onLoginClick}
-                className="neu-btn neu-btn-primary h-14 px-10 text-sm font-black uppercase tracking-widest shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:shadow-[0_0_40px_rgba(16,185,129,0.35)] transition-all"
+                className="neu-btn h-14 px-10 text-sm font-black uppercase tracking-widest border border-border rounded-xl hover:bg-muted/50 transition-colors"
               >
                 Comenzar Ahora
               </button>
+              {isInstallable && (
+                <button
+                  onClick={handleInstallClick}
+                  className="neu-btn neu-btn-primary h-14 px-10 text-sm font-black uppercase tracking-widest shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:shadow-[0_0_40px_rgba(16,185,129,0.35)] transition-all flex items-center justify-center gap-2"
+                >
+                  <Smartphone className="w-5 h-5" />
+                  Instalar APP
+                </button>
+              )}
               <Link href="/demo/executive">
                 <button className="h-14 px-10 text-sm font-black uppercase tracking-widest border border-border rounded-xl hover:bg-muted/50 transition-colors">
                   Ver Demo Online
