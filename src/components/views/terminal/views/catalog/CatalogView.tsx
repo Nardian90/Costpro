@@ -225,7 +225,7 @@ export default function CatalogView() {
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 flex-wrap">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto flex-wrap">
                     <div className="flex items-center justify-between w-full sm:w-auto gap-4">
-                        <h2 className="text-2xl sm:text-3xl font-black text-foreground tracking-tighter uppercase truncate hidden sm:block">Catálogo Global</h2>
+                        <h2 className="text-[clamp(1.5rem,5vw,1.875rem)] font-black text-foreground tracking-tighter uppercase truncate hidden sm:block">Catálogo Global</h2>
                         <ViewSwitcher currentView={viewMode} onViewChange={setViewMode} />
                     </div>
 
@@ -358,21 +358,21 @@ export default function CatalogView() {
                                     </td>
                                     <td className="p-4">
                                         <div className="flex justify-center gap-2">
-                                            <IconButton onClick={() => { modals.setEditingProduct(product); modals.setIsEditProductModalOpen(true); }} icon={Edit} title="Editar" className="w-8 h-8 p-0" />
-                                            <IconButton onClick={() => { modals.setEditingProduct(product); modals.setIsVariantsModalOpen(true); }} icon={DollarSign} title="Precios" className="w-8 h-8 p-0" />
+                                            <IconButton onClick={() => { modals.setEditingProduct(product); modals.setIsEditProductModalOpen(true); }} icon={Edit} title="Editar" className="w-11 h-11 p-0" />
+                                            <IconButton onClick={() => { modals.setEditingProduct(product); modals.setIsVariantsModalOpen(true); }} icon={DollarSign} title="Precios" className="w-11 h-11 p-0" />
                                             {product.has_movements ? (
                                                 <IconButton
                                                     onClick={() => { modals.setProductToAction(product); modals.setIsDeactivateConfirmOpen(true); }}
                                                     icon={product.is_active ? Trash2 : RefreshCw}
                                                     title={product.is_active ? "Desactivar" : "Reactivar"}
-                                                    className={cn("w-8 h-8 p-0", !product.is_active && "text-success border-success/20 bg-success/5")}
+                                                    className={cn("w-11 h-11 p-0", !product.is_active && "text-success border-success/20 bg-success/5")}
                                                 />
                                             ) : (
                                                 <IconButton
                                                     onClick={() => { modals.setProductToAction(product); modals.setIsDeleteConfirmOpen(true); }}
                                                     icon={Trash2}
                                                     title="Eliminar"
-                                                    className="w-8 h-8 p-0 text-danger border-danger/20 hover:bg-danger/10"
+                                                    className="w-11 h-11 p-0 text-danger border-danger/20 hover:bg-danger/10"
                                                 />
                                             )}
                                         </div>
