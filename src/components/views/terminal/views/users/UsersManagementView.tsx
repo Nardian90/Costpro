@@ -1,10 +1,12 @@
 'use client';
 
 import React from 'react';
-import { Plus, Edit } from 'lucide-react';
+import { Plus, Edit, UserPlus, ShieldAlert } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import SearchBar from '@/components/ui/SearchBar';
 import ActionMenu from '@/components/ui/ActionMenu';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { useUsersView } from './useUsersView';
 import { UserFormModal } from './UserFormModal';
 
@@ -20,12 +22,17 @@ export default function UsersManagementView() {
     handleCreateUser,
     handleCloseModal,
     handleUserFormSubmit,
+    handleToggleUserStatus,
     isSubmittingUser,
     allowedRoles,
     isAdmin,
     canCreateMoreUsers,
-    limitReachedMessage
+    limitReachedMessage,
+    user
   } = useUsersView();
+
+  const canCreateEncargado = isAdmin;
+  const canCreateCajero = isAdmin || user?.role === 'encargado';
 
   const getRoleLabel = (role: string) => {
     const labels: Record<string, string> = {
@@ -51,20 +58,42 @@ export default function UsersManagementView() {
               </p>
             )}
           </div>
-          <ActionMenu
-            actions={[
-              {
-                id: 'new',
-                label: 'Nuevo Usuario',
-                icon: Plus,
-                onClick: handleCreateUser,
-                variant: 'primary',
-                disabled: !canCreateMoreUsers,
-                className: !canCreateMoreUsers ? 'opacity-50 grayscale cursor-not-allowed' : ''
-              }
-            ]}
-            className="sm:w-auto"
-          />
+          <div className="flex gap-4">
+            {canCreateEncargado && (
+              <Button
+                onClick={handleCreateUser}
+                className="bg-primary hover:bg-primary/90 text-white font-black rounded-2xl h-14 px-8 uppercase text-xs tracking-[0.2em] shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center gap-3"
+              >
+                <UserPlus className="w-5 h-5" />
+                Crear Encargado
+              </Button>
+            )}
+
+            {canCreateCajero && (
+              <Button
+                onClick={handleCreateUser}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl h-14 px-8 uppercase text-xs tracking-[0.2em] shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center gap-3"
+              >
+                <UserPlus className="w-5 h-5" />
+                Crear Cajero
+              </Button>
+            )}
+
+            <ActionMenu
+              actions={[
+                {
+                  id: 'new',
+                  label: 'Nuevo Usuario',
+                  icon: Plus,
+                  onClick: handleCreateUser,
+                  variant: 'primary',
+                  disabled: !canCreateMoreUsers,
+                  className: !canCreateMoreUsers ? 'opacity-50 grayscale cursor-not-allowed' : ''
+                }
+              ]}
+              className="sm:w-auto"
+            />
+          </div>
         </div>
 
         <SearchBar value={searchTerm} onChange={setSearchTerm} placeholder="Buscar usuarios por nombre, email o rol..." />
@@ -114,9 +143,18 @@ export default function UsersManagementView() {
                     </div>
                   </td>
                   <td className="p-4 text-center">
-                    <div className="flex justify-center items-center gap-2">
-                      <span className={cn("w-2 h-2 rounded-full", u.is_active ? 'bg-green-500' : 'bg-destructive')} />
-                      <span className="text-[10px] font-bold uppercase text-muted-foreground">{u.is_active ? 'Activo' : 'Inactivo'}</span>
+                    <div className="flex flex-col items-center gap-2">
+                      <Switch
+                        checked={u.is_active}
+                        onCheckedChange={(checked) => handleToggleUserStatus(u.id, checked)}
+                        disabled={u.id === user?.id} // Don't allow self-ban
+                      />
+                      <span className={cn(
+                        "text-[9px] font-black uppercase tracking-widest",
+                        u.is_active ? 'text-green-500' : 'text-destructive'
+                      )}>
+                        {u.is_active ? 'Activo' : 'Baneado'}
+                      </span>
                     </div>
                   </td>
                   <td className="p-4">

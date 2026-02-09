@@ -47,6 +47,7 @@ export function useTerminalNavigation(user: UserContract | null, sidebarSearch: 
       { id: 'ipv', icon: FileText, label: 'IPV Builder', roles: ['admin', 'manager', 'encargado'], category: 'GESTIÓN' },
       { id: 'audit', icon: Shield, label: 'Auditoría', roles: ['manager', 'admin', 'encargado'], category: 'GESTIÓN' },
       { id: 'users', icon: Users, label: 'Usuarios', roles: ['admin', 'encargado', 'manager'], category: 'GESTIÓN' },
+      { id: 'roles', icon: Shield, label: 'Roles', roles: ['admin'], category: 'GESTIÓN' },
       { id: 'stores', icon: Building, label: 'Tiendas', roles: ['admin', 'encargado', 'manager'], category: 'GESTIÓN' },
       { id: 'rss_management', icon: Rss, label: 'Gestión RSS', roles: ['admin'], category: 'GESTIÓN' },
       { id: 'settings', icon: Settings, label: 'Configuración', roles: ['admin', 'manager', 'encargado'], category: 'GESTIÓN' },
