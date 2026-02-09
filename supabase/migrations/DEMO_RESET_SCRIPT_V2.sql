@@ -1,6 +1,6 @@
 -- ==========================================
--- CostPro Professional Demo Reset Script (v5.8.1)
--- Features: Selective Cleanup (Protects Real Data), Schema Cache Fix, RBAC Enforcement
+-- CostPro Professional Demo Reset Script (v5.8.3)
+-- Features: Selective Cleanup, Schema Cache Fix, Auth Hardening, Relationship Enforcement
 -- Targets: ONLY Demo Users and Demo Stores
 -- ==========================================
 
@@ -68,6 +68,17 @@ BEGIN
         );
     END IF;
 
+    -- 2.1 RELATIONSHIP ENFORCEMENT (Explicit FK for PostgREST visibility)
+    -- This ensures PostgREST recognizes 'memberships' as a valid join target for 'profiles'
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'user_store_memberships') THEN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'profiles_memberships_fkey') THEN
+            ALTER TABLE public.user_store_memberships
+            DROP CONSTRAINT IF EXISTS user_store_memberships_user_id_fkey,
+            ADD CONSTRAINT profiles_memberships_fkey
+            FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+        END IF;
+    END IF;
+
     -- 3. SCHEMA CACHE FIX (GRANT PERMISSIONS)
     GRANT ALL ON public.user_store_memberships TO authenticated, service_role;
     GRANT ALL ON public.profiles TO authenticated, service_role;
@@ -121,11 +132,12 @@ BEGIN
     END IF;
 
     -- USERS (demo123)
-    pwd := crypt('demo123', gen_salt('bf'));
+    -- We use extensions.crypt to ensure it uses the correct schema if available
+    pwd := extensions.crypt('demo123', extensions.gen_salt('bf'));
 
     -- ADMIN
-    INSERT INTO auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-    VALUES (u_adm, 'authenticated', 'authenticated', 'admin@demo.com', pwd, now(), '{"provider": "email", "providers": ["email"]}', '{"full_name": "Admin Global"}', now(), now())
+    INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, email_change, email_change_token_new, recovery_token)
+    VALUES (u_adm, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'admin@demo.com', pwd, now(), '{"provider": "email", "providers": ["email"]}', '{"full_name": "Admin Global"}', now(), now(), '', '', '', '')
     ON CONFLICT (id) DO NOTHING;
     INSERT INTO public.profiles (id, email, full_name, role, store_id, active_store_id, is_active)
     VALUES (u_adm, 'admin@demo.com', 'Admin Global', 'admin'::user_role, s1, s1, true)
@@ -135,8 +147,8 @@ BEGIN
     ON CONFLICT (user_id, store_id) DO UPDATE SET status = 'active';
 
     -- ENCARGADO
-    INSERT INTO auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-    VALUES (u_enc, 'authenticated', 'authenticated', 'encargado@demo.com', pwd, now(), '{"provider": "email", "providers": ["email"]}', '{"full_name": "Gerente Sucursal"}', now(), now())
+    INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, email_change, email_change_token_new, recovery_token)
+    VALUES (u_enc, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'encargado@demo.com', pwd, now(), '{"provider": "email", "providers": ["email"]}', '{"full_name": "Gerente Sucursal"}', now(), now(), '', '', '', '')
     ON CONFLICT (id) DO NOTHING;
     INSERT INTO public.profiles (id, email, full_name, role, store_id, active_store_id, is_active)
     VALUES (u_enc, 'encargado@demo.com', 'Gerente Sucursal', 'encargado'::user_role, s1, s1, true)
@@ -146,14 +158,25 @@ BEGIN
     ON CONFLICT (user_id, store_id) DO UPDATE SET status = 'active';
 
     -- CAJERO
-    INSERT INTO auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-    VALUES (u_caj, 'authenticated', 'authenticated', 'cajero@demo.com', pwd, now(), '{"provider": "email", "providers": ["email"]}', '{"full_name": "Cajero Central"}', now(), now())
+    INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, email_change, email_change_token_new, recovery_token)
+    VALUES (u_caj, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'cajero@demo.com', pwd, now(), '{"provider": "email", "providers": ["email"]}', '{"full_name": "Cajero Central"}', now(), now(), '', '', '', '')
     ON CONFLICT (id) DO NOTHING;
     INSERT INTO public.profiles (id, email, full_name, role, store_id, active_store_id, is_active)
     VALUES (u_caj, 'cajero@demo.com', 'Cajero Central', 'clerk'::user_role, s1, s1, true)
     ON CONFLICT (id) DO UPDATE SET role = EXCLUDED.role, is_active = true;
     INSERT INTO public.user_store_memberships (user_id, store_id, role, status)
     VALUES (u_caj, s1, 'clerk'::user_role, 'active'::membership_status)
+    ON CONFLICT (user_id, store_id) DO UPDATE SET status = 'active';
+
+    -- ALMACENERO (Missing in v5.8.1)
+    INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, email_change, email_change_token_new, recovery_token)
+    VALUES (u_alm, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'almacen@demo.com', pwd, now(), '{"provider": "email", "providers": ["email"]}', '{"full_name": "Almacenero Central"}', now(), now(), '', '', '', '')
+    ON CONFLICT (id) DO NOTHING;
+    INSERT INTO public.profiles (id, email, full_name, role, store_id, active_store_id, is_active)
+    VALUES (u_alm, 'almacen@demo.com', 'Almacenero Central', 'warehouse'::user_role, s1, s1, true)
+    ON CONFLICT (id) DO UPDATE SET role = EXCLUDED.role, is_active = true;
+    INSERT INTO public.user_store_memberships (user_id, store_id, role, status)
+    VALUES (u_alm, s1, 'warehouse'::user_role, 'active'::membership_status)
     ON CONFLICT (user_id, store_id) DO UPDATE SET status = 'active';
 
     -- CATALOG
@@ -166,12 +189,24 @@ BEGIN
                 (p3, s1, 'PROD-003', 'LECHE ENTERA 1L', c_lac, 1500, 1100, 240, true),
                 (p4, s1, 'PROD-004', 'DETERGENTE LÍQUIDO', c_lim, 3200, 2400, 60, true)
             ON CONFLICT (id) DO UPDATE SET price = EXCLUDED.price, cost_price = EXCLUDED.cost_price;
+        ELSE
+            -- Compatibility for older schemas where category is text
+            INSERT INTO public.products (id, store_id, sku, name, category, price, cost_price, stock_current, is_active) VALUES
+                (p1, s1, 'PROD-001', 'ARROZ EXTRA 1KG', 'ABARROTES', 1200, 800, 150, true),
+                (p2, s1, 'PROD-002', 'ACEITE VEGETAL 1L', 'ABARROTES', 2500, 1850, 85, true),
+                (p3, s1, 'PROD-003', 'LECHE ENTERA 1L', 'LÁCTEOS', 1500, 1100, 240, true),
+                (p4, s1, 'PROD-004', 'DETERGENTE LÍQUIDO', 'LIMPIEZA', 3200, 2400, 60, true)
+            ON CONFLICT (id) DO UPDATE SET price = EXCLUDED.price, cost_price = EXCLUDED.cost_price;
         END IF;
     END IF;
 
 END $$;
 
 -- FORCE RELOAD SCHEMA CACHE
+GRANT ALL ON ALL TABLES IN SCHEMA public TO authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO authenticated, service_role;
+GRANT ALL ON ALL FUNCTIONS IN SCHEMA public TO authenticated, service_role;
+
 NOTIFY pgrst, 'reload schema';
 
 SET session_replication_role = 'origin';

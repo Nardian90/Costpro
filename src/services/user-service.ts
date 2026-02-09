@@ -57,18 +57,20 @@ export const userService = {
     const storeColumns = 'id, name, address, logo_url, is_active, created_at';
 
     // Fetch profiles and memberships separately to avoid "memberships column not found" cache errors
+    // Note: Removed dynamic_role:roles(*) to avoid secondary schema cache errors until relationship is stable
     let result = await supabase
       .from('profiles')
-      .select(`${profileColumns}, dynamic_role:roles(*)`)
+      .select(profileColumns)
       .eq('id', userId)
       .single();
 
     // Fallback if full column set fails (e.g. migration not fully applied)
     if (result.error && result.error.code === '42703') {
       logger.warn('DATABASE', 'GET_USER_PROFILE_COLUMN_MISSING_FALLBACK', { userId });
+      // Expanded fallback to include critical navigation columns
       result = await supabase
         .from('profiles')
-        .select(`id, full_name, email, role, is_active, created_at`)
+        .select(`id, full_name, email, role, is_active, store_id, active_store_id, ai_provider, created_at`)
         .eq('id', userId)
         .single();
     }
