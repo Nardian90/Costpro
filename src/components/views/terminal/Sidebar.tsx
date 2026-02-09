@@ -88,6 +88,7 @@ export const Sidebar = ({
         sublabel: 'Configuración y Control',
         items: [
           'users',
+          'roles',
           'stores',
           'reports',
           'audit',
