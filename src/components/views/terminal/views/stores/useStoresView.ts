@@ -53,16 +53,24 @@ export function useStoresView() {
                 await storeService.updateStore(selectedStore.id, data.name || '', data.address || '');
                 toast.success('Tienda actualizada');
             } else if (mode === 'create') {
-                // await storeService.createStore(data);
-                toast.info('Funcionalidad de creación en desarrollo');
+                await storeService.createStore({
+                    name: data.name || '',
+                    address: data.address || ''
+                });
+                toast.success('Tienda creada correctamente');
             } else if (mode === 'delete' && selectedStore) {
-                // await storeService.deleteStore(selectedStore.id);
-                toast.info('Funcionalidad de eliminación en desarrollo');
+                await storeService.deleteStore(selectedStore.id);
+                toast.success('Tienda eliminada');
             }
             setStoreFormMode(null);
             setSelectedStore(null);
+            // Re-fetch handled by React Query cache invalidation if using mutations,
+            // but here we might need to manually trigger or wait for refresh.
+            // For now, reload to be sure.
+            setTimeout(() => window.location.reload(), 1000);
         } catch (error: any) {
-            toast.error('Error en la operación');
+            logger.error('DATABASE', 'STORE_OPERATION_FAILED', { mode, error });
+            toast.error(error.message || 'Error en la operación');
         } finally {
             setIsSubmitting(false);
         }
