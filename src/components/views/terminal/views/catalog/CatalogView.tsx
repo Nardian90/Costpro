@@ -23,7 +23,6 @@ import {
     SearchInput,
     ProductCard
 } from '@/components/ui/atomic';
-import { MobileSafeContainer } from '@/components/ui/MobileSafeContainer';
 import { useIsMobile } from '@/hooks/ui/useMobile';
 import { catalogService } from '@/services/catalog-service';
 import { useCatalogModals } from '@/hooks/ui/useCatalogModals';
@@ -220,7 +219,7 @@ export default function CatalogView() {
     }
 
     return (
-        <MobileSafeContainer className="space-y-6 pb-20">
+        <div className="space-y-6 pb-20">
             <input type="file" ref={fileInputRef} className="hidden" accept=".csv" onChange={handleImportFileChange} />
 
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 flex-wrap">
@@ -402,6 +401,6 @@ export default function CatalogView() {
                 handleToggleActive={handleToggleActive}
                 catalogService={catalogService}
             />
-        </MobileSafeContainer>
+        </div>
     );
 }
