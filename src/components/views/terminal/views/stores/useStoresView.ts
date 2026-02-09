@@ -6,6 +6,7 @@ import { useAuthStore } from '@/store';
 import { useStores } from '@/hooks/api/useStores';
 import { Store } from '@/types';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 import { storeService } from '@/services/store-service';
 import { userService } from '@/services/user-service';
 
@@ -39,8 +40,9 @@ export function useStoresView() {
         try {
           await userService.setActiveStore(user.id, storeId);
           toast.success('Tienda cambiada. La página se recargará.');
-          setTimeout(() => window.location.reload(), 1500);
+          setTimeout(() => window.location.reload(), 1000);
         } catch (error: any) {
+          logger.error('DATABASE', 'SET_ACTIVE_STORE_FAILED', { storeId, error });
           toast.error('Error al cambiar de tienda');
         }
     };
@@ -61,8 +63,10 @@ export function useStoresView() {
             }
             setStoreFormMode(null);
             setSelectedStore(null);
+            setTimeout(() => window.location.reload(), 1000);
         } catch (error: any) {
-            toast.error('Error en la operación');
+            logger.error('DATABASE', 'STORE_OPERATION_FAILED', { mode, error });
+            toast.error(error.message || 'Error en la operación');
         } finally {
             setIsSubmitting(false);
         }
