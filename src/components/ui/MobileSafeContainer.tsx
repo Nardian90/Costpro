@@ -17,7 +17,7 @@ export const MobileSafeContainer: React.FC<MobileSafeContainerProps> = ({ childr
   return (
     <div
       className={cn(
-        "w-full max-w-[100vw] overflow-x-auto overflow-y-auto touch-pan-x touch-pan-y relative",
+        "w-full max-w-full overflow-x-auto overflow-y-auto touch-pan-x touch-pan-y relative",
         className
       )}
       style={{

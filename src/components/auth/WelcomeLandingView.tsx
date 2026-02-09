@@ -61,18 +61,17 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
     <div className="min-h-screen bg-background overflow-x-hidden">
       {/* Header / Nav */}
       <header className={`sticky top-0 z-50 bg-background/80 ${isHydrated ? 'backdrop-blur-[10px]' : ''} border-b border-border/50 transition-all duration-500`}>
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-8">
-            <CostProLogo size={40} animated={false} />
-            <div className="hidden md:block">
-              <ThemeToggle />
-            </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between gap-2 sm:gap-4">
+          <div className="flex items-center gap-3 sm:gap-8 shrink-0">
+            <CostProLogo size={36} animated={false} className="sm:scale-100 scale-90" />
+            <ThemeToggle />
           </div>
           <button
             onClick={onLoginClick}
-            className="neu-btn neu-btn-primary px-8 py-2.5 text-xs font-black uppercase tracking-widest flex items-center gap-2 group shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:shadow-[0_0_30px_rgba(16,185,129,0.4)] transition-all"
+            className="neu-btn neu-btn-primary px-4 sm:px-8 py-2.5 text-[10px] sm:text-xs font-black uppercase tracking-widest flex items-center gap-2 group shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:shadow-[0_0_30px_rgba(16,185,129,0.4)] transition-all shrink-0"
           >
-            Acceso al Sistema
+            <span className="hidden sm:block">Acceso al Sistema</span>
+            <span className="sm:hidden">Acceso</span>
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </button>
         </div>
@@ -195,7 +194,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
         <div className="max-w-7xl mx-auto px-6 flex overflow-x-auto md:flex-wrap justify-start md:justify-between items-center gap-8 md:gap-4 opacity-50 grayscale no-scrollbar scroll-smooth">
           <div className="flex items-center gap-3 shrink-0">
             <Utensils className="w-5 h-5" />
-            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Restauración</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Restaurante</span>
           </div>
           <div className="flex items-center gap-3 shrink-0">
             <Store className="w-5 h-5" />
@@ -441,11 +440,12 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
             href="https://wa.me/5353183215"
             target="_blank"
             rel="noopener noreferrer"
-            className="fixed bottom-6 right-6 z-[60] bg-[#25D366] text-white p-4 rounded-full shadow-2xl hover:scale-110 active:scale-95 transition-all flex items-center justify-center group"
+            className="fixed bottom-6 right-6 z-[60] bg-[#25D366] text-white p-5 rounded-full shadow-[0_0_30px_rgba(37,211,102,0.4)] hover:shadow-[0_0_40px_rgba(37,211,102,0.6)] hover:scale-110 active:scale-95 transition-all flex items-center justify-center group"
             aria-label="Contactar por WhatsApp"
           >
-            <MessageCircle className="w-6 h-6 fill-current" />
-            <span className="max-w-0 overflow-hidden group-hover:max-w-xs group-hover:ml-2 transition-all duration-500 whitespace-nowrap font-bold text-[10px] uppercase tracking-widest">
+            <div className="absolute inset-0 rounded-full bg-[#25D366] animate-ping opacity-20" />
+            <MessageCircle className="w-7 h-7 fill-current relative z-10" />
+            <span className="max-w-0 overflow-hidden group-hover:max-w-xs group-hover:ml-3 transition-all duration-500 whitespace-nowrap font-black text-xs uppercase tracking-widest relative z-10">
               Soporte MiPyME
             </span>
           </motion.a>

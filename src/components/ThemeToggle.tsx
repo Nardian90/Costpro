@@ -53,7 +53,7 @@ export function ThemeToggle() {
         </AnimatePresence>
       </div>
 
-      <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-foreground transition-colors">
+      <span className="hidden sm:block text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-foreground transition-colors">
         {isDark ? 'Modo Oscuro' : 'Modo Claro'}
       </span>
 
