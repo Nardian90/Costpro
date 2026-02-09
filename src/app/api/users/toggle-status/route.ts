@@ -2,19 +2,26 @@ import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from "@/lib/auth";
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || '',
-  {
+// Helper to get Supabase Admin client lazily to avoid build-time errors with missing env vars
+function getSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !key) {
+    throw new Error('Configuración de Supabase incompleta (URL o Service Role Key faltante)');
+  }
+
+  return createClient(url, key, {
     auth: {
       autoRefreshToken: false,
       persistSession: false
     }
-  }
-);
+  });
+}
 
 export async function POST(req: NextRequest) {
   try {
+    const supabaseAdmin = getSupabaseAdmin();
     const session = await getServerSession(req);
     if (!session) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
