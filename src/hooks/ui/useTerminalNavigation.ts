@@ -4,7 +4,7 @@ import {
   BarChart3, ShoppingCart, Package, Warehouse, Receipt,
   ClipboardList, FileText, History, Shield, DollarSign,
   Users, Building, Settings, HelpCircle, ArrowLeftRight,
-  Newspaper, Rss, TrendingUp
+  Newspaper, Rss, TrendingUp, ShieldCheck
 } from 'lucide-react';
 import { type UserRole } from '@/types';
 import { UserContract } from '@/contracts/user';
@@ -47,7 +47,7 @@ export function useTerminalNavigation(user: UserContract | null, sidebarSearch: 
       { id: 'ipv', icon: FileText, label: 'IPV', roles: ['admin', 'manager', 'encargado'], category: 'GESTIÓN' },
       { id: 'audit', icon: Shield, label: 'Auditoría', roles: ['manager', 'admin', 'encargado'], category: 'GESTIÓN' },
       { id: 'users', icon: Users, label: 'Usuarios', roles: ['admin', 'encargado', 'manager'], category: 'GESTIÓN' },
-      { id: 'roles', icon: Shield, label: 'Roles', roles: ['admin'], category: 'GESTIÓN' },
+      { id: 'roles', icon: ShieldCheck, label: 'Roles', roles: ['admin'], category: 'GESTIÓN' },
       { id: 'stores', icon: Building, label: 'Tiendas', roles: ['admin', 'encargado', 'manager'], category: 'GESTIÓN' },
       { id: 'rss_management', icon: Rss, label: 'Feed RSS', roles: ['admin'], category: 'GESTIÓN' },
       { id: 'settings', icon: Settings, label: 'Configuración', roles: ['admin', 'manager', 'encargado'], category: 'GESTIÓN' },
