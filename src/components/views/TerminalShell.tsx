@@ -82,11 +82,15 @@ export default function TerminalShell() { // Renamed from TerminalView
   // LOGOUT HANDLER (moved from useTerminalOperations)
    const handleLogout = async () => {
     try {
+      // Intentamos cerrar sesión en Supabase
       await userService.logout();
-      logout(); // This is from useAuthStore
-      router.replace('/login');
     } catch (error: any) {
-      toast.error('Error al cerrar sesión');
+      console.warn('[TerminalShell] Logout error (silent):', error);
+    } finally {
+      // SIEMPRE limpiamos el estado local y redirigimos,
+      // incluso si la llamada a Supabase falló (ej. sesión ya expirada)
+      logout();
+      router.replace('/login');
     }
   };
 
