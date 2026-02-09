@@ -109,6 +109,29 @@ export function useUsersView() {
         setSelectedUserContract(null);
     }
 
+    const handleToggleUserStatus = async (userId: string, isActive: boolean) => {
+        try {
+            const response = await fetch('/api/users/toggle-status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: userId, is_active: isActive })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Error al cambiar estado');
+            }
+
+            toast.success(isActive ? 'Usuario activado' : 'Usuario desactivado');
+            // Refresh users
+            // In a real app with react-query, we would invalidate the query.
+            // Assuming useUsers uses react-query internally or we can refresh.
+            window.location.reload(); // Simple refresh for now if needed, though react-query usually handles it if configured.
+        } catch (error: any) {
+            toast.error(error.message);
+        }
+    };
+
     return {
         // State
         searchTerm,
@@ -117,6 +140,7 @@ export function useUsersView() {
         selectedUserContract,
 
         // Data
+        user,
         users: filteredUsers,
         stores,
         isLoadingUsers,
@@ -129,6 +153,7 @@ export function useUsersView() {
         handleCreateUser,
         handleCloseModal,
         handleUserFormSubmit,
+        handleToggleUserStatus,
         isSubmittingUser: createUserMutation.isPending || updateUserMutation.isPending || manageMembershipsMutation.isPending,
         allowedRoles: getAllowedRoles(user?.role as UserRole)
     };

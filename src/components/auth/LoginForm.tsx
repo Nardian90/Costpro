@@ -3,8 +3,9 @@
 import { useState, useRef } from 'react';
 import { useAuthStore } from '@/store';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, LogIn } from 'lucide-react';
+import { Eye, EyeOff, LogIn, UserPlus } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
+import RegisterForm from './RegisterForm';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
 import { UserFactory } from '@/contracts';
@@ -13,6 +14,7 @@ import { userService } from '@/services/user-service';
 import { mapProfileToContract } from '@/contracts/user';
 
 export default function LoginForm() {
+  const [isRegistering, setIsRegistering] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -105,6 +107,14 @@ export default function LoginForm() {
     }
   };
 
+  if (isRegistering) {
+    return (
+      <div className="neu-card w-full max-w-md mx-auto">
+        <RegisterForm onBackToLogin={() => setIsRegistering(false)} />
+      </div>
+    );
+  }
+
   return (
     <div className="neu-card w-full max-w-md mx-auto">
       <h2 className="text-xl font-semibold mb-6 text-center">
@@ -178,6 +188,15 @@ export default function LoginForm() {
               Iniciar Sesión
             </>
           )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setIsRegistering(true)}
+          className="w-full text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-all flex items-center justify-center gap-2 mt-4"
+        >
+          <UserPlus className="w-4 h-4" />
+          ¿No tienes cuenta? Regístrate aquí
         </button>
       </form>
 
