@@ -23,7 +23,7 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
           const profileColumns = 'id, full_name, email, role, role_id, roles, active_store_id, logo_url, is_active, store_id, created_at';
 
           // Fetch profiles and memberships separately to avoid "memberships column not found" cache errors
-          let profilesQuery = supabase.from('profiles').select(`${profileColumns}, dynamic_role:roles(*)`).order('full_name');
+          let profilesQuery = supabase.from('profiles').select(profileColumns).order('full_name');
           if (isEncargado) {
             profilesQuery = profilesQuery.neq('role', 'admin');
           }
@@ -33,7 +33,7 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
           // Fallback if full column set fails
           if (profilesRes.error && profilesRes.error.code === '42703') {
              console.warn('[useUsers] Column missing, retrying with limited columns');
-             let retryQuery = supabase.from('profiles').select('id, full_name, email, role, is_active, created_at').order('full_name');
+             let retryQuery = supabase.from('profiles').select('id, full_name, email, role, is_active, store_id, active_store_id, created_at').order('full_name');
              if (isEncargado) {
                retryQuery = retryQuery.neq('role', 'admin');
              }
