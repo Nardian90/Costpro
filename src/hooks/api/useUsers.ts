@@ -160,9 +160,13 @@ export function useUpdateUser() {
     mutationFn: async ({ id, ...rawUpdates }: { id: string } & Partial<z.input<typeof profileSchema>>) => {
       // Validate partial profile updates
       const updates = profileSchema.partial().parse(rawUpdates);
+
+      // Omit virtual/related fields before update to prevent "column not found" errors
+      const { memberships, ...cleanUpdates } = updates as any;
+
       return await withTableLogging('update', 'profiles', () => supabase
         .from('profiles')
-        .update(updates)
+        .update(cleanUpdates)
         .eq('id', id));
     },
     onSuccess: () => {
