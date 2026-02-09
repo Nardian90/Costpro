@@ -53,11 +53,11 @@ export const userService = {
    * y determina los roles efectivos basados en la membresía.
    */
   async getUserProfile(userId: string): Promise<Profile | null> {
-    const profileColumns = 'id, full_name, email, role, roles, active_store_id, logo_url, is_active, store_id, created_at, ai_provider, ai_api_key';
+    // Incluimos tanto 'role' como 'role_id' para compatibilidad con diferentes versiones del esquema
+    const profileColumns = 'id, full_name, email, role, role_id, roles, active_store_id, logo_url, is_active, store_id, created_at, ai_provider, ai_api_key';
     const storeColumns = 'id, name, address, logo_url, is_active, created_at';
 
     // Fetch profiles and memberships separately to avoid "memberships column not found" cache errors
-    // Note: Removed dynamic_role:roles(*) to avoid secondary schema cache errors until relationship is stable
     let result = await supabase
       .from('profiles')
       .select(profileColumns)
@@ -67,10 +67,10 @@ export const userService = {
     // Fallback if full column set fails (e.g. migration not fully applied)
     if (result.error && result.error.code === '42703') {
       logger.warn('DATABASE', 'GET_USER_PROFILE_COLUMN_MISSING_FALLBACK', { userId });
-      // Expanded fallback to include critical navigation columns
+      // Versión ultra-minimalista para asegurar el acceso si hay columnas en transición
       result = await supabase
         .from('profiles')
-        .select(`id, full_name, email, role, is_active, store_id, active_store_id, ai_provider, created_at`)
+        .select(`id, full_name, email, is_active, store_id, active_store_id, created_at`)
         .eq('id', userId)
         .single();
     }
@@ -83,16 +83,24 @@ export const userService = {
     }
 
     // Fetch memberships separately
-    const { data: membershipsData } = await supabase
-      .from('user_store_memberships')
-      .select(`id, user_id, store_id, role, status, created_at, updated_at, store:stores(${storeColumns})`)
-      .eq('user_id', userId);
+    let memberships: any[] = [];
+    try {
+      const { data: membershipsData, error: membershipsError } = await supabase
+        .from('user_store_memberships')
+        .select(`id, user_id, store_id, role, status, created_at, updated_at, store:stores(${storeColumns})`)
+        .eq('user_id', userId);
 
-    const memberships = (membershipsData || []) as any[];
+      if (!membershipsError && membershipsData) {
+        memberships = membershipsData;
+      }
+    } catch (err) {
+      logger.warn('DATABASE', 'GET_USER_PROFILE_MEMBERSHIPS_FAILED_SILENT', { userId, err });
+    }
 
     // Correctly typed object including memberships
     const profileData = {
       ...profileDataRaw,
+      role: profileDataRaw.role || 'clerk', // Default fallback
       memberships
     } as Profile;
 
