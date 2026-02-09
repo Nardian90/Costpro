@@ -10,10 +10,10 @@ import { Loader2, Save, Shield, CheckCircle2 } from 'lucide-react';
 
 const roleFormSchema = z.object({
   name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
-  is_default: z.boolean().default(false),
+  is_default: z.boolean(),
   permissions: z.object({
-    views: z.array(z.string()).default([]),
-    all: z.boolean().default(false),
+    views: z.array(z.string()),
+    all: z.boolean(),
   })
 });
 
@@ -52,10 +52,10 @@ export default function RoleForm({
     resolver: zodResolver(roleFormSchema),
     defaultValues: initialData ? {
       name: initialData.name,
-      is_default: initialData.is_default,
+      is_default: !!initialData.is_default,
       permissions: {
         views: initialData.permissions?.views || [],
-        all: initialData.permissions?.all || false,
+        all: !!initialData.permissions?.all,
       }
     } : {
       name: '',
