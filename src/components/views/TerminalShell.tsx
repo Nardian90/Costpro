@@ -34,6 +34,7 @@ import { lazy } from 'react';
 // Lazy Loaded Views
 const POSView = lazy(() => import('./terminal/views/pos/POSView'));
 const UsersManagementView = lazy(() => import('./terminal/views/users/UsersManagementView'));
+const RolesManagementView = lazy(() => import('./terminal/views/users/RolesManagementView'));
 const DashboardView = lazy(() => import('./terminal/views/dashboard/DashboardView'));
 const SalesHistoryView = lazy(() => import('./terminal/views/sales/SalesHistoryView'));
 const StoresManagementView = lazy(() => import('./terminal/views/stores/StoresManagementView'));
@@ -157,6 +158,7 @@ export default function TerminalShell() { // Renamed from TerminalView
         case 'pos': return <POSView />;
         case 'sales': return <SalesHistoryView />;
         case 'users': return <UsersManagementView />;
+        case 'roles': return <RolesManagementView />;
         case 'stores': return <StoresManagementView />;
         case 'news': return <NewsView />;
         case 'rss_management': return <RSSManagementView />;

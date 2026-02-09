@@ -59,6 +59,22 @@ export interface AuthState {
 }
 
 // ============================================
+// Roles y Permisos (Sistema Dinámico)
+// ============================================
+
+export interface Role {
+  id: string;
+  name: string;
+  permissions: {
+    views: string[];
+    all: boolean;
+  };
+  is_default: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// ============================================
 // RSS y Noticias
 // ============================================
 

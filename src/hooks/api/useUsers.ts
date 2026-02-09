@@ -18,82 +18,55 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
         return [];
       }
 
-      if (isAdmin) {
-        const profileColumns = 'id, full_name, email, role, roles, active_store_id, logo_url, is_active, store_id, created_at';
-        let profilesRes = await supabase.from('profiles').select(profileColumns).order('full_name');
-
-        // Fallback if full column set fails (e.g. migration not fully applied)
-        if (profilesRes.error && profilesRes.error.code === '42703') {
-           console.warn('[useUsers] Column missing, retrying with limited columns');
-           const retryRes = await supabase.from('profiles').select('id, full_name, email, role, is_active, created_at').order('full_name');
-           profilesRes = retryRes as any;
-        }
-
-        const membershipsRes = await supabase.from('user_store_memberships').select('id, user_id, store_id, role, status, created_at, updated_at, store:stores(id, name, address, is_active, created_at)');
-
-        if (profilesRes.error) {
-          logger.error('DATABASE', 'FETCH_PROFILES_ADMIN_FAILED', { error: profilesRes.error });
-          return [];
-        }
-
-        const rawProfiles = (profilesRes.data || []) as Profile[];
-        // Use a more specific type to avoid dot-access errors with Record
-        interface RawMembershipRow {
-          id: string;
-          user_id: string;
-          store_id: string;
-          role: string;
-          status: string;
-          store: any;
-        }
-        const allMemberships = (membershipsRes.data || []) as RawMembershipRow[];
-
-        const joinedData = rawProfiles.map((profile) => ({
-          ...profile,
-          memberships: allMemberships.filter((m) => m.user_id === profile.id)
-        }));
-
-        return await validateRPCArrayResponse(joinedData, profileSchema, 'fetch_users_admin');
-      }
-
-      if (isEncargado) {
+      if (isAdmin || isEncargado) {
         try {
-          const profileColumns = 'id, full_name, email, role, roles, active_store_id, logo_url, is_active, store_id, created_at';
-          const storeColumns = 'id, name, address, logo_url, is_active, created_at';
-          const membershipColumns = `id, user_id, store_id, role, status, created_at, updated_at, store:stores(${storeColumns})`;
+          const profileColumns = 'id, full_name, email, role, role_id, roles, active_store_id, logo_url, is_active, store_id, created_at';
 
-          let memberProfilesRes = await supabase
-            .from('profiles')
-            .select(`${profileColumns}, memberships:user_store_memberships(${membershipColumns})`)
-            .neq('role', 'admin')
-            .order('full_name');
-
-          // Fallback for missing columns
-          if (memberProfilesRes.error && memberProfilesRes.error.code === '42703') {
-             const retryRes = await supabase
-                .from('profiles')
-                .select(`id, full_name, email, role, is_active, memberships:user_store_memberships(${membershipColumns})`)
-                .neq('role', 'admin')
-                .order('full_name');
-             memberProfilesRes = retryRes as any;
+          // Fetch profiles and memberships separately to avoid "memberships column not found" cache errors
+          let profilesQuery = supabase.from('profiles').select(`${profileColumns}, dynamic_role:roles(*)`).order('full_name');
+          if (isEncargado) {
+            profilesQuery = profilesQuery.neq('role', 'admin');
           }
 
-          const { data: memberProfiles, error } = memberProfilesRes;
+          let profilesRes = await profilesQuery;
 
-          if (error) {
-            logger.error('DATABASE', 'FETCH_USERS_ENCARGADO_FAILED', { error });
-            // Fallback: try with limited columns if the full set fails
-            let fallbackRes = await supabase.from('profiles').select(profileColumns).neq('role', 'admin').order('full_name');
-            if (fallbackRes.error && fallbackRes.error.code === '42703') {
-                const retryFallbackRes = await supabase.from('profiles').select('id, full_name, email, role, is_active, created_at').neq('role', 'admin').order('full_name');
-                fallbackRes = retryFallbackRes as any;
-            }
-            return await validateRPCArrayResponse(fallbackRes.data || [], profileSchema, 'fetch_users_encargado_fallback');
+          // Fallback if full column set fails
+          if (profilesRes.error && profilesRes.error.code === '42703') {
+             console.warn('[useUsers] Column missing, retrying with limited columns');
+             let retryQuery = supabase.from('profiles').select('id, full_name, email, role, is_active, created_at').order('full_name');
+             if (isEncargado) {
+               retryQuery = retryQuery.neq('role', 'admin');
+             }
+             profilesRes = await retryQuery as any;
           }
 
-          return await validateRPCArrayResponse(memberProfiles || [], profileSchema, 'fetch_users_encargado');
+          if (profilesRes.error) {
+            logger.error('DATABASE', 'FETCH_PROFILES_FAILED', { error: profilesRes.error });
+            return [];
+          }
+
+          const membershipsRes = await supabase.from('user_store_memberships')
+            .select('id, user_id, store_id, role, status, created_at, updated_at, store:stores(id, name, address, is_active, created_at)');
+
+          const rawProfiles = (profilesRes.data || []) as Profile[];
+          interface RawMembershipRow {
+            id: string;
+            user_id: string;
+            store_id: string;
+            role: string;
+            status: string;
+            store: any;
+          }
+          const allMemberships = (membershipsRes.data || []) as RawMembershipRow[];
+
+          const joinedData = rawProfiles.map((profile) => ({
+            ...profile,
+            memberships: allMemberships.filter((m) => m.user_id === profile.id)
+          }));
+
+          return await validateRPCArrayResponse(joinedData, profileSchema, isAdmin ? 'fetch_users_admin' : 'fetch_users_encargado');
         } catch (err) {
-          logger.error('DATABASE', 'FETCH_USERS_ENCARGADO_CRASH', { err });
+          logger.error('DATABASE', 'FETCH_USERS_FAILED', { err });
           return [];
         }
       }
@@ -127,14 +100,21 @@ export function useCreateUser() {
   return useMutation({
     mutationFn: async (rawParams: z.input<typeof managedCreateUserParamsSchema>) => {
       const params = managedCreateUserParamsSchema.parse(rawParams);
-      const rpcName = 'managed_create_user';
-      const data = await withLogging(rpcName, params, () => supabase.rpc(rpcName, params));
-      return await validateRPCResponse(data, z.object({
-        success: z.boolean(),
-        user_id: z.string().regex(uuidRegex),
-        email: z.string().email(),
-        message: z.string()
-      }), rpcName);
+
+      // Call Next.js API route instead of direct RPC to handle auth.users via Service Role
+      const response = await fetch('/api/users/managed-create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al crear usuario');
+      }
+
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
