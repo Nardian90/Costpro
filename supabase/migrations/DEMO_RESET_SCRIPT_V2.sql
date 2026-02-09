@@ -1,5 +1,5 @@
 -- ==========================================
--- CostPro Professional Demo Reset Script (v5.8.0)
+-- CostPro Professional Demo Reset Script (v5.8.1)
 -- Features: Selective Cleanup (Protects Real Data), Schema Cache Fix, RBAC Enforcement
 -- Targets: ONLY Demo Users and Demo Stores
 -- ==========================================
@@ -21,16 +21,19 @@ DECLARE
 
     demo_users uuid[] := ARRAY[u_adm, u_enc, u_caj, u_alm];
     demo_stores uuid[] := ARRAY[s1, s2];
-
-    tab_name text;
 BEGIN
     -- 1. SELECTIVE CLEANUP (Protects non-demo data)
     -- Instead of TRUNCATE, we delete only demo-related records
 
     DELETE FROM public.inventory WHERE store_id = ANY(demo_stores);
     DELETE FROM public.products WHERE store_id = ANY(demo_stores);
-    DELETE FROM public.sales WHERE store_id = ANY(demo_stores);
     DELETE FROM public.transactions WHERE store_id = ANY(demo_stores);
+
+    -- Fix for public.sales: uses cashier_id instead of store_id
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'sales') THEN
+        DELETE FROM public.sales WHERE cashier_id = ANY(demo_users);
+    END IF;
+
     DELETE FROM public.receipt_items WHERE receipt_id IN (SELECT id FROM public.receipts WHERE store_id = ANY(demo_stores));
     DELETE FROM public.receipts WHERE store_id = ANY(demo_stores);
     DELETE FROM public.stock_movements WHERE store_id = ANY(demo_stores);
@@ -56,19 +59,23 @@ BEGIN
         CREATE TYPE membership_status AS ENUM ('active', 'revoked');
     END IF;
 
-    CREATE TABLE IF NOT EXISTS public.categories (
-        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-        name text NOT NULL UNIQUE,
-        description text,
-        created_at timestamptz DEFAULT now()
-    );
+    IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'categories') THEN
+        CREATE TABLE public.categories (
+            id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            name text NOT NULL UNIQUE,
+            description text,
+            created_at timestamptz DEFAULT now()
+        );
+    END IF;
 
     -- 3. SCHEMA CACHE FIX (GRANT PERMISSIONS)
     GRANT ALL ON public.user_store_memberships TO authenticated, service_role;
     GRANT ALL ON public.profiles TO authenticated, service_role;
     GRANT ALL ON public.stores TO authenticated, service_role;
     GRANT ALL ON public.products TO authenticated, service_role;
-    GRANT ALL ON public.categories TO authenticated, service_role;
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'categories') THEN
+        GRANT ALL ON public.categories TO authenticated, service_role;
+    END IF;
 END $$;
 
 -- 4. INITIALIZE CORE DATA
@@ -106,10 +113,12 @@ BEGIN
     ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, is_active = true;
 
     -- Create Categories
-    INSERT INTO public.categories (id, name, description) VALUES
-        (c_aba, 'ABARROTES', 'Consumo básico'), (c_lac, 'LÁCTEOS', 'Derivados de leche'),
-        (c_lim, 'LIMPIEZA', 'Hogar'), (c_beb, 'BEBIDAS', 'Líquidos')
-    ON CONFLICT (name) DO NOTHING;
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'categories') THEN
+        INSERT INTO public.categories (id, name, description) VALUES
+            (c_aba, 'ABARROTES', 'Consumo básico'), (c_lac, 'LÁCTEOS', 'Derivados de leche'),
+            (c_lim, 'LIMPIEZA', 'Hogar'), (c_beb, 'BEBIDAS', 'Líquidos')
+        ON CONFLICT (name) DO NOTHING;
+    END IF;
 
     -- USERS (demo123)
     pwd := crypt('demo123', gen_salt('bf'));
@@ -148,14 +157,16 @@ BEGIN
     ON CONFLICT (user_id, store_id) DO UPDATE SET status = 'active';
 
     -- CATALOG
-    SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'products' AND column_name = 'category_id') INTO has_cat_id;
-    IF has_cat_id THEN
-        INSERT INTO public.products (id, store_id, sku, name, category_id, price, cost_price, stock_current, is_active) VALUES
-            (p1, s1, 'PROD-001', 'ARROZ EXTRA 1KG', c_aba, 1200, 800, 150, true),
-            (p2, s1, 'PROD-002', 'ACEITE VEGETAL 1L', c_aba, 2500, 1850, 85, true),
-            (p3, s1, 'PROD-003', 'LECHE ENTERA 1L', c_lac, 1500, 1100, 240, true),
-            (p4, s1, 'PROD-004', 'DETERGENTE LÍQUIDO', c_lim, 3200, 2400, 60, true)
-        ON CONFLICT (id) DO UPDATE SET price = EXCLUDED.price, cost_price = EXCLUDED.cost_price;
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'products') THEN
+        SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'products' AND column_name = 'category_id') INTO has_cat_id;
+        IF has_cat_id THEN
+            INSERT INTO public.products (id, store_id, sku, name, category_id, price, cost_price, stock_current, is_active) VALUES
+                (p1, s1, 'PROD-001', 'ARROZ EXTRA 1KG', c_aba, 1200, 800, 150, true),
+                (p2, s1, 'PROD-002', 'ACEITE VEGETAL 1L', c_aba, 2500, 1850, 85, true),
+                (p3, s1, 'PROD-003', 'LECHE ENTERA 1L', c_lac, 1500, 1100, 240, true),
+                (p4, s1, 'PROD-004', 'DETERGENTE LÍQUIDO', c_lim, 3200, 2400, 60, true)
+            ON CONFLICT (id) DO UPDATE SET price = EXCLUDED.price, cost_price = EXCLUDED.cost_price;
+        END IF;
     END IF;
 
 END $$;
