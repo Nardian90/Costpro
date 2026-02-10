@@ -179,6 +179,7 @@ export const Sidebar = ({
   };
 
   const helpItem = navigationItems.find(i => i.id === 'help');
+  const manualItem = navigationItems.find(i => i.id === 'support_doc');
 
   return (
     <aside className={cn(
@@ -331,6 +332,7 @@ export const Sidebar = ({
         </nav>
 
         <div className="p-4 border-t border-sidebar-border/50 shrink-0 space-y-1">
+          {manualItem && renderNavItem(manualItem.id)}
           {helpItem && renderNavItem(helpItem.id)}
           <button
             onClick={onLogout}
