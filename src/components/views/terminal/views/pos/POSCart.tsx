@@ -435,29 +435,39 @@ export const POSCart = ({
                           )}
                         >
                           <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 sm:gap-4">
-                            {/* Left: Quantity Controls */}
-                            <div className="flex items-center gap-1 bg-muted/50 rounded-2xl p-1 border border-border/50 shrink-0">
-                              <button
-                                onClick={() => onUpdateQuantity(item.product_id, item.variant_id, item.quantity - 1)}
-                                className={cn(
-                                  "flex items-center justify-center rounded-xl bg-background shadow-sm hover:bg-primary/10 hover:text-primary transition-all active:scale-90 border border-border/50",
-                                  isEasyReading ? "w-10 h-10" : "w-8 h-8"
-                                )}
-                                aria-label="Disminuir cantidad"
-                              >
-                                <Minus className="w-4 h-4" />
-                              </button>
-                              <span className={cn("text-center font-black", isEasyReading ? "w-10 text-xl" : "w-8 text-sm")} aria-label={`Cantidad: ${item.quantity}`}>{item.quantity}</span>
-                              <button
-                                onClick={() => onUpdateQuantity(item.product_id, item.variant_id, item.quantity + 1)}
-                                className={cn(
-                                  "flex items-center justify-center rounded-xl bg-background shadow-sm hover:bg-primary/10 hover:text-primary transition-all active:scale-90 border border-border/50",
-                                  isEasyReading ? "w-10 h-10" : "w-8 h-8"
-                                )}
-                                aria-label="Aumentar cantidad"
-                              >
-                                <Plus className="w-4 h-4" />
-                              </button>
+                            {/* Left: Quantity Controls & Stock */}
+                            <div className="flex flex-col items-center gap-1.5 shrink-0">
+                              <div className="flex items-center gap-1 bg-muted/50 rounded-2xl p-1 border border-border/50">
+                                <button
+                                  onClick={() => onUpdateQuantity(item.product_id, item.variant_id, item.quantity - 1)}
+                                  className={cn(
+                                    "flex items-center justify-center rounded-xl bg-background shadow-sm hover:bg-primary/10 hover:text-primary transition-all active:scale-90 border border-border/50",
+                                    isEasyReading ? "w-10 h-10" : "w-8 h-8"
+                                  )}
+                                  aria-label="Disminuir cantidad"
+                                >
+                                  <Minus className="w-4 h-4" />
+                                </button>
+                                <span className={cn("text-center font-black", isEasyReading ? "w-10 text-xl" : "w-8 text-sm")} aria-label={`Cantidad: ${item.quantity}`}>{item.quantity}</span>
+                                <button
+                                  onClick={() => onUpdateQuantity(item.product_id, item.variant_id, item.quantity + 1)}
+                                  className={cn(
+                                    "flex items-center justify-center rounded-xl bg-background shadow-sm hover:bg-primary/10 hover:text-primary transition-all active:scale-90 border border-border/50",
+                                    isEasyReading ? "w-10 h-10" : "w-8 h-8"
+                                  )}
+                                  aria-label="Aumentar cantidad"
+                                >
+                                  <Plus className="w-4 h-4" />
+                                </button>
+                              </div>
+                              <div className={cn(
+                                "px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-tight border whitespace-nowrap",
+                                item.product.stock_current > 10 ? "bg-green-500/10 text-green-600 border-green-500/20" :
+                                item.product.stock_current > 0 ? "bg-amber-500/10 text-amber-600 border-amber-500/20" :
+                                "bg-destructive/10 text-destructive border-destructive/20"
+                              )}>
+                                Stock: {item.product.stock_current}
+                              </div>
                             </div>
 
                             {/* Center: Name and Price */}
@@ -480,19 +490,9 @@ export const POSCart = ({
                                   </button>
                                 )}
                               </div>
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span className={cn("font-bold text-muted-foreground", isEasyReading ? "text-base" : "text-[11px]")}>
-                                  {formatCurrency(item.price)}
-                                </span>
-                                <div className={cn(
-                                  "px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter border",
-                                  item.product.stock_current > 10 ? "bg-green-500/10 text-green-600 border-green-500/20" :
-                                  item.product.stock_current > 0 ? "bg-amber-500/10 text-amber-600 border-amber-500/20" :
-                                  "bg-destructive/10 text-destructive border-destructive/20"
-                                )}>
-                                  Stock: {item.product.stock_current}
-                                </div>
-                              </div>
+                              <span className={cn("font-bold text-muted-foreground", isEasyReading ? "text-base" : "text-[11px]")}>
+                                {formatCurrency(item.price)}
+                              </span>
                             </div>
 
                             {/* Right: Subtotal */}
