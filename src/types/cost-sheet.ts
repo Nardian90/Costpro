@@ -2,7 +2,7 @@ export interface CostSheetHeader {
   code: string;
   name: string;
   date: string;
-  quantity: number;
+  quantity: number | string;
   currency: string;
   category: string;
   type: string;
