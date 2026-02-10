@@ -17,12 +17,15 @@ export interface CostSheetRow {
   vhFormula?: string | null;
   value?: number;
   baseDeCalculoRef?: string | null;
+  baseRef?: string | null;
   base_ref?: string | null;
   calculationMethod?: 'Prorrateo' | 'ValorFijo' | 'FORMULA' | 'ANEXO';
   totalFormula?: string | null;
   formula?: string;
+  isPercent?: boolean;
   is_percent?: boolean;
   children?: CostSheetRow[];
+  helpText?: string;
   [key: string]: any;
 }
 
