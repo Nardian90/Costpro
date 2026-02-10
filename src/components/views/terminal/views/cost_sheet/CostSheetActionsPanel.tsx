@@ -22,8 +22,8 @@ interface CostSheetActionsPanelProps {
   isOpen: boolean;
   onClose: () => void;
   actions: ActionItem[];
-  viewMode: 'expert' | 'assisted' | 'reading';
-  setViewMode: (mode: 'expert' | 'assisted' | 'reading') => void;
+  viewMode: 'expert' | 'assisted' | 'reading' | 'quick';
+  setViewMode: (mode: 'expert' | 'assisted' | 'reading' | 'quick') => void;
   layoutMode: ViewMode;
   setLayoutMode: (mode: ViewMode) => void;
 }
@@ -41,7 +41,10 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
   const actionGroups = [
     {
       title: 'Gestión',
-      items: actions.filter(a => ['load-example', 'reset', 'import-json', 'export-json', 'massive-gen'].includes(a.id))
+      items: [
+        ...actions.filter(a => a.id === 'audit'),
+        ...actions.filter(a => ['load-example', 'reset', 'import-json', 'export-json', 'massive-gen'].includes(a.id))
+      ]
     },
     {
       title: 'Exportar',
