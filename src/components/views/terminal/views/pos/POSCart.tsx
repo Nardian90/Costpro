@@ -62,6 +62,7 @@ export const POSCart = ({
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
   const [isEasyReading, setIsEasyReading] = useState(false);
+  const [viewingImage, setViewingImage] = useState<{ url: string, name: string } | null>(null);
   const isMobile = useIsMobile();
 
   const generatePDF = () => {
@@ -427,82 +428,85 @@ export const POSCart = ({
                           animate={{ opacity: 1, scale: 1 }}
                           exit={{ opacity: 0, x: -20 }}
                           className={cn(
-                            "p-3 sm:p-4 rounded-xl sm:rounded-2xl border-2 transition-all group relative shadow-md",
-                            isEasyReading ? "p-6" : "p-3 sm:p-4",
-                            item.product.stock_current < 10 ? "border-amber-200 bg-amber-50/30" : "border-border bg-background"
+                            "p-3 rounded-2xl border-2 transition-all group relative shadow-md",
+                            isEasyReading ? "p-6" : "p-3",
+                            item.product.stock_current <= 0 ? "border-destructive/20 bg-destructive/5" :
+                            item.product.stock_current < 5 ? "border-amber-200 bg-amber-50/30" : "border-border bg-background"
                           )}
                         >
-                          <div className="flex gap-3 sm:gap-4">
-                            <div className={cn(
-                              "relative rounded-lg sm:rounded-xl overflow-hidden bg-muted flex-shrink-0 border border-border shadow-inner",
-                              isEasyReading ? "w-32 h-32" : "w-16 h-16 sm:w-20 h-20"
-                            )}>
-                              <ProductImage
-                                src={item.product.public_image_url || item.product.image_url}
-                                name={item.product.name}
-                                className="w-full h-full"
-                                forceShow
-                              />
-                              {item.product.stock_current <= 5 && (
-                                <div className="absolute top-0 left-0 right-0 bg-destructive text-white text-[8px] font-black uppercase text-center py-0.5 tracking-tighter z-10">
-                                  Bajo Stock
-                                </div>
-                              )}
+                          <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 sm:gap-4">
+                            {/* Left: Quantity Controls */}
+                            <div className="flex items-center gap-1 bg-muted/50 rounded-2xl p-1 border border-border/50 shrink-0">
+                              <button
+                                onClick={() => onUpdateQuantity(item.product_id, item.variant_id, item.quantity - 1)}
+                                className={cn(
+                                  "flex items-center justify-center rounded-xl bg-background shadow-sm hover:bg-primary/10 hover:text-primary transition-all active:scale-90 border border-border/50",
+                                  isEasyReading ? "w-10 h-10" : "w-8 h-8"
+                                )}
+                                aria-label="Disminuir cantidad"
+                              >
+                                <Minus className="w-4 h-4" />
+                              </button>
+                              <span className={cn("text-center font-black", isEasyReading ? "w-10 text-xl" : "w-8 text-sm")} aria-label={`Cantidad: ${item.quantity}`}>{item.quantity}</span>
+                              <button
+                                onClick={() => onUpdateQuantity(item.product_id, item.variant_id, item.quantity + 1)}
+                                className={cn(
+                                  "flex items-center justify-center rounded-xl bg-background shadow-sm hover:bg-primary/10 hover:text-primary transition-all active:scale-90 border border-border/50",
+                                  isEasyReading ? "w-10 h-10" : "w-8 h-8"
+                                )}
+                                aria-label="Aumentar cantidad"
+                              >
+                                <Plus className="w-4 h-4" />
+                              </button>
                             </div>
 
-                            <div className="flex-1 min-w-0 flex flex-col justify-between py-1">
-                              <div>
-                                <div className="flex justify-between items-start">
-                                  <div className={cn("font-black uppercase tracking-tight truncate text-foreground", isEasyReading ? "text-xl" : "text-sm")}>
-                                    {item.product.name}
-                                  </div>
+                            {/* Center: Name and Price */}
+                            <div className="min-w-0 flex flex-col gap-1">
+                              <div className="flex items-center gap-2">
+                                <h4 className={cn("font-black uppercase tracking-tight truncate text-foreground", isEasyReading ? "text-xl" : "text-sm")}>
+                                  {item.product.name}
+                                  {item.variant && <span className="text-primary ml-1">({item.variant.name})</span>}
+                                </h4>
+                                {(item.product.public_image_url || item.product.image_url) && (
                                   <button
-                                    onClick={() => onRemoveItem(item.product_id, item.variant_id)}
-                                    className="text-muted-foreground/40 hover:text-destructive p-2 -mt-2 -mr-2 transition-all active:scale-90"
-                                    aria-label="Eliminar producto"
+                                    onClick={() => setViewingImage({
+                                      url: item.product.public_image_url || item.product.image_url!,
+                                      name: item.product.name
+                                    })}
+                                    className="p-1 hover:bg-muted rounded-full transition-colors"
+                                    title="Ver imagen"
                                   >
-                                    <Trash2 className="w-5 h-5" />
+                                    <ImageIcon className="w-3.5 h-3.5 text-muted-foreground" />
                                   </button>
-                                </div>
-                                <div className="flex items-center gap-2 mt-1">
-                                  <div className={cn("font-bold text-primary", isEasyReading ? "text-lg" : "text-xs")}>
-                                    {formatCurrency(item.price)} <span className="opacity-50 mx-1 text-[10px]">/</span> unidad
-                                  </div>
-                                  <div className="px-1.5 py-0.5 rounded bg-muted text-[8px] font-black uppercase tracking-tighter text-muted-foreground border border-border/50">
-                                    Stock: {item.product.stock_current}
-                                  </div>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className={cn("font-bold text-muted-foreground", isEasyReading ? "text-base" : "text-[11px]")}>
+                                  {formatCurrency(item.price)}
+                                </span>
+                                <div className={cn(
+                                  "px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter border",
+                                  item.product.stock_current > 10 ? "bg-green-500/10 text-green-600 border-green-500/20" :
+                                  item.product.stock_current > 0 ? "bg-amber-500/10 text-amber-600 border-amber-500/20" :
+                                  "bg-destructive/10 text-destructive border-destructive/20"
+                                )}>
+                                  Stock: {item.product.stock_current}
                                 </div>
                               </div>
+                            </div>
 
-                              <div className="flex items-center justify-between gap-2 sm:gap-4 mt-2">
-                                <div className="flex items-center gap-1 bg-muted/50 rounded-2xl p-1 border border-border/50 shrink-0">
-                                  <button
-                                    onClick={() => onUpdateQuantity(item.product_id, item.variant_id, item.quantity - 1)}
-                                    className={cn(
-                                      "flex items-center justify-center rounded-xl bg-background shadow-sm hover:bg-primary/10 hover:text-primary transition-all active:scale-90 border border-border/50",
-                                      isEasyReading ? "w-14 h-14" : "w-10 h-10"
-                                    )}
-                                    aria-label="Disminuir cantidad"
-                                  >
-                                    <Minus className="w-5 h-5" />
-                                  </button>
-                                  <span className={cn("text-center font-black", isEasyReading ? "w-14 text-xl" : "w-10 text-sm")} aria-label={`Cantidad: ${item.quantity}`}>{item.quantity}</span>
-                                  <button
-                                    onClick={() => onUpdateQuantity(item.product_id, item.variant_id, item.quantity + 1)}
-                                    className={cn(
-                                      "flex items-center justify-center rounded-xl bg-background shadow-sm hover:bg-primary/10 hover:text-primary transition-all active:scale-90 border border-border/50",
-                                      isEasyReading ? "w-14 h-14" : "w-10 h-10"
-                                    )}
-                                    aria-label="Aumentar cantidad"
-                                  >
-                                    <Plus className="w-5 h-5" />
-                                  </button>
-                                </div>
-                                <div className="text-right min-w-0 shrink-0">
-                                  <div className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mb-0.5 truncate">Subtotal</div>
-                                  <div className={cn("font-black text-primary leading-none truncate", isEasyReading ? "text-xl" : "text-base sm:text-lg")}>
-                                    {formatCurrency(item.subtotal)}
-                                  </div>
+                            {/* Right: Subtotal */}
+                            <div className="flex flex-col items-end gap-2">
+                              <button
+                                onClick={() => onRemoveItem(item.product_id, item.variant_id)}
+                                className="text-muted-foreground/30 hover:text-destructive transition-all active:scale-90"
+                                aria-label="Eliminar producto"
+                              >
+                                <X className="w-5 h-5" />
+                              </button>
+                              <div className="text-right">
+                                <div className={cn("font-black text-primary leading-none", isEasyReading ? "text-2xl" : "text-lg")}>
+                                  {formatCurrency(item.subtotal)}
                                 </div>
                               </div>
                             </div>
@@ -548,6 +552,27 @@ export const POSCart = ({
             </>
           )}
         </div>
+
+        {/* Visualizador de Imagen */}
+        <BaseModal
+          open={!!viewingImage}
+          onOpenChange={() => setViewingImage(null)}
+          title={viewingImage?.name}
+        >
+          <div className="aspect-square w-full rounded-2xl overflow-hidden bg-muted">
+            {viewingImage && (
+              <ProductImage
+                src={viewingImage.url}
+                name={viewingImage.name}
+                className="w-full h-full object-contain"
+                forceShow
+              />
+            )}
+          </div>
+          <div className="mt-4">
+             <SecondaryButton label="Cerrar" onClick={() => setViewingImage(null)} className="w-full" />
+          </div>
+        </BaseModal>
 
         {/* Modal de confirmación para vaciar carrito */}
         <BaseModal
