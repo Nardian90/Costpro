@@ -55,11 +55,11 @@ export function useStoresView() {
                 await storeService.updateStore(selectedStore.id, data.name || '', data.address || '');
                 toast.success('Tienda actualizada');
             } else if (mode === 'create') {
-                // await storeService.createStore(data);
-                toast.info('Funcionalidad de creación en desarrollo');
+                await storeService.createStore(data.name || '', data.address || '', user?.id);
+                toast.success('Tienda creada exitosamente');
             } else if (mode === 'delete' && selectedStore) {
-                // await storeService.deleteStore(selectedStore.id);
-                toast.info('Funcionalidad de eliminación en desarrollo');
+                await storeService.deleteStore(selectedStore.id);
+                toast.success('Tienda eliminada');
             }
             setStoreFormMode(null);
             setSelectedStore(null);
