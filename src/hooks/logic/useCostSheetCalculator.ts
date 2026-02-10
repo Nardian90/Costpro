@@ -33,6 +33,19 @@ const evaluateAnnexExpression = (expression: string, rowData: any, header: any, 
 
     // Support GET_ANEXO_DATO and GET_FILA_DATO even in annexes for consistency
     // But since annexes are calculated first, GET_FILA_DATO might be limited here
+
+    // GET_ANEXO_FILA_DATO(anexoId, rowIndex, field) - 1-based index
+    expr = expr.replace(/GET_ANEXO_FILA_DATO\(['"]([^'"]+)['"]\s*,\s*(\d+)\s*,\s*['"]([^'"]+)['"]\)/g, (_, anexoId, rowIndex, field) => {
+        const targetAnnex = calculatedAnnexes.find(a => a.id === anexoId);
+        if (!targetAnnex || !targetAnnex.data) return '0';
+        const index = parseInt(rowIndex) - 1;
+        if (index >= 0 && index < targetAnnex.data.length) {
+            const val = targetAnnex.data[index][field];
+            return String(val ?? 0);
+        }
+        return '0';
+    });
+
     expr = expr.replace(/GET_ANEXO_DATO\(['"]([^'"]+)['"]\s*,\s*['"]([^'"]+)['"]\s*,\s*['"]([^'"]+)['"]\)/g, (_, anexoId, classification, field) => {
         const targetAnnex = calculatedAnnexes.find(a => a.id === anexoId);
         if (!targetAnnex) return '0';
@@ -116,6 +129,22 @@ const evaluateHeaderExpression = (
 
     try {
         let expr = trimmed.substring(1);
+
+        /**
+         * GET_ANEXO_FILA_DATO(anexoId, rowIndex, field)
+         * Retrieves a specific field from an annex row by its 1-based index.
+         * Useful for automatic header population from the first row of an annex.
+         */
+        expr = expr.replace(/GET_ANEXO_FILA_DATO\(['"]([^'"]+)['"]\s*,\s*(\d+)\s*,\s*['"]([^'"]+)['"]\)/g, (_, anexoId, rowIndex, field) => {
+            const targetAnnex = calculatedAnnexes.find(a => a.id === anexoId);
+            if (!targetAnnex || !targetAnnex.data) return '0';
+            const index = parseInt(rowIndex) - 1;
+            if (index >= 0 && index < targetAnnex.data.length) {
+                const val = targetAnnex.data[index][field];
+                return String(val ?? 0);
+            }
+            return '0';
+        });
 
         // GET_ANEXO_DATO(anexoId, classification, field)
         expr = expr.replace(/GET_ANEXO_DATO\(['"]([^'"]+)['"]\s*,\s*['"]([^'"]+)['"]\s*,\s*['"]([^'"]+)['"]\)/g, (_, anexoId, classification, field) => {
@@ -386,6 +415,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
           id: a.id,
           name: a.title,
           rows: (a.data || []).filter((d: any) => !!d).map((d: any) => ({
+            ...d,
             // Normalize classification by taking the prefix before ' - ' (e.g. "1.1 - Insumos" -> "1.1")
             classification: String(d.classification || d.label || '').split(' - ')[0].trim(),
             importe: d.total || d.amount || d.depreciation_cost || d.price_total || 0

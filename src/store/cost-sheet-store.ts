@@ -18,15 +18,18 @@ const clearTemplate = (template: any) => {
     if (cleared.header) {
         cleared.header.code = "";
         cleared.header.name = "";
-        cleared.header.quantity = 0;
-        cleared.header.product_code = "";
+        // Default formulas for automated fields "a consideración del usuario"
+        cleared.header.quantity = "=GET_ANEXO_FILA_DATO(\"I\", 1, \"consumption_norm\")";
+        cleared.header.product_code = "=GET_ANEXO_FILA_DATO(\"I\", 1, \"code\")";
+        cleared.header.unit = "=GET_ANEXO_FILA_DATO(\"I\", 1, \"um\")";
+        cleared.header.sale_price = "=GET_FILA_DATO(\"16.1\", \"total\")";
+
         cleared.header.company = "";
         cleared.header.organism = "";
         cleared.header.union = "";
         cleared.header.destination = "";
         cleared.header.production_level = 0;
         cleared.header.capacity_utilization = 0;
-        cleared.header.sale_price = 0;
         cleared.header.client = "";
     }
 
