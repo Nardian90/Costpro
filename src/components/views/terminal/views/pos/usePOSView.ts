@@ -40,14 +40,16 @@ export function usePOSView() {
   // Mutations
   const createSaleMutation = useCreateSale();
 
-  const handleAddItem = (product: Product) => {
+  const handleAddItem = (product: Product, variant?: any) => {
     if (product.stock_current <= 0) {
       toast.error(`${product.name} no tiene stock disponible.`);
       return;
     }
 
-    if (product.price < (product.cost_price || product.cost_average || 0)) {
-      toast.warning(`Atención: ${product.name} tiene precio inferior al costo (${formatCurrency(product.cost_price || product.cost_average || 0)})`, {
+    const price = variant ? variant.price : product.price;
+
+    if (price < (product.cost_price || product.cost_average || 0)) {
+      toast.warning(`Atención: ${product.name}${variant ? ` (${variant.name})` : ''} tiene precio inferior al costo (${formatCurrency(product.cost_price || product.cost_average || 0)})`, {
         duration: 5000,
       });
       // Log to audit if we have user info
@@ -56,7 +58,7 @@ export function usePOSView() {
           user.id,
           product.id,
           user.activeStoreId!,
-          product.price,
+          price,
           product.cost_price || product.cost_average || 0
         );
       }
@@ -64,16 +66,16 @@ export function usePOSView() {
 
     const item: CartItem = {
         product_id: product.id,
-        variant_id: null,
+        variant_id: variant ? variant.id : null,
         product: product,
-        variant: null,
+        variant: variant || null,
         quantity: 1,
-        price: product.price,
+        price: price,
         cost: product.cost_price || product.cost_average || 0,
-        subtotal: product.price
+        subtotal: price
     };
     addItem(item);
-    toast.success(`${product.name} agregado`);
+    toast.success(`${product.name}${variant ? ` (${variant.name})` : ''} agregado`);
   }
 
   const startCheckout = async (paymentMethod: PaymentMethod, checkoutDiscount?: { type: 'fixed' | 'percentage', value: number } | null) => {
