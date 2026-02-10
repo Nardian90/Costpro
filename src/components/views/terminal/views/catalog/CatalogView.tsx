@@ -14,7 +14,8 @@ import {
     Search,
     PlusCircle,
     Trash2,
-    RefreshCw
+    RefreshCw,
+    Printer
 } from 'lucide-react';
 import { CostProLoader } from '@/components/ui/CostProLoader';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
@@ -31,6 +32,8 @@ import { cn, resolveProductImage, formatCurrency } from '@/lib/utils';
 import ProductImage from '@/components/ui/ProductImage';
 import { QueryInspector } from '@/components/ui/QueryInspector';
 import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
+import JsBarcode from 'jsbarcode';
+import { Product } from '@/types';
 
 export default function CatalogView() {
     const { user } = useAuthStore();
@@ -178,6 +181,61 @@ export default function CatalogView() {
         }
     };
 
+    const handlePrintLabel = (product: Product) => {
+        const canvas = document.createElement('canvas');
+        try {
+            JsBarcode(canvas, product.sku || product.id.substring(0, 8), {
+                format: "CODE128",
+                width: 2,
+                height: 100,
+                displayValue: true
+            });
+
+            const barcodeImg = canvas.toDataURL("image/png");
+            const printWindow = window.open('', '_blank');
+            if (!printWindow) return;
+
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>Imprimir Etiqueta - ${product.name}</title>
+                        <style>
+                            @page { size: 60mm 40mm; margin: 0; }
+                            body {
+                                font-family: 'Inter', system-ui, sans-serif;
+                                display: flex;
+                                flex-direction: column;
+                                align-items: center;
+                                justify-content: center;
+                                height: 100%;
+                                margin: 0;
+                                padding: 5mm;
+                                text-align: center;
+                            }
+                            .name { font-weight: 900; font-size: 14px; text-transform: uppercase; margin-bottom: 2mm; }
+                            .price { font-weight: 900; font-size: 20px; color: #16a34a; margin-bottom: 4mm; }
+                            .barcode { width: 100%; max-width: 50mm; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="name">${product.name}</div>
+                        <div class="price">${formatCurrency(product.price)}</div>
+                        <img class="barcode" src="${barcodeImg}" />
+                        <script>
+                            window.onload = () => {
+                                window.print();
+                                setTimeout(() => window.close(), 500);
+                            };
+                        </script>
+                    </body>
+                </html>
+            `);
+            printWindow.document.close();
+        } catch (error) {
+            toast.error('Error al generar código de barras');
+        }
+    };
+
     const handleImportFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file || !user?.activeStoreId) return;
@@ -226,23 +284,24 @@ export default function CatalogView() {
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto flex-wrap">
                     <div className="flex items-center justify-between w-full sm:w-auto gap-4">
                         <h2 className="text-[clamp(1.5rem,5vw,1.875rem)] font-black text-foreground tracking-tighter uppercase truncate hidden sm:block">Catálogo Global</h2>
-                        <ViewSwitcher currentView={viewMode} onViewChange={setViewMode} />
+                        <div className="flex items-center gap-2">
+                            <ViewSwitcher currentView={viewMode} onViewChange={setViewMode} />
+                            <button
+                                onClick={() => setIsAuditMode(!isAuditMode)}
+                                className={cn(
+                                    "flex items-center gap-2 px-4 py-2 rounded-full transition-all border shrink-0 min-h-[44px]",
+                                    isAuditMode
+                                        ? "bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-500/20"
+                                        : "bg-background text-muted-foreground border-border hover:bg-muted"
+                                )}
+                            >
+                                <DollarSign className={cn("w-4 h-4", isAuditMode ? "animate-pulse" : "opacity-50")} />
+                                <span className="text-[10px] font-black uppercase tracking-widest hidden xs:inline">
+                                    {isAuditMode ? 'Auditoría Activa' : 'Auditoría de Precios'}
+                                </span>
+                            </button>
+                        </div>
                     </div>
-
-                    <button
-                        onClick={() => setIsAuditMode(!isAuditMode)}
-                        className={cn(
-                            "flex items-center gap-2 px-4 py-2 rounded-full transition-all border shrink-0 min-h-[44px]",
-                            isAuditMode
-                                ? "bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-500/20"
-                                : "bg-background text-muted-foreground border-border hover:bg-muted"
-                        )}
-                    >
-                        <DollarSign className={cn("w-4 h-4", isAuditMode ? "animate-pulse" : "opacity-50")} />
-                        <span className="text-[10px] font-black uppercase tracking-widest">
-                            {isAuditMode ? 'Auditoría Activa' : 'Auditoría de Precios'}
-                        </span>
-                    </button>
                 </div>
 
                 <div className="w-full lg:w-auto">
@@ -300,6 +359,7 @@ export default function CatalogView() {
                             onViewPrices={() => { modals.setEditingProduct(product); modals.setIsVariantsModalOpen(true); }}
                             onDelete={() => { modals.setProductToAction(product); modals.setIsDeleteConfirmOpen(true); }}
                             onToggleActive={() => { modals.setProductToAction(product); modals.setIsDeactivateConfirmOpen(true); }}
+                            onPrintLabel={handlePrintLabel}
                         />
                     ))}
                     {filteredProducts.length === 0 && (
@@ -358,6 +418,7 @@ export default function CatalogView() {
                                     </td>
                                     <td className="p-4">
                                         <div className="flex justify-center gap-2">
+                                            <IconButton onClick={() => handlePrintLabel(product)} icon={Printer} title="Imprimir Etiqueta" className="w-11 h-11 p-0" />
                                             <IconButton onClick={() => { modals.setEditingProduct(product); modals.setIsEditProductModalOpen(true); }} icon={Edit} title="Editar" className="w-11 h-11 p-0" />
                                             <IconButton onClick={() => { modals.setEditingProduct(product); modals.setIsVariantsModalOpen(true); }} icon={DollarSign} title="Precios" className="w-11 h-11 p-0" />
                                             {product.has_movements ? (

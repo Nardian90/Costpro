@@ -3,7 +3,7 @@
 import React from 'react';
 import { cn, resolveProductImage, formatCurrency } from '@/lib/utils';
 import { Slot } from '@radix-ui/react-slot';
-import { LucideIcon, Search, X, Edit, DollarSign, Package, Trash2, RefreshCw } from 'lucide-react';
+import { LucideIcon, Search, X, Edit, DollarSign, Package, Trash2, RefreshCw, Camera, Tag, Printer } from 'lucide-react';
 import ProductImage from '../ProductImage';
 import { HorizontalScroll } from '../HorizontalScroll';
 import type { Product } from '@/types';
@@ -129,6 +129,7 @@ interface ProductCardProps {
   onViewPrices?: (product: Product) => void;
   onDelete?: (product: Product) => void;
   onToggleActive?: (product: Product) => void;
+  onPrintLabel?: (product: Product) => void;
   onClick?: (product: Product) => void;
   className?: string;
   variant?: 'catalog' | 'pos' | 'inventory';
@@ -174,10 +175,12 @@ export const CategoryChips: React.FC<{
 };
 
 export const ProductCard: React.FC<ProductCardProps> = ({
-  product, onEdit, onViewPrices, onDelete, onToggleActive, onClick, className, variant = 'catalog'
+  product, onEdit, onViewPrices, onDelete, onToggleActive, onPrintLabel, onClick, className, variant = 'catalog'
 }) => {
   const isOutOfStock = product.stock_current <= 0;
   const isLowStock = product.stock_current <= (product.min_stock || 0);
+  const hasImage = !!(product.public_image_url || product.image_url);
+  const variantCount = product.product_variants?.length || 0;
 
   if (variant === 'pos') {
     return (
@@ -218,47 +221,80 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   return (
     <div className={cn(
-      "neu-card !p-4 border border-white/5 flex flex-col gap-4 w-full max-w-full overflow-hidden transition-all hover:shadow-lg relative",
+      "neu-card !p-4 border border-white/5 flex flex-col gap-4 w-full max-w-full overflow-hidden transition-all hover:shadow-lg relative elevation-1",
       !product.is_active && "opacity-75 grayscale-[0.3] bg-muted/20",
       className
     )}>
-      <div className="w-full aspect-square sm:aspect-video rounded-xl overflow-hidden bg-background/50 flex items-center justify-center shrink-0 relative group">
-        <ProductImage
-          src={resolveProductImage(product)}
-          alt={product.name}
-          name={product.name}
-          className="w-full h-full"
-        />
-        <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
-          {!product.is_active && (
-            <div className="bg-danger text-white text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-lg">
-              Inactivo
-            </div>
-          )}
-          {product.price < (product.cost_price || 0) && (
-            <div className="bg-danger text-white text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-lg border border-white/20 animate-pulse">
-              ALERTA: Margen Negativo
-            </div>
-          )}
-          {variant === 'inventory' && (
-            <div
-              className={cn(
-                "text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border shadow-sm backdrop-blur-md",
-                isLowStock ? "bg-danger/20 text-danger border-danger/30" : "bg-success/20 text-success border-success/30"
-              )}
-            >
-              {isLowStock ? 'Stock Bajo' : 'En Stock'}
-            </div>
-          )}
-        </div>
+      <div className={cn(
+        "rounded-xl overflow-hidden bg-background/50 flex items-center justify-center shrink-0 relative group transition-all",
+        hasImage ? "w-full aspect-square sm:aspect-video" : "w-10 h-10 self-start"
+      )}>
+        {hasImage ? (
+          <ProductImage
+            src={resolveProductImage(product)}
+            alt={product.name}
+            name={product.name}
+            className="w-full h-full"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-muted text-muted-foreground">
+            <Tag className="w-5 h-5" />
+          </div>
+        )}
+
+        {hasImage && (
+          <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
+            {!product.is_active && (
+              <div className="bg-danger text-white text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-lg">
+                Inactivo
+              </div>
+            )}
+            {product.price < (product.cost_price || 0) && (
+              <div className="bg-danger text-white text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-lg border border-white/20 animate-pulse">
+                ALERTA: Margen Negativo
+              </div>
+            )}
+            {variant === 'inventory' && (
+              <div
+                className={cn(
+                  "text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border shadow-sm backdrop-blur-md",
+                  isLowStock ? "bg-danger/20 text-danger border-danger/30" : "bg-success/20 text-success border-success/30"
+                )}
+              >
+                {isLowStock ? 'Stock Bajo' : 'En Stock'}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="flex-1 min-w-0">
         <div className="flex flex-col mb-1">
-          {variant === 'inventory' && (
-             <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mb-1">{product.category || 'General'}</span>
+          <div className="flex justify-between items-start gap-2">
+            <div>
+              {variant === 'inventory' && (
+                <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mb-1 block">{product.category || 'General'}</span>
+              )}
+              <h3 className="font-black text-base uppercase tracking-tight truncate">{product.name}</h3>
+            </div>
+            {!hasImage && (
+              <button
+                onClick={() => onEdit?.(product)}
+                className="p-2 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all active:scale-90 shadow-sm"
+                title="Adjuntar Imagen"
+              >
+                <Camera className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+          {variantCount > 0 && (
+            <div className="mt-1 flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              <span className="text-[9px] font-black uppercase tracking-widest text-primary">
+                {variantCount} {variantCount === 1 ? 'Variante' : 'Variantes'} de precio
+              </span>
+            </div>
           )}
-          <h3 className="font-black text-base uppercase tracking-tight truncate">{product.name}</h3>
         </div>
 
         {variant !== 'inventory' && (
@@ -316,6 +352,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                 )}
                 {variant === 'catalog' && (
                   <>
+                    {onPrintLabel && (
+                      <SecondaryButton
+                        label="Etiqueta"
+                        icon={Printer}
+                        onClick={() => onPrintLabel(product)}
+                        className="w-full"
+                      />
+                    )}
                     {product.has_movements ? (
                       <SecondaryButton
                         label={product.is_active ? "Desactivar" : "Reactivar"}
