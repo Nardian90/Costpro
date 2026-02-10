@@ -20,6 +20,7 @@ import { CostSheetActionsPanel } from './CostSheetActionsPanel';
 import { CostSheetSidebarNav } from './CostSheetSidebarNav';
 import { CostSheetMassiveGenerator } from './CostSheetMassiveGenerator';
 import { CostSheetExportModal, ExportOptions } from './CostSheetExportModal';
+import { CostSheetQuickMode } from './CostSheetQuickMode';
 import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
 import ActionMenu from '@/components/ui/ActionMenu';
 import { Layout, Eye, Edit, FileText, Trash2, Download, FileSpreadsheet, Upload, Save, BarChart3, Activity, MoreVertical, AlertTriangle } from 'lucide-react';
@@ -42,7 +43,7 @@ const CostSheetView = () => {
   } = useCostSheetCalculator(data);
 
   const [isEditing, setIsEditing] = useState(true);
-  const [viewMode, setViewMode] = useState<'expert' | 'assisted' | 'reading'>('expert');
+  const [viewMode, setViewMode] = useState<'expert' | 'assisted' | 'reading' | 'quick'>('expert');
   const [layoutMode, setLayoutMode] = useState<ViewMode>('grid');
   const [activeSection, setActiveSection] = useState('kpis');
   const [activeSubSectionId, setActiveSubSectionId] = useState('');
@@ -256,6 +257,37 @@ const CostSheetView = () => {
     toast.success("JSON exportado correctamente");
   }, [data]);
 
+  const handleQuickGenerate = React.useCallback((rows: any[]) => {
+    // 1. Get original template as base
+    const baseTemplate = JSON.parse(JSON.stringify(data));
+
+    // 2. Clear relevant data
+    baseTemplate.header.name = rows[0].product;
+    baseTemplate.header.code = `QS-${Date.now().toString().slice(-4)}`;
+    baseTemplate.header.quantity = rows[0].quantity;
+    baseTemplate.header.unit = rows[0].um;
+
+    // 3. Map rows to Annex I
+    const annexI = baseTemplate.annexes.find((a: any) => a.id === 'I');
+    if (annexI) {
+        annexI.data = rows.map((r, idx) => ({
+            classification: "1.1",
+            code: `ITM-${idx+1}`,
+            description: r.product,
+            um: r.um,
+            consumption_norm: r.quantity,
+            price: r.cost,
+            total: r.quantity * r.cost
+        }));
+    }
+
+    // 4. Update the sheet
+    setSheet(baseTemplate);
+    setViewMode('expert');
+    setActiveSection('kpis');
+    toast.success("Ficha generada exitosamente en modo experto");
+  }, [data, setSheet]);
+
   const allActions = React.useMemo(() => [
     {
         id: 'toggle-mode',
@@ -269,6 +301,17 @@ const CostSheetView = () => {
         },
         variant: 'primary' as const,
     },
+    {
+        id: 'kpis-header',
+        label: 'KPIs',
+        icon: BarChart3,
+        onClick: () => {
+            setActiveSection('kpis');
+            if (!isEditing) setIsEditing(true);
+        },
+        variant: 'success' as const,
+    },
+    { id: 'audit', label: 'Auditoría', icon: Activity, onClick: () => { setActiveSection('audit'); setIsActionsPanelOpen(false); }, variant: 'outline' as const },
     { id: 'load-example', label: 'Ejemplo', icon: FileText, onClick: loadExample, variant: 'outline' as const },
     { id: 'reset', label: 'Reiniciar', icon: Trash2, onClick: reset, variant: 'danger' as const },
     { id: 'import-json', label: 'Importar', icon: Upload, onClick: handleImportJSON, variant: 'outline' as const },
@@ -279,7 +322,7 @@ const CostSheetView = () => {
   ], [isEditing, loadExample, reset, handleImportJSON, handleExportJSON, handleExportExcel, handleExportPDF, isBlocked]);
 
   const mainActions = React.useMemo(() => [
-    ...allActions.filter(a => ['toggle-mode'].includes(a.id)),
+    ...allActions.filter(a => ['toggle-mode', 'kpis-header'].includes(a.id)),
     {
         id: 'more-actions',
         label: 'Más Acciones',
@@ -289,13 +332,11 @@ const CostSheetView = () => {
     }
   ], [allActions]);
 
-  const secondaryActions = React.useMemo(() => allActions.filter(a => !['toggle-mode'].includes(a.id)), [allActions]);
+  const secondaryActions = React.useMemo(() => allActions.filter(a => !['toggle-mode', 'kpis-header'].includes(a.id)), [allActions]);
 
   const navItems = React.useMemo(() => [
     { id: 'header', label: 'Encabezado', icon: Layout },
-    { id: 'kpis', label: 'KPIs', icon: BarChart3 },
-    { id: 'main', label: 'Ficha Principal', icon: FileSpreadsheet },
-    { id: 'audit', label: 'Auditoría', icon: Activity }
+    { id: 'main', label: 'Ficha Principal', icon: FileSpreadsheet }
   ], []);
 
   const subSectionActions = React.useMemo(() => {
@@ -474,7 +515,15 @@ const CostSheetView = () => {
           )}
 
           {viewMode === 'reading' && (
-               <CostSheetNarrative data={data} calculatedValues={calculatedValues} />
+               <CostSheetNarrative
+                 data={data}
+                 calculatedValues={calculatedValues}
+                 calculatedHeader={calculatedHeader}
+               />
+          )}
+
+          {viewMode === 'quick' && (
+              <CostSheetQuickMode onGenerate={handleQuickGenerate} />
           )}
         </div>
       ) : (
