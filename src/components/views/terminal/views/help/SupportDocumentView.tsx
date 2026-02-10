@@ -54,7 +54,7 @@ export default function SupportDocumentView() {
           <Button
             variant="ghost"
             size="icon"
-            className="lg:hidden h-9 w-9"
+            className="lg:hidden h-11 w-11"
             onClick={() => setSidebarOpen(!sidebarOpen)}
           >
             {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -71,7 +71,7 @@ export default function SupportDocumentView() {
           <Button
             variant="outline"
             size="sm"
-            className="hidden sm:flex h-9 gap-2 font-black uppercase text-[10px] tracking-widest border-primary/20 text-primary hover:bg-primary hover:text-white transition-all"
+            className="hidden sm:flex h-11 gap-2 font-black uppercase text-[10px] tracking-widest border-primary/20 text-primary hover:bg-primary hover:text-white transition-all"
             onClick={() => handleOpenNewTab(1)}
           >
             <ExternalLink className="w-3.5 h-3.5" />
@@ -80,7 +80,7 @@ export default function SupportDocumentView() {
           <Button
             variant="default"
             size="sm"
-            className="flex h-9 gap-2 font-black uppercase text-[10px] tracking-widest shadow-lg shadow-primary/20"
+            className="flex h-11 gap-2 font-black uppercase text-[10px] tracking-widest shadow-lg shadow-primary/20"
             onClick={handleDownload}
           >
             <Download className="w-3.5 h-3.5" />
@@ -137,11 +137,11 @@ export default function SupportDocumentView() {
         )}
 
         {/* Main Content (Dashboard style) */}
-        <div className="flex-1 bg-muted/20 overflow-y-auto p-6 sm:p-12">
+        <div className="flex-1 bg-muted/20 overflow-y-auto overflow-x-auto p-6 sm:p-12 no-scrollbar">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="max-w-3xl mx-auto space-y-12"
+            className="max-w-3xl mx-auto space-y-12 min-w-0"
           >
             {/* Hero Section */}
             <div className="text-center space-y-6">
@@ -149,7 +149,7 @@ export default function SupportDocumentView() {
                 <Zap className="w-4 h-4 fill-primary" />
                 <span className="text-[10px] font-black uppercase tracking-widest">Recurso de Capacitación</span>
               </div>
-              <h1 className="text-4xl sm:text-5xl font-black uppercase tracking-tighter text-foreground leading-none">
+              <h1 className="text-[clamp(1.75rem,8vw,3rem)] font-black uppercase tracking-tighter text-foreground leading-none">
                 Manual de Operaciones <br />
                 <span className="text-primary">CostPro Enterprise</span>
               </h1>

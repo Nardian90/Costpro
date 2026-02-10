@@ -73,7 +73,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
             <button
               onClick={installApp}
               className={cn(
-                "hidden md:flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all active:scale-95",
+                "hidden md:flex items-center gap-2 px-6 h-11 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all active:scale-95",
                 isInstallable
                   ? "bg-primary text-white shadow-[0_0_20px_rgba(16,185,129,0.3)]"
                   : "bg-muted text-muted-foreground opacity-50 border border-border"
@@ -84,7 +84,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
             </button>
             <button
               onClick={onLoginClick}
-              className="neu-btn neu-btn-primary px-4 sm:px-8 py-2.5 text-[10px] sm:text-xs font-black uppercase tracking-widest flex items-center gap-2 group shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:shadow-[0_0_30px_rgba(16,185,129,0.4)] transition-all shrink-0"
+              className="neu-btn neu-btn-primary px-4 sm:px-8 h-11 text-[10px] sm:text-xs font-black uppercase tracking-widest flex items-center gap-2 group shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:shadow-[0_0_30px_rgba(16,185,129,0.4)] transition-all shrink-0"
             >
               <span className="hidden sm:block">Acceso al Sistema</span>
               <span className="sm:hidden">Acceso</span>
@@ -257,7 +257,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
       <section className="py-24 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="text-center space-y-4 mb-20">
-            <h2 className="text-4xl font-black uppercase tracking-tighter">Ecosistema Integrado</h2>
+            <h2 className="text-[clamp(2rem,8vw,3rem)] font-black uppercase tracking-tighter">Ecosistema Integrado</h2>
             <p className="text-muted-foreground font-medium max-w-2xl mx-auto leading-relaxed">
               Módulos técnicos desarrollados bajo estándares de arquitectura empresarial para garantizar la integridad de sus datos y la velocidad operativa.
             </p>
@@ -352,7 +352,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
                 <div className="inline-block px-4 py-2 rounded-xl bg-violet-500/10 text-violet-600 text-[10px] font-black uppercase tracking-widest">
                   Caso de Éxito MiPyME
                 </div>
-                <h2 className="text-4xl lg:text-5xl font-black uppercase tracking-tighter leading-none">
+                <h2 className="text-[clamp(2rem,8vw,3.5rem)] font-black uppercase tracking-tighter leading-none">
                   La Transformación <br /> de los <span className="text-violet-600 italic">Lunes</span>
                 </h2>
                 <div className="space-y-4 text-muted-foreground font-medium leading-relaxed">
@@ -412,7 +412,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
           </div>
 
           <div className="relative z-10 space-y-6">
-            <h2 className="text-4xl lg:text-6xl font-black uppercase tracking-tighter leading-none">
+            <h2 className="text-[clamp(2rem,8vw,4rem)] font-black uppercase tracking-tighter leading-none">
               ¿Listo para modernizar su gestión?
             </h2>
             <p className="text-lg opacity-70 font-medium max-w-xl mx-auto">

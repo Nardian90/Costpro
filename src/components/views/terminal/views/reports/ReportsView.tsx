@@ -179,7 +179,7 @@ export default function ReportsView() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="hidden md:block">
-          <h1 className="text-3xl font-black uppercase tracking-tight text-primary flex items-center gap-3">
+          <h1 className="text-[clamp(1.5rem,6vw,1.875rem)] font-black uppercase tracking-tight text-primary flex items-center gap-3">
             <FileText className="w-8 h-8" />
             Configuración de Reportes
           </h1>
