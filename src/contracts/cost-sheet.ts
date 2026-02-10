@@ -40,16 +40,16 @@ export interface CostSheetHeaderContract {
 export interface CostSheetRowContract {
   id: string;
   label: string;
-  valorHistorico: number;
-  value: number;
-  baseDeCalculoRef: string;
-  baseRef: string;
-  calculationMethod: 'Prorrateo' | 'ValorFijo' | 'FORMULA';
-  totalFormula: string;
-  formula: string;
-  isPercent: boolean;
-  children: CostSheetRowContract[];
-  helpText: string;
+  valorHistorico?: number;
+  value?: number;
+  baseDeCalculoRef?: string;
+  baseRef?: string;
+  calculationMethod?: 'Prorrateo' | 'ValorFijo' | 'FORMULA' | 'ANEXO';
+  totalFormula?: string;
+  formula?: string;
+  isPercent?: boolean;
+  children?: CostSheetRowContract[];
+  helpText?: string;
   // Mantenemos flexibilidad para propiedades dinámicas, pero con un tipo más explícito.
   [key: string]: any;
 }
