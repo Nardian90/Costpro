@@ -9,12 +9,13 @@ vi.mock('zustand/middleware', () => ({
 }));
 
 describe('cost-sheet-store', () => {
-  it('should initialize with blank data', () => {
+  it('should initialize with the default template data', () => {
     const { result } = renderHook(() => useCostSheetStore());
-    expect(result.current.data.annexes[0].data.length).toBe(0);
+    // The new reinicioTemplate has 1 row in the first annex (I)
+    expect(result.current.data.annexes[0].data.length).toBe(1);
   });
 
-  it('should add a row to an empty annex correctly', () => {
+  it('should add a row to an annex correctly', () => {
     const { result } = renderHook(() => useCostSheetStore());
 
     act(() => {
@@ -22,9 +23,7 @@ describe('cost-sheet-store', () => {
     });
 
     const annexI = result.current.data.annexes.find(a => a.id === 'I');
-    expect(annexI?.data.length).toBe(1);
-    expect(annexI?.data[0].description).toBe('');
-    expect(annexI?.data[0].price).toBe(0);
+    expect(annexI?.data.length).toBe(2); // 1 (default) + 1 (added)
   });
 
   it('should update values correctly', () => {

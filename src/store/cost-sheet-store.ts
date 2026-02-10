@@ -1,7 +1,8 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import originalTemplate from '@/lib/data/costpro-full';
+import reinicioTemplate from '@/lib/data/costpro-reinicio';
+import exampleTemplate from '@/lib/data/costpro-ejemplo';
 import { produce } from 'immer';
 import {
   CostSheetDataContract,
@@ -71,8 +72,6 @@ const clearTemplate = (template: any) => {
     return cleared;
 };
 
-const blankSheet = clearTemplate(originalTemplate);
-
 interface CostSheetState {
   data: CostSheetDataContract;
   updateValue: (path: (string | number)[], value: any) => void;
@@ -93,7 +92,7 @@ interface CostSheetState {
 export const useCostSheetStore = create<CostSheetState>()(
   persist(
     (set) => ({
-      data: originalTemplate,
+      data: reinicioTemplate,
       updateValue: (path, value) =>
         set(
           produce((draft: CostSheetState) => {
@@ -292,7 +291,7 @@ export const useCostSheetStore = create<CostSheetState>()(
         }
       },
       loadExample: () => {
-        const example = JSON.parse(JSON.stringify(originalTemplate));
+        const example = JSON.parse(JSON.stringify(exampleTemplate));
         const result = costSheetDataSchema.safeParse(example);
         if (result.success) {
           set({ data: result.data as CostSheetDataContract });
@@ -304,7 +303,10 @@ export const useCostSheetStore = create<CostSheetState>()(
           set({ data: example as CostSheetDataContract }); // Fallback
         }
       },
-      reset: () => set({ data: clearTemplate(originalTemplate) }), // Use fresh blank sheet on reset
+      reset: () => {
+        const resetData = JSON.parse(JSON.stringify(reinicioTemplate));
+        set({ data: resetData as CostSheetDataContract });
+      },
     }),
     {
       name: 'cost-sheet-storage', // Name for the localStorage item
