@@ -164,8 +164,8 @@ export function useUpdateUser() {
       // Omit virtual/related fields and sanitize payload
       const cleanUpdates: any = {};
       Object.entries(updates).forEach(([key, val]) => {
-        // Skip virtual fields that don't exist in the 'profiles' table
-        if (['memberships', 'roles'].includes(key)) return;
+        // Skip virtual fields, Primary Key and immutable fields
+        if (['memberships', 'roles', 'id', 'created_at'].includes(key)) return;
 
         // Hardening: Ensure empty strings are treated as null for UUID compatibility
         // and to avoid 22P02 errors in PostgREST
