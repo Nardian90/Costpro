@@ -19,7 +19,9 @@ The database schema is designed to support a multi-store POS and inventory manag
 
 -   **`public.transactions`**: Records all sales, including details about the seller, store, payment method, and total amount. Changes to transaction status (e.g., `completed`, `voided`) are a key source of audit events.
 
--   **`public.profiles`** and **`public.user_store_memberships`**: These tables manage user identity, roles, and access permissions. Changes to these tables (e.g., role change, store assignment) are critical security events that are logged in the audit trail.
+-   **`public.profiles`**: Stores user metadata and global role information. Key columns include `id` (PK, matches `auth.users.id`), `full_name`, `email`, `role` (legacy text), `role_id` (foreign key to `public.roles`), `is_active`, and limits for multi-store operations.
+-   **`public.roles`**: A centralized table for defining flexible roles with JSONB permissions. Standard roles include `Admin`, `Encargado`, `Cajero`, `Almacenero`, and `UserCosto`.
+-   **`public.user_store_memberships`**: Manages the many-to-many relationship between users and stores, allowing a single user to have different roles in different stores.
 
 ## 2. Key Functions & Business Logic (RPC)
 
@@ -33,7 +35,7 @@ The application logic is heavily encapsulated within PostgreSQL functions, which
 -   **Business Logic Functions**: Many functions contain explicit `INSERT` statements into the `audit_logs` or `business_events` tables after performing their primary operation.
     -   `fn_process_sale()`: After creating a sale, it logs a corresponding audit event.
     -   `fn_void_receipt()`: Logs the voiding of a product receipt.
-    -   `admin_create_user_account()`: Creates a `user_account_created` business event.
+    -   `managed_create_user()`: Synchronizes user profiles and memberships after creation in Auth. It uses an `ON CONFLICT (id) DO UPDATE` pattern to ensure robustness.
 
 -   **Data Integrity Functions**:
     -   `fn_sync_inventory_on_movement()`: A trigger function on `stock_movements` that ensures the main `inventory` table is always up-to-date.
@@ -56,6 +58,7 @@ RLS is used extensively to enforce strict data access control and ensure that us
 The audit system is robust and follows best practices:
 
 1.  **Immutable Ledger**: The `audit_logs` table is treated as an append-only log. RLS policies prevent any user from tampering with historical records.
-2.  **Automated & Explicit Logging**: The combination of automated triggers for common events and explicit logging within business functions provides comprehensive coverage of critical system operations.
-3.  **Centralized Control**: By embedding logic within PostgreSQL functions and triggers, the database acts as the single source of truth for both data and security, reducing the risk of client-side bypasses.
-4.  **Secure by Default**: RLS ensures that sensitive audit data is only accessible to authorized administrative personnel.
+2.  **Strict Schema Contracts**: The application uses Zod for data validation. A critical fix was applied to `profileSchema` to remove default values for primary keys and sensitive fields (like `id` and `created_at`), preventing accidental `null` overwrites during partial updates.
+3.  **Automated & Explicit Logging**: The combination of automated triggers for common events and explicit logging within business functions provides comprehensive coverage of critical system operations.
+4.  **Centralized Control**: By embedding logic within PostgreSQL functions and triggers, the database acts as the single source of truth for both data and security, reducing the risk of client-side bypasses.
+5.  **Secure by Default**: RLS ensures that sensitive audit data is only accessible to authorized administrative personnel.
