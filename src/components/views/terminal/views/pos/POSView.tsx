@@ -26,6 +26,10 @@ import { POSCart } from './POSCart';
 import { StickyCartSummary } from './StickyCartSummary';
 import { usePOSView } from './usePOSView';
 import { QueryInspector } from '@/components/ui/QueryInspector';
+import { PriceSelectorModal } from '@/components/modals/PriceSelectorModal';
+import { BarcodeScanner } from '@/components/modals/BarcodeScanner';
+import { Product } from '@/types';
+import { QrCode } from 'lucide-react';
 
 const EmptyProductsComponent = ({ onClearSearch }: { onClearSearch?: () => void }) => (
   <div className="col-span-full py-32 text-center border-2 border-dashed border-border rounded-xl bg-card/50">
@@ -104,8 +108,27 @@ export default function POSView() {
   } = usePOSView();
 
   const [showCart, setShowCart] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
+  const [selectedProductForVariants, setSelectedProductForVariants] = useState<Product | null>(null);
   const isMobile = useIsMobile();
   const { filteredProducts, categories, selectedCategory, handleCategoryChange, isPending } = usePOSProducts(products, searchTerm);
+
+  const onAddToCart = (product: Product) => {
+    if (product.product_variants && product.product_variants.length > 0) {
+      setSelectedProductForVariants(product);
+    } else {
+      handleAddItem(product);
+    }
+  };
+
+  const handleScan = (sku: string) => {
+    const product = products.find(p => p.sku === sku);
+    if (product) {
+      onAddToCart(product);
+    } else {
+      toast.error(`Producto con SKU ${sku} no encontrado`);
+    }
+  };
 
   const cartButton = (
     <ActionMenu
@@ -244,19 +267,13 @@ export default function POSView() {
                       <ProductCard
                         key={product.id}
                         product={product}
-                        onClick={(p) => {
-                          handleAddItem(p);
-                          toast.success(`${p.name} añadido`);
-                        }}
+                        onClick={onAddToCart}
                         variant="pos"
                       />
                     ))}
                   </div>
                 ) : (
-                  <POSTableView products={data} onAddToCart={(p) => {
-                    handleAddItem(p);
-                    toast.success(`${p.name} añadido`);
-                  }} />
+                  <POSTableView products={data} onAddToCart={onAddToCart} />
                 )
               )}
             </StateRenderer>
@@ -264,6 +281,32 @@ export default function POSView() {
         </div>
       </div>
 
+      <PriceSelectorModal
+        isOpen={!!selectedProductForVariants}
+        onClose={() => setSelectedProductForVariants(null)}
+        product={selectedProductForVariants}
+        onSelect={(variant) => {
+          if (selectedProductForVariants) {
+            handleAddItem(selectedProductForVariants, variant);
+            setSelectedProductForVariants(null);
+          }
+        }}
+      />
+
+      <BarcodeScanner
+        isOpen={showScanner}
+        onClose={() => setShowScanner(false)}
+        onScan={handleScan}
+      />
+
+      {/* Floating Action Button for Scanner */}
+      <button
+        onClick={() => setShowScanner(true)}
+        className="fixed bottom-24 right-6 sm:bottom-8 sm:right-8 w-14 h-14 rounded-full bg-primary text-white shadow-2xl shadow-primary/40 flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50 border-4 border-background"
+        title="Escanear Código de Barras"
+      >
+        <QrCode className="w-6 h-6" />
+      </button>
     </div>
   );
 }
