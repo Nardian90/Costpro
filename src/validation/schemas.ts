@@ -411,7 +411,7 @@ export const costSheetHeaderSchema = z.object({
   code: z.string(),
   name: z.string(),
   date: z.string(),
-  quantity: z.number(),
+  quantity: z.union([z.number(), z.string()]),
   currency: z.string(),
   category: z.string(),
   type: z.string(),
@@ -421,9 +421,9 @@ export const costSheetHeaderSchema = z.object({
   organism: z.string().optional().default(''),
   union: z.string().optional().default(''),
   destination: z.string().optional().default(''),
-  production_level: z.number().optional().default(0),
-  capacity_utilization: z.number().optional().default(0),
-  sale_price: z.number().optional().default(0),
+  production_level: z.union([z.number(), z.string()]).optional().default(0),
+  capacity_utilization: z.union([z.number(), z.string()]).optional().default(0),
+  sale_price: z.union([z.number(), z.string()]).optional().default(0),
   client: z.string().optional().default(''),
 }).catchall(z.any());
 

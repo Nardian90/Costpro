@@ -2,7 +2,7 @@ export interface CostSheetHeader {
   code: string;
   name: string;
   date: string;
-  quantity: number;
+  quantity: number | string;
   currency: string;
   category: string;
   type: string;
@@ -17,12 +17,15 @@ export interface CostSheetRow {
   vhFormula?: string | null;
   value?: number;
   baseDeCalculoRef?: string | null;
+  baseRef?: string | null;
   base_ref?: string | null;
   calculationMethod?: 'Prorrateo' | 'ValorFijo' | 'FORMULA' | 'ANEXO';
   totalFormula?: string | null;
   formula?: string;
+  isPercent?: boolean;
   is_percent?: boolean;
   children?: CostSheetRow[];
+  helpText?: string;
   [key: string]: any;
 }
 

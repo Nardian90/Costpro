@@ -21,7 +21,7 @@ export interface CostSheetHeaderContract {
   code: string;
   name: string;
   date: string;
-  quantity: number;
+  quantity: number | string;
   currency: string;
   category: string;
   type: string;
@@ -31,25 +31,25 @@ export interface CostSheetHeaderContract {
   organism: string;
   union: string;
   destination: string;
-  production_level: number;
-  capacity_utilization: number;
-  sale_price: number;
+  production_level: number | string;
+  capacity_utilization: number | string;
+  sale_price: number | string;
   client: string;
 }
 
 export interface CostSheetRowContract {
   id: string;
   label: string;
-  valorHistorico: number;
-  value: number;
-  baseDeCalculoRef: string;
-  baseRef: string;
-  calculationMethod: 'Prorrateo' | 'ValorFijo' | 'FORMULA';
-  totalFormula: string;
-  formula: string;
-  isPercent: boolean;
-  children: CostSheetRowContract[];
-  helpText: string;
+  valorHistorico?: number;
+  value?: number;
+  baseDeCalculoRef?: string;
+  baseRef?: string;
+  calculationMethod?: 'Prorrateo' | 'ValorFijo' | 'FORMULA' | 'ANEXO';
+  totalFormula?: string;
+  formula?: string;
+  isPercent?: boolean;
+  children?: CostSheetRowContract[];
+  helpText?: string;
   // Mantenemos flexibilidad para propiedades dinámicas, pero con un tipo más explícito.
   [key: string]: any;
 }
