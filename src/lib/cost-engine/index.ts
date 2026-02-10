@@ -365,12 +365,26 @@ export function calculateFicha(
     return annexSumMap.get(anexoId)?.get(classification)?.toNumber() || 0;
   };
 
+  /**
+   * GET_ANEXO_FILA_DATO(anexoId, rowIndex, field)
+   * Retrieves data from an annex by its 1-based row index.
+   */
+  parser.functions.GET_ANEXO_FILA_DATO = (anexoId: string, rowIndex: number, field: string) => {
+    const anexo = ficha.anexos.find(a => a.id === anexoId);
+    if (!anexo || !anexo.rows) return 0;
+    const index = rowIndex - 1;
+    if (index >= 0 && index < anexo.rows.length) {
+        return parseFloat(anexo.rows[index][field]) || (anexo.rows[index][field] ?? 0);
+    }
+    return 0;
+  };
+
   parser.functions.GET_ANEXO_DATO = (anexoId: string, classification: string, field: string) => {
     const anexo = ficha.anexos.find(a => a.id === anexoId);
     if (!anexo) return 0;
     const row = anexo.rows.find(r => r.classification === classification);
     if (!row) return 0;
-    return parseFloat(row[field]) || 0;
+    return parseFloat(row[field]) || (row[field] ?? 0);
   };
 
   parser.functions.GET_FILA_DATO = (search: string, field: string) => {

@@ -124,9 +124,9 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({ compact =
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-6">
           {[
             { id: 'code', label: 'No. FC' },
-            { id: 'product_code', label: 'Cod. Producto' },
+            { id: 'product_code', label: 'Cod. Producto', isFormula: true },
             { id: 'date', label: 'Fecha', type: 'date' },
-            { id: 'unit', label: 'UM' },
+            { id: 'unit', label: 'UM', isFormula: true },
             { id: 'quantity', label: 'Cantidad', type: 'text', isFormula: true },
             { id: 'currency', label: 'Moneda' },
             { id: 'company', label: 'Empresa' },
