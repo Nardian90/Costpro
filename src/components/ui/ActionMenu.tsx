@@ -73,7 +73,7 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
                         onClick={action.onClick}
                         disabled={action.disabled}
                         className={cn(
-                          'flex items-center gap-2 px-4 py-2.5 text-sm sm:text-base rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shrink-0 whitespace-nowrap',
+                          'flex items-center gap-2 px-4 py-3 min-h-[44px] text-sm sm:text-base rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shrink-0 whitespace-nowrap',
                           getVariantClass(action.variant, action.active),
                           !action.active && !action.variant && 'hover:neu-raised-sm',
                           action.className

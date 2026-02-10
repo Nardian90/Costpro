@@ -40,7 +40,7 @@ export default function HelpView() {
       {/* Header with Versioning */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-primary/10 pb-6">
         <div className="flex flex-col gap-2">
-          <h2 className="text-3xl font-black uppercase tracking-tighter text-primary flex items-center gap-3">
+          <h2 className="text-[clamp(1.5rem,6vw,1.875rem)] font-black uppercase tracking-tighter text-primary flex items-center gap-3">
             <BookOpen className="w-8 h-8" />
             Centro de Capacitación CostPro
           </h2>
@@ -60,43 +60,43 @@ export default function HelpView() {
         <div className="mb-8">
           <HorizontalScroll containerClassName="bg-muted/50 rounded-2xl p-1">
             <TabsList className="flex bg-transparent border-none w-max min-w-full h-auto p-0 gap-1">
-              <TabsTrigger value="onboarding" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+              <TabsTrigger value="onboarding" className="rounded-xl py-3 min-h-[44px] data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
                 <Baby className="w-4 h-4 mr-2 hidden sm:block" />
                 Niños
               </TabsTrigger>
-              <TabsTrigger value="roles" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+              <TabsTrigger value="roles" className="rounded-xl py-3 min-h-[44px] data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
                 <Users className="w-4 h-4 mr-2 hidden sm:block" />
                 Jerarquía
               </TabsTrigger>
-              <TabsTrigger value="admin" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+              <TabsTrigger value="admin" className="rounded-xl py-3 min-h-[44px] data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
                 <Settings className="w-4 h-4 mr-2 hidden sm:block" />
                 Gestión
               </TabsTrigger>
-              <TabsTrigger value="costs" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+              <TabsTrigger value="costs" className="rounded-xl py-3 min-h-[44px] data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
                 <FileText className="w-4 h-4 mr-2 hidden sm:block" />
                 Costos
               </TabsTrigger>
-              <TabsTrigger value="pos" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+              <TabsTrigger value="pos" className="rounded-xl py-3 min-h-[44px] data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
                 <ShoppingCart className="w-4 h-4 mr-2 hidden sm:block" />
                 Ventas
               </TabsTrigger>
-              <TabsTrigger value="inventory" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+              <TabsTrigger value="inventory" className="rounded-xl py-3 min-h-[44px] data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
                 <Package className="w-4 h-4 mr-2 hidden sm:block" />
                 Almacén
               </TabsTrigger>
-              <TabsTrigger value="innovation" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+              <TabsTrigger value="innovation" className="rounded-xl py-3 min-h-[44px] data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
                 <Zap className="w-4 h-4 mr-2 hidden sm:block" />
                 Innovación
               </TabsTrigger>
-              <TabsTrigger value="security" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+              <TabsTrigger value="security" className="rounded-xl py-3 min-h-[44px] data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
                 <Shield className="w-4 h-4 mr-2 hidden sm:block" />
                 Seguridad
               </TabsTrigger>
-              <TabsTrigger value="ipv" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+              <TabsTrigger value="ipv" className="rounded-xl py-3 min-h-[44px] data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
                 <Activity className="w-4 h-4 mr-2 hidden sm:block" />
                 Conciliación (IPV)
               </TabsTrigger>
-              <TabsTrigger value="history" className="rounded-xl py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+              <TabsTrigger value="history" className="rounded-xl py-3 min-h-[44px] data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
                 <History className="w-4 h-4 mr-2 hidden sm:block" />
                 Historial
               </TabsTrigger>
