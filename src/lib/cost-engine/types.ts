@@ -60,7 +60,7 @@ export interface FichaJSON {
     name: string;
     currency: string;
     decimals: number;
-    quantity?: number;
+    quantity?: number | string;
     createdAt?: string;
     version?: string;
     settings?: {

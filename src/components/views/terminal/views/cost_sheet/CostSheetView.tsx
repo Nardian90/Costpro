@@ -12,6 +12,7 @@ import CostSheetPreview from './CostSheetPreview';
 import CostSheetNarrative from './CostSheetNarrative';
 import CostSheetWizard from './CostSheetWizard';
 import CostSheetSummary from './CostSheetSummary';
+import { CostSheetFormulaGuide } from './CostSheetFormulaGuide';
 import { CostSheetBanner } from './CostSheetBanner';
 import { CostSheetModeSwitcher } from './CostSheetModeSwitcher';
 import { CostSheetAuditLog } from './CostSheetAuditLog';
@@ -421,6 +422,7 @@ const CostSheetView = () => {
                                 calculatedValues={calculatedValues}
                                 data={data}
                             />
+                            <CostSheetFormulaGuide />
                         </div>
                     )}
                     {activeSection === 'header' && (
