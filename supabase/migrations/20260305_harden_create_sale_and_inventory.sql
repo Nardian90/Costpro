@@ -1,11 +1,13 @@
--- Migration: Hardened Stock Validation and Concurrency
+-- Migration: Hardened Stock Validation and Concurrency v2
 -- Date: 2026-03-05
 -- Author: Eli
--- Description: Aggregated stock validation and row locking to prevent negative inventory.
+-- Description: Final hardening of inventory logic to prevent negative stock and handle concurrency.
 
 BEGIN;
 
--- 1. HARDENED TRIGGER FUNCTION WITH BETTER ERROR MESSAGES
+-- 1. HARDENED TRIGGER FUNCTION
+-- This version avoids the check_violation error by explicitly checking for existence
+-- and separating the logic, ensuring custom error messages are always used.
 CREATE OR REPLACE FUNCTION public.fn_sync_inventory_on_movement()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -13,26 +15,36 @@ SECURITY DEFINER
 AS $function$
 DECLARE
     v_new_qty integer;
+    v_exists boolean;
 BEGIN
-    -- Final Safety: Never allow an initial insert with negative quantity
-    IF NEW.quantity_change < 0 AND NOT EXISTS (
-        SELECT 1 FROM public.inventory WHERE store_id = NEW.store_id AND product_id = NEW.product_id
-    ) THEN
-        RAISE EXCEPTION 'ERR_NEGATIVE_STOCK_INITIAL: No se puede iniciar inventario con valores negativos (Tienda: %, Producto: %)', NEW.store_id, NEW.product_id;
-    END IF;
+    -- Check if record exists
+    SELECT EXISTS (
+        SELECT 1 FROM public.inventory
+        WHERE store_id = NEW.store_id AND product_id = NEW.product_id
+    ) INTO v_exists;
 
-    INSERT INTO public.inventory (store_id, product_id, quantity, version, updated_at)
-    VALUES (NEW.store_id, NEW.product_id, NEW.quantity_change, 1, now())
-    ON CONFLICT (store_id, product_id)
-    DO UPDATE SET
-        quantity = public.inventory.quantity + EXCLUDED.quantity,
-        version = public.inventory.version + 1,
-        updated_at = now()
-    RETURNING quantity INTO v_new_qty;
+    IF NOT v_exists THEN
+        -- If it doesn't exist and we are subtracting, it's an error
+        IF NEW.quantity_change < 0 THEN
+            RAISE EXCEPTION 'ERR_INSUFFICIENT_STOCK: No hay registro de inventario para el producto %', NEW.product_id;
+        END IF;
 
-    -- Ensure we never recorded a negative quantity in inventory even if constraint was deferred
-    IF v_new_qty < 0 THEN
-        RAISE EXCEPTION 'ERR_INSUFFICIENT_STOCK: El stock no puede ser negativo (Tienda: %, Producto: %, Resultado: %)', NEW.store_id, NEW.product_id, v_new_qty;
+        INSERT INTO public.inventory (store_id, product_id, quantity, version, updated_at)
+        VALUES (NEW.store_id, NEW.product_id, NEW.quantity_change, 1, now())
+        RETURNING quantity INTO v_new_qty;
+    ELSE
+        -- If it exists, update it. This handles the negative change safely.
+        UPDATE public.inventory
+        SET quantity = public.inventory.quantity + NEW.quantity_change,
+            version = public.inventory.version + 1,
+            updated_at = now()
+        WHERE store_id = NEW.store_id AND product_id = NEW.product_id
+        RETURNING quantity INTO v_new_qty;
+
+        -- Final check after update
+        IF v_new_qty < 0 THEN
+            RAISE EXCEPTION 'ERR_INSUFFICIENT_STOCK: El stock no puede ser negativo para el producto % (Resultado: %)', NEW.product_id, v_new_qty;
+        END IF;
     END IF;
 
     NEW.balance_after := v_new_qty;
@@ -40,7 +52,7 @@ BEGIN
 END;
 $function$;
 
--- 2. HARDENED CREATE_SALE WITH AGGREGATION AND LOCKING
+-- 2. HARDENED CREATE_SALE RPC
 CREATE OR REPLACE FUNCTION public.create_sale(
   p_store_id uuid,
   p_seller_id uuid,
@@ -74,8 +86,7 @@ BEGIN
   END IF;
 
   -- 1. PRE-VALIDATE STOCK WITH AGGREGATION AND LOCKING
-  -- We aggregate all required units per product first to handle multiple variants/entries of the same product
-  -- ORDER BY prod_id prevents potential deadlocks during concurrent locking
+  -- We aggregate all required units per product first and LOCK the rows.
   FOR v_product_id, v_units_to_deduct IN
     WITH item_list AS (
       SELECT
@@ -94,10 +105,9 @@ BEGIN
     SELECT prod_id, SUM(base_qty)::integer
     FROM item_conversions
     GROUP BY prod_id
-    ORDER BY prod_id
+    ORDER BY prod_id -- Deadlock prevention
   LOOP
-    -- Lock the inventory row for update to prevent race conditions during this transaction
-    v_current_stock := NULL;
+    -- Lock row for update
     SELECT quantity INTO v_current_stock
     FROM public.inventory
     WHERE store_id = p_store_id AND product_id = v_product_id
