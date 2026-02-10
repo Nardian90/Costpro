@@ -18,7 +18,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: 'X-Frame-Options',
-            value: 'DENY',
+            value: 'SAMEORIGIN',
           },
           {
             key: 'X-XSS-Protection',
@@ -46,7 +46,7 @@ const nextConfig: NextConfig = {
               "img-src 'self' blob: data: https://wthkddeleylijmonclxg.supabase.co https://vercel.com https://vercel.live",
               "font-src 'self' data: https://fonts.gstatic.com",
               "connect-src 'self' https://wthkddeleylijmonclxg.supabase.co wss://wthkddeleylijmonclxg.supabase.co https://vercel.live https://vercel.com https://storage.googleapis.com",
-              "frame-src 'self' https://vercel.live https://vercel.com",
+              "frame-src 'self' blob: data: https://vercel.live https://vercel.com",
               "frame-ancestors 'none'",
             ].join('; '),
           },
