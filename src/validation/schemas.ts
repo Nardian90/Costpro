@@ -69,27 +69,27 @@ export const userStoreMembershipSchema = z.object({
 });
 
 export const profileSchema = z.object({
-  id: z.string().default(''),
-  full_name: z.preprocess((val) => (val === '' || val === null ? undefined : val), z.string().default('Usuario sin nombre')),
-  email: z.preprocess((val) => (val === '' || val === null ? undefined : val), z.string().email().catch('no-email@costpro.com')),
-  role: userRoleSchema.default('clerk'),
-  roles: z.array(userRoleSchema).default([]),
+  id: z.string(),
+  full_name: z.preprocess((val) => (val === '' || val === null ? undefined : val), z.string()).catch('Usuario sin nombre'),
+  email: z.preprocess((val) => (val === '' || val === null ? undefined : val), z.string().email()).catch('no-email@costpro.com'),
+  role: userRoleSchema.catch('clerk'),
+  roles: z.array(userRoleSchema).catch([]),
   role_id: resilientUuid,
-  is_active: z.boolean().default(true),
+  is_active: z.boolean().catch(true),
   store_id: resilientUuid,
   active_store_id: resilientUuid,
-  logo_url: z.string().nullable().default(null),
-  ai_provider: z.string().default('gemini'),
-  ai_api_key: z.string().nullable().default(''),
-  max_stores_limit: z.number().default(1),
-  max_users_limit: z.number().default(1),
+  logo_url: z.string().nullable().optional(),
+  ai_provider: z.string().optional(),
+  ai_api_key: z.string().nullable().optional(),
+  max_stores_limit: z.number().optional(),
+  max_users_limit: z.number().optional(),
   created_by: resilientUuid,
-  created_at: z.string().default(() => new Date().toISOString()),
+  created_at: z.string().catch(() => new Date().toISOString()),
   updated_at: z.string().optional().nullable(),
   memberships: z.preprocess(
     (val) => (Array.isArray(val) ? val : []),
     z.array(userStoreMembershipSchema).catch([])
-  ).default([]),
+  ).optional(),
 });
 
 export const productSchema = z.object({
