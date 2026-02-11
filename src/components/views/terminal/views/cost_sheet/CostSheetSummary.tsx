@@ -67,22 +67,22 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({ calculatedValu
   ];
 
   return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 px-2 sm:px-0">
       {kpis.map((kpi, index) => (
-        <div key={index} className="neu-card !p-5 flex flex-col justify-between hover:scale-[1.02] transition-transform duration-300">
-          <div className="flex justify-between items-start mb-4">
-            <div className={`p-2 rounded-xl ${kpi.bgColor}`}>
-              <kpi.icon className={`w-5 h-5 ${kpi.color}`} />
+        <div key={index} className="neu-card !p-6 sm:!p-5 flex flex-col justify-between hover:scale-[1.02] transition-transform duration-300 min-h-[160px] sm:min-h-0">
+          <div className="flex justify-between items-start mb-4 sm:mb-4">
+            <div className={`p-3 sm:p-2 rounded-2xl sm:rounded-xl ${kpi.bgColor}`}>
+              <kpi.icon className={`w-6 h-6 sm:w-5 sm:h-5 ${kpi.color}`} />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">KPI #{index + 1}</span>
+            <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-slate-400">KPI #{index + 1}</span>
           </div>
           <div>
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-tight mb-1">{kpi.label}</p>
-            <p className="text-2xl font-black text-slate-900 dark:text-white tabular-nums">
+            <p className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-tight mb-1 sm:mb-1">{kpi.label}</p>
+            <p className="text-2xl sm:text-2xl font-black text-slate-900 dark:text-white tabular-nums tracking-tighter sm:tracking-normal">
               {formatCurrency(kpi.value)}
             </p>
           </div>
-          <p className="mt-3 text-[10px] font-medium text-slate-400 border-t border-slate-100 dark:border-slate-800 pt-2 italic">
+          <p className="mt-4 sm:mt-3 text-[10px] font-medium text-slate-400 border-t border-slate-100 dark:border-slate-800 pt-3 sm:pt-2 italic leading-relaxed sm:leading-normal">
             {kpi.description}
           </p>
         </div>
