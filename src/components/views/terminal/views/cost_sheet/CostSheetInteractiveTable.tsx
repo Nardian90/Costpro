@@ -131,120 +131,19 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
   const infoErrors = (safeCalculated.validationErrors || []).filter(e => e.type === 'INFO');
   const hasEngineWarnings = safeCalculated.hasWarnings || (!hasChildren && !row.is_percent && safeCalculated.total === 0 && ((row.valorHistorico ?? 0) > 0 || !!row.baseDeCalculoRef));
 
-  const MobileCard = () => (
-    <div className={cn(
-      "sm:hidden flex flex-col p-4 rounded-2xl border-2 mb-3 bg-card shadow-sm",
-      isResultRow ? "border-primary/30 bg-primary/5" : "border-border/50"
-    )}>
-      <div className="flex justify-between items-start mb-3">
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] font-black text-muted-foreground/60 tabular-nums bg-muted px-1.5 py-0.5 rounded">
-            {numbering}
-          </span>
-          {hasChildren && (
-            <button onClick={handleToggle} className="p-1 rounded-full bg-primary/10 text-primary">
-              <ChevronRight className={cn('w-4 h-4 transition-transform', isExpanded && 'rotate-90')} />
-            </button>
-          )}
-          {isEditingLabel ? (
-            <Input
-              autoFocus
-              className="h-9 text-base"
-              defaultValue={row.label}
-              onBlur={(e) => {
-                handleValueChange('label', e.target.value);
-                setIsEditingLabel(false);
-              }}
-            />
-          ) : (
-            <h4 className="font-bold text-sm uppercase tracking-tight" onClick={() => setIsEditingLabel(true)}>
-              {row.label}
-            </h4>
-          )}
-        </div>
-        <div className="flex gap-1">
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => addMainRow([...path, 'children'])}>
-            <Plus className="h-4 w-4 text-primary" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => removeMainRow(path)}>
-            <Trash2 className="h-4 w-4 text-destructive" />
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div className="flex flex-col gap-1">
-          <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Valor Histórico / %</span>
-          <div className="relative" onClick={() => setIsEditingVH(true)}>
-            {isEditingVH ? (
-              <FormulaEditor
-                initialValue={row.vhFormula || String(row.valorHistorico || 0)}
-                onSave={handleVHSave}
-                onCancel={() => setIsEditingVH(false)}
-                suggestions={suggestions}
-              />
-            ) : (
-              <div className="flex items-center gap-1 bg-muted/30 p-3 rounded-xl border border-border/50">
-                <span className="text-base font-bold">
-                  {hasChildren
-                    ? formatAccounting(safeCalculated.calculatedVH ?? safeCalculated.valorHistorico ?? 0)
-                    : (row.vhFormula
-                      ? formatAccounting(safeCalculated.calculatedVH ?? 0)
-                      : (row.hasOwnProperty('valorHistorico') ? formatAccounting(row.valorHistorico ?? 0) : (row.is_percent ? ((row.value ?? 0) * 100).toFixed(3) + '%' : formatAccounting(row.value ?? 0))))}
-                </span>
-                {row.vhFormula && <FunctionSquare className="w-3 h-3 text-primary/40" />}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Total Final</span>
-          <div className="relative" onClick={() => setIsEditingTotal(true)}>
-            {isEditingTotal ? (
-              <FormulaEditor
-                initialValue={row.formula || String(safeCalculated.total)}
-                onSave={handleTotalSave}
-                onCancel={() => setIsEditingTotal(false)}
-                suggestions={suggestions}
-              />
-            ) : (
-              <div className="flex items-center justify-between bg-primary/10 p-3 rounded-xl border border-primary/20">
-                <span className="text-base font-black text-primary">
-                  {formatAccounting(safeCalculated.total)}
-                </span>
-                <div className="flex items-center gap-1">
-                  {row.formula && <FunctionSquare className="w-3 h-3 text-primary/40" />}
-                  {criticalErrors.length > 0 && <XCircle className="w-3 h-3 text-destructive" />}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {row.helpText && (
-        <div className="mt-3 pt-3 border-t border-border/50 text-[10px] text-muted-foreground italic">
-          {row.helpText}
-        </div>
-      )}
-    </div>
-  );
-
   return (
     <>
-      <MobileCard />
       <TableRow className={cn(
-        "hidden sm:table-row border-t border-border/50 hover:bg-primary/5 transition-colors group",
+        "border-t border-border/50 hover:bg-primary/5 transition-colors group",
         isResultRow && "bg-primary/5 font-bold"
       )}>
         {/* No. */}
-        <TableCell className="w-12 px-2 py-2 text-center text-[10px] font-black text-muted-foreground/60 tabular-nums">
+        <TableCell className="w-12 px-2 py-2 text-center text-[10px] font-black text-muted-foreground/60 tabular-nums sticky left-0 bg-background sm:bg-transparent z-10 border-r border-border/10 sm:border-none">
             {numbering}
         </TableCell>
 
         {/* Concepto */}
-        <TableCell style={{ paddingLeft: `${level * 24 + 12}px` }} className="px-2 py-2 sm:px-4 sm:py-2.5 font-medium text-[13px] sm:text-sm text-foreground min-w-[180px] sm:min-w-[250px]">
+        <TableCell style={{ paddingLeft: `${level * 24 + 12}px` }} className="px-2 py-2 sm:px-4 sm:py-2.5 font-medium text-[13px] sm:text-sm text-foreground min-w-[200px] sm:min-w-[250px] sticky left-12 bg-background sm:bg-transparent z-10 border-r border-border/20 sm:border-none shadow-[4px_0_8px_-4px_rgba(0,0,0,0.1)] sm:shadow-none">
           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 group/row">
             {hasChildren && (
               <button onClick={handleToggle} className="p-1 rounded-full hover:bg-primary/10 shrink-0">
@@ -337,7 +236,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                         <Input
                         type="text"
                         className={cn(
-                        "neu-input text-right h-8 transition-all text-xs sm:text-sm px-2 cursor-pointer flex-1",
+                        "neu-input text-right h-10 sm:h-8 transition-all text-base sm:text-sm px-2 cursor-pointer flex-1",
                         row.is_percent && "pr-6",
                         (hasChildren || row.vhFormula) && "bg-muted/30 font-bold border-dashed"
                         )}
@@ -358,7 +257,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
 
         {/* Total */}
         <TableCell
-          className="px-2 py-1.5 sm:px-4 sm:py-2 text-right font-black tabular-nums text-primary w-36 sm:w-48 cursor-pointer hover:bg-primary/5 transition-colors text-xs sm:text-sm"
+          className="px-2 py-1.5 sm:px-4 sm:py-2 text-right font-black tabular-nums text-primary w-36 sm:w-48 cursor-pointer hover:bg-primary/5 transition-colors text-base sm:text-sm"
           onClick={() => setIsEditingTotal(true)}
         >
           {isEditingTotal ? (
@@ -656,7 +555,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                                 onChange={(e) => updateValue(['sections', sectionIndex, 'label'], e.target.value)}
                             />
                         </div>
-                        <div className="hidden sm:flex flex-wrap items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                             <Button
                                 size="sm"
                                 variant="outline"
@@ -706,16 +605,16 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                         </div>
                     </div>
 
-                    <div className="neu-card p-0 border-border/50 shadow-sm hover:shadow-md transition-shadow bg-transparent sm:bg-card">
+                    <div className="neu-card p-0 border-border/50 shadow-sm hover:shadow-md transition-shadow">
                         <div className="table-scroll-wrapper rounded-2xl overflow-hidden">
-                        <Table className="w-full min-w-full sm:min-w-[700px] border-collapse">
+                        <Table className="w-full min-w-[500px] sm:min-w-[700px] border-collapse">
                             <TableHeader className={cn(
                                 "bg-muted/90 backdrop-blur-md text-muted-foreground font-black uppercase text-[9px] sm:text-[10px] tracking-widest border-b border-border",
                                 isStickyHeaderSection ? "sticky top-0 z-20 shadow-sm" : "hidden"
                             )}>
                                 <TableRow className="hover:bg-transparent border-none">
-                                    <TableHead className="w-12 px-2 py-3 sm:px-4 sm:py-4 text-center font-black uppercase tracking-widest">No.</TableHead>
-                                    <TableHead className="px-2 py-3 sm:px-4 sm:py-4 text-left font-black uppercase tracking-widest min-w-[180px] sm:min-w-[250px]">Concepto</TableHead>
+                                    <TableHead className="w-12 px-2 py-3 sm:px-4 sm:py-4 text-center font-black uppercase tracking-widest sticky left-0 bg-muted z-30 border-r border-border/10 sm:border-none">No.</TableHead>
+                                    <TableHead className="px-2 py-3 sm:px-4 sm:py-4 text-left font-black uppercase tracking-widest min-w-[200px] sm:min-w-[250px] sticky left-12 bg-muted z-30 border-r border-border/20 sm:border-none shadow-[4px_0_8px_-4px_rgba(0,0,0,0.1)] sm:shadow-none">Concepto</TableHead>
                                     <TableHead className="px-2 py-3 sm:px-4 sm:py-4 text-right font-black uppercase tracking-widest w-32 sm:w-40">Valor Histórico</TableHead>
                                     <TableHead className="px-2 py-3 sm:px-4 sm:py-4 text-right font-black uppercase tracking-widest w-36 sm:w-48">Total</TableHead>
                                     <TableHead className="px-2 py-3 sm:px-4 sm:py-4 text-center font-black uppercase tracking-widest w-12 sm:w-20 hidden sm:table-cell">Ayuda</TableHead>

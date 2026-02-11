@@ -29,8 +29,8 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store';
 import { exportToPDF, exportToCSV } from '@/services/export-service';
-import { SpeedDial, SpeedDialAction } from '@/components/ui/SpeedDial';
 import { useIsMobile } from '@/hooks/ui/useMobile';
+import { SpeedDial, SpeedDialAction } from '@/components/ui/SpeedDial';
 
 const CostSheetView = () => {
   const isMobile = useIsMobile();
@@ -339,15 +339,7 @@ const CostSheetView = () => {
 
   const mobileActions: SpeedDialAction[] = React.useMemo(() => [
     {
-      id: 'confirm',
-      label: isEditing ? 'Ver Vista Previa' : 'Seguir Editando',
-      icon: isEditing ? Eye : Edit,
-      onClick: () => setIsEditing(!isEditing),
-      category: 'Acción',
-      variant: 'success'
-    },
-    {
-      id: 'kpis-view',
+      id: 'view-kpis',
       label: 'Ver KPIs',
       icon: BarChart3,
       onClick: () => {
@@ -355,70 +347,55 @@ const CostSheetView = () => {
         if (!isEditing) setIsEditing(true);
       },
       category: 'Acción',
+      variant: 'success'
+    },
+    {
+      id: 'actions-panel',
+      label: 'Acciones Avanzadas',
+      icon: MoreVertical,
+      onClick: () => setIsActionsPanelOpen(true),
+      category: 'Gestión',
       variant: 'primary'
     },
     {
-        id: 'toggle-layout',
-        label: layoutMode === 'grid' ? 'Vista Tabla' : 'Vista Tarjetas',
-        icon: layoutMode === 'grid' ? FileSpreadsheet : Layout,
-        onClick: () => setLayoutMode(layoutMode === 'grid' ? 'table' : 'grid'),
-        category: 'Edición',
-        variant: 'primary'
+      id: 'add-row-mobile',
+      label: 'Añadir Fila',
+      icon: Plus,
+      onClick: () => {
+        const currentSectionId = activeSubSectionId || (data.sections.length > 0 ? data.sections[0].id : null);
+        if (currentSectionId) {
+          const sectionIndex = data.sections.findIndex(s => s.id === currentSectionId);
+          if (sectionIndex !== -1) {
+            useCostSheetStore.getState().addMainRow(['sections', sectionIndex, 'rows']);
+            toast.success('Nueva fila añadida');
+            setActiveSection('main');
+          }
+        }
+      },
+      category: 'Edición',
+      variant: 'primary'
     },
     {
-        id: 'add-row',
-        label: 'Añadir Fila',
-        icon: Plus,
-        onClick: () => {
-            const addMainRow = useCostSheetStore.getState().addMainRow;
-            const currentSectionId = activeSubSectionId || (data.sections.length > 0 ? data.sections[0].id : null);
-            if (!currentSectionId) return;
-
-            const currentSectionIndex = data.sections.findIndex(s => s.id === currentSectionId);
-            if (currentSectionIndex !== -1) {
-                addMainRow(['sections', currentSectionIndex, 'rows']);
-                toast.success('Nueva fila añadida');
-                setActiveSection('main');
-            }
-        },
-        category: 'Edición'
+      id: 'export-pdf-mobile',
+      label: 'Exportar PDF',
+      icon: Download,
+      onClick: () => setIsExportModalOpen(true),
+      category: 'Gestión',
+      variant: 'success'
     },
     {
-        id: 'more-actions-trigger',
-        label: 'Más Acciones',
-        icon: MoreVertical,
-        onClick: () => setIsActionsPanelOpen(true),
-        category: 'Gestión',
-        variant: 'primary'
-    },
-    {
-        id: 'export-pdf',
-        label: 'Exportar PDF',
-        icon: Download,
-        onClick: () => setIsExportModalOpen(true),
-        category: 'Gestión',
-        variant: 'success'
-    },
-    {
-        id: 'import-json-dial',
-        label: 'Importar JSON',
-        icon: Upload,
-        onClick: handleImportJSON,
-        category: 'Gestión'
-    },
-    {
-        id: 'clear',
-        label: 'Limpiar Todo',
-        icon: Trash2,
-        onClick: () => {
-            if (confirm('¿Desea limpiar toda la ficha?')) {
-                reset();
-            }
-        },
-        category: 'Edición',
-        variant: 'destructive'
+      id: 'clear-sheet',
+      label: 'Limpiar Ficha',
+      icon: Trash2,
+      onClick: () => {
+        if (confirm('¿Estás seguro de reiniciar la ficha?')) {
+          reset();
+        }
+      },
+      category: 'Edición',
+      variant: 'destructive'
     }
-  ], [isEditing, layoutMode, data.sections, activeSubSectionId, reset, handleImportJSON]);
+  ], [isEditing, activeSubSectionId, data.sections]);
 
   const navItems = React.useMemo(() => [
     { id: 'header', label: 'Encabezado', icon: Layout },
