@@ -293,7 +293,7 @@ export default function TerminalShell() { // Renamed from TerminalView
       )}
 
       <CreateProductModal />
-      <ChatBot />
+      {currentView !== 'pos' && <ChatBot />}
     </div>
   );
 }

@@ -331,7 +331,7 @@ const CostSheetView = () => {
     { id: 'export-json', label: 'Guardar', icon: Save, onClick: handleExportJSON, variant: 'outline' as const, disabled: false },
     { id: 'export-excel', label: 'Excel', icon: FileSpreadsheet, onClick: handleExportExcel, variant: (isBlocked ? 'outline' : 'primary') as any, disabled: false },
     { id: 'export-pdf', label: 'PDF', icon: Download, onClick: () => setIsExportModalOpen(true), variant: (isBlocked ? 'outline' : 'success') as any, disabled: false },
-    { id: 'massive-gen', label: 'Gen. Masiva', icon: FileText, onClick: () => setIsMassiveGeneratorOpen(true), variant: 'outline' as const },
+    { id: 'massive-gen', label: 'Gen. Masiva', icon: FileText, onClick: () => { setActiveSection('massive-gen'); setIsActionsPanelOpen(false); }, variant: 'outline' as const },
   ], [isEditing, loadExample, reset, handleImportJSON, handleExportJSON, handleExportExcel, handleExportPDF, isBlocked]);
 
   const mainActions = React.useMemo(() => [
@@ -349,7 +349,8 @@ const CostSheetView = () => {
 
   const navItems = React.useMemo(() => [
     { id: 'header', label: 'Encabezado', icon: Layout },
-    { id: 'main', label: 'Ficha Principal', icon: FileSpreadsheet }
+    { id: 'main', label: 'Ficha Principal', icon: FileSpreadsheet },
+    { id: 'massive-gen', label: 'Gen. Masiva', icon: FileText }
   ], []);
 
   const subSectionActions = React.useMemo(() => {
@@ -444,11 +445,6 @@ const CostSheetView = () => {
         <ActionMenu actions={mainActions} position="bottom" />
       </div>
 
-      <CostSheetMassiveGenerator
-        isOpen={isMassiveGeneratorOpen}
-        onClose={() => setIsMassiveGeneratorOpen(false)}
-      />
-
       <CostSheetExportModal
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
@@ -518,6 +514,11 @@ const CostSheetView = () => {
                     {activeSection === 'audit' && (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <CostSheetAuditLog audits={audits} />
+                        </div>
+                    )}
+                    {activeSection === 'massive-gen' && (
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                             <CostSheetMassiveGenerator isSection={true} />
                         </div>
                     )}
                 </div>
