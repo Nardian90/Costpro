@@ -278,7 +278,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="md:col-span-3 md:row-span-2 p-10 rounded-[2.5rem] bg-background border border-border hover:border-primary/20 transition-all group flex flex-col justify-between"
+              className="md:col-span-3 md:row-span-2 p-6 sm:p-10 rounded-[2.5rem] bg-background border border-border hover:border-primary/20 transition-all group flex flex-col justify-between"
             >
               <div>
                 <div className="w-14 h-14 rounded-2xl bg-violet-500/10 text-violet-600 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
@@ -305,7 +305,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
-              className="md:col-span-3 md:row-span-1 p-8 rounded-[2.5rem] bg-background border border-border hover:border-primary/20 transition-all group flex gap-8 items-center"
+              className="md:col-span-3 md:row-span-1 p-6 sm:p-8 rounded-[2.5rem] bg-background border border-border hover:border-primary/20 transition-all group flex gap-8 items-center"
             >
               <div className="shrink-0 w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center group-hover:rotate-12 transition-transform">
                 <ShoppingCart className="w-8 h-8" />
@@ -324,7 +324,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.2 }}
-              className="md:col-span-3 md:row-span-1 lg:col-span-2 p-8 rounded-[2.5rem] bg-background border border-border hover:border-primary/20 transition-all group"
+              className="md:col-span-3 md:row-span-1 lg:col-span-2 p-6 sm:p-8 rounded-[2.5rem] bg-background border border-border hover:border-primary/20 transition-all group"
             >
               <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center mb-4 group-hover:-translate-y-1 transition-transform">
                 <Package className="w-6 h-6" />
@@ -415,7 +415,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
 
       {/* Final CTA */}
       <section className="py-24 px-6">
-        <div className="max-w-4xl mx-auto p-12 lg:p-20 rounded-[4rem] bg-foreground text-background relative overflow-hidden text-center space-y-10">
+        <div className="max-w-4xl mx-auto p-8 sm:p-12 lg:p-20 rounded-[4rem] bg-foreground text-background relative overflow-hidden text-center space-y-10">
           <div className="absolute inset-0 opacity-10">
             <CostProLogo size={400} className="absolute -bottom-20 -right-20 rotate-12" />
           </div>

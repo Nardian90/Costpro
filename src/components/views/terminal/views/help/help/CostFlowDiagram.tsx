@@ -24,7 +24,8 @@ export default function CostFlowDiagram() {
   };
 
   return (
-    <div className="w-full aspect-[16/9] md:aspect-video bg-muted/30 rounded-3xl border border-primary/10 flex items-center justify-center p-4 overflow-hidden">
+    <div className="w-full overflow-x-auto no-scrollbar rounded-3xl border border-primary/10 bg-muted/30">
+      <div className="min-w-[600px] sm:min-w-0 aspect-[16/9] md:aspect-video flex items-center justify-center p-4">
       <motion.svg
         viewBox="0 0 800 450"
         className="w-full h-full max-w-4xl"
@@ -116,6 +117,7 @@ export default function CostFlowDiagram() {
         </motion.text>
 
       </motion.svg>
+      </div>
     </div>
   );
 }
