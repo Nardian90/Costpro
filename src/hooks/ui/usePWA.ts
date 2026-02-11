@@ -44,21 +44,25 @@ export function usePWA() {
 
   const installApp = useCallback(async () => {
     if (!deferredPrompt) {
-      // Fallback for browsers that don't support beforeinstallprompt (like iOS Safari)
-      window.open('https://support.google.com/chrome/answer/9658361', '_blank');
-      return;
+      return false;
     }
 
-    // Show the install prompt
-    deferredPrompt.prompt();
+    try {
+      // Show the install prompt
+      deferredPrompt.prompt();
 
-    // Wait for the user to respond to the prompt
-    const { outcome } = await deferredPrompt.userChoice;
-    console.log(`User response to the install prompt: ${outcome}`);
+      // Wait for the user to respond to the prompt
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log(`User response to the install prompt: ${outcome}`);
 
-    // We've used the prompt, and can't use it again, throw it away
-    setDeferredPrompt(null);
-    setIsInstallable(false);
+      // We've used the prompt, and can't use it again, throw it away
+      setDeferredPrompt(null);
+      setIsInstallable(false);
+      return outcome === 'accepted';
+    } catch (error) {
+      console.error('Error during PWA installation:', error);
+      return false;
+    }
   }, [deferredPrompt]);
 
   return { isInstallable, installApp };

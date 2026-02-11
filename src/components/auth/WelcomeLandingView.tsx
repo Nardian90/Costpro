@@ -16,6 +16,7 @@ import AutomationWorkflowDiagram from './diagrams/AutomationWorkflowDiagram';
 import SpeedScaleDiagram from './diagrams/SpeedScaleDiagram';
 import { usePWA } from '@/hooks/ui/usePWA';
 import { cn } from '@/lib/utils';
+import { PWAInstallModal } from '@/components/ui/PWAInstallModal';
 
 interface WelcomeLandingViewProps {
   onLoginClick: () => void;
@@ -23,11 +24,19 @@ interface WelcomeLandingViewProps {
 
 export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewProps) {
   const [isHydrated, setIsHydrated] = useState(false);
+  const [isPWAModalOpen, setIsPWAModalOpen] = useState(false);
   const { isInstallable, installApp } = usePWA();
 
   useEffect(() => {
     setIsHydrated(true);
   }, []);
+
+  const handleInstallClick = async () => {
+    const result = await installApp();
+    if (result === false) {
+      setIsPWAModalOpen(true);
+    }
+  };
 
   const modules = [
     {
@@ -71,12 +80,12 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
             <button
-              onClick={installApp}
+              onClick={handleInstallClick}
               className={cn(
                 "hidden md:flex items-center gap-2 px-6 h-11 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all active:scale-95",
                 isInstallable
                   ? "bg-primary text-white shadow-[0_0_20px_rgba(16,185,129,0.3)]"
-                  : "bg-muted text-muted-foreground opacity-50 border border-border"
+                  : "bg-muted text-muted-foreground border border-border"
               )}
             >
               <Download className="w-3.5 h-3.5" />
@@ -127,12 +136,12 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
                 Comenzar Ahora
               </button>
               <button
-                onClick={installApp}
+                onClick={handleInstallClick}
                 className={cn(
                   "neu-btn h-14 px-10 text-sm font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2",
                   isInstallable
                     ? "neu-btn-primary shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:shadow-[0_0_40px_rgba(16,185,129,0.35)]"
-                    : "bg-muted text-muted-foreground opacity-50 border border-border cursor-not-allowed"
+                    : "bg-muted text-muted-foreground border border-border"
                 )}
               >
                 <Smartphone className="w-5 h-5" />
@@ -459,6 +468,12 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
           </div>
         </div>
       </footer>
+
+      {/* PWA Install Instructions Modal */}
+      <PWAInstallModal
+        isOpen={isPWAModalOpen}
+        onClose={() => setIsPWAModalOpen(false)}
+      />
 
       {/* Floating WhatsApp CTA */}
       <AnimatePresence>
