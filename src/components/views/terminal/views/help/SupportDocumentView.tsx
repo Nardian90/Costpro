@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { motion } from 'framer-motion';
 
-const PDF_URL = '/doc/COSTPRO.pdf';
+const PDF_URL = '/manuals/COSTPRO.pdf';
 
 const INDEX_ITEMS = [
   { id: 'intro', label: 'Introducción', icon: BookOpen, page: 1, description: 'Conceptos básicos y filosofía del sistema.' },
