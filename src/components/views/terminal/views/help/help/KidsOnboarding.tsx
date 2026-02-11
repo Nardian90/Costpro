@@ -148,8 +148,9 @@ function RolesStoryDiagram() {
 
 function ContextIsolationDiagram() {
   return (
-    <div className="w-full aspect-[21/9] bg-muted/20 rounded-3xl border border-primary/10 overflow-hidden">
-      <motion.svg viewBox="0 0 800 300" className="w-full h-full p-8">
+    <div className="w-full overflow-x-auto no-scrollbar rounded-3xl border border-primary/10 bg-muted/20">
+      <div className="min-w-[600px] sm:min-w-0 aspect-[21/9]">
+        <motion.svg viewBox="0 0 800 300" className="w-full h-full p-4 sm:p-8">
         {/* Store A Context */}
         <motion.g initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
            <rect x="50" y="20" width="300" height="260" rx="30" className="fill-primary/5 stroke-primary/20" strokeWidth="2" />
@@ -214,7 +215,8 @@ function ContextIsolationDiagram() {
         <text x="400" y="285" textAnchor="middle" className="fill-muted-foreground italic text-[10px]">
           "Las entradas de Pedro solo afectan a su burbuja"
         </text>
-      </motion.svg>
+        </motion.svg>
+      </div>
     </div>
   );
 }
