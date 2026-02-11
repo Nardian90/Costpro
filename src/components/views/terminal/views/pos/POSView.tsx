@@ -151,7 +151,7 @@ export default function POSView() {
   const mobileActions: SpeedDialAction[] = [
     {
       id: 'view-cart',
-      label: `Ver Carrito (${getItemCount()})`,
+      label: `Caja (${getItemCount()})`,
       icon: ShoppingCart,
       onClick: () => setShowCart(true),
       category: 'Acción',
@@ -166,7 +166,7 @@ export default function POSView() {
     },
     {
       id: 'clear-cart',
-      label: 'Vaciar Carrito',
+      label: 'Anular Carrito',
       icon: Trash2,
       onClick: () => {
         if (getItemCount() > 0) {
