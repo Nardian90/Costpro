@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ShoppingCart, Search, X } from 'lucide-react';
+import { ShoppingCart, Search, X, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import SearchBar from '@/components/ui/SearchBar';
@@ -30,6 +30,7 @@ import { PriceSelectorModal } from '@/components/modals/PriceSelectorModal';
 import { BarcodeScanner } from '@/components/modals/BarcodeScanner';
 import { Product } from '@/types';
 import { QrCode } from 'lucide-react';
+import { SpeedDial, SpeedDialAction } from '@/components/ui/SpeedDial';
 
 const EmptyProductsComponent = ({ onClearSearch }: { onClearSearch?: () => void }) => (
   <div className="col-span-full py-32 text-center border-2 border-dashed border-border rounded-xl bg-card/50">
@@ -147,6 +148,39 @@ export default function POSView() {
     />
   );
 
+  const mobileActions: SpeedDialAction[] = [
+    {
+      id: 'view-cart',
+      label: `Ver Carrito (${getItemCount()})`,
+      icon: ShoppingCart,
+      onClick: () => setShowCart(true),
+      category: 'Acción',
+      variant: getItemCount() > 0 ? 'success' : 'primary'
+    },
+    {
+      id: 'scan',
+      label: 'Escanear SKU',
+      icon: QrCode,
+      onClick: () => setShowScanner(true),
+      category: 'Acción'
+    },
+    {
+      id: 'clear-cart',
+      label: 'Vaciar Carrito',
+      icon: Trash2,
+      onClick: () => {
+        if (getItemCount() > 0) {
+          if (confirm('¿Estás seguro de vaciar el carrito?')) {
+            clearCart();
+            toast.success('Carrito vaciado');
+          }
+        }
+      },
+      category: 'Edición',
+      variant: 'destructive'
+    }
+  ];
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
@@ -154,7 +188,7 @@ export default function POSView() {
           <h2 className="text-[clamp(1.875rem,6vw,3rem)] font-black text-foreground tracking-tighter uppercase hidden sm:block">TPV</h2>
           <ViewSwitcher currentView={posLayoutMode} onViewChange={setPosLayoutMode} />
         </div>
-        {isMobile && cartButton}
+        {!isMobile && cartButton}
       </div>
 
       <QueryInspector />
@@ -299,14 +333,7 @@ export default function POSView() {
         onScan={handleScan}
       />
 
-      {/* Floating Action Button for Scanner */}
-      <button
-        onClick={() => setShowScanner(true)}
-        className="fixed bottom-24 right-6 sm:bottom-8 sm:right-8 w-14 h-14 rounded-full bg-primary text-white shadow-2xl shadow-primary/40 flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50 border-4 border-background"
-        title="Escanear Código de Barras"
-      >
-        <QrCode className="w-6 h-6" />
-      </button>
+      <SpeedDial actions={mobileActions} />
     </div>
   );
 }
