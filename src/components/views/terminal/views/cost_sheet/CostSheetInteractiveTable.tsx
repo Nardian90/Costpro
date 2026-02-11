@@ -131,10 +131,111 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
   const infoErrors = (safeCalculated.validationErrors || []).filter(e => e.type === 'INFO');
   const hasEngineWarnings = safeCalculated.hasWarnings || (!hasChildren && !row.is_percent && safeCalculated.total === 0 && ((row.valorHistorico ?? 0) > 0 || !!row.baseDeCalculoRef));
 
+  const MobileCard = () => (
+    <div className={cn(
+      "sm:hidden flex flex-col p-4 rounded-2xl border-2 mb-3 bg-card shadow-sm",
+      isResultRow ? "border-primary/30 bg-primary/5" : "border-border/50"
+    )}>
+      <div className="flex justify-between items-start mb-3">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-black text-muted-foreground/60 tabular-nums bg-muted px-1.5 py-0.5 rounded">
+            {numbering}
+          </span>
+          {hasChildren && (
+            <button onClick={handleToggle} className="p-1 rounded-full bg-primary/10 text-primary">
+              <ChevronRight className={cn('w-4 h-4 transition-transform', isExpanded && 'rotate-90')} />
+            </button>
+          )}
+          {isEditingLabel ? (
+            <Input
+              autoFocus
+              className="h-8 text-sm"
+              defaultValue={row.label}
+              onBlur={(e) => {
+                handleValueChange('label', e.target.value);
+                setIsEditingLabel(false);
+              }}
+            />
+          ) : (
+            <h4 className="font-bold text-sm uppercase tracking-tight" onClick={() => setIsEditingLabel(true)}>
+              {row.label}
+            </h4>
+          )}
+        </div>
+        <div className="flex gap-1">
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => addMainRow([...path, 'children'])}>
+            <Plus className="h-4 w-4 text-primary" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => removeMainRow(path)}>
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col gap-1">
+          <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Valor Histórico / %</span>
+          <div className="relative" onClick={() => setIsEditingVH(true)}>
+            {isEditingVH ? (
+              <FormulaEditor
+                initialValue={row.vhFormula || String(row.valorHistorico || 0)}
+                onSave={handleVHSave}
+                onCancel={() => setIsEditingVH(false)}
+                suggestions={suggestions}
+              />
+            ) : (
+              <div className="flex items-center gap-1 bg-muted/30 p-2 rounded-xl border border-border/50">
+                <span className="text-xs font-bold">
+                  {hasChildren
+                    ? formatAccounting(safeCalculated.calculatedVH ?? safeCalculated.valorHistorico ?? 0)
+                    : (row.vhFormula
+                      ? formatAccounting(safeCalculated.calculatedVH ?? 0)
+                      : (row.hasOwnProperty('valorHistorico') ? formatAccounting(row.valorHistorico ?? 0) : (row.is_percent ? ((row.value ?? 0) * 100).toFixed(3) + '%' : formatAccounting(row.value ?? 0))))}
+                </span>
+                {row.vhFormula && <FunctionSquare className="w-3 h-3 text-primary/40" />}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Total Final</span>
+          <div className="relative" onClick={() => setIsEditingTotal(true)}>
+            {isEditingTotal ? (
+              <FormulaEditor
+                initialValue={row.formula || String(safeCalculated.total)}
+                onSave={handleTotalSave}
+                onCancel={() => setIsEditingTotal(false)}
+                suggestions={suggestions}
+              />
+            ) : (
+              <div className="flex items-center justify-between bg-primary/10 p-2 rounded-xl border border-primary/20">
+                <span className="text-sm font-black text-primary">
+                  {formatAccounting(safeCalculated.total)}
+                </span>
+                <div className="flex items-center gap-1">
+                  {row.formula && <FunctionSquare className="w-3 h-3 text-primary/40" />}
+                  {criticalErrors.length > 0 && <XCircle className="w-3 h-3 text-destructive" />}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {row.helpText && (
+        <div className="mt-3 pt-3 border-t border-border/50 text-[10px] text-muted-foreground italic">
+          {row.helpText}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <>
+      <MobileCard />
       <TableRow className={cn(
-        "border-t border-border/50 hover:bg-primary/5 transition-colors group",
+        "hidden sm:table-row border-t border-border/50 hover:bg-primary/5 transition-colors group",
         isResultRow && "bg-primary/5 font-bold"
       )}>
         {/* No. */}
@@ -555,7 +656,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                                 onChange={(e) => updateValue(['sections', sectionIndex, 'label'], e.target.value)}
                             />
                         </div>
-                        <div className="flex flex-wrap items-center gap-2">
+                        <div className="hidden sm:flex flex-wrap items-center gap-2">
                             <Button
                                 size="sm"
                                 variant="outline"
@@ -605,9 +706,9 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                         </div>
                     </div>
 
-                    <div className="neu-card p-0 border-border/50 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="neu-card p-0 border-border/50 shadow-sm hover:shadow-md transition-shadow bg-transparent sm:bg-card">
                         <div className="table-scroll-wrapper rounded-2xl overflow-hidden">
-                        <Table className="w-full min-w-[500px] sm:min-w-[700px] border-collapse">
+                        <Table className="w-full min-w-full sm:min-w-[700px] border-collapse">
                             <TableHeader className={cn(
                                 "bg-muted/90 backdrop-blur-md text-muted-foreground font-black uppercase text-[9px] sm:text-[10px] tracking-widest border-b border-border",
                                 isStickyHeaderSection ? "sticky top-0 z-20 shadow-sm" : "hidden"

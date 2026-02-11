@@ -23,14 +23,17 @@ import { CostSheetExportModal, ExportOptions } from './CostSheetExportModal';
 import { CostSheetQuickMode } from './CostSheetQuickMode';
 import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
 import ActionMenu from '@/components/ui/ActionMenu';
-import { Layout, Eye, Edit, FileText, Trash2, Download, FileSpreadsheet, Upload, Save, BarChart3, Activity, MoreVertical, AlertTriangle } from 'lucide-react';
+import { Layout, Eye, Edit, FileText, Trash2, Download, FileSpreadsheet, Upload, Save, BarChart3, Activity, MoreVertical, AlertTriangle, Plus } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store';
 import { exportToPDF, exportToCSV } from '@/services/export-service';
+import { SpeedDial, SpeedDialAction } from '@/components/ui/SpeedDial';
+import { useIsMobile } from '@/hooks/ui/useMobile';
 
 const CostSheetView = () => {
+  const isMobile = useIsMobile();
   const { data, loadExample, reset, setSheet } = useCostSheetStore();
   const {
     calculatedValues,
@@ -334,6 +337,59 @@ const CostSheetView = () => {
 
   const secondaryActions = React.useMemo(() => allActions.filter(a => !['toggle-mode', 'kpis-header'].includes(a.id)), [allActions]);
 
+  const mobileActions: SpeedDialAction[] = React.useMemo(() => [
+    {
+      id: 'confirm',
+      label: isEditing ? 'Confirmar Ficha' : 'Seguir Editando',
+      icon: isEditing ? Eye : Edit,
+      onClick: () => setIsEditing(!isEditing),
+      category: 'Acción',
+      variant: 'success'
+    },
+    {
+        id: 'add-row',
+        label: 'Añadir Fila',
+        icon: Plus,
+        onClick: () => {
+            const addMainRow = useCostSheetStore.getState().addMainRow;
+            const currentSectionIndex = data.sections.findIndex(s => s.id === (activeSubSectionId || data.sections[0].id));
+            if (currentSectionIndex !== -1) {
+                addMainRow(['sections', currentSectionIndex, 'rows']);
+                toast.success('Nueva fila añadida');
+            }
+        },
+        category: 'Edición',
+        variant: 'primary'
+    },
+    {
+        id: 'clear',
+        label: 'Limpiar Todo',
+        icon: Trash2,
+        onClick: () => {
+            if (confirm('¿Desea limpiar toda la ficha?')) {
+                reset();
+            }
+        },
+        category: 'Edición',
+        variant: 'destructive'
+    },
+    {
+        id: 'import',
+        label: 'Importar JSON',
+        icon: Upload,
+        onClick: handleImportJSON,
+        category: 'Gestión'
+    },
+    {
+        id: 'export-pdf',
+        label: 'Exportar PDF',
+        icon: Download,
+        onClick: () => setIsExportModalOpen(true),
+        category: 'Gestión',
+        variant: 'success'
+    }
+  ], [isEditing, data.sections, activeSubSectionId, reset, handleImportJSON]);
+
   const navItems = React.useMemo(() => [
     { id: 'header', label: 'Encabezado', icon: Layout },
     { id: 'main', label: 'Ficha Principal', icon: FileSpreadsheet }
@@ -427,7 +483,7 @@ const CostSheetView = () => {
           </div>
       )}
 
-      <div className="flex flex-col gap-6 mb-8 sm:mb-12">
+      <div className="hidden sm:flex flex-col gap-6 mb-8 sm:mb-12">
         <ActionMenu actions={mainActions} position="bottom" />
       </div>
 
@@ -442,6 +498,8 @@ const CostSheetView = () => {
         onExport={handleExportPDF}
         annexes={data?.annexes || []}
       />
+
+      <SpeedDial actions={mobileActions} />
 
       {isEditing ? (
         <div className="animate-in fade-in duration-700 space-y-6">
