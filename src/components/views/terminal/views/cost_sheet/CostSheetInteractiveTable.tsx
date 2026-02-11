@@ -3,7 +3,7 @@
 
 import React, { useState, useMemo, memo } from 'react';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
-import { ChevronRight, HelpCircle, CornerDownRight, AlertTriangle, ListFilter, LayoutGrid, ArrowRight, FunctionSquare, Plus, Trash2, Edit2, ChevronUp, ChevronDown, Download, Upload, CheckCircle2, XCircle } from 'lucide-react';
+import { ChevronRight, HelpCircle, CornerDownRight, AlertTriangle, ListFilter, LayoutGrid, ArrowRight, FunctionSquare, Plus, Trash2, Edit2, ChevronUp, ChevronDown, Download, Upload, CheckCircle2, XCircle, MoreVertical, Settings2 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { cn, formatAccounting } from '@/lib/utils';
 import { FormulaEditor } from './FormulaEditor';
 import { exportSectionToExcel, importSectionFromExcel } from '@/services/excel-service';
+import { CostSheetSectionActionsPanel } from './CostSheetSectionActionsPanel';
 import {
   CostSheetRow as RowData,
   CostSheetSection,
@@ -134,17 +135,17 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
   return (
     <>
       <TableRow className={cn(
-        "border-t border-border/50 hover:bg-primary/5 transition-colors group",
+        "border-t border-border/30 hover:bg-primary/5 transition-colors group",
         isResultRow && "bg-primary/5 font-bold"
       )}>
         {/* No. */}
-        <TableCell className="w-12 px-2 py-2 text-center text-[10px] font-black text-muted-foreground/60 tabular-nums sticky left-0 bg-background sm:bg-transparent z-10 border-r border-border/10 sm:border-none">
+        <TableCell className="w-12 px-2 py-1.5 text-center text-[10px] font-black text-muted-foreground/60 tabular-nums border-r border-border/10">
             {numbering}
         </TableCell>
 
         {/* Concepto */}
-        <TableCell style={{ paddingLeft: `${level * 24 + 12}px` }} className="px-2 py-2 sm:px-4 sm:py-2.5 font-medium text-[13px] sm:text-sm text-foreground min-w-[200px] sm:min-w-[250px] sticky left-12 bg-background sm:bg-transparent z-10 border-r border-border/20 sm:border-none shadow-[4px_0_8px_-4px_rgba(0,0,0,0.1)] sm:shadow-none">
-          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 group/row">
+        <TableCell style={{ paddingLeft: `${level * 16 + 8}px` }} className="px-2 py-1.5 font-medium text-[13px] text-foreground min-w-[250px] border-r border-border/10">
+          <div className="flex items-center gap-1.5 min-w-0 group/row">
             {hasChildren && (
               <button onClick={handleToggle} className="p-1 rounded-full hover:bg-primary/10 shrink-0">
                 <ChevronRight className={cn('w-3.5 h-3.5 sm:w-4 h-4 transition-transform', isExpanded && 'rotate-90')} />
@@ -222,7 +223,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
         </TableCell>
 
         {/* Valor Histórico / % */}
-        <TableCell className="px-2 py-1.5 sm:px-4 sm:py-2 text-right w-32 sm:w-40 cursor-pointer" onClick={() => setIsEditingVH(true)}>
+        <TableCell className="px-2 py-1 text-right w-32 sm:w-40 cursor-pointer border-r border-border/10" onClick={() => setIsEditingVH(true)}>
             <div className="relative">
                 {isEditingVH ? (
                     <FormulaEditor
@@ -257,7 +258,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
 
         {/* Total */}
         <TableCell
-          className="px-2 py-1.5 sm:px-4 sm:py-2 text-right font-black tabular-nums text-primary w-36 sm:w-48 cursor-pointer hover:bg-primary/5 transition-colors text-base sm:text-sm"
+          className="px-2 py-1 text-right font-black tabular-nums text-primary w-36 sm:w-48 cursor-pointer hover:bg-primary/5 transition-colors text-[13px] border-r border-border/10"
           onClick={() => setIsEditingTotal(true)}
         >
           {isEditingTotal ? (
@@ -354,7 +355,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
         </TableCell>
 
         {/* Ayuda - Hidden on very small screens */}
-        <TableCell className="px-4 py-2 text-center w-12 sm:w-20 hidden sm:table-cell">
+        <TableCell className="px-2 py-1 text-center w-12 sm:w-20 hidden sm:table-cell">
           {row.helpText && (
             <Popover>
               <PopoverTrigger asChild>
@@ -406,6 +407,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
   const addMainRow = useCostSheetStore(state => state.addMainRow);
   const sectionInputRef = React.useRef<HTMLInputElement>(null);
   const [importingSectionIndex, setImportingSectionIndex] = useState<number | null>(null);
+  const [activeSectionForActions, setActiveSectionForActions] = useState<{ section: any, index: number } | null>(null);
 
   // Smooth scroll to active section/group when selected
   React.useEffect(() => {
@@ -541,12 +543,13 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                 const isTarget = targetSectionIds.includes(section.id);
                 if (!isTarget) return null;
 
+                const isFirstInGroup = targetSectionIds[0] === section.id;
                 const sectionNum = parseInt(section.id.replace('s', ''), 10);
                 const isStickyHeaderSection = sectionNum >= 1 && sectionNum <= 3;
 
                 return (
-                <div key={section.id} id={section.id} className="animate-in fade-in slide-in-from-bottom-2 duration-500 mb-12 last:mb-0 scroll-mt-24">
-                    <div className="flex items-center justify-between mb-4 px-1">
+                <div key={section.id} id={section.id} className="animate-in fade-in slide-in-from-bottom-2 duration-500 mb-0 last:mb-0 scroll-mt-24">
+                    <div className="flex items-center justify-between py-1.5 px-4 bg-muted/30 border-y border-border/50">
                         <div className="flex items-center gap-3">
                             <div className="w-1.5 h-6 bg-primary rounded-full" />
                             <Input
@@ -555,69 +558,33 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                                 onChange={(e) => updateValue(['sections', sectionIndex, 'label'], e.target.value)}
                             />
                         </div>
-                        <div className="flex flex-wrap items-center gap-2">
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-11 sm:h-8 rounded-xl font-bold gap-2 text-[10px] uppercase tracking-wider"
-                                onClick={() => exportSectionToExcel(section, calculatedValues)}
-                            >
-                                <Download className="w-3.5 h-3.5" />
-                                Exportar
-                            </Button>
-
-                            <div className="relative">
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="h-11 sm:h-8 rounded-xl font-bold gap-2 text-[10px] uppercase tracking-wider"
-                                    onClick={() => {
-                                        setImportingSectionIndex(sectionIndex);
-                                        setTimeout(() => sectionInputRef.current?.click(), 0);
-                                    }}
-                                >
-                                    <Upload className="w-3.5 h-3.5" />
-                                    Importar
-                                </Button>
-                            </div>
-
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-11 sm:h-8 rounded-xl font-bold gap-2 text-[10px] uppercase tracking-wider"
-                                onClick={() => addMainRow(['sections', sectionIndex, 'rows'])}
-                            >
-                                <Plus className="w-3.5 h-3.5" />
-                                Añadir Fila
-                            </Button>
+                        <div className="flex items-center gap-2">
                             <Button
                                 size="sm"
                                 variant="ghost"
-                                className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive transition-colors"
-                                onClick={() => {
-                                    removeMainSection(sectionIndex);
-                                    setActiveSubSectionId('');
-                                }}
-                                title="Eliminar Sección"
+                                className="h-8 w-8 p-0 text-primary hover:bg-primary/10 rounded-full transition-all"
+                                onClick={() => setActiveSectionForActions({ section, index: sectionIndex })}
+                                title="Acciones de Sección"
                             >
-                                <Trash2 className="w-4 h-4" />
+                                <Settings2 className="w-4 h-4" />
                             </Button>
                         </div>
                     </div>
 
-                    <div className="neu-card p-0 border-border/50 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="table-scroll-wrapper rounded-2xl overflow-hidden">
-                        <Table className="w-full min-w-[500px] sm:min-w-[700px] border-collapse">
+                    <div className="w-full p-0 border-none shadow-none">
+                        <div className="table-scroll-wrapper overflow-x-auto">
+                        <Table className="w-full border-collapse">
                             <TableHeader className={cn(
-                                "bg-muted/90 backdrop-blur-md text-muted-foreground font-black uppercase text-[9px] sm:text-[10px] tracking-widest border-b border-border",
-                                isStickyHeaderSection ? "sticky top-0 z-20 shadow-sm" : "hidden"
+                                "bg-muted/50 text-muted-foreground font-black uppercase text-[10px] tracking-widest border-b border-border",
+                                !isFirstInGroup && "hidden",
+                                (isStickyHeaderSection && isFirstInGroup) && "sticky top-0 z-20"
                             )}>
                                 <TableRow className="hover:bg-transparent border-none">
-                                    <TableHead className="w-12 px-2 py-3 sm:px-4 sm:py-4 text-center font-black uppercase tracking-widest sticky left-0 bg-muted z-30 border-r border-border/10 sm:border-none">No.</TableHead>
-                                    <TableHead className="px-2 py-3 sm:px-4 sm:py-4 text-left font-black uppercase tracking-widest min-w-[200px] sm:min-w-[250px] sticky left-12 bg-muted z-30 border-r border-border/20 sm:border-none shadow-[4px_0_8px_-4px_rgba(0,0,0,0.1)] sm:shadow-none">Concepto</TableHead>
-                                    <TableHead className="px-2 py-3 sm:px-4 sm:py-4 text-right font-black uppercase tracking-widest w-32 sm:w-40">Valor Histórico</TableHead>
-                                    <TableHead className="px-2 py-3 sm:px-4 sm:py-4 text-right font-black uppercase tracking-widest w-36 sm:w-48">Total</TableHead>
-                                    <TableHead className="px-2 py-3 sm:px-4 sm:py-4 text-center font-black uppercase tracking-widest w-12 sm:w-20 hidden sm:table-cell">Ayuda</TableHead>
+                                    <TableHead className="w-12 px-2 py-2 text-center font-black uppercase tracking-widest border-r border-border/10">No.</TableHead>
+                                    <TableHead className="px-2 py-2 text-left font-black uppercase tracking-widest min-w-[250px] border-r border-border/10">Concepto</TableHead>
+                                    <TableHead className="px-2 py-2 text-right font-black uppercase tracking-widest w-32 sm:w-40 border-r border-border/10">Valor Histórico</TableHead>
+                                    <TableHead className="px-2 py-2 text-right font-black uppercase tracking-widest w-36 sm:w-48 border-r border-border/10">Total</TableHead>
+                                    <TableHead className="px-2 py-2 text-center font-black uppercase tracking-widest w-12 sm:w-20 hidden sm:table-cell">Ayuda</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -643,6 +610,26 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                 );
             });
         })()}
+
+        <CostSheetSectionActionsPanel
+            isOpen={!!activeSectionForActions}
+            onClose={() => setActiveSectionForActions(null)}
+            section={activeSectionForActions?.section}
+            onExport={() => activeSectionForActions && exportSectionToExcel(activeSectionForActions.section, calculatedValues)}
+            onImport={() => {
+                if (activeSectionForActions) {
+                    setImportingSectionIndex(activeSectionForActions.index);
+                    setTimeout(() => sectionInputRef.current?.click(), 0);
+                }
+            }}
+            onAddRow={() => activeSectionForActions && addMainRow(['sections', activeSectionForActions.index, 'rows'])}
+            onRemove={() => {
+                if (activeSectionForActions) {
+                    removeMainSection(activeSectionForActions.index);
+                    setActiveSubSectionId('');
+                }
+            }}
+        />
     </div>
   );
 });
