@@ -390,7 +390,7 @@ const CostSheetView = () => {
   }
 
   return (
-    <div className="w-full max-w-none px-2 pb-32 pt-4">
+    <div className="w-full max-w-none px-0 pb-32 pt-4">
       <CostSheetActionsPanel
         isOpen={isActionsPanelOpen}
         onClose={() => setIsActionsPanelOpen(false)}

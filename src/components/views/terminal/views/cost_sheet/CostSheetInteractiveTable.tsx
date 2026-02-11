@@ -144,7 +144,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
         </TableCell>
 
         {/* Concepto */}
-        <TableCell style={{ paddingLeft: `${level * 16 + 8}px` }} className="px-2 py-1.5 font-medium text-[13px] text-foreground min-w-[500px] border-r border-border/10">
+        <TableCell style={{ paddingLeft: `${level * 16 + 8}px` }} className="px-2 py-1.5 font-medium text-[13px] text-foreground min-w-[250px] border-r border-border/10">
           <div className="flex items-center gap-1.5 min-w-0 group/row">
             {hasChildren && (
               <button onClick={handleToggle} className="p-1 rounded-full hover:bg-primary/10 shrink-0">
@@ -223,7 +223,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
         </TableCell>
 
         {/* Valor Histórico / % */}
-        <TableCell className="px-2 py-1 text-right w-64 sm:w-80 cursor-pointer border-r border-border/10" onClick={() => setIsEditingVH(true)}>
+        <TableCell className="px-2 py-1 text-right w-32 sm:w-40 cursor-pointer border-r border-border/10" onClick={() => setIsEditingVH(true)}>
             <div className="relative">
                 {isEditingVH ? (
                     <FormulaEditor
@@ -258,7 +258,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
 
         {/* Total */}
         <TableCell
-          className="px-2 py-1 text-right font-black tabular-nums text-primary w-72 sm:w-96 cursor-pointer hover:bg-primary/5 transition-colors text-[13px] border-r border-border/10"
+          className="px-2 py-1 text-right font-black tabular-nums text-primary w-36 sm:w-48 cursor-pointer hover:bg-primary/5 transition-colors text-[13px] border-r border-border/10"
           onClick={() => setIsEditingTotal(true)}
         >
           {isEditingTotal ? (
@@ -572,8 +572,8 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                     </div>
 
                     <div className="w-full p-0 border-none shadow-none">
-                        <div className="table-scroll-wrapper overflow-x-auto border border-border/50 rounded-lg">
-                        <Table className="w-full border-collapse min-w-[1400px]">
+                        <div className="table-scroll-wrapper overflow-x-auto border-border/50">
+                        <Table className="w-full border-collapse min-w-[800px]">
                             <TableHeader className={cn(
                                 "bg-muted/50 text-muted-foreground font-black uppercase text-[10px] tracking-widest border-b border-border",
                                 !isFirstInGroup && "hidden",
@@ -581,9 +581,9 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                             )}>
                                 <TableRow className="hover:bg-transparent border-none">
                                     <TableHead className="w-12 px-2 py-2 text-center font-black uppercase tracking-widest border-r border-border/10">No.</TableHead>
-                                    <TableHead className="px-2 py-2 text-left font-black uppercase tracking-widest min-w-[500px] border-r border-border/10">Concepto</TableHead>
-                                    <TableHead className="px-2 py-2 text-right font-black uppercase tracking-widest w-64 sm:w-80 border-r border-border/10">Valor Histórico</TableHead>
-                                    <TableHead className="px-2 py-2 text-right font-black uppercase tracking-widest w-72 sm:w-96 border-r border-border/10">Total</TableHead>
+                                    <TableHead className="px-2 py-2 text-left font-black uppercase tracking-widest min-w-[250px] border-r border-border/10">Concepto</TableHead>
+                                    <TableHead className="px-2 py-2 text-right font-black uppercase tracking-widest w-32 sm:w-40 border-r border-border/10">Valor Histórico</TableHead>
+                                    <TableHead className="px-2 py-2 text-right font-black uppercase tracking-widest w-36 sm:w-48 border-r border-border/10">Total</TableHead>
                                     <TableHead className="px-2 py-2 text-center font-black uppercase tracking-widest w-12 sm:w-20 hidden sm:table-cell">Ayuda</TableHead>
                                 </TableRow>
                             </TableHeader>
