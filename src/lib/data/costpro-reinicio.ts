@@ -2,22 +2,22 @@ import { CostSheetDataContract } from '@/contracts/cost-sheet';
 
 const template: CostSheetDataContract = {
   "header": {
-    "code": "",
-    "name": "Prueba",
-    "date": "2026-02-27",
-    "quantity": 1,
+    "code": "=GET_ANEXO_FILA_DATO(\"I\", 1, \"code\")",
+    "name": "=GET_ANEXO_FILA_DATO(\"I\", 1, \"description\")",
+    "date": new Date().toISOString().split('T')[0],
+    "quantity": "=GET_ANEXO_FILA_DATO(\"I\", 1, \"consumption_norm\")",
     "currency": "CUP",
-    "category": "ORGANISMO",
+    "category": "",
     "type": "EMPRESA",
-    "unit": "Kilogramos",
-    "product_code": "",
+    "unit": "=GET_ANEXO_FILA_DATO(\"I\", 1, \"um\")",
+    "product_code": "=GET_ANEXO_FILA_DATO(\"I\", 1, \"code\")",
     "company": "",
     "organism": "",
     "union": "",
     "destination": "",
     "production_level": "562",
     "capacity_utilization": "100.00%",
-    "sale_price": "3349592.94",
+    "sale_price": "=GET_FILA_DATO(\"16.1\", \"total\")",
     "client": ""
   },
   "sections": [
@@ -469,7 +469,7 @@ const template: CostSheetDataContract = {
       "label": "Sección 16: VENTA UNITARIA",
       "rows": [
         {
-          "id": "16",
+          "id": "16.1",
           "label": "VENTA UNITARIA",
           "calculationMethod": "FORMULA",
           "formula": "ref('14')/cantidad",

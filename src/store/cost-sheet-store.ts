@@ -17,9 +17,9 @@ const clearTemplate = (template: any) => {
 
     // Clear header
     if (cleared.header) {
-        cleared.header.code = "";
-        cleared.header.name = "";
         // Default formulas for automated fields "a consideración del usuario"
+        cleared.header.code = "=GET_ANEXO_FILA_DATO(\"I\", 1, \"code\")";
+        cleared.header.name = "=GET_ANEXO_FILA_DATO(\"I\", 1, \"description\")";
         cleared.header.quantity = "=GET_ANEXO_FILA_DATO(\"I\", 1, \"consumption_norm\")";
         cleared.header.product_code = "=GET_ANEXO_FILA_DATO(\"I\", 1, \"code\")";
         cleared.header.unit = "=GET_ANEXO_FILA_DATO(\"I\", 1, \"um\")";
@@ -32,6 +32,7 @@ const clearTemplate = (template: any) => {
         cleared.header.production_level = 0;
         cleared.header.capacity_utilization = 0;
         cleared.header.client = "";
+        cleared.header.category = "";
     }
 
     // Clear sections and rows

@@ -10,23 +10,23 @@ const template: CostSheetDataContract = {
     "description": "Ficha de referencia para estudio de costos industriales complejos con integración de anexos y fórmulas dinámicas."
   },
   "header": {
-    "code": "FC-PAN-DUR-001",
-    "name": "Producción de Pan de Corteza Dura (Lote Especial)",
+    "code": "=GET_ANEXO_FILA_DATO(\"I\", 1, \"code\")",
+    "name": "=GET_ANEXO_FILA_DATO(\"I\", 1, \"description\")",
     "date": new Date().toISOString().split('T')[0],
     "unit": "=GET_ANEXO_FILA_DATO(\"I\", 1, \"um\")",
-    "quantity": 1000,
+    "quantity": "=GET_ANEXO_FILA_DATO(\"I\", 1, \"consumption_norm\")",
     "currency": "CUP",
-    "category": "ORGANISMO",
+    "category": "",
     "type": "EMPRESA",
-    "product_code": "PROD-PAN-001",
+    "product_code": "=GET_ANEXO_FILA_DATO(\"I\", 1, \"code\")",
     "company": "PANIFICADORA NACIONAL S.A.",
     "organism": "MINAL",
     "union": "UNION MOLINERA",
     "destination": "Consumo Social",
     "production_level": 1200,
     "capacity_utilization": 83.33,
-    "sale_price": "=GET_FILA_DATO(\"16\", \"total\")",
-    "client": "Red de Minoristas"
+    "sale_price": "=GET_FILA_DATO(\"16.1\", \"total\")",
+    "client": ""
   },
   "sections": [
     {
@@ -389,7 +389,7 @@ const template: CostSheetDataContract = {
       "label": "Sección 16: VENTA UNITARIA",
       "rows": [
         {
-          "id": "16",
+          "id": "16.1",
           "label": "VENTA UNITARIA",
           "valorHistorico": 0,
           "value": 0,
