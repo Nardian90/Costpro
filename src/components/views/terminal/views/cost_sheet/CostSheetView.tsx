@@ -23,14 +23,17 @@ import { CostSheetExportModal, ExportOptions } from './CostSheetExportModal';
 import { CostSheetQuickMode } from './CostSheetQuickMode';
 import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
 import ActionMenu from '@/components/ui/ActionMenu';
-import { Layout, Eye, Edit, FileText, Trash2, Download, FileSpreadsheet, Upload, Save, BarChart3, Activity, MoreVertical, AlertTriangle } from 'lucide-react';
+import { SpeedDial } from '@/components/ui/SpeedDial';
+import { Layout, Eye, Edit, FileText, Trash2, Download, FileSpreadsheet, Upload, Save, BarChart3, Activity, MoreVertical, AlertTriangle, Plus } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store';
 import { exportToPDF, exportToCSV } from '@/services/export-service';
+import { useIsMobile } from '@/hooks/ui/useMobile';
 
 const CostSheetView = () => {
+  const isMobile = useIsMobile();
   const { data, loadExample, reset, setSheet } = useCostSheetStore();
   const {
     calculatedValues,
@@ -427,9 +430,11 @@ const CostSheetView = () => {
           </div>
       )}
 
-      <div className="flex flex-col gap-6 mb-8 sm:mb-12">
-        <ActionMenu actions={mainActions} position="bottom" />
-      </div>
+      {!isMobile && (
+        <div className="flex flex-col gap-6 mb-8 sm:mb-12">
+          <ActionMenu actions={mainActions} position="bottom" />
+        </div>
+      )}
 
       <CostSheetMassiveGenerator
         isOpen={isMassiveGeneratorOpen}
@@ -534,6 +539,59 @@ const CostSheetView = () => {
                 calculatedAnnexes={calculatedAnnexes}
             />
         </div>
+      )}
+
+      {isMobile && (
+          <SpeedDial
+            actions={[
+                {
+                    id: 'export-pdf',
+                    label: 'Exportar PDF',
+                    icon: Download,
+                    onClick: () => setIsExportModalOpen(true),
+                    variant: 'success',
+                    category: 'Gestión'
+                },
+                {
+                    id: 'import-json',
+                    label: 'Importar Ficha',
+                    icon: Upload,
+                    onClick: handleImportJSON,
+                    variant: 'primary',
+                    category: 'Gestión'
+                },
+                {
+                    id: 'add-row',
+                    label: 'Añadir Fila',
+                    icon: Plus,
+                    onClick: () => {
+                        const idx = data.sections.findIndex(s => s.id === activeSubSectionId);
+                        if (idx !== -1) {
+                            const { addMainRow } = useCostSheetStore.getState();
+                            addMainRow(['sections', idx, 'rows']);
+                            toast.success("Fila añadida a la sección activa");
+                        } else {
+                            toast.error("Seleccione una sección primero");
+                        }
+                    },
+                    variant: 'primary',
+                    category: 'Edición'
+                },
+                {
+                    id: 'reset-sheet',
+                    label: 'Limpiar Todo',
+                    icon: Trash2,
+                    onClick: () => {
+                        if (confirm("¿Estás seguro de que deseas reiniciar la ficha?")) {
+                            reset();
+                            toast.success("Ficha reiniciada");
+                        }
+                    },
+                    variant: 'danger',
+                    category: 'Edición'
+                }
+            ]}
+          />
       )}
     </div>
   );
