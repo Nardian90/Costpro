@@ -10,9 +10,15 @@ const template: CostSheetDataContract = {
     "category": "ORGANISMO",
     "type": "EMPRESA",
     "unit": "Kilogramos",
+    "product_code": "",
+    "company": "",
+    "organism": "",
+    "union": "",
+    "destination": "",
     "production_level": "562",
     "capacity_utilization": "100.00%",
-    "sale_price": "3349592.94"
+    "sale_price": "3349592.94",
+    "client": ""
   },
   "sections": [
     {
