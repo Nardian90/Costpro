@@ -3,13 +3,14 @@
 
 import React from 'react';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
-import { Layout, FileSpreadsheet, PenTool, ClipboardList } from 'lucide-react';
+import { Layout, FileSpreadsheet, PenTool, ClipboardList, Menu } from 'lucide-react';
 
 interface CostSheetNavProps {
   navItems: any[];
   annexes: any[];
   activeSection: string;
   setActiveSection: (id: string) => void;
+  onOpenActions?: () => void;
 }
 
 const CostSheetNav: React.FC<CostSheetNavProps> = ({
@@ -17,9 +18,18 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
   annexes,
   activeSection,
   setActiveSection,
+  onOpenActions,
 }) => {
   // Create a combined list of all navigable sections mapped to ActionMenu format
   const navActions: Action[] = React.useMemo(() => [
+    ...(onOpenActions ? [{
+        id: 'actions-menu',
+        label: 'Menú',
+        icon: Menu,
+        onClick: onOpenActions,
+        variant: 'outline' as const,
+        className: 'bg-primary/10 text-primary border-primary/20'
+    }] : []),
     ...navItems.map(s => {
         const isActive = activeSection === s.id;
 
