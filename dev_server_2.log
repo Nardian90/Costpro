@@ -1,0 +1,6 @@
+
+> nextjs_tailwind_shadcn_ts@5.7.24 dev /app
+> next dev -p 3000 -- -p 3001 -H 0.0.0.0
+
+Invalid project directory provided, no such directory: /app/-p
+ ELIFECYCLE  Command failed with exit code 1.
