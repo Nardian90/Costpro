@@ -73,31 +73,33 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
     <div className="min-h-screen bg-background overflow-x-hidden">
       {/* Header / Nav */}
       <header className={`sticky top-0 z-50 bg-background/80 ${isHydrated ? 'backdrop-blur-[10px]' : ''} border-b border-border/50 transition-all duration-500`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between gap-2 sm:gap-4">
-          <div className="flex items-center gap-3 sm:gap-8 shrink-0">
-            <CostProLogo size={36} animated={false} className="sm:scale-100 scale-90" />
-            <ThemeToggle />
+        <div className="max-w-7xl mx-auto px-2.5 sm:px-6 h-20 flex items-center justify-between gap-1.5 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-8 shrink-0">
+            <CostProLogo size={32} animated={false} className="sm:scale-100 scale-90" />
+            <div className="hidden sm:block">
+              <ThemeToggle />
+            </div>
           </div>
-          <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-1 sm:gap-3">
+            <button
+              onClick={onLoginClick}
+              className="h-10 sm:h-11 px-3 sm:px-6 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 sm:gap-2 border-2 border-border bg-background/50 hover:bg-muted transition-all active:scale-95 group shrink-0 shadow-sm"
+            >
+              <span>Acceso</span>
+              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+            </button>
             <button
               onClick={handleInstallClick}
               className={cn(
-                "hidden md:flex items-center gap-2 px-6 h-11 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all active:scale-95",
+                "flex items-center justify-center gap-2 px-3.5 sm:px-6 h-10 sm:h-11 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all active:scale-95 shrink-0",
                 isInstallable
                   ? "bg-primary text-white shadow-[0_0_20px_rgba(16,185,129,0.3)]"
                   : "bg-muted text-muted-foreground border border-border"
               )}
+              title="Instalar APP"
             >
-              <Download className="w-3.5 h-3.5" />
-              <span>Instalar APP</span>
-            </button>
-            <button
-              onClick={onLoginClick}
-              className="neu-btn neu-btn-primary px-4 sm:px-8 h-11 text-[10px] sm:text-xs font-black uppercase tracking-widest flex items-center gap-2 group shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:shadow-[0_0_30px_rgba(16,185,129,0.4)] transition-all shrink-0"
-            >
-              <span className="hidden sm:block">Acceso al Sistema</span>
-              <span className="sm:hidden">Acceso</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              <Download className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+              <span className="hidden sm:block">Instalar APP</span>
             </button>
           </div>
         </div>
