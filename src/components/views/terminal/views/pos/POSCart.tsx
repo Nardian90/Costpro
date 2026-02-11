@@ -292,29 +292,27 @@ export const POSCart = ({
             <>
               <div className="flex-1 relative overflow-hidden flex flex-col">
                 <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-md border-b border-border p-3 sm:p-4 space-y-3 shadow-md">
-                  {!isMobile && (
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => onCheckout(selectedPayment, (discount && discount.value > 0) ? discount : null)}
-                        disabled={isProcessing || items.length === 0}
-                        className="flex-1 h-12 sm:h-14 rounded-xl sm:rounded-2xl bg-primary text-white font-black text-xs sm:text-sm shadow-xl shadow-primary/20 disabled:opacity-50 flex items-center justify-center gap-3 transition-all active:scale-[0.98]"
-                      >
-                        {isProcessing ? (
-                          <CostProLoader size={20} showText={false} showSubtext={false} />
-                        ) : (
-                          <Check className="w-5 h-5 sm:w-6 sm:h-6" />
-                        )}
-                        {isProcessing ? 'PROCESANDO...' : 'CONFIRMAR VENTA'}
-                      </button>
-                      <button
-                        onClick={() => setShowClearConfirm(true)}
-                        className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-destructive/10 text-destructive border-2 border-destructive/20 hover:bg-destructive/20 transition-all flex items-center justify-center active:scale-[0.95]"
-                        title="Anular Carrito"
-                      >
-                        <Trash2 className="w-5 h-5 sm:w-6 sm:h-6" />
-                      </button>
-                    </div>
-                  )}
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => onCheckout(selectedPayment, (discount && discount.value > 0) ? discount : null)}
+                      disabled={isProcessing || items.length === 0}
+                      className="flex-1 h-12 sm:h-14 rounded-xl sm:rounded-2xl bg-primary text-white font-black text-xs sm:text-sm shadow-xl shadow-primary/20 disabled:opacity-50 flex items-center justify-center gap-3 transition-all active:scale-[0.98]"
+                    >
+                      {isProcessing ? (
+                        <CostProLoader size={20} showText={false} showSubtext={false} />
+                      ) : (
+                        <Check className="w-5 h-5 sm:w-6 sm:h-6" />
+                      )}
+                      {isProcessing ? 'PROCESANDO...' : 'CONFIRMAR VENTA'}
+                    </button>
+                    <button
+                      onClick={() => setShowClearConfirm(true)}
+                      className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-destructive/10 text-destructive border-2 border-destructive/20 hover:bg-destructive/20 transition-all flex items-center justify-center active:scale-[0.95]"
+                      title="Anular Carrito"
+                    >
+                      <Trash2 className="w-5 h-5 sm:w-6 sm:h-6" />
+                    </button>
+                  </div>
 
                   {/* Accordion Toggle for Options */}
                   <button
@@ -430,104 +428,18 @@ export const POSCart = ({
                           animate={{ opacity: 1, scale: 1 }}
                           exit={{ opacity: 0, x: -20 }}
                           className={cn(
-                            "rounded-2xl border-2 transition-all group relative shadow-md",
-                            isEasyReading ? "p-6" : "p-4",
+                            "p-3 rounded-2xl border-2 transition-all group relative shadow-md",
+                            isEasyReading ? "p-6" : "p-3",
                             item.product.stock_current <= 0 ? "border-destructive/20 bg-destructive/5" :
                             item.product.stock_current < 5 ? "border-amber-200 bg-amber-50/30" : "border-border bg-background"
                           )}
                         >
-                          <div className={cn(
-                            "flex gap-4",
-                            isMobile ? "flex-col" : "items-center"
-                          )}>
-                            {/* Header row for mobile: Name + Remove button */}
-                            {isMobile && (
-                              <div className="flex items-start justify-between gap-2 border-b border-border/50 pb-3 mb-1">
-                                <div className="min-w-0">
-                                  <div className="flex items-center gap-2">
-                                    <h4 className={cn("font-black uppercase tracking-tight truncate text-foreground", isEasyReading ? "text-xl" : "text-base")}>
-                                      {item.product.name}
-                                      {item.variant && <span className="text-primary ml-1">({item.variant.name})</span>}
-                                    </h4>
-                                    {(item.product.public_image_url || item.product.image_url) && (
-                                      <button
-                                        onClick={() => setViewingImage({
-                                          url: item.product.public_image_url || item.product.image_url!,
-                                          name: item.product.name
-                                        })}
-                                        className="p-2 bg-muted/50 rounded-xl transition-colors shrink-0"
-                                        title="Ver imagen"
-                                      >
-                                        <ImageIcon className="w-4 h-4 text-primary" />
-                                      </button>
-                                    )}
-                                  </div>
-                                  <div className="flex items-center gap-2 mt-1">
-                                     <span className={cn("font-bold text-muted-foreground", isEasyReading ? "text-base" : "text-xs")}>
-                                      Precio Unit: {formatCurrency(item.price)}
-                                    </span>
-                                    <div className={cn(
-                                      "px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-tight border whitespace-nowrap",
-                                      item.product.stock_current > 10 ? "bg-green-500/10 text-green-600 border-green-500/20" :
-                                      item.product.stock_current > 0 ? "bg-amber-500/10 text-amber-600 border-amber-500/20" :
-                                      "bg-destructive/10 text-destructive border-destructive/20"
-                                    )}>
-                                      Stock: {item.product.stock_current}
-                                    </div>
-                                  </div>
-                                </div>
-                                <button
-                                  onClick={() => onRemoveItem(item.product_id, item.variant_id)}
-                                  className="w-10 h-10 flex items-center justify-center rounded-xl bg-destructive/10 text-destructive transition-all active:scale-90 shrink-0"
-                                  aria-label="Eliminar producto"
-                                >
-                                  <Trash2 className="w-5 h-5" />
-                                </button>
-                              </div>
-                            )}
-
-                            {/* Desktop Left: Quantity Controls & Stock */}
-                            {!isMobile && (
-                              <div className="flex flex-col items-center gap-1.5 shrink-0">
-                                <div className="flex items-center gap-1 bg-muted/50 rounded-2xl p-1 border border-border/50">
-                                  <button
-                                    onClick={() => onUpdateQuantity(item.product_id, item.variant_id, item.quantity - 1)}
-                                    className={cn(
-                                      "flex items-center justify-center rounded-xl bg-background shadow-sm hover:bg-primary/10 hover:text-primary transition-all active:scale-90 border border-border/50",
-                                      isEasyReading ? "w-10 h-10" : "w-8 h-8"
-                                    )}
-                                    aria-label="Disminuir cantidad"
-                                  >
-                                    <Minus className="w-4 h-4" />
-                                  </button>
-                                  <span className={cn("text-center font-black", isEasyReading ? "w-10 text-xl" : "w-8 text-sm")}>{item.quantity}</span>
-                                  <button
-                                    onClick={() => onUpdateQuantity(item.product_id, item.variant_id, item.quantity + 1)}
-                                    className={cn(
-                                      "flex items-center justify-center rounded-xl bg-background shadow-sm hover:bg-primary/10 hover:text-primary transition-all active:scale-90 border border-border/50",
-                                      isEasyReading ? "w-10 h-10" : "w-8 h-8"
-                                    )}
-                                    aria-label="Aumentar cantidad"
-                                  >
-                                    <Plus className="w-4 h-4" />
-                                  </button>
-                                </div>
-                                <div className={cn(
-                                  "px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-tight border whitespace-nowrap",
-                                  item.product.stock_current > 10 ? "bg-green-500/10 text-green-600 border-green-500/20" :
-                                  item.product.stock_current > 0 ? "bg-amber-500/10 text-amber-600 border-amber-500/20" :
-                                  "bg-destructive/10 text-destructive border-destructive/20"
-                                )}>
-                                  Stock: {item.product.stock_current}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Desktop Center: Name and Price */}
-                            {!isMobile && (
-                              <div className="min-w-0 flex-1 flex flex-col gap-1">
+                          <div className="flex flex-col sm:grid sm:grid-cols-[auto_1fr_auto] items-stretch sm:items-center gap-4 sm:gap-4">
+                            <div className="flex items-center justify-between gap-3">
+                              {/* Left: Name and Price */}
+                              <div className="min-w-0 flex flex-col gap-1">
                                 <div className="flex items-center gap-2">
-                                  <h4 className={cn("font-black uppercase tracking-tight truncate text-foreground", isEasyReading ? "text-xl" : "text-sm")}>
+                                  <h4 className={cn("font-black uppercase tracking-tight truncate text-foreground", isEasyReading ? "text-xl" : "text-sm sm:text-base")}>
                                     {item.product.name}
                                     {item.variant && <span className="text-primary ml-1">({item.variant.name})</span>}
                                   </h4>
@@ -544,56 +456,81 @@ export const POSCart = ({
                                     </button>
                                   )}
                                 </div>
-                                <span className={cn("font-bold text-muted-foreground", isEasyReading ? "text-base" : "text-[11px]")}>
+                                <span className={cn("font-bold text-muted-foreground", isEasyReading ? "text-base" : "text-[11px] sm:text-xs")}>
                                   {formatCurrency(item.price)}
                                 </span>
                               </div>
-                            )}
 
-                            {/* Mobile Bottom Row: Quantity + Subtotal */}
-                            {isMobile ? (
-                              <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/30">
-                                <div className="flex items-center gap-3 bg-muted/30 rounded-2xl p-1.5 border border-border/50">
+                              {/* Right: Remove Button (Mobile Only) */}
+                              <button
+                                onClick={() => onRemoveItem(item.product_id, item.variant_id)}
+                                className="sm:hidden text-muted-foreground/30 hover:text-destructive transition-all active:scale-90 p-2"
+                                aria-label="Eliminar producto"
+                              >
+                                <X className="w-5 h-5" />
+                              </button>
+                            </div>
+
+                            {/* Bottom Row Mobile / Middle Column Desktop: Quantity Controls & Stock */}
+                            <div className="flex items-center justify-between sm:justify-center gap-4">
+                              <div className="flex flex-col items-start sm:items-center gap-1.5 shrink-0">
+                                <div className="flex items-center gap-1 bg-muted/50 rounded-2xl p-1 border border-border/50">
                                   <button
                                     onClick={() => onUpdateQuantity(item.product_id, item.variant_id, item.quantity - 1)}
-                                    className="w-11 h-11 flex items-center justify-center rounded-xl bg-background shadow-md hover:bg-primary/10 hover:text-primary transition-all active:scale-90 border border-border/50"
+                                    className={cn(
+                                      "flex items-center justify-center rounded-xl bg-background shadow-sm hover:bg-primary/10 hover:text-primary transition-all active:scale-90 border border-border/50",
+                                      isEasyReading ? "w-12 h-12" : "w-11 h-11 sm:w-8 sm:h-8"
+                                    )}
                                     aria-label="Disminuir cantidad"
                                   >
-                                    <Minus className="w-5 h-5" />
+                                    <Minus className="w-5 h-5 sm:w-4 sm:h-4" />
                                   </button>
-                                  <span className="text-center font-black text-lg w-10">{item.quantity}</span>
+                                  <span className={cn("text-center font-black px-2", isEasyReading ? "min-w-[48px] text-xl" : "min-w-[32px] text-sm sm:text-base")} aria-label={`Cantidad: ${item.quantity}`}>{item.quantity}</span>
                                   <button
                                     onClick={() => onUpdateQuantity(item.product_id, item.variant_id, item.quantity + 1)}
-                                    className="w-11 h-11 flex items-center justify-center rounded-xl bg-background shadow-md hover:bg-primary/10 hover:text-primary transition-all active:scale-90 border border-border/50"
+                                    className={cn(
+                                      "flex items-center justify-center rounded-xl bg-background shadow-sm hover:bg-primary/10 hover:text-primary transition-all active:scale-90 border border-border/50",
+                                      isEasyReading ? "w-12 h-12" : "w-11 h-11 sm:w-8 sm:h-8"
+                                    )}
                                     aria-label="Aumentar cantidad"
                                   >
-                                    <Plus className="w-5 h-5" />
+                                    <Plus className="w-5 h-5 sm:w-4 sm:h-4" />
                                   </button>
                                 </div>
-                                <div className="text-right">
-                                  <div className="text-[10px] font-black uppercase text-muted-foreground mb-1 tracking-widest">Subtotal Item</div>
-                                  <div className={cn("font-black text-primary leading-none", isEasyReading ? "text-2xl" : "text-xl")}>
-                                    {formatCurrency(item.subtotal)}
-                                  </div>
+                                <div className={cn(
+                                  "px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-tight border whitespace-nowrap",
+                                  item.product.stock_current > 10 ? "bg-green-500/10 text-green-600 border-green-500/20" :
+                                  item.product.stock_current > 0 ? "bg-amber-500/10 text-amber-600 border-amber-500/20" :
+                                  "bg-destructive/10 text-destructive border-destructive/20"
+                                )}>
+                                  Stock: {item.product.stock_current}
                                 </div>
                               </div>
-                            ) : (
-                              /* Desktop Right: Subtotal */
-                              <div className="flex flex-col items-end gap-2 shrink-0">
-                                <button
-                                  onClick={() => onRemoveItem(item.product_id, item.variant_id)}
-                                  className="text-muted-foreground/30 hover:text-destructive transition-all active:scale-90"
-                                  aria-label="Eliminar producto"
-                                >
-                                  <X className="w-5 h-5" />
-                                </button>
-                                <div className="text-right">
-                                  <div className={cn("font-black text-primary leading-none", isEasyReading ? "text-2xl" : "text-lg")}>
-                                    {formatCurrency(item.subtotal)}
-                                  </div>
+
+                              {/* Subtotal (Mobile: Bottom Right) */}
+                              <div className="sm:hidden text-right">
+                                <div className="text-[10px] font-black uppercase text-muted-foreground mb-1">Subtotal</div>
+                                <div className={cn("font-black text-primary leading-none", isEasyReading ? "text-2xl" : "text-xl")}>
+                                  {formatCurrency(item.subtotal)}
                                 </div>
                               </div>
-                            )}
+                            </div>
+
+                            {/* Right Column Desktop: Remove & Subtotal */}
+                            <div className="hidden sm:flex flex-col items-end gap-2">
+                              <button
+                                onClick={() => onRemoveItem(item.product_id, item.variant_id)}
+                                className="text-muted-foreground/30 hover:text-destructive transition-all active:scale-90"
+                                aria-label="Eliminar producto"
+                              >
+                                <X className="w-5 h-5" />
+                              </button>
+                              <div className="text-right">
+                                <div className={cn("font-black text-primary leading-none", isEasyReading ? "text-2xl" : "text-lg")}>
+                                  {formatCurrency(item.subtotal)}
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         </motion.div>
                       ))}
