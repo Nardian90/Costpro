@@ -23,7 +23,7 @@ export const SpeedDial: React.FC<SpeedDialProps> = ({ actions, className }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   // Group actions by category
-  const categories = Array.from(new Set(actions.map(a => a.category || 'Acción')));
+  const categories = Array.from(new Set(actions.map(a => a.category || 'Acción'))).reverse();
 
   return (
     <div className={cn("fixed bottom-6 right-6 z-[110] flex flex-col items-end gap-3 sm:hidden", className)}>
