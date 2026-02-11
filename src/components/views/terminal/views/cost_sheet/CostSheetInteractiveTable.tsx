@@ -149,7 +149,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
           {isEditingLabel ? (
             <Input
               autoFocus
-              className="h-8 text-sm"
+              className="h-9 text-base"
               defaultValue={row.label}
               onBlur={(e) => {
                 handleValueChange('label', e.target.value);
@@ -184,8 +184,8 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                 suggestions={suggestions}
               />
             ) : (
-              <div className="flex items-center gap-1 bg-muted/30 p-2 rounded-xl border border-border/50">
-                <span className="text-xs font-bold">
+              <div className="flex items-center gap-1 bg-muted/30 p-3 rounded-xl border border-border/50">
+                <span className="text-base font-bold">
                   {hasChildren
                     ? formatAccounting(safeCalculated.calculatedVH ?? safeCalculated.valorHistorico ?? 0)
                     : (row.vhFormula
@@ -209,8 +209,8 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                 suggestions={suggestions}
               />
             ) : (
-              <div className="flex items-center justify-between bg-primary/10 p-2 rounded-xl border border-primary/20">
-                <span className="text-sm font-black text-primary">
+              <div className="flex items-center justify-between bg-primary/10 p-3 rounded-xl border border-primary/20">
+                <span className="text-base font-black text-primary">
                   {formatAccounting(safeCalculated.total)}
                 </span>
                 <div className="flex items-center gap-1">
