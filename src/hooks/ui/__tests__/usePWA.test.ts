@@ -70,4 +70,24 @@ describe('usePWA', () => {
     expect(mockPrompt).toHaveBeenCalled();
     expect(result.current.isInstallable).toBe(false);
   });
+
+  it('should return false and not redirect if deferredPrompt is null', async () => {
+    const mockOpen = vi.fn();
+    vi.stubGlobal('window', {
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      matchMedia: vi.fn().mockReturnValue({ matches: false }),
+      open: mockOpen,
+    });
+
+    const { result } = renderHook(() => usePWA());
+
+    let success;
+    await act(async () => {
+      success = await result.current.installApp();
+    });
+
+    expect(success).toBe(false);
+    expect(mockOpen).not.toHaveBeenCalled();
+  });
 });
