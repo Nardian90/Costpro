@@ -23,14 +23,13 @@ import { CostSheetExportModal, ExportOptions } from './CostSheetExportModal';
 import { CostSheetQuickMode } from './CostSheetQuickMode';
 import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
 import ActionMenu from '@/components/ui/ActionMenu';
-import { Layout, Eye, Edit, FileText, Trash2, Download, FileSpreadsheet, Upload, Save, BarChart3, Activity, MoreVertical, AlertTriangle, Plus } from 'lucide-react';
+import { Layout, Eye, Edit, FileText, Trash2, Download, FileSpreadsheet, Upload, Save, BarChart3, Activity, MoreVertical, AlertTriangle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store';
 import { exportToPDF, exportToCSV } from '@/services/export-service';
 import { useIsMobile } from '@/hooks/ui/useMobile';
-import { SpeedDial, SpeedDialAction } from '@/components/ui/SpeedDial';
 
 const CostSheetView = () => {
   const isMobile = useIsMobile();
@@ -294,7 +293,7 @@ const CostSheetView = () => {
   const allActions = React.useMemo(() => [
     {
         id: 'toggle-mode',
-        label: isEditing ? 'Ver Resultado' : 'Seguir Editando',
+        label: isEditing ? 'Previsualizar' : 'Seguir Editando',
         icon: isEditing ? Eye : Edit,
         onClick: () => {
             if (isEditing && isBlocked) {
@@ -335,67 +334,7 @@ const CostSheetView = () => {
     }
   ], [allActions]);
 
-  const secondaryActions = React.useMemo(() => allActions.filter(a => !['toggle-mode', 'kpis-header'].includes(a.id)), [allActions]);
-
-  const mobileActions: SpeedDialAction[] = React.useMemo(() => [
-    {
-      id: 'view-kpis',
-      label: 'Ver KPIs',
-      icon: BarChart3,
-      onClick: () => {
-        setActiveSection('kpis');
-        if (!isEditing) setIsEditing(true);
-      },
-      category: 'Acción',
-      variant: 'success'
-    },
-    {
-      id: 'actions-panel',
-      label: 'Acciones Avanzadas',
-      icon: MoreVertical,
-      onClick: () => setIsActionsPanelOpen(true),
-      category: 'Gestión',
-      variant: 'primary'
-    },
-    {
-      id: 'add-row-mobile',
-      label: 'Añadir Fila',
-      icon: Plus,
-      onClick: () => {
-        const currentSectionId = activeSubSectionId || (data.sections.length > 0 ? data.sections[0].id : null);
-        if (currentSectionId) {
-          const sectionIndex = data.sections.findIndex(s => s.id === currentSectionId);
-          if (sectionIndex !== -1) {
-            useCostSheetStore.getState().addMainRow(['sections', sectionIndex, 'rows']);
-            toast.success('Nueva fila añadida');
-            setActiveSection('main');
-          }
-        }
-      },
-      category: 'Edición',
-      variant: 'primary'
-    },
-    {
-      id: 'export-pdf-mobile',
-      label: 'Exportar PDF',
-      icon: Download,
-      onClick: () => setIsExportModalOpen(true),
-      category: 'Gestión',
-      variant: 'success'
-    },
-    {
-      id: 'clear-sheet',
-      label: 'Limpiar Ficha',
-      icon: Trash2,
-      onClick: () => {
-        if (confirm('¿Estás seguro de reiniciar la ficha?')) {
-          reset();
-        }
-      },
-      category: 'Edición',
-      variant: 'destructive'
-    }
-  ], [isEditing, activeSubSectionId, data.sections]);
+  const secondaryActions = React.useMemo(() => allActions, [allActions]);
 
   const navItems = React.useMemo(() => [
     { id: 'header', label: 'Encabezado', icon: Layout },
@@ -506,8 +445,6 @@ const CostSheetView = () => {
         annexes={data?.annexes || []}
       />
 
-      <SpeedDial actions={mobileActions} />
-
       {isEditing ? (
         <div className="animate-in fade-in duration-700 space-y-6">
           {viewMode === 'expert' && (
@@ -518,6 +455,7 @@ const CostSheetView = () => {
                         annexes={data?.annexes || []}
                         activeSection={activeSection}
                         setActiveSection={setActiveSection}
+                        onOpenActions={() => setIsActionsPanelOpen(true)}
                     />
                 </div>
 
