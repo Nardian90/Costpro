@@ -33,6 +33,20 @@ import { useIsMobile } from '@/hooks/ui/useMobile';
 
 const CostSheetView = () => {
   const isMobile = useIsMobile();
+  const [activeSection, setActiveSection] = useState('kpis');
+  const [activeSubSectionId, setActiveSubSectionId] = useState('');
+
+  const handleSetActiveSection = (id: string) => {
+    setActiveSection(id);
+    if (id === 'main' && !activeSubSectionId) {
+        // Find the group 1-3 if it exists
+        const group13 = groupedSections.find(g => g.id === 'group-1-3');
+        if (group13) {
+            setActiveSubSectionId('group-1-3');
+        }
+    }
+  };
+
   const { data, loadExample, reset, setSheet } = useCostSheetStore();
   const {
     calculatedValues,
@@ -47,9 +61,6 @@ const CostSheetView = () => {
   const [isEditing, setIsEditing] = useState(true);
   const [viewMode, setViewMode] = useState<'expert' | 'assisted' | 'reading' | 'quick'>('expert');
   const [layoutMode, setLayoutMode] = useState<ViewMode>('grid');
-  const [activeSection, setActiveSection] = useState('kpis');
-  const [activeSubSectionId, setActiveSubSectionId] = useState('');
-
   // Grouping logic for "Smart Grouping" of small sections
   const groupedSections = React.useMemo(() => {
     if (!data?.sections) return [];
@@ -308,7 +319,7 @@ const CostSheetView = () => {
         label: 'KPIs',
         icon: BarChart3,
         onClick: () => {
-            setActiveSection('kpis');
+            handleSetActiveSection('kpis');
             if (!isEditing) setIsEditing(true);
         },
         variant: 'success' as const,
@@ -349,7 +360,7 @@ const CostSheetView = () => {
         icon: Layout,
         onClick: () => {
             setActiveSubSectionId(group.id);
-            setActiveSection('main');
+            handleSetActiveSection('main');
         },
         active: activeSubSectionId === group.id,
         variant: 'outline' as const
@@ -361,7 +372,7 @@ const CostSheetView = () => {
 
   if (!data || !data.header || !data.annexes || !data.sections) {
     return (
-      <div className="w-full max-w-7xl mx-auto px-1 sm:px-6 lg:px-8 pb-32 pt-4">
+      <div className="w-full max-w-none px-2 pb-32 pt-4">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8 px-2">
           <div className="flex items-center gap-4">
             <Skeleton className="w-12 h-12 rounded-2xl" />
@@ -379,7 +390,7 @@ const CostSheetView = () => {
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-1 sm:px-6 lg:px-8 pb-32 pt-4">
+    <div className="w-full max-w-none px-2 pb-32 pt-4">
       <CostSheetActionsPanel
         isOpen={isActionsPanelOpen}
         onClose={() => setIsActionsPanelOpen(false)}
@@ -410,7 +421,7 @@ const CostSheetView = () => {
         type="annexes"
         items={data?.annexes || []}
         activeId={activeSection}
-        onSelect={setActiveSection}
+        onSelect={handleSetActiveSection}
       />
 
       <CostSheetBanner />
@@ -454,7 +465,7 @@ const CostSheetView = () => {
                         navItems={navItems}
                         annexes={data?.annexes || []}
                         activeSection={activeSection}
-                        setActiveSection={setActiveSection}
+                        setActiveSection={handleSetActiveSection}
                         onOpenActions={() => setIsActionsPanelOpen(true)}
                     />
                 </div>
