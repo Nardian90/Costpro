@@ -3,6 +3,7 @@
 
 import React, { useState, useMemo, memo } from 'react';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
+import { useIsMobile } from '@/hooks/ui/useMobile';
 import { ChevronRight, HelpCircle, CornerDownRight, AlertTriangle, ListFilter, LayoutGrid, ArrowRight, FunctionSquare, Plus, Trash2, Edit2, ChevronUp, ChevronDown, Download, Upload, CheckCircle2, XCircle } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -50,6 +51,7 @@ interface RowProps {
  * Renders a single, potentially recursive, row in the cost sheet table.
  */
 const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, calculated, calculatedValues, path, annexes, suggestions }) => {
+  const isMobile = useIsMobile();
   const [isExpanded, setIsExpanded] = useState(true);
   const [isEditingTotal, setIsEditingTotal] = useState(false);
   const [isEditingVH, setIsEditingVH] = useState(false);
@@ -130,6 +132,144 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
   const warningErrors = (safeCalculated.validationErrors || []).filter(e => e.type === 'WARNING');
   const infoErrors = (safeCalculated.validationErrors || []).filter(e => e.type === 'INFO');
   const hasEngineWarnings = safeCalculated.hasWarnings || (!hasChildren && !row.is_percent && safeCalculated.total === 0 && ((row.valorHistorico ?? 0) > 0 || !!row.baseDeCalculoRef));
+
+  const renderValue = (label: string, value: any, onEdit: () => void, isFormula: boolean, isEditing: boolean, formula: string, onSave: (v: string) => void, onCancel: () => void, isPrimary: boolean = false) => (
+    <div className="space-y-1">
+        <span className={cn("text-[9px] font-black uppercase tracking-widest", isPrimary ? "text-primary" : "text-muted-foreground")}>
+            {label}
+        </span>
+        <div
+            onClick={onEdit}
+            className={cn(
+                "relative h-11 flex items-center px-3 rounded-xl border transition-all cursor-pointer",
+                isEditing ? "p-0 border-primary ring-2 ring-primary/20" :
+                isPrimary ? "bg-primary/5 border-primary/20 font-black text-primary text-sm" :
+                "bg-muted/30 border-border/50 font-bold text-xs"
+            )}
+        >
+            {isEditing ? (
+                <FormulaEditor
+                    initialValue={formula}
+                    onSave={onSave}
+                    onCancel={onCancel}
+                    suggestions={suggestions}
+                />
+            ) : (
+                <div className="flex items-center gap-2">
+                    {isFormula && <FunctionSquare className="w-3.5 h-3.5 opacity-40" />}
+                    <span>{formatAccounting(value)}</span>
+                </div>
+            )}
+        </div>
+    </div>
+  );
+
+  if (isMobile) {
+    return (
+      <div className={cn(
+        "flex flex-col gap-3 p-4 rounded-2xl border-2 transition-all group mb-4 relative",
+        isResultRow ? "bg-primary/5 border-primary/20" : "bg-card border-border/50 shadow-sm",
+        level > 0 && "ml-4 border-l-4"
+      )}>
+        <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-2 min-w-0">
+                <span className="text-[10px] font-black text-muted-foreground/40 mt-1 shrink-0 bg-muted px-1.5 py-0.5 rounded">
+                    {numbering}
+                </span>
+                <div className="min-w-0">
+                    {isEditingLabel ? (
+                        <Input
+                            autoFocus
+                            className="h-8 text-sm"
+                            defaultValue={row.label}
+                            onBlur={(e) => {
+                                handleValueChange('label', e.target.value);
+                                setIsEditingLabel(false);
+                            }}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    handleValueChange('label', (e.target as HTMLInputElement).value);
+                                    setIsEditingLabel(false);
+                                }
+                            }}
+                        />
+                    ) : (
+                        <h4 className="font-black text-sm text-foreground break-words uppercase tracking-tight leading-tight" onClick={() => setIsEditingLabel(true)}>
+                            {row.label}
+                        </h4>
+                    )}
+                </div>
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+                {hasChildren && (
+                    <button onClick={handleToggle} className="w-8 h-8 flex items-center justify-center rounded-lg bg-muted/50 text-muted-foreground">
+                        <ChevronRight className={cn('w-4 h-4 transition-transform', isExpanded && 'rotate-90')} />
+                    </button>
+                )}
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive/40 hover:text-destructive" onClick={() => removeMainRow(path)}>
+                    <Trash2 className="h-4 w-4" />
+                </Button>
+            </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 pt-3 border-t border-border/30">
+            {renderValue(
+                "Histórico",
+                hasChildren ? (safeCalculated.calculatedVH ?? safeCalculated.valorHistorico ?? 0) : (row.vhFormula ? (safeCalculated.calculatedVH ?? 0) : (row.hasOwnProperty('valorHistorico') ? (row.valorHistorico ?? 0) : (row.value ?? 0))),
+                () => setIsEditingVH(true),
+                !!row.vhFormula,
+                isEditingVH,
+                row.vhFormula || String(row.valorHistorico || 0),
+                handleVHSave,
+                () => setIsEditingVH(false)
+            )}
+            {renderValue(
+                "Total",
+                safeCalculated.total,
+                () => setIsEditingTotal(true),
+                !!row.formula,
+                isEditingTotal,
+                row.formula || String(safeCalculated.total),
+                handleTotalSave,
+                () => setIsEditingTotal(false),
+                true
+            )}
+        </div>
+
+        {/* Validation Errors on Mobile */}
+        {safeCalculated.validationErrors && safeCalculated.validationErrors.length > 0 && (
+            <div className="mt-2 p-2 rounded-xl bg-destructive/5 border border-destructive/10">
+                {safeCalculated.validationErrors.map((ve, idx) => (
+                    <div key={idx} className="flex gap-2 text-[10px] text-destructive font-medium mb-1 last:mb-0">
+                        <AlertTriangle className="w-3 h-3 shrink-0" />
+                        <span>{ve.message}</span>
+                    </div>
+                ))}
+            </div>
+        )}
+
+        {/* Children rendering */}
+        {isExpanded && hasChildren && (
+            <div className="mt-2 space-y-4">
+                {(row.children || []).filter(c => !!c).map((child, childIndex) => (
+                    <CostSheetRow
+                        key={child.id}
+                        row={child}
+                        level={level + 1}
+                        index={childIndex}
+                        numbering={`${numbering}.${childIndex + 1}`}
+                        calculated={calculatedValues?.[child.id] || {} as any}
+                        calculatedValues={calculatedValues}
+                        path={[...path, 'children', childIndex]}
+                        annexes={annexes}
+                        suggestions={suggestions}
+                    />
+                ))}
+            </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <>
@@ -406,6 +546,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
   const addMainRow = useCostSheetStore(state => state.addMainRow);
   const sectionInputRef = React.useRef<HTMLInputElement>(null);
   const [importingSectionIndex, setImportingSectionIndex] = useState<number | null>(null);
+  const isMobile = useIsMobile();
 
   // Smooth scroll to active section/group when selected
   React.useEffect(() => {
@@ -520,7 +661,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
   }
 
   return (
-    <div data-testid="cost-sheet-interactive-table" className="space-y-6">
+    <div data-testid="cost-sheet-interactive-table" className={cn("space-y-6", isMobile && "px-4")}>
         <input
             type="file"
             ref={sectionInputRef}
@@ -547,49 +688,53 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                 return (
                 <div key={section.id} id={section.id} className="animate-in fade-in slide-in-from-bottom-2 duration-500 mb-12 last:mb-0 scroll-mt-24">
                     <div className="flex items-center justify-between mb-4 px-1">
-                        <div className="flex items-center gap-3">
-                            <div className="w-1.5 h-6 bg-primary rounded-full" />
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <div className="w-1.5 h-6 bg-primary rounded-full shrink-0" />
                             <Input
-                                className="h-8 text-sm font-black uppercase tracking-[0.2em] text-foreground/80 bg-transparent border-none focus-visible:ring-0 p-0 w-auto min-w-[250px]"
+                                className="h-8 text-xs sm:text-sm font-black uppercase tracking-[0.1em] sm:tracking-[0.2em] text-foreground/80 bg-transparent border-none focus-visible:ring-0 p-0 w-full"
                                 value={section.label}
                                 onChange={(e) => updateValue(['sections', sectionIndex, 'label'], e.target.value)}
                             />
                         </div>
-                        <div className="flex flex-wrap items-center gap-2">
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-11 sm:h-8 rounded-xl font-bold gap-2 text-[10px] uppercase tracking-wider"
-                                onClick={() => exportSectionToExcel(section, calculatedValues)}
-                            >
-                                <Download className="w-3.5 h-3.5" />
-                                Exportar
-                            </Button>
+                        <div className="flex flex-wrap items-center gap-2 shrink-0">
+                            {!isMobile && (
+                                <>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-11 sm:h-8 rounded-xl font-bold gap-2 text-[10px] uppercase tracking-wider"
+                                        onClick={() => exportSectionToExcel(section, calculatedValues)}
+                                    >
+                                        <Download className="w-3.5 h-3.5" />
+                                        Exportar
+                                    </Button>
 
-                            <div className="relative">
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="h-11 sm:h-8 rounded-xl font-bold gap-2 text-[10px] uppercase tracking-wider"
-                                    onClick={() => {
-                                        setImportingSectionIndex(sectionIndex);
-                                        setTimeout(() => sectionInputRef.current?.click(), 0);
-                                    }}
-                                >
-                                    <Upload className="w-3.5 h-3.5" />
-                                    Importar
-                                </Button>
-                            </div>
+                                    <div className="relative">
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="h-11 sm:h-8 rounded-xl font-bold gap-2 text-[10px] uppercase tracking-wider"
+                                            onClick={() => {
+                                                setImportingSectionIndex(sectionIndex);
+                                                setTimeout(() => sectionInputRef.current?.click(), 0);
+                                            }}
+                                        >
+                                            <Upload className="w-3.5 h-3.5" />
+                                            Importar
+                                        </Button>
+                                    </div>
 
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-11 sm:h-8 rounded-xl font-bold gap-2 text-[10px] uppercase tracking-wider"
-                                onClick={() => addMainRow(['sections', sectionIndex, 'rows'])}
-                            >
-                                <Plus className="w-3.5 h-3.5" />
-                                Añadir Fila
-                            </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-11 sm:h-8 rounded-xl font-bold gap-2 text-[10px] uppercase tracking-wider"
+                                        onClick={() => addMainRow(['sections', sectionIndex, 'rows'])}
+                                    >
+                                        <Plus className="w-3.5 h-3.5" />
+                                        Añadir Fila
+                                    </Button>
+                                </>
+                            )}
                             <Button
                                 size="sm"
                                 variant="ghost"
@@ -605,22 +750,41 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                         </div>
                     </div>
 
-                    <div className="neu-card p-0 border-border/50 shadow-sm hover:shadow-md transition-shadow">
+                    <div className={cn(isMobile ? "" : "neu-card p-0 border-border/50 shadow-sm hover:shadow-md transition-shadow")}>
                         <div className="table-scroll-wrapper rounded-2xl overflow-hidden">
-                        <Table className="w-full min-w-[500px] sm:min-w-[700px] border-collapse">
-                            <TableHeader className={cn(
-                                "bg-muted/90 backdrop-blur-md text-muted-foreground font-black uppercase text-[9px] sm:text-[10px] tracking-widest border-b border-border",
-                                isStickyHeaderSection ? "sticky top-0 z-20 shadow-sm" : "hidden"
-                            )}>
-                                <TableRow className="hover:bg-transparent border-none">
-                                    <TableHead className="w-12 px-2 py-3 sm:px-4 sm:py-4 text-center font-black uppercase tracking-widest">No.</TableHead>
-                                    <TableHead className="px-2 py-3 sm:px-4 sm:py-4 text-left font-black uppercase tracking-widest min-w-[180px] sm:min-w-[250px]">Concepto</TableHead>
-                                    <TableHead className="px-2 py-3 sm:px-4 sm:py-4 text-right font-black uppercase tracking-widest w-32 sm:w-40">Valor Histórico</TableHead>
-                                    <TableHead className="px-2 py-3 sm:px-4 sm:py-4 text-right font-black uppercase tracking-widest w-36 sm:w-48">Total</TableHead>
-                                    <TableHead className="px-2 py-3 sm:px-4 sm:py-4 text-center font-black uppercase tracking-widest w-12 sm:w-20 hidden sm:table-cell">Ayuda</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
+                        {!isMobile ? (
+                            <Table className="w-full min-w-[500px] sm:min-w-[700px] border-collapse">
+                                <TableHeader className={cn(
+                                    "bg-muted/90 backdrop-blur-md text-muted-foreground font-black uppercase text-[9px] sm:text-[10px] tracking-widest border-b border-border",
+                                    isStickyHeaderSection ? "sticky top-0 z-20 shadow-sm" : "hidden"
+                                )}>
+                                    <TableRow className="hover:bg-transparent border-none">
+                                        <TableHead className="w-12 px-2 py-3 sm:px-4 sm:py-4 text-center font-black uppercase tracking-widest">No.</TableHead>
+                                        <TableHead className="px-2 py-3 sm:px-4 sm:py-4 text-left font-black uppercase tracking-widest min-w-[180px] sm:min-w-[250px]">Concepto</TableHead>
+                                        <TableHead className="px-2 py-3 sm:px-4 sm:py-4 text-right font-black uppercase tracking-widest w-32 sm:w-40">Valor Histórico</TableHead>
+                                        <TableHead className="px-2 py-3 sm:px-4 sm:py-4 text-right font-black uppercase tracking-widest w-36 sm:w-48">Total</TableHead>
+                                        <TableHead className="px-2 py-3 sm:px-4 sm:py-4 text-center font-black uppercase tracking-widest w-12 sm:w-20 hidden sm:table-cell">Ayuda</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {(section?.rows || []).filter(r => !!r).map((row: RowData, rowIndex: number) => (
+                                        <CostSheetRow
+                                            key={row.id}
+                                            row={row}
+                                            level={0}
+                                            index={rowIndex}
+                                            numbering={`${sectionIndex + 1}.${rowIndex + 1}`}
+                                            calculated={calculatedValues?.[row.id] || {} as any}
+                                            calculatedValues={calculatedValues}
+                                            path={['sections', sectionIndex, 'rows', rowIndex]}
+                                            annexes={annexes}
+                                            suggestions={suggestions}
+                                        />
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        ) : (
+                            <div className="space-y-4">
                                 {(section?.rows || []).filter(r => !!r).map((row: RowData, rowIndex: number) => (
                                     <CostSheetRow
                                         key={row.id}
@@ -635,8 +799,8 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                                         suggestions={suggestions}
                                     />
                                 ))}
-                            </TableBody>
-                        </Table>
+                            </div>
+                        )}
                         </div>
                     </div>
                 </div>
