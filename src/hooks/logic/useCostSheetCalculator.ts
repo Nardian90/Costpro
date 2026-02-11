@@ -301,7 +301,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
       const qVal = parseFloat(String(earlyHeader.quantity));
       const pVal = parseFloat(String(earlyHeader.production_level));
       if (!isNaN(qVal) && !isNaN(pVal) && pVal !== 0) {
-          earlyHeader.capacity_utilization = (qVal / pVal) * 100;
+          earlyHeader.capacity_utilization = Number(((qVal / pVal) * 100).toFixed(2));
       }
 
       // Map UI state to Engine-compatible JSON

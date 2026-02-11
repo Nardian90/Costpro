@@ -48,13 +48,15 @@ interface MassiveResult {
 }
 
 interface CostSheetMassiveGeneratorProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
+  isSection?: boolean;
 }
 
 export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps> = ({
-  isOpen,
-  onClose
+  isOpen = false,
+  onClose = () => {},
+  isSection = false
 }) => {
   const { data: currentSheet } = useCostSheetStore();
   const { user } = useAuthStore();
@@ -409,33 +411,28 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
       setIsProcessing(false);
   };
 
-  return (
-    <Dialog open={isOpen} onOpenChange={(open) => !isProcessing && !open && onClose()}>
-      <input
-        type="file"
-        ref={fileInputRef}
-        onChange={handleFileChange}
-        accept=".xlsx,.xls"
-        className="hidden"
-      />
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col overflow-hidden bg-sidebar/95 backdrop-blur-2xl border-sidebar-border shadow-2xl rounded-3xl">
-        <DialogHeader className="p-6 border-b border-sidebar-border/50">
+  const content = (
+    <div className={cn(
+        "flex flex-col overflow-hidden",
+        isSection ? "w-full bg-card rounded-3xl border border-border shadow-sm" : "max-w-4xl max-h-[90vh] bg-sidebar/95 backdrop-blur-2xl border-sidebar-border shadow-2xl rounded-3xl"
+    )}>
+      <div className="p-6 border-b border-sidebar-border/50">
           <div className="flex items-center gap-4">
              <div className="p-3 rounded-2xl bg-primary/10">
                 <FileSpreadsheet className="w-6 h-6 text-primary" />
              </div>
              <div>
-                <DialogTitle className="text-xl font-black uppercase tracking-tight text-foreground">
+                <h3 className="text-xl font-black uppercase tracking-tight text-foreground">
                     Generación Masiva de Fichas
-                </DialogTitle>
-                <DialogDescription className="text-muted-foreground font-medium">
+                </h3>
+                <p className="text-muted-foreground font-medium text-sm">
                     Crea fichas de costo para todos los productos del catálogo usando la configuración actual.
-                </DialogDescription>
+                </p>
              </div>
           </div>
-        </DialogHeader>
+      </div>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
+      <div className={cn("flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar", isSection ? "min-h-[600px]" : "")}>
             {/* Source Selection */}
             <div className="space-y-4">
                 <div className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/70 mb-2 px-1">
@@ -715,7 +712,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
             </div>
         </div>
 
-        <DialogFooter className="p-6 border-t border-sidebar-border/50 bg-sidebar/5 flex sm:justify-between items-center">
+        <div className="p-6 border-t border-sidebar-border/50 bg-sidebar/5 flex flex-col sm:flex-row gap-4 sm:justify-between items-center">
             <div className="flex gap-2">
                 <Button
                     variant="outline"
@@ -749,14 +746,16 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                     </Button>
                 ) : (
                     <>
-                        <Button
-                            variant="outline"
-                            onClick={onClose}
-                            disabled={isProcessing}
-                            className="rounded-2xl border-sidebar-border hover:bg-sidebar/50"
-                        >
-                            Cerrar
-                        </Button>
+                        {!isSection && (
+                            <Button
+                                variant="outline"
+                                onClick={onClose}
+                                disabled={isProcessing}
+                                className="rounded-2xl border-sidebar-border hover:bg-sidebar/50"
+                            >
+                                Cerrar
+                            </Button>
+                        )}
                         <Button
                             onClick={runMassiveGeneration}
                             disabled={isProcessing || products.length === 0}
@@ -768,7 +767,36 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                     </>
                 )}
             </div>
-        </DialogFooter>
+        </div>
+    </div>
+  );
+
+  if (isSection) {
+      return (
+        <div className="w-full">
+            <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept=".xlsx,.xls"
+                className="hidden"
+            />
+            {content}
+        </div>
+      );
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => !isProcessing && !open && onClose()}>
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept=".xlsx,.xls"
+        className="hidden"
+      />
+      <DialogContent className="max-w-4xl max-h-[90vh] p-0 overflow-hidden border-none bg-transparent">
+        {content}
       </DialogContent>
     </Dialog>
   );

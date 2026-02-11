@@ -272,7 +272,6 @@ export default function POSView() {
                   showSettings={false}
                 />
               </div>
-              {!isMobile && cartButton}
             </div>
 
             <CategoryChips
