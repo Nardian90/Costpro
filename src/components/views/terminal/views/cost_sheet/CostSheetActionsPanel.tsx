@@ -40,6 +40,12 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
   // Categorize actions
   const actionGroups = [
     {
+      title: 'Vistas y Análisis',
+      items: [
+        ...actions.filter(a => ['toggle-mode', 'kpis-header'].includes(a.id))
+      ]
+    },
+    {
       title: 'Gestión',
       items: [
         ...actions.filter(a => a.id === 'audit'),
