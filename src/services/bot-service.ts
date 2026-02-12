@@ -7,7 +7,7 @@ import { dashboardKpiResponseSchema } from '@/validation/schemas';
 import { SalesKPIs } from '@/types';
 
 async function getKnowledgeBaseContext(query: string): Promise<string> {
-  const dirPath = path.join(process.cwd(), 'knowledge/resolutions');
+  const dirPath = path.join(process.cwd(), 'docs/knowledge/resolutions');
   if (!fs.existsSync(dirPath)) return '';
 
   try {
