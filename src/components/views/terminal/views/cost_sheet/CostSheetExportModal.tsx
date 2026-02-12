@@ -65,25 +65,25 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-md bg-sidebar/95 backdrop-blur-2xl border-sidebar-border shadow-2xl rounded-3xl overflow-hidden flex flex-col max-h-[90vh]">
-        <DialogHeader className="p-6 border-b border-sidebar-border/50">
+      <DialogContent className="max-w-md p-0 gap-0 bg-sidebar/95 backdrop-blur-2xl border-sidebar-border shadow-2xl rounded-3xl overflow-hidden flex flex-col max-h-[90vh] sm:max-h-[85vh] w-[95vw] sm:w-full">
+        <DialogHeader className="p-4 sm:p-6 border-b border-sidebar-border/50 shrink-0">
           <div className="flex items-center gap-4">
-             <div className="p-3 rounded-2xl bg-primary/10">
-                <Download className="w-6 h-6 text-primary" />
+             <div className="p-2 sm:p-3 rounded-2xl bg-primary/10 shrink-0">
+                <Download className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
              </div>
-             <div>
-                <DialogTitle className="text-xl font-black uppercase tracking-tight text-foreground">
+             <div className="min-w-0">
+                <DialogTitle className="text-lg sm:text-xl font-black uppercase tracking-tight text-foreground truncate">
                     Opciones de Exportación
                 </DialogTitle>
-                <DialogDescription className="text-muted-foreground font-medium">
+                <DialogDescription className="text-xs sm:text-sm text-muted-foreground font-medium line-clamp-1 sm:line-clamp-none">
                     Selecciona qué elementos deseas incluir en el PDF.
                 </DialogDescription>
              </div>
           </div>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 p-6">
-            <div className="space-y-6">
+        <ScrollArea className="flex-1 min-h-0">
+            <div className="p-4 sm:p-6 space-y-6">
                 {/* Main Documents */}
                 <div className="space-y-4">
                     <div className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/70 px-1">
@@ -196,19 +196,19 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
             </div>
         </ScrollArea>
 
-        <DialogFooter className="p-6 border-t border-sidebar-border/50 bg-sidebar/5">
+        <DialogFooter className="p-4 sm:p-6 border-t border-sidebar-border/50 bg-sidebar/5 shrink-0">
             <div className="flex w-full gap-3">
                 <Button
                     variant="outline"
                     onClick={onClose}
-                    className="flex-1 rounded-2xl font-black uppercase tracking-widest text-[10px]"
+                    className="flex-1 rounded-2xl font-black uppercase tracking-widest text-[10px] h-10 sm:h-11"
                 >
                     Cancelar
                 </Button>
                 <Button
                     onClick={() => onExport(options)}
                     disabled={!options.includeFC && !options.includeAudit && options.includeAnnexes.length === 0}
-                    className="flex-1 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20"
+                    className="flex-1 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20 h-10 sm:h-11"
                 >
                     Generar PDF
                 </Button>
