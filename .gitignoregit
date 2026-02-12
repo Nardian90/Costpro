@@ -1,2 +1,0 @@
-.z-ai-config  rm -r --cached .
-dev.log  rm -r --cached .
