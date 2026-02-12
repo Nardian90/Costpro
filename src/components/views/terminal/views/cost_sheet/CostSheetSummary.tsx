@@ -3,7 +3,8 @@
 import React, { memo } from 'react';
 import { CalculatedRowValue } from '@/types/cost-sheet';
 import { formatCurrency } from '@/lib/utils';
-import { TrendingUp, DollarSign, PieChart, Activity } from 'lucide-react';
+import { TrendingUp, DollarSign, PieChart, Activity, ArrowUpRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface CostSheetSummaryProps {
   calculatedValues: Record<string, CalculatedRowValue>;
@@ -28,63 +29,106 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({ calculatedValu
       label: 'Costo Directo',
       value: directCost,
       icon: DollarSign,
-      color: 'text-green-700',
-      bgColor: 'bg-green-50',
-      description: 'Materiales, Salario y Otros Directos'
+      color: 'text-primary',
+      bgColor: 'bg-primary/10',
+      description: 'Materiales, Salario y Otros Directos',
+      percentage: totalCost > 0 ? (directCost / totalCost) * 100 : 0
     },
     {
       label: 'Costo Indirecto',
       value: indirectCost,
       icon: Activity,
-      color: 'text-amber-600',
-      bgColor: 'bg-amber-50',
-      description: 'Asociados a la producción'
+      color: 'text-primary',
+      bgColor: 'bg-primary/10',
+      description: 'Asociados a la producción',
+      percentage: totalCost > 0 ? (indirectCost / totalCost) * 100 : 0
     },
     {
       label: 'Costo Total',
       value: totalCost,
       icon: PieChart,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50',
-      description: 'Incluye Gastos Tributarios y Admon.'
+      color: 'text-primary',
+      bgColor: 'bg-primary/10',
+      description: 'Gastos Tributarios y Admon.',
+      percentage: 100
     },
     {
       label: 'Precio Final',
       value: finalPrice,
       icon: DollarSign,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
-      description: `Margen Comercial: ${margin.toFixed(2)}%`
+      color: 'text-primary',
+      bgColor: 'bg-primary/10',
+      description: `Margen Comercial: ${margin.toFixed(2)}%`,
+      highlight: true
     },
     {
       label: 'Utilidad',
       value: utility,
       icon: TrendingUp,
-      color: 'text-emerald-600',
-      bgColor: 'bg-emerald-50',
-      description: totalCost > 0 ? `Rentabilidad: ${((utility / totalCost) * 100).toFixed(1)}% sobre costo` : 'Rentabilidad: 0% sobre costo'
+      color: 'text-primary',
+      bgColor: 'bg-primary/10',
+      description: totalCost > 0 ? `Rentabilidad: ${((utility / totalCost) * 100).toFixed(1)}%` : 'Rentabilidad: 0%',
+      percentage: finalPrice > 0 ? (utility / finalPrice) * 100 : 0
     }
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 px-2 sm:px-0">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 px-2 sm:px-0">
       {kpis.map((kpi, index) => (
-        <div key={index} className="neu-card !p-6 sm:!p-5 flex flex-col justify-between hover:scale-[1.02] transition-transform duration-300 min-h-[160px] sm:min-h-0">
-          <div className="flex justify-between items-start mb-4 sm:mb-4">
-            <div className={`p-3 sm:p-2 rounded-2xl sm:rounded-xl ${kpi.bgColor}`}>
-              <kpi.icon className={`w-6 h-6 sm:w-5 sm:h-5 ${kpi.color}`} />
+        <div
+            key={index}
+            className={cn(
+                "group relative overflow-hidden rounded-3xl p-5 transition-all duration-500 hover:scale-[1.02] border border-white/5",
+                kpi.highlight ? "bg-primary shadow-[0_0_30px_rgba(57,255,20,0.2)]" : "bg-zinc-900/50 backdrop-blur-xl"
+            )}
+        >
+          {/* Subtle Glow Background */}
+          {!kpi.highlight && (
+              <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary/5 rounded-full blur-[40px] group-hover:bg-primary/10 transition-colors" />
+          )}
+
+          <div className="flex justify-between items-start mb-6">
+            <div className={cn(
+                "p-2.5 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110",
+                kpi.highlight ? "bg-black/20" : "bg-primary/10"
+            )}>
+              <kpi.icon className={cn("w-5 h-5", kpi.highlight ? "text-black" : "text-primary")} />
             </div>
-            <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-slate-400">KPI #{index + 1}</span>
+            <ArrowUpRight className={cn("w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity", kpi.highlight ? "text-black" : "text-primary")} />
           </div>
-          <div>
-            <p className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-tight mb-1 sm:mb-1">{kpi.label}</p>
-            <p className="text-2xl sm:text-2xl font-black text-slate-900 dark:text-white tabular-nums tracking-tighter sm:tracking-normal">
+
+          <div className="space-y-1">
+            <p className={cn(
+                "text-[10px] font-black uppercase tracking-[0.15em]",
+                kpi.highlight ? "text-black/60" : "text-zinc-500"
+            )}>
+                {kpi.label}
+            </p>
+            <p className={cn(
+                "text-2xl font-black tabular-nums tracking-tighter",
+                kpi.highlight ? "text-black" : "text-white"
+            )}>
               {formatCurrency(kpi.value)}
             </p>
           </div>
-          <p className="mt-4 sm:mt-3 text-[10px] font-medium text-slate-400 border-t border-slate-100 dark:border-slate-800 pt-3 sm:pt-2 italic leading-relaxed sm:leading-normal">
-            {kpi.description}
-          </p>
+
+          <div className="mt-6 space-y-3">
+             {/* Simple visual progress indicator */}
+             {kpi.percentage !== undefined && (
+                 <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden">
+                    <div
+                        className={cn("h-full transition-all duration-1000 ease-out", kpi.highlight ? "bg-black/30" : "bg-primary")}
+                        style={{ width: `${Math.min(100, kpi.percentage)}%` }}
+                    />
+                 </div>
+             )}
+             <p className={cn(
+                "text-[10px] font-medium leading-relaxed",
+                kpi.highlight ? "text-black/70 italic" : "text-zinc-400 italic"
+             )}>
+                {kpi.description}
+             </p>
+          </div>
         </div>
       ))}
     </div>

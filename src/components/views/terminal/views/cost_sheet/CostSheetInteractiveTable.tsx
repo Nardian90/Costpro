@@ -1,8 +1,8 @@
-
 'use client';
 
 import React, { useState, useMemo, memo } from 'react';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
+import { useIsMobile } from '@/hooks/ui/useMobile';
 import { ChevronRight, HelpCircle, CornerDownRight, AlertTriangle, ListFilter, LayoutGrid, ArrowRight, FunctionSquare, Plus, Trash2, Edit2, ChevronUp, ChevronDown, Download, Upload, CheckCircle2, XCircle, MoreVertical, Settings2 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -51,6 +51,7 @@ interface RowProps {
  * Renders a single, potentially recursive, row in the cost sheet table.
  */
 const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, calculated, calculatedValues, path, annexes, suggestions }) => {
+  const isMobile = useIsMobile();
   const [isExpanded, setIsExpanded] = useState(true);
   const [isEditingTotal, setIsEditingTotal] = useState(false);
   const [isEditingVH, setIsEditingVH] = useState(false);
@@ -78,7 +79,6 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
 
     const trimmedVal = val.trim();
     if (trimmedVal === '') {
-        // Reset to 0 if empty
         const field = row.hasOwnProperty('valorHistorico') ? 'valorHistorico' : 'value';
         updateValue([...path, field], 0);
         updateValue([...path, 'calculationMethod'], 'ValorFijo');
@@ -89,16 +89,11 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
         return;
     }
 
-    // Cost Sheet Logic: Any non-empty input is treated as a formula unless it's a simple number.
-    // However, per user request and memory, we should persist formulas even without '='.
-    // If it's a number, we also save it as formula to keep it in the Total column.
-
     const updates: { path: (string | number)[], value: string | number | boolean }[] = [
         { path: [...path, 'formula'], value: trimmedVal },
         { path: [...path, 'calculationMethod'], value: 'FORMULA' }
     ];
 
-    // If it's a number and it was a percentage row, clear is_percent to ensure fixed value is respected
     if (row.is_percent && !isNaN(Number(trimmedVal))) {
         updates.push({ path: [...path, 'is_percent'], value: false });
     }
@@ -135,28 +130,41 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
   return (
     <>
       <TableRow className={cn(
-        "border-t border-border/30 hover:bg-primary/5 transition-colors group",
-        isResultRow && "bg-primary/5 font-bold"
+        "transition-all duration-300 group",
+        !isMobile && "border-t border-border/30 hover:bg-primary/5",
+        !isMobile && isResultRow && "bg-primary/5 font-bold",
+        isMobile && "flex flex-col p-5 mb-4 rounded-[2rem] bg-zinc-900/40 border border-white/5 shadow-2xl mx-2 animate-in fade-in slide-in-from-bottom-4",
+        isMobile && isResultRow && "bg-primary/5 border-primary/20"
       )}>
-        {/* No. */}
-        <TableCell className="w-12 px-2 py-1.5 text-center text-[10px] font-black text-muted-foreground/60 tabular-nums border-r border-border/10">
-            {numbering}
+        {/* No. and Header Info for Mobile */}
+        <TableCell className={cn(
+            "w-12 px-2 py-1.5 text-center text-[10px] font-black text-muted-foreground/60 tabular-nums border-r border-border/10",
+            isMobile && "w-full text-left border-none p-0 flex items-center justify-between mb-2 opacity-50"
+        )}>
+            <span>{numbering}</span>
+            {isMobile && isResultRow && <span className="bg-primary/20 text-primary px-2 py-0.5 rounded-full text-[8px] uppercase font-black">Resultado</span>}
         </TableCell>
 
         {/* Concepto */}
-        <TableCell style={{ paddingLeft: `${level * 16 + 8}px` }} className="px-2 py-1.5 font-medium text-[13px] text-foreground min-w-[250px] border-r border-border/10">
-          <div className="flex items-center gap-1.5 min-w-0 group/row">
+        <TableCell
+            style={!isMobile ? { paddingLeft: `${level * 16 + 8}px` } : {}}
+            className={cn(
+                "px-2 py-1.5 font-medium text-[13px] text-foreground min-w-[250px] border-r border-border/10",
+                isMobile && "block w-full border-none p-0 mb-6"
+            )}
+        >
+          <div className="flex items-start gap-1.5 min-w-0 group/row">
             {hasChildren && (
-              <button onClick={handleToggle} className="p-1 rounded-full hover:bg-primary/10 shrink-0">
+              <button onClick={handleToggle} className="p-1 rounded-full hover:bg-primary/10 shrink-0 mt-0.5">
                 <ChevronRight className={cn('w-3.5 h-3.5 sm:w-4 h-4 transition-transform', isExpanded && 'rotate-90')} />
               </button>
             )}
-            {!hasChildren && <CornerDownRight className="w-3.5 h-3.5 sm:w-4 h-4 text-muted-foreground shrink-0 ml-1" />}
+            {!hasChildren && !isMobile && <CornerDownRight className="w-3.5 h-3.5 sm:w-4 h-4 text-muted-foreground shrink-0 ml-1 mt-1" />}
 
             {isEditingLabel ? (
                 <Input
                     autoFocus
-                    className="h-7 text-xs sm:text-sm py-0"
+                    className="h-8 text-sm py-0 bg-background/50"
                     defaultValue={row.label}
                     onBlur={(e) => {
                         handleValueChange('label', e.target.value);
@@ -170,7 +178,10 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                     }}
                 />
             ) : (
-                <span className="truncate flex-1 cursor-text" onClick={() => setIsEditingLabel(true)}>
+                <span className={cn(
+                    "truncate flex-1 cursor-text",
+                    isMobile ? "text-lg font-black tracking-tight text-white whitespace-normal leading-tight" : "truncate"
+                )} onClick={() => setIsEditingLabel(true)}>
                     {row.label}
                     {row.id === '13' && calculatedValues?.['12']?.total > 0 && (
                         <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-black bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
@@ -181,192 +192,207 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
             )}
 
             {/* Row Actions */}
-            <div className="hidden group-hover/row:flex items-center gap-0.5 ml-auto shrink-0 animate-in fade-in slide-in-from-right-2">
+            <div className={cn(
+                "items-center gap-0.5 ml-auto shrink-0 animate-in fade-in slide-in-from-right-2",
+                !isMobile ? "hidden group-hover/row:flex" : "flex"
+            )}>
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 sm:h-6 sm:w-6 text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                    className="h-8 w-8 text-muted-foreground hover:bg-primary/10 hover:text-primary rounded-full"
                     onClick={() => reorderMainRow(path, 'up')}
-                    title="Mover arriba"
                 >
-                    <ChevronUp className="h-4 w-4 sm:h-3 sm:w-3" />
+                    <ChevronUp className="h-4 w-4" />
                 </Button>
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 sm:h-6 sm:w-6 text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                    className="h-8 w-8 text-muted-foreground hover:bg-primary/10 hover:text-primary rounded-full"
                     onClick={() => reorderMainRow(path, 'down')}
-                    title="Mover abajo"
                 >
-                    <ChevronDown className="h-4 w-4 sm:h-3 sm:w-3" />
+                    <ChevronDown className="h-4 w-4" />
                 </Button>
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 sm:h-6 sm:w-6 text-primary hover:bg-primary/10"
+                    className="h-8 w-8 text-primary hover:bg-primary/10 rounded-full"
                     onClick={() => addMainRow([...path, 'children'])}
-                    title="Añadir hijo"
                 >
-                    <Plus className="h-4 w-4 sm:h-3 sm:w-3" />
+                    <Plus className="h-4 w-4" />
                 </Button>
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 sm:h-6 sm:w-6 text-destructive hover:bg-destructive/10"
+                    className="h-8 w-8 text-destructive hover:bg-destructive/10 rounded-full"
                     onClick={() => removeMainRow(path)}
-                    title="Eliminar fila"
                 >
-                    <Trash2 className="h-4 w-4 sm:h-3 sm:w-3" />
+                    <Trash2 className="h-4 w-4" />
                 </Button>
             </div>
           </div>
         </TableCell>
 
-        {/* Valor Histórico / % */}
-        <TableCell className="px-2 py-1 text-right w-32 sm:w-40 cursor-pointer border-r border-border/10" onClick={() => setIsEditingVH(true)}>
-            <div className="relative">
-                {isEditingVH ? (
-                    <FormulaEditor
-                        initialValue={row.vhFormula || String(row.valorHistorico || 0)}
-                        onSave={handleVHSave}
-                        onCancel={() => setIsEditingVH(false)}
-                        suggestions={suggestions}
-                    />
-                ) : (
-                    <div className="flex items-center justify-end gap-1">
-                        <Input
-                        type="text"
-                        className={cn(
-                        "neu-input text-right h-10 sm:h-8 transition-all text-base sm:text-sm px-2 cursor-pointer flex-1",
-                        row.is_percent && "pr-6",
-                        (hasChildren || row.vhFormula) && "bg-muted/30 font-bold border-dashed"
-                        )}
-                        value={hasChildren
-                        ? formatAccounting(safeCalculated.calculatedVH ?? safeCalculated.valorHistorico ?? 0)
-                        : (row.vhFormula
-                            ? formatAccounting(safeCalculated.calculatedVH ?? 0)
-                            : (row.hasOwnProperty('valorHistorico') ? formatAccounting(row.valorHistorico ?? 0) : (row.is_percent ? ((row.value ?? 0) * 100).toFixed(3) : formatAccounting(row.value ?? 0))))}
-                        readOnly={true}
+        {/* Values Container for Mobile */}
+        <div className={cn(isMobile && "grid grid-cols-2 gap-4 mt-2 pt-5 border-t border-white/5")}>
+            {/* Valor Histórico / % */}
+            <TableCell className={cn(
+                "px-2 py-1 text-right w-32 sm:w-40 cursor-pointer border-r border-border/10",
+                isMobile && "block w-full border-none p-0 text-left"
+            )} onClick={() => setIsEditingVH(true)}>
+                {isMobile && <span className="block text-[10px] uppercase font-black text-zinc-500 mb-1.5 tracking-widest">Histórico</span>}
+                <div className="relative">
+                    {isEditingVH ? (
+                        <FormulaEditor
+                            initialValue={row.vhFormula || String(row.valorHistorico || 0)}
+                            onSave={handleVHSave}
+                            onCancel={() => setIsEditingVH(false)}
+                            suggestions={suggestions}
                         />
-                        {row.vhFormula && <FunctionSquare className="w-3 h-3 text-primary/40 absolute left-2" />}
-                        {row.is_percent && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">%</span>}
-                        {(hasChildren || row.vhFormula) && <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full animate-pulse" title="Calculado automáticamente" />}
-                    </div>
-                )}
-            </div>
-        </TableCell>
-
-        {/* Total */}
-        <TableCell
-          className="px-2 py-1 text-right font-black tabular-nums text-primary w-36 sm:w-48 cursor-pointer hover:bg-primary/5 transition-colors text-[13px] border-r border-border/10"
-          onClick={() => setIsEditingTotal(true)}
-        >
-          {isEditingTotal ? (
-            <FormulaEditor
-              initialValue={row.formula || String(safeCalculated.total)}
-              onSave={handleTotalSave}
-              onCancel={() => setIsEditingTotal(false)}
-              suggestions={suggestions}
-            />
-          ) : (
-            <div className="flex items-center justify-end gap-2 group-hover:scale-105 transition-transform origin-right">
-                {/* Validation Status Icons */}
-                <Popover>
-                    <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
-                        <div className="cursor-help flex items-center">
-                            {criticalErrors.length > 0 ? (
-                                <XCircle className="w-4 h-4 text-destructive animate-pulse" />
-                            ) : (warningErrors.length > 0 || hasEngineWarnings) ? (
-                                <AlertTriangle className="w-4 h-4 text-amber-500 animate-bounce" />
-                            ) : infoErrors.length > 0 ? (
-                                <HelpCircle className="w-4 h-4 text-blue-500 opacity-70 group-hover:opacity-100 transition-opacity" />
-                            ) : isResultRow ? (
-                                <CheckCircle2 className="w-4 h-4 text-emerald-500 opacity-40 group-hover:opacity-100 transition-opacity" />
-                            ) : null}
+                    ) : (
+                        <div className="flex items-center justify-end gap-1">
+                            <Input
+                            type="text"
+                            className={cn(
+                            "neu-input text-right h-10 sm:h-8 transition-all text-base sm:text-sm px-2 cursor-pointer flex-1",
+                            isMobile && "text-left h-12 bg-white/5 border-none rounded-2xl",
+                            row.is_percent && "pr-6",
+                            (hasChildren || row.vhFormula) && "bg-muted/30 font-bold border-dashed"
+                            )}
+                            value={hasChildren
+                            ? formatAccounting(safeCalculated.calculatedVH ?? safeCalculated.valorHistorico ?? 0)
+                            : (row.vhFormula
+                                ? formatAccounting(safeCalculated.calculatedVH ?? 0)
+                                : (row.hasOwnProperty('valorHistorico') ? formatAccounting(row.valorHistorico ?? 0) : (row.is_percent ? ((row.value ?? 0) * 100).toFixed(3) : formatAccounting(row.value ?? 0))))}
+                            readOnly={true}
+                            />
+                            {row.vhFormula && <FunctionSquare className="w-3 h-3 text-primary/40 absolute left-2" />}
+                            {row.is_percent && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">%</span>}
+                            {(hasChildren || row.vhFormula) && <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full animate-pulse" title="Calculado automáticamente" />}
                         </div>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80" onClick={(e) => e.stopPropagation()}>
-                        <p className={cn(
-                            "text-xs font-bold mb-2 uppercase tracking-tight",
-                            criticalErrors.length > 0 ? "text-destructive" : (warningErrors.length > 0 || hasEngineWarnings) ? "text-amber-600" : infoErrors.length > 0 ? "text-blue-600" : "text-emerald-600"
-                        )}>
-                            {criticalErrors.length > 0 ? "Errores Críticos" : (warningErrors.length > 0 || hasEngineWarnings) ? "Advertencias" : infoErrors.length > 0 ? "Información" : "Estado Correcto"}
-                        </p>
-                        <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
-                            {/* Deep Validation Errors */}
-                            {(safeCalculated.validationErrors || []).map((ve, idx) => (
-                                <div key={`ve-${idx}`} className={cn(
-                                    "text-[10px] p-2 rounded border flex gap-2",
-                                    ve.type === 'CRITICAL' ? "bg-destructive/5 border-destructive/20 text-destructive" :
-                                    ve.type === 'WARNING' ? "bg-amber-50 border-amber-200 text-amber-800" :
-                                    "bg-blue-50 border-blue-200 text-blue-800"
-                                )}>
-                                    <div className="mt-0.5">
-                                        {ve.type === 'CRITICAL' ? <XCircle className="w-3 h-3" /> :
-                                         ve.type === 'WARNING' ? <AlertTriangle className="w-3 h-3" /> :
-                                         <HelpCircle className="w-3 h-3" />}
-                                    </div>
-                                    <div>
-                                        <span className="font-bold uppercase text-[8px] block opacity-70">{ve.code}</span>
-                                        {ve.message}
-                                    </div>
-                                </div>
-                            ))}
-
-                            {/* Calculation Context / Auditability */}
-                            {(safeCalculated.fuente || safeCalculated.metadata?.rule) && (
-                                <div className="text-[10px] bg-primary/5 p-2 rounded border border-primary/20 mb-2">
-                                    <span className="font-bold uppercase text-[8px] block text-primary opacity-70">Contexto / Base Legal</span>
-                                    {safeCalculated.metadata?.rule && <div className="font-black mb-1">{safeCalculated.metadata.rule}</div>}
-                                    {safeCalculated.fuente && <div className="italic text-muted-foreground">{safeCalculated.fuente}</div>}
-                                </div>
-                            )}
-
-                            {/* Engine Audits */}
-                            {safeCalculated.audits && safeCalculated.audits.filter(a => a.type === 'ERROR' || a.type === 'WARNING' || a.type === 'CYCLE_DETECTED').map((a: any, idx: number) => (
-                                <div key={`audit-${idx}`} className="text-[10px] bg-muted p-1.5 rounded border border-border">
-                                    <span className="font-bold uppercase text-[8px] block opacity-50">{a.type}</span>
-                                    {a.note}
-                                </div>
-                            ))}
-
-                            {/* Legacy Warning */}
-                            {!hasChildren && !row.is_percent && safeCalculated.total === 0 && ((row.valorHistorico ?? 0) > 0 || !!row.baseDeCalculoRef) && (
-                                <p className="text-[10px] text-slate-500 italic p-1">
-                                    Esta fila tiene un total de 0.00 pero tiene una base de cálculo o valor histórico asignado. Verifique el prorrateo o la fórmula.
-                                </p>
-                            )}
-
-                            {criticalErrors.length === 0 && warningErrors.length === 0 && !hasEngineWarnings && (
-                                <p className="text-[10px] text-emerald-600 font-medium">Los cálculos de esta fila son consistentes con sus dependencias y reglas contables.</p>
-                            )}
-                        </div>
-                    </PopoverContent>
-                </Popover>
-
-                <div className="flex items-center gap-1">
-                    {row.formula && <FunctionSquare className="w-3 h-3 text-primary/40" />}
-                    <span className={cn(row.formula && "underline decoration-dotted decoration-primary/30")}>
-                        {formatAccounting(safeCalculated.total)}
-                    </span>
+                    )}
                 </div>
-            </div>
-          )}
-        </TableCell>
+            </TableCell>
 
-        {/* Ayuda - Hidden on very small screens */}
-        <TableCell className="px-2 py-1 text-center w-12 sm:w-20 hidden sm:table-cell">
-          {row.helpText && (
-            <Popover>
-              <PopoverTrigger asChild>
-                 <button className="p-2 rounded-full hover:bg-primary/10 text-primary/50 hover:text-primary transition-colors">
-                    <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5" />
-                 </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-72 sm:w-80"><p className="text-sm">{row.helpText}</p></PopoverContent>
-            </Popover>
-          )}
-        </TableCell>
+            {/* Total */}
+            <TableCell
+              className={cn(
+                "px-2 py-1 text-right font-black tabular-nums text-primary w-36 sm:w-48 cursor-pointer hover:bg-primary/5 transition-colors text-[13px] border-r border-border/10",
+                isMobile && "block w-full border-none p-0 text-right"
+              )}
+              onClick={() => setIsEditingTotal(true)}
+            >
+              {isMobile && <span className="block text-[10px] uppercase font-black text-zinc-500 mb-1.5 tracking-widest">Total Ficha</span>}
+              {isEditingTotal ? (
+                <FormulaEditor
+                  initialValue={row.formula || String(safeCalculated.total)}
+                  onSave={handleTotalSave}
+                  onCancel={() => setIsEditingTotal(false)}
+                  suggestions={suggestions}
+                />
+              ) : (
+                <div className={cn(
+                    "flex items-center justify-end gap-2 group-hover:scale-105 transition-transform origin-right",
+                    isMobile && "h-12 bg-primary/10 rounded-2xl px-3 border border-primary/20"
+                )}>
+                    {/* Validation Status Icons */}
+                    <Popover>
+                        <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
+                            <div className="cursor-help flex items-center">
+                                {criticalErrors.length > 0 ? (
+                                    <XCircle className="w-4 h-4 text-destructive animate-pulse" />
+                                ) : (warningErrors.length > 0 || hasEngineWarnings) ? (
+                                    <AlertTriangle className="w-4 h-4 text-amber-500 animate-bounce" />
+                                ) : infoErrors.length > 0 ? (
+                                    <HelpCircle className="w-4 h-4 text-blue-500 opacity-70 group-hover:opacity-100 transition-opacity" />
+                                ) : isResultRow ? (
+                                    <CheckCircle2 className="w-4 h-4 text-emerald-500 opacity-40 group-hover:opacity-100 transition-opacity" />
+                                ) : null}
+                            </div>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80" onClick={(e) => e.stopPropagation()}>
+                            <p className={cn(
+                                "text-xs font-bold mb-2 uppercase tracking-tight",
+                                criticalErrors.length > 0 ? "text-destructive" : (warningErrors.length > 0 || hasEngineWarnings) ? "text-amber-600" : infoErrors.length > 0 ? "text-blue-600" : "text-emerald-600"
+                            )}>
+                                {criticalErrors.length > 0 ? "Errores Críticos" : (warningErrors.length > 0 || hasEngineWarnings) ? "Advertencias" : infoErrors.length > 0 ? "Información" : "Estado Correcto"}
+                            </p>
+                            <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+                                {(safeCalculated.validationErrors || []).map((ve, idx) => (
+                                    <div key={`ve-${idx}`} className={cn(
+                                        "text-[10px] p-2 rounded border flex gap-2",
+                                        ve.type === 'CRITICAL' ? "bg-destructive/5 border-destructive/20 text-destructive" :
+                                        ve.type === 'WARNING' ? "bg-amber-50 border-amber-200 text-amber-800" :
+                                        "bg-blue-50 border-blue-200 text-blue-800"
+                                    )}>
+                                        <div className="mt-0.5">
+                                            {ve.type === 'CRITICAL' ? <XCircle className="w-3 h-3" /> :
+                                             ve.type === 'WARNING' ? <AlertTriangle className="w-3 h-3" /> :
+                                             <HelpCircle className="w-3 h-3" />}
+                                        </div>
+                                        <div>
+                                            <span className="font-bold uppercase text-[8px] block opacity-70">{ve.code}</span>
+                                            {ve.message}
+                                        </div>
+                                    </div>
+                                ))}
+
+                                {(safeCalculated.fuente || safeCalculated.metadata?.rule) && (
+                                    <div className="text-[10px] bg-primary/5 p-2 rounded border border-primary/20 mb-2">
+                                        <span className="font-bold uppercase text-[8px] block text-primary opacity-70">Contexto / Base Legal</span>
+                                        {safeCalculated.metadata?.rule && <div className="font-black mb-1">{safeCalculated.metadata.rule}</div>}
+                                        {safeCalculated.fuente && <div className="italic text-muted-foreground">{safeCalculated.fuente}</div>}
+                                    </div>
+                                )}
+
+                                {safeCalculated.audits && safeCalculated.audits.filter(a => a.type === 'ERROR' || a.type === 'WARNING' || a.type === 'CYCLE_DETECTED').map((a: any, idx: number) => (
+                                    <div key={`audit-${idx}`} className="text-[10px] bg-muted p-1.5 rounded border border-border">
+                                        <span className="font-bold uppercase text-[8px] block opacity-50">{a.type}</span>
+                                        {a.note}
+                                    </div>
+                                ))}
+
+                                {!hasChildren && !row.is_percent && safeCalculated.total === 0 && ((row.valorHistorico ?? 0) > 0 || !!row.baseDeCalculoRef) && (
+                                    <p className="text-[10px] text-slate-500 italic p-1">
+                                        Esta fila tiene un total de 0.00 pero tiene una base de cálculo o valor histórico asignado. Verifique el prorrateo o la fórmula.
+                                    </p>
+                                )}
+
+                                {criticalErrors.length === 0 && warningErrors.length === 0 && !hasEngineWarnings && (
+                                    <p className="text-[10px] text-emerald-600 font-medium">Los cálculos de esta fila son consistentes con sus dependencias y reglas contables.</p>
+                                )}
+                            </div>
+                        </PopoverContent>
+                    </Popover>
+
+                    <div className="flex items-center gap-1">
+                        {row.formula && <FunctionSquare className="w-3 h-3 text-primary/40" />}
+                        <span className={cn(
+                            row.formula && "underline decoration-dotted decoration-primary/30",
+                            isMobile ? "text-lg font-black" : ""
+                        )}>
+                            {formatAccounting(safeCalculated.total)}
+                        </span>
+                    </div>
+                </div>
+              )}
+            </TableCell>
+        </div>
+
+        {/* Ayuda - Hidden on mobile, shown as info if needed */}
+        {!isMobile && (
+            <TableCell className="px-2 py-1 text-center w-12 sm:w-20 hidden sm:table-cell">
+              {row.helpText && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                     <button className="p-2 rounded-full hover:bg-primary/10 text-primary/50 hover:text-primary transition-colors">
+                        <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+                     </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-72 sm:w-80"><p className="text-sm">{row.helpText}</p></PopoverContent>
+                </Popover>
+              )}
+            </TableCell>
+        )}
       </TableRow>
 
       {isExpanded && hasChildren && (row.children || []).filter(c => !!c).map((child, childIndex) => (
@@ -400,6 +426,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
     setActiveSubSectionId,
     onOpenSections
 }) => {
+  const isMobile = useIsMobile();
   const addMainSection = useCostSheetStore(state => state.addMainSection);
   const removeMainSection = useCostSheetStore(state => state.removeMainSection);
   const updateValue = useCostSheetStore(state => state.updateValue);
@@ -412,7 +439,6 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
   // Smooth scroll to active section/group when selected
   React.useEffect(() => {
     if (activeSubSectionId) {
-      // Small delay to allow for rendering if it was filtered
       const timer = setTimeout(() => {
         const element = document.getElementById(activeSubSectionId);
         if (element) {
@@ -471,49 +497,37 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
       return (
           <div className="py-12 px-4 text-center animate-in fade-in slide-in-from-bottom-4 duration-700">
               <div className="max-w-md mx-auto space-y-6">
-                  <div className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center mx-auto mb-8 neu-raised-sm">
+                  <div className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-[0_0_20px_rgba(57,255,20,0.1)]">
                       <LayoutGrid className="w-10 h-10 text-primary animate-pulse" />
                   </div>
                   <h2 className="text-2xl font-black text-foreground uppercase tracking-tighter italic">Seleccione una Sección</h2>
                   <p className="text-muted-foreground text-sm font-medium leading-relaxed">
-                      Para comenzar a visualizar o editar los datos de la tabla principal, elija una de las secciones disponibles en el menú superior o en la cuadrícula a continuación.
+                      Para comenzar a visualizar o editar los datos de la tabla principal, elija una de las secciones disponibles.
                   </p>
 
-                  <div className="grid grid-cols-1 gap-3 pt-8">
+                  <div className="grid grid-cols-1 gap-4 pt-8">
                       {displayItems.map((item, idx) => (
                           <div key={item.id} className="relative group">
                               <button
                                 onClick={() => setActiveSubSectionId(item.id)}
-                                className="w-full flex items-center justify-between p-4 rounded-2xl bg-background border border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all group neu-raised-sm active:scale-[0.98]"
+                                className="w-full flex items-center justify-between p-5 rounded-[1.5rem] bg-zinc-900/50 border border-white/5 hover:border-primary/50 hover:bg-primary/5 transition-all group active:scale-[0.98] shadow-xl"
                               >
-                                  <div className="flex items-center gap-3 text-left">
-                                      <div className="w-1.5 h-8 bg-muted group-hover:bg-primary rounded-full transition-colors" />
-                                      <span className="font-bold text-sm uppercase tracking-wider">{item.label}</span>
+                                  <div className="flex items-center gap-4 text-left">
+                                      <div className="w-1 h-8 bg-zinc-800 group-hover:bg-primary rounded-full transition-colors" />
+                                      <span className="font-black text-sm uppercase tracking-widest">{item.label}</span>
                                   </div>
-                                  <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all translate-x-[-10px] group-hover:translate-x-0" />
+                                  <ArrowRight className="w-5 h-5 opacity-0 group-hover:opacity-100 transition-all translate-x-[-10px] group-hover:translate-x-0 text-primary" />
                               </button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="absolute -top-2 -right-2 h-7 w-7 bg-destructive text-white rounded-full opacity-0 group-hover:opacity-100 transition-all shadow-lg hover:bg-destructive/90 z-10"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    removeMainSection(idx);
-                                }}
-                                title="Eliminar Sección"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
                           </div>
                       ))}
 
                       <Button
                         onClick={addMainSection}
                         variant="outline"
-                        className="w-full p-6 rounded-2xl border-dashed border-2 hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2 bg-primary/5 group"
+                        className="w-full p-8 rounded-[1.5rem] border-dashed border-2 border-white/10 hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2 bg-primary/5 group mt-4"
                       >
-                        <Plus className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                        <span className="font-bold uppercase tracking-widest text-xs">Nueva Sección</span>
+                        <Plus className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                        <span className="font-black uppercase tracking-widest text-xs">Nueva Sección</span>
                       </Button>
                   </div>
               </div>
@@ -522,7 +536,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
   }
 
   return (
-    <div data-testid="cost-sheet-interactive-table" className="space-y-6">
+    <div data-testid="cost-sheet-interactive-table" className="space-y-8">
         <input
             type="file"
             ref={sectionInputRef}
@@ -549,11 +563,11 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
 
                 return (
                 <div key={section.id} id={section.id} className="animate-in fade-in slide-in-from-bottom-2 duration-500 mb-0 last:mb-0 scroll-mt-24">
-                    <div className="flex items-center justify-between py-1.5 px-4 bg-muted/30 border-y border-border/50">
-                        <div className="flex items-center gap-3">
-                            <div className="w-1.5 h-6 bg-primary rounded-full" />
+                    <div className="flex items-center justify-between py-3 px-6 bg-zinc-900/80 backdrop-blur-md border-y border-white/5 sticky top-[120px] z-10 sm:static">
+                        <div className="flex items-center gap-4">
+                            <div className="w-1 h-6 bg-primary rounded-full shadow-[0_0_10px_rgba(57,255,20,0.5)]" />
                             <Input
-                                className="h-8 text-sm font-black uppercase tracking-[0.2em] text-foreground/80 bg-transparent border-none focus-visible:ring-0 p-0 w-auto min-w-[250px]"
+                                className="h-8 text-sm font-black uppercase tracking-[0.2em] text-white/90 bg-transparent border-none focus-visible:ring-0 p-0 w-auto min-w-[250px]"
                                 value={section.label}
                                 onChange={(e) => updateValue(['sections', sectionIndex, 'label'], e.target.value)}
                             />
@@ -562,32 +576,37 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                             <Button
                                 size="sm"
                                 variant="ghost"
-                                className="h-8 w-8 p-0 text-primary hover:bg-primary/10 rounded-full transition-all"
+                                className="h-9 w-9 p-0 text-primary hover:bg-primary/10 rounded-full transition-all"
                                 onClick={() => setActiveSectionForActions({ section, index: sectionIndex })}
-                                title="Acciones de Sección"
                             >
-                                <Settings2 className="w-4 h-4" />
+                                <Settings2 className="w-5 h-5" />
                             </Button>
                         </div>
                     </div>
 
                     <div className="w-full p-0 border-none shadow-none">
-                        <div className="table-scroll-wrapper overflow-x-auto border-border/50">
-                        <Table className="w-full border-collapse min-w-[800px]">
+                        <div className={cn(
+                            "table-scroll-wrapper border-none",
+                            !isMobile ? "overflow-x-auto" : "overflow-visible"
+                        )}>
+                        <Table className={cn(
+                            "w-full border-collapse",
+                            !isMobile ? "min-w-[800px]" : "flex flex-col"
+                        )}>
                             <TableHeader className={cn(
-                                "bg-muted/50 text-muted-foreground font-black uppercase text-[10px] tracking-widest border-b border-border",
-                                !isFirstInGroup && "hidden",
+                                "bg-zinc-900/50 text-zinc-500 font-black uppercase text-[10px] tracking-widest border-b border-white/5",
+                                (!isFirstInGroup || isMobile) && "hidden",
                                 (isStickyHeaderSection && isFirstInGroup) && "sticky top-0 z-20"
                             )}>
                                 <TableRow className="hover:bg-transparent border-none">
-                                    <TableHead className="w-12 px-2 py-2 text-center font-black uppercase tracking-widest border-r border-border/10">No.</TableHead>
-                                    <TableHead className="px-2 py-2 text-left font-black uppercase tracking-widest min-w-[250px] border-r border-border/10">Concepto</TableHead>
-                                    <TableHead className="px-2 py-2 text-right font-black uppercase tracking-widest w-32 sm:w-40 border-r border-border/10">Valor Histórico</TableHead>
-                                    <TableHead className="px-2 py-2 text-right font-black uppercase tracking-widest w-36 sm:w-48 border-r border-border/10">Total</TableHead>
-                                    <TableHead className="px-2 py-2 text-center font-black uppercase tracking-widest w-12 sm:w-20 hidden sm:table-cell">Ayuda</TableHead>
+                                    <TableHead className="w-12 px-4 py-4 text-center border-r border-white/5">No.</TableHead>
+                                    <TableHead className="px-4 py-4 text-left min-w-[250px] border-r border-white/5">Concepto</TableHead>
+                                    <TableHead className="px-4 py-4 text-right w-32 sm:w-40 border-r border-white/5">Valor Histórico</TableHead>
+                                    <TableHead className="px-4 py-4 text-right w-36 sm:w-48 border-r border-white/5">Total</TableHead>
+                                    <TableHead className="px-4 py-4 text-center w-12 sm:w-20 hidden sm:table-cell">Ayuda</TableHead>
                                 </TableRow>
                             </TableHeader>
-                            <TableBody>
+                            <TableBody className={cn(isMobile && "flex flex-col pt-4")}>
                                 {(section?.rows || []).filter(r => !!r).map((row: RowData, rowIndex: number) => (
                                     <CostSheetRow
                                         key={row.id}
