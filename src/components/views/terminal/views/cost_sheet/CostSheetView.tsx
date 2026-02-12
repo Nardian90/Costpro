@@ -241,7 +241,7 @@ const CostSheetView = () => {
         label: isEditing ? 'Ver Resultado' : 'Seguir Editando',
         icon: isEditing ? Eye : Edit,
         onClick: () => setIsEditing(!isEditing),
-        variant: 'primary' as const,
+        variant: 'default' as const,
     },
     {
         id: 'kpis-header',
@@ -385,7 +385,7 @@ const CostSheetView = () => {
                                     {subSectionActions.map(action => (
                                         <Button
                                             key={action.id}
-                                            variant={action.active ? 'primary' : 'outline'}
+                                            variant={action.active ? 'default' : 'outline'}
                                             size="sm"
                                             className={cn(
                                                 "rounded-2xl font-black uppercase tracking-tighter text-[10px] h-10 px-4",
