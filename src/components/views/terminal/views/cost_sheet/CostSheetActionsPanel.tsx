@@ -114,7 +114,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
                       Diseño de Tablas
                     </div>
                     <div className="flex justify-center">
-                      <ViewSwitcher currentView={layoutMode} onViewChange={setLayoutMode} />
+                      <ViewSwitcher currentView={layoutMode} onViewChange={(mode) => { setLayoutMode(mode); if (window.innerWidth < 1024) onClose(); }} />
                     </div>
                   </div>
                 )}
