@@ -432,7 +432,7 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-8 animate-in fade-in duration-500 max-w-5xl mx-auto">
       <input
         type="file"
         ref={sectionInputRef}
