@@ -946,3 +946,25 @@
   transition-duration: 0.01ms !important;
   backdrop-filter: none !important;
 }
+
+/* Premium Neon Design - Stitch Inspired */
+.premium-card {
+  background: rgba(21, 27, 40, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  border-radius: 1.5rem;
+}
+
+.neon-glow {
+  box-shadow: 0 0 15px rgba(57, 255, 20, 0.3);
+}
+
+.neon-text {
+  color: #39FF14;
+  text-shadow: 0 0 10px rgba(57, 255, 20, 0.5);
+}
+
+.neon-border {
+  border: 2px solid #39FF14;
+  box-shadow: 0 0 10px rgba(57, 255, 20, 0.2);
+}

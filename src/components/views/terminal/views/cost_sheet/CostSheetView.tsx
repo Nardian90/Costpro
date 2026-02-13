@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+import { useIsMobile } from '@/hooks/ui/useMobile';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
 import { useCostSheetCalculator } from '@/hooks/logic/useCostSheetCalculator';
 import CostSheetNav from './CostSheetNav';
@@ -24,16 +25,14 @@ import { CostSheetExportModal, ExportOptions } from './CostSheetExportModal';
 import { CostSheetQuickMode } from './CostSheetQuickMode';
 import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
 import ActionMenu from '@/components/ui/ActionMenu';
-import { Layout, Eye, Edit, FileText, Trash2, Download, FileSpreadsheet, Upload, Save, BarChart3, Activity, MoreVertical, AlertTriangle } from 'lucide-react';
+import { Layout, LayoutGrid, Plus, Eye, Edit, FileText, Trash2, Download, FileSpreadsheet, Upload, Save, BarChart3, Activity, MoreVertical, AlertTriangle, Moon, Bell } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store';
 import { exportToPDF, exportToCSV } from '@/services/export-service';
-import { useIsMobile } from '@/hooks/ui/useMobile';
 
 const CostSheetView = () => {
-  const isMobile = useIsMobile();
   const [activeSection, setActiveSection] = useState('main');
   const [activeSubSectionId, setActiveSubSectionId] = useState('group-1-3');
 
@@ -62,6 +61,13 @@ const CostSheetView = () => {
   const [isEditing, setIsEditing] = useState(true);
   const [viewMode, setViewMode] = useState<'expert' | 'assisted' | 'reading' | 'quick'>('expert');
   const [layoutMode, setLayoutMode] = useState<ViewMode>('grid');
+  const isMobile = useIsMobile();
+
+  React.useEffect(() => {
+    if (isMobile) {
+      setLayoutMode('grid');
+    }
+  }, [isMobile]);
   // Grouping logic for "Smart Grouping" of small sections
   const groupedSections = React.useMemo(() => {
     if (!data?.sections) return [];
@@ -359,7 +365,7 @@ const CostSheetView = () => {
         id: group.id,
         label: group.label.split(':')[0], // Short label like "SECCIONES 1-3"
         tooltip: group.label,
-        icon: Layout,
+        icon: LayoutGrid,
         onClick: () => {
             setActiveSubSectionId(group.id);
             handleSetActiveSection('main');
@@ -427,7 +433,7 @@ const CostSheetView = () => {
       />
 
       <CostSheetBanner />
-
+      {/* Mobile Header matching Stitch design */}      <div className="sm:hidden flex items-center justify-between px-6 mb-8">        <div className="flex items-center gap-3">          <div className="w-10 h-10 rounded-xl bg-[#151B28] flex items-center justify-center border border-white/5">            <div className="w-5 h-5 bg-[#39FF14] rounded-sm flex items-center justify-center">              <span className="text-[10px] font-black text-black">C</span>            </div>          </div>          <div className="flex flex-col">            <span className="text-sm font-black text-[#39FF14] tracking-wider">COSTPRO</span>            <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest">Enterprise Edition</span>          </div>        </div>        <div className="flex items-center gap-2">          <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full bg-[#151B28] border border-white/5 text-muted-foreground">            <Moon className="w-4 h-4" />          </Button>          <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full bg-[#151B28] border border-white/5 text-muted-foreground">            <Bell className="w-4 h-4" />          </Button>        </div>      </div>
       {isBlocked && (
           <div className="mb-6 animate-in slide-in-from-top duration-500">
               <div className="bg-destructive/10 border border-destructive/20 rounded-2xl p-4 flex items-start gap-4 shadow-sm">
@@ -457,7 +463,7 @@ const CostSheetView = () => {
         <div className="animate-in fade-in duration-700 space-y-6">
           {viewMode === 'expert' && (
             <>
-                <div className="sticky top-[60px] z-30 py-2 bg-background/50 backdrop-blur-sm -mx-4 px-4 overflow-hidden">
+                <div className="sticky top-[60px] z-30 pt-2 pb-4 bg-background/50 backdrop-blur-sm -mx-4 px-4 overflow-hidden space-y-4">
                     <CostSheetNav
                         navItems={navItems}
                         annexes={data?.annexes || []}
@@ -465,6 +471,16 @@ const CostSheetView = () => {
                         setActiveSection={handleSetActiveSection}
                         onOpenActions={() => setIsActionsPanelOpen(true)}
                     />
+
+                    {activeSection === 'main' && (
+                        <div className="animate-in slide-in-from-top-4 duration-500">
+                            <ActionMenu
+                                actions={subSectionActions}
+                                sticky={false}
+                                className="shadow-none bg-transparent"
+                            />
+                        </div>
+                    )}
                 </div>
 
                 <div className="mt-4">
@@ -484,14 +500,7 @@ const CostSheetView = () => {
                     )}
                     {activeSection === 'main' && (
                         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
-                            {/* Horizontal Sub-navigation for Sections */}
-                            <div className="py-2 overflow-hidden">
-                                <ActionMenu
-                                    actions={subSectionActions}
-                                    sticky={false}
-                                    className="shadow-none bg-transparent -mx-4 px-4"
-                                />
-                            </div>
+
 
                             {(layoutMode === "grid") ? (
                                 <CostSheetCardView
@@ -563,6 +572,16 @@ const CostSheetView = () => {
             />
         </div>
       )}
+
+      {/* Floating Action Button for Mobile */}
+      <div className="fixed bottom-8 right-6 z-50 sm:hidden">
+        <Button
+          onClick={() => setIsActionsPanelOpen(true)}
+          className="h-16 w-16 rounded-full bg-[#39FF14] text-black shadow-[0_0_20px_rgba(57,255,20,0.5)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center p-0"
+        >
+          <Plus className="w-8 h-8" />
+        </Button>
+      </div>
     </div>
   );
 };

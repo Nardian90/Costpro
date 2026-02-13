@@ -37,14 +37,14 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
   position = 'top',
 }) => {
   const getVariantClass = (variant?: string, active?: boolean) => {
-    if (active) return 'neu-inset-sm font-bold text-primary !scale-100 shadow-none';
+    if (active) return 'bg-[#151B28] border-2 border-[#39FF14] text-[#39FF14] font-black shadow-[0_0_15px_rgba(57,255,20,0.2)] !scale-100';
     switch (variant) {
       case 'primary': return 'neu-btn-primary';
       case 'success': return 'neu-btn-success';
       case 'danger': return 'neu-btn-danger';
       case 'warning': return 'bg-warning text-white shadow-lg';
-      case 'outline': return 'neu-raised-sm border-primary/20 text-foreground';
-      default: return 'neu-btn text-foreground';
+      case 'outline': return 'bg-[#151B28] border border-white/5 text-muted-foreground font-bold';
+      default: return 'bg-[#151B28] border border-white/5 text-muted-foreground font-bold';
     }
   };
 
@@ -73,7 +73,7 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
                         onClick={action.onClick}
                         disabled={action.disabled}
                         className={cn(
-                          'flex items-center gap-2 px-4 py-3 min-h-[44px] text-sm sm:text-base rounded-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shrink-0 whitespace-nowrap',
+                          'flex items-center gap-2 px-4 py-3 min-h-[44px] text-sm sm:text-base rounded-full transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shrink-0 whitespace-nowrap',
                           getVariantClass(action.variant, action.active),
                           !action.active && !action.variant && 'hover:neu-raised-sm',
                           action.className
@@ -81,7 +81,7 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
                         aria-label={action.label}
                       >
                         {action.icon && <action.icon className="w-4 h-4 sm:w-5 sm:h-5" />}
-                        <span className="font-semibold">{action.label}</span>
+                        <span className="font-black uppercase tracking-widest text-[10px]">{action.label}</span>
                       </button>
                     </TooltipTrigger>
                     {action.tooltip && (

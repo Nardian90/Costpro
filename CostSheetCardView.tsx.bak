@@ -109,6 +109,10 @@ const RowCard: React.FC<RowCardProps> = memo(({
 
   const safeCalculated = calculated || { total: 0, valorHistorico: 0, baseTotal: 0, coeficiente: 0, hasWarnings: false, audits: [], validationErrors: [], fuente: '', metadata: {} };
 
+  const criticalErrors = (safeCalculated.validationErrors || []).filter(e => e.type === 'CRITICAL');
+  const warningErrors = (safeCalculated.validationErrors || []).filter(e => e.type === 'WARNING');
+  const hasEngineWarnings = safeCalculated.hasWarnings || (!hasChildren && !row.is_percent && safeCalculated.total === 0 && ((row.valorHistorico ?? 0) > 0 || !!row.baseDeCalculoRef));
+
   const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsExpanded(!isExpanded);
@@ -135,6 +139,20 @@ const RowCard: React.FC<RowCardProps> = memo(({
   };
 
   return (
+    <div className={cn(
+      "mb-3 rounded-2xl border transition-all overflow-hidden",
+      isResultRow ? "bg-primary/5 border-primary/20 shadow-sm" : "bg-card border-border/50",
+      level > 0 && "ml-4 border-l-2 border-l-primary/30"
+    )}>
+      <div className="p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-2 flex-1 min-w-0">
+            <span className="text-[10px] font-black text-muted-foreground/50 tabular-nums shrink-0 mt-1">
+              {numbering}
+            </span>
+
+            <div className="flex-1 min-w-0">
+              {isEditingLabel ? (
     <div className={cn(
       "mb-2 rounded-2xl border transition-all overflow-hidden",
       isResultRow ? "bg-[#151B28]/80 border-primary/20 shadow-lg shadow-primary/5" : "bg-[#151B28]/40 border-border/10",
@@ -175,11 +193,6 @@ const RowCard: React.FC<RowCardProps> = memo(({
                 >
                   {row.label}
                 </span>
-                {row.id === '13' && calculatedValues?.['12']?.total > 0 && (
-                  <span className="mt-1 inline-flex w-fit items-center px-1.5 py-0.5 rounded text-[8px] font-black bg-emerald-500/10 text-emerald-600">
-                    {((calculatedValues['13'].total / calculatedValues['12'].total) * 100).toFixed(1)}% s/ costo
-                  </span>
-                )}
               </div>
             )}
           </div>
@@ -208,7 +221,7 @@ const RowCard: React.FC<RowCardProps> = memo(({
                     "text-[11px] font-black tabular-nums",
                     !isResultRow && "opacity-60"
                 )}>
-                  {safeCalculated.total === 0 && !isResultRow ? (row.valorHistorico ? formatAccounting(row.valorHistorico) : "") : formatCurrency(safeCalculated.total)}
+                  {safeCalculated.total === 0 && !isResultRow ? "" : formatCurrency(safeCalculated.total)}
                 </span>
                 {hasChildren && (
                     <button
@@ -250,6 +263,65 @@ const RowCard: React.FC<RowCardProps> = memo(({
              </Popover>
         </div>
       </div>
+                    onCancel={() => setIsEditingVH(false)}
+                    suggestions={suggestions}
+                  />
+                </div>
+              ) : (
+                <div className={cn(
+                  "p-2 rounded-xl border border-border/50 text-right transition-all",
+                  (hasChildren || row.vhFormula) ? "bg-muted/30 font-bold border-dashed border-primary/30" : "bg-background"
+                )}>
+                  <span className="text-xs font-black tabular-nums">
+                    {hasChildren
+                      ? formatAccounting(safeCalculated.calculatedVH ?? safeCalculated.valorHistorico ?? 0)
+                      : (row.vhFormula
+                          ? formatAccounting(safeCalculated.calculatedVH ?? 0)
+                          : (row.hasOwnProperty('valorHistorico') ? formatAccounting(row.valorHistorico ?? 0) : (row.is_percent ? ((row.value ?? 0) * 100).toFixed(3) : formatAccounting(row.value ?? 0))))}
+                    {row.is_percent && "%"}
+                  </span>
+                  {row.vhFormula && <FunctionSquare className="w-2.5 h-2.5 text-primary/40 absolute left-2 top-2.5" />}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-1 text-right">
+            <p className="text-[9px] font-black uppercase tracking-[0.15em] text-muted-foreground/60">Total Actual</p>
+            <div
+              className="relative cursor-pointer group/total"
+              onClick={() => setIsEditingTotal(true)}
+            >
+              {isEditingTotal ? (
+                <div className="z-20 relative">
+                  <FormulaEditor
+                    initialValue={row.formula || String(safeCalculated.total)}
+                    onSave={handleTotalSave}
+                    onCancel={() => setIsEditingTotal(false)}
+                    suggestions={suggestions}
+                  />
+                </div>
+              ) : (
+                <div className={cn(
+                  "p-2 rounded-xl border border-primary/20 bg-primary/5 flex items-center justify-end gap-2 transition-all",
+                  "hover:bg-primary/10"
+                )}>
+                  {criticalErrors.length > 0 ? (
+                    <XCircle className="w-3 h-3 text-destructive animate-pulse" />
+                  ) : (warningErrors.length > 0 || hasEngineWarnings) ? (
+                    <AlertTriangle className="w-3 h-3 text-amber-500 animate-bounce" />
+                  ) : (
+                    <CheckCircle2 className="w-3 h-3 text-emerald-500 opacity-40" />
+                  )}
+                  <span className="text-sm font-black text-primary tabular-nums">
+                    {formatCurrency(safeCalculated.total)}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
 
       <AnimatePresence>
         {isExpanded && hasChildren && (
@@ -257,7 +329,7 @@ const RowCard: React.FC<RowCardProps> = memo(({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="border-t border-white/5 bg-black/20"
+            className="border-t border-border/50 bg-muted/20"
           >
             <div className="p-2 space-y-1">
               {row.children?.map((child, childIdx) => (
@@ -365,10 +437,10 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
                         <button
                             key={item.id}
                             onClick={() => setActiveSubSectionId(item.id)}
-                            className="w-full flex items-center justify-between p-4 rounded-2xl bg-[#151B28] border border-white/5 hover:border-primary/50 hover:bg-primary/5 transition-all group active:scale-[0.98]"
+                            className="w-full flex items-center justify-between p-4 rounded-2xl bg-background border border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all group neu-raised-sm active:scale-[0.98]"
                         >
                             <div className="flex items-center gap-3 text-left">
-                                <div className="w-1.5 h-8 bg-muted group-hover:bg-[#39FF14] rounded-full transition-colors" />
+                                <div className="w-1.5 h-8 bg-muted group-hover:bg-primary rounded-full transition-colors" />
                                 <span className="font-bold text-xs uppercase tracking-wider">{item.label}</span>
                             </div>
                             <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all" />
@@ -403,7 +475,7 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
         }}
       />
       {/* Top circular KPIs */}
-      <div className="bg-[#151B28]/80 backdrop-blur-md rounded-[2.5rem] p-6 border border-white/5 shadow-2xl mx-2">
+      <div className="bg-sidebar/30 backdrop-blur-md rounded-[2.5rem] p-6 border border-border/50 shadow-sm mx-2">
         <div className="flex items-center justify-around">
           <CircularProgress
             value={costPercent}
@@ -426,10 +498,11 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
         </div>
       </div>
 
+      <div className="space-y-6">
       <div className="space-y-6 pt-4">
         <div className="flex items-center justify-between px-6 mb-2">
           <span className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em]">Concepto</span>
-          <span className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em]">Valor Actual</span>
+          <span className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.2em]">Valor Histórico</span>
         </div>
         {sections.map((section, sectionIndex) => {
           const isTarget = targetSectionIds.includes(section.id);
@@ -443,13 +516,22 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
                   <Input
                     className="h-8 text-[13px] font-black uppercase tracking-[0.15em] text-white bg-transparent border-none focus-visible:ring-0 p-0 w-auto min-w-[200px]"
                     value={section.label}
-                    onChange={(e) => updateValue(['sections', sectionIndex, 'label'], e.target.value)}
+                    onChange={(e) => updateValue(["sections", sectionIndex, "label"], e.target.value)}
                   />
                 </div>
                 <Button
                   size="sm"
                   variant="ghost"
                   className="h-10 w-10 p-0 bg-white/5 text-muted-foreground rounded-2xl border border-white/5"
+                  onClick={() => setActiveSectionForActions({ section, index: sectionIndex })}
+                >
+                  <Settings2 className="w-4 h-4" />
+                </Button>
+              </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-9 w-9 p-0 bg-primary/5 text-primary rounded-xl"
                   onClick={() => setActiveSectionForActions({ section, index: sectionIndex })}
                 >
                   <Settings2 className="w-4 h-4" />
@@ -475,7 +557,7 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
                 <Button
                     onClick={() => addMainRow(['sections', sectionIndex, 'rows'])}
                     variant="outline"
-                    className="w-full h-12 rounded-2xl border-dashed border-2 hover:border-[#39FF14] hover:text-[#39FF14] transition-all flex items-center justify-center gap-2 bg-[#39FF14]/5 mt-4 border-white/10"
+                    className="w-full h-12 rounded-2xl border-dashed border-2 hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2 bg-primary/5 mt-4"
                 >
                     <Plus className="w-4 h-4" />
                     <span className="font-bold uppercase tracking-widest text-[10px]">Añadir Concepto</span>
