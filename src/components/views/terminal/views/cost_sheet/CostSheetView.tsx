@@ -4,6 +4,7 @@ import React, { useState, useRef } from 'react';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
 import { useCostSheetCalculator } from '@/hooks/logic/useCostSheetCalculator';
 import CostSheetNav from './CostSheetNav';
+import CostSheetCardView from './CostSheetCardView';
 import CostSheetInteractiveTable from './CostSheetInteractiveTable';
 import CostSheetAnnexEditor from './CostSheetAnnexEditor';
 import CostSheetHeaderEditor from './CostSheetHeaderEditor';
@@ -492,15 +493,27 @@ const CostSheetView = () => {
                                 />
                             </div>
 
-                            <CostSheetInteractiveTable
-                                sections={data?.sections || []}
-                                groupedSections={groupedSections}
-                                calculatedValues={calculatedValues}
-                                annexes={data?.annexes || []}
-                                activeSubSectionId={activeSubSectionId}
-                                setActiveSubSectionId={setActiveSubSectionId}
-                                onOpenSections={() => setIsSectionsSidebarOpen(true)}
-                            />
+                            {(layoutMode === "grid" && isMobile) ? (
+                                <CostSheetCardView
+                                    sections={data?.sections || []}
+                                    groupedSections={groupedSections}
+                                    calculatedValues={calculatedValues}
+                                    annexes={data?.annexes || []}
+                                    activeSubSectionId={activeSubSectionId}
+                                    setActiveSubSectionId={setActiveSubSectionId}
+                                    onOpenSections={() => setIsSectionsSidebarOpen(true)}
+                                />
+                            ) : (
+                                <CostSheetInteractiveTable
+                                    sections={data?.sections || []}
+                                    groupedSections={groupedSections}
+                                    calculatedValues={calculatedValues}
+                                    annexes={data?.annexes || []}
+                                    activeSubSectionId={activeSubSectionId}
+                                    setActiveSubSectionId={setActiveSubSectionId}
+                                    onOpenSections={() => setIsSectionsSidebarOpen(true)}
+                                />
+                            )}
                         </div>
                     )}
                     {isAnnexActive && (
