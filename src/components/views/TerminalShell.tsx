@@ -256,7 +256,7 @@ export default function TerminalShell() { // Renamed from TerminalView
         />
 
         <div className={cn(
-          "px-2 py-4 pb-32 flex-1 overflow-x-visible terminal-content",
+          "px-2 pt-0 pb-32 flex-1 overflow-x-visible terminal-content",
           currentView === 'cost-sheets' ? "sm:px-4 lg:px-6" : "sm:p-8 lg:p-12"
         )}>
           <AnimatePresence mode="wait">
