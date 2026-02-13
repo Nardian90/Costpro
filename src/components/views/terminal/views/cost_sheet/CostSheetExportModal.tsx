@@ -65,8 +65,8 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-md p-0 gap-0 bg-sidebar/95 backdrop-blur-2xl border-sidebar-border shadow-2xl rounded-3xl overflow-hidden flex flex-col max-h-[90vh] sm:max-h-[85vh] w-[95vw] sm:w-full">
-        <DialogHeader className="p-4 sm:p-6 border-b border-sidebar-border/50 shrink-0">
+      <DialogContent className="max-w-md p-0 gap-0 bg-sidebar/95 backdrop-blur-2xl border-sidebar-border shadow-2xl rounded-3xl overflow-hidden flex flex-col max-h-[85vh] w-[95vw] sm:w-full">
+        <DialogHeader className="p-4 sm:p-6 border-b border-sidebar-border/50 shrink-0 z-10 relative bg-sidebar/95 backdrop-blur-md">
           <div className="flex items-center gap-4">
              <div className="p-2 sm:p-3 rounded-2xl bg-primary/10 shrink-0">
                 <Download className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
@@ -86,7 +86,7 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
             <div className="p-4 sm:p-6 space-y-6">
                 {/* Main Documents */}
                 <div className="space-y-4">
-                    <div className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/70 px-1">
+                    <div className="text-xs font-black uppercase tracking-[0.2em] text-primary/70 px-1">
                         Documentos Principales
                     </div>
 
@@ -120,13 +120,13 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
                 {/* Annexes */}
                 <div className="space-y-4">
                     <div className="flex items-center justify-between px-1">
-                        <div className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/70">
+                        <div className="text-xs font-black uppercase tracking-[0.2em] text-primary/70">
                             Anexos
                         </div>
                         <Button
                             variant="ghost"
                             size="sm"
-                            className="h-auto p-0 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary"
+                            className="h-auto p-0 text-xs font-black uppercase tracking-widest text-muted-foreground hover:text-primary"
                             onClick={handleSelectAllAnnexes}
                         >
                             {options.includeAnnexes.length === annexes.length ? 'Desmarcar Todos' : 'Marcar Todos'}
@@ -151,7 +151,7 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
 
                 {/* Advanced Options */}
                 <div className="space-y-4">
-                    <div className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/70 px-1">
+                    <div className="text-xs font-black uppercase tracking-[0.2em] text-primary/70 px-1">
                         Configuración Avanzada
                     </div>
 
@@ -159,7 +159,7 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
                         <div className="flex items-center justify-between p-3 rounded-2xl bg-primary/5 border border-primary/10">
                             <div>
                                 <Label htmlFor="consolidated" className="font-bold text-sm block">Consolidar Documentos</Label>
-                                <span className="text-[10px] text-muted-foreground uppercase font-medium">Un solo PDF con todo lo seleccionado</span>
+                                <span className="text-xs text-muted-foreground uppercase font-medium">Un solo PDF con todo lo seleccionado</span>
                             </div>
                             <Switch
                                 id="consolidated"
@@ -171,7 +171,7 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
                         <div className="flex items-center justify-between p-3 rounded-2xl bg-sidebar/40 border border-sidebar-border/50">
                             <div>
                                 <Label htmlFor="skipZeros" className="font-bold text-sm block">Omitir Ceros</Label>
-                                <span className="text-[10px] text-muted-foreground uppercase font-medium">No exportar filas o anexos en cero</span>
+                                <span className="text-xs text-muted-foreground uppercase font-medium">No exportar filas o anexos en cero</span>
                             </div>
                             <Switch
                                 id="skipZeros"
@@ -183,7 +183,7 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
                         <div className="flex items-center justify-between p-3 rounded-2xl bg-sidebar/40 border border-sidebar-border/50">
                             <div>
                                 <Label htmlFor="includeFinancialSummary" className="font-bold text-sm block">Resumen Financiero</Label>
-                                <span className="text-[10px] text-muted-foreground uppercase font-medium">Incluir tabla de totales al inicio</span>
+                                <span className="text-xs text-muted-foreground uppercase font-medium">Incluir tabla de totales al inicio</span>
                             </div>
                             <Switch
                                 id="includeFinancialSummary"
@@ -196,19 +196,19 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
             </div>
         </ScrollArea>
 
-        <DialogFooter className="p-4 sm:p-6 border-t border-sidebar-border/50 bg-sidebar/5 shrink-0">
+        <DialogFooter className="p-4 sm:p-6 border-t border-sidebar-border/50 bg-sidebar/95 backdrop-blur-md shrink-0 z-10 relative">
             <div className="flex w-full gap-3">
                 <Button
                     variant="outline"
                     onClick={onClose}
-                    className="flex-1 rounded-2xl font-black uppercase tracking-widest text-[10px] h-10 sm:h-11"
+                    className="flex-1 rounded-2xl font-black uppercase tracking-widest text-xs h-11"
                 >
                     Cancelar
                 </Button>
                 <Button
                     onClick={() => onExport(options)}
                     disabled={!options.includeFC && !options.includeAudit && options.includeAnnexes.length === 0}
-                    className="flex-1 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20 h-10 sm:h-11"
+                    className="flex-1 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground font-black uppercase tracking-widest text-xs shadow-lg shadow-primary/20 h-11"
                 >
                     Generar PDF
                 </Button>
