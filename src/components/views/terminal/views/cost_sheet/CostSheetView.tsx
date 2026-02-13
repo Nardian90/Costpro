@@ -34,8 +34,8 @@ import { useIsMobile } from '@/hooks/ui/useMobile';
 
 const CostSheetView = () => {
   const isMobile = useIsMobile();
-  const [activeSection, setActiveSection] = useState('kpis');
-  const [activeSubSectionId, setActiveSubSectionId] = useState('');
+  const [activeSection, setActiveSection] = useState('main');
+  const [activeSubSectionId, setActiveSubSectionId] = useState('group-1-3');
 
   const handleSetActiveSection = (id: string) => {
     setActiveSection(id);
@@ -493,7 +493,7 @@ const CostSheetView = () => {
                                 />
                             </div>
 
-                            {(layoutMode === "grid" && isMobile) ? (
+                            {(layoutMode === "grid") ? (
                                 <CostSheetCardView
                                     sections={data?.sections || []}
                                     groupedSections={groupedSections}

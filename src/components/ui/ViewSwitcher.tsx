@@ -23,10 +23,10 @@ export default function ViewSwitcher({ currentView, onViewChange, className }: V
             ? "bg-primary text-white shadow-lg shadow-primary/20"
             : "text-muted-foreground hover:text-foreground"
         )}
-        aria-label="Vista de Cuadrícula"
+        aria-label="Vista de Tarjeta"
       >
         <LayoutGrid className="w-3.5 h-3.5" />
-        <span className="hidden sm:inline">Cuadrícula</span>
+        <span className="inline">Tarjeta</span>
       </button>
       <button
         onClick={() => onViewChange('table')}
@@ -39,7 +39,7 @@ export default function ViewSwitcher({ currentView, onViewChange, className }: V
         aria-label="Vista de Tabla"
       >
         <List className="w-3.5 h-3.5" />
-        <span className="hidden sm:inline">Lista</span>
+        <span className="inline">Tabla</span>
       </button>
     </div>
   );
