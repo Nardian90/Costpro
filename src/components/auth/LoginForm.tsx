@@ -7,6 +7,7 @@ import { Eye, EyeOff, LogIn, UserPlus } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import RegisterForm from './RegisterForm';
 import { toast } from 'sonner';
+import { Input } from '@/components/ui/input';
 import { logger } from '@/lib/logger';
 import { UserFactory } from '@/contracts';
 import { safeNavigate } from '@/lib/navigation';
@@ -126,7 +127,7 @@ export default function LoginForm() {
           <label htmlFor="email" className="block text-sm font-medium mb-2">
             Correo Electrónico
           </label>
-          <input
+          <Input
             id="email"
             type="text"
             value={email}
@@ -142,7 +143,7 @@ export default function LoginForm() {
             Contraseña
           </label>
           <div className="relative">
-            <input
+            <Input
               id="password"
               type={showPassword ? 'text' : 'password'}
               value={password}
@@ -193,7 +194,7 @@ export default function LoginForm() {
         <button
           type="button"
           onClick={() => setIsRegistering(true)}
-          className="w-full text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-all flex items-center justify-center gap-2 mt-4"
+          className="w-full h-11 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-all flex items-center justify-center gap-2 mt-4"
         >
           <UserPlus className="w-4 h-4" />
           ¿No tienes cuenta? Regístrate aquí

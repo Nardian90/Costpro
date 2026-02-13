@@ -273,6 +273,13 @@
   padding: 0.75rem 1rem;
 }
 
+@media (max-width: 768px) {
+  .neu-input {
+    padding: 0.875rem 1rem;
+    min-height: 44px;
+  }
+}
+
 .neu-input:focus {
   outline: none;
   box-shadow:
@@ -295,6 +302,13 @@
   font-weight: 500;
   transition: transform 0.15s ease-out;
   cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .neu-btn {
+    padding: 0.875rem 1.5rem;
+    min-height: 44px;
+  }
 }
 
 .neu-btn:hover {
