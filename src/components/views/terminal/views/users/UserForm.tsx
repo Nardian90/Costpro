@@ -99,7 +99,7 @@ export default function UserForm({
     : true;
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 overflow-x-auto no-scrollbar">
       <div className="space-y-4">
         <div>
           <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1.5 block">
@@ -245,7 +245,7 @@ export default function UserForm({
                  <select
                   {...register(`memberships.${index}.store_id` as const)}
                   className={cn(
-                    "w-full p-2.5 sm:p-2 rounded-lg border bg-background font-bold text-xs outline-none transition-all",
+                    "w-full p-3.5 rounded-lg border bg-background font-bold text-xs outline-none transition-all",
                     errors.memberships?.[index]?.store_id ? "border-destructive ring-1 ring-destructive/20" : "border-border"
                   )}
                 >
@@ -265,7 +265,7 @@ export default function UserForm({
                   <label className="text-[8px] font-black uppercase text-muted-foreground tracking-widest block">Rol</label>
                   <select
                     {...register(`memberships.${index}.role` as const)}
-                    className="w-full p-2.5 sm:p-2 rounded-lg border border-border bg-background font-bold text-xs outline-none"
+                    className="w-full p-3.5 rounded-lg border border-border bg-background font-bold text-xs outline-none"
                   >
                     {(!allowedRoles || allowedRoles.includes('admin')) && <option value="admin">Admin</option>}
                     {(!allowedRoles || allowedRoles.includes('encargado')) && <option value="encargado">Encargado</option>}
@@ -279,7 +279,7 @@ export default function UserForm({
                    <label className="text-[8px] font-black uppercase text-muted-foreground tracking-widest block">Estado</label>
                    <select
                     {...register(`memberships.${index}.status` as const)}
-                    className="w-full p-2.5 sm:p-2 rounded-lg border border-border bg-background font-bold text-xs outline-none"
+                    className="w-full p-3.5 rounded-lg border border-border bg-background font-bold text-xs outline-none"
                   >
                     <option value="active">Activo</option>
                     <option value="revoked">Revocado</option>
@@ -289,7 +289,7 @@ export default function UserForm({
               <button
                 type="button"
                 onClick={() => remove(index)}
-                className="absolute top-2 right-2 sm:relative sm:top-0 sm:right-0 p-2.5 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-white transition-all mb-0.5"
+                className="absolute top-2 right-2 sm:relative sm:top-0 sm:right-0 p-3.5 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-white transition-all mb-0.5"
                 title="Eliminar tienda"
               >
                 <Trash2 className="w-4 h-4" />
