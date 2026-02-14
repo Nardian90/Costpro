@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     let lastHeaderPage = 0;
 
     const addHeader = (doc: jsPDF, title: string) => {
-        const pageNum = doc.internal.getNumberOfPages();
+        const pageNum = doc.getNumberOfPages();
         if (lastHeaderPage === pageNum) return;
         lastHeaderPage = pageNum;
 
