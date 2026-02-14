@@ -51,22 +51,6 @@ export const CostSheetSidebarNav: React.FC<CostSheetSidebarNavProps> = ({
                     Navegación lateral para seleccionar {type === 'sections' ? 'secciones de la ficha' : 'anexos disponibles'}.
                 </SheetDescription>
             </div>
-            <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 rounded-full bg-primary/10 text-primary hover:bg-primary/20"
-                onClick={() => {
-                    if (type === 'sections') {
-                        addMainSection();
-                    } else {
-                        // For annexes we don't dynamically add new types of annexes usually,
-                        // but we could if needed. For now let's stick to sections.
-                    }
-                }}
-                title={type === 'sections' ? "Nueva Sección" : "Nuevo Anexo"}
-            >
-                <Plus className="h-4 w-4" />
-            </Button>
           </div>
         </SheetHeader>
 
@@ -114,7 +98,19 @@ export const CostSheetSidebarNav: React.FC<CostSheetSidebarNavProps> = ({
           })}
         </div>
 
-        <div className="p-6 border-t border-sidebar-border/50 bg-sidebar/5">
+        <div className="p-4 border-t border-sidebar-border/50 bg-sidebar/5 space-y-4">
+            {type === 'sections' && (
+                <Button
+                    onClick={() => {
+                        addMainSection();
+                        onClose();
+                    }}
+                    className="w-full h-12 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest text-xs shadow-lg shadow-primary/20 gap-3"
+                >
+                    <Plus className="w-4 h-4" />
+                    Nueva Sección
+                </Button>
+            )}
             <p className="text-[8px] font-black uppercase tracking-[0.3em] text-muted-foreground/50 text-center">
                 Navegación de Ficha
             </p>

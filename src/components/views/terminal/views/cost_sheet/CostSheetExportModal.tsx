@@ -82,8 +82,8 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
           </div>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 min-h-0">
-            <div className="p-4 sm:p-6 space-y-6">
+        <ScrollArea className="flex-1 min-h-0 overflow-y-auto">
+            <div className="p-4 sm:p-6 space-y-6 pb-12">
                 {/* Main Documents */}
                 <div className="space-y-4">
                     <div className="text-xs font-black uppercase tracking-[0.2em] text-primary/70 px-1">
@@ -180,17 +180,6 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
                             />
                         </div>
 
-                        <div className="flex items-center justify-between p-3 rounded-2xl bg-sidebar/40 border border-sidebar-border/50">
-                            <div>
-                                <Label htmlFor="includeFinancialSummary" className="font-bold text-sm block">Resumen Financiero</Label>
-                                <span className="text-xs text-muted-foreground uppercase font-medium">Incluir tabla de totales al inicio</span>
-                            </div>
-                            <Switch
-                                id="includeFinancialSummary"
-                                checked={options.includeFinancialSummary}
-                                onCheckedChange={(checked) => setOptions(prev => ({ ...prev, includeFinancialSummary: checked }))}
-                            />
-                        </div>
                     </div>
                 </div>
             </div>
