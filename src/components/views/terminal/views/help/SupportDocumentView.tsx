@@ -121,7 +121,7 @@ export default function SupportDocumentView() {
                   <span className="text-[10px] font-black uppercase tracking-widest">Documento Oficial</span>
                 </div>
                 <p className="text-[10px] text-muted-foreground font-medium leading-relaxed">
-                  Este manual contiene la especificación técnica completa de la versión 5.7.24 Enterprise.
+                  Este manual contiene la especificación técnica completa de la versión 5.7.25 Enterprise.
                 </p>
               </div>
             </div>
