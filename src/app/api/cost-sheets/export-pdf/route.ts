@@ -84,36 +84,6 @@ export async function POST(req: NextRequest) {
         addHeader(doc, "FICHA DE COSTO");
         let currentY = addDataSheetHeader(doc, 38);
 
-        if (exportOptions.includeFinancialSummary) {
-            doc.setFontSize(9);
-            doc.setFont("helvetica", "bold");
-            doc.text("RESUMEN FINANCIERO:", 14, currentY + 8);
-
-            const row13 = result.rows.find(r => r.classification === '13');
-            const row12 = result.rows.find(r => r.classification === '12');
-            const utilityPercent = (row13 && row12 && row12.total > 0) ? (row13.total / row12.total) * 100 : 0;
-
-            const summaryData = [
-                ['Costo Total', safeLocale(result.summary.totalCost)],
-                ['Utilidad', safeLocale(row13?.total || 0)],
-                ['% Utilidad / Costo', `${(utilityPercent || 0).toFixed(2)}%`],
-                ['Margen Comercial', safeLocale(result.summary.totalMargin)],
-                ['Impuestos', safeLocale(result.summary.totalTax)],
-                ['PRECIO FINAL', safeLocale(result.summary.grandTotal)],
-            ];
-
-            autoTable(doc, {
-                startY: currentY + 10,
-                head: [['Concepto', 'Valor']],
-                body: summaryData,
-                theme: 'grid',
-                headStyles: { fillColor: [40, 40, 40], textColor: 255 },
-                styles: { fontSize: 8 },
-                columnStyles: { 1: { halign: 'right', fontStyle: 'bold' } }
-            });
-            currentY = (doc as any).lastAutoTable.finalY;
-        }
-
         // Main Rows Table
         const rowHeaders = ['Clasif.', 'Concepto', 'Método', 'V. Histórico', 'Total'];
 

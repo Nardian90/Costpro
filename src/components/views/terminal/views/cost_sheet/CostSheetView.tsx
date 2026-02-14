@@ -26,7 +26,7 @@ import { CostSheetExportModal, ExportOptions } from './CostSheetExportModal';
 import { CostSheetQuickMode } from './CostSheetQuickMode';
 import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
 import ActionMenu from '@/components/ui/ActionMenu';
-import { Layout, Eye, Edit, FileText, Trash2, Download, FileSpreadsheet, Upload, Save, BarChart3, Activity, MoreVertical, AlertTriangle } from 'lucide-react';
+import { Layout, Eye, Edit, FileText, Trash2, Download, FileSpreadsheet, Upload, Save, BarChart3, ClipboardList, Activity, MoreVertical, AlertTriangle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -351,6 +351,8 @@ const CostSheetView = () => {
   const secondaryActions = React.useMemo(() => allActions, [allActions]);
 
   const navItems = React.useMemo(() => [
+    { id: "kpis", label: "Tablero", icon: BarChart3 },
+    { id: "main", label: "Ficha", icon: ClipboardList },
     { id: "header", label: "Encabezado", icon: Layout },
     { id: "massive-gen", label: "Gen. Masiva", icon: FileText }
   ], []);
@@ -468,9 +470,7 @@ const CostSheetView = () => {
           </div>
       )}
 
-      <div className="hidden sm:flex flex-col gap-6 mb-8 sm:mb-12">
-        <ActionMenu actions={mainActions} position="bottom" />
-      </div>
+
 
       <CostSheetExportModal
         isOpen={isExportModalOpen}
@@ -492,6 +492,8 @@ const CostSheetView = () => {
                         onOpenActions={() => setIsActionsPanelOpen(true)}
                         onOpenAnnexes={onOpenAnnexes}
                         onOpenSections={onOpenSections}
+                        isEditing={isEditing}
+                        onToggleEditing={() => setIsEditing(!isEditing)}
                     />
                 </div>
 
@@ -512,15 +514,6 @@ const CostSheetView = () => {
                     )}
                     {activeSection === 'main' && (
                         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
-                            {/* Horizontal Sub-navigation for Sections - Moved to lateral on mobile */}
-                            <div className="hidden sm:block py-2 overflow-hidden">
-                                <ActionMenu
-                                    actions={subSectionActions}
-                                    sticky={false}
-                                    className="shadow-none bg-transparent -mx-4 px-4"
-                                />
-                            </div>
-
                             {(layoutMode === "grid") ? (
                                 <CostSheetCardView
                                     sections={data?.sections || []}
@@ -567,7 +560,11 @@ const CostSheetView = () => {
           )}
 
           {viewMode === 'assisted' && (
-              <CostSheetWizard data={data} calculatedValues={calculatedValues} />
+              <CostSheetWizard
+                data={data}
+                calculatedValues={calculatedValues}
+                calculatedHeader={calculatedHeader}
+              />
           )}
 
           {viewMode === 'reading' && (
@@ -588,6 +585,7 @@ const CostSheetView = () => {
                 data={data}
                 calculatedValues={calculatedValues}
                 calculatedAnnexes={calculatedAnnexes}
+                calculatedHeader={calculatedHeader}
             />
         </div>
       )}
