@@ -4,7 +4,7 @@ import { CostSheetDataContract } from '@/contracts/cost-sheet';
 const template: CostSheetDataContract = {
   "id": "costpro-full-v5",
   "name": "Producción de Pan de Corteza Dura (Lote Especial)",
-  "version": "5.7.24",
+  "version": "5.7.25",
   "metadata": {
     "author": "Eli - Senior Specialist",
     "description": "Ficha de referencia para estudio de costos industriales complejos con integración de anexos y fórmulas dinámicas."
@@ -473,7 +473,7 @@ const template: CostSheetDataContract = {
     "prepared_by": "Eli - Senior Developer & UX Specialist",
     "approved_by": "Dirección de Operaciones"
   },
-  "footer": "DOCUMENTO DE REFERENCIA EDUCATIVA • GENERADO POR ELI v5.7.24"
+  "footer": "DOCUMENTO DE REFERENCIA EDUCATIVA • GENERADO POR ELI v5.7.25"
 };
 
 export default template;

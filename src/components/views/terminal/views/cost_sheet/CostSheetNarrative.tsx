@@ -225,7 +225,7 @@ const CostSheetNarrative: React.FC<CostSheetNarrativeProps> = ({ data, calculate
                 <div className="flex items-center gap-4 bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10">
                     <Info className="w-5 h-5 shrink-0" />
                     <p className="text-[10px] font-bold uppercase tracking-widest leading-tight">
-                        Datos validados por el motor v5.7.24
+                        Datos validados por el motor v5.7.25
                     </p>
                 </div>
             </div>

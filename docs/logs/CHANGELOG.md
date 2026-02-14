@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.25] - 2026-03-14
+
+### Added
+- **Integración de Modo Rápido con Generación Masiva**: Nueva funcionalidad que permite la creación express de múltiples fichas de costo desde una tabla simplificada.
+- **Transición Automatizada**: Los productos ingresados en Modo Rápido se pre-pueblan automáticamente en el motor de Generación Masiva, eliminando la entrada duplicada de datos.
+- **Documentación Visual**: Incorporación de diagramas SVG explicativos en la sección de Ayuda para guiar al usuario en el nuevo flujo de trabajo.
+
+## [5.7.24] - 2026-03-06
+
+### Added
+- **Next-Gen Welcome Landing**: Rediseño total de la página de inicio con enfoque en Showcase de Producto y diseño Bento.
+- **Desacoplamiento de Autenticación**: El flujo de login ahora es independiente de la interfaz de marketing, mejorando la primera impresión y la velocidad de carga.
+
+## [5.7.23] - 2026-03-02
+
+### Changed
+- **Hardening de Contratos y Observabilidad**: Refuerzo de la integridad de datos mediante validación Zod en hooks de API para Dashboard, Ventas y Tiendas.
+- **Trazabilidad Total**: Implementación de logging estructurado (`withLogging`) en todos los flujos de datos críticos para facilitar la auditoría técnica.
+
 ## [5.7.22] - 2026-03-01
 
 ### Changed
