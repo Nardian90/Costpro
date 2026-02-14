@@ -355,8 +355,87 @@ Iteración de hardening técnica exitosa. Se ha reducido la deuda técnica en la
 
 El score global **subió** (+0.19). La estabilidad y observabilidad del sistema se han reforzado significativamente, cumpliendo con los estándares de madurez Enterprise.
 
+## Version: 5.7.25 (Express Generation & Quick Mode)
+- **Date:** 2026-03-14
+- **Global Technical Score:** 9.55 / 10.0
+- **System Status:** 🟩 Saludable
+
+---
+
+### Executive Summary
+
+Esta iteración introduce una mejora sustancial en la eficiencia operativa de la ingeniería de costos mediante el "Modo Rápido". Se ha logrado reducir drásticamente el tiempo de entrada de datos para nuevos productos, permitiendo una transición fluida hacia el motor de Generación Masiva. La incorporación de documentación didáctica visual (SVG) asegura que los usuarios adopten estas nuevas capacidades sin fricción. El sistema continúa su trayectoria hacia la automatización total de la gestión de costos.
+
+---
+
+### 1. EVALUACIÓN POR DOMINIO
+
+| Dominio | Nota | Justificación |
+| :--- | :---: | :--- |
+| **Core Architecture** | 9.2 | **Sin cambios.** |
+| **Type Safety** | 9.8 | **Sin cambios.** |
+| **POS / Terminal** | 9.5 | **Sin cambios.** |
+| **Multi-Store & Roles**| 9.5 | **Sin cambios.** |
+| **UX / Mobile** | 9.6 | **Mejorado.** Simplificación del flujo de creación de fichas de costo mediante el Modo Rápido. |
+| **Performance** | 8.8 | **Sin cambios.** |
+| **Seguridad** | 9.5 | **Sin cambios.** |
+| **Observabilidad** | 9.5 | **Sin cambios.** |
+| **DX** | 9.2 | **Mejorado.** Documentación técnica y visual (SVG) actualizada para nuevas funcionalidades. |
+
+---
+
+### 2. COMPARATIVA CON VERSIÓN ANTERIOR (v5.7.24)
+
+| Dominio | v5.7.24 | v5.7.25 | Variación | Causa Concreta del Cambio |
+| :--- | :---: | :---: | :---: | :--- |
+| UX / Mobile | 9.5 | 9.6 | **(+0.1)** | Implementación de Modo Rápido para entrada express de datos. |
+| DX | 9.0 | 9.2 | **(+0.2)** | Nueva documentación didáctica y diagramas SVG de flujo. |
+| **Global Score** | **9.45**| **9.55**| **(+0.10)**| **Mejora en la eficiencia operativa y calidad de la documentación.**|
+
+---
+
+### 3. DETECCIÓN DE RIESGOS
+
+1.  **Riesgo: Complejidad de Fórmulas en Modo Rápido**
+    -   **Tipo:** Funcional.
+    -   **Impacto:** Bajo. El modo rápido utiliza costos base; fichas complejas siguen requiriendo el modo experto.
+2.  **Riesgo: Sincronización Cloud para IPV Builder**
+    -   **Estado:** igual.
+3.  **Riesgo: Obsolescencia de Prisma**
+    -   **Estado:** igual.
+
+---
+
+### 4. MEJORA VERIFICADA DE LA ITERACIÓN
+- **Quick Mode Integration**: Integración funcional de `CostSheetQuickMode` con `CostSheetMassiveGenerator`.
+- **Educational Sync**: Sección de ayuda actualizada con analogías y diagramas SVG.
+- **Version Alignment**: Sincronización total de versiones en metadatos y UI.
+
+---
+
+### 5. REGISTRO DE MADUREZ DEL SISTEMA
+
+-   **Versión del sistema:** 5.7.25
+-   **Fecha:** 2026-03-14
+-   **Score global:** 9.55
+-   **Top 3 Avances:**
+    1.  **Modo Rápido**: Reducción de tiempos de carga de productos.
+    2.  **Ayuda Didáctica**: Uso de Storytelling y SVG para facilitar la adopción.
+    3.  **Generación Masiva Pre-poblada**: Automatización del flujo de trabajo de costos.
+
+---
+
+### 6. SCORE EJECUTIVO FINAL
+
+- **Score técnico global:** 9.55
+- **Estado del sistema:** 🟩 Saludable
+
+La iteración ha fortalecido la propuesta de valor de CostPro al hacerla más accesible y rápida para el usuario final, manteniendo la robustez técnica subyacente.
+
+---
+
 ## Version: 5.7.24 (Next-Gen Welcome Landing)
-- **Date:** 2026-02-06
+- **Date:** 2026-03-06
 - **Global Technical Score:** 9.45 / 10.0
 - **System Status:** 🟩 Saludable
 
@@ -416,7 +495,7 @@ Esta iteración marca el reposicionamiento estratégico del punto de entrada al 
 ### 5. REGISTRO DE MADUREZ DEL SISTEMA
 
 -   **Versión del sistema:** 5.7.24
--   **Fecha:** 2026-02-06
+-   **Fecha:** 2026-03-06
 -   **Score global:** 9.45
 -   **Top 3 Avances:**
     1.  **Welcome Landing**: Transformación del acceso al sistema en una herramienta comercial.

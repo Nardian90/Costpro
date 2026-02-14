@@ -33,6 +33,7 @@ import EliDiagram from './help/EliDiagram';
 import StickyCartFlowDiagram from './help/StickyCartFlowDiagram';
 import InventoryAdjustmentFlowDiagram from './help/InventoryAdjustmentFlowDiagram';
 import IpvFlowDiagram from './help/IpvFlowDiagram';
+import QuickModeMassiveDiagram from './help/QuickModeMassiveDiagram';
 
 export default function HelpView() {
   return (
@@ -50,9 +51,9 @@ export default function HelpView() {
         </div>
         <div className="flex flex-col items-end">
           <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-black">
-            VERSIÓN 5.7.24 (IPV & LANDING)
+            VERSIÓN 5.7.25 (EXPRESS GEN)
           </Badge>
-          <span className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Última actualización: 06 Mar 2026</span>
+          <span className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Última actualización: 14 Mar 2026</span>
         </div>
       </div>
 
@@ -330,6 +331,28 @@ export default function HelpView() {
                   <BookOpen className="w-6 h-6 text-amber-600" />
                   <h5 className="font-black text-xs uppercase">Modo Lectura</h5>
                   <p className="text-[10px] text-muted-foreground leading-tight">Narrativa generada automáticamente que explica el origen de cada costo.</p>
+                </div>
+              </div>
+
+              <div className="bg-amber-500/5 border border-amber-500/10 p-6 rounded-3xl mt-8">
+                <h4 className="font-black text-amber-600 text-xs uppercase mb-4 flex items-center gap-2">
+                  <Zap className="w-4 h-4" />
+                  Nuevo: Modo Rápido & Gen. Masiva (v5.7.25)
+                </h4>
+                <div className="grid lg:grid-cols-2 gap-8 items-center">
+                  <div className="space-y-4">
+                    <p className="text-[10px] font-medium leading-relaxed text-amber-800/70">
+                      <strong>Antes Juan hacía X:</strong> Tenía que crear cada ficha de costo una por una, entrando en el modo experto para cada producto, lo cual era lento si tenía 20 productos nuevos.
+                      <br />
+                      <strong>Ahora Juan hace Y:</strong> Juan entra al "Modo Rápido", escribe una lista simple de productos con sus costos base, y Eli se encarga de generar todas las fichas masivamente en un solo clic.
+                    </p>
+                    <div className="p-4 bg-background/50 rounded-xl border border-amber-200">
+                      <p className="text-[10px] italic text-amber-800 leading-tight">
+                        "Es como hacer una lista de compras: tú pones lo que necesitas y el sistema llena todos los formularios técnicos por ti automáticamente."
+                      </p>
+                    </div>
+                  </div>
+                  <QuickModeMassiveDiagram />
                 </div>
               </div>
             </div>
@@ -777,12 +800,28 @@ export default function HelpView() {
             </CardHeader>
             <CardContent className="px-0">
               <div className="space-y-8">
-                {/* --- v5.7.24 --- */}
+                {/* --- v5.7.25 --- */}
                 <div className="relative pl-8 border-l-2 border-primary/20 space-y-4">
                   <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary border-4 border-background" />
                   <div className="flex items-center gap-3">
-                    <Badge className="bg-primary">v5.7.24</Badge>
-                    <span className="text-xs font-black text-muted-foreground uppercase">06 de Marzo, 2026 (Actual)</span>
+                    <Badge className="bg-primary">v5.7.25</Badge>
+                    <span className="text-xs font-black text-muted-foreground uppercase">14 de Marzo, 2026 (Actual)</span>
+                  </div>
+                  <div className="bg-muted/30 rounded-2xl p-6 space-y-4 border border-primary/10">
+                    <h4 className="font-black text-sm uppercase text-primary">Integración de Modo Rápido y Gen. Masiva</h4>
+                    <ul className="grid md:grid-cols-2 gap-x-8 gap-y-2 text-xs font-medium text-muted-foreground">
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Creación express de productos mediante tabla de entrada rápida.</li>
+                      <li className="flex gap-2 items-center"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> Transición automática al motor de Generación Masiva pre-poblado.</li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* --- v5.7.24 --- */}
+                <div className="relative pl-8 border-l-2 border-primary/20 space-y-4 opacity-90">
+                  <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-muted border-4 border-background" />
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline">v5.7.24</Badge>
+                    <span className="text-xs font-black text-muted-foreground uppercase">06 de Marzo, 2026</span>
                   </div>
                   <div className="bg-muted/30 rounded-2xl p-6 space-y-4 border border-primary/10">
                     <h4 className="font-black text-sm uppercase text-primary">Next-Gen Welcome Landing</h4>
@@ -795,7 +834,7 @@ export default function HelpView() {
 
                 {/* --- v5.7.23 --- */}
                 <div className="relative pl-8 border-l-2 border-primary/20 space-y-4 opacity-90">
-                  <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary border-4 border-background" />
+                  <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-muted border-4 border-background" />
                   <div className="flex items-center gap-3">
                     <Badge variant="outline">v5.7.23</Badge>
                     <span className="text-xs font-black text-muted-foreground uppercase">02 de Marzo, 2026</span>
@@ -985,7 +1024,7 @@ export default function HelpView() {
            <button className="px-8 py-3 bg-background border border-border rounded-xl font-black text-xs uppercase tracking-widest hover:bg-primary hover:text-white transition-all">
              Abrir Ticket de Soporte
            </button>
-           <span className="text-[10px] font-bold text-muted-foreground">COSTPRO v5.7.24</span>
+           <span className="text-[10px] font-bold text-muted-foreground">COSTPRO v5.7.25</span>
         </div>
       </div>
     </div>
