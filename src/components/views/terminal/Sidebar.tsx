@@ -100,6 +100,12 @@ export const Sidebar = ({
             items: ['news', 'rss_management']
           }
         ]
+      },
+      {
+        id: 'soporte',
+        label: 'SOPORTE Y AYUDA',
+        isDirect: true,
+        items: ['support_doc', 'help']
       }
     ];
     return structure;
@@ -177,9 +183,6 @@ export const Sidebar = ({
       </button>
     );
   };
-
-  const helpItem = navigationItems.find(i => i.id === 'help');
-  const manualItem = navigationItems.find(i => i.id === 'support_doc');
 
   return (
     <aside className={cn(
@@ -332,8 +335,6 @@ export const Sidebar = ({
         </nav>
 
         <div className="p-4 border-t border-sidebar-border/50 shrink-0 space-y-1">
-          {manualItem && renderNavItem(manualItem.id)}
-          {helpItem && renderNavItem(helpItem.id)}
           <button
             onClick={onLogout}
             className="w-full flex items-center gap-4 p-3.5 rounded-xl transition-all group active:scale-95 hover:bg-danger/10 text-danger font-bold"
