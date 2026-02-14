@@ -377,7 +377,7 @@ const CostSheetView = () => {
   const handleBottomAction = React.useCallback((actionId: string) => {
     switch (actionId) {
         case 'export-pdf':
-            handleExportPDF();
+            setIsExportModalOpen(true);
             break;
         case 'massive-pdf':
             handleSetActiveSection('massive-gen');
@@ -392,7 +392,7 @@ const CostSheetView = () => {
             setCurrentView('inventory');
             break;
     }
-  }, [handleExportPDF, handleSetActiveSection, setViewMode, setIsActionsPanelOpen, setCurrentView]);
+  }, [setIsExportModalOpen, handleSetActiveSection, setViewMode, setIsActionsPanelOpen, setCurrentView]);
 
 
   if (!data || !data.header || !data.annexes || !data.sections) {
