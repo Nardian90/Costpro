@@ -1,0 +1,8 @@
+▲ Next.js 16.1.3 (Turbopack)
+- Local:         http://localhost:3001
+- Network:       http://0.0.0.0:3001
+
+✓ Starting...
+⨯ Unable to acquire lock at /app/.next/dev/lock, is another instance of next dev running?
+  Suggestion: If you intended to restart next dev, terminate the other process, and then try again.
+[?25h

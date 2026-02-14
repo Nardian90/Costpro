@@ -3,7 +3,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, Send, X, Bot, Loader2, Sparkles, Settings, Key, Check } from 'lucide-react';
-import { useAuthStore } from '@/store';
+import { useAuthStore, useUIStore } from '@/store';
+import { cn } from '@/lib/utils';
 import { userService } from '@/services/user-service';
 import { toast } from 'sonner';
 
@@ -13,7 +14,7 @@ interface Message {
 }
 
 export function ChatBot() {
-  const [isOpen, setIsOpen] = useState(false);
+  const { isChatBotOpen: isOpen, setIsChatBotOpen: setIsOpen, currentView } = useUIStore();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
@@ -97,7 +98,7 @@ export function ChatBot() {
   const isConfigured = !!(user?.aiApiKey && user?.aiApiKey.length > 5);
 
   return (
-    <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[100] flex flex-col items-end">
+    <div className={cn("fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[100] flex flex-col items-end", currentView === "cost-sheets" && !isOpen && "hidden lg:flex")}>
       <AnimatePresence>
         {!isOpen && (
           <motion.button
