@@ -34,7 +34,7 @@ export const Header = ({
   const isMocked = useAuthStore(state => state.isMocked);
 
   return (
-    <header className="bg-background/80 backdrop-blur-xl p-4 sm:p-6 sticky top-0 z-30 border-b border-white/5 w-full">
+    <header className="bg-background/80 backdrop-blur-xl p-2 sm:p-6 sticky top-0 z-30 border-b border-white/5 w-full">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4 flex-1 overflow-hidden">
           <button
