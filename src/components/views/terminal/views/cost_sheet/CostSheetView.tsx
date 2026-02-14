@@ -19,6 +19,8 @@ import { CostSheetModeSwitcher } from './CostSheetModeSwitcher';
 import { CostSheetAuditLog } from './CostSheetAuditLog';
 import { CostSheetActionsPanel } from './CostSheetActionsPanel';
 import { CostSheetSidebarNav } from './CostSheetSidebarNav';
+import { CostSheetBottomNav } from './CostSheetBottomNav';
+import { useUIStore } from '@/store';
 import { CostSheetMassiveGenerator } from './CostSheetMassiveGenerator';
 import { CostSheetExportModal, ExportOptions } from './CostSheetExportModal';
 import { CostSheetQuickMode } from './CostSheetQuickMode';
@@ -371,10 +373,31 @@ const CostSheetView = () => {
 
   const onOpenAnnexes = React.useCallback(() => setIsAnnexesSidebarOpen(true), []);
   const onOpenSections = React.useCallback(() => setIsSectionsSidebarOpen(true), []);
+  const { setCurrentView } = useUIStore();
+  const handleBottomAction = React.useCallback((actionId: string) => {
+    switch (actionId) {
+        case 'export-pdf':
+            setIsExportModalOpen(true);
+            break;
+        case 'massive-pdf':
+            handleSetActiveSection('massive-gen');
+            break;
+        case 'quick-mode':
+            setViewMode('quick');
+            break;
+        case 'config':
+            setIsActionsPanelOpen(true);
+            break;
+        case 'inventory':
+            setCurrentView('inventory');
+            break;
+    }
+  }, [setIsExportModalOpen, handleSetActiveSection, setViewMode, setIsActionsPanelOpen, setCurrentView]);
+
 
   if (!data || !data.header || !data.annexes || !data.sections) {
     return (
-      <div className="w-full max-w-none px-2 pb-32 pt-4">
+      <div className="w-full max-w-none px-2 pb-32 pt-0">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8 px-2">
           <div className="flex items-center gap-4">
             <Skeleton className="w-12 h-12 rounded-2xl" />
@@ -392,7 +415,7 @@ const CostSheetView = () => {
   }
 
   return (
-    <div className="w-full max-w-none px-0 pb-32 pt-4">
+    <div className="w-full max-w-none px-0 pb-32 pt-0">
       <CostSheetActionsPanel
         isOpen={isActionsPanelOpen}
         onClose={() => setIsActionsPanelOpen(false)}
@@ -464,6 +487,8 @@ const CostSheetView = () => {
                         activeSection={activeSection}
                         setActiveSection={handleSetActiveSection}
                         onOpenActions={() => setIsActionsPanelOpen(true)}
+                        onOpenAnnexes={onOpenAnnexes}
+                        onOpenSections={onOpenSections}
                     />
                 </div>
 
@@ -484,8 +509,8 @@ const CostSheetView = () => {
                     )}
                     {activeSection === 'main' && (
                         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
-                            {/* Horizontal Sub-navigation for Sections */}
-                            <div className="py-2 overflow-hidden">
+                            {/* Horizontal Sub-navigation for Sections - Moved to lateral on mobile */}
+                            <div className="hidden sm:block py-2 overflow-hidden">
                                 <ActionMenu
                                     actions={subSectionActions}
                                     sticky={false}
@@ -563,6 +588,11 @@ const CostSheetView = () => {
             />
         </div>
       )}
+      <CostSheetBottomNav
+        activeTab={activeSection}
+        onTabChange={handleSetActiveSection}
+        onAction={handleBottomAction}
+      />
     </div>
   );
 };
