@@ -49,6 +49,7 @@ interface UIState {
   currentView: ViewType;
   sidebarOpen: boolean;
   isCreateProductModalOpen: boolean;
+  isChatBotOpen: boolean;
   initialProductName?: string;
   notifications: NotificationsConfig;
   viewQueries: Record<string, string | null>;
@@ -60,6 +61,7 @@ interface UIState {
   setSidebarOpen: (open: boolean) => void;
   setIsCreateProductModalOpen: (open: boolean) => void;
   setInitialProductName: (name?: string) => void;
+  setIsChatBotOpen: (open: boolean) => void;
   setLastQuery: (query: string | null, view?: string) => void;
 }
 
@@ -67,6 +69,7 @@ export const useUIStore = create<UIState>((set) => ({
   currentView: 'dashboard',
   sidebarOpen: true,
   isCreateProductModalOpen: false,
+  isChatBotOpen: false,
   initialProductName: '',
   notifications: {
     lowStock: true,
@@ -80,6 +83,7 @@ export const useUIStore = create<UIState>((set) => ({
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
   setIsCreateProductModalOpen: (open) => set({ isCreateProductModalOpen: open }),
+  setIsChatBotOpen: (open) => set({ isChatBotOpen: open }),
   setInitialProductName: (name) => set({ initialProductName: name }),
   setLastQuery: (query, view) => set((state) => ({
     viewQueries: {
