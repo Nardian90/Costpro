@@ -43,6 +43,7 @@ test.describe('RBAC and User Management', () => {
     await expect(page).toHaveURL(/\/$/);
 
     // Go to Users management
+    await page.getByTestId('module-administracion').click();
     await page.getByTestId('nav-users').click();
 
     // Check table headers

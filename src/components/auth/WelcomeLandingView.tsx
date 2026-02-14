@@ -85,7 +85,8 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
               onClick={onLoginClick}
               className="h-10 sm:h-11 px-3 sm:px-6 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 sm:gap-2 border-2 border-border bg-background/50 hover:bg-muted transition-all active:scale-95 group shrink-0 shadow-sm"
             >
-              <span>Acceso</span>
+              <span className="hidden sm:inline">Acceso al Sistema</span>
+              <span className="inline sm:hidden">Acceso</span>
               <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
             </button>
             <button

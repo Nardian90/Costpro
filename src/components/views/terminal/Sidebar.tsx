@@ -254,6 +254,7 @@ export const Sidebar = ({
                     <>
                       <button
                         onClick={() => toggleModule(module.id)}
+                        data-testid={`module-${module.id}`}
                         className={cn(
                           "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all",
                           isExpanded ? "bg-primary/5 text-primary" : "text-sidebar-foreground/60 hover:text-sidebar-foreground"

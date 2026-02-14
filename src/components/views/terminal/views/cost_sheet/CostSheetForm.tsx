@@ -153,7 +153,7 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
             </div>
             <button
               onClick={() => addRow(annex.id)}
-              className="neu-btn-primary !py-2.5 !px-5 rounded-xl w-full sm:w-auto flex items-center justify-center gap-2 font-bold text-sm shadow-lg"
+              className="neu-btn-primary !py-3 !px-5 rounded-xl w-full sm:w-auto flex items-center justify-center gap-2 font-bold text-sm shadow-lg min-h-[44px]"
             >
                 <Plus className="w-4 h-4" />
                 Añadir Fila
@@ -195,7 +195,7 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
                               <TableCell data-label="Acciones" className="text-center p-3 sm:p-4">
                                   <button
                                       onClick={() => removeRow(annex.id, rowIndex)}
-                                      className="p-2.5 text-danger hover:bg-danger/10 rounded-xl transition-all neu-raised-sm group-hover:scale-110 active:scale-95"
+                                      className="p-3.5 text-danger hover:bg-danger/10 rounded-xl transition-all neu-raised-sm group-hover:scale-110 active:scale-95 min-h-[44px] min-w-[44px] flex items-center justify-center mx-auto"
                                       aria-label="Eliminar fila"
                                   >
                                       <Trash2 className="h-4 w-4" />

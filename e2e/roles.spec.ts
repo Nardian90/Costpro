@@ -19,6 +19,7 @@ test.describe('Roles and Permissions Management', () => {
     await expect(page).toHaveURL(/\/$/);
 
     // Go to Roles management
+    await page.getByTestId('module-administracion').click();
     await page.getByTestId('nav-roles').click();
 
     // Check table headers

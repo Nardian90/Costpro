@@ -245,7 +245,7 @@ export default function UserForm({
                  <select
                   {...register(`memberships.${index}.store_id` as const)}
                   className={cn(
-                    "w-full p-2.5 sm:p-2 rounded-lg border bg-background font-bold text-xs outline-none transition-all",
+                    "w-full h-11 p-2.5 sm:p-2 rounded-lg border bg-background font-bold text-xs outline-none transition-all",
                     errors.memberships?.[index]?.store_id ? "border-destructive ring-1 ring-destructive/20" : "border-border"
                   )}
                 >
@@ -265,7 +265,7 @@ export default function UserForm({
                   <label className="text-[8px] font-black uppercase text-muted-foreground tracking-widest block">Rol</label>
                   <select
                     {...register(`memberships.${index}.role` as const)}
-                    className="w-full p-2.5 sm:p-2 rounded-lg border border-border bg-background font-bold text-xs outline-none"
+                    className="w-full h-11 p-2.5 sm:p-2 rounded-lg border border-border bg-background font-bold text-xs outline-none"
                   >
                     {(!allowedRoles || allowedRoles.includes('admin')) && <option value="admin">Admin</option>}
                     {(!allowedRoles || allowedRoles.includes('encargado')) && <option value="encargado">Encargado</option>}
@@ -279,7 +279,7 @@ export default function UserForm({
                    <label className="text-[8px] font-black uppercase text-muted-foreground tracking-widest block">Estado</label>
                    <select
                     {...register(`memberships.${index}.status` as const)}
-                    className="w-full p-2.5 sm:p-2 rounded-lg border border-border bg-background font-bold text-xs outline-none"
+                    className="w-full h-11 p-2.5 sm:p-2 rounded-lg border border-border bg-background font-bold text-xs outline-none"
                   >
                     <option value="active">Activo</option>
                     <option value="revoked">Revocado</option>

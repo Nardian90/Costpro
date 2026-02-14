@@ -60,7 +60,7 @@ export default function RegisterForm({ onBackToLogin }: RegisterFormProps) {
       <div className="flex items-center gap-4">
         <button
           onClick={onBackToLogin}
-          className="p-2 hover:bg-muted rounded-full transition-colors"
+          className="p-3 hover:bg-muted rounded-full transition-colors flex items-center justify-center min-w-[44px] min-h-[44px]"
           aria-label="Volver al login"
         >
           <ArrowLeft className="w-5 h-5" />

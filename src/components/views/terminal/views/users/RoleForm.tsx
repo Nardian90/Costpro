@@ -99,14 +99,14 @@ export default function RoleForm({
           )}
         </div>
 
-        <div className="flex items-center gap-2 p-3 bg-primary/5 rounded-xl border border-primary/10">
+        <div className="flex items-center gap-3 p-3.5 bg-primary/5 rounded-xl border border-primary/10 min-h-[44px]">
           <input
             type="checkbox"
             id="is_default"
             {...register('is_default')}
-            className="w-4 h-4 rounded border-primary/20 text-primary focus:ring-primary"
+            className="w-5 h-5 rounded border-primary/20 text-primary focus:ring-primary cursor-pointer"
           />
-          <label htmlFor="is_default" className="text-[10px] font-black uppercase text-primary tracking-widest cursor-pointer">
+          <label htmlFor="is_default" className="text-[10px] font-black uppercase text-primary tracking-widest cursor-pointer flex-1 py-1">
             Establecer como Rol por Defecto (Para auto-registro)
           </label>
         </div>
@@ -119,14 +119,14 @@ export default function RoleForm({
                 Permisos de Acceso
               </label>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 min-h-[44px]">
                <input
                 type="checkbox"
                 id="all_perms"
                 {...register('permissions.all')}
-                className="w-3 h-3 rounded border-border text-primary focus:ring-primary"
+                className="w-4 h-4 rounded border-border text-primary focus:ring-primary cursor-pointer"
               />
-              <label htmlFor="all_perms" className="text-[9px] font-bold uppercase text-muted-foreground tracking-tighter cursor-pointer">
+              <label htmlFor="all_perms" className="text-[9px] font-bold uppercase text-muted-foreground tracking-tighter cursor-pointer py-2">
                 Acceso Total
               </label>
             </div>
@@ -140,7 +140,7 @@ export default function RoleForm({
                 disabled={allSelected}
                 onClick={() => toggleView(view)}
                 className={cn(
-                  "flex items-center gap-2 p-3 rounded-xl border transition-all text-left",
+                  "flex items-center gap-2 p-3 rounded-xl border transition-all text-left min-h-[44px]",
                   allSelected ? "opacity-50 grayscale cursor-not-allowed bg-muted border-border" :
                   selectedViews.includes(view)
                     ? "bg-primary/10 border-primary/30 text-primary"

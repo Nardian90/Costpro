@@ -109,14 +109,14 @@ export default function LoginForm() {
 
   if (isRegistering) {
     return (
-      <div className="neu-card w-full max-w-md mx-auto">
+      <div className="neu-card w-full max-w-md mx-auto overflow-hidden">
         <RegisterForm onBackToLogin={() => setIsRegistering(false)} />
       </div>
     );
   }
 
   return (
-    <div className="neu-card w-full max-w-md mx-auto">
+    <div className="neu-card w-full max-w-md mx-auto overflow-hidden">
       <h2 className="text-xl font-semibold mb-6 text-center">
         Iniciar Sesión
       </h2>
