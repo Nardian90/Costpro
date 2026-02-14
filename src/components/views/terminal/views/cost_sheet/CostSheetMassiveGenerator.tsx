@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -51,12 +51,14 @@ interface CostSheetMassiveGeneratorProps {
   isOpen?: boolean;
   onClose?: () => void;
   isSection?: boolean;
+  initialProducts?: any[];
 }
 
 export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps> = ({
   isOpen = false,
   onClose = () => {},
-  isSection = false
+  isSection = false,
+  initialProducts
 }) => {
   const { data: currentSheet } = useCostSheetStore();
   const { user } = useAuthStore();
@@ -76,6 +78,11 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
     includeFinancialSummary: true
   });
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (initialProducts && initialProducts.length > 0) {
+      setImportedProducts(initialProducts);
+    }
+  }, [initialProducts]);
 
   // We fetch a large number of products for massive generation
   // In a real scenario, we might want to fetch all pages sequentially
@@ -207,7 +214,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                         code: product.sku || product.id,
                         description: product.name,
                     um: product.unit_of_measure || "u",
-                        consumption_norm: 1,
+                        consumption_norm: product.quantity || 1,
                         price: product.price || 0,
                         importe: product.price || 0,
                         total: product.price || 0
@@ -507,7 +514,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                                     <div>
                                         <p className="text-sm font-bold text-success">Listado Importado Exitosamente</p>
                                         <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-1">
-                                            Se han cargado {importedProducts.length} productos desde el archivo.
+                                            Se han cargado {importedProducts.length} productos {initialProducts && initialProducts.length > 0 ? 'desde el Modo Rápido' : 'desde el archivo'}.
                                         </p>
                                     </div>
                                 </div>
