@@ -34,14 +34,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
     const massiveGenItem = navItems.find(s => s.id === 'massive-gen');
 
     const actions: Action[] = [
-        ...(onToggleEditing ? [{
-            id: 'toggle-editing',
-            label: isEditing ? 'Ver' : 'Editar',
-            icon: isEditing ? Eye : Edit,
-            onClick: onToggleEditing,
-            variant: 'primary' as const,
-            className: 'bg-primary text-primary-foreground font-black shadow-lg shadow-primary/20 text-[10px] uppercase tracking-wider'
-        }] : []),
+
         ...(onOpenActions ? [{
             id: 'actions-menu',
             label: 'Menú',

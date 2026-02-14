@@ -25,11 +25,12 @@ type Section = {
 };
 
 type CostSheetBodyProps = {
+  forceTable?: boolean;
   sections: Section[];
   calculatedValues: { [key: string]: CalculatedRowValue };
 };
 
-const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValues }) => {
+const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValues, forceTable }) => {
   const renderRow = (row: any, level: number = 0, numbering: string) => {
       const calc = calculatedValues[row.id] || { total: 0, valorHistorico: 0, baseTotal: 0, coeficiente: 0 };
       const hasChildren = row.children && row.children.length > 0;
@@ -86,7 +87,7 @@ const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValue
   };
 
   return (
-    <div className="overflow-x-auto table-to-cards border border-slate-100 dark:border-slate-800 rounded-3xl overflow-hidden shadow-xl bg-white dark:bg-slate-900">
+    <div className={cn("overflow-x-auto table-to-cards border border-slate-100 dark:border-slate-800 rounded-3xl overflow-hidden shadow-xl bg-white dark:bg-slate-900", forceTable && "force-table")}>
       <table className="w-full text-sm">
         <thead className="bg-slate-800 text-white hidden sm:table-header-group">
           <tr>

@@ -2,14 +2,15 @@
 'use client';
 
 import React from 'react';
-import { formatCurrency } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 import { CostSheetAnnex, CostSheetColumn } from '@/types/cost-sheet';
 
 type CostSheetAnnexesProps = {
+  forceTable?: boolean;
   annexes: CostSheetAnnex[];
 };
 
-const CostSheetAnnexes: React.FC<CostSheetAnnexesProps> = ({ annexes }) => {
+const CostSheetAnnexes: React.FC<CostSheetAnnexesProps> = ({ annexes, forceTable }) => {
   return (
     <div className="space-y-16">
       {annexes.map((annex) => {
@@ -25,7 +26,7 @@ const CostSheetAnnexes: React.FC<CostSheetAnnexesProps> = ({ annexes }) => {
               <div className="h-1 w-24 bg-primary mx-auto rounded-full" />
             </div>
 
-            <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-lg bg-white dark:bg-slate-900">
+            <div className={cn("overflow-x-auto border table-to-cards border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-lg bg-white dark:bg-slate-900", forceTable && "force-table")}>
               <table className="w-full text-xs">
                 <thead className="bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-700">
                   <tr>
