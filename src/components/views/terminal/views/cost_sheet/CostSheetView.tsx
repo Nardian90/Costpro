@@ -351,9 +351,8 @@ const CostSheetView = () => {
   const secondaryActions = React.useMemo(() => allActions, [allActions]);
 
   const navItems = React.useMemo(() => [
-    { id: 'header', label: 'Encabezado', icon: Layout },
-    { id: 'main', label: 'Ficha Principal', icon: FileSpreadsheet },
-    { id: 'massive-gen', label: 'Gen. Masiva', icon: FileText }
+    { id: "header", label: "Encabezado", icon: Layout },
+    { id: "massive-gen", label: "Gen. Masiva", icon: FileText }
   ], []);
 
   const subSectionActions = React.useMemo(() => {
@@ -373,26 +372,30 @@ const CostSheetView = () => {
 
   const onOpenAnnexes = React.useCallback(() => setIsAnnexesSidebarOpen(true), []);
   const onOpenSections = React.useCallback(() => setIsSectionsSidebarOpen(true), []);
-  const { setCurrentView } = useUIStore();
+  const { setCurrentView, setIsChatBotOpen } = useUIStore();
   const handleBottomAction = React.useCallback((actionId: string) => {
     switch (actionId) {
-        case 'export-pdf':
+        case "export-pdf":
             setIsExportModalOpen(true);
             break;
-        case 'massive-pdf':
-            handleSetActiveSection('massive-gen');
+        case "massive-pdf":
+            handleSetActiveSection("massive-gen");
             break;
-        case 'quick-mode':
-            setViewMode('quick');
+        case "quick-mode":
+            setViewMode("quick");
             break;
-        case 'config':
+        case "config":
             setIsActionsPanelOpen(true);
+            window.scrollTo({ top: 0, behavior: "smooth" });
             break;
-        case 'inventory':
-            setCurrentView('inventory');
+        case "inventory":
+            setCurrentView("inventory");
+            break;
+        case "ai":
+            setIsChatBotOpen(true);
             break;
     }
-  }, [setIsExportModalOpen, handleSetActiveSection, setViewMode, setIsActionsPanelOpen, setCurrentView]);
+  }, [setIsExportModalOpen, handleSetActiveSection, setViewMode, setIsActionsPanelOpen, setCurrentView, setIsChatBotOpen]);
 
 
   if (!data || !data.header || !data.annexes || !data.sections) {
@@ -480,7 +483,7 @@ const CostSheetView = () => {
         <div className="animate-in fade-in duration-700 space-y-6">
           {viewMode === 'expert' && (
             <>
-                <div className="sticky top-[60px] z-30 py-2 bg-background/50 backdrop-blur-sm -mx-4 px-4 overflow-hidden">
+                <div className="sticky top-[48px] z-30 py-1 bg-background/60 backdrop-blur-md border-b border-border/5 -mx-4 px-4 overflow-hidden">
                     <CostSheetNav
                         navItems={navItems}
                         annexes={data?.annexes || []}
