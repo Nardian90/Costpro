@@ -36,7 +36,7 @@ import { useIsMobile } from '@/hooks/ui/useMobile';
 
 const CostSheetView = () => {
   const isMobile = useIsMobile();
-  const [activeSection, setActiveSection] = useState('main');
+  const [activeSection, setActiveSection] = useState('kpis');
   const [activeSubSectionId, setActiveSubSectionId] = useState('group-1-3');
   const [quickModeProducts, setQuickModeProducts] = React.useState<any[] | null>(null);
 
@@ -366,7 +366,7 @@ const CostSheetView = () => {
 
   const navItems = React.useMemo(() => [
     { id: "kpis", label: "Tablero", icon: BarChart3 },
-    { id: "main", label: "Ficha", icon: ClipboardList },
+
     { id: "header", label: "Encabezado", icon: Layout },
     { id: "massive-gen", label: "Gen. Masiva", icon: FileText }
   ], []);

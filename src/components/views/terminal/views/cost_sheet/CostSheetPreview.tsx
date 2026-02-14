@@ -30,7 +30,7 @@ const CostSheetPreview = React.forwardRef<HTMLDivElement, CostSheetPreviewProps>
                 Resumen de Operación
               </div>
               <SecurityScrollContainer minWidth="600px">
-                <CostSheetBody
+                <CostSheetBody forceTable={true}
                     sections={data?.sections || []}
                     calculatedValues={calculatedValues}
                 />
@@ -41,7 +41,7 @@ const CostSheetPreview = React.forwardRef<HTMLDivElement, CostSheetPreviewProps>
                 Anexos Detallados
               </div>
               <SecurityScrollContainer minWidth="800px">
-                <CostSheetAnnexes
+                <CostSheetAnnexes forceTable={true}
                     annexes={calculatedAnnexes}
                 />
               </SecurityScrollContainer>
