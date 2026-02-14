@@ -24,6 +24,7 @@ describe('Zod Schema Resilience', () => {
 
   it('should handle invalid memberships within the array', () => {
     const profileWithBadMemberships = {
+      id: 'some-valid-id',
       full_name: 'Test User',
       email: 'test@example.com',
       memberships: [
