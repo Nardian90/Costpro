@@ -30,49 +30,9 @@ import { Input } from '@/components/ui/input';
 import { FormulaEditor } from './FormulaEditor';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CostSheetSectionActionsPanel } from './CostSheetSectionActionsPanel';
+import CircularProgress from './CircularProgress';
 
-// Circular Progress Component
-const CircularProgress = ({ value, label, subLabel, color = "text-primary" }: { value: number, label: string, subLabel: string, color?: string }) => {
-  const radius = 32;
-  const circumference = 2 * Math.PI * radius;
-  const safeValue = isNaN(value) ? 0 : value;
-  const strokeDashoffset = circumference - (Math.min(safeValue, 100) / 100) * circumference;
 
-  return (
-    <div className="flex flex-col items-center gap-2">
-      <div className="relative w-20 h-20 flex items-center justify-center">
-        <svg className="w-full h-full -rotate-90">
-          <circle
-            cx="40"
-            cy="40"
-            r={radius}
-            className="stroke-muted/10 fill-none"
-            strokeWidth="6"
-          />
-          <motion.circle
-            cx="40"
-            cy="40"
-            r={radius}
-            className={cn("fill-none", color)}
-            strokeWidth="6"
-            strokeDasharray={circumference}
-            initial={{ strokeDashoffset: circumference }}
-            animate={{ strokeDashoffset }}
-            transition={{ duration: 1, ease: "easeOut" }}
-            strokeLinecap="round"
-          />
-        </svg>
-        <div className="absolute inset-0 flex items-center justify-center flex-col">
-          <span className="text-sm font-black tracking-tighter">{Math.round(safeValue)}%</span>
-        </div>
-      </div>
-      <div className="text-center">
-        <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground mb-0.5">{label}</p>
-        <p className={cn("text-[10px] font-black tracking-tight", color)}>{subLabel}</p>
-      </div>
-    </div>
-  );
-};
 
 interface RowCardProps {
   row: CostSheetRow;
