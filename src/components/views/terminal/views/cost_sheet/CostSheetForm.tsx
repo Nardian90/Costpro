@@ -195,7 +195,7 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
                               <TableCell data-label="Acciones" className="text-center p-3 sm:p-4">
                                   <button
                                       onClick={() => removeRow(annex.id, rowIndex)}
-                                      className="p-2.5 text-danger hover:bg-danger/10 rounded-xl transition-all neu-raised-sm group-hover:scale-110 active:scale-95"
+                                      className="p-3.5 text-danger hover:bg-danger/10 rounded-xl transition-all neu-raised-sm group-hover:scale-110 active:scale-95"
                                       aria-label="Eliminar fila"
                                   >
                                       <Trash2 className="h-4 w-4" />
@@ -213,7 +213,7 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
             <div className="neu-card !p-5 border-primary/20 bg-primary/5 shadow-xl min-w-[240px]">
                 <span className="text-[10px] text-primary/70 uppercase font-black tracking-[0.2em] block mb-2 text-right">Total {annex.id}</span>
                 <div className="flex items-center justify-end gap-2">
-                    <span className="text-3xl font-black font-mono text-primary drop-shadow-sm">
+                    <span className="text-[clamp(1.5rem,5vw,1.875rem)] font-black font-mono text-primary drop-shadow-sm">
                         {formatCurrency(displayData.reduce((acc: number, row: any) => {
                              const totalCol = annex.columns.find((c:any) => c.formula || c.key === 'amount' || c.key === 'total');
                              return acc + (row[totalCol?.key || ''] || 0);
@@ -252,7 +252,7 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
         </div>
       </div>
 
-      <div className="neu-card !p-4 sm:!p-8 bg-card/30 backdrop-blur-sm border-white/5 shadow-2xl rounded-3xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="neu-card !p-4 sm:!p-8 bg-card/30 backdrop-blur-sm border-white/5 shadow-2xl rounded-3xl animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-x-auto no-scrollbar">
         {getActiveContent()}
       </div>
     </div>

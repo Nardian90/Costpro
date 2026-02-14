@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import { Loader2, UserPlus, ArrowLeft, Mail, Lock } from 'lucide-react';
 import { logger } from '@/lib/logger';
+import { Input } from '@/components/ui/input';
 
 interface RegisterFormProps {
   onBackToLogin: () => void;
@@ -60,7 +61,7 @@ export default function RegisterForm({ onBackToLogin }: RegisterFormProps) {
       <div className="flex items-center gap-4">
         <button
           onClick={onBackToLogin}
-          className="p-2 hover:bg-muted rounded-full transition-colors"
+          className="p-3.5 hover:bg-muted rounded-full transition-colors"
           aria-label="Volver al login"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -78,7 +79,7 @@ export default function RegisterForm({ onBackToLogin }: RegisterFormProps) {
             <Mail className="w-4 h-4" />
             Correo Electrónico
           </label>
-          <input
+          <Input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -93,7 +94,7 @@ export default function RegisterForm({ onBackToLogin }: RegisterFormProps) {
             <Lock className="w-4 h-4" />
             Contraseña
           </label>
-          <input
+          <Input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -108,7 +109,7 @@ export default function RegisterForm({ onBackToLogin }: RegisterFormProps) {
             <Lock className="w-4 h-4" />
             Confirmar Contraseña
           </label>
-          <input
+          <Input
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
