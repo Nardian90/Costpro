@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -25,9 +24,17 @@ export async function POST(req: NextRequest) {
     });
 
     const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
     const timestamp = format(new Date(), "yyyy-MM-dd HH:mm:ss");
 
+    let pageTitle = "FICHA DE COSTO";
+    let lastHeaderPage = 0;
+
     const addHeader = (doc: jsPDF, title: string) => {
+        const pageNum = doc.internal.getNumberOfPages();
+        if (lastHeaderPage === pageNum) return;
+        lastHeaderPage = pageNum;
+
         // Logo Placeholder or "C"
         doc.setDrawColor(200);
         doc.setLineWidth(0.5);
@@ -71,18 +78,22 @@ export async function POST(req: NextRequest) {
             body: data,
             theme: 'plain',
             styles: { fontSize: 7, cellPadding: 1 },
-            columnStyles: { 0: { cellWidth: 60 }, 1: { cellWidth: 60 }, 2: { cellWidth: 60 } }
+            columnStyles: { 0: { cellWidth: 60 }, 1: { cellWidth: 60 }, 2: { cellWidth: 60 } },
+            margin: { top: 35 },
+            didDrawPage: () => addHeader(doc, pageTitle)
         });
 
         return (doc as any).lastAutoTable.finalY;
     };
 
     let isFirstPage = true;
+    let currentY = 0;
 
     // 1. Export FC
     if (exportOptions.includeFC) {
-        addHeader(doc, "FICHA DE COSTO");
-        let currentY = addDataSheetHeader(doc, 38);
+        pageTitle = "FICHA DE COSTO";
+        addHeader(doc, pageTitle);
+        currentY = addDataSheetHeader(doc, 38);
 
         // Main Rows Table
         const rowHeaders = ['Clasif.', 'Concepto', 'Método', 'V. Histórico', 'Total'];
@@ -97,7 +108,6 @@ export async function POST(req: NextRequest) {
         };
 
         const filteredRows = filterRows(result.rows);
-
         const row12Total = result.rows.find(r => r.classification === '12')?.total || 0;
 
         const rowData = filteredRows.map(r => {
@@ -127,8 +137,11 @@ export async function POST(req: NextRequest) {
                 0: { cellWidth: 20 },
                 3: { halign: 'right' },
                 4: { halign: 'right', fontStyle: 'bold' }
-            }
+            },
+            margin: { top: 35, bottom: 20 },
+            didDrawPage: () => addHeader(doc, pageTitle)
         });
+        currentY = (doc as any).lastAutoTable.finalY;
         isFirstPage = false;
     }
 
@@ -139,30 +152,56 @@ export async function POST(req: NextRequest) {
         const totalImporte = annex.rows.reduce((sum, r) => sum + (r.importe || 0), 0);
         if (exportOptions.skipZeros && totalImporte === 0) continue;
 
-        if (!isFirstPage) doc.addPage();
-        addHeader(doc, `ANEXO ${annex.id}`);
+        const needsNewPage = !exportOptions.consolidated || isFirstPage || (currentY > pageHeight - 60);
+
+        if (needsNewPage) {
+            if (!isFirstPage) doc.addPage();
+            pageTitle = `ANEXO ${annex.id}`;
+            addHeader(doc, pageTitle);
+            currentY = 38;
+        } else {
+            currentY += 12; // Spacing between sections
+        }
+
         doc.setFontSize(10);
         doc.setFont("helvetica", "bold");
-        doc.text((annex.name || annex.id).toUpperCase(), 14, 38);
+        doc.text((annex.name || annex.id).toUpperCase(), 14, currentY);
+        currentY += 4;
 
         const headers = Object.keys(annex.rows[0] || {}).filter(k => k !== 'importe');
         const body = annex.rows.map(r => headers.map(h => r[h]));
 
         autoTable(doc, {
-            startY: 42,
+            startY: currentY,
             head: [headers.map(h => h.toUpperCase())],
             body: body,
             theme: 'grid',
             headStyles: { fillColor: [100, 100, 100], textColor: 255, fontSize: 7 },
-            styles: { fontSize: 6.5, cellPadding: 1 }
+            styles: { fontSize: 6.5, cellPadding: 1 },
+            margin: { top: 35, bottom: 20 },
+            didDrawPage: () => addHeader(doc, pageTitle)
         });
+        currentY = (doc as any).lastAutoTable.finalY;
         isFirstPage = false;
     }
 
     // 3. Export Audit (always last if consolidated)
     if (exportOptions.includeAudit) {
-        if (!isFirstPage) doc.addPage();
-        addHeader(doc, "TRAZABILIDAD DE CÁLCULO (AUDITORÍA)");
+        const needsNewPage = !exportOptions.consolidated || isFirstPage || (currentY > pageHeight - 40);
+
+        if (needsNewPage) {
+            if (!isFirstPage) doc.addPage();
+            pageTitle = "TRAZABILIDAD DE CÁLCULO (AUDITORÍA)";
+            addHeader(doc, pageTitle);
+            currentY = 38;
+        } else {
+            currentY += 12;
+        }
+
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.text("TRAZABILIDAD DE CÁLCULO (AUDITORÍA)", 14, currentY);
+        currentY += 4;
 
         const auditData = result.audits.map(a => [
             a.rowId || '-',
@@ -172,13 +211,16 @@ export async function POST(req: NextRequest) {
         ]);
 
         autoTable(doc, {
-            startY: 38,
+            startY: currentY,
             head: [['Fila', 'Tipo', 'Nota', 'Cambio']],
             body: auditData,
             theme: 'plain',
             styles: { fontSize: 6 },
-            headStyles: { fontStyle: 'bold' }
+            headStyles: { fontStyle: 'bold' },
+            margin: { top: 35, bottom: 20 },
+            didDrawPage: () => addHeader(doc, pageTitle)
         });
+        currentY = (doc as any).lastAutoTable.finalY;
     }
 
     // Footer
