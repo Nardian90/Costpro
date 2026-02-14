@@ -14,6 +14,7 @@ import { Progress } from '@/components/ui/progress';
 interface CostSheetWizardProps {
   data: any;
   calculatedValues: any;
+  calculatedHeader?: any;
 }
 
 const steps = [
@@ -27,7 +28,7 @@ const steps = [
   { id: 'signature', label: 'Firmas', description: 'Validación y aprobación' },
 ];
 
-const CostSheetWizard: React.FC<CostSheetWizardProps> = ({ data, calculatedValues }) => {
+const CostSheetWizard: React.FC<CostSheetWizardProps> = ({ data, calculatedValues, calculatedHeader }) => {
   const [currentStep, setCurrentStep] = React.useState(0);
   const [activeSubSectionId, setActiveSubSectionId] = React.useState('');
   const [isSectionsSidebarOpen, setIsSectionsSidebarOpen] = React.useState(false);
@@ -85,7 +86,7 @@ const CostSheetWizard: React.FC<CostSheetWizardProps> = ({ data, calculatedValue
 
       {/* Step Content */}
       <div className="min-h-[400px]">
-        {step.id === 'header' && <CostSheetHeaderEditor />}
+        {step.id === 'header' && <CostSheetHeaderEditor calculatedHeader={calculatedHeader} />}
         {['I', 'II', 'III', 'IV', 'V'].includes(step.id) && <CostSheetAnnexEditor activeAnnexId={step.id} />}
         {step.id === 'main' && (
            <div className="space-y-4">

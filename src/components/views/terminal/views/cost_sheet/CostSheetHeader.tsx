@@ -4,19 +4,7 @@ import React from 'react';
 import { cn, formatDate } from '@/lib/utils';
 
 type CostSheetHeaderProps = {
-  header: {
-    code: string;
-    name: string;
-    date: string;
-    unit: string;
-    quantity: number;
-    currency: string;
-    category: string;
-    type: string;
-    productionLevel?: string;
-    utilization?: string;
-    salePrice?: string;
-  };
+  header: any;
 };
 
 const CostSheetHeader: React.FC<CostSheetHeaderProps> = ({ header }) => {
@@ -35,13 +23,13 @@ const CostSheetHeader: React.FC<CostSheetHeaderProps> = ({ header }) => {
         </p>
       </div>
 
-      <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-inner">
+      <div className="bg-white/50 dark:bg-slate-900/50 p-6 rounded-[2rem] border border-slate-200 dark:border-primary/20 shadow-xl backdrop-blur-sm">
         <div className="flex flex-col gap-6">
-          <div className="border-b border-slate-200 dark:border-slate-700 pb-4">
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary block mb-1">
+          <div className="border-b border-slate-200 dark:border-primary/10 pb-4">
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary block mb-2 px-1">
               Datos generales de la Ficha de Costo (FC)
             </span>
-            <h1 className="text-2xl font-black text-slate-900 dark:text-white leading-tight uppercase">
+            <h1 className="text-3xl font-black text-slate-900 dark:text-white leading-tight uppercase tracking-tight">
               {header.name || 'Sin nombre'}
             </h1>
           </div>
@@ -49,16 +37,16 @@ const CostSheetHeader: React.FC<CostSheetHeaderProps> = ({ header }) => {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-6">
             {[
               { label: 'No. FC', value: header.code },
-              { label: 'Cod. Producto', value: '5587' },
+              { label: 'Cod. Producto', value: header.product_code },
               { label: 'Fecha', value: formatDate(header.date) },
               { label: 'UM', value: header.unit },
               { label: 'Cantidad', value: header.quantity },
               { label: 'Moneda', value: header.currency },
-              { label: 'ORGANISMO', value: header.category },
-              { label: 'EMPRESA', value: header.type },
-              { label: 'Nivel de Producción', value: header.productionLevel },
-              { label: '% Utilización Capacidad', value: header.utilization },
-              { label: 'Precio de Venta', value: header.salePrice, highlight: true },
+              { label: 'EMPRESA', value: header.company },
+              { label: 'ORGANISMO', value: header.organism },
+              { label: 'Nivel de Producción', value: header.production_level },
+              { label: '% Utilización Capacidad', value: header.capacity_utilization ? `${header.capacity_utilization}%` : 'N/A' },
+              { label: 'Precio de Venta', value: header.sale_price, highlight: true },
             ].map((item, idx) => (
               <div key={idx} className={cn("space-y-1", item.highlight && "col-span-1 sm:col-span-2 lg:col-span-1")}>
                 <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400 block">

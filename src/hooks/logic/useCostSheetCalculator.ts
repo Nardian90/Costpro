@@ -462,10 +462,19 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
           finalHeader.sale_price = evaluateHeaderExpression(finalHeader.sale_price, finalHeader, calculatedAnnexes, newCalculatedValues);
       }
 
+      // Ensure the calculation result contains the final calculated header for export purposes
+      const finalResult = {
+          ...result,
+          metadata: {
+              ...(result.metadata || {}),
+              header: finalHeader
+          }
+      };
+
       setResultState({
           calculatedValues: newCalculatedValues,
           calculatedHeader: finalHeader,
-          calculationResult: result,
+          calculationResult: finalResult,
           audits: result.audits,
           error: null,
           isBlocked,
