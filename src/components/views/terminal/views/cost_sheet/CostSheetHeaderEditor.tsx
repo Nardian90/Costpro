@@ -53,8 +53,8 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({ compact =
 
   return (
     <div className={cn(
-        "bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-inner animate-in slide-in-from-top duration-500",
-        compact ? "p-3" : "p-6"
+        "bg-white/80 dark:bg-[#0B0F19]/80 backdrop-blur-xl rounded-[2.5rem] border border-slate-200 dark:border-primary/10 shadow-2xl animate-in slide-in-from-top duration-700",
+        compact ? "p-4" : "p-8"
     )}>
       <div className={cn("flex flex-col", compact ? "gap-2" : "gap-6")}>
         {!compact && (
@@ -88,12 +88,12 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({ compact =
                 </div>
             </div>
         )}
-        <div className={cn("flex items-center gap-4", compact && "justify-between")}>
+        <div className={cn("flex flex-col gap-4", compact && "sm:flex-row sm:items-center sm:justify-between")}>
           <div className="flex-1">
             {!compact && (
-                <label htmlFor="name" className="text-[10px] font-black uppercase tracking-[0.2em] text-primary block mb-1">
+                <label htmlFor="name" className="text-[10px] font-black uppercase tracking-[0.3em] text-primary block mb-2 px-1">
                     Nombre del Recurso
-                    {String(header?.name).startsWith('=') && focusedField !== 'name' && <span className="ml-1 text-primary-500 font-black">fx</span>}
+                    {String(header?.name).startsWith('=') && focusedField !== 'name' && <span className="ml-2 text-primary animate-pulse font-black">fx</span>}
                 </label>
             )}
             <input
@@ -106,9 +106,9 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({ compact =
                 onBlur={() => setFocusedField(null)}
                 placeholder="Nombre del Recurso"
                 className={cn(
-                    "w-full px-3 py-2 font-black text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg focus:ring-primary focus:border-primary transition-all",
-                    compact ? "text-sm bg-transparent border-none py-1 px-1" : "text-2xl",
-                    String(header?.name).startsWith('=') && focusedField !== 'name' && "text-primary dark:text-primary-400"
+                    "w-full px-4 py-3 font-black text-slate-900 dark:text-white bg-slate-100/50 dark:bg-slate-900/50 border border-slate-200 dark:border-primary/20 rounded-2xl focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all outline-none shadow-sm",
+                    compact ? "text-sm bg-transparent border-none py-1 px-1 shadow-none" : "text-2xl sm:text-3xl lg:text-4xl tracking-tight",
+                    String(header?.name).startsWith('=') && focusedField !== 'name' && "text-primary dark:text-[#39FF14] drop-shadow-[0_0_8px_rgba(57,255,20,0.3)]"
                 )}
             />
           </div>
@@ -121,7 +121,7 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({ compact =
         </div>
 
         {!compact && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-6">
+          <div className="grid grid-cols-1 gap-y-6">
           {[
             { id: 'code', label: 'No. FC' },
             { id: 'product_code', label: 'Cod. Producto', isFormula: true },
@@ -148,10 +148,10 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({ compact =
             const isFormula = String(header?.[item.id]).startsWith('=');
 
             return (
-              <div key={item.id} className="space-y-1">
-                <label htmlFor={item.id} className="text-[9px] font-bold uppercase tracking-widest text-slate-400 block">
+              <div key={item.id} className="space-y-2 group">
+                <label htmlFor={item.id} className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 block px-1 group-focus-within:text-primary transition-colors">
                   {item.label}
-                  {isFormula && !isEditing && <span className="ml-1 text-primary-500 font-black">fx</span>}
+                  {isFormula && !isEditing && <span className="ml-2 text-primary font-black animate-pulse">fx</span>}
                 </label>
                 <input
                   id={item.id}
@@ -163,11 +163,11 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({ compact =
                   onBlur={() => setFocusedField(null)}
                   readOnly={item.readonly}
                   className={cn(
-                    "w-full px-2 py-1.5 text-sm font-bold border rounded-md focus:ring-primary focus:border-primary transition-colors",
+                    "w-full px-4 py-3 text-sm font-bold border rounded-2xl focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all outline-none shadow-sm",
                     item.readonly
-                        ? "bg-slate-200 dark:bg-slate-800 text-slate-500 cursor-not-allowed"
-                        : "text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 border-slate-200 dark:border-slate-600",
-                    isFormula && !isEditing && "text-primary dark:text-primary-400"
+                        ? "bg-slate-200 dark:bg-slate-900/80 text-slate-500 border-slate-300 dark:border-slate-800 cursor-not-allowed"
+                        : "text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-primary/10 hover:border-primary/30",
+                    isFormula && !isEditing && "text-primary dark:text-[#39FF14] drop-shadow-[0_0_8px_rgba(57,255,20,0.2)]"
                   )}
                 />
               </div>

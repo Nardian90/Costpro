@@ -2,7 +2,7 @@
 
 import React from 'react';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
-import { Layout, FileSpreadsheet, PenTool, ClipboardList, Menu, ListFilter, Sparkles } from 'lucide-react';
+import { Layout, FileSpreadsheet, PenTool, ClipboardList, Menu, ListFilter, Sparkles, Eye, Edit } from 'lucide-react';
 
 interface CostSheetNavProps {
   navItems: any[];
@@ -12,6 +12,8 @@ interface CostSheetNavProps {
   onOpenActions?: () => void;
   onOpenAnnexes?: () => void;
   onOpenSections?: () => void;
+  isEditing?: boolean;
+  onToggleEditing?: () => void;
 }
 
 const CostSheetNav: React.FC<CostSheetNavProps> = ({
@@ -22,6 +24,8 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
   onOpenActions,
   onOpenAnnexes,
   onOpenSections,
+  isEditing,
+  onToggleEditing,
 }) => {
   // Create a combined list of all navigable sections mapped to ActionMenu format
   const navActions: Action[] = React.useMemo(() => {
@@ -30,6 +34,14 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
     const massiveGenItem = navItems.find(s => s.id === 'massive-gen');
 
     const actions: Action[] = [
+        ...(onToggleEditing ? [{
+            id: 'toggle-editing',
+            label: isEditing ? 'Ver' : 'Editar',
+            icon: isEditing ? Eye : Edit,
+            onClick: onToggleEditing,
+            variant: 'primary' as const,
+            className: 'bg-primary text-primary-foreground font-black shadow-lg shadow-primary/20 text-[10px] uppercase tracking-wider'
+        }] : []),
         ...(onOpenActions ? [{
             id: 'actions-menu',
             label: 'Menú',

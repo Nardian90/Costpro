@@ -12,9 +12,10 @@ interface CostSheetPreviewProps {
   data: any;
   calculatedValues: any;
   calculatedAnnexes: any;
+  calculatedHeader?: any;
 }
 
-const CostSheetPreview = React.forwardRef<HTMLDivElement, CostSheetPreviewProps>(({ data, calculatedValues, calculatedAnnexes }, ref) => {
+const CostSheetPreview = React.forwardRef<HTMLDivElement, CostSheetPreviewProps>(({ data, calculatedValues, calculatedAnnexes, calculatedHeader }, ref) => {
   return (
     <div ref={ref} className="max-w-5xl mx-auto">
       <div className="neu-card !p-0 overflow-hidden border-none shadow-2xl bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
@@ -23,7 +24,7 @@ const CostSheetPreview = React.forwardRef<HTMLDivElement, CostSheetPreviewProps>
            <div className="text-xs font-bold opacity-50 uppercase tracking-widest">Documento Oficial de Costos</div>
         </div>
         <div className="p-4 sm:p-10 lg:p-12 space-y-10">
-            {data?.header && <CostSheetHeader header={data.header} />}
+            {data?.header && <CostSheetHeader header={calculatedHeader || data.header} />}
             <div className="space-y-4">
               <div className="text-xs font-black uppercase tracking-widest text-primary pb-2 border-b-2 border-primary/20 whitespace-nowrap">
                 Resumen de Operación
