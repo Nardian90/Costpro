@@ -40,17 +40,7 @@ export const CostSheetBottomNav: React.FC<CostSheetBottomNavProps> = ({
           <span className="text-[9px] font-black uppercase tracking-widest leading-none">Tablero</span>
         </button>
 
-        {/* Ficha */}
-        <button
-          onClick={() => onTabChange('main')}
-          className={cn(
-            "flex flex-col items-center gap-1 transition-all duration-300",
-            activeTab === 'main' ? "text-primary" : "text-muted-foreground/60"
-          )}
-        >
-          <FileText className={cn("w-5 h-5", activeTab === 'main' && "drop-shadow-[0_0_8px_rgba(57,255,20,0.5)]")} />
-          <span className="text-[9px] font-black uppercase tracking-widest leading-none">Ficha</span>
-        </button>
+
 
         {/* Central FAB with Dropdown */}
         <div className="relative -mt-10">
