@@ -38,6 +38,7 @@ const CostSheetView = () => {
   const isMobile = useIsMobile();
   const [activeSection, setActiveSection] = useState('main');
   const [activeSubSectionId, setActiveSubSectionId] = useState('group-1-3');
+  const [quickModeProducts, setQuickModeProducts] = React.useState<any[] | null>(null);
 
   const handleSetActiveSection = (id: string) => {
     setActiveSection(id);
@@ -273,7 +274,20 @@ const CostSheetView = () => {
     toast.success("JSON exportado correctamente");
   }, [data]);
 
-  const handleQuickGenerate = React.useCallback((rows: any[]) => {
+    const handleQuickGenerate = React.useCallback((rows: any[]) => {
+    if (rows.length > 1) {
+        setQuickModeProducts(rows.map(r => ({
+            name: r.product,
+            sku: `QM-${r.id}`,
+            unit_of_measure: r.um,
+            price: r.cost,
+            quantity: r.quantity
+        })));
+        setActiveSection("massive-gen");
+        setViewMode("expert");
+        toast.info(`Iniciando generación masiva para ${rows.length} productos`);
+        return;
+    }
     // 1. Get original template as base
     const baseTemplate = JSON.parse(JSON.stringify(data));
 
@@ -302,7 +316,7 @@ const CostSheetView = () => {
     setViewMode('expert');
     setActiveSection('kpis');
     toast.success("Ficha generada exitosamente en modo experto");
-  }, [data, setSheet]);
+  }, [data, setSheet, setActiveSection, setViewMode]);
 
   const allActions = React.useMemo(() => [
     {
@@ -579,7 +593,7 @@ const CostSheetView = () => {
                     )}
                     {activeSection === 'massive-gen' && (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                             <CostSheetMassiveGenerator isSection={true} />
+                             <CostSheetMassiveGenerator isSection={true} initialProducts={quickModeProducts || undefined} />
                         </div>
                     )}
                 </div>
