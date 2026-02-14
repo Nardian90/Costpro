@@ -118,7 +118,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
               </span>
-              v5.7.24 Hardened Enterprise Release
+              v5.7.25 Hardened Enterprise Release
             </div>
 
             <h1 className="text-[clamp(2.5rem,12vw,4.5rem)] font-black tracking-tighter leading-[0.9] uppercase text-foreground">
