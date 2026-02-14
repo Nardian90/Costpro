@@ -25,7 +25,7 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({ onGenera
   ]);
 
   const addRow = () => {
-    const newId = (rows.length + 1).toString();
+    const newId = Math.random().toString(36).substring(2, 9);
     setRows([...rows, { id: newId, product: '', um: '', quantity: 0, cost: 0 }]);
   };
 
@@ -79,7 +79,7 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({ onGenera
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 w-16">No.</th>
-                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Producto / Insumo</th>
+                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Producto / Item</th>
                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 w-24">UM</th>
                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 w-32">Cantidad</th>
                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 w-40">Costo Unit.</th>
@@ -96,7 +96,7 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({ onGenera
                     <Input
                       value={row.product}
                       onChange={(e) => updateRow(idx, 'product', e.target.value)}
-                      placeholder="Ej. Harina de Trigo"
+                      placeholder="Ej. Pizza Margherita"
                       className="bg-transparent border-none focus-visible:ring-1 focus-visible:ring-amber-500/30 font-bold text-slate-700 dark:text-slate-300 placeholder:text-slate-300"
                     />
                   </td>
@@ -130,7 +130,7 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({ onGenera
                   <td className="px-6 py-4 text-center">
                     <button
                       onClick={() => removeRow(idx)}
-                      className="p-2 text-slate-300 hover:text-danger hover:bg-danger/10 rounded-xl transition-all opacity-0 group-hover:opacity-100"
+                      className="p-2 text-destructive/50 hover:text-destructive hover:bg-destructive/10 rounded-xl transition-all opacity-100"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
