@@ -249,8 +249,7 @@ const template: CostSheetDataContract = {
               "id": "6.1",
               "label": "- Salarios",
               "valorHistorico": 37931.5,
-              "calculationMethod": "ValorFijo",
-              "vhFormula": ""
+              "calculationMethod": "ValorFijo"              
             },
             {
               "id": "6.2",
@@ -274,8 +273,7 @@ const template: CostSheetDataContract = {
               "id": "6.5",
               "label": "- Otros Gastos Admin.",
               "valorHistorico": 37205,
-              "calculationMethod": "ValorFijo",
-              "vhFormula": ""
+              "calculationMethod": "ValorFijo"
             }
           ]
         }
