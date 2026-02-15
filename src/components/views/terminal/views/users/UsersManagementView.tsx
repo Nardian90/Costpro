@@ -42,6 +42,7 @@ export default function UsersManagementView() {
       clerk: 'Cajero',
       warehouse: 'Almacén',
       usuario: 'Usuario',
+      costo: 'Costo',
     };
     return labels[role] || role;
   };
@@ -104,6 +105,8 @@ export default function UsersManagementView() {
               <tr className="bg-muted/30 text-muted-foreground font-black uppercase text-[10px] tracking-widest border-b border-border">
                 <th className="p-4 text-left">Perfil</th>
                 <th className="p-4 text-left">Email</th>
+                <th className="p-4 text-left">Inscripción</th>
+                <th className="p-4 text-center">Días Activos</th>
                 <th className="p-4 text-left">Accesos Multi-Tienda</th>
                 <th className="p-4 text-center">Estado</th>
                 <th className="p-4 text-center">Acciones</th>
@@ -121,6 +124,17 @@ export default function UsersManagementView() {
                      </div>
                   </td>
                   <td className="p-4 font-mono text-[10px] text-muted-foreground">{u.email}</td>
+                  <td className="p-4 font-mono text-[10px] text-muted-foreground whitespace-nowrap">
+                    {u.created_at ? new Date(u.created_at).toLocaleDateString() : '-'}
+                  </td>
+                  <td className="p-4 text-center">
+                    <div className="flex flex-col items-center">
+                      <span className="text-xs font-black text-primary">
+                        {u.created_at ? Math.floor((new Date().getTime() - new Date(u.created_at).getTime()) / (1000 * 60 * 60 * 24)) : 0}
+                      </span>
+                      <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-tighter">Días</span>
+                    </div>
+                  </td>
                   <td className="p-4">
                     <div className="flex flex-wrap gap-2">
                       {u.memberships?.map((m, idx) => (
@@ -172,7 +186,7 @@ export default function UsersManagementView() {
               ))}
               {users.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="p-12 text-center py-20">
+                  <td colSpan={7} className="p-12 text-center py-20">
                     <p className="text-muted-foreground uppercase font-black tracking-widest text-xs mb-2">
                       No se encontraron usuarios
                     </p>

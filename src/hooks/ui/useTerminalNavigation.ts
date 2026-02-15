@@ -42,7 +42,7 @@ export function useTerminalNavigation(user: UserContract | null, sidebarSearch: 
       { id: 'catalog', icon: Package, label: 'Catálogo', roles: ['manager', 'admin', 'encargado'], category: 'INVENTARIO' },
       { id: 'history', icon: History, label: 'Movimientos', roles: ['manager', 'admin', 'encargado'], category: 'INVENTARIO' },
 
-      { id: 'cost-sheets', icon: FileText, label: 'Costos', roles: ['admin', 'manager', 'encargado'], category: 'GESTIÓN' },
+      { id: 'cost-sheets', icon: FileText, label: 'Costos', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'GESTIÓN' },
       { id: 'reports', icon: FileText, label: 'Reportes', roles: ['admin', 'manager', 'encargado'], category: 'GESTIÓN' },
       { id: 'ipv', icon: FileText, label: 'IPV', roles: ['admin', 'manager', 'encargado'], category: 'GESTIÓN' },
       { id: 'audit', icon: Shield, label: 'Auditoría', roles: ['manager', 'admin', 'encargado'], category: 'GESTIÓN' },
@@ -52,8 +52,8 @@ export function useTerminalNavigation(user: UserContract | null, sidebarSearch: 
       { id: 'rss_management', icon: Rss, label: 'Feed RSS', roles: ['admin'], category: 'GESTIÓN' },
       { id: 'settings', icon: Settings, label: 'Configuración', roles: ['admin', 'manager', 'encargado'], category: 'GESTIÓN' },
 
-      { id: 'support_doc', icon: FileText, label: 'Manual', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado'], category: 'SOPORTE' },
-      { id: 'help', icon: HelpCircle, label: 'Ayuda', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado'], category: 'SOPORTE' },
+      { id: 'support_doc', icon: FileText, label: 'Manual', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'SOPORTE' },
+      { id: 'help', icon: HelpCircle, label: 'Ayuda', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'SOPORTE' },
     ];
 
     const filteredByRole = all.filter(i => i.roles.some(r => hasRole(user, r)));

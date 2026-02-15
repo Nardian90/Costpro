@@ -4,7 +4,7 @@ import { z } from 'zod';
 // Enums and Basics
 // ============================================
 
-export const userRoleSchema = z.enum(['admin', 'encargado', 'usuario', 'manager', 'clerk', 'warehouse']);
+export const userRoleSchema = z.enum(['admin', 'encargado', 'usuario', 'manager', 'clerk', 'warehouse', 'costo']);
 
 /**
  * Permissive UUID regex that matches the standard 8-4-4-4-12 format

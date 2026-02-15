@@ -12,13 +12,13 @@ import { Loader2, Save, Plus, Trash2, Building } from 'lucide-react';
 const userFormSchema = z.object({
   fullName: z.string().min(3, 'El nombre debe tener al menos 3 caracteres'),
   email: z.string().email('Email inválido'),
-  role: z.enum(['admin', 'encargado', 'usuario', 'manager', 'clerk', 'warehouse'] as const),
+  role: z.enum(['admin', 'encargado', 'usuario', 'manager', 'clerk', 'warehouse', 'costo'] as const),
   isActive: z.boolean(),
   maxStoresLimit: z.number().min(0).catch(0),
   maxUsersLimit: z.number().min(0).catch(0),
   memberships: z.array(z.object({
     store_id: z.string().min(1, 'Seleccione una tienda'),
-    role: z.enum(['admin', 'encargado', 'usuario', 'manager', 'clerk', 'warehouse'] as const),
+    role: z.enum(['admin', 'encargado', 'usuario', 'manager', 'clerk', 'warehouse', 'costo'] as const),
     status: z.enum(['active', 'revoked'] as const),
   })).min(1, 'El usuario debe tener al menos una tienda asignada'),
 }).refine(data => {
@@ -149,6 +149,7 @@ export default function UserForm({
               {(!allowedRoles || allowedRoles.includes('clerk')) && <option value="clerk">Cajero</option>}
               {(!allowedRoles || allowedRoles.includes('warehouse')) && <option value="warehouse">Almacén</option>}
               {(!allowedRoles || allowedRoles.includes('usuario')) && <option value="usuario">Usuario</option>}
+              {(!allowedRoles || allowedRoles.includes('costo')) && <option value="costo">Costo</option>}
             </select>
           </div>
 
@@ -273,6 +274,7 @@ export default function UserForm({
                     {(!allowedRoles || allowedRoles.includes('clerk')) && <option value="clerk">Cajero</option>}
                     {(!allowedRoles || allowedRoles.includes('warehouse')) && <option value="warehouse">Almacén</option>}
                     {(!allowedRoles || allowedRoles.includes('usuario')) && <option value="usuario">Usuario</option>}
+              {(!allowedRoles || allowedRoles.includes('costo')) && <option value="costo">Costo</option>}
                   </select>
                 </div>
                 <div className="flex-1 sm:w-24 space-y-2">
