@@ -113,12 +113,11 @@ export function useUsersView() {
 
     const handleToggleUserStatus = async (userId: string, isActive: boolean) => {
         try {
-            // Get the access token from Supabase session
             const { data: { session } } = await supabase.auth.getSession();
             const token = session?.access_token;
 
             if (!token) {
-                throw new Error('No hay sesión activa. Por favor, inicia sesión nuevamente.');
+                throw new Error('No hay sesión activa.');
             }
 
             const response = await fetch('/api/users/toggle-status', {
@@ -136,10 +135,42 @@ export function useUsersView() {
             }
 
             toast.success(isActive ? 'Usuario activado' : 'Usuario desactivado');
-            // Refresh users
-            // In a real app with react-query, we would invalidate the query.
-            // Assuming useUsers uses react-query internally or we can refresh.
-            window.location.reload(); // Simple refresh for now if needed, though react-query usually handles it if configured.
+            window.location.reload();
+        } catch (error: any) {
+            toast.error(error.message);
+        }
+    };
+
+    const handleDeleteUser = async (userId: string) => {
+        if (!confirm('¿Estás seguro de que deseas eliminar este usuario? Esta acción es irreversible y solo se permitirá si el usuario no tiene registros operativos.')) {
+            return;
+        }
+
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+
+            if (!token) {
+                throw new Error('No hay sesión activa.');
+            }
+
+            const response = await fetch('/api/users/delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ user_id: userId })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Error al eliminar usuario');
+            }
+
+            toast.success('Usuario eliminado correctamente');
+            window.location.reload();
         } catch (error: any) {
             toast.error(error.message);
         }
@@ -167,6 +198,7 @@ export function useUsersView() {
         handleCloseModal,
         handleUserFormSubmit,
         handleToggleUserStatus,
+        handleDeleteUser,
         isSubmittingUser: createUserMutation.isPending || updateUserMutation.isPending || manageMembershipsMutation.isPending,
         allowedRoles: getAllowedRoles(user?.role as UserRole)
     };
