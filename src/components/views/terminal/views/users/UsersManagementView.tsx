@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Plus, Edit, UserPlus, ShieldAlert } from 'lucide-react';
+import { Plus, Edit, UserPlus, ShieldAlert, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import SearchBar from '@/components/ui/SearchBar';
 import ActionMenu from '@/components/ui/ActionMenu';
@@ -23,6 +23,7 @@ export default function UsersManagementView() {
     handleCloseModal,
     handleUserFormSubmit,
     handleToggleUserStatus,
+    handleDeleteUser,
     isSubmittingUser,
     allowedRoles,
     isAdmin,
@@ -172,13 +173,21 @@ export default function UsersManagementView() {
                     </div>
                   </td>
                   <td className="p-4">
-                    <div className="flex justify-center">
+                    <div className="flex justify-center gap-2">
                       <button
                         onClick={() => handleEditUser(u)}
                         className="w-8 h-8 flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-white transition-all active:scale-95"
                         aria-label="Editar usuario"
                       >
                         <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteUser(u.id)}
+                        disabled={u.id === user?.id}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg border border-border hover:bg-destructive hover:text-white transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+                        aria-label="Eliminar usuario"
+                      >
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </td>
