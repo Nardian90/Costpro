@@ -215,9 +215,9 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <HorizontalScroll containerClassName="bg-muted dark:bg-slate-900/50 p-1 rounded-2xl border border-border dark:border-white/5 overflow-hidden">
             <TabsList className="bg-transparent border-none w-max min-w-full h-auto p-0 gap-1 flex overflow-visible">
-              <TabsTrigger value="functions" className="flex-1 py-3 px-4 sm:px-6 text-[10px] font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-slate-800 data-[state=active]:text-foreground dark:data-[state=active]:text-white transition-all shrink-0">Funciones</TabsTrigger>
-              <TabsTrigger value="refs" className="flex-1 py-3 px-4 sm:px-6 text-[10px] font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-slate-800 data-[state=active]:text-foreground dark:data-[state=active]:text-white transition-all shrink-0">Referencias</TabsTrigger>
-              <TabsTrigger value="ops" className="flex-1 py-3 px-4 sm:px-6 text-[10px] font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-slate-800 data-[state=active]:text-foreground dark:data-[state=active]:text-white transition-all shrink-0">Operadores</TabsTrigger>
+              <TabsTrigger value="functions" className="w-[calc(50%-4px)] sm:w-auto sm:flex-1 py-3 px-4 sm:px-6 text-[10px] font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-slate-800 data-[state=active]:text-foreground dark:data-[state=active]:text-white transition-all shrink-0">Funciones</TabsTrigger>
+              <TabsTrigger value="refs" className="w-[calc(50%-4px)] sm:w-auto sm:flex-1 py-3 px-4 sm:px-6 text-[10px] font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-slate-800 data-[state=active]:text-foreground dark:data-[state=active]:text-white transition-all shrink-0">Referencias</TabsTrigger>
+              <TabsTrigger value="ops" className="w-[calc(50%-4px)] sm:w-auto sm:flex-1 py-3 px-4 sm:px-6 text-[10px] font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-slate-800 data-[state=active]:text-foreground dark:data-[state=active]:text-white transition-all shrink-0">Operadores</TabsTrigger>
             </TabsList>
           </HorizontalScroll>
 
