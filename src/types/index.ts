@@ -2,7 +2,7 @@
 // Tipos de la Aplicación - Plataforma Tienda Online
 // ============================================
 
-export type UserRole = 'admin' | 'encargado' | 'usuario' | 'manager' | 'clerk' | 'warehouse';
+export type UserRole = 'admin' | 'encargado' | 'usuario' | 'manager' | 'clerk' | 'warehouse' | 'costo';
 
 export type PaymentMethod = 'cash' | 'card' | 'transfer' | 'wallet' | 'other';
 

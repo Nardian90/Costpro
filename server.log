@@ -1,0 +1,31 @@
+▲ Next.js 16.1.3 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://0.0.0.0:3000
+
+✓ Starting...
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+✓ Ready in 1112ms
+○ Compiling / ...
+⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment.
+ GET / 200 in 24.7s (compile: 23.6s, render: 1106ms)
+ GET / 200 in 209ms (compile: 42ms, render: 167ms)
+ GET /login 200 in 2.0s (compile: 1954ms, render: 51ms)
+ GET / 200 in 109ms (compile: 33ms, render: 75ms)
+ GET /login 200 in 83ms (compile: 38ms, render: 45ms)
+ GET / 200 in 151ms (compile: 41ms, render: 111ms)
+ GET /login 200 in 212ms (compile: 38ms, render: 174ms)
+ GET / 200 in 68ms (compile: 26ms, render: 42ms)
+ GET / 200 in 114ms (compile: 30ms, render: 84ms)
+ GET /login 200 in 92ms (compile: 55ms, render: 38ms)
+ GET / 200 in 84ms (compile: 38ms, render: 46ms)
+ GET / 200 in 107ms (compile: 26ms, render: 82ms)
+ GET /login 200 in 65ms (compile: 27ms, render: 39ms)
+ GET / 200 in 60ms (compile: 33ms, render: 27ms)
+ GET / 200 in 97ms (compile: 31ms, render: 66ms)
+ GET /login 200 in 166ms (compile: 27ms, render: 139ms)
+ GET / 200 in 51ms (compile: 25ms, render: 26ms)
