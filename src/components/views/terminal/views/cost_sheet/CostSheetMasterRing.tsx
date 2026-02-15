@@ -32,18 +32,18 @@ const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
   const costPercent = totalPrice > 0 ? (totalCost / totalPrice) * 100 : 0;
 
   // Ring configurations
-  const size = 320; // Increased size
+  const size = 320;
   const strokeWidth = 16;
   const center = size / 2;
   const radius = (size - strokeWidth * 4) / 2;
   const circumference = 2 * Math.PI * radius;
 
   return (
-    <div className={cn("flex flex-col items-center gap-12 w-full max-w-md mx-auto", className)}>
+    <div className={cn("flex flex-col items-center gap-10 w-full max-w-md mx-auto", className)}>
       {/* Main Master Ring */}
       <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
         {/* Background Glow */}
-        <div className="absolute inset-0 bg-primary/5 rounded-full blur-[80px]" />
+        <div className="absolute inset-0 bg-primary/10 rounded-full blur-[80px] opacity-50 dark:opacity-100" />
 
         {/* SVG Rings */}
         <svg width={size} height={size} className="-rotate-90 drop-shadow-[0_0_15px_rgba(57,255,20,0.1)]">
@@ -55,7 +55,7 @@ const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
             fill="none"
             stroke="currentColor"
             strokeWidth={strokeWidth}
-            className="text-slate-200 dark:text-slate-800/40"
+            className="text-slate-200/50 dark:text-slate-800/40"
           />
 
           {/* Cost Ring (Blue track) */}
@@ -71,7 +71,7 @@ const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
             animate={{ strokeDashoffset: circumference - (Math.min(costPercent, 100) / 100) * circumference }}
             transition={{ duration: 1.5, ease: "circOut" }}
             strokeLinecap="round"
-            className="text-blue-500/20"
+            className="text-blue-500/30"
           />
 
           {/* Utility Ring (Main Neon) */}
@@ -116,46 +116,46 @@ const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
       </div>
 
       {/* Primary KPI Breakdown */}
-      <div className="grid grid-cols-2 gap-16 w-full px-6">
-        <div className="flex flex-col">
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Costo Bruto</span>
+      <div className="flex flex-row justify-between items-start w-full px-4 sm:px-8 gap-4">
+        <div className="flex flex-col min-w-0">
+            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.1em] sm:tracking-[0.2em] text-slate-500 mb-2 truncate">Costo Bruto</span>
             <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-black tabular-nums">{formatCurrency(totalCost)}</span>
+                <span className="text-lg sm:text-2xl font-black tabular-nums truncate text-slate-900 dark:text-white">{formatCurrency(totalCost)}</span>
             </div>
-            <p className="text-[10px] text-slate-400 mt-1 uppercase font-black tracking-tighter opacity-70">Suma Total Gastos</p>
+            <p className="text-[8px] sm:text-[10px] text-slate-400 mt-1 uppercase font-black tracking-tighter opacity-70">Total Gastos</p>
         </div>
-        <div className="flex flex-col items-end text-right">
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Utilidad Bruta</span>
+        <div className="flex flex-col items-end text-right min-w-0">
+            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.1em] sm:tracking-[0.2em] text-slate-500 mb-2 truncate">Utilidad Bruta</span>
             <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-black text-[#39FF14] tabular-nums">{formatCurrency(utility)}</span>
+                <span className="text-lg sm:text-2xl font-black text-[#39FF14] tabular-nums truncate">{formatCurrency(utility)}</span>
             </div>
-            <p className="text-[10px] text-slate-400 mt-1 uppercase font-black tracking-tighter opacity-70">Net Profit Margin</p>
+            <p className="text-[8px] sm:text-[10px] text-slate-400 mt-1 uppercase font-black tracking-tighter opacity-70">Margen Neto</p>
         </div>
       </div>
 
       {/* Operational Telemetry */}
       <div className="w-full space-y-8 pt-10 border-t border-border/30">
         <div className="flex items-center justify-between px-2">
-            <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">Desglose Operativo</h4>
+            <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">Desglose Operativo</h4>
             <div className="flex items-center gap-2.5">
                 <div className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#39FF14] opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-[#39FF14]"></span>
                 </div>
-                <span className="text-[10px] font-black uppercase text-[#39FF14] tracking-[0.2em]">Live Telemetry</span>
+                <span className="text-[10px] font-black uppercase text-[#39FF14] tracking-[0.2em]">Telemetría en Vivo</span>
             </div>
         </div>
 
         <div className="grid gap-4">
             {telemetry.map((item, idx) => (
-                <div key={idx} className="bg-white/50 dark:bg-slate-900/50 p-4 rounded-[1.5rem] border border-border/40 flex items-center justify-between group hover:border-primary/40 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5">
+                <div key={idx} className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-[1.5rem] border border-border/40 flex items-center justify-between group hover:border-primary/40 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5">
                     <div className="flex items-center gap-5">
                         <div className={cn("p-3 rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-border/50", item.color)}>
                             <item.icon className="w-5 h-5" />
                         </div>
                         <div>
                             <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-0.5">{item.label}</p>
-                            <p className="text-base font-black tracking-tight tabular-nums">{formatCurrency(item.value)}</p>
+                            <p className="text-base font-black tracking-tight tabular-nums text-slate-900 dark:text-white">{formatCurrency(item.value)}</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-4">
