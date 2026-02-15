@@ -449,24 +449,24 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
       </section>
 
       {/* Simple Footer */}
-      <footer className="py-12 border-t border-border/50">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-4">
+      <footer className="py-12 border-t border-border/50 overflow-x-auto no-scrollbar">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8 md:gap-6">
+          <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
             <CostProLogo size={30} animated={false} className="grayscale" />
             <span className="text-xs font-bold text-muted-foreground">© 2026 CostPro Enterprise. Todos los derechos reservados.</span>
           </div>
-          <div className="flex gap-8 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+          <div className="flex flex-wrap justify-center gap-x-8 gap-y-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
             <a
               href="https://wa.me/5353183215"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-primary transition-colors flex items-center gap-1"
+              className="hover:text-primary transition-colors flex items-center gap-1 min-h-[44px]"
             >
               Soporte WhatsApp
               <ExternalLink className="w-2.5 h-2.5" />
             </a>
-            <a href="#" className="hover:text-primary transition-colors">Términos</a>
-            <a href="#" className="hover:text-primary transition-colors">Privacidad</a>
+            <a href="#" className="hover:text-primary transition-colors flex items-center min-h-[44px]">Términos</a>
+            <a href="#" className="hover:text-primary transition-colors flex items-center min-h-[44px]">Privacidad</a>
           </div>
         </div>
       </footer>
