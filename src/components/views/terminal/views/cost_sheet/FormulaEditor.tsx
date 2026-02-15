@@ -15,7 +15,8 @@ import {
   Maximize2,
   ChevronRight,
   Plus,
-  Terminal
+  Terminal,
+  XIcon
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -31,7 +32,6 @@ import {
   TabsList,
   TabsTrigger
 } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import {
   Popover,
@@ -85,17 +85,23 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
       <motion.div
         layout
         className={cn(
-          "flex items-center gap-2 p-1 rounded-lg border transition-all min-h-[38px]",
+          "flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-1 rounded-lg border transition-all min-h-[38px]",
           isFocused ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-border bg-muted/30",
           className
         )}
       >
         <div className="flex-1 flex items-center gap-2 pl-2">
-          <Calculator className={cn("w-3.5 h-3.5", isFormula ? "text-primary" : "text-muted-foreground")} />
+          <button
+            type="button"
+            onClick={() => setIsModalOpen(true)}
+            className="p-1 hover:bg-primary/20 rounded-md transition-colors"
+          >
+            <Calculator className={cn("w-3.5 h-3.5", isFormula ? "text-primary" : "text-muted-foreground")} />
+          </button>
           <input
             ref={inputRef}
             type="text"
-            className="flex-1 bg-transparent border-none outline-none text-xs font-mono py-1"
+            className="flex-1 bg-transparent border-none outline-none text-xs font-mono py-1 min-w-0"
             value={value}
             onChange={(e) => setValue(e.target.value)}
             onFocus={() => setIsFocused(true)}
@@ -106,7 +112,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
         </div>
 
         {isFocused && (
-          <div className="flex items-center gap-1 pr-1 animate-in fade-in slide-in-from-right-2 duration-200">
+          <div className="flex items-center justify-end gap-1 pr-1 pb-1 sm:pb-0 animate-in fade-in slide-in-from-right-2 duration-200">
              <Popover>
                 <PopoverTrigger asChild>
                   <button className="p-1 hover:bg-primary/20 text-primary rounded" title="Ayuda">
@@ -165,7 +171,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                className="p-1 hover:bg-red-500/20 text-red-600 rounded"
                title="Cancelar (Esc)"
              >
-                <X className="w-3.5 h-3.5" />
+                <XIcon className="w-3.5 h-3.5" />
              </button>
           </div>
         )}
@@ -173,7 +179,10 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
 
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[800px] z-[200] p-0 overflow-hidden rounded-3xl border-none shadow-2xl flex flex-col max-h-[90vh] bg-[#020617] text-slate-200">
+        <DialogContent
+          showCloseButton={false}
+          className="sm:max-w-[800px] z-[200] p-0 overflow-y-auto rounded-3xl border-none shadow-2xl max-h-[95vh] bg-[#020617] text-slate-200"
+        >
           {/* Custom Header based on Design */}
           <div className="px-6 pt-6 pb-4 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-4">
@@ -229,8 +238,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
             </div>
           </div>
 
-          <ScrollArea className="flex-1 min-h-0">
-            <div className="p-0"> {/* FormulaBuilder will handle padding */}
+          <div className="p-0">
             {mode === 'assisted' ? (
               <div className="animate-in fade-in zoom-in-95 duration-300">
                 <FormulaBuilder
@@ -276,8 +284,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                 </div>
               </div>
             )}
-            </div>
-          </ScrollArea>
+          </div>
 
           {/* Footer based on Design */}
           <div className="px-6 py-6 bg-slate-900/20 flex items-center justify-end gap-4 border-t border-white/5 shrink-0">
