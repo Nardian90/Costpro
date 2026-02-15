@@ -1,5 +1,30 @@
-'use client';
+import sys
 
+def apply_diff(file_path, diff):
+    with open(file_path, 'r') as f:
+        content = f.read()
+
+    blocks = diff.split('<<<<<<< SEARCH\n')
+    for block in blocks[1:]:
+        search_part, replace_part = block.split('=======\n')
+        replace_part = replace_part.split('>>>>>>> REPLACE')[0]
+        if search_part in content:
+            content = content.replace(search_part, replace_part)
+        else:
+            print(f'Warning: Search part not found')
+
+    with open(file_path, 'w') as f:
+        f.write(content)
+
+file_path = 'src/components/views/terminal/views/cost_sheet/CostSheetSummary.tsx'
+diff = """<<<<<<< SEARCH
+import React, { memo, useMemo } from 'react';
+import { CalculatedRowValue } from '@/types/cost-sheet';
+import { Package, Users, Zap, Settings } from 'lucide-react';
+import CostSheetMasterRing from './CostSheetMasterRing';
+
+interface CostSheetSummaryProps {
+=======
 import React, { memo, useMemo, useState, useEffect } from 'react';
 import { CalculatedRowValue } from '@/types/cost-sheet';
 import { Package, Users, Zap, Settings, Info, AlertTriangle, CheckCircle2, TrendingUp } from 'lucide-react';
@@ -9,58 +34,19 @@ import { useCostSheetStore } from '@/store/cost-sheet-store';
 import { cn } from '@/lib/utils';
 
 interface CostSheetSummaryProps {
-  calculatedValues: Record<string, CalculatedRowValue>;
-  data: any;
-}
-
-const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({ calculatedValues, data }) => {
-  // Helper to get total for a row ID
-  const getTotal = (id: string) => calculatedValues?.[id]?.total || 0;
-
-  const totalPrice = getTotal('14');
-  const utility = getTotal('13');
-  const totalCost = getTotal('12');
-
-  const telemetry = useMemo(() => {
-    const rawMaterials = getTotal('1');
-    const labor = getTotal('2');
-    const directOther = getTotal('3');
-    const indirects = getTotal('4') + getTotal('11');
-
-    const totalForTelemetry = rawMaterials + labor + directOther + indirects || 1;
-
-    return [
-      {
-        label: 'Materiales',
-        value: rawMaterials,
-        percent: (rawMaterials / totalForTelemetry) * 100,
-        color: 'text-primary dark:text-[#39FF14]',
-        icon: Package
-      },
-      {
-        label: 'Mano de Obra',
-        value: labor,
-        percent: (labor / totalForTelemetry) * 100,
-        color: 'text-green-400',
-        icon: Users
-      },
-      {
-        label: 'Gastos Directos',
-        value: directOther,
-        percent: (directOther / totalForTelemetry) * 100,
-        color: 'text-emerald-400',
-        icon: Zap
-      },
-      {
-        label: 'Gastos Indirectos',
-        value: indirects,
-        percent: (indirects / totalForTelemetry) * 100,
-        color: 'text-lime-400',
-        icon: Settings
-      }
-    ];
-  }, [calculatedValues]);
-
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+  return (
+    <div className="space-y-12 pb-12">
+      <CostSheetSummaryContent
+        totalPrice={totalPrice}
+        utility={utility}
+        totalCost={totalCost}
+        telemetry={telemetry}
+      />
+    </div>
+  );
+=======
   const updateValue = useCostSheetStore(state => state.updateValue);
 
   // Current markup (utility over cost)
@@ -196,18 +182,5 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({ calculatedValu
       </div>
     </div>
   );
-});
-
-// Separate component for the content to ensure re-rendering with theme changes if needed
-const CostSheetSummaryContent: React.FC<any> = ({ totalPrice, utility, totalCost, telemetry }) => {
-    return (
-        <CostSheetMasterRing
-            totalPrice={totalPrice}
-            utility={utility}
-            totalCost={totalCost}
-            telemetry={telemetry}
-        />
-    );
-}
-
-export default CostSheetSummary;
+>>>>>>> REPLACE"""
+apply_diff(file_path, diff)

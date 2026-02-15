@@ -183,8 +183,13 @@ const CostSheetView = () => {
     try {
       // Prioritize the declarative engine export
       if (calculationResult) {
+        const h = calculationResult.metadata?.header || data?.header || {};
+        const evalCode = h.code || 'export';
+        const evalName = h.name || 'ficha';
+        const safeBaseName = `${evalCode}-${evalName}`.replace(/[\\/\?%*:|"<>]/g, '-');
+
         if (options.consolidated) {
-            const success = await downloadPDF(options, `ficha-consolidada-${data?.header?.code || 'export'}.pdf`);
+            const success = await downloadPDF(options, `ficha-consolidada-${safeBaseName}.pdf`);
             if (success) {
                 toast.success("PDF consolidado generado con éxito", { id: toastId });
                 return;
@@ -193,17 +198,17 @@ const CostSheetView = () => {
             // Separate export
             let count = 0;
             if (options.includeFC) {
-                await downloadPDF({ ...options, includeAudit: false, includeAnnexes: [] }, `ficha-${data?.header?.code || 'export'}.pdf`);
+                await downloadPDF({ ...options, includeAudit: false, includeAnnexes: [] }, `ficha-${safeBaseName}.pdf`);
                 count++;
             }
 
             for (const annexId of options.includeAnnexes) {
-                await downloadPDF({ ...options, includeFC: false, includeAudit: false, includeAnnexes: [annexId] }, `anexo-${annexId}-${data?.header?.code || 'export'}.pdf`);
+                await downloadPDF({ ...options, includeFC: false, includeAudit: false, includeAnnexes: [annexId] }, `anexo-${annexId}-${safeBaseName}.pdf`);
                 count++;
             }
 
             if (options.includeAudit) {
-                await downloadPDF({ ...options, includeFC: false, includeAnnexes: [] }, `auditoria-${data?.header?.code || 'export'}.pdf`);
+                await downloadPDF({ ...options, includeFC: false, includeAnnexes: [] }, `auditoria-${safeBaseName}.pdf`);
                 count++;
             }
 
