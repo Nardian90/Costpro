@@ -16,7 +16,7 @@ import CostSheetSummary from './CostSheetSummary';
 import { CostSheetFormulaGuide } from './CostSheetFormulaGuide';
 import { CostSheetBanner } from './CostSheetBanner';
 import { CostSheetModeSwitcher } from './CostSheetModeSwitcher';
-import { CostSheetAuditLog } from './CostSheetAuditLog';
+import { CostSheetAuditView } from './CostSheetAuditView';
 import { CostSheetActionsPanel } from './CostSheetActionsPanel';
 import { CostSheetSidebarNav } from './CostSheetSidebarNav';
 import { CostSheetBottomNav } from './CostSheetBottomNav';
@@ -611,7 +611,7 @@ const CostSheetView = () => {
                     {activeSection === 'signature' && <CostSheetSignatureEditor />}
                     {activeSection === 'audit' && (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <CostSheetAuditLog audits={audits} />
+                            <CostSheetAuditView data={data} calculatedValues={calculatedValues} calculatedHeader={calculatedHeader} audits={audits} />
                         </div>
                     )}
                     {activeSection === 'massive-gen' && (

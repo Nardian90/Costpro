@@ -41,6 +41,7 @@ interface RowCardProps {
   numbering: string;
   calculated: CalculatedRowValue;
   calculatedValues: Record<string, CalculatedRowValue>;
+  calculatedHeader?: any;
   path: (string | number)[];
   annexes: any[];
   suggestions: any;
@@ -53,6 +54,7 @@ const RowCard: React.FC<RowCardProps> = memo(({
   numbering,
   calculated,
   calculatedValues,
+  calculatedHeader,
   path,
   annexes,
   suggestions
@@ -289,6 +291,7 @@ interface CostSheetCardViewProps {
   sections: CostSheetSection[];
   groupedSections: any[];
   calculatedValues: Record<string, CalculatedRowValue>;
+  calculatedHeader?: any;
   annexes: any[];
   activeSubSectionId: string;
   setActiveSubSectionId: (id: string) => void;
@@ -299,6 +302,7 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
   sections,
   groupedSections,
   calculatedValues,
+  calculatedHeader,
   annexes,
   activeSubSectionId,
   setActiveSubSectionId,
@@ -332,6 +336,13 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
   const totalCost = getTotal('12');
   const utility = getTotal('13');
   const finalPrice = getTotal('14');
+
+  // Indirect Expenses Coefficient
+  const g4 = getTotal('4');
+  const g6 = getTotal('6');
+  const g7 = getTotal('7');
+  const s2 = getTotal('2');
+  const indirectCoef = s2 > 0 ? (g4 + g6 + g7) / s2 : 0;
 
   // Percentages relative to Final Price (match Stitch design)
   const costPercent = finalPrice > 0 ? (totalCost / finalPrice) * 100 : 0;
@@ -442,6 +453,16 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
             label="P. Venta"
             subLabel={formatCurrency(finalPrice)}
             color="text-blue-500"
+          />
+          <CircularProgress
+            value={Math.min(indirectCoef * 50, 100)}
+            label="Coef. Gto Ind."
+            subLabel={indirectCoef.toFixed(2)}
+            color={(() => {
+                const dest = String(calculatedHeader?.destination || '').toLowerCase();
+                const limit = dest === 'servicios' ? 1.0 : 1.5;
+                return indirectCoef > limit ? "text-destructive" : "text-amber-500";
+            })()}
           />
         </div>
       </div>
