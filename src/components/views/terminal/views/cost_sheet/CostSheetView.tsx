@@ -268,15 +268,29 @@ const CostSheetView = () => {
     if (isBlocked) {
         toast.warning("Exportando con advertencias: La ficha contiene errores críticos de validación.");
     }
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+
+    // Evaluate header formulas for final save as requested by user
+    const exportData = {
+        ...data,
+        header: {
+            ...data.header,
+            ...(calculatedHeader || {})
+        }
+    };
+
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href",     dataStr);
-    downloadAnchorNode.setAttribute("download", `ficha-${data?.header?.code || 'export'}.json`);
+
+    // Use calculated code for filename if available
+    const filename = `ficha-${calculatedHeader?.code || data?.header?.code || 'export'}.json`;
+    downloadAnchorNode.setAttribute("download", filename);
+
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
     toast.success("JSON exportado correctamente");
-  }, [data]);
+  }, [data, calculatedHeader, isBlocked]);
 
     const handleQuickGenerate = React.useCallback((rows: any[]) => {
     if (rows.length > 1) {
