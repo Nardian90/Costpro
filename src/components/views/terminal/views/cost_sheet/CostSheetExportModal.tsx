@@ -23,6 +23,7 @@ export interface ExportOptions {
   consolidated: boolean;
   skipZeros: boolean;
   includeFinancialSummary: boolean;
+  includeUtilityNote: boolean;
 }
 
 interface CostSheetExportModalProps {
@@ -44,7 +45,8 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
     includeAnnexes: annexes.map(a => a.id),
     consolidated: true,
     skipZeros: true,
-    includeFinancialSummary: true
+    includeFinancialSummary: true,
+    includeUtilityNote: true
   });
 
   const handleToggleAnnex = (id: string) => {
@@ -177,6 +179,18 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
                                 id="skipZeros"
                                 checked={options.skipZeros}
                                 onCheckedChange={(checked) => setOptions(prev => ({ ...prev, skipZeros: checked }))}
+                            />
+                        </div>
+
+                        <div className="flex items-center justify-between p-3 rounded-2xl bg-sidebar/40 border border-sidebar-border/50">
+                            <div>
+                                <Label htmlFor="includeUtilityNote" className="font-bold text-sm block">Nota de Utilidad</Label>
+                                <span className="text-xs text-muted-foreground uppercase font-medium">Incluir desglose del % de utilidad</span>
+                            </div>
+                            <Switch
+                                id="includeUtilityNote"
+                                checked={options.includeUtilityNote}
+                                onCheckedChange={(checked) => setOptions(prev => ({ ...prev, includeUtilityNote: checked }))}
                             />
                         </div>
 
