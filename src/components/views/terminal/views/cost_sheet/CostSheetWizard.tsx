@@ -86,7 +86,7 @@ const CostSheetWizard: React.FC<CostSheetWizardProps> = ({ data, calculatedValue
 
       {/* Step Content */}
       <div className="min-h-[400px]">
-        {step.id === 'header' && <CostSheetHeaderEditor calculatedHeader={calculatedHeader} />}
+        {step.id === 'header' && <CostSheetHeaderEditor header={data?.header || {}} calculatedHeader={calculatedHeader} />}
         {['I', 'II', 'III', 'IV', 'V'].includes(step.id) && <CostSheetAnnexEditor activeAnnexId={step.id} />}
         {step.id === 'main' && (
            <div className="space-y-4">
