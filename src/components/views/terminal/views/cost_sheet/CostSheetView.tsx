@@ -65,6 +65,10 @@ const CostSheetView = () => {
   const [isEditing, setIsEditing] = useState(true);
   const [viewMode, setViewMode] = useState<'expert' | 'assisted' | 'reading' | 'quick'>('expert');
   const [layoutMode, setLayoutMode] = useState<ViewMode>('grid');
+
+  React.useEffect(() => {
+    setLayoutMode(isMobile ? 'grid' : 'list');
+  }, [isMobile]);
   // Grouping logic for "Smart Grouping" of small sections
   const groupedSections = React.useMemo(() => {
     if (!data?.sections) return [];
