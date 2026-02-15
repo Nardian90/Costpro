@@ -1,4 +1,4 @@
--- Professional Demo Reset Script v3.1
+-- Professional Demo Reset Script v3.0
 -- Optimized for User-Store Consistency and Role-based assignments.
 
 SET session_replication_role = 'replica'; -- Disable triggers temporarily for bulk load
@@ -16,13 +16,6 @@ DECLARE
     u_alm uuid := 'b4444444-4444-4444-4444-444444444444';
     u_cos uuid := 'd5555555-5555-5555-5555-555555555555';
 
-    -- Role IDs (from public.roles)
-    r_adm uuid := 'f4676504-472c-4f13-a09c-96fc6a39b5c8';
-    r_enc uuid := '5fd07ef0-2d39-47fc-8b13-55a3c5b693ca';
-    r_caj uuid := '00ba3389-860d-48ac-903b-55aaf346a67a';
-    r_alm uuid := 'fa3231f4-746a-4395-9ffb-01824b757794';
-    r_cos uuid := '684d0cfd-1d3f-4d21-a065-9104355fbeaa';
-
     pwd text;
 BEGIN
     -- 1. STORES
@@ -31,9 +24,7 @@ BEGIN
         (s2, 'SUCURSAL BELGRANO', 'Av. Cabildo 2500, CABA', true)
     ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, is_active = true;
 
-    -- Ensure pgcrypto
-    CREATE EXTENSION IF NOT EXISTS pgcrypto;
-    pwd := crypt('demo123', gen_salt('bf'));
+    pwd := extensions.crypt('demo123', extensions.gen_salt('bf'));
 
     -- 2. AUTH USERS
     INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, email_change, email_change_token_new, recovery_token)
@@ -46,17 +37,16 @@ BEGIN
     ON CONFLICT (id) DO NOTHING;
 
     -- 3. PROFILES (Initial)
-    INSERT INTO public.profiles (id, email, full_name, role, role_id, store_id, active_store_id, is_active)
+    INSERT INTO public.profiles (id, email, full_name, role, store_id, active_store_id, is_active)
     VALUES
-        (u_adm, 'admin@demo.com', 'Admin Global', 'admin'::user_role, r_adm, s1, s1, true),
-        (u_enc, 'encargado@demo.com', 'Gerente Sucursal', 'encargado'::user_role, r_enc, s1, s1, true),
-        (u_caj, 'cajero@demo.com', 'Cajero Central', 'clerk'::user_role, r_caj, s1, s1, true),
-        (u_alm, 'almacen@demo.com', 'Almacenero Central', 'warehouse'::user_role, r_alm, s1, s1, true),
-        (u_cos, 'costo@demo.com', 'Especialista de Costos', 'costo'::user_role, r_cos, NULL, NULL, true)
-    ON CONFLICT (id) DO UPDATE SET role = EXCLUDED.role, role_id = EXCLUDED.role_id, active_store_id = EXCLUDED.active_store_id, is_active = true;
+        (u_adm, 'admin@demo.com', 'Admin Global', 'admin'::user_role, s1, s1, true),
+        (u_enc, 'encargado@demo.com', 'Gerente Sucursal', 'encargado'::user_role, s1, s1, true),
+        (u_caj, 'cajero@demo.com', 'Cajero Central', 'clerk'::user_role, s1, s1, true),
+        (u_alm, 'almacen@demo.com', 'Almacenero Central', 'warehouse'::user_role, s1, s1, true),
+        (u_cos, 'costo@demo.com', 'Especialista de Costos', 'costo'::user_role, NULL, NULL, true)
+    ON CONFLICT (id) DO UPDATE SET role = EXCLUDED.role, active_store_id = EXCLUDED.active_store_id, is_active = true;
 
     -- 4. MEMBERSHIPS
-    DELETE FROM public.user_store_memberships WHERE user_id IN (u_adm, u_enc, u_caj, u_alm, u_cos);
     INSERT INTO public.user_store_memberships (user_id, store_id, role, status)
     VALUES
         (u_adm, s1, 'admin'::user_role, 'active'::membership_status),
