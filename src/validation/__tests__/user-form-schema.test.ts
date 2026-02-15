@@ -12,7 +12,7 @@ const userFormSchema = z.object({
     store_id: z.string().min(1, 'Seleccione una tienda'),
     role: z.enum(['admin', 'encargado', 'usuario', 'manager', 'clerk', 'warehouse', 'costo'] as const),
     status: z.enum(['active', 'revoked'] as const),
-  })).min(1, 'El usuario debe tener al menos una tienda asignada'),
+  })),
 }).refine(data => {
   if (data.role === 'encargado' && data.maxStoresLimit > 0) {
     return data.memberships.length <= data.maxStoresLimit;
@@ -20,6 +20,15 @@ const userFormSchema = z.object({
   return true;
 }, {
   message: "El número de tiendas asignadas excede el límite permitido para este encargado",
+  path: ["memberships"]
+}).refine(data => {
+  const rolesQueRequierenTienda = ['encargado', 'clerk', 'warehouse'];
+  if (rolesQueRequierenTienda.includes(data.role)) {
+    return data.memberships.length > 0;
+  }
+  return true;
+}, {
+  message: "Este rol requiere al menos una tienda asignada",
   path: ["memberships"]
 });
 
@@ -54,30 +63,49 @@ describe('userFormSchema', () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error.issues[0].message).toBe("El número de tiendas asignadas excede el límite permitido para este encargado");
-      expect(result.error.issues[0].path).toContain("memberships");
     }
   });
 
-  it('should NOT fail if memberships exceed maxStoresLimit for non-encargado', () => {
+  it('should fail if memberships is empty for encargado', () => {
+    const invalidData = {
+      ...validData,
+      role: 'encargado' as const,
+      memberships: []
+    };
+    const result = userFormSchema.safeParse(invalidData);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toBe("Este rol requiere al menos una tienda asignada");
+    }
+  });
+
+  it('should fail if memberships is empty for clerk', () => {
+    const invalidData = {
+      ...validData,
+      role: 'clerk' as const,
+      memberships: []
+    };
+    const result = userFormSchema.safeParse(invalidData);
+    expect(result.success).toBe(false);
+  });
+
+  it('should succeed if memberships is empty for costo', () => {
     const data = {
       ...validData,
-      role: 'admin' as const,
-      maxStoresLimit: 1,
-      memberships: [
-        { store_id: '550e8400-e29b-41d4-a716-446655440000', role: 'admin' as const, status: 'active' as const },
-        { store_id: '550e8400-e29b-41d4-a716-446655440001', role: 'admin' as const, status: 'active' as const }
-      ]
+      role: 'costo' as const,
+      memberships: []
     };
     const result = userFormSchema.safeParse(data);
     expect(result.success).toBe(true);
   });
 
-  it('should fail if memberships is empty', () => {
-    const invalidData = {
+  it('should succeed if memberships is empty for admin', () => {
+    const data = {
       ...validData,
+      role: 'admin' as const,
       memberships: []
     };
-    const result = userFormSchema.safeParse(invalidData);
-    expect(result.success).toBe(false);
+    const result = userFormSchema.safeParse(data);
+    expect(result.success).toBe(true);
   });
 });
