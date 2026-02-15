@@ -63,7 +63,7 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({ compact =
                     size="sm"
                     variant="outline"
                     className="h-9 rounded-xl font-bold gap-2 text-[10px] uppercase tracking-wider bg-white/50 dark:bg-slate-900/50"
-                    onClick={() => exportHeaderToExcel(header)}
+                    onClick={() => exportHeaderToExcel(calculatedHeader || header)}
                 >
                     <Download className="w-3.5 h-3.5 text-primary" />
                     Exportar Excel

@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Command, HelpCircle, Maximize2, Check, X as XIcon, Info, Sparkles, Code } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -275,8 +276,8 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
 
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[700px] z-[200] p-0 overflow-hidden rounded-2xl border-none shadow-2xl">
-          <div className="bg-primary/10 px-6 py-4 flex items-center justify-between border-b border-primary/10">
+        <DialogContent className="sm:max-w-[700px] z-[200] p-0 overflow-hidden rounded-2xl border-none shadow-2xl flex flex-col max-h-[90vh]">
+          <div className="bg-primary/10 px-6 py-4 flex items-center justify-between border-b border-primary/10 shrink-0">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20">
                 <Command className="w-5 h-5" />
@@ -306,7 +307,8 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
             </Tabs>
           </div>
 
-          <div className="p-6">
+          <ScrollArea className="flex-1 min-h-0">
+            <div className="p-6">
             {mode === 'assisted' ? (
               <div className="animate-in fade-in zoom-in-95 duration-300">
                 <FormulaBuilder
@@ -360,9 +362,10 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                 </div>
               </div>
             )}
-          </div>
+            </div>
+          </ScrollArea>
 
-          <div className="px-6 py-4 bg-muted/30 flex items-center justify-between border-t border-border">
+          <div className="px-6 py-4 bg-muted/30 flex items-center justify-between border-t border-border shrink-0">
             <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-medium italic">
                 <Info className="w-3 h-3" />
                 Los cambios se aplican al cerrar o guardar.
