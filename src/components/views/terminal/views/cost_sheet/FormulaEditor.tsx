@@ -1,218 +1,119 @@
-
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { cn } from '@/lib/utils';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Command, HelpCircle, Maximize2, Check, X as XIcon, Info, Sparkles, Code } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  Calculator,
+  HelpCircle,
+  X,
+  Info,
+  Check,
+  Command,
+  Sparkles,
+  Code,
+  History,
+  Maximize2,
+  ChevronRight,
+  Plus,
+  Terminal
+} from 'lucide-react';
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
   DialogTitle,
-  DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { FormulaBuilder } from './FormulaBuilder';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { HorizontalScroll } from '@/components/ui/HorizontalScroll';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger
+} from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from "@/components/ui/popover";
+import { FormulaBuilder } from './FormulaBuilder';
 
 interface FormulaEditorProps {
   initialValue: string;
   onSave: (value: string) => void;
   onCancel: () => void;
-  suggestions: { label: string; value: string; description?: string }[];
   className?: string;
+  suggestions?: { label: string; value: string; description?: string }[];
 }
 
 export const FormulaEditor: React.FC<FormulaEditorProps> = ({
   initialValue,
   onSave,
   onCancel,
-  suggestions,
-  className
+  className,
+  suggestions = []
 }) => {
-  const [value, setValue] = useState(initialValue || '');
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [cursorPosition, setCursorPosition] = useState(0);
+  const [value, setValue] = useState(initialValue);
   const [isFocused, setIsFocused] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [mode, setMode] = useState<'assisted' | 'expert'>('assisted');
   const inputRef = useRef<HTMLInputElement>(null);
-  const suggestionsRef = useRef<HTMLDivElement>(null);
-  const hasSavedRef = useRef(false);
 
   useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
-      setIsFocused(true);
-    }
-  }, []);
+    setValue(initialValue);
+  }, [initialValue]);
 
-  const filteredSuggestions = suggestions.filter(s => {
-    const lastWord = value.slice(0, cursorPosition).split(/[\s+\-*/()%,]/).pop() || '';
-    if (!lastWord) return false;
-    return s.value && s.value.toLowerCase().includes(lastWord.toLowerCase()) && s.value.toLowerCase() !== lastWord.toLowerCase();
-  });
-
-  useEffect(() => {
-    if (filteredSuggestions.length > 0) {
-      setShowSuggestions(true);
-      setSelectedIndex(0);
-    } else {
-      setShowSuggestions(false);
-    }
-  }, [value, cursorPosition, filteredSuggestions.length]);
+  const handleSave = (val: string) => {
+    onSave(val);
+    setIsFocused(false);
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      if (showSuggestions && filteredSuggestions.length > 0) {
-        e.preventDefault();
-        applySuggestion(filteredSuggestions[selectedIndex]);
-      } else {
-        handleSave(value);
-      }
+      handleSave(value);
     } else if (e.key === 'Escape') {
       onCancel();
-    } else if (e.key === 'ArrowDown' && showSuggestions) {
-      e.preventDefault();
-      setSelectedIndex(prev => (prev + 1) % filteredSuggestions.length);
-    } else if (e.key === 'ArrowUp' && showSuggestions) {
-      e.preventDefault();
-      setSelectedIndex(prev => (prev - 1 + filteredSuggestions.length) % filteredSuggestions.length);
-    } else if (e.key === 'Tab' && showSuggestions && filteredSuggestions.length > 0) {
-      e.preventDefault();
-      applySuggestion(filteredSuggestions[selectedIndex]);
     }
   };
 
-  const handleSave = React.useCallback((val: string) => {
-    if (hasSavedRef.current) return;
-    hasSavedRef.current = true;
-    onSave(val);
-  }, [onSave]);
-
-  const applySuggestion = (suggestion: { value: string }) => {
-    const before = value.slice(0, cursorPosition);
-    const after = value.slice(cursorPosition);
-    const lastWordMatch = before.match(/[\s+\-*/()%,]([^\s+\-*/()%,]*)$/) || [null, before];
-    const lastWord = lastWordMatch[1] || before;
-
-    const newValue = before.slice(0, before.length - lastWord.length) + suggestion.value + after;
-    setValue(newValue);
-    setShowSuggestions(false);
-
-    // Set focus back and move cursor
-    setTimeout(() => {
-      if (inputRef.current) {
-        inputRef.current.focus();
-        const newPos = before.length - lastWord.length + suggestion.value.length;
-        inputRef.current.setSelectionRange(newPos, newPos);
-      }
-    }, 0);
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newVal = e.target.value;
-    if (newVal !== value) {
-      setValue(newVal);
-    }
-    setCursorPosition(e.target.selectionStart || 0);
-  };
-
-  const handleBlur = (e: React.FocusEvent) => {
-    // Delay blur to allow clicking suggestions or interacting with help/modal
-    setTimeout(() => {
-        const activeElement = document.activeElement;
-        const isInteractingWithSuggestions = suggestionsRef.current?.contains(activeElement);
-
-        // If we are opening the modal, don't trigger save/blur logic here
-        // as the modal handles its own state
-        if (!isInteractingWithSuggestions && !isModalOpen) {
-            setIsFocused(false);
-            handleSave(value);
-        }
-    }, 200);
-  };
+  const isFormula = value.startsWith('=');
 
   return (
-    <div className={cn("relative w-full flex justify-end h-8", className)}>
+    <div className="relative group/formula">
       <motion.div
-        className="absolute right-0 z-40 bg-white dark:bg-slate-800 border-2 border-primary rounded-md shadow-xl flex items-center"
-        initial={false}
-        animate={{
-            width: isFocused ? (typeof window !== 'undefined' && window.innerWidth < 640 ? 'calc(100vw - 40px)' : '400px') : '100%',
-            boxShadow: isFocused ? '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)' : '0 4px 6px -1px rgb(0 0 0 / 0.1)'
-        }}
-        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+        layout
+        className={cn(
+          "flex items-center gap-2 p-1 rounded-lg border transition-all min-h-[38px]",
+          isFocused ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-border bg-muted/30",
+          className
+        )}
       >
-        <div className="pl-2 pr-1 text-primary shrink-0">
-            {value.startsWith('=') ? <Command className="w-3.5 h-3.5" /> : <span className="text-xs font-bold">$</span>}
-        </div>
-        <div className="flex-1 relative h-full flex items-center min-w-0">
-            <input
-              ref={inputRef}
-              type="text"
-              className="w-full h-8 px-1 py-1 text-sm bg-transparent border-none outline-none focus:ring-0 font-mono"
-              value={value}
-              onChange={handleChange}
-              onKeyDown={handleKeyDown}
-              onBlur={handleBlur}
-              onFocus={() => setIsFocused(true)}
-              onClick={(e) => setCursorPosition((e.target as HTMLInputElement).selectionStart || 0)}
-            />
-
-            <AnimatePresence>
-                {showSuggestions && (
-                    <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        ref={suggestionsRef}
-                        className="absolute z-50 top-full left-0 w-full mt-1 bg-white dark:bg-slate-800 border border-border rounded-md shadow-2xl max-h-48 overflow-y-auto"
-                    >
-                        {filteredSuggestions.map((s, i) => (
-                            <button
-                                key={s.value || i}
-                                className={cn(
-                                    "w-full text-left px-3 py-2 text-xs hover:bg-primary/10 flex flex-col gap-0.5 transition-colors",
-                                    i === selectedIndex && "bg-primary/20"
-                                )}
-                                onClick={() => applySuggestion(s)}
-                                onMouseDown={(e) => e.preventDefault()} // Prevent blur
-                            >
-                                <div className="font-bold text-primary">{s.label}</div>
-                                {s.description && <div className="text-[10px] text-muted-foreground">{s.description}</div>}
-                            </button>
-                        ))}
-                    </motion.div>
-                )}
-            </AnimatePresence>
+        <div className="flex-1 flex items-center gap-2 pl-2">
+          <Calculator className={cn("w-3.5 h-3.5", isFormula ? "text-primary" : "text-muted-foreground")} />
+          <input
+            ref={inputRef}
+            type="text"
+            className="flex-1 bg-transparent border-none outline-none text-xs font-mono py-1"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setTimeout(() => setIsFocused(false), 200)}
+            onKeyDown={handleKeyDown}
+            placeholder="f(x) = ..."
+          />
         </div>
 
         {isFocused && (
-          <div className="flex items-center gap-1 px-1 border-l border-border bg-muted/30 shrink-0">
+          <div className="flex items-center gap-1 pr-1 animate-in fade-in slide-in-from-right-2 duration-200">
              <Popover>
                 <PopoverTrigger asChild>
-                  <button
-                    onMouseDown={(e) => e.preventDefault()}
-                    className="p-1 hover:bg-primary/20 text-primary rounded"
-                    title="Ayuda de Fórmulas"
-                  >
-                      <HelpCircle className="w-3.5 h-3.5" />
+                  <button className="p-1 hover:bg-primary/20 text-primary rounded" title="Ayuda">
+                    <HelpCircle className="w-3.5 h-3.5" />
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-80 p-4 z-[100]" side="top" align="end">
+                <PopoverContent side="top" className="w-64 p-3 z-[250]">
                   <div className="space-y-3">
                     <div className="flex items-center gap-2 border-b pb-2">
                       <Info className="w-4 h-4 text-primary" />
@@ -240,10 +141,6 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                         <li><span className="font-bold">ref</span>('ID')</li>
                       </ul>
                     </div>
-
-                    <div className="text-[10px] text-muted-foreground italic border-top pt-2 leading-tight">
-                      Use <span className="font-bold text-primary">vh('ID')</span> para referenciar valores históricos de otras filas.
-                    </div>
                   </div>
                 </PopoverContent>
              </Popover>
@@ -268,7 +165,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                className="p-1 hover:bg-red-500/20 text-red-600 rounded"
                title="Cancelar (Esc)"
              >
-                <XIcon className="w-3.5 h-3.5" />
+                <X className="w-3.5 h-3.5" />
              </button>
           </div>
         )}
@@ -276,39 +173,64 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
 
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[700px] z-[200] p-0 overflow-hidden rounded-2xl border-none shadow-2xl flex flex-col max-h-[90vh]">
-          <div className="bg-primary/10 px-6 py-4 flex items-center justify-between border-b border-primary/10 shrink-0">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20">
-                <Command className="w-5 h-5" />
+        <DialogContent className="sm:max-w-[800px] z-[200] p-0 overflow-hidden rounded-3xl border-none shadow-2xl flex flex-col max-h-[90vh] bg-[#020617] text-slate-200">
+          {/* Custom Header based on Design */}
+          <div className="px-6 pt-6 pb-4 flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-[#39FF14]/10 border border-[#39FF14]/30 flex items-center justify-center text-[#39FF14] shadow-[0_0_15px_rgba(57,255,20,0.2)]">
+                <Terminal className="w-6 h-6" />
               </div>
               <div>
-                <DialogTitle className="text-lg font-black uppercase tracking-tight italic">Editor de Cálculo</DialogTitle>
+                <DialogTitle className="text-xl font-black uppercase tracking-tighter italic text-white leading-none">Editor de Cálculo</DialogTitle>
                 <DialogDescription className="sr-only">
                   Editor avanzado para configurar fórmulas y cálculos personalizados en la ficha de costo.
                 </DialogDescription>
-                <p className="text-[10px] font-bold text-primary/60 uppercase tracking-widest leading-none">v5.7.22 • Motor de Costos Avanzado</p>
+                <p className="text-[10px] font-black text-[#39FF14] uppercase tracking-[0.25em] mt-1.5 opacity-90">v5.7.22 • Motor de Costos Avanzado</p>
               </div>
             </div>
 
-            <Tabs value={mode} onValueChange={(v: any) => setMode(v)} className="w-auto">
-              <HorizontalScroll containerClassName="bg-black/5 rounded-xl p-1 border border-black/5">
-                <TabsList className="flex bg-transparent border-none w-max min-w-full h-auto p-0 gap-1">
-                  <TabsTrigger value="assisted" className="rounded-lg px-4 py-2 gap-2 text-[10px] font-black uppercase tracking-wider data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all shrink-0">
-                    <Sparkles className="w-3 h-3" />
-                    Asistido
-                  </TabsTrigger>
-                  <TabsTrigger value="expert" className="rounded-lg px-4 py-2 gap-2 text-[10px] font-black uppercase tracking-wider data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all shrink-0">
-                    <Code className="w-3 h-3" />
-                    Experto
-                  </TabsTrigger>
-                </TabsList>
-              </HorizontalScroll>
-            </Tabs>
+            <button
+              onClick={() => setIsModalOpen(false)}
+              className="w-10 h-10 rounded-full bg-slate-800/50 flex items-center justify-center hover:bg-slate-700 transition-colors"
+            >
+              <X className="w-5 h-5 text-slate-400" />
+            </button>
+          </div>
+
+          {/* Subheader with Mode Switcher and Icons */}
+          <div className="px-6 py-2 flex items-center justify-between border-b border-white/5">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setMode('assisted')}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all",
+                  mode === 'assisted'
+                    ? "bg-[#16a34a] text-white shadow-[0_0_12px_rgba(22,163,74,0.4)]"
+                    : "bg-slate-800/50 text-slate-400 hover:text-slate-200"
+                )}
+              >
+                <Sparkles className="w-3 h-3" />
+                Asistido
+              </button>
+
+              <button
+                onClick={() => setMode('expert')}
+                className={cn(
+                  "p-2 rounded-lg transition-all",
+                  mode === 'expert' ? "text-[#39FF14]" : "text-slate-500 hover:text-slate-300"
+                )}
+              >
+                <Code className="w-4 h-4" />
+              </button>
+
+              <button className="p-2 rounded-lg text-slate-500 hover:text-slate-300 transition-all">
+                <History className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           <ScrollArea className="flex-1 min-h-0">
-            <div className="p-6">
+            <div className="p-0"> {/* FormulaBuilder will handle padding */}
             {mode === 'assisted' ? (
               <div className="animate-in fade-in zoom-in-95 duration-300">
                 <FormulaBuilder
@@ -318,17 +240,17 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                 />
               </div>
             ) : (
-              <div className="space-y-4 animate-in fade-in zoom-in-95 duration-300">
+              <div className="p-6 space-y-4 animate-in fade-in zoom-in-95 duration-300">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
                         <Code className="w-3 h-3" />
                         Código de Fórmula
                     </label>
-                    <Badge variant="outline" className="text-[9px] font-mono opacity-50">expr-eval enabled</Badge>
+                    <Badge variant="outline" className="text-[9px] font-mono border-slate-700 text-slate-500">expr-eval enabled</Badge>
                   </div>
                   <textarea
-                    className="w-full h-64 p-6 font-mono text-base bg-muted/30 border-2 border-border rounded-2xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none resize-none transition-all shadow-inner"
+                    className="w-full h-64 p-6 font-mono text-base bg-slate-900/50 border border-slate-800 rounded-2xl focus:ring-4 focus:ring-[#39FF14]/10 focus:border-[#39FF14]/50 outline-none resize-none transition-all text-slate-200"
                     value={value}
                     onChange={(e) => setValue(e.target.value)}
                     placeholder="Escriba su fórmula aquí (ej. = AnexoI + AnexoII)"
@@ -336,27 +258,19 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                   />
                 </div>
 
-                <div className="bg-amber-500/5 p-4 rounded-xl border border-amber-500/20">
-                    <div className="flex items-center gap-2 mb-2 text-amber-700 font-black text-[10px] uppercase tracking-wider">
+                <div className="bg-[#39FF14]/5 p-4 rounded-xl border border-[#39FF14]/10">
+                    <div className="flex items-center gap-2 mb-2 text-[#39FF14] font-black text-[10px] uppercase tracking-wider">
                         <Info className="w-3.5 h-3.5" />
                         Guía de Referencia Rápida
                     </div>
                     <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-[11px]">
-                        <div className="flex justify-between items-center py-1 border-b border-amber-500/10">
-                            <span className="font-medium text-amber-900/60">Suma de Hijos</span>
-                            <code className="bg-amber-500/10 text-amber-700 px-1.5 py-0.5 rounded font-bold">SUMA(hijos)</code>
+                        <div className="flex justify-between items-center py-1 border-b border-white/5">
+                            <span className="font-medium text-slate-400">Suma de Hijos</span>
+                            <code className="bg-slate-800 text-slate-200 px-1.5 py-0.5 rounded font-mono">SUMA(hijos)</code>
                         </div>
-                        <div className="flex justify-between items-center py-1 border-b border-amber-500/10">
-                            <span className="font-medium text-amber-900/60">Uso de Anexos</span>
-                            <code className="bg-amber-500/10 text-amber-700 px-1.5 py-0.5 rounded font-bold">AnexoI + AnexoII</code>
-                        </div>
-                        <div className="flex justify-between items-center py-1 border-b border-amber-500/10">
-                            <span className="font-medium text-amber-900/60">Ref. a Fila</span>
-                            <code className="bg-amber-500/10 text-amber-700 px-1.5 py-0.5 rounded font-bold">ref('1.1')</code>
-                        </div>
-                        <div className="flex justify-between items-center py-1 border-b border-amber-500/10">
-                            <span className="font-medium text-amber-900/60">Cálculo %</span>
-                            <code className="bg-amber-500/10 text-amber-700 px-1.5 py-0.5 rounded font-bold">PCT(total, 15)</code>
+                        <div className="flex justify-between items-center py-1 border-b border-white/5">
+                            <span className="font-medium text-slate-400">Uso de Anexos</span>
+                            <code className="bg-slate-800 text-slate-200 px-1.5 py-0.5 rounded font-mono text-[9px]">AnexoI + AnexoII</code>
                         </div>
                     </div>
                 </div>
@@ -365,17 +279,20 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
             </div>
           </ScrollArea>
 
-          <div className="px-6 py-4 bg-muted/30 flex items-center justify-between border-t border-border shrink-0">
-            <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-medium italic">
-                <Info className="w-3 h-3" />
-                Los cambios se aplican al cerrar o guardar.
-            </div>
-            <div className="flex gap-3">
-                <Button variant="ghost" className="rounded-xl h-11 px-6 font-bold uppercase tracking-widest text-[10px]" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
-                <Button className="rounded-xl h-11 px-8 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20" onClick={() => { onSave(value); setIsModalOpen(false); }}>
-                    Aplicar Fórmula
-                </Button>
-            </div>
+          {/* Footer based on Design */}
+          <div className="px-6 py-6 bg-slate-900/20 flex items-center justify-end gap-4 border-t border-white/5 shrink-0">
+            <button
+              onClick={() => setIsModalOpen(false)}
+              className="px-8 h-12 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-white transition-all border border-slate-800 hover:border-slate-600"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={() => { onSave(value); setIsModalOpen(false); }}
+              className="px-10 h-12 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] bg-[#39FF14] text-black shadow-[0_0_25px_rgba(57,255,20,0.4)] hover:shadow-[0_0_35px_rgba(57,255,20,0.6)] transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+            >
+              Guardar Cambios
+            </button>
           </div>
         </DialogContent>
       </Dialog>
