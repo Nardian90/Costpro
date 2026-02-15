@@ -573,7 +573,7 @@ const CostSheetView = () => {
                     )}
                     {activeSection === 'header' && (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <CostSheetHeaderEditor calculatedHeader={calculatedHeader} />
+                            <CostSheetHeaderEditor header={data?.header || {}} calculatedHeader={calculatedHeader} />
                         </div>
                     )}
                     {activeSection === 'main' && (
