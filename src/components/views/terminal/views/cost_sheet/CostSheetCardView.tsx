@@ -100,7 +100,7 @@ const RowCard: React.FC<RowCardProps> = memo(({
 
   return (
     <div className={cn(
-      "mb-3 rounded-2xl border transition-all overflow-hidden",
+      "mb-3 rounded-2xl border transition-all",
       isResultRow ? "bg-primary/5 border-primary/20 shadow-sm" : "bg-card border-border/50",
       level > 0 && "ml-4 border-l-2 border-l-primary/30"
     )}>
@@ -343,17 +343,34 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
 
   // Suggestions for FormulaEditor
   const suggestions = React.useMemo(() => {
-    const list: any[] = [];
+    const list: any[] = [
+      ...(annexes || []).map(a => ({ label: `Anexo ${a.id}`, value: `Anexo${a.id}`, description: a.title })),
+    ];
     sections.forEach(s => {
       s.rows.forEach(r => {
-        list.push({ id: r.id, label: r.label });
+        list.push({ label: `Fila ${r.id}`, value: `ref('${r.id}')`, description: r.label });
+        list.push({ label: `VH Fila ${r.id}`, value: `vh('${r.id}')`, description: `Valor Histórico de ${r.label}` });
         if (r.children) {
-          r.children.forEach(c => list.push({ id: c.id, label: c.label }));
+          r.children.forEach(c => {
+            list.push({ label: `Fila ${c.id}`, value: `ref('${c.id}')`, description: c.label });
+            list.push({ label: `VH Fila ${c.id}`, value: `vh('${c.id}')`, description: `Valor Histórico de ${c.label}` });
+          });
         }
       });
     });
+    list.push(
+      { label: 'SUMA', value: 'SUMA(', description: 'Suma de valores' },
+      { label: 'PROMEDIO', value: 'PROMEDIO(', description: 'Promedio de valores' },
+      { label: 'MAX', value: 'MAX(', description: 'Valor máximo' },
+      { label: 'MIN', value: 'MIN(', description: 'Valor mínimo' },
+      { label: 'PCT', value: 'pct(', description: 'Porcentaje: pct(valor, %)' },
+      { label: 'ROUND2', value: 'round2(', description: 'Redondear a 2 decimales' },
+      { label: 'VH', value: 'VH', description: 'Valor Histórico de la fila' },
+      { label: 'BASE_TOTAL', value: 'BASE_TOTAL', description: 'Total de la base de cálculo' }
+    );
     return list;
-  }, [sections]);
+  }, [sections, annexes]);
+
 
   if (!activeSubSectionId) {
     return (

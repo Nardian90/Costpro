@@ -439,7 +439,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                         <div>
                             <h4 className="text-[9px] font-black uppercase text-muted-foreground mb-2 px-1">Filas de la Ficha</h4>
                             <div className="grid grid-cols-1 gap-1.5">
-                                {suggestions.filter(s => s.value.startsWith('ref')).map(s => (
+                                {suggestions.filter(s => s.value?.startsWith('ref')).map(s => (
                                     <button
                                         key={s.value}
                                         onClick={() => addToken('reference', s.value, s.label)}
@@ -457,7 +457,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                         <div>
                             <h4 className="text-[9px] font-black uppercase text-muted-foreground mb-2 px-1">Anexos</h4>
                             <div className="grid grid-cols-2 gap-2">
-                                {suggestions.filter(s => s.value.startsWith('Anexo')).map(s => (
+                                {suggestions.filter(s => s.value?.startsWith('Anexo')).map(s => (
                                     <button
                                         key={s.value}
                                         onClick={() => addToken('reference', s.value, s.label)}
