@@ -31,28 +31,28 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({ calculatedValu
         label: 'Materiales',
         value: rawMaterials,
         percent: (rawMaterials / totalForTelemetry) * 100,
-        color: 'text-blue-500',
+        color: 'text-[#39FF14]',
         icon: Package
       },
       {
         label: 'Mano de Obra',
         value: labor,
         percent: (labor / totalForTelemetry) * 100,
-        color: 'text-orange-500',
+        color: 'text-green-400',
         icon: Users
       },
       {
         label: 'Gastos Directos',
         value: directOther,
         percent: (directOther / totalForTelemetry) * 100,
-        color: 'text-amber-500',
+        color: 'text-emerald-400',
         icon: Zap
       },
       {
         label: 'Gastos Indirectos',
         value: indirects,
         percent: (indirects / totalForTelemetry) * 100,
-        color: 'text-slate-500',
+        color: 'text-lime-400',
         icon: Settings
       }
     ];
