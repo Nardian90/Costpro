@@ -42,6 +42,7 @@ export default function UsersManagementView() {
       clerk: 'Cajero',
       warehouse: 'Almacén',
       usuario: 'Usuario',
+      costo: 'Costo',
     };
     return labels[role] || role;
   };

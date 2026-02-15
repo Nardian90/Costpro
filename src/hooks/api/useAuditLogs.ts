@@ -58,7 +58,7 @@ export function useAuditLogs(filters: AuditLogFilters = {}) {
       const extendedSchema = auditLogSchema.extend({
         profile: z.object({
           full_name: z.string().nullable().optional(),
-          role: z.enum(['admin', 'encargado', 'usuario', 'manager', 'clerk', 'warehouse']).nullable().optional()
+          role: z.enum(['admin', 'encargado', 'usuario', 'manager', 'clerk', 'warehouse', 'costo']).nullable().optional()
         }).nullable().optional()
       });
 
@@ -110,7 +110,7 @@ export async function prefetchAuditLogs(queryClient: QueryClient, filters: Audit
       const extendedSchema = auditLogSchema.extend({
         profile: z.object({
           full_name: z.string().nullable().optional(),
-          role: z.enum(['admin', 'encargado', 'usuario', 'manager', 'clerk', 'warehouse']).nullable().optional()
+          role: z.enum(['admin', 'encargado', 'usuario', 'manager', 'clerk', 'warehouse', 'costo']).nullable().optional()
         }).nullable().optional()
       });
 

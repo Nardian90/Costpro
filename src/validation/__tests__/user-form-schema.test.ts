@@ -4,13 +4,13 @@ import { describe, it, expect } from 'vitest';
 const userFormSchema = z.object({
   fullName: z.string().min(3, 'El nombre debe tener al menos 3 caracteres'),
   email: z.string().email('Email inválido'),
-  role: z.enum(['admin', 'encargado', 'usuario', 'manager', 'clerk', 'warehouse'] as const),
+  role: z.enum(['admin', 'encargado', 'usuario', 'manager', 'clerk', 'warehouse', 'costo'] as const),
   isActive: z.boolean(),
   maxStoresLimit: z.number().min(0).catch(0),
   maxUsersLimit: z.number().min(0).catch(0),
   memberships: z.array(z.object({
     store_id: z.string().min(1, 'Seleccione una tienda'),
-    role: z.enum(['admin', 'encargado', 'usuario', 'manager', 'clerk', 'warehouse'] as const),
+    role: z.enum(['admin', 'encargado', 'usuario', 'manager', 'clerk', 'warehouse', 'costo'] as const),
     status: z.enum(['active', 'revoked'] as const),
   })).min(1, 'El usuario debe tener al menos una tienda asignada'),
 }).refine(data => {
