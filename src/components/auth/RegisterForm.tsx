@@ -40,13 +40,20 @@ export default function RegisterForm({ onBackToLogin }: RegisterFormProps) {
 
     try {
       const { data, error } = await supabase.auth.signUp({
+        options: {
+          data: {
+            full_name: email.split('@')[0],
+            role: 'costo'
+          },
+          emailRedirectTo: 'https://costpro4.vercel.app/'
+        },
         email: email.toLowerCase().trim(),
         password: password,
       });
 
       if (error) throw error;
 
-      toast.success('¡Registro exitoso! Por favor revisa tu correo para confirmar tu cuenta.');
+      toast.success('¡Registro exitoso! Revisa tu correo (incluso en SPAM) para confirmar tu cuenta.');
       onBackToLogin();
     } catch (err: any) {
       logger.error('AUTH', 'REGISTER_FAILED', { email, error: err.message });
