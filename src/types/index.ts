@@ -653,8 +653,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canVoidTransactions: true,
     canCloseCashRegister: true,
     canViewDashboard: true,
-    canManageUsers: true, // Nuevo: Puede gestionar usuarios bajo su mando
-    canManageStores: true, // Nuevo: Puede gestionar tiendas creadas por él
+    canManageUsers: true,
+    canManageStores: true,
     canViewAudits: true,
     canPerformInventoryCount: true,
   },
@@ -729,6 +729,24 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     canManageStores: false,
     canViewAudits: false,
     canPerformInventoryCount: true,
+  },
+  costo: {
+    canCreateProducts: false,
+    canEditProducts: false,
+    canDeleteProducts: false,
+    canViewInventory: false,
+    canAdjustStock: false,
+    canReceiveProducts: false,
+    canCreateSales: false,
+    canViewSales: false,
+    canViewAllSales: false,
+    canVoidTransactions: false,
+    canCloseCashRegister: false,
+    canViewDashboard: false,
+    canManageUsers: false,
+    canManageStores: false,
+    canViewAudits: false,
+    canPerformInventoryCount: false,
   },
 };
 
