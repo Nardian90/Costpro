@@ -1,7 +1,0 @@
-
-> nextjs_tailwind_shadcn_ts@5.7.24 prebuild /app
-> prisma generate
-
-sh: 1: prisma: not found
- ELIFECYCLE  Command failed.
- WARN   Local package.json exists, but node_modules missing, did you mean to install?
