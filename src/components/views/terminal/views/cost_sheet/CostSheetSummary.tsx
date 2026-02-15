@@ -1,9 +1,12 @@
 'use client';
 
-import React, { memo, useMemo } from 'react';
+import React, { memo, useMemo, useState, useEffect } from 'react';
 import { CalculatedRowValue } from '@/types/cost-sheet';
-import { Package, Users, Zap, Settings } from 'lucide-react';
+import { Package, Users, Zap, Settings, Info, AlertTriangle, CheckCircle2, TrendingUp } from 'lucide-react';
 import CostSheetMasterRing from './CostSheetMasterRing';
+import { Slider } from '@/components/ui/slider';
+import { useCostSheetStore } from '@/store/cost-sheet-store';
+import { cn } from '@/lib/utils';
 
 interface CostSheetSummaryProps {
   calculatedValues: Record<string, CalculatedRowValue>;
@@ -58,6 +61,74 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({ calculatedValu
     ];
   }, [calculatedValues]);
 
+  const updateValue = useCostSheetStore(state => state.updateValue);
+
+  // Current markup (utility over cost)
+  const currentMarkup = totalCost > 0 ? (utility / totalCost) * 100 : 30;
+  const [sliderValue, setSliderValue] = useState(currentMarkup);
+
+  // Sync slider with actual values if they change elsewhere
+  useEffect(() => {
+    setSliderValue(currentMarkup);
+  }, [currentMarkup]);
+
+  const handleSliderChange = (val: number[]) => {
+    const newValue = val[0];
+    setSliderValue(newValue);
+
+    // Find row 13 and update its formula
+    // We assume ID '13' is the utility row based on standard templates
+    if (data?.sections) {
+      for (let sIdx = 0; sIdx < data.sections.length; sIdx++) {
+        const section = data.sections[sIdx];
+        for (let rIdx = 0; rIdx < section.rows.length; rIdx++) {
+          const row = section.rows[rIdx];
+          if (row.id === '13' || row.label.toLowerCase().includes('utilidad')) {
+            // Update formula to ref('12') * factor
+            // Factor is newValue / 100
+            const factor = (newValue / 100).toFixed(4);
+            updateValue(['sections', sIdx, 'rows', rIdx, 'formula'], `ref('12') * ${factor}`);
+            updateValue(['sections', sIdx, 'rows', rIdx, 'totalFormula'], `ref('12') * ${factor}`);
+            return;
+          }
+        }
+      }
+    }
+  };
+
+  const getFeedback = (pct: number) => {
+    if (pct >= 20 && pct <= 30) return {
+        text: "Precio para venta con productos normales.",
+        color: "text-green-500",
+        bg: "bg-green-500/10",
+        border: "border-green-500/20",
+        icon: CheckCircle2
+    };
+    if (pct >= 12 && pct < 20) return {
+        text: "Venta mayorista para aumentar rotación.",
+        color: "text-blue-500",
+        bg: "bg-blue-500/10",
+        border: "border-blue-500/20",
+        icon: Info
+    };
+    if (pct < 12) return {
+        text: "Cuidado: puede caer en pérdida al cumplir con las obligaciones tributarias.",
+        color: "text-red-500",
+        bg: "bg-red-500/10",
+        border: "border-red-500/20",
+        icon: AlertTriangle
+    };
+    return {
+        text: "Precio que puede estancar mercancía o considerarse abusivo por las autoridades.",
+        color: "text-amber-500",
+        bg: "bg-amber-500/10",
+        border: "border-amber-500/20",
+        icon: AlertTriangle
+    };
+  };
+
+  const feedback = getFeedback(sliderValue);
+
   return (
     <div className="space-y-12 pb-12">
       <CostSheetSummaryContent
@@ -66,6 +137,63 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({ calculatedValu
         totalCost={totalCost}
         telemetry={telemetry}
       />
+
+      {/* Utility Slider Control */}
+      <div className="max-w-md mx-auto w-full px-6 py-8 rounded-[2.5rem] bg-sidebar/30 border border-sidebar-border/50 backdrop-blur-xl space-y-8 shadow-2xl">
+        <div className="flex items-center justify-between px-2">
+            <div className="space-y-1">
+                <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-primary">Margen de Utilidad</h4>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase">Ajuste dinámico sobre costo (13.1/12.1)</p>
+            </div>
+            <div className="flex items-baseline gap-1">
+                <span className="text-3xl font-black tracking-tighter text-foreground">{sliderValue.toFixed(1)}</span>
+                <span className="text-sm font-black text-primary">%</span>
+            </div>
+        </div>
+
+        <div className="px-2 pt-4">
+            <Slider
+                value={[sliderValue]}
+                min={1}
+                max={100}
+                step={0.5}
+                onValueChange={handleSliderChange}
+                className="py-4"
+            />
+            <div className="flex justify-between mt-2 px-1">
+                <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest">Mín 1%</span>
+                <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest">Máx 100%</span>
+            </div>
+        </div>
+
+        {/* Feedback Note */}
+        <div className={cn(
+            "p-4 rounded-2xl border transition-all duration-500 flex items-start gap-4",
+            feedback.bg,
+            feedback.border
+        )}>
+            <div className={cn("p-2 rounded-xl bg-white dark:bg-slate-900 shadow-sm shrink-0", feedback.color)}>
+                <feedback.icon className="w-4 h-4" />
+            </div>
+            <div className="space-y-1">
+                <p className={cn("text-[10px] font-black uppercase tracking-widest", feedback.color)}>Análisis de Margen</p>
+                <p className="text-xs font-bold text-foreground/80 leading-relaxed">
+                    {feedback.text}
+                </p>
+            </div>
+        </div>
+
+        <div className="pt-4 border-t border-sidebar-border/30">
+            <div className="flex items-center gap-3 px-2">
+                <div className="p-2 rounded-lg bg-primary/10">
+                    <TrendingUp className="w-3.5 h-3.5 text-primary" />
+                </div>
+                <p className="text-[9px] font-bold text-muted-foreground leading-tight uppercase">
+                    El sistema recalcula automáticamente el precio final y los impuestos basándose en este margen de utilidad.
+                </p>
+            </div>
+        </div>
+      </div>
     </div>
   );
 });

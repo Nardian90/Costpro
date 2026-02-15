@@ -14,7 +14,8 @@ export async function POST(req: NextRequest) {
         includeAnnexes: [],
         consolidated: true,
         skipZeros: false,
-        includeFinancialSummary: true
+        includeFinancialSummary: true,
+        includeUtilityNote: false
     };
 
     const doc = new jsPDF({
@@ -130,18 +131,60 @@ export async function POST(req: NextRequest) {
             startY: currentY + 10,
             head: [rowHeaders],
             body: rowData,
-            theme: 'striped',
-            headStyles: { fillColor: [80, 80, 80], textColor: 255, fontSize: 7 },
-            styles: { fontSize: 7, cellPadding: 1.5 },
+            theme: 'plain',
+            headStyles: { fillColor: [60, 60, 60], textColor: 255, fontSize: 7, fontStyle: 'bold' },
+            styles: { fontSize: 7, cellPadding: 1.5, lineColor: [200, 200, 200], lineWidth: 0.1 },
             columnStyles: {
                 0: { cellWidth: 20 },
                 3: { halign: 'right' },
-                4: { halign: 'right', fontStyle: 'bold' }
+                4: { halign: 'right' }
             },
             margin: { top: 35, bottom: 20 },
+            didParseCell: (data) => {
+                if (data.section === 'body') {
+                    const rowIndex = data.row.index;
+                    const r = filteredRows[rowIndex];
+                    if (r) {
+                        const labelLower = r.label.toLowerCase();
+                        const isVenta = labelLower.includes('venta');
+                        const isCosto = labelLower.includes('costo');
+                        const hasChildren = result.rows.some(child => child.classification.startsWith(r.classification + '.'));
+
+                        if (hasChildren || isVenta || isCosto) {
+                            data.cell.styles.fontStyle = 'bold';
+                        }
+                        if (isVenta) {
+                            data.cell.styles.textColor = [180, 0, 0];
+                        }
+                    }
+                }
+            },
             didDrawPage: () => addHeader(doc, pageTitle)
         });
         currentY = (doc as any).lastAutoTable.finalY;
+
+        // Utility Note logic
+        if (exportOptions.includeUtilityNote) {
+            const r12 = result.rows.find(r => r.classification === '12' || r.classification === '12.1');
+            const r13 = result.rows.find(r => r.classification === '13.1' || r.classification === '13');
+
+            if (r12 && r13 && r12.total > 0) {
+                const ratio = (r13.total / r12.total);
+                const percent = (ratio - 1) * 100;
+
+                doc.setFontSize(7.5);
+                doc.setFont("helvetica", "bold");
+                const noteTitle = "NOTA SOBRE EL MARGEN DE UTILIDAD:";
+                doc.text(noteTitle, 14, currentY + 8);
+
+                doc.setFont("helvetica", "normal");
+                const noteContent = `El % de utilidad con respecto al costo es del ${percent.toFixed(2)}%, resultado de la relación entre el Precio (${safeLocale(r13.total)}) y el Total de Costos (${safeLocale(r12.total)}).`;
+                const splitNote = doc.splitTextToSize(noteContent, pageWidth - 28);
+                doc.text(splitNote, 14, currentY + 12);
+                currentY += 15 + (splitNote.length * 3.5);
+            }
+        }
+
         isFirstPage = false;
     }
 
@@ -152,15 +195,21 @@ export async function POST(req: NextRequest) {
         const totalImporte = annex.rows.reduce((sum, r) => sum + (r.importe || 0), 0);
         if (exportOptions.skipZeros && totalImporte === 0) continue;
 
-        const needsNewPage = !exportOptions.consolidated || isFirstPage || (currentY > pageHeight - 60);
+        // Annexes ALWAYS start on a new page if consolidated, as requested
+        const needsNewPage = !isFirstPage;
 
         if (needsNewPage) {
-            if (!isFirstPage) doc.addPage();
+            doc.addPage();
             pageTitle = `ANEXO ${annex.id}`;
             addHeader(doc, pageTitle);
             currentY = 38;
         } else {
-            currentY += 12; // Spacing between sections
+            if (isFirstPage) {
+                addHeader(doc, `ANEXO ${annex.id}`);
+                currentY = 38;
+            } else {
+                currentY += 12;
+            }
         }
 
         doc.setFontSize(10);
@@ -233,10 +282,15 @@ export async function POST(req: NextRequest) {
 
     const pdfBuffer = doc.output('arraybuffer');
 
+    const h = result.metadata?.header || {};
+    const evalCode = h.code || result.fichaId || 'export';
+    const evalName = h.name || result.fichaName || 'ficha';
+    const safeFilename = `ficha-${evalCode}-${evalName}.pdf`.replace(/[\\/\?%*:|"<>]/g, '-');
+
     return new NextResponse(pdfBuffer, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="ficha-${result.fichaId || 'export'}.pdf"`
+        'Content-Disposition': `attachment; filename="${safeFilename}"`
       }
     });
 
