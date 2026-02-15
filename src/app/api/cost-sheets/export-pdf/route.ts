@@ -175,13 +175,17 @@ export async function POST(req: NextRequest) {
                 let labelForNote = "";
 
                 if (r13) {
+                    const isPrice = r13.label.toLowerCase().includes("precio");
                     percent = (r13.total / r12.total) * 100;
+                    if (isPrice) percent -= 100;
                     valForNote = r13.total;
-                    labelForNote = "Utilidad";
+                    labelForNote = isPrice ? "Precio" : "Utilidad";
                 } else if (r13_1) {
-                    percent = ((r13_1.total / r12.total) - 1) * 100;
+                    const isPrice = r13_1.label.toLowerCase().includes("precio");
+                    percent = (r13_1.total / r12.total) * 100;
+                    if (isPrice) percent -= 100;
                     valForNote = r13_1.total;
-                    labelForNote = "Precio";
+                    labelForNote = isPrice ? "Precio" : "Utilidad";
                 }
 
                 if (labelForNote) {

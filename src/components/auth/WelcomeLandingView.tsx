@@ -25,9 +25,11 @@ interface WelcomeLandingViewProps {
 export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewProps) {
   const [isHydrated, setIsHydrated] = useState(false);
   const [isPWAModalOpen, setIsPWAModalOpen] = useState(false);
+  const [randomDiagram, setRandomDiagram] = useState<number>(0);
   const { isInstallable, installApp } = usePWA();
 
   useEffect(() => {
+    setRandomDiagram(Math.random() > 0.5 ? 1 : 2);
     setIsHydrated(true);
   }, []);
 
@@ -408,8 +410,18 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
             </div>
 
             <div className="order-2 lg:order-2 space-y-8">
-              <AutomationWorkflowDiagram />
-              <SpeedScaleDiagram />
+              {/* Desktop: Show both */}
+              <div className="hidden lg:block space-y-8">
+                <AutomationWorkflowDiagram />
+                <SpeedScaleDiagram />
+              </div>
+
+              {/* Mobile: Show only one randomly to optimize performance */}
+              <div className="lg:hidden">
+                {isHydrated && (
+                  randomDiagram === 1 ? <AutomationWorkflowDiagram /> : <SpeedScaleDiagram />
+                )}
+              </div>
             </div>
           </div>
         </div>
