@@ -166,22 +166,36 @@ export async function POST(req: NextRequest) {
         // Utility Note logic
         if (exportOptions.includeUtilityNote) {
             const r12 = result.rows.find(r => r.classification === '12' || r.classification === '12.1');
-            const r13 = result.rows.find(r => r.classification === '13.1' || r.classification === '13');
+            const r13 = result.rows.find(r => r.classification === '13'); // Utilidad
+            const r13_1 = result.rows.find(r => r.classification === '13.1'); // Precio
 
-            if (r12 && r13 && r12.total > 0) {
-                const ratio = (r13.total / r12.total);
-                const percent = (ratio - 1) * 100;
+            if (r12 && r12.total > 0) {
+                let percent = 0;
+                let valForNote = 0;
+                let labelForNote = "";
 
-                doc.setFontSize(7.5);
-                doc.setFont("helvetica", "bold");
-                const noteTitle = "NOTA SOBRE EL MARGEN DE UTILIDAD:";
-                doc.text(noteTitle, 14, currentY + 8);
+                if (r13) {
+                    percent = (r13.total / r12.total) * 100;
+                    valForNote = r13.total;
+                    labelForNote = "Utilidad";
+                } else if (r13_1) {
+                    percent = ((r13_1.total / r12.total) - 1) * 100;
+                    valForNote = r13_1.total;
+                    labelForNote = "Precio";
+                }
 
-                doc.setFont("helvetica", "normal");
-                const noteContent = `El % de utilidad con respecto al costo es del ${percent.toFixed(2)}%, resultado de la relación entre el Precio (${safeLocale(r13.total)}) y el Total de Costos (${safeLocale(r12.total)}).`;
-                const splitNote = doc.splitTextToSize(noteContent, pageWidth - 28);
-                doc.text(splitNote, 14, currentY + 12);
-                currentY += 15 + (splitNote.length * 3.5);
+                if (labelForNote) {
+                    doc.setFontSize(7.5);
+                    doc.setFont("helvetica", "bold");
+                    const noteTitle = "NOTA SOBRE EL MARGEN DE UTILIDAD:";
+                    doc.text(noteTitle, 14, currentY + 8);
+
+                    doc.setFont("helvetica", "normal");
+                    const noteContent = `El % de utilidad con respecto al costo es del ${percent.toFixed(2)}%, resultado de la relación entre la ${labelForNote} (${safeLocale(valForNote)}) y el Total de Costos (${safeLocale(r12.total)}).`;
+                    const splitNote = doc.splitTextToSize(noteContent, pageWidth - 28);
+                    doc.text(splitNote, 14, currentY + 12);
+                    currentY += 15 + (splitNote.length * 3.5);
+                }
             }
         }
 
@@ -190,13 +204,15 @@ export async function POST(req: NextRequest) {
 
     // 2. Export Annexes
     const selectedAnnexes = result.anexos.filter(a => exportOptions.includeAnnexes.includes(a.id));
+    let isFirstAnnex = true;
     for (const annex of selectedAnnexes) {
         // Skip Zeros logic for annexes
         const totalImporte = annex.rows.reduce((sum, r) => sum + (r.importe || 0), 0);
         if (exportOptions.skipZeros && totalImporte === 0) continue;
 
-        // Annexes ALWAYS start on a new page if consolidated, as requested
-        const needsNewPage = !isFirstPage;
+        // First annex ALWAYS starts on a new page (separated from main table)
+        // Subsequent annexes flow if they fit
+        const needsNewPage = isFirstAnnex || (currentY > pageHeight - 60);
 
         if (needsNewPage) {
             doc.addPage();
@@ -204,13 +220,9 @@ export async function POST(req: NextRequest) {
             addHeader(doc, pageTitle);
             currentY = 38;
         } else {
-            if (isFirstPage) {
-                addHeader(doc, `ANEXO ${annex.id}`);
-                currentY = 38;
-            } else {
-                currentY += 12;
-            }
+            currentY += 12; // Spacing between annexes on same page
         }
+        isFirstAnnex = false;
 
         doc.setFontSize(10);
         doc.setFont("helvetica", "bold");
