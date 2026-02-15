@@ -67,7 +67,7 @@ const CostSheetView = () => {
   const [layoutMode, setLayoutMode] = useState<ViewMode>('grid');
 
   React.useEffect(() => {
-    setLayoutMode(isMobile ? 'grid' : 'list');
+    setLayoutMode(isMobile ? 'grid' : 'table');
   }, [isMobile]);
   // Grouping logic for "Smart Grouping" of small sections
   const groupedSections = React.useMemo(() => {
