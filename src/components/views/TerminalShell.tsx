@@ -110,6 +110,11 @@ export default function TerminalShell() { // Renamed from TerminalView
       prefetchProducts(queryClient, user.activeStoreId);
     }
   }, [loading, user, router, queryClient]);
+  useEffect(() => {
+    if (user?.role === 'costo' && currentView === 'dashboard') {
+      setCurrentView('cost-sheets');
+    }
+  }, [user, currentView, setCurrentView]);
 
   if (loading) {
     return (

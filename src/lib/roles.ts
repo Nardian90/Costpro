@@ -2,12 +2,13 @@
 import { UserRole, UserStoreMembership } from '@/types';
 
 const ROLES_HIERARCHY: Record<UserRole, UserRole[]> = {
-  admin: ['admin', 'manager', 'encargado', 'clerk', 'warehouse', 'usuario'],
-  manager: ['manager', 'encargado', 'clerk', 'warehouse', 'usuario'],
-  encargado: ['encargado', 'clerk', 'warehouse', 'usuario'],
+  admin: ['admin', 'manager', 'encargado', 'clerk', 'warehouse', 'usuario', 'costo'],
+  manager: ['manager', 'encargado', 'clerk', 'warehouse', 'usuario', 'costo'],
+  encargado: ['encargado', 'clerk', 'warehouse', 'usuario', 'costo'],
   clerk: ['clerk'],
   warehouse: ['warehouse'],
   usuario: ['usuario'],
+  costo: ['costo'],
 };
 
 export const getAllowedRoles = (role: UserRole | undefined): UserRole[] => {
