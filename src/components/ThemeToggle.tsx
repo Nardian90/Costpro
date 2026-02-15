@@ -15,7 +15,7 @@ export function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <div className="w-10 h-10 rounded-xl bg-muted/50 border border-border/50" />
+      <div className="w-11 h-11 rounded-xl bg-muted/50 border border-border/50" />
     );
   }
 
@@ -24,7 +24,7 @@ export function ThemeToggle() {
   return (
     <button
       onClick={() => setTheme(isDark ? 'light' : 'dark')}
-      className="group relative flex items-center gap-3 px-3 py-2 rounded-xl bg-muted/50 border border-border/50 hover:bg-muted hover:border-primary/20 transition-all"
+      className="group relative flex items-center gap-3 px-3 h-11 rounded-xl bg-muted/50 border border-border/50 hover:bg-muted hover:border-primary/20 transition-all"
       aria-label="Toggle theme"
     >
       <div className="relative w-5 h-5 flex items-center justify-center overflow-hidden">
