@@ -39,7 +39,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
   suggestions,
   className
 }) => {
-  const [value, setValue] = useState(initialValue);
+  const [value, setValue] = useState(initialValue || '');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [cursorPosition, setCursorPosition] = useState(0);
@@ -61,7 +61,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
   const filteredSuggestions = suggestions.filter(s => {
     const lastWord = value.slice(0, cursorPosition).split(/[\s+\-*/()%,]/).pop() || '';
     if (!lastWord) return false;
-    return s.value.toLowerCase().includes(lastWord.toLowerCase()) && s.value.toLowerCase() !== lastWord.toLowerCase();
+    return s.value && s.value.toLowerCase().includes(lastWord.toLowerCase()) && s.value.toLowerCase() !== lastWord.toLowerCase();
   });
 
   useEffect(() => {
@@ -182,7 +182,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                     >
                         {filteredSuggestions.map((s, i) => (
                             <button
-                                key={s.value}
+                                key={s.value || i}
                                 className={cn(
                                     "w-full text-left px-3 py-2 text-xs hover:bg-primary/10 flex flex-col gap-0.5 transition-colors",
                                     i === selectedIndex && "bg-primary/20"
