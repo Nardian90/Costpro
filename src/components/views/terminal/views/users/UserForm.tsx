@@ -20,7 +20,7 @@ const userFormSchema = z.object({
     store_id: z.string().min(1, 'Seleccione una tienda'),
     role: z.enum(['admin', 'encargado', 'usuario', 'manager', 'clerk', 'warehouse', 'costo'] as const),
     status: z.enum(['active', 'revoked'] as const),
-  })).min(1, 'El usuario debe tener al menos una tienda asignada'),
+  })),
 }).refine(data => {
   // Solo validamos el límite de tiendas si el usuario es un encargado y tiene un límite definido > 0
   if (data.role === 'encargado' && data.maxStoresLimit > 0) {
@@ -29,6 +29,16 @@ const userFormSchema = z.object({
   return true;
 }, {
   message: "El número de tiendas asignadas excede el límite permitido para este encargado",
+  path: ["memberships"]
+}).refine(data => {
+  // Roles que requieren al menos una tienda
+  const rolesQueRequierenTienda = ['encargado', 'clerk', 'warehouse'];
+  if (rolesQueRequierenTienda.includes(data.role)) {
+    return data.memberships.length > 0;
+  }
+  return true;
+}, {
+  message: "Este rol requiere al menos una tienda asignada",
   path: ["memberships"]
 });
 
