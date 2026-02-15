@@ -1,43 +1,34 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Calculator,
   HelpCircle,
-  X,
   Info,
   Check,
-  Command,
-  Sparkles,
-  Code,
-  History,
+  X as XIcon,
   Maximize2,
-  ChevronRight,
-  Plus,
   Terminal,
-  XIcon
+  Code,
+  Sparkles,
+  History,
+  X
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger
-} from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger
+  PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { FormulaBuilder } from './FormulaBuilder';
 
 interface FormulaEditorProps {
@@ -94,7 +85,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
           <button
             type="button"
             onClick={() => setIsModalOpen(true)}
-            className="p-1 hover:bg-primary/20 rounded-md transition-colors"
+            className="p-1 hover:bg-primary/20 rounded-md transition-colors shrink-0"
           >
             <Calculator className={cn("w-3.5 h-3.5", isFormula ? "text-primary" : "text-muted-foreground")} />
           </button>
@@ -181,41 +172,41 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent
           showCloseButton={false}
-          className="sm:max-w-[800px] z-[200] p-0 overflow-y-auto rounded-3xl border-none shadow-2xl max-h-[95vh] bg-[#020617] text-slate-200"
+          className="w-full max-w-[calc(100%-2rem)] sm:max-w-[800px] z-[200] p-0 overflow-y-auto rounded-3xl border-none shadow-2xl max-h-[95vh] bg-background dark:bg-[#020617] text-foreground dark:text-slate-200 transition-colors"
         >
           {/* Custom Header based on Design */}
-          <div className="px-6 pt-6 pb-4 flex items-center justify-between shrink-0">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#39FF14]/10 border border-[#39FF14]/30 flex items-center justify-center text-[#39FF14] shadow-[0_0_15px_rgba(57,255,20,0.2)]">
-                <Terminal className="w-6 h-6" />
+          <div className="px-4 sm:px-6 pt-6 pb-4 flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-3 sm:gap-4 overflow-hidden">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-primary/10 dark:bg-[#39FF14]/10 border border-primary/30 dark:border-[#39FF14]/30 flex items-center justify-center text-primary dark:text-[#39FF14] shadow-[0_0_15px_rgba(var(--primary),0.2)] dark:shadow-[0_0_15px_rgba(57,255,20,0.2)] shrink-0">
+                <Terminal className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
-              <div>
-                <DialogTitle className="text-xl font-black uppercase tracking-tighter italic text-white leading-none">Editor de Cálculo</DialogTitle>
+              <div className="min-w-0">
+                <DialogTitle className="text-lg sm:text-xl font-black uppercase tracking-tighter italic leading-none truncate">Editor de Cálculo</DialogTitle>
                 <DialogDescription className="sr-only">
                   Editor avanzado para configurar fórmulas y cálculos personalizados en la ficha de costo.
                 </DialogDescription>
-                <p className="text-[10px] font-black text-[#39FF14] uppercase tracking-[0.25em] mt-1.5 opacity-90">v5.7.22 • Motor de Costos Avanzado</p>
+                <p className="text-[9px] sm:text-[10px] font-black text-primary dark:text-[#39FF14] uppercase tracking-[0.25em] mt-1.5 opacity-90 truncate">v5.7.22 • Motor de Costos Avanzado</p>
               </div>
             </div>
 
             <button
               onClick={() => setIsModalOpen(false)}
-              className="w-10 h-10 rounded-full bg-slate-800/50 flex items-center justify-center hover:bg-slate-700 transition-colors"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-muted dark:bg-slate-800/50 flex items-center justify-center hover:bg-muted-foreground/10 dark:hover:bg-slate-700 transition-colors shrink-0 ml-2"
             >
-              <X className="w-5 h-5 text-slate-400" />
+              <X className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground dark:text-slate-400" />
             </button>
           </div>
 
           {/* Subheader with Mode Switcher and Icons */}
-          <div className="px-6 py-2 flex items-center justify-between border-b border-white/5">
-            <div className="flex items-center gap-4">
+          <div className="px-4 sm:px-6 py-2 flex items-center justify-between border-b border-border dark:border-white/5">
+            <div className="flex items-center gap-3 sm:gap-4">
               <button
                 onClick={() => setMode('assisted')}
                 className={cn(
-                  "flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all",
+                  "flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all",
                   mode === 'assisted'
-                    ? "bg-[#16a34a] text-white shadow-[0_0_12px_rgba(22,163,74,0.4)]"
-                    : "bg-slate-800/50 text-slate-400 hover:text-slate-200"
+                    ? "bg-green-600 text-white shadow-[0_0_12px_rgba(22,163,74,0.4)]"
+                    : "bg-muted dark:bg-slate-800/50 text-muted-foreground dark:text-slate-400 hover:text-foreground dark:hover:text-slate-200"
                 )}
               >
                 <Sparkles className="w-3 h-3" />
@@ -226,13 +217,13 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                 onClick={() => setMode('expert')}
                 className={cn(
                   "p-2 rounded-lg transition-all",
-                  mode === 'expert' ? "text-[#39FF14]" : "text-slate-500 hover:text-slate-300"
+                  mode === 'expert' ? "text-primary dark:text-[#39FF14]" : "text-muted-foreground dark:text-slate-500 hover:text-foreground dark:hover:text-slate-300"
                 )}
               >
                 <Code className="w-4 h-4" />
               </button>
 
-              <button className="p-2 rounded-lg text-slate-500 hover:text-slate-300 transition-all">
+              <button className="p-2 rounded-lg text-muted-foreground dark:text-slate-500 hover:text-foreground dark:hover:text-slate-300 transition-all">
                 <History className="w-4 h-4" />
               </button>
             </div>
@@ -248,17 +239,17 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                 />
               </div>
             ) : (
-              <div className="p-6 space-y-4 animate-in fade-in zoom-in-95 duration-300">
+              <div className="p-4 sm:p-6 space-y-4 animate-in fade-in zoom-in-95 duration-300">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground dark:text-slate-400 flex items-center gap-2">
                         <Code className="w-3 h-3" />
                         Código de Fórmula
                     </label>
-                    <Badge variant="outline" className="text-[9px] font-mono border-slate-700 text-slate-500">expr-eval enabled</Badge>
+                    <Badge variant="outline" className="text-[9px] font-mono border-border dark:border-slate-700 text-muted-foreground dark:text-slate-500">expr-eval enabled</Badge>
                   </div>
                   <textarea
-                    className="w-full h-64 p-6 font-mono text-base bg-slate-900/50 border border-slate-800 rounded-2xl focus:ring-4 focus:ring-[#39FF14]/10 focus:border-[#39FF14]/50 outline-none resize-none transition-all text-slate-200"
+                    className="w-full h-48 sm:h-64 p-4 sm:p-6 font-mono text-sm sm:text-base bg-muted/30 dark:bg-slate-900/50 border border-border dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-primary/10 dark:focus:ring-[#39FF14]/10 focus:border-primary/50 dark:focus:border-[#39FF14]/50 outline-none resize-none transition-all text-foreground dark:text-slate-200"
                     value={value}
                     onChange={(e) => setValue(e.target.value)}
                     placeholder="Escriba su fórmula aquí (ej. = AnexoI + AnexoII)"
@@ -266,19 +257,19 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                   />
                 </div>
 
-                <div className="bg-[#39FF14]/5 p-4 rounded-xl border border-[#39FF14]/10">
-                    <div className="flex items-center gap-2 mb-2 text-[#39FF14] font-black text-[10px] uppercase tracking-wider">
+                <div className="bg-primary/5 dark:bg-[#39FF14]/5 p-3 sm:p-4 rounded-xl border border-primary/10 dark:border-[#39FF14]/10">
+                    <div className="flex items-center gap-2 mb-2 text-primary dark:text-[#39FF14] font-black text-[10px] uppercase tracking-wider">
                         <Info className="w-3.5 h-3.5" />
                         Guía de Referencia Rápida
                     </div>
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-[11px]">
-                        <div className="flex justify-between items-center py-1 border-b border-white/5">
-                            <span className="font-medium text-slate-400">Suma de Hijos</span>
-                            <code className="bg-slate-800 text-slate-200 px-1.5 py-0.5 rounded font-mono">SUMA(hijos)</code>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-[10px] sm:text-[11px]">
+                        <div className="flex justify-between items-center py-1 border-b border-border dark:border-white/5">
+                            <span className="font-medium text-muted-foreground dark:text-slate-400">Suma de Hijos</span>
+                            <code className="bg-muted dark:bg-slate-800 text-foreground dark:text-slate-200 px-1.5 py-0.5 rounded font-mono">SUMA(hijos)</code>
                         </div>
-                        <div className="flex justify-between items-center py-1 border-b border-white/5">
-                            <span className="font-medium text-slate-400">Uso de Anexos</span>
-                            <code className="bg-slate-800 text-slate-200 px-1.5 py-0.5 rounded font-mono text-[9px]">AnexoI + AnexoII</code>
+                        <div className="flex justify-between items-center py-1 border-b border-border dark:border-white/5">
+                            <span className="font-medium text-muted-foreground dark:text-slate-400">Uso de Anexos</span>
+                            <code className="bg-muted dark:bg-slate-800 text-foreground dark:text-slate-200 px-1.5 py-0.5 rounded font-mono text-[9px]">AnexoI + AnexoII</code>
                         </div>
                     </div>
                 </div>
@@ -287,16 +278,16 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
           </div>
 
           {/* Footer based on Design */}
-          <div className="px-6 py-6 bg-slate-900/20 flex items-center justify-end gap-4 border-t border-white/5 shrink-0">
+          <div className="px-4 sm:px-6 py-4 sm:py-6 bg-muted/20 dark:bg-slate-900/20 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 sm:gap-4 border-t border-border dark:border-white/5 shrink-0">
             <button
               onClick={() => setIsModalOpen(false)}
-              className="px-8 h-12 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-white transition-all border border-slate-800 hover:border-slate-600"
+              className="px-4 sm:px-8 h-10 sm:h-12 rounded-2xl text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground dark:text-slate-400 hover:text-foreground dark:hover:text-white transition-all border border-border dark:border-slate-800 hover:border-muted-foreground/30 dark:hover:border-slate-600"
             >
               Cancelar
             </button>
             <button
               onClick={() => { onSave(value); setIsModalOpen(false); }}
-              className="px-10 h-12 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] bg-[#39FF14] text-black shadow-[0_0_25px_rgba(57,255,20,0.4)] hover:shadow-[0_0_35px_rgba(57,255,20,0.6)] transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+              className="px-6 sm:px-10 h-10 sm:h-12 rounded-2xl text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] bg-primary dark:bg-[#39FF14] text-primary-foreground dark:text-black shadow-[0_0_20px_rgba(var(--primary),0.3)] dark:shadow-[0_0_25px_rgba(57,255,20,0.4)] hover:shadow-[0_0_30px_rgba(var(--primary),0.5)] dark:hover:shadow-[0_0_35px_rgba(57,255,20,0.6)] transition-all transform hover:scale-[1.02] active:scale-[0.98]"
             >
               Guardar Cambios
             </button>
