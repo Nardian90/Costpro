@@ -24,7 +24,6 @@ import {
   TabsList,
   TabsTrigger
 } from "@/components/ui/tabs";
-import { HorizontalScroll } from '@/components/ui/horizontal-scroll';
 
 interface Token {
   id: string;

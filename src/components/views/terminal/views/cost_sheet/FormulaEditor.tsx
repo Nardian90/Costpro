@@ -39,7 +39,6 @@ import {
   PopoverTrigger
 } from "@/components/ui/popover";
 import { FormulaBuilder } from './FormulaBuilder';
-import { HorizontalScroll } from '@/components/ui/horizontal-scroll';
 
 interface FormulaEditorProps {
   initialValue: string;
