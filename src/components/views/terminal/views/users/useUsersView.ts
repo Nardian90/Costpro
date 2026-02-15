@@ -65,12 +65,18 @@ export function useUsersView() {
               p_email: data.email,
               p_full_name: data.fullName,
               p_role: data.role,
-              p_store_id: data.memberships?.[0]?.store_id || user.storeId || '',
+              p_store_id: data.memberships?.[0]?.store_id || (data.role !== 'costo' ? (user.storeId || user.activeStoreId) : null),
               p_memberships: data.memberships,
               p_max_stores: data.role === 'encargado' ? data.maxStoresLimit : 0,
               p_max_users: data.role === 'encargado' ? data.maxUsersLimit : 0
             });
           } else if (mode === 'edit' && selectedUserContractId) {
+            // First update memberships to ensure references exist for active_store_id validation
+            await manageMembershipsMutation.mutateAsync({
+              userId: selectedUserContractId,
+              memberships: data.memberships
+            });
+
             await updateUserMutation.mutateAsync({
               id: selectedUserContractId,
               full_name: data.fullName,
@@ -78,11 +84,6 @@ export function useUsersView() {
               is_active: data.isActive,
               max_stores_limit: data.role === 'encargado' ? data.maxStoresLimit : 0,
               max_users_limit: data.role === 'encargado' ? data.maxUsersLimit : 0
-            });
-
-            await manageMembershipsMutation.mutateAsync({
-              userId: selectedUserContractId,
-              memberships: data.memberships
             });
           }
           setUserFormMode(null);
