@@ -18,15 +18,13 @@ interface CostSheetMasterRingProps {
   totalPrice: number;
   utility: number;
   totalCost: number;
-  telemetry: TelemetryItem[];
   className?: string;
 }
 
-const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
+export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
   totalPrice,
   utility,
   totalCost,
-  telemetry,
   className
 }) => {
   const { resolvedTheme } = useTheme();
@@ -162,9 +160,18 @@ const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
             <p className="text-[8px] sm:text-[10px] text-slate-400 mt-1 uppercase font-black tracking-tighter opacity-70">Margen Neto</p>
         </div>
       </div>
+    </div>
+  );
+};
 
-      {/* Operational Telemetry */}
-      <div className="w-full space-y-8 pt-10 border-t border-border/30">
+export const CostSheetTelemetry: React.FC<{ telemetry: TelemetryItem[], className?: string }> = ({ telemetry, className }) => {
+    const { resolvedTheme } = useTheme();
+    const isDark = resolvedTheme === 'dark';
+    const brandGreen = "text-primary dark:text-[#39FF14]";
+    const brandGreenBg = "bg-primary dark:bg-[#39FF14]";
+
+    return (
+      <div className={cn("w-full max-w-md mx-auto space-y-8 pt-10 border-t border-border/30", className)}>
         <div className="flex items-center justify-between px-2">
             <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">Desglose Operativo</h4>
             <div className="flex items-center gap-2.5">
@@ -218,8 +225,7 @@ const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
             ))}
         </div>
       </div>
-    </div>
-  );
+    );
 };
 
 export default CostSheetMasterRing;

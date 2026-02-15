@@ -3,7 +3,7 @@
 import React, { memo, useMemo, useState, useEffect } from 'react';
 import { CalculatedRowValue } from '@/types/cost-sheet';
 import { Package, Users, Zap, Settings, Info, AlertTriangle, CheckCircle2, TrendingUp, DollarSign } from 'lucide-react';
-import CostSheetMasterRing from './CostSheetMasterRing';
+import CostSheetMasterRing, { CostSheetTelemetry } from './CostSheetMasterRing';
 import { Slider } from '@/components/ui/slider';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
 import { cn } from '@/lib/utils';
@@ -167,7 +167,6 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({ calculatedValu
         totalPrice={totalPrice}
         utility={utility}
         totalCost={totalCost}
-        telemetry={telemetry}
       />
 
       {/* Utility Slider Control */}
@@ -255,18 +254,19 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({ calculatedValu
             </div>
         </div>
       </div>
+
+      <CostSheetTelemetry telemetry={telemetry} />
     </div>
   );
 });
 
 // Separate component for the content to ensure re-rendering with theme changes if needed
-const CostSheetSummaryContent: React.FC<any> = ({ totalPrice, utility, totalCost, telemetry }) => {
+const CostSheetSummaryContent: React.FC<any> = ({ totalPrice, utility, totalCost }) => {
     return (
         <CostSheetMasterRing
             totalPrice={totalPrice}
             utility={utility}
             totalCost={totalCost}
-            telemetry={telemetry}
         />
     );
 }
