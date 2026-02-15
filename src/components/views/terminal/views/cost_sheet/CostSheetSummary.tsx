@@ -31,7 +31,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({ calculatedValu
         label: 'Materiales',
         value: rawMaterials,
         percent: (rawMaterials / totalForTelemetry) * 100,
-        color: 'text-[#39FF14]',
+        color: 'text-primary dark:text-[#39FF14]',
         icon: Package
       },
       {
@@ -60,7 +60,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({ calculatedValu
 
   return (
     <div className="space-y-12 pb-12">
-      <CostSheetMasterRing
+      <CostSheetSummaryContent
         totalPrice={totalPrice}
         utility={utility}
         totalCost={totalCost}
@@ -69,5 +69,17 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({ calculatedValu
     </div>
   );
 });
+
+// Separate component for the content to ensure re-rendering with theme changes if needed
+const CostSheetSummaryContent: React.FC<any> = ({ totalPrice, utility, totalCost, telemetry }) => {
+    return (
+        <CostSheetMasterRing
+            totalPrice={totalPrice}
+            utility={utility}
+            totalCost={totalCost}
+            telemetry={telemetry}
+        />
+    );
+}
 
 export default CostSheetSummary;
