@@ -202,21 +202,45 @@ const template: CostSheetDataContract = {
       "label": "Sección 4: Gastos Asociados Prod.",
       "rows": [
         {
-          "id": "4",
+         "id": "4",
           "label": "GASTOS ASOCIADOS PROD.",
-          "formula": "=sum(children)",
+          "valorHistorico": 0,
+          "value": 0,
+          "baseDeCalculoRef": "",
+          "baseRef": "",
+          "calculationMethod": "FORMULA",
+          "totalFormula": "=SUMA(hijos)",
+          "formula": "=SUMA(hijos)",
+          "isPercent": false,
+          "helpText": "",
           "children": [
             {
               "id": "4.1",
               "label": "De ello: Salarios",
               "valorHistorico": 0,
-              "calculationMethod": "ValorFijo"
+              "value": 0,
+              "baseDeCalculoRef": "",
+              "baseRef": "",
+              "calculationMethod": "FORMULA",
+              "totalFormula": "",
+              "formula": "vh('4.1.1')/vh('1.1.1')*ref('1.1.1')",
+              "isPercent": false,
+              "helpText": "",
+              "children": []
             },
             {
               "id": "4.2",
               "label": "-Otros gastos",
               "valorHistorico": 0,
-              "calculationMethod": "ValorFijo"
+              "value": 0,
+              "baseDeCalculoRef": "",
+              "baseRef": "",
+              "calculationMethod": "FORMULA",
+              "totalFormula": "",
+              "formula": "vh('4.1.1')/vh('1.1.1')*ref('1.1.1')",
+              "isPercent": false,
+              "helpText": "",
+              "children": []
             }
           ]
         }
@@ -230,8 +254,15 @@ const template: CostSheetDataContract = {
           "id": "5",
           "label": "COSTO TOTAL (1+2+3+4)",
           "valorHistorico": 0,
+          "value": 0,
+          "baseDeCalculoRef": "",
+          "baseRef": "",
           "calculationMethod": "FORMULA",
+          "totalFormula": "=SUMA ( ref('1') , ref('2') , ref('3') , ref('4') )",
           "formula": "=SUMA ( ref('1') , ref('2') , ref('3') , ref('4') )",
+          "isPercent": false,
+          "helpText": "",
+          "children": [],
           "vhFormula": "=SUMA ( vh('1') , vh('2') , vh('3') , vh('4') )"
         }
       ]
@@ -243,37 +274,87 @@ const template: CostSheetDataContract = {
         {
           "id": "6",
           "label": "GTOS. GRALES Y ADMÓN.",
-          "formula": "=sum(children)",
+          "valorHistorico": 0,
+          "value": 0,
+          "baseDeCalculoRef": "",
+          "baseRef": "",
+          "calculationMethod": "FORMULA",
+          "totalFormula": "=SUMA(hijos)",
+          "formula": "=SUMA(hijos)",
+          "isPercent": false,
+          "helpText": "",
           "children": [
             {
               "id": "6.1",
               "label": "- Salarios",
               "valorHistorico": 37931.5,
-              "calculationMethod": "ValorFijo"              
+              "value": 0,
+              "baseDeCalculoRef": "",
+              "baseRef": "",
+              "calculationMethod": "FORMULA",
+              "totalFormula": "",
+              "formula": "vh('6.1.1')/vh('1.1.1')*ref('1.1.1')",
+              "isPercent": false,
+              "helpText": "",
+              "children": [],
+              "vhFormula": ""
             },
             {
               "id": "6.2",
               "label": "- Comunicación",
               "valorHistorico": 0,
-              "calculationMethod": "ValorFijo"
+              "value": 0,
+              "baseDeCalculoRef": "",
+              "baseRef": "",
+              "calculationMethod": "FORMULA",
+              "totalFormula": "",
+              "formula": "vh('6.1.2')/vh('1.1.1')*ref('1.1.1')",
+              "isPercent": false,
+              "helpText": "",
+              "children": []
             },
             {
               "id": "6.3",
               "label": "- Depreciacion",
               "valorHistorico": 0,
-              "calculationMethod": "ValorFijo"
+              "value": 0,
+              "baseDeCalculoRef": "",
+              "baseRef": "",
+              "calculationMethod": "FORMULA",
+              "totalFormula": "",
+              "formula": "vh('6.1.3')/vh('1.1.1')*ref('1.1.1')",
+              "isPercent": false,
+              "helpText": "",
+              "children": []
             },
             {
               "id": "6.4",
               "label": "- Energia",
               "valorHistorico": 0,
-              "calculationMethod": "ValorFijo"
+              "value": 0,
+              "baseDeCalculoRef": "",
+              "baseRef": "",
+              "calculationMethod": "FORMULA",
+              "totalFormula": "",
+              "formula": "vh('6.1.4')/vh('1.1.1')*ref('1.1.1')",
+              "isPercent": false,
+              "helpText": "",
+              "children": []
             },
             {
               "id": "6.5",
               "label": "- Otros Gastos Admin.",
               "valorHistorico": 37205,
-              "calculationMethod": "ValorFijo"
+              "value": 0,
+              "baseDeCalculoRef": "",
+              "baseRef": "",
+              "calculationMethod": "FORMULA",
+              "totalFormula": "",
+              "formula": "vh('6.1.5')/vh('1.1.1')*ref('1.1.1')",
+              "isPercent": false,
+              "helpText": "",
+              "children": [],
+              "vhFormula": ""
             }
           ]
         }
@@ -286,19 +367,43 @@ const template: CostSheetDataContract = {
         {
           "id": "7",
           "label": "GTOS. DIST. Y VENTA",
-          "formula": "=sum(children)",
+          "valorHistorico": 0,
+          "value": 0,
+          "baseDeCalculoRef": "",
+          "baseRef": "",
+          "calculationMethod": "FORMULA",
+          "totalFormula": "=SUMA(hijos)",
+          "formula": "=SUMA(hijos)",
+          "isPercent": false,
+          "helpText": "",
           "children": [
             {
               "id": "7.1",
               "label": "- Salarios",
               "valorHistorico": 0,
-              "calculationMethod": "ValorFijo"
+              "value": 0,
+              "baseDeCalculoRef": "",
+              "baseRef": "",
+              "calculationMethod": "FORMULA",
+              "totalFormula": "",
+              "formula": "vh('7.1.1')/vh('1.1.1')*ref('1.1.1')",
+              "isPercent": false,
+              "helpText": "",
+              "children": []
             },
             {
               "id": "7.2",
               "label": "- Otros gastos",
               "valorHistorico": 0,
-              "calculationMethod": "ValorFijo"
+              "value": 0,
+              "baseDeCalculoRef": "",
+              "baseRef": "",
+              "calculationMethod": "FORMULA",
+              "totalFormula": "",
+              "formula": "vh('7.1.2')/vh('1.1.1')*ref('1.1.1')",
+              "isPercent": false,
+              "helpText": "",
+              "children": []
             }
           ]
         }
@@ -311,21 +416,44 @@ const template: CostSheetDataContract = {
         {
           "id": "8",
           "label": "GASTOS FINANCIEROS",
-          "formula": "=sum(children)",
+          "valorHistorico": 0,
+          "value": 0,
+          "baseDeCalculoRef": "",
+          "baseRef": "",
+          "calculationMethod": "FORMULA",
+          "totalFormula": "=SUMA(hijos)",
+          "formula": "=SUMA(hijos)",
+          "isPercent": false,
+          "helpText": "",
           "children": [
             {
               "id": "8.1",
               "label": "- Intereses y comisiones",
               "valorHistorico": 3911.31,
-              "calculationMethod": "ValorFijo",
+              "value": 0,
+              "baseDeCalculoRef": "",
+              "baseRef": "",
+              "calculationMethod": "FORMULA",
+              "totalFormula": "",
+              "formula": "vh('8.1.1')/vh('1.1.1')*ref('1.1.1')",
+              "isPercent": false,
+              "helpText": "",
+              "children": [],
               "vhFormula": ""
             },
             {
               "id": "8.2",
               "label": "- Otros Gastos Financ.",
-              "valorHistorico": 6652.02,
+              "valorHistorico": 6652.22,
+              "value": 0,
+              "baseDeCalculoRef": "",
+              "baseRef": "",
               "calculationMethod": "FORMULA",
-              "formula": "0",
+              "totalFormula": "",
+              "formula": "=0",
+              "isPercent": false,
+              "helpText": "",
+              "children": [],
               "vhFormula": ""
             }
           ]
@@ -340,7 +468,15 @@ const template: CostSheetDataContract = {
           "id": "9",
           "label": "GASTO FINANC. OSDE",
           "valorHistorico": 0,
-          "calculationMethod": "ValorFijo"
+          "value": 0,
+          "baseDeCalculoRef": "",
+          "baseRef": "",
+          "calculationMethod": "FORMULA",
+          "totalFormula": "",
+          "formula": "vh('9.1')/vh('1.1.1')*ref('1.1.1')",
+          "isPercent": false,
+          "helpText": "",
+          "children": []
         }
       ]
     },
@@ -352,26 +488,46 @@ const template: CostSheetDataContract = {
           "id": "10",
           "label": "GASTOS TRIBUTARIOS",
           "valorHistorico": 0,
+          "value": 0,
+          "baseDeCalculoRef": "",
+          "baseRef": "",
           "calculationMethod": "FORMULA",
-          "formula": "=sum(children)",
+          "totalFormula": "=SUMA(hijos)",
+          "formula": "=SUMA(hijos)",
+          "isPercent": false,
+          "helpText": "",
           "children": [
             {
               "id": "10.1",
               "label": "De ello: -Contrib. Seg. Social (14%)",
               "valorHistorico": 10843.54,
+              "value": 0,
+              "baseDeCalculoRef": "2.1",
+              "baseRef": "2.1",
               "calculationMethod": "FORMULA",
-              "formula": "=ROUND2 ( PCT ( ref('2.1') + ref('4.1') + ref('6.1') + ref('7.1') , 14 ) )",
+              "totalFormula": "=ROUND2(PCT(ref('2.1') + ref('4.1') + ref('6.1') + ref('7.1'), 14))",
+              "formula": "=ROUND2(PCT(ref('2.1') + ref('4.1') + ref('6.1') + ref('7.1'), 14))",
+              "isPercent": false,
+              "helpText": "",
+              "children": [],
               "vhFormula": ""
             },
             {
               "id": "10.2",
               "label": "-Imp. Fuerza Trabajo (5%)",
-              "valorHistorico": 3872.9,
-              "formula": "=round2(pct(ref('2.1') + ref('4.1') + ref('6.1') + ref('7.1'), 5))",
+              "valorHistorico": 3872.7,
+              "value": 0,
+              "baseDeCalculoRef": "2.1",
+              "baseRef": "2.1",
+              "calculationMethod": "FORMULA",
+              "totalFormula": "=ROUND2(PCT(ref('2.1') + ref('4.1') + ref('6.1') + ref('7.1'), 5))",
+              "formula": "=ROUND2(PCT(ref('2.1') + ref('4.1') + ref('6.1') + ref('7.1'), 5))",
+              "isPercent": false,
+              "helpText": "",
+              "children": [],
               "vhFormula": ""
             }
-          ],
-          "vhFormula": "=sum(children)"
+          ]
         }
       ]
     },
@@ -382,9 +538,17 @@ const template: CostSheetDataContract = {
         {
           "id": "11",
           "label": "TOTAL DE GASTOS (6+7+8+9+10)",
+          "valorHistorico": 0,
+          "value": 0,
+          "baseDeCalculoRef": "",
+          "baseRef": "",
           "calculationMethod": "FORMULA",
-          "formula": "=sum(ref('6'), ref('7'), ref('8'), ref('9'), ref('10'))",
-          "vhFormula": "=sum(ref('6'), ref('7'), vh('8'), vh('9'), vh('10'))"
+          "totalFormula": "=SUMA(ref('6'), ref('7'), ref('8'), ref('9'), ref('10'))",
+          "formula": "=SUMA(ref('6'), ref('7'), ref('8'), ref('9'), ref('10'))",
+          "isPercent": false,
+          "helpText": "",
+          "children": [],
+          "vhFormula": "=SUMA ( vh ( 6 ) , vh ( 7 ) , vh ( 8 ) , vh ( 9 ) , vh ( 10 ) )"
         }
       ]
     },
@@ -396,8 +560,15 @@ const template: CostSheetDataContract = {
           "id": "12",
           "label": "TOTAL COSTOS Y GASTOS (5+11)",
           "valorHistorico": 0,
+          "value": 0,
+          "baseDeCalculoRef": "",
+          "baseRef": "",
           "calculationMethod": "FORMULA",
+          "totalFormula": "=SUMA ( ref('5') , ref('11') )",
           "formula": "=SUMA ( ref('5') , ref('11') )",
+          "isPercent": false,
+          "helpText": "",
+          "children": [],
           "vhFormula": "=SUMA ( vh('5') , vh('11') )"
         }
       ]
@@ -410,27 +581,45 @@ const template: CostSheetDataContract = {
           "id": "13",
           "label": "Utilidad",
           "valorHistorico": 93547.55,
-          "base_ref": "12",
+          "value": 0,
+          "baseDeCalculoRef": "12",
+          "baseRef": "12",
           "calculationMethod": "FORMULA",
-          "formula": "ref('12')*0.3",
-          "is_percent": false,
+          "totalFormula": "ref('12') * 0.3",
+          "formula": "ref('12') * 0.3",
+          "isPercent": false,
+          "helpText": "",
+          "children": [],
           "vhFormula": ""
         },
         {
           "id": "13.1",
           "label": "Precio antes de Impuesto",
           "valorHistorico": 0,
+          "value": 0,
+          "baseDeCalculoRef": "",
+          "baseRef": "",
           "calculationMethod": "FORMULA",
-          "formula": "ref('12')+ref('13')",
-          "vhFormula": "vh('12')+vh('13')"
+          "totalFormula": "ref('12') + ref('13')",
+          "formula": "ref('12') + ref('13')",
+          "isPercent": false,
+          "helpText": "",
+          "children": [],
+          "vhFormula": "vh('12') + vh('13')"
         },
         {
           "id": "13.2",
           "label": "Imp s/Ventas y Serv",
           "valorHistorico": 66522.21,
+          "value": 0,
+          "baseDeCalculoRef": "",
+          "baseRef": "",
           "calculationMethod": "FORMULA",
-          "formula": "ref('14')-ref('13.1')",
-          "is_percent": false,
+          "totalFormula": "ref('14') - ref('13.1')",
+          "formula": "ref('14') - ref('13.2')",
+          "isPercent": false,
+          "helpText": "",
+          "children": [],
           "vhFormula": ""
         }
       ]
@@ -442,9 +631,17 @@ const template: CostSheetDataContract = {
         {
           "id": "14",
           "label": "Precio o Tarifa Final",
+          "valorHistorico": 0,
+          "value": 0,
+          "baseDeCalculoRef": "",
+          "baseRef": "",
           "calculationMethod": "FORMULA",
-          "formula": "ref('13.1')/0.9",
-          "vhFormula": "vh('13.1')/0.9"
+          "totalFormula": "ref('13.1') / 0.9",
+          "formula": "ref('13.2') / 0.9",
+          "isPercent": false,
+          "helpText": "",
+          "children": [],
+          "vhFormula": "vh('13.2') +vh('13.3')"
         }
       ]
     },
@@ -456,9 +653,15 @@ const template: CostSheetDataContract = {
           "id": "15",
           "label": "Costo y gasto UNITARIO",
           "valorHistorico": 0,
+          "value": 0,
+          "baseDeCalculoRef": "",
+          "baseRef": "",
           "calculationMethod": "FORMULA",
+          "totalFormula": "=ref('12') / cantidad",
           "formula": "=ref('12') / cantidad",
-          "vhFormula": ""
+          "isPercent": false,
+          "helpText": "",
+          "children": []
         }
       ]
     },
@@ -467,12 +670,18 @@ const template: CostSheetDataContract = {
       "label": "Sección 16: VENTA UNITARIA",
       "rows": [
         {
-          "id": "16.1",
+          "id": "16",
           "label": "VENTA UNITARIA",
-          "calculationMethod": "FORMULA",
-          "formula": "ref('14')/cantidad",
           "valorHistorico": 0,
-          "vhFormula": ""
+          "value": 0,
+          "baseDeCalculoRef": "",
+          "baseRef": "",
+          "calculationMethod": "FORMULA",
+          "totalFormula": "=ref('14') / cantidad",
+          "formula": "=ref('14') / cantidad",
+          "isPercent": false,
+          "helpText": "",
+          "children": []
         }
       ]
     }
