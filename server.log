@@ -33,3 +33,7 @@ Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and 
 ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
 Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment.
  GET / 200 in 4.0s (compile: 2.0s, render: 1970ms)
+✓ Finished filesystem cache database compaction in 10.6s
+⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment.
+ GET / 200 in 3.5s (compile: 1383ms, render: 2.1s)
