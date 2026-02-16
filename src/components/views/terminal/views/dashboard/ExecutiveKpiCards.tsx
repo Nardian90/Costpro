@@ -3,6 +3,7 @@
 import React from 'react';
 import { TrendingUp, DollarSign, Activity } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
+import { useTheme } from 'next-themes';
 
 interface KpiCardProps {
   title: string;
@@ -37,6 +38,9 @@ export const ExecutiveKpiCards = ({
   costs: number;
   profit: number;
 }) => {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
+
   const cards = [
     {
       title: 'Ingresos Totales',
@@ -51,10 +55,10 @@ export const ExecutiveKpiCards = ({
       title: 'Costo de Ventas',
       value: costs,
       icon: <DollarSign className="w-6 h-6" />,
-      iconColor: 'text-slate-300',
-      iconBg: 'bg-white/5 border-white/10',
+      iconColor: 'text-slate-400 dark:text-slate-300',
+      iconBg: 'bg-slate-400/10 dark:bg-white/5 border-slate-400/20 dark:border-white/10',
       linePath: 'M0 5 Q 15 15, 30 8 T 60 12',
-      lineColor: '#ffffff'
+      lineColor: isDark ? '#ffffff' : '#64748b' // White in dark, Slate-500 in light
     },
     {
       title: 'Utilidad Neta',
@@ -72,7 +76,7 @@ export const ExecutiveKpiCards = ({
       {cards.map((card, i) => (
         <div
           key={i}
-          className="bg-[#121212]/80 backdrop-blur-md p-5 rounded-[24px] border border-white/5 flex items-center justify-between shadow-sm"
+          className="bg-card/80 backdrop-blur-md p-5 rounded-[24px] border border-border/50 flex items-center justify-between shadow-sm"
         >
           <div className="flex items-center gap-4">
             <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center border", card.iconBg, card.iconColor)}>
@@ -82,7 +86,7 @@ export const ExecutiveKpiCards = ({
               <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tight">
                 {card.title}
               </p>
-              <h3 className="text-xl font-bold font-display text-white">
+              <h3 className="text-xl font-bold font-display text-foreground">
                 {formatCurrency(card.value)}
               </h3>
             </div>
