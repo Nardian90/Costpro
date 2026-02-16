@@ -280,7 +280,7 @@ export const POSCart = ({
           {lastSale ? (
             <SuccessView />
           ) : items.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-4">
+            <div className="flex-1 flex flex-col items-center justify-start pt-12 p-6 text-center space-y-4">
               <div className="w-32 h-32 bg-muted rounded-full flex items-center justify-center mb-4">
                 <ShoppingCart className="w-16 h-16 opacity-10" />
               </div>
