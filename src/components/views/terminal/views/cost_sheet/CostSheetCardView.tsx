@@ -454,16 +454,6 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
             subLabel={formatCurrency(finalPrice)}
             color="text-blue-500"
           />
-          <CircularProgress
-            value={Math.min(indirectCoef * 50, 100)}
-            label="Coef. Gto Ind."
-            subLabel={indirectCoef.toFixed(2)}
-            color={(() => {
-                const dest = String(calculatedHeader?.destination || '').toLowerCase();
-                const limit = dest === 'servicios' ? 1.0 : 1.5;
-                return indirectCoef > limit ? "text-destructive" : "text-amber-500";
-            })()}
-          />
         </div>
       </div>
 
