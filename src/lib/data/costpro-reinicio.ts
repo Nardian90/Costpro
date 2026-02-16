@@ -17,7 +17,7 @@ const template: CostSheetDataContract = {
     "destination": "",
     "production_level": "562",
     "capacity_utilization": "100.00%",
-    "sale_price": "=GET_FILA_DATO(\"16.1\", \"total\")",
+    "sale_price": "=GET_FILA_DATO(\"16\", \"total\")",
     "client": ""
   },
   "sections": [
