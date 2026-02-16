@@ -88,6 +88,7 @@ interface CostSheetState {
   setSheet: (data: CostSheetDataContract) => void;
   loadExample: () => void;
   reset: () => void;
+  updateUtilityFormula: (percentage: number) => void;
 }
 
 export const useCostSheetStore = create<CostSheetState>()(
@@ -304,6 +305,21 @@ export const useCostSheetStore = create<CostSheetState>()(
           set({ data: example as CostSheetDataContract }); // Fallback
         }
       },
+      updateUtilityFormula: (percentage) =>
+        set(
+          produce((draft: CostSheetState) => {
+            if (!draft.data) return;
+            // Search for row with ID '13' in all sections
+            for (const section of draft.data.sections) {
+              const row = section.rows.find(r => r.id === '13');
+              if (row) {
+                row.value = percentage / 100;
+                row.calculationMethod = 'ValorFijo';
+                break;
+              }
+            }
+          })
+        ),
       reset: () => {
         const resetData = JSON.parse(JSON.stringify(reinicioTemplate));
         set({ data: resetData as CostSheetDataContract });
