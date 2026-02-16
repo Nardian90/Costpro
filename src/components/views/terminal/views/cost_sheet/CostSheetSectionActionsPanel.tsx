@@ -43,7 +43,7 @@ export const CostSheetSectionActionsPanel: React.FC<CostSheetSectionActionsPanel
                 <SheetTitle className="text-xs font-black uppercase tracking-[0.2em] text-foreground">
                     Acciones de Sección
                 </SheetTitle>
-                <SheetDescription className="text-[10px] font-bold uppercase text-muted-foreground mt-1">
+                <SheetDescription className="text-xs font-bold uppercase text-muted-foreground mt-1">
                     {section?.label || 'Sin título'}
                 </SheetDescription>
             </div>
@@ -52,7 +52,7 @@ export const CostSheetSectionActionsPanel: React.FC<CostSheetSectionActionsPanel
 
         <div className="flex-1 overflow-y-auto p-4 space-y-6 no-scrollbar">
           <div className="space-y-1">
-            <div className="px-4 text-[10px] font-black text-primary/70 tracking-[0.4em] uppercase mb-4">
+            <div className="px-4 text-xs font-black text-primary/70 tracking-[0.4em] uppercase mb-4">
               Operaciones de Datos
             </div>
 
@@ -88,7 +88,7 @@ export const CostSheetSectionActionsPanel: React.FC<CostSheetSectionActionsPanel
           </div>
 
           <div className="pt-4 border-t border-sidebar-border/50 space-y-1">
-            <div className="px-4 text-[10px] font-black text-destructive/70 tracking-[0.4em] uppercase mb-4">
+            <div className="px-4 text-xs font-black text-destructive/70 tracking-[0.4em] uppercase mb-4">
               Peligro
             </div>
 
@@ -105,7 +105,7 @@ export const CostSheetSectionActionsPanel: React.FC<CostSheetSectionActionsPanel
         </div>
 
         <div className="p-6 border-t border-sidebar-border/50 bg-sidebar/5">
-            <p className="text-[8px] font-black uppercase tracking-[0.3em] text-muted-foreground/50 text-center">
+            <p className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground/50 text-center">
                 Gestión de Sección de Ficha
             </p>
         </div>

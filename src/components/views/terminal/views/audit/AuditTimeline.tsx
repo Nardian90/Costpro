@@ -68,7 +68,7 @@ export default function AuditTimeline({ logs }: AuditTimelineProps) {
               className="mb-12 last:mb-0"
             >
               <div className="sticky top-0 z-20 py-2 bg-background/80 backdrop-blur-md mb-6">
-                <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-primary bg-primary/5 px-3 py-1.5 rounded-full inline-block border border-primary/10">
+                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary bg-primary/5 px-3 py-1.5 rounded-full inline-block border border-primary/10">
                   {displayDate}
                 </h3>
               </div>
@@ -87,7 +87,7 @@ export default function AuditTimeline({ logs }: AuditTimelineProps) {
         <div className="flex justify-center mt-8 pb-10">
           <button
             onClick={() => setVisibleCount(prev => prev + 50)}
-            className="px-8 py-3 rounded-full bg-primary/10 text-primary border border-primary/20 font-black uppercase text-[11px] tracking-widest hover:bg-primary hover:text-white transition-all shadow-lg hover:shadow-primary/25"
+            className="px-8 py-3 rounded-full bg-primary/10 text-primary border border-primary/20 font-black uppercase text-xs tracking-widest hover:bg-primary hover:text-white transition-all shadow-lg hover:shadow-primary/25"
           >
             Cargar más eventos (+{Math.min(50, logs.length - visibleCount)})
           </button>

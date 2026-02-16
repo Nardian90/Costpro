@@ -31,7 +31,7 @@ export default function QuickModeMassiveDiagram() {
         >
           <rect x="50" y="150" width="180" height="100" rx="20" className="fill-amber-500/10 stroke-amber-500" strokeWidth="3" />
           <text x="140" y="195" textAnchor="middle" className="fill-amber-600 font-black text-xs uppercase">Modo Rápido</text>
-          <text x="140" y="220" textAnchor="middle" className="fill-amber-400 font-bold text-[10px] uppercase">(Entrada Manual Express)</text>
+          <text x="140" y="220" textAnchor="middle" className="fill-amber-400 font-bold text-xs uppercase">(Entrada Manual Express)</text>
           <path d="M230 200 L320 200" stroke="#f59e0b" strokeWidth="2" markerEnd="url(#arrow-amber)" strokeDasharray="4,2" />
         </motion.g>
 
@@ -42,7 +42,7 @@ export default function QuickModeMassiveDiagram() {
           strokeWidth="3"
         />
         <text x="400" y="195" textAnchor="middle" className="fill-blue-600 font-black text-xs uppercase">Mapeo</text>
-        <text x="400" y="215" textAnchor="middle" className="fill-blue-400 font-bold text-[10px] uppercase">Automático</text>
+        <text x="400" y="215" textAnchor="middle" className="fill-blue-400 font-bold text-xs uppercase">Automático</text>
 
         {/* Massive Generation (Process) */}
         <motion.g
@@ -52,7 +52,7 @@ export default function QuickModeMassiveDiagram() {
         >
           <rect x="570" y="150" width="180" height="100" rx="20" className="fill-emerald-500/10 stroke-emerald-500" strokeWidth="3" />
           <text x="660" y="195" textAnchor="middle" className="fill-emerald-600 font-black text-xs uppercase">Gen. Masiva</text>
-          <text x="660" y="220" textAnchor="middle" className="fill-emerald-400 font-bold text-[10px] uppercase">(Fichas Listas)</text>
+          <text x="660" y="220" textAnchor="middle" className="fill-emerald-400 font-bold text-xs uppercase">(Fichas Listas)</text>
           <path d="M460 200 L560 200" stroke="#10b981" strokeWidth="2" markerEnd="url(#arrow-emerald)" />
         </motion.g>
 

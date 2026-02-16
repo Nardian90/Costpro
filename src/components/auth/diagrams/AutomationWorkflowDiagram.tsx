@@ -26,11 +26,11 @@ export default function AutomationWorkflowDiagram() {
               animate={{ scale: [1, 1.1, 1] }}
               transition={{ duration: 2, repeat: Infinity }}
             >
-              <span className="text-[10px] font-black">CSV</span>
+              <span className="text-xs font-black">CSV</span>
             </motion.div>
           </div>
           <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap">
-            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700/60">Datos Maestros</span>
+            <span className="text-xs font-black uppercase tracking-widest text-emerald-700/60">Datos Maestros</span>
           </div>
         </motion.div>
 
@@ -80,7 +80,7 @@ export default function AutomationWorkflowDiagram() {
             </motion.div>
           </div>
           <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap">
-            <span className="text-[10px] font-black uppercase tracking-widest text-foreground">Algoritmo CostPro</span>
+            <span className="text-xs font-black uppercase tracking-widest text-foreground">Algoritmo CostPro</span>
           </div>
         </motion.div>
 
@@ -126,7 +126,7 @@ export default function AutomationWorkflowDiagram() {
             ))}
           </div>
           <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 whitespace-nowrap">
-            <span className="text-[10px] font-black uppercase tracking-widest text-violet-700/60">Fichas Finalizadas</span>
+            <span className="text-xs font-black uppercase tracking-widest text-violet-700/60">Fichas Finalizadas</span>
           </div>
 
           <motion.div

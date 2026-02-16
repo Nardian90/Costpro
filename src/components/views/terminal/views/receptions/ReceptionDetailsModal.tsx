@@ -41,14 +41,14 @@ export function ReceptionDetailsModal({ receipt, isOpen, onClose, items, isLoadi
         <div className="flex justify-between items-center w-full">
           <button
             onClick={onExport}
-            className="flex items-center gap-2 px-4 py-3 bg-background border border-border rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all active:scale-95"
+            className="flex items-center gap-2 px-4 py-3 bg-background border border-border rounded-xl text-xs font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all active:scale-95"
           >
             <Download className="w-4 h-4" />
             Exportar CSV
           </button>
           <button
             onClick={onClose}
-            className="px-8 py-3 bg-background border border-border rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-muted transition-all active:scale-95"
+            className="px-8 py-3 bg-background border border-border rounded-xl text-xs font-black uppercase tracking-widest hover:bg-muted transition-all active:scale-95"
           >
             Cerrar Detalle
           </button>
@@ -59,14 +59,14 @@ export function ReceptionDetailsModal({ receipt, isOpen, onClose, items, isLoadi
           {/* Metadata Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             <div className="neu-card !p-3 space-y-1">
-              <div className="flex items-center gap-1.5 text-[9px] font-black text-muted-foreground uppercase tracking-widest">
+              <div className="flex items-center gap-1.5 text-xs font-black text-muted-foreground uppercase tracking-widest">
                 <Hash className="w-3 h-3" /> ID Ref
               </div>
               <div className="font-bold text-xs truncate text-primary">{receipt?.id}</div>
             </div>
 
             <div className="neu-card !p-3 space-y-1">
-              <div className="flex items-center gap-1.5 text-[9px] font-black text-muted-foreground uppercase tracking-widest">
+              <div className="flex items-center gap-1.5 text-xs font-black text-muted-foreground uppercase tracking-widest">
                 <Calendar className="w-3 h-3" /> Fecha
               </div>
               <div className="font-bold text-xs uppercase">
@@ -75,41 +75,41 @@ export function ReceptionDetailsModal({ receipt, isOpen, onClose, items, isLoadi
             </div>
 
             <div className="neu-card !p-3 space-y-1">
-              <div className="flex items-center gap-1.5 text-[9px] font-black text-muted-foreground uppercase tracking-widest">
+              <div className="flex items-center gap-1.5 text-xs font-black text-muted-foreground uppercase tracking-widest">
                 <Building2 className="w-3 h-3" /> Proveedor
               </div>
               <div className="font-bold text-xs truncate">{receipt?.supplier || 'N/A'}</div>
             </div>
 
              <div className="neu-card !p-3 space-y-1">
-              <div className="flex items-center gap-1.5 text-[9px] font-black text-muted-foreground uppercase tracking-widest">
+              <div className="flex items-center gap-1.5 text-xs font-black text-muted-foreground uppercase tracking-widest">
                 <FileText className="w-3 h-3" /> Factura #
               </div>
               <div className="font-bold text-xs truncate">{receipt?.reference_doc || 'N/A'}</div>
             </div>
 
             <div className="neu-card !p-3 space-y-1">
-              <div className="flex items-center gap-1.5 text-[9px] font-black text-muted-foreground uppercase tracking-widest">
+              <div className="flex items-center gap-1.5 text-xs font-black text-muted-foreground uppercase tracking-widest">
                 <User className="w-3 h-3" /> Recibido por
               </div>
-              <div className="font-bold text-[10px] truncate text-muted-foreground italic">
+              <div className="font-bold text-xs truncate text-muted-foreground italic">
                 SISTEMA (ID: {receipt?.user_id?.split('-')[0]})
               </div>
             </div>
 
             <div className="neu-card !p-3 space-y-1 bg-primary/5 border-primary/20">
-              <div className="text-[9px] font-black text-primary uppercase tracking-widest">Total Costo</div>
+              <div className="text-xs font-black text-primary uppercase tracking-widest">Total Costo</div>
               <div className="font-black text-lg text-primary">{formatCurrency(receipt?.total_cost || 0)}</div>
             </div>
           </div>
 
           {/* Items Table */}
           <div className="space-y-3">
-             <h4 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] ml-1">Productos Recibidos</h4>
+             <h4 className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] ml-1">Productos Recibidos</h4>
              <div className="rounded-2xl border border-white/5 overflow-hidden">
                 <table className="w-full text-xs">
                   <thead>
-                    <tr className="bg-muted/50 text-muted-foreground font-black uppercase text-[9px] tracking-widest text-left">
+                    <tr className="bg-muted/50 text-muted-foreground font-black uppercase text-xs tracking-widest text-left">
                       <th className="p-3">Img</th>
                       <th className="p-3">Producto</th>
                       <th className="p-3 text-center">Cant.</th>
@@ -144,7 +144,7 @@ export function ReceptionDetailsModal({ receipt, isOpen, onClose, items, isLoadi
                             </td>
                             <td className="p-3">
                               <div className="font-bold">{item.products?.name}</div>
-                              <div className="text-[9px] font-mono text-muted-foreground">{item.products?.sku}</div>
+                              <div className="text-xs font-mono text-muted-foreground">{item.products?.sku}</div>
                             </td>
                             <td className="p-3 text-center font-black">{item.quantity}</td>
                             <td className="p-3 text-right font-bold text-muted-foreground">{formatCurrency(item.unit_cost)}</td>
@@ -162,11 +162,11 @@ export function ReceptionDetailsModal({ receipt, isOpen, onClose, items, isLoadi
         {/* Financial Summary */}
         <div className="mt-6 pt-4 border-t border-white/5">
            <div className="flex flex-col items-end gap-1">
-              <div className="flex justify-between w-full max-w-[200px] text-[10px] font-bold text-muted-foreground uppercase">
+              <div className="flex justify-between w-full max-w-[200px] text-xs font-bold text-muted-foreground uppercase">
                 <span>Subtotal:</span>
                 <span>{formatCurrency(subtotal)}</span>
               </div>
-              <div className="flex justify-between w-full max-w-[200px] text-[10px] font-bold text-muted-foreground uppercase">
+              <div className="flex justify-between w-full max-w-[200px] text-xs font-bold text-muted-foreground uppercase">
                 <span>Impuestos (0%):</span>
                 <span>{formatCurrency(taxes)}</span>
               </div>

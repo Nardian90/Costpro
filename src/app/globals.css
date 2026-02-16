@@ -88,7 +88,7 @@
     -12px -12px 20px var(--shadow-light);
 
   /* Colores Semánticos Light */
-  --primary: #16a34a;
+  --primary: #15803d;
   --primary-foreground: #ffffff;
   --primary-light: #22c55e;
   --primary-dark: #15803d;
@@ -897,12 +897,12 @@
   --neumorphic-shadow-hover: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 
   /* Colores Semánticos */
-  --primary: #16a34a;
+  --primary: #15803d;
   --primary-foreground: #ffffff;
   --secondary: #a0aec0;
   --secondary-foreground: #1a202c;
   --muted: #e2e8f0;
-  --muted-foreground: #718096;
+  --muted-foreground: #526077;
   --accent: #f0fdf4;
   --accent-foreground: #166534;
   --border: #e2e8f0;

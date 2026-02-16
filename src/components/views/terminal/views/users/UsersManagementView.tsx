@@ -55,7 +55,7 @@ export default function UsersManagementView() {
           <div className="space-y-1">
             <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase">Usuarios</h2>
             {limitReachedMessage && (
-              <p className="text-[10px] font-bold text-destructive uppercase tracking-widest animate-pulse">
+              <p className="text-xs font-bold text-destructive uppercase tracking-widest animate-pulse">
                 {limitReachedMessage}
               </p>
             )}
@@ -103,7 +103,7 @@ export default function UsersManagementView() {
         <div className="table-scroll-wrapper rounded-xl border border-border bg-card shadow-sm">
           <table className="data-table sticky-column-1 w-full text-sm">
             <thead>
-              <tr className="bg-muted/30 text-muted-foreground font-black uppercase text-[10px] tracking-widest border-b border-border">
+              <tr className="bg-muted/30 text-muted-foreground font-black uppercase text-xs tracking-widest border-b border-border">
                 <th className="p-4 text-left">Perfil</th>
                 <th className="p-4 text-left">Email</th>
                 <th className="p-4 text-left">Inscripción</th>
@@ -124,8 +124,8 @@ export default function UsersManagementView() {
                         <div className="font-bold text-sm uppercase">{u.full_name}</div>
                      </div>
                   </td>
-                  <td className="p-4 font-mono text-[10px] text-muted-foreground">{u.email}</td>
-                  <td className="p-4 font-mono text-[10px] text-muted-foreground whitespace-nowrap">
+                  <td className="p-4 font-mono text-xs text-muted-foreground">{u.email}</td>
+                  <td className="p-4 font-mono text-xs text-muted-foreground whitespace-nowrap">
                     {u.created_at ? new Date(u.created_at).toLocaleDateString() : '-'}
                   </td>
                   <td className="p-4 text-center">
@@ -133,7 +133,7 @@ export default function UsersManagementView() {
                       <span className="text-xs font-black text-primary">
                         {u.created_at ? Math.floor((new Date().getTime() - new Date(u.created_at).getTime()) / (1000 * 60 * 60 * 24)) : 0}
                       </span>
-                      <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-tighter">Días</span>
+                      <span className="text-xs font-bold text-muted-foreground uppercase tracking-tighter">Días</span>
                     </div>
                   </td>
                   <td className="p-4">
@@ -141,7 +141,7 @@ export default function UsersManagementView() {
                       {u.memberships?.map((m, idx) => (
                         <div key={idx} className="flex flex-col bg-muted/30 p-1.5 rounded-lg border border-border/50 min-w-[80px]">
                           <span className={cn(
-                            "px-1.5 py-0.5 rounded text-[8px] font-black uppercase w-fit",
+                            "px-1.5 py-0.5 rounded text-xs font-black uppercase w-fit",
                             m.role === 'admin' ? 'bg-primary/20 text-primary' :
                             (m.role === 'encargado' || m.role === 'manager') ? 'bg-green-600/20 text-green-700' : 'bg-background text-muted-foreground'
                           )}>
@@ -153,7 +153,7 @@ export default function UsersManagementView() {
                         </div>
                       ))}
                       {(!u.memberships || u.memberships.length === 0) && (
-                        <span className="text-[9px] text-muted-foreground uppercase font-bold italic opacity-50">Sin asignaciones</span>
+                        <span className="text-xs text-muted-foreground uppercase font-bold italic opacity-50">Sin asignaciones</span>
                       )}
                     </div>
                   </td>
@@ -165,7 +165,7 @@ export default function UsersManagementView() {
                         disabled={u.id === user?.id} // Don't allow self-ban
                       />
                       <span className={cn(
-                        "text-[9px] font-black uppercase tracking-widest",
+                        "text-xs font-black uppercase tracking-widest",
                         u.is_active ? 'text-green-500' : 'text-destructive'
                       )}>
                         {u.is_active ? 'Activo' : 'Baneado'}
@@ -199,7 +199,7 @@ export default function UsersManagementView() {
                     <p className="text-muted-foreground uppercase font-black tracking-widest text-xs mb-2">
                       No se encontraron usuarios
                     </p>
-                    <p className="text-[10px] text-muted-foreground/50 font-bold">
+                    <p className="text-xs text-muted-foreground/50 font-bold">
                       No tienes acceso a entidades en este contexto o no existen registros.
                     </p>
                   </td>

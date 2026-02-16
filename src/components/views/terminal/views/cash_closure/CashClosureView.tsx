@@ -158,7 +158,7 @@ export default function CashClosureView() {
 
           <div className="space-y-6">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block ml-1">Efectivo Físico</label>
+              <label className="text-xs font-black text-muted-foreground uppercase tracking-widest block ml-1">Efectivo Físico</label>
               <div className="relative">
                 <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-primary w-5 h-5" />
                 <input
@@ -172,7 +172,7 @@ export default function CashClosureView() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block ml-1">Transferencias / Otros</label>
+              <label className="text-xs font-black text-muted-foreground uppercase tracking-widest block ml-1">Transferencias / Otros</label>
               <div className="relative">
                 <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 text-primary w-5 h-5" />
                 <input
@@ -186,7 +186,7 @@ export default function CashClosureView() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block ml-1">Observaciones</label>
+              <label className="text-xs font-black text-muted-foreground uppercase tracking-widest block ml-1">Observaciones</label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
@@ -206,7 +206,7 @@ export default function CashClosureView() {
           <div className="space-y-4">
             {summaryItems.map((row, i) => (
               <div key={i} className="flex justify-between items-center p-4 rounded-xl bg-background/50 border border-border">
-                <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">{row.label}</span>
+                <span className="text-xs font-black uppercase text-muted-foreground tracking-widest">{row.label}</span>
                 <span className={cn("text-xl font-black font-mono", row.color)}>{formatCurrency(row.value)}</span>
               </div>
             ))}
@@ -232,7 +232,7 @@ export default function CashClosureView() {
         <div className="table-scroll-wrapper rounded-xl border border-border">
           <table className="data-table sticky-column-1 w-full text-sm">
             <thead>
-              <tr className="bg-muted/30 text-muted-foreground font-black uppercase text-[10px] tracking-widest border-b border-border">
+              <tr className="bg-muted/30 text-muted-foreground font-black uppercase text-xs tracking-widest border-b border-border">
                 <th className="p-4 text-left">Fecha</th>
                 <th className="p-4 text-left">Operador</th>
                 <th className="p-4 text-right">Monto Sistema</th>
@@ -245,7 +245,7 @@ export default function CashClosureView() {
                 <tr key={closure.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                   <td className="p-4">
                     <div className="font-bold text-xs">{formatDate(closure.created_at)}</div>
-                    <div className="text-[10px] text-muted-foreground font-mono">
+                    <div className="text-xs text-muted-foreground font-mono">
                       {formatTime(closure.created_at)}
                     </div>
                   </td>

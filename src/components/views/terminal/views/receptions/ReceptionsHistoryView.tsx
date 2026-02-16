@@ -61,7 +61,7 @@ export default function ReceptionsHistoryView() {
         >
            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2">
               <div>
-                <label className="text-[10px] font-black text-muted-foreground uppercase mb-1 block ml-1">Estado</label>
+                <label className="text-xs font-black text-muted-foreground uppercase mb-1 block ml-1">Estado</label>
                 <select
                   value={selectedStatus}
                   onChange={(e) => setSelectedStatus(e.target.value)}
@@ -75,7 +75,7 @@ export default function ReceptionsHistoryView() {
                 </select>
               </div>
               <div>
-                <label className="text-[10px] font-black text-muted-foreground uppercase mb-1 block ml-1">Desde</label>
+                <label className="text-xs font-black text-muted-foreground uppercase mb-1 block ml-1">Desde</label>
                 <input
                   type="date"
                   value={dateFrom}
@@ -84,7 +84,7 @@ export default function ReceptionsHistoryView() {
                 />
               </div>
               <div>
-                <label className="text-[10px] font-black text-muted-foreground uppercase mb-1 block ml-1">Hasta</label>
+                <label className="text-xs font-black text-muted-foreground uppercase mb-1 block ml-1">Hasta</label>
                 <input
                   type="date"
                   value={dateTo}
@@ -105,7 +105,7 @@ export default function ReceptionsHistoryView() {
             {(data) => (
               <table className="data-table sticky-column-1 w-full text-sm">
                 <thead>
-                  <tr className="bg-muted/30 text-muted-foreground font-black uppercase text-[10px] tracking-widest border-b border-border">
+                  <tr className="bg-muted/30 text-muted-foreground font-black uppercase text-xs tracking-widest border-b border-border">
                     <th className="p-4 text-left">ID / Ref</th>
                     <th className="p-4 text-left">Fecha</th>
                     <th className="p-4 text-left">Proveedor</th>
@@ -124,7 +124,7 @@ export default function ReceptionsHistoryView() {
                            <Calendar className="w-3 h-3 text-muted-foreground" />
                            <div className="font-bold text-xs">{formatDate(rec.reception_date)}</div>
                         </div>
-                        <div className="text-[9px] text-muted-foreground ml-5">{formatTime(rec.created_at)}</div>
+                        <div className="text-xs text-muted-foreground ml-5">{formatTime(rec.created_at)}</div>
                       </td>
                       <td className="p-4">
                         <div className="flex items-center gap-2">
@@ -135,12 +135,12 @@ export default function ReceptionsHistoryView() {
                       <td className="p-4 priority-low">
                         <div className="flex items-center gap-2">
                           <FileText className="w-3 h-3 text-muted-foreground" />
-                          <span className="text-[10px] font-bold uppercase">{rec.reference_doc || 'S/N'}</span>
+                          <span className="text-xs font-bold uppercase">{rec.reference_doc || 'S/N'}</span>
                         </div>
                       </td>
                       <td className="p-4 text-center priority-low">
                         <span className={cn(
-                          "inline-flex items-center px-2 py-0.5 rounded text-[9px] font-black uppercase",
+                          "inline-flex items-center px-2 py-0.5 rounded text-xs font-black uppercase",
                           rec.status === 'active' ? "bg-green-500/10 text-green-600" :
                           rec.status === 'voided' ? "bg-destructive/10 text-destructive" :
                           rec.status === 'pending' ? "bg-amber-500/10 text-amber-600" :

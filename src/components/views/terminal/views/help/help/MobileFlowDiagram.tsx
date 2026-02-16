@@ -48,7 +48,7 @@ export default function MobileFlowDiagram() {
         {/* Sticky Footer / Action Menu */}
         <rect x="260" y="340" width="280" height="40" rx="0" className="fill-background/80 backdrop-blur-md stroke-primary/10" strokeWidth="1" />
         <rect x="270" y="345" width="260" height="30" rx="8" className="fill-primary shadow-lg shadow-primary/20" />
-        <text x="400" y="365" textAnchor="middle" className="fill-white font-black text-[8px] uppercase tracking-widest">Carrito de Ventas</text>
+        <text x="400" y="365" textAnchor="middle" className="fill-white font-black text-xs uppercase tracking-widest">Carrito de Ventas</text>
 
         {/* Callouts */}
         <motion.g initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1 }}>
@@ -63,7 +63,7 @@ export default function MobileFlowDiagram() {
 
         <motion.g initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 2 }}>
           <circle cx="400" cy="190" r="20" className="fill-primary/20 stroke-primary animate-pulse" strokeWidth="2" strokeDasharray="4,2" />
-          <text x="400" y="160" textAnchor="middle" className="fill-primary font-black text-[10px] uppercase">Touch Targets 44px</text>
+          <text x="400" y="160" textAnchor="middle" className="fill-primary font-black text-xs uppercase">Touch Targets 44px</text>
         </motion.g>
       </motion.svg>
     </div>

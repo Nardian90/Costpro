@@ -180,7 +180,7 @@ export const Sidebar = ({
         )}
       >
         <item.icon className={cn("w-4.5 h-4.5", isActive ? "text-white" : "group-hover:text-primary transition-colors")} />
-        <span className="text-[11px] uppercase tracking-wider">{item.label}</span>
+        <span className="text-xs uppercase tracking-wider">{item.label}</span>
       </button>
     );
   };
@@ -250,9 +250,9 @@ export const Sidebar = ({
                   {module.isDirect ? (
                     <div className="space-y-2">
                       <div className="px-4 flex flex-col items-start mb-2">
-                        <span className="text-[10px] font-black text-primary/50 tracking-[0.3em] uppercase">{module.label}</span>
+                        <span className="text-xs font-black text-primary/50 tracking-[0.3em] uppercase">{module.label}</span>
                         {module.sublabel && (
-                          <span className="text-[9px] font-medium opacity-40 uppercase tracking-tighter mt-0.5">{module.sublabel}</span>
+                          <span className="text-xs font-medium opacity-40 uppercase tracking-tighter mt-0.5">{module.sublabel}</span>
                         )}
                       </div>
                       {module.items.map(itemId => typeof itemId === 'string' && renderNavItem(itemId))}
@@ -261,15 +261,16 @@ export const Sidebar = ({
                     <>
                       <button
                         onClick={() => toggleModule(module.id)}
+                        data-testid={`module-${module.id}`}
                         className={cn(
                           "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all",
                           isExpanded ? "bg-primary/5 text-primary" : "text-sidebar-foreground/60 hover:text-sidebar-foreground"
                         )}
                       >
                         <div className="flex flex-col items-start">
-                          <span className="text-[10px] font-black tracking-[0.2em] uppercase">{module.label}</span>
+                          <span className="text-xs font-black tracking-[0.2em] uppercase">{module.label}</span>
                           {hasSublabel && (
-                            <span className="text-[9px] font-medium opacity-60 uppercase tracking-tighter">{module.sublabel}</span>
+                            <span className="text-xs font-medium opacity-60 uppercase tracking-tighter">{module.sublabel}</span>
                           )}
                         </div>
                         <ChevronDown className={cn("w-4 h-4 transition-transform duration-300", isExpanded && "rotate-180")} />
@@ -301,7 +302,7 @@ export const Sidebar = ({
                                       <button
                                         onClick={() => toggleModule(item.id, true)}
                                         className={cn(
-                                          "w-full flex items-center justify-between px-4 py-2.5 rounded-lg text-[10px] font-black tracking-widest uppercase transition-all",
+                                          "w-full flex items-center justify-between px-4 py-2.5 rounded-lg text-xs font-black tracking-widest uppercase transition-all",
                                           isSubExpanded ? "text-primary" : "text-sidebar-foreground/50 hover:text-sidebar-foreground"
                                         )}
                                       >
@@ -344,7 +345,7 @@ export const Sidebar = ({
             className="w-full flex items-center gap-4 p-3.5 rounded-xl transition-all group active:scale-95 hover:bg-danger/10 text-danger font-bold"
           >
             <LogOut className="w-4.5 h-4.5" />
-            <span className="text-[11px] uppercase tracking-wider">Salir</span>
+            <span className="text-xs uppercase tracking-wider">Salir</span>
           </button>
         </div>
       </div>

@@ -71,7 +71,7 @@ export default function SupportDocumentView() {
           <Button
             variant="outline"
             size="sm"
-            className="hidden sm:flex h-11 gap-2 font-black uppercase text-[10px] tracking-widest border-primary/20 text-primary hover:bg-primary hover:text-white transition-all"
+            className="hidden sm:flex h-11 gap-2 font-black uppercase text-xs tracking-widest border-primary/20 text-primary hover:bg-primary hover:text-white transition-all"
             onClick={() => handleOpenNewTab(1)}
           >
             <ExternalLink className="w-3.5 h-3.5" />
@@ -80,7 +80,7 @@ export default function SupportDocumentView() {
           <Button
             variant="default"
             size="sm"
-            className="flex h-11 gap-2 font-black uppercase text-[10px] tracking-widest shadow-lg shadow-primary/20"
+            className="flex h-11 gap-2 font-black uppercase text-xs tracking-widest shadow-lg shadow-primary/20"
             onClick={handleDownload}
           >
             <Download className="w-3.5 h-3.5" />
@@ -96,19 +96,19 @@ export default function SupportDocumentView() {
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}>
           <div className="p-6 space-y-1">
-            <p className="text-[10px] font-black text-muted-foreground uppercase px-3 mb-6 tracking-[0.3em] opacity-50">Índice Temático</p>
+            <p className="text-xs font-black text-muted-foreground uppercase px-3 mb-6 tracking-[0.3em] opacity-50">Índice Temático</p>
             {INDEX_ITEMS.map((item) => (
               <button
                 key={item.id}
                 onClick={() => handleOpenNewTab(item.page)}
-                className="w-full flex flex-col items-start gap-1 px-4 py-4 rounded-xl text-[11px] font-bold transition-all hover:bg-primary/5 group border border-transparent hover:border-primary/10 mb-2"
+                className="w-full flex flex-col items-start gap-1 px-4 py-4 rounded-xl text-xs font-bold transition-all hover:bg-primary/5 group border border-transparent hover:border-primary/10 mb-2"
               >
                 <div className="flex items-center gap-3 w-full">
                   <item.icon className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
                   <span className="flex-1 text-left text-foreground uppercase tracking-wider">{item.label}</span>
                   <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-primary" />
                 </div>
-                <p className="text-[9px] text-muted-foreground font-medium leading-tight pl-7 text-left group-hover:text-primary/70">
+                <p className="text-xs text-muted-foreground font-medium leading-tight pl-7 text-left group-hover:text-primary/70">
                   {item.description}
                 </p>
               </button>
@@ -118,9 +118,9 @@ export default function SupportDocumentView() {
               <div className="p-5 rounded-2xl bg-primary/5 border border-primary/10">
                 <div className="flex items-center gap-2 text-primary mb-3">
                   <ShieldCheck className="w-4 h-4" />
-                  <span className="text-[10px] font-black uppercase tracking-widest">Documento Oficial</span>
+                  <span className="text-xs font-black uppercase tracking-widest">Documento Oficial</span>
                 </div>
-                <p className="text-[10px] text-muted-foreground font-medium leading-relaxed">
+                <p className="text-xs text-muted-foreground font-medium leading-relaxed">
                   Este manual contiene la especificación técnica completa de la versión 5.7.25 Enterprise.
                 </p>
               </div>
@@ -147,7 +147,7 @@ export default function SupportDocumentView() {
             <div className="text-center space-y-6">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary border border-primary/20 mb-4">
                 <Zap className="w-4 h-4 fill-primary" />
-                <span className="text-[10px] font-black uppercase tracking-widest">Recurso de Capacitación</span>
+                <span className="text-xs font-black uppercase tracking-widest">Recurso de Capacitación</span>
               </div>
               <h1 className="text-[clamp(1.75rem,8vw,3rem)] font-black uppercase tracking-tighter text-foreground leading-none">
                 Manual de Operaciones <br />
@@ -208,7 +208,7 @@ export default function SupportDocumentView() {
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-primary">
                   <Info className="w-4 h-4" />
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-foreground">Acceso Rápido</h4>
+                  <h4 className="text-xs font-black uppercase tracking-widest text-foreground">Acceso Rápido</h4>
                 </div>
                 <p className="text-xs text-muted-foreground leading-relaxed font-medium">
                   Utiliza el índice de la izquierda para saltar directamente a capítulos específicos sin tener que buscar manualmente.
@@ -217,7 +217,7 @@ export default function SupportDocumentView() {
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-primary">
                   <Zap className="w-4 h-4" />
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-foreground">Interactividad</h4>
+                  <h4 className="text-xs font-black uppercase tracking-widest text-foreground">Interactividad</h4>
                 </div>
                 <p className="text-xs text-muted-foreground leading-relaxed font-medium">
                   El visor online soporta búsqueda por palabras clave, impresión selectiva y navegación por marcadores nativos.
@@ -226,7 +226,7 @@ export default function SupportDocumentView() {
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-primary">
                   <ShieldCheck className="w-4 h-4" />
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-foreground">Soporte</h4>
+                  <h4 className="text-xs font-black uppercase tracking-widest text-foreground">Soporte</h4>
                 </div>
                 <p className="text-xs text-muted-foreground leading-relaxed font-medium">
                   Si encuentras discrepancias entre el manual y tu versión del sistema, por favor contacta con soporte técnico.

@@ -28,7 +28,7 @@ export default function StoreSkuDiagram() {
             animate={{ opacity: [0.4, 1, 0.4] }}
             transition={{ duration: 2, repeat: Infinity }}
           />
-          <text x="200" y="255" textAnchor="middle" className="fill-emerald-600 font-black text-[10px] uppercase">Inventario A</text>
+          <text x="200" y="255" textAnchor="middle" className="fill-emerald-600 font-black text-xs uppercase">Inventario A</text>
           <text x="200" y="275" textAnchor="middle" className="fill-emerald-600 font-bold text-lg">50 Unid.</text>
         </motion.g>
 
@@ -49,7 +49,7 @@ export default function StoreSkuDiagram() {
             animate={{ opacity: [0.4, 1, 0.4] }}
             transition={{ duration: 2, repeat: Infinity, delay: 1 }}
           />
-          <text x="600" y="255" textAnchor="middle" className="fill-emerald-700 font-black text-[10px] uppercase">Inventario B</text>
+          <text x="600" y="255" textAnchor="middle" className="fill-emerald-700 font-black text-xs uppercase">Inventario B</text>
           <text x="600" y="275" textAnchor="middle" className="fill-emerald-700 font-bold text-lg">120 Unid.</text>
         </motion.g>
 
@@ -64,7 +64,7 @@ export default function StoreSkuDiagram() {
           transition={{ duration: 6, repeat: Infinity }}
         >
            <circle cx="200" cy="40" r="10" className="fill-primary" />
-           <text x="200" y="25" textAnchor="middle" className="fill-primary font-black text-[8px] uppercase">Tienda Activa</text>
+           <text x="200" y="25" textAnchor="middle" className="fill-primary font-black text-xs uppercase">Tienda Activa</text>
         </motion.g>
 
       </motion.svg>

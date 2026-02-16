@@ -85,7 +85,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
           <div className="flex items-center gap-1 sm:gap-3">
             <button
               onClick={onLoginClick}
-              className="h-11 px-3 sm:px-6 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 sm:gap-2 border-2 border-border bg-background/50 hover:bg-muted transition-all active:scale-95 group shrink-0 shadow-sm"
+              className="h-11 px-3 sm:px-6 rounded-xl text-xs font-black uppercase tracking-widest flex items-center gap-1.5 sm:gap-2 border-2 border-border bg-background/50 hover:bg-muted transition-all active:scale-95 group shrink-0 shadow-sm"
             >
               <span>Acceso<span className="hidden sm:inline"> al Sistema</span></span>
               <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
@@ -93,7 +93,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
             <button
               onClick={handleInstallClick}
               className={cn(
-                "flex items-center justify-center gap-2 px-3.5 sm:px-6 h-11 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all active:scale-95 shrink-0",
+                "flex items-center justify-center gap-2 px-3.5 sm:px-6 h-11 rounded-xl text-xs font-black uppercase tracking-widest hover:scale-105 transition-all active:scale-95 shrink-0",
                 isInstallable
                   ? "bg-primary text-white shadow-[0_0_20px_rgba(16,185,129,0.3)]"
                   : "bg-muted text-muted-foreground border border-border"
@@ -115,7 +115,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
             animate={{ opacity: 1, x: 0 }}
             className="space-y-8"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 border border-primary/10 text-primary text-[10px] font-black uppercase tracking-widest">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 border border-primary/10 text-primary text-xs font-black uppercase tracking-widest">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
@@ -161,11 +161,11 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
             <div className="flex items-center gap-6 pt-8 grayscale opacity-50">
               <div className="flex items-center gap-2">
                 <Shield className="w-5 h-5" />
-                <span className="text-[10px] font-bold uppercase tracking-widest">Aislamiento RLS</span>
+                <span className="text-xs font-bold uppercase tracking-widest">Aislamiento RLS</span>
               </div>
               <div className="flex items-center gap-2">
                 <TrendingUp className="w-5 h-5" />
-                <span className="text-[10px] font-bold uppercase tracking-widest">Escalabilidad Cloud</span>
+                <span className="text-xs font-bold uppercase tracking-widest">Escalabilidad Cloud</span>
               </div>
             </div>
           </motion.div>
@@ -188,7 +188,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
                 className={`absolute top-6 sm:top-10 right-4 sm:right-10 p-4 sm:p-6 rounded-3xl bg-background/80 ${isHydrated ? 'backdrop-blur-2xl' : ''} border border-border/50 shadow-[0_20px_50px_rgba(0,0,0,0.1)] space-y-4 w-48 sm:w-64 z-10 transition-all duration-700`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Ventas Hoy</span>
+                  <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Ventas Hoy</span>
                   <BadgeCheck className="w-4 h-4 text-primary" />
                 </div>
                 <div className="text-3xl font-black tracking-tight">$42,950.00</div>
@@ -207,11 +207,11 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
                 className="absolute bottom-6 sm:bottom-10 left-4 sm:left-10 p-4 sm:p-6 rounded-3xl bg-primary text-white shadow-[0_20px_50px_rgba(16,185,129,0.3)] space-y-4 w-48 sm:w-64 z-10"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-black uppercase tracking-widest opacity-70">Stock Crítico</span>
+                  <span className="text-xs font-black uppercase tracking-widest opacity-70">Stock Crítico</span>
                   <Package className="w-4 h-4 opacity-70" />
                 </div>
                 <div className="text-3xl font-black tracking-tight">12 Items</div>
-                <p className="text-[10px] font-bold opacity-80 uppercase leading-tight">Acción inmediata requerida en sucursal Norte.</p>
+                <p className="text-xs font-bold opacity-80 uppercase leading-tight">Acción inmediata requerida en sucursal Norte.</p>
               </motion.div>
 
               <motion.div
@@ -224,7 +224,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
                   <Zap className="w-5 h-5" />
                 </div>
                 <div className="text-xs font-black uppercase tracking-widest">Inteligencia AI</div>
-                <div className="text-[10px] text-muted-foreground font-medium">Eli analizando tendencias...</div>
+                <div className="text-xs text-muted-foreground font-medium">Eli analizando tendencias...</div>
               </motion.div>
             </div>
           </motion.div>
@@ -236,23 +236,23 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex overflow-x-auto md:flex-wrap justify-start md:justify-between items-center gap-8 md:gap-4 opacity-50 grayscale no-scrollbar scroll-smooth">
           <div className="flex items-center gap-3 shrink-0">
             <Utensils className="w-5 h-5" />
-            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Restaurante</span>
+            <span className="text-xs font-black uppercase tracking-[0.2em]">Restaurante</span>
           </div>
           <div className="flex items-center gap-3 shrink-0">
             <Store className="w-5 h-5" />
-            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Retail & Comercio</span>
+            <span className="text-xs font-black uppercase tracking-[0.2em]">Retail & Comercio</span>
           </div>
           <div className="flex items-center gap-3 shrink-0">
             <Factory className="w-5 h-5" />
-            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Manufactura</span>
+            <span className="text-xs font-black uppercase tracking-[0.2em]">Manufactura</span>
           </div>
           <div className="flex items-center gap-3 shrink-0">
             <Briefcase className="w-5 h-5" />
-            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Servicios Prof.</span>
+            <span className="text-xs font-black uppercase tracking-[0.2em]">Servicios Prof.</span>
           </div>
           <div className="flex items-center gap-3 shrink-0">
             <TrendingUp className="w-5 h-5" />
-            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Franquicias</span>
+            <span className="text-xs font-black uppercase tracking-[0.2em]">Franquicias</span>
           </div>
         </div>
         <style jsx>{`
@@ -349,7 +349,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
             >
               <div className="text-center">
                 <Zap className="w-8 h-8 mx-auto mb-2 text-primary animate-pulse" />
-                <div className="text-[10px] font-black uppercase tracking-widest">Eli AI</div>
+                <div className="text-xs font-black uppercase tracking-widest">Eli AI</div>
               </div>
             </motion.div>
           </div>
@@ -362,7 +362,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
           <div className="grid lg:grid-cols-2 gap-20 items-center">
             <div className="order-1 lg:order-1 space-y-12">
               <div className="space-y-6">
-                <div className="inline-block px-4 py-2 rounded-xl bg-violet-500/10 text-violet-600 text-[10px] font-black uppercase tracking-widest">
+                <div className="inline-block px-4 py-2 rounded-xl bg-violet-500/10 text-violet-600 text-xs font-black uppercase tracking-widest">
                   Caso de Éxito MiPyME
                 </div>
                 <h2 className="text-[clamp(2rem,8vw,3.5rem)] font-black uppercase tracking-tighter leading-none">
@@ -452,7 +452,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
             </button>
           </div>
 
-          <div className="relative z-10 flex flex-wrap justify-center gap-8 pt-8 opacity-50 text-[10px] font-black uppercase tracking-[0.2em]">
+          <div className="relative z-10 flex flex-wrap justify-center gap-8 pt-8 opacity-50 text-xs font-black uppercase tracking-[0.2em]">
             <span>Seguridad Bancaria</span>
             <span>Nube Distribuida</span>
             <span>Soporte 24/7</span>
@@ -467,7 +467,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
             <CostProLogo size={30} animated={false} className="grayscale" />
             <span className="text-xs font-bold text-muted-foreground">© 2026 CostPro Enterprise. Todos los derechos reservados.</span>
           </div>
-          <div className="flex flex-wrap justify-center gap-x-8 gap-y-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+          <div className="flex flex-wrap justify-center gap-x-8 gap-y-2 text-xs font-black uppercase tracking-widest text-muted-foreground">
             <a
               href="https://wa.me/5353183215"
               target="_blank"

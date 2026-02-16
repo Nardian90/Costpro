@@ -41,7 +41,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
             icon: Menu,
             onClick: onOpenActions,
             variant: 'default' as const,
-            className: 'bg-primary/10 text-primary border-primary/20 text-[10px] uppercase tracking-wider'
+            className: 'bg-primary/10 text-primary border-primary/20 text-xs uppercase tracking-wider'
         }] : []),
         ...filteredNavItems.map(s => {
             const isActive = activeSection === s.id;
@@ -52,7 +52,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
                 icon: s.icon || (s.id === 'header' ? Layout : ClipboardList),
                 onClick: () => setActiveSection(s.id),
                 active: isActive,
-                className: "text-[10px] uppercase tracking-wider"
+                className: "text-xs uppercase tracking-wider"
             };
         }),
         // Consolidated Sections Button
@@ -62,7 +62,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
             icon: ListFilter,
             onClick: onOpenSections,
             variant: 'default' as const,
-            className: 'bg-primary/5 text-primary border-none shadow-none text-[10px] uppercase tracking-wider hover:bg-primary/10'
+            className: 'bg-primary/5 text-primary border-none shadow-none text-xs uppercase tracking-wider hover:bg-primary/10'
         }] : []),
         // Consolidated Annexes Button
         ...(onOpenAnnexes ? [{
@@ -71,7 +71,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
             icon: FileSpreadsheet,
             onClick: onOpenAnnexes,
             variant: 'default' as const,
-            className: 'bg-primary/5 text-primary border-none shadow-none text-[10px] uppercase tracking-wider hover:bg-primary/10'
+            className: 'bg-primary/5 text-primary border-none shadow-none text-xs uppercase tracking-wider hover:bg-primary/10'
         }] : []),
         {
             id: 'signature',
@@ -79,7 +79,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
             icon: PenTool,
             onClick: () => setActiveSection('signature'),
             active: activeSection === 'signature',
-            className: "text-[10px] uppercase tracking-wider"
+            className: "text-xs uppercase tracking-wider"
         }
     ];
 
@@ -91,7 +91,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
             icon: Sparkles,
             onClick: () => setActiveSection(massiveGenItem.id),
             active: activeSection === massiveGenItem.id,
-            className: 'bg-primary/20 border-primary/40 text-primary font-black shadow-[0_0_15px_rgba(57,255,20,0.3)] hover:bg-primary/30 transition-all text-[10px] uppercase tracking-wider'
+            className: 'bg-primary/20 border-primary/40 text-primary font-black shadow-[0_0_15px_rgba(57,255,20,0.3)] hover:bg-primary/30 transition-all text-xs uppercase tracking-wider'
         });
     }
 

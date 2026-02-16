@@ -41,26 +41,26 @@ export default function CashFlowDiagram() {
         {/* Nodes */}
         <motion.g variants={item} transform="translate(100, 200)">
           <circle r="60" className="fill-emerald-500" />
-          <text textAnchor="middle" y="5" className="fill-white font-black text-[10px] uppercase">Apertura</text>
-          <text textAnchor="middle" y="80" className="fill-muted-foreground font-bold text-[8px] uppercase">Base de Efectivo</text>
+          <text textAnchor="middle" y="5" className="fill-white font-black text-xs uppercase">Apertura</text>
+          <text textAnchor="middle" y="80" className="fill-muted-foreground font-bold text-xs uppercase">Base de Efectivo</text>
         </motion.g>
 
         <motion.g variants={item} transform="translate(300, 200)">
           <circle r="60" className="fill-emerald-600" />
-          <text textAnchor="middle" y="5" className="fill-white font-black text-[10px] uppercase">Ventas</text>
-          <text textAnchor="middle" y="80" className="fill-muted-foreground font-bold text-[8px] uppercase">Registro de Cobros</text>
+          <text textAnchor="middle" y="5" className="fill-white font-black text-xs uppercase">Ventas</text>
+          <text textAnchor="middle" y="80" className="fill-muted-foreground font-bold text-xs uppercase">Registro de Cobros</text>
         </motion.g>
 
         <motion.g variants={item} transform="translate(500, 200)">
           <circle r="60" className="fill-amber-500" />
-          <text textAnchor="middle" y="5" className="fill-white font-black text-[10px] uppercase">Arqueo</text>
-          <text textAnchor="middle" y="80" className="fill-muted-foreground font-bold text-[8px] uppercase">Conteo Físico</text>
+          <text textAnchor="middle" y="5" className="fill-white font-black text-xs uppercase">Arqueo</text>
+          <text textAnchor="middle" y="80" className="fill-muted-foreground font-bold text-xs uppercase">Conteo Físico</text>
         </motion.g>
 
         <motion.g variants={item} transform="translate(700, 200)">
           <circle r="60" className="fill-primary" />
-          <text textAnchor="middle" y="5" className="fill-white font-black text-[10px] uppercase">Cierre</text>
-          <text textAnchor="middle" y="80" className="fill-muted-foreground font-bold text-[8px] uppercase">Reporte Final</text>
+          <text textAnchor="middle" y="5" className="fill-white font-black text-xs uppercase">Cierre</text>
+          <text textAnchor="middle" y="80" className="fill-muted-foreground font-bold text-xs uppercase">Reporte Final</text>
         </motion.g>
 
         {/* Transaction icons floating */}

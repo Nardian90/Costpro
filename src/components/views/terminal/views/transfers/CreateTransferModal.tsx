@@ -128,7 +128,7 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
              <div>
-                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1 block">Almacén Destino</label>
+                <label className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-1 block">Almacén Destino</label>
                 <select
                   value={destinationStoreId}
                   onChange={(e) => setDestinationStoreId(e.target.value)}
@@ -141,7 +141,7 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
                 </select>
              </div>
              <div>
-                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1 block">Notas / Observaciones</label>
+                <label className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-1 block">Notas / Observaciones</label>
                 <input
                   type="text"
                   value={notes}
@@ -153,7 +153,7 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
           </div>
 
           <div className="relative">
-            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1 block">Buscar Productos</label>
+            <label className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-1 block">Buscar Productos</label>
             <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
@@ -178,7 +178,7 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
                     >
                       <div className="flex flex-col">
                         <span className="text-sm font-bold">{p.name}</span>
-                        <span className="text-[10px] text-muted-foreground font-mono uppercase">{p.sku}</span>
+                        <span className="text-xs text-muted-foreground font-mono uppercase">{p.sku}</span>
                       </div>
                       <Plus className="w-4 h-4 text-primary" />
                     </div>
@@ -191,17 +191,17 @@ export default function CreateTransferModal({ isOpen, onClose }: CreateTransferM
           </div>
 
           <div className="space-y-2">
-            <h4 className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Productos Seleccionados</h4>
+            <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest">Productos Seleccionados</h4>
             <div className="space-y-2">
               {Array.from(selectedItems.values()).map(({ product, quantity }) => (
                 <div key={product.id} className="neu-card !p-3 flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold truncate">{product.name}</p>
-                    <p className="text-[10px] text-muted-foreground font-mono uppercase">{product.sku}</p>
+                    <p className="text-xs text-muted-foreground font-mono uppercase">{product.sku}</p>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="flex flex-col items-center">
-                       <span className="text-[9px] font-black text-muted-foreground uppercase">Cant.</span>
+                       <span className="text-xs font-black text-muted-foreground uppercase">Cant.</span>
                        <input
                         type="number"
                         value={quantity}

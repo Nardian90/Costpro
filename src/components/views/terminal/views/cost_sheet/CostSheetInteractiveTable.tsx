@@ -139,7 +139,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
         isResultRow && "bg-primary/5 font-bold"
       )}>
         {/* No. */}
-        <TableCell className="w-12 px-2 py-1.5 text-center text-[10px] font-black text-muted-foreground/60 tabular-nums border-r border-border/10">
+        <TableCell className="w-12 px-2 py-1.5 text-center text-xs font-black text-muted-foreground/60 tabular-nums border-r border-border/10">
             {numbering}
         </TableCell>
 
@@ -173,7 +173,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                 <span className="truncate flex-1 cursor-text" onClick={() => setIsEditingLabel(true)}>
                     {row.label}
                     {row.id === '13' && calculatedValues?.['12']?.total > 0 && (
-                        <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-black bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                        <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-black bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
                             {((calculatedValues['13'].total / calculatedValues['12'].total) * 100).toFixed(1)}% s/ costo
                         </span>
                     )}
@@ -249,7 +249,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                         readOnly={true}
                         />
                         {row.vhFormula && <FunctionSquare className="w-3 h-3 text-primary/40 absolute left-2" />}
-                        {row.is_percent && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">%</span>}
+                        {row.is_percent && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">%</span>}
                         {(hasChildren || row.vhFormula) && <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full animate-pulse" title="Calculado automáticamente" />}
                     </div>
                 )}
@@ -296,7 +296,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                             {/* Deep Validation Errors */}
                             {(safeCalculated.validationErrors || []).map((ve, idx) => (
                                 <div key={`ve-${idx}`} className={cn(
-                                    "text-[10px] p-2 rounded border flex gap-2",
+                                    "text-xs p-2 rounded border flex gap-2",
                                     ve.type === 'CRITICAL' ? "bg-destructive/5 border-destructive/20 text-destructive" :
                                     ve.type === 'WARNING' ? "bg-amber-50 border-amber-200 text-amber-800" :
                                     "bg-blue-50 border-blue-200 text-blue-800"
@@ -307,7 +307,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                                          <HelpCircle className="w-3 h-3" />}
                                     </div>
                                     <div>
-                                        <span className="font-bold uppercase text-[8px] block opacity-70">{ve.code}</span>
+                                        <span className="font-bold uppercase text-xs block opacity-70">{ve.code}</span>
                                         {ve.message}
                                     </div>
                                 </div>
@@ -315,8 +315,8 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
 
                             {/* Calculation Context / Auditability */}
                             {(safeCalculated.fuente || safeCalculated.metadata?.rule) && (
-                                <div className="text-[10px] bg-primary/5 p-2 rounded border border-primary/20 mb-2">
-                                    <span className="font-bold uppercase text-[8px] block text-primary opacity-70">Contexto / Base Legal</span>
+                                <div className="text-xs bg-primary/5 p-2 rounded border border-primary/20 mb-2">
+                                    <span className="font-bold uppercase text-xs block text-primary opacity-70">Contexto / Base Legal</span>
                                     {safeCalculated.metadata?.rule && <div className="font-black mb-1">{safeCalculated.metadata.rule}</div>}
                                     {safeCalculated.fuente && <div className="italic text-muted-foreground">{safeCalculated.fuente}</div>}
                                 </div>
@@ -324,21 +324,21 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
 
                             {/* Engine Audits */}
                             {safeCalculated.audits && safeCalculated.audits.filter(a => a.type === 'ERROR' || a.type === 'WARNING' || a.type === 'CYCLE_DETECTED').map((a: any, idx: number) => (
-                                <div key={`audit-${idx}`} className="text-[10px] bg-muted p-1.5 rounded border border-border">
-                                    <span className="font-bold uppercase text-[8px] block opacity-50">{a.type}</span>
+                                <div key={`audit-${idx}`} className="text-xs bg-muted p-1.5 rounded border border-border">
+                                    <span className="font-bold uppercase text-xs block opacity-50">{a.type}</span>
                                     {a.note}
                                 </div>
                             ))}
 
                             {/* Legacy Warning */}
                             {!hasChildren && !row.is_percent && safeCalculated.total === 0 && ((row.valorHistorico ?? 0) > 0 || !!row.baseDeCalculoRef) && (
-                                <p className="text-[10px] text-slate-500 italic p-1">
+                                <p className="text-xs text-slate-500 italic p-1">
                                     Esta fila tiene un total de 0.00 pero tiene una base de cálculo o valor histórico asignado. Verifique el prorrateo o la fórmula.
                                 </p>
                             )}
 
                             {criticalErrors.length === 0 && warningErrors.length === 0 && !hasEngineWarnings && (
-                                <p className="text-[10px] text-emerald-600 font-medium">Los cálculos de esta fila son consistentes con sus dependencias y reglas contables.</p>
+                                <p className="text-xs text-emerald-600 font-medium">Los cálculos de esta fila son consistentes con sus dependencias y reglas contables.</p>
                             )}
                         </div>
                     </PopoverContent>
@@ -575,7 +575,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                         <div className="table-scroll-wrapper overflow-x-auto border-border/50">
                         <Table className="w-full border-collapse min-w-[800px]">
                             <TableHeader className={cn(
-                                "bg-muted/50 text-muted-foreground font-black uppercase text-[10px] tracking-widest border-b border-border",
+                                "bg-muted/50 text-muted-foreground font-black uppercase text-xs tracking-widest border-b border-border",
                                 !isFirstInGroup && "hidden",
                                 (isStickyHeaderSection && isFirstInGroup) && "sticky top-0 z-20"
                             )}>

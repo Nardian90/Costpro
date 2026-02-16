@@ -97,12 +97,12 @@ export function IngestionErrorsTable() {
         <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
         <div>
             <h4 className="text-xs font-black text-red-500 uppercase">Transacciones con Conflicto</h4>
-            <p className="text-[10px] text-muted-foreground font-medium uppercase leading-tight">
+            <p className="text-xs text-muted-foreground font-medium uppercase leading-tight">
                 Estas transacciones no pudieron ser importadas por duplicidad de referencia o errores de formato.
                 Edita la referencia o elimina el duplicado en la pestaña principal para reintentar.
             </p>
         </div>
-        <Button variant="ghost" size="sm" onClick={clearAllErrors} className="ml-auto h-8 text-[10px] font-black uppercase text-red-500 hover:bg-red-500/10">
+        <Button variant="ghost" size="sm" onClick={clearAllErrors} className="ml-auto h-8 text-xs font-black uppercase text-red-500 hover:bg-red-500/10">
             Vaciar Todo
         </Button>
       </div>
@@ -139,18 +139,18 @@ export function IngestionErrorsTable() {
                                 <Input
                                     value={editForm.referencia_origen}
                                     onChange={e => setEditForm({...editForm, referencia_origen: e.target.value})}
-                                    className="h-8 text-[10px] font-mono w-40"
+                                    className="h-8 text-xs font-mono w-40"
                                 />
                             ) : (
-                                <span className="font-mono text-[10px] font-bold text-red-500">{err.referencia_origen}</span>
+                                <span className="font-mono text-xs font-bold text-red-500">{err.referencia_origen}</span>
                             )}
                         </TableCell>
                         <TableCell>
-                            <Badge variant="outline" className="text-[9px] uppercase border-red-500/20 text-red-500 bg-red-500/5">
+                            <Badge variant="outline" className="text-xs uppercase border-red-500/20 text-red-500 bg-red-500/5">
                                 {err.error_note}
                             </Badge>
                         </TableCell>
-                        <TableCell className="text-[10px] max-w-md truncate" title={err.observaciones}>
+                        <TableCell className="text-xs max-w-md truncate" title={err.observaciones}>
                             {err.observaciones}
                         </TableCell>
                         <TableCell className="text-right font-black text-xs">

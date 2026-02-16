@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import dynamic from 'next/dynamic';
 import {
   Calendar,
   FileDown,
@@ -16,8 +17,17 @@ import { useAuthStore } from '@/store';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { ConcentricDashboardRing } from './ConcentricDashboardRing';
-import { ExecutiveKpiCards } from './ExecutiveKpiCards';
+
+// Lazy load heavy dashboard components to improve TBT and LCP
+const ConcentricDashboardRing = dynamic(() => import('./ConcentricDashboardRing').then(mod => mod.ConcentricDashboardRing), {
+  loading: () => <div className="h-[280px] w-[280px] rounded-full bg-muted/20 animate-pulse flex items-center justify-center text-xs text-muted-foreground uppercase font-black">Cargando Visualización...</div>,
+  ssr: false
+});
+
+const ExecutiveKpiCards = dynamic(() => import('./ExecutiveKpiCards').then(mod => mod.ExecutiveKpiCards), {
+  loading: () => <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[120px] animate-pulse bg-muted/5 rounded-3xl" />,
+  ssr: false
+});
 
 export default function DashboardView() {
   const { user } = useAuthStore();
@@ -37,7 +47,7 @@ export default function DashboardView() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mb-2">
         <div>
           <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase">Panel de Control</h2>
-          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1 opacity-70">Executive KPI Overview</p>
+          <p className="text-xs font-black text-muted-foreground uppercase tracking-widest mt-1 opacity-70">Executive KPI Overview</p>
         </div>
 
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
@@ -47,18 +57,18 @@ export default function DashboardView() {
               onValueChange={(v) => v && setTimeRange(v as any)}
               className="bg-card/50 border border-border p-1 rounded-2xl w-full sm:w-auto"
             >
-              <ToggleGroupItem value="day" className="flex-1 sm:flex-none text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl data-[state=on]:bg-primary data-[state=on]:text-primary-foreground transition-all">
+              <ToggleGroupItem value="day" className="flex-1 sm:flex-none text-xs font-black uppercase tracking-widest px-4 py-2 rounded-xl data-[state=on]:bg-primary data-[state=on]:text-primary-foreground transition-all">
                 Hoy
               </ToggleGroupItem>
-              <ToggleGroupItem value="month" className="flex-1 sm:flex-none text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl data-[state=on]:bg-primary data-[state=on]:text-primary-foreground transition-all">
+              <ToggleGroupItem value="month" className="flex-1 sm:flex-none text-xs font-black uppercase tracking-widest px-4 py-2 rounded-xl data-[state=on]:bg-primary data-[state=on]:text-primary-foreground transition-all">
                 Mes
               </ToggleGroupItem>
-              <ToggleGroupItem value="year" className="flex-1 sm:flex-none text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl data-[state=on]:bg-primary data-[state=on]:text-primary-foreground transition-all">
+              <ToggleGroupItem value="year" className="flex-1 sm:flex-none text-xs font-black uppercase tracking-widest px-4 py-2 rounded-xl data-[state=on]:bg-primary data-[state=on]:text-primary-foreground transition-all">
                 Año
               </ToggleGroupItem>
             </ToggleGroup>
 
-            <div className="hidden lg:flex items-center gap-2 py-2 px-4 rounded-xl border border-border bg-card/50 text-[10px] font-black uppercase tracking-widest text-muted-foreground min-w-[140px] justify-center">
+            <div className="hidden lg:flex items-center gap-2 py-2 px-4 rounded-xl border border-border bg-card/50 text-xs font-black uppercase tracking-widest text-muted-foreground min-w-[140px] justify-center">
               <Calendar className="w-3.5 h-3.5" />
               {timeRange === 'day' ? formatDate(new Date()) : (timeRange === 'month' ? format(new Date(), 'MMMM yyyy', { locale: es }) : format(new Date(), 'yyyy'))}
             </div>
@@ -90,17 +100,17 @@ export default function DashboardView() {
                 <div className="grid grid-cols-3 gap-8 w-full max-w-sm mt-4">
                   <div className="flex flex-col items-center">
                     <div className="w-2 h-2 rounded-full bg-[#00E0FF] mb-2 shadow-[0_0_8px_rgba(0,224,255,0.6)]"></div>
-                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Ventas</span>
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter">Ventas</span>
                     <span className="text-sm font-black text-foreground">{formatCurrency(sales)}</span>
                   </div>
                   <div className="flex flex-col items-center">
                     <div className="w-2 h-2 rounded-full bg-white mb-2 shadow-[0_0_8px_rgba(255,255,255,0.6)]"></div>
-                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Costos</span>
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter">Costos</span>
                     <span className="text-sm font-black text-foreground">{formatCurrency(costs)}</span>
                   </div>
                   <div className="flex flex-col items-center">
                     <div className="w-2 h-2 rounded-full bg-[#39FF14] mb-2 shadow-[0_0_8px_rgba(57,255,20,0.6)]"></div>
-                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Utilidad</span>
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter">Utilidad</span>
                     <span className="text-sm font-black text-foreground">{formatCurrency(profit)}</span>
                   </div>
                 </div>
@@ -109,8 +119,8 @@ export default function DashboardView() {
               {/* Summary Cards with Sparklines */}
               <section className="space-y-4">
                 <div className="flex justify-between items-end px-1">
-                  <h2 className="text-sm font-bold tracking-widest uppercase text-slate-400 dark:text-slate-500">Resumen de Ventas</h2>
-                  <span className="text-[10px] font-mono text-primary animate-pulse uppercase font-black">Live Updates</span>
+                  <h2 className="text-sm font-bold tracking-widest uppercase text-slate-400 dark:text-slate-300">Resumen de Ventas</h2>
+                  <span className="text-xs font-mono text-primary animate-pulse uppercase font-black">Live Updates</span>
                 </div>
                 <ExecutiveKpiCards
                   sales={sales}
@@ -123,14 +133,14 @@ export default function DashboardView() {
               <div className="grid grid-cols-2 gap-4">
                 <button className="bg-card/50 border border-border py-5 rounded-[24px] flex flex-col items-center justify-center group active:scale-95 transition-all hover:bg-card">
                   <FileDown className="w-6 h-6 text-slate-500 group-hover:text-[#39FF14] transition-colors" />
-                  <span className="text-[10px] font-black mt-2 text-slate-400 uppercase tracking-widest">Reporte</span>
+                  <span className="text-xs font-black mt-2 text-slate-400 uppercase tracking-widest">Reporte</span>
                 </button>
                 <button
                   onClick={() => setCurrentView('settings')}
                   className="bg-card/50 border border-border py-5 rounded-[24px] flex flex-col items-center justify-center group active:scale-95 transition-all hover:bg-card"
                 >
                   <Settings2 className="w-6 h-6 text-slate-500 group-hover:text-[#00E0FF] transition-colors" />
-                  <span className="text-[10px] font-black mt-2 text-slate-400 uppercase tracking-widest">Ajustes</span>
+                  <span className="text-xs font-black mt-2 text-slate-400 uppercase tracking-widest">Ajustes</span>
                 </button>
               </div>
 
@@ -164,7 +174,7 @@ function DashboardAlertsSection({ products, onViewInventory, onGoToCatalog }: { 
             <div className="flex justify-between items-center">
               <div className="overflow-hidden">
                 <div className="font-bold text-xs text-foreground truncate">{product.name}</div>
-                <div className="text-[10px] font-mono text-muted-foreground uppercase">{product.sku}</div>
+                <div className="text-xs font-mono text-muted-foreground uppercase">{product.sku}</div>
               </div>
               <div className="text-destructive font-black text-sm whitespace-nowrap ml-2">{product.stock_current} uds</div>
             </div>
@@ -173,7 +183,7 @@ function DashboardAlertsSection({ products, onViewInventory, onGoToCatalog }: { 
         {criticalProducts.length > 4 && (
           <button
             onClick={onViewInventory}
-            className="w-full py-2 text-[10px] font-black uppercase text-primary hover:underline mt-2"
+            className="w-full py-2 text-xs font-black uppercase text-primary hover:underline mt-2"
           >
             Ver todas las alertas ({criticalProducts.length})
           </button>

@@ -297,11 +297,11 @@ export function ManualReconciliationView({ transaction, onBack }: Props) {
                         <div className="flex flex-col">
                             <div className="flex items-center gap-2">
                                 <h2 className="text-lg font-black uppercase text-primary tracking-tighter">Conciliación Manual</h2>
-                                <Badge variant="outline" className="text-[10px] font-black border-primary/20 bg-primary/5 text-primary">
+                                <Badge variant="outline" className="text-xs font-black border-primary/20 bg-primary/5 text-primary">
                                     Meta: {targetAmount}
                                 </Badge>
                             </div>
-                            <div className="font-medium text-[9px] text-muted-foreground truncate max-w-[400px]">
+                            <div className="font-medium text-xs text-muted-foreground truncate max-w-[400px]">
                                 {transaction.observaciones}
                             </div>
                         </div>
@@ -309,11 +309,11 @@ export function ManualReconciliationView({ transaction, onBack }: Props) {
 
                     <div className="flex items-center gap-2">
                         <div className="flex items-center gap-2 px-3 py-1.5 bg-green-500/5 rounded-full border border-green-500/10">
-                            <span className="text-[9px] font-black uppercase text-muted-foreground">Conciliado</span>
+                            <span className="text-xs font-black uppercase text-muted-foreground">Conciliado</span>
                             <span className="text-xs font-black text-green-600">{currentTotal}</span>
                         </div>
                         <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${Math.abs(remaining) < 0.001 ? 'bg-green-500/5 border-green-500/10' : 'bg-orange-500/5 border-orange-500/10'}`}>
-                            <span className="text-[9px] font-black uppercase text-muted-foreground">Restante</span>
+                            <span className="text-xs font-black uppercase text-muted-foreground">Restante</span>
                             <span className={`text-xs font-black ${Math.abs(remaining) < 0.001 ? 'text-green-600' : 'text-orange-600'}`}>
                                 {remaining.toFixed(2)}
                             </span>
@@ -322,7 +322,7 @@ export function ManualReconciliationView({ transaction, onBack }: Props) {
                             <Button
                                 size="sm"
                                 variant="outline"
-                                className="h-7 text-[9px] font-black uppercase px-2 bg-background border-orange-200 text-orange-600 hover:bg-orange-500 hover:text-white transition-all"
+                                className="h-7 text-xs font-black uppercase px-2 bg-background border-orange-200 text-orange-600 hover:bg-orange-500 hover:text-white transition-all"
                                 onClick={applyRebate}
                             >
                                 Ajustar Todo
@@ -350,7 +350,7 @@ export function ManualReconciliationView({ transaction, onBack }: Props) {
                             variant="outline"
                             size="sm"
                             onClick={addManualCash}
-                            className="w-full h-8 text-[9px] font-black uppercase border-orange-200 text-orange-600 hover:bg-orange-50 gap-2 rounded-lg"
+                            className="w-full h-8 text-xs font-black uppercase border-orange-200 text-orange-600 hover:bg-orange-50 gap-2 rounded-lg"
                         >
                             <Plus className="w-3 h-3" />
                             Añadir Venta en Efectivo (CASH)
@@ -365,25 +365,25 @@ export function ManualReconciliationView({ transaction, onBack }: Props) {
                                     onClick={() => addProduct(p)}
                                 >
                                     {/* Tarjetas de Producto Slimit */}
-                                    <p className="flex-1 font-bold text-[11px] text-foreground truncate uppercase">{p.descripcion}</p>
+                                    <p className="flex-1 font-bold text-xs text-foreground truncate uppercase">{p.descripcion}</p>
 
                                     <div className="flex items-center gap-2 shrink-0">
                                         <div className="flex flex-col items-end mr-2">
-                                            <span className="text-[8px] font-bold text-muted-foreground uppercase">Stock</span>
-                                            <span className={`text-[10px] font-black ${(currentStockMap.get(p.cod) || 0) <= 0 ? 'text-red-500' : 'text-foreground'}`}>
+                                            <span className="text-xs font-bold text-muted-foreground uppercase">Stock</span>
+                                            <span className={`text-xs font-black ${(currentStockMap.get(p.cod) || 0) <= 0 ? 'text-red-500' : 'text-foreground'}`}>
                                                 {currentStockMap.get(p.cod) || 0}
                                             </span>
                                         </div>
-                                        <Badge variant="outline" className="text-[8px] px-1.5 h-4 font-black uppercase border-primary/10 bg-muted/50 text-muted-foreground">
+                                        <Badge variant="outline" className="text-xs px-1.5 h-4 font-black uppercase border-primary/10 bg-muted/50 text-muted-foreground">
                                             {p.cod}
                                         </Badge>
-                                        <span className="text-[9px] text-muted-foreground font-black uppercase w-8 text-center">{p.um}</span>
+                                        <span className="text-xs text-muted-foreground font-black uppercase w-8 text-center">{p.um}</span>
                                     </div>
 
                                     <div className="flex items-center gap-2 shrink-0">
                                         <div className="flex flex-col items-end">
-                                            <span className="text-[8px] font-bold text-muted-foreground uppercase">Precio</span>
-                                            <span className="font-black text-[11px] text-primary">{p.precio_cents}</span>
+                                            <span className="text-xs font-bold text-muted-foreground uppercase">Precio</span>
+                                            <span className="font-black text-xs text-primary">{p.precio_cents}</span>
                                         </div>
                                         <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all">
                                             <Plus className="w-3.5 h-3.5" />
@@ -398,7 +398,7 @@ export function ManualReconciliationView({ transaction, onBack }: Props) {
                 {/* Derecha: Panel de Selección (Scroll Independiente + Sticky Footer Interno) */}
                 <div className="bg-muted/30 flex flex-col overflow-hidden relative">
                     <div className="p-3 border-b bg-background/50 backdrop-blur-sm sticky top-0 z-10">
-                        <h4 className="font-black text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Lista de Conciliación</h4>
+                        <h4 className="font-black text-xs uppercase tracking-[0.2em] text-muted-foreground">Lista de Conciliación</h4>
                     </div>
 
                     <ScrollArea className="flex-1">
@@ -408,8 +408,8 @@ export function ManualReconciliationView({ transaction, onBack }: Props) {
                                 <div key={l.id} className="p-3 bg-background border rounded-2xl flex flex-col group/exist shadow-sm border-l-4 border-l-green-500 gap-2">
                                     <div className="flex justify-between items-center">
                                         <div className="flex-1">
-                                            <p className="font-black text-[11px] text-foreground mb-0.5 uppercase tracking-tighter">{l.product_cod}</p>
-                                            <p className="text-[9px] font-medium text-muted-foreground uppercase">
+                                            <p className="font-black text-xs text-foreground mb-0.5 uppercase tracking-tighter">{l.product_cod}</p>
+                                            <p className="text-xs font-medium text-muted-foreground uppercase">
                                                 {l.cantidad} {l.product_um} × {l.precio_unitario_cents}
                                             </p>
                                         </div>
@@ -417,7 +417,7 @@ export function ManualReconciliationView({ transaction, onBack }: Props) {
                                             <div className="text-right">
                                                 <span className="font-black text-xs text-green-600 block">{l.importe_linea_cents}</span>
                                                 {l.cuadre_cents && l.cuadre_cents !== 0 ? (
-                                                    <Badge variant="outline" className={`text-[8px] font-black uppercase py-0 px-1 ${l.cuadre_cents > 0 ? 'border-green-200 text-green-600 bg-green-50' : 'border-red-200 text-red-600 bg-red-50'}`}>
+                                                    <Badge variant="outline" className={`text-xs font-black uppercase py-0 px-1 ${l.cuadre_cents > 0 ? 'border-green-200 text-green-600 bg-green-50' : 'border-red-200 text-red-600 bg-red-50'}`}>
                                                         {l.cuadre_cents > 0 ? `+${l.cuadre_cents}` : `${l.cuadre_cents}`}
                                                     </Badge>
                                                 ) : null}
@@ -428,7 +428,7 @@ export function ManualReconciliationView({ transaction, onBack }: Props) {
                                         </div>
                                     </div>
                                     <div className="flex justify-end border-t border-dashed pt-2">
-                                        <Button size="sm" variant="ghost" className="h-6 text-[8px] font-black uppercase px-2 hover:bg-orange-500/10 text-orange-600" onClick={() => adjustExistingLine(l)} disabled={Math.abs(remaining) < 0.001}>
+                                        <Button size="sm" variant="ghost" className="h-6 text-xs font-black uppercase px-2 hover:bg-orange-500/10 text-orange-600" onClick={() => adjustExistingLine(l)} disabled={Math.abs(remaining) < 0.001}>
                                             Cuadrar Aquí
                                         </Button>
                                     </div>
@@ -441,7 +441,7 @@ export function ManualReconciliationView({ transaction, onBack }: Props) {
                                     <div className="flex justify-between items-start">
                                         <div className="flex items-center gap-2">
                                             <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                                            <p className="font-black text-[11px] text-primary uppercase tracking-widest">{l.product_cod}</p>
+                                            <p className="font-black text-xs text-primary uppercase tracking-widest">{l.product_cod}</p>
                                         </div>
                                         <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:bg-red-100/50 rounded-full" onClick={() => removeManualLine(l.id!)}>
                                             <Trash2 className="w-3.5 h-3.5" />
@@ -450,7 +450,7 @@ export function ManualReconciliationView({ transaction, onBack }: Props) {
                                     <div className="flex justify-between items-end">
                                         <div className="flex items-center gap-3">
                                             <div className="flex flex-col">
-                                                <span className="text-[8px] font-black uppercase text-muted-foreground tracking-widest mb-1">Cant.</span>
+                                                <span className="text-xs font-black uppercase text-muted-foreground tracking-widest mb-1">Cant.</span>
                                                 <Input
                                                     type="number"
                                                     className="w-14 h-8 text-xs font-black text-center rounded-lg bg-background"
@@ -459,7 +459,7 @@ export function ManualReconciliationView({ transaction, onBack }: Props) {
                                                     disabled={l.product_cod === 'CASH_MANUAL'}
                                                 />
                                             </div>
-                                            <Button size="sm" variant="ghost" className="h-7 text-[8px] font-black uppercase px-2 hover:bg-orange-500/10 text-orange-600" onClick={() => {
+                                            <Button size="sm" variant="ghost" className="h-7 text-xs font-black uppercase px-2 hover:bg-orange-500/10 text-orange-600" onClick={() => {
                                                 const idx = manualLines.findIndex(ml => ml.id === l.id);
                                                 if (idx !== -1) {
                                                     const updated = [...manualLines];
@@ -476,7 +476,7 @@ export function ManualReconciliationView({ transaction, onBack }: Props) {
                                             </Button>
                                         </div>
                                         <div className="text-right">
-                                            <span className="text-[8px] font-black uppercase text-muted-foreground tracking-widest mb-1 block">Subtotal</span>
+                                            <span className="text-xs font-black uppercase text-muted-foreground tracking-widest mb-1 block">Subtotal</span>
                                             <div className="flex flex-col items-end">
                                                 {l.product_cod === 'CASH_MANUAL' ? (
                                                     <Input
@@ -493,7 +493,7 @@ export function ManualReconciliationView({ transaction, onBack }: Props) {
                                                     <span className="font-black text-sm text-primary">{(l.importe_linea_cents || 0)}</span>
                                                 )}
                                                 {l.cuadre_cents && l.cuadre_cents !== 0 ? (
-                                                    <Badge variant="outline" className={`text-[8px] font-black uppercase py-0 px-1 ${l.cuadre_cents > 0 ? 'border-green-200 text-green-600 bg-green-50' : 'border-red-200 text-red-600 bg-red-50'}`}>
+                                                    <Badge variant="outline" className={`text-xs font-black uppercase py-0 px-1 ${l.cuadre_cents > 0 ? 'border-green-200 text-green-600 bg-green-50' : 'border-red-200 text-red-600 bg-red-50'}`}>
                                                         {l.cuadre_cents > 0 ? `+${l.cuadre_cents}` : `${l.cuadre_cents}`}
                                                     </Badge>
                                                 ) : null}
@@ -508,7 +508,7 @@ export function ManualReconciliationView({ transaction, onBack }: Props) {
                                     <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
                                         <Plus className="w-6 h-6 opacity-20" />
                                     </div>
-                                    <p className="text-[10px] font-black uppercase tracking-[0.2em]">Esperando Selección</p>
+                                    <p className="text-xs font-black uppercase tracking-[0.2em]">Esperando Selección</p>
                                 </div>
                             )}
                         </div>
@@ -518,16 +518,16 @@ export function ManualReconciliationView({ transaction, onBack }: Props) {
                     <div className="absolute bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-md border-t z-20">
                         <div className="flex items-center justify-between mb-3">
                             <div className="flex flex-col">
-                                <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Diferencia</span>
+                                <span className="text-xs font-black text-muted-foreground uppercase tracking-widest">Diferencia</span>
                                 <span className={`text-lg font-black ${Math.abs(remaining) < 0.001 ? 'text-green-600' : 'text-orange-600'}`}>
                                     {remaining.toFixed(2)}
                                 </span>
                             </div>
                             <div className="flex gap-2">
-                                <Button variant="ghost" size="sm" className="h-9 text-[9px] font-black uppercase tracking-widest" onClick={onBack}>Cancelar</Button>
+                                <Button variant="ghost" size="sm" className="h-9 text-xs font-black uppercase tracking-widest" onClick={onBack}>Cancelar</Button>
                                 <Button
                                     onClick={handleSave}
-                                    className="neu-btn-primary px-6 h-9 text-[9px] font-black uppercase tracking-widest"
+                                    className="neu-btn-primary px-6 h-9 text-xs font-black uppercase tracking-widest"
                                     disabled={manualLines.length === 0 && (Math.abs(remaining) > 0.001)}
                                 >
                                     Confirmar

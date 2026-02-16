@@ -66,7 +66,7 @@ export default function StockHistoryView({}: StockHistoryViewProps) {
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
           <div className="space-y-1.5">
-            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block ml-1">Desde</label>
+            <label className="text-xs font-black text-muted-foreground uppercase tracking-widest block ml-1">Desde</label>
             <div className="relative">
               <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
               <input
@@ -78,7 +78,7 @@ export default function StockHistoryView({}: StockHistoryViewProps) {
             </div>
           </div>
           <div className="space-y-1.5">
-            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block ml-1">Hasta</label>
+            <label className="text-xs font-black text-muted-foreground uppercase tracking-widest block ml-1">Hasta</label>
             <div className="relative">
               <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
               <input
@@ -104,8 +104,8 @@ export default function StockHistoryView({}: StockHistoryViewProps) {
               <div>
                 <div className="font-black text-base uppercase tracking-tight leading-tight">{mov.product?.name}</div>
                 <div className="flex items-center gap-3 mt-1">
-                  <span className="font-mono text-[9px] font-bold text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded">{mov.product?.sku}</span>
-                  <span className="text-[9px] font-black uppercase text-primary tracking-widest">
+                  <span className="font-mono text-xs font-bold text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded">{mov.product?.sku}</span>
+                  <span className="text-xs font-black uppercase text-primary tracking-widest">
                     {mov.movement_type === 'sale' ? 'Venta' :
                      mov.movement_type === 'purchase' ? 'Compra' :
                      mov.movement_type === 'adjustment' ? 'Ajuste' : mov.movement_type}
@@ -118,10 +118,10 @@ export default function StockHistoryView({}: StockHistoryViewProps) {
                 {mov.quantity_change > 0 ? '+' : ''}{mov.quantity_change}
                 <span className="text-xs ml-1 font-bold">uds</span>
               </div>
-              <div className="text-[9px] text-muted-foreground uppercase font-black tracking-widest">
+              <div className="text-xs text-muted-foreground uppercase font-black tracking-widest">
                 {formatDate(mov.created_at)}
               </div>
-              <div className="text-[9px] font-mono text-muted-foreground/60 italic">
+              <div className="text-xs font-mono text-muted-foreground/60 italic">
                 REF: {mov.reference_doc || 'N/A'}
               </div>
             </div>

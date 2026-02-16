@@ -16,7 +16,7 @@ const POSTableView: React.FC<POSTableViewProps> = ({ products, onAddToCart }) =>
     <div className="table-scroll-wrapper">
       <table className="data-table sticky-column-1 w-full text-sm">
         <thead>
-          <tr className="bg-muted/30 text-muted-foreground font-black uppercase text-[10px] tracking-widest border-b border-border">
+          <tr className="bg-muted/30 text-muted-foreground font-black uppercase text-xs tracking-widest border-b border-border">
             <th className="p-4 pl-[68px] text-left">Producto</th>
             <th className="p-4 text-left priority-low">SKU</th>
             <th className="p-4 text-right">Stock</th>

@@ -376,9 +376,9 @@ export function BankIngestion() {
                                 Suelta aquí tu <span className="text-primary font-bold">Catálogo de Productos</span> o tu <span className="text-primary font-bold">Extracto Bancario</span>. El sistema los distinguirá automáticamente.
                             </p>
                             <div className="flex justify-center gap-3 mt-4">
-                                <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm text-[10px] font-black px-3 py-1">CSV</Badge>
-                                <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm text-[10px] font-black px-3 py-1">XLSX</Badge>
-                                <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm text-[10px] font-black px-3 py-1">TXT (BANDEC)</Badge>
+                                <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm text-xs font-black px-3 py-1">CSV</Badge>
+                                <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm text-xs font-black px-3 py-1">XLSX</Badge>
+                                <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm text-xs font-black px-3 py-1">TXT (BANDEC)</Badge>
                             </div>
                         </div>
                         <Button className="neu-btn-primary mt-2 h-14 px-10 text-sm font-black uppercase tracking-widest shadow-xl">
@@ -392,8 +392,8 @@ export function BankIngestion() {
                 <div className="p-6 bg-primary/5 border-l-4 border-primary rounded-2xl flex items-start gap-4 shadow-sm hover:bg-primary/[0.07] transition-colors">
                     <RefreshCw className="w-6 h-6 text-primary mt-1 shrink-0 animate-spin-slow" />
                     <div className="space-y-1">
-                        <h4 className="font-black text-primary uppercase text-[10px] tracking-widest italic">Tecnología Upsert Inteligente</h4>
-                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                        <h4 className="font-black text-primary uppercase text-xs tracking-widest italic">Tecnología Upsert Inteligente</h4>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
                             Si una transacción o producto ya existe, el sistema <strong>actualizará</strong> su información preservando estados previos de conciliación.
                         </p>
                     </div>
@@ -401,8 +401,8 @@ export function BankIngestion() {
                 <div className="p-6 bg-green-500/5 border-l-4 border-green-500 rounded-2xl flex items-start gap-4 shadow-sm hover:bg-green-500/[0.07] transition-colors">
                     <Info className="w-6 h-6 text-green-600 mt-1 shrink-0" />
                     <div className="space-y-1">
-                        <h4 className="font-black text-green-600 uppercase text-[10px] tracking-widest italic">Auto-Detección de Archivos</h4>
-                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                        <h4 className="font-black text-green-600 uppercase text-xs tracking-widest italic">Auto-Detección de Archivos</h4>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
                             No te preocupes por el orden. Nuestra IA analiza los encabezados para enrutar los datos al destino correcto.
                         </p>
                     </div>
@@ -414,17 +414,17 @@ export function BankIngestion() {
             <div className="p-6 bg-card border rounded-3xl shadow-sm space-y-4">
                 <h4 className="font-black uppercase text-xs tracking-[0.2em] text-muted-foreground border-b pb-2">Acciones Rápidas</h4>
                 <div className="grid grid-cols-1 gap-2">
-                    <Button variant="outline" className="neu-btn justify-start h-12 text-[10px] font-black uppercase" onClick={importDefaultProducts}>
+                    <Button variant="outline" className="neu-btn justify-start h-12 text-xs font-black uppercase" onClick={importDefaultProducts}>
                         <Plus className="w-4 h-4 mr-3 text-primary" /> Cargar Productos Demo
                     </Button>
-                    <Button variant="outline" className="neu-btn justify-start h-12 text-[10px] font-black uppercase" onClick={loadDemoStatement}>
+                    <Button variant="outline" className="neu-btn justify-start h-12 text-xs font-black uppercase" onClick={loadDemoStatement}>
                         <RefreshCw className="w-4 h-4 mr-3 text-primary" /> Generar Extracto Demo
                     </Button>
                     <div className="pt-2 flex gap-2">
-                        <Button variant="outline" className="neu-btn flex-1 h-10 text-[10px]" onClick={() => downloadTemplate('xlsx')}>
+                        <Button variant="outline" className="neu-btn flex-1 h-10 text-xs" onClick={() => downloadTemplate('xlsx')}>
                             <Download className="w-3 h-3 mr-2" /> Plantilla
                         </Button>
-                        <Button variant="outline" className="neu-btn flex-1 h-10 text-[10px]" onClick={() => exportCatalog('xlsx')}>
+                        <Button variant="outline" className="neu-btn flex-1 h-10 text-xs" onClick={() => exportCatalog('xlsx')}>
                             <Download className="w-3 h-3 mr-2" /> Backup
                         </Button>
                     </div>
@@ -434,13 +434,13 @@ export function BankIngestion() {
             <div className="p-6 bg-orange-500/5 border border-orange-500/20 rounded-3xl space-y-3">
                 <div className="flex items-center gap-2 text-orange-600">
                     <RefreshCw className="w-4 h-4" />
-                    <h4 className="font-black uppercase text-[10px] tracking-widest">Mantenimiento</h4>
+                    <h4 className="font-black uppercase text-xs tracking-widest">Mantenimiento</h4>
                 </div>
                 <div className="grid grid-cols-1 gap-2">
-                    <Button variant="outline" className="h-9 text-[9px] font-bold border-orange-200 text-orange-700 hover:bg-orange-50" onClick={resetAllMatching}>
+                    <Button variant="outline" className="h-9 text-xs font-bold border-orange-200 text-orange-700 hover:bg-orange-50" onClick={resetAllMatching}>
                         Resetear Todas las Conciliaciones
                     </Button>
-                    <Button variant="outline" className="h-9 text-[9px] font-bold border-red-200 text-red-700 hover:bg-red-50" onClick={resetBankData}>
+                    <Button variant="outline" className="h-9 text-xs font-bold border-red-200 text-red-700 hover:bg-red-50" onClick={resetBankData}>
                         Limpiar Historial Bancario
                     </Button>
                 </div>
@@ -454,8 +454,8 @@ export function BankIngestion() {
               <h4 className="font-black uppercase text-sm tracking-widest">Zona de Peligro</h4>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Button variant="destructive" className="text-[10px] font-bold" onClick={resetEverything}>REINICIO TOTAL</Button>
-              <Button variant="outline" className="text-[10px] font-bold border-destructive text-destructive hover:bg-destructive/10" onClick={resetCatalog}>VACIAR CATÁLOGO</Button>
+              <Button variant="destructive" className="text-xs font-bold" onClick={resetEverything}>REINICIO TOTAL</Button>
+              <Button variant="outline" className="text-xs font-bold border-destructive text-destructive hover:bg-destructive/10" onClick={resetCatalog}>VACIAR CATÁLOGO</Button>
           </div>
       </div>
     </div>

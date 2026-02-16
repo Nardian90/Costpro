@@ -49,7 +49,7 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
           { id: 'type', label: 'Tipo', type: 'text' },
         ].map((field) => (
           <div key={field.id} className="space-y-1.5">
-            <Label htmlFor={`header-${field.id}`} className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">
+            <Label htmlFor={`header-${field.id}`} className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">
               {field.label}
             </Label>
             <Input
@@ -71,7 +71,7 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         {Object.entries(data?.signature || {}).map(([key, value]) => (
           <div key={key} className="space-y-1.5">
-            <Label htmlFor={`signature-${key}`} className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">
+            <Label htmlFor={`signature-${key}`} className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">
                 {key === 'prepared_by' ? 'Elaborado por' : 'Aprobado por'}
             </Label>
             <Input
@@ -103,7 +103,7 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
                     {row.label}
                 </Label>
                 {row.formula && (
-                    <div className="text-[10px] text-primary/70 font-mono bg-primary/5 px-2 py-0.5 rounded-full inline-block border border-primary/10">
+                    <div className="text-xs text-primary/70 font-mono bg-primary/5 px-2 py-0.5 rounded-full inline-block border border-primary/10">
                         Fórmula: {row.formula}
                     </div>
                 )}
@@ -166,7 +166,7 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
                   <TableHeader className="bg-muted/50 hidden sm:table-header-group">
                       <TableRow className="border-b border-border/50">
                           {annex.columns.map((col: any) => (
-                              <TableHead key={col.key} className="font-black py-4 px-4 text-[10px] uppercase tracking-widest text-muted-foreground">
+                              <TableHead key={col.key} className="font-black py-4 px-4 text-xs uppercase tracking-widest text-muted-foreground">
                                   {col.label}
                               </TableHead>
                           ))}
@@ -211,7 +211,7 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
          {/* Annex Total */}
          <div className="flex justify-end mt-4">
             <div className="neu-card !p-5 border-primary/20 bg-primary/5 shadow-xl min-w-[240px]">
-                <span className="text-[10px] text-primary/70 uppercase font-black tracking-[0.2em] block mb-2 text-right">Total {annex.id}</span>
+                <span className="text-xs text-primary/70 uppercase font-black tracking-[0.2em] block mb-2 text-right">Total {annex.id}</span>
                 <div className="flex items-center justify-end gap-2">
                     <span className="text-[clamp(1.5rem,5vw,1.875rem)] font-black font-mono text-primary drop-shadow-sm">
                         {formatCurrency(displayData.reduce((acc: number, row: any) => {
@@ -244,7 +244,7 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
           <h2 className="text-lg font-black uppercase tracking-widest text-primary leading-tight">
             Editor de Ficha
           </h2>
-          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+          <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
             {activeSection === 'header' ? 'Encabezado General' :
              activeSection === 'signature' ? 'Control de Firmas' :
              `Sección: ${activeSection}`}

@@ -119,19 +119,19 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
 
                     <div className="space-y-2">
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Ejemplos Comunes</p>
-                      <div className="space-y-1 text-[11px] font-mono bg-muted p-2 rounded">
-                        <p className="text-primary">= SUMA(hijos) <span className="text-[9px] text-muted-foreground opacity-70 ml-1">// Suma todos los sub-elementos</span></p>
+                      <div className="space-y-1 text-xs font-mono bg-muted p-2 rounded">
+                        <p className="text-primary">= SUMA(hijos) <span className="text-xs text-muted-foreground opacity-70 ml-1">// Suma todos los sub-elementos</span></p>
                         <p className="text-primary">= ref('1.1') + ref('2.1')</p>
-                        <p className="text-primary">= PCT(ref('12'), 10) <span className="text-[9px] text-muted-foreground opacity-70 ml-1">// 10% del total de sección 12</span></p>
+                        <p className="text-primary">= PCT(ref('12'), 10) <span className="text-xs text-muted-foreground opacity-70 ml-1">// 10% del total de sección 12</span></p>
                         <p className="text-primary">= ref('12') / cantidad</p>
                       </div>
                     </div>
 
                     <div className="space-y-2">
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Funciones y Variables</p>
-                      <ul className="grid grid-cols-2 gap-x-2 gap-y-1 text-[11px]">
+                      <ul className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs">
                         <li><span className="font-bold">SUMA</span>(a, b...)</li>
-                        <li><span className="font-bold">hijos</span> <span className="text-[9px] opacity-60">(Sub-filas)</span></li>
+                        <li><span className="font-bold">hijos</span> <span className="text-xs opacity-60">(Sub-filas)</span></li>
                         <li><span className="font-bold">PCT</span>(valor, %)</li>
                         <li><span className="font-bold">ROUND2</span>(valor)</li>
                         <li><span className="font-bold">cantidad</span></li>
@@ -185,7 +185,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                 <DialogDescription className="sr-only">
                   Editor avanzado para configurar fórmulas y cálculos personalizados en la ficha de costo.
                 </DialogDescription>
-                <p className="text-[9px] sm:text-[10px] font-black text-primary dark:text-[#39FF14] uppercase tracking-[0.25em] mt-1.5 opacity-90 truncate">v5.7.25 • Motor de Costos Avanzado</p>
+                <p className="text-xs sm:text-xs font-black text-primary dark:text-[#39FF14] uppercase tracking-[0.25em] mt-1.5 opacity-90 truncate">v5.7.25 • Motor de Costos Avanzado</p>
               </div>
             </div>
 
@@ -203,7 +203,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
               <button
                 onClick={() => setMode('assisted')}
                 className={cn(
-                  "flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all",
+                  "flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-xs font-black uppercase tracking-widest transition-all",
                   mode === 'assisted' ? "bg-primary dark:bg-[#39FF14] text-primary-foreground dark:text-black shadow-[0_0_12px_rgba(var(--primary),0.4)] dark:shadow-[0_0_15px_rgba(57,255,20,0.4)]"
                     : "bg-muted dark:bg-slate-800/50 text-muted-foreground dark:text-slate-400 hover:text-foreground dark:hover:text-slate-200"
                 )}
@@ -241,11 +241,11 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
               <div className="p-4 sm:p-6 space-y-4 animate-in fade-in zoom-in-95 duration-300">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground dark:text-slate-400 flex items-center gap-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-muted-foreground dark:text-slate-400 flex items-center gap-2">
                         <Code className="w-3 h-3" />
                         Código de Fórmula
                     </label>
-                    <Badge variant="outline" className="text-[9px] font-mono border-border dark:border-slate-700 text-muted-foreground dark:text-slate-500">expr-eval enabled</Badge>
+                    <Badge variant="outline" className="text-xs font-mono border-border dark:border-slate-700 text-muted-foreground dark:text-slate-500">expr-eval enabled</Badge>
                   </div>
                   <textarea
                     className="w-full h-48 sm:h-64 p-4 sm:p-6 font-mono text-sm sm:text-base bg-muted/30 dark:bg-slate-950/50 border border-border dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-primary/10 dark:focus:ring-[#39FF14]/10 focus:border-primary/50 dark:focus:border-[#39FF14]/50 outline-none resize-none transition-all text-foreground dark:text-slate-200"
@@ -257,18 +257,18 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                 </div>
 
                 <div className="bg-primary/5 dark:bg-[#39FF14]/5 p-3 sm:p-4 rounded-xl border border-primary/10 dark:border-[#39FF14]/10">
-                    <div className="flex items-center gap-2 mb-2 text-primary dark:text-[#39FF14] font-black text-[10px] uppercase tracking-wider">
+                    <div className="flex items-center gap-2 mb-2 text-primary dark:text-[#39FF14] font-black text-xs uppercase tracking-wider">
                         <Info className="w-3.5 h-3.5" />
                         Guía de Referencia Rápida
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-[10px] sm:text-[11px]">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-xs sm:text-xs">
                         <div className="flex justify-between items-center py-1 border-b border-border dark:border-white/5">
                             <span className="font-medium text-muted-foreground dark:text-slate-400">Suma de Hijos</span>
                             <code className="bg-muted dark:bg-slate-800 text-foreground dark:text-slate-200 px-1.5 py-0.5 rounded font-mono">SUMA(hijos)</code>
                         </div>
                         <div className="flex justify-between items-center py-1 border-b border-border dark:border-white/5">
                             <span className="font-medium text-muted-foreground dark:text-slate-400">Uso de Anexos</span>
-                            <code className="bg-muted dark:bg-slate-800 text-foreground dark:text-slate-200 px-1.5 py-0.5 rounded font-mono text-[9px]">AnexoI + AnexoII</code>
+                            <code className="bg-muted dark:bg-slate-800 text-foreground dark:text-slate-200 px-1.5 py-0.5 rounded font-mono text-xs">AnexoI + AnexoII</code>
                         </div>
                     </div>
                 </div>
@@ -280,13 +280,13 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
           <div className="px-4 sm:px-6 py-4 sm:py-6 bg-muted/20 dark:bg-slate-950/20 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 sm:gap-4 border-t border-border dark:border-white/5 shrink-0">
             <button
               onClick={() => setIsModalOpen(false)}
-              className="px-4 sm:px-8 h-10 sm:h-12 rounded-2xl text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground dark:text-slate-400 hover:text-foreground dark:hover:text-white transition-all border border-border dark:border-slate-800 hover:border-muted-foreground/30 dark:hover:border-slate-600"
+              className="px-4 sm:px-8 h-10 sm:h-12 rounded-2xl text-xs sm:text-xs font-black uppercase tracking-[0.2em] text-muted-foreground dark:text-slate-400 hover:text-foreground dark:hover:text-white transition-all border border-border dark:border-slate-800 hover:border-muted-foreground/30 dark:hover:border-slate-600"
             >
               Cancelar
             </button>
             <button
               onClick={() => { onSave(value); setIsModalOpen(false); }}
-              className="px-6 sm:px-10 h-10 sm:h-12 rounded-2xl text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] bg-primary dark:bg-[#39FF14] text-primary-foreground dark:text-black shadow-[0_0_20px_rgba(var(--primary),0.3)] dark:shadow-[0_0_25px_rgba(57,255,20,0.4)] hover:shadow-[0_0_30px_rgba(var(--primary),0.5)] dark:hover:shadow-[0_0_35px_rgba(57,255,20,0.6)] transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+              className="px-6 sm:px-10 h-10 sm:h-12 rounded-2xl text-xs sm:text-xs font-black uppercase tracking-[0.2em] bg-primary dark:bg-[#39FF14] text-primary-foreground dark:text-black shadow-[0_0_20px_rgba(var(--primary),0.3)] dark:shadow-[0_0_25px_rgba(57,255,20,0.4)] hover:shadow-[0_0_30px_rgba(var(--primary),0.5)] dark:hover:shadow-[0_0_35px_rgba(57,255,20,0.6)] transition-all transform hover:scale-[1.02] active:scale-[0.98]"
             >
               Guardar Cambios
             </button>

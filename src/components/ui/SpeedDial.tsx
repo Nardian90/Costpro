@@ -32,7 +32,7 @@ export const SpeedDial: React.FC<SpeedDialProps> = ({ actions, className }) => {
           <div className="flex flex-col items-end gap-6 mb-2">
             {categories.map((cat) => (
               <div key={cat} className="flex flex-col items-end gap-2">
-                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground bg-background/80 backdrop-blur-sm px-2 py-0.5 rounded border border-border">
+                <span className="text-xs font-black uppercase tracking-widest text-muted-foreground bg-background/80 backdrop-blur-sm px-2 py-0.5 rounded border border-border">
                   {cat}
                 </span>
                 <div className="flex flex-col items-end gap-2">

@@ -130,14 +130,14 @@ export default function AuditEventCard({ log }: AuditEventCardProps) {
             </span>
             {log.profile?.role && (
               <span className={cn(
-                "text-[9px] font-black uppercase px-1.5 py-0.5 rounded border",
+                "text-xs font-black uppercase px-1.5 py-0.5 rounded border",
                 roleColors[log.profile.role as keyof typeof roleColors] || 'text-slate-600 bg-slate-50 border-slate-200'
               )}>
                 {log.profile.role}
               </span>
             )}
           </div>
-          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+          <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
             {timeAgo}
           </span>
         </div>
@@ -150,20 +150,20 @@ export default function AuditEventCard({ log }: AuditEventCardProps) {
           {storeName && (
             <div className="flex items-center gap-1.5">
               <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-              <span className="text-[10px] font-black uppercase text-muted-foreground">
+              <span className="text-xs font-black uppercase text-muted-foreground">
                 🏬 {storeName}
               </span>
             </div>
           )}
           <div className="flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-            <span className="text-[10px] font-mono text-muted-foreground uppercase">
+            <span className="text-xs font-mono text-muted-foreground uppercase">
               ID: {log.record_id?.slice(0, 8)}...
             </span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className={cn(
-              "px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter",
+              "px-1.5 py-0.5 rounded text-xs font-black uppercase tracking-tighter",
               category === 'inventory' ? 'bg-green-500/10 text-green-600' :
               category === 'sales' ? 'bg-green-500/10 text-green-700' :
               category === 'users' ? 'bg-purple-500/10 text-purple-600' :

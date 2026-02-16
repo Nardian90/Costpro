@@ -30,7 +30,7 @@ export default function IpvFlowDiagram() {
           strokeWidth="3"
         />
         <text x="400" y="195" textAnchor="middle" className="fill-blue-600 font-black text-xs uppercase">Motor de Matching</text>
-        <text x="400" y="220" textAnchor="middle" className="fill-blue-400 font-bold text-[10px] uppercase">(Multi-Pass AI)</text>
+        <text x="400" y="220" textAnchor="middle" className="fill-blue-400 font-bold text-xs uppercase">(Multi-Pass AI)</text>
 
         {/* Bank Extract (Input) */}
         <motion.g
@@ -39,8 +39,8 @@ export default function IpvFlowDiagram() {
           transition={{ delay: 0.5, duration: 1 }}
         >
           <rect x="50" y="160" width="150" height="80" rx="10" className="fill-amber-500/10 stroke-amber-500" strokeWidth="2" />
-          <text x="125" y="195" textAnchor="middle" className="fill-amber-600 font-bold text-[10px] uppercase">Extracto Bancario</text>
-          <text x="125" y="215" textAnchor="middle" className="fill-amber-400 font-medium text-[8px] uppercase">(CSV / XLSX)</text>
+          <text x="125" y="195" textAnchor="middle" className="fill-amber-600 font-bold text-xs uppercase">Extracto Bancario</text>
+          <text x="125" y="215" textAnchor="middle" className="fill-amber-400 font-medium text-xs uppercase">(CSV / XLSX)</text>
           <path d="M200 200 L290 200" stroke="#f59e0b" strokeWidth="2" markerEnd="url(#arrow-amber)" strokeDasharray="4,2" />
         </motion.g>
 
@@ -51,8 +51,8 @@ export default function IpvFlowDiagram() {
           transition={{ delay: 1, duration: 1 }}
         >
           <rect x="600" y="160" width="150" height="80" rx="10" className="fill-emerald-500/10 stroke-emerald-500" strokeWidth="2" />
-          <text x="675" y="195" textAnchor="middle" className="fill-emerald-600 font-bold text-[10px] uppercase">Reporte IPV</text>
-          <text x="675" y="215" textAnchor="middle" className="fill-emerald-400 font-medium text-[8px] uppercase">(PDF Certificado)</text>
+          <text x="675" y="195" textAnchor="middle" className="fill-emerald-600 font-bold text-xs uppercase">Reporte IPV</text>
+          <text x="675" y="215" textAnchor="middle" className="fill-emerald-400 font-medium text-xs uppercase">(PDF Certificado)</text>
           <path d="M500 200 L590 200" stroke="#10b981" strokeWidth="2" markerEnd="url(#arrow-emerald)" />
         </motion.g>
 
@@ -63,8 +63,8 @@ export default function IpvFlowDiagram() {
           transition={{ delay: 1.5, duration: 1 }}
         >
           <path d="M350 350 L450 350 L470 300 L330 300 Z" className="fill-primary/5 stroke-primary/30" strokeWidth="2" />
-          <text x="400" y="330" textAnchor="middle" className="fill-primary/60 font-bold text-[10px] uppercase">Persistencia Local</text>
-          <text x="400" y="345" textAnchor="middle" className="fill-primary/40 font-medium text-[8px] uppercase">(IndexedDB)</text>
+          <text x="400" y="330" textAnchor="middle" className="fill-primary/60 font-bold text-xs uppercase">Persistencia Local</text>
+          <text x="400" y="345" textAnchor="middle" className="fill-primary/40 font-medium text-xs uppercase">(IndexedDB)</text>
           <path d="M400 300 L400 250" stroke="#6366f1" strokeWidth="2" markerEnd="url(#arrow-blue)" />
         </motion.g>
 

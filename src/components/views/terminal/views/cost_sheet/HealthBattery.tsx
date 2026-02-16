@@ -57,7 +57,7 @@ const HealthBattery: React.FC<HealthBatteryProps> = ({ percent, className }) => 
                 <div className="space-y-1">
                     <div className="flex items-center gap-2">
                          <Activity className={cn("w-3 h-3", colorClass)} />
-                         <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">Estado de Salud</span>
+                         <span className="text-xs font-black uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">Estado de Salud</span>
                     </div>
                     <div className="flex items-baseline gap-1">
                         <h2 className={cn("text-6xl font-black tracking-tighter tabular-nums", colorClass)}>{Math.round(percent)}</h2>
@@ -72,11 +72,11 @@ const HealthBattery: React.FC<HealthBatteryProps> = ({ percent, className }) => 
                         isCritical ? "border-red-500/20" : isLow ? "border-amber-500/20" : "border-primary/20"
                     )}>
                         {percent === 100 ? <ShieldCheck className={cn("w-3.5 h-3.5", colorClass)} /> : <AlertTriangle className={cn("w-3.5 h-3.5", colorClass)} />}
-                        <span className={cn("text-[10px] font-black uppercase tracking-widest", colorClass)}>
+                        <span className={cn("text-xs font-black uppercase tracking-widest", colorClass)}>
                             {percent === 100 ? 'Integridad Total' : percent > 80 ? 'Nivel Excelente' : percent > 50 ? 'Nivel Aceptable' : 'Riesgo Estructural'}
                         </span>
                     </div>
-                    <p className="text-[10px] font-bold text-slate-400 leading-relaxed uppercase">
+                    <p className="text-xs font-bold text-slate-400 leading-relaxed uppercase">
                         Basado en validaciones estructurales, rentabilidad y coeficientes indirectos.
                     </p>
                 </div>

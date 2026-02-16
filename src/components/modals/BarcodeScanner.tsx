@@ -108,7 +108,7 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
           )}
         </div>
 
-        <p className="text-[10px] text-center text-muted-foreground uppercase font-black tracking-widest">
+        <p className="text-xs text-center text-muted-foreground uppercase font-black tracking-widest">
           Alinea el código de barras dentro del recuadro para escanearlo automáticamente.
         </p>
 
