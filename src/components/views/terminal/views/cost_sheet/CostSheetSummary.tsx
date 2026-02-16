@@ -77,12 +77,11 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
 
   const handleCoefChange = (newCoef: number) => {
     setLocalCoef(newCoef);
-    if (row2 <= 0) return;
 
     const updates: { path: (string | number)[]; value: any }[] = [];
 
     ['4', '6', '7'].forEach(sectionId => {
-      const sectionIndex = data.sections.findIndex(s => s.id === sectionId);
+      const sectionIndex = data.sections.findIndex(s => s.id === sectionId || s.id === `s${sectionId}`);
       if (sectionIndex !== -1) {
         const section = data.sections[sectionIndex];
 
@@ -92,28 +91,27 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
             if (row.children && row.children.length > 0) {
               walk(row.children, [...rowPath, 'children']);
             } else {
-              // Calculate weight relative to Salario Directo (row 2.1)
-              let weight = 0;
-              const formulaMatch = row.formula?.match(/^=\(ref\(['"]2\.1['"]\)\)\s*\*\s*([\d.]+)$/);
+              // Get current formula or fallback to value
+              let currentFormula = row.formula || row.totalFormula || String(row.value || 0);
+              let baseFormula = currentFormula.trim();
+              if (baseFormula.startsWith('=')) baseFormula = baseFormula.substring(1).trim();
 
-              if (formulaMatch) {
-                const currentMultiplier = parseFloat(formulaMatch[1]);
-                weight = indirectCoef > 0 ? (currentMultiplier / indirectCoef) : (1 / 3);
-              } else {
-                weight = indirectSum > 0 ? (row.value || 0) / indirectSum : (1 / 3);
-              }
+              // Extract base if already wrapped: (base) * coefficient
+              const wrappedRegex = /^\((.*)\)\s*\*\s*[\d.]+$/;
+              const match = baseFormula.match(wrappedRegex);
+              const innerFormula = match ? match[1].trim() : baseFormula;
 
-              if (!isNaN(weight)) {
-                const multiplier = newCoef * weight;
-                updates.push({
-                  path: [...rowPath, 'formula'],
-                  value: `=(ref('2.1')) * ${multiplier.toFixed(4)}`
-                });
-                updates.push({
-                  path: [...rowPath, 'calculationMethod'],
-                  value: 'FORMULA'
-                });
-              }
+              // Inject the new coefficient wrapping the inner formula
+              const finalFormula = `=(${innerFormula}) * ${newCoef.toFixed(4)}`;
+
+              updates.push({
+                path: [...rowPath, 'formula'],
+                value: finalFormula
+              });
+              updates.push({
+                path: [...rowPath, 'calculationMethod'],
+                value: 'FORMULA'
+              });
             }
           });
         };
@@ -138,10 +136,18 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
     setLocalPrice(val);
 
     const numericPrice = parseFloat(val);
+    // If totalCost is 0, we fallback to simple margin calculation
     if (isNaN(numericPrice) || numericPrice <= 0 || totalCost <= 0) return;
 
-    const neededUtility = numericPrice - totalCost;
-    const neededMargin = (neededUtility / totalCost) * 100;
+    let neededMargin = 0;
+    if (totalPrice > 0) {
+        // Enterprise formula: accounts for tax proportions relative to total cost
+        neededMargin = (((numericPrice / totalPrice) * (totalCost + utility) - totalCost) / totalCost) * 100;
+    } else {
+        // Fallback for zero price scenario
+        neededMargin = ((numericPrice - totalCost) / totalCost) * 100;
+    }
+
     const clampedMargin = Math.max(0, Math.min(500, neededMargin));
 
     setSliderValue(clampedMargin);
