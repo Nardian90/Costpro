@@ -50,7 +50,7 @@ const CostSheetPreview = React.forwardRef<HTMLDivElement, CostSheetPreviewProps>
                {data?.signature && <CostSheetSignature {...data.signature} />}
             </div>
         </div>
-        <div className="bg-slate-50 dark:bg-slate-950 p-4 text-[10px] text-center text-slate-400 font-bold uppercase tracking-widest">
+        <div className="bg-slate-50 dark:bg-slate-950 p-4 text-xs text-center text-slate-400 font-bold uppercase tracking-widest">
           Fin del Documento • Generado automáticamente por COSTPRO v1.0
         </div>
       </div>

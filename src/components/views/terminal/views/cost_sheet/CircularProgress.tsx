@@ -58,15 +58,15 @@ const CircularProgress: React.FC<CircularProgressProps> = ({
         <div className="absolute inset-0 flex items-center justify-center flex-col">
           <span className={cn(
               "font-black tracking-tighter",
-              size === 'sm' ? "text-[10px]" : size === 'lg' ? "text-base" : "text-sm"
+              size === 'sm' ? "text-xs" : size === 'lg' ? "text-base" : "text-sm"
           )}>
               {Math.round(safeValue)}%
           </span>
         </div>
       </div>
       <div className="text-center">
-        <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground mb-0.5">{label}</p>
-        <p className="text-[10px] font-black text-foreground tracking-tighter">{subLabel}</p>
+        <p className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-0.5">{label}</p>
+        <p className="text-xs font-black text-foreground tracking-tighter">{subLabel}</p>
       </div>
     </div>
   );

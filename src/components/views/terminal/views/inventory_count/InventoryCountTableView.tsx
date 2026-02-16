@@ -24,7 +24,7 @@ export default function InventoryCountTableView({
     <div className="overflow-x-auto table-to-cards force-table rounded-2xl shadow-xl border border-white/5 overflow-hidden">
       <table className="w-full">
         <thead>
-          <tr className="bg-muted/50 text-muted-foreground font-black uppercase text-[10px] tracking-widest">
+          <tr className="bg-muted/50 text-muted-foreground font-black uppercase text-xs tracking-widest">
             <th className="p-4 text-left">Producto / SKU</th>
             <th className="p-4 text-right">Stock Teórico</th>
             <th className="p-4 text-center">Stock Físico (Contado)</th>
@@ -36,7 +36,7 @@ export default function InventoryCountTableView({
             <tr>
               <td colSpan={4} className="p-20 text-center">
                 <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Cargando catálogo...</p>
+                <p className="text-xs font-black uppercase text-muted-foreground tracking-widest">Cargando catálogo...</p>
               </td>
             </tr>
           ) : products.length === 0 ? (
@@ -55,7 +55,7 @@ export default function InventoryCountTableView({
                 <tr key={product.id} className="border-b border-white/5 hover:bg-primary/5 transition-colors group">
                   <td data-label="Producto" className="p-4">
                     <div className="font-black text-sm uppercase tracking-tight">{product.name}</div>
-                    <div className="text-[9px] font-mono text-muted-foreground mt-1">{product.sku || '-'} • {product.category || 'General'}</div>
+                    <div className="text-xs font-mono text-muted-foreground mt-1">{product.sku || '-'} • {product.category || 'General'}</div>
                   </td>
                   <td data-label="Teórico" className="p-4 text-right font-black text-lg text-muted-foreground">{product.stock_current}</td>
                   <td data-label="Contado" className="p-4">

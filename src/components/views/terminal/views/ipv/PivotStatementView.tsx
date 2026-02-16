@@ -137,7 +137,7 @@ export function PivotStatementView() {
                     </div>
                     <div>
                         <h3 className="font-black uppercase text-sm tracking-widest text-primary">Consolidado Dinámico</h3>
-                        <p className="text-[10px] text-muted-foreground font-bold uppercase">Agrupación Mensual de Movimientos</p>
+                        <p className="text-xs text-muted-foreground font-bold uppercase">Agrupación Mensual de Movimientos</p>
                     </div>
                 </div>
 
@@ -146,7 +146,7 @@ export function PivotStatementView() {
                         <Button
                             variant={groupBy === 'day' ? 'secondary' : 'ghost'}
                             size="sm"
-                            className="h-7 text-[10px] font-black uppercase px-2"
+                            className="h-7 text-xs font-black uppercase px-2"
                             onClick={() => setGroupBy('day')}
                         >
                             Día
@@ -154,7 +154,7 @@ export function PivotStatementView() {
                         <Button
                             variant={groupBy === 'month' ? 'secondary' : 'ghost'}
                             size="sm"
-                            className="h-7 text-[10px] font-black uppercase px-2"
+                            className="h-7 text-xs font-black uppercase px-2"
                             onClick={() => setGroupBy('month')}
                         >
                             Mes
@@ -162,7 +162,7 @@ export function PivotStatementView() {
                         <Button
                             variant={groupBy === 'year' ? 'secondary' : 'ghost'}
                             size="sm"
-                            className="h-7 text-[10px] font-black uppercase px-2"
+                            className="h-7 text-xs font-black uppercase px-2"
                             onClick={() => setGroupBy('year')}
                         >
                             Año
@@ -231,16 +231,16 @@ export function PivotStatementView() {
                                         <TableRow className="bg-muted/10">
                                             <TableCell colSpan={6} className="p-0">
                                                 <div className="p-4 border-l-4 border-primary ml-8 my-2 space-y-2">
-                                                    <div className="grid grid-cols-4 text-[10px] font-black text-muted-foreground uppercase tracking-tighter pb-1 border-b">
+                                                    <div className="grid grid-cols-4 text-xs font-black text-muted-foreground uppercase tracking-tighter pb-1 border-b">
                                                         <span>Fecha</span>
                                                         <span className="col-span-2">Referencia / Observaciones</span>
                                                         <span className="text-right">Importe</span>
                                                     </div>
                                                     {g.transactions.sort((a,b) => a.fecha.localeCompare(b.fecha)).map(t => (
-                                                        <div key={t.id} className="grid grid-cols-4 text-[11px] items-center py-1">
+                                                        <div key={t.id} className="grid grid-cols-4 text-xs items-center py-1">
                                                             <span className="font-medium">{formatDate(t.fecha)}</span>
                                                             <div className="col-span-2 flex flex-col">
-                                                                <span className="font-mono font-bold text-[10px]">{t.referencia_origen}</span>
+                                                                <span className="font-mono font-bold text-xs">{t.referencia_origen}</span>
                                                                 <span className="text-muted-foreground truncate" title={t.observaciones}>{t.observaciones}</span>
                                                             </div>
                                                             <span className={`text-right font-black ${t.tipo === 'Cr' ? 'text-green-500' : 'text-red-500'}`}>

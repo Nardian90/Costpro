@@ -79,7 +79,7 @@ export const ExecutiveKpiCards = ({
               {card.icon}
             </div>
             <div>
-              <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tight">
+              <p className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-tight">
                 {card.title}
               </p>
               <h3 className="text-xl font-bold font-display text-white">

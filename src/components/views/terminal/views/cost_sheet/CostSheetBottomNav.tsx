@@ -37,7 +37,7 @@ export const CostSheetBottomNav: React.FC<CostSheetBottomNavProps> = ({
           )}
         >
           <LayoutGrid className={cn("w-5 h-5", activeTab === 'kpis' && "drop-shadow-[0_0_8px_rgba(57,255,20,0.5)]")} />
-          <span className="text-[9px] font-black uppercase tracking-widest leading-none">Tablero</span>
+          <span className="text-xs font-black uppercase tracking-widest leading-none">Tablero</span>
         </button>
 
 
@@ -103,7 +103,7 @@ export const CostSheetBottomNav: React.FC<CostSheetBottomNavProps> = ({
               <Sparkles className="absolute -top-1 -right-1 w-3 h-3 text-primary animate-pulse" />
           )}
           <Bot className={cn("w-5 h-5", isChatBotOpen && "drop-shadow-[0_0_8px_rgba(57,255,20,0.5)]")} />
-          <span className="text-[9px] font-black uppercase tracking-widest leading-none">Eli</span>
+          <span className="text-xs font-black uppercase tracking-widest leading-none">Eli</span>
         </button>
 
         {/* Config */}
@@ -115,7 +115,7 @@ export const CostSheetBottomNav: React.FC<CostSheetBottomNavProps> = ({
           )}
         >
           <Settings className={cn("w-5 h-5", activeTab === 'config' && "drop-shadow-[0_0_8px_rgba(57,255,20,0.5)]")} />
-          <span className="text-[9px] font-black uppercase tracking-widest leading-none">Menú</span>
+          <span className="text-xs font-black uppercase tracking-widest leading-none">Menú</span>
         </button>
 
       </div>

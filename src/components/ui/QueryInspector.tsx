@@ -53,7 +53,7 @@ export const QueryInspector: React.FC = () => {
             <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-muted/30">
               <div className="flex items-center gap-2">
                 <Code className="w-4 h-4 text-primary" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">
                   Inspector de Consultas Supabase
                 </span>
               </div>
@@ -90,7 +90,7 @@ export const QueryInspector: React.FC = () => {
               )}
             </div>
             <div className="px-4 py-1 border-t border-border bg-muted/10">
-              <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-tighter">
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-tighter">
                 * Muestra la última operación de base de datos interceptada en esta vista.
               </p>
             </div>

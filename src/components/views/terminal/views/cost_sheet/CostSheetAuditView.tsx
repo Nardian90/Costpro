@@ -39,11 +39,11 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                         <AlertTriangle className="w-16 h-16 text-destructive" />
                     </div>
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-[10px] font-black uppercase tracking-widest text-destructive/70">Errores Críticos</CardTitle>
+                        <CardTitle className="text-xs font-black uppercase tracking-widest text-destructive/70">Errores Críticos</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-4xl font-black text-destructive">{criticals.length}</div>
-                        <p className="text-[10px] text-destructive/60 font-bold uppercase mt-1">Requieren Corrección Inmediata</p>
+                        <p className="text-xs text-destructive/60 font-bold uppercase mt-1">Requieren Corrección Inmediata</p>
                     </CardContent>
                 </Card>
 
@@ -52,11 +52,11 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                         <AlertTriangle className="w-16 h-16 text-amber-500" />
                     </div>
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-[10px] font-black uppercase tracking-widest text-amber-500/70">Advertencias</CardTitle>
+                        <CardTitle className="text-xs font-black uppercase tracking-widest text-amber-500/70">Advertencias</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-4xl font-black text-amber-500">{warnings.length}</div>
-                        <p className="text-[10px] text-amber-500/60 font-bold uppercase mt-1">Revisión de Parámetros Sugerida</p>
+                        <p className="text-xs text-amber-500/60 font-bold uppercase mt-1">Revisión de Parámetros Sugerida</p>
                     </CardContent>
                 </Card>
 
@@ -65,11 +65,11 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                         <CheckCircle2 className="w-16 h-16 text-primary" />
                     </div>
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-[10px] font-black uppercase tracking-widest text-primary/70">Validaciones OK</CardTitle>
+                        <CardTitle className="text-xs font-black uppercase tracking-widest text-primary/70">Validaciones OK</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-4xl font-black text-primary">{successes.length}</div>
-                        <p className="text-[10px] text-primary/60 font-bold uppercase mt-1">Integridad de Datos Confirmada</p>
+                        <p className="text-xs text-primary/60 font-bold uppercase mt-1">Integridad de Datos Confirmada</p>
                     </CardContent>
                 </Card>
             </div>
@@ -82,7 +82,7 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                             <Activity className="w-4 h-4 text-primary" />
                             Auditoría de Cumplimiento y Normativas
                         </CardTitle>
-                        <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-wider px-3 h-6 rounded-full">
+                        <Badge variant="outline" className="text-xs font-bold uppercase tracking-wider px-3 h-6 rounded-full">
                             Protocolo v5.7
                         </Badge>
                     </div>
@@ -115,7 +115,7 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 mb-1">
                                                 <span className={cn(
-                                                    "text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border",
+                                                    "text-xs font-black uppercase tracking-widest px-2 py-0.5 rounded-full border",
                                                     v.type === 'CRITICAL' ? "border-destructive/20 text-destructive" :
                                                     v.type === 'WARNING' ? "border-amber-500/20 text-amber-500" :
                                                     "border-primary/20 text-primary"
@@ -123,7 +123,7 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                                                     {v.category}
                                                 </span>
                                                 {v.rowId && (
-                                                    <span className="text-[10px] font-mono text-muted-foreground">REF: {v.rowId}</span>
+                                                    <span className="text-xs font-mono text-muted-foreground">REF: {v.rowId}</span>
                                                 )}
                                             </div>
                                             <h4 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">{v.title}</h4>

@@ -67,7 +67,7 @@ export function IPVHelpDialog({ open, onOpenChange, showTrigger = true }: Props)
               <div className="space-y-1">
                 <p className="text-sm font-black text-red-900 uppercase">Regla de Oro (No Negativos)</p>
                 <p className="text-xs text-red-700 font-medium leading-relaxed">
-                  Si la regla <Badge variant="outline" className="text-[10px] font-bold border-red-200">STOCK_LIMIT</Badge> está activa,
+                  Si la regla <Badge variant="outline" className="text-xs font-bold border-red-200">STOCK_LIMIT</Badge> está activa,
                   el sistema <strong>bloqueará automáticamente</strong> cualquier matching con productos cuya existencia sea cero.
                 </p>
               </div>

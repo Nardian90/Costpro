@@ -258,7 +258,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
         <div className="flex-1 w-full space-y-8">
           <div className="flex items-center justify-between mb-4">
             <div className="px-6 py-2 rounded-full bg-primary/10 border border-primary/20 shadow-[0_0_20px_rgba(57,255,20,0.1)]">
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary animate-pulse">Margen Activo</span>
+              <span className="text-xs font-black uppercase tracking-[0.3em] text-primary animate-pulse">Margen Activo</span>
             </div>
           </div>
           <CostSheetMasterRing
@@ -271,19 +271,19 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
         <div className="w-full lg:w-[480px]">
           <div className="glass-card-stitch rounded-3xl p-8 relative overflow-hidden group shadow-2xl">
             <header className="mb-10">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-primary mb-2 font-bold">Margen de Utilidad</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-primary mb-2 font-bold">Margen de Utilidad</p>
               <div className="flex items-baseline gap-1">
                 <h1 className="font-display text-6xl font-bold tracking-tighter neon-glow text-foreground">
                   {sliderValue.toFixed(3)}<span className="text-primary text-3xl ml-1">%</span>
                 </h1>
               </div>
-              <p className="text-[11px] uppercase tracking-widest text-muted-foreground mt-2">Ajuste dinámico sobre costo (13.1/12.1)</p>
+              <p className="text-xs uppercase tracking-widest text-muted-foreground mt-2">Ajuste dinámico sobre costo (13.1/12.1)</p>
             </header>
 
             <div className="glass-card-stitch rounded-2xl p-4 mb-10 relative overflow-hidden group/price border-primary/20 bg-primary/5">
               <div className="flex items-start">
                 <div className="w-full">
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-primary font-bold mb-1">Precio de Venta</p>
+                  <p className="text-xs uppercase tracking-[0.2em] text-primary font-bold mb-1">Precio de Venta</p>
                   <div className="flex items-center mt-1">
                     <input
                       type="number"
@@ -300,7 +300,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
                       )}
                     />
                   </div>
-                  <p className="text-[9px] uppercase tracking-widest text-muted-foreground mt-1">Objetivo Final Calculado</p>
+                  <p className="text-xs uppercase tracking-widest text-muted-foreground mt-1">Objetivo Final Calculado</p>
                 </div>
               </div>
             </div>
@@ -308,7 +308,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
             <div className="space-y-10 mb-12">
               <div className="space-y-4">
                 <div className="flex justify-between items-end">
-                  <label className="text-[11px] uppercase tracking-widest text-muted-foreground font-medium">Margen Deseado</label>
+                  <label className="text-xs uppercase tracking-widest text-muted-foreground font-medium">Margen Deseado</label>
                   <span className="text-primary font-display font-bold">{sliderValue.toFixed(3)}%</span>
                 </div>
                 <div className="flex items-center gap-3">
@@ -333,7 +333,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
                     <Plus className="w-4 h-4" />
                   </button>
                 </div>
-                <div className="flex justify-between text-[9px] text-muted-foreground uppercase font-bold tracking-tighter">
+                <div className="flex justify-between text-xs text-muted-foreground uppercase font-bold tracking-tighter">
                   <span>mín 1%</span>
                   <span>máx 100%</span>
                 </div>
@@ -341,7 +341,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
 
               <div className="space-y-4">
                 <div className="flex justify-between items-end">
-                  <label className="text-[11px] uppercase tracking-widest text-muted-foreground font-medium">Coeficiente</label>
+                  <label className="text-xs uppercase tracking-widest text-muted-foreground font-medium">Coeficiente</label>
                   <span className="text-primary font-display font-bold">{localCoef.toFixed(4)}</span>
                 </div>
                 <div className="flex items-center gap-3">
@@ -367,12 +367,12 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
                   </button>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <div className="flex justify-between text-[9px] text-muted-foreground uppercase font-bold tracking-tighter">
+                  <div className="flex justify-between text-xs text-muted-foreground uppercase font-bold tracking-tighter">
                     <span>mín 0.0</span>
                     <span>máx 4.0</span>
                   </div>
                   <div className="mt-3 p-3 rounded-xl bg-primary/5 border border-primary/10 shadow-[inner_0_1px_2px_rgba(0,0,0,0.1)]">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-[0.1em] leading-relaxed flex justify-between items-center">
+                    <p className="text-xs text-muted-foreground uppercase tracking-[0.1em] leading-relaxed flex justify-between items-center">
                       <span>Relación Actual (Gtos Ind. / Salario):</span>
                       <span className="text-primary font-black text-xs">{indirectCoef.toFixed(4)}</span>
                     </p>
@@ -402,7 +402,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
                 </div>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-widest leading-tight">
+                <p className="text-xs text-muted-foreground uppercase tracking-widest leading-tight">
                   El sistema recalcula automáticamente el precio final y los impuestos basándose en este margen de utilidad.
                 </p>
               </div>

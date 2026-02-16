@@ -63,7 +63,7 @@ export function SyncStatusBadge() {
       onClick={() => processQueue()}
       disabled={status === 'syncing' || !navigator.onLine}
       className={cn(
-        "flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest transition-all",
+        "flex items-center gap-2 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest transition-all",
         config.className,
         "hover:opacity-80 active:scale-95"
       )}

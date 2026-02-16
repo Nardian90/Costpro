@@ -52,13 +52,13 @@ export const StickyCartSummary: React.FC<StickyCartSummaryProps> = ({
               key={itemCount}
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="absolute -top-2 -right-2 bg-destructive text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-primary"
+              className="absolute -top-2 -right-2 bg-destructive text-white text-xs font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-primary"
             >
               {itemCount}
             </motion.span>
           </div>
           <div className="flex flex-col items-start">
-            <span className="text-[10px] font-bold uppercase tracking-widest opacity-70 leading-none mb-1">Tu Carrito</span>
+            <span className="text-xs font-bold uppercase tracking-widest opacity-70 leading-none mb-1">Tu Carrito</span>
             <span className="text-xl font-black tracking-tight leading-none">
               {formatCurrency(total)}
             </span>

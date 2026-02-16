@@ -34,7 +34,7 @@ export default function InventoryAdjustmentFlowDiagram() {
           }}
         >
           <rect x="320" y="240" width="160" height="30" rx="4" className="fill-primary/20 stroke-primary/40" strokeWidth="1" />
-          <text x="400" y="260" textAnchor="middle" className="fill-primary font-bold text-[8px] uppercase tracking-tighter">Ajustar Stock</text>
+          <text x="400" y="260" textAnchor="middle" className="fill-primary font-bold text-xs uppercase tracking-tighter">Ajustar Stock</text>
         </motion.g>
 
         {/* Drawer Overlay (Appearing from bottom) */}
@@ -47,7 +47,7 @@ export default function InventoryAdjustmentFlowDiagram() {
           <rect x="380" y="160" width="40" height="4" rx="2" className="fill-muted-foreground/30" />
 
           {/* Header */}
-          <text x="400" y="180" textAnchor="middle" className="fill-foreground font-black text-[8px] uppercase tracking-widest">Ajuste Rápido</text>
+          <text x="400" y="180" textAnchor="middle" className="fill-foreground font-black text-xs uppercase tracking-widest">Ajuste Rápido</text>
 
           {/* Stepper Controls */}
           <motion.g
@@ -83,7 +83,7 @@ export default function InventoryAdjustmentFlowDiagram() {
             transition={{ delay: 1.8 }}
           >
             <rect x="330" y="280" width="140" height="35" rx="10" className="fill-primary shadow-lg" />
-            <text x="400" y="302" textAnchor="middle" className="fill-primary-foreground font-black text-[10px] uppercase tracking-widest">Confirmar</text>
+            <text x="400" y="302" textAnchor="middle" className="fill-primary-foreground font-black text-xs uppercase tracking-widest">Confirmar</text>
           </motion.g>
         </motion.g>
 
@@ -98,7 +98,7 @@ export default function InventoryAdjustmentFlowDiagram() {
           transition={{ duration: 1 }}
           markerEnd="url(#arrow-primary)"
         />
-        <text x="245" y="245" textAnchor="middle" className="fill-primary/60 font-bold text-[10px] uppercase italic">1. Click</text>
+        <text x="245" y="245" textAnchor="middle" className="fill-primary/60 font-bold text-xs uppercase italic">1. Click</text>
 
         <motion.path
           d="M500 215 L590 215"
@@ -110,7 +110,7 @@ export default function InventoryAdjustmentFlowDiagram() {
           transition={{ duration: 1, delay: 2 }}
           markerEnd="url(#arrow-primary)"
         />
-        <text x="545" y="205" textAnchor="middle" className="fill-primary/60 font-bold text-[10px] uppercase italic">2. Ajuste</text>
+        <text x="545" y="205" textAnchor="middle" className="fill-primary/60 font-bold text-xs uppercase italic">2. Ajuste</text>
 
         <defs>
           <marker id="arrow-primary" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">

@@ -192,7 +192,7 @@ export default function CostEngineDemo() {
                     <TableCell className="font-mono text-xs">{row.classification}</TableCell>
                     <TableCell>
                         <div className="font-medium">{row.label}</div>
-                        <div className="text-[10px] text-muted-foreground uppercase">{row.type}</div>
+                        <div className="text-xs text-muted-foreground uppercase">{row.type}</div>
                     </TableCell>
                     <TableCell>
                         <Select
@@ -255,18 +255,18 @@ export default function CostEngineDemo() {
                    <div className="flex-1">
                      <div className="flex items-center gap-2">
                         <span className="font-bold">Fila {audit.rowId}</span>
-                        <span className="text-[10px] text-muted-foreground uppercase">{ficha.rows.find(r => r.id === audit.rowId)?.label}</span>
+                        <span className="text-xs text-muted-foreground uppercase">{ficha.rows.find(r => r.id === audit.rowId)?.label}</span>
                      </div>
                      <p className="text-muted-foreground text-xs mt-1">{audit.note}</p>
                      {audit.prev !== undefined && (
-                        <div className="mt-2 font-mono text-[10px] bg-background p-1.5 rounded border inline-block">
+                        <div className="mt-2 font-mono text-xs bg-background p-1.5 rounded border inline-block">
                           <span className="text-muted-foreground">{audit.prev}</span>
                           <span className="mx-2">→</span>
                           <span className="text-primary font-bold">{audit.now}</span>
                         </div>
                      )}
                    </div>
-                   <div className="text-[10px] text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+                   <div className="text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
                      {new Date(audit.ts).toLocaleTimeString()}
                    </div>
                 </div>

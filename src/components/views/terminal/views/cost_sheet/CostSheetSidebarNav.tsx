@@ -84,11 +84,11 @@ export const CostSheetSidebarNav: React.FC<CostSheetSidebarNavProps> = ({
                     )}
                 </div>
                 <div className="flex flex-col">
-                    <span className="text-[10px] font-black uppercase tracking-widest leading-none mb-1">
+                    <span className="text-xs font-black uppercase tracking-widest leading-none mb-1">
                         {type === 'annexes' ? `Anexo ${item.id}` : item.label}
                     </span>
                     {type === 'annexes' && (
-                        <span className={cn("text-[8px] font-bold uppercase tracking-tight truncate max-w-[180px]", isActive ? "text-white/70" : "text-muted-foreground")}>
+                        <span className={cn("text-xs font-bold uppercase tracking-tight truncate max-w-[180px]", isActive ? "text-white/70" : "text-muted-foreground")}>
                             {item.title}
                         </span>
                     )}
@@ -111,7 +111,7 @@ export const CostSheetSidebarNav: React.FC<CostSheetSidebarNavProps> = ({
                     Nueva Sección
                 </Button>
             )}
-            <p className="text-[8px] font-black uppercase tracking-[0.3em] text-muted-foreground/50 text-center">
+            <p className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground/50 text-center">
                 Navegación de Ficha
             </p>
         </div>

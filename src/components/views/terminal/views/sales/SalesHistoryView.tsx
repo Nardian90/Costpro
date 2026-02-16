@@ -66,7 +66,7 @@ export default function SalesHistoryView() {
         >
            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
               <div>
-                <label className="text-[10px] font-black text-muted-foreground uppercase mb-1 block ml-1">Estado</label>
+                <label className="text-xs font-black text-muted-foreground uppercase mb-1 block ml-1">Estado</label>
                 <select
                   value={selectedStatus}
                   onChange={(e) => setSelectedStatus(e.target.value)}
@@ -91,7 +91,7 @@ export default function SalesHistoryView() {
             {(data) => (
               <table className="data-table sticky-column-1 w-full text-sm">
                 <thead>
-                  <tr className="bg-muted/30 text-muted-foreground font-black uppercase text-[10px] tracking-widest border-b border-border">
+                  <tr className="bg-muted/30 text-muted-foreground font-black uppercase text-xs tracking-widest border-b border-border">
                     <th className="p-4 text-center w-10">
                       <button
                         onClick={() => toggleAll(allIds)}
@@ -128,12 +128,12 @@ export default function SalesHistoryView() {
                       <td className="p-4 font-bold text-xs text-primary">{txn.id.split('-')[0]}</td>
                       <td className="p-4">
                         <div className="font-bold text-xs">{formatDate(txn.created_at)}</div>
-                        <div className="text-[10px] text-muted-foreground">{formatTime(txn.created_at)}</div>
+                        <div className="text-xs text-muted-foreground">{formatTime(txn.created_at)}</div>
                       </td>
                       <td className="p-4 priority-low">
                         <div className="flex items-center gap-2">
                           {txn.payment_method === 'cash' ? <DollarSign className="w-3 h-3 text-green-500" /> : <CreditCard className="w-3 h-3 text-primary" />}
-                          <span className="text-[10px] font-bold uppercase">
+                          <span className="text-xs font-bold uppercase">
                             {txn.payment_method === 'cash' ? 'Efectivo' : 'Transferencia'}
                           </span>
                         </div>
@@ -143,7 +143,7 @@ export default function SalesHistoryView() {
                       </td>
                       <td className="p-4 text-center priority-low">
                         <span className={cn(
-                          "inline-flex items-center px-2 py-0.5 rounded text-[9px] font-black uppercase",
+                          "inline-flex items-center px-2 py-0.5 rounded text-xs font-black uppercase",
                           txn.status === 'completed' ? "bg-green-500/10 text-green-600" :
                           txn.status === 'pending' ? "bg-amber-500/10 text-amber-600" : "bg-destructive/10 text-destructive"
                         )}>

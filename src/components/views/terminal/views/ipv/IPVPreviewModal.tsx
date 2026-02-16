@@ -44,7 +44,7 @@ export function IPVPreviewModal({ report, open, onOpenChange, onExportPDF }: Pro
                             </div>
                         </div>
                         <div className="flex gap-2">
-                            <Button variant="outline" size="sm" className="h-9 text-[10px] font-black uppercase tracking-widest gap-2">
+                            <Button variant="outline" size="sm" className="h-9 text-xs font-black uppercase tracking-widest gap-2">
                                 <Printer className="w-4 h-4" />
                                 Imprimir
                             </Button>
@@ -54,9 +54,9 @@ export function IPVPreviewModal({ report, open, onOpenChange, onExportPDF }: Pro
                                     checked={includeDetails}
                                     onCheckedChange={(checked) => setIncludeDetails(!!checked)}
                                 />
-                                <Label htmlFor="includeDetails" className="text-[10px] font-black uppercase cursor-pointer">Anexar Detalle</Label>
+                                <Label htmlFor="includeDetails" className="text-xs font-black uppercase cursor-pointer">Anexar Detalle</Label>
                             </div>
-                            <Button size="sm" className="h-9 text-[10px] font-black uppercase tracking-widest gap-2 neu-btn-primary" onClick={() => onExportPDF(report, includeDetails)}>
+                            <Button size="sm" className="h-9 text-xs font-black uppercase tracking-widest gap-2 neu-btn-primary" onClick={() => onExportPDF(report, includeDetails)}>
                                 <Download className="w-4 h-4" />
                                 Exportar PDF
                             </Button>
@@ -65,15 +65,15 @@ export function IPVPreviewModal({ report, open, onOpenChange, onExportPDF }: Pro
 
                     <div className="grid grid-cols-3 gap-4 mt-6">
                         <div className="p-4 bg-primary/5 rounded-2xl border border-primary/10">
-                            <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1">Total Ventas</p>
+                            <p className="text-xs font-black uppercase text-muted-foreground tracking-widest mb-1">Total Ventas</p>
                             <p className="text-xl font-black text-primary">{formatCurrency(report.total_ventas_cents)}</p>
                         </div>
                         <div className="p-4 bg-green-500/5 rounded-2xl border border-green-500/10">
-                            <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1">Efectivo</p>
+                            <p className="text-xs font-black uppercase text-muted-foreground tracking-widest mb-1">Efectivo</p>
                             <p className="text-xl font-black text-green-600">{formatCurrency(report.resumen_efectivo_cents)}</p>
                         </div>
                         <div className="p-4 bg-blue-500/5 rounded-2xl border border-blue-500/10">
-                            <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1">Transferencia</p>
+                            <p className="text-xs font-black uppercase text-muted-foreground tracking-widest mb-1">Transferencia</p>
                             <p className="text-xl font-black text-blue-600">{formatCurrency(report.resumen_transferencia_cents)}</p>
                         </div>
                     </div>
@@ -84,7 +84,7 @@ export function IPVPreviewModal({ report, open, onOpenChange, onExportPDF }: Pro
                         <div className="p-6">
                             <div className="mb-4 flex items-center justify-between">
                                 <h4 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Desglose por Producto</h4>
-                                <Badge variant="outline" className="font-black text-[10px] border-primary/20 text-primary">
+                                <Badge variant="outline" className="font-black text-xs border-primary/20 text-primary">
                                     {report.filas.length} PRODUCTOS
                                 </Badge>
                             </div>
@@ -93,21 +93,21 @@ export function IPVPreviewModal({ report, open, onOpenChange, onExportPDF }: Pro
                             <Table className="min-w-[800px]">
                                 <TableHeader className="bg-muted/50">
                                     <TableRow>
-                                        <TableHead className="text-[10px] font-black uppercase">Código</TableHead>
-                                        <TableHead className="text-[10px] font-black uppercase">Producto</TableHead>
-                                        <TableHead className="text-center text-[10px] font-black uppercase">Ini.</TableHead>
-                                        <TableHead className="text-center text-[10px] font-black uppercase">Entrada</TableHead>
-                                        <TableHead className="text-center text-[10px] font-black uppercase">Salida</TableHead>
-                                        <TableHead className="text-center text-[10px] font-black uppercase">Venta</TableHead>
-                                        <TableHead className="text-right text-[10px] font-black uppercase">Precio</TableHead>
-                                        <TableHead className="text-right text-[10px] font-black uppercase">Importe</TableHead>
-                                        <TableHead className="text-center text-[10px] font-black uppercase">Final</TableHead>
+                                        <TableHead className="text-xs font-black uppercase">Código</TableHead>
+                                        <TableHead className="text-xs font-black uppercase">Producto</TableHead>
+                                        <TableHead className="text-center text-xs font-black uppercase">Ini.</TableHead>
+                                        <TableHead className="text-center text-xs font-black uppercase">Entrada</TableHead>
+                                        <TableHead className="text-center text-xs font-black uppercase">Salida</TableHead>
+                                        <TableHead className="text-center text-xs font-black uppercase">Venta</TableHead>
+                                        <TableHead className="text-right text-xs font-black uppercase">Precio</TableHead>
+                                        <TableHead className="text-right text-xs font-black uppercase">Importe</TableHead>
+                                        <TableHead className="text-center text-xs font-black uppercase">Final</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {report.filas.map((f, idx) => (
                                         <TableRow key={f.cod + idx} className={f.venta_cantidad_qty > 0 ? 'bg-primary/5' : ''}>
-                                            <TableCell className="font-mono text-[10px] font-bold">{f.cod}</TableCell>
+                                            <TableCell className="font-mono text-xs font-bold">{f.cod}</TableCell>
                                             <TableCell className="text-xs font-bold">{f.descripcion}</TableCell>
                                             <TableCell className="text-center text-xs font-medium">{f.saldo_inicial_qty}</TableCell>
                                             <TableCell className="text-center text-xs font-medium">{f.entrada_qty || 0}</TableCell>
@@ -126,13 +126,13 @@ export function IPVPreviewModal({ report, open, onOpenChange, onExportPDF }: Pro
                                 <div className="text-center">
                                     <div className="border-t-2 border-muted-foreground/30 pt-2">
                                         <p className="text-xs font-black uppercase text-muted-foreground">Realizado por</p>
-                                        <p className="text-[10px] font-medium opacity-50 mt-1">{report.firmas?.realizado_por || ''}</p>
+                                        <p className="text-xs font-medium opacity-50 mt-1">{report.firmas?.realizado_por || ''}</p>
                                     </div>
                                 </div>
                                 <div className="text-center">
                                     <div className="border-t-2 border-muted-foreground/30 pt-2">
                                         <p className="text-xs font-black uppercase text-muted-foreground">Revisado por</p>
-                                        <p className="text-[10px] font-medium opacity-50 mt-1">Firma y Cuño</p>
+                                        <p className="text-xs font-medium opacity-50 mt-1">Firma y Cuño</p>
                                     </div>
                                 </div>
                             </div>
@@ -143,9 +143,9 @@ export function IPVPreviewModal({ report, open, onOpenChange, onExportPDF }: Pro
                 <div className="p-4 border-t bg-muted/20 flex justify-between items-center shrink-0">
                     <div className="flex items-center gap-2 text-muted-foreground">
                         <CheckCircle2 className="w-4 h-4 text-green-500" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest">Estado: {report.estado}</span>
+                        <span className="text-xs font-bold uppercase tracking-widest">Estado: {report.estado}</span>
                     </div>
-                    <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-[10px] font-black uppercase">Cerrar</Button>
+                    <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-xs font-black uppercase">Cerrar</Button>
                 </div>
             </DialogContent>
         </Dialog>

@@ -22,7 +22,7 @@ export default function SpeedScaleDiagram() {
               <Timer className="w-6 h-6 sm:w-7 sm:h-7" />
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-0.5">Tiempo de Procesamiento</p>
+              <p className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-0.5">Tiempo de Procesamiento</p>
               <p className="text-2xl sm:text-3xl font-black text-foreground tracking-tighter leading-none">
                 &lt; 5 <span className="text-violet-600 italic">MINUTOS</span>
               </p>
@@ -31,7 +31,7 @@ export default function SpeedScaleDiagram() {
           <motion.div
             animate={{ scale: [1, 1.05, 1], boxShadow: ['0 0 0px rgba(16,185,129,0)', '0 0 20px rgba(16,185,129,0.3)', '0 0 0px rgba(16,185,129,0)'] }}
             transition={{ duration: 2, repeat: Infinity }}
-            className="flex items-center gap-1 bg-emerald-500 text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-emerald-500/20"
+            className="flex items-center gap-1 bg-emerald-500 text-white px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest shadow-xl shadow-emerald-500/20"
           >
             <Zap className="w-3 h-3" />
             95% Ahorro
@@ -44,7 +44,7 @@ export default function SpeedScaleDiagram() {
 
           <div className="flex justify-between items-end relative z-10">
             <div className="space-y-1">
-               <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-70">Capacidad Operativa</span>
+               <span className="text-xs font-black uppercase tracking-widest text-muted-foreground opacity-70">Capacidad Operativa</span>
                <div className="flex items-center gap-2 text-primary">
                  <div className="p-1 rounded-lg bg-primary/10">
                    <TrendingUp className="w-4 h-4" />
@@ -56,7 +56,7 @@ export default function SpeedScaleDiagram() {
               <span className="text-4xl sm:text-5xl font-black text-foreground tabular-nums tracking-tighter leading-none block">
                 <CountUp end={100} duration={3} />
               </span>
-              <span className="text-[10px] font-black text-muted-foreground block uppercase tracking-widest mt-1">Fichas / Lote</span>
+              <span className="text-xs font-black text-muted-foreground block uppercase tracking-widest mt-1">Fichas / Lote</span>
             </div>
           </div>
 
@@ -76,11 +76,11 @@ export default function SpeedScaleDiagram() {
         <div className="flex flex-wrap gap-3 justify-center">
             <div className="px-4 py-2 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center gap-2 shadow-sm">
               <ArrowUpRight className="w-3 h-3 text-violet-600" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-violet-700">Carga Masiva</span>
+              <span className="text-xs font-black uppercase tracking-widest text-violet-700">Carga Masiva</span>
             </div>
             <div className="px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2 shadow-sm">
               <ArrowUpRight className="w-3 h-3 text-emerald-600" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700">Validación AI</span>
+              <span className="text-xs font-black uppercase tracking-widest text-emerald-700">Validación AI</span>
             </div>
         </div>
       </div>

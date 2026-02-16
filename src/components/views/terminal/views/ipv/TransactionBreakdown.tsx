@@ -221,7 +221,7 @@ export function TransactionBreakdown() {
                     variant="outline"
                     size="sm"
                     onClick={handleRandomizeDates}
-                    className="h-11 px-4 rounded-xl border-primary/20 bg-primary/5 text-primary font-black uppercase tracking-widest text-[10px] gap-2 hover:bg-primary hover:text-white transition-all shadow-sm active:scale-95"
+                    className="h-11 px-4 rounded-xl border-primary/20 bg-primary/5 text-primary font-black uppercase tracking-widest text-xs gap-2 hover:bg-primary hover:text-white transition-all shadow-sm active:scale-95"
                 >
                     <RotateCcw className="w-4 h-4" />
                     Reacomodar Fechas
@@ -230,14 +230,14 @@ export function TransactionBreakdown() {
                     variant="outline"
                     size="sm"
                     onClick={handleResetCash}
-                    className="h-11 px-4 rounded-xl border-red-500/20 bg-red-500/5 text-red-500 font-black uppercase tracking-widest text-[10px] gap-2 hover:bg-red-500 hover:text-white transition-all shadow-sm active:scale-95"
+                    className="h-11 px-4 rounded-xl border-red-500/20 bg-red-500/5 text-red-500 font-black uppercase tracking-widest text-xs gap-2 hover:bg-red-500 hover:text-white transition-all shadow-sm active:scale-95"
                 >
                     <Trash2 className="w-4 h-4" />
                     Reset Efectivo
                 </Button>
                 <Badge variant="outline" className="h-11 px-4 rounded-xl border-primary/20 bg-primary/5">
                     <div className="flex flex-col items-end">
-                        <span className="text-[10px] font-black text-muted-foreground uppercase leading-none">Total Filtrado</span>
+                        <span className="text-xs font-black text-muted-foreground uppercase leading-none">Total Filtrado</span>
                         <span className="text-sm font-black text-primary">{formatCurrency(total)}</span>
                     </div>
                 </Badge>
@@ -281,7 +281,7 @@ export function TransactionBreakdown() {
           <TableBody>
             {filteredLines.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={10} className="h-24 text-center text-muted-foreground font-bold uppercase text-[10px]">
+                <TableCell colSpan={10} className="h-24 text-center text-muted-foreground font-bold uppercase text-xs">
                   No se encontraron líneas de detalle.
                 </TableCell>
               </TableRow>
@@ -300,16 +300,16 @@ export function TransactionBreakdown() {
                   <TableRow key={l.id}>
                     <TableCell className="text-xs font-medium">{formatDate(l.fecha_operacion)}</TableCell>
                     <TableCell>
-                      <div className="text-[10px] font-black text-primary truncate max-w-[150px]" title={l.transaction_ref}>
+                      <div className="text-xs font-black text-primary truncate max-w-[150px]" title={l.transaction_ref}>
                         {l.transaction_ref}
                       </div>
-                      <div className="text-[9px] text-muted-foreground truncate max-w-[150px]" title={tx?.observaciones}>
+                      <div className="text-xs text-muted-foreground truncate max-w-[150px]" title={tx?.observaciones}>
                         {tx?.observaciones || 'Ajuste Manual / Global'}
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="text-xs font-bold">{prod?.descripcion || (l.product_cod === 'CASH' ? 'EFECTIVO' : l.product_cod)}</div>
-                      <div className="text-[9px] text-muted-foreground font-mono">{l.product_cod}</div>
+                      <div className="text-xs text-muted-foreground font-mono">{l.product_cod}</div>
                     </TableCell>
                     <TableCell className="text-center font-bold text-xs">{l.cantidad}</TableCell>
                     <TableCell className="text-right">
@@ -322,20 +322,20 @@ export function TransactionBreakdown() {
                             <div className="text-xs font-black text-green-600">
                                 +{formatCurrency(propina)}
                             </div>
-                        ) : <span className="text-muted-foreground opacity-30 text-[10px]">—</span>}
+                        ) : <span className="text-muted-foreground opacity-30 text-xs">—</span>}
                     </TableCell>
                     <TableCell className="text-right">
                         {descuento > 0 ? (
                             <div className="text-xs font-black text-red-600">
                                 -{formatCurrency(descuento)}
                             </div>
-                        ) : <span className="text-muted-foreground opacity-30 text-[10px]">—</span>}
+                        ) : <span className="text-muted-foreground opacity-30 text-xs">—</span>}
                     </TableCell>
                     <TableCell className="text-right">
                         <div className="font-black text-xs text-primary">{formatCurrency(l.importe_linea_cents)}</div>
                     </TableCell>
                     <TableCell>
-                        <Badge variant="outline" className={`text-[8px] font-black uppercase ${
+                        <Badge variant="outline" className={`text-xs font-black uppercase ${
                             l.origen_dato === 'AUTO_MATCH' ? 'border-green-200 text-green-600' :
                             l.origen_dato === 'CASH_FILLER' ? 'border-orange-200 text-orange-600' :
                             'border-blue-200 text-blue-600'
@@ -384,14 +384,14 @@ export function TransactionBreakdown() {
             </DialogHeader>
             <div className="py-6 space-y-4">
                 <div className="p-4 bg-muted/30 rounded-2xl border border-dashed border-muted-foreground/30">
-                    <p className="text-[10px] font-black uppercase text-muted-foreground mb-1">Producto / Ref</p>
+                    <p className="text-xs font-black uppercase text-muted-foreground mb-1">Producto / Ref</p>
                     <p className="font-bold text-sm">{editingLine?.product_cod}</p>
-                    <p className="text-[10px] text-muted-foreground">{editingLine?.transaction_ref}</p>
+                    <p className="text-xs text-muted-foreground">{editingLine?.transaction_ref}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase text-muted-foreground">Importe Total (Cents)</label>
+                        <label className="text-xs font-black uppercase text-muted-foreground">Importe Total (Cents)</label>
                         <Input
                             type="number"
                             value={editAmount}
@@ -400,7 +400,7 @@ export function TransactionBreakdown() {
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase text-muted-foreground">Fecha Operación</label>
+                        <label className="text-xs font-black uppercase text-muted-foreground">Fecha Operación</label>
                         <Input
                             type="date"
                             value={editDate}
@@ -411,7 +411,7 @@ export function TransactionBreakdown() {
                 </div>
 
                 <div className="p-4 bg-primary/5 rounded-xl border border-primary/10">
-                    <p className="text-[10px] text-muted-foreground italic">
+                    <p className="text-xs text-muted-foreground italic">
                         El precio base es {formatCurrency(productMap.get(editingLine?.product_cod)?.precio_cents || editingLine?.precio_unitario_cents)}.
                         Cualquier diferencia se guardará como Propina o Descuento.
                     </p>

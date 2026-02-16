@@ -39,7 +39,7 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({
             </div>
             <div className="text-left">
               <h3 className="text-sm font-black uppercase tracking-widest text-slate-800 dark:text-slate-100">Configuración General</h3>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase mt-0.5">Metadatos y Parámetros Operativos</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase mt-0.5">Metadatos y Parámetros Operativos</p>
             </div>
           </div>
           {isOpen ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
@@ -74,7 +74,7 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({
 
             return (
               <div key={item.id} className="space-y-2 group">
-                <label htmlFor={item.id} className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 block px-1 group-focus-within:text-primary transition-colors">
+                <label htmlFor={item.id} className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 block px-1 group-focus-within:text-primary transition-colors">
                   {item.label}
                   {isFormula && !isEditing && <span className="ml-2 text-primary font-black animate-pulse">fx</span>}
                 </label>

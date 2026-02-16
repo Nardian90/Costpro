@@ -96,19 +96,19 @@ const CostSheetNarrative: React.FC<CostSheetNarrativeProps> = ({ data, calculate
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-12 border-t border-white/10 pt-8">
                 <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Costo Total</p>
+                    <p className="text-xs font-black uppercase tracking-widest text-slate-500 mb-1">Costo Total</p>
                     <p className="text-xl font-bold">{header?.currency} {format(costoYGastoTotal)}</p>
                 </div>
                 <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Precio Unitario</p>
+                    <p className="text-xs font-black uppercase tracking-widest text-slate-500 mb-1">Precio Unitario</p>
                     <p className="text-xl font-bold">{header?.currency} {format(unitPrice)}</p>
                 </div>
                 <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Margen (30%)</p>
+                    <p className="text-xs font-black uppercase tracking-widest text-slate-500 mb-1">Margen (30%)</p>
                     <p className="text-xl font-bold text-success">{header?.currency} {format(utilidad)}</p>
                 </div>
                 <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">UM</p>
+                    <p className="text-xs font-black uppercase tracking-widest text-slate-500 mb-1">UM</p>
                     <p className="text-xl font-bold uppercase">{header?.unit || 'Unidad'}</p>
                 </div>
             </div>
@@ -224,7 +224,7 @@ const CostSheetNarrative: React.FC<CostSheetNarrativeProps> = ({ data, calculate
                 </p>
                 <div className="flex items-center gap-4 bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10">
                     <Info className="w-5 h-5 shrink-0" />
-                    <p className="text-[10px] font-bold uppercase tracking-widest leading-tight">
+                    <p className="text-xs font-bold uppercase tracking-widest leading-tight">
                         Datos validados por el motor v5.7.25
                     </p>
                 </div>
@@ -233,7 +233,7 @@ const CostSheetNarrative: React.FC<CostSheetNarrativeProps> = ({ data, calculate
       </div>
 
       <div className="pt-12 border-t border-slate-200 dark:border-slate-800 text-center">
-        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">
+        <p className="text-xs font-black uppercase tracking-[0.4em] text-slate-400">
           Documento Confidencial • Generado Automáticamente por CostPro Terminal
         </p>
       </div>

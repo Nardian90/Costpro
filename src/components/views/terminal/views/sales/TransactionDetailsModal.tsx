@@ -150,7 +150,7 @@ export function TransactionDetailsModal({ isOpen, onClose, transaction, items, i
                         key={tax.id}
                         onClick={() => handleToggleTax(tax)}
                         className={cn(
-                          "w-full flex items-center justify-between p-2 rounded-lg border text-[10px] transition-all",
+                          "w-full flex items-center justify-between p-2 rounded-lg border text-xs transition-all",
                           appliedTaxes.some(t => t.id === tax.id)
                             ? "bg-primary/5 border-primary font-bold"
                             : "bg-background border-border text-muted-foreground"
