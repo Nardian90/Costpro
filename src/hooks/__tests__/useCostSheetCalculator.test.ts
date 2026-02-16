@@ -217,4 +217,48 @@ describe('useCostSheetCalculator', () => {
     expect(result.current.calculatedHeader.product_code).toBe('PROD-777');
     expect(result.current.calculatedHeader.sale_price).toBe(1234.56);
   });
+
+  it('should calculate health validations and percent correctly', () => {
+    const template: CostSheetData = {
+        ...baseTemplate,
+        sections: [{
+            id: 's1',
+            label: 'Production',
+            rows: [
+                { id: '2', label: 'Salario Directo', valorHistorico: 1000, calculationMethod: 'ValorFijo' },
+                { id: '4', label: 'Gasto Indirecto 1', valorHistorico: 500, calculationMethod: 'ValorFijo' },
+                { id: '6', label: 'Gasto Indirecto 2', valorHistorico: 500, calculationMethod: 'ValorFijo' },
+                { id: '7', label: 'Gasto Indirecto 3', valorHistorico: 500, calculationMethod: 'ValorFijo' },
+                { id: '12', label: 'Costo Total', formula: '1000', calculationMethod: 'FORMULA' },
+                { id: '13', label: 'Utilidad', formula: '100', calculationMethod: 'FORMULA' }
+            ]
+        }]
+    };
+
+    const { result } = renderHook(() => useCostSheetCalculator(template));
+
+    // Validations:
+    // 1. Rentabilidad: 100/1000 = 0.1 <= 0.3 -> SUCCESS
+    // 2. Gastos Indirectos: (500+500+500)/1000 = 1.5 <= 1.5 (prod) -> SUCCESS
+    // Total: 2 validations, 2 successes -> 100% (assuming no structural integrity checks added for these simple rows without children)
+
+    expect(result.current.healthPercent).toBe(100);
+    expect(result.current.validations.length).toBeGreaterThan(0);
+    expect(result.current.validations.every(v => v.type === 'SUCCESS')).toBe(true);
+
+    // Now fail Rentabilidad
+    const templateFail = {
+        ...template,
+        sections: [{
+            ...template.sections[0],
+            rows: template.sections[0].rows.map(r => r.id === '13' ? { ...r, formula: '500' } : r)
+        }]
+    };
+
+    const { result: resultFail } = renderHook(() => useCostSheetCalculator(templateFail));
+
+    // Rentabilidad: 500/1000 = 0.5 > 0.3 -> WARNING
+    expect(resultFail.current.healthPercent).toBe(50); // 1 success out of 2
+    expect(resultFail.current.validations.find(v => v.category === 'Rentabilidad')?.type).toBe('WARNING');
+  });
 });
