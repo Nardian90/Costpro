@@ -186,9 +186,11 @@ export default function POSView() {
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <h2 className="text-[clamp(1.875rem,6vw,3rem)] font-black text-foreground tracking-tighter uppercase hidden sm:block">TPV</h2>
-          <ViewSwitcher currentView={posLayoutMode} onViewChange={setPosLayoutMode} />
+          <div className="flex items-center gap-2">
+            <ViewSwitcher currentView={posLayoutMode} onViewChange={setPosLayoutMode} />
+            {cartButton}
+          </div>
         </div>
-        {!isMobile && cartButton}
       </div>
 
       <QueryInspector />
