@@ -8,6 +8,8 @@ import {
   CheckCircle2,
   TrendingUp,
   DollarSign,
+  Plus,
+  Minus,
   Activity,
   ShieldCheck,
   Wand2,
@@ -288,10 +290,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
               <div className="absolute -right-4 -top-4 opacity-5 group-hover/price:opacity-10 transition-opacity">
                 <DollarSign className="w-24 h-24 text-foreground" />
               </div>
-              <div className="flex items-start gap-5">
-                <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
-                  <DollarSign className="text-primary w-8 h-8 font-bold" />
-                </div>
+              <div className="flex items-start">
                 <div>
                   <p className="text-[10px] uppercase tracking-[0.2em] text-primary font-bold mb-1">Precio de Venta</p>
                   <div className="flex items-center gap-2 mt-1">
@@ -302,7 +301,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
                       onFocus={() => setIsEditingPrice(true)}
                       onBlur={() => setIsEditingPrice(false)}
                       onChange={handlePriceChange}
-                      className="bg-transparent border-none text-left font-display text-5xl font-bold tracking-tight focus:ring-0 p-0 text-foreground w-full min-w-0"
+                      className="bg-transparent border-none text-left font-display text-5xl font-bold focus:ring-0 p-0 text-foreground w-full min-w-0 pr-4"
                     />
                   </div>
                   <p className="text-[9px] uppercase tracking-widest text-muted-foreground mt-1">Objetivo Final Calculado</p>
@@ -316,7 +315,14 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
                   <label className="text-[11px] uppercase tracking-widest text-muted-foreground font-medium">Margen Deseado</label>
                   <span className="text-primary font-display font-bold">{sliderValue.toFixed(1)}%</span>
                 </div>
-                <Slider
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => handleSliderChange([Math.max(1, sliderValue - 1)])}
+                    className="p-1 rounded-md bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+                  >
+                    <Minus className="w-4 h-4" />
+                  </button>
+                  <Slider
                   value={[sliderValue]}
                   min={1}
                   max={100}
@@ -324,6 +330,13 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
                   onValueChange={handleSliderChange}
                   className="w-full"
                 />
+                  <button
+                    onClick={() => handleSliderChange([Math.min(100, sliderValue + 1)])}
+                    className="p-1 rounded-md bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
                 <div className="flex justify-between text-[9px] text-muted-foreground uppercase font-bold tracking-tighter">
                   <span>mín 1%</span>
                   <span>máx 100%</span>
@@ -333,16 +346,30 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
               <div className="space-y-4">
                 <div className="flex justify-between items-end">
                   <label className="text-[11px] uppercase tracking-widest text-muted-foreground font-medium">Coeficiente</label>
-                  <span className="text-primary font-display font-bold">{localCoef.toFixed(2)}</span>
+                  <span className="text-primary font-display font-bold">{localCoef.toFixed(4)}</span>
                 </div>
-                <Slider
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => handleCoefChange(Math.max(0, localCoef - 0.0001))}
+                    className="p-1 rounded-md bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+                  >
+                    <Minus className="w-4 h-4" />
+                  </button>
+                  <Slider
                   value={[localCoef]}
                   min={0}
                   max={4}
-                  step={0.01}
+                  step={0.0001}
                   onValueChange={(val) => handleCoefChange(val[0])}
                   className="w-full"
                 />
+                  <button
+                    onClick={() => handleCoefChange(Math.min(4, localCoef + 0.0001))}
+                    className="p-1 rounded-md bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
                 <div className="flex flex-col gap-1">
                   <div className="flex justify-between text-[9px] text-muted-foreground uppercase font-bold tracking-tighter">
                     <span>mín 0.0</span>
@@ -351,7 +378,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
                   <div className="mt-3 p-3 rounded-xl bg-primary/5 border border-primary/10 shadow-[inner_0_1px_2px_rgba(0,0,0,0.1)]">
                     <p className="text-[10px] text-muted-foreground uppercase tracking-[0.1em] leading-relaxed flex justify-between items-center">
                       <span>Relación Actual (Gtos Ind. / Salario):</span>
-                      <span className="text-primary font-black text-xs">{indirectCoef.toFixed(2)}</span>
+                      <span className="text-primary font-black text-xs">{indirectCoef.toFixed(4)}</span>
                     </p>
                   </div>
                 </div>

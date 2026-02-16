@@ -124,18 +124,6 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
             <span className={cn("text-xs font-black", brandGreen)}>+{utilityPercent.toFixed(1)}%</span>
           </div>
         </div>
-
-        {/* Badge Indicator */}
-        <div className="absolute -top-2 left-1/2 -translate-x-1/2">
-            <div className={cn(
-                brandGreenBg,
-                "text-white dark:text-black text-[10px] font-black px-5 py-2 rounded-full uppercase tracking-widest flex items-center gap-2 transition-all duration-300",
-                isDark ? "shadow-[0_0_20px_rgba(57,255,20,0.5)]" : "shadow-[0_0_20px_rgba(22,163,74,0.3)]"
-            )}>
-                <Zap className="w-3 h-3 fill-current" />
-                Margen Activo
-            </div>
-        </div>
       </div>
 
       {/* Primary KPI Breakdown */}
