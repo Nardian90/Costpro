@@ -43,6 +43,14 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                             message: `La suma de los hijos (${childrenSum.toFixed(2)}) no coincide con el total del padre (${parentVal.toFixed(2)}). Diferencia: ${diff.toFixed(2)}.`,
                             rowId: row.id
                         });
+                    } else {
+                        results.push({
+                            type: 'SUCCESS',
+                            category: 'Integridad Estructural',
+                            title: `Integridad OK: ${row.label}`,
+                            message: `La suma de los elementos hijos coincide correctamente con el total del padre (${parentVal.toFixed(2)}).`,
+                            rowId: row.id
+                        });
                     }
                     checkRowIntegrity(row.children);
                 }
@@ -51,22 +59,37 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
         data.sections.forEach((s: any) => checkRowIntegrity(s.rows));
 
         // 2. Utility / Cost Validation (13.1 / 12.1 or 13 / 12)
-        const utilId = calculatedValues['13.1'] ? '13.1' : '13';
-        const costId = calculatedValues['12.1'] ? '12.1' : '12';
+        const utilId = calculatedValues['13'] ? '13' : (calculatedValues['13.1'] ? '13.1' : null);
+        const costId = calculatedValues['12.1'] ? '12.1' : (calculatedValues['12'] ? '12' : null);
 
-        const utilVal = calculatedValues[utilId]?.total || 0;
-        const costVal = calculatedValues[costId]?.total || 0;
+        if (utilId && costId) {
+            let utilVal = calculatedValues[utilId]?.total || 0;
+            const costVal = calculatedValues[costId]?.total || 0;
 
-        if (costVal > 0) {
-            const ratio = utilVal / costVal;
-            if (ratio > 0.3) {
-                results.push({
-                    type: 'WARNING',
-                    category: 'Rentabilidad',
-                    title: 'Utilidad Excesiva',
-                    message: `La relación utilidad/costo (${(ratio * 100).toFixed(2)}%) supera el límite prudencial del 30%.`,
-                    value: ratio
-                });
+            // Detect if 13.1 is Price instead of Utility
+            if (utilId === '13.1' && utilVal > costVal) {
+                utilVal = utilVal - costVal;
+            }
+
+            if (costVal > 0) {
+                const ratio = utilVal / costVal;
+                if (ratio > 0.3) {
+                    results.push({
+                        type: 'WARNING',
+                        category: 'Rentabilidad',
+                        title: 'Utilidad Excesiva',
+                        message: `La relación utilidad/costo (${(ratio * 100).toFixed(2)}%) supera el límite prudencial del 30%.`,
+                        value: ratio
+                    });
+                } else {
+                    results.push({
+                        type: 'SUCCESS',
+                        category: 'Rentabilidad',
+                        title: 'Rentabilidad Validada',
+                        message: `La relación utilidad/costo (${(ratio * 100).toFixed(2)}%) está dentro del rango prudencial.`,
+                        value: ratio
+                    });
+                }
             }
         }
 
@@ -147,7 +170,7 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                         <CardTitle className="text-[10px] font-black uppercase tracking-widest text-primary/70">Validaciones OK</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-4xl font-black text-primary">{successes.length + (validations.length === 0 ? 1 : 0)}</div>
+                        <div className="text-4xl font-black text-primary">{successes.length}</div>
                         <p className="text-[10px] text-primary/60 font-bold uppercase mt-1">Integridad de Datos Confirmada</p>
                     </CardContent>
                 </Card>
