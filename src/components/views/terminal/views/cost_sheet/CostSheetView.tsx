@@ -565,8 +565,11 @@ const CostSheetView = () => {
                     {activeSection === 'kpis' && (
                          <div className="animate-in zoom-in-95 duration-500 py-8">
                             <CostSheetSummary
-                                calculatedValues={calculatedValues}
-                                data={data}
+                                totalPrice={calculatedValues['14']?.total || 0}
+                                utility={calculatedValues['13']?.total || 0}
+                                totalCost={calculatedValues['12']?.total || 0}
+                                telemetry={calculatedValues}
+                                header={calculatedHeader}
                             />
                             <CostSheetFormulaGuide />
                         </div>
