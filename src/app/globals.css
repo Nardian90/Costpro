@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -962,7 +963,6 @@
 }
 
 /* Stitch Proposed Design Utilities */
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap');
 
 .font-display {
   font-family: 'Space Grotesk', sans-serif;

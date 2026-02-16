@@ -92,22 +92,22 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
             if (row.children && row.children.length > 0) {
               walk(row.children, [...rowPath, 'children']);
             } else {
-              let baseValue = 0;
-              // Intentar extraer la base de la fórmula si ya sigue el patrón =(X) * Y
-              const formulaMatch = row.formula?.match(/^=\((([\d.]+))\)\s*\*\s*[\d.]+$/);
+              // Calculate weight relative to Salario Directo (row 2.1)
+              let weight = 0;
+              const formulaMatch = row.formula?.match(/^=\(ref\(['"]2\.1['"]\)\)\s*\*\s*([\d.]+)$/);
+
               if (formulaMatch) {
-                baseValue = parseFloat(formulaMatch[1]);
+                const currentMultiplier = parseFloat(formulaMatch[1]);
+                weight = indirectCoef > 0 ? (currentMultiplier / indirectCoef) : (1 / 3);
               } else {
-                // De lo contrario, calcular la base basada en el coeficiente indirecto actual
-                // El objetivo es que Sum(baseValue) = row2 (Salario Directo)
-                baseValue = indirectCoef > 0 ? (row.value || 0) / indirectCoef : 0;
+                weight = indirectSum > 0 ? (row.value || 0) / indirectSum : (1 / 3);
               }
 
-              if (!isNaN(baseValue)) {
-                // Formatear con 4 decimales para precisión en la base, y 2 para el coeficiente
+              if (!isNaN(weight)) {
+                const multiplier = newCoef * weight;
                 updates.push({
                   path: [...rowPath, 'formula'],
-                  value: `=(${baseValue.toFixed(4)}) * ${newCoef.toFixed(2)}`
+                  value: `=(ref('2.1')) * ${multiplier.toFixed(4)}`
                 });
                 updates.push({
                   path: [...rowPath, 'calculationMethod'],
@@ -311,15 +311,15 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
                 </div>
                 <Slider
                   value={[localCoef]}
-                  min={0.1}
-                  max={5}
+                  min={0}
+                  max={4}
                   step={0.01}
                   onValueChange={(val) => handleCoefChange(val[0])}
                   className="w-full"
                 />
                 <div className="flex justify-between text-[9px] text-muted-foreground uppercase font-bold tracking-tighter">
-                  <span>base 1.0</span>
-                  <span>máx 5.0</span>
+                  <span>mín 0.0</span>
+                  <span>máx 4.0</span>
                 </div>
               </div>
             </div>
