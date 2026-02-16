@@ -152,7 +152,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
 
              <button
                onMouseDown={(e) => { e.preventDefault(); handleSave(value); }}
-               className="p-1 hover:bg-green-500/20 text-green-600 rounded"
+               className="p-1 hover:bg-primary/20 text-primary dark:text-[#39FF14] rounded"
                title="Guardar (Enter)"
              >
                 <Check className="w-3.5 h-3.5" />
@@ -172,7 +172,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent
           showCloseButton={false}
-          className="w-full max-w-[calc(100%-2rem)] sm:max-w-[800px] z-[200] p-0 overflow-y-auto rounded-3xl border-none shadow-2xl max-h-[95vh] bg-background dark:bg-[#020617] text-foreground dark:text-slate-200 transition-colors"
+          className="w-[calc(100%-1rem)] sm:w-full sm:max-w-[800px] z-[200] p-0 overflow-hidden rounded-[2rem] sm:rounded-3xl border-none shadow-2xl max-h-[95vh] bg-background dark:bg-[#020617] text-foreground dark:text-slate-200 transition-all flex flex-col"
         >
           {/* Custom Header based on Design */}
           <div className="px-4 sm:px-6 pt-6 pb-4 flex items-center justify-between shrink-0">
@@ -185,7 +185,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                 <DialogDescription className="sr-only">
                   Editor avanzado para configurar fórmulas y cálculos personalizados en la ficha de costo.
                 </DialogDescription>
-                <p className="text-[9px] sm:text-[10px] font-black text-primary dark:text-[#39FF14] uppercase tracking-[0.25em] mt-1.5 opacity-90 truncate">v5.7.22 • Motor de Costos Avanzado</p>
+                <p className="text-[9px] sm:text-[10px] font-black text-primary dark:text-[#39FF14] uppercase tracking-[0.25em] mt-1.5 opacity-90 truncate">v5.7.25 • Motor de Costos Avanzado</p>
               </div>
             </div>
 
@@ -204,8 +204,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                 onClick={() => setMode('assisted')}
                 className={cn(
                   "flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all",
-                  mode === 'assisted'
-                    ? "bg-green-600 text-white shadow-[0_0_12px_rgba(22,163,74,0.4)]"
+                  mode === 'assisted' ? "bg-primary dark:bg-[#39FF14] text-primary-foreground dark:text-black shadow-[0_0_12px_rgba(var(--primary),0.4)] dark:shadow-[0_0_15px_rgba(57,255,20,0.4)]"
                     : "bg-muted dark:bg-slate-800/50 text-muted-foreground dark:text-slate-400 hover:text-foreground dark:hover:text-slate-200"
                 )}
               >
@@ -229,7 +228,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
             </div>
           </div>
 
-          <div className="p-0">
+          <div className="p-0 flex-1 min-h-0 overflow-y-auto">
             {mode === 'assisted' ? (
               <div className="animate-in fade-in zoom-in-95 duration-300">
                 <FormulaBuilder
@@ -249,7 +248,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                     <Badge variant="outline" className="text-[9px] font-mono border-border dark:border-slate-700 text-muted-foreground dark:text-slate-500">expr-eval enabled</Badge>
                   </div>
                   <textarea
-                    className="w-full h-48 sm:h-64 p-4 sm:p-6 font-mono text-sm sm:text-base bg-muted/30 dark:bg-slate-900/50 border border-border dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-primary/10 dark:focus:ring-[#39FF14]/10 focus:border-primary/50 dark:focus:border-[#39FF14]/50 outline-none resize-none transition-all text-foreground dark:text-slate-200"
+                    className="w-full h-48 sm:h-64 p-4 sm:p-6 font-mono text-sm sm:text-base bg-muted/30 dark:bg-slate-950/50 border border-border dark:border-slate-800 rounded-2xl focus:ring-4 focus:ring-primary/10 dark:focus:ring-[#39FF14]/10 focus:border-primary/50 dark:focus:border-[#39FF14]/50 outline-none resize-none transition-all text-foreground dark:text-slate-200"
                     value={value}
                     onChange={(e) => setValue(e.target.value)}
                     placeholder="Escriba su fórmula aquí (ej. = AnexoI + AnexoII)"
@@ -278,7 +277,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
           </div>
 
           {/* Footer based on Design */}
-          <div className="px-4 sm:px-6 py-4 sm:py-6 bg-muted/20 dark:bg-slate-900/20 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 sm:gap-4 border-t border-border dark:border-white/5 shrink-0">
+          <div className="px-4 sm:px-6 py-4 sm:py-6 bg-muted/20 dark:bg-slate-950/20 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 sm:gap-4 border-t border-border dark:border-white/5 shrink-0">
             <button
               onClick={() => setIsModalOpen(false)}
               className="px-4 sm:px-8 h-10 sm:h-12 rounded-2xl text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground dark:text-slate-400 hover:text-foreground dark:hover:text-white transition-all border border-border dark:border-slate-800 hover:border-muted-foreground/30 dark:hover:border-slate-600"
