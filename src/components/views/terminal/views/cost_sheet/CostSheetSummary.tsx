@@ -30,6 +30,7 @@ interface CostSheetSummaryProps {
   totalCost: number;
   telemetry: Record<string, CalculatedRowValue>;
   header?: CostSheetHeader;
+  healthPercent?: number;
 }
 
 const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
@@ -37,7 +38,8 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
   utility,
   totalCost,
   telemetry,
-  header
+  header,
+  healthPercent: providedHealthPercent
 }) => {
   const updateUtilityFormula = useCostSheetStore(state => state.updateUtilityFormula);
   const updateValues = useCostSheetStore(state => state.updateValues);
@@ -179,19 +181,22 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
 
   const feedback = getFeedback(sliderValue);
 
-  // Health calculation
-  const structuralIntegrity = !Object.values(telemetry).some(r => r.hasWarnings);
-  const profitability = (utility / totalCost) <= 0.3;
-  const maxCoef = (header?.destino === 'servicios') ? 1.0 : 1.5;
-  const indirectLimitPassed = indirectCoef <= maxCoef;
+  // Health calculation - Use provided or fallback to simple if not available (legacy)
+  const healthPercent = providedHealthPercent !== undefined ? providedHealthPercent : (() => {
+    const structuralIntegrity = !Object.values(telemetry).some(r => r.hasWarnings);
+    const profitability = totalCost > 0 ? (utility / totalCost) <= 0.3 : true;
+    const dest = header?.destino || header?.destination || '';
+    const maxCoef = (String(dest).toLowerCase() === 'servicios') ? 1.0 : 1.5;
+    const indirectLimitPassed = indirectCoef <= maxCoef;
 
-  const validations = [
-    { name: 'Integridad Estructural', passed: structuralIntegrity },
-    { name: 'Rentabilidad', passed: profitability },
-    { name: 'Gasto Indirecto', passed: indirectLimitPassed }
-  ];
-  const passedCount = validations.filter(v => v.passed).length;
-  const healthPercent = (passedCount / validations.length) * 100;
+    const validations = [
+      { name: 'Integridad Estructural', passed: structuralIntegrity },
+      { name: 'Rentabilidad', passed: profitability },
+      { name: 'Gasto Indirecto', passed: indirectLimitPassed }
+    ];
+    const passedCount = validations.filter(v => v.passed).length;
+    return (passedCount / validations.length) * 100;
+  })();
 
   // Map telemetry to array for CostSheetTelemetry component
   const telemetryItems = [
