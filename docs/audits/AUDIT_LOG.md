@@ -510,3 +510,16 @@ Esta iteración marca el reposicionamiento estratégico del punto de entrada al 
 - **Estado del sistema:** 🟩 Saludable
 
 El sistema ahora no solo es técnicamente robusto, sino comercialmente atractivo. La "cara" del producto ha sido modernizada para alinearse con los estándares de SaaS Enterprise.
+
+---
+
+### 7. ACTUALIZACIÓN POST-AUDITORÍA INTEGRAL (v5.7.25)
+
+- **Versión del sistema:** 5.7.25
+- **Fecha:** 2026-03-08
+- **Score global:** 9.65 (+0.20)
+- **Hito principal:** Implementación de Auditoría Estructural y Validación de Coeficientes de Gastos Indirectos (1.5/1.0).
+- **Mejoras en Exportación:** Motor PDF server-side con jsPDF-AutoTable para fidelidad institucional.
+- **Seguridad:** Hardening de RLS en perfiles y onboarding automático con rol 'costo'.
+
+El sistema alcanza una madurez óptima para despliegues en entornos de alta exigencia regulatoria.
