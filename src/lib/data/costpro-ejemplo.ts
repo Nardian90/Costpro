@@ -25,7 +25,7 @@ const template: CostSheetDataContract = {
     "destination": "Consumo Social",
     "production_level": 1200,
     "capacity_utilization": 83.33,
-    "sale_price": "=GET_FILA_DATO(\"16.1\", \"total\")",
+    "sale_price": "=GET_FILA_DATO(\"16\", \"total\")",
     "client": ""
   },
   "sections": [
