@@ -94,7 +94,7 @@ export default function DashboardView() {
                     <span className="text-sm font-black text-foreground">{formatCurrency(sales)}</span>
                   </div>
                   <div className="flex flex-col items-center">
-                    <div className="w-2 h-2 rounded-full bg-white mb-2 shadow-[0_0_8px_rgba(255,255,255,0.6)]"></div>
+                    <div className="w-2 h-2 rounded-full bg-slate-400 dark:bg-white mb-2 shadow-[0_0_8px_rgba(100,116,139,0.6)]"></div>
                     <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Costos</span>
                     <span className="text-sm font-black text-foreground">{formatCurrency(costs)}</span>
                   </div>
