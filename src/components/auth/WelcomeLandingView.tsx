@@ -87,7 +87,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
               onClick={onLoginClick}
               className="h-11 px-3 sm:px-6 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 sm:gap-2 border-2 border-border bg-background/50 hover:bg-muted transition-all active:scale-95 group shrink-0 shadow-sm"
             >
-              <span>Acceso</span>
+              <span>Acceso<span className="hidden sm:inline"> al Sistema</span></span>
               <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
             </button>
             <button
@@ -108,7 +108,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
       </header>
 
       {/* Hero Section */}
-      <section className="pt-24 sm:pt-40 pb-20 px-6">
+      <section className="pt-24 sm:pt-40 pb-20 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -123,26 +123,26 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
               v5.7.25 Hardened Enterprise Release
             </div>
 
-            <h1 className="text-[clamp(2.5rem,12vw,4.5rem)] font-black tracking-tighter leading-[0.9] uppercase text-foreground">
+            <h1 className="text-[clamp(1.85rem,10vw,4.5rem)] font-black tracking-tighter leading-[0.9] uppercase text-foreground">
               Control <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-lime-400 italic">Total</span> <br />
               de su Negocio.
             </h1>
 
-            <p className="text-xl text-muted-foreground font-medium max-w-xl leading-relaxed">
+            <p className="text-lg sm:text-xl text-muted-foreground font-medium max-w-xl leading-relaxed">
               La plataforma integral de gestión diseñada para escalar MiPyMEs con precisión técnica, automatización de costos y operativa móvil de alto rendimiento.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <button
                 onClick={onLoginClick}
-                className="neu-btn h-14 px-10 text-sm font-black uppercase tracking-widest border border-border rounded-xl hover:bg-muted/50 transition-colors"
+                className="neu-btn h-14 px-10 w-full sm:w-auto text-sm font-black uppercase tracking-widest border border-border rounded-xl hover:bg-muted/50 transition-colors"
               >
                 Comenzar Ahora
               </button>
               <button
                 onClick={handleInstallClick}
                 className={cn(
-                  "neu-btn h-14 px-10 text-sm font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2",
+                  "neu-btn h-14 px-10 w-full sm:w-auto text-sm font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2",
                   isInstallable
                     ? "neu-btn-primary shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:shadow-[0_0_40px_rgba(16,185,129,0.35)]"
                     : "bg-muted text-muted-foreground border border-border"
@@ -151,8 +151,8 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
                 <Smartphone className="w-5 h-5" />
                 Instalar APP
               </button>
-              <Link href="/demo/executive">
-                <button className="h-14 px-10 text-sm font-black uppercase tracking-widest border border-border rounded-xl hover:bg-muted/50 transition-colors">
+              <Link href="/demo/executive" className="w-full sm:w-auto">
+                <button className="h-14 px-10 w-full text-sm font-black uppercase tracking-widest border border-border rounded-xl hover:bg-muted/50 transition-colors">
                   Ver Demo Online
                 </button>
               </Link>
@@ -233,7 +233,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
 
       {/* Sectors Trust Signals */}
       <section className="py-12 border-y border-border/50 bg-muted/10 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 flex overflow-x-auto md:flex-wrap justify-start md:justify-between items-center gap-8 md:gap-4 opacity-50 grayscale no-scrollbar scroll-smooth">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex overflow-x-auto md:flex-wrap justify-start md:justify-between items-center gap-8 md:gap-4 opacity-50 grayscale no-scrollbar scroll-smooth">
           <div className="flex items-center gap-3 shrink-0">
             <Utensils className="w-5 h-5" />
             <span className="text-[10px] font-black uppercase tracking-[0.2em]">Restaurante</span>
