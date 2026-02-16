@@ -77,26 +77,46 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
     setLocalCoef(newCoef);
     if (row2 <= 0) return;
 
-    const targetTotal = row2 * newCoef;
-    const currentTotal = indirectSum;
-    if (currentTotal <= 0) return;
-
-    const factor = targetTotal / currentTotal;
-    const updates: { path: (string | number)[]; value: number }[] = [];
+    const updates: { path: (string | number)[]; value: any }[] = [];
 
     ['4', '6', '7'].forEach(sectionId => {
       const sectionIndex = data.sections.findIndex(s => s.id === sectionId);
       if (sectionIndex !== -1) {
         const section = data.sections[sectionIndex];
-        section.rows.forEach((row, rowIndex) => {
-          if (row.calculationMethod === 'ValorFijo' || !row.formula) {
-            const currentValue = row.value || 0;
-            updates.push({
-              path: ['sections', sectionIndex, 'rows', rowIndex, 'value'],
-              value: currentValue * factor
-            });
-          }
-        });
+
+        const walk = (rows: any[], pathBase: (string | number)[]) => {
+          rows.forEach((row, rowIndex) => {
+            const rowPath = [...pathBase, rowIndex];
+            if (row.children && row.children.length > 0) {
+              walk(row.children, [...rowPath, 'children']);
+            } else {
+              let baseValue = 0;
+              // Intentar extraer la base de la fórmula si ya sigue el patrón =(X) * Y
+              const formulaMatch = row.formula?.match(/^=\((([\d.]+))\)\s*\*\s*[\d.]+$/);
+              if (formulaMatch) {
+                baseValue = parseFloat(formulaMatch[1]);
+              } else {
+                // De lo contrario, calcular la base basada en el coeficiente indirecto actual
+                // El objetivo es que Sum(baseValue) = row2 (Salario Directo)
+                baseValue = indirectCoef > 0 ? (row.value || 0) / indirectCoef : 0;
+              }
+
+              if (!isNaN(baseValue)) {
+                // Formatear con 4 decimales para precisión en la base, y 2 para el coeficiente
+                updates.push({
+                  path: [...rowPath, 'formula'],
+                  value: `=(${baseValue.toFixed(4)}) * ${newCoef.toFixed(2)}`
+                });
+                updates.push({
+                  path: [...rowPath, 'calculationMethod'],
+                  value: 'FORMULA'
+                });
+              }
+            }
+          });
+        };
+
+        walk(section.rows, ['sections', sectionIndex, 'rows']);
       }
     });
 
@@ -261,8 +281,8 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
                 </div>
 
                 <div className="flex flex-row gap-6 h-64">
-                  <div className="flex flex-col items-center bg-black/20 border border-white/5 rounded-3xl p-4 w-20 shadow-inner">
-                    <p className="text-[8px] font-black text-primary/70 uppercase tracking-[0.3em] mb-4 [writing-mode:vertical-lr] rotate-180">COEFICIENTE</p>
+                  <div className="flex flex-col items-center bg-black/20 border border-white/5 rounded-3xl pt-4 pb-4 px-2 w-24 shadow-inner overflow-hidden">
+                    <p className="text-[7px] font-black text-primary/70 uppercase tracking-[0.2em] mb-4 text-center">COEFICIENTE</p>
                     <div className="flex-1 flex items-center py-2">
                       <Slider
                         value={[localCoef]}
@@ -274,7 +294,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
                         className="h-full"
                       />
                     </div>
-                    <span className="text-[10px] font-black text-primary mt-4 tabular-nums">{localCoef.toFixed(2)}</span>
+                    <span className="text-[10px] font-black text-primary mt-4 tabular-nums bg-primary/10 px-2 py-0.5 rounded-md border border-primary/20 shadow-[0_0_10px_rgba(57,255,20,0.1)]">{localCoef.toFixed(2)}</span>
                   </div>
 
                   <div className="flex-1 flex flex-col justify-center gap-8">
