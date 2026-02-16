@@ -26,7 +26,7 @@ export const SpeedDial: React.FC<SpeedDialProps> = ({ actions, className }) => {
   const categories = Array.from(new Set(actions.map(a => a.category || 'Acción'))).reverse();
 
   return (
-    <div className={cn("fixed bottom-6 right-6 z-[110] flex flex-col items-end gap-3 sm:hidden", className)}>
+    <div className={cn("fixed bottom-6 right-6 z-[110] flex flex-col items-end gap-3", className)}>
       <AnimatePresence>
         {isOpen && (
           <div className="flex flex-col items-end gap-6 mb-2">
