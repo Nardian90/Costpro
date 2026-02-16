@@ -62,19 +62,13 @@ export const Sidebar = ({
         id: 'estrategico',
         label: 'MÓDULO ESTRATÉGICO',
         isDirect: true,
-        items: ['dashboard']
+        items: ['dashboard', 'cost-sheets', 'ipv']
       },
       {
         id: 'punto_venta',
         label: 'MÓDULO PUNTO DE VENTA',
         sublabel: 'Acciones de Caja',
         items: ['pos', 'sales', 'cash']
-      },
-      {
-        id: 'operativa',
-        label: 'MÓDULO GESTIÓN OPERATIVA',
-        sublabel: 'Core de Costos',
-        items: ['cost-sheets', 'ipv']
       },
       {
         id: 'almacen',
@@ -248,9 +242,14 @@ export const Sidebar = ({
                 <div key={module.id} className="space-y-1">
                   {module.isDirect ? (
                     <div className="space-y-2">
-                      <div className="px-4 text-[10px] font-black text-primary/50 tracking-[0.3em] uppercase mb-2">
-                        {module.label}
-                      </div>
+                      {module.label && (
+                        <div className="px-4 flex flex-col items-start mb-2">
+                          <span className="text-[10px] font-black text-primary/50 tracking-[0.3em] uppercase">{module.label}</span>
+                          {module.sublabel && (
+                            <span className="text-[9px] font-medium opacity-40 uppercase tracking-tighter mt-0.5">{module.sublabel}</span>
+                          )}
+                        </div>
+                      )}
                       {module.items.map(itemId => typeof itemId === 'string' && renderNavItem(itemId))}
                     </div>
                   ) : (
