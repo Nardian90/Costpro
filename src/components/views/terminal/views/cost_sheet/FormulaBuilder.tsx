@@ -158,7 +158,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
           Área de Construcción
         </div>
 
-        <div className="min-h-[100px] sm:min-h-[120px] p-4 sm:p-6 rounded-3xl border-2 border-dashed border-border dark:border-slate-800 bg-muted/30 dark:bg-slate-900/30 flex flex-wrap gap-2 sm:gap-3 items-start content-start transition-all relative overflow-hidden">
+        <div className="min-h-[100px] sm:min-h-[120px] p-4 sm:p-6 rounded-3xl border-2 border-dashed border-border dark:border-slate-800 bg-muted/30 dark:bg-slate-950/30 flex flex-wrap gap-2 sm:gap-3 items-start content-start transition-all relative overflow-hidden">
           {tokens.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-6 text-center">
               <span className="text-xs sm:text-sm italic text-muted-foreground dark:text-slate-600 font-medium tracking-tight">Comience a construir su fórmula seleccionando elementos del panel inferior</span>
@@ -172,7 +172,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                 token.type === 'function' && "bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20 shadow-[0_2px_8px_rgba(139,92,246,0.1)]",
                 token.type === 'reference' && "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 shadow-[0_2px_8px_rgba(59,130,246,0.1)]",
                 token.type === 'operator' && "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20",
-                token.type === 'literal' && "bg-[#39FF14]/10 text-green-600 dark:text-[#39FF14] border-[#39FF14]/20",
+                token.type === 'literal' && "bg-[#39FF14]/10 text-primary dark:text-[#39FF14] dark:text-[#39FF14] border-[#39FF14]/20",
                 token.type === 'punctuation' && "bg-transparent text-muted-foreground dark:text-slate-500 border-none px-1"
               )}
             >
@@ -194,11 +194,11 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
 
         {/* Validation Status */}
         {tokens.length > 0 && (
-          <div className="bg-green-500/10 border border-green-500/20 p-2 sm:p-3 rounded-xl sm:rounded-2xl flex items-center gap-2 sm:gap-3 animate-in fade-in slide-in-from-top-2">
-            <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-green-600 flex items-center justify-center shrink-0">
+          <div className="bg-primary/10 dark:bg-[#39FF14]/5 border border-primary/20 dark:border-[#39FF14]/20 p-2 sm:p-3 rounded-xl sm:rounded-2xl flex items-center gap-2 sm:gap-3 animate-in fade-in slide-in-from-top-2">
+            <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-primary dark:bg-[#39FF14] flex items-center justify-center shrink-0">
               <CheckCircle2 className="w-3 h-3 sm:w-4 h-4 text-white" />
             </div>
-            <span className="text-[9px] sm:text-[11px] font-bold text-green-600 dark:text-[#16a34a] uppercase tracking-wider leading-tight">
+            <span className="text-[9px] sm:text-[11px] font-bold text-primary dark:text-[#39FF14] dark:text-[#39FF14] uppercase tracking-wider leading-tight">
               Fórmula válida • Resultado: (Evaluando...)
             </span>
           </div>
@@ -213,22 +213,23 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <HorizontalScroll containerClassName="bg-muted dark:bg-slate-900/50 p-1 rounded-2xl border border-border dark:border-white/5 overflow-hidden">
+          <HorizontalScroll containerClassName="bg-muted dark:bg-slate-950/50 p-1 rounded-2xl border border-border dark:border-white/10 overflow-hidden">
             <TabsList className="bg-transparent border-none w-max min-w-full h-auto p-0 gap-1 flex overflow-visible">
-              <TabsTrigger value="functions" className="w-[calc(50%-4px)] sm:w-auto sm:flex-1 py-3 px-4 sm:px-6 text-[10px] font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-slate-800 data-[state=active]:text-foreground dark:data-[state=active]:text-white transition-all shrink-0">Funciones</TabsTrigger>
-              <TabsTrigger value="refs" className="w-[calc(50%-4px)] sm:w-auto sm:flex-1 py-3 px-4 sm:px-6 text-[10px] font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-slate-800 data-[state=active]:text-foreground dark:data-[state=active]:text-white transition-all shrink-0">Referencias</TabsTrigger>
-              <TabsTrigger value="ops" className="w-[calc(50%-4px)] sm:w-auto sm:flex-1 py-3 px-4 sm:px-6 text-[10px] font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-slate-800 data-[state=active]:text-foreground dark:data-[state=active]:text-white transition-all shrink-0">Operadores</TabsTrigger>
+              <TabsTrigger value="functions" className="py-2.5 px-5 sm:px-8 text-[10px] font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-slate-900 data-[state=active]:text-foreground dark:data-[state=active]:text-[#39FF14] transition-all shrink-0 border border-transparent data-[state=active]:border-border dark:data-[state=active]:border-[#39FF14]/20 shadow-none outline-none">Funciones</TabsTrigger>
+              <TabsTrigger value="refs" className="py-2.5 px-5 sm:px-8 text-[10px] font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-slate-900 data-[state=active]:text-foreground dark:data-[state=active]:text-[#39FF14] transition-all shrink-0 border border-transparent data-[state=active]:border-border dark:data-[state=active]:border-[#39FF14]/20 shadow-none outline-none">Referencias</TabsTrigger>
+              <TabsTrigger value="annexes" className="py-2.5 px-5 sm:px-8 text-[10px] font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-slate-900 data-[state=active]:text-foreground dark:data-[state=active]:text-[#39FF14] transition-all shrink-0 border border-transparent data-[state=active]:border-border dark:data-[state=active]:border-[#39FF14]/20 shadow-none outline-none">Anexos</TabsTrigger>
+              <TabsTrigger value="ops" className="py-2.5 px-5 sm:px-8 text-[10px] font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-slate-900 data-[state=active]:text-foreground dark:data-[state=active]:text-[#39FF14] transition-all shrink-0 border border-transparent data-[state=active]:border-border dark:data-[state=active]:border-[#39FF14]/20 shadow-none outline-none">Operadores</TabsTrigger>
             </TabsList>
           </HorizontalScroll>
 
           <div className="mt-4 overflow-hidden">
             <ScrollArea className="h-[250px] sm:h-[300px] rounded-2xl">
-              <TabsContent value="functions" className="m-0 space-y-2 pb-4 pr-3">
+              <TabsContent value="functions" className="m-0 space-y-2 pb-4 pr-3 outline-none">
                 {Object.keys(SPANISH_TO_ENGLISH).map(func => (
                   <button
                     key={func}
                     onClick={() => addToken('function', SPANISH_TO_ENGLISH[func], func)}
-                    className="w-full flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-2xl bg-muted/40 dark:bg-slate-900/40 border border-border dark:border-slate-800 hover:border-primary dark:hover:border-[#39FF14]/30 hover:bg-muted dark:hover:bg-slate-800/60 transition-all text-left group relative overflow-hidden"
+                    className="w-full flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-2xl bg-muted/40 dark:bg-slate-950/40 border border-border dark:border-slate-800 hover:border-primary dark:hover:border-[#39FF14]/30 hover:bg-muted dark:hover:bg-slate-800/60 transition-all text-left group relative overflow-hidden"
                   >
                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary dark:bg-[#39FF14] opacity-0 group-hover:opacity-100 transition-opacity" />
                     <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-violet-500/10 flex items-center justify-center text-violet-600 dark:text-violet-400 shrink-0">
@@ -238,35 +239,65 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                       <div className="text-[11px] sm:text-[12px] font-black text-foreground dark:text-white uppercase tracking-wider">{func}</div>
                       <div className="text-[9px] sm:text-[10px] text-muted-foreground dark:text-slate-500 line-clamp-1">{FUNCTION_DESCRIPTIONS[func]}</div>
                     </div>
-                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-border dark:bg-slate-800 flex items-center justify-center text-muted-foreground dark:text-slate-400 group-hover:bg-primary dark:group-hover:bg-[#39FF14] group-hover:text-primary-foreground dark:group-hover:text-black transition-all">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-border dark:bg-slate-900 flex items-center justify-center text-muted-foreground dark:text-slate-400 group-hover:bg-primary dark:group-hover:bg-[#39FF14] group-hover:text-primary-foreground dark:group-hover:text-black transition-all">
                       <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </div>
                   </button>
                 ))}
               </TabsContent>
 
-              <TabsContent value="refs" className="m-0 space-y-4 pb-4 pr-3">
+              <TabsContent value="refs" className="m-0 space-y-4 pb-4 pr-3 outline-none">
                 <div className="space-y-2">
-                  <div className="text-[9px] sm:text-[10px] font-black text-muted-foreground dark:text-slate-600 uppercase tracking-widest px-2">Filas de la Ficha</div>
-                  {suggestions.filter(s => s.value?.startsWith('ref')).map(s => (
+                  <div className="text-[9px] sm:text-[10px] font-black text-muted-foreground dark:text-slate-600 uppercase tracking-widest px-2 mb-2">Filas de la Ficha</div>
+                  {suggestions.filter(s => s.value?.startsWith('ref') || s.value?.startsWith('vh')).map(s => (
                     <button
                       key={s.value}
                       onClick={() => addToken('reference', s.value, s.label)}
-                      className="w-full flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-2xl bg-muted/40 dark:bg-slate-900/40 border border-border dark:border-slate-800 hover:border-primary dark:hover:border-[#39FF14]/30 hover:bg-muted dark:hover:bg-slate-800/60 transition-all text-left group relative overflow-hidden"
+                      className="w-full flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-2xl bg-muted/40 dark:bg-slate-950/40 border border-border dark:border-slate-800 hover:border-primary dark:hover:border-[#39FF14]/30 hover:bg-muted dark:hover:bg-slate-800/60 transition-all text-left group relative overflow-hidden"
                     >
                       <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary dark:bg-[#39FF14] opacity-0 group-hover:opacity-100 transition-opacity" />
                       <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 font-black text-[10px] sm:text-xs">
-                        {s.label.split('.')[0]}
+                        {s.label.includes(' ') ? s.label.split(' ')[1] : s.label}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="text-[10px] sm:text-[11px] font-bold text-foreground dark:text-white uppercase truncate">{s.label}</div>
                         <div className="text-[8px] sm:text-[9px] text-muted-foreground dark:text-slate-500 truncate">{s.description}</div>
                       </div>
-                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-border dark:bg-slate-800 flex items-center justify-center text-muted-foreground dark:text-slate-400 group-hover:bg-primary dark:group-hover:bg-[#39FF14] group-hover:text-primary-foreground dark:group-hover:text-black transition-all">
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-border dark:bg-slate-900 flex items-center justify-center text-muted-foreground dark:text-slate-400 group-hover:bg-primary dark:group-hover:bg-[#39FF14] group-hover:text-primary-foreground dark:group-hover:text-black transition-all">
                         <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       </div>
                     </button>
                   ))}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="annexes" className="m-0 space-y-4 pb-4 pr-3 outline-none">
+                <div className="space-y-2">
+                  <div className="text-[9px] sm:text-[10px] font-black text-muted-foreground dark:text-slate-600 uppercase tracking-widest px-2 mb-2">Referencias a Anexos</div>
+                  {suggestions.filter(s => s.value?.startsWith('Anexo')).map(s => (
+                    <button
+                      key={s.value}
+                      onClick={() => addToken('reference', s.value, s.label)}
+                      className="w-full flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-2xl bg-muted/40 dark:bg-slate-950/40 border border-border dark:border-slate-800 hover:border-primary dark:hover:border-[#39FF14]/30 hover:bg-muted dark:hover:bg-slate-800/60 transition-all text-left group relative overflow-hidden"
+                    >
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary dark:bg-[#39FF14] opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0 font-black text-[10px] sm:text-xs">
+                        {s.label.split(' ')[1] || 'AX'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[10px] sm:text-[11px] font-bold text-foreground dark:text-white uppercase truncate">{s.label}</div>
+                        <div className="text-[8px] sm:text-[9px] text-muted-foreground dark:text-slate-500 truncate">{s.description}</div>
+                      </div>
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-border dark:bg-slate-900 flex items-center justify-center text-muted-foreground dark:text-slate-400 group-hover:bg-primary dark:group-hover:bg-[#39FF14] group-hover:text-primary-foreground dark:group-hover:text-black transition-all">
+                        <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      </div>
+                    </button>
+                  ))}
+                  {suggestions.filter(s => s.value?.startsWith('Anexo')).length === 0 && (
+                    <div className="p-8 text-center border-2 border-dashed border-border dark:border-white/5 rounded-3xl">
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">No hay anexos configurados</p>
+                    </div>
+                  )}
                 </div>
               </TabsContent>
 
@@ -284,18 +315,18 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                     <button
                       key={op.v}
                       onClick={() => addToken(op.v === '(' || op.v === ')' || op.v === ',' ? 'punctuation' : 'operator', op.v, op.l)}
-                      className="flex items-center justify-center h-12 sm:h-16 rounded-xl sm:rounded-2xl bg-muted/50 dark:bg-slate-900/50 border border-border dark:border-slate-800 hover:border-primary/50 dark:hover:border-[#39FF14]/50 hover:bg-muted dark:hover:bg-slate-800 text-muted-foreground dark:text-slate-400 hover:text-primary dark:hover:text-[#39FF14] transition-all shadow-sm"
+                      className="flex items-center justify-center h-12 sm:h-16 rounded-xl sm:rounded-2xl bg-muted/50 dark:bg-slate-950/50 border border-border dark:border-slate-800 hover:border-primary/50 dark:hover:border-[#39FF14]/50 hover:bg-muted dark:hover:bg-slate-800 text-muted-foreground dark:text-slate-400 hover:text-primary dark:hover:text-[#39FF14] transition-all shadow-sm"
                     >
                       {op.i}
                     </button>
                   ))}
 
-                  <div className="col-span-4 mt-2 sm:mt-4 p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-muted/30 dark:bg-slate-900/30 border border-border dark:border-slate-800">
+                  <div className="col-span-4 mt-2 sm:mt-4 p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-muted/30 dark:bg-slate-950/30 border border-border dark:border-slate-800">
                     <div className="text-[9px] sm:text-[10px] font-black text-muted-foreground dark:text-slate-600 uppercase tracking-widest mb-2 sm:mb-3">Valor Numérico</div>
                     <div className="flex gap-2 sm:gap-3">
                       <input
                         type="number"
-                        className="flex-1 h-10 sm:h-12 px-3 sm:px-4 rounded-lg sm:rounded-xl bg-background dark:bg-slate-800 border-none text-foreground dark:text-white text-xs sm:text-sm focus:ring-2 focus:ring-primary/50 dark:focus:ring-[#39FF14]/50 transition-all outline-none"
+                        className="flex-1 h-10 sm:h-12 px-3 sm:px-4 rounded-lg sm:rounded-xl bg-background dark:bg-slate-900 border-none text-foreground dark:text-white text-xs sm:text-sm focus:ring-2 focus:ring-primary/50 dark:focus:ring-[#39FF14]/50 transition-all outline-none"
                         placeholder="Ej: 1500"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
