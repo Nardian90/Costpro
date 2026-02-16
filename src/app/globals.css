@@ -960,3 +960,25 @@
   transition-duration: 0.01ms !important;
   backdrop-filter: none !important;
 }
+
+/* Stitch Proposed Design Utilities */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap');
+
+.font-display {
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.neon-glow {
+  text-shadow: 0 0 15px rgba(57, 255, 20, 0.4);
+}
+
+.glass-card-stitch {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.amber-glow-border {
+  border-left: 4px solid #FFBF00;
+  box-shadow: inset 10px 0 20px -10px rgba(255, 191, 0, 0.15);
+}
