@@ -57,6 +57,8 @@ const CostSheetView = () => {
     calculatedHeader,
     calculatedAnnexes,
     audits,
+    validations,
+    healthPercent,
     calculationResult,
     isBlocked,
     deepValidationErrors
@@ -570,6 +572,7 @@ const CostSheetView = () => {
                                 totalCost={calculatedValues['12']?.total || 0}
                                 telemetry={calculatedValues}
                                 header={calculatedHeader}
+                                healthPercent={healthPercent}
                             />
                             <CostSheetFormulaGuide />
                         </div>
@@ -614,7 +617,13 @@ const CostSheetView = () => {
                     {activeSection === 'signature' && <CostSheetSignatureEditor />}
                     {activeSection === 'audit' && (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <CostSheetAuditView data={data} calculatedValues={calculatedValues} calculatedHeader={calculatedHeader} audits={audits} />
+                            <CostSheetAuditView
+                                data={data}
+                                calculatedValues={calculatedValues}
+                                calculatedHeader={calculatedHeader}
+                                audits={audits}
+                                validations={validations}
+                            />
                         </div>
                     )}
                     {activeSection === 'massive-gen' && (

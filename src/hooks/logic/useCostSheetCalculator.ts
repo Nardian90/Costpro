@@ -10,6 +10,7 @@ import {
 } from '@/types/cost-sheet';
 import { calculateFicha } from '@/lib/cost-engine';
 import { FichaJSON, CostRow, Anexo, RowSemanticType, FormaCalculo, BaseRef, AuditEntry, CalculationResult } from '@/lib/cost-engine/types';
+import { calculateCostSheetHealth, ValidationResult } from '@/lib/cost-engine/validations';
 
 // Helper to safely evaluate a formula string for ANNEXES (keeping it simple for annex rows)
 const evaluateAnnexExpression = (expression: string, rowData: any, header: any, calculatedAnnexes: any[] = []): number => {
@@ -204,6 +205,8 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
       calculatedHeader: any | null;
       calculationResult: CalculationResult | null;
       audits: AuditEntry[];
+      validations: ValidationResult[];
+      healthPercent: number;
       error: Error | null;
       isBlocked: boolean;
       deepValidationErrors: any[];
@@ -212,6 +215,8 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
       calculatedHeader: null,
       calculationResult: null,
       audits: [],
+      validations: [],
+      healthPercent: 100,
       error: null,
       isBlocked: false,
       deepValidationErrors: []
@@ -471,11 +476,16 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
           }
       };
 
+      // Calculate health validations
+      const health = calculateCostSheetHealth(template, newCalculatedValues, finalHeader);
+
       setResultState({
           calculatedValues: newCalculatedValues,
           calculatedHeader: finalHeader,
           calculationResult: finalResult,
           audits: result.audits,
+          validations: health.validations,
+          healthPercent: health.healthPercent,
           error: null,
           isBlocked,
           deepValidationErrors: result.deepValidationErrors || []
@@ -492,6 +502,8 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
       calculatedAnnexes,
       annexTotals,
       audits: resultState.audits,
+      validations: resultState.validations,
+      healthPercent: resultState.healthPercent,
       calculationResult: resultState.calculationResult,
       error: resultState.error,
       isBlocked: resultState.isBlocked,
