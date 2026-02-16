@@ -153,25 +153,19 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
     if (baseVal <= 0) return;
     const taxFactor = totalPrice / baseVal;
 
-    // Iterative refinement for exact price match (step 0.01%)
-    // Starting with algebraic estimate for speed
-    let startMargin = (((targetPrice / totalPrice) * baseVal - totalCost) / totalCost) * 100;
-    startMargin = Math.max(0, startMargin - 2); // Start safely below
-
     const getPriceForMargin = (m: number) => (totalCost * (1 + m / 100)) * taxFactor;
 
-    // Increment 0.01 until we hit or exceed target
-    let bestMargin = startMargin;
-    for (let m = startMargin; m <= 500; m += 0.01) {
+    // User requested iterative algorithm starting from 0.001 with 0.001 step
+    let bestMargin = 0.001;
+    for (let m = 0.001; m <= 1000; m += 0.001) {
         const p = getPriceForMargin(m);
         if (p > targetPrice) {
             break;
         }
         bestMargin = m;
-        if (Math.abs(p - targetPrice) < 0.01) break; // Close enough for 2 decimals
     }
 
-    const clampedMargin = Math.max(0, Math.min(500, bestMargin));
+    const clampedMargin = Math.max(0.001, Math.min(1000, bestMargin));
     setSliderValue(clampedMargin);
     updateUtilityFormula(clampedMargin);
   };
@@ -274,34 +268,36 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
           />
         </div>
 
-        <div className="w-full lg:w-[450px]">
+        <div className="w-full lg:w-[480px]">
           <div className="glass-card-stitch rounded-3xl p-8 relative overflow-hidden group shadow-2xl">
             <header className="mb-10">
               <p className="text-[10px] uppercase tracking-[0.2em] text-primary mb-2 font-bold">Margen de Utilidad</p>
               <div className="flex items-baseline gap-1">
                 <h1 className="font-display text-6xl font-bold tracking-tighter neon-glow text-foreground">
-                  {sliderValue.toFixed(1)}<span className="text-primary text-3xl ml-1">%</span>
+                  {sliderValue.toFixed(3)}<span className="text-primary text-3xl ml-1">%</span>
                 </h1>
               </div>
               <p className="text-[11px] uppercase tracking-widest text-muted-foreground mt-2">Ajuste dinámico sobre costo (13.1/12.1)</p>
             </header>
 
-            <div className="glass-card-stitch rounded-2xl p-6 mb-10 relative overflow-hidden group/price">
-              <div className="absolute -right-4 -top-4 opacity-5 group-hover/price:opacity-10 transition-opacity">
-                <DollarSign className="w-24 h-24 text-foreground" />
-              </div>
+            <div className="glass-card-stitch rounded-2xl p-4 mb-10 relative overflow-hidden group/price border-primary/20 bg-primary/5">
               <div className="flex items-start">
-                <div>
+                <div className="w-full">
                   <p className="text-[10px] uppercase tracking-[0.2em] text-primary font-bold mb-1">Precio de Venta</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-3xl font-light text-muted-foreground shrink-0">$</span>
+                  <div className="flex items-center mt-1">
                     <input
                       type="number"
                       value={localPrice}
                       onFocus={() => setIsEditingPrice(true)}
                       onBlur={() => setIsEditingPrice(false)}
                       onChange={handlePriceChange}
-                      className="bg-transparent border-none text-left font-display text-5xl font-bold focus:ring-0 p-0 text-foreground w-full min-w-0 pr-4"
+                      className={cn(
+                        "bg-transparent border-none text-left font-display font-bold focus:ring-0 p-0 text-foreground w-full min-w-0 transition-all duration-300",
+                        localPrice.length <= 5 ? "text-5xl" :
+                        localPrice.length <= 7 ? "text-4xl" :
+                        localPrice.length <= 9 ? "text-3xl" :
+                        localPrice.length <= 12 ? "text-2xl" : "text-xl"
+                      )}
                     />
                   </div>
                   <p className="text-[9px] uppercase tracking-widest text-muted-foreground mt-1">Objetivo Final Calculado</p>
@@ -313,7 +309,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
               <div className="space-y-4">
                 <div className="flex justify-between items-end">
                   <label className="text-[11px] uppercase tracking-widest text-muted-foreground font-medium">Margen Deseado</label>
-                  <span className="text-primary font-display font-bold">{sliderValue.toFixed(1)}%</span>
+                  <span className="text-primary font-display font-bold">{sliderValue.toFixed(3)}%</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <button
