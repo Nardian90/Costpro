@@ -246,108 +246,110 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
           />
         </div>
 
-        <div className="w-full lg:w-[450px] space-y-6">
-          <div className="relative group p-8 rounded-[2.5rem] bg-sidebar/30 border border-sidebar-border/50 backdrop-blur-xl shadow-2xl transition-all duration-500 hover:border-primary/30">
-            <div className="space-y-8">
-              <div className="flex flex-col gap-2">
-                <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Margen de Utilidad</p>
-                <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest leading-relaxed">Ajuste dinámico sobre costo (13.1/12.1)</p>
-                <div className="flex items-baseline gap-1 mt-2">
-                  <span className="text-4xl font-black tracking-tighter text-foreground">{sliderValue.toFixed(1)}</span>
-                  <span className="text-xl font-black text-primary">%</span>
-                </div>
+        <div className="w-full lg:w-[450px]">
+          <div className="glass-card-stitch rounded-3xl p-8 relative overflow-hidden group shadow-2xl">
+            <header className="mb-10">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-primary mb-2 font-bold">Margen de Utilidad</p>
+              <div className="flex items-baseline gap-1">
+                <h1 className="font-display text-6xl font-bold tracking-tighter neon-glow text-foreground">
+                  {sliderValue.toFixed(1)}<span className="text-primary text-3xl ml-1">%</span>
+                </h1>
               </div>
+              <p className="text-[11px] uppercase tracking-widest text-muted-foreground mt-2">Ajuste dinámico sobre costo (13.1/12.1)</p>
+            </header>
 
-              <div className="space-y-6">
-                <div className="group relative">
-                  <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/50 to-emerald-500/50 rounded-2xl blur opacity-20 group-focus-within:opacity-40 transition duration-500"></div>
-                  <div className="relative flex items-center justify-between p-5 rounded-2xl bg-black/40 border border-white/5 backdrop-blur-md">
-                    <div className="flex items-center gap-4">
-                      <div className="p-2.5 rounded-xl bg-primary/10 border border-primary/20">
-                        <DollarSign className="w-5 h-5 text-primary" />
-                      </div>
-                      <div className="space-y-0.5">
-                        <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Precio de Venta</p>
-                        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Objetivo Final</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg font-black text-muted-foreground/50 tracking-tighter">$</span>
-                      <input
-                        type="number"
-                        value={localPrice}
-                        onFocus={() => setIsEditingPrice(true)}
-                        onBlur={() => setIsEditingPrice(false)}
-                        onChange={handlePriceChange}
-                        className="w-32 bg-transparent border-none text-right font-black text-3xl tracking-tighter focus:ring-0 p-0 text-foreground"
-                      />
-                    </div>
-                  </div>
+            <div className="glass-card-stitch rounded-2xl p-6 mb-10 relative overflow-hidden group/price">
+              <div className="absolute -right-4 -top-4 opacity-5 group-hover/price:opacity-10 transition-opacity">
+                <DollarSign className="w-24 h-24 text-foreground" />
+              </div>
+              <div className="flex items-start gap-5">
+                <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+                  <DollarSign className="text-primary w-8 h-8 font-bold" />
                 </div>
-
-                <div className="flex flex-row gap-6 h-64">
-                  <div className="flex flex-col items-center bg-black/20 border border-white/5 rounded-3xl pt-4 pb-4 px-2 w-24 shadow-inner overflow-hidden">
-                    <p className="text-[7px] font-black text-primary/70 uppercase tracking-[0.2em] mb-4 text-center">COEFICIENTE</p>
-                    <div className="flex-1 flex items-center py-2">
-                      <Slider
-                        value={[localCoef]}
-                        min={0.1}
-                        max={50}
-                        step={0.05}
-                        orientation="vertical"
-                        onValueChange={(val) => handleCoefChange(val[0])}
-                        className="h-full"
-                      />
-                    </div>
-                    <span className="text-[10px] font-black text-primary mt-4 tabular-nums bg-primary/10 px-2 py-0.5 rounded-md border border-primary/20 shadow-[0_0_10px_rgba(57,255,20,0.1)]">{localCoef.toFixed(2)}</span>
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-primary font-bold mb-1">Precio de Venta</p>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-light text-muted-foreground">$</span>
+                    <input
+                      type="number"
+                      value={localPrice}
+                      onFocus={() => setIsEditingPrice(true)}
+                      onBlur={() => setIsEditingPrice(false)}
+                      onChange={handlePriceChange}
+                      className="bg-transparent border-none text-left font-display text-4xl font-bold tracking-tight focus:ring-0 p-0 text-foreground w-full"
+                    />
                   </div>
-
-                  <div className="flex-1 flex flex-col justify-center gap-8">
-                    <div className="space-y-4">
-                      <Slider
-                        value={[sliderValue]}
-                        min={1}
-                        max={100}
-                        step={0.5}
-                        onValueChange={handleSliderChange}
-                        className="py-4"
-                      />
-                      <div className="flex justify-between px-1">
-                        <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Mín 1%</span>
-                        <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Máx 100%</span>
-                      </div>
-                    </div>
-
-                    <div className={cn(
-                      "p-5 rounded-2xl border transition-all duration-500 flex items-start gap-4",
-                      feedback.bg,
-                      feedback.border
-                    )}>
-                      <div className={cn("p-2.5 rounded-xl bg-white dark:bg-slate-900 shadow-sm shrink-0", feedback.color)}>
-                        <feedback.icon className="w-5 h-5" />
-                      </div>
-                      <div className="space-y-1">
-                        <p className={cn("text-[10px] font-black uppercase tracking-widest", feedback.color)}>Análisis de Margen</p>
-                        <p className="text-xs font-bold text-foreground/80 leading-relaxed">
-                          {feedback.text}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-6 border-t border-white/5">
-                  <div className="flex items-center gap-4 px-2">
-                    <div className="p-2.5 rounded-xl bg-primary/10">
-                      <TrendingUp className="w-4 h-4 text-primary" />
-                    </div>
-                    <p className="text-[10px] font-bold text-muted-foreground leading-relaxed uppercase tracking-wide">
-                      El sistema recalcula automáticamente el precio final y los impuestos basándose en este margen de utilidad.
-                    </p>
-                  </div>
+                  <p className="text-[9px] uppercase tracking-widest text-muted-foreground mt-1">Objetivo Final Calculado</p>
                 </div>
               </div>
             </div>
+
+            <div className="space-y-10 mb-12">
+              <div className="space-y-4">
+                <div className="flex justify-between items-end">
+                  <label className="text-[11px] uppercase tracking-widest text-muted-foreground font-medium">Margen Deseado</label>
+                  <span className="text-primary font-display font-bold">{sliderValue.toFixed(1)}%</span>
+                </div>
+                <Slider
+                  value={[sliderValue]}
+                  min={1}
+                  max={100}
+                  step={0.5}
+                  onValueChange={handleSliderChange}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-[9px] text-muted-foreground uppercase font-bold tracking-tighter">
+                  <span>mín 1%</span>
+                  <span>máx 100%</span>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex justify-between items-end">
+                  <label className="text-[11px] uppercase tracking-widest text-muted-foreground font-medium">Coeficiente</label>
+                  <span className="text-primary font-display font-bold">{localCoef.toFixed(2)}</span>
+                </div>
+                <Slider
+                  value={[localCoef]}
+                  min={0.1}
+                  max={5}
+                  step={0.01}
+                  onValueChange={(val) => handleCoefChange(val[0])}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-[9px] text-muted-foreground uppercase font-bold tracking-tighter">
+                  <span>base 1.0</span>
+                  <span>máx 5.0</span>
+                </div>
+              </div>
+            </div>
+
+            <div className={cn(
+              "amber-glow-border p-5 rounded-r-xl mb-auto transition-all duration-500",
+              sliderValue > 30 ? "bg-amber-500/5 opacity-100" : "bg-primary/5 border-primary opacity-80"
+            )}>
+              <div className="flex gap-4">
+                <feedback.icon className={cn("shrink-0 w-6 h-6", feedback.color)} />
+                <div>
+                  <h3 className={cn("text-xs font-bold uppercase tracking-widest mb-2", feedback.color)}>Análisis de Margen</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {feedback.text}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <footer className="mt-12 pt-6 border-t border-white/5">
+              <div className="flex items-center gap-3">
+                <div className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                </div>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-widest leading-tight">
+                  El sistema recalcula automáticamente el precio final y los impuestos basándose en este margen de utilidad.
+                </p>
+              </div>
+            </footer>
           </div>
         </div>
       </div>
