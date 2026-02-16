@@ -59,7 +59,17 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
   const indirectSum = row4 + row6 + row7;
   const indirectCoef = row2 > 0 ? indirectSum / row2 : 0;
 
-  const [localCoef, setLocalCoef] = useState(indirectCoef);
+  const [localCoef, setLocalCoef] = useState(() => {
+    // Try to extract current multiplier from section 4 formulas
+    const s4 = data.sections.find(s => s.id === '4' || s.id === 's4');
+    if (s4 && s4.rows.length > 0) {
+      const firstRow = s4.rows[0];
+      const formula = firstRow.formula || '';
+      const match = formula.match(/\*\s*([\d.]+)$/);
+      if (match) return parseFloat(match[1]);
+    }
+    return 1.0;
+  });
 
   useEffect(() => {
     setSliderValue(currentMarkup);
@@ -71,9 +81,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
     }
   }, [totalPrice, isEditingPrice]);
 
-  useEffect(() => {
-    setLocalCoef(indirectCoef);
-  }, [indirectCoef]);
+  // Decoupled from indirectCoef to allow manual multiplier setting
 
   const handleCoefChange = (newCoef: number) => {
     setLocalCoef(newCoef);
@@ -135,21 +143,33 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
     const val = e.target.value;
     setLocalPrice(val);
 
-    const numericPrice = parseFloat(val);
-    // If totalCost is 0, we fallback to simple margin calculation
-    if (isNaN(numericPrice) || numericPrice <= 0 || totalCost <= 0) return;
+    const targetPrice = parseFloat(val);
+    if (isNaN(targetPrice) || targetPrice <= 0 || totalCost <= 0) return;
 
-    let neededMargin = 0;
-    if (totalPrice > 0) {
-        // Enterprise formula: accounts for tax proportions relative to total cost
-        neededMargin = (((numericPrice / totalPrice) * (totalCost + utility) - totalCost) / totalCost) * 100;
-    } else {
-        // Fallback for zero price scenario
-        neededMargin = ((numericPrice - totalCost) / totalCost) * 100;
+    // Use tax factor to estimate relationship: Price = (Cost + Utility) * Factor
+    const baseVal = totalCost + utility;
+    if (baseVal <= 0) return;
+    const taxFactor = totalPrice / baseVal;
+
+    // Iterative refinement for exact price match (step 0.01%)
+    // Starting with algebraic estimate for speed
+    let startMargin = (((targetPrice / totalPrice) * baseVal - totalCost) / totalCost) * 100;
+    startMargin = Math.max(0, startMargin - 2); // Start safely below
+
+    const getPriceForMargin = (m: number) => (totalCost * (1 + m / 100)) * taxFactor;
+
+    // Increment 0.01 until we hit or exceed target
+    let bestMargin = startMargin;
+    for (let m = startMargin; m <= 500; m += 0.01) {
+        const p = getPriceForMargin(m);
+        if (p > targetPrice) {
+            break;
+        }
+        bestMargin = m;
+        if (Math.abs(p - targetPrice) < 0.01) break; // Close enough for 2 decimals
     }
 
-    const clampedMargin = Math.max(0, Math.min(500, neededMargin));
-
+    const clampedMargin = Math.max(0, Math.min(500, bestMargin));
     setSliderValue(clampedMargin);
     updateUtilityFormula(clampedMargin);
   };
@@ -274,15 +294,15 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
                 </div>
                 <div>
                   <p className="text-[10px] uppercase tracking-[0.2em] text-primary font-bold mb-1">Precio de Venta</p>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-light text-muted-foreground">$</span>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-3xl font-light text-muted-foreground shrink-0">$</span>
                     <input
                       type="number"
                       value={localPrice}
                       onFocus={() => setIsEditingPrice(true)}
                       onBlur={() => setIsEditingPrice(false)}
                       onChange={handlePriceChange}
-                      className="bg-transparent border-none text-left font-display text-4xl font-bold tracking-tight focus:ring-0 p-0 text-foreground w-full"
+                      className="bg-transparent border-none text-left font-display text-5xl font-bold tracking-tight focus:ring-0 p-0 text-foreground w-full min-w-0"
                     />
                   </div>
                   <p className="text-[9px] uppercase tracking-widest text-muted-foreground mt-1">Objetivo Final Calculado</p>
@@ -323,9 +343,17 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
                   onValueChange={(val) => handleCoefChange(val[0])}
                   className="w-full"
                 />
-                <div className="flex justify-between text-[9px] text-muted-foreground uppercase font-bold tracking-tighter">
-                  <span>mín 0.0</span>
-                  <span>máx 4.0</span>
+                <div className="flex flex-col gap-1">
+                  <div className="flex justify-between text-[9px] text-muted-foreground uppercase font-bold tracking-tighter">
+                    <span>mín 0.0</span>
+                    <span>máx 4.0</span>
+                  </div>
+                  <div className="mt-3 p-3 rounded-xl bg-primary/5 border border-primary/10 shadow-[inner_0_1px_2px_rgba(0,0,0,0.1)]">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-[0.1em] leading-relaxed flex justify-between items-center">
+                      <span>Relación Actual (Gtos Ind. / Salario):</span>
+                      <span className="text-primary font-black text-xs">{indirectCoef.toFixed(2)}</span>
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
