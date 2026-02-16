@@ -313,8 +313,8 @@ export const useCostSheetStore = create<CostSheetState>()(
             for (const section of draft.data.sections) {
               const row = section.rows.find(r => r.id === '13');
               if (row) {
-                row.value = percentage / 100;
-                row.calculationMethod = 'ValorFijo';
+                row.formula = `ref('12') * ${(percentage / 100).toFixed(4)}`;
+                row.calculationMethod = 'FORMULA';
                 break;
               }
             }
