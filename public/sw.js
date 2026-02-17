@@ -5,17 +5,25 @@ if (workbox) {
   console.log('Workbox is loaded');
 
   // Cache strategy for static assets
+  const staticStrategy = new workbox.strategies.StaleWhileRevalidate({
+    plugins: [
+      new workbox.expiration.ExpirationPlugin({
+        maxEntries: 50,
+        maxAgeSeconds: 7 * 24 * 60 * 60, // 7 Days
+      }),
+    ],
+  });
+
   workbox.routing.registerRoute(
     ({request}) => request.destination === 'script' || request.destination === 'style',
-    new workbox.strategies.StaleWhileRevalidate({
-      cacheName: 'static-resources',
-      plugins: [
-        new workbox.expiration.ExpirationPlugin({
-          maxEntries: 60,
-          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
-        }),
-      ],
-    })
+    async (args) => {
+      try {
+        return await staticStrategy.handle(args);
+      } catch (error) {
+        console.error('SW: Strategy error, falling back to network', error);
+        return fetch(args.request);
+      }
+    }
   );
 
   // Background Sync for the batch sync endpoint
@@ -59,5 +67,22 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    Promise.all([
+      self.clients.claim(),
+      // Clear specific caches known to cause issues if corrupted
+      caches.delete('static-resources'),
+      // Also clear old workbox caches if they are very old
+      caches.keys().then(cacheNames => {
+        return Promise.all(
+          cacheNames.map(cacheName => {
+            if (cacheName.includes('workbox-') && !cacheName.includes('7.0.0')) {
+               console.log('SW: Cleaning up old Workbox cache:', cacheName);
+               return caches.delete(cacheName);
+            }
+          })
+        );
+      })
+    ])
+  );
 });
