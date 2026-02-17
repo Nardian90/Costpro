@@ -1,11 +1,10 @@
 
-> nextjs_tailwind_shadcn_ts@5.7.25 dev /app
+> nextjs_tailwind_shadcn_ts@5.7.25 dev
 > next dev -p 3000
 
-▲ Next.js 16.1.3 (Turbopack)
+▲ Next.js 16.1.6 (Turbopack)
 - Local:         http://localhost:3000
 - Network:       http://192.168.0.2:3000
-- Environments: .env.local
 
 ✓ Starting...
 Attention: Next.js now collects completely anonymous telemetry regarding usage.
@@ -13,139 +12,12 @@ This information is used to shape Next.js' roadmap and prioritize features.
 You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
 https://nextjs.org/telemetry
 
-✓ Ready in 1202ms
-○ Compiling /test-academy ...
-⨯ ./src/components/views/terminal/views/academy/MasteryDashboard.tsx:3:1
-Module not found: Can't resolve '@/store/useAuthStore'
-[0m [90m 1 |[39m [36mimport[39m [33mReact[39m[33m,[39m { useEffect[33m,[39m useState } [36mfrom[39m [32m'react'[39m[33m;[39m
- [90m 2 |[39m [36mimport[39m { supabase } [36mfrom[39m [32m'@/lib/supabaseClient'[39m[33m;[39m
-[31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m { useAuthStore } [36mfrom[39m [32m'@/store/useAuthStore'[39m[33m;[39m
- [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
- [90m 4 |[39m [36mimport[39m { [33mCard[39m } [36mfrom[39m [32m'@/components/ui/card'[39m[33m;[39m
- [90m 5 |[39m [36mimport[39m { [33mProgress[39m } [36mfrom[39m [32m'@/components/ui/progress'[39m[33m;[39m
- [90m 6 |[39m [36mimport[39m { [33mBarChart[39m[33m,[39m [33mBar[39m[33m,[39m [33mXAxis[39m[33m,[39m [33mYAxis[39m[33m,[39m [33mCartesianGrid[39m[33m,[39m [33mTooltip[39m[33m,[39m [33mResponsiveContainer[39m[33m,[39m [33mCell[39m } [36mfrom[39m [32m'recharts'[39m[33m;[39m[0m
-
-Import map: aliased to relative './src/store/useAuthStore' inside of [project]/
-
-
-Import traces:
-  Client Component Browser:
-    ./src/components/views/terminal/views/academy/MasteryDashboard.tsx [Client Component Browser]
-    ./src/components/views/terminal/views/academy/AcademyView.tsx [Client Component Browser]
-    ./src/app/test-academy/page.tsx [Client Component Browser]
-    ./src/app/test-academy/page.tsx [Server Component]
-
-  Client Component SSR:
-    ./src/components/views/terminal/views/academy/MasteryDashboard.tsx [Client Component SSR]
-    ./src/components/views/terminal/views/academy/AcademyView.tsx [Client Component SSR]
-    ./src/app/test-academy/page.tsx [Client Component SSR]
-    ./src/app/test-academy/page.tsx [Server Component]
-
-https://nextjs.org/docs/messages/module-not-found
-
-
- GET /test-academy 500 in 12.7s (compile: 12.5s, render: 265ms)
-⨯ ./src/components/views/terminal/views/academy/MasteryDashboard.tsx:3:1
-Module not found: Can't resolve '@/store/useAuthStore'
-[0m [90m 1 |[39m [36mimport[39m [33mReact[39m[33m,[39m { useEffect[33m,[39m useState } [36mfrom[39m [32m'react'[39m[33m;[39m
- [90m 2 |[39m [36mimport[39m { supabase } [36mfrom[39m [32m'@/lib/supabaseClient'[39m[33m;[39m
-[31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m { useAuthStore } [36mfrom[39m [32m'@/store/useAuthStore'[39m[33m;[39m
- [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
- [90m 4 |[39m [36mimport[39m { [33mCard[39m } [36mfrom[39m [32m'@/components/ui/card'[39m[33m;[39m
- [90m 5 |[39m [36mimport[39m { [33mProgress[39m } [36mfrom[39m [32m'@/components/ui/progress'[39m[33m;[39m
- [90m 6 |[39m [36mimport[39m { [33mBarChart[39m[33m,[39m [33mBar[39m[33m,[39m [33mXAxis[39m[33m,[39m [33mYAxis[39m[33m,[39m [33mCartesianGrid[39m[33m,[39m [33mTooltip[39m[33m,[39m [33mResponsiveContainer[39m[33m,[39m [33mCell[39m } [36mfrom[39m [32m'recharts'[39m[33m;[39m[0m
-
-Import map: aliased to relative './src/store/useAuthStore' inside of [project]/
-
-
-Import traces:
-  Client Component Browser:
-    ./src/components/views/terminal/views/academy/MasteryDashboard.tsx [Client Component Browser]
-    ./src/components/views/terminal/views/academy/AcademyView.tsx [Client Component Browser]
-    ./src/app/test-academy/page.tsx [Client Component Browser]
-    ./src/app/test-academy/page.tsx [Server Component]
-
-  Client Component SSR:
-    ./src/components/views/terminal/views/academy/MasteryDashboard.tsx [Client Component SSR]
-    ./src/components/views/terminal/views/academy/AcademyView.tsx [Client Component SSR]
-    ./src/app/test-academy/page.tsx [Client Component SSR]
-    ./src/app/test-academy/page.tsx [Server Component]
-
-https://nextjs.org/docs/messages/module-not-found
-
-
- GET /test-academy 500 in 37ms (compile: 23ms, render: 14ms)
-✓ Compiled in 327ms
+✓ Ready in 1535ms
+○ Compiling / ...
 ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
 Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment.
- GET /test-academy 200 in 1174ms (compile: 326ms, render: 848ms)
-Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment.
- GET /api/academy/review 401 in 1595ms (compile: 1554ms, render: 41ms)
-⨯ ./src/app/api/academy/generate/route.ts:3:1
-Export default doesn't exist in target module
-[0m [90m 1 |[39m [36mimport[39m { [33mNextRequest[39m[33m,[39m [33mNextResponse[39m } [36mfrom[39m [32m'next/server'[39m[33m;[39m
- [90m 2 |[39m [36mimport[39m { [33mGoogleGenerativeAI[39m } [36mfrom[39m [32m'@google/generative-ai'[39m[33m;[39m
-[31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m pdf [36mfrom[39m [32m'pdf-parse'[39m[33m;[39m
- [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
- [90m 4 |[39m [36mimport[39m fs [36mfrom[39m [32m'fs'[39m[33m;[39m
- [90m 5 |[39m [36mimport[39m path [36mfrom[39m [32m'path'[39m[33m;[39m
- [90m 6 |[39m [36mimport[39m { supabase } [36mfrom[39m [32m'@/lib/supabaseClient'[39m[33m;[39m[0m
-
-The export default was not found in module [project]/node_modules/.pnpm/pdf-parse@2.4.5/node_modules/pdf-parse/dist/pdf-parse/esm/index.js [app-route] (ecmascript).
-Did you mean to import Rectangle?
-All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
-
-
- GET /api/academy/generate 500 in 1915ms (compile: 1879ms, render: 35ms)
-⨯ ./src/app/api/academy/generate/route.ts:3:1
-Export default doesn't exist in target module
-[0m [90m 1 |[39m [36mimport[39m { [33mNextRequest[39m[33m,[39m [33mNextResponse[39m } [36mfrom[39m [32m'next/server'[39m[33m;[39m
- [90m 2 |[39m [36mimport[39m { [33mGoogleGenerativeAI[39m } [36mfrom[39m [32m'@google/generative-ai'[39m[33m;[39m
-[31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m pdf [36mfrom[39m [32m'pdf-parse'[39m[33m;[39m
- [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
- [90m 4 |[39m [36mimport[39m fs [36mfrom[39m [32m'fs'[39m[33m;[39m
- [90m 5 |[39m [36mimport[39m path [36mfrom[39m [32m'path'[39m[33m;[39m
- [90m 6 |[39m [36mimport[39m { supabase } [36mfrom[39m [32m'@/lib/supabaseClient'[39m[33m;[39m[0m
-
-The export default was not found in module [project]/node_modules/.pnpm/pdf-parse@2.4.5/node_modules/pdf-parse/dist/pdf-parse/esm/index.js [app-route] (ecmascript).
-Did you mean to import Rectangle?
-All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
-
-
- GET /api/academy/generate 500 in 76ms (compile: 27ms, render: 49ms)
- GET /test-academy 200 in 143ms (compile: 39ms, render: 104ms)
- GET /api/academy/review 500 in 29ms (compile: 12ms, render: 16ms)
-⨯ ./src/app/api/academy/generate/route.ts:3:1
-Export default doesn't exist in target module
-[0m [90m 1 |[39m [36mimport[39m { [33mNextRequest[39m[33m,[39m [33mNextResponse[39m } [36mfrom[39m [32m'next/server'[39m[33m;[39m
- [90m 2 |[39m [36mimport[39m { [33mGoogleGenerativeAI[39m } [36mfrom[39m [32m'@google/generative-ai'[39m[33m;[39m
-[31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m pdf [36mfrom[39m [32m'pdf-parse'[39m[33m;[39m
- [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
- [90m 4 |[39m [36mimport[39m fs [36mfrom[39m [32m'fs'[39m[33m;[39m
- [90m 5 |[39m [36mimport[39m path [36mfrom[39m [32m'path'[39m[33m;[39m
- [90m 6 |[39m [36mimport[39m { supabase } [36mfrom[39m [32m'@/lib/supabaseClient'[39m[33m;[39m[0m
-
-The export default was not found in module [project]/node_modules/.pnpm/pdf-parse@2.4.5/node_modules/pdf-parse/dist/pdf-parse/esm/index.js [app-route] (ecmascript).
-Did you mean to import Rectangle?
-All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
-
-
- GET /api/academy/generate 500 in 34ms (compile: 15ms, render: 19ms)
-⨯ ./src/app/api/academy/generate/route.ts:3:1
-Export default doesn't exist in target module
-[0m [90m 1 |[39m [36mimport[39m { [33mNextRequest[39m[33m,[39m [33mNextResponse[39m } [36mfrom[39m [32m'next/server'[39m[33m;[39m
- [90m 2 |[39m [36mimport[39m { [33mGoogleGenerativeAI[39m } [36mfrom[39m [32m'@google/generative-ai'[39m[33m;[39m
-[31m[1m>[22m[39m[90m 3 |[39m [36mimport[39m pdf [36mfrom[39m [32m'pdf-parse'[39m[33m;[39m
- [90m   |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
- [90m 4 |[39m [36mimport[39m fs [36mfrom[39m [32m'fs'[39m[33m;[39m
- [90m 5 |[39m [36mimport[39m path [36mfrom[39m [32m'path'[39m[33m;[39m
- [90m 6 |[39m [36mimport[39m { supabase } [36mfrom[39m [32m'@/lib/supabaseClient'[39m[33m;[39m[0m
-
-The export default was not found in module [project]/node_modules/.pnpm/pdf-parse@2.4.5/node_modules/pdf-parse/dist/pdf-parse/esm/index.js [app-route] (ecmascript).
-Did you mean to import Rectangle?
-All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
-
-
- GET /api/academy/generate 500 in 28ms (compile: 14ms, render: 14ms)
- ELIFECYCLE  Command failed.
-[?25h
+ GET / 200 in 27.2s (compile: 26.1s, render: 1146ms)
+○ Compiling /login ...
+ GET /login 200 in 5.6s (compile: 5.5s, render: 98ms)
+✓ Finished writing to filesystem cache in 10.5s
+ GET / 200 in 60ms (compile: 25ms, render: 35ms)

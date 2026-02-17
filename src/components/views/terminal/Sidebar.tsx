@@ -66,20 +66,17 @@ export const Sidebar = ({
       },
       {
         id: 'punto_venta',
-        label: 'MÓDULO PUNTO DE VENTA',
-        sublabel: 'Acciones de Caja',
+        label: 'Punto de Venta',
         items: ['pos', 'sales', 'cash']
       },
       {
         id: 'almacen',
-        label: 'MÓDULO ALMACÉN',
-        sublabel: 'Logística e Inventario',
+        label: 'Módulo almacén',
         items: ['catalog', 'inventory', 'recepcion', 'reception_list', 'transferencias', 'inventory_count', 'history']
       },
       {
         id: 'administracion',
-        label: 'MÓDULO ADMINISTRACIÓN',
-        sublabel: 'Configuración y Control',
+        label: 'Administración',
         items: [
           'users',
           'roles',
