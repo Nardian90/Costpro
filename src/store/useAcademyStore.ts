@@ -22,7 +22,7 @@ interface AcademyState {
   error: string | null;
   fetchDailyCards: () => Promise<void>;
   evaluateCard: (cardId: string, score: number) => Promise<void>;
-  generateCards: (filename: string) => Promise<void>;
+  generateCards: (filename: string, aiProvider?: string, aiApiKey?: string) => Promise<void>;
 }
 
 export const useAcademyStore = create<AcademyState>((set, get) => ({
@@ -82,13 +82,13 @@ export const useAcademyStore = create<AcademyState>((set, get) => ({
     }
   },
 
-  generateCards: async (filename) => {
+  generateCards: async (filename, aiProvider, aiApiKey) => {
     set({ loading: true, error: null });
     try {
       const response = await fetch('/api/academy/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filename })
+        body: JSON.stringify({ filename, aiProvider, aiApiKey })
       });
       if (!response.ok) {
           const errorData = await response.json();
