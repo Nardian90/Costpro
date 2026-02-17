@@ -781,3 +781,30 @@ export function getMergedPermissions(roles: UserRole[]): RolePermissions {
 
   return merged;
 }
+
+// ============================================
+// Academy Module
+// ============================================
+
+export interface AcademyCard {
+  id: string;
+  category: string;
+  difficulty: 'Básico' | 'Operativo' | 'Experto';
+  question: string;
+  answer: string;
+  source: string;
+  created_at: string;
+}
+
+export interface UserAcademyProgress {
+  id: string;
+  user_id: string;
+  card_id: string;
+  ease_factor: number;
+  interval_days: number;
+  repetitions: number;
+  next_review: string;
+  last_review: string | null;
+  mastery_score: number;
+  learning_cards?: AcademyCard;
+}
