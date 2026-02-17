@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAcademyStore } from '@/store/useAcademyStore';
+import { useAuthStore } from '@/store';
 import { Flashcard } from './Flashcard';
 import { MasteryDashboard } from './MasteryDashboard';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import { CostProLoader } from '@/components/ui/CostProLoader';
 import { toast } from 'sonner';
 
 export default function AcademyView() {
+  const { user } = useAuthStore();
   const {
     dueCards, newCards, loading, error,
     fetchDailyCards, evaluateCard, generateCards
@@ -38,7 +40,7 @@ export default function AcademyView() {
 
   const handleGenerate = async (filename: string) => {
     try {
-        await generateCards(filename);
+        await generateCards(filename, user?.aiProvider, user?.aiApiKey);
         toast.success('Flashcards generadas correctamente');
         fetchDailyCards();
         setActiveTab('study');
