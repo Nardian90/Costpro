@@ -307,7 +307,18 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
             totalPrice={totalPrice}
             utility={utility}
             totalCost={totalCost}
-          />
+          >
+            <div className="w-full px-8 -mt-2">
+              <Slider
+                value={[totalPrice]}
+                min={totalCost}
+                max={Math.max(totalPrice * 2, totalCost * 5, 100)}
+                step={0.01}
+                onValueChange={(val) => goalSeek(val[0])}
+                className="w-full"
+              />
+            </div>
+          </CostSheetMasterRing>
         </div>
 
         <div className="w-full lg:w-[600px]">
