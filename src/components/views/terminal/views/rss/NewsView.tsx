@@ -100,7 +100,7 @@ export default function NewsView() {
                   Ver Detalles <ExternalLink className="w-4 h-4" />
                 </a>
               )}
-              <div className="mt-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1">
+              <div className="mt-2 text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1">
                 <Clock className="w-3 h-3" />
                 Publicado: {safeFormatDate(exchangeRateNews.pubDate)} {formatTime(exchangeRateNews.pubDate)}
               </div>
@@ -136,7 +136,7 @@ export default function NewsView() {
           </button>
         </div>
         <div className="md:col-span-1 flex items-center justify-center p-3 rounded-2xl border border-dashed border-border bg-muted/30">
-          <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">
+          <span className="text-xs font-black uppercase text-muted-foreground tracking-widest">
             {filteredNews.length} Resultados
           </span>
         </div>
@@ -184,7 +184,7 @@ function NewsCard({ item }: { item: RSSNewsItem }) {
     >
       {item.isPriority && (
         <div className="absolute top-0 right-0">
-          <div className="bg-amber-500 text-white text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-bl-xl shadow-lg">
+          <div className="bg-amber-500 text-white text-xs font-black uppercase tracking-widest px-3 py-1 rounded-bl-xl shadow-lg">
             Prioritario
           </div>
         </div>
@@ -199,11 +199,11 @@ function NewsCard({ item }: { item: RSSNewsItem }) {
             )}>
               <Newspaper className="w-4 h-4" />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+            <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">
               {item.feedName || 'Noticias'}
             </span>
           </div>
-          <div className="text-[9px] font-bold text-muted-foreground uppercase flex items-center gap-1">
+          <div className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-1">
             <Clock className="w-3 h-3" />
             {safeFormatDate(item.pubDate)}
           </div>
@@ -224,7 +224,7 @@ function NewsCard({ item }: { item: RSSNewsItem }) {
           href={item.link}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline flex items-center gap-1"
+          className="text-xs font-black uppercase tracking-widest text-primary hover:underline flex items-center gap-1"
         >
           Leer noticia completa <ExternalLink className="w-3 h-3" />
         </a>

@@ -136,15 +136,15 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
 
   const getStatusBadge = (status: string, diffCents: number, matchedTotal: number) => {
     if (status === 'NO_PROCESAR') {
-        return <Badge className="bg-slate-400/10 text-slate-500 border-slate-500/20 text-[10px] font-black uppercase tracking-tighter">NO PROCESAR</Badge>;
+        return <Badge className="bg-slate-400/10 text-slate-500 border-slate-500/20 text-xs font-black uppercase tracking-tighter">NO PROCESAR</Badge>;
     }
     if (matchedTotal > 0 && Math.abs(diffCents) < 0.001) {
-      return <Badge className="bg-green-500 text-white border-green-600 shadow-sm text-[10px] font-black uppercase tracking-tighter">CUADRADA</Badge>;
+      return <Badge className="bg-green-500 text-white border-green-600 shadow-sm text-xs font-black uppercase tracking-tighter">CUADRADA</Badge>;
     }
     if (matchedTotal > 0 && Math.abs(diffCents) >= 0.001) {
-      return <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20 text-[10px] font-black uppercase tracking-tighter">EN PROCESO</Badge>;
+      return <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20 text-xs font-black uppercase tracking-tighter">EN PROCESO</Badge>;
     }
-    return <Badge className="bg-gray-500/10 text-gray-500 border-gray-500/20 text-[10px] font-black uppercase tracking-tighter">PENDIENTE</Badge>;
+    return <Badge className="bg-gray-500/10 text-gray-500 border-gray-500/20 text-xs font-black uppercase tracking-tighter">PENDIENTE</Badge>;
   };
 
   return (
@@ -178,7 +178,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                         onCheckedChange={setShowExcluded}
                         className="scale-75"
                     />
-                    <Label htmlFor="show-excluded" className={`text-[9px] font-black uppercase cursor-pointer tracking-tighter ${showExcluded ? 'text-primary' : 'text-muted-foreground'}`}>
+                    <Label htmlFor="show-excluded" className={`text-xs font-black uppercase cursor-pointer tracking-tighter ${showExcluded ? 'text-primary' : 'text-muted-foreground'}`}>
                         {showExcluded ? 'Mostrando Excluidos' : 'Ocultando Excluidos'}
                     </Label>
                 </div>
@@ -192,12 +192,12 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                                 variant="ghost"
                                 size="sm"
                                 onClick={bulkResetMatching}
-                                className="h-7 text-[10px] font-black uppercase text-orange-600 hover:bg-orange-500/10"
+                                className="h-7 text-xs font-black uppercase text-orange-600 hover:bg-orange-500/10"
                             >
                                 <RotateCcw className="w-3 h-3 mr-1" /> Reset
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
+                        <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
                             Elimina todas las líneas de reconciliación de las transacciones visibles actualmente. ¡Acción destructiva!
                         </TooltipContent>
                     </Tooltip>
@@ -219,7 +219,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                         <HelpCircle className="w-4 h-4" />
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
+                <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
                     Ver ayuda detallada sobre las columnas y el proceso de importación de extractos.
                 </TooltipContent>
             </Tooltip>
@@ -235,7 +235,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                         <List className="w-4 h-4" />
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
+                <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
                     Vista de tabla detallada.
                 </TooltipContent>
             </Tooltip>
@@ -251,7 +251,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                         <LayoutGrid className="w-4 h-4" />
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
+                <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
                     Vista de tarjetas optimizada para móviles.
                 </TooltipContent>
             </Tooltip>
@@ -281,7 +281,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                           <TooltipTrigger>
                               <Info className="w-3 h-3 text-muted-foreground" />
                           </TooltipTrigger>
-                          <TooltipContent className="text-[10px] max-w-xs p-3">
+                          <TooltipContent className="text-xs max-w-xs p-3">
                               <p className="font-black mb-1 text-primary">Estados de Conciliación:</p>
                               <ul className="space-y-1">
                                   <li><strong>CUADRADA:</strong> Diferencia es $0.00. Listo para el IPV.</li>
@@ -356,7 +356,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                                         className="mt-1"
                                     />
                                     <div>
-                                        <p className="text-[10px] font-black text-muted-foreground uppercase">{formatDate(tx.fecha)}</p>
+                                        <p className="text-xs font-black text-muted-foreground uppercase">{formatDate(tx.fecha)}</p>
                                         <p className="text-xs font-mono font-bold text-primary">{tx.referencia_origen}</p>
                                     </div>
                                 </div>
@@ -369,22 +369,22 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
 
                             <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border/50">
                                 <div>
-                                    <p className="text-[8px] font-bold text-muted-foreground uppercase">Neto</p>
+                                    <p className="text-xs font-bold text-muted-foreground uppercase">Neto</p>
                                     <p className="text-xs font-bold">{formatCurrency(tx.importe_cents)}</p>
                                 </div>
                                 <div>
-                                    <p className="text-[8px] font-bold text-muted-foreground uppercase">Comis.</p>
+                                    <p className="text-xs font-bold text-muted-foreground uppercase">Comis.</p>
                                     <p className="text-xs font-bold text-red-500">{formatCurrency(tx.comision_cents || 0)}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-[8px] font-bold text-primary uppercase">Objetivo</p>
+                                    <p className="text-xs font-bold text-primary uppercase">Objetivo</p>
                                     <p className="text-sm font-black">{formatCurrency(targetAmount)}</p>
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-1 pt-2">
                                 <div className="text-right">
-                                    <p className="text-[9px] font-bold text-muted-foreground uppercase">Diferencia</p>
+                                    <p className="text-xs font-bold text-muted-foreground uppercase">Diferencia</p>
                                     <p className={`text-lg font-black ${Math.abs(diff) < 0.001 ? 'text-green-500' : (diff < -0.001 ? 'text-red-500' : 'text-orange-500')}`}>
                                         {formatCurrency(diff)}
                                     </p>
@@ -392,7 +392,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                             </div>
 
                             <div className="flex justify-between items-center pt-2">
-                                <span className={`text-[10px] font-black uppercase tracking-widest ${tx.tipo === 'Cr' ? 'text-green-500/80' : 'text-red-500/80'}`}>
+                                <span className={`text-xs font-black uppercase tracking-widest ${tx.tipo === 'Cr' ? 'text-green-500/80' : 'text-red-500/80'}`}>
                                     {tx.tipo === 'Cr' ? 'Crédito (Ingreso)' : 'Débito (Gasto)'}
                                 </span>
                                 <div className="flex gap-2 items-center">
@@ -506,7 +506,7 @@ function ColumnHelpModal({ open, onOpenChange }: { open: boolean, onOpenChange: 
 
                 <div className="p-4 bg-primary/5 rounded-2xl border border-primary/20">
                     <p className="text-xs font-bold text-primary mb-2 uppercase tracking-widest">💡 Tip Pro:</p>
-                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    <p className="text-xs text-muted-foreground leading-relaxed">
                         Si exportas tus movimientos desde BANDEC en formato .txt, el sistema los reconocerá y parseará automáticamente sin necesidad de usar la plantilla CSV.
                     </p>
                 </div>
@@ -590,18 +590,18 @@ function ForceMatchPopover({ transaction }: { transaction: BankTransaction }) {
                         </Button>
                     </PopoverTrigger>
                 </TooltipTrigger>
-                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
+                <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
                     Forzar Matching: Selecciona un producto para cubrir lo máximo posible de esta transacción.
                 </TooltipContent>
             </Tooltip>
             <PopoverContent className="w-72 p-0 shadow-2xl rounded-2xl border-primary/20" align="end">
                 <div className="p-3 border-b bg-muted/20">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Forzar Matching</p>
+                    <p className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">Forzar Matching</p>
                     <div className="relative">
                         <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
                         <Input
                             placeholder="Buscar producto..."
-                            className="pl-7 h-8 text-[10px] rounded-lg"
+                            className="pl-7 h-8 text-xs rounded-lg"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -616,10 +616,10 @@ function ForceMatchPopover({ transaction }: { transaction: BankTransaction }) {
                                 onClick={() => handleForceMatch(p)}
                             >
                                 <div className="min-w-0 flex-1">
-                                    <p className="text-[10px] font-black uppercase text-foreground truncate">{p.descripcion}</p>
+                                    <p className="text-xs font-black uppercase text-foreground truncate">{p.descripcion}</p>
                                     <div className="flex gap-2">
-                                        <span className="text-[8px] text-muted-foreground font-bold uppercase">Stock: {p.stock_inicial_manual}</span>
-                                        <span className="text-[8px] text-primary font-bold uppercase">${p.precio_cents}</span>
+                                        <span className="text-xs text-muted-foreground font-bold uppercase">Stock: {p.stock_inicial_manual}</span>
+                                        <span className="text-xs text-primary font-bold uppercase">${p.precio_cents}</span>
                                     </div>
                                 </div>
                                 <Plus className="w-3 h-3 text-primary opacity-0 group-hover:opacity-100 transition-opacity ml-2 shrink-0" />
@@ -736,24 +736,24 @@ function BulkForceMatchPopover({ transactions }: { transactions: BankTransaction
                         <Button
                             variant="ghost"
                             size="sm"
-                            className="h-7 text-[10px] font-black uppercase text-blue-600 hover:bg-blue-500/10"
+                            className="h-7 text-xs font-black uppercase text-blue-600 hover:bg-blue-500/10"
                         >
                             <Target className="w-3 h-3 mr-1" /> Forzar Matching
                         </Button>
                     </PopoverTrigger>
                 </TooltipTrigger>
-                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
+                <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
                     Forzar Matching (Masivo): Aplica un producto a TODAS las transacciones pendientes filtradas. Respeta existencias si el límite está activo.
                 </TooltipContent>
             </Tooltip>
             <PopoverContent className="w-72 p-0 shadow-2xl rounded-2xl border-primary/20" align="end">
                 <div className="p-3 border-b bg-muted/20">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Forzar Matching Masivo</p>
+                    <p className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">Forzar Matching Masivo</p>
                     <div className="relative">
                         <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
                         <Input
                             placeholder="Buscar producto..."
-                            className="pl-7 h-8 text-[10px] rounded-lg"
+                            className="pl-7 h-8 text-xs rounded-lg"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -768,10 +768,10 @@ function BulkForceMatchPopover({ transactions }: { transactions: BankTransaction
                                 onClick={() => handleBulkForceMatch(p)}
                             >
                                 <div className="min-w-0 flex-1">
-                                    <p className="text-[10px] font-black uppercase text-foreground truncate">{p.descripcion}</p>
+                                    <p className="text-xs font-black uppercase text-foreground truncate">{p.descripcion}</p>
                                     <div className="flex gap-2">
-                                        <span className="text-[8px] text-muted-foreground font-bold uppercase">Stock: {currentStockMap.get(p.cod) || 0}</span>
-                                        <span className="text-[8px] text-primary font-bold uppercase">${p.precio_cents}</span>
+                                        <span className="text-xs text-muted-foreground font-bold uppercase">Stock: {currentStockMap.get(p.cod) || 0}</span>
+                                        <span className="text-xs text-primary font-bold uppercase">${p.precio_cents}</span>
                                     </div>
                                 </div>
                                 <Plus className="w-3 h-3 text-primary opacity-0 group-hover:opacity-100 transition-opacity ml-2 shrink-0" />
@@ -801,8 +801,8 @@ const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onDelete
           <TableCell className="sticky-column-1 font-medium whitespace-nowrap text-xs">
             {formatDate(tx.fecha)}
           </TableCell>
-          <TableCell className="font-mono text-[10px] max-w-[120px] truncate">{tx.referencia_origen}</TableCell>
-          <TableCell className="text-[10px] max-w-[150px]">
+          <TableCell className="font-mono text-xs max-w-[120px] truncate">{tx.referencia_origen}</TableCell>
+          <TableCell className="text-xs max-w-[150px]">
             <div className="truncate" title={tx.observaciones}>
                 {tx.observaciones}
             </div>
@@ -820,7 +820,7 @@ const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onDelete
             {formatCurrency(diff)}
           </TableCell>
           <TableCell>
-            <span className={`text-[10px] font-black ${tx.tipo === 'Cr' ? 'text-green-500' : 'text-red-500'}`}>
+            <span className={`text-xs font-black ${tx.tipo === 'Cr' ? 'text-green-500' : 'text-red-500'}`}>
                 {tx.tipo}
             </span>
           </TableCell>
@@ -860,7 +860,7 @@ const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onDelete
                                     <CheckCircle2 className="w-4 h-4" />
                                 </Button>
                             </TooltipTrigger>
-                            <TooltipContent className="text-[10px]">Ajustar Todo (Cerrar transacción)</TooltipContent>
+                            <TooltipContent className="text-xs">Ajustar Todo (Cerrar transacción)</TooltipContent>
                         </Tooltip>
                         <QuickAdjustPopover
                             transaction={tx}
@@ -880,7 +880,7 @@ const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onDelete
                             <Eye className="w-4 h-4" />
                         </Button>
                     </TooltipTrigger>
-                    <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
+                    <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
                         Ver detalles y gestionar reconciliación manual.
                     </TooltipContent>
                 </Tooltip>
@@ -897,7 +897,7 @@ const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onDelete
                                 <RotateCcw className="w-4 h-4" />
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
+                        <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
                             Reiniciar Conciliación: Borra los productos asociados a esta transacción.
                         </TooltipContent>
                     </Tooltip>
@@ -914,7 +914,7 @@ const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onDelete
                             <Trash2 className="w-4 h-4" />
                         </Button>
                     </TooltipTrigger>
-                    <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
+                    <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
                         Eliminar Transacción permanentemente.
                     </TooltipContent>
                 </Tooltip>
@@ -972,19 +972,19 @@ function QuickAdjustPopover({ transaction, remaining, onSuccess }: { transaction
                         </Button>
                     </PopoverTrigger>
                 </TooltipTrigger>
-                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
+                <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
                     Ajuste Rápido: Distribuye la diferencia restante como propina o descuento en un producto existente.
                 </TooltipContent>
             </Tooltip>
             <PopoverContent className="w-64 p-3 shadow-2xl rounded-2xl border-primary/20" align="end">
                 <div className="space-y-3">
                     <div className="flex justify-between items-center border-b pb-2">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Ajuste Rápido</span>
-                        <Badge variant="outline" className={`text-[10px] font-black ${remaining > 0 ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'}`}>
+                        <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Ajuste Rápido</span>
+                        <Badge variant="outline" className={`text-xs font-black ${remaining > 0 ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'}`}>
                             {remaining > 0 ? `+${remaining} cts` : `${remaining} cts`}
                         </Badge>
                     </div>
-                    <p className="text-[10px] text-muted-foreground font-medium uppercase leading-tight">
+                    <p className="text-xs text-muted-foreground font-medium uppercase leading-tight">
                         Selecciona el producto al que aplicar el {remaining > 0 ? 'exceso (Propina)' : 'faltante (Descuento)'}:
                     </p>
                     <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
@@ -994,9 +994,9 @@ function QuickAdjustPopover({ transaction, remaining, onSuccess }: { transaction
                                 className="w-full text-left p-2 hover:bg-primary/5 rounded-lg border border-transparent hover:border-primary/20 transition-all group"
                                 onClick={() => handleAdjust(l)}
                             >
-                                <p className="text-[10px] font-black uppercase text-foreground truncate">{l.product_cod}</p>
+                                <p className="text-xs font-black uppercase text-foreground truncate">{l.product_cod}</p>
                                 <div className="flex justify-between items-center">
-                                    <span className="text-[9px] text-muted-foreground">{l.cantidad} ud × {l.precio_unitario_cents}</span>
+                                    <span className="text-xs text-muted-foreground">{l.cantidad} ud × {l.precio_unitario_cents}</span>
                                     <Zap className="w-3 h-3 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
                                 </div>
                             </button>

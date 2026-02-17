@@ -443,7 +443,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
       <div className={cn("flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar", isSection ? "min-h-[600px]" : "")}>
             {/* Source Selection */}
             <div className="space-y-4">
-                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/70 mb-2 px-1">
+                <div className="text-xs font-black uppercase tracking-[0.2em] text-primary/70 mb-2 px-1">
                     Selección de Catálogo (Origen de Datos)
                 </div>
 
@@ -461,13 +461,13 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                     <TabsList className="grid grid-cols-2 h-14 bg-sidebar/40 p-1 rounded-2xl border border-sidebar-border/50">
                         <TabsTrigger
                             value="system"
-                            className="rounded-xl font-black uppercase tracking-widest text-[10px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground shadow-none transition-all"
+                            className="rounded-xl font-black uppercase tracking-widest text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground shadow-none transition-all"
                         >
                             Catálogo del Sistema
                         </TabsTrigger>
                         <TabsTrigger
                             value="imported"
-                            className="rounded-xl font-black uppercase tracking-widest text-[10px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground shadow-none transition-all"
+                            className="rounded-xl font-black uppercase tracking-widest text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground shadow-none transition-all"
                         >
                             Listado Importado (Excel)
                         </TabsTrigger>
@@ -481,7 +481,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                                 </div>
                                 <div>
                                     <p className="text-sm font-bold">Usando Catálogo del Sistema</p>
-                                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-1">
+                                    <p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">
                                         Se procesarán los productos activos de la tienda actual.
                                     </p>
                                 </div>
@@ -489,7 +489,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                                     variant="outline"
                                     size="sm"
                                     onClick={handleImportClick}
-                                    className="mt-2 rounded-xl text-[10px] font-black uppercase tracking-widest border-primary/30 text-primary hover:bg-primary/10"
+                                    className="mt-2 rounded-xl text-xs font-black uppercase tracking-widest border-primary/30 text-primary hover:bg-primary/10"
                                 >
                                     <Upload className="w-3 h-3 mr-2" />
                                     ¿Prefieres importar un Excel?
@@ -514,7 +514,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                                     </div>
                                     <div>
                                         <p className="text-sm font-bold text-success">Listado Importado Exitosamente</p>
-                                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-1">
+                                        <p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">
                                             Se han cargado {importedProducts.length} productos {initialProducts && initialProducts.length > 0 ? 'desde el Modo Rápido' : 'desde el archivo'}.
                                         </p>
                                     </div>
@@ -524,7 +524,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                                         variant="outline"
                                         size="sm"
                                         onClick={handleImportClick}
-                                        className="h-10 rounded-xl text-[10px] font-black uppercase tracking-widest"
+                                        className="h-10 rounded-xl text-xs font-black uppercase tracking-widest"
                                     >
                                         <RotateCcw className="w-3 h-3 mr-2" />
                                         Cambiar
@@ -533,7 +533,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                                         variant="ghost"
                                         size="sm"
                                         onClick={() => { setImportedProducts([]); reset(); }}
-                                        className="h-10 rounded-xl text-[10px] font-black uppercase tracking-widest text-danger hover:bg-danger/10"
+                                        className="h-10 rounded-xl text-xs font-black uppercase tracking-widest text-danger hover:bg-danger/10"
                                     >
                                         <XIcon className="w-3 h-3 mr-2" />
                                         Quitar
@@ -560,7 +560,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                             variant="link"
                             size="sm"
                             onClick={exportMassiveTemplate}
-                            className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary h-auto p-0"
+                            className="text-xs font-black uppercase tracking-widest text-muted-foreground hover:text-primary h-auto p-0"
                         >
                             <Download className="w-3 h-3 mr-2" />
                             Descargar Plantilla de Importación
@@ -571,7 +571,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
 
             {/* Export Options */}
             <div className="p-4 rounded-2xl bg-sidebar/40 border border-sidebar-border/50 space-y-4">
-                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/70 px-1">
+                <div className="text-xs font-black uppercase tracking-[0.2em] text-primary/70 px-1">
                     Opciones de Exportación (PDF)
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -581,7 +581,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                             checked={exportOptions.includeFC}
                             onCheckedChange={(c) => setExportOptions(prev => ({ ...prev, includeFC: !!c }))}
                         />
-                        <Label htmlFor="m-includeFC" className="text-[10px] font-bold uppercase cursor-pointer">Ficha (FC)</Label>
+                        <Label htmlFor="m-includeFC" className="text-xs font-bold uppercase cursor-pointer">Ficha (FC)</Label>
                     </div>
                     <div className="flex items-center gap-2">
                         <Checkbox
@@ -589,7 +589,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                             checked={exportOptions.includeAudit}
                             onCheckedChange={(c) => setExportOptions(prev => ({ ...prev, includeAudit: !!c }))}
                         />
-                        <Label htmlFor="m-includeAudit" className="text-[10px] font-bold uppercase cursor-pointer">Auditoría</Label>
+                        <Label htmlFor="m-includeAudit" className="text-xs font-bold uppercase cursor-pointer">Auditoría</Label>
                     </div>
                     <div className="flex items-center gap-2">
                         <Switch
@@ -597,7 +597,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                             checked={exportOptions.skipZeros}
                             onCheckedChange={(c) => setExportOptions(prev => ({ ...prev, skipZeros: c }))}
                         />
-                        <Label htmlFor="m-skipZeros" className="text-[10px] font-bold uppercase cursor-pointer">Omitir Ceros</Label>
+                        <Label htmlFor="m-skipZeros" className="text-xs font-bold uppercase cursor-pointer">Omitir Ceros</Label>
                     </div>
                     <div className="flex items-center gap-2">
                         <Switch
@@ -605,7 +605,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                             checked={exportOptions.consolidated}
                             onCheckedChange={(c) => setExportOptions(prev => ({ ...prev, consolidated: c }))}
                         />
-                        <Label htmlFor="m-consolidated" className="text-[10px] font-bold uppercase cursor-pointer">Consolidar</Label>
+                        <Label htmlFor="m-consolidated" className="text-xs font-bold uppercase cursor-pointer">Consolidar</Label>
                     </div>
                     <div className="flex items-center gap-2">
                         <Switch
@@ -613,13 +613,13 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                             checked={exportOptions.includeUtilityNote}
                             onCheckedChange={(c) => setExportOptions(prev => ({ ...prev, includeUtilityNote: c }))}
                         />
-                        <Label htmlFor="m-includeUtilityNote" className="text-[10px] font-bold uppercase cursor-pointer">Nota Util.</Label>
+                        <Label htmlFor="m-includeUtilityNote" className="text-xs font-bold uppercase cursor-pointer">Nota Util.</Label>
                     </div>
                 </div>
 
                 {currentSheet?.annexes && currentSheet.annexes.length > 0 && (
                     <div className="pt-2 border-t border-sidebar-border/30">
-                        <div className="text-[9px] font-bold uppercase text-muted-foreground mb-2">Anexos a incluir:</div>
+                        <div className="text-xs font-bold uppercase text-muted-foreground mb-2">Anexos a incluir:</div>
                         <div className="flex flex-wrap gap-3">
                             {currentSheet.annexes.map(a => (
                                 <div key={a.id} className="flex items-center gap-2">
@@ -635,7 +635,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                                             }));
                                         }}
                                     />
-                                    <Label htmlFor={`m-annex-${a.id}`} className="text-[10px] font-medium cursor-pointer">{a.id}</Label>
+                                    <Label htmlFor={`m-annex-${a.id}`} className="text-xs font-medium cursor-pointer">{a.id}</Label>
                                 </div>
                             ))}
                         </div>
@@ -646,17 +646,17 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
             {/* Stats / Progress */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10">
-                    <div className="text-[10px] font-black text-primary/70 tracking-[0.2em] uppercase mb-1">Total Productos</div>
+                    <div className="text-xs font-black text-primary/70 tracking-[0.2em] uppercase mb-1">Total Productos</div>
                     <div className="text-2xl font-black text-foreground">{products.length}</div>
                 </div>
                 <div className="p-4 rounded-2xl bg-success/5 border border-success/10">
-                    <div className="text-[10px] font-black text-success/70 tracking-[0.2em] uppercase mb-1">Procesados</div>
+                    <div className="text-xs font-black text-success/70 tracking-[0.2em] uppercase mb-1">Procesados</div>
                     <div className="text-2xl font-black text-foreground">
                         {results.filter(r => r.status === 'completed').length}
                     </div>
                 </div>
                 <div className="p-4 rounded-2xl bg-danger/5 border border-danger/10">
-                    <div className="text-[10px] font-black text-danger/70 tracking-[0.2em] uppercase mb-1">Errores</div>
+                    <div className="text-xs font-black text-danger/70 tracking-[0.2em] uppercase mb-1">Errores</div>
                     <div className="text-2xl font-black text-foreground">
                         {results.filter(r => r.status === 'error').length}
                     </div>
@@ -665,7 +665,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
 
             {isProcessing && (
                 <div className="space-y-2">
-                    <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-muted-foreground px-1">
+                    <div className="flex justify-between text-xs font-black uppercase tracking-widest text-muted-foreground px-1">
                         <span>Progreso General</span>
                         <span>{Math.round(progress)}%</span>
                     </div>
@@ -678,12 +678,12 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                 <Table>
                     <TableHeader className="bg-sidebar/30">
                         <TableRow className="border-sidebar-border/50 hover:bg-transparent">
-                            <TableHead className="text-[10px] font-black uppercase tracking-widest h-10">SKU</TableHead>
-                            <TableHead className="text-[10px] font-black uppercase tracking-widest h-10">Producto</TableHead>
-                            <TableHead className="text-[10px] font-black uppercase tracking-widest h-10 text-right">Costo</TableHead>
-                            <TableHead className="text-[10px] font-black uppercase tracking-widest h-10 text-right">Venta</TableHead>
-                            <TableHead className="text-[10px] font-black uppercase tracking-widest h-10 text-right">Utilidad</TableHead>
-                            <TableHead className="text-[10px] font-black uppercase tracking-widest h-10 text-center">Estado</TableHead>
+                            <TableHead className="text-xs font-black uppercase tracking-widest h-10">SKU</TableHead>
+                            <TableHead className="text-xs font-black uppercase tracking-widest h-10">Producto</TableHead>
+                            <TableHead className="text-xs font-black uppercase tracking-widest h-10 text-right">Costo</TableHead>
+                            <TableHead className="text-xs font-black uppercase tracking-widest h-10 text-right">Venta</TableHead>
+                            <TableHead className="text-xs font-black uppercase tracking-widest h-10 text-right">Utilidad</TableHead>
+                            <TableHead className="text-xs font-black uppercase tracking-widest h-10 text-center">Estado</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -705,7 +705,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                                     "border-sidebar-border/50 transition-colors",
                                     idx === currentIndex ? "bg-primary/5" : "hover:bg-sidebar/20"
                                 )}>
-                                    <TableCell className="font-mono text-[10px] text-muted-foreground">{result.sku}</TableCell>
+                                    <TableCell className="font-mono text-xs text-muted-foreground">{result.sku}</TableCell>
                                     <TableCell className="font-bold text-xs max-w-[200px] truncate">{result.name}</TableCell>
                                     <TableCell className="text-right font-bold text-xs">${result.cost.toLocaleString()}</TableCell>
                                     <TableCell className="text-right font-bold text-xs text-success">${result.salePrice.toLocaleString()}</TableCell>

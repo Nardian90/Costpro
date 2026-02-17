@@ -42,22 +42,22 @@ export default function EliDiagram() {
         {/* Nodes around the core */}
         <motion.g variants={item} transform="translate(400, 100)">
           <circle r="40" className="fill-emerald-600" />
-          <text textAnchor="middle" y="5" className="fill-white font-black text-[8px] uppercase">Pregunta</text>
+          <text textAnchor="middle" y="5" className="fill-white font-black text-xs uppercase">Pregunta</text>
         </motion.g>
 
         <motion.g variants={item} transform="translate(600, 200)">
           <circle r="40" className="fill-emerald-500" />
-          <text textAnchor="middle" y="5" className="fill-white font-black text-[8px] uppercase">Contexto</text>
+          <text textAnchor="middle" y="5" className="fill-white font-black text-xs uppercase">Contexto</text>
         </motion.g>
 
         <motion.g variants={item} transform="translate(400, 300)">
           <circle r="40" className="fill-amber-500" />
-          <text textAnchor="middle" y="5" className="fill-white font-black text-[8px] uppercase">Respuesta</text>
+          <text textAnchor="middle" y="5" className="fill-white font-black text-xs uppercase">Respuesta</text>
         </motion.g>
 
         <motion.g variants={item} transform="translate(200, 200)">
           <circle r="40" className="fill-violet-500" />
-          <text textAnchor="middle" y="5" className="fill-white font-black text-[8px] uppercase">Modelos</text>
+          <text textAnchor="middle" y="5" className="fill-white font-black text-xs uppercase">Modelos</text>
         </motion.g>
 
         {/* Eli Center */}

@@ -105,7 +105,7 @@ export default function ExecutiveDemoView() {
             exit={{ opacity: 0, scale: 0.95 }}
             className="max-w-2xl text-center space-y-8"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 border border-primary/10 text-primary text-[10px] font-black uppercase tracking-widest">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 border border-primary/10 text-primary text-xs font-black uppercase tracking-widest">
               <Zap className="w-3 h-3" />
               Executive Demo Mode
             </div>
@@ -139,15 +139,15 @@ export default function ExecutiveDemoView() {
             <div className="pt-8 grid grid-cols-3 gap-8 opacity-50 grayscale">
               <div className="text-center">
                 <div className="text-2xl font-black">100</div>
-                <div className="text-[10px] font-bold uppercase tracking-widest">Productos</div>
+                <div className="text-xs font-bold uppercase tracking-widest">Productos</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-black">{'< 1min'}</div>
-                <div className="text-[10px] font-bold uppercase tracking-widest">Tiempo</div>
+                <div className="text-xs font-bold uppercase tracking-widest">Tiempo</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-black">0</div>
-                <div className="text-[10px] font-bold uppercase tracking-widest">Fricción</div>
+                <div className="text-xs font-bold uppercase tracking-widest">Fricción</div>
               </div>
             </div>
           </motion.div>
@@ -168,7 +168,7 @@ export default function ExecutiveDemoView() {
               </div>
               <div className="text-right">
                 <div className="text-2xl font-mono font-black">{elapsedTime.toFixed(1)}s</div>
-                <div className="text-[10px] font-bold uppercase text-muted-foreground">Tiempo Transcurrido</div>
+                <div className="text-xs font-bold uppercase text-muted-foreground">Tiempo Transcurrido</div>
               </div>
             </div>
 
@@ -180,7 +180,7 @@ export default function ExecutiveDemoView() {
                )}
 
                <div className="space-y-6">
-                 <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
+                 <div className="flex justify-between items-center text-xs font-black uppercase tracking-widest">
                     <span className="flex items-center gap-2">
                        <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                        Lote de 100 Fichas de Costo
@@ -209,7 +209,7 @@ export default function ExecutiveDemoView() {
                  </div>
 
                  <div className="flex justify-center pt-4">
-                    <div className="px-4 py-2 rounded-xl bg-primary/10 border border-primary/20 text-[10px] font-bold uppercase tracking-widest text-primary animate-bounce">
+                    <div className="px-4 py-2 rounded-xl bg-primary/10 border border-primary/20 text-xs font-bold uppercase tracking-widest text-primary animate-bounce">
                       {narrative}
                     </div>
                  </div>
@@ -228,7 +228,7 @@ export default function ExecutiveDemoView() {
             <div className="text-center space-y-4">
                <Shield className="w-16 h-16 text-primary mx-auto animate-pulse" />
                <h2 className="text-4xl font-black uppercase tracking-tighter leading-none">Inteligencia Detectada</h2>
-               <p className="text-muted-foreground font-medium uppercase tracking-widest text-[10px]">Protección de rentabilidad activada</p>
+               <p className="text-muted-foreground font-medium uppercase tracking-widest text-xs">Protección de rentabilidad activada</p>
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
@@ -270,7 +270,7 @@ export default function ExecutiveDemoView() {
           >
              <div className="flex flex-col md:flex-row justify-between items-center gap-6">
                 <div className="space-y-2 text-center md:text-left">
-                  <Badge className="bg-primary text-white font-black px-4 py-1 rounded-full uppercase tracking-widest text-[10px]">Informe de Resultado</Badge>
+                  <Badge className="bg-primary text-white font-black px-4 py-1 rounded-full uppercase tracking-widest text-xs">Informe de Resultado</Badge>
                   <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter leading-none">Impacto al <span className="text-primary italic">Negocio</span></h2>
                 </div>
                 <div className="flex gap-4">
@@ -328,7 +328,7 @@ export default function ExecutiveDemoView() {
 
                     <div className="space-y-6">
                        <div className="space-y-2">
-                          <div className="flex justify-between text-[10px] font-black uppercase tracking-widest opacity-70">
+                          <div className="flex justify-between text-xs font-black uppercase tracking-widest opacity-70">
                              <span>Método Tradicional (Excel/Papel)</span>
                              <span>~ 4 Horas</span>
                           </div>
@@ -338,7 +338,7 @@ export default function ExecutiveDemoView() {
                        </div>
 
                        <div className="space-y-2">
-                          <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-primary">
+                          <div className="flex justify-between text-xs font-black uppercase tracking-widest text-primary">
                              <span>CostPro Automation</span>
                              <span>{elapsedTime.toFixed(1)} Segundos</span>
                           </div>
@@ -374,11 +374,11 @@ export default function ExecutiveDemoView() {
                  <div className="flex flex-col gap-4 p-4">
                     <div className="flex items-center gap-3 opacity-50">
                        <CheckCircle2 className="w-4 h-4 text-primary" />
-                       <span className="text-[10px] font-black uppercase tracking-widest">Soporte 24/7</span>
+                       <span className="text-xs font-black uppercase tracking-widest">Soporte 24/7</span>
                     </div>
                     <div className="flex items-center gap-3 opacity-50">
                        <CheckCircle2 className="w-4 h-4 text-primary" />
-                       <span className="text-[10px] font-black uppercase tracking-widest">Infraestructura AWS</span>
+                       <span className="text-xs font-black uppercase tracking-widest">Infraestructura AWS</span>
                     </div>
                  </div>
                </div>
@@ -398,9 +398,9 @@ function KPIBox({ icon, label, value, subtext, color }: any) {
           {icon}
         </div>
         <div className="space-y-1">
-          <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{label}</div>
+          <div className="text-xs font-black uppercase tracking-widest text-muted-foreground">{label}</div>
           <div className="text-3xl font-black tracking-tighter">{value}</div>
-          <div className="text-[9px] font-bold uppercase text-primary/70">{subtext}</div>
+          <div className="text-xs font-bold uppercase text-primary/70">{subtext}</div>
         </div>
       </CardContent>
     </Card>

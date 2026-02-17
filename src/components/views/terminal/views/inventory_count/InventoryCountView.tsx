@@ -391,7 +391,7 @@ export default function InventoryCountView() {
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6 sm:space-y-8 no-scrollbar">
-              <p className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-muted-foreground leading-relaxed">
+              <p className="text-xs sm:text-xs font-bold uppercase tracking-widest text-muted-foreground leading-relaxed">
                 Se han detectado las siguientes diferencias. Confirma las acciones de ajuste para proceder:
               </p>
 
@@ -404,7 +404,7 @@ export default function InventoryCountView() {
                       <div className="flex justify-between items-start mb-6 gap-4">
                         <div className="flex-1 overflow-hidden">
                           <h4 className="font-black text-sm uppercase tracking-tight truncate pr-4">{d.name}</h4>
-                          <div className="text-[9px] font-bold text-muted-foreground uppercase mt-1 tracking-widest flex gap-4 whitespace-nowrap">
+                          <div className="text-xs font-bold text-muted-foreground uppercase mt-1 tracking-widest flex gap-4 whitespace-nowrap">
                             <span>Sistema: <strong className="text-foreground">{d.expected}</strong></span>
                             <span>Contado: <strong className="text-foreground">{d.counted}</strong></span>
                           </div>
@@ -417,11 +417,11 @@ export default function InventoryCountView() {
 
                     {d.diff < 0 && (
                       <div className="space-y-4 pt-4 border-t border-white/5">
-                        <h5 className="text-[8px] font-black text-warning uppercase tracking-[0.3em]">Resolución de Faltante (Venta)</h5>
+                        <h5 className="text-xs font-black text-warning uppercase tracking-[0.3em]">Resolución de Faltante (Venta)</h5>
                         <div className="space-y-2">
                            {d.decomposition.map((item, vIdx) => (
                              <div key={item.variantId || `base-${vIdx}`} className="flex items-center justify-between p-3 neu-inset-sm bg-background border border-white/5">
-                                <span className="text-[10px] font-black uppercase tracking-tight">{item.name}</span>
+                                <span className="text-xs font-black uppercase tracking-tight">{item.name}</span>
                                 <span className="font-black text-primary text-sm">x{item.quantity}</span>
                              </div>
                            ))}
@@ -436,14 +436,14 @@ export default function InventoryCountView() {
             <div className="p-6 sm:p-8 border-t border-white/5 bg-muted/10 flex flex-col sm:flex-row gap-4">
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="neu-btn w-full sm:flex-1 !py-4 font-black uppercase text-[10px] sm:text-xs tracking-[0.2em]"
+                className="neu-btn w-full sm:flex-1 !py-4 font-black uppercase text-xs sm:text-xs tracking-[0.2em]"
                 disabled={processing}
               >
                 Cancelar
               </button>
               <button
                 onClick={handleFinalSubmit}
-                className="neu-btn-primary w-full sm:flex-1 flex items-center justify-center gap-3 font-black uppercase text-[10px] sm:text-xs tracking-[0.2em] shadow-xl shadow-primary/20"
+                className="neu-btn-primary w-full sm:flex-1 flex items-center justify-center gap-3 font-black uppercase text-xs sm:text-xs tracking-[0.2em] shadow-xl shadow-primary/20"
                 disabled={processing || !isAdjustmentValid}
               >
                 {processing ? (

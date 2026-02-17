@@ -46,12 +46,12 @@ export default function CostFlowDiagram() {
         {/* Input Layer */}
         <motion.g variants={item}>
           <rect x="50" y="50" width="180" height="60" rx="12" className="fill-background stroke-primary/20" strokeWidth="2" />
-          <text x="140" y="85" textAnchor="middle" className="fill-foreground font-black text-[10px] uppercase tracking-wider">Anexos (Materiales/MO)</text>
+          <text x="140" y="85" textAnchor="middle" className="fill-foreground font-black text-xs uppercase tracking-wider">Anexos (Materiales/MO)</text>
         </motion.g>
 
         <motion.g variants={item}>
           <rect x="50" y="130" width="180" height="60" rx="12" className="fill-background stroke-primary/20" strokeWidth="2" />
-          <text x="140" y="165" textAnchor="middle" className="fill-foreground font-black text-[10px] uppercase tracking-wider">Encabezado y Metadatos</text>
+          <text x="140" y="165" textAnchor="middle" className="fill-foreground font-black text-xs uppercase tracking-wider">Encabezado y Metadatos</text>
         </motion.g>
 
         {/* Connections to Engine */}
@@ -72,7 +72,7 @@ export default function CostFlowDiagram() {
           />
           <text x="400" y="185" textAnchor="middle" className="fill-primary font-black text-xs uppercase tracking-[0.2em]">Motor de</text>
           <text x="400" y="210" textAnchor="middle" className="fill-primary font-black text-xs uppercase tracking-[0.2em]">Cálculo v5</text>
-          <text x="400" y="240" textAnchor="middle" className="fill-primary/60 font-bold text-[8px] uppercase">14 Secciones / 5 Anexos</text>
+          <text x="400" y="240" textAnchor="middle" className="fill-primary/60 font-bold text-xs uppercase">14 Secciones / 5 Anexos</text>
         </motion.g>
 
         {/* Output Connections */}
@@ -83,17 +83,17 @@ export default function CostFlowDiagram() {
         {/* Interaction Modes */}
         <motion.g variants={item}>
           <rect x="570" y="70" width="180" height="50" rx="10" className="fill-violet-500" />
-          <text x="660" y="100" textAnchor="middle" className="fill-white font-black text-[10px] uppercase">Modo Experto (Tabla)</text>
+          <text x="660" y="100" textAnchor="middle" className="fill-white font-black text-xs uppercase">Modo Experto (Tabla)</text>
         </motion.g>
 
         <motion.g variants={item}>
           <rect x="570" y="170" width="180" height="50" rx="10" className="fill-emerald-500" />
-          <text x="660" y="200" textAnchor="middle" className="fill-white font-black text-[10px] uppercase">Modo Asistido (Wizard)</text>
+          <text x="660" y="200" textAnchor="middle" className="fill-white font-black text-xs uppercase">Modo Asistido (Wizard)</text>
         </motion.g>
 
         <motion.g variants={item}>
           <rect x="570" y="270" width="180" height="50" rx="10" className="fill-amber-500" />
-          <text x="660" y="300" textAnchor="middle" className="fill-white font-black text-[10px] uppercase">Modo Lectura (Narrativa)</text>
+          <text x="660" y="300" textAnchor="middle" className="fill-white font-black text-xs uppercase">Modo Lectura (Narrativa)</text>
         </motion.g>
 
         {/* Export Layer */}
@@ -108,7 +108,7 @@ export default function CostFlowDiagram() {
         <motion.text
           x="50"
           y="420"
-          className="fill-muted-foreground/50 font-bold text-[9px] uppercase tracking-[0.3em]"
+          className="fill-muted-foreground/50 font-bold text-xs uppercase tracking-[0.3em]"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 2 }}

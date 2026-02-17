@@ -137,7 +137,7 @@ export const TaxCalculationModal = ({
             <Calculator className="w-8 h-8" />
             Cálculo de Impuestos
           </DialogTitle>
-          <DialogDescription className="text-white/80 font-bold uppercase text-[10px] tracking-widest mt-2">
+          <DialogDescription className="text-white/80 font-bold uppercase text-xs tracking-widest mt-2">
              Procesando {selectedTransactions.length} facturas seleccionadas
           </DialogDescription>
         </DialogHeader>
@@ -155,8 +155,8 @@ export const TaxCalculationModal = ({
                 activeTaxes.map(tax => (
                   <div key={tax.id} className="flex justify-between items-center p-4 rounded-xl bg-muted/30 border border-border/50 group hover:border-primary/30 transition-all">
                     <div>
-                      <div className="text-[10px] font-black uppercase text-primary tracking-tight">{tax.name}</div>
-                      <div className="text-[9px] font-bold text-muted-foreground uppercase">
+                      <div className="text-xs font-black uppercase text-primary tracking-tight">{tax.name}</div>
+                      <div className="text-xs font-bold text-muted-foreground uppercase">
                         {tax.type === 'percentage' ? `${tax.value}%` : formatCurrency(tax.value)}
                         {tax.min_exempt ? ` (Mín. Exento: ${formatCurrency(tax.min_exempt)})` : ''}
                       </div>
@@ -169,7 +169,7 @@ export const TaxCalculationModal = ({
               ) : (
                 <div className="p-4 rounded-xl border border-amber-500/20 bg-amber-500/5 flex items-center gap-3">
                   <AlertCircle className="w-5 h-5 text-amber-600" />
-                  <p className="text-[10px] font-bold text-amber-700 uppercase leading-tight">
+                  <p className="text-xs font-bold text-amber-700 uppercase leading-tight">
                     No hay impuestos activos configurados para este cálculo.
                   </p>
                 </div>
@@ -186,7 +186,7 @@ export const TaxCalculationModal = ({
 
           {/* Export Options */}
           <div className="space-y-4 p-6 rounded-2xl border border-border bg-background/50">
-            <h4 className="text-[10px] font-black uppercase text-muted-foreground tracking-widest flex items-center gap-2">
+            <h4 className="text-xs font-black uppercase text-muted-foreground tracking-widest flex items-center gap-2">
               <FileDown className="w-3 h-3" />
               Opciones de Exportación
             </h4>
@@ -203,8 +203,8 @@ export const TaxCalculationModal = ({
                   {includeAnnex && <CheckCircle2 className="w-3 h-3 text-white" />}
                 </div>
                 <div>
-                  <div className="text-[10px] font-black uppercase tracking-tight">Incluir Anexo de Facturas</div>
-                  <div className="text-[9px] font-bold text-muted-foreground uppercase">Lista detallada de números de referencia</div>
+                  <div className="text-xs font-black uppercase tracking-tight">Incluir Anexo de Facturas</div>
+                  <div className="text-xs font-bold text-muted-foreground uppercase">Lista detallada de números de referencia</div>
                 </div>
               </button>
 
@@ -216,7 +216,7 @@ export const TaxCalculationModal = ({
                     exportMode === 'combined' ? "border-primary bg-primary/5 text-primary" : "border-border hover:bg-muted"
                   )}
                 >
-                  <div className="text-[10px] font-black uppercase">Conjunto</div>
+                  <div className="text-xs font-black uppercase">Conjunto</div>
                 </button>
                 <button
                   onClick={() => setExportMode('separate')}
@@ -225,7 +225,7 @@ export const TaxCalculationModal = ({
                     exportMode === 'separate' ? "border-primary bg-primary/5 text-primary" : "border-border hover:bg-muted"
                   )}
                 >
-                  <div className="text-[10px] font-black uppercase">Separado</div>
+                  <div className="text-xs font-black uppercase">Separado</div>
                 </button>
               </div>
             </div>

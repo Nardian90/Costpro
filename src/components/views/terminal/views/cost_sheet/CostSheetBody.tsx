@@ -42,7 +42,7 @@ const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValue
                 hasChildren && "bg-slate-50/30 dark:bg-slate-900/30"
             )}>
                 {/* No. */}
-                <td className="p-3 text-center font-mono text-[10px] text-slate-400">
+                <td className="p-3 text-center font-mono text-xs text-slate-400">
                     {numbering}
                 </td>
 
@@ -57,12 +57,12 @@ const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValue
                 >
                     {row.label}
                     {row.id === '13' && calculatedValues?.['12']?.total > 0 && (
-                        <span className="ml-2 text-[10px] font-black text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                        <span className="ml-2 text-xs font-black text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 px-1.5 py-0.5 rounded border border-emerald-500/20">
                             {((calculatedValues['13'].total / calculatedValues['12'].total) * 100).toFixed(1)}% s/ costo
                         </span>
                     )}
                     {row.is_percent && (
-                        <span className="ml-2 text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
+                        <span className="ml-2 text-xs font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
                             {((row.value || calc.valorHistorico || 0) * 100).toFixed(2)}%
                         </span>
                     )}
@@ -91,17 +91,17 @@ const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValue
       <table className="w-full text-sm">
         <thead className="bg-slate-800 text-white hidden sm:table-header-group">
           <tr>
-            <th className="p-4 text-center font-black uppercase tracking-widest text-[9px] w-16">No.</th>
-            <th className="p-4 text-left font-black uppercase tracking-widest text-[9px]">Concepto</th>
-            <th className="p-4 text-right font-black uppercase tracking-widest text-[9px] w-40">Valor Histórico</th>
-            <th className="p-4 text-right font-black uppercase tracking-widest text-[9px] w-48">Total</th>
+            <th className="p-4 text-center font-black uppercase tracking-widest text-xs w-16">No.</th>
+            <th className="p-4 text-left font-black uppercase tracking-widest text-xs">Concepto</th>
+            <th className="p-4 text-right font-black uppercase tracking-widest text-xs w-40">Valor Histórico</th>
+            <th className="p-4 text-right font-black uppercase tracking-widest text-xs w-48">Total</th>
           </tr>
         </thead>
         <tbody className="bg-white dark:bg-slate-900">
           {sections.map((section) => (
             <React.Fragment key={section.id}>
               <tr className="bg-slate-100 dark:bg-slate-950/80">
-                  <td colSpan={4} className="px-4 py-2 text-[10px] font-black text-primary uppercase tracking-[0.2em] border-y border-slate-200 dark:border-slate-800">
+                  <td colSpan={4} className="px-4 py-2 text-xs font-black text-primary uppercase tracking-[0.2em] border-y border-slate-200 dark:border-slate-800">
                       {section.label}
                   </td>
               </tr>

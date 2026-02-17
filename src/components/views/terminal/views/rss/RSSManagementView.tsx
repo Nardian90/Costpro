@@ -123,7 +123,7 @@ export default function RSSManagementView() {
               <button
                 type="submit"
                 disabled={addFeedMutation.isPending}
-                className="bg-primary text-white font-black text-[10px] uppercase tracking-widest rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                className="bg-primary text-white font-black text-xs uppercase tracking-widest rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
               >
                 <Plus className="w-4 h-4" />
                 Añadir
@@ -135,7 +135,7 @@ export default function RSSManagementView() {
                 <div className="table-scroll-wrapper rounded-xl border border-border overflow-hidden">
                   <table className="w-full text-sm">
                     <thead className="bg-muted/30">
-                      <tr className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em] border-b border-border">
+                      <tr className="text-xs font-black uppercase text-muted-foreground tracking-[0.2em] border-b border-border">
                         <th className="p-4 text-left">Fuente</th>
                         <th className="p-4 text-left">URL</th>
                         <th className="p-4 text-center">Estado</th>
@@ -148,7 +148,7 @@ export default function RSSManagementView() {
                           <td className="p-4">
                             <div className="font-black text-xs uppercase">{feed.name || 'Sin nombre'}</div>
                           </td>
-                          <td className="p-4 font-mono text-[10px] text-muted-foreground max-w-[200px] truncate">
+                          <td className="p-4 font-mono text-xs text-muted-foreground max-w-[200px] truncate">
                             {feed.url}
                           </td>
                           <td className="p-4">
@@ -156,7 +156,7 @@ export default function RSSManagementView() {
                               <button
                                 onClick={() => handleToggleFeed(feed.id, feed.is_active)}
                                 className={cn(
-                                  "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-all",
+                                  "px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest transition-all",
                                   feed.is_active
                                     ? "bg-green-500/10 text-green-600 border border-green-500/20"
                                     : "bg-muted text-muted-foreground border border-border"
@@ -194,14 +194,14 @@ export default function RSSManagementView() {
 
             <div className="space-y-8">
               <section>
-                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-4 block">
+                <label className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] mb-4 block">
                   Palabras Clave de Prioridad
                 </label>
                 <div className="flex flex-wrap gap-2 mb-4">
                   {settings?.priority_keywords.map((kw, i) => (
                     <div
                       key={i}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-lg text-amber-700 font-bold text-[10px] uppercase group"
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-lg text-amber-700 font-bold text-xs uppercase group"
                     >
                       <Tag className="w-3 h-3" />
                       {kw}
@@ -236,8 +236,8 @@ export default function RSSManagementView() {
                 <div className="flex items-start gap-3">
                   <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
                   <div className="space-y-1">
-                    <p className="text-[10px] font-black uppercase text-foreground tracking-widest">Nota del Sistema</p>
-                    <p className="text-[10px] font-medium text-muted-foreground leading-relaxed">
+                    <p className="text-xs font-black uppercase text-foreground tracking-widest">Nota del Sistema</p>
+                    <p className="text-xs font-medium text-muted-foreground leading-relaxed">
                       Las noticias que contengan estas palabras clave se mostrarán primero y con un indicador visual. Las tasas de cambio del Banco Central se priorizan automáticamente.
                     </p>
                   </div>
@@ -246,7 +246,7 @@ export default function RSSManagementView() {
 
               <button
                 disabled
-                className="w-full py-4 bg-muted text-muted-foreground font-black text-[10px] uppercase tracking-[0.3em] rounded-2xl flex items-center justify-center gap-2 cursor-not-allowed"
+                className="w-full py-4 bg-muted text-muted-foreground font-black text-xs uppercase tracking-[0.3em] rounded-2xl flex items-center justify-center gap-2 cursor-not-allowed"
               >
                 <Save className="w-4 h-4" />
                 Guardar Configuración

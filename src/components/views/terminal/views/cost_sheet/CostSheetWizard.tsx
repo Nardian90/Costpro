@@ -66,7 +66,7 @@ const CostSheetWizard: React.FC<CostSheetWizardProps> = ({ data, calculatedValue
       <div className="neu-card p-6 bg-slate-50 dark:bg-slate-900/50">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary mb-1">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-1">
               Paso {currentStep + 1} de {steps.length}
             </p>
             <h2 className="text-xl font-bold">{step.label}</h2>

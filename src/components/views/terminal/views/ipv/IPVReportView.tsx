@@ -659,43 +659,43 @@ export function IPVReportView() {
       <div className="px-6 py-4 bg-primary/5 border-b flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex flex-col gap-1">
-            <label className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">Desde</label>
+            <label className="text-xs font-black uppercase text-muted-foreground tracking-widest">Desde</label>
             <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="h-9 w-40 text-xs font-bold" />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">Hasta</label>
+            <label className="text-xs font-black uppercase text-muted-foreground tracking-widest">Hasta</label>
             <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="h-9 w-40 text-xs font-bold" />
           </div>
           <div className="flex gap-2 mt-auto pb-0.5">
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button onClick={generateRangeReports} variant="outline" className="h-9 text-[10px] font-black uppercase border-primary/20 text-primary hover:bg-primary/5">
+                    <Button onClick={generateRangeReports} variant="outline" className="h-9 text-xs font-black uppercase border-primary/20 text-primary hover:bg-primary/5">
                         Generar IPV (Rango)
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-card border-2">
                     Crea reportes diarios para cada fecha en el rango seleccionado que no tenga uno previo.
                 </TooltipContent>
             </Tooltip>
 
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button onClick={exportRangePDF} variant="outline" className="h-9 text-[10px] font-black uppercase border-primary/20 text-primary hover:bg-primary/5">
+                    <Button onClick={exportRangePDF} variant="outline" className="h-9 text-xs font-black uppercase border-primary/20 text-primary hover:bg-primary/5">
                         Exportar PDF (Rango)
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-card border-2">
                     Genera un único archivo PDF que contiene todos los reportes individuales del rango seleccionado.
                 </TooltipContent>
             </Tooltip>
 
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button onClick={deleteRangeReports} variant="outline" className="h-9 text-[10px] font-black uppercase border-red-200 text-red-500 hover:bg-red-50">
+                    <Button onClick={deleteRangeReports} variant="outline" className="h-9 text-xs font-black uppercase border-red-200 text-red-500 hover:bg-red-50">
                         Borrar IPV (Rango)
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2 text-destructive">
+                <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-card border-2 text-destructive">
                     Elimina permanentemente todos los reportes dentro del rango de fechas. ¡Cuidado!
                 </TooltipContent>
             </Tooltip>
@@ -738,33 +738,33 @@ export function IPVReportView() {
             <div className="flex gap-1 bg-muted/30 p-1 rounded-lg border">
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button onClick={generateMonthlyReports} variant="ghost" className="h-7 text-[9px] font-black uppercase hover:bg-primary/10">
+                        <Button onClick={generateMonthlyReports} variant="ghost" className="h-7 text-xs font-black uppercase hover:bg-primary/10">
                             Generar Mes
                         </Button>
                     </TooltipTrigger>
-                    <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                    <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-card border-2">
                         Completa los reportes faltantes para todo el mes seleccionado.
                     </TooltipContent>
                 </Tooltip>
 
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button onClick={exportConsolidatedMonthlyPDF} variant="ghost" className="h-7 text-[9px] font-black uppercase hover:bg-primary/10">
+                        <Button onClick={exportConsolidatedMonthlyPDF} variant="ghost" className="h-7 text-xs font-black uppercase hover:bg-primary/10">
                             Consolidado PDF
                         </Button>
                     </TooltipTrigger>
-                    <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                    <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-card border-2">
                         Genera un reporte resumen del mes sumando todas las ventas y existencias finales por producto.
                     </TooltipContent>
                 </Tooltip>
 
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button onClick={exportAllMonthPDFs} variant="ghost" className="h-7 text-[9px] font-black uppercase hover:bg-primary/10">
+                        <Button onClick={exportAllMonthPDFs} variant="ghost" className="h-7 text-xs font-black uppercase hover:bg-primary/10">
                             Masivo PDF
                         </Button>
                     </TooltipTrigger>
-                    <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                    <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-card border-2">
                         Descarga individualmente cada reporte diario del mes como un archivo PDF separado.
                     </TooltipContent>
                 </Tooltip>
@@ -772,12 +772,12 @@ export function IPVReportView() {
 
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button onClick={generateReportForToday} className="neu-btn-primary h-9 text-[10px] font-black uppercase">
+                    <Button onClick={generateReportForToday} className="neu-btn-primary h-9 text-xs font-black uppercase">
                         <Plus className="w-4 h-4 mr-2" />
                         Generar Hoy
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-card border-2">
                     Crea el reporte IPV para la fecha actual utilizando las conciliaciones del día.
                 </TooltipContent>
             </Tooltip>
@@ -828,7 +828,7 @@ export function IPVReportView() {
                                     <Eye className="w-4 h-4" />
                                 </Button>
                             </TooltipTrigger>
-                            <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                            <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-card border-2">
                                 Visualiza el detalle de productos y ventas de este reporte antes de exportar.
                             </TooltipContent>
                         </Tooltip>
@@ -839,7 +839,7 @@ export function IPVReportView() {
                                     <Download className="w-4 h-4" />
                                 </Button>
                             </TooltipTrigger>
-                            <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                            <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-card border-2">
                                 Descarga el reporte diario en formato PDF.
                             </TooltipContent>
                         </Tooltip>
@@ -852,7 +852,7 @@ export function IPVReportView() {
                                             <RefreshCw className="w-3 h-3" />
                                         </Button>
                                     </TooltipTrigger>
-                                    <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                                    <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-card border-2">
                                         Recalcular: Actualiza las ventas del reporte si realizaste cambios en la conciliación después de generarlo.
                                     </TooltipContent>
                                 </Tooltip>
@@ -863,7 +863,7 @@ export function IPVReportView() {
                                             <Lock className="w-4 h-4" />
                                         </Button>
                                     </TooltipTrigger>
-                                    <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                                    <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-card border-2">
                                         Cerrar Reporte: Marca el reporte como inmutable para el cierre oficial.
                                     </TooltipContent>
                                 </Tooltip>
@@ -874,7 +874,7 @@ export function IPVReportView() {
                                             <RotateCcw className="w-4 h-4" />
                                         </Button>
                                     </TooltipTrigger>
-                                    <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                                    <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-card border-2">
                                         Anular: Marca el reporte como inválido (requiere ajuste contable).
                                     </TooltipContent>
                                 </Tooltip>
@@ -892,7 +892,7 @@ export function IPVReportView() {
                                     <Trash2 className="w-4 h-4" />
                                 </Button>
                             </TooltipTrigger>
-                            <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2 text-destructive">
+                            <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-card border-2 text-destructive">
                                 Eliminar Reporte permanentemente.
                             </TooltipContent>
                         </Tooltip>

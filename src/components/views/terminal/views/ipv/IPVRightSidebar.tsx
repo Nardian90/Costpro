@@ -61,7 +61,7 @@ export function IPVRightSidebar({ activeTab, onSelect }: Props) {
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent side="left">
-                            <p className="text-[10px] font-black uppercase tracking-widest">{item.label}</p>
+                            <p className="text-xs font-black uppercase tracking-widest">{item.label}</p>
                         </TooltipContent>
                     </Tooltip>
                 ))}

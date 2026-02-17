@@ -51,7 +51,7 @@ export const Header = ({
             <div className="h-4 w-[1px] bg-white/10 hidden sm:block shrink-0" />
 
             <div className="hidden sm:flex items-center gap-3">
-              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] truncate">
+              <p className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] truncate">
                 {user?.fullName}
               </p>
 
@@ -61,7 +61,7 @@ export const Header = ({
                   <select
                     value={user.activeStoreId || ''}
                     onChange={(e) => handleSetActiveStore(e.target.value)}
-                    className="bg-transparent text-[9px] font-black uppercase text-primary outline-none cursor-pointer border-none p-0 focus:ring-0"
+                    className="bg-transparent text-xs font-black uppercase text-primary outline-none cursor-pointer border-none p-0 focus:ring-0"
                   >
                     {user.memberships.map((m: any) => (
                       <option key={m.store_id} value={m.store_id} className="text-foreground bg-background">
@@ -123,22 +123,22 @@ export const Header = ({
                    <div className="flex gap-3 p-3 rounded-xl bg-danger/5 border border-danger/20">
                      <AlertTriangle className="w-5 h-5 text-danger shrink-0" />
                      <div className="space-y-1">
-                       <p className="text-[10px] font-black uppercase tracking-tight text-danger">Modo Offline Detectado</p>
-                       <p className="text-[10px] text-muted-foreground leading-relaxed text-xs">
+                       <p className="text-xs font-black uppercase tracking-tight text-danger">Modo Offline Detectado</p>
+                       <p className="text-xs text-muted-foreground leading-relaxed text-xs">
                          Estás utilizando una cuenta de bypass local. Los cambios no se sincronizarán con la base de datos central.
                        </p>
                      </div>
                    </div>
                  ) : (
                    <div className="py-8 text-center">
-                     <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-50 italic">
+                     <p className="text-xs font-black uppercase tracking-widest text-muted-foreground opacity-50 italic">
                        No tienes notificaciones pendientes
                      </p>
                    </div>
                  )}
                </div>
                <div className="p-3 bg-muted/30 border-t border-white/5">
-                  <p className="text-[8px] text-center font-bold text-muted-foreground uppercase tracking-tighter">
+                  <p className="text-xs text-center font-bold text-muted-foreground uppercase tracking-tighter">
                     Actualizado hace un momento
                   </p>
                </div>

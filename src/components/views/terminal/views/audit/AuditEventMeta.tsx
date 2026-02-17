@@ -47,7 +47,7 @@ export default function AuditEventMeta({ oldData, newData, metadata }: AuditEven
       if (oldData[key] !== newData[key] && key !== 'updated_at') {
         changes.push(
           <div key={key} className="flex items-center gap-2 py-1 border-b border-border/30 last:border-0">
-            <span className="font-bold text-muted-foreground w-24 shrink-0 uppercase tracking-tighter text-[9px]">
+            <span className="font-bold text-muted-foreground w-24 shrink-0 uppercase tracking-tighter text-xs">
                 {labelMap[key] || key.replace(/_/g, ' ')}:
             </span>
             <div className="flex items-center gap-1.5 overflow-hidden">
@@ -64,7 +64,7 @@ export default function AuditEventMeta({ oldData, newData, metadata }: AuditEven
 
     return (
       <div className="bg-background/50 rounded-xl p-3 border border-border/50 mb-3">
-        <div className="text-[9px] font-black text-primary/70 uppercase tracking-widest mb-2 border-b border-primary/10 pb-1">Cambios Detectados</div>
+        <div className="text-xs font-black text-primary/70 uppercase tracking-widest mb-2 border-b border-primary/10 pb-1">Cambios Detectados</div>
         <div className="space-y-0.5">
           {changes}
         </div>
@@ -76,14 +76,14 @@ export default function AuditEventMeta({ oldData, newData, metadata }: AuditEven
     <div className="mt-2">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1 text-[10px] font-black uppercase text-muted-foreground hover:text-primary transition-colors"
+        className="flex items-center gap-1 text-xs font-black uppercase text-muted-foreground hover:text-primary transition-colors"
       >
         {isOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
         {isOpen ? 'Ocultar detalles' : 'Ver detalles'}
       </button>
 
       {isOpen && (
-        <div className="mt-2 p-3 rounded-lg bg-muted/30 border border-border/50 font-mono text-[10px] space-y-3 overflow-hidden">
+        <div className="mt-2 p-3 rounded-lg bg-muted/30 border border-border/50 font-mono text-xs space-y-3 overflow-hidden">
           {renderDiff()}
 
           {metadata && Object.keys(metadata).length > 0 && (

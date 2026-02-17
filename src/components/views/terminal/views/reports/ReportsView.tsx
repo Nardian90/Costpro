@@ -145,7 +145,7 @@ export default function ReportsView() {
         onClick: handleSave,
         disabled: isSaving,
         variant: 'outline' as const,
-        className: 'border-primary/20 font-bold uppercase tracking-widest text-[10px]'
+        className: 'border-primary/20 font-bold uppercase tracking-widest text-xs'
     },
     {
         id: 'export-excel',
@@ -154,7 +154,7 @@ export default function ReportsView() {
         onClick: handleExportExcel,
         disabled: isExportingExcel,
         variant: 'outline' as const,
-        className: 'border-success/20 text-success hover:bg-success/10 font-bold uppercase tracking-widest text-[10px]'
+        className: 'border-success/20 text-success hover:bg-success/10 font-bold uppercase tracking-widest text-xs'
     },
     {
         id: 'audit',
@@ -162,7 +162,7 @@ export default function ReportsView() {
         icon: History,
         onClick: () => setIsAuditModalOpen(true),
         variant: 'outline' as const,
-        className: 'hover:bg-primary/10 text-primary font-bold uppercase tracking-widest text-[10px]'
+        className: 'hover:bg-primary/10 text-primary font-bold uppercase tracking-widest text-xs'
     },
     {
         id: 'generate',
@@ -171,7 +171,7 @@ export default function ReportsView() {
         onClick: handleGenerate,
         disabled: isGenerating,
         variant: 'primary' as const,
-        className: 'font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20'
+        className: 'font-black uppercase tracking-widest text-xs shadow-lg shadow-primary/20'
     }
   ], [isSaving, isExportingExcel, isGenerating]);
 
@@ -203,8 +203,8 @@ export default function ReportsView() {
           <div className="p-4 rounded-2xl bg-warning/10 border border-warning/20 flex gap-3 items-start animate-in fade-in slide-in-from-left-4 duration-500">
              <AlertTriangle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
              <div className="space-y-1">
-                <p className="text-[10px] font-black uppercase text-warning tracking-widest">Aviso de Rendimiento</p>
-                <p className="text-[9px] font-medium text-warning/80 leading-relaxed">
+                <p className="text-xs font-black uppercase text-warning tracking-widest">Aviso de Rendimiento</p>
+                <p className="text-xs font-medium text-warning/80 leading-relaxed">
                    Reportes con más de 10,000 registros pueden tardar hasta 30 segundos en procesarse.
                    Se recomienda filtrar por periodos más cortos para mayor agilidad.
                 </p>

@@ -48,7 +48,7 @@ const SectionCard = ({ id, title, description, icon, onClick, color, badge, isHe
         }`}
     >
         {badge && (
-            <div className={`absolute top-2 left-2 px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-tighter z-20 ${
+            <div className={`absolute top-2 left-2 px-2 py-0.5 rounded-md text-xs font-black uppercase tracking-tighter z-20 ${
                 isHero ? 'bg-white text-primary' : 'bg-primary text-white'
             }`}>
                 {badge}
@@ -81,7 +81,7 @@ const SectionCard = ({ id, title, description, icon, onClick, color, badge, isHe
         {warning && (
             <div className="mt-4 flex items-center gap-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
                 <AlertCircle className="w-3 h-3 text-amber-500" />
-                <p className="text-[9px] font-bold text-amber-600 uppercase tracking-tighter">{warning}</p>
+                <p className="text-xs font-bold text-amber-600 uppercase tracking-tighter">{warning}</p>
             </div>
         )}
     </Card>
@@ -227,11 +227,11 @@ export function IPVControlPanel({ onSelect, onExportBackup, onImportBackup, hasT
                 <div className="flex flex-col sm:flex-row items-center gap-6 relative z-10">
                     <div className="flex gap-4">
                         <div className="text-center">
-                            <p className="text-[10px] font-black text-muted-foreground uppercase mb-1">Caché</p>
+                            <p className="text-xs font-black text-muted-foreground uppercase mb-1">Caché</p>
                             <Badge variant="outline" className="font-black text-primary border-primary/20">ACTIVA</Badge>
                         </div>
                         <div className="text-center">
-                            <p className="text-[10px] font-black text-muted-foreground uppercase mb-1">Sincronización</p>
+                            <p className="text-xs font-black text-muted-foreground uppercase mb-1">Sincronización</p>
                             <Badge variant="outline" className="font-black text-blue-500 border-blue-200">LOCAL-ONLY</Badge>
                         </div>
                     </div>
@@ -243,13 +243,13 @@ export function IPVControlPanel({ onSelect, onExportBackup, onImportBackup, hasT
                                     variant="outline"
                                     size="sm"
                                     onClick={onExportBackup}
-                                    className="h-10 text-[10px] font-black uppercase tracking-widest gap-2 bg-background/50 shadow-sm hover:bg-primary hover:text-white transition-all border-primary/20 rounded-xl"
+                                    className="h-10 text-xs font-black uppercase tracking-widest gap-2 bg-background/50 shadow-sm hover:bg-primary hover:text-white transition-all border-primary/20 rounded-xl"
                                 >
                                     <Download className="w-4 h-4" />
                                     Respaldar
                                 </Button>
                             </TooltipTrigger>
-                            <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                            <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-card border-2">
                                 Exporta todos los datos locales (transacciones, catálogo, reglas y reportes) a un archivo JSON para respaldo externo.
                             </TooltipContent>
                         </Tooltip>
@@ -260,13 +260,13 @@ export function IPVControlPanel({ onSelect, onExportBackup, onImportBackup, hasT
                                     variant="outline"
                                     size="sm"
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="h-10 text-[10px] font-black uppercase tracking-widest gap-2 bg-background/50 shadow-sm hover:bg-emerald-500 hover:text-white transition-all border-emerald-500/20 rounded-xl"
+                                    className="h-10 text-xs font-black uppercase tracking-widest gap-2 bg-background/50 shadow-sm hover:bg-emerald-500 hover:text-white transition-all border-emerald-500/20 rounded-xl"
                                 >
                                     <Upload className="w-4 h-4" />
                                     Cargar Respaldo
                                 </Button>
                             </TooltipTrigger>
-                            <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-card border-2">
+                            <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-card border-2">
                                 Importa un archivo de respaldo JSON. ¡Atención! Esto sobreescribirá todos los datos actuales de su base de datos local.
                             </TooltipContent>
                         </Tooltip>

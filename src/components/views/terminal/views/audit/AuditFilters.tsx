@@ -60,7 +60,7 @@ export default function AuditFilters({
         <button
           onClick={() => setIsExpanded(!isExpanded)}
           className={cn(
-            "flex items-center justify-center gap-2 px-6 py-3 rounded-xl border font-black uppercase text-[10px] tracking-widest transition-all",
+            "flex items-center justify-center gap-2 px-6 py-3 rounded-xl border font-black uppercase text-xs tracking-widest transition-all",
             isExpanded ? "bg-primary text-primary-foreground border-primary" : "bg-card text-foreground border-border hover:bg-muted"
           )}
         >
@@ -74,14 +74,14 @@ export default function AuditFilters({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Categorías */}
             <div className="space-y-3">
-              <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Categoría</label>
+              <label className="text-xs font-black uppercase text-muted-foreground tracking-widest">Categoría</label>
               <div className="flex flex-wrap gap-2">
                 {categories.map((cat) => (
                   <button
                     key={cat.id}
                     onClick={() => onCategoryChange(cat.id)}
                     className={cn(
-                      "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all border",
+                      "px-3 py-1.5 rounded-lg text-xs font-black uppercase transition-all border",
                       selectedCategory === cat.id
                         ? `${cat.color} text-white border-transparent shadow-lg scale-105`
                         : "bg-muted/50 text-muted-foreground border-border hover:border-muted-foreground/30"
@@ -95,7 +95,7 @@ export default function AuditFilters({
 
             {/* Rango de Fechas */}
             <div className="space-y-3">
-              <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Rango de Fechas</label>
+              <label className="text-xs font-black uppercase text-muted-foreground tracking-widest">Rango de Fechas</label>
               <div className="flex flex-wrap gap-1.5 mb-2">
                 {[
                   { label: 'Hoy', getValue: () => ({ from: format(new Date(), 'yyyy-MM-dd'), to: format(new Date(), 'yyyy-MM-dd') }) },
@@ -108,7 +108,7 @@ export default function AuditFilters({
                   <button
                     key={preset.label}
                     onClick={() => onDateRangeChange(preset.getValue())}
-                    className="px-2 py-1 rounded bg-muted/50 hover:bg-primary/10 hover:text-primary text-[9px] font-black uppercase border border-border/50 transition-colors"
+                    className="px-2 py-1 rounded bg-muted/50 hover:bg-primary/10 hover:text-primary text-xs font-black uppercase border border-border/50 transition-colors"
                   >
                     {preset.label}
                   </button>
@@ -116,7 +116,7 @@ export default function AuditFilters({
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">
-                  <span className="text-[8px] font-bold text-muted-foreground uppercase ml-1">Desde</span>
+                  <span className="text-xs font-bold text-muted-foreground uppercase ml-1">Desde</span>
                   <input
                     type="date"
                     className="w-full p-2 rounded-lg border border-border bg-background text-xs font-bold outline-none focus:ring-1 focus:ring-primary"
@@ -125,7 +125,7 @@ export default function AuditFilters({
                   />
                 </div>
                 <div className="space-y-1">
-                  <span className="text-[8px] font-bold text-muted-foreground uppercase ml-1">Hasta</span>
+                  <span className="text-xs font-bold text-muted-foreground uppercase ml-1">Hasta</span>
                   <input
                     type="date"
                     className="w-full p-2 rounded-lg border border-border bg-background text-xs font-bold outline-none focus:ring-1 focus:ring-primary"
@@ -138,7 +138,7 @@ export default function AuditFilters({
 
             {/* Contexto: Usuario y Tienda */}
             <div className="space-y-3">
-              <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Contexto</label>
+              <label className="text-xs font-black uppercase text-muted-foreground tracking-widest">Contexto</label>
               <div className="space-y-2">
                 <select
                   className="w-full p-2 rounded-lg border border-border bg-background text-xs font-bold outline-none focus:ring-1 focus:ring-primary"
@@ -173,7 +173,7 @@ export default function AuditFilters({
                   onUserChange('all');
                   onStoreChange('all');
                 }}
-                className="text-[10px] font-black uppercase text-muted-foreground hover:text-destructive transition-colors flex items-center gap-1"
+                className="text-xs font-black uppercase text-muted-foreground hover:text-destructive transition-colors flex items-center gap-1"
              >
                <X size={12} /> Limpiar Filtros
              </button>

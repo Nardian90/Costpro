@@ -86,7 +86,7 @@ export default function RoleForm({
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 pt-4">
       <div className="space-y-4">
         <div>
-          <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1.5 block">
+          <label className="text-xs font-black uppercase text-muted-foreground tracking-widest mb-1.5 block">
             Nombre del Rol
           </label>
           <input
@@ -95,7 +95,7 @@ export default function RoleForm({
             placeholder="Ej: Auditor Externo"
           />
           {errors.name && (
-            <p className="text-[10px] text-destructive font-bold uppercase mt-1">{errors.name.message}</p>
+            <p className="text-xs text-destructive font-bold uppercase mt-1">{errors.name.message}</p>
           )}
         </div>
 
@@ -106,7 +106,7 @@ export default function RoleForm({
             {...register('is_default')}
             className="w-4 h-4 rounded border-primary/20 text-primary focus:ring-primary"
           />
-          <label htmlFor="is_default" className="text-[10px] font-black uppercase text-primary tracking-widest cursor-pointer">
+          <label htmlFor="is_default" className="text-xs font-black uppercase text-primary tracking-widest cursor-pointer">
             Establecer como Rol por Defecto (Para auto-registro)
           </label>
         </div>
@@ -115,7 +115,7 @@ export default function RoleForm({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Shield className="w-4 h-4 text-primary" />
-              <label className="text-[10px] font-black uppercase text-foreground tracking-widest">
+              <label className="text-xs font-black uppercase text-foreground tracking-widest">
                 Permisos de Acceso
               </label>
             </div>
@@ -126,7 +126,7 @@ export default function RoleForm({
                 {...register('permissions.all')}
                 className="w-3 h-3 rounded border-border text-primary focus:ring-primary"
               />
-              <label htmlFor="all_perms" className="text-[9px] font-bold uppercase text-muted-foreground tracking-tighter cursor-pointer">
+              <label htmlFor="all_perms" className="text-xs font-bold uppercase text-muted-foreground tracking-tighter cursor-pointer">
                 Acceso Total
               </label>
             </div>
@@ -152,7 +152,7 @@ export default function RoleForm({
                 ) : (
                   <div className="w-4 h-4 rounded-full border border-muted-foreground/30 shrink-0" />
                 )}
-                <span className="text-[10px] font-bold uppercase tracking-tighter">{view}</span>
+                <span className="text-xs font-bold uppercase tracking-tighter">{view}</span>
               </button>
             ))}
           </div>

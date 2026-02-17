@@ -109,7 +109,7 @@ const RowCard: React.FC<RowCardProps> = memo(({
       <div className="p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-2 flex-1 min-w-0">
-            <span className="text-[10px] font-black text-muted-foreground/50 tabular-nums shrink-0 mt-1">
+            <span className="text-xs font-black text-muted-foreground/50 tabular-nums shrink-0 mt-1">
               {numbering}
             </span>
 
@@ -139,7 +139,7 @@ const RowCard: React.FC<RowCardProps> = memo(({
                     {row.label}
                   </span>
                   {row.id === '13' && calculatedValues?.['12']?.total > 0 && (
-                    <span className="mt-1 inline-flex w-fit items-center px-1.5 py-0.5 rounded text-[9px] font-black bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                    <span className="mt-1 inline-flex w-fit items-center px-1.5 py-0.5 rounded text-xs font-black bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
                       {((calculatedValues['13'].total / calculatedValues['12'].total) * 100).toFixed(1)}% s/ costo
                     </span>
                   )}
@@ -166,16 +166,16 @@ const RowCard: React.FC<RowCardProps> = memo(({
                 </PopoverTrigger>
                 <PopoverContent className="w-48 p-2 rounded-2xl shadow-xl z-50" align="end">
                   <div className="grid grid-cols-1 gap-1">
-                    <Button variant="ghost" size="sm" className="justify-start gap-2 text-[10px] font-bold uppercase tracking-widest rounded-lg" onClick={() => reorderMainRow(path, 'up')}>
+                    <Button variant="ghost" size="sm" className="justify-start gap-2 text-xs font-bold uppercase tracking-widest rounded-lg" onClick={() => reorderMainRow(path, 'up')}>
                       <ChevronUp className="w-3.5 h-3.5" /> Subir
                     </Button>
-                    <Button variant="ghost" size="sm" className="justify-start gap-2 text-[10px] font-bold uppercase tracking-widest rounded-lg" onClick={() => reorderMainRow(path, 'down')}>
+                    <Button variant="ghost" size="sm" className="justify-start gap-2 text-xs font-bold uppercase tracking-widest rounded-lg" onClick={() => reorderMainRow(path, 'down')}>
                       <ChevronDown className="w-3.5 h-3.5" /> Bajar
                     </Button>
-                    <Button variant="ghost" size="sm" className="justify-start gap-2 text-[10px] font-bold uppercase tracking-widest rounded-lg text-primary" onClick={() => addMainRow([...path, 'children'])}>
+                    <Button variant="ghost" size="sm" className="justify-start gap-2 text-xs font-bold uppercase tracking-widest rounded-lg text-primary" onClick={() => addMainRow([...path, 'children'])}>
                       <Plus className="w-3.5 h-3.5" /> Añadir Hijo
                     </Button>
-                    <Button variant="ghost" size="sm" className="justify-start gap-2 text-[10px] font-bold uppercase tracking-widest rounded-lg text-destructive hover:bg-destructive/10" onClick={() => removeMainRow(path)}>
+                    <Button variant="ghost" size="sm" className="justify-start gap-2 text-xs font-bold uppercase tracking-widest rounded-lg text-destructive hover:bg-destructive/10" onClick={() => removeMainRow(path)}>
                       <Trash2 className="w-3.5 h-3.5" /> Eliminar
                     </Button>
                   </div>
@@ -186,7 +186,7 @@ const RowCard: React.FC<RowCardProps> = memo(({
 
         <div className="mt-4 grid grid-cols-2 gap-4">
           <div className="space-y-1">
-            <p className="text-[9px] font-black uppercase tracking-[0.15em] text-muted-foreground/60">Histórico / %</p>
+            <p className="text-xs font-black uppercase tracking-[0.15em] text-muted-foreground/60">Histórico / %</p>
             <div
               className="relative cursor-pointer group/vh"
               onClick={() => setIsEditingVH(true)}
@@ -220,7 +220,7 @@ const RowCard: React.FC<RowCardProps> = memo(({
           </div>
 
           <div className="space-y-1 text-right">
-            <p className="text-[9px] font-black uppercase tracking-[0.15em] text-muted-foreground/60">Total Actual</p>
+            <p className="text-xs font-black uppercase tracking-[0.15em] text-muted-foreground/60">Total Actual</p>
             <div
               className="relative cursor-pointer group/total"
               onClick={() => setIsEditingTotal(true)}
@@ -463,7 +463,7 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
             <div className="w-1 h-5 bg-primary rounded-full" />
             Análisis de Desglose
           </h3>
-          <span className="text-[10px] font-black text-muted-foreground/50 uppercase tracking-widest">
+          <span className="text-xs font-black text-muted-foreground/50 uppercase tracking-widest">
             {annexes?.[0]?.data?.[0]?.um || 'UND'} / TOTAL
           </span>
         </div>
@@ -477,7 +477,7 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
                 <div className="flex items-center gap-3">
                   <div className="w-1 h-6 bg-primary rounded-full" />
                   <Input
-                    className="h-8 text-[11px] font-black uppercase tracking-[0.2em] text-foreground bg-transparent border-none focus-visible:ring-0 p-0 w-auto min-w-[200px]"
+                    className="h-8 text-xs font-black uppercase tracking-[0.2em] text-foreground bg-transparent border-none focus-visible:ring-0 p-0 w-auto min-w-[200px]"
                     value={section.label}
                     onChange={(e) => updateValue(['sections', sectionIndex, 'label'], e.target.value)}
                   />
@@ -514,7 +514,7 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
                     className="w-full h-12 rounded-2xl border-dashed border-2 hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2 bg-primary/5 mt-4"
                 >
                     <Plus className="w-4 h-4" />
-                    <span className="font-bold uppercase tracking-widest text-[10px]">Añadir Concepto</span>
+                    <span className="font-bold uppercase tracking-widest text-xs">Añadir Concepto</span>
                 </Button>
               </div>
             </div>

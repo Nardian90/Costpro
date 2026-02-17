@@ -139,11 +139,11 @@ export function MatchingSimulation({ products, rules }: { products: Product[], r
                 <Target className="w-4 h-4" />
                 Simulación Unitaria
             </h3>
-            <p className="text-[10px] text-muted-foreground font-medium uppercase leading-tight">
+            <p className="text-xs text-muted-foreground font-medium uppercase leading-tight">
                 Prueba el motor de matching contra un monto específico sin afectar los datos reales.
             </p>
             <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase text-muted-foreground">Monto Objetivo ($)</label>
+                <label className="text-xs font-bold uppercase text-muted-foreground">Monto Objetivo ($)</label>
                 <Input
                 type="number"
                 value={target}
@@ -179,11 +179,11 @@ export function MatchingSimulation({ products, rules }: { products: Product[], r
                     <RotateCcw className="w-3 h-3" />
                   </Button>
                 </div>
-                <p className="text-[10px] text-muted-foreground font-medium uppercase leading-tight">
+                <p className="text-xs text-muted-foreground font-medium uppercase leading-tight">
                     Reparte la diferencia entre el total actual y tu meta mensual usando productos comodín.
                 </p>
                 <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground">Meta Mensual ($)</label>
+                    <label className="text-xs font-bold uppercase text-muted-foreground">Meta Mensual ($)</label>
                     <Input
                         type="number"
                         value={globalTarget}
@@ -204,13 +204,13 @@ export function MatchingSimulation({ products, rules }: { products: Product[], r
             <>
               <div className="grid grid-cols-2 gap-4">
                 <Card className="p-4 bg-primary/5 border-none">
-                  <p className="text-[10px] font-black text-primary uppercase mb-1">Total Alcanzado</p>
+                  <p className="text-xs font-black text-primary uppercase mb-1">Total Alcanzado</p>
                   <p className="text-2xl font-black">
                     {result.lines.reduce((sum, l) => sum + l.importe_linea_cents, 0).toFixed(2)}
                   </p>
                 </Card>
                 <Card className="p-4 bg-orange-500/5 border-none">
-                  <p className="text-[10px] font-black text-orange-500 uppercase mb-1">Diferencia</p>
+                  <p className="text-xs font-black text-orange-500 uppercase mb-1">Diferencia</p>
                   <p className="text-2xl font-black">
                     {(target - result.lines.reduce((sum, l) => sum + l.importe_linea_cents, 0)).toFixed(2)}
                   </p>
@@ -221,16 +221,16 @@ export function MatchingSimulation({ products, rules }: { products: Product[], r
                 <Table>
                   <TableHeader className="bg-muted/50">
                     <TableRow>
-                      <TableHead className="text-[10px] font-black uppercase">Producto</TableHead>
-                      <TableHead className="text-[10px] font-black uppercase text-center">Cant.</TableHead>
-                      <TableHead className="text-[10px] font-black uppercase text-right">Precio Aplicado</TableHead>
-                      <TableHead className="text-[10px] font-black uppercase text-right">Total</TableHead>
+                      <TableHead className="text-xs font-black uppercase">Producto</TableHead>
+                      <TableHead className="text-xs font-black uppercase text-center">Cant.</TableHead>
+                      <TableHead className="text-xs font-black uppercase text-right">Precio Aplicado</TableHead>
+                      <TableHead className="text-xs font-black uppercase text-right">Total</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {result.lines.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={4} className="h-24 text-center text-muted-foreground font-bold uppercase text-[10px]">
+                            <TableCell colSpan={4} className="h-24 text-center text-muted-foreground font-bold uppercase text-xs">
                                 No se encontraron combinaciones válidas.
                             </TableCell>
                         </TableRow>
@@ -246,7 +246,7 @@ export function MatchingSimulation({ products, rules }: { products: Product[], r
                             {isAdjusted && (
                               <Badge
                                 variant="outline"
-                                className={`text-[8px] h-3 px-1 mt-1 font-black gap-1 uppercase ${
+                                className={`text-xs h-3 px-1 mt-1 font-black gap-1 uppercase ${
                                     adjustment > 0
                                         ? 'border-green-200 text-green-600 bg-green-50'
                                         : 'border-red-200 text-red-600 bg-red-50'
@@ -262,7 +262,7 @@ export function MatchingSimulation({ products, rules }: { products: Product[], r
                             <span className={isAdjusted ? (adjustment > 0 ? "text-green-600 font-black" : "text-red-600 font-black") : ""}>
                                 {l.precio_unitario_cents.toFixed(2)}
                             </span>
-                            {isAdjusted && <div className="text-[8px] line-through opacity-50">{product?.precio_cents?.toFixed(2)}</div>}
+                            {isAdjusted && <div className="text-xs line-through opacity-50">{product?.precio_cents?.toFixed(2)}</div>}
                           </TableCell>
                           <TableCell className="text-right font-black text-xs">{l.importe_linea_cents.toFixed(2)}</TableCell>
                         </TableRow>
@@ -273,13 +273,13 @@ export function MatchingSimulation({ products, rules }: { products: Product[], r
               </Card>
 
               <Card className="p-4 bg-muted/30 border-none">
-                <h4 className="text-[10px] font-black uppercase mb-2 flex items-center gap-2">
+                <h4 className="text-xs font-black uppercase mb-2 flex items-center gap-2">
                     <TrendingUp className="w-3 h-3" />
                     Trace de Ejecución (Logs)
                 </h4>
                 <div className="space-y-1">
                   {result.logs.map((log, i) => (
-                    <p key={i} className="text-[10px] font-medium text-muted-foreground leading-tight">
+                    <p key={i} className="text-xs font-medium text-muted-foreground leading-tight">
                         <span className="opacity-30 mr-2">[{i+1}]</span> {log}
                     </p>
                   ))}

@@ -53,7 +53,7 @@ export default function StoresManagementView() {
                   )}
                 </div>
                 <span className={cn(
-                  "px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest",
+                  "px-2 py-0.5 rounded text-xs font-black uppercase tracking-widest",
                   store.is_active ? 'bg-green-500/10 text-green-600' : 'bg-destructive/10 text-destructive'
                 )}>
                   {store.is_active ? 'Activa' : 'Inactiva'}
@@ -61,19 +61,19 @@ export default function StoresManagementView() {
               </div>
 
               <h3 className="font-black text-lg uppercase tracking-tight mb-1">{store.name}</h3>
-              <p className="text-[10px] font-bold text-muted-foreground leading-relaxed flex-1 mb-6">{store.address || 'Ubicación no especificada'}</p>
+              <p className="text-xs font-bold text-muted-foreground leading-relaxed flex-1 mb-6">{store.address || 'Ubicación no especificada'}</p>
 
               <div className="space-y-2">
                 {activeStoreId !== store.id ? (
                   <button
                     onClick={() => handleSetActiveStore(store.id)}
-                    className="w-full py-2.5 rounded-xl bg-primary text-white font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                    className="w-full py-2.5 rounded-xl bg-primary text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform"
                   >
                     <Target className="w-3.5 h-3.5" />
                     Seleccionar Tienda
                   </button>
                 ) : (
-                  <div className="w-full py-2.5 rounded-xl bg-primary/5 border border-primary/20 text-primary font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2">
+                  <div className="w-full py-2.5 rounded-xl bg-primary/5 border border-primary/20 text-primary font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2">
                     <Check className="w-3.5 h-3.5" />
                     Tienda Actual
                   </div>
@@ -82,7 +82,7 @@ export default function StoresManagementView() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleEditStore(store)}
-                    className="flex-1 py-2 rounded-xl border border-border hover:bg-muted font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
+                    className="flex-1 py-2 rounded-xl border border-border hover:bg-muted font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
                   >
                     <Edit className="w-3 h-3" />
                     Info
@@ -90,7 +90,7 @@ export default function StoresManagementView() {
                   {isAdmin && (
                     <button
                       onClick={() => handleDeleteStore(store)}
-                      className="flex-1 py-2 rounded-xl border border-border hover:bg-destructive/10 hover:text-destructive font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
+                      className="flex-1 py-2 rounded-xl border border-border hover:bg-destructive/10 hover:text-destructive font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
                     >
                       <Trash2 className="w-3 h-3" />
                       Borrar
@@ -104,7 +104,7 @@ export default function StoresManagementView() {
             <div className="col-span-full py-24 text-center border-2 border-dashed border-border rounded-xl bg-muted/10">
                <Building className="w-16 h-16 mx-auto mb-4 opacity-5" />
                <p className="font-black uppercase tracking-widest text-xs text-muted-foreground mb-2">No se encontraron sucursales</p>
-               <p className="text-[10px] text-muted-foreground/50 font-bold uppercase tracking-wider">No tienes acceso a entidades en este contexto o no existen registros.</p>
+               <p className="text-xs text-muted-foreground/50 font-bold uppercase tracking-wider">No tienes acceso a entidades en este contexto o no existen registros.</p>
             </div>
           )}
         </div>

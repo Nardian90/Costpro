@@ -95,7 +95,7 @@ export const ReportConfigPanel = ({ config, setConfig }: ReportConfigPanelProps)
         <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary/60">Configuración Base</h3>
 
         <div className="space-y-2">
-          <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Nombre del Reporte</Label>
+          <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Nombre del Reporte</Label>
           <Input
             value={config.name}
             onChange={(e) => setConfig({ ...config, name: e.target.value })}
@@ -105,14 +105,14 @@ export const ReportConfigPanel = ({ config, setConfig }: ReportConfigPanelProps)
         </div>
 
         <div className="space-y-2">
-          <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Tipo de Reporte</Label>
+          <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Tipo de Reporte</Label>
           <Select value={config.type} onValueChange={(val) => handleTypeChange(val as ReportType)}>
             <SelectTrigger className="rounded-xl border-primary/10 bg-background/50 text-xs font-bold uppercase tracking-widest">
               <SelectValue placeholder="Seleccionar tipo" />
             </SelectTrigger>
             <SelectContent className="rounded-xl border-primary/10">
               {REPORT_TYPES.map(t => (
-                <SelectItem key={t.id} value={t.id} className="text-[10px] font-bold uppercase tracking-widest">
+                <SelectItem key={t.id} value={t.id} className="text-xs font-bold uppercase tracking-widest">
                   {t.label}
                 </SelectItem>
               ))}
@@ -122,7 +122,7 @@ export const ReportConfigPanel = ({ config, setConfig }: ReportConfigPanelProps)
 
         {(isAdmin || isEncargado) && (
            <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-             <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+             <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                <StoreIcon className="w-3 h-3" />
                Almacén / Tienda
              </Label>
@@ -130,12 +130,12 @@ export const ReportConfigPanel = ({ config, setConfig }: ReportConfigPanelProps)
                 value={config.store_id || user?.activeStoreId || 'none'}
                 onValueChange={(val) => setConfig({ ...config, store_id: val })}
              >
-                <SelectTrigger className="rounded-xl border-primary/10 bg-background/50 text-[10px] font-bold uppercase">
+                <SelectTrigger className="rounded-xl border-primary/10 bg-background/50 text-xs font-bold uppercase">
                     <SelectValue placeholder="Seleccionar tienda" />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl border-primary/10">
                     {stores.map(s => (
-                        <SelectItem key={s.id} value={s.id} className="text-[10px] font-bold uppercase">{s.name}</SelectItem>
+                        <SelectItem key={s.id} value={s.id} className="text-xs font-bold uppercase">{s.name}</SelectItem>
                     ))}
                 </SelectContent>
              </Select>
@@ -144,7 +144,7 @@ export const ReportConfigPanel = ({ config, setConfig }: ReportConfigPanelProps)
 
         {(config.type === 'inventory' || config.type === 'sales') && (
           <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-             <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+             <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                <Tag className="w-3 h-3" />
                Filtrar por Categoría
              </Label>
@@ -155,13 +155,13 @@ export const ReportConfigPanel = ({ config, setConfig }: ReportConfigPanelProps)
                     filters: { ...config.filters, category: val === 'all' ? undefined : val }
                 })}
              >
-                <SelectTrigger className="rounded-xl border-primary/10 bg-background/50 text-[10px] font-bold uppercase">
+                <SelectTrigger className="rounded-xl border-primary/10 bg-background/50 text-xs font-bold uppercase">
                     <SelectValue placeholder="Todas las categorías" />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl border-primary/10">
-                    <SelectItem value="all" className="text-[10px] font-bold uppercase">Todas</SelectItem>
+                    <SelectItem value="all" className="text-xs font-bold uppercase">Todas</SelectItem>
                     {categories.map(cat => (
-                        <SelectItem key={cat} value={cat} className="text-[10px] font-bold uppercase">{cat}</SelectItem>
+                        <SelectItem key={cat} value={cat} className="text-xs font-bold uppercase">{cat}</SelectItem>
                     ))}
                 </SelectContent>
              </Select>
@@ -170,7 +170,7 @@ export const ReportConfigPanel = ({ config, setConfig }: ReportConfigPanelProps)
 
         {config.type === 'kardex' && (
           <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-            <Label className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+            <Label className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
               <Package className="w-3 h-3" />
               Producto (Obligatorio para Kardex)
             </Label>
@@ -180,7 +180,7 @@ export const ReportConfigPanel = ({ config, setConfig }: ReportConfigPanelProps)
                   variant="outline"
                   role="combobox"
                   aria-expanded={isProductPopoverOpen}
-                  className="w-full justify-between rounded-xl border-primary/20 bg-background/50 text-[10px] font-bold uppercase tracking-widest"
+                  className="w-full justify-between rounded-xl border-primary/20 bg-background/50 text-xs font-bold uppercase tracking-widest"
                 >
                   {config.filters?.product_id
                     ? products.find((p) => p.id === config.filters?.product_id)?.name || "Cargando..."
@@ -209,7 +209,7 @@ export const ReportConfigPanel = ({ config, setConfig }: ReportConfigPanelProps)
                             });
                             setIsProductPopoverOpen(false);
                           }}
-                          className="text-[10px] font-bold uppercase"
+                          className="text-xs font-bold uppercase"
                         >
                           <Check
                             className={cn(
@@ -219,7 +219,7 @@ export const ReportConfigPanel = ({ config, setConfig }: ReportConfigPanelProps)
                           />
                           <div className="flex flex-col">
                              <span>{product.name}</span>
-                             <span className="text-[8px] text-muted-foreground">{product.sku}</span>
+                             <span className="text-xs text-muted-foreground">{product.sku}</span>
                           </div>
                         </CommandItem>
                       ))}
@@ -236,21 +236,21 @@ export const ReportConfigPanel = ({ config, setConfig }: ReportConfigPanelProps)
         <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary/60">Periodo</h3>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Desde</Label>
+            <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Desde</Label>
             <Input
               type="date"
               value={config.date_range?.from}
               onChange={(e) => setConfig({ ...config, date_range: { ...config.date_range!, from: e.target.value } })}
-              className="rounded-xl border-primary/10 bg-background/50 text-[10px] font-bold"
+              className="rounded-xl border-primary/10 bg-background/50 text-xs font-bold"
             />
           </div>
           <div className="space-y-2">
-            <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Hasta</Label>
+            <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Hasta</Label>
             <Input
               type="date"
               value={config.date_range?.to}
               onChange={(e) => setConfig({ ...config, date_range: { ...config.date_range!, to: e.target.value } })}
-              className="rounded-xl border-primary/10 bg-background/50 text-[10px] font-bold"
+              className="rounded-xl border-primary/10 bg-background/50 text-xs font-bold"
             />
           </div>
         </div>
@@ -260,32 +260,32 @@ export const ReportConfigPanel = ({ config, setConfig }: ReportConfigPanelProps)
         <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary/60">Formato</h3>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Orientación</Label>
+            <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Orientación</Label>
             <Select
                 value={config.layout?.orientation || 'portrait'}
                 onValueChange={(val) => setConfig({ ...config, layout: { ...config.layout, orientation: val } })}
             >
-              <SelectTrigger className="rounded-xl border-primary/10 bg-background/50 text-[10px] font-bold uppercase tracking-widest">
+              <SelectTrigger className="rounded-xl border-primary/10 bg-background/50 text-xs font-bold uppercase tracking-widest">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="rounded-xl border-primary/10">
-                <SelectItem value="portrait" className="text-[10px] font-bold uppercase">Vertical</SelectItem>
-                <SelectItem value="landscape" className="text-[10px] font-bold uppercase">Horizontal</SelectItem>
+                <SelectItem value="portrait" className="text-xs font-bold uppercase">Vertical</SelectItem>
+                <SelectItem value="landscape" className="text-xs font-bold uppercase">Horizontal</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-2">
-            <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Tamaño</Label>
+            <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Tamaño</Label>
             <Select
                 value={config.layout?.format || 'a4'}
                 onValueChange={(val) => setConfig({ ...config, layout: { ...config.layout, format: val } })}
             >
-              <SelectTrigger className="rounded-xl border-primary/10 bg-background/50 text-[10px] font-bold uppercase tracking-widest">
+              <SelectTrigger className="rounded-xl border-primary/10 bg-background/50 text-xs font-bold uppercase tracking-widest">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="rounded-xl border-primary/10">
-                <SelectItem value="a4" className="text-[10px] font-bold uppercase">A4</SelectItem>
-                <SelectItem value="letter" className="text-[10px] font-bold uppercase">Carta</SelectItem>
+                <SelectItem value="a4" className="text-xs font-bold uppercase">A4</SelectItem>
+                <SelectItem value="letter" className="text-xs font-bold uppercase">Carta</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -295,7 +295,7 @@ export const ReportConfigPanel = ({ config, setConfig }: ReportConfigPanelProps)
       <div className="space-y-4">
         <div className="flex items-center justify-between">
             <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary/60">Columnas</h3>
-            <span className="text-[9px] font-bold text-muted-foreground uppercase">
+            <span className="text-xs font-bold text-muted-foreground uppercase">
                 {config.columns?.length || 0} seleccionadas
             </span>
         </div>
@@ -310,7 +310,7 @@ export const ReportConfigPanel = ({ config, setConfig }: ReportConfigPanelProps)
                     />
                     <Label
                         htmlFor={`col-${col}`}
-                        className="text-[10px] font-bold uppercase tracking-tight cursor-pointer select-none"
+                        className="text-xs font-bold uppercase tracking-tight cursor-pointer select-none"
                     >
                         {COLUMN_LABELS[col] || col}
                     </Label>

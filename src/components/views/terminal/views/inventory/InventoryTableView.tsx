@@ -31,7 +31,7 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onA
                     </div>
                     <div>
                         <div className="font-bold text-sm">{product.name}</div>
-                        <div className="text-[10px] font-bold text-muted-foreground uppercase">{product.category}</div>
+                        <div className="text-xs font-bold text-muted-foreground uppercase">{product.category}</div>
                     </div>
                 </div>
             </td>
@@ -41,7 +41,7 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onA
             <td className="p-4 text-right text-muted-foreground" data-label="Costo">{formatCurrency(product.cost_price || 0)}</td>
             <td className="p-4 text-center" data-label="Estado">
                 <span className={cn(
-                    "neu-badge text-[9px] px-2 py-0.5",
+                    "neu-badge text-xs px-2 py-0.5",
                     isLowStock ? "text-danger" : "text-success"
                 )}>
                     {isLowStock ? 'Stock Bajo' : 'Normal'}
@@ -80,7 +80,7 @@ export default function InventoryTableView({ products, loadMore, hasMore, isLoad
         <div className="overflow-x-auto table-to-cards rounded-2xl shadow-xl border border-white/5">
             <table className="w-full min-w-[1024px] grid-table-inventory">
                 <thead className="bg-muted/30 border-b sticky-header">
-                    <tr className="text-left text-muted-foreground uppercase text-[10px] font-bold">
+                    <tr className="text-left text-muted-foreground uppercase text-xs font-bold">
                         <th className="p-4 pl-[76px]">Producto</th>
                         <th className="p-4">SKU</th>
                         <th className="p-4 text-right">Stock</th>

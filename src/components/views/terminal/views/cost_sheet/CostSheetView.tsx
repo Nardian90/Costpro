@@ -532,14 +532,14 @@ const CostSheetView = () => {
                           <h3 className="text-sm font-bold uppercase tracking-tight">
                               {viewMode === 'assisted' ? 'Modo Asistido' : viewMode === 'reading' ? 'Modo Lectura' : 'Modo Rápido'}
                           </h3>
-                          <p className="text-[10px] text-muted-foreground uppercase font-black tracking-[0.2em]">Vista Simplificada Activa</p>
+                          <p className="text-xs text-muted-foreground uppercase font-black tracking-[0.2em]">Vista Simplificada Activa</p>
                       </div>
                   </div>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setViewMode('expert')}
-                    className="w-full sm:w-auto rounded-xl border-primary/20 hover:bg-primary/10 text-primary font-bold uppercase tracking-widest text-[10px] h-10 px-6 active:scale-95 transition-all"
+                    className="w-full sm:w-auto rounded-xl border-primary/20 hover:bg-primary/10 text-primary font-bold uppercase tracking-widest text-xs h-10 px-6 active:scale-95 transition-all"
                   >
                       <Table2 className="w-3.5 h-3.5 mr-2" />
                       Volver a Modo Experto
@@ -660,13 +660,13 @@ const CostSheetView = () => {
             <div className="max-w-5xl mx-auto mb-6 flex flex-col sm:flex-row justify-between items-center bg-slate-100 dark:bg-slate-800/40 p-3 rounded-2xl gap-3">
                 <div className="flex items-center gap-3 px-2">
                     <Eye className="w-4 h-4 text-slate-400" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Vista de Previsualización</span>
+                    <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Vista de Previsualización</span>
                 </div>
                 <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => { setIsEditing(true); setViewMode('expert'); }}
-                    className="w-full sm:w-auto text-primary hover:bg-primary/10 font-bold uppercase tracking-widest text-[10px] h-9 px-4 rounded-xl"
+                    className="w-full sm:w-auto text-primary hover:bg-primary/10 font-bold uppercase tracking-widest text-xs h-9 px-4 rounded-xl"
                 >
                     <Edit className="w-3.5 h-3.5 mr-2" />
                     Ir al Editor (Modo Experto)

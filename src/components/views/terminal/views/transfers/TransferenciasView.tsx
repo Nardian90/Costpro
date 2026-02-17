@@ -65,11 +65,11 @@ export default function TransferenciasView() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'PENDIENTE':
-        return <span className="flex items-center gap-1 text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest"><Clock className="w-3 h-3" /> Pendiente</span>;
+        return <span className="flex items-center gap-1 text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full text-xs font-black uppercase tracking-widest"><Clock className="w-3 h-3" /> Pendiente</span>;
       case 'CONFIRMADA':
-        return <span className="flex items-center gap-1 text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest"><CheckCircle2 className="w-3 h-3" /> Confirmada</span>;
+        return <span className="flex items-center gap-1 text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full text-xs font-black uppercase tracking-widest"><CheckCircle2 className="w-3 h-3" /> Confirmada</span>;
       case 'CANCELADA':
-        return <span className="flex items-center gap-1 text-rose-500 bg-rose-500/10 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest"><XCircle className="w-3 h-3" /> Cancelada</span>;
+        return <span className="flex items-center gap-1 text-rose-500 bg-rose-500/10 px-2 py-0.5 rounded-full text-xs font-black uppercase tracking-widest"><XCircle className="w-3 h-3" /> Cancelada</span>;
       default:
         return status;
     }
@@ -148,7 +148,7 @@ export default function TransferenciasView() {
                          </span>
                          {getStatusBadge(t.status)}
                       </div>
-                      <div className="flex items-center gap-3 mt-1 text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+                      <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground font-medium uppercase tracking-wider">
                          <span>ID: {t.id.split('-')[0]}</span>
                          <span>•</span>
                          <span>Solicitado por: {t.creator?.full_name}</span>
@@ -160,7 +160,7 @@ export default function TransferenciasView() {
 
                 <div className="flex items-center gap-6">
                    <div className="text-right">
-                      <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Productos</p>
+                      <p className="text-xs font-black uppercase text-muted-foreground tracking-widest">Productos</p>
                       <p className="text-sm font-black text-primary group-hover:scale-110 transition-transform origin-right">VER DETALLE</p>
                    </div>
                    <ArrowLeftRight className="w-5 h-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />

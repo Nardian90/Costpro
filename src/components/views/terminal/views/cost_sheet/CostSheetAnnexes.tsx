@@ -31,7 +31,7 @@ const CostSheetAnnexes: React.FC<CostSheetAnnexesProps> = ({ annexes, forceTable
                 <thead className="bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-700">
                   <tr>
                     {annex.columns.map((col: CostSheetColumn) => (
-                      <th key={col.key} className="p-3 text-left font-black uppercase tracking-widest text-[9px] text-slate-500 dark:text-slate-400">
+                      <th key={col.key} className="p-3 text-left font-black uppercase tracking-widest text-xs text-slate-500 dark:text-slate-400">
                         {col.label || col.title || col.key}
                       </th>
                     ))}
@@ -41,7 +41,7 @@ const CostSheetAnnexes: React.FC<CostSheetAnnexesProps> = ({ annexes, forceTable
                   {annex.data.length > 0 ? annex.data.map((row, rowIndex) => (
                     <tr key={rowIndex} className="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
                       {annex.columns.map((col: CostSheetColumn) => (
-                        <td key={`${rowIndex}-${col.key}`} className="p-3 font-mono text-[10px] text-slate-700 dark:text-slate-300">
+                        <td key={`${rowIndex}-${col.key}`} className="p-3 font-mono text-xs text-slate-700 dark:text-slate-300">
                            <span className={col.formula ? "font-black text-primary" : "font-medium"}>
                              {typeof row[col.key] === 'number'
                                ? row[col.key].toLocaleString('es-ES', { minimumFractionDigits: 2 })
@@ -61,7 +61,7 @@ const CostSheetAnnexes: React.FC<CostSheetAnnexesProps> = ({ annexes, forceTable
                   {/* Total Row */}
                   {annex.data.length > 0 && (
                     <tr className="bg-slate-50 dark:bg-slate-800/50 font-bold border-t border-slate-200 dark:border-slate-700">
-                        <td colSpan={annex.columns.length - 1} className="p-4 text-right uppercase tracking-[0.2em] text-[10px] font-black text-slate-500">
+                        <td colSpan={annex.columns.length - 1} className="p-4 text-right uppercase tracking-[0.2em] text-xs font-black text-slate-500">
                           TOTAL
                         </td>
                         <td className="p-4 text-right font-mono font-black text-base text-slate-900 dark:text-white border-l border-slate-200 dark:border-slate-700">
