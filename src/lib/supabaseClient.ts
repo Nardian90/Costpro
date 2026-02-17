@@ -47,5 +47,11 @@ export const getSupabaseAuthClient = (token: string) => {
         Authorization: `Bearer ${token}`,
       },
     },
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+      lock: customLock,
+    }
   });
 };
