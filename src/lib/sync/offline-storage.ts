@@ -14,6 +14,41 @@ localforage.config({
   storeName: 'offline_data',
 });
 
+
+// Fallback in-memory storage for offline queue if IndexedDB fails
+const memoryQueue: Record<string, any> = {};
+
+const safeLocalForage = {
+  getItem: async <T>(key: string): Promise<T | null> => {
+    try {
+      return await Promise.race([
+        safeLocalForage.getItem<T>(key),
+        new Promise<null>((_, reject) => setTimeout(() => reject(new Error('LocalForage Timeout')), 3000))
+      ]);
+    } catch (e) {
+      console.warn('LocalForage getItem failed, using memory:', e);
+      return (memoryQueue[key] as T) || null;
+    }
+  },
+  setItem: async <T>(key: string, value: T): Promise<T> => {
+    try {
+      return await safeLocalForage.setItem(key, value);
+    } catch (e) {
+      console.warn('LocalForage setItem failed, using memory:', e);
+      memoryQueue[key] = value;
+      return value;
+    }
+  },
+  removeItem: async (key: string): Promise<void> => {
+    try {
+      await safeLocalForage.removeItem(key);
+    } catch (e) {
+      console.warn('LocalForage removeItem failed, using memory:', e);
+      delete memoryQueue[key];
+    }
+  }
+};
+
 export const offlineStorage = {
   /**
    * Add an operation to the sync queue
@@ -34,7 +69,7 @@ export const offlineStorage = {
     syncOperationSchema.parse(newOp);
 
     queue.push(newOp);
-    await localforage.setItem(SYNC_QUEUE_KEY, queue);
+    await safeLocalForage.setItem(SYNC_QUEUE_KEY, queue);
     return newOp;
   },
 
@@ -42,7 +77,7 @@ export const offlineStorage = {
    * Get all operations in the queue
    */
   async getQueue(): Promise<SyncOperationType[]> {
-    const queue = await localforage.getItem<SyncOperationType[]>(SYNC_QUEUE_KEY);
+    const queue = await safeLocalForage.getItem<SyncOperationType[]>(SYNC_QUEUE_KEY);
     return queue || [];
   },
 
@@ -63,7 +98,7 @@ export const offlineStorage = {
 
     if (index !== -1) {
       queue[index] = { ...queue[index], ...updates };
-      await localforage.setItem(SYNC_QUEUE_KEY, queue);
+      await safeLocalForage.setItem(SYNC_QUEUE_KEY, queue);
     }
   },
 
@@ -80,7 +115,7 @@ export const offlineStorage = {
         queue[index].attempts += 1;
         queue[index].lastError = lastError;
       }
-      await localforage.setItem(SYNC_QUEUE_KEY, queue);
+      await safeLocalForage.setItem(SYNC_QUEUE_KEY, queue);
     }
   },
 
@@ -90,26 +125,26 @@ export const offlineStorage = {
   async removeSyncedOperations(): Promise<void> {
     const queue = await this.getQueue();
     const filteredQueue = queue.filter(op => op.status !== 'synced');
-    await localforage.setItem(SYNC_QUEUE_KEY, filteredQueue);
+    await safeLocalForage.setItem(SYNC_QUEUE_KEY, filteredQueue);
   },
 
   /**
    * Save an offline snapshot of data (e.g., product list)
    */
   async saveSnapshot(key: string, data: any): Promise<void> {
-    const snapshots = await localforage.getItem<Record<string, any>>(OFFLINE_SNAPSHOT_KEY) || {};
+    const snapshots = await safeLocalForage.getItem<Record<string, any>>(OFFLINE_SNAPSHOT_KEY) || {};
     snapshots[key] = {
       data,
       timestamp: Date.now(),
     };
-    await localforage.setItem(OFFLINE_SNAPSHOT_KEY, snapshots);
+    await safeLocalForage.setItem(OFFLINE_SNAPSHOT_KEY, snapshots);
   },
 
   /**
    * Get an offline snapshot
    */
   async getSnapshot(key: string): Promise<any | null> {
-    const snapshots = await localforage.getItem<Record<string, any>>(OFFLINE_SNAPSHOT_KEY);
+    const snapshots = await safeLocalForage.getItem<Record<string, any>>(OFFLINE_SNAPSHOT_KEY);
     return snapshots?.[key]?.data || null;
   },
 
@@ -117,7 +152,7 @@ export const offlineStorage = {
    * Clear all sync data
    */
   async clearAll(): Promise<void> {
-    await localforage.removeItem(SYNC_QUEUE_KEY);
-    await localforage.removeItem(OFFLINE_SNAPSHOT_KEY);
+    await safeLocalForage.removeItem(SYNC_QUEUE_KEY);
+    await safeLocalForage.removeItem(OFFLINE_SNAPSHOT_KEY);
   }
 };

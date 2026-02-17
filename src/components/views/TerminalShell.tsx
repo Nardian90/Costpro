@@ -75,6 +75,18 @@ export default function TerminalShell() { // Renamed from TerminalView
 
   const { updateUser } = useAuthStore();
 
+
+  // Failsafe: Ensure loading doesn't stay true forever if session check hangs
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (loading) {
+        console.warn('[TerminalShell] Failsafe: Loading took too long, forcing false');
+        useAuthStore.getState().setLoading(false);
+      }
+    }, 12000); // 12 seconds
+    return () => clearTimeout(timer);
+  }, [loading]);
+
   const [sidebarSearch, setSidebarSearch] = useState('');
 
   // Hooks

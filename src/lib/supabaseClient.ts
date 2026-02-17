@@ -22,6 +22,32 @@ if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_A
 
 // Initialize the Supabase client.
 // Using fallbacks ensures the application can function if environment variables are not yet configured.
+
+// Fallback in-memory storage for environments with broken localStorage/Cache
+const createMemoryStorage = () => {
+  let store: Record<string, string> = {};
+  return {
+    getItem: (key: string) => store[key] || null,
+    setItem: (key: string, value: string) => { store[key] = value; },
+    removeItem: (key: string) => { delete store[key]; },
+  };
+};
+
+const getSafeStorage = () => {
+  if (typeof window === 'undefined') return undefined;
+  try {
+    const testKey = '__storage_test__';
+    window.localStorage.setItem(testKey, testKey);
+    window.localStorage.removeItem(testKey);
+    return window.localStorage;
+  } catch (e) {
+    console.warn('LocalStorage is not available, falling back to memory storage:', e);
+    return createMemoryStorage();
+  }
+};
+
+const safeStorage = getSafeStorage();
+
 export const supabase = createClient(
   supabaseUrl,
   supabaseAnonKey,
@@ -31,6 +57,7 @@ export const supabase = createClient(
       autoRefreshToken: true,
       detectSessionInUrl: true,
       storageKey: 'costpro-auth-token',
+      storage: safeStorage,
       lock: customLock,
     }
   }

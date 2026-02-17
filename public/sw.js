@@ -1,5 +1,14 @@
 // Service Worker for Costpro PWA with Workbox Background Sync
 importScripts('https://storage.googleapis.com/workbox-cdn/releases/7.0.0/workbox-sw.js');
+// Global error handling for the Service Worker
+self.addEventListener('error', (event) => {
+  console.error('SW: Global error', event.error);
+});
+
+self.addEventListener('unhandledrejection', (event) => {
+  console.error('SW: Unhandled rejection', event.reason);
+});
+
 
 if (workbox) {
   console.log('Workbox is loaded');
@@ -17,10 +26,19 @@ if (workbox) {
   workbox.routing.registerRoute(
     ({request}) => request.destination === 'script' || request.destination === 'style',
     async (args) => {
+      // If the Cache API is completely broken, skip Workbox strategy
+      if (typeof caches === 'undefined') return fetch(args.request);
+
       try {
-        return await staticStrategy.handle(args);
+        const response = await staticStrategy.handle(args);
+        if (!response) throw new Error('No response from strategy');
+        return response;
       } catch (error) {
         console.error('SW: Strategy error, falling back to network', error);
+        // Clean up if it was a storage error
+        if (error.name === 'QuotaExceededError' || error.message?.includes('internal error')) {
+           console.warn('SW: Detected storage corruption, attempting to bypass cache');
+        }
         return fetch(args.request);
       }
     }

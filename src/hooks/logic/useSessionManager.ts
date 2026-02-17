@@ -9,7 +9,7 @@ import { userService } from '@/services/user-service';
 import type { UserRole, User, Profile } from '@/types';
 
 const SESSION_CHECK_THROTTLE = 60 * 1000; // 1 minute
-const SESSION_CHECK_TIMEOUT = 15 * 1000; // 15 seconds
+const SESSION_CHECK_TIMEOUT = 8 * 1000; // 15 seconds
 
 /**
  * Manages Supabase session, syncs with Zustand, and handles online/offline state.
@@ -90,6 +90,7 @@ export function useSessionManager() {
             setStatus('error');
         } finally {
             setSessionStatus(false);
+            setLoading(false); // Guarantee loader dismissal
         }
     }, [isOnline, isCheckingSession, lastChecked, login, logout, setAuthStatus, setSessionStatus, setStatus, user]);
 
