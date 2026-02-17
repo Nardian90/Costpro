@@ -40,13 +40,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Perfil o rol no encontrado' }, { status: 403 });
     }
 
-    const requesterRole = (requesterProfile.roles as any).name;
+    const requesterRole = (requesterProfile.roles as any).name.toLowerCase();
 
     const body = await req.json();
     const {
       p_email,
       p_full_name,
-      p_role, // This is the role NAME or ID? Looking at previous code it seemed to be ID in some places, name in others.
+      p_role,
       p_store_id,
       p_memberships,
       p_max_stores,
@@ -55,12 +55,17 @@ export async function POST(req: NextRequest) {
 
     // 3. Validate Hierarchy
     // Admin can create anything.
-    // Encargado can only create Cajero or Almacenero.
-    if (requesterRole !== 'Admin') {
-      if (requesterRole === 'Encargado') {
-        const allowedRoles = ['Cajero', 'Almacenero'];
-        if (!allowedRoles.includes(p_role)) {
-          return NextResponse.json({ error: 'No tienes permisos para crear este tipo de usuario' }, { status: 403 });
+    // Encargado/Manager can only create users within their hierarchy.
+    if (requesterRole !== 'admin') {
+      if (requesterRole === 'encargado' || requesterRole === 'manager') {
+        const allowedRoles = ['clerk', 'warehouse', 'usuario', 'costo', 'encargado', 'manager'];
+        const targetRole = (p_role || '').toLowerCase();
+
+        if (!allowedRoles.includes(targetRole)) {
+          return NextResponse.json({
+            error: 'No tienes permisos para crear este tipo de usuario',
+            details: `Rol ${p_role} no permitido para ${requesterRole}`
+          }, { status: 403 });
         }
       } else {
         return NextResponse.json({ error: 'No tienes permisos para crear usuarios' }, { status: 403 });
@@ -88,8 +93,8 @@ export async function POST(req: NextRequest) {
       p_role,
       p_store_id,
       p_memberships,
-      p_max_stores,
-      p_max_users,
+      p_max_stores: p_max_stores || 0,
+      p_max_users: p_max_users || 0,
       p_target_user_id: userId,
       p_creator_id: session.user.id
     });
@@ -101,10 +106,15 @@ export async function POST(req: NextRequest) {
     }
 
     // 6. Send Reset Password Email (Generates recovery link)
-    const { error: resetError } = await supabaseAdmin.auth.admin.generateLink({
-      type: 'recovery',
-      email: p_email,
-    });
+    try {
+      await supabaseAdmin.auth.admin.generateLink({
+        type: 'recovery',
+        email: p_email,
+      });
+    } catch (linkError) {
+      console.error('Error generating recovery link:', linkError);
+      // Don't fail the whole request if only the email fail, but maybe log it
+    }
 
     return NextResponse.json({
       success: true,
