@@ -147,14 +147,30 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
     // Use tax factor to estimate relationship: Price = (Cost + Utility) * Factor
     const baseVal = totalCost + utility;
 
-    // Heuristic: If taxFactor is exactly 1.0, it's likely taxes haven't been calculated yet
-    // but the user expects them. We use the standard 1.1111 (10% sales tax inside price)
-    // as a robust fallback to ensure goal seek accounts for taxes.
-    const currentTaxFactor = baseVal > 0 ? totalPrice / baseVal : 1.1111;
-    const safeTaxFactor = (currentTaxFactor > 1.0001) ? currentTaxFactor : 1.1111;
+    // Dynamic tax factor detection
+    let safeTaxFactor = 1.1111; // Default fallback
+
+    const currentTaxFactor = baseVal > 0 ? totalPrice / baseVal : 1.0;
+    if (currentTaxFactor > 1.0001) {
+      safeTaxFactor = currentTaxFactor;
+    } else {
+      // Try to extract it from row 13.2 formula (Impuesto sobre Ventas)
+      const s13 = data.sections.find(s => s.id === "13" || s.id === "s13");
+      const row13_2 = s13?.rows.find(r => r.id === "13.2");
+      const formula = row13_2?.formula || row13_2?.totalFormula || "";
+
+      // Standard pattern: ref("13.1")/0.9*0.1
+      const match = formula.match(/\/([\d.]+)\*([\d.]+)$/);
+      if (match) {
+        const divisor = parseFloat(match[1]);
+        const multiplier = parseFloat(match[2]);
+        if (divisor > 0) {
+          safeTaxFactor = 1 + (multiplier / divisor);
+        }
+      }
+    }
 
     const getPriceForMargin = (m: number) => (totalCost * (1 + m / 100)) * safeTaxFactor;
-
     // Numerical approximation using Binary Search for efficiency and precision
     let low = 0.0001;
     let high = 5000;
