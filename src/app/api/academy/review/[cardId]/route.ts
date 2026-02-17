@@ -5,13 +5,16 @@ import { getServerSession } from "@/lib/auth";
 
 export const runtime = 'nodejs';
 
-export async function POST(req: NextRequest, { params }: { params: { cardId: string } }) {
+export async function POST(
+  req: NextRequest,
+  { params }: { params: Promise<{ cardId: string }> }
+) {
   const session = await getServerSession(req);
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const userId = session.user.id;
   const { score } = await req.json(); // 0-5
-  const cardId = params.cardId;
+  const { cardId } = await params;
 
   try {
     // 1. Get current progress

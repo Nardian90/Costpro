@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import pdf from 'pdf-parse';
+// @ts-ignore
+import pdf from 'pdf-parse/lib/pdf-parse.js';
 import fs from 'fs';
 import path from 'path';
 import { supabase } from '@/lib/supabaseClient';
@@ -85,10 +86,10 @@ export async function POST(req: NextRequest) {
         let text = response.text();
 
         // Clean up JSON
-        text = text.replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();
+        text = text.replace(/```json/g, '').replace(/```/g, '').trim();
 
         // Basic JSON finding if Gemini adds text
-        const jsonMatch = text.match(/\\s*\\[.*\\]\\s*/s);
+        const jsonMatch = text.match(/\s*\[[\s\S]*\]\s*/);
         if (jsonMatch) text = jsonMatch[0];
 
         const parsedQuestions = JSON.parse(text);
