@@ -1,11 +1,10 @@
 'use client';
 
 import React from 'react';
-import { Plus, Edit, UserPlus, ShieldAlert, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import SearchBar from '@/components/ui/SearchBar';
 import ActionMenu from '@/components/ui/ActionMenu';
-import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { useUsersView } from './useUsersView';
 import { UserFormModal } from './UserFormModal';
@@ -31,9 +30,6 @@ export default function UsersManagementView() {
     limitReachedMessage,
     user
   } = useUsersView();
-
-  const canCreateEncargado = isAdmin;
-  const canCreateCajero = isAdmin || user?.role === 'encargado';
 
   const getRoleLabel = (role: string) => {
     const labels: Record<string, string> = {
@@ -61,26 +57,6 @@ export default function UsersManagementView() {
             )}
           </div>
           <div className="flex gap-4">
-            {canCreateEncargado && (
-              <Button
-                onClick={handleCreateUser}
-                className="bg-primary hover:bg-primary/90 text-white font-black rounded-2xl h-14 px-8 uppercase text-xs tracking-[0.2em] shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center gap-3"
-              >
-                <UserPlus className="w-5 h-5" />
-                Crear Encargado
-              </Button>
-            )}
-
-            {canCreateCajero && (
-              <Button
-                onClick={handleCreateUser}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl h-14 px-8 uppercase text-xs tracking-[0.2em] shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center gap-3"
-              >
-                <UserPlus className="w-5 h-5" />
-                Crear Cajero
-              </Button>
-            )}
-
             <ActionMenu
               actions={[
                 {
