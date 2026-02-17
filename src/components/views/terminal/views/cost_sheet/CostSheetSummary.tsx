@@ -141,12 +141,8 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
     updateUtilityFormula(newValue);
   };
 
-  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setLocalPrice(val);
-
-    const targetPrice = parseFloat(val);
-    if (isNaN(targetPrice) || targetPrice <= 0 || totalCost <= 0) return;
+  const goalSeek = (target: number) => {
+    if (isNaN(target) || target <= 0 || totalCost <= 0) return;
 
     // Use tax factor to estimate relationship: Price = (Cost + Utility) * Factor
     const baseVal = totalCost + utility;
@@ -155,19 +151,45 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
 
     const getPriceForMargin = (m: number) => (totalCost * (1 + m / 100)) * taxFactor;
 
-    // User requested iterative algorithm starting from 0.001 with 0.001 step
-    let bestMargin = 0.001;
-    for (let m = 0.001; m <= 1000; m += 0.001) {
-        const p = getPriceForMargin(m);
-        if (p > targetPrice) {
-            break;
-        }
-        bestMargin = m;
+    // Numerical approximation using Binary Search for efficiency and precision
+    let low = 0.0001;
+    let high = 2000; // Allow up to 2000% margin
+    let iterations = 0;
+    const tolerance = 0.0001;
+
+    while (iterations < 40) {
+      const mid = (low + high) / 2;
+      const currentPrice = getPriceForMargin(mid);
+
+      if (Math.abs(currentPrice - target) < tolerance) {
+        low = mid;
+        break;
+      }
+
+      if (currentPrice < target) {
+        low = mid;
+      } else {
+        high = mid;
+      }
+      iterations++;
     }
 
-    const clampedMargin = Math.max(0.001, Math.min(1000, bestMargin));
+    const clampedMargin = Math.max(0.0001, Math.min(2000, low));
     setSliderValue(clampedMargin);
     updateUtilityFormula(clampedMargin);
+  };
+
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setLocalPrice(val);
+    goalSeek(parseFloat(val));
+  };
+
+  const handlePriceAdjust = (delta: number) => {
+    const current = parseFloat(localPrice) || totalPrice;
+    const next = Math.max(0, current + delta);
+    setLocalPrice(next.toFixed(2));
+    goalSeek(next);
   };
 
   const getFeedback = (pct: number) => {
@@ -281,26 +303,42 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
             </header>
 
             <div className="glass-card-stitch rounded-2xl p-4 mb-10 relative overflow-hidden group/price border-primary/20 bg-primary/5">
-              <div className="flex items-start">
+              <div className="flex items-start justify-between">
                 <div className="w-full">
                   <p className="text-xs uppercase tracking-[0.2em] text-primary font-bold mb-1">Precio de Venta</p>
-                  <div className="flex items-center mt-1">
-                    <input
-                      type="number"
-                      value={localPrice}
-                      onFocus={() => setIsEditingPrice(true)}
-                      onBlur={() => setIsEditingPrice(false)}
-                      onChange={handlePriceChange}
-                      className={cn(
-                        "bg-transparent border-none text-left font-display font-bold focus:ring-0 p-0 text-foreground w-full min-w-0 transition-all duration-300",
-                        localPrice.length <= 5 ? "text-5xl" :
-                        localPrice.length <= 7 ? "text-4xl" :
-                        localPrice.length <= 9 ? "text-3xl" :
-                        localPrice.length <= 12 ? "text-2xl" : "text-xl"
-                      )}
-                    />
+                  <div className="flex items-center gap-4 mt-1">
+                    <button
+                      onClick={() => handlePriceAdjust(-1)}
+                      className="p-2 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary transition-all border border-primary/20 hover:scale-110 active:scale-95"
+                    >
+                      <Minus className="w-5 h-5" />
+                    </button>
+
+                    <div className="flex-1 min-w-0">
+                      <input
+                        type="number"
+                        value={localPrice}
+                        onFocus={() => setIsEditingPrice(true)}
+                        onBlur={() => setIsEditingPrice(false)}
+                        onChange={handlePriceChange}
+                        className={cn(
+                          "bg-transparent border-none text-center lg:text-left font-display font-bold focus:ring-0 p-0 text-foreground w-full transition-all duration-300",
+                          localPrice.length <= 5 ? "text-5xl" :
+                          localPrice.length <= 7 ? "text-4xl" :
+                          localPrice.length <= 9 ? "text-3xl" :
+                          localPrice.length <= 12 ? "text-2xl" : "text-xl"
+                        )}
+                      />
+                    </div>
+
+                    <button
+                      onClick={() => handlePriceAdjust(1)}
+                      className="p-2 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary transition-all border border-primary/20 hover:scale-110 active:scale-95"
+                    >
+                      <Plus className="w-5 h-5" />
+                    </button>
                   </div>
-                  <p className="text-xs uppercase tracking-widest text-muted-foreground mt-1">Objetivo Final Calculado</p>
+                  <p className="text-xs uppercase tracking-widest text-muted-foreground mt-2">Objetivo Final Calculado</p>
                 </div>
               </div>
             </div>
