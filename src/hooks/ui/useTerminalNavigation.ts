@@ -3,7 +3,7 @@ import { useMotionValue, useTransform } from 'framer-motion';
 import {
   BarChart3, ShoppingCart, Package, Warehouse, Receipt,
   ClipboardList, FileText, History, Shield, DollarSign,
-  Users, Building, Settings, HelpCircle, ArrowLeftRight,
+  Users, Building, Settings, HelpCircle, ArrowLeftRight, GraduationCap,
   Newspaper, Rss, TrendingUp, ShieldCheck
 } from 'lucide-react';
 import { type UserRole } from '@/types';
@@ -54,6 +54,7 @@ export function useTerminalNavigation(user: UserContract | null, sidebarSearch: 
 
       { id: 'support_doc', icon: FileText, label: 'Manual', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'SOPORTE' },
       { id: 'help', icon: HelpCircle, label: 'Ayuda', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'SOPORTE' },
+      { id: 'academy', icon: GraduationCap, label: 'Academy', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'SOPORTE' },
     ];
 
     const filteredByRole = all.filter(i => i.roles.some(r => hasRole(user, r)));
