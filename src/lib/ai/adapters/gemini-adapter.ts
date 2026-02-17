@@ -5,7 +5,7 @@ export class GeminiAdapter implements LLMProvider {
   private apiKey: string;
   private modelName: string;
 
-  constructor(apiKey: string, model: string = 'gemini-2.5-flash-preview-09-2025') {
+  constructor(apiKey: string, model: string = 'gemini-2.0-flash') {
     this.apiKey = apiKey;
     this.modelName = model;
   }
@@ -85,7 +85,7 @@ export class GeminiAdapter implements LLMProvider {
     } catch (error: any) {
       console.error('GeminiAdapter Error:', error.message);
 
-      // Fallback for the 404 error if gemini-1.5-flash is still not found in this environment
+      // Fallback for the 404 error if gemini-2.0-flash is still not found in this environment
       if (error.message.includes('404') || error.message.includes('not found')) {
         throw new Error(`Error de modelo: ${this.modelName} no encontrado o no disponible con esta API Key. Detalles: ${error.message}`);
       }
