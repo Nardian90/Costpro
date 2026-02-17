@@ -7,7 +7,15 @@ if (workbox) {
   // Cache strategy for static assets
   workbox.routing.registerRoute(
     ({request}) => request.destination === 'script' || request.destination === 'style',
-    new workbox.strategies.StaleWhileRevalidate()
+    new workbox.strategies.StaleWhileRevalidate({
+      cacheName: 'static-resources',
+      plugins: [
+        new workbox.expiration.ExpirationPlugin({
+          maxEntries: 60,
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
+        }),
+      ],
+    })
   );
 
   // Background Sync for the batch sync endpoint
