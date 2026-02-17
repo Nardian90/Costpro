@@ -146,14 +146,34 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
 
     // Use tax factor to estimate relationship: Price = (Cost + Utility) * Factor
     const baseVal = totalCost + utility;
-    if (baseVal <= 0) return;
-    const taxFactor = totalPrice / baseVal;
 
-    const getPriceForMargin = (m: number) => (totalCost * (1 + m / 100)) * taxFactor;
+    // Dynamic tax factor detection
+    let safeTaxFactor = 1.1111; // Default fallback
 
+    const currentTaxFactor = baseVal > 0 ? totalPrice / baseVal : 1.0;
+    if (currentTaxFactor > 1.0001) {
+      safeTaxFactor = currentTaxFactor;
+    } else {
+      // Try to extract it from row 13.2 formula (Impuesto sobre Ventas)
+      const s13 = data.sections.find(s => s.id === "13" || s.id === "s13");
+      const row13_2 = s13?.rows.find(r => r.id === "13.2");
+      const formula = row13_2?.formula || row13_2?.totalFormula || "";
+
+      // Standard pattern: ref("13.1")/0.9*0.1
+      const match = formula.match(/\/([\d.]+)\*([\d.]+)$/);
+      if (match) {
+        const divisor = parseFloat(match[1]);
+        const multiplier = parseFloat(match[2]);
+        if (divisor > 0) {
+          safeTaxFactor = 1 + (multiplier / divisor);
+        }
+      }
+    }
+
+    const getPriceForMargin = (m: number) => (totalCost * (1 + m / 100)) * safeTaxFactor;
     // Numerical approximation using Binary Search for efficiency and precision
     let low = 0.0001;
-    let high = 2000; // Allow up to 2000% margin
+    let high = 5000;
     let iterations = 0;
     const tolerance = 0.0001;
 
@@ -290,8 +310,8 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
           />
         </div>
 
-        <div className="w-full lg:w-[480px]">
-          <div className="glass-card-stitch rounded-3xl p-8 relative overflow-hidden group shadow-2xl">
+        <div className="w-full lg:w-[600px]">
+          <div className="glass-card-stitch rounded-3xl p-10 relative overflow-hidden group shadow-2xl">
             <header className="mb-10">
               <p className="text-xs uppercase tracking-[0.2em] text-primary mb-2 font-bold">Margen de Utilidad</p>
               <div className="flex items-baseline gap-1">
@@ -302,43 +322,55 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
               <p className="text-xs uppercase tracking-widest text-muted-foreground mt-2">Ajuste dinámico sobre costo (13.1/12.1)</p>
             </header>
 
-            <div className="glass-card-stitch rounded-2xl p-4 mb-10 relative overflow-hidden group/price border-primary/20 bg-primary/5">
-              <div className="flex items-start justify-between">
-                <div className="w-full">
-                  <p className="text-xs uppercase tracking-[0.2em] text-primary font-bold mb-1">Precio de Venta</p>
-                  <div className="flex items-center gap-4 mt-1">
-                    <button
-                      onClick={() => handlePriceAdjust(-1)}
-                      className="p-2 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary transition-all border border-primary/20 hover:scale-110 active:scale-95"
-                    >
-                      <Minus className="w-5 h-5" />
-                    </button>
+            <div className="glass-card-stitch rounded-3xl p-8 mb-10 relative overflow-hidden group/price border-primary/30 bg-primary/5 shadow-inner">
+              <div className="flex flex-col items-center gap-6">
+                <div className="w-full text-center">
+                  <p className="text-xs uppercase tracking-[0.3em] text-primary font-black mb-4">Precio de Venta</p>
 
-                    <div className="flex-1 min-w-0">
-                      <input
-                        type="number"
-                        value={localPrice}
-                        onFocus={() => setIsEditingPrice(true)}
-                        onBlur={() => setIsEditingPrice(false)}
-                        onChange={handlePriceChange}
-                        className={cn(
-                          "bg-transparent border-none text-center lg:text-left font-display font-bold focus:ring-0 p-0 text-foreground w-full transition-all duration-300",
-                          localPrice.length <= 5 ? "text-5xl" :
-                          localPrice.length <= 7 ? "text-4xl" :
-                          localPrice.length <= 9 ? "text-3xl" :
-                          localPrice.length <= 12 ? "text-2xl" : "text-xl"
-                        )}
-                      />
-                    </div>
-
-                    <button
-                      onClick={() => handlePriceAdjust(1)}
-                      className="p-2 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary transition-all border border-primary/20 hover:scale-110 active:scale-95"
-                    >
-                      <Plus className="w-5 h-5" />
-                    </button>
+                  <div className="relative inline-block w-full">
+                    <input
+                      type="number"
+                      value={localPrice}
+                      onFocus={() => setIsEditingPrice(true)}
+                      onBlur={() => setIsEditingPrice(false)}
+                      onChange={handlePriceChange}
+                      className={cn(
+                        "bg-transparent border-none text-center font-display font-black focus:ring-0 p-0 text-foreground w-full transition-all duration-300 neon-glow selection:bg-primary/30",
+                        localPrice.length <= 4 ? "text-7xl" :
+                        localPrice.length <= 6 ? "text-6xl" :
+                        localPrice.length <= 8 ? "text-5xl" :
+                        localPrice.length <= 10 ? "text-4xl" :
+                        localPrice.length <= 12 ? "text-3xl" : "text-2xl"
+                      )}
+                      placeholder="0.00"
+                    />
                   </div>
-                  <p className="text-xs uppercase tracking-widest text-muted-foreground mt-2">Objetivo Final Calculado</p>
+
+                  <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mt-4 font-bold opacity-70">
+                    Objetivo Final Calculado (Inc. Impuestos)
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-center gap-12 w-full pt-4 border-t border-primary/10">
+                  <button
+                    onClick={() => handlePriceAdjust(-1)}
+                    className="flex flex-col items-center gap-2 group/btn"
+                  >
+                    <div className="p-4 rounded-2xl bg-primary/10 hover:bg-primary/20 text-primary transition-all border border-primary/20 group-hover/btn:scale-110 active:scale-90 shadow-lg shadow-primary/5">
+                      <Minus className="w-6 h-6 stroke-[3]" />
+                    </div>
+                    <span className="text-[10px] uppercase tracking-widest font-black text-primary/40 group-hover/btn:text-primary transition-colors">- $1.00</span>
+                  </button>
+
+                  <button
+                    onClick={() => handlePriceAdjust(1)}
+                    className="flex flex-col items-center gap-2 group/btn"
+                  >
+                    <div className="p-4 rounded-2xl bg-primary/10 hover:bg-primary/20 text-primary transition-all border border-primary/20 group-hover/btn:scale-110 active:scale-90 shadow-lg shadow-primary/5">
+                      <Plus className="w-6 h-6 stroke-[3]" />
+                    </div>
+                    <span className="text-[10px] uppercase tracking-widest font-black text-primary/40 group-hover/btn:text-primary transition-colors">+ $1.00</span>
+                  </button>
                 </div>
               </div>
             </div>
