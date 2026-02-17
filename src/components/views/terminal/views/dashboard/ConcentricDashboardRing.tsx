@@ -27,7 +27,7 @@ export const ConcentricDashboardRing: React.FC<ConcentricDashboardRingProps> = (
 
   // We'll show:
   // Outer (Blue): Sales (always 100% or relative to a target, here we'll just show it full or 100%)
-  // Middle (White): Costs as % of sales
+  // Middle (White/Slate): Costs as % of sales
   // Inner (Green): Profit as % of sales
 
   const salesOffset = 0; // 100% full
@@ -57,15 +57,16 @@ export const ConcentricDashboardRing: React.FC<ConcentricDashboardRingProps> = (
           style={{ filter: 'drop-shadow(0 0 8px rgba(0, 224, 255, 0.4))' }}
         />
 
-        {/* Middle Ring - Costs (White) */}
+        {/* Middle Ring - Costs (White in Dark, Slate in Light) */}
         <circle
           className="text-slate-200 dark:text-white/5"
           cx="100" cy="100" fill="none" r="70"
           stroke="currentColor" strokeWidth="8"
         />
         <motion.circle
+          className="text-slate-400 dark:text-white"
           cx="100" cy="100" fill="none" r="70"
-          stroke="#FFFFFF" strokeWidth="8"
+          stroke="currentColor" strokeWidth="8"
           strokeLinecap="round"
           strokeDasharray={c70}
           initial={{ strokeDashoffset: c70 }}
