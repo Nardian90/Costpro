@@ -154,7 +154,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
     if (currentTaxFactor > 1.0001) {
       safeTaxFactor = currentTaxFactor;
     } else {
-      // Try to extract it from row 13.2 formula (Impuesto sobre Ventas)
+      // Try to extract tax factor from row 13.2 (Tax) to calculate Row 14 goal
       const s13 = data.sections.find(s => s.id === "13" || s.id === "s13");
       const row13_2 = s13?.rows.find(r => r.id === "13.2");
       const formula = row13_2?.formula || row13_2?.totalFormula || "";
@@ -295,8 +295,8 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
   ];
 
   return (
-    <div className="flex flex-col gap-12 max-w-7xl mx-auto px-4 py-8">
-      <div className="flex flex-col lg:flex-row gap-12 items-center lg:items-start">
+    <div className="flex flex-col gap-6 sm:gap-12 max-w-7xl mx-auto px-4 py-4 sm:py-8">
+      <div className="flex flex-col lg:flex-row gap-6 sm:gap-12 items-center lg:items-start">
         <div className="flex-1 w-full space-y-8">
           <div className="flex items-center justify-between mb-4">
             <div className="px-6 py-2 rounded-full bg-primary/10 border border-primary/20 shadow-[0_0_20px_rgba(57,255,20,0.1)]">
@@ -311,18 +311,18 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
         </div>
 
         <div className="w-full lg:w-[600px]">
-          <div className="glass-card-stitch rounded-3xl p-10 relative overflow-hidden group shadow-2xl">
-            <header className="mb-10">
+          <div className="glass-card-stitch rounded-3xl p-6 sm:p-10 relative overflow-hidden group shadow-2xl">
+            <header className="mb-6 sm:mb-10">
               <p className="text-xs uppercase tracking-[0.2em] text-primary mb-2 font-bold">Margen de Utilidad</p>
               <div className="flex items-baseline gap-1">
                 <h1 className="font-display text-6xl font-bold tracking-tighter neon-glow text-foreground">
                   {sliderValue.toFixed(3)}<span className="text-primary text-3xl ml-1">%</span>
                 </h1>
               </div>
-              <p className="text-xs uppercase tracking-widest text-muted-foreground mt-2">Ajuste dinámico sobre costo (13.1/12.1)</p>
+              <p className="text-xs uppercase tracking-widest text-muted-foreground mt-2">Ajuste dinámico sobre costo</p>
             </header>
 
-            <div className="glass-card-stitch rounded-3xl p-8 mb-10 relative overflow-hidden group/price border-primary/30 bg-primary/5 shadow-inner">
+            <div className="glass-card-stitch rounded-3xl p-4 sm:p-8 mb-6 sm:mb-10 relative overflow-hidden group/price border-primary/30 bg-primary/5 shadow-inner">
               <div className="flex flex-col items-center gap-6">
                 <div className="w-full text-center">
                   <p className="text-xs uppercase tracking-[0.3em] text-primary font-black mb-4">Precio de Venta</p>
@@ -336,19 +336,16 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
                       onChange={handlePriceChange}
                       className={cn(
                         "bg-transparent border-none text-center font-display font-black focus:ring-0 p-0 text-foreground w-full transition-all duration-300 neon-glow selection:bg-primary/30",
-                        localPrice.length <= 4 ? "text-7xl" :
-                        localPrice.length <= 6 ? "text-6xl" :
-                        localPrice.length <= 8 ? "text-5xl" :
-                        localPrice.length <= 10 ? "text-4xl" :
-                        localPrice.length <= 12 ? "text-3xl" : "text-2xl"
+                        "text-4xl sm:text-5xl md:text-6xl lg:text-7xl",
+                        localPrice.length > 6 && "text-3xl sm:text-4xl md:text-5xl lg:text-6xl",
+                        localPrice.length > 9 && "text-2xl sm:text-3xl md:text-4xl lg:text-5xl",
+                        localPrice.length > 12 && "text-xl sm:text-2xl md:text-3xl lg:text-4xl"
                       )}
                       placeholder="0.00"
                     />
                   </div>
 
-                  <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mt-4 font-bold opacity-70">
-                    Objetivo Final Calculado (Inc. Impuestos)
-                  </p>
+
                 </div>
 
                 <div className="flex items-center justify-center gap-12 w-full pt-4 border-t border-primary/10">
@@ -375,7 +372,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
               </div>
             </div>
 
-            <div className="space-y-10 mb-12">
+            <div className="space-y-6 sm:space-y-10 mb-8 sm:mb-12">
               <div className="space-y-4">
                 <div className="flex justify-between items-end">
                   <label className="text-xs uppercase tracking-widest text-muted-foreground font-medium">Margen Deseado</label>
