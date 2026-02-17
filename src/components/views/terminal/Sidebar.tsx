@@ -99,7 +99,7 @@ export const Sidebar = ({
         id: 'soporte',
         label: 'SOPORTE Y AYUDA',
         isDirect: true,
-        items: ['support_doc', 'help']
+        items: ['support_doc', 'help', 'academy']
       }
     ];
     return structure;
