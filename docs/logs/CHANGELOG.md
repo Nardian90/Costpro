@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [5.7.25] - 2026-03-14
 
+### Fixed
+- **Modelo de IA Descontinuado**: Corrección del error 404 al migrar de `gemini-2.5-flash-preview` (obsoleto) a `gemini-2.0-flash` como motor predeterminado.
+- **Transparencia en Academy**: Mejora en el sistema de errores del módulo Academy para diferenciar entre fallos de API Key, errores de modelo y problemas con el contenido de los PDFs.
+
 ### Added
 - **Integración de Modo Rápido con Generación Masiva**: Nueva funcionalidad que permite la creación express de múltiples fichas de costo desde una tabla simplificada.
 - **Transición Automatizada**: Los productos ingresados en Modo Rápido se pre-pueblan automáticamente en el motor de Generación Masiva, eliminando la entrada duplicada de datos.
