@@ -115,7 +115,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
             className="overflow-hidden"
           >
             <div className="p-6 rounded-xl border border-border bg-card shadow-sm">
-              <div className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
+              <div className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
                 <Settings2 className="w-4 h-4" />
                 Filtros Avanzados
               </div>

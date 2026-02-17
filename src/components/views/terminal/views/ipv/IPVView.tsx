@@ -304,7 +304,7 @@ export default function IPVView() {
         tooltip: (
             <div className="space-y-1">
                 <p className="font-bold text-primary">Sincronizar IPV</p>
-                <p className="text-[10px] leading-relaxed">Recalcula la cadena de reportes IPV y actualiza estadísticas para asegurar coherencia total.</p>
+                <p className="text-xs leading-relaxed">Recalcula la cadena de reportes IPV y actualiza estadísticas para asegurar coherencia total.</p>
             </div>
         )
     },
@@ -325,7 +325,7 @@ export default function IPVView() {
         tooltip: (
             <>
                 <p className="font-bold text-primary">Motor de Matching Pro:</p>
-                <p className="text-[10px] leading-relaxed">
+                <p className="text-xs leading-relaxed">
                     Procesa transacciones en 4 pasos automáticos:
                     <br/>1. <strong>Hard Ref:</strong> Match por código en obs.
                     <br/>2. <strong>Exact Sum:</strong> Combinación exacta de productos.
@@ -404,12 +404,12 @@ export default function IPVView() {
                 </div>
             </TooltipTrigger>
             <TooltipContent className="bg-popover text-popover-foreground border shadow-lg">
-                <p className="text-[10px] font-bold text-primary mb-1 uppercase">Desglose de Venta Real:</p>
+                <p className="text-xs font-bold text-primary mb-1 uppercase">Desglose de Venta Real:</p>
                 <div className="space-y-1">
-                    <p className="text-[10px]"><strong>Transferencias:</strong> {formatCurrency(stats.totalTransferencias)}</p>
-                    <p className="text-[10px]"><strong>Efectivo:</strong> {formatCurrency(stats.totalEfectivo)}</p>
+                    <p className="text-xs"><strong>Transferencias:</strong> {formatCurrency(stats.totalTransferencias)}</p>
+                    <p className="text-xs"><strong>Efectivo:</strong> {formatCurrency(stats.totalEfectivo)}</p>
                 </div>
-                <p className="text-[10px] mt-2 opacity-70 italic border-t pt-1">Incluye transacciones bancarias procesadas y ajustes de caja global.</p>
+                <p className="text-xs mt-2 opacity-70 italic border-t pt-1">Incluye transacciones bancarias procesadas y ajustes de caja global.</p>
             </TooltipContent>
         </Tooltip>
 
@@ -430,7 +430,7 @@ export default function IPVView() {
                 </div>
             </TooltipTrigger>
             <TooltipContent className="bg-popover text-popover-foreground border shadow-lg">
-                <p className="text-[10px] font-bold">Total de movimientos activos (no excluidos) en el período actual.</p>
+                <p className="text-xs font-bold">Total de movimientos activos (no excluidos) en el período actual.</p>
             </TooltipContent>
         </Tooltip>
         <Tooltip>
@@ -451,7 +451,7 @@ export default function IPVView() {
                 </div>
             </TooltipTrigger>
             <TooltipContent className="bg-popover text-popover-foreground border shadow-lg">
-                <p className="text-[10px] font-bold">Transacciones cuyo desglose de productos coincide exactamente con el importe neto.</p>
+                <p className="text-xs font-bold">Transacciones cuyo desglose de productos coincide exactamente con el importe neto.</p>
             </TooltipContent>
         </Tooltip>
 
@@ -472,7 +472,7 @@ export default function IPVView() {
                 </div>
             </TooltipTrigger>
             <TooltipContent className="bg-popover text-popover-foreground border shadow-lg">
-                <p className="text-[10px] font-bold">Transacciones con productos asociados pero que aún tienen una diferencia pendiente por cuadrar.</p>
+                <p className="text-xs font-bold">Transacciones con productos asociados pero que aún tienen una diferencia pendiente por cuadrar.</p>
             </TooltipContent>
         </Tooltip>
 
@@ -493,7 +493,7 @@ export default function IPVView() {
                 </div>
             </TooltipTrigger>
             <TooltipContent className="bg-popover text-popover-foreground border shadow-lg">
-                <p className="text-[10px] font-bold">Transacciones que no han sido procesadas o no encontraron coincidencias automáticas.</p>
+                <p className="text-xs font-bold">Transacciones que no han sido procesadas o no encontraron coincidencias automáticas.</p>
             </TooltipContent>
         </Tooltip>
       </div>
@@ -505,25 +505,25 @@ export default function IPVView() {
             <div className="mb-6">
                 <HorizontalScroll containerClassName="bg-muted/50 rounded-2xl p-1">
                     <TabsList className="flex bg-transparent border-none w-max min-w-full h-auto p-0 gap-1">
-                        <TabsTrigger value="dashboard" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Panel</TabsTrigger>
-                        <TabsTrigger value="transactions" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Transacciones</TabsTrigger>
-                        <TabsTrigger value="sim" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Simulación</TabsTrigger>
-                        <TabsTrigger value="breakdown" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Desglose</TabsTrigger>
-                        <TabsTrigger value="pivot" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Consolidado</TabsTrigger>
-                        <TabsTrigger value="catalog" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Catálogo</TabsTrigger>
-                        <TabsTrigger value="ingestion" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest text-nowrap shrink-0 rounded-xl">Extracto</TabsTrigger>
-                        <TabsTrigger value="errors" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest relative shrink-0 rounded-xl">
+                        <TabsTrigger value="dashboard" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Panel</TabsTrigger>
+                        <TabsTrigger value="transactions" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Transacciones</TabsTrigger>
+                        <TabsTrigger value="sim" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Simulación</TabsTrigger>
+                        <TabsTrigger value="breakdown" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Desglose</TabsTrigger>
+                        <TabsTrigger value="pivot" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Consolidado</TabsTrigger>
+                        <TabsTrigger value="catalog" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Catálogo</TabsTrigger>
+                        <TabsTrigger value="ingestion" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest text-nowrap shrink-0 rounded-xl">Extracto</TabsTrigger>
+                        <TabsTrigger value="errors" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest relative shrink-0 rounded-xl">
                             Errores
                             {ingestionErrorsCount > 0 && (
-                                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[8px] text-white font-black shadow-sm animate-pulse">
+                                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs text-white font-black shadow-sm animate-pulse">
                                     {ingestionErrorsCount}
                                 </span>
                             )}
                         </TabsTrigger>
-                        <TabsTrigger value="reports" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest text-nowrap shrink-0 rounded-xl">Reportes IPV</TabsTrigger>
-                        <TabsTrigger value="rules" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Reglas</TabsTrigger>
+                        <TabsTrigger value="reports" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest text-nowrap shrink-0 rounded-xl">Reportes IPV</TabsTrigger>
+                        <TabsTrigger value="rules" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Reglas</TabsTrigger>
                         {selectedReconTx && (
-                            <TabsTrigger value="manual-recon" className="px-4 py-3 text-[11px] sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl border-2 border-primary/20 bg-primary/5 text-primary">
+                            <TabsTrigger value="manual-recon" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl border-2 border-primary/20 bg-primary/5 text-primary">
                                 Conciliación
                             </TabsTrigger>
                         )}
@@ -609,10 +609,10 @@ export default function IPVView() {
 function FlowStep({ number, title, desc }: { number: string, title: string, desc: string }) {
     return (
         <div className="flex gap-3 items-start">
-            <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-black">{number}</span>
+            <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-black">{number}</span>
             <div>
                 <p className="text-xs font-black uppercase text-primary tracking-tighter">{title}</p>
-                <p className="text-[10px] text-muted-foreground leading-tight font-medium">{desc}</p>
+                <p className="text-xs text-muted-foreground leading-tight font-medium">{desc}</p>
             </div>
         </div>
     );
@@ -625,16 +625,16 @@ function StatCard({ title, value, icon, trend, subtitle, active, onClick, isCurr
         className={`p-3 sm:p-4 flex flex-col sm:flex-row items-center sm:justify-between border-2 transition-all cursor-pointer gap-2 ${active ? 'border-primary bg-primary/5 shadow-lg scale-[1.02]' : 'border-transparent bg-card/50 backdrop-blur-sm shadow-md hover:border-primary/20'}`}
     >
       <div className="flex flex-col items-center sm:items-start space-y-0.5 sm:space-y-1">
-        <p className="text-[10px] sm:text-xs font-black text-muted-foreground uppercase tracking-widest">{title}</p>
+        <p className="text-xs sm:text-xs font-black text-muted-foreground uppercase tracking-widest">{title}</p>
         <div className="flex items-baseline gap-1.5 sm:gap-2">
             <h3 className="text-xl sm:text-2xl font-black">{isCurrency ? formatCurrency(value) : value}</h3>
             {trend && (
-                <Badge variant="outline" className="text-[10px] h-4 px-1 font-bold text-green-600 bg-green-500/10 border-green-500/20">
+                <Badge variant="outline" className="text-xs h-4 px-1 font-bold text-green-600 bg-green-500/10 border-green-500/20">
                     {trend}
                 </Badge>
             )}
         </div>
-        {subtitle && <p className="text-[9px] sm:text-[10px] text-muted-foreground font-bold uppercase opacity-60">{subtitle}</p>}
+        {subtitle && <p className="text-xs sm:text-xs text-muted-foreground font-bold uppercase opacity-60">{subtitle}</p>}
       </div>
       <div className="p-2 sm:p-3 bg-background rounded-xl sm:rounded-2xl shadow-inner">
         {React.cloneElement(icon as React.ReactElement<any>, { className: 'w-4 h-4 sm:w-5 sm:h-5' })}

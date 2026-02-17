@@ -78,12 +78,12 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({ onGenera
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
-                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 w-16">No.</th>
-                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Producto / Item</th>
-                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 w-24">UM</th>
-                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 w-32">Cantidad</th>
-                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 w-40">Costo Unit.</th>
-                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 w-16"></th>
+                <th className="px-6 py-5 text-xs font-black uppercase tracking-[0.2em] text-slate-500 w-16">No.</th>
+                <th className="px-6 py-5 text-xs font-black uppercase tracking-[0.2em] text-slate-500">Producto / Item</th>
+                <th className="px-6 py-5 text-xs font-black uppercase tracking-[0.2em] text-slate-500 w-24">UM</th>
+                <th className="px-6 py-5 text-xs font-black uppercase tracking-[0.2em] text-slate-500 w-32">Cantidad</th>
+                <th className="px-6 py-5 text-xs font-black uppercase tracking-[0.2em] text-slate-500 w-40">Costo Unit.</th>
+                <th className="px-6 py-5 text-xs font-black uppercase tracking-[0.2em] text-slate-500 w-16"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -153,7 +153,7 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({ onGenera
       </div>
 
       <div className="flex justify-center pt-8">
-         <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 flex items-center gap-2">
+         <p className="text-xs font-black uppercase tracking-[0.4em] text-slate-400 flex items-center gap-2">
             <Zap className="w-3 h-3 text-amber-500" />
             Sistema de Generación Express CostPro
          </p>

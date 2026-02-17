@@ -30,7 +30,7 @@ const CostSheetSignatureEditor = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
         <div className="space-y-3">
-          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 block">
+          <label className="text-xs font-black uppercase tracking-[0.2em] text-primary/60 block">
             Elaborado por (Nombre y Cargo)
           </label>
           <Input
@@ -42,7 +42,7 @@ const CostSheetSignatureEditor = () => {
         </div>
 
         <div className="space-y-3">
-          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 block">
+          <label className="text-xs font-black uppercase tracking-[0.2em] text-primary/60 block">
             Aprobado por (Nombre y Cargo)
           </label>
           <Input
@@ -55,7 +55,7 @@ const CostSheetSignatureEditor = () => {
       </div>
 
       <div className="mt-12 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
-          <p className="text-[10px] text-center text-slate-400 font-bold uppercase tracking-widest">
+          <p className="text-xs text-center text-slate-400 font-bold uppercase tracking-widest">
             Estas firmas aparecerán en la parte inferior del documento impreso o exportado.
           </p>
       </div>

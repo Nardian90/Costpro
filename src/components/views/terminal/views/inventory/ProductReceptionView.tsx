@@ -331,7 +331,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                     <div className="neu-card !p-4">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label className="text-[10px] font-black text-muted-foreground uppercase">Proveedor</label>
+                                <label className="text-xs font-black text-muted-foreground uppercase">Proveedor</label>
                                 <input
                                     type="text"
                                     value={receptionDetails.supplier}
@@ -342,7 +342,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                                <div>
-                                    <label className="text-[10px] font-black text-muted-foreground uppercase">Fecha</label>
+                                    <label className="text-xs font-black text-muted-foreground uppercase">Fecha</label>
                                     <input
                                         type="date"
                                         value={receptionDetails.receptionDate}
@@ -351,7 +351,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-black text-muted-foreground uppercase">Factura #</label>
+                                    <label className="text-xs font-black text-muted-foreground uppercase">Factura #</label>
                                     <input
                                         type="text"
                                         value={receptionDetails.invoiceNumber}
@@ -375,7 +375,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                                 <div className="table-scroll-wrapper mt-4 max-h-48 overflow-y-auto pr-2">
                                     <table className="data-table sticky-column-1 w-full text-xs">
                                         <thead className="sticky-header">
-                                            <tr className="text-left font-black uppercase text-[10px] border-b border-danger/20">
+                                            <tr className="text-left font-black uppercase text-xs border-b border-danger/20">
                                                 <th className="p-2">Fila</th>
                                                 <th className="p-2">Error</th>
                                             </tr>
@@ -409,7 +409,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                                 {isSearching ? (
                                     <div className="p-8 text-center flex flex-col items-center gap-3">
                                         <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Buscando...</span>
+                                        <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Buscando...</span>
                                     </div>
                                 ) : searchResults.length > 0 ? (
                                     <div className="divide-y divide-white/5">
@@ -421,7 +421,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                                             >
                                                 <div className="flex flex-col">
                                                     <span className="font-bold text-sm group-hover:text-primary transition-colors">{p.name}</span>
-                                                    <span className="text-[10px] font-mono text-muted-foreground uppercase">{p.sku || 'S/N'}</span>
+                                                    <span className="text-xs font-mono text-muted-foreground uppercase">{p.sku || 'S/N'}</span>
                                                 </div>
                                                 <div className="neu-raised-sm p-2 group-hover:bg-primary group-hover:text-white transition-all">
                                                     <Plus className="w-4 h-4" />
@@ -433,7 +433,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                                     <div className="p-8 text-center space-y-4">
                                         <div className="space-y-1">
                                             <p className="text-sm font-bold text-muted-foreground uppercase tracking-tight">No se encontraron productos</p>
-                                            <p className="text-[10px] text-muted-foreground/60 italic">Intenta con otro término o SKU</p>
+                                            <p className="text-xs text-muted-foreground/60 italic">Intenta con otro término o SKU</p>
                                         </div>
                                         <div className="pt-2 border-t border-white/5">
                                             <PrimaryButton
@@ -445,7 +445,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                                                     setIsCreateProductModalOpen(true);
                                                     setSearchTerm('');
                                                 }}
-                                                className="w-full !py-2 !text-[9px]"
+                                                className="w-full !py-2 !text-xs"
                                             />
                                         </div>
                                     </div>
@@ -458,7 +458,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                     <div className="table-scroll-wrapper">
                         <table className="data-table w-full min-w-[700px]">
                             <thead>
-                                <tr className="text-left font-black uppercase text-[10px] text-muted-foreground border-b border-white/5">
+                                <tr className="text-left font-black uppercase text-xs text-muted-foreground border-b border-white/5">
                                     <th className="pb-4 pl-4 sticky-column-1">Producto</th>
                                     <th className="pb-4 text-center">Cant.</th>
                                     <th className="pb-4 text-center">Costo Unit.</th>
@@ -472,7 +472,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                                         <td className="py-4 pl-4 sticky-column-1">
                                             <div className="flex flex-col">
                                                 <span className="font-bold text-sm">{product.name}</span>
-                                                <span className="text-[10px] font-mono text-muted-foreground uppercase">{product.sku || 'S/N'}</span>
+                                                <span className="text-xs font-mono text-muted-foreground uppercase">{product.sku || 'S/N'}</span>
                                             </div>
                                         </td>
                                         <td className="py-4 px-2 w-24">
@@ -496,11 +496,11 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                                                     )}
                                                 />
                                                 {(product.cost_price || 0) > 0 && Math.abs(cost - (product.cost_price || 0)) / (product.cost_price || 1) > 0.5 && (
-                                                    <div className="text-[8px] text-danger font-black uppercase text-center animate-pulse">
+                                                    <div className="text-xs text-danger font-black uppercase text-center animate-pulse">
                                                         Var. Crítica (&gt;50%)
                                                     </div>
                                                 )}
-                                                <div className="text-[8px] text-muted-foreground font-bold text-center uppercase tracking-tighter">
+                                                <div className="text-xs text-muted-foreground font-bold text-center uppercase tracking-tighter">
                                                     Hist: {formatCurrency(product.cost_price || 0)}
                                                 </div>
                                             </div>
@@ -537,7 +537,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                         <div className="neu-card border-primary/20 bg-primary/5 space-y-4 min-w-[300px]">
                             <h3 className="font-bold text-lg text-primary uppercase tracking-tighter">Resumen de Recepción</h3>
                             <div className="flex flex-wrap justify-between items-center gap-2">
-                                <span className="text-muted-foreground font-bold text-[10px] uppercase tracking-widest">Total Items</span>
+                                <span className="text-muted-foreground font-bold text-xs uppercase tracking-widest">Total Items</span>
                                 <span className="font-black text-xl">{receptionItems.size}</span>
                             </div>
                             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center text-xl pt-4 border-t border-primary/20 gap-2">
@@ -610,7 +610,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                     <p>Esta sección permite registrar el ingreso de mercancía al inventario.</p>
 
                     <div className="space-y-2">
-                        <h4 className="font-bold uppercase text-[10px] text-primary tracking-widest">Importación por CSV</h4>
+                        <h4 className="font-bold uppercase text-xs text-primary tracking-widest">Importación por CSV</h4>
                         <p>Puede cargar múltiples productos a la vez usando un archivo CSV con las siguientes columnas:</p>
                         <ul className="list-disc pl-5 space-y-1 text-xs">
                             <li><strong>SKU:</strong> Código único del producto dentro de esta tienda (OBLIGATORIO).</li>
@@ -624,7 +624,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                         <p className="text-xs font-bold italic">“Los productos se aplicarán al inventario solo al confirmar la recepción.”</p>
                         <button
                             onClick={downloadTemplate}
-                            className="w-full neu-btn !py-2 flex items-center justify-center gap-2 text-[10px] font-black uppercase"
+                            className="w-full neu-btn !py-2 flex items-center justify-center gap-2 text-xs font-black uppercase"
                         >
                             <FileText className="w-4 h-4" />
                             Descargar Plantilla CSV
@@ -632,7 +632,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                     </div>
 
                     <div className="space-y-2">
-                        <h4 className="font-bold uppercase text-[10px] text-primary tracking-widest">Consejos</h4>
+                        <h4 className="font-bold uppercase text-xs text-primary tracking-widest">Consejos</h4>
                         <ul className="list-disc pl-5 space-y-1 text-xs">
                             <li>Asegúrese de cerrar el archivo en Excel antes de subirlo.</li>
                             <li>Verifique que los SKU existan previamente en el sistema.</li>

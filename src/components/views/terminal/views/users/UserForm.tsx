@@ -112,7 +112,7 @@ export default function UserForm({
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 overflow-x-auto no-scrollbar">
       <div className="space-y-4">
         <div>
-          <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1.5 block">
+          <label className="text-xs font-black uppercase text-muted-foreground tracking-widest mb-1.5 block">
             Nombre Completo
           </label>
           <input
@@ -121,12 +121,12 @@ export default function UserForm({
             placeholder="Ej: Juan Pérez"
           />
           {errors.fullName && (
-            <p className="text-[10px] text-destructive font-bold uppercase mt-1">{errors.fullName.message}</p>
+            <p className="text-xs text-destructive font-bold uppercase mt-1">{errors.fullName.message}</p>
           )}
         </div>
 
         <div>
-          <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1.5 block">
+          <label className="text-xs font-black uppercase text-muted-foreground tracking-widest mb-1.5 block">
             Correo Electrónico
           </label>
           <input
@@ -140,13 +140,13 @@ export default function UserForm({
             placeholder="juan@costpro.com"
           />
           {errors.email && (
-            <p className="text-[10px] text-destructive font-bold uppercase mt-1">{errors.email.message}</p>
+            <p className="text-xs text-destructive font-bold uppercase mt-1">{errors.email.message}</p>
           )}
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1.5 block">
+            <label className="text-xs font-black uppercase text-muted-foreground tracking-widest mb-1.5 block">
               Rol de Usuario
             </label>
             <select
@@ -164,7 +164,7 @@ export default function UserForm({
           </div>
 
           <div>
-            <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1.5 block">
+            <label className="text-xs font-black uppercase text-muted-foreground tracking-widest mb-1.5 block">
               Estado
             </label>
             <select
@@ -180,7 +180,7 @@ export default function UserForm({
         {isAdmin && selectedRole === 'encargado' && (
           <div className="grid grid-cols-2 gap-4 p-4 bg-primary/5 rounded-2xl border border-primary/10">
             <div>
-              <label className="text-[10px] font-black uppercase text-primary tracking-widest mb-1.5 block">
+              <label className="text-xs font-black uppercase text-primary tracking-widest mb-1.5 block">
                 Límite de Tiendas
               </label>
               <input
@@ -190,11 +190,11 @@ export default function UserForm({
                 className="w-full p-3 rounded-xl border border-border bg-background font-bold text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
               />
               {errors.maxStoresLimit && (
-                <p className="text-[10px] text-destructive font-bold uppercase mt-1">{errors.maxStoresLimit.message}</p>
+                <p className="text-xs text-destructive font-bold uppercase mt-1">{errors.maxStoresLimit.message}</p>
               )}
             </div>
             <div>
-              <label className="text-[10px] font-black uppercase text-primary tracking-widest mb-1.5 block">
+              <label className="text-xs font-black uppercase text-primary tracking-widest mb-1.5 block">
                 Límite de Usuarios
               </label>
               <input
@@ -204,10 +204,10 @@ export default function UserForm({
                 className="w-full p-3 rounded-xl border border-border bg-background font-bold text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
               />
               {errors.maxUsersLimit && (
-                <p className="text-[10px] text-destructive font-bold uppercase mt-1">{errors.maxUsersLimit.message}</p>
+                <p className="text-xs text-destructive font-bold uppercase mt-1">{errors.maxUsersLimit.message}</p>
               )}
             </div>
-            <p className="col-span-2 text-[9px] text-muted-foreground font-medium italic">
+            <p className="col-span-2 text-xs text-muted-foreground font-medium italic">
               * Estas capacidades definen cuántos recursos puede gestionar el usuario si tiene rol de Encargado.
             </p>
           </div>
@@ -217,7 +217,7 @@ export default function UserForm({
       {/* Tiendas Asignadas */}
       <div className="pt-4 border-t border-border">
         <div className="flex items-center justify-between mb-4">
-          <label className="text-[10px] font-black uppercase text-primary tracking-widest block">
+          <label className="text-xs font-black uppercase text-primary tracking-widest block">
             Tiendas Asignadas (Multi-Tienda)
           </label>
           <button
@@ -225,7 +225,7 @@ export default function UserForm({
             disabled={!canAddMoreStores}
             onClick={() => append({ store_id: '', role: 'clerk', status: 'active' })}
             className={cn(
-              "flex items-center gap-1 px-2 py-1 rounded-lg transition-all text-[10px] font-black uppercase",
+              "flex items-center gap-1 px-2 py-1 rounded-lg transition-all text-xs font-black uppercase",
               canAddMoreStores
                 ? "bg-primary/10 text-primary hover:bg-primary/20"
                 : "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
@@ -239,12 +239,12 @@ export default function UserForm({
 
         <div className="space-y-3">
           {errors.memberships?.root && (
-            <p className="p-2 rounded-lg bg-destructive/10 text-destructive text-[10px] font-bold uppercase text-center border border-destructive/20 animate-pulse">
+            <p className="p-2 rounded-lg bg-destructive/10 text-destructive text-xs font-bold uppercase text-center border border-destructive/20 animate-pulse">
               {errors.memberships.root.message}
             </p>
           )}
           {errors.memberships?.message && !errors.memberships?.root && (
-            <p className="p-2 rounded-lg bg-destructive/10 text-destructive text-[10px] font-bold uppercase text-center border border-destructive/20 animate-pulse">
+            <p className="p-2 rounded-lg bg-destructive/10 text-destructive text-xs font-bold uppercase text-center border border-destructive/20 animate-pulse">
               {errors.memberships.message}
             </p>
           )}
@@ -252,7 +252,7 @@ export default function UserForm({
           {fields.map((field, index) => (
             <div key={field.id} className="flex flex-col sm:flex-row gap-4 sm:gap-2 items-stretch sm:items-end bg-muted/20 p-4 sm:p-3 rounded-xl border border-border/50 relative group">
               <div className="flex-1 space-y-2">
-                 <label className="text-[8px] font-black uppercase text-muted-foreground tracking-widest block">Tienda</label>
+                 <label className="text-xs font-black uppercase text-muted-foreground tracking-widest block">Tienda</label>
                  <select
                   {...register(`memberships.${index}.store_id` as const)}
                   className={cn(
@@ -266,14 +266,14 @@ export default function UserForm({
                   ))}
                 </select>
                 {errors.memberships?.[index]?.store_id && (
-                  <p className="text-[9px] text-destructive font-bold uppercase mt-1 animate-pulse">
+                  <p className="text-xs text-destructive font-bold uppercase mt-1 animate-pulse">
                     {errors.memberships[index].store_id.message}
                   </p>
                 )}
               </div>
               <div className="grid grid-cols-2 sm:flex gap-2">
                 <div className="flex-1 sm:w-24 space-y-2">
-                  <label className="text-[8px] font-black uppercase text-muted-foreground tracking-widest block">Rol</label>
+                  <label className="text-xs font-black uppercase text-muted-foreground tracking-widest block">Rol</label>
                   <select
                     {...register(`memberships.${index}.role` as const)}
                     className="w-full p-3.5 rounded-lg border border-border bg-background font-bold text-xs outline-none"
@@ -288,7 +288,7 @@ export default function UserForm({
                   </select>
                 </div>
                 <div className="flex-1 sm:w-24 space-y-2">
-                   <label className="text-[8px] font-black uppercase text-muted-foreground tracking-widest block">Estado</label>
+                   <label className="text-xs font-black uppercase text-muted-foreground tracking-widest block">Estado</label>
                    <select
                     {...register(`memberships.${index}.status` as const)}
                     className="w-full p-3.5 rounded-lg border border-border bg-background font-bold text-xs outline-none"
@@ -311,7 +311,7 @@ export default function UserForm({
           {fields.length === 0 && (
             <div className="text-center py-6 border-2 border-dashed border-border rounded-xl">
                <Building className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
-               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Sin tiendas asignadas</p>
+               <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Sin tiendas asignadas</p>
             </div>
           )}
         </div>
@@ -319,7 +319,7 @@ export default function UserForm({
 
       {isSubmitted && Object.keys(errors).length > 0 && (
         <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20">
-           <p className="text-[10px] text-destructive font-black uppercase tracking-widest text-center">
+           <p className="text-xs text-destructive font-black uppercase tracking-widest text-center">
              Hay errores en el formulario. Por favor, revisa los campos marcados.
            </p>
         </div>

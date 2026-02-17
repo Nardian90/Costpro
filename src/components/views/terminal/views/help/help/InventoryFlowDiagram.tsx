@@ -37,7 +37,7 @@ export default function InventoryFlowDiagram() {
           transition={{ delay: 0.5, duration: 1 }}
         >
           <rect x="50" y="150" width="120" height="60" rx="10" className="fill-emerald-500/10 stroke-emerald-500" strokeWidth="2" />
-          <text x="110" y="185" textAnchor="middle" className="fill-emerald-600 font-bold text-[10px] uppercase">Entrada / Compra</text>
+          <text x="110" y="185" textAnchor="middle" className="fill-emerald-600 font-bold text-xs uppercase">Entrada / Compra</text>
           <path d="M170 180 L290 180" stroke="#10b981" strokeWidth="2" markerEnd="url(#arrow-emerald)" strokeDasharray="4,2" />
         </motion.g>
 
@@ -48,7 +48,7 @@ export default function InventoryFlowDiagram() {
           transition={{ delay: 1, duration: 1 }}
         >
           <rect x="630" y="150" width="120" height="60" rx="10" className="fill-emerald-600/10 stroke-emerald-600" strokeWidth="2" />
-          <text x="690" y="185" textAnchor="middle" className="fill-emerald-700 font-bold text-[10px] uppercase">Venta / Salida</text>
+          <text x="690" y="185" textAnchor="middle" className="fill-emerald-700 font-bold text-xs uppercase">Venta / Salida</text>
           <path d="M510 180 L620 180" stroke="#059669" strokeWidth="2" markerEnd="url(#arrow-green)" strokeDasharray="4,2" />
         </motion.g>
 
@@ -59,7 +59,7 @@ export default function InventoryFlowDiagram() {
           transition={{ delay: 1.5, duration: 1 }}
         >
           <rect x="340" y="320" width="120" height="40" rx="10" className="fill-amber-500/10 stroke-amber-500" strokeWidth="2" />
-          <text x="400" y="345" textAnchor="middle" className="fill-amber-600 font-bold text-[10px] uppercase">Ajustes / Merma</text>
+          <text x="400" y="345" textAnchor="middle" className="fill-amber-600 font-bold text-xs uppercase">Ajustes / Merma</text>
           <path d="M400 320 L400 300" stroke="#f59e0b" strokeWidth="2" markerEnd="url(#arrow-amber)" />
         </motion.g>
 

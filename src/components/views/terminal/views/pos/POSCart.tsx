@@ -208,13 +208,13 @@ export const POSCart = ({
               <div className="text-xl font-black">Imagen JPG</div>
             </div>
           </div>
-          <div className="px-3 py-1 bg-white/10 rounded-full text-[10px] font-black uppercase">Alta Calidad</div>
+          <div className="px-3 py-1 bg-white/10 rounded-full text-xs font-black uppercase">Alta Calidad</div>
         </button>
       </div>
 
       <div className="w-full p-6 rounded-3xl border-2 border-dashed border-border bg-muted/30 flex flex-col items-center gap-4">
         <QrCode className="w-16 h-16 opacity-20" />
-        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Código de seguimiento disponible</p>
+        <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Código de seguimiento disponible</p>
       </div>
 
       <PrimaryButton
@@ -251,7 +251,7 @@ export const POSCart = ({
               <ShoppingCart className={cn(isEasyReading ? "w-7 h-7 sm:w-8 sm:h-8" : "w-5 h-5 sm:w-6 sm:h-6")} />
               Caja Registradora
             </h3>
-            <span className={cn("font-bold opacity-70 uppercase tracking-widest", isEasyReading ? "text-xs sm:text-sm" : "text-[9px] sm:text-[10px]")}>
+            <span className={cn("font-bold opacity-70 uppercase tracking-widest", isEasyReading ? "text-xs sm:text-sm" : "text-xs sm:text-xs")}>
               {items.length} {items.length === 1 ? 'Producto' : 'Productos'}
             </span>
           </div>
@@ -259,11 +259,11 @@ export const POSCart = ({
             <button
               onClick={() => setIsEasyReading(!isEasyReading)}
               className={cn(
-                "p-2.5 sm:p-3 rounded-lg sm:rounded-xl transition-all active:scale-90 flex items-center gap-2 font-black uppercase tracking-widest text-[9px] sm:text-[10px]",
+                "p-2.5 sm:p-3 rounded-lg sm:rounded-xl transition-all active:scale-90 flex items-center gap-2 font-black uppercase tracking-widest text-xs sm:text-xs",
                 isEasyReading ? "bg-white text-primary" : "bg-white/10 hover:bg-white/20 text-white"
               )}
             >
-              <div className="w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center border-2 border-current rounded text-[9px] sm:text-[10px]">A</div>
+              <div className="w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center border-2 border-current rounded text-xs sm:text-xs">A</div>
               <span className="hidden sm:inline">Lectura Fácil</span>
             </button>
             <button
@@ -317,7 +317,7 @@ export const POSCart = ({
                   {/* Accordion Toggle for Options */}
                   <button
                     onClick={() => setShowOptions(!showOptions)}
-                    className="w-full flex items-center justify-center gap-2 py-1 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors"
+                    className="w-full flex items-center justify-center gap-2 py-1 text-xs font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors"
                   >
                     <Settings className={cn("w-3.5 h-3.5 transition-transform duration-500", showOptions && "rotate-180")} />
                     {showOptions ? 'Ocultar Opciones' : 'Pago y Descuento'}
@@ -341,7 +341,7 @@ export const POSCart = ({
                             )}
                           >
                             <DollarSign className="w-4 h-4" />
-                            <span className="text-[9px] font-black uppercase tracking-widest">Efectivo</span>
+                            <span className="text-xs font-black uppercase tracking-widest">Efectivo</span>
                           </button>
                           <button
                             onClick={() => setSelectedPayment('transfer')}
@@ -351,19 +351,19 @@ export const POSCart = ({
                             )}
                           >
                             <CreditCard className="w-4 h-4" />
-                            <span className="text-[9px] font-black uppercase tracking-widest">Transf.</span>
+                            <span className="text-xs font-black uppercase tracking-widest">Transf.</span>
                           </button>
                         </div>
 
                         {/* Discount Selection */}
                         <div className="space-y-3 p-3 rounded-xl bg-muted/50 border border-border">
                           <div className="flex justify-between items-center">
-                            <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Descuento</span>
+                            <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Descuento</span>
                             <div className="flex gap-1 bg-background p-0.5 rounded-lg border border-border">
                               <button
                                 onClick={() => setDiscount({ type: 'percentage', value: discount?.value || 0 })}
                                 className={cn(
-                                  "px-2 py-0.5 rounded-md text-[9px] font-black uppercase transition-all",
+                                  "px-2 py-0.5 rounded-md text-xs font-black uppercase transition-all",
                                   discount?.type === 'percentage' ? "bg-primary text-white" : "text-muted-foreground"
                                 )}
                               >
@@ -372,7 +372,7 @@ export const POSCart = ({
                               <button
                                 onClick={() => setDiscount({ type: 'fixed', value: discount?.value || 0 })}
                                 className={cn(
-                                  "px-2 py-0.5 rounded-md text-[9px] font-black uppercase transition-all",
+                                  "px-2 py-0.5 rounded-md text-xs font-black uppercase transition-all",
                                   discount?.type === 'fixed' ? "bg-primary text-white" : "text-muted-foreground"
                                 )}
                               >
@@ -387,7 +387,7 @@ export const POSCart = ({
                                 key={d}
                                 onClick={() => setDiscount({ type: discount?.type || 'percentage', value: d })}
                                 className={cn(
-                                  "flex-1 py-2 rounded-lg border font-black text-[9px] uppercase transition-all",
+                                  "flex-1 py-2 rounded-lg border font-black text-xs uppercase transition-all",
                                   discount?.value === d && discount?.type === 'percentage' ? "bg-primary text-white border-primary" : "bg-background text-muted-foreground border-border"
                                 )}
                               >
@@ -397,7 +397,7 @@ export const POSCart = ({
                           </div>
 
                           <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-black text-[10px]">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-black text-xs">
                               {discount?.type === 'percentage' ? '%' : '$'}
                             </span>
                             <input
@@ -405,7 +405,7 @@ export const POSCart = ({
                               min="0"
                               value={discount?.value || ''}
                               onChange={(e) => setDiscount({ type: discount?.type || 'percentage', value: parseFloat(e.target.value) || 0 })}
-                              className="w-full pl-7 p-2 rounded-lg border border-border bg-background text-[11px] font-bold focus:ring-1 focus:ring-primary outline-none"
+                              className="w-full pl-7 p-2 rounded-lg border border-border bg-background text-xs font-bold focus:ring-1 focus:ring-primary outline-none"
                               placeholder="Monto personalizado"
                             />
                           </div>
@@ -461,7 +461,7 @@ export const POSCart = ({
                                 </button>
                               </div>
                               <div className={cn(
-                                "px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-tight border whitespace-nowrap",
+                                "px-2 py-0.5 rounded-full text-xs font-black uppercase tracking-tight border whitespace-nowrap",
                                 item.product.stock_current > 10 ? "bg-green-500/10 text-green-600 border-green-500/20" :
                                 item.product.stock_current > 0 ? "bg-amber-500/10 text-amber-600 border-amber-500/20" :
                                 "bg-destructive/10 text-destructive border-destructive/20"
@@ -490,7 +490,7 @@ export const POSCart = ({
                                   </button>
                                 )}
                               </div>
-                              <span className={cn("font-bold text-muted-foreground", isEasyReading ? "text-base" : "text-[12px] sm:text-[11px]")}>
+                              <span className={cn("font-bold text-muted-foreground", isEasyReading ? "text-base" : "text-[12px] sm:text-xs")}>
                                 {formatCurrency(item.price)}
                               </span>
                             </div>
@@ -526,20 +526,20 @@ export const POSCart = ({
               )}>
                 {/* Resumen de Totales */}
                 <div className="px-4 py-3 bg-muted/30 rounded-2xl border border-border/50 space-y-1">
-                  <div className="flex justify-between items-center text-[10px] font-black uppercase text-muted-foreground tracking-widest">
+                  <div className="flex justify-between items-center text-xs font-black uppercase text-muted-foreground tracking-widest">
                     <span>Subtotal</span>
                     <span className="text-foreground">{formatCurrency(getSubtotal())}</span>
                   </div>
 
                   {getDiscountAmount() > 0 && (
-                    <div className="flex justify-between items-center text-[10px] font-black uppercase text-destructive tracking-widest">
+                    <div className="flex justify-between items-center text-xs font-black uppercase text-destructive tracking-widest">
                       <span>Descuento ({discount?.type === 'percentage' ? `${discount.value}%` : 'Monto'})</span>
                       <span>-{formatCurrency(getDiscountAmount())}</span>
                     </div>
                   )}
 
                   <div className="flex justify-between items-center pt-2 border-t border-primary/20">
-                    <span className="text-[10px] font-black uppercase text-foreground tracking-widest">Total Final</span>
+                    <span className="text-xs font-black uppercase text-foreground tracking-widest">Total Final</span>
                     <span className="text-2xl font-black text-primary tracking-tighter leading-none">
                       {formatCurrency(Math.max(0, getSubtotal() - getDiscountAmount()))}
                     </span>

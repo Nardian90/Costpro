@@ -94,11 +94,11 @@ export const ConcentricDashboardRing: React.FC<ConcentricDashboardRingProps> = (
       </svg>
 
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center rotate-0">
-        <span className="text-[10px] font-bold tracking-widest text-slate-500 dark:text-slate-400 uppercase">Margen</span>
+        <span className="text-xs font-bold tracking-widest text-slate-500 dark:text-slate-400 uppercase">Margen</span>
         <span className="text-4xl font-black tracking-tighter text-foreground">
           {profitPercent.toFixed(0)}<span className="text-primary">%</span>
         </span>
-        <span className="text-[10px] font-mono text-primary opacity-0">
+        <span className="text-xs font-mono text-primary opacity-0">
           {/* We don't have historical delta here yet */}
           +0.0%
         </span>

@@ -114,7 +114,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                 <Database className="w-8 h-8 text-muted-foreground opacity-20" />
             </div>
             <p className="text-muted-foreground font-bold uppercase tracking-widest text-xs">Anexo no disponible</p>
-            <p className="text-[10px] text-muted-foreground/60 mt-1 uppercase">Verifique la configuración de la ficha</p>
+            <p className="text-xs text-muted-foreground/60 mt-1 uppercase">Verifique la configuración de la ficha</p>
         </div>
       );
   }
@@ -244,12 +244,12 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
          )}>
             <Table>
                 <TableHeader className={cn(
-                  "bg-slate-100 dark:bg-slate-800/50 text-slate-900 dark:text-white font-black uppercase text-[10px] tracking-widest border-b border-slate-200 dark:border-slate-700",
+                  "bg-slate-100 dark:bg-slate-800/50 text-slate-900 dark:text-white font-black uppercase text-xs tracking-widest border-b border-slate-200 dark:border-slate-700",
                   layoutMode === 'grid' ? "hidden md:table-header-group" : "table-header-group"
                 )}>
                     <TableRow className="border-b border-border/50">
                         {annex.columns.map((col: CostSheetColumn) => (
-                            <TableHead key={col.key} className="font-black py-4 px-4 text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                            <TableHead key={col.key} className="font-black py-4 px-4 text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400 whitespace-nowrap">
                                 {col.label || col.title || col.key}
                             </TableHead>
                         ))}
@@ -352,7 +352,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                   <TableRow className="bg-primary/5 hover:bg-primary/10 transition-colors border-t-2 border-primary/20">
                     <TableCell colSpan={annex.columns.length} className="p-0">
                       <div className="flex flex-col sm:flex-row justify-end items-end sm:items-center gap-4 p-6 min-w-full">
-                        <span className="text-[10px] text-primary/70 uppercase font-black tracking-[0.2em]">Total {annex.id}</span>
+                        <span className="text-xs text-primary/70 uppercase font-black tracking-[0.2em]">Total {annex.id}</span>
                         <span className="text-3xl font-black font-mono text-primary drop-shadow-sm">
                           {formatCurrency(totalValue)}
                         </span>
@@ -376,7 +376,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
        {layoutMode === 'grid' && (
          <div className="flex justify-end mt-4 sm:hidden">
             <div className="neu-card !p-5 border-primary/20 bg-primary/5 shadow-xl min-w-[240px] w-full">
-                <span className="text-[10px] text-primary/70 uppercase font-black tracking-[0.2em] block mb-2 text-right">Total {annex.id}</span>
+                <span className="text-xs text-primary/70 uppercase font-black tracking-[0.2em] block mb-2 text-right">Total {annex.id}</span>
                 <div className="flex items-center justify-end gap-2">
                     <span className="text-3xl font-black font-mono text-primary drop-shadow-sm">
                         {formatCurrency(totalValue)}

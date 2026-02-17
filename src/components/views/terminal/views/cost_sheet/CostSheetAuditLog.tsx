@@ -24,7 +24,7 @@ export const CostSheetAuditLog: React.FC<CostSheetAuditLogProps> = memo(({ audit
                 <Clock className="w-4 h-4" />
                 Bitácora de Auditoría (Motor Declarativo)
             </CardTitle>
-            <Badge variant="outline" className="text-[10px] font-bold border-primary/20 text-primary">
+            <Badge variant="outline" className="text-xs font-bold border-primary/20 text-primary">
                 {audits.length} EVENTOS
             </Badge>
         </div>
@@ -43,7 +43,7 @@ export const CostSheetAuditLog: React.FC<CostSheetAuditLogProps> = memo(({ audit
                  <div className="flex-1 min-w-0">
                    <div className="flex items-center gap-2 mb-1">
                       <span className="font-black text-primary uppercase">Fila {audit.rowId}</span>
-                      <Badge variant="secondary" className="text-[8px] h-4 uppercase tracking-tighter">
+                      <Badge variant="secondary" className="text-xs h-4 uppercase tracking-tighter">
                         {audit.type}
                       </Badge>
                    </div>
@@ -51,14 +51,14 @@ export const CostSheetAuditLog: React.FC<CostSheetAuditLogProps> = memo(({ audit
                      {audit.note}
                    </p>
                    {audit.prev !== undefined && (
-                      <div className="mt-2 font-mono text-[9px] bg-primary/5 p-1.5 rounded-lg border border-primary/10 inline-flex items-center gap-2">
+                      <div className="mt-2 font-mono text-xs bg-primary/5 p-1.5 rounded-lg border border-primary/10 inline-flex items-center gap-2">
                         <span className="text-muted-foreground">{audit.prev}</span>
                         <Zap className="w-2.5 h-2.5 text-primary opacity-50" />
                         <span className="text-primary font-bold">{audit.now}</span>
                       </div>
                    )}
                  </div>
-                 <div className="text-[9px] font-bold text-muted-foreground/50 tabular-nums">
+                 <div className="text-xs font-bold text-muted-foreground/50 tabular-nums">
                    {(() => {
                       const d = new Date(audit.ts);
                       return isNaN(d.getTime()) ? '--:--:--' : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });

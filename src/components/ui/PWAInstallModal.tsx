@@ -57,7 +57,7 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
                 <h3 className="font-black uppercase text-xs tracking-widest">iOS / Safari</h3>
               </div>
               {platform === 'ios' && (
-                <span className="text-[10px] font-black bg-primary text-white px-3 py-1 rounded-full uppercase tracking-widest animate-pulse">Tu dispositivo</span>
+                <span className="text-xs font-black bg-primary text-white px-3 py-1 rounded-full uppercase tracking-widest animate-pulse">Tu dispositivo</span>
               )}
             </div>
 
@@ -90,7 +90,7 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
                 <h3 className="font-black uppercase text-xs tracking-widest">Android / Chrome</h3>
               </div>
               {platform === 'android' && (
-                <span className="text-[10px] font-black bg-primary text-white px-3 py-1 rounded-full uppercase tracking-widest animate-pulse">Tu dispositivo</span>
+                <span className="text-xs font-black bg-primary text-white px-3 py-1 rounded-full uppercase tracking-widest animate-pulse">Tu dispositivo</span>
               )}
             </div>
 
@@ -108,7 +108,7 @@ export function PWAInstallModal({ isOpen, onClose }: PWAInstallModalProps) {
 
           <div className="flex items-start gap-3 p-5 rounded-2xl bg-primary/5 border border-primary/10 text-primary">
             <Info className="w-5 h-5 shrink-0 mt-0.5" />
-            <p className="text-[10px] font-black uppercase tracking-widest leading-relaxed">
+            <p className="text-xs font-black uppercase tracking-widest leading-relaxed">
               CostPro se ejecutará en modo pantalla completa, con mejor rendimiento y acceso rápido desde su escritorio.
             </p>
           </div>

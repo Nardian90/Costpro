@@ -27,7 +27,7 @@ export default function StickyCartFlowDiagram() {
 
         {/* Cart Header */}
         <rect x="260" y="30" width="280" height="40" rx="10" className="fill-primary" />
-        <text x="400" y="55" textAnchor="middle" className="fill-white font-black text-[10px] uppercase">Caja Registradora</text>
+        <text x="400" y="55" textAnchor="middle" className="fill-white font-black text-xs uppercase">Caja Registradora</text>
 
         {/* Scrollable Items List */}
         <g>
@@ -48,12 +48,12 @@ export default function StickyCartFlowDiagram() {
           <rect x="260" y="280" width="280" height="90" rx="0" className="fill-background stroke-primary/10 shadow-2xl" strokeWidth="1" />
 
           {/* Totals */}
-          <text x="280" y="300" className="fill-muted-foreground font-black text-[8px] uppercase">Total Final</text>
+          <text x="280" y="300" className="fill-muted-foreground font-black text-xs uppercase">Total Final</text>
           <text x="520" y="305" textAnchor="end" className="fill-primary font-black text-lg font-mono">$1,250.00</text>
 
           {/* Action Button */}
           <rect x="270" y="320" width="260" height="40" rx="10" className="fill-primary shadow-lg shadow-primary/20" />
-          <text x="400" y="345" textAnchor="middle" className="fill-white font-black text-[10px] uppercase tracking-widest">Finalizar Venta</text>
+          <text x="400" y="345" textAnchor="middle" className="fill-white font-black text-xs uppercase tracking-widest">Finalizar Venta</text>
         </motion.g>
 
         {/* Annotations */}

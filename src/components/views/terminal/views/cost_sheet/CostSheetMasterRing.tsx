@@ -114,7 +114,7 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
 
         {/* Center Content */}
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-          <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 dark:text-slate-400 mb-1">Total Venta</span>
+          <span className="text-xs font-black uppercase tracking-[0.4em] text-slate-500 dark:text-slate-400 mb-1">Total Venta</span>
           <h2 className="text-5xl font-black tracking-tighter text-slate-900 dark:text-white">
             {formatCurrency(totalPrice).split(',')[0]}
             <span className="text-2xl opacity-40">,{formatCurrency(totalPrice).split(',')[1] || '00'}</span>
@@ -129,23 +129,23 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
       {/* Primary KPI Breakdown */}
       <div className="flex flex-row justify-between items-start w-full px-4 sm:px-8 gap-4">
         <div className="flex flex-col min-w-0">
-            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.1em] sm:tracking-[0.2em] text-slate-500 mb-2 truncate">Costo Bruto</span>
+            <span className="text-xs sm:text-xs font-bold uppercase tracking-[0.1em] sm:tracking-[0.2em] text-slate-500 mb-2 truncate">Costo Bruto</span>
             <div className="flex items-baseline gap-1">
                 <span className="text-lg sm:text-2xl font-black tabular-nums truncate text-slate-900 dark:text-white">{formatCurrency(totalCost)}</span>
             </div>
-            <p className="text-[8px] sm:text-[10px] text-slate-400 mt-1 uppercase font-black tracking-tighter opacity-70">Total Gastos</p>
+            <p className="text-xs sm:text-xs text-slate-400 mt-1 uppercase font-black tracking-tighter opacity-70">Total Gastos</p>
         </div>
         <div className="flex flex-col items-end text-right min-w-0">
-            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.1em] sm:tracking-[0.2em] text-slate-500 mb-2 truncate">Utilidad Bruta</span>
+            <span className="text-xs sm:text-xs font-bold uppercase tracking-[0.1em] sm:tracking-[0.2em] text-slate-500 mb-2 truncate">Utilidad Bruta</span>
             <div className="flex flex-col items-end">
                 <div className="flex items-baseline gap-1">
                     <span className={cn("text-lg sm:text-2xl font-black tabular-nums truncate", brandGreen)}>{formatCurrency(utility)}</span>
                 </div>
-                <div className={cn("text-[10px] font-black mt-0.5 opacity-70", brandGreen)}>
+                <div className={cn("text-xs font-black mt-0.5 opacity-70", brandGreen)}>
                     {markupPercent.toFixed(1)}% sobre costo
                 </div>
             </div>
-            <p className="text-[8px] sm:text-[10px] text-slate-400 mt-1 uppercase font-black tracking-tighter opacity-70">Margen Neto</p>
+            <p className="text-xs sm:text-xs text-slate-400 mt-1 uppercase font-black tracking-tighter opacity-70">Margen Neto</p>
         </div>
       </div>
     </div>
@@ -161,13 +161,13 @@ export const CostSheetTelemetry: React.FC<{ telemetry: TelemetryItem[], classNam
     return (
       <div className={cn("w-full max-w-md mx-auto space-y-8 pt-10 border-t border-border/30", className)}>
         <div className="flex items-center justify-between px-2">
-            <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">Desglose Operativo</h4>
+            <h4 className="text-xs font-black uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">Desglose Operativo</h4>
             <div className="flex items-center gap-2.5">
                 <div className="relative flex h-2 w-2">
                     <span className={cn("animate-ping absolute inline-flex h-full w-full rounded-full opacity-75", brandGreenBg)}></span>
                     <span className={cn("relative inline-flex rounded-full h-2 w-2", brandGreenBg)}></span>
                 </div>
-                <span className={cn("text-[10px] font-black uppercase tracking-[0.2em]", brandGreen)}>Telemetría en Vivo</span>
+                <span className={cn("text-xs font-black uppercase tracking-[0.2em]", brandGreen)}>Telemetría en Vivo</span>
             </div>
         </div>
 
@@ -179,13 +179,13 @@ export const CostSheetTelemetry: React.FC<{ telemetry: TelemetryItem[], classNam
                             <item.icon className="w-5 h-5" />
                         </div>
                         <div>
-                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-0.5">{item.label}</p>
+                            <p className="text-xs font-black text-slate-500 uppercase tracking-widest mb-0.5">{item.label}</p>
                             <p className="text-base font-black tracking-tight tabular-nums text-slate-900 dark:text-white">{formatCurrency(item.value)}</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-4">
                         <div className="text-right">
-                             <p className="text-[11px] font-black text-slate-400 tracking-tighter">{item.percent.toFixed(1)}%</p>
+                             <p className="text-xs font-black text-slate-400 tracking-tighter">{item.percent.toFixed(1)}%</p>
                         </div>
                         <div className="flex gap-1 items-end h-8">
                             {[1, 2, 3, 4, 5].map((bar) => {

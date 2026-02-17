@@ -54,7 +54,7 @@ export default function RolesManagementView() {
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="space-y-1">
           <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase">Roles y Permisos</h2>
-          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+          <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
             Gestión de Control de Acceso Basado en Roles (RBAC)
           </p>
         </div>
@@ -76,7 +76,7 @@ export default function RolesManagementView() {
       <div className="table-scroll-wrapper rounded-xl border border-border bg-card shadow-sm">
         <table className="data-table w-full text-sm">
           <thead>
-            <tr className="bg-muted/30 text-muted-foreground font-black uppercase text-[10px] tracking-widest border-b border-border">
+            <tr className="bg-muted/30 text-muted-foreground font-black uppercase text-xs tracking-widest border-b border-border">
               <th className="p-4 text-left">Nombre del Rol</th>
               <th className="p-4 text-left">Vistas Permitidas</th>
               <th className="p-4 text-center">Por Defecto</th>
@@ -94,7 +94,7 @@ export default function RolesManagementView() {
                     <div>
                       <div className="font-bold text-sm uppercase tracking-tighter">{role.name}</div>
                       {role.permissions?.all && (
-                        <span className="text-[8px] font-black text-primary uppercase">Acceso Total</span>
+                        <span className="text-xs font-black text-primary uppercase">Acceso Total</span>
                       )}
                     </div>
                   </div>
@@ -102,16 +102,16 @@ export default function RolesManagementView() {
                 <td className="p-4">
                   <div className="flex flex-wrap gap-1">
                     {role.permissions?.all ? (
-                      <span className="px-2 py-0.5 rounded bg-primary/20 text-primary text-[8px] font-black uppercase">Todas</span>
+                      <span className="px-2 py-0.5 rounded bg-primary/20 text-primary text-xs font-black uppercase">Todas</span>
                     ) : (
                       role.permissions?.views?.map(v => (
-                        <span key={v} className="px-2 py-0.5 rounded bg-muted text-muted-foreground text-[8px] font-black uppercase border border-border/50">
+                        <span key={v} className="px-2 py-0.5 rounded bg-muted text-muted-foreground text-xs font-black uppercase border border-border/50">
                           {v}
                         </span>
                       ))
                     )}
                     {(!role.permissions?.views || role.permissions.views.length === 0) && !role.permissions?.all && (
-                      <span className="text-[8px] italic text-muted-foreground">Sin vistas asignadas</span>
+                      <span className="text-xs italic text-muted-foreground">Sin vistas asignadas</span>
                     )}
                   </div>
                 </td>

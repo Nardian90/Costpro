@@ -151,7 +151,7 @@ export function CatalogTable() {
             variant="ghost"
             size="sm"
             onClick={() => handleSort(column)}
-            className={`h-7 px-2 text-[10px] font-black uppercase tracking-widest hover:bg-primary/5 gap-1 ${isActive ? 'text-primary' : 'text-muted-foreground'} ${className}`}
+            className={`h-7 px-2 text-xs font-black uppercase tracking-widest hover:bg-primary/5 gap-1 ${isActive ? 'text-primary' : 'text-muted-foreground'} ${className}`}
         >
             {label}
             {isActive ? (
@@ -476,7 +476,7 @@ export function CatalogTable() {
                     <button
                         key={f.id}
                         onClick={() => setStockFilter(f.id as any)}
-                        className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-tighter transition-all whitespace-nowrap flex-1 sm:flex-none ${
+                        className={`px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-tighter transition-all whitespace-nowrap flex-1 sm:flex-none ${
                             stockFilter === f.id
                                 ? 'bg-background text-primary shadow-sm'
                                 : 'text-muted-foreground hover:text-foreground'
@@ -516,7 +516,7 @@ export function CatalogTable() {
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs p-4 bg-popover text-popover-foreground border shadow-xl">
                     <p className="font-bold text-primary mb-2">Ayuda de Columnas:</p>
-                    <ul className="text-[10px] space-y-1 list-disc pl-4 uppercase font-bold">
+                    <ul className="text-xs space-y-1 list-disc pl-4 uppercase font-bold">
                         <li><strong>cod:</strong> Identificador único.</li>
                         <li><strong>Precio:</strong> Valor unitario en centavos.</li>
                         <li><strong>Prioridad:</strong> 1-5 (Menor es mayor prioridad).</li>
@@ -531,14 +531,14 @@ export function CatalogTable() {
                         variant="outline"
                         size="sm"
                         onClick={handleNormalizeNegatives}
-                        className="h-12 sm:h-10 text-[10px] uppercase font-black tracking-widest gap-2 text-red-500 border-red-200 hover:bg-red-50 flex-1 sm:flex-none"
+                        className="h-12 sm:h-10 text-xs uppercase font-black tracking-widest gap-2 text-red-500 border-red-200 hover:bg-red-50 flex-1 sm:flex-none"
                     >
                         <AlertTriangle className="w-4 h-4" />
                         <span className="hidden sm:inline">Normalizar Negativos</span>
                         <span className="sm:hidden">Normalizar</span>
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
+                <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
                     Ajusta automáticamente el stock inicial de productos con existencia negativa para que su saldo final sea cero o superior.
                 </TooltipContent>
             </Tooltip>
@@ -550,13 +550,13 @@ export function CatalogTable() {
                         size="sm"
                         onClick={syncWithSystemCatalog}
                         disabled={isSyncing}
-                        className="h-12 sm:h-10 text-[10px] uppercase font-black tracking-widest gap-2 text-primary border-primary/20 flex-1 sm:flex-none"
+                        className="h-12 sm:h-10 text-xs uppercase font-black tracking-widest gap-2 text-primary border-primary/20 flex-1 sm:flex-none"
                     >
                         <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
                         Catálogo Real
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
+                <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
                     Sincroniza los precios y stock inicial con la base de datos central de la tienda activa.
                 </TooltipContent>
             </Tooltip>
@@ -567,14 +567,14 @@ export function CatalogTable() {
                         variant="outline"
                         size="sm"
                         onClick={handleAddNew}
-                        className="h-12 sm:h-10 text-[10px] uppercase font-black tracking-widest gap-2 flex-1 sm:flex-none"
+                        className="h-12 sm:h-10 text-xs uppercase font-black tracking-widest gap-2 flex-1 sm:flex-none"
                     >
                         <Plus className="w-4 h-4" />
                         <span className="hidden sm:inline">Nuevo Producto</span>
                         <span className="sm:hidden">Nuevo</span>
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
+                <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
                     Añade manualmente un producto temporal al catálogo local para procesos de conciliación específicos.
                 </TooltipContent>
             </Tooltip>
@@ -585,14 +585,14 @@ export function CatalogTable() {
                         variant="outline"
                         size="sm"
                         onClick={handleRecalculateReportsChain}
-                        className="h-12 sm:h-10 text-[10px] uppercase font-black tracking-widest gap-2 text-primary border-primary/20 flex-1 sm:flex-none"
+                        className="h-12 sm:h-10 text-xs uppercase font-black tracking-widest gap-2 text-primary border-primary/20 flex-1 sm:flex-none"
                     >
                         <RefreshCw className="w-4 h-4" />
                         <span className="hidden sm:inline">Recalcular IPVs</span>
                         <span className="sm:hidden">Recalcular</span>
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
+                <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
                     Fuerza el recalculo de la existencia inicial de cada día basándose en el cierre del día anterior para toda la historia del reporte.
                 </TooltipContent>
             </Tooltip>
@@ -604,13 +604,13 @@ export function CatalogTable() {
                         size="sm"
                         onClick={handleRecalculateIntelligence}
                         disabled={isSyncing}
-                        className="h-12 sm:h-10 text-[10px] uppercase font-black tracking-widest gap-2 text-purple-500 border-purple-200 hover:bg-purple-50 flex-1 sm:flex-none"
+                        className="h-12 sm:h-10 text-xs uppercase font-black tracking-widest gap-2 text-purple-500 border-purple-200 hover:bg-purple-50 flex-1 sm:flex-none"
                     >
                         <Brain className={`w-4 h-4 ${isSyncing ? 'animate-pulse' : ''}`} />
                         <span>Inteligencia</span>
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
+                <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
                     Analiza patrones de venta históricos para sugerir precios óptimos y ajustar prioridades de matching automáticamente.
                 </TooltipContent>
             </Tooltip>
@@ -618,47 +618,47 @@ export function CatalogTable() {
             <div className="flex gap-1 bg-purple-50 p-1 rounded-xl border border-purple-100">
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button variant="ghost" size="sm" onClick={handleAcceptSuggestions} className="h-8 text-[9px] font-black uppercase text-purple-600 hover:bg-purple-100">
+                        <Button variant="ghost" size="sm" onClick={handleAcceptSuggestions} className="h-8 text-xs font-black uppercase text-purple-600 hover:bg-purple-100">
                             <Sparkles className="w-3 h-3 mr-1" />
                             Aceptar Todo
                         </Button>
                     </TooltipTrigger>
-                    <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
+                    <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
                         Aplica masivamente el precio sugerido por el motor de inteligencia a todos los productos seleccionados.
                     </TooltipContent>
                 </Tooltip>
 
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button variant="ghost" size="sm" onClick={() => handleBulkPriority('auto')} className="h-8 text-[9px] font-black uppercase text-purple-600 hover:bg-purple-100">
+                        <Button variant="ghost" size="sm" onClick={() => handleBulkPriority('auto')} className="h-8 text-xs font-black uppercase text-purple-600 hover:bg-purple-100">
                             <Star className="w-3 h-3 mr-1" />
                             Prio Auto
                         </Button>
                     </TooltipTrigger>
-                    <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
+                    <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
                         Cambia el modo de prioridad a "Automático" para los productos seleccionados, permitiendo que el sistema decida según el volumen de ventas.
                     </TooltipContent>
                 </Tooltip>
 
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button variant="ghost" size="sm" onClick={handleBulkPercentageAdjustment} className="h-8 text-[9px] font-black uppercase text-purple-600 hover:bg-purple-100">
+                        <Button variant="ghost" size="sm" onClick={handleBulkPercentageAdjustment} className="h-8 text-xs font-black uppercase text-purple-600 hover:bg-purple-100">
                             <Percent className="w-3 h-3 mr-1" />
                             Ajuste %
                         </Button>
                     </TooltipTrigger>
-                    <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
+                    <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
                         Modifica el precio de venta actual aplicando un factor porcentual (ej: 110% para subir un 10%).
                     </TooltipContent>
                 </Tooltip>
 
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button variant="ghost" size="sm" onClick={handleResetPrices} className="h-8 text-[9px] font-black uppercase text-red-600 hover:bg-red-50">
+                        <Button variant="ghost" size="sm" onClick={handleResetPrices} className="h-8 text-xs font-black uppercase text-red-600 hover:bg-red-50">
                             <RotateCcw className="w-3 h-3" />
                         </Button>
                     </TooltipTrigger>
-                    <TooltipContent className="max-w-xs text-[10px] font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
+                    <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-popover text-popover-foreground border shadow-xl">
                         Revierte los precios modificados a su valor original de la última sincronización.
                     </TooltipContent>
                 </Tooltip>
@@ -668,7 +668,7 @@ export function CatalogTable() {
 
       <div className="px-4 py-2 bg-primary/5 border-l-4 border-primary mx-4 rounded-r-xl flex items-start gap-3">
         <Info className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-        <div className="text-[10px] text-muted-foreground leading-relaxed font-medium uppercase tracking-tight">
+        <div className="text-xs text-muted-foreground leading-relaxed font-medium uppercase tracking-tight">
             <span className="font-black text-primary">Tip:</span> La <strong>Prioridad</strong> resuelve ambigüedades de precio durante el matching automático.
         </div>
       </div>
@@ -721,7 +721,7 @@ export function CatalogTable() {
             <TableBody>
                 {sortedAndFiltered.length === 0 && editingId !== 'NEW' ? (
                 <TableRow>
-                    <TableCell colSpan={13} className="h-24 text-center text-muted-foreground font-bold uppercase text-[10px]">
+                    <TableCell colSpan={13} className="h-24 text-center text-muted-foreground font-bold uppercase text-xs">
                         {searchTerm || stockFilter !== 'all' ? 'No hay productos que coincidan con los filtros.' : 'No hay productos en el catálogo.'}
                     </TableCell>
                 </TableRow>
@@ -734,7 +734,7 @@ export function CatalogTable() {
                                 value={editForm.cod}
                                 onChange={e => setEditForm({...editForm, cod: e.target.value})}
                                 placeholder="CÓDIGO"
-                                className="h-8 w-24 text-[10px] font-bold"
+                                className="h-8 w-24 text-xs font-bold"
                             />
                         </TableCell>
                         <TableCell>
@@ -749,7 +749,7 @@ export function CatalogTable() {
                             <Input
                                 value={editForm.um}
                                 onChange={e => setEditForm({...editForm, um: e.target.value})}
-                                className="h-8 w-24 text-[10px] uppercase"
+                                className="h-8 w-24 text-xs uppercase"
                             />
                         </TableCell>
                         <TableCell className="text-center">
@@ -826,7 +826,7 @@ export function CatalogTable() {
                                 }}
                             />
                         </TableCell>
-                        <TableCell className="sticky-column-1 font-mono text-[10px] font-bold text-primary">
+                        <TableCell className="sticky-column-1 font-mono text-xs font-bold text-primary">
                         {p.cod}
                         </TableCell>
 
@@ -843,14 +843,14 @@ export function CatalogTable() {
                                         placeholder="Categoría"
                                         value={editForm.categoria || ''}
                                         onChange={e => setEditForm({...editForm, categoria: e.target.value})}
-                                        className="h-7 text-[10px] w-full"
+                                        className="h-7 text-xs w-full"
                                     />
                                 </div>
                             </div>
                         ) : (
                             <div>
                                 <div className="text-xs font-bold">{p.descripcion}</div>
-                                {p.categoria && <Badge variant="secondary" className="text-[8px] h-3 px-1 mt-1 opacity-70 uppercase">{p.categoria}</Badge>}
+                                {p.categoria && <Badge variant="secondary" className="text-xs h-3 px-1 mt-1 opacity-70 uppercase">{p.categoria}</Badge>}
                             </div>
                         )}
                         </TableCell>
@@ -864,7 +864,7 @@ export function CatalogTable() {
                                             style={{ width: `${p.priceEffectivenessScore}%` }}
                                         />
                                     </div>
-                                    <span className="text-[10px] font-black">{p.priceEffectivenessScore}</span>
+                                    <span className="text-xs font-black">{p.priceEffectivenessScore}</span>
                                 </div>
                             )}
                         </TableCell>
@@ -901,7 +901,7 @@ export function CatalogTable() {
                                 <div className="flex flex-col items-end">
                                     <span className={`font-black text-xs ${p.precio_base_cents ? 'text-purple-600' : ''}`}>{p.precio_cents}</span>
                                     {p.precio_base_cents && (
-                                        <span className="text-[8px] text-muted-foreground line-through">Base: {p.precio_base_cents}</span>
+                                        <span className="text-xs text-muted-foreground line-through">Base: {p.precio_base_cents}</span>
                                     )}
                                 </div>
                             )}
@@ -928,7 +928,7 @@ export function CatalogTable() {
                                     <select
                                         value={editForm.priorityMode || 'manual'}
                                         onChange={e => setEditForm({...editForm, priorityMode: e.target.value as any})}
-                                        className="h-7 rounded border bg-background px-1 text-[9px] uppercase font-bold"
+                                        className="h-7 rounded border bg-background px-1 text-xs uppercase font-bold"
                                     >
                                         <option value="manual">Manual</option>
                                         <option value="auto">Auto</option>
@@ -945,11 +945,11 @@ export function CatalogTable() {
                                 </div>
                             ) : (
                                 <div className="flex flex-col items-center gap-1">
-                                    <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full ${p.priorityMode === 'auto' ? 'bg-purple-100 text-purple-700' : 'bg-primary/10 text-primary'} text-[10px] font-black shadow-sm`}>
+                                    <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full ${p.priorityMode === 'auto' ? 'bg-purple-100 text-purple-700' : 'bg-primary/10 text-primary'} text-xs font-black shadow-sm`}>
                                         {p.prioridad_algoritmo}
                                     </span>
                                     {p.priorityMode && p.priorityMode !== 'manual' && (
-                                        <span className="text-[8px] font-bold text-muted-foreground uppercase opacity-50">{p.priorityMode}</span>
+                                        <span className="text-xs font-bold text-muted-foreground uppercase opacity-50">{p.priorityMode}</span>
                                     )}
                                 </div>
                             )}
@@ -1032,9 +1032,9 @@ function ProductCard({ product, stats, isEditing, editForm, setEditForm, onSave,
             <div className="flex justify-between items-start">
                 <div>
                     <div className="flex items-center gap-2">
-                        <p className="text-[10px] font-black text-primary uppercase tracking-widest">{product.cod}</p>
+                        <p className="text-xs font-black text-primary uppercase tracking-widest">{product.cod}</p>
                         {product.priceEffectivenessScore !== undefined && (
-                            <Badge variant="outline" className="text-[8px] h-3 px-1 border-primary/20 bg-primary/5">
+                            <Badge variant="outline" className="text-xs h-3 px-1 border-primary/20 bg-primary/5">
                                 Eff: {product.priceEffectivenessScore}%
                             </Badge>
                         )}
@@ -1055,21 +1055,21 @@ function ProductCard({ product, stats, isEditing, editForm, setEditForm, onSave,
                             <Input
                                 value={editForm.um}
                                 onChange={e => setEditForm({...editForm, um: e.target.value})}
-                                className="h-7 w-20 text-[9px] uppercase text-right"
+                                className="h-7 w-20 text-xs uppercase text-right"
                                 placeholder="UM"
                             />
                             <select
                                 value={editForm.prioridad_algoritmo}
                                 onChange={e => setEditForm({...editForm, prioridad_algoritmo: Number(e.target.value)})}
-                                className="h-7 rounded-md border border-input bg-background px-1 text-[9px]"
+                                className="h-7 rounded-md border border-input bg-background px-1 text-xs"
                             >
                                 {[1, 2, 3, 4, 5].map(v => <option key={v} value={v}>Prio {v}</option>)}
                             </select>
                         </div>
                     ) : (
                         <>
-                            <Badge variant="outline" className="text-[9px] uppercase font-black">{product.um}</Badge>
-                            <span className="text-[10px] font-bold text-muted-foreground uppercase opacity-50">Prio {product.prioridad_algoritmo}</span>
+                            <Badge variant="outline" className="text-xs uppercase font-black">{product.um}</Badge>
+                            <span className="text-xs font-bold text-muted-foreground uppercase opacity-50">Prio {product.prioridad_algoritmo}</span>
                         </>
                     )}
                 </div>
@@ -1077,25 +1077,25 @@ function ProductCard({ product, stats, isEditing, editForm, setEditForm, onSave,
 
             <div className="grid grid-cols-3 gap-2 py-3 border-y border-border/50">
                 <div className="text-center">
-                    <p className="text-[8px] font-black text-muted-foreground uppercase mb-1">Inicial</p>
+                    <p className="text-xs font-black text-muted-foreground uppercase mb-1">Inicial</p>
                     {isEditing ? (
                         <Input
                             type="number"
                             min="0"
                             value={editForm.stock_inicial_manual}
                             onChange={e => setEditForm({...editForm, stock_inicial_manual: Math.max(0, Number(e.target.value))})}
-                            className="h-7 text-[10px] text-center"
+                            className="h-7 text-xs text-center"
                         />
                     ) : (
                         <p className="font-black text-lg">{stats.initial}</p>
                     )}
                 </div>
                 <div className="text-center border-x border-border/50">
-                    <p className="text-[8px] font-black text-muted-foreground uppercase mb-1">Ventas</p>
+                    <p className="text-xs font-black text-muted-foreground uppercase mb-1">Ventas</p>
                     <p className="font-black text-lg text-orange-500">{stats.sales}</p>
                 </div>
                 <div className="text-center">
-                    <p className="text-[8px] font-black text-muted-foreground uppercase mb-1">Final</p>
+                    <p className="text-xs font-black text-muted-foreground uppercase mb-1">Final</p>
                     <p className={`font-black text-lg ${stats.final < 0 ? 'text-red-500' : 'text-primary'}`}>{stats.final}</p>
                 </div>
             </div>
@@ -1108,20 +1108,20 @@ function ProductCard({ product, stats, isEditing, editForm, setEditForm, onSave,
                                 checked={editForm.es_paquete}
                                 onCheckedChange={checked => setEditForm({...editForm, es_paquete: checked})}
                             />
-                            <Label className="text-[8px] uppercase font-black">Paquete</Label>
+                            <Label className="text-xs uppercase font-black">Paquete</Label>
                             {editForm.es_paquete && (
                                 <Input
                                     type="number"
                                     value={editForm.contenido_paquete}
                                     onChange={e => setEditForm({...editForm, contenido_paquete: Number(e.target.value)})}
-                                    className="h-7 w-12 text-[10px] text-center"
+                                    className="h-7 w-12 text-xs text-center"
                                 />
                             )}
                         </div>
                     ) : (
                         product.es_paquete && (
                             <div className="flex items-center gap-1">
-                                <Badge className="bg-primary/10 text-primary text-[8px] font-black uppercase">Pack X{product.contenido_paquete}</Badge>
+                                <Badge className="bg-primary/10 text-primary text-xs font-black uppercase">Pack X{product.contenido_paquete}</Badge>
                             </div>
                         )
                     )}
@@ -1130,7 +1130,7 @@ function ProductCard({ product, stats, isEditing, editForm, setEditForm, onSave,
 
             <div className="flex justify-between items-center">
                 <div>
-                    <p className="text-[8px] font-bold text-muted-foreground uppercase">Precio</p>
+                    <p className="text-xs font-bold text-muted-foreground uppercase">Precio</p>
                     {isEditing ? (
                          <div className="flex items-center gap-1">
                             <Input
@@ -1141,14 +1141,14 @@ function ProductCard({ product, stats, isEditing, editForm, setEditForm, onSave,
                                     const val = e.target.value;
                                     setEditForm({...editForm, precio_cents: parseFloat(val) || 0});
                                 }}
-                                className="h-7 text-[10px] w-24 font-black"
+                                className="h-7 text-xs w-24 font-black"
                             />
                          </div>
                     ) : (
                         <div className="flex flex-col items-end">
                             <p className={`font-black text-base ${product.precio_base_cents ? 'text-purple-600' : ''}`}>{product.precio_cents}</p>
                             {product.precio_base_cents && (
-                                <p className="text-[9px] text-muted-foreground line-through">Base: {product.precio_base_cents}</p>
+                                <p className="text-xs text-muted-foreground line-through">Base: {product.precio_base_cents}</p>
                             )}
                         </div>
                     )}
@@ -1171,21 +1171,21 @@ function NewProductCard({ editForm, setEditForm, onSave, onCancel }: any) {
         <Card className="p-4 space-y-4 border-2 border-dashed border-primary/50 bg-primary/5 relative">
             <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                    <Label className="text-[9px] uppercase font-black">Código</Label>
+                    <Label className="text-xs uppercase font-black">Código</Label>
                     <Input value={editForm.cod} onChange={e => setEditForm({...editForm, cod: e.target.value})} className="h-8 text-xs font-bold uppercase" placeholder="SKU-123" />
                 </div>
                 <div className="space-y-1">
-                    <Label className="text-[9px] uppercase font-black">UM</Label>
+                    <Label className="text-xs uppercase font-black">UM</Label>
                     <Input value={editForm.um} onChange={e => setEditForm({...editForm, um: e.target.value})} className="h-8 text-xs uppercase" placeholder="UNIDADES" />
                 </div>
             </div>
             <div className="space-y-1">
-                <Label className="text-[9px] uppercase font-black">Descripción</Label>
+                <Label className="text-xs uppercase font-black">Descripción</Label>
                 <Input value={editForm.descripcion} onChange={e => setEditForm({...editForm, descripcion: e.target.value})} className="h-8 text-xs" placeholder="Nombre del producto..." />
             </div>
             <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                    <Label className="text-[9px] uppercase font-black">Precio de Venta</Label>
+                    <Label className="text-xs uppercase font-black">Precio de Venta</Label>
                     <Input
                         type="number"
                         step="0.01"
@@ -1198,7 +1198,7 @@ function NewProductCard({ editForm, setEditForm, onSave, onCancel }: any) {
                     />
                 </div>
                 <div className="space-y-1">
-                    <Label className="text-[9px] uppercase font-black">Prioridad</Label>
+                    <Label className="text-xs uppercase font-black">Prioridad</Label>
                     <select
                         value={editForm.prioridad_algoritmo}
                         onChange={e => setEditForm({...editForm, prioridad_algoritmo: Number(e.target.value)})}
@@ -1210,7 +1210,7 @@ function NewProductCard({ editForm, setEditForm, onSave, onCancel }: any) {
             </div>
             <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                    <Label className="text-[9px] uppercase font-black">Stock Inicial</Label>
+                    <Label className="text-xs uppercase font-black">Stock Inicial</Label>
                     <Input type="number" min="0" value={editForm.stock_inicial_manual} onChange={e => setEditForm({...editForm, stock_inicial_manual: Math.max(0, Number(e.target.value))})} className="h-8 text-xs" />
                 </div>
                 <div className="space-y-1 flex flex-col justify-end">
@@ -1219,7 +1219,7 @@ function NewProductCard({ editForm, setEditForm, onSave, onCancel }: any) {
                             checked={editForm.es_paquete}
                             onCheckedChange={checked => setEditForm({...editForm, es_paquete: checked})}
                         />
-                        <Label className="text-[9px] uppercase font-black">¿Es Paquete?</Label>
+                        <Label className="text-xs uppercase font-black">¿Es Paquete?</Label>
                     </div>
                     {editForm.es_paquete && (
                         <Input
@@ -1233,8 +1233,8 @@ function NewProductCard({ editForm, setEditForm, onSave, onCancel }: any) {
                 </div>
             </div>
             <div className="flex gap-2 pt-2">
-                <Button className="flex-1 neu-btn-primary h-12 sm:h-10 font-black text-[10px] uppercase" onClick={onSave}><Check className="w-4 h-4 mr-2" /> Guardar</Button>
-                <Button variant="ghost" className="h-12 sm:h-10 text-[10px] uppercase font-bold" onClick={onCancel}>Cancelar</Button>
+                <Button className="flex-1 neu-btn-primary h-12 sm:h-10 font-black text-xs uppercase" onClick={onSave}><Check className="w-4 h-4 mr-2" /> Guardar</Button>
+                <Button variant="ghost" className="h-12 sm:h-10 text-xs uppercase font-bold" onClick={onCancel}>Cancelar</Button>
             </div>
         </Card>
     );

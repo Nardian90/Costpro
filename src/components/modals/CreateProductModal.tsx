@@ -78,7 +78,7 @@ export const CreateProductModal = () => {
     >
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-[10px] font-black uppercase tracking-widest ml-1">Nombre</label>
+            <label className="text-xs font-black uppercase tracking-widest ml-1">Nombre</label>
             <input
               type="text"
               value={form.name}
@@ -90,9 +90,9 @@ export const CreateProductModal = () => {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest ml-1 flex justify-between">
+              <label className="text-xs font-black uppercase tracking-widest ml-1 flex justify-between">
                 <span>SKU</span>
-                <span className="text-[8px] text-primary/70 italic">Único en tienda</span>
+                <span className="text-xs text-primary/70 italic">Único en tienda</span>
               </label>
               <input
                 type="text"
@@ -103,7 +103,7 @@ export const CreateProductModal = () => {
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest ml-1">Categoría</label>
+              <label className="text-xs font-black uppercase tracking-widest ml-1">Categoría</label>
               <input
                 type="text"
                 value={form.category}
@@ -116,9 +116,9 @@ export const CreateProductModal = () => {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest ml-1 flex justify-between">
+              <label className="text-xs font-black uppercase tracking-widest ml-1 flex justify-between">
                  <span>Costo</span>
-                 <span className="text-[8px] text-primary/70 italic">Prioridad</span>
+                 <span className="text-xs text-primary/70 italic">Prioridad</span>
               </label>
               <input
                 type="number"
@@ -129,8 +129,8 @@ export const CreateProductModal = () => {
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest ml-1">
-                Precio <span className="text-[8px] opacity-50 lowercase font-normal">(opcional)</span>
+              <label className="text-xs font-black uppercase tracking-widest ml-1">
+                Precio <span className="text-xs opacity-50 lowercase font-normal">(opcional)</span>
               </label>
               <input
                 type="number"
@@ -143,7 +143,7 @@ export const CreateProductModal = () => {
           </div>
 
           <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest ml-1">Descripción</label>
+              <label className="text-xs font-black uppercase tracking-widest ml-1">Descripción</label>
               <textarea
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}

@@ -257,7 +257,7 @@ export default function POSView() {
                    ¿Desea continuar con la facturación bajo su responsabilidad?
                  </p>
               </div>
-              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">
+              <p className="text-xs text-muted-foreground uppercase font-black tracking-widest">
                 Esta acción quedará registrada en la auditoría del sistema.
               </p>
             </div>

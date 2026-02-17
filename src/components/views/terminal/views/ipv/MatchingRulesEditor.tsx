@@ -114,11 +114,11 @@ function SortableRuleItem({ rule, toggleRule, updateTolerance, updatePriority, t
                     <div className="sm:hidden flex-1">
                         <h4 className="font-bold text-sm uppercase tracking-wide">{getLabel(rule.tipo)}</h4>
                         <div className="flex items-center gap-2 mt-1">
-                            <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-black uppercase tracking-widest">Prio</span>
+                            <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-black uppercase tracking-widest">Prio</span>
                             <select
                                 value={rule.prioridad}
                                 onChange={(e) => updatePriority(rule.id, parseInt(e.target.value))}
-                                className="h-6 text-[10px] font-bold border rounded bg-background px-1 focus:ring-1 focus:ring-primary outline-none"
+                                className="h-6 text-xs font-bold border rounded bg-background px-1 focus:ring-1 focus:ring-primary outline-none"
                                 onClick={(e) => e.stopPropagation()}
                             >
                                 {Array.from({ length: totalRules }, (_, i) => i + 1).map(p => (
@@ -147,11 +147,11 @@ function SortableRuleItem({ rule, toggleRule, updateTolerance, updatePriority, t
                     <div className="flex items-center gap-2">
                         <h4 className="font-bold text-sm uppercase tracking-wide">{getLabel(rule.tipo)}</h4>
                         <div className="flex items-center gap-2 ml-2">
-                            <span className="text-[10px] font-bold text-muted-foreground uppercase opacity-50 tracking-widest">Prioridad:</span>
+                            <span className="text-xs font-bold text-muted-foreground uppercase opacity-50 tracking-widest">Prioridad:</span>
                             <select
                                 value={rule.prioridad}
                                 onChange={(e) => updatePriority(rule.id, parseInt(e.target.value))}
-                                className="h-7 text-[10px] font-black border rounded bg-background px-2 focus:ring-1 focus:ring-primary outline-none cursor-pointer hover:bg-muted/50 transition-colors"
+                                className="h-7 text-xs font-black border rounded bg-background px-2 focus:ring-1 focus:ring-primary outline-none cursor-pointer hover:bg-muted/50 transition-colors"
                             >
                                 {Array.from({ length: totalRules }, (_, i) => i + 1).map(p => (
                                     <option key={p} value={p}>{p}</option>
@@ -169,7 +169,7 @@ function SortableRuleItem({ rule, toggleRule, updateTolerance, updatePriority, t
                 <div className="flex flex-wrap items-center gap-4 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-border/50">
                     {rule.tipo === 'TOLERANCE' && (
                         <div className="flex items-center gap-2 mr-auto sm:mr-4">
-                            <Label className="text-[10px] sm:text-xs font-bold uppercase">Max ($):</Label>
+                            <Label className="text-xs sm:text-xs font-bold uppercase">Max ($):</Label>
                             <Input
                                 type="number"
                                 className="w-16 sm:w-20 h-8 text-xs"

@@ -296,7 +296,7 @@ export default function CatalogView() {
                                 )}
                             >
                                 <DollarSign className={cn("w-4 h-4", isAuditMode ? "animate-pulse" : "opacity-50")} />
-                                <span className="text-[10px] font-black uppercase tracking-widest hidden xs:inline">
+                                <span className="text-xs font-black uppercase tracking-widest hidden xs:inline">
                                     {isAuditMode ? 'Auditoría Activa' : 'Auditoría de Precios'}
                                 </span>
                             </button>
@@ -330,7 +330,7 @@ export default function CatalogView() {
                         <div className="mt-4 max-h-48 overflow-y-auto pr-2">
                             <table className="w-full text-xs">
                                 <thead>
-                                    <tr className="text-left font-black uppercase text-[10px] border-b border-danger/20">
+                                    <tr className="text-left font-black uppercase text-xs border-b border-danger/20">
                                         <th className="p-2">Fila</th>
                                         <th className="p-2">Error</th>
                                     </tr>
@@ -373,7 +373,7 @@ export default function CatalogView() {
                 <div className="table-scroll-wrapper rounded-2xl shadow-xl border border-border overflow-hidden bg-background/50 backdrop-blur-sm">
                     <table className="data-table sticky-column-1 w-full text-sm">
                         <thead>
-                            <tr className="bg-muted/30 text-muted-foreground font-black uppercase text-[10px] tracking-widest border-b border-border">
+                            <tr className="bg-muted/30 text-muted-foreground font-black uppercase text-xs tracking-widest border-b border-border">
                                 <th className="p-4 text-left">Producto</th>
                                 <th className="p-4 text-left priority-low">SKU</th>
                                 <th className="p-4 text-left priority-low">Categoría</th>
@@ -397,18 +397,18 @@ export default function CatalogView() {
                                             <div className="flex flex-col">
                                                 <span className="font-bold text-xs truncate max-w-[200px]">{product.name}</span>
                                                 {!product.is_active && (
-                                                    <span className="text-[8px] font-black uppercase text-danger tracking-tighter">Inactivo</span>
+                                                    <span className="text-xs font-black uppercase text-danger tracking-tighter">Inactivo</span>
                                                 )}
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="p-4 font-mono text-[10px] priority-low">{product.sku || '-'}</td>
-                                    <td className="p-4 text-[10px] uppercase font-bold text-muted-foreground priority-low">{product.category || '-'}</td>
+                                    <td className="p-4 font-mono text-xs priority-low">{product.sku || '-'}</td>
+                                    <td className="p-4 text-xs uppercase font-bold text-muted-foreground priority-low">{product.category || '-'}</td>
                                     <td className="p-4 text-right font-bold text-xs priority-low">{formatCurrency(product.cost_price || 0)}</td>
                                     <td className="p-4 text-right font-black text-sm text-primary">{formatCurrency(product.price || 0)}</td>
                                     <td className="p-4 text-right">
                                         <div className={cn(
-                                            "inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase",
+                                            "inline-flex items-center px-2 py-0.5 rounded text-xs font-black uppercase",
                                             (product.stock_current || 0) <= 0 ? "bg-danger/10 text-danger" :
                                             (product.stock_current || 0) <= 10 ? "bg-warning/10 text-warning" :
                                             "bg-success/10 text-success"

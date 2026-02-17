@@ -56,7 +56,7 @@ export default function LoginPage() {
 
               <LoginForm />
 
-              <p className="text-center text-[10px] font-bold text-muted-foreground mt-8 uppercase tracking-[0.2em]">
+              <p className="text-center text-xs font-bold text-muted-foreground mt-8 uppercase tracking-[0.2em]">
                 Acceso Protegido por Encriptación de Grado Bancario
               </p>
             </motion.div>

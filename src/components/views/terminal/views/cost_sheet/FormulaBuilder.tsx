@@ -153,7 +153,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
     <div className="flex flex-col h-full bg-background dark:bg-[#020617] text-foreground dark:text-slate-200 transition-colors">
       {/* Construction Area */}
       <div className="p-4 sm:p-6 space-y-4">
-        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground dark:text-slate-500">
+        <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-muted-foreground dark:text-slate-500">
           <Hammer className="w-3.5 h-3.5" />
           Área de Construcción
         </div>
@@ -168,7 +168,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
             <div
               key={token.id}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[10px] sm:text-xs font-bold transition-all animate-in zoom-in-95 duration-200",
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs sm:text-xs font-bold transition-all animate-in zoom-in-95 duration-200",
                 token.type === 'function' && "bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20 shadow-[0_2px_8px_rgba(139,92,246,0.1)]",
                 token.type === 'reference' && "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 shadow-[0_2px_8px_rgba(59,130,246,0.1)]",
                 token.type === 'operator' && "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20",
@@ -198,7 +198,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
             <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-primary dark:bg-[#39FF14] flex items-center justify-center shrink-0">
               <CheckCircle2 className="w-3 h-3 sm:w-4 h-4 text-white" />
             </div>
-            <span className="text-[9px] sm:text-[11px] font-bold text-primary dark:text-[#39FF14] dark:text-[#39FF14] uppercase tracking-wider leading-tight">
+            <span className="text-xs sm:text-xs font-bold text-primary dark:text-[#39FF14] dark:text-[#39FF14] uppercase tracking-wider leading-tight">
               Fórmula válida • Resultado: (Evaluando...)
             </span>
           </div>
@@ -207,7 +207,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
 
       {/* Elements Panel */}
       <div className="p-4 sm:p-6 pt-2 space-y-4 border-t border-border dark:border-white/5">
-        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground dark:text-slate-500">
+        <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-muted-foreground dark:text-slate-500">
           <LayoutGrid className="w-3.5 h-3.5" />
           Panel de Elementos
         </div>
@@ -215,10 +215,10 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <HorizontalScroll containerClassName="bg-muted dark:bg-slate-950/50 p-1 rounded-2xl border border-border dark:border-white/10 overflow-hidden">
             <TabsList className="bg-transparent border-none w-max min-w-full h-auto p-0 gap-1 flex overflow-visible">
-              <TabsTrigger value="functions" className="py-2.5 px-5 sm:px-8 text-[10px] font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-slate-900 data-[state=active]:text-foreground dark:data-[state=active]:text-[#39FF14] transition-all shrink-0 border border-transparent data-[state=active]:border-border dark:data-[state=active]:border-[#39FF14]/20 shadow-none outline-none">Funciones</TabsTrigger>
-              <TabsTrigger value="refs" className="py-2.5 px-5 sm:px-8 text-[10px] font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-slate-900 data-[state=active]:text-foreground dark:data-[state=active]:text-[#39FF14] transition-all shrink-0 border border-transparent data-[state=active]:border-border dark:data-[state=active]:border-[#39FF14]/20 shadow-none outline-none">Referencias</TabsTrigger>
-              <TabsTrigger value="annexes" className="py-2.5 px-5 sm:px-8 text-[10px] font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-slate-900 data-[state=active]:text-foreground dark:data-[state=active]:text-[#39FF14] transition-all shrink-0 border border-transparent data-[state=active]:border-border dark:data-[state=active]:border-[#39FF14]/20 shadow-none outline-none">Anexos</TabsTrigger>
-              <TabsTrigger value="ops" className="py-2.5 px-5 sm:px-8 text-[10px] font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-slate-900 data-[state=active]:text-foreground dark:data-[state=active]:text-[#39FF14] transition-all shrink-0 border border-transparent data-[state=active]:border-border dark:data-[state=active]:border-[#39FF14]/20 shadow-none outline-none">Operadores</TabsTrigger>
+              <TabsTrigger value="functions" className="py-2.5 px-5 sm:px-8 text-xs font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-slate-900 data-[state=active]:text-foreground dark:data-[state=active]:text-[#39FF14] transition-all shrink-0 border border-transparent data-[state=active]:border-border dark:data-[state=active]:border-[#39FF14]/20 shadow-none outline-none">Funciones</TabsTrigger>
+              <TabsTrigger value="refs" className="py-2.5 px-5 sm:px-8 text-xs font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-slate-900 data-[state=active]:text-foreground dark:data-[state=active]:text-[#39FF14] transition-all shrink-0 border border-transparent data-[state=active]:border-border dark:data-[state=active]:border-[#39FF14]/20 shadow-none outline-none">Referencias</TabsTrigger>
+              <TabsTrigger value="annexes" className="py-2.5 px-5 sm:px-8 text-xs font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-slate-900 data-[state=active]:text-foreground dark:data-[state=active]:text-[#39FF14] transition-all shrink-0 border border-transparent data-[state=active]:border-border dark:data-[state=active]:border-[#39FF14]/20 shadow-none outline-none">Anexos</TabsTrigger>
+              <TabsTrigger value="ops" className="py-2.5 px-5 sm:px-8 text-xs font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-slate-900 data-[state=active]:text-foreground dark:data-[state=active]:text-[#39FF14] transition-all shrink-0 border border-transparent data-[state=active]:border-border dark:data-[state=active]:border-[#39FF14]/20 shadow-none outline-none">Operadores</TabsTrigger>
             </TabsList>
           </HorizontalScroll>
 
@@ -236,8 +236,8 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                       <Sigma className="w-5 h-5 sm:w-6 sm:h-6" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-[11px] sm:text-[12px] font-black text-foreground dark:text-white uppercase tracking-wider">{func}</div>
-                      <div className="text-[9px] sm:text-[10px] text-muted-foreground dark:text-slate-500 line-clamp-1">{FUNCTION_DESCRIPTIONS[func]}</div>
+                      <div className="text-xs sm:text-[12px] font-black text-foreground dark:text-white uppercase tracking-wider">{func}</div>
+                      <div className="text-xs sm:text-xs text-muted-foreground dark:text-slate-500 line-clamp-1">{FUNCTION_DESCRIPTIONS[func]}</div>
                     </div>
                     <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-border dark:bg-slate-900 flex items-center justify-center text-muted-foreground dark:text-slate-400 group-hover:bg-primary dark:group-hover:bg-[#39FF14] group-hover:text-primary-foreground dark:group-hover:text-black transition-all">
                       <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -248,7 +248,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
 
               <TabsContent value="refs" className="m-0 space-y-4 pb-4 pr-3 outline-none">
                 <div className="space-y-2">
-                  <div className="text-[9px] sm:text-[10px] font-black text-muted-foreground dark:text-slate-600 uppercase tracking-widest px-2 mb-2">Filas de la Ficha</div>
+                  <div className="text-xs sm:text-xs font-black text-muted-foreground dark:text-slate-600 uppercase tracking-widest px-2 mb-2">Filas de la Ficha</div>
                   {suggestions.filter(s => s.value?.startsWith('ref') || s.value?.startsWith('vh')).map(s => (
                     <button
                       key={s.value}
@@ -256,12 +256,12 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                       className="w-full flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-2xl bg-muted/40 dark:bg-slate-950/40 border border-border dark:border-slate-800 hover:border-primary dark:hover:border-[#39FF14]/30 hover:bg-muted dark:hover:bg-slate-800/60 transition-all text-left group relative overflow-hidden"
                     >
                       <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary dark:bg-[#39FF14] opacity-0 group-hover:opacity-100 transition-opacity" />
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 font-black text-[10px] sm:text-xs">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 font-black text-xs sm:text-xs">
                         {s.label.includes(' ') ? s.label.split(' ')[1] : s.label}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-[10px] sm:text-[11px] font-bold text-foreground dark:text-white uppercase truncate">{s.label}</div>
-                        <div className="text-[8px] sm:text-[9px] text-muted-foreground dark:text-slate-500 truncate">{s.description}</div>
+                        <div className="text-xs sm:text-xs font-bold text-foreground dark:text-white uppercase truncate">{s.label}</div>
+                        <div className="text-xs sm:text-xs text-muted-foreground dark:text-slate-500 truncate">{s.description}</div>
                       </div>
                       <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-border dark:bg-slate-900 flex items-center justify-center text-muted-foreground dark:text-slate-400 group-hover:bg-primary dark:group-hover:bg-[#39FF14] group-hover:text-primary-foreground dark:group-hover:text-black transition-all">
                         <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -273,7 +273,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
 
               <TabsContent value="annexes" className="m-0 space-y-4 pb-4 pr-3 outline-none">
                 <div className="space-y-2">
-                  <div className="text-[9px] sm:text-[10px] font-black text-muted-foreground dark:text-slate-600 uppercase tracking-widest px-2 mb-2">Referencias a Anexos</div>
+                  <div className="text-xs sm:text-xs font-black text-muted-foreground dark:text-slate-600 uppercase tracking-widest px-2 mb-2">Referencias a Anexos</div>
                   {suggestions.filter(s => s.value?.startsWith('Anexo')).map(s => (
                     <button
                       key={s.value}
@@ -281,12 +281,12 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                       className="w-full flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-2xl bg-muted/40 dark:bg-slate-950/40 border border-border dark:border-slate-800 hover:border-primary dark:hover:border-[#39FF14]/30 hover:bg-muted dark:hover:bg-slate-800/60 transition-all text-left group relative overflow-hidden"
                     >
                       <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary dark:bg-[#39FF14] opacity-0 group-hover:opacity-100 transition-opacity" />
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0 font-black text-[10px] sm:text-xs">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0 font-black text-xs sm:text-xs">
                         {s.label.split(' ')[1] || 'AX'}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-[10px] sm:text-[11px] font-bold text-foreground dark:text-white uppercase truncate">{s.label}</div>
-                        <div className="text-[8px] sm:text-[9px] text-muted-foreground dark:text-slate-500 truncate">{s.description}</div>
+                        <div className="text-xs sm:text-xs font-bold text-foreground dark:text-white uppercase truncate">{s.label}</div>
+                        <div className="text-xs sm:text-xs text-muted-foreground dark:text-slate-500 truncate">{s.description}</div>
                       </div>
                       <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-border dark:bg-slate-900 flex items-center justify-center text-muted-foreground dark:text-slate-400 group-hover:bg-primary dark:group-hover:bg-[#39FF14] group-hover:text-primary-foreground dark:group-hover:text-black transition-all">
                         <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -295,7 +295,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                   ))}
                   {suggestions.filter(s => s.value?.startsWith('Anexo')).length === 0 && (
                     <div className="p-8 text-center border-2 border-dashed border-border dark:border-white/5 rounded-3xl">
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">No hay anexos configurados</p>
+                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">No hay anexos configurados</p>
                     </div>
                   )}
                 </div>
@@ -322,7 +322,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                   ))}
 
                   <div className="col-span-4 mt-2 sm:mt-4 p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-muted/30 dark:bg-slate-950/30 border border-border dark:border-slate-800">
-                    <div className="text-[9px] sm:text-[10px] font-black text-muted-foreground dark:text-slate-600 uppercase tracking-widest mb-2 sm:mb-3">Valor Numérico</div>
+                    <div className="text-xs sm:text-xs font-black text-muted-foreground dark:text-slate-600 uppercase tracking-widest mb-2 sm:mb-3">Valor Numérico</div>
                     <div className="flex gap-2 sm:gap-3">
                       <input
                         type="number"

@@ -22,7 +22,7 @@ export const PrimaryButton: React.FC<BaseButtonProps> = ({ icon: Icon, label, cl
     <Comp
       className={cn(
         "flex items-center justify-center gap-2 px-6 py-3 min-h-[44px] w-full sm:w-auto transition-all",
-        "bg-primary text-primary-foreground font-black uppercase tracking-widest text-[10px] rounded-xl",
+        "bg-primary text-primary-foreground font-black uppercase tracking-widest text-xs rounded-xl",
         "hover:brightness-110 active:scale-95 shadow-lg shadow-primary/20",
         "disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap overflow-hidden",
         className
@@ -46,7 +46,7 @@ export const SecondaryButton: React.FC<BaseButtonProps> = ({ icon: Icon, label, 
     <Comp
       className={cn(
         "flex items-center justify-center gap-2 px-6 py-3 min-h-[44px] w-full sm:w-auto transition-all",
-        "bg-muted text-foreground font-bold uppercase tracking-widest text-[10px] rounded-xl border border-border",
+        "bg-muted text-foreground font-bold uppercase tracking-widest text-xs rounded-xl border border-border",
         "hover:bg-muted active:scale-95",
         "disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap overflow-hidden",
         className
@@ -103,7 +103,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({ onClear, value, classN
         className={cn(
           "w-full pl-12 pr-12 py-3 min-h-[44px] text-base rounded-xl border border-border bg-background transition-all outline-none",
           "focus:ring-2 focus:ring-primary/20 focus:border-primary",
-          "placeholder:text-muted-foreground/50 placeholder:uppercase placeholder:text-[10px] placeholder:tracking-widest placeholder:font-bold",
+          "placeholder:text-muted-foreground/50 placeholder:uppercase placeholder:text-xs placeholder:tracking-widest placeholder:font-bold",
           inputClassName
         )}
         {...props}
@@ -147,7 +147,7 @@ export const CategoryChips: React.FC<{
         type="button"
         onClick={() => onCategoryChange('')}
         className={cn(
-          "px-5 py-3 min-h-[44px] rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border shrink-0 flex items-center justify-center",
+          "px-5 py-3 min-h-[44px] rounded-full text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all border shrink-0 flex items-center justify-center",
           selectedCategory === ''
             ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20"
             : "bg-background text-muted-foreground border-border hover:bg-muted"
@@ -161,7 +161,7 @@ export const CategoryChips: React.FC<{
           type="button"
           onClick={() => onCategoryChange(cat)}
           className={cn(
-            "px-5 py-3 min-h-[44px] rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border shrink-0 flex items-center justify-center",
+            "px-5 py-3 min-h-[44px] rounded-full text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all border shrink-0 flex items-center justify-center",
             selectedCategory === cat
               ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20"
               : "bg-background text-muted-foreground border-border hover:bg-muted"
@@ -197,11 +197,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
            <ProductImage src={resolveProductImage(product)} alt={product.name} name={product.name} className="w-full h-full object-cover" />
         </div>
         <div className="flex-1 min-w-0">
-          <h4 className="font-black text-[10px] sm:text-xs uppercase truncate mb-0.5 sm:mb-1">{product.name}</h4>
+          <h4 className="font-black text-xs sm:text-xs uppercase truncate mb-0.5 sm:mb-1">{product.name}</h4>
           <div className="flex items-center justify-between gap-2">
             <div className="text-base sm:text-lg font-black text-primary leading-none">{formatCurrency(product.price)}</div>
             <div className={cn(
-              "text-[8px] font-black uppercase tracking-tighter px-1.5 py-0.5 rounded border shrink-0",
+              "text-xs font-black uppercase tracking-tighter px-1.5 py-0.5 rounded border shrink-0",
               isOutOfStock ? "bg-danger/10 text-danger border-danger/20" :
               isLowStock ? "bg-amber-500/10 text-amber-600 border-amber-500/20" :
               "bg-success/10 text-success border-success/20"
@@ -212,7 +212,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         </div>
         {isOutOfStock && (
           <div className="absolute inset-0 bg-background/40 backdrop-blur-[1px] flex items-center justify-center">
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] bg-background px-3 py-1 rounded-full border border-border shadow-xl">Sin Stock</span>
+            <span className="text-xs font-black uppercase tracking-[0.2em] bg-background px-3 py-1 rounded-full border border-border shadow-xl">Sin Stock</span>
           </div>
         )}
       </button>
@@ -245,19 +245,19 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         {hasImage && (
           <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
             {!product.is_active && (
-              <div className="bg-danger text-white text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-lg">
+              <div className="bg-danger text-white text-xs font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-lg">
                 Inactivo
               </div>
             )}
             {product.price < (product.cost_price || 0) && (
-              <div className="bg-danger text-white text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-lg border border-white/20 animate-pulse">
+              <div className="bg-danger text-white text-xs font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-lg border border-white/20 animate-pulse">
                 ALERTA: Margen Negativo
               </div>
             )}
             {variant === 'inventory' && (
               <div
                 className={cn(
-                  "text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border shadow-sm backdrop-blur-md",
+                  "text-xs font-black uppercase tracking-widest px-2 py-0.5 rounded-full border shadow-sm backdrop-blur-md",
                   isLowStock ? "bg-danger/20 text-danger border-danger/30" : "bg-success/20 text-success border-success/30"
                 )}
               >
@@ -273,7 +273,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <div className="flex justify-between items-start gap-2">
             <div>
               {variant === 'inventory' && (
-                <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mb-1 block">{product.category || 'General'}</span>
+                <span className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-1 block">{product.category || 'General'}</span>
               )}
               <h3 className="font-black text-base uppercase tracking-tight truncate">{product.name}</h3>
             </div>
@@ -290,7 +290,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           {variantCount > 0 && (
             <div className="mt-1 flex items-center gap-1.5">
               <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-              <span className="text-[9px] font-black uppercase tracking-widest text-primary">
+              <span className="text-xs font-black uppercase tracking-widest text-primary">
                 {variantCount} {variantCount === 1 ? 'Variante' : 'Variantes'} de precio
               </span>
             </div>
@@ -298,18 +298,18 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         </div>
 
         {variant !== 'inventory' && (
-          <p className="text-[10px] text-muted-foreground line-clamp-2 min-h-[30px] mb-4">
+          <p className="text-xs text-muted-foreground line-clamp-2 min-h-[30px] mb-4">
             {product.description || 'Sin descripción disponible'}
           </p>
         )}
 
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div className="p-2 rounded-lg bg-muted/30 border border-white/5 text-center">
-            <div className="text-[8px] font-black uppercase text-muted-foreground mb-0.5">Costo</div>
+            <div className="text-xs font-black uppercase text-muted-foreground mb-0.5">Costo</div>
             <div className="font-bold text-xs">{formatCurrency(product.cost_price || 0)}</div>
           </div>
           <div className="p-2 rounded-lg bg-primary/5 border border-primary/10 text-center">
-            <div className="text-[8px] font-black uppercase text-primary mb-0.5">Venta</div>
+            <div className="text-xs font-black uppercase text-primary mb-0.5">Venta</div>
             <div className="font-black text-xs text-primary">{formatCurrency(product.price || 0)}</div>
           </div>
         </div>
@@ -317,7 +317,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         {variant === 'inventory' && (
            <div className="neu-inset-sm !p-3 bg-background/50 border border-white/5 mb-4">
               <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Stock Disponible</span>
+                  <span className="text-xs font-black uppercase text-muted-foreground tracking-widest">Stock Disponible</span>
                   <span className={cn("font-black text-xl", isLowStock ? "text-danger" : "text-foreground")}>
                     {product.stock_current}
                   </span>

@@ -102,7 +102,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
               {/* Configuration / Switchers */}
               <div className="space-y-6 bg-primary/5 p-4 rounded-3xl border border-primary/10">
                 <div className="space-y-4">
-                  <div className="text-[10px] font-black text-primary/70 tracking-[0.4em] uppercase px-2">
+                  <div className="text-xs font-black text-primary/70 tracking-[0.4em] uppercase px-2">
                     Modo de Visualización
                   </div>
                   <CostSheetModeSwitcher viewMode={viewMode} setViewMode={setViewMode} />
@@ -110,7 +110,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
 
                 {viewMode === 'expert' && (
                   <div className="space-y-4 pt-4 border-t border-primary/10">
-                    <div className="text-[10px] font-black text-primary/70 tracking-[0.4em] uppercase px-2">
+                    <div className="text-xs font-black text-primary/70 tracking-[0.4em] uppercase px-2">
                       Diseño de Tablas
                     </div>
                     <div className="flex justify-center">
@@ -123,7 +123,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
               {actionGroups.map((group, idx) => (
                 group.items.length > 0 && (
                   <div key={idx} className="space-y-4">
-                    <div className="px-4 text-[10px] font-black text-primary/70 tracking-[0.4em] uppercase">
+                    <div className="px-4 text-xs font-black text-primary/70 tracking-[0.4em] uppercase">
                       {group.title}
                     </div>
                     <div className="space-y-1">
@@ -160,7 +160,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
 
             {/* Footer */}
             <div className="p-6 border-t border-sidebar-border/50 bg-sidebar/5">
-               <p className="text-[8px] font-black uppercase tracking-[0.3em] text-muted-foreground/50 text-center">
+               <p className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground/50 text-center">
                   CostPro Terminal v5.7
                </p>
             </div>

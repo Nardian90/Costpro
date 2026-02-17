@@ -61,12 +61,12 @@ export default function InventoryCountCard({
                     <h3 className="font-black text-sm uppercase tracking-tight leading-tight line-clamp-2">
                       {product.name}
                     </h3>
-                    <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">
+                    <p className="text-xs font-mono text-muted-foreground uppercase tracking-widest">
                       {product.sku || 'SIN SKU'} • {product.category || 'GENERAL'}
                     </p>
                   </div>
                   <div className={cn(
-                    "px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-tighter",
+                    "px-2 py-1 rounded-md text-xs font-black uppercase tracking-tighter",
                     diff === 0 ? "bg-muted/10 text-muted-foreground/50" :
                     diff > 0 ? "bg-success/10 text-success" : "bg-danger/10 text-danger"
                   )}>
@@ -76,11 +76,11 @@ export default function InventoryCountCard({
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="neu-inset-sm !p-3 bg-muted/5">
-                    <p className="text-[8px] font-black uppercase text-muted-foreground tracking-widest mb-1">Stock Teórico</p>
+                    <p className="text-xs font-black uppercase text-muted-foreground tracking-widest mb-1">Stock Teórico</p>
                     <p className="text-xl font-black text-foreground">{product.stock_current}</p>
                   </div>
                   <div className="neu-inset-sm !p-3 bg-primary/5 border-primary/10">
-                    <p className="text-[8px] font-black uppercase text-primary tracking-widest mb-1">Stock Físico</p>
+                    <p className="text-xs font-black uppercase text-primary tracking-widest mb-1">Stock Físico</p>
                     <p className="text-xl font-black text-primary">{counted}</p>
                   </div>
                 </div>

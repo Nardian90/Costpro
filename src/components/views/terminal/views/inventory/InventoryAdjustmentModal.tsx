@@ -108,7 +108,7 @@ export default function InventoryAdjustmentModal({
             <h3 className="text-xl font-black text-foreground uppercase tracking-tighter">
               Ajuste de Inventario
             </h3>
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
               {product.name} • {product.sku}
             </p>
           </div>
@@ -131,15 +131,15 @@ export default function InventoryAdjustmentModal({
         {/* Current Status Row */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="neu-inset-sm p-4 text-center">
-            <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mb-1">Stock Actual</p>
+            <p className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-1">Stock Actual</p>
             <p className="text-xl font-black">{stockActual}</p>
           </div>
           <div className="neu-inset-sm p-4 text-center">
-            <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mb-1">Costo Promedio</p>
+            <p className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-1">Costo Promedio</p>
             <p className="text-xl font-black text-primary">{formatCurrency(costoPromedioActual)}</p>
           </div>
           <div className="neu-inset-sm p-4 text-center">
-            <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mb-1">Valor Total</p>
+            <p className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-1">Valor Total</p>
             <p className="text-xl font-black">{formatCurrency(costoTotalActual)}</p>
           </div>
         </div>
@@ -148,7 +148,7 @@ export default function InventoryAdjustmentModal({
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label htmlFor="ajusteUnidades" className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">
+              <label htmlFor="ajusteUnidades" className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">
                 Ajuste Unidades (+ / -)
               </label>
               <div className="flex items-center gap-2">
@@ -188,13 +188,13 @@ export default function InventoryAdjustmentModal({
 
             <div className="space-y-2">
               <div className="flex justify-between items-center ml-1">
-                <label htmlFor="ajusteValor" className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
+                <label htmlFor="ajusteValor" className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">
                   Costo Unitario Ajuste
                 </label>
                 {ajusteValorUnitario !== '' && (
                   <button
                     onClick={() => setAjusteValorUnitario('')}
-                    className="text-[9px] font-bold text-primary hover:underline uppercase"
+                    className="text-xs font-bold text-primary hover:underline uppercase"
                   >
                     Usar sugerido
                   </button>
@@ -215,7 +215,7 @@ export default function InventoryAdjustmentModal({
                   placeholder={ajusteUnidades < 0 ? costoPromedioActual.toFixed(2).toString() : "0.00"}
                 />
               </div>
-              <p className="text-[9px] text-muted-foreground italic px-1">
+              <p className="text-xs text-muted-foreground italic px-1">
                 {ajusteValorUnitario === '' ? (
                   isReduction ? `Usando costo promedio actual: ${formatCurrency(costoPromedioActual)}` :
                   isIncrease ? "Usando costo de entrada: $0.00 (Dilución)" :
@@ -228,7 +228,7 @@ export default function InventoryAdjustmentModal({
           </div>
 
           <div className="space-y-3">
-              <label htmlFor="reason" className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">
+              <label htmlFor="reason" className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">
                 Motivo del Ajuste
               </label>
               <div className="flex flex-wrap gap-2 mb-2">
@@ -238,7 +238,7 @@ export default function InventoryAdjustmentModal({
                     type="button"
                     onClick={() => setReason(r)}
                     className={cn(
-                      "px-3 py-1.5 rounded-full text-[9px] font-bold uppercase border transition-all active:scale-95",
+                      "px-3 py-1.5 rounded-full text-xs font-bold uppercase border transition-all active:scale-95",
                       reason === r ? "bg-primary text-white border-primary" : "bg-muted text-muted-foreground border-border"
                     )}
                   >
@@ -258,26 +258,26 @@ export default function InventoryAdjustmentModal({
 
         {/* Results Summary */}
         <div className="p-6 bg-muted/30 rounded-2xl border border-white/5 space-y-4">
-          <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+          <h4 className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-warning" />
             Vista Previa del Resultado
           </h4>
 
           <div className="grid grid-cols-3 gap-4">
              <div className="text-center">
-                <p className="text-[8px] font-bold text-muted-foreground uppercase mb-1">Nuevo Stock</p>
+                <p className="text-xs font-bold text-muted-foreground uppercase mb-1">Nuevo Stock</p>
                 <p className={cn("text-lg font-black", resultados.nuevo_stock !== stockActual && "text-primary")}>
                   {resultados.nuevo_stock}
                 </p>
              </div>
              <div className="text-center border-x border-white/5">
-                <p className="text-[8px] font-bold text-muted-foreground uppercase mb-1">Nuevo Valor Total</p>
+                <p className="text-xs font-bold text-muted-foreground uppercase mb-1">Nuevo Valor Total</p>
                 <p className={cn("text-lg font-black", resultados.nuevo_costo_total !== costoTotalActual && "text-primary")}>
                   {formatCurrency(resultados.nuevo_costo_total)}
                 </p>
              </div>
              <div className="text-center">
-                <p className="text-[8px] font-bold text-muted-foreground uppercase mb-1">Nuevo C. Promedio</p>
+                <p className="text-xs font-bold text-muted-foreground uppercase mb-1">Nuevo C. Promedio</p>
                 <p className={cn("text-lg font-black", resultados.nuevo_costo_unitario !== costoPromedioActual && "text-primary")}>
                   {formatCurrency(resultados.nuevo_costo_unitario)}
                 </p>
@@ -287,7 +287,7 @@ export default function InventoryAdjustmentModal({
           {resultados.nuevo_costo_unitario !== costoPromedioActual && (
               <div className="pt-2 text-center">
                   <span className={cn(
-                      "text-[9px] font-bold px-2 py-0.5 rounded-full",
+                      "text-xs font-bold px-2 py-0.5 rounded-full",
                       resultados.nuevo_costo_unitario > costoPromedioActual ? "bg-success/10 text-success" : "bg-danger/10 text-danger"
                   )}>
                       Variación de Costo: {((resultados.nuevo_costo_unitario / costoPromedioActual - 1) * 100).toFixed(2)}%

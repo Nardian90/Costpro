@@ -53,7 +53,7 @@ export default function HelpView() {
           <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-black">
             VERSIÓN 5.7.25 (EXPRESS GEN)
           </Badge>
-          <span className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Última actualización: 14 Mar 2026</span>
+          <span className="text-xs text-muted-foreground font-bold uppercase mt-1">Última actualización: 14 Mar 2026</span>
         </div>
       </div>
 
@@ -61,43 +61,43 @@ export default function HelpView() {
         <div className="mb-8">
           <HorizontalScroll containerClassName="bg-muted/50 rounded-2xl p-1">
             <TabsList className="flex bg-transparent border-none w-max min-w-full h-auto p-0 gap-1">
-              <TabsTrigger value="onboarding" className="rounded-xl py-3 min-h-[44px] data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+              <TabsTrigger value="onboarding" className="rounded-xl py-3 min-h-[44px] data-[state=active]:bg-background data-[state=active]:shadow-sm text-xs sm:text-xs shrink-0 px-6">
                 <Baby className="w-4 h-4 mr-2 hidden sm:block" />
                 Niños
               </TabsTrigger>
-              <TabsTrigger value="roles" className="rounded-xl py-3 min-h-[44px] data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+              <TabsTrigger value="roles" className="rounded-xl py-3 min-h-[44px] data-[state=active]:bg-background data-[state=active]:shadow-sm text-xs sm:text-xs shrink-0 px-6">
                 <Users className="w-4 h-4 mr-2 hidden sm:block" />
                 Jerarquía
               </TabsTrigger>
-              <TabsTrigger value="admin" className="rounded-xl py-3 min-h-[44px] data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+              <TabsTrigger value="admin" className="rounded-xl py-3 min-h-[44px] data-[state=active]:bg-background data-[state=active]:shadow-sm text-xs sm:text-xs shrink-0 px-6">
                 <Settings className="w-4 h-4 mr-2 hidden sm:block" />
                 Gestión
               </TabsTrigger>
-              <TabsTrigger value="costs" className="rounded-xl py-3 min-h-[44px] data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+              <TabsTrigger value="costs" className="rounded-xl py-3 min-h-[44px] data-[state=active]:bg-background data-[state=active]:shadow-sm text-xs sm:text-xs shrink-0 px-6">
                 <FileText className="w-4 h-4 mr-2 hidden sm:block" />
                 Costos
               </TabsTrigger>
-              <TabsTrigger value="pos" className="rounded-xl py-3 min-h-[44px] data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+              <TabsTrigger value="pos" className="rounded-xl py-3 min-h-[44px] data-[state=active]:bg-background data-[state=active]:shadow-sm text-xs sm:text-xs shrink-0 px-6">
                 <ShoppingCart className="w-4 h-4 mr-2 hidden sm:block" />
                 Ventas
               </TabsTrigger>
-              <TabsTrigger value="inventory" className="rounded-xl py-3 min-h-[44px] data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+              <TabsTrigger value="inventory" className="rounded-xl py-3 min-h-[44px] data-[state=active]:bg-background data-[state=active]:shadow-sm text-xs sm:text-xs shrink-0 px-6">
                 <Package className="w-4 h-4 mr-2 hidden sm:block" />
                 Almacén
               </TabsTrigger>
-              <TabsTrigger value="innovation" className="rounded-xl py-3 min-h-[44px] data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+              <TabsTrigger value="innovation" className="rounded-xl py-3 min-h-[44px] data-[state=active]:bg-background data-[state=active]:shadow-sm text-xs sm:text-xs shrink-0 px-6">
                 <Zap className="w-4 h-4 mr-2 hidden sm:block" />
                 Innovación
               </TabsTrigger>
-              <TabsTrigger value="security" className="rounded-xl py-3 min-h-[44px] data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+              <TabsTrigger value="security" className="rounded-xl py-3 min-h-[44px] data-[state=active]:bg-background data-[state=active]:shadow-sm text-xs sm:text-xs shrink-0 px-6">
                 <Shield className="w-4 h-4 mr-2 hidden sm:block" />
                 Seguridad
               </TabsTrigger>
-              <TabsTrigger value="ipv" className="rounded-xl py-3 min-h-[44px] data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+              <TabsTrigger value="ipv" className="rounded-xl py-3 min-h-[44px] data-[state=active]:bg-background data-[state=active]:shadow-sm text-xs sm:text-xs shrink-0 px-6">
                 <Activity className="w-4 h-4 mr-2 hidden sm:block" />
                 Conciliación (IPV)
               </TabsTrigger>
-              <TabsTrigger value="history" className="rounded-xl py-3 min-h-[44px] data-[state=active]:bg-background data-[state=active]:shadow-sm text-[10px] sm:text-xs shrink-0 px-6">
+              <TabsTrigger value="history" className="rounded-xl py-3 min-h-[44px] data-[state=active]:bg-background data-[state=active]:shadow-sm text-xs sm:text-xs shrink-0 px-6">
                 <History className="w-4 h-4 mr-2 hidden sm:block" />
                 Historial
               </TabsTrigger>
@@ -195,15 +195,15 @@ export default function HelpView() {
                 <div className="space-y-6">
                   <div>
                     <Badge className="bg-primary mb-2">ADMIN</Badge>
-                    <p className="text-[10px] font-medium text-muted-foreground leading-tight">Control total, creación de tiendas, reportes financieros globales y auditoría de sistema.</p>
+                    <p className="text-xs font-medium text-muted-foreground leading-tight">Control total, creación de tiendas, reportes financieros globales y auditoría de sistema.</p>
                   </div>
                   <div>
                     <Badge variant="outline" className="bg-violet-500/10 text-violet-600 border-violet-500/20 mb-2">ENCARGADO / GERENTE</Badge>
-                    <p className="text-[10px] font-medium text-muted-foreground leading-tight">Administra usuarios y tiendas asignadas, supervisa cierres de caja y gestiona el inventario local.</p>
+                    <p className="text-xs font-medium text-muted-foreground leading-tight">Administra usuarios y tiendas asignadas, supervisa cierres de caja y gestiona el inventario local.</p>
                   </div>
                   <div>
                     <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20 mb-2">CAJERO / ALMACÉN</Badge>
-                    <p className="text-[10px] font-medium text-muted-foreground leading-tight">Operaciones diarias de punto de venta y control de entrada/salida de mercancía.</p>
+                    <p className="text-xs font-medium text-muted-foreground leading-tight">Operaciones diarias de punto de venta y control de entrada/salida de mercancía.</p>
                   </div>
                 </div>
               </div>
@@ -220,7 +220,7 @@ export default function HelpView() {
                     <Store className="w-3 h-3" />
                     Auto-selección de Tienda
                   </h4>
-                  <p className="text-[10px] font-medium text-green-800/70 leading-relaxed">
+                  <p className="text-xs font-medium text-green-800/70 leading-relaxed">
                     Para garantizar la operatividad inmediata, el sistema selecciona automáticamente tu primera tienda asignada si no tienes una activa.
                     <span className="block mt-1 font-bold italic">Nota: Si no ves datos, verifica que tengas al menos una tienda asignada por tu Administrador.</span>
                   </p>
@@ -320,17 +320,17 @@ export default function HelpView() {
                 <div className="p-6 rounded-2xl bg-violet-500/5 border border-violet-500/10 space-y-2">
                   <Table2 className="w-6 h-6 text-violet-600" />
                   <h5 className="font-black text-xs uppercase">Modo Experto</h5>
-                  <p className="text-[10px] text-muted-foreground leading-tight">Control total sobre celdas, fórmulas y referencias cruzadas en tiempo real.</p>
+                  <p className="text-xs text-muted-foreground leading-tight">Control total sobre celdas, fórmulas y referencias cruzadas en tiempo real.</p>
                 </div>
                 <div className="p-6 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 space-y-2">
                   <Wand2 className="w-6 h-6 text-emerald-600" />
                   <h5 className="font-black text-xs uppercase">Modo Asistido</h5>
-                  <p className="text-[10px] text-muted-foreground leading-tight">Wizard paso a paso que guía la entrada de datos para evitar errores humanos.</p>
+                  <p className="text-xs text-muted-foreground leading-tight">Wizard paso a paso que guía la entrada de datos para evitar errores humanos.</p>
                 </div>
                 <div className="p-6 rounded-2xl bg-amber-500/5 border border-amber-500/10 space-y-2">
                   <BookOpen className="w-6 h-6 text-amber-600" />
                   <h5 className="font-black text-xs uppercase">Modo Lectura</h5>
-                  <p className="text-[10px] text-muted-foreground leading-tight">Narrativa generada automáticamente que explica el origen de cada costo.</p>
+                  <p className="text-xs text-muted-foreground leading-tight">Narrativa generada automáticamente que explica el origen de cada costo.</p>
                 </div>
               </div>
 
@@ -341,13 +341,13 @@ export default function HelpView() {
                 </h4>
                 <div className="grid lg:grid-cols-2 gap-8 items-center">
                   <div className="space-y-4">
-                    <p className="text-[10px] font-medium leading-relaxed text-amber-800/70">
+                    <p className="text-xs font-medium leading-relaxed text-amber-800/70">
                       <strong>Antes Juan hacía X:</strong> Tenía que crear cada ficha de costo una por una, entrando en el modo experto para cada producto, lo cual era lento si tenía 20 productos nuevos.
                       <br />
                       <strong>Ahora Juan hace Y:</strong> Juan entra al "Modo Rápido", escribe una lista simple de productos con sus costos base, y Eli se encarga de generar todas las fichas masivamente en un solo clic.
                     </p>
                     <div className="p-4 bg-background/50 rounded-xl border border-amber-200">
-                      <p className="text-[10px] italic text-amber-800 leading-tight">
+                      <p className="text-xs italic text-amber-800 leading-tight">
                         "Es como hacer una lista de compras: tú pones lo que necesitas y el sistema llena todos los formularios técnicos por ti automáticamente."
                       </p>
                     </div>
@@ -365,20 +365,20 @@ export default function HelpView() {
                 </h4>
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center font-black text-primary text-[10px]">14</div>
-                    <span className="text-[10px] font-bold uppercase">Secciones de Gasto</span>
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center font-black text-primary text-xs">14</div>
+                    <span className="text-xs font-bold uppercase">Secciones de Gasto</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center font-black text-primary text-[10px]">05</div>
-                    <span className="text-[10px] font-bold uppercase">Anexos Técnicos</span>
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center font-black text-primary text-xs">05</div>
+                    <span className="text-xs font-bold uppercase">Anexos Técnicos</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center font-black text-primary text-[10px]">14%</div>
-                    <span className="text-[10px] font-bold uppercase">Seguridad Social</span>
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center font-black text-primary text-xs">14%</div>
+                    <span className="text-xs font-bold uppercase">Seguridad Social</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center font-black text-primary text-[10px]">05%</div>
-                    <span className="text-[10px] font-bold uppercase">Impuesto Fuerza Trabajo</span>
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center font-black text-primary text-xs">05%</div>
+                    <span className="text-xs font-bold uppercase">Impuesto Fuerza Trabajo</span>
                   </div>
                 </div>
               </div>
@@ -388,7 +388,7 @@ export default function HelpView() {
                   <FileSpreadsheet className="w-4 h-4" />
                   Exportación
                 </h4>
-                <p className="text-[10px] font-medium leading-relaxed">
+                <p className="text-xs font-medium leading-relaxed">
                   Genera reportes profesionales en <span className="font-black">PDF</span> con branding corporativo o exporta a <span className="font-black">CSV/Excel</span> para auditorías contables externas.
                 </p>
               </div>
@@ -403,7 +403,7 @@ export default function HelpView() {
               <Zap className="w-4 h-4" />
               Arquitectura Zero-Latency (v5.7.12)
             </h4>
-            <p className="text-[10px] font-medium leading-relaxed text-primary/80">
+            <p className="text-xs font-medium leading-relaxed text-primary/80">
               <strong>Antes Juan hacía X:</strong> Cada búsqueda de producto requería una llamada a la nube, causando esperas y frustración si el internet fallaba.
               <br />
               <strong>Ahora Juan hace Y:</strong> El TPV descarga todo el catálogo al inicio (como llenar los estantes al abrir la tienda). Las búsquedas son instantáneas, locales y funcionan incluso si el internet parpadea.
@@ -421,14 +421,14 @@ export default function HelpView() {
                 </h4>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <p className="text-[10px] font-black uppercase text-muted-foreground">TPV (Caja):</p>
+                    <p className="text-xs font-black uppercase text-muted-foreground">TPV (Caja):</p>
                     <ul className="text-xs space-y-1 font-medium">
                       <li className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> <strong>Botones 44px:</strong> Controles de cantidad más grandes para evitar errores.</li>
                       <li className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> <strong>Descuento 1-Tap:</strong> Botones rápidos de 5%, 10% y 15%.</li>
                     </ul>
                   </div>
                   <div className="space-y-2">
-                    <p className="text-[10px] font-black uppercase text-muted-foreground">Inventario:</p>
+                    <p className="text-xs font-black uppercase text-muted-foreground">Inventario:</p>
                     <ul className="text-xs space-y-1 font-medium">
                       <li className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> <strong>Filtros Rápidos:</strong> Categorías siempre visibles en un toque.</li>
                       <li className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-emerald-500" /> <strong>Búsqueda Local:</strong> Resultados inmediatos sin latencia de red.</li>
@@ -448,7 +448,7 @@ export default function HelpView() {
                         En la v5.4.0, el TPV ha sido rediseñado para una operativa fluida en dispositivos táctiles. El carrito de compras ahora reside en un <span className="font-bold text-primary">Panel Inferior</span> accesible desde la zona de alcance del pulgar.
                     </p>
                     <div className="bg-primary/5 p-4 rounded-xl border-l-4 border-primary">
-                       <p className="text-[10px] font-black uppercase text-primary mb-1">Optimización UX (Nueva Estructura):</p>
+                       <p className="text-xs font-black uppercase text-primary mb-1">Optimización UX (Nueva Estructura):</p>
                        <p className="text-xs italic">"Menos clics, más velocidad. El selector de productos y el cierre de venta están optimizados para uso a una sola mano mediante un footer sticky."</p>
                     </div>
                   </div>
@@ -561,7 +561,7 @@ export default function HelpView() {
                         <p className="italic text-xs text-emerald-900/70">"La tabla de recepción ahora permite scroll horizontal en móviles, asegurando que los subtotales y costos totales sean siempre visibles."</p>
                       </div>
                       <div className="space-y-2">
-                        <h5 className="font-black text-[10px] uppercase tracking-widest text-muted-foreground">Ejemplo Operativo:</h5>
+                        <h5 className="font-black text-xs uppercase tracking-widest text-muted-foreground">Ejemplo Operativo:</h5>
                         <p className="text-xs bg-muted/50 p-3 rounded-lg">
                           Juan administra la <strong>Tienda A</strong> y la <strong>Tienda B</strong>. Ambas venden arroz con SKU <code className="bg-primary/10 px-1 rounded text-primary font-bold">ARROZ-1KG</code>.
                           Cuando Juan importa una recepción estando en la <span className="font-bold uppercase text-primary">Tienda B</span>, solo aumenta el inventario de la Tienda B. El inventario de la Tienda A permanece intacto.
@@ -715,7 +715,7 @@ export default function HelpView() {
                     </p>
                     <div className="grid grid-cols-2 gap-3">
                       {["Auditoría Real-time", "Parámetros RPC", "Filtros Supabase", "Restringido a Admins"].map((t, i) => (
-                        <div key={i} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-tighter text-muted-foreground">
+                        <div key={i} className="flex items-center gap-2 text-xs font-black uppercase tracking-tighter text-muted-foreground">
                           <CheckCircle2 className="w-3 h-3 text-primary" />
                           {t}
                         </div>
@@ -745,13 +745,13 @@ export default function HelpView() {
                 </h4>
                 <div className="grid md:grid-cols-2 gap-8">
                   <div className="space-y-2">
-                    <p className="text-[10px] font-black uppercase text-muted-foreground">Antes (Juan Manual):</p>
+                    <p className="text-xs font-black uppercase text-muted-foreground">Antes (Juan Manual):</p>
                     <p className="text-xs font-medium leading-relaxed">
                       Juan pasaba horas con una regla y un papel comparando cada transferencia del banco con sus vales de venta. Si se equivocaba en un peso, tenía que empezar de nuevo.
                     </p>
                   </div>
                   <div className="space-y-2">
-                    <p className="text-[10px] font-black uppercase text-blue-600">Ahora (Eli Automática):</p>
+                    <p className="text-xs font-black uppercase text-blue-600">Ahora (Eli Automática):</p>
                     <p className="text-xs font-medium leading-relaxed">
                       Eli toma el archivo del banco (CSV/XLSX) y lo cruza instantáneamente con el sistema. Ella detecta montos exactos, referencias y hasta errores de centavos automáticamente.
                     </p>
@@ -765,23 +765,23 @@ export default function HelpView() {
                 <div className="p-6 rounded-2xl bg-muted/30 border border-border space-y-3">
                   <CreditCard className="w-6 h-6 text-primary" />
                   <h5 className="font-black text-xs uppercase">Ingesta Inteligente</h5>
-                  <p className="text-[10px] text-muted-foreground leading-tight">Carga masiva de extractos con detección de duplicados por Hash SHA-256.</p>
+                  <p className="text-xs text-muted-foreground leading-tight">Carga masiva de extractos con detección de duplicados por Hash SHA-256.</p>
                 </div>
                 <div className="p-6 rounded-2xl bg-muted/30 border border-border space-y-3">
                   <Scale className="w-6 h-6 text-primary" />
                   <h5 className="font-black text-xs uppercase">Motor Multi-Pass</h5>
-                  <p className="text-[10px] text-muted-foreground leading-tight">4 niveles de análisis: Referencia Exacta, Suma de Partes, Tolerancia y Ajuste de Caja.</p>
+                  <p className="text-xs text-muted-foreground leading-tight">4 niveles de análisis: Referencia Exacta, Suma de Partes, Tolerancia y Ajuste de Caja.</p>
                 </div>
                 <div className="p-6 rounded-2xl bg-muted/30 border border-border space-y-3">
                   <FileText className="w-6 h-6 text-primary" />
                   <h5 className="font-black text-xs uppercase">Reportes IPV PDF</h5>
-                  <p className="text-[10px] text-muted-foreground leading-tight">Generación de informes de venta e inventario listos para imprimir o enviar.</p>
+                  <p className="text-xs text-muted-foreground leading-tight">Generación de informes de venta e inventario listos para imprimir o enviar.</p>
                 </div>
               </div>
 
               <div className="bg-amber-500/5 border border-amber-500/10 p-6 rounded-3xl">
                 <h4 className="font-black text-amber-600 text-xs uppercase mb-2">Privacidad de Datos (Local-First)</h4>
-                <p className="text-[10px] font-medium leading-relaxed text-amber-800/70">
+                <p className="text-xs font-medium leading-relaxed text-amber-800/70">
                   Tus transacciones bancarias <strong>nunca suben a la nube</strong> de forma cruda. Todo el proceso de matching ocurre en tu navegador usando IndexedDB. Solo el reporte final consolidado es almacenado para auditoría.
                 </p>
               </div>
@@ -1024,7 +1024,7 @@ export default function HelpView() {
            <button className="px-8 py-3 bg-background border border-border rounded-xl font-black text-xs uppercase tracking-widest hover:bg-primary hover:text-white transition-all">
              Abrir Ticket de Soporte
            </button>
-           <span className="text-[10px] font-bold text-muted-foreground">COSTPRO v5.7.25</span>
+           <span className="text-xs font-bold text-muted-foreground">COSTPRO v5.7.25</span>
         </div>
       </div>
     </div>

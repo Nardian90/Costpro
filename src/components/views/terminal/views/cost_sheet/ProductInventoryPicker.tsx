@@ -50,10 +50,10 @@ const ProductInventoryPicker: React.FC<ProductInventoryPickerProps> = ({
           <Table>
             <TableHeader className="bg-muted/50 sticky top-0 z-10">
               <TableRow>
-                <TableHead className="font-black text-[10px] uppercase tracking-widest">Producto</TableHead>
-                <TableHead className="font-black text-[10px] uppercase tracking-widest">Código</TableHead>
-                <TableHead className="font-black text-[10px] uppercase tracking-widest text-right">Costo</TableHead>
-                <TableHead className="font-black text-[10px] uppercase tracking-widest text-center">Acción</TableHead>
+                <TableHead className="font-black text-xs uppercase tracking-widest">Producto</TableHead>
+                <TableHead className="font-black text-xs uppercase tracking-widest">Código</TableHead>
+                <TableHead className="font-black text-xs uppercase tracking-widest text-right">Costo</TableHead>
+                <TableHead className="font-black text-xs uppercase tracking-widest text-center">Acción</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
