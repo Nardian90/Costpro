@@ -267,7 +267,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
       </section>
 
       {/* Modules Grid - Bento Layout */}
-      <section className="py-24 px-6">
+      <section className="py-24 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto">
           <div className="text-center space-y-4 mb-20">
             <h2 className="text-[clamp(2rem,8vw,3rem)] font-black uppercase tracking-tighter">Ecosistema Integrado</h2>
@@ -288,8 +288,8 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
                 <div className="w-14 h-14 rounded-2xl bg-violet-500/10 text-violet-600 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
                   <FileText className="w-7 h-7" />
                 </div>
-                <h3 className="text-3xl font-black uppercase tracking-tight mb-4">Gestión de Costos</h3>
-                <p className="text-lg text-muted-foreground leading-relaxed font-medium mb-8">
+                <h3 className="text-[clamp(1.5rem,5vw,1.875rem)] font-black uppercase tracking-tight mb-4">Gestión de Costos</h3>
+                <p className="text-[clamp(1rem,4vw,1.125rem)] text-muted-foreground leading-relaxed font-medium mb-8">
                   Motor de ingeniería con 14 secciones de gasto, 5 anexos técnicos y validación de ciclos en tiempo real.
                 </p>
               </div>
@@ -309,13 +309,13 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
-              className="md:col-span-3 md:row-span-1 p-6 sm:p-8 rounded-[2.5rem] bg-background border border-border hover:border-primary/20 transition-all group flex gap-8 items-center"
+              className="md:col-span-3 md:row-span-1 p-6 sm:p-8 rounded-[2.5rem] bg-background border border-border hover:border-primary/20 transition-all group flex gap-4 sm:gap-8 items-center"
             >
               <div className="shrink-0 w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center group-hover:rotate-12 transition-transform">
                 <ShoppingCart className="w-8 h-8" />
               </div>
               <div>
-                <h3 className="text-xl font-black uppercase tracking-tight mb-2">Punto de Venta</h3>
+                <h3 className="text-[clamp(1.125rem,4vw,1.25rem)] font-black uppercase tracking-tight mb-2">Punto de Venta</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed font-medium">
                   TPV móvil optimizado para operaciones de alta velocidad con sincronización offline.
                 </p>
@@ -333,7 +333,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
               <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center mb-4 group-hover:-translate-y-1 transition-transform">
                 <Package className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-black uppercase tracking-tight mb-2">Inventario Multi-Sede</h3>
+              <h3 className="text-[clamp(1rem,4vw,1.125rem)] font-black uppercase tracking-tight mb-2">Inventario Multi-Sede</h3>
               <p className="text-xs text-muted-foreground leading-relaxed font-medium">
                 Control total de stock con aislamiento RLS.
               </p>
@@ -357,9 +357,9 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
       </section>
 
       {/* SMB Feature Spotlight: Massive Cost Sheets */}
-      <section className="py-24 px-6 overflow-hidden">
+      <section className="py-24 px-4 sm:px-6 overflow-hidden">
         <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-20 items-center">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             <div className="order-1 lg:order-1 space-y-12">
               <div className="space-y-6">
                 <div className="inline-block px-4 py-2 rounded-xl bg-violet-500/10 text-violet-600 text-xs font-black uppercase tracking-widest">
@@ -399,9 +399,9 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
                 </div>
               </div>
 
-              <Link href="/demo/executive">
+              <Link href="/demo/executive" className="w-full sm:w-auto">
                 <button
-                  className="neu-btn border-2 border-violet-600 text-violet-600 h-14 px-10 text-sm font-black uppercase tracking-widest hover:bg-violet-600 hover:text-white transition-all flex items-center gap-2"
+                  className="neu-btn border-2 border-violet-600 text-violet-600 h-14 px-10 w-full sm:w-auto text-sm font-black uppercase tracking-widest hover:bg-violet-600 hover:text-white transition-all flex items-center justify-center gap-2"
                 >
                   Ver esta funcionalidad
                   <ArrowRight className="w-4 h-4" />
@@ -428,8 +428,8 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
       </section>
 
       {/* Final CTA */}
-      <section className="py-24 px-6">
-        <div className="max-w-4xl mx-auto p-8 sm:p-12 lg:p-20 rounded-[4rem] bg-foreground text-background relative overflow-hidden text-center space-y-10">
+      <section className="py-24 px-4 sm:px-6">
+        <div className="max-w-4xl mx-auto p-6 sm:p-12 lg:p-20 rounded-[4rem] bg-foreground text-background relative overflow-hidden text-center space-y-10">
           <div className="absolute inset-0 opacity-10">
             <CostProLogo size={400} className="absolute -bottom-20 -right-20 rotate-12" />
           </div>
@@ -446,7 +446,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
           <div className="relative z-10">
             <button
               onClick={onLoginClick}
-              className="px-12 py-5 bg-primary text-white rounded-2xl text-base font-black uppercase tracking-widest hover:scale-105 transition-transform shadow-2xl"
+              className="px-6 sm:px-12 py-5 bg-primary text-white rounded-2xl text-base font-black uppercase tracking-widest hover:scale-105 transition-transform shadow-2xl w-full sm:w-auto"
             >
               Acceso Inmediato de Clientes
             </button>
