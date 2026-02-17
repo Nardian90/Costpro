@@ -111,7 +111,7 @@ export const MasteryDashboard = () => {
                             width={120}
                             axisLine={false}
                             tickLine={false}
-                            tick={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase' }}
+                            tick={{ fontSize: 10, fontWeight: 900 }}
                         />
                         <Tooltip
                             cursor={{ fill: 'rgba(0,0,0,0.02)' }}
