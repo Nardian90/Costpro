@@ -3,8 +3,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { cn, formatCurrency } from '@/lib/utils';
-import { TrendingUp, Package, Users, Settings, Zap } from 'lucide-react';
+import { TrendingUp, Package, Users, Settings, Zap, Plus, Minus } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import { Slider } from '@/components/ui/slider';
 
 interface TelemetryItem {
   label: string;
@@ -19,13 +20,17 @@ interface CostSheetMasterRingProps {
   utility: number;
   totalCost: number;
   className?: string;
+  onPriceChange?: (value: number) => void;
+  onPriceAdjust?: (delta: number) => void;
 }
 
 export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
   totalPrice,
   utility,
   totalCost,
-  className
+  className,
+  onPriceChange,
+  onPriceAdjust
 }) => {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
@@ -125,6 +130,42 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Price Control Slider */}
+      {onPriceChange && (
+        <div className="flex items-center gap-3 w-full px-4 sm:px-8 -mt-4 mb-2">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onPriceAdjust?.(-1);
+            }}
+            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800/50 hover:bg-primary/10 hover:text-primary transition-all active:scale-95 border border-transparent hover:border-primary/20"
+          >
+            <Minus className="w-4 h-4" />
+          </button>
+
+          <div className="flex-1 px-2">
+            <Slider
+              value={[totalPrice]}
+              min={totalCost}
+              max={Math.max(totalPrice * 2, totalCost * 3)}
+              step={0.01}
+              onValueChange={(val) => onPriceChange(val[0])}
+              className="w-full"
+            />
+          </div>
+
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onPriceAdjust?.(1);
+            }}
+            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800/50 hover:bg-primary/10 hover:text-primary transition-all active:scale-95 border border-transparent hover:border-primary/20"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Primary KPI Breakdown */}
       <div className="flex flex-row justify-between items-start w-full px-4 sm:px-8 gap-4">
