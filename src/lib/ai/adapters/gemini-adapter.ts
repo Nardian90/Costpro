@@ -5,7 +5,7 @@ export class GeminiAdapter implements LLMProvider {
   private apiKey: string;
   private modelName: string;
 
-  constructor(apiKey: string, model: string = 'gemini-2.5-flash-preview-09-2025') {
+  constructor(apiKey: string, model: string = 'gemini-2.5-flash-lite') {
     this.apiKey = apiKey;
     this.modelName = model;
   }
@@ -32,10 +32,6 @@ export class GeminiAdapter implements LLMProvider {
       const model = genAI.getGenerativeModel(modelConfig, { apiVersion: 'v1beta' });
 
       // Format messages for the SDK
-      // The SDK expects contents to alternate between user and model roles.
-      // Our logic already handles normalization in the previous implementation,
-      // but let's re-implement it cleanly for the SDK.
-
       const contents: any[] = [];
 
       chatMessages.forEach((msg) => {
@@ -85,12 +81,21 @@ export class GeminiAdapter implements LLMProvider {
     } catch (error: any) {
       console.error('GeminiAdapter Error:', error.message);
 
-      // Fallback for the 404 error if gemini-1.5-flash is still not found in this environment
-      if (error.message.includes('404') || error.message.includes('not found')) {
-        throw new Error(`Error de modelo: ${this.modelName} no encontrado o no disponible con esta API Key. Detalles: ${error.message}`);
+      const msg = error.message.toLowerCase();
+
+      if (msg.includes('401') || msg.includes('unauthorized') || msg.includes('invalid api key')) {
+        throw new Error("Error de API Key: La clave proporcionada no es válida o ha expirado. Verifica tu configuración.");
       }
 
-      throw error;
+      if (msg.includes('403') || msg.includes('permission_denied')) {
+        throw new Error("Error de Permisos: Tu API Key no tiene acceso a este modelo o se ha alcanzado el límite de cuota.");
+      }
+
+      if (msg.includes('404') || msg.includes('not found') || msg.includes('no longer available')) {
+        throw new Error(`Error de Modelo: El modelo ${this.modelName} no está disponible. Es posible que Google lo haya retirado o el nombre sea incorrecto.`);
+      }
+
+      throw new Error(`Error de AI (${this.modelName}): ${error.message}`);
     }
   }
 }
