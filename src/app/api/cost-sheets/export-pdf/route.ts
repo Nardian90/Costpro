@@ -61,7 +61,10 @@ export async function POST(req: NextRequest) {
             doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
             doc.setFontSize(14);
             doc.setFont("helvetica", "bold");
-            doc.text(title.toUpperCase(), 35, 20);
+            doc.text(title.toUpperCase(), 35, 18);
+            doc.setFontSize(8);
+            doc.setFont("helvetica", "normal");
+            doc.text("Res. 148/2023", 35, 22);
 
             doc.setDrawColor(230, 230, 230);
             doc.setLineWidth(0.2);
@@ -168,9 +171,17 @@ export async function POST(req: NextRequest) {
                 doc.setTextColor(130, 130, 130);
                 doc.text(item.l.toUpperCase(), curX, curY);
 
-                doc.setFontSize(10);
-                doc.setTextColor(0, 0, 0);
-                // Fix: use maxWidth to prevent overlap and split text if needed
+                if (item.l === 'PRECIO VENTA') {
+                    doc.setFillColor(255, 240, 240);
+                    doc.rect(curX - 1, curY + 0.5, colWidth - 2, 8, 'F');
+                    doc.setFontSize(12);
+                    doc.setTextColor(180, 0, 0);
+                    doc.setFont("helvetica", "bold");
+                } else {
+                    doc.setFontSize(10);
+                    doc.setTextColor(0, 0, 0);
+                    doc.setFont("helvetica", "normal");
+                }
                 const valStr = String(item.v);
                 const lines = doc.splitTextToSize(valStr, colWidth - 5);
                 doc.text(lines, curX, curY + 4.5);
@@ -193,90 +204,7 @@ export async function POST(req: NextRequest) {
             doc.setFont("helvetica", "bold");
             doc.text(status, pageWidth - 24, y - 1.5, { align: "center" });
 
-            // ANALYSIS: Donut Chart for Profitability (Utility vs Cost)
-            const r12 = result.rows.find(r => r.classification === '12' || r.classification === '12.1')?.total || result.summary?.totalCost || 1;
-            const r13 = result.rows.find(r => r.classification === '13')?.total || result.summary?.totalMargin || 0;
-            const total = r12 + r13;
-            const utilityPercent = (r13 / r12) * 100;
-
-            const chartX = pageWidth - 45;
-            const chartY = curY - 5;
-            const radius = 10;
-            const innerRadius = 6;
-
-            // Draw Background Circle (Cost - Blue)
-            doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-            doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-            doc.setLineWidth(0.1);
-            doc.circle(chartX, chartY, radius, 'F');
-
-            // Draw Utility Segment (Green)
-            const utilityRatio = r13 / total;
-            if (utilityRatio > 0) {
-                doc.setFillColor(39, 174, 96); // Green
-                const startAngle = 0;
-                const endAngle = utilityRatio * 360;
-                // jsPDF doesn't have a simple way to draw a sector/arc with fill easily without paths
-                // But we can approximate or use a thicker circle if needed.
-                // For simplicity and standard jsPDF, we'll draw a small green circle or just labels if donut is hard.
-                // Let's try to draw a donut using white inner circle
-            }
-
-            // Inner white circle to make it a donut
-            doc.setFillColor(255, 255, 255);
-            doc.circle(chartX, chartY, innerRadius, 'F');
-
-            doc.setFontSize(6);
-            doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-            doc.setFont("helvetica", "bold");
-            doc.text(`${utilityPercent.toFixed(1)}%`, chartX, chartY + 0.5, { align: "center" });
-            doc.setFontSize(5);
-            doc.text("UTILIDAD/COSTO", chartX, chartY + 2.5, { align: "center" });
-
-            // Legend
-            doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-            doc.rect(chartX + 12, chartY - 4, 2, 2, 'F');
-            doc.setTextColor(100, 100, 100);
-            doc.text("COSTO TOTAL", chartX + 15, chartY - 2.5);
-
-            doc.setFillColor(39, 174, 96);
-            doc.rect(chartX + 12, chartY, 2, 2, 'F');
-            doc.text("UTILIDAD", chartX + 15, chartY + 1.5);
-
-            // Cost Mix (Bar Chart below labels)
-            const getRowTotal = (id: string) => result.rows.find(r => r.classification === id)?.total || 0;
-            const mat = getRowTotal('1');
-            const labor = getRowTotal('2') + getRowTotal('3');
-            const indirect = getRowTotal('4') + getRowTotal('6') + getRowTotal('7') + getRowTotal('9');
-            const others = Math.max(0, r12 - (mat + labor + indirect));
-
-            const mixData = [
-                { l: 'Materiales', v: mat, c: [26, 82, 118] },
-                { l: 'Labor', v: labor, c: [41, 128, 185] },
-                { l: 'Indirectos', v: indirect, c: [52, 152, 219] },
-                { l: 'Otros', v: others, c: [127, 179, 213] }
-            ].filter(d => d.v > 0);
-
-            const barX = 14;
-            const barY = curY + 5;
-            const barW = pageWidth - 100;
-            const barH = 3;
-
-            doc.setFontSize(6);
-            doc.setTextColor(150, 150, 150);
-            doc.text("ESTRUCTURA DE COSTOS (COST MIX)", barX, barY - 2);
-
-            let currentX = barX;
-            mixData.forEach(d => {
-                const w = (d.v / r12) * barW;
-                if (w > 0.5) {
-                    doc.setFillColor(d.c[0], d.c[1], d.c[2]);
-                    doc.rect(currentX, barY, w, barH, 'F');
-                    currentX += w;
-                }
-            });
-
-            return curY + 15;
+            return curY + 10;
         }
 
         const data = [
@@ -545,7 +473,7 @@ export async function POST(req: NextRequest) {
 
         if (isPro) {
             doc.setFontSize(6);
-            doc.text("VALIDACIÓN CORPORATIVA - DOCUMENTO OFICIAL", pageWidth - 14, 285, { align: "right" });
+            doc.text("VALIDACIÓN CORPORATIVA - DOCUMENTO OFICIAL - Res. 148/2023", pageWidth - 14, 285, { align: "right" });
         }
     }
 
