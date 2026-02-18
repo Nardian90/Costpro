@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
       email: p_email,
       password: Math.random().toString(36).slice(-12), // Temporary password
       email_confirm: true,
-      user_metadata: { full_name: p_full_name }
+      user_metadata: { full_name: p_full_name, role: p_role }
     });
 
     if (authError) {
