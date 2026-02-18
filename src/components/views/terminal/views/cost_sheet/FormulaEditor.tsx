@@ -172,7 +172,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent
           showCloseButton={false}
-          className="w-[calc(100%-1rem)] sm:w-full sm:max-w-[800px] z-[200] p-0 overflow-hidden rounded-[2rem] sm:rounded-3xl border-none shadow-2xl max-h-[95vh] bg-background dark:bg-[#020617] text-foreground dark:text-slate-200 transition-all flex flex-col"
+          className="w-[calc(100%-1rem)] sm:w-full sm:max-w-[800px] z-[200] p-0 overflow-hidden rounded-[2rem] sm:rounded-2xl border-none shadow-2xl max-h-[95vh] bg-background dark:bg-[#010203] text-foreground dark:text-slate-200 transition-all flex flex-col"
         >
           {/* Custom Header based on Design */}
           <div className="px-4 sm:px-6 pt-6 pb-4 flex items-center justify-between shrink-0">
