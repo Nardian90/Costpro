@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
         'total_price': 'Precio Total',
         'subtotal': 'Subtotal',
         'tax': 'Impuesto',
-        'discount': 'Descuento'
+        'discount': 'Descuento',
         'concept': 'Concepto',
         'unit': 'UM',
         'norm': 'Norma',

@@ -76,7 +76,8 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
     consolidated: true,
     skipZeros: true,
     includeFinancialSummary: true,
-    includeUtilityNote: true
+    includeUtilityNote: true,
+    showDateTime: true
   });
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   useEffect(() => {
