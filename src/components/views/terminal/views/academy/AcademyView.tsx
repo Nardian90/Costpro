@@ -52,7 +52,7 @@ export default function AcademyView() {
   if (loading && allCards.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
-        <CostProLoader size={200} text="ACADEMY" subtext="PREPARANDO MATERIAL..." />
+        <CostProLoader size={200} text="ACADEMIA" subtext="PREPARANDO MATERIAL..." />
       </div>
     );
   }
@@ -66,7 +66,7 @@ export default function AcademyView() {
             <GraduationCap className="w-8 h-8 text-primary" />
           </div>
           <div>
-            <h1 className="text-4xl font-black uppercase tracking-tighter italic text-foreground leading-none">Costpro Academy</h1>
+            <h1 className="text-4xl font-black uppercase tracking-tighter italic text-foreground leading-none">Costpro Academia</h1>
             <p className="text-muted-foreground font-bold text-xs uppercase tracking-widest mt-1 opacity-70">Learning & Mastery Engine</p>
           </div>
         </div>
