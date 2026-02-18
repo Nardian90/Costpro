@@ -307,6 +307,8 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
             totalPrice={totalPrice}
             utility={utility}
             totalCost={totalCost}
+            onPriceChange={goalSeek}
+            onPriceAdjust={handlePriceAdjust}
           />
         </div>
 
