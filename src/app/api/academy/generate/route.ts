@@ -3,11 +3,28 @@ import { NextRequest, NextResponse } from 'next/server';
 import pdf from 'pdf-parse/lib/pdf-parse.js';
 import fs from 'fs';
 import path from 'path';
-import { supabase } from '@/lib/supabaseClient';
+import { createClient } from '@supabase/supabase-js';
 import { getLLMProvider } from '@/lib/ai/orchestrator';
+import { getServerSession } from "@/lib/auth";
 
 // Use standard Node runtime because pdf-parse needs fs and Buffer
 export const runtime = 'nodejs';
+
+function getSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !key) {
+    throw new Error('Configuración de Supabase incompleta (URL o Service Role Key faltante)');
+  }
+
+  return createClient(url, key, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  });
+}
 
 export async function GET() {
   const manualsDir = path.join(process.cwd(), 'public', 'manuals');
@@ -24,6 +41,12 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    // 1. Verify session
+    const session = await getServerSession(req);
+    if (!session) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
     const { filename, limit = 3, aiProvider, aiApiKey } = await req.json();
     if (!filename) {
       return NextResponse.json({ error: 'Filename is required' }, { status: 400 });
@@ -140,7 +163,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Save to DB
-    const { data: insertedData, error } = await supabase
+    const supabaseAdmin = getSupabaseAdmin();
+    const { data: insertedData, error } = await supabaseAdmin
       .from('learning_cards')
       .insert(results.map(q => ({
         question: q.question,
