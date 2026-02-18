@@ -40,27 +40,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Perfil o rol no encontrado' }, { status: 403 });
     }
 
-    const requesterRole = (requesterProfile.roles as any).name;
+    const requesterRole = ((requesterProfile.roles as any).name || '').toLowerCase();
 
     const body = await req.json();
     const {
       p_email,
       p_full_name,
-      p_role, // This is the role NAME or ID? Looking at previous code it seemed to be ID in some places, name in others.
+      p_role,
       p_store_id,
       p_memberships,
       p_max_stores,
       p_max_users
     } = body;
 
+    const targetRole = (p_role || '').toLowerCase();
+
     // 3. Validate Hierarchy
     // Admin can create anything.
-    // Encargado can only create Cajero or Almacenero.
-    if (requesterRole !== 'Admin') {
-      if (requesterRole === 'Encargado') {
-        const allowedRoles = ['Cajero', 'Almacenero'];
-        if (!allowedRoles.includes(p_role)) {
-          return NextResponse.json({ error: 'No tienes permisos para crear este tipo de usuario' }, { status: 403 });
+    // Encargado/Manager can create anything EXCEPT Admin.
+    if (requesterRole !== 'admin') {
+      if (requesterRole === 'encargado' || requesterRole === 'manager') {
+        if (targetRole === 'admin') {
+          return NextResponse.json({ error: 'No tienes permisos para crear administradores' }, { status: 403 });
         }
       } else {
         return NextResponse.json({ error: 'No tienes permisos para crear usuarios' }, { status: 403 });
