@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Plus, Edit, UserPlus, ShieldAlert, Trash2 } from 'lucide-react';
+import { Plus, Edit, UserPlus, ShieldAlert, Trash2, Key } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import SearchBar from '@/components/ui/SearchBar';
 import ActionMenu from '@/components/ui/ActionMenu';
@@ -23,7 +23,7 @@ export default function UsersManagementView() {
     handleCloseModal,
     handleUserFormSubmit,
     handleToggleUserStatus,
-    handleDeleteUser,
+    handleDeleteUser, handleResetPassword,
     isSubmittingUser,
     allowedRoles,
     isAdmin,
@@ -162,6 +162,14 @@ export default function UsersManagementView() {
                         aria-label="Editar usuario"
                       >
                         <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleResetPassword(u.id)}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg border border-border hover:bg-amber-500 hover:text-white transition-all active:scale-95"
+                        aria-label="Reiniciar contraseña"
+                        title="Reiniciar contraseña"
+                      >
+                        <Key className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDeleteUser(u.id)}

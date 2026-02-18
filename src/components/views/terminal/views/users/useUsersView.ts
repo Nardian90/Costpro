@@ -68,7 +68,8 @@ export function useUsersView() {
               p_store_id: data.memberships?.[0]?.store_id || (data.role !== 'costo' ? (user.storeId || user.activeStoreId) : null),
               p_memberships: data.memberships,
               p_max_stores: data.role === 'encargado' ? data.maxStoresLimit : 0,
-              p_max_users: data.role === 'encargado' ? data.maxUsersLimit : 0
+              p_max_users: data.role === 'encargado' ? data.maxUsersLimit : 0,
+              p_password: data.password || undefined
             });
           } else if (mode === 'edit' && selectedUserContractId) {
             // First update memberships to ensure references exist for active_store_id validation
@@ -176,6 +177,40 @@ export function useUsersView() {
         }
     };
 
+    const handleResetPassword = async (userId: string) => {
+        if (!confirm('¿Estás seguro de que deseas reiniciar la contraseña de este usuario? Se enviará un correo de recuperación.')) {
+            return;
+        }
+
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+
+            if (!token) {
+                throw new Error('No hay sesión activa.');
+            }
+
+            const response = await fetch('/api/users/reset-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer `
+                },
+                body: JSON.stringify({ user_id: userId })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Error al reiniciar contraseña');
+            }
+
+            toast.success(data.message || 'Correo de recuperación enviado');
+        } catch (error: any) {
+            toast.error(error.message);
+        }
+    };
+
     return {
         // State
         searchTerm,
@@ -199,6 +234,7 @@ export function useUsersView() {
         handleUserFormSubmit,
         handleToggleUserStatus,
         handleDeleteUser,
+        handleResetPassword,
         isSubmittingUser: createUserMutation.isPending || updateUserMutation.isPending || manageMembershipsMutation.isPending,
         allowedRoles: getAllowedRoles(user?.role as UserRole)
     };

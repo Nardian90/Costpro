@@ -392,6 +392,7 @@ export const managedCreateUserParamsSchema = z.object({
   })).optional(),
   p_max_stores: z.number().int().min(0).optional(),
   p_max_users: z.number().int().min(0).optional(),
+  p_password: z.string().min(6).optional(),
 });
 
 export const manageUserMembershipsParamsSchema = z.object({

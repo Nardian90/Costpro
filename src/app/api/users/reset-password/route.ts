@@ -15,9 +15,6 @@ export async function POST(req: NextRequest) {
     const session = await getServerSession(req);
     if (!session) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
-    const { user_id } = await req.json();
-    if (!user_id) return NextResponse.json({ error: 'Falta user_id' }, { status: 400 });
-
     const { data: requesterProfile } = await supabaseAdmin
       .from('profiles')
       .select('*, roles(name)')
@@ -39,21 +36,26 @@ export async function POST(req: NextRequest) {
     }
 
     if (!roleNames.includes('admin')) {
-      return NextResponse.json({ error: 'Solo los administradores pueden eliminar usuarios.' }, { status: 403 });
+      return NextResponse.json({ error: 'Solo los administradores pueden reiniciar contraseñas' }, { status: 403 });
     }
 
-    // Call the safety check and profile deletion RPC
-    const { data: rpcData, error: rpcError } = await supabaseAdmin.rpc('managed_delete_user', {
-        p_user_id: user_id
+    const { user_id } = await req.json();
+    if (!user_id) return NextResponse.json({ error: 'ID de usuario requerido' }, { status: 400 });
+
+    const { data: targetUser, error: getUserError } = await supabaseAdmin.auth.admin.getUserById(user_id);
+    if (getUserError || !targetUser.user) return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
+
+    const { error: resetError } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'recovery',
+      email: targetUser.user.email!,
     });
 
-    if (rpcError) return NextResponse.json({ error: rpcError.message }, { status: 400 });
+    if (resetError) return NextResponse.json({ error: resetError.message }, { status: 400 });
 
-    // Delete from auth.users
-    const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(user_id);
-    if (authError) console.error('Auth deletion failed:', authError);
-
-    return NextResponse.json({ success: true, message: 'Usuario eliminado correctamente' });
+    return NextResponse.json({
+      success: true,
+      message: 'Se ha enviado un correo de recuperación al usuario.'
+    });
 
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
