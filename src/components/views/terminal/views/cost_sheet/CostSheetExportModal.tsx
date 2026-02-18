@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Download, FileText, CheckCircle2, X } from 'lucide-react';
+import { Download, FileText, CheckCircle2, X, Layout } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 export interface ExportOptions {
@@ -25,6 +25,7 @@ export interface ExportOptions {
   includeFinancialSummary: boolean;
   includeUtilityNote: boolean;
   showDateTime: boolean;
+  pdfFormat: "standard" | "pro";
 }
 
 interface CostSheetExportModalProps {
@@ -48,7 +49,8 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
     skipZeros: true,
     includeFinancialSummary: true,
     includeUtilityNote: true,
-    showDateTime: true
+    showDateTime: true,
+    pdfFormat: "standard"
   });
 
   const handleToggleAnnex = (id: string) => {
@@ -88,6 +90,37 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
 
         <ScrollArea className="flex-1 min-h-0 overflow-y-auto">
             <div className="p-4 sm:p-6 space-y-6 pb-12">
+                {/* PDF Format Selection */}
+                <div className="space-y-4">
+                    <div className="text-xs font-black uppercase tracking-[0.2em] text-primary/70 px-1">
+                        Formato del Reporte
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                        <button
+                            onClick={() => setOptions(prev => ({ ...prev, pdfFormat: "standard" }))}
+                            className={`p-3 rounded-2xl border transition-all flex flex-col items-center gap-2 ${
+                                options.pdfFormat === "standard"
+                                ? "bg-primary/10 border-primary shadow-sm"
+                                : "bg-sidebar/40 border-sidebar-border/50 hover:bg-sidebar/60"
+                            }`}
+                        >
+                            <FileText className={`w-5 h-5 ${options.pdfFormat === "standard" ? "text-primary" : "text-muted-foreground"}`} />
+                            <span className={`text-xs font-bold ${options.pdfFormat === "standard" ? "text-primary" : "text-muted-foreground"}`}>Estándar</span>
+                        </button>
+                        <button
+                            onClick={() => setOptions(prev => ({ ...prev, pdfFormat: "pro" }))}
+                            className={`p-3 rounded-2xl border transition-all flex flex-col items-center gap-2 ${
+                                options.pdfFormat === "pro"
+                                ? "bg-primary/10 border-primary shadow-sm"
+                                : "bg-sidebar/40 border-sidebar-border/50 hover:bg-sidebar/60"
+                            }`}
+                        >
+                            <Layout className={`w-5 h-5 ${options.pdfFormat === "pro" ? "text-primary" : "text-muted-foreground"}`} />
+                            <span className={`text-xs font-bold ${options.pdfFormat === "pro" ? "text-primary" : "text-muted-foreground"}`}>Pro (Ink-Save)</span>
+                        </button>
+                    </div>
+                </div>
+
                 {/* Main Documents */}
                 <div className="space-y-4">
                     <div className="text-xs font-black uppercase tracking-[0.2em] text-primary/70 px-1">
