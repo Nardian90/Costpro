@@ -7,7 +7,7 @@ All notable changes to this project will be documented in this file.
 - **Soporte para Compañeros JSON en Academy**: El motor de generación de flashcards ahora busca automáticamente archivos `.json` que acompañen a los manuales PDF. Si se encuentra un JSON (ej. `1482023.json` para `Res1482023.pdf`), se utiliza como contexto estructurado prioritario para mejorar la precisión de la IA.
 
 ### Changed
-- **Migración a Gemini 1.5 Flash**: Actualización del modelo predeterminado a `gemini-1.5-flash` tras la depreciación de versiones preview anteriores.
+- **Migración a Gemini 1.5 Flash**: Actualización del modelo predeterminado a `gemini-2.5-flash-lite` tras la depreciación de versiones preview anteriores.
 - **Hardening de Errores de AI**: Mejora integral en la gestión de excepciones del `GeminiAdapter`. Ahora se distinguen claramente errores de API Key (401/403), errores de Modelo (404) y límites de cuota, proporcionando mensajes de error accionables al usuario en la interfaz.
 - **Propagación de Errores en API**: La ruta de generación de Academy (`/api/academy/generate`) ahora propaga errores específicos de AI directamente al usuario, evitando mensajes genéricos y facilitando el diagnóstico.
 
@@ -234,18 +234,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [5.7.1] - 2026-02-18
 
 ### Fixed
-- **Actualización a Gemini 2.5 Flash Preview**: Migración del modelo predeterminado a `gemini-2.5-flash-preview-09-2025` tras detectar que `gemini-1.5-flash` ya no está disponible en la versión `v1beta` del entorno de producción.
+- **Actualización a Gemini 2.5 Flash Preview**: Migración del modelo predeterminado a `gemini-2.5-flash-preview-09-2025` tras detectar que `gemini-2.5-flash-lite` ya no está disponible en la versión `v1beta` del entorno de producción.
 
 ## [5.7.0] - 2026-02-18
 
 ### Added
 - **Integración con SDK Oficial de Google AI**: Migración de llamadas REST manuales al SDK `@google/generative-ai` para mayor estabilidad y compatibilidad con funciones avanzadas (como system instructions nativas).
-- **Soporte Estricto para Gemini 1.5 Flash**: Configuración del bot para usar específicamente el modelo `gemini-1.5-flash` con la versión de API `v1beta`, cumpliendo con los requisitos de compatibilidad de Jules.
+- **Soporte Estricto para Gemini 1.5 Flash**: Configuración del bot para usar específicamente el modelo `gemini-2.5-flash-lite` con la versión de API `v1beta`, cumpliendo con los requisitos de compatibilidad de Jules.
 
 ## [5.6.9] - 2026-02-18
 
 ### Fixed
-- **Actualización de Modelos Gemini**: Migración del modelo predeterminado de `gemini-1.5-flash` a `gemini-2.0-flash` para asegurar compatibilidad en entornos de producción actuales (2026) donde las versiones legacy han sido deprecadas.
+- **Actualización de Modelos Gemini**: Migración del modelo predeterminado de `gemini-2.5-flash-lite` a `gemini-2.0-flash` para asegurar compatibilidad en entornos de producción actuales (2026) donde las versiones legacy han sido deprecadas.
 - **Hardenización de GeminiAdapter**: Refuerzo del algoritmo de alternancia de roles para manejar casos complejos de mensajes consecutivos del mismo rol mediante la fusión de partes de mensaje, evitando errores 400 de la API de Google.
 - **Resiliencia de Servicio**: Añadida validación defensiva en `botService` para prevenir errores de puntero nulo en hilos de conversación vacíos.
 - **Logs de Diagnóstico**: Incorporación de `stack` y `cause` en los logs de error de la API del bot para acelerar la resolución de incidencias en producción.
