@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 import { useAuthStore } from '@/store';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, LogIn, UserPlus } from 'lucide-react';
+import { Eye, EyeOff, LogIn, UserPlus, Mail, ShieldCheck, Chrome } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import RegisterForm from './RegisterForm';
 import { toast } from 'sonner';
@@ -25,6 +25,40 @@ export default function LoginForm() {
   const formRef = useRef<HTMLFormElement>(null);
 
   const login = useAuthStore((state) => state.login);
+
+  const handleGoogleLogin = async () => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin
+        }
+      });
+      if (error) throw error;
+    } catch (err: any) {
+      toast.error('Error al iniciar con Google: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      toast.error('Por favor ingresa tu correo electrónico primero');
+      return;
+    }
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/login?type=recovery`,
+      });
+      if (error) throw error;
+      toast.success('Se ha enviado un enlace de recuperación a tu correo');
+    } catch (err: any) {
+      toast.error('Error: ' + err.message);
+    }
+  };
+
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -165,6 +199,15 @@ export default function LoginForm() {
               )}
             </button>
           </div>
+          <div className="flex justify-end mt-1">
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+              className="text-[10px] font-bold uppercase tracking-tighter text-muted-foreground hover:text-primary transition-all"
+            >
+              ¿Olvidaste tu contraseña?
+            </button>
+          </div>
         </div>
 
         {error && (
@@ -191,14 +234,34 @@ export default function LoginForm() {
           )}
         </button>
 
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-border"></span>
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground font-bold tracking-widest">O continuar con</span>
+          </div>
+        </div>
+
         <button
           type="button"
-          onClick={() => setIsRegistering(true)}
-          className="w-full h-11 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-all flex items-center justify-center gap-2 mt-4"
+          onClick={handleGoogleLogin}
+          className="neu-raised-sm w-full h-12 flex items-center justify-center gap-3 hover:bg-muted transition-all active:scale-95 font-bold text-sm"
         >
-          <UserPlus className="w-4 h-4" />
-          ¿No tienes cuenta? Regístrate aquí
+          <Chrome className="w-5 h-5 text-primary" />
+          Google
         </button>
+
+        <p className="text-center text-xs text-muted-foreground mt-8">
+          ¿No tienes una cuenta?{" "}
+          <button
+            type="button"
+            onClick={() => setIsRegistering(true)}
+            className="text-primary font-black uppercase tracking-tighter hover:underline"
+          >
+            Regístrate aquí
+          </button>
+        </p>
       </form>
 
     </div>

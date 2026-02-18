@@ -21,8 +21,21 @@ export async function POST(req: NextRequest) {
       .eq('id', session.user.id)
       .single();
 
-    const requesterRole = ((requesterProfile?.roles as any)?.name || '').toLowerCase();
-    if (requesterRole !== 'admin') {
+    if (!requesterProfile) return NextResponse.json({ error: 'Perfil no encontrado' }, { status: 403 });
+
+    // Robust role check
+    const rawRoles = requesterProfile.roles;
+    const roleNames: string[] = [];
+    if (Array.isArray(rawRoles)) {
+      rawRoles.forEach(r => { if (r.name) roleNames.push(r.name.toLowerCase()); });
+    } else if (rawRoles && typeof rawRoles === 'object' && (rawRoles as any).name) {
+      roleNames.push((rawRoles as any).name.toLowerCase());
+    }
+    if (requesterProfile.role) {
+      roleNames.push(requesterProfile.role.toLowerCase());
+    }
+
+    if (!roleNames.includes('admin')) {
       return NextResponse.json({ error: 'Solo los administradores pueden reiniciar contraseñas' }, { status: 403 });
     }
 
@@ -32,9 +45,7 @@ export async function POST(req: NextRequest) {
     const { data: targetUser, error: getUserError } = await supabaseAdmin.auth.admin.getUserById(user_id);
     if (getUserError || !targetUser.user) return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
 
-    // Generate recovery link (this sends an email if configured, or we just return it)
-    // By default, generateLink with type 'recovery' will use the site's email template.
-    const { data, error: resetError } = await supabaseAdmin.auth.admin.generateLink({
+    const { error: resetError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'recovery',
       email: targetUser.user.email!,
     });
