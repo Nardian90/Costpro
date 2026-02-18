@@ -15,7 +15,6 @@ interface TelemetryItem {
 }
 
 interface CostSheetMasterRingProps {
-  children?: React.ReactNode;
   totalPrice: number;
   utility: number;
   totalCost: number;
@@ -26,7 +25,6 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
   totalPrice,
   utility,
   totalCost,
-  children,
   className
 }) => {
   const { resolvedTheme } = useTheme();
@@ -50,7 +48,7 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
   const brandGreenAlpha = "bg-primary/10 dark:bg-[#39FF14]/10";
 
   return (
-    <div className={cn("flex flex-col items-center gap-8 w-full max-w-md mx-auto", className)}>
+    <div className={cn("flex flex-col items-center gap-10 w-full max-w-md mx-auto", className)}>
       {/* Main Master Ring */}
       <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
         {/* Background Glow */}
@@ -127,8 +125,6 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
           </div>
         </div>
       </div>
-
-      {children}
 
       {/* Primary KPI Breakdown */}
       <div className="flex flex-row justify-between items-start w-full px-4 sm:px-8 gap-4">
