@@ -176,6 +176,40 @@ export function useUsersView() {
         }
     };
 
+    const handleResetPassword = async (userId: string) => {
+        if (!confirm('¿Estás seguro de que deseas reiniciar la contraseña de este usuario? Se enviará un correo de recuperación.')) {
+            return;
+        }
+
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+
+            if (!token) {
+                throw new Error('No hay sesión activa.');
+            }
+
+            const response = await fetch('/api/users/reset-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer `
+                },
+                body: JSON.stringify({ user_id: userId })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Error al reiniciar contraseña');
+            }
+
+            toast.success(data.message || 'Correo de recuperación enviado');
+        } catch (error: any) {
+            toast.error(error.message);
+        }
+    };
+
     return {
         // State
         searchTerm,
@@ -199,6 +233,7 @@ export function useUsersView() {
         handleUserFormSubmit,
         handleToggleUserStatus,
         handleDeleteUser,
+        handleResetPassword,
         isSubmittingUser: createUserMutation.isPending || updateUserMutation.isPending || manageMembershipsMutation.isPending,
         allowedRoles: getAllowedRoles(user?.role as UserRole)
     };
