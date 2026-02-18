@@ -16,8 +16,12 @@ export async function POST(req: NextRequest) {
         skipZeros: false,
         includeFinancialSummary: true,
         includeUtilityNote: false,
-        showDateTime: true
+        showDateTime: true,
+        pdfFormat: 'standard'
     };
+
+    const isPro = exportOptions.pdfFormat === 'pro';
+    const primaryColor: [number, number, number] = isPro ? [26, 82, 118] : [60, 60, 60];
 
     const doc = new jsPDF({
       orientation: 'portrait',
@@ -37,32 +41,59 @@ export async function POST(req: NextRequest) {
         if (lastHeaderPage === pageNum) return;
         lastHeaderPage = pageNum;
 
-        // Logo Box "FC" (More attractive style)
-        doc.setFillColor(40, 40, 40);
-        doc.rect(14, 10, 20, 20, 'F');
+        if (isPro) {
+            // PRO Header: Minimalist, Ink-Saving
+            doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+            doc.setLineWidth(0.5);
+            doc.rect(14, 10, 15, 15, 'S'); // Outline Logo
 
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(16);
-        doc.setFont("helvetica", "bold");
-        doc.text("FC", 24, 23, { align: "center" });
+            doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "bold");
+            doc.text("FC", 21.5, 20, { align: "center" });
 
-        doc.setTextColor(0, 0, 0); // Reset to black
+            doc.setTextColor(100, 100, 100);
+            doc.setFontSize(8);
+            doc.setFont("helvetica", "bold");
+            doc.text("REPORTE CORPORATIVO DE COSTOS", pageWidth - 14, 15, { align: "right" });
+            doc.setFont("helvetica", "normal");
+            doc.text(`Generado: ${timestamp}`, pageWidth - 14, 19, { align: "right" });
 
-        // Formal Header (Ministry Style)
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "bold");
-        doc.text("MINISTERIO DE FINANZAS Y PRECIOS", pageWidth / 2 + 10, 15, { align: "center" });
-        doc.setFontSize(8);
-        doc.text("FICHA DE COSTOS Y GASTOS DE PRODUCTOS Y SERVICIOS", pageWidth / 2 + 10, 20, { align: "center" });
-        doc.setFont("helvetica", "normal");
-        doc.text(title, pageWidth / 2 + 10, 24, { align: "center" });
-        doc.line(14, 32, pageWidth - 14, 32);
+            doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+            doc.setFontSize(14);
+            doc.setFont("helvetica", "bold");
+            doc.text(title.toUpperCase(), 35, 20);
+
+            doc.setDrawColor(230, 230, 230);
+            doc.setLineWidth(0.2);
+            doc.line(14, 28, pageWidth - 14, 28);
+        } else {
+            // Standard Logo Box
+            doc.setFillColor(40, 40, 40);
+            doc.rect(14, 10, 20, 20, 'F');
+
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(16);
+            doc.setFont("helvetica", "bold");
+            doc.text("FC", 24, 23, { align: "center" });
+
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "bold");
+            doc.text("MINISTERIO DE FINANZAS Y PRECIOS", pageWidth / 2 + 10, 15, { align: "center" });
+            doc.setFontSize(8);
+            doc.text("FICHA DE COSTOS Y GASTOS DE PRODUCTOS Y SERVICIOS", pageWidth / 2 + 10, 20, { align: "center" });
+            doc.setFont("helvetica", "normal");
+            doc.text(title, pageWidth / 2 + 10, 24, { align: "center" });
+            doc.line(14, 32, pageWidth - 14, 32);
+        }
     };
 
     const safeLocale = (val: any) => {
         if (val === null || val === undefined || isNaN(Number(val))) return '0,00';
         return Number(val).toLocaleString('es-ES', { minimumFractionDigits: 2 });
     };
+
     const translationMap: Record<string, string> = {
         'no': 'No.',
         'classification': 'Clasificación',
@@ -108,12 +139,6 @@ export async function POST(req: NextRequest) {
         'discount': 'Descuento',
         'concept': 'Concepto',
         'unit': 'UM',
-        'norm': 'Norma',
-        'total_cost': 'Costo Total',
-        'reference': 'Referencia',
-        'percentage': 'Porcentaje',
-        'weight': 'Peso',
-        'volume': 'Volumen',
     };
 
     const translate = (key: string) => {
@@ -121,15 +146,104 @@ export async function POST(req: NextRequest) {
         return translationMap[normalized] || translationMap[key.toLowerCase()] || key;
     };
 
-
     const addDataSheetHeader = (doc: jsPDF, y: number) => {
-        doc.setFontSize(9);
-        doc.setFont("helvetica", "bold");
-        doc.text("DATOS GENERALES DE LA FICHA DE COSTO (FC)", 14, y);
-
         const h = result.metadata?.header || {};
+
+        if (isPro) {
+            const salePrice = h.sale_price || result.summary?.grandTotal || 0;
+            const labels = [
+                { l: 'PRODUCTO / SERVICIO', v: h.name || 'N/A' },
+                { l: 'CÓDIGO', v: h.code || 'N/A' },
+                { l: 'UNIDAD DE MEDIDA', v: h.unit || 'N/A' },
+                { l: 'CANTIDAD', v: h.quantity || 1 },
+                { l: 'EMPRESA', v: h.company || 'N/A' },
+                { l: 'DESTINO', v: h.destination || 'N/A' },
+                { l: 'MONEDA', v: h.currency || 'CUP' },
+                { l: 'PRECIO VENTA', v: safeLocale(salePrice) }
+            ];
+
+            let curX = 14;
+            let curY = y;
+            const colWidth = (pageWidth - 28) / 4;
+
+            labels.forEach((item, i) => {
+                doc.setFontSize(8);
+                doc.setFont("helvetica", "bold");
+                doc.setTextColor(130, 130, 130);
+                doc.text(item.l.toUpperCase(), curX, curY);
+
+                doc.setFontSize(10);
+                doc.setTextColor(0, 0, 0);
+                doc.text(String(item.v), curX, curY + 4.5);
+
+                if ((i + 1) % 4 === 0) {
+                    curX = 14;
+                    curY += 12;
+                } else {
+                    curX += colWidth;
+                }
+            });
+
+            // Status Badge (Outlined)
+            const status = "VIGENTE";
+            doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+            doc.setLineWidth(0.3);
+            doc.rect(pageWidth - 34, y - 6, 20, 6, 'S');
+            doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+            doc.setFontSize(8);
+            doc.setFont("helvetica", "bold");
+            doc.text(status, pageWidth - 24, y - 1.5, { align: "center" });
+
+            // Cost Mix Chart (Micro Donut/Bar)
+            const getRowTotal = (id: string) => result.rows.find(r => r.classification === id)?.total || 0;
+            const mat = getRowTotal('1');
+            const labor = getRowTotal('2') + getRowTotal('3');
+            const indirect = getRowTotal('4') + getRowTotal('6') + getRowTotal('7') + getRowTotal('9');
+            const r12 = result.rows.find(r => r.classification === '12' || r.classification === '12.1')?.total || result.summary?.totalCost || 0;
+            const others = Math.max(0, r12 - (mat + labor + indirect));
+            const totalCost = r12 || 1;
+
+            const mixData = [
+                { l: 'Materiales', v: mat, c: [26, 82, 118] },
+                { l: 'Labor', v: labor, c: [41, 128, 185] },
+                { l: 'Indirectos', v: indirect, c: [52, 152, 219] },
+                { l: 'Otros', v: others, c: [127, 179, 213] }
+            ].filter(d => d.v > 0);
+
+            const chartX = pageWidth - 90;
+            const chartY = curY - 5;
+            const barW = 76;
+            const barH = 3.5;
+
+            doc.setFontSize(6);
+            doc.setTextColor(150, 150, 150);
+            doc.text("ESTRUCTURA DE COSTOS (COST MIX)", chartX, chartY - 2);
+
+            let currentX = chartX;
+            mixData.forEach(d => {
+                const w = (d.v / totalCost) * barW;
+                if (w > 0.5) {
+                    doc.setFillColor(d.c[0], d.c[1], d.c[2]);
+                    doc.rect(currentX, chartY, w, barH, 'F');
+                    currentX += w;
+                }
+            });
+
+            // Mini Legend
+            let legX = chartX;
+            mixData.forEach(d => {
+                doc.setFillColor(d.c[0], d.c[1], d.c[2]);
+                doc.rect(legX, chartY + barH + 1.5, 1.5, 1.5, 'F');
+                doc.setTextColor(100, 100, 100);
+                doc.text(`${d.l}: ${((d.v/totalCost)*100).toFixed(0)}%`, legX + 2.5, chartY + barH + 3);
+                legX += 19;
+            });
+
+            return curY + 10;
+        }
+
         const data = [
-            [`No. FC: ${h.code || result.fichaId || 'N/A'}`, `Cod. Producto: ${h.product_code || 'N/A'}`, `Producto: ${h.name || result.fichaName || 'N/A'}`],
+            [`PRODUCTO: ${h.name || 'N/A'}`, `CÓDIGO: ${h.code || 'N/A'}`, `FECHA: ${h.date || format(new Date(), "yyyy-MM-dd")}`],
             [`UM: ${h.unit || 'N/A'}`, `Cantidad: ${h.quantity || 1}`, `EMPRESA: ${h.company || 'N/A'}`],
             [`ORGANISMO: ${h.organism || 'N/A'}`, `UNION: ${h.union || 'N/A'}`, `Destino: ${h.destination || 'N/A'}`],
             [`Nivel de Producción: ${h.production_level || 'N/A'}`, `% Utilización capacidad: ${h.capacity_utilization || 0}%`, `Precio de Venta: ${safeLocale(h.sale_price)}`],
@@ -156,12 +270,10 @@ export async function POST(req: NextRequest) {
     if (exportOptions.includeFC) {
         pageTitle = "FICHA DE COSTO";
         addHeader(doc, pageTitle);
-        currentY = addDataSheetHeader(doc, 38);
+        currentY = addDataSheetHeader(doc, isPro ? 35 : 38);
 
-        // Main Rows Table
         const rowHeaders = ['Clasif.', 'Concepto', 'Método', 'V. Histórico', 'Total'];
 
-        // Skip Zeros logic for children
         const filterRows = (rows: any[]) => {
             return rows.filter(r => {
                 const hasChildren = result.rows.some(child => child.classification.startsWith(r.classification + '.'));
@@ -171,7 +283,7 @@ export async function POST(req: NextRequest) {
         };
 
         const filteredRows = filterRows(result.rows);
-        const row12Total = result.rows.find(r => r.classification === '12')?.total || 0;
+        const row12Total = result.rows.find(r => r.classification === '12' || r.classification === '12.1')?.total || result.summary?.totalCost || 0;
 
         const rowData = filteredRows.map(r => {
             let label = r.label.toUpperCase();
@@ -190,12 +302,25 @@ export async function POST(req: NextRequest) {
         });
 
         autoTable(doc, {
-            startY: currentY + 10,
+            startY: currentY + 5,
             head: [rowHeaders],
             body: rowData,
-            theme: 'plain',
-            headStyles: { fillColor: [60, 60, 60], textColor: 255, fontSize: 7, fontStyle: 'bold' },
-            styles: { fontSize: 7, cellPadding: 1.5, lineColor: [200, 200, 200], lineWidth: 0.1 },
+            theme: isPro ? 'striped' : 'plain',
+            headStyles: {
+                fillColor: isPro ? [255, 255, 255] : [60, 60, 60],
+                textColor: isPro ? primaryColor : [255, 255, 255],
+                fontSize: 7,
+                fontStyle: 'bold',
+                lineWidth: isPro ? { bottom: 0.5 } : 0,
+                lineColor: isPro ? primaryColor : [0,0,0]
+            },
+            styles: {
+                fontSize: 7,
+                cellPadding: 1.5,
+                lineColor: [220, 220, 220],
+                lineWidth: isPro ? { bottom: 0.2 } : 0.1
+            },
+            alternateRowStyles: isPro ? { fillColor: [247, 247, 247] } : {},
             columnStyles: {
                 0: { cellWidth: 20 },
                 3: { halign: 'right' },
@@ -214,6 +339,7 @@ export async function POST(req: NextRequest) {
 
                         if (hasChildren || isVenta || isCosto) {
                             data.cell.styles.fontStyle = 'bold';
+                            if (isPro) data.cell.styles.textColor = primaryColor;
                         }
                         if (isVenta) {
                             data.cell.styles.textColor = [180, 0, 0];
@@ -225,11 +351,11 @@ export async function POST(req: NextRequest) {
         });
         currentY = (doc as any).lastAutoTable.finalY;
 
-        // Utility Note logic
+        // Utility Note
         if (exportOptions.includeUtilityNote) {
             const r12 = result.rows.find(r => r.classification === '12' || r.classification === '12.1');
-            const r13 = result.rows.find(r => r.classification === '13'); // Utilidad
-            const r13_1 = result.rows.find(r => r.classification === '13.1'); // Precio
+            const r13 = result.rows.find(r => r.classification === '13');
+            const r13_1 = result.rows.find(r => r.classification === '13.1');
 
             if (r12 && r12.total > 0) {
                 let percent = 0;
@@ -253,10 +379,12 @@ export async function POST(req: NextRequest) {
                 if (labelForNote) {
                     doc.setFontSize(7.5);
                     doc.setFont("helvetica", "bold");
+                    doc.setTextColor(isPro ? primaryColor[0] : 0, isPro ? primaryColor[1] : 0, isPro ? primaryColor[2] : 0);
                     const noteTitle = "NOTA SOBRE EL MARGEN DE UTILIDAD:";
                     doc.text(noteTitle, 14, currentY + 8);
 
                     doc.setFont("helvetica", "normal");
+                    doc.setTextColor(100, 100, 100);
                     const noteContent = `El % de utilidad con respecto al costo es del ${percent.toFixed(2)}%, resultado de la relación entre la ${labelForNote} (${safeLocale(valForNote)}) y el Total de Costos (${safeLocale(r12.total)}).`;
                     const splitNote = doc.splitTextToSize(noteContent, pageWidth - 28);
                     doc.text(splitNote, 14, currentY + 12);
@@ -272,26 +400,24 @@ export async function POST(req: NextRequest) {
     const selectedAnnexes = result.anexos.filter(a => exportOptions.includeAnnexes.includes(a.id));
     let isFirstAnnex = true;
     for (const annex of selectedAnnexes) {
-        // Skip Zeros logic for annexes
         const totalImporte = annex.rows.reduce((sum, r) => sum + (r.importe || 0), 0);
         if (exportOptions.skipZeros && totalImporte === 0) continue;
 
-        // First annex ALWAYS starts on a new page (separated from main table)
-        // Subsequent annexes flow if they fit
         const needsNewPage = isFirstAnnex || (currentY > pageHeight - 60);
 
         if (needsNewPage) {
             doc.addPage();
             pageTitle = `ANEXO ${annex.id}`;
             addHeader(doc, pageTitle);
-            currentY = 38;
+            currentY = isPro ? 35 : 38;
         } else {
-            currentY += 12; // Spacing between annexes on same page
+            currentY += 12;
         }
         isFirstAnnex = false;
 
         doc.setFontSize(10);
         doc.setFont("helvetica", "bold");
+        doc.setTextColor(isPro ? primaryColor[0] : 0, isPro ? primaryColor[1] : 0, isPro ? primaryColor[2] : 0);
         doc.text((annex.name || annex.id).toUpperCase(), 14, currentY);
         currentY += 4;
 
@@ -302,9 +428,21 @@ export async function POST(req: NextRequest) {
             startY: currentY,
             head: [headers.map(h => translate(h.toLowerCase()).toUpperCase())],
             body: body,
-            theme: 'grid',
-            headStyles: { fillColor: [100, 100, 100], textColor: 255, fontSize: 7 },
-            styles: { fontSize: 6.5, cellPadding: 1 },
+            theme: isPro ? 'striped' : 'grid',
+            headStyles: {
+                fillColor: isPro ? [255, 255, 255] : [100, 100, 100],
+                textColor: isPro ? primaryColor : 255,
+                fontSize: 7,
+                lineWidth: isPro ? { bottom: 0.5 } : 0,
+                lineColor: isPro ? primaryColor : [0,0,0]
+            },
+            styles: {
+                fontSize: 6.5,
+                cellPadding: 1,
+                lineColor: [230, 230, 230],
+                lineWidth: isPro ? { bottom: 0.2 } : 0.1
+            },
+            alternateRowStyles: isPro ? { fillColor: [247, 247, 247] } : {},
             margin: { top: 35, bottom: 20 },
             didDrawPage: () => addHeader(doc, pageTitle)
         });
@@ -312,7 +450,7 @@ export async function POST(req: NextRequest) {
         isFirstPage = false;
     }
 
-    // 3. Export Audit (always last if consolidated)
+    // 3. Export Audit
     if (exportOptions.includeAudit) {
         const needsNewPage = !exportOptions.consolidated || isFirstPage || (currentY > pageHeight - 40);
 
@@ -320,13 +458,14 @@ export async function POST(req: NextRequest) {
             if (!isFirstPage) doc.addPage();
             pageTitle = "TRAZABILIDAD DE CÁLCULO (AUDITORÍA)";
             addHeader(doc, pageTitle);
-            currentY = 38;
+            currentY = isPro ? 35 : 38;
         } else {
             currentY += 12;
         }
 
         doc.setFontSize(10);
         doc.setFont("helvetica", "bold");
+        doc.setTextColor(isPro ? primaryColor[0] : 0, isPro ? primaryColor[1] : 0, isPro ? primaryColor[2] : 0);
         doc.text("TRAZABILIDAD DE CÁLCULO (AUDITORÍA)", 14, currentY);
         currentY += 4;
 
@@ -341,9 +480,16 @@ export async function POST(req: NextRequest) {
             startY: currentY,
             head: [['Fila', 'Tipo', 'Nota', 'Cambio']],
             body: auditData,
-            theme: 'plain',
-            styles: { fontSize: 6 },
-            headStyles: { fontStyle: 'bold' },
+            theme: isPro ? 'striped' : 'plain',
+            styles: { fontSize: 6, lineColor: [230, 230, 230], lineWidth: isPro ? { bottom: 0.2 } : 0.1 },
+            headStyles: {
+                fontStyle: 'bold',
+                fillColor: isPro ? [255, 255, 255] : [240, 240, 240],
+                textColor: isPro ? primaryColor : 0,
+                lineWidth: isPro ? { bottom: 0.5 } : 0,
+                lineColor: isPro ? primaryColor : [0,0,0]
+            },
+            alternateRowStyles: isPro ? { fillColor: [247, 247, 247] } : {},
             margin: { top: 35, bottom: 20 },
             didDrawPage: () => addHeader(doc, pageTitle)
         });
@@ -354,11 +500,17 @@ export async function POST(req: NextRequest) {
     const pageCount = doc.getNumberOfPages();
     for(let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
-        doc.setFontSize(7);
+        doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
         const footerText = exportOptions.showDateTime
             ? `Generado el: ${timestamp} - Página ${i} de ${pageCount}`
             : `Página ${i} de ${pageCount}`;
         doc.text(footerText, 14, 285);
+
+        if (isPro) {
+            doc.setFontSize(6);
+            doc.text("VALIDACIÓN CORPORATIVA - DOCUMENTO OFICIAL", pageWidth - 14, 285, { align: "right" });
+        }
     }
 
     const pdfBuffer = doc.output('arraybuffer');
