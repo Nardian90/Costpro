@@ -15,7 +15,8 @@ export async function POST(req: NextRequest) {
         consolidated: true,
         skipZeros: false,
         includeFinancialSummary: true,
-        includeUtilityNote: false
+        includeUtilityNote: false,
+        showDateTime: true
     };
 
     const doc = new jsPDF({
@@ -26,7 +27,7 @@ export async function POST(req: NextRequest) {
 
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
-    const timestamp = format(new Date(), "yyyy-MM-dd HH:mm:ss");
+    const timestamp = format(new Date(), "dd/MM/yyyy HH:mm");
 
     let pageTitle = "FICHA DE COSTO";
     let lastHeaderPage = 0;
@@ -59,6 +60,36 @@ export async function POST(req: NextRequest) {
         if (val === null || val === undefined || isNaN(Number(val))) return '0,00';
         return Number(val).toLocaleString('es-ES', { minimumFractionDigits: 2 });
     };
+    const translationMap: Record<string, string> = {
+        'no': 'No.',
+        'classification': 'Clasificación',
+        'code': 'Código',
+        'description': 'Descripción',
+        'um': 'UM',
+        'consumption_norm': 'Norma Consumo',
+        'price': 'Precio Unitario',
+        'total': 'Total',
+        'quantity': 'Cantidad',
+        'amount': 'Importe',
+        'cost': 'Costo',
+        'unit_cost': 'Costo Unitario',
+        'time_norm': 'Norma Tiempo',
+        'hourly_rate': 'Tarifa Horaria',
+        'worker_count': 'Cant. Obreros',
+        'name': 'Nombre/Descripción',
+        'initial_value': 'Valor Inicial',
+        'useful_life': 'Vida Útil (%)',
+        'time': 'Tiempo',
+        'value': 'Valor',
+        'depreciation': 'Depreciación',
+        'diet': 'Dieta',
+        'category': 'Categoría',
+        'salary': 'Salario',
+        'total_salary': 'Salario Total',
+        'coefficient': 'Coeficiente'};
+
+    const translate = (key: string) => translationMap[key] || key;
+
 
     const addDataSheetHeader = (doc: jsPDF, y: number) => {
         doc.setFontSize(9);
@@ -238,7 +269,7 @@ export async function POST(req: NextRequest) {
 
         autoTable(doc, {
             startY: currentY,
-            head: [headers.map(h => h.toUpperCase())],
+            head: [headers.map(h => translate(h.toLowerCase()).toUpperCase())],
             body: body,
             theme: 'grid',
             headStyles: { fillColor: [100, 100, 100], textColor: 255, fontSize: 7 },
@@ -293,7 +324,10 @@ export async function POST(req: NextRequest) {
     for(let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
         doc.setFontSize(7);
-        doc.text(`Generado el: ${timestamp} - Página ${i} de ${pageCount}`, 14, 285);
+        const footerText = exportOptions.showDateTime
+            ? `Generado el: ${timestamp} - Página ${i} de ${pageCount}`
+            : `Página ${i} de ${pageCount}`;
+        doc.text(footerText, 14, 285);
     }
 
     const pdfBuffer = doc.output('arraybuffer');

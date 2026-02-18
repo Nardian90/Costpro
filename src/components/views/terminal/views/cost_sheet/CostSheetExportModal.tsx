@@ -24,6 +24,7 @@ export interface ExportOptions {
   skipZeros: boolean;
   includeFinancialSummary: boolean;
   includeUtilityNote: boolean;
+  showDateTime: boolean;
 }
 
 interface CostSheetExportModalProps {
@@ -46,7 +47,8 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
     consolidated: true,
     skipZeros: true,
     includeFinancialSummary: true,
-    includeUtilityNote: true
+    includeUtilityNote: true,
+    showDateTime: true
   });
 
   const handleToggleAnnex = (id: string) => {
@@ -191,6 +193,18 @@ export const CostSheetExportModal: React.FC<CostSheetExportModalProps> = ({
                                 id="includeUtilityNote"
                                 checked={options.includeUtilityNote}
                                 onCheckedChange={(checked) => setOptions(prev => ({ ...prev, includeUtilityNote: checked }))}
+                            />
+                        </div>
+
+                        <div className="flex items-center justify-between p-3 rounded-2xl bg-sidebar/40 border border-sidebar-border/50">
+                            <div>
+                                <Label htmlFor="showDateTime" className="font-bold text-sm block">Mostrar Fecha y Hora</Label>
+                                <span className="text-xs text-muted-foreground uppercase font-medium">Incluir marca de tiempo en el pie de página</span>
+                            </div>
+                            <Switch
+                                id="showDateTime"
+                                checked={options.showDateTime}
+                                onCheckedChange={(checked) => setOptions(prev => ({ ...prev, showDateTime: checked }))}
                             />
                         </div>
 
