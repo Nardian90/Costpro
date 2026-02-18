@@ -13,12 +13,14 @@ const userFormSchema = z.object({
   fullName: z.string().min(3, 'El nombre debe tener al menos 3 caracteres'),
   email: z.string().email('Email inválido'),
   role: z.enum(['admin', 'encargado', 'usuario', 'manager', 'clerk', 'warehouse', 'costo'] as const),
+  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres').optional().or(z.literal('')),
   isActive: z.boolean(),
   maxStoresLimit: z.number().min(0).catch(0),
   maxUsersLimit: z.number().min(0).catch(0),
   memberships: z.array(z.object({
     store_id: z.string().min(1, 'Seleccione una tienda'),
     role: z.enum(['admin', 'encargado', 'usuario', 'manager', 'clerk', 'warehouse', 'costo'] as const),
+  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres').optional().or(z.literal('')),
     status: z.enum(['active', 'revoked'] as const),
   })),
 }).refine(data => {
@@ -90,6 +92,7 @@ export default function UserForm({
       fullName: '',
       email: '',
       role: 'clerk',
+      password: '',
       isActive: true,
       maxStoresLimit: 0,
       maxUsersLimit: 0,
@@ -143,6 +146,26 @@ export default function UserForm({
             <p className="text-xs text-destructive font-bold uppercase mt-1">{errors.email.message}</p>
           )}
         </div>
+
+        {mode === 'create' && (
+          <div className="bg-primary/5 p-4 rounded-2xl border border-primary/10">
+             <label className="text-xs font-black uppercase text-primary tracking-widest mb-1.5 block">
+              Asignar Contraseña (Opcional)
+            </label>
+            <input
+              {...register('password')}
+              type="password"
+              placeholder="Dejar en blanco para enviar correo de recuperación"
+              className="w-full p-3 rounded-xl border border-border bg-background font-bold text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+            />
+            <p className="text-[10px] text-muted-foreground mt-2 italic">
+              * Si no asignas una contraseña, el usuario recibirá un correo para definirla.
+            </p>
+            {errors.password && (
+              <p className="text-xs text-destructive font-bold uppercase mt-1">{errors.password.message}</p>
+            )}
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -223,7 +246,8 @@ export default function UserForm({
           <button
             type="button"
             disabled={!canAddMoreStores}
-            onClick={() => append({ store_id: '', role: 'clerk', status: 'active' })}
+            onClick={() => append({ store_id: '', role: 'clerk',
+      password: '', status: 'active' })}
             className={cn(
               "flex items-center gap-1 px-2 py-1 rounded-lg transition-all text-xs font-black uppercase",
               canAddMoreStores
