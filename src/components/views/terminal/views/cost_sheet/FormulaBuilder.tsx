@@ -150,18 +150,18 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-background  text-foreground dark:text-foreground transition-colors">
+    <div className="flex flex-col h-full bg-background dark:bg-[#020617] text-foreground dark:text-slate-200 transition-colors">
       {/* Construction Area */}
       <div className="p-4 sm:p-6 space-y-4">
-        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground dark:text-muted-foreground/70">
+        <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-muted-foreground dark:text-slate-500">
           <Hammer className="w-3.5 h-3.5" />
           Área de Construcción
         </div>
 
-        <div className="min-h-[100px] sm:min-h-[120px] p-4 sm:p-6 rounded-xl border-2 border-dashed border-border dark:border-border bg-muted/30 dark:bg-muted/30 flex flex-wrap gap-2 sm:gap-3 items-start content-start transition-all relative overflow-hidden">
+        <div className="min-h-[100px] sm:min-h-[120px] p-4 sm:p-6 rounded-3xl border-2 border-dashed border-border dark:border-slate-800 bg-muted/30 dark:bg-slate-950/30 flex flex-wrap gap-2 sm:gap-3 items-start content-start transition-all relative overflow-hidden">
           {tokens.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-6 text-center">
-              <span className="text-xs sm:text-sm italic text-muted-foreground dark:text-muted-foreground/50 font-medium tracking-tight">Comience a construir su fórmula seleccionando elementos del panel inferior</span>
+              <span className="text-xs sm:text-sm italic text-muted-foreground dark:text-slate-600 font-medium tracking-tight">Comience a construir su fórmula seleccionando elementos del panel inferior</span>
             </div>
           )}
           {tokens.map((token) => (
@@ -171,9 +171,9 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                 "flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs sm:text-xs font-bold transition-all animate-in zoom-in-95 duration-200",
                 token.type === 'function' && "bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20 shadow-[0_2px_8px_rgba(139,92,246,0.1)]",
                 token.type === 'reference' && "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 shadow-[0_2px_8px_rgba(59,130,246,0.1)]",
-                token.type === 'operator' && "bg-muted/50 text-muted-foreground dark:text-muted-foreground border-border",
-                token.type === 'literal' && "bg-primary/10 text-primary dark:text-primary dark:text-primary border-primary/20",
-                token.type === 'punctuation' && "bg-transparent text-muted-foreground dark:text-muted-foreground/70 border-none px-1"
+                token.type === 'operator' && "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20",
+                token.type === 'literal' && "bg-[#39FF14]/10 text-primary dark:text-[#39FF14] dark:text-[#39FF14] border-[#39FF14]/20",
+                token.type === 'punctuation' && "bg-transparent text-muted-foreground dark:text-slate-500 border-none px-1"
               )}
             >
               {token.type === 'function' && <Sigma className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
@@ -189,16 +189,16 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
               )}
             </div>
           ))}
-          <div className="w-[2px] h-5 sm:h-6 bg-primary dark:bg-primary animate-pulse self-center ml-1 rounded-full  " />
+          <div className="w-[2px] h-5 sm:h-6 bg-primary dark:bg-[#39FF14] animate-pulse self-center ml-1 rounded-full shadow-[0_0_8px_rgba(var(--primary),0.5)] dark:shadow-[0_0_8px_#39FF14]" />
         </div>
 
         {/* Validation Status */}
         {tokens.length > 0 && (
-          <div className="bg-primary/10 dark:bg-primary/5 border border-primary/20 dark:border-primary/20 p-2 sm:p-3 rounded-xl sm:rounded-xl flex items-center gap-2 sm:gap-3 animate-in fade-in slide-in-from-top-2">
-            <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-primary dark:bg-primary flex items-center justify-center shrink-0">
+          <div className="bg-primary/10 dark:bg-[#39FF14]/5 border border-primary/20 dark:border-[#39FF14]/20 p-2 sm:p-3 rounded-xl sm:rounded-2xl flex items-center gap-2 sm:gap-3 animate-in fade-in slide-in-from-top-2">
+            <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-primary dark:bg-[#39FF14] flex items-center justify-center shrink-0">
               <CheckCircle2 className="w-3 h-3 sm:w-4 h-4 text-white" />
             </div>
-            <span className="text-xs sm:text-xs font-bold text-primary dark:text-primary dark:text-primary uppercase tracking-wider leading-tight">
+            <span className="text-xs sm:text-xs font-bold text-primary dark:text-[#39FF14] dark:text-[#39FF14] uppercase tracking-wider leading-tight">
               Fórmula válida • Resultado: (Evaluando...)
             </span>
           </div>
@@ -206,40 +206,40 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
       </div>
 
       {/* Elements Panel */}
-      <div className="p-4 sm:p-6 pt-2 space-y-4 border-t border-border dark:border-border/50">
-        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground dark:text-muted-foreground/70">
+      <div className="p-4 sm:p-6 pt-2 space-y-4 border-t border-border dark:border-white/5">
+        <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-muted-foreground dark:text-slate-500">
           <LayoutGrid className="w-3.5 h-3.5" />
           Panel de Elementos
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <HorizontalScroll containerClassName="bg-muted dark:bg-muted/50 p-1 rounded-xl border border-border dark:border-border/50 overflow-hidden">
+          <HorizontalScroll containerClassName="bg-muted dark:bg-slate-950/50 p-1 rounded-2xl border border-border dark:border-white/10 overflow-hidden">
             <TabsList className="bg-transparent border-none w-max min-w-full h-auto p-0 gap-1 flex overflow-visible">
-              <TabsTrigger value="functions" className="py-2.5 px-5 sm:px-8 text-xs font-bold uppercase tracking-widest rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-muted data-[state=active]:text-foreground dark:data-[state=active]:text-primary transition-all shrink-0 border border-transparent data-[state=active]:border-border dark:data-[state=active]:border-primary/20 shadow-none outline-none">Funciones</TabsTrigger>
-              <TabsTrigger value="refs" className="py-2.5 px-5 sm:px-8 text-xs font-bold uppercase tracking-widest rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-muted data-[state=active]:text-foreground dark:data-[state=active]:text-primary transition-all shrink-0 border border-transparent data-[state=active]:border-border dark:data-[state=active]:border-primary/20 shadow-none outline-none">Referencias</TabsTrigger>
-              <TabsTrigger value="annexes" className="py-2.5 px-5 sm:px-8 text-xs font-bold uppercase tracking-widest rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-muted data-[state=active]:text-foreground dark:data-[state=active]:text-primary transition-all shrink-0 border border-transparent data-[state=active]:border-border dark:data-[state=active]:border-primary/20 shadow-none outline-none">Anexos</TabsTrigger>
-              <TabsTrigger value="ops" className="py-2.5 px-5 sm:px-8 text-xs font-bold uppercase tracking-widest rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-muted data-[state=active]:text-foreground dark:data-[state=active]:text-primary transition-all shrink-0 border border-transparent data-[state=active]:border-border dark:data-[state=active]:border-primary/20 shadow-none outline-none">Operadores</TabsTrigger>
+              <TabsTrigger value="functions" className="py-2.5 px-5 sm:px-8 text-xs font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-slate-900 data-[state=active]:text-foreground dark:data-[state=active]:text-[#39FF14] transition-all shrink-0 border border-transparent data-[state=active]:border-border dark:data-[state=active]:border-[#39FF14]/20 shadow-none outline-none">Funciones</TabsTrigger>
+              <TabsTrigger value="refs" className="py-2.5 px-5 sm:px-8 text-xs font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-slate-900 data-[state=active]:text-foreground dark:data-[state=active]:text-[#39FF14] transition-all shrink-0 border border-transparent data-[state=active]:border-border dark:data-[state=active]:border-[#39FF14]/20 shadow-none outline-none">Referencias</TabsTrigger>
+              <TabsTrigger value="annexes" className="py-2.5 px-5 sm:px-8 text-xs font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-slate-900 data-[state=active]:text-foreground dark:data-[state=active]:text-[#39FF14] transition-all shrink-0 border border-transparent data-[state=active]:border-border dark:data-[state=active]:border-[#39FF14]/20 shadow-none outline-none">Anexos</TabsTrigger>
+              <TabsTrigger value="ops" className="py-2.5 px-5 sm:px-8 text-xs font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-slate-900 data-[state=active]:text-foreground dark:data-[state=active]:text-[#39FF14] transition-all shrink-0 border border-transparent data-[state=active]:border-border dark:data-[state=active]:border-[#39FF14]/20 shadow-none outline-none">Operadores</TabsTrigger>
             </TabsList>
           </HorizontalScroll>
 
           <div className="mt-4 overflow-hidden">
-            <ScrollArea className="h-[250px] sm:h-[300px] rounded-xl">
+            <ScrollArea className="h-[250px] sm:h-[300px] rounded-2xl">
               <TabsContent value="functions" className="m-0 space-y-2 pb-4 pr-3 outline-none">
                 {Object.keys(SPANISH_TO_ENGLISH).map(func => (
                   <button
                     key={func}
                     onClick={() => addToken('function', SPANISH_TO_ENGLISH[func], func)}
-                    className="w-full flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl bg-muted/40 dark:bg-card/40 border border-border dark:border-border hover:border-primary dark:hover:border-primary/30 hover:bg-muted dark:hover:bg-muted/60 transition-all text-left group relative overflow-hidden"
+                    className="w-full flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-2xl bg-muted/40 dark:bg-slate-950/40 border border-border dark:border-slate-800 hover:border-primary dark:hover:border-[#39FF14]/30 hover:bg-muted dark:hover:bg-slate-800/60 transition-all text-left group relative overflow-hidden"
                   >
-                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary dark:bg-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary dark:bg-[#39FF14] opacity-0 group-hover:opacity-100 transition-opacity" />
                     <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-violet-500/10 flex items-center justify-center text-violet-600 dark:text-violet-400 shrink-0">
                       <Sigma className="w-5 h-5 sm:w-6 sm:h-6" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-xs sm:text-[12px] font-bold text-foreground dark:text-white uppercase tracking-wider">{func}</div>
-                      <div className="text-xs sm:text-xs text-muted-foreground dark:text-muted-foreground/70 line-clamp-1">{FUNCTION_DESCRIPTIONS[func]}</div>
+                      <div className="text-xs sm:text-[12px] font-black text-foreground dark:text-white uppercase tracking-wider">{func}</div>
+                      <div className="text-xs sm:text-xs text-muted-foreground dark:text-slate-500 line-clamp-1">{FUNCTION_DESCRIPTIONS[func]}</div>
                     </div>
-                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-border dark:bg-muted flex items-center justify-center text-muted-foreground dark:text-muted-foreground group-hover:bg-primary dark:group-hover:bg-primary group-hover:text-primary-foreground dark:group-hover:text-black transition-all">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-border dark:bg-slate-900 flex items-center justify-center text-muted-foreground dark:text-slate-400 group-hover:bg-primary dark:group-hover:bg-[#39FF14] group-hover:text-primary-foreground dark:group-hover:text-black transition-all">
                       <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </div>
                   </button>
@@ -248,22 +248,22 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
 
               <TabsContent value="refs" className="m-0 space-y-4 pb-4 pr-3 outline-none">
                 <div className="space-y-2">
-                  <div className="text-xs sm:text-xs font-bold text-muted-foreground dark:text-muted-foreground/50 uppercase tracking-widest px-2 mb-2">Filas de la Ficha</div>
+                  <div className="text-xs sm:text-xs font-black text-muted-foreground dark:text-slate-600 uppercase tracking-widest px-2 mb-2">Filas de la Ficha</div>
                   {suggestions.filter(s => s.value?.startsWith('ref') || s.value?.startsWith('vh')).map(s => (
                     <button
                       key={s.value}
                       onClick={() => addToken('reference', s.value, s.label)}
-                      className="w-full flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl bg-muted/40 dark:bg-card/40 border border-border dark:border-border hover:border-primary dark:hover:border-primary/30 hover:bg-muted dark:hover:bg-muted/60 transition-all text-left group relative overflow-hidden"
+                      className="w-full flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-2xl bg-muted/40 dark:bg-slate-950/40 border border-border dark:border-slate-800 hover:border-primary dark:hover:border-[#39FF14]/30 hover:bg-muted dark:hover:bg-slate-800/60 transition-all text-left group relative overflow-hidden"
                     >
-                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary dark:bg-primary opacity-0 group-hover:opacity-100 transition-opacity" />
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 font-bold text-xs sm:text-xs">
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary dark:bg-[#39FF14] opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 font-black text-xs sm:text-xs">
                         {s.label.includes(' ') ? s.label.split(' ')[1] : s.label}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="text-xs sm:text-xs font-bold text-foreground dark:text-white uppercase truncate">{s.label}</div>
-                        <div className="text-xs sm:text-xs text-muted-foreground dark:text-muted-foreground/70 truncate">{s.description}</div>
+                        <div className="text-xs sm:text-xs text-muted-foreground dark:text-slate-500 truncate">{s.description}</div>
                       </div>
-                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-border dark:bg-muted flex items-center justify-center text-muted-foreground dark:text-muted-foreground group-hover:bg-primary dark:group-hover:bg-primary group-hover:text-primary-foreground dark:group-hover:text-black transition-all">
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-border dark:bg-slate-900 flex items-center justify-center text-muted-foreground dark:text-slate-400 group-hover:bg-primary dark:group-hover:bg-[#39FF14] group-hover:text-primary-foreground dark:group-hover:text-black transition-all">
                         <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       </div>
                     </button>
@@ -273,28 +273,28 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
 
               <TabsContent value="annexes" className="m-0 space-y-4 pb-4 pr-3 outline-none">
                 <div className="space-y-2">
-                  <div className="text-xs sm:text-xs font-bold text-muted-foreground dark:text-muted-foreground/50 uppercase tracking-widest px-2 mb-2">Referencias a Anexos</div>
+                  <div className="text-xs sm:text-xs font-black text-muted-foreground dark:text-slate-600 uppercase tracking-widest px-2 mb-2">Referencias a Anexos</div>
                   {suggestions.filter(s => s.value?.startsWith('Anexo')).map(s => (
                     <button
                       key={s.value}
                       onClick={() => addToken('reference', s.value, s.label)}
-                      className="w-full flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl bg-muted/40 dark:bg-card/40 border border-border dark:border-border hover:border-primary dark:hover:border-primary/30 hover:bg-muted dark:hover:bg-muted/60 transition-all text-left group relative overflow-hidden"
+                      className="w-full flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-2xl bg-muted/40 dark:bg-slate-950/40 border border-border dark:border-slate-800 hover:border-primary dark:hover:border-[#39FF14]/30 hover:bg-muted dark:hover:bg-slate-800/60 transition-all text-left group relative overflow-hidden"
                     >
-                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary dark:bg-primary opacity-0 group-hover:opacity-100 transition-opacity" />
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0 font-bold text-xs sm:text-xs">
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary dark:bg-[#39FF14] opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0 font-black text-xs sm:text-xs">
                         {s.label.split(' ')[1] || 'AX'}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="text-xs sm:text-xs font-bold text-foreground dark:text-white uppercase truncate">{s.label}</div>
-                        <div className="text-xs sm:text-xs text-muted-foreground dark:text-muted-foreground/70 truncate">{s.description}</div>
+                        <div className="text-xs sm:text-xs text-muted-foreground dark:text-slate-500 truncate">{s.description}</div>
                       </div>
-                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-border dark:bg-muted flex items-center justify-center text-muted-foreground dark:text-muted-foreground group-hover:bg-primary dark:group-hover:bg-primary group-hover:text-primary-foreground dark:group-hover:text-black transition-all">
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-border dark:bg-slate-900 flex items-center justify-center text-muted-foreground dark:text-slate-400 group-hover:bg-primary dark:group-hover:bg-[#39FF14] group-hover:text-primary-foreground dark:group-hover:text-black transition-all">
                         <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       </div>
                     </button>
                   ))}
                   {suggestions.filter(s => s.value?.startsWith('Anexo')).length === 0 && (
-                    <div className="p-8 text-center border-2 border-dashed border-border dark:border-border/50 rounded-xl">
+                    <div className="p-8 text-center border-2 border-dashed border-border dark:border-white/5 rounded-3xl">
                         <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">No hay anexos configurados</p>
                     </div>
                   )}
@@ -310,23 +310,23 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                     { v: '/', l: '÷', i: <Divide className="w-4 h-4 sm:w-5 sm:h-5" /> },
                     { v: '(', l: '(', i: <span className="text-lg sm:text-xl font-bold">(</span> },
                     { v: ')', l: ')', i: <span className="text-lg sm:text-xl font-bold">)</span> },
-                    { v: ',', l: ',', i: <span className="text-xl sm:text-2xl font-bold">,</span> },
+                    { v: ',', l: ',', i: <span className="text-xl sm:text-2xl font-black">,</span> },
                   ].map(op => (
                     <button
                       key={op.v}
                       onClick={() => addToken(op.v === '(' || op.v === ')' || op.v === ',' ? 'punctuation' : 'operator', op.v, op.l)}
-                      className="flex items-center justify-center h-12 sm:h-16 rounded-xl sm:rounded-xl bg-muted/50 dark:bg-muted/50 border border-border dark:border-border hover:border-primary/50 dark:hover:border-primary/50 hover:bg-muted dark:hover:bg-muted text-muted-foreground dark:text-muted-foreground hover:text-primary dark:hover:text-primary transition-all shadow-sm"
+                      className="flex items-center justify-center h-12 sm:h-16 rounded-xl sm:rounded-2xl bg-muted/50 dark:bg-slate-950/50 border border-border dark:border-slate-800 hover:border-primary/50 dark:hover:border-[#39FF14]/50 hover:bg-muted dark:hover:bg-slate-800 text-muted-foreground dark:text-slate-400 hover:text-primary dark:hover:text-[#39FF14] transition-all shadow-sm"
                     >
                       {op.i}
                     </button>
                   ))}
 
-                  <div className="col-span-4 mt-2 sm:mt-4 p-3 sm:p-4 rounded-xl sm:rounded-xl bg-muted/30 dark:bg-muted/30 border border-border dark:border-border">
-                    <div className="text-xs sm:text-xs font-bold text-muted-foreground dark:text-muted-foreground/50 uppercase tracking-widest mb-2 sm:mb-3">Valor Numérico</div>
+                  <div className="col-span-4 mt-2 sm:mt-4 p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-muted/30 dark:bg-slate-950/30 border border-border dark:border-slate-800">
+                    <div className="text-xs sm:text-xs font-black text-muted-foreground dark:text-slate-600 uppercase tracking-widest mb-2 sm:mb-3">Valor Numérico</div>
                     <div className="flex gap-2 sm:gap-3">
                       <input
                         type="number"
-                        className="flex-1 h-10 sm:h-12 px-3 sm:px-4 rounded-lg sm:rounded-xl bg-background dark:bg-muted border-none text-foreground dark:text-white text-xs sm:text-sm focus:ring-2 focus:ring-primary/50 dark:focus:ring-primary/50 transition-all outline-none"
+                        className="flex-1 h-10 sm:h-12 px-3 sm:px-4 rounded-lg sm:rounded-xl bg-background dark:bg-slate-900 border-none text-foreground dark:text-white text-xs sm:text-sm focus:ring-2 focus:ring-primary/50 dark:focus:ring-[#39FF14]/50 transition-all outline-none"
                         placeholder="Ej: 1500"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
@@ -343,7 +343,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                           if (val) addToken('literal', val, val);
                           input.value = '';
                         }}
-                        className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg sm:rounded-xl bg-primary dark:bg-primary text-primary-foreground dark:text-black flex items-center justify-center hover:shadow-[0_0_15px_rgba(var(--primary),0.4)] transition-all shrink-0"
+                        className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg sm:rounded-xl bg-primary dark:bg-[#39FF14] text-primary-foreground dark:text-black flex items-center justify-center hover:shadow-[0_0_15px_rgba(57,255,20,0.4)] transition-all shrink-0"
                       >
                         <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                       </button>
