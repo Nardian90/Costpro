@@ -199,9 +199,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <div className="flex-1 min-w-0">
           <h4 className="font-black text-xs sm:text-xs uppercase truncate mb-0.5 sm:mb-1">{product.name}</h4>
           <div className="flex items-center justify-between gap-2">
-            <div className="text-base sm:text-lg font-black text-primary leading-none">{formatCurrency(product.price)}</div>
+            <div className="text-[clamp(0.875rem,4vw,1.125rem)] font-black text-primary leading-none">{formatCurrency(product.price)}</div>
             <div className={cn(
-              "text-xs font-black uppercase tracking-tighter px-1.5 py-0.5 rounded border shrink-0",
+              "text-[10px] sm:text-xs font-black uppercase tracking-tighter px-1.5 py-0.5 rounded border shrink-0",
               isOutOfStock ? "bg-danger/10 text-danger border-danger/20" :
               isLowStock ? "bg-amber-500/10 text-amber-600 border-amber-500/20" :
               "bg-success/10 text-success border-success/20"
@@ -303,14 +303,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </p>
         )}
 
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          <div className="p-2 rounded-lg bg-muted/30 border border-white/5 text-center">
-            <div className="text-xs font-black uppercase text-muted-foreground mb-0.5">Costo</div>
-            <div className="font-bold text-xs">{formatCurrency(product.cost_price || 0)}</div>
+        <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-4">
+          <div className="p-1.5 sm:p-2 rounded-lg bg-muted/30 border border-white/5 text-center">
+            <div className="text-[10px] sm:text-xs font-black uppercase text-muted-foreground mb-0.5">Costo</div>
+            <div className="font-bold text-[11px] sm:text-xs">{formatCurrency(product.cost_price || 0)}</div>
           </div>
-          <div className="p-2 rounded-lg bg-primary/5 border border-primary/10 text-center">
-            <div className="text-xs font-black uppercase text-primary mb-0.5">Venta</div>
-            <div className="font-black text-xs text-primary">{formatCurrency(product.price || 0)}</div>
+          <div className="p-1.5 sm:p-2 rounded-lg bg-primary/5 border border-primary/10 text-center">
+            <div className="text-[10px] sm:text-xs font-black uppercase text-primary mb-0.5">Venta</div>
+            <div className="font-black text-[11px] sm:text-xs text-primary">{formatCurrency(product.price || 0)}</div>
           </div>
         </div>
 

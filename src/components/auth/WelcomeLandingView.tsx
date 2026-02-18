@@ -267,11 +267,11 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
       </section>
 
       {/* Modules Grid - Bento Layout */}
-      <section className="py-24 px-6">
+      <section className="py-16 sm:py-24 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center space-y-4 mb-20">
-            <h2 className="text-[clamp(2rem,8vw,3rem)] font-black uppercase tracking-tighter">Ecosistema Integrado</h2>
-            <p className="text-muted-foreground font-medium max-w-2xl mx-auto leading-relaxed">
+          <div className="text-center space-y-4 mb-12 sm:mb-20">
+            <h2 className="text-[clamp(1.85rem,8vw,3rem)] font-black uppercase tracking-tighter">Ecosistema Integrado</h2>
+            <p className="text-muted-foreground font-medium max-w-2xl mx-auto leading-relaxed text-sm sm:text-base">
               Módulos técnicos desarrollados bajo estándares de arquitectura empresarial para garantizar la integridad de sus datos y la velocidad operativa.
             </p>
           </div>
@@ -282,13 +282,13 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="md:col-span-3 md:row-span-2 p-6 sm:p-10 rounded-[2.5rem] bg-background border border-border hover:border-primary/20 transition-all group flex flex-col justify-between"
+              className="md:col-span-3 md:row-span-2 p-5 sm:p-10 rounded-[2rem] sm:rounded-[2.5rem] bg-background border border-border hover:border-primary/20 transition-all group flex flex-col justify-between"
             >
               <div>
-                <div className="w-14 h-14 rounded-2xl bg-violet-500/10 text-violet-600 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
-                  <FileText className="w-7 h-7" />
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-violet-500/10 text-violet-600 flex items-center justify-center mb-6 sm:mb-8 group-hover:scale-110 transition-transform">
+                  <FileText className="w-6 h-6 sm:w-7 sm:h-7" />
                 </div>
-                <h3 className="text-3xl font-black uppercase tracking-tight mb-4">Gestión de Costos</h3>
+                <h3 className="text-[clamp(1.5rem,5vw,1.875rem)] font-black uppercase tracking-tight mb-4">Gestión de Costos</h3>
                 <p className="text-lg text-muted-foreground leading-relaxed font-medium mb-8">
                   Motor de ingeniería con 14 secciones de gasto, 5 anexos técnicos y validación de ciclos en tiempo real.
                 </p>
@@ -309,13 +309,13 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
-              className="md:col-span-3 md:row-span-1 p-6 sm:p-8 rounded-[2.5rem] bg-background border border-border hover:border-primary/20 transition-all group flex gap-8 items-center"
+              className="md:col-span-3 md:row-span-1 p-5 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] bg-background border border-border hover:border-primary/20 transition-all group flex gap-4 sm:gap-8 items-center"
             >
-              <div className="shrink-0 w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center group-hover:rotate-12 transition-transform">
-                <ShoppingCart className="w-8 h-8" />
+              <div className="shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center group-hover:rotate-12 transition-transform">
+                <ShoppingCart className="w-7 h-7 sm:w-8 sm:h-8" />
               </div>
               <div>
-                <h3 className="text-xl font-black uppercase tracking-tight mb-2">Punto de Venta</h3>
+                <h3 className="text-lg sm:text-xl font-black uppercase tracking-tight mb-1 sm:mb-2">Punto de Venta</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed font-medium">
                   TPV móvil optimizado para operaciones de alta velocidad con sincronización offline.
                 </p>
@@ -328,12 +328,12 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.2 }}
-              className="md:col-span-3 md:row-span-1 lg:col-span-2 p-6 sm:p-8 rounded-[2.5rem] bg-background border border-border hover:border-primary/20 transition-all group"
+              className="md:col-span-3 md:row-span-1 lg:col-span-2 p-5 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] bg-background border border-border hover:border-primary/20 transition-all group"
             >
-              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center mb-4 group-hover:-translate-y-1 transition-transform">
-                <Package className="w-6 h-6" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center mb-3 sm:mb-4 group-hover:-translate-y-1 transition-transform">
+                <Package className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
-              <h3 className="text-lg font-black uppercase tracking-tight mb-2">Inventario Multi-Sede</h3>
+              <h3 className="text-base sm:text-lg font-black uppercase tracking-tight mb-1 sm:mb-2">Inventario Multi-Sede</h3>
               <p className="text-xs text-muted-foreground leading-relaxed font-medium">
                 Control total de stock con aislamiento RLS.
               </p>
@@ -345,7 +345,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.3 }}
-              className="md:col-span-3 md:row-span-1 lg:col-span-1 p-8 rounded-[2.5rem] bg-foreground text-background transition-all group flex items-center justify-center"
+              className="md:col-span-3 md:row-span-1 lg:col-span-1 p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] bg-foreground text-background transition-all group flex items-center justify-center"
             >
               <div className="text-center">
                 <Zap className="w-8 h-8 mx-auto mb-2 text-primary animate-pulse" />
@@ -357,15 +357,15 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
       </section>
 
       {/* SMB Feature Spotlight: Massive Cost Sheets */}
-      <section className="py-24 px-6 overflow-hidden">
+      <section className="py-16 sm:py-24 px-4 sm:px-6 overflow-hidden">
         <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-20 items-center">
-            <div className="order-1 lg:order-1 space-y-12">
-              <div className="space-y-6">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+            <div className="order-1 lg:order-1 space-y-8 sm:space-y-12">
+              <div className="space-y-4 sm:space-y-6">
                 <div className="inline-block px-4 py-2 rounded-xl bg-violet-500/10 text-violet-600 text-xs font-black uppercase tracking-widest">
                   Caso de Éxito MiPyME
                 </div>
-                <h2 className="text-[clamp(2rem,8vw,3.5rem)] font-black uppercase tracking-tighter leading-none">
+                <h2 className="text-[clamp(1.75rem,8vw,3.5rem)] font-black uppercase tracking-tighter leading-none">
                   La Transformación <br /> de los <span className="text-violet-600 italic">Lunes</span>
                 </h2>
                 <div className="space-y-4 text-muted-foreground font-medium leading-relaxed">
