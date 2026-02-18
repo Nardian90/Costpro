@@ -107,10 +107,20 @@ export function useCreateUser() {
     mutationFn: async (rawParams: z.input<typeof managedCreateUserParamsSchema>) => {
       const params = managedCreateUserParamsSchema.parse(rawParams);
 
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      if (!token) {
+        throw new Error('No hay sesión activa. Por favor, inicia sesión de nuevo.');
+      }
+
       // Call Next.js API route instead of direct RPC to handle auth.users via Service Role
       const response = await fetch('/api/users/managed-create', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(params),
       });
 
