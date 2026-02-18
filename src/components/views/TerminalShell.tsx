@@ -128,7 +128,7 @@ export default function TerminalShell() { // Renamed from TerminalView
   if (!user) return null;
 
   // BLOCKING ACCESS (Regla 3): If a non-admin user has no active store, block operations
-  const isBlockingRequired = user.role !== 'admin' && !user.activeStoreId;
+  const isBlockingRequired = user.role !== 'admin' && user.role !== 'costo' && !user.activeStoreId;
 
   const handleViewChange = (view: ViewType) => {
     startTransition(() => {
