@@ -36,14 +36,37 @@ export async function POST(req: NextRequest) {
 
     const dataBuffer = fs.readFileSync(filePath);
     const data = await pdf(dataBuffer);
-    const fullText = data.text;
+    let fullText = data.text;
+
+    // Search for companion JSON file
+    const baseName = filename.replace(/\.pdf$/i, '');
+    const manualsDir = path.dirname(filePath);
+    const jsonPaths = [
+        path.join(manualsDir, `${baseName}.json`),
+        path.join(manualsDir, baseName.replace(/^Res/, '') + '.json'),
+        path.join(manualsDir, baseName.replace(/^Res/, 'Res ') + '.json')
+    ];
+
+    let jsonFound = false;
+    for (const jPath of jsonPaths) {
+        if (fs.existsSync(jPath)) {
+            try {
+                const jsonRaw = fs.readFileSync(jPath, 'utf8');
+                // We prioritize JSON if it exists as it is usually better structured
+                fullText = `DATOS ESTRUCTURADOS DEL MANUAL (JSON):\n${jsonRaw}\n\nCONTENIDO ADICIONAL:\n${fullText}`;
+                jsonFound = true;
+                break;
+            } catch (e) {
+                console.error('Error reading JSON companion:', e);
+            }
+        }
+    }
 
     if (!fullText || fullText.trim().length === 0) {
         return NextResponse.json({ error: 'Could not extract text from PDF' }, { status: 400 });
     }
 
     // Initialize AI Provider
-    // Use user-provided key or fallback to system env vars
     const provider = getLLMProvider(aiProvider, aiApiKey);
 
     // Chunking: approx 4000 chars
@@ -54,7 +77,9 @@ export async function POST(req: NextRequest) {
     }
 
     const results: any[] = [];
-    const processedChunks = chunks.slice(0, limit);
+    // If we found JSON, we might want to process more than 3 chunks if they are small,
+    // but let's stick to the limit or a slightly higher one if it's the JSON content.
+    const processedChunks = chunks.slice(0, jsonFound ? Math.max(limit, 5) : limit);
 
     for (const chunk of processedChunks) {
       const messages: any[] = [
@@ -64,7 +89,7 @@ export async function POST(req: NextRequest) {
         },
         {
           role: 'user',
-          content: `A partir del siguiente fragmento de manual técnico, genera un conjunto de flashcards educativas.
+          content: `A partir del siguiente fragmento de manual técnico${jsonFound ? ' (que contiene datos estructurados JSON)' : ''}, genera un conjunto de flashcards educativas.
 
           INSTRUCCIONES:
           - Genera exactamente 5 preguntas tipo escenario práctico o concepto clave.
@@ -92,9 +117,8 @@ export async function POST(req: NextRequest) {
         let text = aiResponse.text;
 
         // Clean up JSON
-        text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        text = text.replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();
 
-        // Basic JSON finding if AI adds text
         const jsonMatch = text.match(/\s*\[[\s\S]*\]\s*/);
         if (jsonMatch) text = jsonMatch[0];
 
@@ -102,13 +126,17 @@ export async function POST(req: NextRequest) {
         if (Array.isArray(parsedQuestions)) {
           results.push(...parsedQuestions);
         }
-      } catch (e) {
-        console.error('Error in AI call or parsing:', e);
+      } catch (e: any) {
+        console.error('Error in AI call or parsing:', e.message);
+        // If it's a model/key error, we should probably stop and report it
+        if (e.message.includes('API Key') || e.message.includes('Modelo') || e.message.includes('Permisos')) {
+           return NextResponse.json({ error: e.message }, { status: 500 });
+        }
       }
     }
 
     if (results.length === 0) {
-      return NextResponse.json({ error: 'No questions generated. Check your AI configuration or PDF content.' }, { status: 500 });
+      return NextResponse.json({ error: 'No se pudieron generar preguntas. Verifica la configuración de AI o el contenido del PDF.' }, { status: 500 });
     }
 
     // Save to DB
@@ -126,7 +154,7 @@ export async function POST(req: NextRequest) {
     if (error) throw error;
 
     return NextResponse.json({
-      message: `Generated ${insertedData?.length || 0} cards from ${filename}`,
+      message: `Generadas ${insertedData?.length || 0} tarjetas desde ${filename}`,
       count: insertedData?.length || 0
     });
 
