@@ -324,58 +324,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
               <p className="text-xs uppercase tracking-widest text-muted-foreground mt-2">Ajuste dinámico sobre costo (13.1/12.1)</p>
             </header>
 
-            <div className="glass-card-stitch rounded-3xl p-8 mb-10 relative overflow-hidden group/price border-primary/30 bg-primary/5 shadow-inner">
-              <div className="flex flex-col items-center gap-6">
-                <div className="w-full text-center">
-                  <p className="text-xs uppercase tracking-[0.3em] text-primary font-black mb-4">Precio de Venta</p>
 
-                  <div className="relative inline-block w-full">
-                    <input
-                      type="number"
-                      value={localPrice}
-                      onFocus={() => setIsEditingPrice(true)}
-                      onBlur={() => setIsEditingPrice(false)}
-                      onChange={handlePriceChange}
-                      className={cn(
-                        "bg-transparent border-none text-center font-display font-black focus:ring-0 p-0 text-foreground w-full transition-all duration-300 neon-glow selection:bg-primary/30",
-                        localPrice.length <= 4 ? "text-7xl" :
-                        localPrice.length <= 6 ? "text-6xl" :
-                        localPrice.length <= 8 ? "text-5xl" :
-                        localPrice.length <= 10 ? "text-4xl" :
-                        localPrice.length <= 12 ? "text-3xl" : "text-2xl"
-                      )}
-                      placeholder="0.00"
-                    />
-                  </div>
-
-                  <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground mt-4 font-bold opacity-70">
-                    Objetivo Final Calculado (Inc. Impuestos)
-                  </p>
-                </div>
-
-                <div className="flex items-center justify-center gap-12 w-full pt-4 border-t border-primary/10">
-                  <button
-                    onClick={() => handlePriceAdjust(-1)}
-                    className="flex flex-col items-center gap-2 group/btn"
-                  >
-                    <div className="p-4 rounded-2xl bg-primary/10 hover:bg-primary/20 text-primary transition-all border border-primary/20 group-hover/btn:scale-110 active:scale-90 shadow-lg shadow-primary/5">
-                      <Minus className="w-6 h-6 stroke-[3]" />
-                    </div>
-                    <span className="text-[10px] uppercase tracking-widest font-black text-primary/40 group-hover/btn:text-primary transition-colors">- $1.00</span>
-                  </button>
-
-                  <button
-                    onClick={() => handlePriceAdjust(1)}
-                    className="flex flex-col items-center gap-2 group/btn"
-                  >
-                    <div className="p-4 rounded-2xl bg-primary/10 hover:bg-primary/20 text-primary transition-all border border-primary/20 group-hover/btn:scale-110 active:scale-90 shadow-lg shadow-primary/5">
-                      <Plus className="w-6 h-6 stroke-[3]" />
-                    </div>
-                    <span className="text-[10px] uppercase tracking-widest font-black text-primary/40 group-hover/btn:text-primary transition-colors">+ $1.00</span>
-                  </button>
-                </div>
-              </div>
-            </div>
 
             <div className="space-y-10 mb-12">
               <div className="space-y-4">
