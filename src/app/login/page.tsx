@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SplashScreen from '@/components/SplashScreen';
 import WelcomeLandingView from '@/components/auth/WelcomeLandingView';
@@ -12,13 +12,20 @@ export default function LoginPage() {
   const [showSplash, setShowSplash] = useState(true);
   const [showLoginForm, setShowLoginForm] = useState(false);
 
-  if (showSplash) {
-    return <SplashScreen onFinish={() => setShowSplash(false)} />;
-  }
+  const handleSplashFinish = useCallback(() => {
+    setShowSplash(false);
+  }, []);
 
   return (
     <main className="relative min-h-screen">
-      {/* The Landing View is always the base layer */}
+      {/* Splash Screen Overlay */}
+      <AnimatePresence>
+        {showSplash && (
+          <SplashScreen onFinish={handleSplashFinish} />
+        )}
+      </AnimatePresence>
+
+      {/* The Landing View is always rendered but covered by splash initially */}
       <WelcomeLandingView onLoginClick={() => setShowLoginForm(true)} />
 
       {/* Login Overlay / Modal */}

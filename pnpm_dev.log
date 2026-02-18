@@ -1,0 +1,7 @@
+
+> nextjs_tailwind_shadcn_ts@5.7.25 dev /app
+> next dev -p 3000 -H 0.0.0.0
+
+sh: 1: next: not found
+ ELIFECYCLE  Command failed.
+ WARN   Local package.json exists, but node_modules missing, did you mean to install?

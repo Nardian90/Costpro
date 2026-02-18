@@ -44,8 +44,8 @@ const CostProLogo: React.FC<CostProLogoProps> = ({ size = 120, animated = true, 
         >
           <defs>
             <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" className="logo-stop-start" />
-              <stop offset="100%" className="logo-stop-end" />
+              <stop offset="0%" style={{ stopColor: 'var(--logo-start, #22c55e)' }} />
+              <stop offset="100%" style={{ stopColor: 'var(--logo-end, #10b981)' }} />
             </linearGradient>
 
             <filter id="pure-glow">
@@ -85,20 +85,6 @@ const CostProLogo: React.FC<CostProLogoProps> = ({ size = 120, animated = true, 
           Protege tus costos y precios
         </p>
       </motion.div>
-      <style>{`
-        .logo-stop-start {
-          stop-color: #22c55e;
-        }
-        .logo-stop-end {
-          stop-color: #10b981;
-        }
-        .dark .logo-stop-start {
-          stop-color: #4ade80;
-        }
-        .dark .logo-stop-end {
-          stop-color: #2dd4bf;
-        }
-      `}</style>
     </div>
   );
 };

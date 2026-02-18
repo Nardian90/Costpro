@@ -1,3 +1,15 @@
+:root {
+  --logo-start: #22c55e;
+  --logo-end: #10b981;
+}
+.dark {
+  --logo-start: #4ade80;
+  --logo-end: #2dd4bf;
+}
+:root {
+}
+.dark {
+}
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";

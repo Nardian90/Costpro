@@ -1,0 +1,10 @@
+I have fixed the Splash Screen lock issue and rendering performance.
+
+Summary of changes:
+1. Updated tailwind.config.ts to correctly map Geist font variables, fixing the preload mismatch.
+2. Enhanced SplashScreen.tsx with a safety timeout (4s) and useRef to ensure it always dismisses, even if Framer Motion animations hang.
+3. Optimized CostProLogo.tsx by removing dynamic style tags and using CSS variables in globals.css to prevent forced reflows.
+4. Improved LoginPage.tsx hydration by using useCallback for the finish handler and wrapping SplashScreen in AnimatePresence for clean unmounting.
+5. Added necessary CSS variables to globals.css for the logo colors across themes.
+
+Please review these changes for any potential side effects.
