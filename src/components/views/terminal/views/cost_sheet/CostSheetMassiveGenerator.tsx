@@ -76,7 +76,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
     consolidated: true,
     skipZeros: true,
     includeFinancialSummary: true,
-    includeUtilityNote: true, showDateTime: true
+    includeUtilityNote: true
   });
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -614,6 +614,14 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                             onCheckedChange={(c) => setExportOptions(prev => ({ ...prev, includeUtilityNote: c }))}
                         />
                         <Label htmlFor="m-includeUtilityNote" className="text-xs font-bold uppercase cursor-pointer">Nota Util.</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Switch
+                            id="m-showDateTime"
+                            checked={exportOptions.showDateTime}
+                            onCheckedChange={(c) => setExportOptions(prev => ({ ...prev, showDateTime: c }))}
+                        />
+                        <Label htmlFor="m-showDateTime" className="text-xs font-bold uppercase cursor-pointer">Fecha/Hora</Label>
                     </div>
                 </div>
 
