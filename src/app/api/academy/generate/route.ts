@@ -31,44 +31,19 @@ export async function POST(req: NextRequest) {
 
     const filePath = path.join(process.cwd(), 'public', 'manuals', filename);
     if (!fs.existsSync(filePath)) {
-      return NextResponse.json({ error: 'Archivo no encontrado: ' + filename }, { status: 404 });
+      return NextResponse.json({ error: 'File not found: ' + filePath }, { status: 404 });
     }
 
-    // Pre-check for API Key if using a provider that requires it
-    const effectiveProvider = (aiProvider || process.env.LLM_PROVIDER || 'gemini').toLowerCase();
-    const effectiveApiKey = aiApiKey || (
-      effectiveProvider === 'gemini' ? process.env.GEMINI_API_KEY :
-      effectiveProvider === 'gpt' ? process.env.OPENAI_API_KEY :
-      effectiveProvider === 'qwen' ? process.env.QWEN_API_KEY : ''
-    );
-
-    if (!effectiveApiKey) {
-        return NextResponse.json({
-            error: `No se ha configurado la API Key para ${effectiveProvider}. Por favor, ve a tu perfil y configúrala.`
-        }, { status: 401 });
-    }
-
-    let dataBuffer;
-    try {
-        dataBuffer = fs.readFileSync(filePath);
-    } catch (e: any) {
-        return NextResponse.json({ error: 'Error al leer el archivo PDF: ' + e.message }, { status: 500 });
-    }
-
-    let data;
-    try {
-        data = await pdf(dataBuffer);
-    } catch (e: any) {
-        return NextResponse.json({ error: 'Error al procesar el PDF (posible formato inválido o corrupto): ' + e.message }, { status: 400 });
-    }
-
+    const dataBuffer = fs.readFileSync(filePath);
+    const data = await pdf(dataBuffer);
     const fullText = data.text;
 
     if (!fullText || fullText.trim().length === 0) {
-        return NextResponse.json({ error: 'No se pudo extraer texto del PDF. Asegúrate de que no sea solo una imagen o tenga protección.' }, { status: 400 });
+        return NextResponse.json({ error: 'Could not extract text from PDF' }, { status: 400 });
     }
 
     // Initialize AI Provider
+    // Use user-provided key or fallback to system env vars
     const provider = getLLMProvider(aiProvider, aiApiKey);
 
     // Chunking: approx 4000 chars
@@ -80,7 +55,6 @@ export async function POST(req: NextRequest) {
 
     const results: any[] = [];
     const processedChunks = chunks.slice(0, limit);
-    let lastAiError: string | null = null;
 
     for (const chunk of processedChunks) {
       const messages: any[] = [
@@ -128,21 +102,13 @@ export async function POST(req: NextRequest) {
         if (Array.isArray(parsedQuestions)) {
           results.push(...parsedQuestions);
         }
-      } catch (e: any) {
+      } catch (e) {
         console.error('Error in AI call or parsing:', e);
-        lastAiError = e.message;
-        // If it's a model not found or auth error, don't bother continuing with other chunks
-        if (e.message.includes('404') || e.message.includes('not found') || e.message.includes('API Key')) {
-            break;
-        }
       }
     }
 
     if (results.length === 0) {
-      const detail = lastAiError ? ` Detalles IA: ${lastAiError}` : '';
-      return NextResponse.json({
-        error: `No se pudieron generar preguntas.${detail} Revisa la configuración de tu IA o el contenido del PDF.`
-      }, { status: 500 });
+      return NextResponse.json({ error: 'No questions generated. Check your AI configuration or PDF content.' }, { status: 500 });
     }
 
     // Save to DB
@@ -160,7 +126,7 @@ export async function POST(req: NextRequest) {
     if (error) throw error;
 
     return NextResponse.json({
-      message: `Generadas ${insertedData?.length || 0} tarjetas desde ${filename}`,
+      message: `Generated ${insertedData?.length || 0} cards from ${filename}`,
       count: insertedData?.length || 0
     });
 
