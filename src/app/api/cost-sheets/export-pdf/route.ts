@@ -37,13 +37,16 @@ export async function POST(req: NextRequest) {
         if (lastHeaderPage === pageNum) return;
         lastHeaderPage = pageNum;
 
-        // Logo Placeholder or "C"
-        doc.setDrawColor(200);
-        doc.setLineWidth(0.5);
-        doc.rect(14, 10, 20, 20);
-        doc.setFontSize(14);
+        // Logo Box "FC" (More attractive style)
+        doc.setFillColor(40, 40, 40);
+        doc.rect(14, 10, 20, 20, 'F');
+
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(16);
         doc.setFont("helvetica", "bold");
-        doc.text("C", 24, 23, { align: "center" });
+        doc.text("FC", 24, 23, { align: "center" });
+
+        doc.setTextColor(0, 0, 0); // Reset to black
 
         // Formal Header (Ministry Style)
         doc.setFontSize(10);
@@ -86,9 +89,37 @@ export async function POST(req: NextRequest) {
         'category': 'Categoría',
         'salary': 'Salario',
         'total_salary': 'Salario Total',
-        'coefficient': 'Coeficiente'};
+        'coefficient': 'Coeficiente',
+        'provider': 'Proveedor',
+        'supplier': 'Proveedor',
+        'observation': 'Observación',
+        'observations': 'Observaciones',
+        'note': 'Nota',
+        'notes': 'Notas',
+        'date': 'Fecha',
+        'currency': 'Moneda',
+        'status': 'Estado',
+        'type': 'Tipo',
+        'category_name': 'Categoría',
+        'unit_price': 'Precio Unitario',
+        'total_price': 'Precio Total',
+        'subtotal': 'Subtotal',
+        'tax': 'Impuesto',
+        'discount': 'Descuento',
+        'concept': 'Concepto',
+        'unit': 'UM',
+        'norm': 'Norma',
+        'total_cost': 'Costo Total',
+        'reference': 'Referencia',
+        'percentage': 'Porcentaje',
+        'weight': 'Peso',
+        'volume': 'Volumen',
+    };
 
-    const translate = (key: string) => translationMap[key] || key;
+    const translate = (key: string) => {
+        const normalized = key.toLowerCase().trim().replace(/ /g, '_');
+        return translationMap[normalized] || translationMap[key.toLowerCase()] || key;
+    };
 
 
     const addDataSheetHeader = (doc: jsPDF, y: number) => {
