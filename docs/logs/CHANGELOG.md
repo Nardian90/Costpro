@@ -1,6 +1,18 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [5.6.5] - 2026-02-18
+
+### Added
+- **Soporte para Compañeros JSON en Academy**: El motor de generación de flashcards ahora busca automáticamente archivos `.json` que acompañen a los manuales PDF. Si se encuentra un JSON (ej. `1482023.json` para `Res1482023.pdf`), se utiliza como contexto estructurado prioritario para mejorar la precisión de la IA.
+
+### Changed
+- **Migración a Gemini 1.5 Flash**: Actualización del modelo predeterminado a `gemini-1.5-flash` tras la depreciación de versiones preview anteriores.
+- **Hardening de Errores de AI**: Mejora integral en la gestión de excepciones del `GeminiAdapter`. Ahora se distinguen claramente errores de API Key (401/403), errores de Modelo (404) y límites de cuota, proporcionando mensajes de error accionables al usuario en la interfaz.
+- **Propagación de Errores en API**: La ruta de generación de Academy (`/api/academy/generate`) ahora propaga errores específicos de AI directamente al usuario, evitando mensajes genéricos y facilitando el diagnóstico.
+
+**Nota de Handoff para UX:** No se requieren cambios visuales. Se ha mejorado la claridad de los mensajes de error mostrados mediante Toasts cuando hay problemas con la configuración de la IA o el contenido de los manuales.
+
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
