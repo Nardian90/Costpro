@@ -9,7 +9,8 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, FileSpreadsheet, ListFilter, Layout, ClipboardList, Activity, Plus } from 'lucide-react';
+import { CheckCircle2, FileSpreadsheet, ListFilter, Layout, ClipboardList, Activity, Plus, Calculator } from 'lucide-react';
+import { useUIStore } from "@/store";
 import { Button } from '@/components/ui/button';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
 
@@ -34,6 +35,7 @@ export const CostSheetSidebarNav: React.FC<CostSheetSidebarNavProps> = ({
 }) => {
   const addMainSection = useCostSheetStore(state => state.addMainSection);
   const addRow = useCostSheetStore(state => state.addRow);
+  const setIsCalculatorOpen = useUIStore(state => state.setIsCalculatorOpen);
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -100,16 +102,29 @@ export const CostSheetSidebarNav: React.FC<CostSheetSidebarNavProps> = ({
 
         <div className="p-4 border-t border-sidebar-border/50 bg-sidebar/5 space-y-4">
             {type === 'sections' && (
-                <Button
-                    onClick={() => {
-                        addMainSection();
-                        onClose();
-                    }}
-                    className="w-full h-12 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest text-xs shadow-lg shadow-primary/20 gap-3"
-                >
-                    <Plus className="w-4 h-4" />
-                    Nueva Sección
-                </Button>
+                <div className="grid grid-cols-2 gap-3">
+                  <Button
+                      onClick={() => {
+                          addMainSection();
+                          onClose();
+                      }}
+                      className="w-full h-12 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20 gap-2 px-2"
+                  >
+                      <Plus className="w-4 h-4" />
+                      Nueva Sección
+                  </Button>
+                  <Button
+                      onClick={() => {
+                          setIsCalculatorOpen(true);
+                          onClose();
+                      }}
+                      variant="outline"
+                      className="w-full h-12 rounded-2xl border-primary/20 hover:bg-primary/10 text-primary font-black uppercase tracking-widest text-[10px] gap-2 px-2"
+                  >
+                      <Calculator className="w-4 h-4" />
+                      Calculadora
+                  </Button>
+                </div>
             )}
             <p className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground/50 text-center">
                 Navegación de Ficha
