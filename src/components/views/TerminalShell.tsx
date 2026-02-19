@@ -26,6 +26,7 @@ import { Header } from './terminal/Header';
 import { CostProLoader } from '@/components/ui/CostProLoader';
 import { CreateProductModal } from '@/components/modals/CreateProductModal';
 import { ChatBot } from '@/components/ui/ChatBot';
+import { FloatingCalculator } from "@/components/ui/FloatingCalculator";
 
 // Sub-views will be lazy loaded later
 import { MobileSafeContainer } from '@/components/ui/MobileSafeContainer';
@@ -301,6 +302,7 @@ export default function TerminalShell() { // Renamed from TerminalView
 
       <CreateProductModal />
       {currentView !== 'pos' && <ChatBot />}
+      <FloatingCalculator />
     </div>
   );
 }
