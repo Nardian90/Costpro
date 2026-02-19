@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -30,28 +29,51 @@ const CostSheetAnnexes: React.FC<CostSheetAnnexesProps> = ({ annexes, forceTable
               <table className="w-full text-xs">
                 <thead className="bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-700">
                   <tr>
-                    {annex.columns.map((col: CostSheetColumn) => (
-                      <th key={col.key} className="p-3 text-left font-black uppercase tracking-widest text-xs text-slate-500 dark:text-slate-400">
-                        {col.label || col.title || col.key}
-                      </th>
-                    ))}
+                    {annex.columns.map((col: CostSheetColumn) => {
+                      const isMain = col.key === 'description' || col.label?.toLowerCase().includes('descripción') || col.label?.toLowerCase().includes('puesto');
+                      const widthClass = col.key === 'no' ? 'w-12' :
+                                       (col.key === 'um' ? 'w-16' :
+                                       (col.key === 'total' || col.key === 'amount' ? 'w-32' :
+                                       (!isMain ? 'w-24' : '')));
+                      return (
+                        <th key={col.key} className={cn(
+                            "p-3 text-left font-black uppercase tracking-widest text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap",
+                            widthClass
+                        )}>
+                            {col.label || col.title || col.key}
+                        </th>
+                      );
+                    })}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {annex.data.length > 0 ? annex.data.map((row, rowIndex) => (
-                    <tr key={rowIndex} className="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
-                      {annex.columns.map((col: CostSheetColumn) => (
-                        <td key={`${rowIndex}-${col.key}`} className="p-3 font-mono text-xs text-slate-700 dark:text-slate-300">
-                           <span className={col.formula ? "font-black text-primary" : "font-medium"}>
-                             {typeof row[col.key] === 'number'
-                               ? row[col.key].toLocaleString('es-ES', { minimumFractionDigits: 2 })
-                               : (row[col.key] !== undefined && row[col.key] !== null && row[col.key] !== '' ? row[col.key] : '--')
-                             }
-                           </span>
-                        </td>
-                      ))}
-                    </tr>
-                  )) : (
+                  {annex.data.length > 0 ? annex.data.map((row, rowIndex) => {
+                    const isZero = (val: any) => Number(val) === 0;
+                    return (
+                        <tr key={rowIndex} className="h-8 text-xs hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
+                        {annex.columns.map((col: CostSheetColumn) => {
+                            const isMain = col.key === 'description' || col.label?.toLowerCase().includes('descripción') || col.label?.toLowerCase().includes('puesto');
+                            const widthClass = col.key === 'no' ? 'w-12' :
+                                            (col.key === 'um' ? 'w-16' :
+                                            (col.key === 'total' || col.key === 'amount' ? 'w-32' :
+                                            (!isMain ? 'w-24' : '')));
+                            return (
+                            <td key={`${rowIndex}-${col.key}`} className={cn(
+                                "py-0.5 px-2 font-mono text-xs text-slate-700 dark:text-slate-300 whitespace-nowrap",
+                                widthClass
+                            )}>
+                            <span className={cn(col.formula ? "text-primary font-black" : "font-medium text-slate-700", isZero(row[col.key]) && "text-muted-foreground opacity-60 font-medium")}>
+                                {typeof row[col.key] === 'number'
+                                ? row[col.key].toLocaleString('es-ES', { minimumFractionDigits: 2 })
+                                : (row[col.key] !== undefined && row[col.key] !== null && row[col.key] !== '' ? row[col.key] : '--')
+                                }
+                            </span>
+                            </td>
+                            );
+                        })}
+                        </tr>
+                    );
+                  }) : (
                     <tr>
                       <td colSpan={annex.columns.length} className="p-8 text-center italic text-slate-400">
                         No hay datos registrados en este anexo.
