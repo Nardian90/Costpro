@@ -1,16 +1,19 @@
 'use client';
 
 import { useState } from 'react';
+import { useUIStore } from '@/store';
 import { motion, AnimatePresence } from 'framer-motion';
 import SplashScreen from '@/components/SplashScreen';
 import WelcomeLandingView from '@/components/auth/WelcomeLandingView';
 import LoginForm from '@/components/auth/LoginForm';
 import { X } from 'lucide-react';
 import CostProLogo from '@/components/CostProLogo';
+import { FloatingCalculator } from "@/components/ui/FloatingCalculator";
 
 export default function LoginPage() {
   const [showSplash, setShowSplash] = useState(true);
   const [showLoginForm, setShowLoginForm] = useState(false);
+  const { setIsCalculatorOpen } = useUIStore();
 
   if (showSplash) {
     return <SplashScreen onFinish={() => setShowSplash(false)} />;
@@ -18,10 +21,10 @@ export default function LoginPage() {
 
   return (
     <main className="relative min-h-screen">
-      {/* The Landing View is always the base layer */}
       <WelcomeLandingView onLoginClick={() => setShowLoginForm(true)} />
 
-      {/* Login Overlay / Modal */}
+      <button id="open-calc" onClick={() => setIsCalculatorOpen(true)} className="fixed top-4 right-4 z-[50] bg-primary p-2 rounded text-white mt-4">Open Calculator</button>
+
       <AnimatePresence>
         {showLoginForm && (
           <motion.div
@@ -30,7 +33,6 @@ export default function LoginPage() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/40 backdrop-blur-md"
           >
-            {/* Backdrop click to close */}
             <div
               className="absolute inset-0"
               onClick={() => setShowLoginForm(false)}
@@ -63,6 +65,7 @@ export default function LoginPage() {
           </motion.div>
         )}
       </AnimatePresence>
+      <FloatingCalculator />
     </main>
   );
 }
