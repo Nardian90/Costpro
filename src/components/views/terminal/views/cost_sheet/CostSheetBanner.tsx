@@ -10,8 +10,14 @@ export const CostSheetBanner = () => {
   return (
     <div className="hidden sm:flex flex-col sm:flex-row items-center justify-between gap-4 mb-8 px-2">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" className="mr-2" onClick={() => setCurrentView('dashboard')}>
-          <ArrowLeft className="w-5 h-5" />
+        <Button
+          variant="outline"
+          size="sm"
+          className="mr-4 rounded-xl border-primary/20 text-primary hover:bg-primary/10 font-black uppercase tracking-widest text-[10px] h-11 px-4"
+          onClick={() => setCurrentView('dashboard')}
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Regresar
         </Button>
         <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20 rotate-3">
           <ShieldCheck className="w-7 h-7 text-white" />

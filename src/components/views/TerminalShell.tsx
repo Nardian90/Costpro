@@ -305,8 +305,8 @@ export default function TerminalShell() { // Renamed from TerminalView
       )}
 
       <CreateProductModal />
-      {currentView !== 'pos' && <ChatBot />}
-      <FloatingCalculator />
+      {currentView !== 'pos' && !isIntegroView && <ChatBot />}
+      {!isIntegroView && <FloatingCalculator />}
     </div>
   );
 }
