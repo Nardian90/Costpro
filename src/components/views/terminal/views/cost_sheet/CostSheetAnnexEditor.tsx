@@ -250,10 +250,14 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                     <TableRow className="border-b border-border/50">
                         {annex.columns.map((col: CostSheetColumn) => {
                              const isMain = col.key === 'description' || col.label?.toLowerCase().includes('descripción') || col.label?.toLowerCase().includes('puesto');
+                             const widthClass = col.key === 'no' ? 'w-12' :
+                                               (col.key === 'um' ? 'w-16' :
+                                               (col.key === 'total' || col.key === 'amount' ? 'w-32' :
+                                               (!isMain ? 'w-24' : '')));
                              return (
                                 <TableHead key={col.key} className={cn(
                                     "font-black py-4 px-4 text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400 whitespace-nowrap",
-                                    !isMain && "w-[1%]"
+                                    widthClass
                                 )}>
                                     {col.label || col.title || col.key}
                                 </TableHead>
@@ -267,8 +271,12 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                         <TableRow key={rowIndex} className="border-b border-border/30 hover:bg-primary/5 transition-colors group">
                             {annex.columns.map((col: CostSheetColumn) => {
                                 const isMain = col.key === 'description' || col.label?.toLowerCase().includes('descripción') || col.label?.toLowerCase().includes('puesto');
+                                const widthClass = col.key === 'no' ? 'w-12' :
+                                               (col.key === 'um' ? 'w-16' :
+                                               (col.key === 'total' || col.key === 'amount' ? 'w-32' :
+                                               (!isMain ? 'w-24' : '')));
                                 return (
-                                <TableCell key={col.key} data-label={col.label || col.title || col.key} className={cn("p-3 sm:p-4", !isMain && "w-[1%] whitespace-nowrap")}>
+                                <TableCell key={col.key} data-label={col.label || col.title || col.key} className={cn("p-3 sm:p-4", widthClass)}>
                                     {col.formula ? (
                                         <div className="relative group/cell">
                                             <div className="neu-inset-sm px-3 py-2 font-mono text-right bg-primary/5 text-primary font-black min-w-[100px] border border-primary/10">
