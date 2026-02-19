@@ -30,18 +30,29 @@ const CostSheetAnnexes: React.FC<CostSheetAnnexesProps> = ({ annexes, forceTable
               <table className="w-full text-xs">
                 <thead className="bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-700">
                   <tr>
-                    {annex.columns.map((col: CostSheetColumn) => (
-                      <th key={col.key} className="p-3 text-left font-black uppercase tracking-widest text-xs text-slate-500 dark:text-slate-400">
-                        {col.label || col.title || col.key}
-                      </th>
-                    ))}
+                    {annex.columns.map((col: CostSheetColumn) => {
+                      const isMain = col.key === 'description' || col.label?.toLowerCase().includes('descripción') || col.label?.toLowerCase().includes('puesto');
+                      return (
+                        <th key={col.key} className={cn(
+                            "p-3 text-left font-black uppercase tracking-widest text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap",
+                            !isMain && "w-[1%]"
+                        )}>
+                            {col.label || col.title || col.key}
+                        </th>
+                      );
+                    })}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {annex.data.length > 0 ? annex.data.map((row, rowIndex) => (
                     <tr key={rowIndex} className="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
-                      {annex.columns.map((col: CostSheetColumn) => (
-                        <td key={`${rowIndex}-${col.key}`} className="p-3 font-mono text-xs text-slate-700 dark:text-slate-300">
+                      {annex.columns.map((col: CostSheetColumn) => {
+                        const isMain = col.key === 'description' || col.label?.toLowerCase().includes('descripción') || col.label?.toLowerCase().includes('puesto');
+                        return (
+                        <td key={`${rowIndex}-${col.key}`} className={cn(
+                            "p-3 font-mono text-xs text-slate-700 dark:text-slate-300 whitespace-nowrap",
+                            !isMain && "w-[1%]"
+                        )}>
                            <span className={col.formula ? "font-black text-primary" : "font-medium"}>
                              {typeof row[col.key] === 'number'
                                ? row[col.key].toLocaleString('es-ES', { minimumFractionDigits: 2 })
@@ -49,7 +60,8 @@ const CostSheetAnnexes: React.FC<CostSheetAnnexesProps> = ({ annexes, forceTable
                              }
                            </span>
                         </td>
-                      ))}
+                        );
+                      })}
                     </tr>
                   )) : (
                     <tr>

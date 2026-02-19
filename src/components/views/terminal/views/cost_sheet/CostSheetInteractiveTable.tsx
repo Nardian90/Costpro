@@ -140,7 +140,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
         isResultRow && "bg-primary/5 font-bold"
       )}>
         {/* No. */}
-        <TableCell className="w-12 px-2 py-1.5 text-center text-xs font-black text-muted-foreground/60 tabular-nums border-r border-border/10">
+        <TableCell className="w-[1%] whitespace-nowrap px-2 py-1.5 text-center text-xs font-black text-muted-foreground/60 tabular-nums border-r border-border/10">
             {numbering}
         </TableCell>
 
@@ -224,7 +224,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
         </TableCell>
 
         {/* Valor Histórico / % */}
-        <TableCell className="px-2 py-1 text-right w-32 sm:w-40 cursor-pointer border-r border-border/10" onClick={() => setIsEditingVH(true)}>
+        <TableCell className="px-2 py-1 text-right w-[1%] whitespace-nowrap cursor-pointer border-r border-border/10" onClick={() => setIsEditingVH(true)}>
             <div className="relative">
                 {isEditingVH ? (
                     <FormulaEditor
@@ -259,7 +259,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
 
         {/* Total */}
         <TableCell
-          className="px-2 py-1 text-right font-black tabular-nums text-primary w-36 sm:w-48 cursor-pointer hover:bg-primary/5 transition-colors text-[13px] border-r border-border/10"
+          className="px-2 py-1 text-right font-black tabular-nums text-primary w-[1%] whitespace-nowrap cursor-pointer hover:bg-primary/5 transition-colors text-[13px] border-r border-border/10"
           onClick={() => setIsEditingTotal(true)}
         >
           {isEditingTotal ? (
@@ -356,7 +356,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
         </TableCell>
 
         {/* Ayuda - Hidden on very small screens */}
-        <TableCell className="px-2 py-1 text-center w-12 sm:w-20 hidden sm:table-cell">
+        <TableCell className="px-2 py-1 text-center w-[1%] whitespace-nowrap hidden sm:table-cell">
           {row.helpText && (
             <Popover>
               <PopoverTrigger asChild>
@@ -583,11 +583,11 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                                 (isStickyHeaderSection && isFirstInGroup) && "sticky top-0 z-20"
                             )}>
                                 <TableRow className="hover:bg-transparent border-none">
-                                    <TableHead className="w-12 px-2 py-2 text-center font-black uppercase tracking-widest border-r border-border/10">No.</TableHead>
+                                    <TableHead className="w-[1%] whitespace-nowrap px-2 py-2 text-center font-black uppercase tracking-widest border-r border-border/10">No.</TableHead>
                                     <TableHead className="px-2 py-2 text-left font-black uppercase tracking-widest min-w-[250px] border-r border-border/10">Concepto</TableHead>
-                                    <TableHead className="px-2 py-2 text-right font-black uppercase tracking-widest w-32 sm:w-40 border-r border-border/10">Valor Histórico</TableHead>
-                                    <TableHead className="px-2 py-2 text-right font-black uppercase tracking-widest w-36 sm:w-48 border-r border-border/10">Total</TableHead>
-                                    <TableHead className="px-2 py-2 text-center font-black uppercase tracking-widest w-12 sm:w-20 hidden sm:table-cell">Ayuda</TableHead>
+                                    <TableHead className="px-2 py-2 text-right font-black uppercase tracking-widest w-[1%] whitespace-nowrap border-r border-border/10">Valor Histórico</TableHead>
+                                    <TableHead className="px-2 py-2 text-right font-black uppercase tracking-widest w-[1%] whitespace-nowrap border-r border-border/10">Total</TableHead>
+                                    <TableHead className="px-2 py-2 text-center font-black uppercase tracking-widest w-[1%] whitespace-nowrap hidden sm:table-cell">Ayuda</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
