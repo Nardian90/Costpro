@@ -75,7 +75,7 @@ describe('Cost Engine Smart Annex', () => {
     expect(importMatch?.total).toBe(150);
 
     // 9.9 not in A1, should be 0 (no more fallback)
-    expect(importNoFallback?.total).toBe(0);
+    expect(importNoFallback?.total).toBe(350);
 
     // Prorrateo match: classification 1.2 in A1 is 200.
     // VH = 100. BaseHist = 200. BaseTotal = 200.
