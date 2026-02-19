@@ -221,49 +221,55 @@ export default function TerminalShell() { // Renamed from TerminalView
     return renderView(currentView);
   };
 
+  const isIntegroView = currentView === 'help' || currentView === 'cost-sheets';
+
   return (
     <div className="min-h-screen flex bg-background text-foreground max-w-full overflow-x-hidden">
-      <Sidebar
-        sidebarOpen={sidebarOpen}
-        sidebarSearch={sidebarSearch}
-        setSidebarSearch={setSidebarSearch}
-        navigationItems={nav.navigationItems}
-        currentView={currentView}
-        onViewChange={handleViewChange}
-        onPrefetchView={handlePrefetchView}
-        onLogout={handleLogout}
-        logoHeight={nav.logoHeight}
-        logoOpacity={nav.logoOpacity}
-        logoScale={nav.logoScale}
-        navRef={nav.navRef}
-      />
+      {!isIntegroView && (
+        <Sidebar
+          sidebarOpen={sidebarOpen}
+          sidebarSearch={sidebarSearch}
+          setSidebarSearch={setSidebarSearch}
+          navigationItems={nav.navigationItems}
+          currentView={currentView}
+          onViewChange={handleViewChange}
+          onPrefetchView={handlePrefetchView}
+          onLogout={handleLogout}
+          logoHeight={nav.logoHeight}
+          logoOpacity={nav.logoOpacity}
+          logoScale={nav.logoScale}
+          navRef={nav.navRef}
+        />
+      )}
 
       <main className="flex-1 min-h-screen flex flex-col z-10 min-w-0">
-        <Header
-          sidebarOpen={sidebarOpen}
-          toggleSidebar={toggleSidebar}
-          currentView={currentView}
-          navigationItems={nav.navigationItems}
-          onViewChange={handleViewChange}
-          user={user}
-          handleSetActiveStore={async (id) => {
-            try {
-              updateUser({ activeStoreId: id });
-              await userService.setActiveStore(user.id, id);
-              toast.success('Sucursal actualizada');
-              // Invalida productos para forzar recarga con el nuevo storeId
-              // queryClient está correctamente instanciado arriba mediante useQueryClient()
-              queryClient.invalidateQueries({ queryKey: ['products'] });
-            } catch (error) {
-              console.error('Error al cambiar de sucursal:', error);
-              toast.error('No se pudo persistir el cambio de sucursal');
-            }
-          }}
-        />
+        {!isIntegroView && (
+          <Header
+            sidebarOpen={sidebarOpen}
+            toggleSidebar={toggleSidebar}
+            currentView={currentView}
+            navigationItems={nav.navigationItems}
+            onViewChange={handleViewChange}
+            user={user}
+            handleSetActiveStore={async (id) => {
+              try {
+                updateUser({ activeStoreId: id });
+                await userService.setActiveStore(user.id, id);
+                toast.success('Sucursal actualizada');
+                // Invalida productos para forzar recarga con el nuevo storeId
+                // queryClient está correctamente instanciado arriba mediante useQueryClient()
+                queryClient.invalidateQueries({ queryKey: ['products'] });
+              } catch (error) {
+                console.error('Error al cambiar de sucursal:', error);
+                toast.error('No se pudo persistir el cambio de sucursal');
+              }
+            }}
+          />
+        )}
 
         <div className={cn(
-          "px-2 pt-0 pb-32 flex-1 overflow-x-visible terminal-content",
-          currentView === 'cost-sheets' ? "sm:px-4 lg:px-6" : "sm:p-8 lg:p-12"
+          "px-0 pt-0 pb-0 flex-1 overflow-x-visible terminal-content",
+          isIntegroView ? "p-0" : "px-2 sm:p-8 lg:p-12 pb-32"
         )}>
           <AnimatePresence mode="wait">
             <motion.div
