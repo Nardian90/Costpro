@@ -1,11 +1,6 @@
 
-/**
- * Maps Spanish function names to their English equivalents used by the calculation engine.
- */
 export function translateFormulaFromSpanish(formula: string): string {
   if (!formula) return formula;
-
-  // Mapping of Spanish functions/variables to English
   const mapping: Record<string, string> = {
     'SUMA': 'sum',
     'PROMEDIO': 'average',
@@ -15,19 +10,30 @@ export function translateFormulaFromSpanish(formula: string): string {
     'ROUND2': 'round2',
     'HIJOS': 'children',
   };
-
   let translated = formula;
-
-  // Replace each term using a word-boundary regex for safety
+  translated = translated.replace(/\\bvh\\(([^'\\)]+)\\)/gi, (match, p1) => {
+      const id = p1.trim();
+      if (id.startsWith("'") || id.startsWith('"')) return match;
+      return `vh('${id}')`;
+  });
   Object.entries(mapping).forEach(([spanish, english]) => {
-    // For functions like SUMA, we can be more specific, but for variables like HIJOS we just need word boundaries
-    const isVariable = spanish === 'HIJOS';
-    const regex = isVariable
-      ? new RegExp(`\\b${spanish}\\b`, 'gi')
-      : new RegExp(`\\b${spanish}\\b\\s*(?=\\()`, 'gi');
-
+    const regex = new RegExp(`\\b${spanish}\\b`, 'gi');
     translated = translated.replace(regex, english);
   });
+  return translated;
+}
 
+export function smartTranslate(formula: string, knownIds: Set<string>, knownClasses: Set<string>): string {
+  if (!formula) return '0';
+  let translated = translateFormulaFromSpanish(formula);
+  // Keep VH as is, it's provided in the context
+
+  const tokenRegex = /\\b(\\d+(?:\\.\\d+)*)\\b/g;
+  translated = translated.replace(tokenRegex, (match) => {
+      if (knownIds.has(match) || knownClasses.has(match)) {
+          return `ref('${match}')`;
+      }
+      return match;
+  });
   return translated;
 }

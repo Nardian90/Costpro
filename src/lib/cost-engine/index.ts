@@ -9,19 +9,24 @@ import {
   BaseRef,
   ValidationError,
 } from './types';
-import { translateFormulaFromSpanish } from './formula-utils';
+import { translateFormulaFromSpanish, smartTranslate } from './formula-utils';
 
 export function extractDependencies(row: CostRow, allRows: CostRow[]): string[] {
   const deps: string[] = [];
 
   const extractFromFormula = (formula: string) => {
+    if (!formula) return;
+    const knownIds = new Set(allRows.map(r => r.id));
+    const knownClasses = new Set(allRows.map(r => r.classification));
+    const translated = smartTranslate(formula, knownIds, knownClasses);
+
     // Extract ref('...')
-    const refMatches = formula.matchAll(/ref\(['"]([^'"]+)['"]\)/g);
+    const refMatches = translated.matchAll(/ref\(['"]([^'"]+)['"]\)/g);
     for (const match of refMatches) {
         deps.push(match[1]);
     }
     // Extract vh('...')
-    const vhMatches = formula.matchAll(/vh\(['"]([^'"]+)['"]\)/g);
+    const vhMatches = translated.matchAll(/vh\(['"]([^'"]+)['"]\)/g);
     for (const match of vhMatches) {
         deps.push(match[1]);
     }
@@ -50,6 +55,8 @@ export function extractDependencies(row: CostRow, allRows: CostRow[]): string[] 
 export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: string[]; validationErrors: ValidationError[] } {
   const errors: string[] = [];
   const validationErrors: ValidationError[] = [];
+  const knownIds = new Set(ficha.rows.map(r => r.id));
+  const knownClasses = new Set(ficha.rows.map(r => r.classification));
   const ids = new Set<string>();
   const classifications = new Set<string>();
   const rowMap = new Map<string, CostRow>();
@@ -280,6 +287,8 @@ export function calculateFicha(
   const maxIter = options?.maxIter ?? ficha.meta.settings?.maxIter ?? 10;
   const dampingValue = options?.damping ?? ficha.meta.settings?.damping ?? 0.6;
   const damping = new Decimal(dampingValue);
+  const knownIds = new Set(ficha.rows.map(r => r.id));
+  const knownClasses = new Set(ficha.rows.map(r => r.classification));
 
   // 0. Pre-validate
   const { validationErrors, errors: legacyErrors } = validateFicha(ficha);
@@ -494,6 +503,12 @@ export function calculateFicha(
     let formulaToUse = row.formula;
     let formaCalculoToUse = row.formaCalculo;
 
+    const isParent = ficha.rows.some(r => r.parentId === row.id);
+    if (!formulaToUse && isParent && (formaCalculoToUse === 'FORMULA' || formaCalculoToUse === 'IMPORTAR_ANEXO')) {
+        formulaToUse = 'sum(children)';
+        formaCalculoToUse = 'FORMULA';
+    }
+
     if (ruleOverride) {
         if (ruleOverride.formulaOverride) {
             formulaToUse = ruleOverride.formulaOverride;
@@ -597,7 +612,7 @@ export function calculateFicha(
               ? formulaToUse!.trim().substring(1)
               : formulaToUse;
 
-            const formulaStr = translateFormulaFromSpanish(formulaStrRaw || '0');
+            const formulaStr = smartTranslate(formulaStrRaw || '0', knownIds, knownClasses);
             const expr = parser.parse(formulaStr);
 
             if (base?.type === 'ANEXO') {
@@ -629,15 +644,22 @@ export function calculateFicha(
                     .map(r => calculatedRows.get(r.id)?.total || 0)
             };
 
-            annexTotals.forEach((total, id) => {
-                context[`TotalAnexo${id}`] = total;
-                context[`Total${id}`] = total;
-
-                const classSum = annexSumMap.get(id)?.get(row.classification);
+            const romanMap = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+            ficha.anexos.forEach((anexo, idx) => {
+                const total = annexTotals.get(anexo.id) || 0;
+                const classSum = annexSumMap.get(anexo.id)?.get(row.classification);
                 const valueToUse = classSum !== undefined ? classSum.toNumber() : 0;
 
-                context[id] = valueToUse;
-                context[`Anexo${id}`] = valueToUse;
+                context[anexo.id] = valueToUse;
+                context[`Anexo${anexo.id}`] = valueToUse;
+                context[`TotalAnexo${anexo.id}`] = total;
+                context[`Total${anexo.id}`] = total;
+
+                if (idx < romanMap.length) {
+                    context[`Anexo${romanMap[idx]}`] = valueToUse;
+                    context[`TotalAnexo${romanMap[idx]}`] = total;
+                    context[`Total${romanMap[idx]}`] = total;
+                }
             });
 
             const result = expr.evaluate(context);
@@ -671,7 +693,7 @@ export function calculateFicha(
             const vhFormulaStrRaw = row.vhFormula.trim().startsWith('=')
               ? row.vhFormula.trim().substring(1)
               : row.vhFormula;
-            const vhFormulaStr = translateFormulaFromSpanish(vhFormulaStrRaw);
+            const vhFormulaStr = smartTranslate(vhFormulaStrRaw, knownIds, knownClasses);
             const vhExpr = parser.parse(vhFormulaStr);
 
             const vhContext: any = {
