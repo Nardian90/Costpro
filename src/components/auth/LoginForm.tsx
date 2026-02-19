@@ -159,7 +159,7 @@ export default function LoginForm() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="neu-input w-full pl-10"
+              className="neu-input w-full !pl-12"
               placeholder="admin@costpro.com"
               autoComplete="email"
               required
@@ -187,7 +187,7 @@ export default function LoginForm() {
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="neu-input w-full pl-10 pr-12"
+              className="neu-input w-full !pl-12 pr-12"
               placeholder="••••••••"
               autoComplete="current-password"
               required
