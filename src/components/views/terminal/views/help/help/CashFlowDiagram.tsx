@@ -21,15 +21,15 @@ export default function CashFlowDiagram() {
   return (
     <div className="w-full aspect-video bg-muted/30 rounded-3xl border border-primary/10 flex items-center justify-center p-4">
       <motion.svg
-        viewBox="0 0 800 400"
-        className="w-full h-full max-w-3xl"
+        viewBox="0 0 1000 400"
+        className="w-full h-full max-w-4xl"
         variants={container}
         initial="hidden"
         animate="show"
       >
         {/* Main Flow Path */}
         <motion.path
-          d="M100 200 L700 200"
+          d="M100 200 L900 200"
           stroke="currentColor"
           strokeWidth="4"
           className="text-primary/10"
@@ -40,45 +40,49 @@ export default function CashFlowDiagram() {
 
         {/* Nodes */}
         <motion.g variants={item} transform="translate(100, 200)">
-          <circle r="60" className="fill-emerald-500" />
-          <text textAnchor="middle" y="5" className="fill-white font-black text-xs uppercase">Apertura</text>
-          <text textAnchor="middle" y="80" className="fill-muted-foreground font-bold text-xs uppercase">Base de Efectivo</text>
+          <circle r="60" className="fill-emerald-500 shadow-lg shadow-emerald-500/20" />
+          <text textAnchor="middle" y="5" className="fill-white font-black text-[10px] uppercase tracking-widest">Apertura</text>
+          <text textAnchor="middle" y="85" className="fill-muted-foreground font-bold text-[9px] uppercase tracking-wider">Base Efectivo</text>
         </motion.g>
 
-        <motion.g variants={item} transform="translate(300, 200)">
-          <circle r="60" className="fill-emerald-600" />
-          <text textAnchor="middle" y="5" className="fill-white font-black text-xs uppercase">Ventas</text>
-          <text textAnchor="middle" y="80" className="fill-muted-foreground font-bold text-xs uppercase">Registro de Cobros</text>
+        <motion.g variants={item} transform="translate(350, 200)">
+          <circle r="60" className="fill-emerald-600 shadow-lg shadow-emerald-600/20" />
+          <text textAnchor="middle" y="5" className="fill-white font-black text-[10px] uppercase tracking-widest">Ventas</text>
+          <text textAnchor="middle" y="85" className="fill-muted-foreground font-bold text-[9px] uppercase tracking-wider">Registro Cobros</text>
         </motion.g>
 
-        <motion.g variants={item} transform="translate(500, 200)">
-          <circle r="60" className="fill-amber-500" />
-          <text textAnchor="middle" y="5" className="fill-white font-black text-xs uppercase">Arqueo</text>
-          <text textAnchor="middle" y="80" className="fill-muted-foreground font-bold text-xs uppercase">Conteo Físico</text>
+        <motion.g variants={item} transform="translate(600, 200)">
+          <circle r="60" className="fill-amber-500 shadow-lg shadow-amber-500/20" />
+          <text textAnchor="middle" y="5" className="fill-white font-black text-[10px] uppercase tracking-widest">Arqueo</text>
+          <text textAnchor="middle" y="85" className="fill-muted-foreground font-bold text-[9px] uppercase tracking-wider">
+            <tspan x="0" dy="0">CONTEO FÍSICO</tspan>
+          </text>
         </motion.g>
 
-        <motion.g variants={item} transform="translate(700, 200)">
-          <circle r="60" className="fill-primary" />
-          <text textAnchor="middle" y="5" className="fill-white font-black text-xs uppercase">Cierre</text>
-          <text textAnchor="middle" y="80" className="fill-muted-foreground font-bold text-xs uppercase">Reporte Final</text>
+        <motion.g variants={item} transform="translate(850, 200)">
+          <circle r="60" className="fill-primary shadow-2xl shadow-primary/40" />
+          <text textAnchor="middle" y="5" className="fill-white font-black text-[10px] uppercase tracking-widest">Cierre</text>
+          <text textAnchor="middle" y="85" className="fill-muted-foreground font-bold text-[9px] uppercase tracking-wider">
+             <tspan x="0" dy="0">REPORTE FINAL</tspan>
+          </text>
         </motion.g>
 
         {/* Transaction icons floating */}
         {[0, 1, 2].map(i => (
           <motion.circle
             key={i}
-            r="8"
+            r="6"
             className="fill-primary/40"
             animate={{
-              x: [200 + i * 50, 400 + i * 50],
+              x: [200 + i * 80, 500 + i * 80],
               opacity: [0, 1, 0]
             }}
             transition={{
-              duration: 2,
+              duration: 3,
               repeat: Infinity,
-              delay: i * 0.5
+              delay: i * 0.8
             }}
-            cy="160"
+            cy="150"
           />
         ))}
 

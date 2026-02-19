@@ -33,11 +33,14 @@ import OfflineSyncDiagram from './help/OfflineSyncDiagram';
 import SecurityFlowDiagram from './help/SecurityFlowDiagram';
 import IpvFlowDiagram from './help/IpvFlowDiagram';
 import RolesDiagram from './help/RolesDiagram';
+import KidsOnboarding from './help/KidsOnboarding';
+import { useUIStore } from '@/store';
 
-type HelpSection = 'intro' | 'costs' | 'pos' | 'inventory' | 'innovation' | 'security' | 'ipv' | 'admin';
+type HelpSection = 'intro' | 'costs' | 'pos' | 'inventory' | 'innovation' | 'security' | 'ipv' | 'admin' | 'kids' | 'resolutions';
 
 export default function HelpView() {
   const [selectedSection, setSelectedSection] = useState<HelpSection>('intro');
+  const { previousView, setCurrentView } = useUIStore();
 
   const sections = [
     { id: 'intro', label: 'Inicio', icon: Book, color: 'text-blue-500' },
@@ -48,6 +51,8 @@ export default function HelpView() {
     { id: 'ipv', label: 'Conciliación IPV', icon: CreditCard, color: 'text-blue-600' },
     { id: 'security', label: 'Seguridad RLS', icon: ShieldCheck, color: 'text-rose-500' },
     { id: 'admin', label: 'Administración', icon: Settings, color: 'text-slate-500' },
+    { id: 'kids', label: 'Para Niños', icon: UserCheck, color: 'text-pink-500' },
+    { id: 'resolutions', label: 'Resoluciones', icon: Info, color: 'text-blue-400' },
   ];
 
   return (
@@ -65,11 +70,23 @@ export default function HelpView() {
             </div>
           </div>
           <div className="hidden md:flex items-center gap-3">
-            <Badge variant="outline" className="border-primary/20 text-primary font-black px-4 py-1">RES. 148/2023 COMPLIANT</Badge>
-            <Button variant="ghost" size="sm" className="font-bold text-xs uppercase tracking-widest gap-2">
+
+            <Button
+              onClick={() => window.open("/manuals/COSTPRO.pdf", "_blank")}
+              variant="ghost" size="sm" className="font-bold text-xs uppercase tracking-widest gap-2"
+            >
                <Download className="w-4 h-4" />
                Manual PDF
             </Button>
+            {previousView && (
+              <Button
+                onClick={() => setCurrentView(previousView)}
+                variant="default" size="sm" className="bg-primary text-white font-black text-xs uppercase tracking-widest gap-2 rounded-xl px-6 shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Volver
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -254,26 +271,25 @@ export default function HelpView() {
               )}
 
               {selectedSection === 'innovation' && (
-                <div className="grid lg:grid-cols-2 gap-12">
+                <div className="space-y-12">
                    <div className="space-y-6">
-                      <div className="p-10 rounded-[3rem] bg-violet-600 text-white shadow-2xl shadow-violet-500/20">
-                        <Cpu className="w-12 h-12 mb-6" />
-                        <h3 className="text-2xl font-black uppercase tracking-tight mb-4">Eli: Cerebro AI</h3>
-                        <p className="text-sm font-medium leading-relaxed opacity-90">
-                          Analiza sus estados financieros, stock crítico y tendencias de venta para ofrecer recomendaciones proactivas.
+                      <div className="p-10 rounded-[3rem] bg-slate-950 text-white border border-white/10 shadow-2xl shadow-primary/10">
+                        <div className="flex items-center gap-6 mb-8">
+                          <div className="p-4 rounded-2xl bg-primary/10">
+                            <Cpu className="w-12 h-12 text-primary" />
+                          </div>
+                          <div>
+                            <h3 className="text-3xl font-black uppercase tracking-tighter">Eli: Inteligencia Aumentada</h3>
+                            <p className="text-primary font-bold text-xs uppercase tracking-[0.2em]">Orquestador de Decisiones CostPro</p>
+                          </div>
+                        </div>
+                        <p className="text-lg font-medium leading-relaxed opacity-80 max-w-2xl">
+                          Eli no es solo un chat; es un motor de análisis que integra sus estados financieros,
+                          inventario crítico y tendencias de mercado para ofrecer una visión 360° de su negocio,
+                          incluso sin conexión a internet.
                         </p>
                       </div>
                       <EliDiagram />
-                   </div>
-                   <div className="space-y-6">
-                      <div className="p-10 rounded-[3rem] bg-slate-900 text-white border border-white/10">
-                        <TrendingUp className="w-12 h-12 mb-6 text-primary" />
-                        <h3 className="text-2xl font-black uppercase tracking-tight mb-4">Continuidad Total</h3>
-                        <p className="text-sm font-medium leading-relaxed opacity-80">
-                          Operativa offline garantizada. Los datos se sincronizan automáticamente al recuperar la conexión.
-                        </p>
-                      </div>
-                      <OfflineSyncDiagram />
                    </div>
                 </div>
               )}
@@ -331,6 +347,44 @@ export default function HelpView() {
                 </div>
               )}
 
+              {selectedSection === "kids" && <KidsOnboarding />}
+
+              {selectedSection === "resolutions" && (
+                <div className="space-y-12">
+                  <div className="space-y-4">
+                    <h2 className="text-3xl font-black uppercase tracking-tighter">Base Normativa</h2>
+                    <p className="text-muted-foreground font-medium">Resoluciones y leyes que rigen la ingeniería de costos en Cuba.</p>
+                  </div>
+
+                  <div className="grid gap-4">
+                    {[
+                      { name: "Resolución 148/2023", file: "Res1482023.pdf", desc: "Metodología para la formación de precios y tarifas." },
+                      { name: "Resolución 209/2024", file: "Res2092024.pdf", desc: "Actualización de márgenes y coeficientes de gastos." },
+                      { name: "Norma Contabilidad 12", file: "Norma de contabilidad numero 12 Costo RES-0935-18.pdf", desc: "Tratamiento contable de los costos de producción." },
+                      { name: "Manual de Usuario CostPro", file: "COSTPRO.pdf", desc: "Guía completa de operación del sistema." }
+                    ].map((res, i) => (
+                      <div key={i} className="p-6 rounded-3xl bg-card border border-border flex items-center justify-between group hover:border-primary/50 transition-colors">
+                        <div className="flex gap-4 items-center">
+                          <div className="p-3 rounded-2xl bg-primary/10 text-primary">
+                            <FileText className="w-6 h-6" />
+                          </div>
+                          <div>
+                            <h4 className="font-black text-sm uppercase">{res.name}</h4>
+                            <p className="text-xs text-muted-foreground">{res.desc}</p>
+                          </div>
+                        </div>
+                        <Button
+                          onClick={() => window.open(`/manuals/${res.file}`, "_blank")}
+                          variant="ghost" size="icon" className="rounded-full group-hover:bg-primary group-hover:text-white transition-all"
+                        >
+                          <Download className="w-5 h-5" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
             </motion.div>
           </AnimatePresence>
         </div>
@@ -343,8 +397,12 @@ export default function HelpView() {
           <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">¿Necesita asistencia técnica personalizada?</span>
         </div>
         <div className="flex gap-4">
-          <Button variant="outline" className="rounded-xl font-bold text-xs uppercase tracking-widest px-8">Chat con Soporte</Button>
-          <Button className="rounded-xl font-bold text-xs uppercase tracking-widest px-8">Llamar Ahora</Button>
+          <Button
+            onClick={() => window.open("https://wa.me/5353183215", "_blank")}
+            className="rounded-xl font-bold text-xs uppercase tracking-widest px-8"
+          >
+            Chat con Soporte
+          </Button>
         </div>
       </div>
     </div>
