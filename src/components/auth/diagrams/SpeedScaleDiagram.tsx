@@ -23,7 +23,7 @@ export default function SpeedScaleDiagram() {
             </div>
             <div>
               <p className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-0.5">Tiempo de Procesamiento</p>
-              <p className="text-2xl sm:text-3xl font-black text-foreground tracking-tighter leading-none">
+              <p className="text-[clamp(1.5rem,5vw,2rem)] font-black text-foreground tracking-tighter leading-none">
                 &lt; 5 <span className="text-violet-600 italic">MINUTOS</span>
               </p>
             </div>
@@ -53,7 +53,7 @@ export default function SpeedScaleDiagram() {
                </div>
             </div>
             <div className="text-right">
-              <span className="text-4xl sm:text-5xl font-black text-foreground tabular-nums tracking-tighter leading-none block">
+              <span className="text-[clamp(2rem,8vw,3.5rem)] font-black text-foreground tabular-nums tracking-tighter leading-none block">
                 <CountUp end={100} duration={3} />
               </span>
               <span className="text-xs font-black text-muted-foreground block uppercase tracking-widest mt-1">Fichas / Lote</span>
