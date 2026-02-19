@@ -87,7 +87,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
     }
 
     // Regex to match tokens
-    const tokenRegex = /(ref\(['"][^'"]+['"]\))|([A-Z][A-Z0-9_]*)|(\d+(?:\.\d+)?)|([\+\-\*\/\(\),])|(\s+)/gi;
+    const tokenRegex = /(ref\(['"][^'"]+['"]\))|([A-Z][A-Z0-9_]*)|(\d+(?:\.\d+)*)|([\+\-\*\/\(\),])|(\s+)/gi;
 
     const parsedTokens: Token[] = [];
     let match;
