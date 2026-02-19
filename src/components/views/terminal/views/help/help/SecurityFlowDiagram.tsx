@@ -32,30 +32,30 @@ export default function SecurityFlowDiagram() {
           transition={{ duration: 1 }}
         />
 
-        {/* Steps */}
+        {/* Steps - Centered and denoted */}
         <motion.g transform="translate(400, 100)" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
-          <rect x="-120" y="-30" width="240" height="60" rx="10" className="fill-background stroke-primary/40" strokeWidth="2" />
-          <text textAnchor="middle" y="5" className="fill-foreground font-black text-xs uppercase">1. Verificación de Rol</text>
+          <rect x="-140" y="-30" width="280" height="60" rx="20" className="fill-background stroke-primary/40" strokeWidth="2" />
+          <text textAnchor="middle" y="5" className="fill-foreground font-black text-xs uppercase tracking-widest">1. Verificación de Rol</text>
         </motion.g>
 
         <motion.g transform="translate(400, 200)" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1 }}>
-          <rect x="-120" y="-30" width="240" height="60" rx="10" className="fill-background stroke-primary/40" strokeWidth="2" />
-          <text textAnchor="middle" y="5" className="fill-foreground font-black text-xs uppercase">2. Aislamiento de Tienda</text>
+          <rect x="-140" y="-30" width="280" height="60" rx="20" className="fill-background stroke-primary/40" strokeWidth="2" />
+          <text textAnchor="middle" y="5" className="fill-foreground font-black text-xs uppercase tracking-widest">2. Aislamiento de Tienda</text>
         </motion.g>
 
         <motion.g transform="translate(400, 300)" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.5 }}>
-          <rect x="-120" y="-30" width="240" height="60" rx="10" className="fill-primary" />
-          <text textAnchor="middle" y="5" className="fill-white font-black text-xs uppercase">3. Registro de Auditoría</text>
+          <rect x="-140" y="-30" width="280" height="60" rx="20" className="fill-primary shadow-xl shadow-primary/20" />
+          <text textAnchor="middle" y="5" className="fill-white font-black text-xs uppercase tracking-widest">3. Registro de Auditoría</text>
         </motion.g>
 
         {/* Scan line effect */}
         <motion.line
-          x1="200" x2="600"
+          x1="150" x2="650"
           stroke="currentColor"
-          strokeWidth="2"
+          strokeWidth="3"
           className="text-primary/40"
           animate={{
-            y: [100, 350, 100],
+            y: [50, 350, 50],
           }}
           transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
         />
