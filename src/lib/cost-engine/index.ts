@@ -523,7 +523,7 @@ export function calculateFicha(
     switch (formaCalculoToUse) {
       case 'FIJO':
         total = vh;
-        note += `Used VH ${vh.toFixed(decimals)}.`;
+        note += `Used VH ${vh.toFixed(decimals)}. `;
         break;
 
       case 'ANEXO':
@@ -534,10 +534,11 @@ export function calculateFicha(
 
           if (classSum !== undefined) {
               total = classSum;
-              note += `Imported from ${base.anexoId} for class ${row.classification}.`;
+              note += `Imported from ${base.anexoId} for class ${row.classification}. `;
           } else {
-              total = new Decimal(0);
-              note += `Imported from ${base.anexoId} (Class ${row.classification} not found, using 0).`;
+              const annexTotalValue = annexTotals.get(base.anexoId) || 0;
+              total = new Decimal(annexTotalValue);
+              note += `Imported total from ${base.anexoId} (Class ${row.classification} not found). `;
           }
 
           baseTotalValue = total;
@@ -545,7 +546,7 @@ export function calculateFicha(
           fuenteParts.push(base.anexoId);
         } else {
           type = 'WARNING';
-          note += `Missing ANEXO reference.`;
+          note += `Missing ANEXO reference. `;
         }
         break;
 
@@ -561,7 +562,7 @@ export function calculateFicha(
                 baseTotalValue = classSum;
                 note += `Using class ${row.classification} from ${base.anexoId} as base. `;
             } else {
-                baseTotalValue = Array.from(classSumMap?.values() || []).reduce((acc, val) => acc.plus(val), new Decimal(0));
+                baseTotalValue = new Decimal(annexTotals.get(base.anexoId) || 0);
                 note += `Using total of ${base.anexoId} as base (class ${row.classification} not found). `;
             }
 
@@ -586,16 +587,16 @@ export function calculateFicha(
             if (baseHistValue.isZero()) {
                 total = new Decimal(0);
                 type = 'WARNING';
-                note += `BaseHist is zero for ${baseRefName}.`;
+                note += `BaseHist is zero for ${baseRefName}. `;
             } else {
                 const ratio = vh.div(baseHistValue);
                 total = ratio.times(baseTotalValue);
-                note += `Prorrated: (${vh}/${baseHistValue}) * ${baseTotalValue.toFixed(decimals)}.`;
+                note += `Prorrated: (${vh}/${baseHistValue}) * ${baseTotalValue.toFixed(decimals)}. `;
             }
         } else {
             const coef = new Decimal(row.coeficiente ?? 0);
             total = coef.times(baseTotalValue);
-            note += `Coefficient: ${coef} * ${baseTotalValue.toFixed(decimals)}.`;
+            note += `Coefficient: ${coef} * ${baseTotalValue.toFixed(decimals)}. `;
         }
         break;
 
@@ -604,7 +605,7 @@ export function calculateFicha(
         if (!allowFormulas && !ruleOverride) {
             total = new Decimal(0);
             type = 'ERROR';
-            note += `Formulas are disabled.`;
+            note += `Formulas are disabled. `;
             break;
         }
         try {
@@ -616,8 +617,7 @@ export function calculateFicha(
             const expr = parser.parse(formulaStr);
 
             if (base?.type === 'ANEXO') {
-                 const anexo = annexSumMap.get(base.anexoId);
-                 baseTotalValue = Array.from(anexo?.values() || []).reduce((acc, val) => acc.plus(val), new Decimal(0));
+                 baseTotalValue = new Decimal(annexTotals.get(base.anexoId) || 0);
             } else if (base?.type === 'FILA') {
                 let targets = rowsByClass.get(base.classification);
                 if (!targets || targets.length === 0) {
@@ -646,25 +646,42 @@ export function calculateFicha(
 
             const romanMap = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
             ficha.anexos.forEach((anexo, idx) => {
-                const total = annexTotals.get(anexo.id) || 0;
-                const classSum = annexSumMap.get(anexo.id)?.get(row.classification);
-                const valueToUse = classSum !== undefined ? classSum.toNumber() : 0;
+                const totalVal = annexTotals.get(anexo.id) || 0;
+                const classSumMap = annexSumMap.get(anexo.id);
+                const classSum = classSumMap?.get(row.classification);
 
-                context[anexo.id] = valueToUse;
-                context[`Anexo${anexo.id}`] = valueToUse;
-                context[`TotalAnexo${anexo.id}`] = total;
-                context[`Total${anexo.id}`] = total;
+                // Smart fallback: if specific classification doesn't exist, use total
+                const valueToUse = classSum !== undefined ? classSum.toNumber() : totalVal;
+
+                // Provide multiple naming variations for flexibility
+                const variations = new Set([
+                    anexo.id,
+                    `Anexo${anexo.id}`,
+                    anexo.id.toUpperCase(),
+                    `ANEXO${anexo.id.toUpperCase()}`
+                ]);
+
+                variations.forEach(v => {
+                    context[v] = valueToUse;
+                });
+
+                context[`TotalAnexo${anexo.id}`] = totalVal;
+                context[`Total${anexo.id}`] = totalVal;
+                context[`TotalAnexo${anexo.id.toUpperCase()}`] = totalVal;
+                context[`Total${anexo.id.toUpperCase()}`] = totalVal;
 
                 if (idx < romanMap.length) {
-                    context[`Anexo${romanMap[idx]}`] = valueToUse;
-                    context[`TotalAnexo${romanMap[idx]}`] = total;
-                    context[`Total${romanMap[idx]}`] = total;
+                    const roman = romanMap[idx];
+                    context[`Anexo${roman}`] = valueToUse;
+                    context[`ANEXO${roman}`] = valueToUse;
+                    context[`TotalAnexo${roman}`] = totalVal;
+                    context[`Total${roman}`] = totalVal;
                 }
             });
 
             const result = expr.evaluate(context);
             total = new Decimal(result);
-            note += `Evaluated: ${formulaToUse}.`;
+            note += `Evaluated: ${formulaToUse}. `;
         } catch (e: any) {
             total = new Decimal(0);
             type = 'ERROR';
@@ -675,6 +692,7 @@ export function calculateFicha(
 
     return { total, note, type, fuente: fuenteParts.join('|'), baseTotal: baseTotalValue, baseHist: baseHistValue };
   };
+
 
   // 4. Iterative Solver
   let converged = false;
