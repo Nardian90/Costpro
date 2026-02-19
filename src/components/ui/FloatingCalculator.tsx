@@ -5,14 +5,14 @@ import { motion, AnimatePresence, Variants } from 'framer-motion';
 import {
   Calculator,
   X,
-  Divide,
-  Minus,
-  Plus,
-  Equal,
   Delete,
-  GripHorizontal
+  Divide,
+  Plus,
+  Minus,
+  Equal,
+  Move
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 import { useTheme } from 'next-themes';
 import { useUIStore } from '@/store';
 
@@ -23,6 +23,7 @@ export const FloatingCalculator: React.FC = () => {
   const [lastResult, setLastResult] = useState<number | null>(null);
   const [isMounted, setIsMounted] = useState(false);
   const { resolvedTheme } = useTheme();
+  const constraintsRef = useRef(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -56,9 +57,10 @@ export const FloatingCalculator: React.FC = () => {
     try {
       if (!equation) return;
       const fullEquation = equation + display;
+      // Sanitize input
       const sanitized = fullEquation.replace(/[^-0-9+*/.]/g, '');
-      // eslint-disable-next-line no-eval
-      const result = eval(sanitized);
+      // Use Function constructor instead of eval for slightly better practice
+      const result = new Function(`return ${sanitized}`)();
       const resultStr = String(Number(result.toFixed(8)));
       setDisplay(resultStr.length > 15 ? result.toExponential(4) : resultStr);
       setEquation('');
@@ -84,11 +86,14 @@ export const FloatingCalculator: React.FC = () => {
 
   const isDark = resolvedTheme === 'dark';
 
-  const modalVariants: Variants = {
+  // Enhanced "Abanico" (Fan) Variants
+  const fanVariants: Variants = {
     closed: {
-      y: -100,
       opacity: 0,
-      scale: 0.95,
+      scale: 0.3,
+      rotate: -15,
+      y: 20,
+      filter: "blur(10px)",
       transition: {
         type: "spring",
         stiffness: 300,
@@ -96,55 +101,52 @@ export const FloatingCalculator: React.FC = () => {
       }
     },
     open: {
-      y: 0,
       opacity: 1,
       scale: 1,
+      rotate: 0,
+      y: 0,
+      filter: "blur(0px)",
       transition: {
         type: "spring",
-        stiffness: 300,
-        damping: 25,
-        staggerChildren: 0.02,
+        stiffness: 150,
+        damping: 15,
+        staggerChildren: 0.03,
         delayChildren: 0.1
       }
     }
   };
 
   const itemVariants: Variants = {
-    closed: { opacity: 0, scale: 0.5, rotate: -15, y: -10 },
+    closed: { opacity: 0, scale: 0.5, rotate: -20, y: 10 },
     open: { opacity: 1, scale: 1, rotate: 0, y: 0 }
   };
 
   return (
-    <AnimatePresence>
-      {isCalculatorOpen && (
-        <div className="fixed inset-0 z-[10000] flex items-start justify-center p-4 pt-12">
-          {/* Backdrop */}
+    <div ref={constraintsRef} className="fixed inset-0 z-[10000] pointer-events-none overflow-hidden">
+      <AnimatePresence>
+        {isCalculatorOpen && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={closeCalculator}
-            className="absolute inset-0 bg-black/60 backdrop-blur-md"
-          />
-
-          <motion.div
-            variants={modalVariants}
+            drag
+            dragConstraints={constraintsRef}
+            dragElastic={0.1}
+            dragMomentum={false}
+            variants={fanVariants}
             initial="closed"
             animate="open"
             exit="closed"
             className={cn(
-              "relative w-full max-w-sm rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] overflow-hidden border-2 flex flex-col transition-colors duration-500 backdrop-blur-xl",
+              "absolute top-24 right-12 w-full max-w-[320px] rounded-[2rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] overflow-hidden border flex flex-col pointer-events-auto",
               isDark
-                ? "bg-[#010203]/90 border-[#39FF14]/30 text-white"
-                : "bg-white/90 border-primary/30 text-foreground"
+                ? "bg-[#010203]/95 border-[#39FF14]/30 text-white"
+                : "bg-white/95 border-primary/30 text-foreground"
             )}
           >
-            {/* Header */}
+            {/* Draggable Handle */}
             <div className={cn(
-              "p-5 flex items-center justify-between border-b",
+              "p-4 flex items-center justify-between border-b cursor-move active:cursor-grabbing",
               isDark ? "bg-white/5 border-white/10" : "bg-muted/50 border-border/50"
             )}>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <div className={cn(
                   "w-8 h-8 rounded-xl flex items-center justify-center",
                   isDark ? "bg-[#39FF14]/10" : "bg-primary/10"
@@ -152,8 +154,10 @@ export const FloatingCalculator: React.FC = () => {
                   <Calculator className={cn("w-4 h-4", isDark ? "text-[#39FF14]" : "text-primary")} />
                 </div>
                 <div>
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 leading-none">C-Pro</h4>
-                  <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">Calculadora</p>
+                  <h4 className="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 leading-none">CostPro</h4>
+                  <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 flex items-center gap-1">
+                    Calc <Move className="w-2 h-2 opacity-50" />
+                  </p>
                 </div>
               </div>
               <button
@@ -163,33 +167,29 @@ export const FloatingCalculator: React.FC = () => {
                   isDark ? "hover:bg-white/10" : "hover:bg-black/5"
                 )}
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* LCD Display */}
+            {/* Display */}
             <div className={cn(
-              "px-6 py-8 flex flex-col items-end justify-center gap-1 min-h-[120px] relative overflow-hidden",
+              "px-6 py-6 flex flex-col items-end justify-center gap-1 min-h-[100px] relative overflow-hidden",
               isDark ? "bg-black/40" : "bg-slate-50/50"
             )}>
               <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
                    style={{ backgroundImage: 'linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)', backgroundSize: '10px 10px' }} />
 
-              <motion.div
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 0.4, x: 0 }}
-                className="text-[11px] font-mono h-4 uppercase tracking-widest font-bold"
-              >
+              <motion.div className="text-[10px] font-mono h-4 uppercase tracking-widest font-bold opacity-40">
                 {equation || '\u00A0'}
               </motion.div>
               <motion.div
                 key={display}
-                initial={{ scale: 0.95, opacity: 0.8 }}
-                animate={{ scale: 1, opacity: 1 }}
+                initial={{ y: 5, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
                 className={cn(
-                  "text-4xl font-mono tracking-tighter overflow-hidden text-ellipsis w-full text-right font-black",
+                  "text-4xl font-mono tracking-tighter w-full text-right font-black",
                   isDark
-                    ? "text-[#39FF14] drop-shadow-[0_0_12px_rgba(57,255,20,0.5)]"
+                    ? "text-[#39FF14] drop-shadow-[0_0_10px_rgba(57,255,20,0.3)]"
                     : "text-primary"
                 )}
               >
@@ -198,25 +198,25 @@ export const FloatingCalculator: React.FC = () => {
             </div>
 
             {/* Keypad */}
-            <div className="p-5 grid grid-cols-4 gap-3 bg-gradient-to-b from-transparent to-black/5">
+            <div className="p-4 grid grid-cols-4 gap-2 bg-gradient-to-b from-transparent to-black/5">
               <CalcButton variants={itemVariants} label="C" onClick={handleClear} variant="danger" />
               <CalcButton variants={itemVariants} icon={<Delete className="w-4 h-4" />} onClick={handleBackspace} variant="secondary" />
               <CalcButton variants={itemVariants} icon={<Divide className="w-4 h-4" />} onClick={() => handleOperator('/')} variant="operator" />
               <CalcButton variants={itemVariants} icon={<X className="w-4 h-4" />} onClick={() => handleOperator('*')} variant="operator" />
 
-              <CalcButton variants={itemVariants} label="7" onClick={() => handleNumber('7')} />
-              <CalcButton variants={itemVariants} label="8" onClick={() => handleNumber('8')} />
-              <CalcButton variants={itemVariants} label="9" onClick={() => handleNumber('9')} />
+              {[7, 8, 9].map(num => (
+                <CalcButton key={num} variants={itemVariants} label={num.toString()} onClick={() => handleNumber(num.toString())} />
+              ))}
               <CalcButton variants={itemVariants} icon={<Minus className="w-4 h-4" />} onClick={() => handleOperator('-')} variant="operator" />
 
-              <CalcButton variants={itemVariants} label="4" onClick={() => handleNumber('4')} />
-              <CalcButton variants={itemVariants} label="5" onClick={() => handleNumber('5')} />
-              <CalcButton variants={itemVariants} label="6" onClick={() => handleNumber('6')} />
+              {[4, 5, 6].map(num => (
+                <CalcButton key={num} variants={itemVariants} label={num.toString()} onClick={() => handleNumber(num.toString())} />
+              ))}
               <CalcButton variants={itemVariants} icon={<Plus className="w-4 h-4" />} onClick={() => handleOperator('+')} variant="operator" />
 
-              <CalcButton variants={itemVariants} label="1" onClick={() => handleNumber('1')} />
-              <CalcButton variants={itemVariants} label="2" onClick={() => handleNumber('2')} />
-              <CalcButton variants={itemVariants} label="3" onClick={() => handleNumber('3')} />
+              {[1, 2, 3].map(num => (
+                <CalcButton key={num} variants={itemVariants} label={num.toString()} onClick={() => handleNumber(num.toString())} />
+              ))}
               <CalcButton
                 variants={itemVariants}
                 icon={<Equal className="w-5 h-5" />}
@@ -229,9 +229,9 @@ export const FloatingCalculator: React.FC = () => {
               <CalcButton variants={itemVariants} label="." onClick={() => handleNumber('.')} />
             </div>
           </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
+        )}
+      </AnimatePresence>
+    </div>
   );
 };
 
@@ -272,7 +272,7 @@ const CalcButton: React.FC<CalcButtonProps> = ({ label, icon, onClick, variant =
       whileTap={{ scale: 0.9, transition: { type: "spring", stiffness: 400, damping: 10 } }}
       onClick={onClick}
       className={cn(
-        "h-14 rounded-2xl flex items-center justify-center text-base font-bold border transition-all duration-300",
+        "h-12 rounded-xl flex items-center justify-center text-sm font-bold border transition-all duration-300",
         variantStyles[variant],
         className
       )}
