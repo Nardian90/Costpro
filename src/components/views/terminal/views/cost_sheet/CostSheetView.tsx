@@ -1,4 +1,5 @@
 'use client';
+import { LazyRender } from '@/components/ui/LazyRender';
 
 import React, { useState, useRef } from 'react';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
@@ -147,7 +148,7 @@ const CostSheetView = () => {
   const [isMassiveGeneratorOpen, setIsMassiveGeneratorOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
-  const isAnnexActive = React.useMemo(() => (data?.annexes || []).some((a: any) => a.id === activeSection), [data?.annexes, activeSection]);
+  const isAnnexActive = React.useMemo(() => (data?.annexes || []).some((a: any) => a.id === activeSection) || activeSection === 'all-annexes' || activeSection === 'all-content', [data?.annexes, activeSection]);
 
   const handleExportPDF = React.useCallback(async (options: ExportOptions) => {
     setIsExportModalOpen(false);
@@ -582,37 +583,69 @@ const CostSheetView = () => {
                             <CostSheetHeaderEditor header={data?.header || {}} calculatedHeader={calculatedHeader} />
                         </div>
                     )}
-                    {activeSection === 'main' && (
+                    {(activeSection === 'main' || activeSection === 'all-content') && (
                         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
-                            {(layoutMode === "grid") ? (
-                                <CostSheetCardView
-                                    sections={data?.sections || []}
-                                    groupedSections={groupedSections}
-                                    calculatedValues={calculatedValues}
-                                    annexes={data?.annexes || []}
-                                    activeSubSectionId={activeSubSectionId}
-                                    setActiveSubSectionId={setActiveSubSectionId}
-                                    onOpenSections={() => setIsSectionsSidebarOpen(true)}
-                                />
-                            ) : (
-                                <CostSheetInteractiveTable
-                                    sections={data?.sections || []}
-                                    groupedSections={groupedSections}
-                                    calculatedValues={calculatedValues}
-                                    annexes={data?.annexes || []}
-                                    activeSubSectionId={activeSubSectionId}
-                                    setActiveSubSectionId={setActiveSubSectionId}
-                                    onOpenSections={() => setIsSectionsSidebarOpen(true)}
-                                />
+                            {activeSection === 'all-content' && (
+                                <div className="px-4 py-6 mb-8 bg-primary/5 rounded-[2rem] border border-primary/10">
+                                    <h2 className="text-2xl font-black uppercase tracking-tighter italic text-primary flex items-center gap-3">
+                                        <ZapIcon className="w-8 h-8" />
+                                        Modo Experto: Vista Consolidada
+                                    </h2>
+                                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">Todas las Secciones y Anexos</p>
+                                </div>
                             )}
+
+                            <LazyRender>
+                                {(layoutMode === "grid") ? (
+                                    <CostSheetCardView
+                                        sections={data?.sections || []}
+                                        groupedSections={groupedSections}
+                                        calculatedValues={calculatedValues}
+                                        annexes={data?.annexes || []}
+                                        activeSubSectionId={activeSection === 'all-content' ? 'all' : activeSubSectionId}
+                                        setActiveSubSectionId={setActiveSubSectionId}
+                                        onOpenSections={() => setIsSectionsSidebarOpen(true)}
+                                    />
+                                ) : (
+                                    <CostSheetInteractiveTable
+                                        sections={data?.sections || []}
+                                        groupedSections={groupedSections}
+                                        calculatedValues={calculatedValues}
+                                        annexes={data?.annexes || []}
+                                        activeSubSectionId={activeSection === 'all-content' ? 'all' : activeSubSectionId}
+                                        setActiveSubSectionId={setActiveSubSectionId}
+                                        onOpenSections={() => setIsSectionsSidebarOpen(true)}
+                                    />
+                                )}
+                            </LazyRender>
                         </div>
                     )}
                     {isAnnexActive && (
-                        <CostSheetAnnexEditor
-                            activeAnnexId={activeSection}
-                            layoutMode={layoutMode}
-                            calculatedAnnexes={calculatedAnnexes}
-                        />
+                        <div className="space-y-12">
+                            {(activeSection === 'all-annexes' || activeSection === 'all-content') ? (
+                                (data?.annexes || []).map((annex: any) => (
+                                    <LazyRender key={annex.id}>
+                                        <div className="space-y-4">
+                                            <div className="flex items-center gap-3 px-4">
+                                                <div className="w-2 h-8 bg-primary rounded-full" />
+                                                <h3 className="text-xl font-black uppercase tracking-tighter italic">Anexo {annex.id}: {annex.title}</h3>
+                                            </div>
+                                            <CostSheetAnnexEditor
+                                                activeAnnexId={annex.id}
+                                                layoutMode={layoutMode}
+                                                calculatedAnnexes={calculatedAnnexes}
+                                            />
+                                        </div>
+                                    </LazyRender>
+                                ))
+                            ) : (
+                                <CostSheetAnnexEditor
+                                    activeAnnexId={activeSection}
+                                    layoutMode={layoutMode}
+                                    calculatedAnnexes={calculatedAnnexes}
+                                />
+                            )}
+                        </div>
                     )}
                     {activeSection === 'signature' && <CostSheetSignatureEditor />}
                     {activeSection === 'audit' && (
