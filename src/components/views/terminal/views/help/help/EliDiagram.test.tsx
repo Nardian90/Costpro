@@ -18,6 +18,6 @@ test('EliDiagram renders correctly', () => {
 
   expect(container.querySelector('svg')).toBeTruthy();
   expect(container.textContent).toContain('ELI');
-  expect(container.textContent).toContain('Análisis Real-time');
-  expect(container.textContent).toContain('Sincro Offline');
+  expect(container.textContent).toContain('Predictivo');
+  expect(container.textContent).toContain('Offline');
 });

@@ -1,7 +1,6 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Cpu, Wifi, Database, TrendingUp, Shield } from 'lucide-react';
 
 export default function EliDiagram() {
   const container = {
@@ -20,8 +19,8 @@ export default function EliDiagram() {
   };
 
   return (
-    <div className="w-full aspect-video bg-slate-950 rounded-[3rem] border border-white/10 flex items-center justify-center p-8 overflow-hidden relative">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent opacity-50" />
+    <div className="w-full aspect-video bg-slate-950 rounded-[2.5rem] border border-white/10 flex items-center justify-center p-8 overflow-hidden relative group">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent opacity-50" />
 
       <motion.svg
         viewBox="0 0 800 400"
@@ -30,56 +29,64 @@ export default function EliDiagram() {
         initial="hidden"
         animate="show"
       >
+        {/* Connection Lines from central Eli */}
+        {[
+          [200, 120], [600, 120], [200, 280], [600, 280]
+        ].map((pos, i) => (
+          <motion.line
+            key={`line-${i}`}
+            x1="400" y1="200"
+            x2={pos[0]} y2={pos[1]}
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeDasharray="5 5"
+            className="text-primary/30"
+            initial={{ pathLength: 0 }}
+            animate={{ pathLength: 1 }}
+            transition={{ delay: 1, duration: 1 }}
+          />
+        ))}
+
         {/* Central Intelligence Core */}
         <motion.g transform="translate(400, 200)" variants={item}>
-          <circle r="70" className="fill-primary/20 stroke-primary/40" strokeWidth="2" strokeDasharray="10 5" />
+          <circle r="80" className="fill-primary/10 stroke-primary/30" strokeWidth="2" strokeDasharray="10 5">
+            <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="20s" repeatCount="indefinite" />
+          </circle>
           <motion.circle
-            r="50"
-            className="fill-primary shadow-2xl shadow-primary/50"
-            animate={{ scale: [1, 1.1, 1] }}
-            transition={{ duration: 2, repeat: Infinity }}
+            r="55"
+            className="fill-primary"
+            animate={{ scale: [1, 1.05, 1], filter: ['blur(0px)', 'blur(2px)', 'blur(0px)'] }}
+            transition={{ duration: 3, repeat: Infinity }}
           />
-          <text textAnchor="middle" y="8" className="fill-white font-black text-2xl uppercase tracking-tighter">ELI</text>
+          <text textAnchor="middle" y="10" className="fill-white font-black text-3xl uppercase tracking-tighter shadow-2xl">ELI</text>
         </motion.g>
 
-        {/* Peripheral Nodes */}
+        {/* Distributed Intelligence Nodes */}
         {[
-          { label: "Análisis Real-time", icon: TrendingUp, color: "fill-emerald-500", pos: [150, 100] },
-          { label: "Sincro Offline", icon: Wifi, color: "fill-blue-500", pos: [650, 100] },
-          { label: "Protección RLS", icon: Shield, color: "fill-rose-500", pos: [150, 300] },
-          { label: "Predicción Stock", icon: Database, color: "fill-amber-500", pos: [650, 300] }
+          { label: "Predictivo", pos: [200, 120], color: "fill-blue-500" },
+          { label: "Operativo", pos: [600, 120], color: "fill-emerald-500" },
+          { label: "Seguridad", pos: [200, 280], color: "fill-rose-500" },
+          { label: "Offline", pos: [600, 280], color: "fill-amber-500" }
         ].map((node, i) => (
           <motion.g key={i} transform={`translate(${node.pos[0]}, ${node.pos[1]})`} variants={item}>
-             <circle r="45" className={node.color} />
-             <text textAnchor="middle" y="65" className="fill-white/60 font-black text-[10px] uppercase tracking-widest">{node.label}</text>
-
-             {/* Connection Line to Core */}
-             <motion.line
-               x1={0} y1={0}
-               x2={node.pos[0] > 400 ? -200 : 200}
-               y2={node.pos[1] > 200 ? -70 : 70}
-               stroke="currentColor"
-               strokeWidth="1"
-               className="text-white/20"
-               initial={{ pathLength: 0 }}
-               animate={{ pathLength: 1 }}
-               transition={{ delay: 1, duration: 1 }}
-             />
+             <circle r="40" className={`${node.color} opacity-90`} />
+             <text textAnchor="middle" y="5" className="fill-white font-black text-[9px] uppercase tracking-widest">{node.label}</text>
+             <circle r="48" className="fill-none stroke-white/10" strokeWidth="1" />
           </motion.g>
         ))}
 
         {/* Floating Data Particles */}
-        {[...Array(10)].map((_, i) => (
+        {[...Array(12)].map((_, i) => (
           <motion.circle
-            key={i}
-            r="1.5"
+            key={`particle-${i}`}
+            r="2"
             className="fill-primary"
             animate={{
               x: [Math.random() * 800, Math.random() * 800],
               y: [Math.random() * 400, Math.random() * 400],
-              opacity: [0, 0.8, 0]
+              opacity: [0, 0.7, 0]
             }}
-            transition={{ duration: 3 + Math.random() * 4, repeat: Infinity }}
+            transition={{ duration: 4 + Math.random() * 4, repeat: Infinity, delay: i * 0.5 }}
           />
         ))}
       </motion.svg>

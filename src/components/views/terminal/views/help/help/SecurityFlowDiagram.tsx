@@ -16,7 +16,7 @@ export default function SecurityFlowDiagram() {
   return (
     <div className="w-full aspect-video bg-muted/30 rounded-3xl border border-primary/10 flex items-center justify-center p-4">
       <motion.svg
-        viewBox="-40 -40 880 480"
+        viewBox="0 0 800 400"
         className="w-full h-full max-w-3xl"
         variants={container}
         initial="hidden"
@@ -32,30 +32,30 @@ export default function SecurityFlowDiagram() {
           transition={{ duration: 1 }}
         />
 
-        {/* Steps */}
+        {/* Steps - Centered and denoted */}
         <motion.g transform="translate(400, 100)" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
-          <rect x="-120" y="-30" width="240" height="60" rx="15" className="fill-background stroke-primary/40" strokeWidth="2" />
+          <rect x="-140" y="-30" width="280" height="60" rx="20" className="fill-background stroke-primary/40" strokeWidth="2" />
           <text textAnchor="middle" y="5" className="fill-foreground font-black text-xs uppercase tracking-widest">1. Verificación de Rol</text>
         </motion.g>
 
         <motion.g transform="translate(400, 200)" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1 }}>
-          <rect x="-120" y="-30" width="240" height="60" rx="15" className="fill-background stroke-primary/40" strokeWidth="2" />
+          <rect x="-140" y="-30" width="280" height="60" rx="20" className="fill-background stroke-primary/40" strokeWidth="2" />
           <text textAnchor="middle" y="5" className="fill-foreground font-black text-xs uppercase tracking-widest">2. Aislamiento de Tienda</text>
         </motion.g>
 
         <motion.g transform="translate(400, 300)" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.5 }}>
-          <rect x="-120" y="-30" width="240" height="60" rx="15" className="fill-primary shadow-lg shadow-primary/20" />
+          <rect x="-140" y="-30" width="280" height="60" rx="20" className="fill-primary shadow-xl shadow-primary/20" />
           <text textAnchor="middle" y="5" className="fill-white font-black text-xs uppercase tracking-widest">3. Registro de Auditoría</text>
         </motion.g>
 
         {/* Scan line effect */}
         <motion.line
-          x1="180" x2="620"
+          x1="150" x2="650"
           stroke="currentColor"
           strokeWidth="3"
           className="text-primary/40"
           animate={{
-            y: [80, 380, 80],
+            y: [50, 350, 50],
           }}
           transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
         />
