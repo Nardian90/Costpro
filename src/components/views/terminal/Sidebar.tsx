@@ -96,7 +96,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         id: 'soporte',
         label: 'SOPORTE Y AYUDA',
         isDirect: true,
-        items: ['support_doc', 'help', 'academy']
+        items: ['help', 'academy']
       }
     ];
     return structure;
