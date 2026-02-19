@@ -33,16 +33,18 @@ type CostSheetBodyProps = {
 const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValues, forceTable }) => {
   const renderRow = (row: any, level: number = 0, numbering: string) => {
       const calc = calculatedValues[row.id] || { total: 0, valorHistorico: 0, baseTotal: 0, coeficiente: 0 };
+      const isZero = Number(calc.total) === 0;
       const hasChildren = row.children && row.children.length > 0;
 
       return (
         <React.Fragment key={row.id}>
             <tr className={cn(
+                "h-8 text-xs",
                 "border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors",
                 hasChildren && "bg-slate-50/30 dark:bg-slate-900/30"
             )}>
                 {/* No. */}
-                <td className="p-3 text-center font-mono text-xs text-slate-400 w-12 whitespace-nowrap">
+                <td className="py-0.5 px-2 text-center font-mono text-xs text-slate-400 w-[60px] whitespace-nowrap">
                     {numbering}
                 </td>
 
@@ -51,7 +53,7 @@ const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValue
                     data-label="Concepto"
                     style={{ paddingLeft: `${level > 0 ? (level * 20) + 12 : 12}px` }}
                     className={cn(
-                        "p-3",
+                        "py-0.5 px-2",
                         hasChildren ? "font-black text-slate-900 dark:text-white uppercase tracking-tight" : "text-slate-600 dark:text-slate-400 font-medium"
                     )}
                 >
@@ -69,14 +71,14 @@ const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValue
                 </td>
 
                 {/* Valor Histórico */}
-                <td data-label="Valor Histórico" className="p-3 text-right font-mono text-slate-500 text-xs w-28 whitespace-nowrap">
+                <td data-label="Valor Histórico" className="py-0.5 px-2 text-right font-mono text-slate-500 text-xs w-[140px] whitespace-nowrap">
                     {calc.valorHistorico > 0 ? calc.valorHistorico.toLocaleString('es-ES', { minimumFractionDigits: 2 }) : '--'}
                 </td>
 
                 {/* Total */}
                 <td data-label="Total" className={cn(
-                    "p-3 text-right font-mono font-black text-sm w-32 whitespace-nowrap",
-                    hasChildren ? "text-slate-900 dark:text-white" : "text-primary"
+                    "py-0.5 px-2 text-right font-mono font-black text-sm w-[120px] whitespace-nowrap",
+                    hasChildren ? "text-slate-900 dark:text-white" : (isZero ? "text-muted-foreground opacity-60 font-medium" : "text-primary font-black")
                 )}>
                     {formatCurrency(calc.total).replace('$', '').trim()}
                 </td>
@@ -91,16 +93,16 @@ const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValue
       <table className="w-full text-sm">
         <thead className="bg-slate-800 text-white hidden sm:table-header-group">
           <tr>
-            <th className="p-4 text-center font-black uppercase tracking-widest text-xs w-12 whitespace-nowrap">No.</th>
-            <th className="p-4 text-left font-black uppercase tracking-widest text-xs">Concepto</th>
-            <th className="p-4 text-right font-black uppercase tracking-widest text-xs w-28 whitespace-nowrap">Valor Histórico</th>
-            <th className="p-4 text-right font-black uppercase tracking-widest text-xs w-32 whitespace-nowrap">Total</th>
+            <th className="py-1 px-2 text-center font-black uppercase tracking-widest text-xs w-[60px] whitespace-nowrap">No.</th>
+            <th className="py-1 px-2 text-left font-black uppercase tracking-widest text-xs">Concepto</th>
+            <th className="py-1 px-2 text-right font-black uppercase tracking-widest text-xs w-[140px] whitespace-nowrap">Valor Histórico</th>
+            <th className="py-1 px-2 text-right font-black uppercase tracking-widest text-xs w-[120px] whitespace-nowrap">Total</th>
           </tr>
         </thead>
         <tbody className="bg-white dark:bg-slate-900">
           {sections.map((section) => (
             <React.Fragment key={section.id}>
-              <tr className="bg-slate-100 dark:bg-slate-950/80">
+              <tr className="bg-emerald-500/5 border-l-2 border-emerald-500/40">
                   <td colSpan={4} className="px-4 py-2 text-xs font-black text-primary uppercase tracking-[0.2em] border-y border-slate-200 dark:border-slate-800">
                       {section.label}
                   </td>

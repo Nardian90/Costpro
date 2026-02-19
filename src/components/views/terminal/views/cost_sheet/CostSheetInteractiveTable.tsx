@@ -132,20 +132,22 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
   const warningErrors = (safeCalculated.validationErrors || []).filter(e => e.type === 'WARNING');
   const infoErrors = (safeCalculated.validationErrors || []).filter(e => e.type === 'INFO');
   const hasEngineWarnings = safeCalculated.hasWarnings || (!hasChildren && !row.is_percent && safeCalculated.total === 0 && ((row.valorHistorico ?? 0) > 0 || !!row.baseDeCalculoRef));
+  const isZero = Number(safeCalculated.total) === 0;
 
   return (
     <>
       <TableRow className={cn(
+        "h-8 text-xs",
         "border-t border-border/30 hover:bg-primary/5 transition-colors group",
         isResultRow && "bg-primary/5 font-bold"
       )}>
         {/* No. */}
-        <TableCell className="w-12 px-2 py-1.5 text-center text-xs font-black text-muted-foreground/60 tabular-nums border-r border-border/10">
+        <TableCell className="w-[60px] px-2 py-0.5 text-center text-xs font-black text-muted-foreground/60 tabular-nums border-r border-border/10">
             {numbering}
         </TableCell>
 
         {/* Concepto */}
-        <TableCell style={{ paddingLeft: `${level * 16 + 8}px` }} className="px-2 py-1.5 font-medium text-[13px] text-foreground min-w-[250px] border-r border-border/10">
+        <TableCell style={{ paddingLeft: `${level * 16 + 8}px` }} className="px-2 py-0.5 font-medium text-foreground border-r border-border/10">
           <div className="flex items-center gap-1.5 min-w-0 group/row">
             {hasChildren && (
               <button onClick={handleToggle} className="p-1 rounded-full hover:bg-primary/10 shrink-0">
@@ -224,7 +226,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
         </TableCell>
 
         {/* Valor Histórico / % */}
-        <TableCell className="px-2 py-1 text-right w-28 cursor-pointer border-r border-border/10" onClick={() => setIsEditingVH(true)}>
+        <TableCell className="px-2 py-0.5 text-right w-[140px] cursor-pointer border-r border-border/10" onClick={() => setIsEditingVH(true)}>
             <div className="relative">
                 {isEditingVH ? (
                     <FormulaEditor
@@ -259,7 +261,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
 
         {/* Total */}
         <TableCell
-          className="px-2 py-1 text-right font-black tabular-nums text-primary w-32 cursor-pointer hover:bg-primary/5 transition-colors text-[13px] border-r border-border/10"
+          className="px-2 py-0.5 text-right font-black tabular-nums text-primary w-[120px] cursor-pointer hover:bg-primary/5 transition-colors text-xs border-r border-border/10"
           onClick={() => setIsEditingTotal(true)}
         >
           {isEditingTotal ? (
@@ -275,13 +277,13 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                 <Popover>
                     <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
                         <div className="cursor-help flex items-center">
-                            {criticalErrors.length > 0 ? (
+                            {(criticalErrors.length > 0 && !isZero) ? (
                                 <XCircle className="w-4 h-4 text-destructive animate-pulse" />
-                            ) : (warningErrors.length > 0 || hasEngineWarnings) ? (
+                            ) : (warningErrors.length > 0 || hasEngineWarnings) && !isZero ? (
                                 <AlertTriangle className="w-4 h-4 text-amber-500 animate-bounce" />
-                            ) : infoErrors.length > 0 ? (
+                            ) : (infoErrors.length > 0 && !isZero) ? (
                                 <HelpCircle className="w-4 h-4 text-blue-500 opacity-70 group-hover:opacity-100 transition-opacity" />
-                            ) : isResultRow ? (
+                            ) : (isResultRow && !isZero) ? (
                                 <CheckCircle2 className="w-4 h-4 text-emerald-500 opacity-40 group-hover:opacity-100 transition-opacity" />
                             ) : null}
                         </div>
@@ -347,7 +349,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
 
                 <div className="flex items-center gap-1">
                     {row.formula && <FunctionSquare className="w-3 h-3 text-primary/40" />}
-                    <span className={cn(row.formula && "underline decoration-dotted decoration-primary/30")}>
+                    <span className={cn(row.formula && "underline decoration-dotted decoration-primary/30", isZero ? "text-muted-foreground opacity-60 font-medium" : "text-primary font-black")}>
                         {formatAccounting(safeCalculated.total)}
                     </span>
                 </div>
@@ -356,7 +358,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
         </TableCell>
 
         {/* Ayuda - Hidden on very small screens */}
-        <TableCell className="px-2 py-1 text-center w-12 hidden sm:table-cell">
+        <TableCell className="px-2 py-0.5 text-center w-[80px] hidden sm:table-cell">
           {row.helpText && (
             <Popover>
               <PopoverTrigger asChild>
@@ -552,11 +554,11 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                 return (
                 <LazyRender key={section.id}>
                 <div id={section.id} className="animate-in fade-in slide-in-from-bottom-2 duration-500 mb-8 last:mb-0 scroll-mt-24">
-                    <div className="flex items-center justify-between py-1.5 px-4 bg-muted/30 border-y border-border/50">
+                    <div className="flex items-center justify-between py-1 px-4 bg-emerald-500/5 border-y border-border/20 border-l-2 border-emerald-500/40">
                         <div className="flex items-center gap-3">
-                            <div className="w-1.5 h-6 bg-primary rounded-full" />
+                            <div className="w-1 h-4 bg-emerald-500/40 rounded-full" />
                             <Input
-                                className="h-8 text-sm font-black uppercase tracking-[0.2em] text-foreground/80 bg-transparent border-none focus-visible:ring-0 p-0 w-auto min-w-[250px]"
+                                className="h-7 text-xs font-black uppercase tracking-[0.2em] text-foreground/80 bg-transparent border-none focus-visible:ring-0 p-0 w-auto min-w-[250px]"
                                 value={section.label}
                                 onChange={(e) => updateValue(['sections', sectionIndex, 'label'], e.target.value)}
                             />
@@ -582,12 +584,12 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                                 !isFirstInGroup && "hidden",
                                 (isStickyHeaderSection && isFirstInGroup) && "sticky top-0 z-20"
                             )}>
-                                <TableRow className="hover:bg-transparent border-none">
-                                    <TableHead className="w-12 px-2 py-2 text-center font-black uppercase tracking-widest border-r border-border/10">No.</TableHead>
-                                    <TableHead className="px-2 py-2 text-left font-black uppercase tracking-widest min-w-[250px] border-r border-border/10">Concepto</TableHead>
-                                    <TableHead className="px-2 py-2 text-right font-black uppercase tracking-widest w-28 border-r border-border/10">Valor Histórico</TableHead>
-                                    <TableHead className="px-2 py-2 text-right font-black uppercase tracking-widest w-32 border-r border-border/10">Total</TableHead>
-                                    <TableHead className="px-2 py-2 text-center font-black uppercase tracking-widest w-12 hidden sm:table-cell">Ayuda</TableHead>
+                                <TableRow className="hover:bg-transparent border-none h-8 text-xs">
+                                    <TableHead className="w-[60px] px-2 py-0.5 text-center font-black uppercase tracking-widest border-r border-border/10">No.</TableHead>
+                                    <TableHead className="px-2 py-0.5 text-left font-black uppercase tracking-widest border-r border-border/10">Concepto</TableHead>
+                                    <TableHead className="w-[140px] px-2 py-0.5 text-right font-black uppercase tracking-widest border-r border-border/10">Valor Histórico</TableHead>
+                                    <TableHead className="w-[120px] px-2 py-0.5 text-right font-black uppercase tracking-widest border-r border-border/10">Total</TableHead>
+                                    <TableHead className="w-[80px] px-2 py-0.5 text-center font-black uppercase tracking-widest hidden sm:table-cell">Ayuda</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
