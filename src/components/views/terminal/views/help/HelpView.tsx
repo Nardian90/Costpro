@@ -142,7 +142,7 @@ export default function HelpView() {
               {selectedSection === 'intro' && (
                 <div className="space-y-12">
                   <div className="space-y-6">
-                    <h2 className="text-4xl font-black uppercase tracking-tighter">Bienvenido al Ecosistema CostPro</h2>
+                    <h2 className="text-[clamp(2rem,8vw,3rem)] font-black uppercase tracking-tighter leading-tight">Bienvenido al Ecosistema CostPro</h2>
                     <p className="text-lg text-muted-foreground font-medium leading-relaxed">
                       Esta guía le proporcionará los conocimientos necesarios para operar la plataforma líder en gestión de costos y operativa comercial para MiPyMEs.
                     </p>
@@ -186,7 +186,7 @@ export default function HelpView() {
               {selectedSection === 'costs' && (
                 <div className="space-y-12">
                    <div className="space-y-4">
-                      <h2 className="text-3xl font-black uppercase tracking-tighter">Ingeniería de Costos v5</h2>
+                      <h2 className="text-[clamp(1.75rem,7vw,2.5rem)] font-black uppercase tracking-tighter leading-tight">Ingeniería de Costos v5</h2>
                       <p className="text-muted-foreground font-medium">Cumplimiento total con normativas vigentes y precisión decimal extendida.</p>
                    </div>
 
@@ -226,7 +226,7 @@ export default function HelpView() {
               {selectedSection === 'pos' && (
                 <div className="space-y-12">
                   <div className="space-y-4">
-                    <h2 className="text-3xl font-black uppercase tracking-tighter">Punto de Venta Móvil</h2>
+                    <h2 className="text-[clamp(1.75rem,7vw,2.5rem)] font-black uppercase tracking-tighter leading-tight">Punto de Venta Móvil</h2>
                     <p className="text-muted-foreground font-medium">Diseñado para entornos de alto tráfico con controles táctiles optimizados.</p>
                   </div>
 
@@ -251,7 +251,7 @@ export default function HelpView() {
               {selectedSection === 'inventory' && (
                 <div className="space-y-12">
                    <div className="space-y-4">
-                    <h2 className="text-3xl font-black uppercase tracking-tighter">Gestión de Almacenes</h2>
+                    <h2 className="text-[clamp(1.75rem,7vw,2.5rem)] font-black uppercase tracking-tighter leading-tight">Gestión de Almacenes</h2>
                     <p className="text-muted-foreground font-medium">Trazabilidad total de existencias y control de merma.</p>
                   </div>
 
@@ -295,7 +295,7 @@ export default function HelpView() {
               {selectedSection === 'security' && (
                 <div className="space-y-12">
                    <div className="space-y-4">
-                    <h2 className="text-3xl font-black uppercase tracking-tighter">Arquitectura de Seguridad</h2>
+                    <h2 className="text-[clamp(1.75rem,7vw,2.5rem)] font-black uppercase tracking-tighter leading-tight">Arquitectura de Seguridad</h2>
                     <p className="text-muted-foreground font-medium">Privacidad de grado empresarial mediante Row-Level Security.</p>
                   </div>
 
@@ -321,7 +321,7 @@ export default function HelpView() {
               {selectedSection === 'ipv' && (
                 <div className="space-y-12">
                    <div className="space-y-4">
-                    <h2 className="text-3xl font-black uppercase tracking-tighter">Conciliación Bancaria IPV</h2>
+                    <h2 className="text-[clamp(1.75rem,7vw,2.5rem)] font-black uppercase tracking-tighter leading-tight">Conciliación Bancaria IPV</h2>
                     <p className="text-muted-foreground font-medium">Sincronización automática entre ventas POS y movimientos de cuenta.</p>
                   </div>
                   <IpvFlowDiagram />
@@ -331,7 +331,7 @@ export default function HelpView() {
               {selectedSection === 'admin' && (
                 <div className="space-y-12">
                    <div className="space-y-4">
-                    <h2 className="text-3xl font-black uppercase tracking-tighter">Panel de Administración</h2>
+                    <h2 className="text-[clamp(1.75rem,7vw,2.5rem)] font-black uppercase tracking-tighter leading-tight">Panel de Administración</h2>
                     <p className="text-muted-foreground font-medium">Gestión centralizada de usuarios, roles y sucursales.</p>
                   </div>
                   <RolesDiagram />
@@ -350,7 +350,7 @@ export default function HelpView() {
               {selectedSection === "resolutions" && (
                 <div className="space-y-12">
                   <div className="space-y-4">
-                    <h2 className="text-3xl font-black uppercase tracking-tighter">Base Normativa</h2>
+                    <h2 className="text-[clamp(1.75rem,7vw,2.5rem)] font-black uppercase tracking-tighter leading-tight">Base Normativa</h2>
                     <p className="text-muted-foreground font-medium">Resoluciones y leyes que rigen la ingeniería de costos en Cuba.</p>
                   </div>
 
@@ -397,7 +397,7 @@ export default function HelpView() {
         <div className="flex gap-4">
           <Button
             onClick={() => window.open("https://wa.me/5353183215", "_blank")}
-            className="rounded-xl font-bold text-xs uppercase tracking-widest px-8"
+            className="h-11 rounded-xl font-bold text-xs uppercase tracking-widest px-8"
           >
             Chat con Soporte
           </Button>
