@@ -248,19 +248,27 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                   layoutMode === 'grid' ? "hidden md:table-header-group" : "table-header-group"
                 )}>
                     <TableRow className="border-b border-border/50">
-                        {annex.columns.map((col: CostSheetColumn) => (
-                            <TableHead key={col.key} className="font-black py-4 px-4 text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                                {col.label || col.title || col.key}
-                            </TableHead>
-                        ))}
-                        <TableHead className="text-center w-20 uppercase tracking-widest">Acciones</TableHead>
+                        {annex.columns.map((col: CostSheetColumn) => {
+                             const isMain = col.key === 'description' || col.label?.toLowerCase().includes('descripción') || col.label?.toLowerCase().includes('puesto');
+                             return (
+                                <TableHead key={col.key} className={cn(
+                                    "font-black py-4 px-4 text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400 whitespace-nowrap",
+                                    !isMain && "w-[1%]"
+                                )}>
+                                    {col.label || col.title || col.key}
+                                </TableHead>
+                             );
+                        })}
+                        <TableHead className="text-center w-[1%] whitespace-nowrap uppercase tracking-widest">Acciones</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {displayData.map((row: any, rowIndex: number) => (
                         <TableRow key={rowIndex} className="border-b border-border/30 hover:bg-primary/5 transition-colors group">
-                            {annex.columns.map((col: CostSheetColumn) => (
-                                <TableCell key={col.key} data-label={col.label || col.title || col.key} className="p-3 sm:p-4">
+                            {annex.columns.map((col: CostSheetColumn) => {
+                                const isMain = col.key === 'description' || col.label?.toLowerCase().includes('descripción') || col.label?.toLowerCase().includes('puesto');
+                                return (
+                                <TableCell key={col.key} data-label={col.label || col.title || col.key} className={cn("p-3 sm:p-4", !isMain && "w-[1%] whitespace-nowrap")}>
                                     {col.formula ? (
                                         <div className="relative group/cell">
                                             <div className="neu-inset-sm px-3 py-2 font-mono text-right bg-primary/5 text-primary font-black min-w-[100px] border border-primary/10">
@@ -287,7 +295,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                                                     return undefined;
                                                 })()}
                                                 className={cn(
-                                                    "neu-input !p-2 min-w-[140px] text-xs font-bold text-slate-700 dark:text-slate-200 border-transparent hover:border-primary/20 focus:border-primary bg-white/50 dark:bg-slate-900/50",
+                                                    "neu-input !p-2 min-w-[80px] text-xs font-bold text-slate-700 dark:text-slate-200 border-transparent hover:border-primary/20 focus:border-primary bg-white/50 dark:bg-slate-900/50",
                                                     typeof annexes[annexIndex].data[rowIndex][col.key] === 'string' && annexes[annexIndex].data[rowIndex][col.key] !== '' && "border-primary/20 bg-primary/5"
                                                 )}
                                             />
@@ -297,8 +305,9 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                                         </div>
                                     )}
                                 </TableCell>
-                            ))}
-                            <TableCell data-label="Acciones" className="text-center p-3 sm:p-4">
+                                );
+                            })}
+                            <TableCell data-label="Acciones" className="text-center p-3 sm:p-4 w-[1%] whitespace-nowrap">
                                 <div className="flex items-center justify-center gap-1">
                                 <div className="flex flex-col sm:flex-row items-center gap-1">
                                     <Button
