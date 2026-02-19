@@ -24,7 +24,6 @@ import QuickModeMassiveDiagram from './help/QuickModeMassiveDiagram';
 import StickyCartFlowDiagram from './help/StickyCartFlowDiagram';
 import MobilePosDiagram from './help/MobilePosDiagram';
 import SalesFlowDiagram from './help/SalesFlowDiagram';
-import CashFlowDiagram from './help/CashFlowDiagram';
 import InventoryFlowDiagram from './help/InventoryFlowDiagram';
 import InventoryAdjustmentFlowDiagram from './help/InventoryAdjustmentFlowDiagram';
 import StoreSkuDiagram from './help/StoreSkuDiagram';
@@ -246,7 +245,6 @@ export default function HelpView() {
                   </div>
 
                   <SalesFlowDiagram />
-                  <CashFlowDiagram />
                 </div>
               )}
 
