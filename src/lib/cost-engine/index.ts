@@ -489,6 +489,23 @@ export function calculateFicha(
     const currentCalculated = currentRows.get(row.id);
     const vh = new Decimal(currentCalculated?.calculatedVH || row.valorHistorico || 0);
 
+    // Helper for prefix matching in annexes
+    const getAnnexSumForPrefix = (anexoId: string, prefix: string): Decimal => {
+        const classSumMap = annexSumMap.get(anexoId);
+        if (!classSumMap) return new Decimal(0);
+
+        let sum = new Decimal(0);
+        let found = false;
+        classSumMap.forEach((val, classification) => {
+            // Check if classification starts with prefix (e.g. "1.1.1" starts with "1.1")
+            if (classification === prefix || classification.startsWith(prefix + '.')) {
+                sum = sum.plus(val);
+                found = true;
+            }
+        });
+        return found ? sum : (new Decimal(-1)); // -1 means no match found
+    };
+
     // Resolve Rules
     const activeRules = (ficha.rules || [])
       .filter((r) => r.enabled)
@@ -513,7 +530,7 @@ export function calculateFicha(
         if (ruleOverride.formulaOverride) {
             formulaToUse = ruleOverride.formulaOverride;
             formaCalculoToUse = 'FORMULA';
-            note += `Rule '${ruleOverride.name}' v${ruleOverride.version} applied. `;
+            note += `Rule '${ruleOverride.name}' applied. `;
             type = 'RULE_APPLIED';
         }
     }
@@ -529,16 +546,14 @@ export function calculateFicha(
       case 'ANEXO':
       case 'IMPORTAR_ANEXO':
         if (base?.type === 'ANEXO') {
-          const classSumMap = annexSumMap.get(base.anexoId);
-          const classSum = classSumMap?.get(row.classification);
+          const sum = getAnnexSumForPrefix(base.anexoId, row.classification);
 
-          if (classSum !== undefined) {
-              total = classSum;
-              note += `Imported from ${base.anexoId} for class ${row.classification}. `;
+          if (sum.gte(0)) {
+              total = sum;
+              note += `Imported prefix match from ${base.anexoId} for ${row.classification}. `;
           } else {
-              const annexTotalValue = annexTotals.get(base.anexoId) || 0;
-              total = new Decimal(annexTotalValue);
-              note += `Imported total from ${base.anexoId} (Class ${row.classification} not found). `;
+              total = new Decimal(0);
+              note += `No matches in ${base.anexoId} for prefix ${row.classification}. `;
           }
 
           baseTotalValue = total;
@@ -555,15 +570,14 @@ export function calculateFicha(
         let baseRefName = '';
 
         if (base?.type === 'ANEXO') {
-            const classSumMap = annexSumMap.get(base.anexoId);
-            const classSum = classSumMap?.get(row.classification);
+            const sum = getAnnexSumForPrefix(base.anexoId, row.classification);
 
-            if (classSum !== undefined) {
-                baseTotalValue = classSum;
-                note += `Using class ${row.classification} from ${base.anexoId} as base. `;
+            if (sum.gte(0)) {
+                baseTotalValue = sum;
+                note += `Using prefix match for ${row.classification} from ${base.anexoId} as base. `;
             } else {
-                baseTotalValue = new Decimal(annexTotals.get(base.anexoId) || 0);
-                note += `Using total of ${base.anexoId} as base (class ${row.classification} not found). `;
+                baseTotalValue = new Decimal(0);
+                note += `No matches for ${row.classification} in ${base.anexoId}. `;
             }
 
             baseHistValue = baseTotalValue;
@@ -617,6 +631,7 @@ export function calculateFicha(
             const expr = parser.parse(formulaStr);
 
             if (base?.type === 'ANEXO') {
+                 // Formula context base total use total of annex
                  baseTotalValue = new Decimal(annexTotals.get(base.anexoId) || 0);
             } else if (base?.type === 'FILA') {
                 let targets = rowsByClass.get(base.classification);
@@ -647,13 +662,11 @@ export function calculateFicha(
             const romanMap = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
             ficha.anexos.forEach((anexo, idx) => {
                 const totalVal = annexTotals.get(anexo.id) || 0;
-                const classSumMap = annexSumMap.get(anexo.id);
-                const classSum = classSumMap?.get(row.classification);
+                const prefixSum = getAnnexSumForPrefix(anexo.id, row.classification);
 
-                // Smart fallback: if specific classification doesn't exist, use total
-                const valueToUse = classSum !== undefined ? classSum.toNumber() : totalVal;
+                // Smart Resolve: if prefix matches exist, use them, otherwise 0 (formulas can use TotalAnexo explicitly)
+                const valueToUse = prefixSum.gte(0) ? prefixSum.toNumber() : 0;
 
-                // Provide multiple naming variations for flexibility
                 const variations = new Set([
                     anexo.id,
                     `Anexo${anexo.id}`,
@@ -680,8 +693,14 @@ export function calculateFicha(
             });
 
             const result = expr.evaluate(context);
-            total = new Decimal(result);
-            note += `Evaluated: ${formulaToUse}. `;
+            if (isNaN(result) || !isFinite(result)) {
+                total = new Decimal(0);
+                note += `Evaluation result was ${result} (NaN/Infinity). Forcing to 0. `;
+                type = 'WARNING';
+            } else {
+                total = new Decimal(result);
+                note += `Evaluated: ${formulaToUse}. `;
+            }
         } catch (e: any) {
             total = new Decimal(0);
             type = 'ERROR';
@@ -692,8 +711,6 @@ export function calculateFicha(
 
     return { total, note, type, fuente: fuenteParts.join('|'), baseTotal: baseTotalValue, baseHist: baseHistValue };
   };
-
-
   // 4. Iterative Solver
   let converged = false;
   let iterations = 0;
