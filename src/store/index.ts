@@ -55,6 +55,7 @@ interface UIState {
   notifications: NotificationsConfig;
   viewQueries: Record<string, string | null>;
   showQueries: boolean;
+  previousView: ViewType | null;
   setCurrentView: (view: ViewType) => void;
   setShowQueries: (show: boolean) => void;
   setNotifications: (notifications: NotificationsConfig) => void;
@@ -80,7 +81,11 @@ export const useUIStore = create<UIState>((set) => ({
   },
   viewQueries: {},
   showQueries: false,
-  setCurrentView: (view) => set({ currentView: view }),
+  previousView: null,
+  setCurrentView: (view) => set((state) => ({
+    previousView: view !== state.currentView ? state.currentView : state.previousView,
+    currentView: view
+  })),
   setShowQueries: (show) => set({ showQueries: show }),
   setNotifications: (notifications) => set({ notifications }),
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
