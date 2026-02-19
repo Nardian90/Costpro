@@ -49,7 +49,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
       title: 'Gestión',
       items: [
         ...actions.filter(a => a.id === 'audit'),
-        ...actions.filter(a => ['load-example', 'reset', 'import-json', 'export-json', 'massive-gen'].includes(a.id))
+        ...actions.filter(a => ['load-example', 'reset', 'import-json', 'export-json', 'save-template', 'massive-gen'].includes(a.id))
       ]
     },
     {

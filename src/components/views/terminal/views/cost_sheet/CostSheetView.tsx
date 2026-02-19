@@ -20,6 +20,8 @@ import { CostSheetModeSwitcher } from './CostSheetModeSwitcher';
 import { CostSheetAuditView } from './CostSheetAuditView';
 import { CostSheetActionsPanel } from './CostSheetActionsPanel';
 import { CostSheetHelpPanel } from './CostSheetHelpPanel';
+import { CostSheetTemplateExplorer } from "./CostSheetTemplateExplorer";
+import { FolderOpen } from "lucide-react";
 import { CostModuleAI } from './CostModuleAI';
 import { CostSheetSidebarNav } from './CostSheetSidebarNav';
 import { CostSheetBottomNav } from './CostSheetBottomNav';
@@ -378,9 +380,28 @@ const CostSheetView = () => {
     { id: 'export-excel', label: 'Excel', icon: FileSpreadsheet, onClick: handleExportExcel, variant: (isBlocked ? 'outline' : 'primary') as any, disabled: false },
     { id: 'export-pdf', label: 'PDF', icon: Download, onClick: () => setIsExportModalOpen(true), variant: (isBlocked ? 'outline' : 'success') as any, disabled: false },
     { id: 'massive-gen', label: 'Gen. Masiva', icon: FileText, onClick: () => { setActiveSection('massive-gen'); setIsActionsPanelOpen(false); }, variant: 'outline' as const },
+    {
+        id: 'save-template',
+        label: 'Guardar Plantilla',
+        icon: Save,
+        onClick: () => {
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${data.name || 'plantilla'}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            toast.success('Plantilla lista para guardar en tu carpeta local');
+        },
+        variant: 'success' as const
+    },
+
+
   ], [isEditing, loadExample, reset, handleImportJSON, handleExportJSON, handleExportExcel, handleExportPDF, isBlocked]);
 
   const mainActions = React.useMemo(() => [
+
     ...allActions.filter(a => ['toggle-mode', 'kpis-header'].includes(a.id)),
     {
         id: 'more-actions',
@@ -395,6 +416,7 @@ const CostSheetView = () => {
 
   const navItems = React.useMemo(() => [
     { id: "kpis", label: "Tablero", icon: BarChart3 },
+    { id: "templates", label: "Plantillas", icon: FolderOpen },
 
     { id: "header", label: "Encabezado", icon: Layout },
     { id: "massive-gen", label: "Gen. Masiva", icon: FileText }
@@ -664,6 +686,11 @@ const CostSheetView = () => {
                                 audits={audits}
                                 validations={validations}
                             />
+                        </div>
+                    )}
+                    {activeSection === "templates" && (
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <CostSheetTemplateExplorer />
                         </div>
                     )}
                     {activeSection === 'massive-gen' && (
