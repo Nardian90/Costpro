@@ -81,7 +81,7 @@ export default function HelpView() {
             {previousView && (
               <Button
                 onClick={() => setCurrentView(previousView)}
-                variant="outline" size="sm" className="font-bold text-xs uppercase tracking-widest gap-2 rounded-xl"
+                variant="default" size="sm" className="bg-primary text-white font-black text-xs uppercase tracking-widest gap-2 rounded-xl px-6 shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
               >
                 <ArrowLeft className="w-4 h-4" />
                 Volver
