@@ -137,9 +137,9 @@ export default function HelpView() {
             <div className="h-6 w-px bg-border/50 mx-2" />
             <h2 className="text-sm font-black uppercase tracking-[0.3em] text-primary flex items-center gap-3">
               Ayuda
-              {user?.name && (
+              {user?.fullName && (
                 <span className="text-muted-foreground/40 font-medium tracking-widest text-[10px] hidden sm:inline">
-                  | {user.name}
+                  | {user.fullName}
                 </span>
               )}
             </h2>
@@ -147,19 +147,22 @@ export default function HelpView() {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="hidden sm:flex items-center gap-2 mr-4">
-            <ThemeToggle />
-          </div>
-          <Badge variant="outline" className="hidden md:flex bg-primary/5 text-primary border-primary/20 font-black text-[10px] uppercase shadow-sm">
-            v5.7.25
-          </Badge>
-          <Button
+                    <Button
             variant="ghost"
             size="sm"
-            className="h-11 px-4 font-black uppercase text-[10px] tracking-widest text-primary hover:bg-primary/10"
+            className="h-11 px-4 font-black uppercase text-[10px] tracking-widest"
+            onClick={() => setSelectedSection('main')}
+          >
+            Inicio
+          </Button>
+          <div className="h-6 w-px bg-border/50 mx-1" />
+          <Button
+            variant="default"
+            size="sm"
+            className="h-11 px-6 font-black uppercase text-[10px] tracking-widest bg-primary text-white hover:opacity-90 shadow-lg shadow-primary/20"
             onClick={() => setCurrentView('dashboard')}
           >
-            Salir de Ayuda
+            Regresar al Terminal
           </Button>
         </div>
       </div>
