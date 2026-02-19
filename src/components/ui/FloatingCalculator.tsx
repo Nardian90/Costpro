@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { motion, AnimatePresence, useDragControls } from 'framer-motion';
+import { motion, AnimatePresence, useDragControls, Variants } from 'framer-motion';
 import {
   Calculator,
   X,
@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTheme } from 'next-themes';
+import { useUIStore } from '@/store';
 
 interface Position {
   x: number;
@@ -23,6 +24,7 @@ interface Position {
 }
 
 export const FloatingCalculator: React.FC = () => {
+  const { isCalculatorOpen, setIsCalculatorOpen } = useUIStore();
   const [isOpen, setIsOpen] = useState(false);
   const [display, setDisplay] = useState('0');
   const [equation, setEquation] = useState('');
@@ -32,6 +34,13 @@ export const FloatingCalculator: React.FC = () => {
   const { resolvedTheme } = useTheme();
   const dragControls = useDragControls();
   const constraintsRef = useRef<HTMLDivElement>(null);
+
+  // Sync with store - if store opens it, we expand it
+  useEffect(() => {
+    if (isCalculatorOpen) {
+      setIsOpen(true);
+    }
+  }, [isCalculatorOpen]);
 
   // Persistence
   useEffect(() => {
@@ -105,11 +114,16 @@ export const FloatingCalculator: React.FC = () => {
     }
   };
 
-  if (!isMounted) return null;
+  const closeCalculator = () => {
+    setIsOpen(false);
+    setIsCalculatorOpen(false);
+  };
+
+  if (!isMounted || !isCalculatorOpen) return null;
 
   const isDark = resolvedTheme === 'dark';
 
-  const containerVariants = {
+  const containerVariants: Variants = {
     closed: {
       scale: 0,
       opacity: 0,
@@ -139,7 +153,7 @@ export const FloatingCalculator: React.FC = () => {
     }
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     closed: { opacity: 0, scale: 0.5, rotate: -20, y: 10 },
     open: { opacity: 1, scale: 1, rotate: 0, y: 0 }
   };
@@ -156,7 +170,6 @@ export const FloatingCalculator: React.FC = () => {
           dragConstraints={constraintsRef}
           dragMomentum={false}
           onDragEnd={handleDragEnd}
-          style={{ x: position.x, y: position.y }}
           className="absolute pointer-events-auto flex flex-col items-end"
           style={{
             right: 24,
@@ -202,7 +215,7 @@ export const FloatingCalculator: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <GripHorizontal className="w-4 h-4 opacity-20" />
                     <button
-                      onClick={() => setIsOpen(false)}
+                      onClick={closeCalculator}
                       className={cn(
                         "hover:rotate-90 transition-transform p-1.5 rounded-full",
                         isDark ? "hover:bg-white/10" : "hover:bg-black/5"
@@ -325,7 +338,7 @@ interface CalcButtonProps {
   onClick: () => void;
   variant?: 'number' | 'operator' | 'primary' | 'danger' | 'secondary';
   className?: string;
-  variants?: any;
+  variants?: Variants;
 }
 
 const CalcButton: React.FC<CalcButtonProps> = ({ label, icon, onClick, variant = 'number', className, variants }) => {
