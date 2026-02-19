@@ -280,9 +280,9 @@ export default function CatalogView() {
         <div className="space-y-6 pb-20">
             <input type="file" ref={fileInputRef} className="hidden" accept=".csv" onChange={handleImportFileChange} />
 
-            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 flex-wrap">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 sm:gap-6 flex-wrap">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto flex-wrap">
-                    <div className="flex items-center justify-between w-full sm:w-auto gap-4">
+                    <div className="flex items-center justify-between w-full sm:w-auto gap-2 sm:gap-4">
                         <h2 className="text-[clamp(1.5rem,5vw,1.875rem)] font-black text-foreground tracking-tighter uppercase truncate hidden sm:block">Catálogo Global</h2>
                         <div className="flex items-center gap-2">
                             <ViewSwitcher currentView={viewMode} onViewChange={setViewMode} />
@@ -350,7 +350,7 @@ export default function CatalogView() {
             )}
 
             {viewMode === 'grid' ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
                     {filteredProducts.map(product => (
                         <ProductCard
                             key={product.id}
