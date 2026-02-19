@@ -4,6 +4,7 @@ import React from 'react';
 import { useUIStore } from "@/store";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export const CostSheetBanner = () => {
   const { setCurrentView } = useUIStore();
@@ -31,7 +32,8 @@ export const CostSheetBanner = () => {
           </p>
         </div>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-4">
+        <ThemeToggle />
         <div className="neu-badge !text-success !bg-success/10 border border-success/20 py-1 px-3">
           Sistema Activo
         </div>

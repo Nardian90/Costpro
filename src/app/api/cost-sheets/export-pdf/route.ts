@@ -43,33 +43,34 @@ export async function POST(req: NextRequest) {
 
         if (isPro) {
             doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-            doc.setLineWidth(0.5);
-            doc.rect(14, 10, 15, 15, 'S');
+            doc.setLineWidth(0.4);
+            doc.rect(14, 8, 12, 12, 'S');
 
             doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-            doc.setFontSize(12);
+            doc.setFontSize(10);
             doc.setFont("helvetica", "bold");
-            doc.text("FC", 21.5, 20, { align: "center" });
+            doc.text("FC", 20, 16, { align: "center" });
 
             doc.setTextColor(100, 100, 100);
-            doc.setFontSize(7);
+            doc.setFontSize(6.5);
             doc.setFont("helvetica", "bold");
-            doc.text("REPORTE CORPORATIVO DE COSTOS", pageWidth - 14, 15, { align: "right" });
+            doc.text("DOCUMENTO TÉCNICO DE COSTOS", pageWidth - 14, 12, { align: "right" });
             doc.setFont("helvetica", "normal");
-            doc.text(`Generado: ${timestamp}`, pageWidth - 14, 19, { align: "right" });
+            doc.text(`Generado: ${timestamp}`, pageWidth - 14, 15, { align: "right" });
 
             doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-            doc.setFontSize(14);
+            doc.setFontSize(11);
             doc.setFont("helvetica", "bold");
-            doc.text(title.toUpperCase(), 35, 18);
-            doc.setFontSize(8);
+            doc.text(title.toUpperCase(), 30, 14);
+            doc.setFontSize(7);
             doc.setFont("helvetica", "normal");
-            doc.text("Res. 148/2023", 35, 22);
+            doc.text("Res. 148/2023 - CONTROL INTERNO", 30, 17.5);
 
             doc.setDrawColor(230, 230, 230);
-            doc.setLineWidth(0.2);
-            doc.line(14, 28, pageWidth - 14, 28);
-        } else {
+            doc.setLineWidth(0.15);
+            doc.line(14, 22, pageWidth - 14, 22);
+        }
+
             doc.setFillColor(40, 40, 40);
             doc.rect(14, 10, 20, 20, 'F');
             doc.setTextColor(255, 255, 255);
@@ -166,29 +167,29 @@ export async function POST(req: NextRequest) {
             const colWidth = (pageWidth - 28) / 4;
 
             labels.forEach((item, i) => {
-                doc.setFontSize(8);
+                doc.setFontSize(7);
                 doc.setFont("helvetica", "bold");
                 doc.setTextColor(130, 130, 130);
                 doc.text(item.l.toUpperCase(), curX, curY);
 
                 if (item.l === 'PRECIO VENTA') {
                     doc.setFillColor(255, 240, 240);
-                    doc.rect(curX - 1, curY + 0.5, colWidth - 2, 8, 'F');
-                    doc.setFontSize(12);
+                    doc.rect(curX - 1, curY + 0.5, colWidth - 2, 6, 'F');
+                    doc.setFontSize(10);
                     doc.setTextColor(180, 0, 0);
                     doc.setFont("helvetica", "bold");
                 } else {
-                    doc.setFontSize(10);
+                    doc.setFontSize(8.5);
                     doc.setTextColor(0, 0, 0);
                     doc.setFont("helvetica", "normal");
                 }
                 const valStr = String(item.v);
                 const lines = doc.splitTextToSize(valStr, colWidth - 5);
-                doc.text(lines, curX, curY + 4.5);
+                doc.text(lines, curX, curY + 3.5);
 
                 if ((i + 1) % 4 === 0) {
                     curX = 14;
-                    curY += 15;
+                    curY += 10;
                 } else {
                     curX += colWidth;
                 }
@@ -198,13 +199,15 @@ export async function POST(req: NextRequest) {
             const status = "VIGENTE";
             doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
             doc.setLineWidth(0.3);
-            doc.rect(pageWidth - 34, y - 6, 20, 6, 'S');
+            doc.rect(pageWidth - 34, y - 6, 20, 5, 'S');
             doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-            doc.setFontSize(7);
+            doc.setFontSize(6.5);
             doc.setFont("helvetica", "bold");
-            doc.text(status, pageWidth - 24, y - 1.5, { align: "center" });
+            doc.text(status, pageWidth - 24, y - 2.5, { align: "center" });
 
-            return curY + 10;
+            return curY + 5;
+        }
+
         }
 
         const data = [
@@ -235,9 +238,11 @@ export async function POST(req: NextRequest) {
     if (exportOptions.includeFC) {
         pageTitle = "FICHA DE COSTO";
         addHeader(doc, pageTitle);
-        currentY = addDataSheetHeader(doc, isPro ? 35 : 38);
+        currentY = addDataSheetHeader(doc, isPro ? 28 : 38);
 
-        const rowHeaders = ['Clasif.', 'Concepto', 'Método', 'V. Histórico', 'Total'];
+        const rowHeaders = isPro
+            ? ['CONCEPTO', 'FILA', 'UM', 'V. HISTÓRICO', 'TOTAL']
+            : ['Fila', 'Conceptos de Gastos', 'UM', 'Índice', 'Total'];
 
         const filterRows = (rows: any[]) => {
             return rows.filter(r => {
@@ -251,42 +256,62 @@ export async function POST(req: NextRequest) {
         const row12Total = result.rows.find(r => r.classification === '12' || r.classification === '12.1')?.total || result.summary?.totalCost || 0;
 
         const rowData = filteredRows.map(r => {
-            let label = r.label.toUpperCase();
+            const level = r.classification.split('.').length - 1;
+            let label = r.label;
+
+            if (level === 0) label = label.toUpperCase();
+
             if (r.classification === '13' && row12Total > 0) {
                 const p = (r.total / row12Total) * 100;
                 label += ` (${p.toFixed(1)}% S/ COSTO)`;
             }
 
-            return [
-                r.classification,
-                label,
-                r.formaCalculo,
-                safeLocale(r.valorHistorico),
-                safeLocale(r.total)
-            ];
+            if (isPro) {
+                return [
+                    label,
+                    r.classification,
+                    r.formaCalculo || '-',
+                    safeLocale(r.valorHistorico),
+                    safeLocale(r.total)
+                ];
+            } else {
+                return [
+                    r.classification,
+                    label.toUpperCase(),
+                    r.formaCalculo,
+                    safeLocale(r.valorHistorico),
+                    safeLocale(r.total)
+                ];
+            }
         });
 
         autoTable(doc, {
             startY: currentY + 5,
             head: [rowHeaders],
             body: rowData,
-            theme: isPro ? 'striped' : 'plain',
+            theme: isPro ? 'plain' : 'plain',
             headStyles: {
                 fillColor: isPro ? [255, 255, 255] : [60, 60, 60],
                 textColor: isPro ? primaryColor : [255, 255, 255],
-                fontSize: 7,
+                fontSize: isPro ? 8 : 7,
                 fontStyle: 'bold',
                 lineWidth: isPro ? { bottom: 0.5 } : 0,
                 lineColor: isPro ? primaryColor : [0,0,0]
             },
             styles: {
-                fontSize: 7,
-                cellPadding: 2, // Increased padding
+                fontSize: isPro ? 8.5 : 7,
+                cellPadding: isPro ? 1.5 : 2,
                 lineColor: [220, 220, 220],
-                lineWidth: isPro ? { bottom: 0.2 } : 0.1
+                lineWidth: isPro ? { bottom: 0.1 } : 0.1
             },
-            alternateRowStyles: isPro ? { fillColor: [247, 247, 247] } : {},
-            columnStyles: {
+            alternateRowStyles: isPro ? { fillColor: [249, 249, 249] } : {},
+            columnStyles: isPro ? {
+                0: { cellWidth: 95 },
+                1: { halign: 'center', cellWidth: 15 },
+                2: { halign: 'center', cellWidth: 15 },
+                3: { halign: 'right' },
+                4: { halign: 'right', fontStyle: 'bold' }
+            } : {
                 0: { cellWidth: 20 },
                 3: { halign: 'right' },
                 4: { halign: 'right' }
@@ -297,17 +322,48 @@ export async function POST(req: NextRequest) {
                     const rowIndex = data.row.index;
                     const r = filteredRows[rowIndex];
                     if (r) {
+                        const level = r.classification.split('.').length - 1;
                         const labelLower = r.label.toLowerCase();
                         const isVenta = labelLower.includes('venta');
                         const isCosto = labelLower.includes('costo');
+                        const isSpecial = isVenta || isCosto || ['13', '13.1', '13.2', '14', '19', '20'].includes(r.classification);
                         const hasChildren = result.rows.some(child => child.classification.startsWith(r.classification + '.'));
 
-                        if (hasChildren || isVenta || isCosto) {
-                            data.cell.styles.fontStyle = 'bold';
-                            if (isPro) data.cell.styles.textColor = primaryColor;
-                        }
-                        if (isVenta) {
-                            data.cell.styles.textColor = [180, 0, 0];
+                        if (isPro) {
+                            if (data.column.index === 0) {
+                                data.cell.styles.cellPadding = { left: 2 + level * 5, top: 1.5, bottom: 1.5, right: 2 };
+                            }
+
+                            if (level === 0) {
+                                data.cell.styles.fontStyle = 'bold';
+                                data.cell.styles.fontSize = 9;
+                            } else if (level === 1) {
+                                data.cell.styles.fontStyle = 'normal';
+                                data.cell.styles.fontSize = 8.5;
+                            } else {
+                                data.cell.styles.fontStyle = 'italic';
+                                data.cell.styles.fontSize = 7.5;
+                                data.cell.styles.textColor = [100, 100, 100];
+                            }
+
+                            if (isSpecial) {
+                                data.cell.styles.fontStyle = 'bold';
+                                if (isVenta) {
+                                    data.cell.styles.fillColor = [255, 240, 240];
+                                    data.cell.styles.textColor = [180, 0, 0];
+                                }
+                                if (['14', '20'].includes(r.classification)) {
+                                    data.cell.styles.lineWidth = { top: 0.3, bottom: 0.5 };
+                                    data.cell.styles.fontSize = 10;
+                                }
+                            }
+                        } else {
+                            if (hasChildren || isVenta || isCosto) {
+                                data.cell.styles.fontStyle = 'bold';
+                            }
+                            if (isVenta) {
+                                data.cell.styles.textColor = [180, 0, 0];
+                            }
                         }
                     }
                 }
@@ -315,6 +371,7 @@ export async function POST(req: NextRequest) {
             didDrawPage: () => addHeader(doc, pageTitle)
         });
         currentY = (doc as any).lastAutoTable.finalY;
+
 
         // Utility Note
         if (exportOptions.includeUtilityNote) {
