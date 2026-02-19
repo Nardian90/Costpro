@@ -38,6 +38,11 @@ export const CostModuleAI: React.FC<CostModuleAIProps> = ({ sheetData }) => {
     const handleSend = async () => {
         if (!input.trim() || isLoading) return;
 
+        if (!token) {
+            toast.error("Sesión expirada. Por favor, vuelve a iniciar sesión.");
+            return;
+        }
+
         const userMsg: Message = { role: 'user', content: input };
         const newMessages = [...messages, userMsg];
         setMessages(newMessages);
@@ -74,11 +79,6 @@ export const CostModuleAI: React.FC<CostModuleAIProps> = ({ sheetData }) => {
         }
     };
 
-    const containerVariants: Variants = {
-        closed: { opacity: 0, scale: 0.8, y: 20 },
-        open: { opacity: 1, scale: 1, y: 0 }
-    };
-
     if (!isOpen) return (
         <button
             onClick={() => setIsOpen(true)}
@@ -89,11 +89,12 @@ export const CostModuleAI: React.FC<CostModuleAIProps> = ({ sheetData }) => {
     );
 
     return (
-        <div ref={constraintsRef} className="fixed inset-0 z-[9999] pointer-events-none overflow-hidden">
+        <div ref={constraintsRef} className="fixed inset-0 z-[9999] pointer-events-none">
             <AnimatePresence>
                 {isMinimized ? (
                     <motion.button
-                        layoutId="ai-widget"
+                        key="minimized"
+                        layoutId="ai-widget-container"
                         onClick={() => setIsMinimized(false)}
                         className={cn(
                             "absolute bottom-24 right-8 pointer-events-auto w-16 h-16 rounded-2xl shadow-2xl flex items-center justify-center group overflow-hidden border transition-all",
@@ -101,6 +102,9 @@ export const CostModuleAI: React.FC<CostModuleAIProps> = ({ sheetData }) => {
                         )}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
                     >
                         <div className={cn(
                             "absolute inset-0 opacity-20 bg-gradient-to-br",
@@ -111,17 +115,16 @@ export const CostModuleAI: React.FC<CostModuleAIProps> = ({ sheetData }) => {
                     </motion.button>
                 ) : (
                     <motion.div
-                        layoutId="ai-widget"
+                        key="expanded"
                         drag
                         dragConstraints={constraintsRef}
-                        dragElastic={0.1}
+                        dragElastic={0.05}
                         dragMomentum={false}
-                        initial="closed"
-                        animate="open"
-                        exit="closed"
-                        variants={containerVariants}
+                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.9, y: 20 }}
                         className={cn(
-                            "absolute top-24 right-12 w-full max-w-[380px] h-[550px] rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] overflow-hidden border flex flex-col pointer-events-auto",
+                            "absolute top-24 right-12 w-[380px] max-w-[calc(100vw-2rem)] h-[600px] max-h-[calc(100vh-8rem)] rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] overflow-hidden border flex flex-col pointer-events-auto",
                             isDark ? "bg-[#010203]/95 border-[#39FF14]/30 text-white" : "bg-white/95 border-primary/30 text-foreground"
                         )}
                     >

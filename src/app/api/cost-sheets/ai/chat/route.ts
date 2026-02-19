@@ -10,7 +10,8 @@ export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(req);
     if (!session) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+      console.error('[CostAI] No session found');
+      return NextResponse.json({ error: 'Sesión no válida o expirada. Por favor, re-inicia sesión.' }, { status: 401 });
     }
 
     const { messages, sheetData, aiProvider, aiApiKey } = await req.json();
