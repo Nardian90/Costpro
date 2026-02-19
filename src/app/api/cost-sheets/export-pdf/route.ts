@@ -241,8 +241,8 @@ export async function POST(req: NextRequest) {
         currentY = addDataSheetHeader(doc, isPro ? 28 : 38);
 
         const rowHeaders = isPro
-            ? ['CONCEPTO', 'FILA', 'UM', 'V. HISTÓRICO', 'TOTAL']
-            : ['Fila', 'Conceptos de Gastos', 'UM', 'Índice', 'Total'];
+            ? ['FILA', 'CONCEPTO', 'V. HISTÓRICO', 'TOTAL']
+            : ['Fila', 'Concepto', 'V. Histórico', 'Total'];
 
         const filterRows = (rows: any[]) => {
             return rows.filter(r => {
@@ -268,9 +268,8 @@ export async function POST(req: NextRequest) {
 
             if (isPro) {
                 return [
-                    label,
                     r.classification,
-                    r.formaCalculo || '-',
+                    label,
                     safeLocale(r.valorHistorico),
                     safeLocale(r.total)
                 ];
@@ -278,7 +277,6 @@ export async function POST(req: NextRequest) {
                 return [
                     r.classification,
                     label.toUpperCase(),
-                    r.formaCalculo,
                     safeLocale(r.valorHistorico),
                     safeLocale(r.total)
                 ];
@@ -306,15 +304,14 @@ export async function POST(req: NextRequest) {
             },
             alternateRowStyles: isPro ? { fillColor: [249, 249, 249] } : {},
             columnStyles: isPro ? {
-                0: { cellWidth: 95 },
-                1: { halign: 'center', cellWidth: 15 },
-                2: { halign: 'center', cellWidth: 15 },
-                3: { halign: 'right' },
-                4: { halign: 'right', fontStyle: 'bold' }
+                0: { halign: 'center', cellWidth: 20 },
+                1: { cellWidth: 105 },
+                2: { halign: 'right' },
+                3: { halign: 'right', fontStyle: 'bold' }
             } : {
                 0: { cellWidth: 20 },
-                3: { halign: 'right' },
-                4: { halign: 'right' }
+                2: { halign: 'right' },
+                3: { halign: 'right' }
             },
             margin: { top: 35, bottom: 20 },
             didParseCell: (data) => {
@@ -330,7 +327,7 @@ export async function POST(req: NextRequest) {
                         const hasChildren = result.rows.some(child => child.classification.startsWith(r.classification + '.'));
 
                         if (isPro) {
-                            if (data.column.index === 0) {
+                            if (data.column.index === 1) {
                                 data.cell.styles.cellPadding = { left: 2 + level * 5, top: 1.5, bottom: 1.5, right: 2 };
                             }
 
@@ -371,6 +368,7 @@ export async function POST(req: NextRequest) {
             didDrawPage: () => addHeader(doc, pageTitle)
         });
         currentY = (doc as any).lastAutoTable.finalY;
+
 
 
         // Utility Note
