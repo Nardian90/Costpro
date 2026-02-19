@@ -18,6 +18,9 @@ import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useUIStore, ViewType } from "@/store";
+import { useAuthStore } from "@/store";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 // Diagrams
 import RolesDiagram from './help/RolesDiagram';
@@ -55,6 +58,8 @@ const SECTIONS = [
 
 export default function HelpView() {
   const [selectedSection, setSelectedSection] = useState('main');
+  const { setCurrentView } = useUIStore();
+  const { user } = useAuthStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleDownload = () => {
@@ -115,46 +120,46 @@ export default function HelpView() {
   );
 
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)] min-h-[600px] -mx-4 sm:-mx-6 lg:-mx-8 -mt-6 overflow-hidden bg-background/50 border border-border/50 rounded-[2.5rem] shadow-2xl relative">
+    <div className="flex flex-col h-screen min-h-[600px] overflow-hidden bg-background relative">
 
-      {/* Mobile Header / Desktop Breadcrumb */}
-      <div className="flex items-center justify-between px-6 py-4 border-b bg-card/30 backdrop-blur-xl z-20">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="lg:hidden h-11 w-11"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-          >
-            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </Button>
+      {/* Enhanced Integro Header */}
+      <div className="flex items-center justify-between px-6 py-4 border-b bg-card/50 backdrop-blur-3xl z-40 sticky top-0">
+        <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-primary" />
-            <h2 className="text-xs font-black uppercase tracking-[0.2em] text-foreground hidden sm:block">
-              Capacitación <span className="text-primary">CostPro</span>
-            </h2>
-            {selectedSection !== 'main' && (
-              <>
-                <ChevronRight className="w-4 h-4 text-muted-foreground/30" />
-                <span className="text-xs font-black uppercase tracking-widest text-primary">
-                  {SECTIONS.find(s => s.id === selectedSection)?.label}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10 rounded-xl hover:bg-primary/10 hover:text-primary transition-all"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+            >
+              {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </Button>
+            <div className="h-6 w-px bg-border/50 mx-2" />
+            <h2 className="text-sm font-black uppercase tracking-[0.3em] text-primary flex items-center gap-3">
+              Ayuda
+              {user?.name && (
+                <span className="text-muted-foreground/40 font-medium tracking-widest text-[10px] hidden sm:inline">
+                  | {user.name}
                 </span>
-              </>
-            )}
+              )}
+            </h2>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="hidden md:flex bg-primary/5 text-primary border-primary/20 font-black text-[10px] uppercase">
+        <div className="flex items-center gap-4">
+          <div className="hidden sm:flex items-center gap-2 mr-4">
+            <ThemeToggle />
+          </div>
+          <Badge variant="outline" className="hidden md:flex bg-primary/5 text-primary border-primary/20 font-black text-[10px] uppercase shadow-sm">
             v5.7.25
           </Badge>
           <Button
             variant="ghost"
             size="sm"
-            className="h-11 px-4 font-black uppercase text-[10px] tracking-widest"
-            onClick={() => setSelectedSection('main')}
+            className="h-11 px-4 font-black uppercase text-[10px] tracking-widest text-primary hover:bg-primary/10"
+            onClick={() => setCurrentView('dashboard')}
           >
-            Inicio
+            Salir de Ayuda
           </Button>
         </div>
       </div>
@@ -162,8 +167,8 @@ export default function HelpView() {
       <div className="flex flex-1 overflow-hidden relative">
         {/* Left Sidebar */}
         <div className={cn(
-          "absolute lg:relative inset-y-0 left-0 w-72 bg-card border-r z-30 transition-transform duration-300 lg:translate-x-0 bg-card/50 backdrop-blur-3xl overflow-y-auto no-scrollbar",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          "absolute lg:relative inset-y-0 left-0 w-72 bg-card border-r z-30 transition-all duration-500 ease-in-out bg-card/50 backdrop-blur-3xl overflow-y-auto no-scrollbar",
+          sidebarOpen ? "translate-x-0 opacity-100 w-72" : "-translate-x-full lg:translate-x-0 lg:w-0 lg:opacity-0 lg:pointer-events-none"
         )}>
           {renderSidebar()}
         </div>
@@ -182,7 +187,7 @@ export default function HelpView() {
         </AnimatePresence>
 
         {/* Main Content Area */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 sm:p-10 no-scrollbar overscroll-contain">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 sm:p-10 lg:p-16 no-scrollbar overscroll-contain bg-background/30">
           <AnimatePresence mode="wait">
             <motion.div
               key={selectedSection}
