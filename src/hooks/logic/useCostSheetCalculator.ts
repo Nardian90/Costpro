@@ -165,16 +165,24 @@ const evaluateHeaderExpression = (
 
         // GET_FILA_DATO(search, field)
         expr = expr.replace(/GET_FILA_DATO\(['"]([^'"]+)['"]\s*,\s*['"]([^'"]+)['"]\)/g, (_, search, field) => {
-            // Find row by classification or ID
             const val = Object.values(calculatedValues).find(v => v.metadata?.id === search || v.metadata?.classification === search);
             if (val) {
                 return String((val as any)[field] || 0);
             }
-            // Fallback: try direct lookup if calculatedValues keys are IDs
             const directVal = calculatedValues[search];
             if (directVal) {
                 return String((directVal as any)[field] || 0);
             }
+            return '0';
+        });
+
+        // ref('...') and vh('...') support in header
+        expr = expr.replace(/\b(ref|vh)\(['"]([^'"]+)['"]\)/g, (_, fn, __, search) => {
+            const field = fn === 'ref' ? 'total' : 'calculatedVH';
+            const val = Object.values(calculatedValues).find(v => v.metadata?.id === search || v.metadata?.classification === search);
+            if (val) return String((val as any)[field] || 0);
+            const directVal = calculatedValues[search];
+            if (directVal) return String((directVal as any)[field] || 0);
             return '0';
         });
 
