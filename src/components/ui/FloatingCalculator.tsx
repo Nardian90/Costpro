@@ -84,11 +84,13 @@ export const FloatingCalculator: React.FC = () => {
 
   const isDark = resolvedTheme === 'dark';
 
-  const modalVariants: Variants = {
+  const fanVariants: Variants = {
     closed: {
-      y: -100,
       opacity: 0,
-      scale: 0.95,
+      scale: 0,
+      rotate: -180,
+      x: 300,
+      y: 300,
       transition: {
         type: "spring",
         stiffness: 300,
@@ -96,13 +98,15 @@ export const FloatingCalculator: React.FC = () => {
       }
     },
     open: {
-      y: 0,
       opacity: 1,
       scale: 1,
+      rotate: 0,
+      x: 0,
+      y: 0,
       transition: {
         type: "spring",
-        stiffness: 300,
-        damping: 25,
+        stiffness: 200,
+        damping: 20,
         staggerChildren: 0.02,
         delayChildren: 0.1
       }
@@ -110,30 +114,23 @@ export const FloatingCalculator: React.FC = () => {
   };
 
   const itemVariants: Variants = {
-    closed: { opacity: 0, scale: 0.5, rotate: -15, y: -10 },
+    closed: { opacity: 0, scale: 0.2, rotate: -45, y: 50 },
     open: { opacity: 1, scale: 1, rotate: 0, y: 0 }
   };
 
   return (
     <AnimatePresence>
       {isCalculatorOpen && (
-        <div className="fixed inset-0 z-[10000] flex items-start justify-center p-4 pt-12">
-          {/* Backdrop */}
+        <div className="fixed inset-0 z-[10000] pointer-events-none">
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={closeCalculator}
-            className="absolute inset-0 bg-black/60 backdrop-blur-md"
-          />
-
-          <motion.div
-            variants={modalVariants}
+            drag
+            dragMomentum={false}
+            variants={fanVariants}
             initial="closed"
             animate="open"
             exit="closed"
             className={cn(
-              "relative w-full max-w-sm rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] overflow-hidden border-2 flex flex-col transition-colors duration-500 backdrop-blur-xl",
+              "absolute top-24 right-12 w-full max-w-sm rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] overflow-hidden border-2 flex flex-col transition-colors duration-500 backdrop-blur-xl pointer-events-auto cursor-grab active:cursor-grabbing",
               isDark
                 ? "bg-[#010203]/90 border-[#39FF14]/30 text-white"
                 : "bg-white/90 border-primary/30 text-foreground"
