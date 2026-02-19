@@ -1,19 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { useUIStore } from '@/store';
 import { motion, AnimatePresence } from 'framer-motion';
 import SplashScreen from '@/components/SplashScreen';
 import WelcomeLandingView from '@/components/auth/WelcomeLandingView';
 import LoginForm from '@/components/auth/LoginForm';
 import { X } from 'lucide-react';
 import CostProLogo from '@/components/CostProLogo';
-import { FloatingCalculator } from "@/components/ui/FloatingCalculator";
 
 export default function LoginPage() {
   const [showSplash, setShowSplash] = useState(true);
   const [showLoginForm, setShowLoginForm] = useState(false);
-  const { setIsCalculatorOpen } = useUIStore();
 
   if (showSplash) {
     return <SplashScreen onFinish={() => setShowSplash(false)} />;
@@ -23,7 +20,6 @@ export default function LoginPage() {
     <main className="relative min-h-screen">
       <WelcomeLandingView onLoginClick={() => setShowLoginForm(true)} />
 
-      <button id="open-calc" onClick={() => setIsCalculatorOpen(true)} className="fixed top-4 right-4 z-[50] bg-primary p-2 rounded text-white mt-4">Open Calculator</button>
 
       <AnimatePresence>
         {showLoginForm && (
@@ -65,7 +61,6 @@ export default function LoginPage() {
           </motion.div>
         )}
       </AnimatePresence>
-      <FloatingCalculator />
     </main>
   );
 }
