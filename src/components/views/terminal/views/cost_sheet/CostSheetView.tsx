@@ -19,6 +19,8 @@ import { CostSheetBanner } from './CostSheetBanner';
 import { CostSheetModeSwitcher } from './CostSheetModeSwitcher';
 import { CostSheetAuditView } from './CostSheetAuditView';
 import { CostSheetActionsPanel } from './CostSheetActionsPanel';
+import { CostSheetHelpPanel } from './CostSheetHelpPanel';
+import { CostModuleAI } from './CostModuleAI';
 import { CostSheetSidebarNav } from './CostSheetSidebarNav';
 import { CostSheetBottomNav } from './CostSheetBottomNav';
 import { useUIStore } from '@/store';
@@ -143,6 +145,7 @@ const CostSheetView = () => {
   }, [data?.sections]);
 
   const [isActionsPanelOpen, setIsActionsPanelOpen] = useState(false);
+  const [isHelpPanelOpen, setIsHelpPanelOpen] = useState(false);
   const [isSectionsSidebarOpen, setIsSectionsSidebarOpen] = useState(false);
   const [isAnnexesSidebarOpen, setIsAnnexesSidebarOpen] = useState(false);
   const [isMassiveGeneratorOpen, setIsMassiveGeneratorOpen] = useState(false);
@@ -461,6 +464,8 @@ const CostSheetView = () => {
 
   return (
     <div className="w-full max-w-none px-0 pb-32 pt-0">
+      <CostModuleAI sheetData={data} />
+      <CostSheetHelpPanel isOpen={isHelpPanelOpen} onClose={() => setIsHelpPanelOpen(false)} />
       <CostSheetActionsPanel
         isOpen={isActionsPanelOpen}
         onClose={() => setIsActionsPanelOpen(false)}
@@ -557,6 +562,7 @@ const CostSheetView = () => {
                         activeSection={activeSection}
                         setActiveSection={handleSetActiveSection}
                         onOpenActions={() => setIsActionsPanelOpen(true)}
+                        onOpenHelp={() => setIsHelpPanelOpen(true)}
                         onOpenAnnexes={onOpenAnnexes}
                         onOpenSections={onOpenSections}
                         isEditing={isEditing}
@@ -576,7 +582,7 @@ const CostSheetView = () => {
                                 header={calculatedHeader}
                                 healthPercent={healthPercent}
                             />
-                            <CostSheetFormulaGuide />
+                            {/* CostSheetFormulaGuide movido al HelpPanel */}
                         </div>
                     )}
                     {activeSection === 'header' && (

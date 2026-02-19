@@ -2,7 +2,7 @@
 
 import React from 'react';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
-import { Layout, FileSpreadsheet, PenTool, ClipboardList, Menu, ListFilter, Sparkles, Eye, Edit, Zap, Calculator } from 'lucide-react';
+import { Layout, FileSpreadsheet, PenTool, ClipboardList, Menu, ListFilter, Sparkles, Eye, Edit, Zap, Calculator, HelpCircle } from 'lucide-react';
 import { useUIStore } from '@/store';
 
 interface CostSheetNavProps {
@@ -13,6 +13,7 @@ interface CostSheetNavProps {
   onOpenActions?: () => void;
   onOpenAnnexes?: () => void;
   onOpenSections?: () => void;
+  onOpenHelp?: () => void;
   isEditing?: boolean;
   onToggleEditing?: () => void;
 }
@@ -25,6 +26,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
   onOpenActions,
   onOpenAnnexes,
   onOpenSections,
+  onOpenHelp,
   isEditing,
   onToggleEditing,
 }) => {
@@ -98,7 +100,14 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
             icon: Calculator,
             onClick: () => setIsCalculatorOpen(true),
             className: "text-xs uppercase tracking-wider bg-blue-500/10 text-blue-500 border-blue-500/20"
-        }
+        },
+        ...(onOpenHelp ? [{
+            id: 'help-panel',
+            label: 'Ayuda',
+            icon: HelpCircle,
+            onClick: onOpenHelp,
+            className: "text-xs uppercase tracking-wider bg-amber-500/10 text-amber-600 border-amber-500/20"
+        }] : [])
     ];
 
     // Add massive-gen at the end with distinctive style
@@ -114,7 +123,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
     }
 
     return actions;
-  }, [navItems, activeSection, setActiveSection, annexes, onOpenActions, onOpenAnnexes, onOpenSections, setIsCalculatorOpen]);
+  }, [navItems, activeSection, setActiveSection, annexes, onOpenActions, onOpenAnnexes, onOpenSections, onOpenHelp, setIsCalculatorOpen]);
 
   return (
     <div className="mb-0">
