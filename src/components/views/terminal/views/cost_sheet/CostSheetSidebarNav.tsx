@@ -9,7 +9,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, FileSpreadsheet, ListFilter, Layout, ClipboardList, Activity, Plus, Calculator } from 'lucide-react';
+import { CheckCircle2, FileSpreadsheet, ListFilter, Layout, ClipboardList, Activity, Plus, Calculator, Layers } from 'lucide-react';
 import { useUIStore } from "@/store";
 import { Button } from '@/components/ui/button';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
@@ -34,8 +34,10 @@ export const CostSheetSidebarNav: React.FC<CostSheetSidebarNavProps> = ({
   type
 }) => {
   const addMainSection = useCostSheetStore(state => state.addMainSection);
-  const addRow = useCostSheetStore(state => state.addRow);
   const setIsCalculatorOpen = useUIStore(state => state.setIsCalculatorOpen);
+
+  const allOptionId = type === 'sections' ? 'all' : 'all-annexes';
+  const isAllActive = activeId === allOptionId;
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -57,6 +59,37 @@ export const CostSheetSidebarNav: React.FC<CostSheetSidebarNavProps> = ({
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-2 no-scrollbar">
+          {/* Option "Todos" */}
+          <button
+            onClick={() => {
+              onSelect(allOptionId);
+              onClose();
+            }}
+            className={cn(
+              "w-full flex items-center gap-4 p-4 rounded-2xl transition-all group active:scale-95 text-left border border-transparent",
+              isAllActive
+                ? "bg-primary text-white shadow-xl shadow-primary/20 scale-[1.02]"
+                : "hover:bg-primary/5 text-sidebar-foreground/70 hover:border-primary/10"
+            )}
+          >
+            <div className={cn(
+              "p-2 rounded-lg transition-colors",
+              isAllActive ? "bg-white/20" : "bg-primary/5 group-hover:bg-primary/10"
+            )}>
+                <Layers className="w-4 h-4" />
+            </div>
+            <div className="flex flex-col">
+                <span className="text-xs font-black uppercase tracking-widest leading-none mb-1">
+                    Todos
+                </span>
+                <span className={cn("text-[10px] font-bold uppercase tracking-tight truncate", isAllActive ? "text-white/70" : "text-muted-foreground")}>
+                    Ver todas las {type === 'sections' ? 'secciones' : 'anexos'} juntas
+                </span>
+            </div>
+          </button>
+
+          <div className="h-px bg-sidebar-border/50 my-2" />
+
           {items.map((item) => {
             const isActive = activeId === item.id;
             const hasData = type === 'annexes' && item.data && item.data.length > 0;
