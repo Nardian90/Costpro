@@ -19,8 +19,8 @@ export default function EliDiagram() {
   };
 
   return (
-    <div className="w-full aspect-video bg-slate-950 rounded-[2.5rem] border border-white/10 flex items-center justify-center p-8 overflow-hidden relative group">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent opacity-50" />
+    <div className="w-full aspect-video bg-slate-950 rounded-[3rem] border border-white/10 flex items-center justify-center p-8 overflow-hidden relative group">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent opacity-50" />
 
       <motion.svg
         viewBox="0 0 800 400"
@@ -29,66 +29,86 @@ export default function EliDiagram() {
         initial="hidden"
         animate="show"
       >
-        {/* Connection Lines from central Eli */}
-        {[
-          [200, 120], [600, 120], [200, 280], [600, 280]
-        ].map((pos, i) => (
-          <motion.line
-            key={`line-${i}`}
-            x1="400" y1="200"
-            x2={pos[0]} y2={pos[1]}
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeDasharray="5 5"
-            className="text-primary/30"
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: 1 }}
-            transition={{ delay: 1, duration: 1 }}
-          />
-        ))}
+        {/* Central Orchestrator */}
+        <g transform="translate(400, 200)">
+          <motion.g variants={item}>
+            <motion.circle
+              r="80"
+              className="fill-primary/5 stroke-primary/20"
+              strokeWidth="1"
+              strokeDasharray="10 5"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+            />
+            <motion.circle
+              r="60"
+              className="fill-primary/10 stroke-primary/40"
+              strokeWidth="2"
+              animate={{ scale: [1, 1.05, 1] }}
+              transition={{ duration: 4, repeat: Infinity }}
+            />
+            <circle r="45" className="fill-primary shadow-2xl shadow-primary/50" />
+            <text textAnchor="middle" y="8" className="fill-white font-black text-2xl uppercase tracking-widest">ELI</text>
+          </motion.g>
+        </g>
 
-        {/* Central Intelligence Core */}
-        <motion.g transform="translate(400, 200)" variants={item}>
-          <circle r="80" className="fill-primary/10 stroke-primary/30" strokeWidth="2" strokeDasharray="10 5">
-            <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="20s" repeatCount="indefinite" />
-          </circle>
-          <motion.circle
-            r="55"
-            className="fill-primary"
-            animate={{ scale: [1, 1.05, 1], filter: ['blur(0px)', 'blur(2px)', 'blur(0px)'] }}
-            transition={{ duration: 3, repeat: Infinity }}
-          />
-          <text textAnchor="middle" y="10" className="fill-white font-black text-3xl uppercase tracking-tighter shadow-2xl">ELI</text>
+        {/* Connection Lines (Cross layout) */}
+        <motion.g initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }}>
+          <path d="M400 120 L400 60" stroke="currentColor" className="text-primary/30" strokeWidth="2" strokeDasharray="4 4" />
+          <path d="M400 280 L400 340" stroke="currentColor" className="text-primary/30" strokeWidth="2" strokeDasharray="4 4" />
+          <path d="M320 200 L240 200" stroke="currentColor" className="text-primary/30" strokeWidth="2" strokeDasharray="4 4" />
+          <path d="M480 200 L560 200" stroke="currentColor" className="text-primary/30" strokeWidth="2" strokeDasharray="4 4" />
         </motion.g>
 
-        {/* Distributed Intelligence Nodes */}
-        {[
-          { label: "Predictivo", pos: [200, 120], color: "fill-blue-500" },
-          { label: "Operativo", pos: [600, 120], color: "fill-emerald-500" },
-          { label: "Seguridad", pos: [200, 280], color: "fill-rose-500" },
-          { label: "Offline", pos: [600, 280], color: "fill-amber-500" }
-        ].map((node, i) => (
-          <motion.g key={i} transform={`translate(${node.pos[0]}, ${node.pos[1]})`} variants={item}>
-             <circle r="40" className={`${node.color} opacity-90`} />
-             <text textAnchor="middle" y="5" className="fill-white font-black text-[9px] uppercase tracking-widest">{node.label}</text>
-             <circle r="48" className="fill-none stroke-white/10" strokeWidth="1" />
+        {/* Intelligence Nodes */}
+        <g transform="translate(400, 60)">
+          <motion.g variants={item}>
+            <rect x="-70" y="-25" width="140" height="50" rx="15" className="fill-blue-500/10 stroke-blue-500" strokeWidth="2" />
+            <text textAnchor="middle" y="5" className="fill-blue-400 font-black text-[10px] uppercase tracking-widest">Análisis Predictivo</text>
           </motion.g>
-        ))}
+        </g>
 
-        {/* Floating Data Particles */}
-        {[...Array(12)].map((_, i) => (
+        <g transform="translate(400, 340)">
+          <motion.g variants={item}>
+            <rect x="-70" y="-25" width="140" height="50" rx="15" className="fill-emerald-500/10 stroke-emerald-500" strokeWidth="2" />
+            <text textAnchor="middle" y="5" className="fill-emerald-400 font-black text-[10px] uppercase tracking-widest">Sincro Offline</text>
+          </motion.g>
+        </g>
+
+        <g transform="translate(140, 200)">
+          <motion.g variants={item}>
+            <rect x="-60" y="-25" width="120" height="50" rx="15" className="fill-amber-500/10 stroke-amber-500" strokeWidth="2" />
+            <text textAnchor="middle" y="5" className="fill-amber-400 font-black text-[10px] uppercase tracking-widest">Finanzas 360°</text>
+          </motion.g>
+        </g>
+
+        <g transform="translate(660, 200)">
+          <motion.g variants={item}>
+            <rect x="-60" y="-25" width="120" height="50" rx="15" className="fill-violet-500/10 stroke-violet-500" strokeWidth="2" />
+            <text textAnchor="middle" y="5" className="fill-violet-400 font-black text-[10px] uppercase tracking-widest">Tendencias</text>
+          </motion.g>
+        </g>
+
+        {/* Floating Data Particles moving towards center */}
+        {[
+          { from: [400, 60], delay: 0 },
+          { from: [400, 340], delay: 1 },
+          { from: [140, 200], delay: 0.5 },
+          { from: [660, 200], delay: 1.5 }
+        ].map((p, i) => (
           <motion.circle
-            key={`particle-${i}`}
-            r="2"
+            key={i}
+            r="3"
             className="fill-primary"
             animate={{
-              x: [Math.random() * 800, Math.random() * 800],
-              y: [Math.random() * 400, Math.random() * 400],
-              opacity: [0, 0.7, 0]
+              x: [p.from[0], 400],
+              y: [p.from[1], 200],
+              opacity: [0, 1, 0]
             }}
-            transition={{ duration: 4 + Math.random() * 4, repeat: Infinity, delay: i * 0.5 }}
+            transition={{ duration: 2, repeat: Infinity, delay: p.delay, ease: "easeInOut" }}
           />
         ))}
+
       </motion.svg>
     </div>
   );
