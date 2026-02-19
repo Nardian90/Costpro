@@ -69,7 +69,8 @@ export async function POST(req: NextRequest) {
             doc.setDrawColor(230, 230, 230);
             doc.setLineWidth(0.15);
             doc.line(14, 22, pageWidth - 14, 22);
-        }
+        } else {
+
 
             doc.setFillColor(40, 40, 40);
             doc.rect(14, 10, 20, 20, 'F');
@@ -208,7 +209,6 @@ export async function POST(req: NextRequest) {
             return curY + 5;
         }
 
-        }
 
         const data = [
             [`PRODUCTO: ${h.name || 'N/A'}`, `CÓDIGO: ${h.code || 'N/A'}`, `FECHA: ${h.date || format(new Date(), "yyyy-MM-dd")}`],
