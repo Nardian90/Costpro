@@ -564,7 +564,8 @@ const CostSheetView = () => {
                     />
                 </div>
 
-                <div className="mt-4">
+                <div className="mt-4 w-full flex justify-center">
+                    <div className="w-full max-w-6xl">
                     {activeSection === 'kpis' && (
                          <div className="animate-in zoom-in-95 duration-500 py-8">
                             <CostSheetSummary
@@ -664,6 +665,7 @@ const CostSheetView = () => {
                              <CostSheetMassiveGenerator isSection={true} initialProducts={quickModeProducts || undefined} />
                         </div>
                     )}
+                    </div>
                 </div>
             </>
           )}
@@ -705,12 +707,16 @@ const CostSheetView = () => {
                     Ir al Editor (Modo Experto)
                 </Button>
             </div>
-            <CostSheetPreview
-                data={data}
-                calculatedValues={calculatedValues}
-                calculatedAnnexes={calculatedAnnexes}
-                calculatedHeader={calculatedHeader}
-            />
+            <div className="w-full flex justify-center">
+                <div className="w-full max-w-6xl">
+                    <CostSheetPreview
+                        data={data}
+                        calculatedValues={calculatedValues}
+                        calculatedAnnexes={calculatedAnnexes}
+                        calculatedHeader={calculatedHeader}
+                    />
+                </div>
+            </div>
         </div>
       )}
       <CostSheetBottomNav
