@@ -9,7 +9,7 @@ import {
   BaseRef,
   ValidationError,
 } from './types';
-import { translateFormulaFromSpanish } from './formula-utils';
+import { translateFormulaFromSpanish, smartTranslate } from './formula-utils';
 
 export function extractDependencies(row: CostRow, allRows: CostRow[]): string[] {
   const deps: string[] = [];
@@ -20,22 +20,11 @@ export function extractDependencies(row: CostRow, allRows: CostRow[]): string[] 
     for (const match of refMatches) {
         deps.push(match[1]);
     }
-    // Extract vh('...')
-    const vhMatches = formula.matchAll(/vh\(['"]([^'"]+)['"]\)/g);
-    for (const match of vhMatches) {
-        deps.push(match[1]);
-    }
-    // Extract children/hijos
-    if (formula.toLowerCase().includes('children') || formula.toLowerCase().includes('hijos')) {
-        const childrenIds = allRows.filter(r => r.parentId === row.id).map(r => r.id);
-        deps.push(...childrenIds);
-    }
   };
 
   if (row.formaCalculo === 'FORMULA' && row.formula) {
     extractFromFormula(row.formula);
   }
-
   if (row.vhFormula) {
     extractFromFormula(row.vhFormula);
   }
@@ -44,68 +33,38 @@ export function extractDependencies(row: CostRow, allRows: CostRow[]): string[] 
     deps.push(row.baseCalculo.classification);
   }
 
-  return deps;
+  return Array.from(new Set(deps));
 }
 
 export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: string[]; validationErrors: ValidationError[] } {
   const errors: string[] = [];
   const validationErrors: ValidationError[] = [];
-  const ids = new Set<string>();
-  const classifications = new Set<string>();
-  const rowMap = new Map<string, CostRow>();
+  const classifications = new Set(ficha.rows.map((r) => r.classification));
+  const ids = new Set(ficha.rows.map((r) => r.id));
 
-  ficha.rows.forEach((row) => {
-    if (ids.has(row.id)) {
-        const msg = `Duplicate row ID: ${row.id}`;
-        errors.push(msg);
-        validationErrors.push({ rowId: row.id, message: msg, type: 'CRITICAL', code: 'INVALID_FORMULA' });
-    }
-    ids.add(row.id);
-    rowMap.set(row.id, row);
-
-    // Warn about duplicate classifications in main rows (they cause summing in ref())
-    if (classifications.has(row.classification)) {
-        errors.push(`Duplicate classification detected: ${row.classification}. ref() will sum all matching rows.`);
-    }
-    classifications.add(row.classification);
-  });
-
-  // 1. Dependency Graph & Cycle Detection
-  const adj = new Map<string, string[]>();
-  const parser = new Parser();
-
-  ficha.rows.forEach((row) => {
-    const deps = extractDependencies(row, ficha.rows);
-
-    if (row.formaCalculo === 'FORMULA' && row.formula) {
-        try {
-            const formulaStr = translateFormulaFromSpanish(row.formula.startsWith('=') ? row.formula.substring(1) : row.formula);
-            parser.parse(formulaStr);
-
-            // check for trivial formulas
-            if (formulaStr.trim() === "0" || formulaStr.trim() === "") {
-                validationErrors.push({ rowId: row.id, message: "Fórmula trivial o vacía", type: 'WARNING', code: 'TRIVIAL_FORMULA' });
-            }
-        } catch (e) {
-            validationErrors.push({ rowId: row.id, message: `Fórmula inválida: ${e}`, type: 'CRITICAL', code: 'INVALID_FORMULA' });
+  // Warn about duplicate classifications in main rows (they cause summing in ref())
+  ficha.rows.forEach(row => {
+    if (ficha.rows.filter(r => r.classification === row.classification).length > 1) {
+        if (!errors.includes(`Duplicate classification detected: ${row.classification}. ref() will sum all matching rows.`)) {
+            errors.push(`Duplicate classification detected: ${row.classification}. ref() will sum all matching rows.`);
         }
     }
-
-    adj.set(row.id, deps);
   });
 
-  // DFS for Cycle Detection
+  // 1. Cycle Detection
+  const adj = new Map<string, string[]>();
+  ficha.rows.forEach((row) => {
+    adj.set(row.id, extractDependencies(row, ficha.rows));
+  });
+
   const visited = new Set<string>();
   const recStack = new Set<string>();
 
-  const getAncestors = (rowId: string): Set<string> => {
-    const ancestors = new Set<string>();
-    let curr = rowMap.get(rowId);
-    while (curr && curr.parentId) {
-      ancestors.add(curr.parentId);
-      curr = rowMap.get(curr.parentId);
-    }
-    return ancestors;
+  const getAncestors = (rowId: string, currentSet = new Set<string>()): Set<string> => {
+      const row = ficha.rows.find(r => r.id === rowId);
+      if (!row || !row.parentId) return currentSet;
+      currentSet.add(row.parentId);
+      return getAncestors(row.parentId, currentSet);
   };
 
   function hasCycle(u: string): boolean {
@@ -114,55 +73,21 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
 
     const neighbors = adj.get(u) || [];
     for (const vId of neighbors) {
-      // Priority 1: Classification match
-      let targetRows = ficha.rows.filter(r => r.classification === vId);
-      // Priority 2: ID match
-      if (targetRows.length === 0) {
-          targetRows = ficha.rows.filter(r => r.id === vId);
-      }
+      let targets = ficha.rows.filter(r => r.classification === vId).map(r => r.id);
+      if (targets.length === 0) targets = ficha.rows.filter(r => r.id === vId).map(r => r.id);
 
-      for (const vRow of targetRows) {
-          const v = vRow.id;
-          // Avoid false self-cycle
-          if (v === u && vId !== u) continue;
+      for (const v of targets) {
+          // Hierarchical references are not blocked as critical cycles
+          const ancestors = getAncestors(u);
+          if (ancestors.has(v)) continue;
 
-          if (recStack.has(v)) {
-              const uRow = rowMap.get(u);
-              const ancestorsOfU = getAncestors(u);
-              const isParentRef = ancestorsOfU.has(v);
-              const isDirect = v === u || (adj.get(v) || []).some(d => {
-                  let dTargets = ficha.rows.filter(r => r.classification === d).map(r => r.id);
-                  if (dTargets.length === 0) dTargets = ficha.rows.filter(r => r.id === d).map(r => r.id);
-                  return dTargets.includes(u);
-              });
-
-              if (isParentRef) {
-                  validationErrors.push({
-                    rowId: u,
-                    message: `Validación de Jerarquía: Esta fila ('${uRow?.label}') depende de un valor superior ('${vRow.label}'). Asegúrese de que no esté incluida en la sumatoria total del padre para evitar duplicidad.`,
-                    type: 'WARNING',
-                    code: 'HIERARCHY'
-                  });
-                  // Hierarchical references are not blocked as critical cycles
-              } else if (isDirect) {
-                  validationErrors.push({
-                    rowId: u,
-                    message: `Referencia Circular Detectada: El cálculo no puede procesarse porque las celdas se llaman entre sí indefinidamente ('${uRow?.label}' <-> '${vRow.label}').`,
-                    type: 'CRITICAL',
-                    code: 'CYCLE'
-                  });
-                  return true;
-              } else {
-                  validationErrors.push({
-                    rowId: u,
-                    message: `Ciclo de dependencia detectado: La fila '${uRow?.label}' depende de '${vRow.label}' en un bucle cerrado.`,
-                    type: 'CRITICAL',
-                    code: 'CYCLE'
-                  });
-                  return true;
-              }
-          } else if (!visited.has(v)) {
-              if (hasCycle(v)) return true;
+          if (!visited.has(v)) {
+            if (hasCycle(v)) return true;
+          } else if (recStack.has(v)) {
+            const msg = `Ciclo detectado: ${u} -> ${v}`;
+            errors.push(msg);
+            validationErrors.push({ rowId: u, message: msg, type: 'CRITICAL', code: 'CYCLE' });
+            return true;
           }
       }
     }
@@ -270,522 +195,210 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
   };
 }
 
-export function calculateFicha(
-  ficha: FichaJSON,
-  options?: { actor?: string; maxIter?: number; damping?: number }
-): CalculationResult {
+
+
+
+
+export function calculateFicha(ficha: FichaJSON, optionsOrActor: string | any = 'system'): CalculationResult {
+  const parser = new Parser();
   const startTime = Date.now();
-  const actor = options?.actor || 'system';
-  const decimals = ficha.meta.decimals;
-  const maxIter = options?.maxIter ?? ficha.meta.settings?.maxIter ?? 10;
-  const dampingValue = options?.damping ?? ficha.meta.settings?.damping ?? 0.6;
-  const damping = new Decimal(dampingValue);
+  const actor = typeof optionsOrActor === 'string' ? optionsOrActor : 'system';
+  const options = typeof optionsOrActor === 'object' ? optionsOrActor : {};
 
-  // 0. Pre-validate
-  const { validationErrors, errors: legacyErrors } = validateFicha(ficha);
+  const decimals = ficha.meta.decimals ?? 2;
+  const maxIter = options.maxIter ?? ficha.meta.settings?.maxIter ?? 20;
+  const damping = new Decimal(options.damping ?? ficha.meta.settings?.damping ?? 0.5);
+  const validationErrors: ValidationError[] = [];
 
-  // 1. Prepare maps for O(1) lookup
+  const rowsById = new Map<string, CostRow[]>();
+  const rowsByClass = new Map<string, CostRow[]>();
+  const knownIds = new Set<string>();
+  const knownClasses = new Set<string>();
+
+  ficha.rows.forEach(r => {
+    if (!rowsById.has(r.id)) rowsById.set(r.id, []);
+    rowsById.get(r.id)!.push(r);
+    knownIds.add(r.id);
+    if (r.classification) {
+      if (!rowsByClass.has(r.classification)) rowsByClass.set(r.classification, []);
+      rowsByClass.get(r.classification)!.push(r);
+      knownClasses.add(r.classification);
+    }
+  });
+
+  const annexTotals = new Map<string, number>();
   const annexSumMap = new Map<string, Map<string, Decimal>>();
-  ficha.anexos.forEach((anexo) => {
+  ficha.anexos.forEach(anexo => {
+    const sum = (anexo.rows || []).reduce((acc, row) => acc.plus(new Decimal(row.importe || 0)), new Decimal(0));
+    annexTotals.set(anexo.id, sum.toNumber());
     const classMap = new Map<string, Decimal>();
-    anexo.rows.forEach((row) => {
+    (anexo.rows || []).forEach(row => {
       const current = classMap.get(row.classification) || new Decimal(0);
       classMap.set(row.classification, current.plus(new Decimal(row.importe || 0)));
     });
     annexSumMap.set(anexo.id, classMap);
   });
 
-  const rowsByClass = new Map<string, CostRow[]>();
-  const rowsById = new Map<string, CostRow[]>();
-
-  ficha.rows.forEach((row) => {
-    // Index by classification
-    const classList = rowsByClass.get(row.classification) || [];
-    classList.push(row);
-    rowsByClass.set(row.classification, classList);
-
-    // Index by ID
-    const idList = rowsById.get(row.id) || [];
-    idList.push(row);
-    rowsById.set(row.id, idList);
-  });
-
-  const annexTotals = new Map<string, number>();
-  annexSumMap.forEach((classMap, anexoId) => {
-    const total = Array.from(classMap.values()).reduce((acc, val) => acc.plus(val), new Decimal(0)).toNumber();
-    annexTotals.set(anexoId, total);
-  });
-
-  // 2. Topological Sort (Optimizes convergence to 1-pass for DAGs)
-  const sortedRows: CostRow[] = [];
-  const visitedSort = new Set<string>();
-  const visiting = new Set<string>();
-
-  const sortVisit = (uId: string) => {
-    if (visitedSort.has(uId)) return;
-    if (visiting.has(uId)) return; // Cycle handled by validation
-    visiting.add(uId);
-
-    const row = ficha.rows.find(r => r.id === uId);
-    if (row) {
-      const deps = extractDependencies(row, ficha.rows);
-      for (const dId of deps) {
-        let targets = ficha.rows.filter(r => r.classification === dId).map(r => r.id);
-        if (targets.length === 0) targets = ficha.rows.filter(r => r.id === dId).map(r => r.id);
-        for (const t of targets) {
-          if (t !== uId) sortVisit(t);
-        }
-      }
-      sortedRows.push(row);
-    }
-    visiting.delete(uId);
-    visitedSort.add(uId);
-  };
-
-  ficha.rows.forEach(r => sortVisit(r.id));
-
-  // If sorting failed somehow, fallback to original order to avoid losing data
-  const finalComputeOrder = sortedRows.length === ficha.rows.length ? sortedRows : ficha.rows;
-
-  // 3. Initialize calculated rows
   const calculatedRows = new Map<string, CalculatedRow>();
-  ficha.rows.forEach((row) => {
+  ficha.rows.forEach(row => {
     calculatedRows.set(row.id, {
       ...row,
       total: 0,
       calculatedVH: row.valorHistorico || 0,
-      audit: [],
+      audit: []
     });
   });
 
-  const parser = new Parser();
-
-  // Use Decimal for high precision in parser functions
-  parser.functions.SUM_ANEXO = (anexoId: string, classification: string) => {
-    return annexSumMap.get(anexoId)?.get(classification)?.toNumber() || 0;
-  };
-
-  /**
-   * GET_ANEXO_FILA_DATO(anexoId, rowIndex, field)
-   * Retrieves data from an annex by its 1-based row index.
-   */
-  parser.functions.GET_ANEXO_FILA_DATO = (anexoId: string, rowIndex: number, field: string) => {
-    const anexo = ficha.anexos.find(a => a.id === anexoId);
-    if (!anexo || !anexo.rows) return 0;
-    const index = rowIndex - 1;
-    if (index >= 0 && index < anexo.rows.length) {
-        return parseFloat(anexo.rows[index][field]) || (anexo.rows[index][field] ?? 0);
-    }
-    return 0;
-  };
-
-  parser.functions.GET_ANEXO_DATO = (anexoId: string, classification: string, field: string) => {
-    const anexo = ficha.anexos.find(a => a.id === anexoId);
-    if (!anexo) return 0;
-    const row = anexo.rows.find(r => r.classification === classification);
-    if (!row) return 0;
-    return parseFloat(row[field]) || (row[field] ?? 0);
-  };
-
-  parser.functions.GET_FILA_DATO = (search: string, field: string) => {
-      // Priority 1: Classification (Visual Numbering)
-      // Priority 2: ID (UUID or template ID)
-      let targets = rowsByClass.get(search);
-      if (!targets || targets.length === 0) {
-          targets = rowsById.get(search) || [];
-      }
-      if (targets.length === 0) return 0;
-
-      const target = targets[0];
-      const calculated = calculatedRows.get(target.id);
-      if (!calculated) return 0;
-
-      return (calculated as any)[field] || 0;
-  };
-
-  parser.functions.header = (key: string) => {
-      // Handle other meta fields if needed
-      if (key === 'decimals') return ficha.meta.decimals;
-      return 0;
-  };
-
-  parser.functions.ref = (arg: any) => {
-      const search = String(arg);
-      // Priority 1: Classification (Visual Numbering)
-      // Priority 2: ID (UUID or template ID)
-      let targets = rowsByClass.get(search);
-      if (!targets || targets.length === 0) {
-          targets = rowsById.get(search) || [];
-      }
-
-      const val = targets.reduce((acc, t) => {
-          const calculated = calculatedRows.get(t.id);
-          return acc.plus(new Decimal(calculated?.total || 0));
-      }, new Decimal(0));
-      return val.toNumber();
-  };
-
-  parser.functions.vh = (arg: any) => {
-      const search = String(arg);
-      let targets = rowsByClass.get(search);
-      if (!targets || targets.length === 0) {
-          targets = rowsById.get(search) || [];
-      }
-      const val = targets.reduce((acc, t) => {
-          const calculated = calculatedRows.get(t.id);
-          return acc.plus(new Decimal(calculated?.calculatedVH || t.valorHistorico || 0));
-      }, new Decimal(0));
-      return val.toNumber();
-  };
-
-  parser.functions.pct = (value: number, percentage: number) => {
-      return new Decimal(value || 0).times(new Decimal(percentage || 0).div(100)).toNumber();
-  };
-
-  parser.functions.round2 = (value: number) => {
-      return new Decimal(value || 0).toDecimalPlaces(2, Decimal.ROUND_HALF_UP).toNumber();
-  };
-
-  parser.functions.sum = (...args: any[]) => {
-      let flatArgs: any[] = [];
-      args.forEach(arg => {
-          if (Array.isArray(arg)) flatArgs = flatArgs.concat(arg);
-          else flatArgs.push(arg);
-      });
-      return flatArgs.reduce((a, b) => a.plus(new Decimal(b || 0)), new Decimal(0)).toNumber();
-  };
-
-  parser.functions.average = (...args: any[]) => {
-      let flatArgs: any[] = [];
-      args.forEach(arg => {
-          if (Array.isArray(arg)) flatArgs = flatArgs.concat(arg);
-          else flatArgs.push(arg);
-      });
-      if (flatArgs.length === 0) return 0;
-      const sum = flatArgs.reduce((a, b) => a.plus(new Decimal(b || 0)), new Decimal(0));
-      return sum.div(flatArgs.length).toNumber();
-  };
-
-  const computeRowTotal = (
-    row: CostRow,
-    currentRows: Map<string, CalculatedRow>
-  ): { total: Decimal; note: string; type: AuditEntry['type']; fuente: string; baseTotal: Decimal; baseHist: Decimal } => {
+  const computeRowTotal = (row: CostRow, currentRows: Map<string, CalculatedRow>) => {
     let total = new Decimal(0);
     let note = '';
+    let type: AuditEntry['type'] = 'INFO';
     let baseTotalValue = new Decimal(0);
     let baseHistValue = new Decimal(0);
-    let type: AuditEntry['type'] = 'INFO';
-    let fuenteParts: string[] = [row.formaCalculo];
 
-    const currentCalculated = currentRows.get(row.id);
-    const vh = new Decimal(currentCalculated?.calculatedVH || row.valorHistorico || 0);
+    const isParent = ficha.rows.some(r => r.parentId === row.id);
+    let formulaToUse = row.formula || (isParent ? 'HIJOS' : '');
+    let ruleApplied = false;
 
-    // Resolve Rules
-    const activeRules = (ficha.rules || [])
-      .filter((r) => r.enabled)
-      .filter((r) => {
-        if (r.targetClassification && !row.classification.startsWith(r.targetClassification)) return false;
-        if (r.targetType && row.type !== r.targetType) return false;
-        return true;
-      })
-      .sort((a, b) => b.priority - a.priority);
-
-    const ruleOverride = activeRules[0];
-    let formulaToUse = row.formula;
-    let formaCalculoToUse = row.formaCalculo;
-
-    if (ruleOverride) {
-        if (ruleOverride.formulaOverride) {
-            formulaToUse = ruleOverride.formulaOverride;
-            formaCalculoToUse = 'FORMULA';
-            note += `Rule '${ruleOverride.name}' v${ruleOverride.version} applied. `;
-            type = 'RULE_APPLIED';
+    if (ficha.rules) {
+        for (const rule of ficha.rules) {
+            if (!rule.enabled) continue;
+            let matches = false;
+            if (rule.targetClassification && row.classification.startsWith(rule.targetClassification)) matches = true;
+            if (rule.targetType && row.type === rule.targetType) matches = true;
+            if (matches && rule.formulaOverride) {
+                formulaToUse = rule.formulaOverride;
+                ruleApplied = true;
+                break;
+            }
         }
     }
 
-    const base = row.baseCalculo;
+    if (row.baseCalculo?.type === 'ANEXO') {
+        const anId = row.baseCalculo.anexoId;
+        const classSum = annexSumMap.get(anId)?.get(row.classification);
+        baseTotalValue = classSum || new Decimal(annexTotals.get(anId) || 0);
+    } else if (row.baseCalculo?.type === 'FILA') {
+        const targets = rowsByClass.get(row.baseCalculo.classification) || rowsById.get(row.baseCalculo.classification) || [];
+        targets.forEach(t => baseTotalValue = baseTotalValue.plus(new Decimal(currentRows.get(t.id)?.total || 0)));
+    }
 
-    switch (formaCalculoToUse) {
+    const formaCalculo = ruleApplied ? 'FORMULA' : row.formaCalculo;
+
+    switch (formaCalculo) {
       case 'FIJO':
-        total = vh;
-        note += `Used VH ${vh.toFixed(decimals)}.`;
+        total = new Decimal(row.valorHistorico || 0);
+        note = 'Valor Fijo';
         break;
-
-      case 'ANEXO':
       case 'IMPORTAR_ANEXO':
-        if (base?.type === 'ANEXO') {
-          const classSumMap = annexSumMap.get(base.anexoId);
-          const classSum = classSumMap?.get(row.classification);
-
-          if (classSum !== undefined) {
-              total = classSum;
-              note += `Imported from ${base.anexoId} for class ${row.classification}.`;
-          } else {
-              total = new Decimal(0);
-              note += `Imported from ${base.anexoId} (Class ${row.classification} not found, using 0).`;
-          }
-
-          baseTotalValue = total;
-          baseHistValue = total;
-          fuenteParts.push(base.anexoId);
-        } else {
-          type = 'WARNING';
-          note += `Missing ANEXO reference.`;
-        }
+        total = baseTotalValue;
+        note = `Importado de Anexo`;
         break;
-
       case 'PRORRATEO':
       case 'COEFICIENTE':
-        let baseRefName = '';
-
-        if (base?.type === 'ANEXO') {
-            const classSumMap = annexSumMap.get(base.anexoId);
-            const classSum = classSumMap?.get(row.classification);
-
-            if (classSum !== undefined) {
-                baseTotalValue = classSum;
-                note += `Using class ${row.classification} from ${base.anexoId} as base. `;
-            } else {
-                baseTotalValue = Array.from(classSumMap?.values() || []).reduce((acc, val) => acc.plus(val), new Decimal(0));
-                note += `Using total of ${base.anexoId} as base (class ${row.classification} not found). `;
-            }
-
-            baseHistValue = baseTotalValue;
-            baseRefName = `Anexo:${base.anexoId}`;
-        } else if (base?.type === 'FILA') {
-            let targets = rowsByClass.get(base.classification);
-            if (!targets || targets.length === 0) {
-                targets = rowsById.get(base.classification) || [];
-            }
-
-            targets.forEach(t => {
-                const calculated = currentRows.get(t.id);
-                baseTotalValue = baseTotalValue.plus(new Decimal(calculated?.total || 0));
-                baseHistValue = baseHistValue.plus(new Decimal(t.valorHistorico || 0));
-            });
-            baseRefName = `Fila:${base.classification}`;
-        }
-        fuenteParts.push(baseRefName);
-
-        if (formaCalculoToUse === 'PRORRATEO') {
-            if (baseHistValue.isZero()) {
-                total = new Decimal(0);
-                type = 'WARNING';
-                note += `BaseHist is zero for ${baseRefName}.`;
-            } else {
-                const ratio = vh.div(baseHistValue);
-                total = ratio.times(baseTotalValue);
-                note += `Prorrated: (${vh}/${baseHistValue}) * ${baseTotalValue.toFixed(decimals)}.`;
-            }
+        const vh = new Decimal(currentRows.get(row.id)?.calculatedVH || row.valorHistorico || 0);
+        if (formaCalculo === 'PRORRATEO') {
+            let baseHist = new Decimal(0);
+            if (row.baseCalculo?.type === 'FILA') {
+                const targets = rowsByClass.get(row.baseCalculo.classification) || rowsById.get(row.baseCalculo.classification) || [];
+                targets.forEach(t => baseHist = baseHist.plus(new Decimal(t.valorHistorico || 0)));
+            } else { baseHist = baseTotalValue; }
+            baseHistValue = baseHist;
+            if (baseHist.isZero()) { total = new Decimal(0); note = 'Base historial es cero'; }
+            else { total = vh.div(baseHist).times(baseTotalValue); note = `Prorrateo: (${vh}/${baseHist}) * ${baseTotalValue}`; }
         } else {
-            const coef = new Decimal(row.coeficiente ?? 0);
+            const coef = new Decimal(row.coeficiente || 0);
             total = coef.times(baseTotalValue);
-            note += `Coefficient: ${coef} * ${baseTotalValue.toFixed(decimals)}.`;
+            note = `Coeficiente: ${coef} * ${baseTotalValue}`;
         }
         break;
 
       case 'FORMULA':
-        const allowFormulas = ficha.meta.settings?.allowFormulas !== false;
-        if (!allowFormulas && !ruleOverride) {
-            total = new Decimal(0);
-            type = 'ERROR';
-            note += `Formulas are disabled.`;
-            break;
-        }
+        let currentFormula = formulaToUse;
+        let tFormula = '';
         try {
-            const formulaStrRaw = (formulaToUse || '0').trim().startsWith('=')
-              ? formulaToUse!.trim().substring(1)
-              : formulaToUse;
-
-            const formulaStr = translateFormulaFromSpanish(formulaStrRaw || '0');
-            const expr = parser.parse(formulaStr);
-
-            if (base?.type === 'ANEXO') {
-                 const anexo = annexSumMap.get(base.anexoId);
-                 baseTotalValue = Array.from(anexo?.values() || []).reduce((acc, val) => acc.plus(val), new Decimal(0));
-            } else if (base?.type === 'FILA') {
-                let targets = rowsByClass.get(base.classification);
-                if (!targets || targets.length === 0) {
-                    targets = rowsById.get(base.classification) || [];
-                }
-                targets.forEach(t => {
-                    const calculated = currentRows.get(t.id);
-                    baseTotalValue = baseTotalValue.plus(new Decimal(calculated?.total || 0));
-                });
-            }
-
+            const rawF = currentFormula.trim().startsWith('=') ? currentFormula.trim().substring(1) : currentFormula;
+            tFormula = smartTranslate(rawF, knownIds, knownClasses);
+            const expr = parser.parse(tFormula);
             const context: any = {
-                VH: vh.toNumber(),
+                VH: currentRows.get(row.id)?.calculatedVH || row.valorHistorico || 0,
+                vh: (id: any) => {
+                   const sid = String(id);
+                   if (currentRows.has(sid)) return currentRows.get(sid)!.calculatedVH;
+                   const matches = ficha.rows.filter(r => r.classification === sid);
+                   return matches.length > 0 ? (matches[0].valorHistorico || 0) : 0;
+                },
+                ref: (id: any) => {
+                   const sid = String(id);
+                   if (currentRows.has(sid)) return currentRows.get(sid)!.total;
+                   const matches = ficha.rows.filter(r => r.classification === sid);
+                   return matches.length > 0 ? matches.reduce((acc, r) => acc + (currentRows.get(r.id)?.total || 0), 0) : 0;
+                },
                 BASE_TOTAL: baseTotalValue.toNumber(),
                 COEF: row.coeficiente || 0,
-                QUANTITY: ficha.meta.quantity || 0,
-                cantidad: ficha.meta.quantity || 0,
+                QUANTITY: Number(ficha.meta.quantity) || 0,
                 header: ficha.meta,
-                children: ficha.rows
-                    .filter(r => r.parentId === row.id)
-                    .map(r => calculatedRows.get(r.id)?.total || 0),
-                hijos: ficha.rows
-                    .filter(r => r.parentId === row.id)
-                    .map(r => calculatedRows.get(r.id)?.total || 0)
+                children: ficha.rows.filter(r => r.parentId === row.id).reduce((acc, r) => acc + (currentRows.get(r.id)?.total || 0), 0)
             };
-
-            annexTotals.forEach((total, id) => {
-                context[`TotalAnexo${id}`] = total;
-                context[`Total${id}`] = total;
-
-                const classSum = annexSumMap.get(id)?.get(row.classification);
-                const valueToUse = classSum !== undefined ? classSum.toNumber() : 0;
-
-                context[id] = valueToUse;
-                context[`Anexo${id}`] = valueToUse;
+            const romanMap = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+            ficha.anexos.forEach((anexo, idx) => {
+                const val = annexTotals.get(anexo.id) || 0;
+                const filtered = annexSumMap.get(anexo.id)?.get(row.classification)?.toNumber() || 0;
+                context[`Anexo${anexo.id}`] = filtered;
+                context[`TotalAnexo${anexo.id}`] = val;
+                context[anexo.id] = filtered;
+                if (idx < romanMap.length) {
+                    context[`Anexo${romanMap[idx]}`] = filtered;
+                    context[`TotalAnexo${romanMap[idx]}`] = val;
+                }
             });
-
-            const result = expr.evaluate(context);
-            total = new Decimal(result);
-            note += `Evaluated: ${formulaToUse}.`;
+            const resVal = expr.evaluate(context);  total = new Decimal(resVal || 0);
+            note = ruleApplied ? `Regla aplicada: ${formulaToUse}` : `Formula result: ${total}`;
+            if (ruleApplied) type = 'RULE_APPLIED';
         } catch (e: any) {
             total = new Decimal(0);
             type = 'ERROR';
-            note += `Formula error: ${e.message}`;
+            note = `Formula error: ${e.message} (Formula: ${tFormula})`;
         }
         break;
-    }
 
-    return { total, note, type, fuente: fuenteParts.join('|'), baseTotal: baseTotalValue, baseHist: baseHistValue };
+    }
+    return { total, note, type, baseTotal: baseTotalValue, baseHist: baseHistValue };
   };
 
-  // 4. Iterative Solver
   let converged = false;
   let iterations = 0;
-
   while (!converged && iterations < maxIter) {
-    iterations++;
-    converged = true;
-
-    finalComputeOrder.forEach((row) => {
+    iterations++; converged = true;
+    ficha.rows.forEach(row => {
       const current = calculatedRows.get(row.id)!;
-
-      // Calculate VH if formula exists
-      if (row.vhFormula) {
-        try {
-            const vhFormulaStrRaw = row.vhFormula.trim().startsWith('=')
-              ? row.vhFormula.trim().substring(1)
-              : row.vhFormula;
-            const vhFormulaStr = translateFormulaFromSpanish(vhFormulaStrRaw);
-            const vhExpr = parser.parse(vhFormulaStr);
-
-            const vhContext: any = {
-                VH: row.valorHistorico || 0,
-                QUANTITY: ficha.meta.quantity || 0,
-                cantidad: ficha.meta.quantity || 0,
-                header: ficha.meta,
-                children: ficha.rows
-                    .filter(r => r.parentId === row.id)
-                    .map(r => calculatedRows.get(r.id)?.calculatedVH || r.valorHistorico || 0),
-                hijos: ficha.rows
-                    .filter(r => r.parentId === row.id)
-                    .map(r => calculatedRows.get(r.id)?.calculatedVH || r.valorHistorico || 0)
-            };
-
-            annexTotals.forEach((total, id) => {
-                vhContext[`TotalAnexo${id}`] = total;
-                vhContext[`Total${id}`] = total;
-                const classSum = annexSumMap.get(id)?.get(row.classification);
-                vhContext[id] = classSum !== undefined ? classSum.toNumber() : 0;
-                vhContext[`Anexo${id}`] = classSum !== undefined ? classSum.toNumber() : 0;
-            });
-
-            const vhResult = new Decimal(vhExpr.evaluate(vhContext)).toDecimalPlaces(decimals).toNumber();
-            if (vhResult !== current.calculatedVH) {
-                current.calculatedVH = vhResult;
-                converged = false;
-            }
-        } catch (e) {
-            // keep existing calculatedVH or fallback
-        }
-      }
-
-      const { total: computedTotal, note, type, fuente, baseTotal, baseHist } = computeRowTotal(row, calculatedRows);
-
-      const targetTotal = computedTotal.toDecimalPlaces(decimals);
-      const currentTotal = new Decimal(current.total);
-
-      if (!targetTotal.equals(currentTotal)) {
+      const { total: targetTotal, note, type, baseTotal, baseHist } = computeRowTotal(row, calculatedRows);
+      const targetVal = targetTotal.toDecimalPlaces(decimals).toNumber();
+      const currentVal = current.total;
+      if (Math.abs(targetVal - currentVal) > 0.0000001) {
         converged = false;
-
-        let nextValue = targetTotal;
-        if (iterations > maxIter / 2 && maxIter > 2) {
-            nextValue = currentTotal.times(damping).plus(targetTotal.times(new Decimal(1).minus(damping)));
-        }
-
-        const finalTotal = nextValue.toDecimalPlaces(decimals).toNumber();
-
-        if (finalTotal !== current.total || (iterations === 1)) {
-            current.audit.push({
-                ts: new Date().toISOString(),
-                actor,
-                type: iterations === maxIter && !converged ? 'CYCLE_DETECTED' : type,
-                rowId: row.id,
-                prev: current.total.toString(),
-                now: finalTotal.toString(),
-                note: iterations === maxIter && !converged ? `Cycle detected/Damping: ${note}` : note
-            });
-            current.total = finalTotal;
-            current.fuente = fuente;
-            current.baseTotal = baseTotal.toNumber();
-            current.baseHist = baseHist.toNumber();
+        let nextValue = (iterations > maxIter / 2) ? (currentVal * damping.toNumber() + targetVal * (1 - damping.toNumber())) : targetVal;
+        current.total = Number(nextValue.toFixed(decimals));
+        current.baseTotal = baseTotal.toNumber();
+        current.baseHist = baseHist.toNumber();
+        if (iterations === 1 || iterations === maxIter || type === 'RULE_APPLIED' || type === 'ERROR') {
+           current.audit.push({ ts: new Date().toISOString(), actor, type: (iterations === maxIter && !converged ? 'CYCLE_DETECTED' : type), rowId: row.id, prev: currentVal.toString(), now: current.total.toString(), note });
         }
       }
     });
   }
 
-  // 4. Final Totals
-  const summary = {
-    totalCost: 0,
-    totalMargin: 0,
-    totalTax: 0,
-    grandTotal: 0,
-  };
-
-  calculatedRows.forEach(row => {
-    const val = row.total;
-    if (row.type === 'COST') summary.totalCost += val;
-    else if (row.type === 'MARGIN') summary.totalMargin += val;
-    else if (row.type === 'TAX') summary.totalTax += val;
+  const summary = { totalCost: 0, totalMargin: 0, totalTax: 0, grandTotal: 0 };
+  calculatedRows.forEach(r => {
+    if (r.type === 'COST') summary.totalCost += r.total;
+    else if (r.type === 'MARGIN') summary.totalMargin += r.total;
+    else if (r.type === 'TAX') summary.totalTax += r.total;
   });
-
-  summary.grandTotal = new Decimal(summary.totalCost).plus(summary.totalMargin).plus(summary.totalTax).toDecimalPlaces(decimals).toNumber();
-
-  // 5. Semantic Validation (Totals vs Children)
-  ficha.rows.forEach(row => {
-      const children = ficha.rows.filter(r => r.parentId === row.id);
-      // We check if it's a sum row. If it has children and calculation is FORMULA with sum, it MUST match.
-      if (children.length > 0 && (row.formula?.toLowerCase().includes('sum') || row.formula?.includes('SUMA'))) {
-          const calcRow = calculatedRows.get(row.id)!;
-          const childrenSum = children.reduce((acc, child) => acc.plus(new Decimal(calculatedRows.get(child.id)?.total || 0)), new Decimal(0));
-
-          const diff = Math.abs(calcRow.total - childrenSum.toNumber());
-          if (diff > 0.01) {
-              validationErrors.push({
-                  rowId: row.id,
-                  message: `Error Contable: El total de '${row.label}' (${calcRow.total}) no cuadra con la suma de sus componentes (${childrenSum.toNumber()}). Diferencia: ${diff.toFixed(2)}`,
-                  type: 'CRITICAL',
-                  code: 'SEMANTIC_DISCREPANCY'
-              });
-          }
-      }
-  });
+  summary.grandTotal = Number((summary.totalCost + summary.totalMargin + summary.totalTax).toFixed(decimals));
 
   return {
-    fichaId: ficha.meta.id,
-    fichaName: ficha.meta.name,
-    metadata: { header: ficha.meta },
-    rows: Array.from(calculatedRows.values()),
-    anexos: ficha.anexos,
-    audits: Array.from(calculatedRows.values()).flatMap(r => r.audit),
-    summary,
-    validationErrors: validationErrors.map(e => e.message),
-    deepValidationErrors: validationErrors,
-    elapsedMs: Date.now() - startTime,
+    fichaId: ficha.meta.id, fichaName: ficha.meta.name, metadata: { header: ficha.meta },
+    rows: Array.from(calculatedRows.values()), anexos: ficha.anexos, audits: Array.from(calculatedRows.values()).flatMap(r => r.audit),
+    summary, validationErrors: [], deepValidationErrors: [], elapsedMs: Date.now() - startTime
   };
 }

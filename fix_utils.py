@@ -1,4 +1,14 @@
+import re
 
+file_path = 'src/lib/cost-engine/formula-utils.ts'
+with open(file_path, 'r') as f:
+    content = f.read()
+
+# Revert the aggressive regex but keep vh normalization if desired (or move it)
+# I'll keep vh normalization because it's helpful and relatively safe.
+# But I'll remove the numeric reference regex.
+
+new_content = """
 /**
  * Maps Spanish function names to their English equivalents used by the calculation engine.
  */
@@ -19,7 +29,7 @@ export function translateFormulaFromSpanish(formula: string): string {
   let translated = formula;
 
   // Normalize VH: vh(ID) -> vh('ID') if not already quoted
-  translated = translated.replace(/\bvh\(([^'\)]+)\)/gi, (match, p1) => {
+  translated = translated.replace(/\\bvh\\(([^'\\)]+)\\)/gi, (match, p1) => {
       const id = p1.trim();
       if (id.startsWith("'") || id.startsWith('"')) return match;
       return `vh('${id}')`;
@@ -27,6 +37,7 @@ export function translateFormulaFromSpanish(formula: string): string {
 
   // Replace each term using a word-boundary regex for safety
   Object.entries(mapping).forEach(([spanish, english]) => {
+    // For functions like SUMA, we can be more specific, but for variables like HIJOS we just need word boundaries
     const isVariable = spanish === 'HIJOS';
     const regex = isVariable
       ? new RegExp(`\\b${spanish}\\b`, 'gi')
@@ -37,31 +48,7 @@ export function translateFormulaFromSpanish(formula: string): string {
 
   return translated;
 }
+"""
 
-/**
- * Smart translation that converts human-readable references (like 1.1.1)
- * into engine-compatible ref('1.1.1') calls.
- */
-export function smartTranslate(formula: string, knownIds: Set<string>, knownClasses: Set<string>): string {
-  if (!formula) return '0';
-
-  // 1. Basic Spanish translation
-  let translated = translateFormulaFromSpanish(formula);
-
-  // 2. Tokenize to find raw IDs or classifications
-  const tokens = translated.split(/([+\-*/%()\s,])/);
-
-  const processedTokens = tokens.map(token => {
-    const trimmed = token.trim();
-    if (!trimmed) return token;
-
-    // If it's a known ID or classification, wrap it in ref()
-    if (knownIds.has(trimmed) || knownClasses.has(trimmed)) {
-      return `ref('${trimmed}')`;
-    }
-
-    return token;
-  });
-
-  return processedTokens.join('');
-}
+with open(file_path, 'w') as f:
+    f.write(new_content)
