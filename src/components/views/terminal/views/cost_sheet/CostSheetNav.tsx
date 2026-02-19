@@ -2,7 +2,8 @@
 
 import React from 'react';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
-import { Layout, FileSpreadsheet, PenTool, ClipboardList, Menu, ListFilter, Sparkles, Eye, Edit } from 'lucide-react';
+import { Layout, FileSpreadsheet, PenTool, ClipboardList, Menu, ListFilter, Sparkles, Eye, Edit, Zap, Calculator } from 'lucide-react';
+import { useUIStore } from '@/store';
 
 interface CostSheetNavProps {
   navItems: any[];
@@ -27,6 +28,8 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
   isEditing,
   onToggleEditing,
 }) => {
+  const setIsCalculatorOpen = useUIStore(state => state.setIsCalculatorOpen);
+
   // Create a combined list of all navigable sections mapped to ActionMenu format
   const navActions: Action[] = React.useMemo(() => {
     // Separate massive-gen to put it at the end
@@ -80,6 +83,21 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
             onClick: () => setActiveSection('signature'),
             active: activeSection === 'signature',
             className: "text-xs uppercase tracking-wider"
+        },
+        {
+            id: 'expert-view',
+            label: 'Experto',
+            icon: Zap,
+            onClick: () => setActiveSection('all-content'),
+            active: activeSection === 'all-content',
+            className: "text-xs uppercase tracking-wider bg-primary/20 text-primary border-primary/30"
+        },
+        {
+            id: 'calculator-shortcut',
+            label: 'Calculadora',
+            icon: Calculator,
+            onClick: () => setIsCalculatorOpen(true),
+            className: "text-xs uppercase tracking-wider bg-blue-500/10 text-blue-500 border-blue-500/20"
         }
     ];
 
@@ -96,7 +114,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
     }
 
     return actions;
-  }, [navItems, activeSection, setActiveSection, annexes, onOpenActions, onOpenAnnexes, onOpenSections]);
+  }, [navItems, activeSection, setActiveSection, annexes, onOpenActions, onOpenAnnexes, onOpenSections, setIsCalculatorOpen]);
 
   return (
     <div className="mb-0">

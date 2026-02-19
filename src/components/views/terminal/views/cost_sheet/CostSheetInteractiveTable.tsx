@@ -1,5 +1,6 @@
-
 'use client';
+import { LazyRender } from '@/components/ui/LazyRender';
+
 
 import React, { useState, useMemo, memo } from 'react';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
@@ -537,7 +538,8 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
         />
         {(() => {
             const currentGroup = groupedSections?.find(g => g.id === activeSubSectionId);
-            const targetSectionIds = currentGroup ? currentGroup.sectionIds : [activeSubSectionId];
+            const isAll = activeSubSectionId === 'all';
+            const targetSectionIds = currentGroup ? currentGroup.sectionIds : (isAll ? sections.map(s => s.id) : [activeSubSectionId]);
 
             return sections.map((section, sectionIndex) => {
                 const isTarget = targetSectionIds.includes(section.id);
@@ -548,7 +550,8 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                 const isStickyHeaderSection = sectionNum >= 1 && sectionNum <= 3;
 
                 return (
-                <div key={section.id} id={section.id} className="animate-in fade-in slide-in-from-bottom-2 duration-500 mb-0 last:mb-0 scroll-mt-24">
+                <LazyRender key={section.id}>
+                <div id={section.id} className="animate-in fade-in slide-in-from-bottom-2 duration-500 mb-8 last:mb-0 scroll-mt-24">
                     <div className="flex items-center justify-between py-1.5 px-4 bg-muted/30 border-y border-border/50">
                         <div className="flex items-center gap-3">
                             <div className="w-1.5 h-6 bg-primary rounded-full" />
@@ -607,6 +610,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                         </div>
                     </div>
                 </div>
+                </LazyRender>
                 );
             });
         })()}
