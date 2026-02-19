@@ -1,4 +1,5 @@
 'use client';
+import { LazyRender } from '@/components/ui/LazyRender';
 import { toast } from 'sonner';
 import { exportSectionToExcel, importSectionFromExcel } from '@/services/excel-service';
 
@@ -350,7 +351,8 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
   const pricePercent = finalPrice > 0 ? 100 : 0;
 
   const currentGroup = groupedSections?.find(g => g.id === activeSubSectionId);
-  const targetSectionIds = currentGroup ? currentGroup.sectionIds : [activeSubSectionId];
+  const isAll = activeSubSectionId === 'all';
+  const targetSectionIds = currentGroup ? currentGroup.sectionIds : (isAll ? sections.map(s => s.id) : [activeSubSectionId]);
 
   // Suggestions for FormulaEditor
   const suggestions = React.useMemo(() => {
@@ -472,7 +474,8 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
           if (!isTarget) return null;
 
           return (
-            <div key={section.id} className="animate-in fade-in slide-in-from-bottom-2 duration-500 px-4">
+            <LazyRender key={section.id}>
+            <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 px-4 mb-8">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-1 h-6 bg-primary rounded-full" />
@@ -518,6 +521,7 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
                 </Button>
               </div>
             </div>
+            </LazyRender>
           );
         })}
       </div>
