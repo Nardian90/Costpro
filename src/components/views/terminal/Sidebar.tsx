@@ -3,10 +3,10 @@
 import * as React from 'react';
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, LogOut, ChevronDown } from 'lucide-react';
+import { Search, LogOut, ChevronDown, Calculator } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import CostProLogo from '@/components/CostProLogo';
-import { ViewType } from '@/store';
+import { ViewType, useUIStore } from '@/store';
 import { NavigationItem } from '@/hooks/ui/useTerminalNavigation';
 
 interface SidebarProps {
@@ -21,10 +21,10 @@ interface SidebarProps {
   logoHeight: any;
   logoOpacity: any;
   logoScale: any;
-  navRef: React.RefObject<HTMLElement | null>;
+  navRef: any;
 }
 
-export const Sidebar = ({
+export const Sidebar: React.FC<SidebarProps> = ({
   sidebarOpen,
   sidebarSearch,
   setSidebarSearch,
@@ -37,10 +37,10 @@ export const Sidebar = ({
   logoOpacity,
   logoScale,
   navRef
-}: SidebarProps) => {
-  const [expandedModules, setExpandedModules] = useState<string[]>([]);
+}) => {
+  const { isCalculatorOpen, setIsCalculatorOpen } = useUIStore();
+  const [expandedModules, setExpandedModules] = useState<string[]>(['estrategico']);
 
-  // Define information architecture
   const STRUCTURE = useMemo(() => {
     interface NavSubmenu {
       id: string;
@@ -67,19 +67,16 @@ export const Sidebar = ({
       {
         id: 'punto_venta',
         label: 'Punto de Venta',
-
         items: ['pos', 'sales', 'cash']
       },
       {
         id: 'almacen',
         label: 'Módulo almacén',
-
         items: ['catalog', 'inventory', 'recepcion', 'reception_list', 'transferencias', 'inventory_count', 'history']
       },
       {
         id: 'administracion',
         label: 'Administración',
-
         items: [
           'users',
           'roles',
@@ -99,19 +96,19 @@ export const Sidebar = ({
         id: 'soporte',
         label: 'SOPORTE Y AYUDA',
         isDirect: true,
-        items: ['support_doc', 'help', 'academy']
+        items: ['help', 'academy']
       }
     ];
     return structure;
   }, []);
 
-  // Intelligent active state: Expand parent if child is active
   useEffect(() => {
     const findParentModule = (viewId: string) => {
       for (const module of STRUCTURE) {
-        if (module.items.some(item =>
-          typeof item === 'string' ? item === viewId : item.items.includes(viewId)
-        )) {
+        if (module.items.some(item => {
+          if (typeof item === 'string') return item === viewId;
+          return item.items.includes(viewId);
+        })) {
           return module.id;
         }
       }
@@ -122,29 +119,16 @@ export const Sidebar = ({
     if (parentId && !expandedModules.includes(parentId)) {
       setExpandedModules(prev => [...prev, parentId]);
     }
-
-    // Also check for submenus
-    for (const module of STRUCTURE) {
-      for (const item of module.items) {
-        if (typeof item !== 'string' && item.items.includes(currentView)) {
-          if (!expandedModules.includes(item.id)) {
-            setExpandedModules(prev => [...prev, item.id]);
-          }
-        }
-      }
-    }
   }, [currentView, STRUCTURE]);
 
   const toggleModule = (moduleId: string, isSubmenu = false) => {
     setExpandedModules(prev => {
-      const isCurrentlyExpanded = prev.includes(moduleId);
-      if (isCurrentlyExpanded) {
+      if (prev.includes(moduleId)) {
         return prev.filter(id => id !== moduleId);
       } else {
         if (isSubmenu) {
           return [...prev, moduleId];
         } else {
-          // Accordion behavior for top-level modules
           const topLevelIds = STRUCTURE.filter(m => !m.isDirect).map(m => m.id);
           const filtered = prev.filter(id => !topLevelIds.includes(id));
           return [...filtered, moduleId];
@@ -224,7 +208,6 @@ export const Sidebar = ({
         >
           <div className="space-y-4">
             {STRUCTURE.map(module => {
-              // Check if any item in the module is available to the user
               const hasAvailableItems = module.items.some(item => {
                 if (typeof item === 'string') {
                   return navigationItems.some(ni => ni.id === item);
@@ -256,7 +239,6 @@ export const Sidebar = ({
                     <>
                       <button
                         onClick={() => toggleModule(module.id)}
-                        data-testid={`module-${module.id}`}
                         className={cn(
                           "w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all",
                           isExpanded ? "bg-primary/5 text-primary" : "text-sidebar-foreground/60 hover:text-sidebar-foreground"
@@ -285,7 +267,6 @@ export const Sidebar = ({
                                 if (typeof item === 'string') {
                                   return renderNavItem(item);
                                 } else {
-                                  // Submenu (e.g., Comunicación)
                                   const isSubExpanded = expandedModules.includes(item.id) || !!sidebarSearch;
                                   const hasAvailableSubItems = item.items.some(subItem =>
                                     navigationItems.some(ni => ni.id === subItem)
@@ -335,6 +316,19 @@ export const Sidebar = ({
         </nav>
 
         <div className="p-4 border-t border-sidebar-border/50 shrink-0 space-y-1">
+          <button
+            onClick={() => setIsCalculatorOpen(!isCalculatorOpen)}
+            className={cn(
+              "w-full flex items-center gap-4 p-3.5 rounded-xl transition-all group active:scale-95 font-bold",
+              isCalculatorOpen
+                ? "bg-primary/10 text-primary border border-primary/20"
+                : "hover:bg-primary/5 text-sidebar-foreground/60"
+            )}
+          >
+            <Calculator className="w-4.5 h-4.5" />
+            <span className="text-xs uppercase tracking-wider">Calculadora</span>
+          </button>
+
           <button
             onClick={onLogout}
             className="w-full flex items-center gap-4 p-3.5 rounded-xl transition-all group active:scale-95 hover:bg-danger/10 text-danger font-bold"
