@@ -14,7 +14,8 @@ export default function InventoryFlowDiagram() {
   };
 
   return (
-    <div className="w-full aspect-video bg-muted/30 rounded-3xl border border-primary/10 flex items-center justify-center p-4">
+    <div className="w-full overflow-x-auto no-scrollbar rounded-3xl border border-primary/10 bg-muted/30">
+      <div className="min-w-[600px] aspect-video flex items-center justify-center p-4">
       <motion.svg
         viewBox="0 0 800 400"
         className="w-full h-full max-w-3xl"
@@ -98,6 +99,7 @@ export default function InventoryFlowDiagram() {
         />
 
       </motion.svg>
+      </div>
     </div>
   );
 }

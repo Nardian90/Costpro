@@ -28,7 +28,7 @@ export default function KidsOnboarding() {
             <User className="w-3 h-3" />
             Historia CostPro
           </div>
-          <h3 className="text-2xl font-black uppercase tracking-tighter text-primary">
+          <h3 className="text-[clamp(1.25rem,5vw,1.5rem)] font-black uppercase tracking-tighter text-primary leading-tight">
             Juan, Pedro y el Misterio de los Inventarios
           </h3>
           <p className="text-sm text-muted-foreground leading-relaxed">
@@ -46,7 +46,7 @@ export default function KidsOnboarding() {
       {/* The Concept of Context */}
       <div className="grid lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
-          <h4 className="text-xl font-black uppercase tracking-tight flex items-center gap-3">
+          <h4 className="text-[clamp(1.1rem,4vw,1.25rem)] font-black uppercase tracking-tight flex items-center gap-3 leading-tight">
             <Store className="w-6 h-6 text-primary" />
             La "Burbuja" de la Tienda
           </h4>
@@ -73,7 +73,7 @@ export default function KidsOnboarding() {
 
       {/* Step by Step Flow */}
       <div className="space-y-6">
-        <h4 className="text-xl font-black uppercase tracking-tight text-center">Cómo trabaja Pedro (Encargado)</h4>
+        <h4 className="text-[clamp(1.1rem,4vw,1.25rem)] font-black uppercase tracking-tight text-center leading-tight">Cómo trabaja Pedro (Encargado)</h4>
         <div className="grid md:grid-cols-4 gap-4">
           {[
             { step: "1", title: "Entra", desc: "Pedro inicia sesión con su correo.", icon: User },
