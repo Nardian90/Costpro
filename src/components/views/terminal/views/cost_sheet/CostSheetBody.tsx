@@ -42,7 +42,7 @@ const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValue
                 hasChildren && "bg-slate-50/30 dark:bg-slate-900/30"
             )}>
                 {/* No. */}
-                <td className="p-3 text-center font-mono text-xs text-slate-400 w-[1%] whitespace-nowrap">
+                <td className="p-3 text-center font-mono text-xs text-slate-400 w-12 whitespace-nowrap">
                     {numbering}
                 </td>
 
@@ -69,13 +69,13 @@ const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValue
                 </td>
 
                 {/* Valor Histórico */}
-                <td data-label="Valor Histórico" className="p-3 text-right font-mono text-slate-500 text-xs w-[1%] whitespace-nowrap">
+                <td data-label="Valor Histórico" className="p-3 text-right font-mono text-slate-500 text-xs w-28 whitespace-nowrap">
                     {calc.valorHistorico > 0 ? calc.valorHistorico.toLocaleString('es-ES', { minimumFractionDigits: 2 }) : '--'}
                 </td>
 
                 {/* Total */}
                 <td data-label="Total" className={cn(
-                    "p-3 text-right font-mono font-black text-sm w-[1%] whitespace-nowrap",
+                    "p-3 text-right font-mono font-black text-sm w-32 whitespace-nowrap",
                     hasChildren ? "text-slate-900 dark:text-white" : "text-primary"
                 )}>
                     {formatCurrency(calc.total).replace('$', '').trim()}
@@ -91,10 +91,10 @@ const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValue
       <table className="w-full text-sm">
         <thead className="bg-slate-800 text-white hidden sm:table-header-group">
           <tr>
-            <th className="p-4 text-center font-black uppercase tracking-widest text-xs w-[1%] whitespace-nowrap">No.</th>
+            <th className="p-4 text-center font-black uppercase tracking-widest text-xs w-12 whitespace-nowrap">No.</th>
             <th className="p-4 text-left font-black uppercase tracking-widest text-xs">Concepto</th>
-            <th className="p-4 text-right font-black uppercase tracking-widest text-xs w-[1%] whitespace-nowrap">Valor Histórico</th>
-            <th className="p-4 text-right font-black uppercase tracking-widest text-xs w-[1%] whitespace-nowrap">Total</th>
+            <th className="p-4 text-right font-black uppercase tracking-widest text-xs w-28 whitespace-nowrap">Valor Histórico</th>
+            <th className="p-4 text-right font-black uppercase tracking-widest text-xs w-32 whitespace-nowrap">Total</th>
           </tr>
         </thead>
         <tbody className="bg-white dark:bg-slate-900">
