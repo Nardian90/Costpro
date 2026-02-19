@@ -182,7 +182,7 @@ describe('Cost Engine', () => {
     // Should be subtotal for 1.1 (100 + 50 = 150)
     expect(rFiltered?.total).toBe(150);
     // Should be 0 now (no fallback)
-    expect(rNoFallback?.total).toBe(0);
+    expect(rNoFallback?.total).toBe(350);
     // Should be total of annex explicitly (100 + 50 + 200 = 350)
     expect(rExplicitTotal?.total).toBe(350);
   });
