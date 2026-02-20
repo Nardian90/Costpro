@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { X as XIcon, Calculator, Bot, ChevronRight, Maximize2, Minimize2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTheme } from 'next-themes';
@@ -25,7 +25,7 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
 
-  const panelVariants = {
+  const panelVariants: Variants = {
     closed: {
       x: '-100%',
       opacity: 0,
@@ -51,7 +51,7 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
     }
   };
 
-  const indicatorVariants = {
+  const indicatorVariants: Variants = {
     closed: { x: 0, opacity: 1 },
     open: { x: -20, opacity: 0 }
   };
