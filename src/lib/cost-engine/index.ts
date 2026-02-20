@@ -584,8 +584,9 @@ export function calculateFicha(
                 baseTotalValue = sum;
                 note += `Using prefix match for ${row.classification} from ${base.anexoId} as base. `;
             } else {
-                baseTotalValue = new Decimal(0);
-                note += `No matches for ${row.classification} in ${base.anexoId}. `;
+                // Fallback to total of annex if no prefix match found
+                baseTotalValue = new Decimal(annexTotals.get(base.anexoId) || 0);
+                note += `No prefix match for ${row.classification} in ${base.anexoId}, using Annex Total. `;
             }
 
             baseHistValue = baseTotalValue;

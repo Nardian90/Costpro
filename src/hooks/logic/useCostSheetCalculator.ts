@@ -15,6 +15,7 @@ import { calculateCostSheetHealth, ValidationResult } from '@/lib/cost-engine/va
 
 // Helper to safely evaluate a formula string for ANNEXES (keeping it simple for annex rows)
 const evaluateAnnexExpression = (expression: string, rowData: any, header: any, calculatedAnnexes: any[] = []): number => {
+  let expr = "";
   if (expression === undefined || expression === null || expression === '') return 0;
 
   // If it's already a number, return it
@@ -30,7 +31,7 @@ const evaluateAnnexExpression = (expression: string, rowData: any, header: any, 
 
   try {
     // Simple replacement for annex row variables
-    let expr = trimmed;
+    expr = trimmed;
     if (expr.startsWith('=')) expr = expr.substring(1);
 
     // Support GET_ANEXO_DATO and GET_FILA_DATO even in annexes for consistency
@@ -107,7 +108,6 @@ const evaluateAnnexExpression = (expression: string, rowData: any, header: any, 
         return '0';
     });
 
-    // Basic arithmetic evaluation
     // Advanced arithmetic evaluation with expr-eval
     const parser = new Parser();
     parser.functions.REDONDEO = (val: number, decimals: number = 2) => {
@@ -115,7 +115,9 @@ const evaluateAnnexExpression = (expression: string, rowData: any, header: any, 
     };
     parser.functions.round = parser.functions.REDONDEO;
     return parser.evaluate(expr);
-    return isNaN(Number(trimmed)) ? 0 : Number(trimmed);
+  } catch (error) {
+    // Return processed expr if evaluation fails
+    return expr;
   }
 };
 
@@ -130,8 +132,9 @@ const evaluateHeaderExpression = (
     const trimmed = String(expression).trim();
     if (!trimmed.startsWith('=')) return expression;
 
+    let expr = '';
     try {
-        let expr = trimmed.substring(1);
+        expr = trimmed.substring(1);
 
         /**
          * GET_ANEXO_FILA_DATO(anexoId, rowIndex, field)
@@ -205,12 +208,8 @@ const evaluateHeaderExpression = (
         parser.functions.round = parser.functions.REDONDEO;
 
         return parser.evaluate(expr);
-
-        // If not simple arithmetic, just return the processed string if it's not a number
-        return expr;
     } catch (e) {
-        console.error("Error evaluating header expression:", e);
-        return expression;
+        return expr;
     }
 };
 
