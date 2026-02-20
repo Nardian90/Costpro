@@ -2,7 +2,8 @@
 
 import React from 'react';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
-import { Layout, FileSpreadsheet, PenTool, ClipboardList, Menu, ListFilter, Sparkles, Eye, Edit, Zap, HelpCircle, DatabaseZap } from 'lucide-react';
+import { Layout, FileSpreadsheet, PenTool, ClipboardList, Menu, ListFilter, Sparkles, Eye, Edit, Zap, HelpCircle, DatabaseZap, Bot } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface CostSheetNavProps {
   navItems: any[];
@@ -31,9 +32,10 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
 }) => {
   // Create a combined list of all navigable sections mapped to ActionMenu format
   const navActions: Action[] = React.useMemo(() => {
-    // Separate massive-gen to put it at the end
-    const filteredNavItems = navItems.filter(s => s.id !== 'massive-gen');
-    const massiveGenItem = navItems.find(s => s.id === 'massive-gen');
+    // Separate massive-gen and ai-chat to put them at the end
+    const specialIds = ['massive-gen', 'ai-chat'];
+    const filteredNavItems = navItems.filter(s => !specialIds.includes(s.id));
+    const specialItems = navItems.filter(s => specialIds.includes(s.id));
 
     const actions: Action[] = [
         ...(onOpenActions ? [{
@@ -99,17 +101,22 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
         }] : [])
     ];
 
-    // Add massive-gen at the end with distinctive style
-    if (massiveGenItem) {
+    // Add special items at the end
+    specialItems.forEach(item => {
         actions.push({
-            id: massiveGenItem.id,
-            label: massiveGenItem.label,
-            icon: DatabaseZap,
-            onClick: () => setActiveSection(massiveGenItem.id),
-            active: activeSection === massiveGenItem.id,
-            className: 'bg-primary/20 border-primary/40 text-primary font-black shadow-[0_0_15px_rgba(57,255,20,0.3)] hover:bg-primary/30 transition-all text-xs uppercase tracking-wider'
+            id: item.id,
+            label: item.label,
+            icon: item.icon || Bot,
+            onClick: () => setActiveSection(item.id),
+            active: activeSection === item.id,
+            className: cn(
+                'text-xs uppercase tracking-wider border-primary/40 font-black transition-all',
+                item.id === 'massive-gen'
+                    ? 'bg-primary/20 text-primary shadow-lg shadow-primary/20 hover:bg-primary/30'
+                    : 'bg-primary/10 text-primary border-primary/20 hover:bg-primary/20'
+            )
         });
-    }
+    });
 
     return actions;
   }, [navItems, activeSection, setActiveSection, annexes, onOpenActions, onOpenAnnexes, onOpenSections, onOpenHelp]);

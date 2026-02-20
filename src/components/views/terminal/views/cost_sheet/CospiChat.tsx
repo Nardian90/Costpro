@@ -64,7 +64,7 @@ export const CospiChat: React.FC<CospiChatProps> = ({ sheetData, isFullView, onT
     return (
         <div className={cn(
             "flex flex-col h-full overflow-hidden transition-all duration-500",
-            isDark ? "bg-[#010203]" : "bg-transparent",
+            isDark ? "bg-background" : "bg-transparent",
             isFullView ? "p-4 sm:p-8" : "p-0"
         )}>
             {/* Header with name and toggle */}
@@ -75,14 +75,13 @@ export const CospiChat: React.FC<CospiChatProps> = ({ sheetData, isFullView, onT
                 <div className="flex items-center gap-3">
                     <div className={cn(
                         "w-9 h-9 rounded-xl flex items-center justify-center border transition-all",
-                        isDark ? "bg-[#39FF14]/10 border-[#39FF14]/30" : "bg-primary/10 border-primary/20"
+                        "bg-primary/10 border-primary/20"
                     )}>
-                        <Bot className={cn("w-5 h-5", isDark ? "text-[#39FF14]" : "text-primary")} />
+                        <Bot className={cn("w-5 h-5 text-primary")} />
                     </div>
                     <div>
                         <h4 className={cn(
-                            "text-[10px] font-black uppercase tracking-[0.3em] leading-none mb-1",
-                            isDark ? "text-[#39FF14]/60" : "text-primary/60"
+                            "text-[10px] font-black uppercase tracking-[0.3em] leading-none mb-1 text-primary/60"
                         )}>Cospi AI</h4>
                         <p className="text-[11px] font-black uppercase tracking-widest opacity-90">Asistente</p>
                     </div>
@@ -92,7 +91,7 @@ export const CospiChat: React.FC<CospiChatProps> = ({ sheetData, isFullView, onT
                         onClick={onToggleFullView}
                         className={cn(
                             "p-2.5 rounded-xl transition-all active:scale-90",
-                            isDark ? "hover:bg-white/10 text-[#39FF14]/50 hover:text-[#39FF14]" : "hover:bg-primary/10 text-primary/50 hover:text-primary"
+                            "hover:bg-primary/10 text-primary/50 hover:text-primary"
                         )}
                         title={isFullView ? "Vista Normal" : "Vista Completa"}
                     >
@@ -112,10 +111,9 @@ export const CospiChat: React.FC<CospiChatProps> = ({ sheetData, isFullView, onT
                 {messages.length === 0 && (
                     <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-4 opacity-40">
                         <div className={cn(
-                            "w-16 h-16 rounded-[2rem] border-2 border-dashed flex items-center justify-center animate-pulse",
-                            isDark ? "border-[#39FF14]/30" : "border-primary/30"
+                            "w-16 h-16 rounded-[2rem] border-2 border-dashed flex items-center justify-center animate-pulse border-primary/30"
                         )}>
-                            <MessageSquare className={cn("w-6 h-6", isDark ? "text-[#39FF14]" : "text-primary")} />
+                            <MessageSquare className={cn("w-6 h-6 text-primary")} />
                         </div>
                         <div>
                             <p className="text-[10px] font-black uppercase tracking-widest italic">Hola, soy Cospi</p>
@@ -131,7 +129,7 @@ export const CospiChat: React.FC<CospiChatProps> = ({ sheetData, isFullView, onT
                         <div className={cn(
                             "max-w-[92%] sm:max-w-[85%] p-4 rounded-3xl text-[13px] font-black shadow-xl break-words leading-relaxed transition-all",
                             msg.role === 'user'
-                                ? (isDark ? "bg-[#39FF14] text-black rounded-tr-none shadow-[#39FF14]/10" : "bg-primary text-white rounded-tr-none shadow-primary/10")
+                                ? "bg-primary text-primary-foreground rounded-tr-none shadow-primary/10"
                                 : (isDark ? "bg-white/5 border border-white/10 rounded-tl-none" : "bg-muted border border-border rounded-tl-none"),
                             isFullView && "sm:text-sm sm:max-w-[75%]"
                         )}>
@@ -146,7 +144,7 @@ export const CospiChat: React.FC<CospiChatProps> = ({ sheetData, isFullView, onT
                             "p-4 rounded-3xl rounded-tl-none flex items-center gap-3 border shadow-lg",
                             isDark ? "bg-white/5 border-white/10" : "bg-muted border-border"
                         )}>
-                            <Loader2 className={cn("w-4 h-4 animate-spin", isDark ? "text-[#39FF14]" : "text-primary")} />
+                            <Loader2 className={cn("w-4 h-4 animate-spin text-primary")} />
                             <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Cospi analizando...</span>
                         </div>
                     </div>
@@ -160,7 +158,7 @@ export const CospiChat: React.FC<CospiChatProps> = ({ sheetData, isFullView, onT
             )}>
                 <div className={cn(
                     "flex items-center gap-2 p-2 rounded-[2.5rem] border transition-all shadow-inner",
-                    isDark ? "bg-white/5 border-white/10 focus-within:border-[#39FF14]/50" : "bg-white border-border focus-within:border-primary/50"
+                    isDark ? "bg-white/5 border-white/10 focus-within:border-primary/50" : "bg-white border-border focus-within:border-primary/50"
                 )}>
                     <input
                         value={input}
@@ -174,7 +172,7 @@ export const CospiChat: React.FC<CospiChatProps> = ({ sheetData, isFullView, onT
                         disabled={!input.trim() || isLoading}
                         className={cn(
                             "w-11 h-11 rounded-full flex items-center justify-center transition-all shadow-lg active:scale-90 disabled:opacity-30 disabled:grayscale",
-                            isDark ? "bg-[#39FF14] text-black shadow-[#39FF14]/20" : "bg-primary text-white shadow-primary/20"
+                            "bg-primary text-primary-foreground shadow-primary/20"
                         )}
                     >
                         <Send className="w-5 h-5" />

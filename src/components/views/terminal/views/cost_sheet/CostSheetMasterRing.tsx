@@ -47,10 +47,10 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
   const circumference = 2 * Math.PI * radius;
 
   // Colors based on theme
-  const brandGreen = "text-primary dark:text-[#39FF14]";
-  const brandGreenBg = "bg-primary dark:bg-[#39FF14]";
-  const brandGreenBorder = "border-primary/20 dark:border-[#39FF14]/20";
-  const brandGreenAlpha = "bg-primary/10 dark:bg-[#39FF14]/10";
+  const brandGreen = "text-primary dark:text-[var(--primary)]";
+  const brandGreenBg = "bg-primary dark:bg-[var(--primary)]";
+  const brandGreenBorder = "border-primary/20 dark:border-[var(--primary)]/20";
+  const brandGreenAlpha = "bg-primary/10 dark:bg-[var(--primary)]/10";
 
   return (
     <div className={cn("flex flex-col items-center gap-10 w-full max-w-md mx-auto", className)}>
@@ -92,7 +92,7 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
             animate={{ strokeDashoffset: circumference - (Math.min(costPercent, 100) / 100) * circumference }}
             transition={{ duration: 1.5, ease: "circOut" }}
             strokeLinecap="round"
-            className="text-primary/20 dark:text-[#39FF14]/20"
+            className="text-primary/20 dark:text-[var(--primary)]/20"
           />
 
           {/* Utility Ring (Main Neon/Primary) */}
@@ -111,7 +111,7 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
             strokeLinecap="round"
             style={{
                 filter: isDark
-                    ? 'drop-shadow(0 0 12px rgba(57, 255, 20, 0.6))'
+                    ? 'drop-shadow(0 0 12px rgba(var(--primary-rgb), 0.6))'
                     : 'drop-shadow(0 0 12px rgba(22, 163, 74, 0.3))',
             }}
           />
@@ -196,8 +196,8 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
 export const CostSheetTelemetry: React.FC<{ telemetry: TelemetryItem[], className?: string }> = ({ telemetry, className }) => {
     const { resolvedTheme } = useTheme();
     const isDark = resolvedTheme === 'dark';
-    const brandGreen = "text-primary dark:text-[#39FF14]";
-    const brandGreenBg = "bg-primary dark:bg-[#39FF14]";
+    const brandGreen = "text-primary dark:text-[var(--primary)]";
+    const brandGreenBg = "bg-primary dark:bg-[var(--primary)]";
 
     return (
       <div className={cn("w-full max-w-md mx-auto space-y-8 pt-10 border-t border-border/30", className)}>
@@ -242,7 +242,7 @@ export const CostSheetTelemetry: React.FC<{ telemetry: TelemetryItem[], classNam
                                             height: `${bar * 20 + 20}%`,
                                             opacity: active ? 1 : 0.3,
                                             boxShadow: active
-                                                ? (isDark ? '0 0 8px rgba(57, 255, 20, 0.4)' : '0 0 8px rgba(22, 163, 74, 0.2)')
+                                                ? (isDark ? '0 0 8px rgba(var(--primary-rgb), 0.4)' : '0 0 8px rgba(22, 163, 74, 0.2)')
                                                 : 'none'
                                         }}
                                     />

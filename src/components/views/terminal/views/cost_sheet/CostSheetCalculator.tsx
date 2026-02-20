@@ -77,45 +77,40 @@ export const CostSheetCalculator: React.FC = () => {
 
   return (
     <div className={cn(
-        "flex flex-col h-full overflow-hidden transition-colors duration-500",
-        isDark ? "bg-[#010203]" : "bg-transparent"
+        "flex flex-col h-full overflow-hidden transition-colors duration-300",
+        isDark ? "bg-background" : "bg-transparent"
     )}>
       {/* Display */}
       <div className={cn(
         "px-8 py-8 flex flex-col items-end justify-center gap-1 min-h-[120px] shrink-0 relative overflow-hidden",
-        isDark ? "bg-black/60" : "bg-slate-50/50"
+        isDark ? "bg-black/20" : "bg-slate-50/50"
       )}>
-        {/* Neon Grid Effect */}
+        {/* Subtle Grid Effect */}
         <div className={cn(
-            "absolute inset-0 opacity-[0.05] pointer-events-none",
-            isDark ? "bg-[radial-gradient(#39FF14_1px,transparent_1px)] bg-[size:20px_20px]" : "bg-[radial-gradient(#000_1px,transparent_1px)] bg-[size:20px_20px]"
+            "absolute inset-0 opacity-[0.03] pointer-events-none",
+            "bg-[radial-gradient(var(--primary)_1px,transparent_1px)] bg-[size:20px_20px]"
         )} />
 
-        <motion.div className={cn(
+        <div className={cn(
             "text-[10px] font-mono h-4 uppercase tracking-[0.2em] font-black",
-            isDark ? "text-[#39FF14]/40" : "text-muted-foreground/40"
+            "text-primary/40"
         )}>
           {equation || '\u00A0'}
-        </motion.div>
-        <motion.div
-          key={display}
-          initial={{ y: 5, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
+        </div>
+        <div
           className={cn(
             "text-5xl font-mono tracking-tighter w-full text-right font-black",
-            isDark
-              ? "text-[#39FF14] drop-shadow-[0_0_15px_rgba(57,255,20,0.5)]"
-              : "text-primary"
+            "text-primary"
           )}
         >
           {display}
-        </motion.div>
+        </div>
       </div>
 
       {/* Keypad */}
       <div className={cn(
           "flex-1 p-6 grid grid-cols-4 gap-3 overflow-hidden",
-          isDark ? "bg-gradient-to-b from-black/0 to-[#39FF14]/5" : "bg-gradient-to-b from-transparent to-black/5"
+          "bg-gradient-to-b from-transparent to-primary/5"
       )}>
         <CalcButton label="C" onClick={handleClear} variant="danger" />
         <CalcButton icon={<Delete className="w-5 h-5" />} onClick={handleBackspace} variant="secondary" />
@@ -139,7 +134,7 @@ export const CostSheetCalculator: React.FC = () => {
           icon={<Equal className="w-6 h-6" />}
           onClick={handleCalculate}
           variant="primary"
-          className="row-span-2 h-full shadow-2xl shadow-primary/40"
+          className="row-span-2 h-full shadow-lg shadow-primary/20"
         />
 
         <CalcButton label="0" onClick={() => handleNumber('0')} className="col-span-2" />
@@ -165,32 +160,24 @@ const CalcButton: React.FC<CalcButtonProps> = ({ label, icon, onClick, variant =
     number: isDark
       ? "bg-white/5 hover:bg-white/10 text-white border-white/5 shadow-inner"
       : "bg-muted/30 hover:bg-muted/60 text-foreground border-border/40 shadow-sm",
-    operator: isDark
-      ? "bg-[#39FF14]/5 hover:bg-[#39FF14]/20 text-[#39FF14] border-[#39FF14]/20"
-      : "bg-primary/5 hover:bg-primary/20 text-primary border-primary/10",
-    primary: isDark
-      ? "bg-[#39FF14] hover:bg-[#39FF14]/90 text-black border-[#39FF14] shadow-lg shadow-[#39FF14]/30"
-      : "bg-primary hover:bg-primary/90 text-white border-primary shadow-lg shadow-primary/20",
-    danger: isDark
-      ? "bg-red-500/10 hover:bg-red-500/20 text-red-500 border-red-500/20"
-      : "bg-red-500/10 hover:bg-red-500/20 text-red-500 border-red-500/20",
+    operator: "bg-primary/5 hover:bg-primary/20 text-primary border-primary/10",
+    primary: "bg-primary hover:bg-primary/90 text-primary-foreground border-primary shadow-lg shadow-primary/20",
+    danger: "bg-red-500/10 hover:bg-red-500/20 text-red-500 border-red-500/20",
     secondary: isDark
       ? "bg-white/10 hover:bg-white/20 text-white/70 border-white/10"
       : "bg-muted hover:bg-muted/80 text-muted-foreground border-border",
   };
 
   return (
-    <motion.button
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.95, transition: { type: "spring", stiffness: 400, damping: 10 } }}
+    <button
       onClick={onClick}
       className={cn(
-        "h-14 rounded-2xl flex items-center justify-center text-lg font-black border transition-all duration-200",
+        "h-14 rounded-2xl flex items-center justify-center text-lg font-black border transition-all duration-150 active:scale-95",
         variantStyles[variant],
         className
       )}
     >
       {label || icon}
-    </motion.button>
+    </button>
   );
 };
