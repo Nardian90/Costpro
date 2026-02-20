@@ -110,7 +110,7 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({
                       item.readonly
                           ? "bg-slate-200 dark:bg-slate-900/80 text-slate-500 border-slate-300 dark:border-slate-800 cursor-not-allowed"
                           : "text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-primary/10 hover:border-primary/30",
-                      isFormula && !isEditing && "text-primary dark:text-[#39FF14] drop-shadow-[0_0_8px_rgba(57,255,20,0.2)]"
+                      isFormula && !isEditing && "text-primary dark:text-[currentColor] drop-shadow-[0_0_8px_hsl(var(--primary)/0.2)]"
                     )}
                   />
                 )}

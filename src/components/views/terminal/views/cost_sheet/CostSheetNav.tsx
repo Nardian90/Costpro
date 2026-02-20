@@ -107,7 +107,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
             icon: DatabaseZap,
             onClick: () => setActiveSection(massiveGenItem.id),
             active: activeSection === massiveGenItem.id,
-            className: 'bg-primary/20 border-primary/40 text-primary font-black shadow-[0_0_15px_rgba(57,255,20,0.3)] hover:bg-primary/30 transition-all text-xs uppercase tracking-wider'
+            className: 'bg-primary/20 border-primary/40 text-primary font-black shadow-[0_0_15px_rgba(22,163,74,0.3)] hover:bg-primary/30 transition-all text-xs uppercase tracking-wider'
         });
     }
 

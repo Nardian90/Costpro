@@ -47,10 +47,10 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
   const circumference = 2 * Math.PI * radius;
 
   // Colors based on theme
-  const brandGreen = "text-primary dark:text-[#39FF14]";
-  const brandGreenBg = "bg-primary dark:bg-[#39FF14]";
-  const brandGreenBorder = "border-primary/20 dark:border-[#39FF14]/20";
-  const brandGreenAlpha = "bg-primary/10 dark:bg-[#39FF14]/10";
+  const brandGreen = "text-primary dark:text-[currentColor]";
+  const brandGreenBg = "bg-primary dark:bg-[currentColor]";
+  const brandGreenBorder = "border-primary/20 dark:border-[currentColor]/20";
+  const brandGreenAlpha = "bg-primary/10 dark:bg-[currentColor]/10";
 
   return (
     <div className={cn("flex flex-col items-center gap-10 w-full max-w-md mx-auto", className)}>
@@ -65,7 +65,7 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
             height={size}
             className={cn(
                 "-rotate-90 transition-all duration-500",
-                isDark ? "drop-shadow-[0_0_15px_rgba(57,255,20,0.2)]" : "drop-shadow-[0_0_15px_rgba(22,163,74,0.1)]"
+                isDark ? "drop-shadow-[0_0_15px_hsl(var(--primary)/0.2)]" : "drop-shadow-[0_0_15px_rgba(22,163,74,0.1)]"
             )}
         >
           {/* Base Track */}
@@ -92,7 +92,7 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
             animate={{ strokeDashoffset: circumference - (Math.min(costPercent, 100) / 100) * circumference }}
             transition={{ duration: 1.5, ease: "circOut" }}
             strokeLinecap="round"
-            className="text-primary/20 dark:text-[#39FF14]/20"
+            className="text-primary/20 dark:text-[currentColor]/20"
           />
 
           {/* Utility Ring (Main Neon/Primary) */}
@@ -111,7 +111,7 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
             strokeLinecap="round"
             style={{
                 filter: isDark
-                    ? 'drop-shadow(0 0 12px rgba(57, 255, 20, 0.6))'
+                    ? 'drop-shadow(0 0 12px rgba(22, 163, 74, 0.6))'
                     : 'drop-shadow(0 0 12px rgba(22, 163, 74, 0.3))',
             }}
           />
@@ -196,8 +196,8 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
 export const CostSheetTelemetry: React.FC<{ telemetry: TelemetryItem[], className?: string }> = ({ telemetry, className }) => {
     const { resolvedTheme } = useTheme();
     const isDark = resolvedTheme === 'dark';
-    const brandGreen = "text-primary dark:text-[#39FF14]";
-    const brandGreenBg = "bg-primary dark:bg-[#39FF14]";
+    const brandGreen = "text-primary dark:text-[currentColor]";
+    const brandGreenBg = "bg-primary dark:bg-[currentColor]";
 
     return (
       <div className={cn("w-full max-w-md mx-auto space-y-8 pt-10 border-t border-border/30", className)}>
@@ -242,7 +242,7 @@ export const CostSheetTelemetry: React.FC<{ telemetry: TelemetryItem[], classNam
                                             height: `${bar * 20 + 20}%`,
                                             opacity: active ? 1 : 0.3,
                                             boxShadow: active
-                                                ? (isDark ? '0 0 8px rgba(57, 255, 20, 0.4)' : '0 0 8px rgba(22, 163, 74, 0.2)')
+                                                ? (isDark ? '0 0 8px hsl(var(--primary)/0.4)' : '0 0 8px rgba(22, 163, 74, 0.2)')
                                                 : 'none'
                                         }}
                                     />
