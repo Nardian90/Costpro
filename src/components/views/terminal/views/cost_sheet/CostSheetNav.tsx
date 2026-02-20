@@ -2,8 +2,7 @@
 
 import React from 'react';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
-import { Layout, FileSpreadsheet, PenTool, ClipboardList, Menu, ListFilter, Sparkles, Eye, Edit, Zap, Calculator, HelpCircle } from 'lucide-react';
-import { useUIStore } from '@/store';
+import { Layout, FileSpreadsheet, PenTool, ClipboardList, Menu, ListFilter, Sparkles, Eye, Edit, Zap, HelpCircle, DatabaseZap } from 'lucide-react';
 
 interface CostSheetNavProps {
   navItems: any[];
@@ -30,8 +29,6 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
   isEditing,
   onToggleEditing,
 }) => {
-  const setIsCalculatorOpen = useUIStore(state => state.setIsCalculatorOpen);
-
   // Create a combined list of all navigable sections mapped to ActionMenu format
   const navActions: Action[] = React.useMemo(() => {
     // Separate massive-gen to put it at the end
@@ -39,7 +36,6 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
     const massiveGenItem = navItems.find(s => s.id === 'massive-gen');
 
     const actions: Action[] = [
-
         ...(onOpenActions ? [{
             id: 'actions-menu',
             label: 'Menú',
@@ -94,13 +90,6 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
             active: activeSection === 'all-content',
             className: "text-xs uppercase tracking-wider bg-primary/20 text-primary border-primary/30"
         },
-        {
-            id: 'calculator-shortcut',
-            label: 'Calculadora',
-            icon: Calculator,
-            onClick: () => setIsCalculatorOpen(true),
-            className: "text-xs uppercase tracking-wider bg-blue-500/10 text-blue-500 border-blue-500/20"
-        },
         ...(onOpenHelp ? [{
             id: 'help-panel',
             label: 'Ayuda',
@@ -115,7 +104,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
         actions.push({
             id: massiveGenItem.id,
             label: massiveGenItem.label,
-            icon: Sparkles,
+            icon: DatabaseZap,
             onClick: () => setActiveSection(massiveGenItem.id),
             active: activeSection === massiveGenItem.id,
             className: 'bg-primary/20 border-primary/40 text-primary font-black shadow-[0_0_15px_rgba(57,255,20,0.3)] hover:bg-primary/30 transition-all text-xs uppercase tracking-wider'
@@ -123,7 +112,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
     }
 
     return actions;
-  }, [navItems, activeSection, setActiveSection, annexes, onOpenActions, onOpenAnnexes, onOpenSections, onOpenHelp, setIsCalculatorOpen]);
+  }, [navItems, activeSection, setActiveSection, annexes, onOpenActions, onOpenAnnexes, onOpenSections, onOpenHelp]);
 
   return (
     <div className="mb-0">
