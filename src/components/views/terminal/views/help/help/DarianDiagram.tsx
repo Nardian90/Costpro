@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 
-export default function EliDiagram() {
+export default function DarianDiagram() {
   const container = {
     hidden: { opacity: 0 },
     show: {

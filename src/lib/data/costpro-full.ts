@@ -1031,7 +1031,7 @@ const template: CostSheetDataContract = {
   "name": "Producción de Pan de Corteza Dura (Lote Especial)",
   "version": "5.7.25",
   "metadata": {
-    "author": "Eli - Senior Specialist",
+    "author": "Darian - Senior Specialist",
     "description": "Ficha de referencia para estudio de costos industriales complejos con integración de anexos y fórmulas dinámicas."
   },
   "footer": "FIN DEL DOCUMENTO • GENERADO AUTOMÁTICAMENTE POR COSTPRO "
