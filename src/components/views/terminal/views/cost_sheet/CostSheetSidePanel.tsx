@@ -131,7 +131,7 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
                 "fixed left-0 z-[45] flex flex-col items-stretch overflow-hidden rounded-r-[1.5rem] border-y border-r transition-all duration-500 shadow-2xl",
                 isMobile ? "top-[70%] -translate-y-1/2" : "top-1/2 -translate-y-1/2",
                 isDark
-                    ? "bg-[#010203] border-[#39FF14]/30 shadow-[#39FF14]/10"
+                    ? "bg-[var(--background)] border-[hsl(var(--primary))]/30 shadow-[hsl(var(--primary))]/10"
                     : "bg-white border-primary/20 backdrop-blur-xl shadow-primary/5"
             )}
           >
@@ -146,7 +146,7 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
                     <div className={cn(
                         "rounded-xl flex items-center justify-center transition-all",
                         isMobile ? "w-7 h-7" : "w-8 h-8",
-                        isDark ? "bg-[#39FF14]/10 text-[#39FF14]" : "bg-primary/10 text-primary",
+                        isDark ? "bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))]" : "bg-primary/10 text-primary",
                         "hover:scale-110 active:scale-95"
                     )}>
                         <Calculator className={isMobile ? "w-3.5 h-3.5" : "w-4 h-4"} />
@@ -166,7 +166,7 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
                     <div className={cn(
                         "rounded-xl flex items-center justify-center transition-all",
                         isMobile ? "w-7 h-7" : "w-8 h-8",
-                        isDark ? "bg-[#39FF14]/10 text-[#39FF14]" : "bg-primary/10 text-primary",
+                        isDark ? "bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))]" : "bg-primary/10 text-primary",
                         "hover:scale-110 active:scale-95"
                     )}>
                         <Bot className={isMobile ? "w-3.5 h-3.5" : "w-4 h-4"} />
@@ -186,7 +186,7 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
                     >
                         <div className={cn(
                             "w-8 h-8 rounded-xl flex items-center justify-center transition-all",
-                            isDark ? "bg-[#39FF14]/10 text-[#39FF14]" : "bg-primary/10 text-primary",
+                            isDark ? "bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))]" : "bg-primary/10 text-primary",
                             "hover:scale-110 active:scale-95"
                         )}>
                             <LayoutGrid className="w-4 h-4" />
@@ -200,9 +200,9 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
 
             <div className={cn(
                 "h-8 flex items-center justify-center border-t",
-                isDark ? "border-[#39FF14]/10" : "border-primary/10"
+                isDark ? "border-[hsl(var(--primary))]/10" : "border-primary/10"
             )}>
-                 <ChevronRight className={cn("w-3 h-3 animate-pulse opacity-40", isDark ? "text-[#39FF14]" : "text-primary")} />
+                 <ChevronRight className={cn("w-3 h-3 animate-pulse opacity-40", isDark ? "text-[hsl(var(--primary))]" : "text-primary")} />
             </div>
           </motion.div>
         )}
@@ -228,7 +228,7 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
               exit="closed"
               className={cn(
                 "fixed z-[100] flex flex-col overflow-hidden transition-all duration-500 rounded-[2.5rem] border shadow-2xl",
-                isDark ? "bg-[#010203] border-[#39FF14]/30 shadow-[#39FF14]/10" : "bg-white border-primary/20",
+                isDark ? "bg-[var(--background)] border-[hsl(var(--primary))]/30 shadow-[hsl(var(--primary))]/10" : "bg-white border-primary/20",
                 isMobile
                     ? "inset-x-4 bottom-4 h-[85vh] rounded-t-[3rem] rounded-b-[2rem]"
                     : (mode === 'both' ? "w-[850px] max-w-[95vw] left-4 top-1/2" : (isFullView ? "w-[85vw] h-[85vh] left-[7.5vw] top-[7.5vh]" : "w-[400px] left-4 top-1/2")),
@@ -243,7 +243,7 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
                 <div className="flex items-center gap-3">
                   <div className={cn(
                     "p-2.5 rounded-2xl",
-                    isDark ? "bg-white/5 text-[#39FF14]" : "bg-primary/5 text-primary"
+                    isDark ? "bg-white/5 text-[hsl(var(--primary))]" : "bg-primary/5 text-primary"
                   )}>
                     {mode === 'calculator' && <Calculator className="w-5 h-5" />}
                     {mode === 'ai' && <Bot className="w-5 h-5" />}
@@ -265,7 +265,7 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
                             onClick={() => setIsFullView(!isFullView)}
                             className={cn(
                                 "p-2.5 rounded-2xl transition-all active:scale-90",
-                                isDark ? "hover:bg-white/10 text-[#39FF14]/50" : "hover:bg-primary/10 text-primary/50"
+                                isDark ? "hover:bg-white/10 text-[hsl(var(--primary))]/50" : "hover:bg-primary/10 text-primary/50"
                             )}
                         >
                             {isFullView ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}

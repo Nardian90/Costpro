@@ -299,7 +299,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
       <div className="flex flex-col lg:flex-row gap-12 items-center lg:items-start">
         <div className="flex-1 w-full space-y-8">
           <div className="flex items-center justify-between mb-4">
-            <div className="px-6 py-2 rounded-full bg-primary/10 border border-primary/20 shadow-[0_0_20px_rgba(57,255,20,0.1)]">
+            <div className="px-6 py-2 rounded-full bg-primary/10 border border-primary/20 shadow-[0_0_20px_rgba(22,163,74,0.1)]">
               <span className="text-xs font-black uppercase tracking-[0.3em] text-primary animate-pulse">Margen Activo</span>
             </div>
           </div>
