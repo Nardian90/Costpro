@@ -1,22 +1,30 @@
+
 import { CostSheetDataContract } from '@/contracts/cost-sheet';
 
 const template: CostSheetDataContract = {
+  "id": "costpro-full-v5",
+  "name": "Producción de Pan de Corteza Dura (Lote Especial)",
+  "version": "5.7.25",
+  "metadata": {
+    "author": "Darian - Senior Specialist",
+    "description": "Ficha de referencia para estudio de costos industriales complejos con integración de anexos y fórmulas dinámicas."
+  },
   "header": {
     "code": "=GET_ANEXO_FILA_DATO(\"I\", 1, \"code\")",
     "name": "=GET_ANEXO_FILA_DATO(\"I\", 1, \"description\")",
     "date": new Date().toISOString().split('T')[0],
+    "unit": "=GET_ANEXO_FILA_DATO(\"I\", 1, \"um\")",
     "quantity": "=GET_ANEXO_FILA_DATO(\"I\", 1, \"consumption_norm\")",
     "currency": "CUP",
     "category": "",
     "type": "EMPRESA",
-    "unit": "=GET_ANEXO_FILA_DATO(\"I\", 1, \"um\")",
     "product_code": "=GET_ANEXO_FILA_DATO(\"I\", 1, \"code\")",
-    "company": "",
-    "organism": "",
-    "union": "",
-    "destination": "",
-    "production_level": "562",
-    "capacity_utilization": "100.00%",
+    "company": "PANIFICADORA NACIONAL S.A.",
+    "organism": "MINAL",
+    "union": "UNION MOLINERA",
+    "destination": "Consumo Social",
+    "production_level": 1200,
+    "capacity_utilization": 83.33,
     "sale_price": "=GET_FILA_DATO(\"16\", \"total\")",
     "client": ""
   },
@@ -31,23 +39,26 @@ const template: CostSheetDataContract = {
           "valorHistorico": 0,
           "value": 0,
           "baseDeCalculoRef": "",
+          "baseRef": "",
           "calculationMethod": "FORMULA",
           "totalFormula": "=SUMA(hijos)",
           "formula": "=SUMA(hijos)",
+          "isPercent": false,
+          "helpText": "",
           "children": [
             {
               "id": "1.1",
               "label": "De ello: - Insumos (MP)",
-              "valorHistorico": 0,
+              "valorHistorico": 365464.56,
               "value": 0,
               "baseDeCalculoRef": "I",
+              "baseRef": "I",
               "calculationMethod": "FORMULA",
               "totalFormula": "AnexoI",
               "formula": "AnexoI",
-              "children": [],
-              "baseRef": "I",
               "isPercent": false,
               "helpText": "",
+              "children": [],
               "vhFormula": ""
             },
             {
@@ -56,13 +67,13 @@ const template: CostSheetDataContract = {
               "valorHistorico": 0,
               "value": 0,
               "baseDeCalculoRef": "I",
+              "baseRef": "I",
               "calculationMethod": "FORMULA",
               "totalFormula": "AnexoI",
               "formula": "AnexoI",
-              "children": [],
-              "baseRef": "I",
               "isPercent": false,
-              "helpText": ""
+              "helpText": "",
+              "children": []
             },
             {
               "id": "1.3",
@@ -70,13 +81,13 @@ const template: CostSheetDataContract = {
               "valorHistorico": 0,
               "value": 0,
               "baseDeCalculoRef": "I",
+              "baseRef": "I",
               "calculationMethod": "FORMULA",
               "totalFormula": "AnexoI",
               "formula": "AnexoI",
-              "children": [],
-              "baseRef": "I",
               "isPercent": false,
-              "helpText": ""
+              "helpText": "",
+              "children": []
             },
             {
               "id": "1.4",
@@ -84,19 +95,15 @@ const template: CostSheetDataContract = {
               "valorHistorico": 0,
               "value": 0,
               "baseDeCalculoRef": "I",
+              "baseRef": "I",
               "calculationMethod": "FORMULA",
               "totalFormula": "AnexoI",
               "formula": "AnexoI",
-              "children": [],
-              "baseRef": "I",
               "isPercent": false,
-              "helpText": ""
+              "helpText": "",
+              "children": []
             }
-          ],
-          "baseRef": "",
-          "isPercent": false,
-          "helpText": "",
-          "vhFormula": ""
+          ]
         }
       ]
     },
@@ -110,45 +117,44 @@ const template: CostSheetDataContract = {
           "valorHistorico": 0,
           "value": 0,
           "baseDeCalculoRef": "",
+          "baseRef": "",
           "calculationMethod": "FORMULA",
           "totalFormula": "=SUMA(hijos)",
           "formula": "=SUMA(hijos)",
+          "isPercent": false,
+          "helpText": "",
           "children": [
             {
               "id": "2.1",
               "label": "De ello: Salarios",
-              "valorHistorico": 0,
+              "valorHistorico": 36000,
               "value": 0,
               "baseDeCalculoRef": "II",
+              "baseRef": "II",
               "calculationMethod": "FORMULA",
               "totalFormula": "AnexoII",
               "formula": "AnexoII",
-              "children": [],
-              "baseRef": "II",
               "isPercent": false,
               "helpText": "",
+              "children": [],
               "vhFormula": ""
             },
             {
               "id": "2.2",
               "label": "Vacaciones",
-              "valorHistorico": 0,
+              "valorHistorico": 3272.4,
               "value": 0,
               "baseDeCalculoRef": "2.1",
-              "calculationMethod": "FORMULA",
-              "totalFormula": "=PCT(ref('2.1'), 9.09)",
-              "formula": "=PCT(ref('2.1'), 9.09)",
-              "children": [],
               "baseRef": "2.1",
+              "calculationMethod": "FORMULA",
+              "totalFormula": "=PCT(2.1, 9.09)",
+              "formula": "=PCT(2.1, 9.09)",
               "isPercent": true,
               "helpText": "",
-              "vhFormula": "=PCT(vh('2.1.1'), 9.09)"
+              "children": [],
+              "vhFormula": "=PCT(vh(2.1.1), 9.09)"
             }
-          ],
-          "baseRef": "",
-          "isPercent": false,
-          "helpText": "",
-          "vhFormula": ""
+          ]
         }
       ]
     },
@@ -162,9 +168,12 @@ const template: CostSheetDataContract = {
           "valorHistorico": 0,
           "value": 0,
           "baseDeCalculoRef": "",
+          "baseRef": "",
           "calculationMethod": "FORMULA",
           "totalFormula": "=SUMA(hijos)",
           "formula": "=SUMA(hijos)",
+          "isPercent": false,
+          "helpText": "",
           "children": [
             {
               "id": "3.1",
@@ -172,9 +181,12 @@ const template: CostSheetDataContract = {
               "valorHistorico": 0,
               "value": 0,
               "baseDeCalculoRef": "",
+              "baseRef": "",
               "calculationMethod": "FORMULA",
               "totalFormula": "=SUMA(hijos)",
               "formula": "=SUMA(hijos)",
+              "isPercent": false,
+              "helpText": "",
               "children": [
                 {
                   "id": "3.1.1",
@@ -182,13 +194,13 @@ const template: CostSheetDataContract = {
                   "valorHistorico": 0,
                   "value": 0,
                   "baseDeCalculoRef": "III",
+                  "baseRef": "III",
                   "calculationMethod": "FORMULA",
                   "totalFormula": "AnexoIII",
                   "formula": "AnexoIII",
-                  "children": [],
-                  "baseRef": "III",
                   "isPercent": false,
-                  "helpText": ""
+                  "helpText": "",
+                  "children": []
                 },
                 {
                   "id": "3.1.2",
@@ -196,13 +208,13 @@ const template: CostSheetDataContract = {
                   "valorHistorico": 0,
                   "value": 0,
                   "baseDeCalculoRef": "III",
+                  "baseRef": "III",
                   "calculationMethod": "FORMULA",
                   "totalFormula": "AnexoIII",
                   "formula": "AnexoIII",
-                  "children": [],
-                  "baseRef": "III",
                   "isPercent": false,
-                  "helpText": ""
+                  "helpText": "",
+                  "children": []
                 },
                 {
                   "id": "3.1.3",
@@ -210,13 +222,13 @@ const template: CostSheetDataContract = {
                   "valorHistorico": 0,
                   "value": 0,
                   "baseDeCalculoRef": "III",
+                  "baseRef": "III",
                   "calculationMethod": "FORMULA",
                   "totalFormula": "AnexoIII",
                   "formula": "AnexoIII",
-                  "children": [],
-                  "baseRef": "III",
                   "isPercent": false,
-                  "helpText": ""
+                  "helpText": "",
+                  "children": []
                 },
                 {
                   "id": "3.1.4",
@@ -224,13 +236,13 @@ const template: CostSheetDataContract = {
                   "valorHistorico": 0,
                   "value": 0,
                   "baseDeCalculoRef": "III",
+                  "baseRef": "III",
                   "calculationMethod": "FORMULA",
                   "totalFormula": "AnexoIII",
                   "formula": "AnexoIII",
-                  "children": [],
-                  "baseRef": "III",
                   "isPercent": false,
-                  "helpText": ""
+                  "helpText": "",
+                  "children": []
                 },
                 {
                   "id": "3.1.5",
@@ -238,19 +250,15 @@ const template: CostSheetDataContract = {
                   "valorHistorico": 0,
                   "value": 0,
                   "baseDeCalculoRef": "III",
+                  "baseRef": "III",
                   "calculationMethod": "FORMULA",
                   "totalFormula": "AnexoIII",
                   "formula": "AnexoIII",
-                  "children": [],
-                  "baseRef": "III",
                   "isPercent": false,
-                  "helpText": ""
+                  "helpText": "",
+                  "children": []
                 }
-              ],
-              "baseRef": "",
-              "isPercent": false,
-              "helpText": "",
-              "vhFormula": ""
+              ]
             },
             {
               "id": "3.2",
@@ -258,13 +266,13 @@ const template: CostSheetDataContract = {
               "valorHistorico": 0,
               "value": 0,
               "baseDeCalculoRef": "IV",
+              "baseRef": "IV",
               "calculationMethod": "FORMULA",
               "totalFormula": "AnexoIV",
               "formula": "AnexoIV",
-              "children": [],
-              "baseRef": "IV",
               "isPercent": false,
-              "helpText": ""
+              "helpText": "",
+              "children": []
             },
             {
               "id": "3.3",
@@ -272,13 +280,13 @@ const template: CostSheetDataContract = {
               "valorHistorico": 0,
               "value": 0,
               "baseDeCalculoRef": "IV",
+              "baseRef": "IV",
               "calculationMethod": "FORMULA",
               "totalFormula": "AnexoIV",
               "formula": "AnexoIV",
-              "children": [],
-              "baseRef": "IV",
               "isPercent": false,
-              "helpText": ""
+              "helpText": "",
+              "children": []
             },
             {
               "id": "3.4",
@@ -286,13 +294,13 @@ const template: CostSheetDataContract = {
               "valorHistorico": 0,
               "value": 0,
               "baseDeCalculoRef": "IV",
+              "baseRef": "IV",
               "calculationMethod": "FORMULA",
               "totalFormula": "AnexoIV",
               "formula": "AnexoIV",
-              "children": [],
-              "baseRef": "IV",
               "isPercent": false,
-              "helpText": ""
+              "helpText": "",
+              "children": []
             },
             {
               "id": "3.5",
@@ -300,13 +308,13 @@ const template: CostSheetDataContract = {
               "valorHistorico": 0,
               "value": 0,
               "baseDeCalculoRef": "IV",
+              "baseRef": "IV",
               "calculationMethod": "FORMULA",
               "totalFormula": "AnexoIV",
               "formula": "AnexoIV",
-              "children": [],
-              "baseRef": "IV",
               "isPercent": false,
-              "helpText": ""
+              "helpText": "",
+              "children": []
             },
             {
               "id": "3.6",
@@ -314,13 +322,13 @@ const template: CostSheetDataContract = {
               "valorHistorico": 0,
               "value": 0,
               "baseDeCalculoRef": "IV",
+              "baseRef": "IV",
               "calculationMethod": "FORMULA",
               "totalFormula": "AnexoIV",
               "formula": "AnexoIV",
-              "children": [],
-              "baseRef": "IV",
               "isPercent": false,
-              "helpText": ""
+              "helpText": "",
+              "children": []
             },
             {
               "id": "3.7",
@@ -328,19 +336,15 @@ const template: CostSheetDataContract = {
               "valorHistorico": 0,
               "value": 0,
               "baseDeCalculoRef": "V",
+              "baseRef": "V",
               "calculationMethod": "FORMULA",
               "totalFormula": "AnexoV",
               "formula": "AnexoV",
-              "children": [],
-              "baseRef": "V",
               "isPercent": false,
-              "helpText": ""
+              "helpText": "",
+              "children": []
             }
-          ],
-          "baseRef": "",
-          "isPercent": false,
-          "helpText": "",
-          "vhFormula": ""
+          ]
         }
       ]
     },
@@ -354,9 +358,12 @@ const template: CostSheetDataContract = {
           "valorHistorico": 0,
           "value": 0,
           "baseDeCalculoRef": "",
+          "baseRef": "",
           "calculationMethod": "FORMULA",
           "totalFormula": "=SUMA(hijos)",
           "formula": "=SUMA(hijos)",
+          "isPercent": false,
+          "helpText": "",
           "children": [
             {
               "id": "4.1",
@@ -364,13 +371,13 @@ const template: CostSheetDataContract = {
               "valorHistorico": 0,
               "value": 0,
               "baseDeCalculoRef": "",
+              "baseRef": "",
               "calculationMethod": "FORMULA",
               "totalFormula": "",
-              "formula": "vh('4.1.1')/vh('1.1.1')*ref('1.1.1')",
-              "children": [],
-              "baseRef": "",
+              "formula": "vh(4.1.1)/vh(1.1.1)*1.1.1",
               "isPercent": false,
-              "helpText": ""
+              "helpText": "",
+              "children": []
             },
             {
               "id": "4.2",
@@ -378,18 +385,15 @@ const template: CostSheetDataContract = {
               "valorHistorico": 0,
               "value": 0,
               "baseDeCalculoRef": "",
+              "baseRef": "",
               "calculationMethod": "FORMULA",
               "totalFormula": "",
-              "formula": "vh('4.1.1')/vh('1.1.1')*ref('1.1.1')",
-              "children": [],
-              "baseRef": "",
+              "formula": "vh(4.1.1)/vh(1.1.1)*1.1.1",
               "isPercent": false,
-              "helpText": ""
+              "helpText": "",
+              "children": []
             }
-          ],
-          "baseRef": "",
-          "isPercent": false,
-          "helpText": ""
+          ]
         }
       ]
     },
@@ -403,13 +407,13 @@ const template: CostSheetDataContract = {
           "valorHistorico": 0,
           "value": 0,
           "baseDeCalculoRef": "",
+          "baseRef": "",
           "calculationMethod": "FORMULA",
           "totalFormula": "=SUMA ( ref('1') , ref('2') , ref('3') , ref('4') )",
           "formula": "=SUMA ( ref('1') , ref('2') , ref('3') , ref('4') )",
-          "children": [],
-          "baseRef": "",
           "isPercent": false,
           "helpText": "",
+          "children": [],
           "vhFormula": "=SUMA ( vh('1') , vh('2') , vh('3') , vh('4') )"
         }
       ]
@@ -424,23 +428,26 @@ const template: CostSheetDataContract = {
           "valorHistorico": 0,
           "value": 0,
           "baseDeCalculoRef": "",
+          "baseRef": "",
           "calculationMethod": "FORMULA",
           "totalFormula": "=SUMA(hijos)",
           "formula": "=SUMA(hijos)",
+          "isPercent": false,
+          "helpText": "",
           "children": [
             {
               "id": "6.1",
               "label": "- Salarios",
-              "valorHistorico": 0,
+              "valorHistorico": 37931.5,
               "value": 0,
               "baseDeCalculoRef": "",
+              "baseRef": "",
               "calculationMethod": "FORMULA",
               "totalFormula": "",
-              "formula": "vh('6.1.1')/vh('1.1.1')*ref('1.1.1')",
-              "children": [],
-              "baseRef": "",
+              "formula": "vh(6.1.1)/vh(1.1.1)*1.1.1",
               "isPercent": false,
               "helpText": "",
+              "children": [],
               "vhFormula": ""
             },
             {
@@ -449,13 +456,13 @@ const template: CostSheetDataContract = {
               "valorHistorico": 0,
               "value": 0,
               "baseDeCalculoRef": "",
+              "baseRef": "",
               "calculationMethod": "FORMULA",
               "totalFormula": "",
-              "formula": "vh('6.1.2')/vh('1.1.1')*ref('1.1.1')",
-              "children": [],
-              "baseRef": "",
+              "formula": "vh(6.1.2)/vh(1.1.1)*1.1.1",
               "isPercent": false,
-              "helpText": ""
+              "helpText": "",
+              "children": []
             },
             {
               "id": "6.3",
@@ -463,13 +470,13 @@ const template: CostSheetDataContract = {
               "valorHistorico": 0,
               "value": 0,
               "baseDeCalculoRef": "",
+              "baseRef": "",
               "calculationMethod": "FORMULA",
               "totalFormula": "",
-              "formula": "vh('6.1.3')/vh('1.1.1')*ref('1.1.1')",
-              "children": [],
-              "baseRef": "",
+              "formula": "vh(6.1.3)/vh(1.1.1)*1.1.1",
               "isPercent": false,
-              "helpText": ""
+              "helpText": "",
+              "children": []
             },
             {
               "id": "6.4",
@@ -477,33 +484,30 @@ const template: CostSheetDataContract = {
               "valorHistorico": 0,
               "value": 0,
               "baseDeCalculoRef": "",
+              "baseRef": "",
               "calculationMethod": "FORMULA",
               "totalFormula": "",
-              "formula": "vh('6.1.4')/vh('1.1.1')*ref('1.1.1')",
-              "children": [],
-              "baseRef": "",
+              "formula": "vh(6.1.4)/vh(1.1.1)*1.1.1",
               "isPercent": false,
-              "helpText": ""
+              "helpText": "",
+              "children": []
             },
             {
               "id": "6.5",
               "label": "- Otros Gastos Admin.",
-              "valorHistorico": 0,
+              "valorHistorico": 37205,
               "value": 0,
               "baseDeCalculoRef": "",
+              "baseRef": "",
               "calculationMethod": "FORMULA",
               "totalFormula": "",
-              "formula": "vh('6.1.5')/vh('1.1.1')*ref('1.1.1')",
-              "children": [],
-              "baseRef": "",
+              "formula": "vh(6.1.5)/vh(1.1.1)*1.1.1",
               "isPercent": false,
               "helpText": "",
+              "children": [],
               "vhFormula": ""
             }
-          ],
-          "baseRef": "",
-          "isPercent": false,
-          "helpText": ""
+          ]
         }
       ]
     },
@@ -517,9 +521,12 @@ const template: CostSheetDataContract = {
           "valorHistorico": 0,
           "value": 0,
           "baseDeCalculoRef": "",
+          "baseRef": "",
           "calculationMethod": "FORMULA",
           "totalFormula": "=SUMA(hijos)",
           "formula": "=SUMA(hijos)",
+          "isPercent": false,
+          "helpText": "",
           "children": [
             {
               "id": "7.1",
@@ -527,13 +534,13 @@ const template: CostSheetDataContract = {
               "valorHistorico": 0,
               "value": 0,
               "baseDeCalculoRef": "",
+              "baseRef": "",
               "calculationMethod": "FORMULA",
               "totalFormula": "",
-              "formula": "vh('7.1.1')/vh('1.1.1')*ref('1.1.1')",
-              "children": [],
-              "baseRef": "",
+              "formula": "vh(7.1.1)/vh(1.1.1)*1.1.1",
               "isPercent": false,
-              "helpText": ""
+              "helpText": "",
+              "children": []
             },
             {
               "id": "7.2",
@@ -541,18 +548,15 @@ const template: CostSheetDataContract = {
               "valorHistorico": 0,
               "value": 0,
               "baseDeCalculoRef": "",
+              "baseRef": "",
               "calculationMethod": "FORMULA",
               "totalFormula": "",
-              "formula": "vh('7.1.2')/vh('1.1.1')*ref('1.1.1')",
-              "children": [],
-              "baseRef": "",
+              "formula": "vh(7.1.2)/vh(1.1.1)*1.1.1",
               "isPercent": false,
-              "helpText": ""
+              "helpText": "",
+              "children": []
             }
-          ],
-          "baseRef": "",
-          "isPercent": false,
-          "helpText": ""
+          ]
         }
       ]
     },
@@ -566,44 +570,44 @@ const template: CostSheetDataContract = {
           "valorHistorico": 0,
           "value": 0,
           "baseDeCalculoRef": "",
+          "baseRef": "",
           "calculationMethod": "FORMULA",
           "totalFormula": "=SUMA(hijos)",
           "formula": "=SUMA(hijos)",
+          "isPercent": false,
+          "helpText": "",
           "children": [
             {
               "id": "8.1",
               "label": "- Intereses y comisiones",
-              "valorHistorico": 0,
+              "valorHistorico": 3911.31,
               "value": 0,
               "baseDeCalculoRef": "",
+              "baseRef": "",
               "calculationMethod": "FORMULA",
               "totalFormula": "",
-              "formula": "vh('8.1.1')/vh('1.1.1')*ref('1.1.1')",
-              "children": [],
-              "baseRef": "",
+              "formula": "vh(8.1.1)/vh(1.1.1)*1.1.1",
               "isPercent": false,
               "helpText": "",
+              "children": [],
               "vhFormula": ""
             },
             {
               "id": "8.2",
               "label": "- Otros Gastos Financ.",
-              "valorHistorico": 0,
+              "valorHistorico": 6652.22,
               "value": 0,
               "baseDeCalculoRef": "",
+              "baseRef": "",
               "calculationMethod": "FORMULA",
               "totalFormula": "",
               "formula": "=0",
-              "children": [],
-              "baseRef": "",
               "isPercent": false,
               "helpText": "",
+              "children": [],
               "vhFormula": ""
             }
-          ],
-          "baseRef": "",
-          "isPercent": false,
-          "helpText": ""
+          ]
         }
       ]
     },
@@ -617,13 +621,13 @@ const template: CostSheetDataContract = {
           "valorHistorico": 0,
           "value": 0,
           "baseDeCalculoRef": "",
+          "baseRef": "",
           "calculationMethod": "FORMULA",
           "totalFormula": "",
-          "formula": "vh('9.1')/vh('1.1.1')*ref('1.1.1')",
-          "children": [],
-          "baseRef": "",
+          "formula": "vh(9.1)/vh(1.1.1)*1.1.1",
           "isPercent": false,
-          "helpText": ""
+          "helpText": "",
+          "children": []
         }
       ]
     },
@@ -637,44 +641,44 @@ const template: CostSheetDataContract = {
           "valorHistorico": 0,
           "value": 0,
           "baseDeCalculoRef": "",
+          "baseRef": "",
           "calculationMethod": "FORMULA",
           "totalFormula": "=SUMA(hijos)",
           "formula": "=SUMA(hijos)",
+          "isPercent": false,
+          "helpText": "",
           "children": [
             {
               "id": "10.1",
               "label": "De ello: -Contrib. Seg. Social (14%)",
-              "valorHistorico": 0,
+              "valorHistorico": 10843.54,
               "value": 0,
               "baseDeCalculoRef": "2.1",
-              "calculationMethod": "FORMULA",
-              "totalFormula": "=ROUND2(PCT(ref('2.1') + ref('4.1') + ref('6.1') + ref('7.1'), 14))",
-              "formula": "=(ref('2.1') + ref('4.1.1') + ref('6.1.1') + ref('7.1.1'))*0.14",
-              "children": [],
               "baseRef": "2.1",
+              "calculationMethod": "FORMULA",
+              "totalFormula": "=ROUND2(PCT(2.1 + 4.1.1 + 6.1.1 + 7.1.1, 14))",
+              "formula": "=ROUND2(PCT(2.1 + 4.1.1 + 6.1.1 + 7.1.1, 14))",
               "isPercent": false,
               "helpText": "",
+              "children": [],
               "vhFormula": ""
             },
             {
               "id": "10.2",
               "label": "-Imp. Fuerza Trabajo (5%)",
-              "valorHistorico": 0,
+              "valorHistorico": 3872.7,
               "value": 0,
               "baseDeCalculoRef": "2.1",
-              "calculationMethod": "FORMULA",
-              "totalFormula": "=ROUND2(PCT(ref('2.1') + ref('4.1') + ref('6.1') + ref('7.1'), 5))",
-              "formula": "=( ref('2.1') + ref('4.1.1') + ref('5.1.1') + ref('6.1.1') + ref('7.1.1') ) * 0.05",
-              "children": [],
               "baseRef": "2.1",
+              "calculationMethod": "FORMULA",
+              "totalFormula": "=ROUND2(PCT(2.1 + 4.1.1 + 6.1.1 + 7.1.1, 5))",
+              "formula": "=ROUND2(PCT(2.1 + 4.1.1 + 6.1.1 + 7.1.1, 5))",
               "isPercent": false,
               "helpText": "",
+              "children": [],
               "vhFormula": ""
             }
-          ],
-          "baseRef": "",
-          "isPercent": false,
-          "helpText": ""
+          ]
         }
       ]
     },
@@ -688,13 +692,13 @@ const template: CostSheetDataContract = {
           "valorHistorico": 0,
           "value": 0,
           "baseDeCalculoRef": "",
+          "baseRef": "",
           "calculationMethod": "FORMULA",
           "totalFormula": "=SUMA(ref('6'), ref('7'), ref('8'), ref('9'), ref('10'))",
           "formula": "=SUMA(ref('6'), ref('7'), ref('8'), ref('9'), ref('10'))",
-          "children": [],
-          "baseRef": "",
           "isPercent": false,
           "helpText": "",
+          "children": [],
           "vhFormula": "=SUMA ( vh ( 6 ) , vh ( 7 ) , vh ( 8 ) , vh ( 9 ) , vh ( 10 ) )"
         }
       ]
@@ -709,13 +713,13 @@ const template: CostSheetDataContract = {
           "valorHistorico": 0,
           "value": 0,
           "baseDeCalculoRef": "",
+          "baseRef": "",
           "calculationMethod": "FORMULA",
           "totalFormula": "=SUMA ( ref('5') , ref('11') )",
           "formula": "=SUMA ( ref('5') , ref('11') )",
-          "children": [],
-          "baseRef": "",
           "isPercent": false,
           "helpText": "",
+          "children": [],
           "vhFormula": "=SUMA ( vh('5') , vh('11') )"
         }
       ]
@@ -727,16 +731,16 @@ const template: CostSheetDataContract = {
         {
           "id": "13",
           "label": "Utilidad",
-          "valorHistorico": 0,
+          "valorHistorico": 93547.55,
           "value": 0,
           "baseDeCalculoRef": "12",
+          "baseRef": "12",
           "calculationMethod": "FORMULA",
           "totalFormula": "ref('12') * 0.3",
           "formula": "ref('12') * 0.3",
-          "children": [],
-          "baseRef": "12",
           "isPercent": false,
           "helpText": "",
+          "children": [],
           "vhFormula": ""
         },
         {
@@ -745,28 +749,28 @@ const template: CostSheetDataContract = {
           "valorHistorico": 0,
           "value": 0,
           "baseDeCalculoRef": "",
+          "baseRef": "",
           "calculationMethod": "FORMULA",
           "totalFormula": "ref('12') + ref('13')",
           "formula": "ref('12') + ref('13')",
-          "children": [],
-          "baseRef": "",
           "isPercent": false,
           "helpText": "",
+          "children": [],
           "vhFormula": "vh('12') + vh('13')"
         },
         {
           "id": "13.2",
           "label": "Imp s/Ventas y Serv",
-          "valorHistorico": 0,
+          "valorHistorico": 66522.21,
           "value": 0,
           "baseDeCalculoRef": "",
-          "calculationMethod": "FORMULA",
-          "totalFormula": "ref('13.1')/0.9*0.1",
-          "formula": "ref('13.1')/0.9*0.1",
-          "children": [],
           "baseRef": "",
+          "calculationMethod": "FORMULA",
+          "totalFormula": "13.1/0.9*0.1",
+          "formula": "13.1/0.9*0.1",
           "isPercent": false,
           "helpText": "",
+          "children": [],
           "vhFormula": ""
         }
       ]
@@ -781,14 +785,14 @@ const template: CostSheetDataContract = {
           "valorHistorico": 0,
           "value": 0,
           "baseDeCalculoRef": "",
-          "calculationMethod": "FORMULA",
-          "totalFormula": "ref('13.1') + ref('13.2')",
-          "formula": "ref('13.2') + ref('13.3')",
-          "children": [],
           "baseRef": "",
+          "calculationMethod": "FORMULA",
+          "totalFormula": "ref('13.2'+ 13.3)",
+          "formula": "13.2+ 13.3",
           "isPercent": false,
           "helpText": "",
-          "vhFormula": "vh('13.2') +vh('13.3')"
+          "children": [],
+          "vhFormula": "vh(13.2) +vh(13.3)"
         }
       ]
     },
@@ -802,13 +806,13 @@ const template: CostSheetDataContract = {
           "valorHistorico": 0,
           "value": 0,
           "baseDeCalculoRef": "",
+          "baseRef": "",
           "calculationMethod": "FORMULA",
           "totalFormula": "=ref('12') / cantidad",
           "formula": "=ref('12') / cantidad",
-          "children": [],
-          "baseRef": "",
           "isPercent": false,
-          "helpText": ""
+          "helpText": "",
+          "children": []
         }
       ]
     },
@@ -822,13 +826,13 @@ const template: CostSheetDataContract = {
           "valorHistorico": 0,
           "value": 0,
           "baseDeCalculoRef": "",
+          "baseRef": "",
           "calculationMethod": "FORMULA",
           "totalFormula": "=ref('14') / cantidad",
           "formula": "=ref('14') / cantidad",
-          "children": [],
-          "baseRef": "",
           "isPercent": false,
-          "helpText": ""
+          "helpText": "",
+          "children": []
         }
       ]
     }
@@ -872,7 +876,18 @@ const template: CostSheetDataContract = {
           "formula": "consumption_norm * price"
         }
       ],
-      "data": []
+      "data": [
+        {
+          "no": 0,
+          "classification": "1.1.1 - De ello: - Insumos (MP)",
+          "code": "SKU001",
+          "description": "1 LITRO",
+          "um": "Unidades",
+          "consumption_norm": 1,
+          "price": 6360,
+          "total": 0
+        }
+      ]
     },
     {
       "id": "II",
@@ -908,7 +923,17 @@ const template: CostSheetDataContract = {
           "formula": "time_norm * hourly_rate * worker_count"
         }
       ],
-      "data": []
+      "data": [
+        {
+          "no": 0,
+          "classification": "2.1.1 - De ello: Salarios",
+          "description": "Dependiente",
+          "time_norm": 0.01,
+          "hourly_rate": 34.56,
+          "worker_count": 1,
+          "total": 0
+        }
+      ]
     },
     {
       "id": "III",
@@ -1006,14 +1031,7 @@ const template: CostSheetDataContract = {
     "prepared_by": "Elaborado por:",
     "approved_by": "Aprobado por:"
   },
-  "id": "costpro-full-v5",
-  "name": "Producción de Pan de Corteza Dura (Lote Especial)",
-  "version": "5.7.25",
-  "metadata": {
-    "author": "Eli - Senior Specialist",
-    "description": "Ficha de referencia para estudio de costos industriales complejos con integración de anexos y fórmulas dinámicas."
-  },
-  "footer": "FIN DEL DOCUMENTO • GENERADO AUTOMÁTICAMENTE POR COSTPRO "
+  "footer": "FIN DEL DOCUMENTO • GENERADO AUTOMÁTICAMENTE POR COSTPRO V1.0"
 };
 
 export default template;

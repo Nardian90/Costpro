@@ -25,7 +25,7 @@ export const CostSheetBanner = () => {
         </div>
         <div>
           <h1 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight leading-tight">
-            Ficha de Costo
+            Vista Costo
           </h1>
           <p className="text-xs font-black uppercase tracking-[0.2em] text-primary/60">
             Sistema de Gestión COSTPRO

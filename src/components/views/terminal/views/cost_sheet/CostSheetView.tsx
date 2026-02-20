@@ -1,5 +1,5 @@
 'use client';
-import { CospiChat } from './CospiChat';
+import { DarianEditor } from './DarianEditor';
 import { LazyRender } from '@/components/ui/LazyRender';
 
 import React, { useState, useRef } from 'react';
@@ -420,7 +420,7 @@ const CostSheetView = () => {
   const navItems = React.useMemo(() => [
     { id: "kpis", label: "Tablero", icon: BarChart3 },
     { id: "templates", label: "Plantillas", icon: FolderOpen },
-    { id: "ai-chat", label: "Cospi IA", icon: Sparkles },
+    { id: "ai-chat", label: "Darian", icon: Sparkles },
 
     { id: "header", label: "Encabezado", icon: Layout },
     { id: "massive-gen", label: "Gen. Masiva", icon: FileText }
@@ -490,7 +490,14 @@ const CostSheetView = () => {
 
   return (
     <div className="w-full max-w-none px-0 pb-32 pt-0">
-      <CostSheetSidePanel isOpen={isSidePanelOpen} onOpen={(mode) => { setSidePanelMode(mode); setIsSidePanelOpen(true); }} onClose={() => setIsSidePanelOpen(false)} mode={sidePanelMode} sheetData={data} />
+      <CostSheetSidePanel
+        isOpen={isSidePanelOpen}
+        onOpen={(mode) => { setSidePanelMode(mode); setIsSidePanelOpen(true); }}
+        onClose={() => setIsSidePanelOpen(false)}
+        onExpand={() => { setActiveSection('ai-chat'); setIsSidePanelOpen(false); }}
+        mode={sidePanelMode}
+        sheetData={data}
+      />
       <CostSheetHelpPanel isOpen={isHelpPanelOpen} onClose={() => setIsHelpPanelOpen(false)} />
       <CostSheetActionsPanel
         isOpen={isActionsPanelOpen}
@@ -693,8 +700,14 @@ const CostSheetView = () => {
                         </div>
                     )}
                     {activeSection === "ai-chat" && (
-                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 h-[calc(100vh-250px)] min-h-[500px]">
-                             <CospiChat sheetData={data} isFullView={true} />
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-[600px] flex flex-col">
+                             <h2 className="text-3xl font-black uppercase tracking-tighter italic text-primary mb-6 flex items-center gap-3 px-4">
+                                 <Sparkles className="w-8 h-8" />
+                                 Darian
+                             </h2>
+                             <div className="flex-1">
+                                <DarianEditor sheetData={data} isFullView={true} />
+                             </div>
                         </div>
                     )}
                     {activeSection === "templates" && (
