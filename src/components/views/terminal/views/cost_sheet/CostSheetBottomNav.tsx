@@ -36,7 +36,7 @@ export const CostSheetBottomNav: React.FC<CostSheetBottomNavProps> = ({
             activeTab === 'kpis' ? "text-primary" : "text-muted-foreground/60"
           )}
         >
-          <LayoutGrid className={cn("w-5 h-5", activeTab === 'kpis' && "drop-shadow-[0_0_8px_rgba(57,255,20,0.5)]")} />
+          <LayoutGrid className={cn("w-5 h-5", activeTab === 'kpis' && "drop-shadow-[0_0_8px_rgba(22,163,74,0.5)]")} />
           <span className="text-xs font-black uppercase tracking-widest leading-none">Tablero</span>
         </button>
 
@@ -46,7 +46,7 @@ export const CostSheetBottomNav: React.FC<CostSheetBottomNavProps> = ({
         <div className="relative -mt-10">
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <button className="w-14 h-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-[0_0_20px_rgba(57,255,20,0.4)] active:scale-95 transition-all border-4 border-background">
+                    <button className="w-14 h-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-[0_0_20px_rgba(22,163,74,0.4)] active:scale-95 transition-all border-4 border-background">
                         <Plus className="w-7 h-7 font-bold" />
                     </button>
                 </DropdownMenuTrigger>
@@ -102,7 +102,7 @@ export const CostSheetBottomNav: React.FC<CostSheetBottomNavProps> = ({
           {isChatBotOpen && (
               <Sparkles className="absolute -top-1 -right-1 w-3 h-3 text-primary animate-pulse" />
           )}
-          <Bot className={cn("w-5 h-5", isChatBotOpen && "drop-shadow-[0_0_8px_rgba(57,255,20,0.5)]")} />
+          <Bot className={cn("w-5 h-5", isChatBotOpen && "drop-shadow-[0_0_8px_rgba(22,163,74,0.5)]")} />
           <span className="text-xs font-black uppercase tracking-widest leading-none">Eli</span>
         </button>
 
@@ -114,7 +114,7 @@ export const CostSheetBottomNav: React.FC<CostSheetBottomNavProps> = ({
             activeTab === 'config' ? "text-primary" : "text-muted-foreground/60"
           )}
         >
-          <Settings className={cn("w-5 h-5", activeTab === 'config' && "drop-shadow-[0_0_8px_rgba(57,255,20,0.5)]")} />
+          <Settings className={cn("w-5 h-5", activeTab === 'config' && "drop-shadow-[0_0_8px_rgba(22,163,74,0.5)]")} />
           <span className="text-xs font-black uppercase tracking-widest leading-none">Menú</span>
         </button>
 

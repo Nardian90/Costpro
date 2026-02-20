@@ -78,7 +78,7 @@ export const CostSheetCalculator: React.FC = () => {
   return (
     <div className={cn(
         "flex flex-col h-full overflow-hidden transition-colors duration-500",
-        isDark ? "bg-[#010203]" : "bg-transparent"
+        isDark ? "bg-[var(--background)]" : "bg-transparent"
     )}>
       {/* Display */}
       <div className={cn(
@@ -88,12 +88,12 @@ export const CostSheetCalculator: React.FC = () => {
         {/* Neon Grid Effect */}
         <div className={cn(
             "absolute inset-0 opacity-[0.05] pointer-events-none",
-            isDark ? "bg-[radial-gradient(#39FF14_1px,transparent_1px)] bg-[size:20px_20px]" : "bg-[radial-gradient(#000_1px,transparent_1px)] bg-[size:20px_20px]"
+            isDark ? "bg-[radial-gradient(hsl(var(--primary))_1px,transparent_1px)] bg-[size:20px_20px]" : "bg-[radial-gradient(#000_1px,transparent_1px)] bg-[size:20px_20px]"
         )} />
 
         <motion.div className={cn(
             "text-[10px] font-mono h-4 uppercase tracking-[0.2em] font-black",
-            isDark ? "text-[#39FF14]/40" : "text-muted-foreground/40"
+            isDark ? "text-[hsl(var(--primary))]/40" : "text-muted-foreground/40"
         )}>
           {equation || '\u00A0'}
         </motion.div>
@@ -104,7 +104,7 @@ export const CostSheetCalculator: React.FC = () => {
           className={cn(
             "text-5xl font-mono tracking-tighter w-full text-right font-black",
             isDark
-              ? "text-[#39FF14] drop-shadow-[0_0_15px_rgba(57,255,20,0.5)]"
+              ? "text-[hsl(var(--primary))] drop-shadow-[0_0_15px_rgba(22,163,74,0.5)]"
               : "text-primary"
           )}
         >
@@ -115,7 +115,7 @@ export const CostSheetCalculator: React.FC = () => {
       {/* Keypad */}
       <div className={cn(
           "flex-1 p-6 grid grid-cols-4 gap-3 overflow-hidden",
-          isDark ? "bg-gradient-to-b from-black/0 to-[#39FF14]/5" : "bg-gradient-to-b from-transparent to-black/5"
+          isDark ? "bg-gradient-to-b from-black/0 to-[hsl(var(--primary))]/5" : "bg-gradient-to-b from-transparent to-black/5"
       )}>
         <CalcButton label="C" onClick={handleClear} variant="danger" />
         <CalcButton icon={<Delete className="w-5 h-5" />} onClick={handleBackspace} variant="secondary" />
@@ -166,10 +166,10 @@ const CalcButton: React.FC<CalcButtonProps> = ({ label, icon, onClick, variant =
       ? "bg-white/5 hover:bg-white/10 text-white border-white/5 shadow-inner"
       : "bg-muted/30 hover:bg-muted/60 text-foreground border-border/40 shadow-sm",
     operator: isDark
-      ? "bg-[#39FF14]/5 hover:bg-[#39FF14]/20 text-[#39FF14] border-[#39FF14]/20"
+      ? "bg-[hsl(var(--primary))]/5 hover:bg-[hsl(var(--primary))]/20 text-[hsl(var(--primary))] border-[hsl(var(--primary))]/20"
       : "bg-primary/5 hover:bg-primary/20 text-primary border-primary/10",
     primary: isDark
-      ? "bg-[#39FF14] hover:bg-[#39FF14]/90 text-black border-[#39FF14] shadow-lg shadow-[#39FF14]/30"
+      ? "bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/90 text-black border-[hsl(var(--primary))] shadow-lg shadow-[hsl(var(--primary))]/30"
       : "bg-primary hover:bg-primary/90 text-white border-primary shadow-lg shadow-primary/20",
     danger: isDark
       ? "bg-red-500/10 hover:bg-red-500/20 text-red-500 border-red-500/20"
