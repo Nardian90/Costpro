@@ -3,6 +3,7 @@ export function translateFormulaFromSpanish(formula: string): string {
   const mapping: Record<string, string> = {
     'SUMA': 'sum',
     'SUM': 'sum',
+    'REDONDEO': 'REDONDEO',
     'PROMEDIO': 'average',
     'MAX': 'max',
     'MIN': 'min',
