@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     // System Prompt construction
     const systemPrompt = {
       role: 'system',
-      content: `      content: `Eres un asistente de IA experto llamado Darian, especializado en el Módulo de Costos de la plataforma Costpro.
+      content: `Eres un asistente de IA experto llamado Darian, especializado en el Módulo de Costos de la plataforma Costpro.
       Tu propósito es ayudar al usuario a entender, completar y auditar sus fichas de costo basándote en datos reales y normativas legales (Resolución 148/2023).
 
       CAPACIDADES ESPECIALES:
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
       - Responde de forma profesional, técnica y precisa (Tono "Consultor Contable Senior").
       - Si detectas errores en la ficha, menciónalos constructivamente.
       - Para solicitudes de generación, proporciona primero una explicación técnica y luego la propuesta de datos.
-      ``
+      `
     };
 
     const provider = getLLMProvider(aiProvider, aiApiKey);
