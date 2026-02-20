@@ -283,12 +283,18 @@ const CostSheetView = () => {
         toast.warning("Exportando con advertencias: La ficha contiene errores críticos de validación.");
     }
 
-    // Evaluate header formulas for final save as requested by user
+    // Export data maintaining formula integrity in the header
+    // We include a calculation snapshot for offline reference without destroying the dynamic nature of the sheet
     const exportData = {
         ...data,
-        header: {
-            ...data.header,
-            ...(calculatedHeader || {})
+        metadata: {
+            ...data?.metadata,
+            exportedAt: new Date().toISOString(),
+            integrity: "full",
+            calculationSnapshot: {
+                header: calculatedHeader,
+                values: calculatedValues
+            }
         }
     };
 
