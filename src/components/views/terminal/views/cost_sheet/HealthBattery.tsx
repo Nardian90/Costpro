@@ -17,13 +17,13 @@ const HealthBattery: React.FC<HealthBatteryProps> = ({ percent, className }) => 
     ? "text-red-500"
     : isLow
       ? "text-amber-500"
-      : "text-primary dark:text-[#39FF14]";
+      : "text-primary dark:text-[currentColor]";
 
   const bgClass = isCritical
     ? "bg-red-500/10"
     : isLow
       ? "bg-amber-500/10"
-      : "bg-primary/10 dark:bg-[#39FF14]/10";
+      : "bg-primary/10 dark:bg-[currentColor]/10";
 
   return (
     <div className={cn("w-full p-8 rounded-[2.5rem] bg-sidebar/30 border border-border/40 backdrop-blur-xl relative overflow-hidden", className)}>

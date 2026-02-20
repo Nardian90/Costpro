@@ -1,4 +1,5 @@
 'use client';
+import { CospiChat } from './CospiChat';
 import { LazyRender } from '@/components/ui/LazyRender';
 
 import React, { useState, useRef } from 'react';
@@ -31,7 +32,7 @@ import { CostSheetExportModal, ExportOptions } from './CostSheetExportModal';
 import { CostSheetQuickMode } from './CostSheetQuickMode';
 import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
 import ActionMenu from '@/components/ui/ActionMenu';
-import { Layout, Eye, Edit, FileText, Trash2, Download, FileSpreadsheet, Upload, Save, BarChart3, ClipboardList, Activity, MoreVertical, AlertTriangle, ArrowLeft, Table2, Wand2, BookOpen, Zap as ZapIcon } from 'lucide-react';
+import { Layout, Eye, Edit, FileText, Trash2, Download, FileSpreadsheet, Upload, Save, BarChart3, ClipboardList, Activity, MoreVertical, AlertTriangle, ArrowLeft, Table2, Wand2, BookOpen, Zap as ZapIcon, Sparkles } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -419,6 +420,7 @@ const CostSheetView = () => {
   const navItems = React.useMemo(() => [
     { id: "kpis", label: "Tablero", icon: BarChart3 },
     { id: "templates", label: "Plantillas", icon: FolderOpen },
+    { id: "ai-chat", label: "Cospi IA", icon: Sparkles },
 
     { id: "header", label: "Encabezado", icon: Layout },
     { id: "massive-gen", label: "Gen. Masiva", icon: FileText }
@@ -461,7 +463,7 @@ const CostSheetView = () => {
             setCurrentView("inventory");
             break;
         case "ai":
-            setIsChatBotOpen(true);
+            handleSetActiveSection("ai-chat");
             break;
     }
   }, [setIsExportModalOpen, handleSetActiveSection, setViewMode, setIsActionsPanelOpen, setCurrentView, setIsChatBotOpen]);
@@ -688,6 +690,11 @@ const CostSheetView = () => {
                                 audits={audits}
                                 validations={validations}
                             />
+                        </div>
+                    )}
+                    {activeSection === "ai-chat" && (
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 h-[calc(100vh-250px)] min-h-[500px]">
+                             <CospiChat sheetData={data} isFullView={true} />
                         </div>
                     )}
                     {activeSection === "templates" && (
