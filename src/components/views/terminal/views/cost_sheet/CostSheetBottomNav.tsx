@@ -91,7 +91,7 @@ export const CostSheetBottomNav: React.FC<CostSheetBottomNavProps> = ({
             </DropdownMenu>
         </div>
 
-        {/* Eli (AI) */}
+        {/* Darian (AI) */}
         <button
           onClick={() => onAction('ai')}
           className={cn(
@@ -103,7 +103,7 @@ export const CostSheetBottomNav: React.FC<CostSheetBottomNavProps> = ({
               <Sparkles className="absolute -top-1 -right-1 w-3 h-3 text-primary animate-pulse" />
           )}
           <Bot className={cn("w-5 h-5", isChatBotOpen && "drop-shadow-[0_0_8px_rgba(22,163,74,0.5)]")} />
-          <span className="text-xs font-black uppercase tracking-widest leading-none">Eli</span>
+          <span className="text-xs font-black uppercase tracking-widest leading-none">Darian</span>
         </button>
 
         {/* Config */}

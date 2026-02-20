@@ -5,7 +5,7 @@ import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { X as XIcon, Calculator, Bot, ChevronRight, Maximize2, Minimize2, LayoutGrid } from 'lucide-react';
 import { cn , isDarkTheme} from '@/lib/utils';
 import { useTheme } from 'next-themes';
-import { CospiChat } from './CospiChat';
+import { DarianEditor } from './DarianEditor';
 import { CostSheetCalculator } from './CostSheetCalculator';
 import { useIsMobile } from '@/hooks/ui/useMobile';
 
@@ -69,7 +69,7 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
              <CostSheetCalculator />
           </div>
           <div className="w-1/2 h-full overflow-hidden">
-            <CospiChat
+            <DarianEditor
               sheetData={sheetData}
               isFullView={false}
               onToggleFullView={undefined}
@@ -88,7 +88,7 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
                     <CostSheetCalculator />
                 </div>
                 <div className="h-[500px]">
-                    <CospiChat
+                    <DarianEditor
                       sheetData={sheetData}
                       isFullView={false}
                     />
@@ -106,7 +106,7 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
     }
 
     return (
-      <CospiChat
+      <DarianEditor
         sheetData={sheetData}
         isFullView={isFullView}
         onToggleFullView={() => setIsFullView(!isFullView)}
@@ -172,7 +172,7 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
                         <Bot className={isMobile ? "w-3.5 h-3.5" : "w-4 h-4"} />
                     </div>
                     {isTriggerExpanded && (
-                        <span className="text-[9px] font-black uppercase tracking-widest opacity-80 whitespace-nowrap">Cospi</span>
+                        <span className="text-[9px] font-black uppercase tracking-widest opacity-80 whitespace-nowrap">Darian</span>
                     )}
                 </button>
 
@@ -254,7 +254,7 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
                         {mode === 'both' ? 'Multitarea' : (mode === 'calculator' ? 'Herramienta' : 'Asistente')}
                     </h3>
                     <p className="text-sm font-black uppercase tracking-widest italic">
-                        {mode === 'both' ? 'Centro de Control' : (mode === 'calculator' ? 'Calculadora Pro' : 'Cospi AI')}
+                        {mode === 'both' ? 'Centro de Control' : (mode === 'calculator' ? 'Calculadora Pro' : 'Darian')}
                     </p>
                   </div>
                 </div>

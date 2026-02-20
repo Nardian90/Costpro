@@ -27,7 +27,7 @@ import SalesFlowDiagram from './help/SalesFlowDiagram';
 import InventoryFlowDiagram from './help/InventoryFlowDiagram';
 import InventoryAdjustmentFlowDiagram from './help/InventoryAdjustmentFlowDiagram';
 import StoreSkuDiagram from './help/StoreSkuDiagram';
-import EliDiagram from './help/EliDiagram';
+import DarianDiagram from './help/DarianDiagram';
 import OfflineSyncDiagram from './help/OfflineSyncDiagram';
 import SecurityFlowDiagram from './help/SecurityFlowDiagram';
 import IpvFlowDiagram from './help/IpvFlowDiagram';
@@ -305,17 +305,17 @@ export default function HelpView() {
                             <Cpu className="w-12 h-12 text-primary" />
                           </div>
                           <div>
-                            <h3 className="text-3xl font-black uppercase tracking-tighter">Eli: Inteligencia Aumentada</h3>
+                            <h3 className="text-3xl font-black uppercase tracking-tighter">Darian: Inteligencia Aumentada</h3>
                             <p className="text-primary font-bold text-xs uppercase tracking-[0.2em]">Orquestador de Decisiones CostPro</p>
                           </div>
                         </div>
                         <p className="text-lg font-medium leading-relaxed opacity-80 max-w-2xl">
-                          Eli no es solo un chat; es un motor de análisis que integra sus estados financieros,
+                          Darian no es solo un chat; es un motor de análisis que integra sus estados financieros,
                           inventario crítico y tendencias de mercado para ofrecer una visión 360° de su negocio,
                           incluso sin conexión a internet.
                         </p>
                       </div>
-                      <EliDiagram />
+                      <DarianDiagram />
                    </div>
                 </div>
               )}
@@ -460,7 +460,7 @@ export default function HelpView() {
                         changes: [
                           "Validación estricta de contratos de API con Zod.",
                           "Cobertura del 100% de hooks con logging estructurado.",
-                          "Eliminación de ambigüedades en tipos de datos.",
+                          "Darianminación de ambigüedades en tipos de datos.",
                           "Mejora en la trazabilidad de transacciones SQL."
                         ],
                         status: "Estable",

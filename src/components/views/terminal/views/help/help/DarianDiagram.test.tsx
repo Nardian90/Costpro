@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 import { expect, test, vi } from 'vitest';
-import EliDiagram from './EliDiagram';
+import DarianDiagram from './DarianDiagram';
 
 // Mock framer-motion to avoid animation issues in tests
 vi.mock('framer-motion', () => ({
@@ -13,8 +13,8 @@ vi.mock('framer-motion', () => ({
   },
 }));
 
-test('EliDiagram renders correctly', () => {
-  const { container } = render(<EliDiagram />);
+test('DarianDiagram renders correctly', () => {
+  const { container } = render(<DarianDiagram />);
 
   expect(container.querySelector('svg')).toBeTruthy();
   expect(container.textContent).toContain('ELI');
