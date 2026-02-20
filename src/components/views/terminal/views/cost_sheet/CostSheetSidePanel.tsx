@@ -46,7 +46,7 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
     open: {
         x: 0,
         opacity: 1,
-        transition: { type: 'spring', damping: 25, stiffness: 200 }
+        transition: { type: 'spring' as const, damping: 25, stiffness: 200 }
     }
   };
 

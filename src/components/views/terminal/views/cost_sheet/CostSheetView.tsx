@@ -31,7 +31,7 @@ import { CostSheetMassiveGenerator } from './CostSheetMassiveGenerator';
 import { CostSheetExportModal, ExportOptions } from './CostSheetExportModal';
 import { CostSheetQuickMode } from './CostSheetQuickMode';
 import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
-import ActionMenu from '@/components/ui/ActionMenu';
+import ActionMenu, { Action } from '@/components/ui/ActionMenu';
 import { Layout, Eye, Edit, FileText, Trash2, Download, FileSpreadsheet, Upload, Save, BarChart3, ClipboardList, Activity, MoreVertical, AlertTriangle, ArrowLeft, Table2, Wand2, BookOpen, Zap as ZapIcon } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -41,7 +41,7 @@ import { exportToPDF, exportToCSV } from '@/services/export-service';
 import { useIsMobile } from '@/hooks/ui/useMobile';
 
 const CostSheetView: React.FC = () => {
-  const { data, isLoading, updateData, resetStore, audits, validations, calculateAll } = useCostSheetStore();
+  const { data, reset } = useCostSheetStore();
   const { isCalculatorOpen, setIsCalculatorOpen } = useUIStore();
   const isMobile = useIsMobile();
   const [activeSection, setActiveSection] = useState('kpis');
@@ -53,10 +53,10 @@ const CostSheetView: React.FC = () => {
   const [isActionsPanelOpen, setIsActionsPanelOpen] = useState(false);
   const [isHelpPanelOpen, setIsHelpPanelOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>('expert');
+  const [viewMode, setViewMode] = useState<'expert' | 'assisted' | 'reading' | 'quick'>('expert');
   const [layoutMode, setLayoutMode] = useState<'grid' | 'table'>('grid');
 
-  const { calculatedValues, calculatedAnnexes, calculatedHeader, healthPercent } = useCostSheetCalculator(data);
+  const { calculatedValues, calculatedAnnexes, calculatedHeader, healthPercent, audits, validations } = useCostSheetCalculator(data);
 
   const handleSetActiveSection = (id: string) => {
     setActiveSection(id);
@@ -74,7 +74,7 @@ const CostSheetView: React.FC = () => {
   };
 
   const handleQuickGenerate = (generatedData: any) => {
-    updateData(generatedData);
+    useCostSheetStore.getState().setSheet(generatedData);
     setViewMode('expert');
     setActiveSection('kpis');
     toast.success('Ficha generada exitosamente');
@@ -102,8 +102,7 @@ const CostSheetView: React.FC = () => {
         label: 'Exportar CSV',
         icon: FileSpreadsheet,
         onClick: async () => {
-            const success = await exportToCSV(data, calculatedValues, calculatedHeader);
-            if (success) toast.success('CSV exportado exitosamente');
+            exportToCSV(data, calculatedValues, `cost-sheet-${data?.header?.product_name || "export"}`);
         }
     },
     {
@@ -126,13 +125,13 @@ const CostSheetView: React.FC = () => {
         icon: Trash2,
         onClick: () => {
             if (confirm('¿Estás seguro de que deseas reiniciar la ficha? Todos los cambios se perderán.')) {
-                resetStore();
+                reset();
                 toast.success('Ficha reiniciada');
             }
         },
         variant: 'danger'
     }
-  ], [data, calculatedValues, calculatedHeader, resetStore]);
+  ], [data, calculatedValues, calculatedHeader, reset]);
 
   const secondaryActions = React.useMemo(() => allActions, [allActions]);
 
@@ -154,7 +153,7 @@ const CostSheetView: React.FC = () => {
       groups.push({
         id: `group-${i}`,
         label: `Secciones ${labels}`,
-        sections: slice
+        sectionIds: slice.map((s: any) => s.id)
       });
     }
     return groups;
@@ -184,49 +183,17 @@ const CostSheetView: React.FC = () => {
     if (action === 'sections') setIsSectionsSidebarOpen(true);
   };
 
-  if (isLoading) {
-    return (
-      <div className="p-8 space-y-8">
-        <div className="flex justify-between items-center">
-          <Skeleton className="h-12 w-64" />
-          <div className="flex gap-4">
-            <Skeleton className="h-10 w-32" />
-            <Skeleton className="h-10 w-32" />
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Skeleton className="h-48 col-span-1" />
-          <Skeleton className="h-48 col-span-2" />
-        </div>
-        <Skeleton className="h-96 w-full" />
-      </div>
-    );
-  }
-
   return (
     <div className="relative min-h-screen pb-24">
-      <CostSheetBanner
-        header={calculatedHeader}
-        activeSection={activeSection}
-        onOpenActions={() => setIsActionsPanelOpen(true)}
-        isEditing={isEditing}
-        onToggleEditing={() => setIsEditing(!isEditing)}
-      />
+        <CostSheetBanner />
 
       {isEditing ? (
         <div className="px-4 py-2">
           <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
             <div className="flex items-center gap-3 w-full sm:w-auto overflow-x-auto no-scrollbar py-1">
-                <CostSheetModeSwitcher activeMode={viewMode} onChange={setViewMode} />
+                <CostSheetModeSwitcher viewMode={viewMode} setViewMode={setViewMode} />
                 <div className="h-8 w-px bg-border/40 mx-2" />
-                <ViewSwitcher
-                    activeView={layoutMode}
-                    onViewChange={(v) => setLayoutMode(v as 'grid' | 'table')}
-                    options={[
-                        { id: 'grid', label: 'Cuadrícula', icon: Layout },
-                        { id: 'table', label: 'Tabla', icon: Table2 }
-                    ]}
-                />
+                <ViewSwitcher currentView={layoutMode} onViewChange={setLayoutMode} />
             </div>
             <div className="flex items-center gap-2 w-full sm:w-auto">
                 <Button
@@ -299,7 +266,7 @@ const CostSheetView: React.FC = () => {
                                         groupedSections={groupedSections}
                                         calculatedValues={calculatedValues}
                                         annexes={data?.annexes || []}
-                                        activeSubSectionId={activeSection === 'all-content' ? 'all' : activeSubSectionId}
+                                        activeSubSectionId={activeSection === 'all-content' ? 'all' : (activeSubSectionId || '')}
                                         setActiveSubSectionId={setActiveSubSectionId}
                                         onOpenSections={() => setIsSectionsSidebarOpen(true)}
                                     />
@@ -309,7 +276,7 @@ const CostSheetView: React.FC = () => {
                                         groupedSections={groupedSections}
                                         calculatedValues={calculatedValues}
                                         annexes={data?.annexes || []}
-                                        activeSubSectionId={activeSection === 'all-content' ? 'all' : activeSubSectionId}
+                                        activeSubSectionId={activeSection === 'all-content' ? 'all' : (activeSubSectionId || '')}
                                         setActiveSubSectionId={setActiveSubSectionId}
                                         onOpenSections={() => setIsSectionsSidebarOpen(true)}
                                     />
@@ -443,7 +410,11 @@ const CostSheetView: React.FC = () => {
       <CostSheetActionsPanel
         isOpen={isActionsPanelOpen}
         onClose={() => setIsActionsPanelOpen(false)}
-        actions={secondaryActions}
+        actions={secondaryActions as any}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        layoutMode={layoutMode}
+        setLayoutMode={setLayoutMode}
       />
 
       <CostSheetHelpPanel
@@ -469,8 +440,31 @@ const CostSheetView: React.FC = () => {
         onClose={() => setIsExportModalOpen(false)}
         annexes={data?.annexes || []}
         onExport={async (options) => {
-            const success = await exportToPDF(data, calculatedValues, calculatedHeader, options);
-            if (success) toast.success('PDF exportado exitosamente');
+            const response = await fetch('/api/cost-sheets/export-pdf', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    data,
+                    calculatedValues,
+                    calculatedHeader,
+                    exportOptions: options
+                })
+            });
+
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${data?.header?.product_name || 'ficha'}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+                toast.success('PDF exportado exitosamente');
+            } else {
+                toast.error('Error al generar PDF');
+            }
             setIsExportModalOpen(false);
         }}
       />
