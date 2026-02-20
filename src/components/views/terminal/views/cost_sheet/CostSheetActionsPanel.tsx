@@ -15,34 +15,30 @@ interface ActionItem {
   disabled?: boolean;
 }
 
-import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
-import { CostSheetModeSwitcher } from './CostSheetModeSwitcher';
+
+
 
 interface CostSheetActionsPanelProps {
   isOpen: boolean;
   onClose: () => void;
   actions: ActionItem[];
-  viewMode: 'expert' | 'assisted' | 'reading' | 'quick';
-  setViewMode: (mode: 'expert' | 'assisted' | 'reading' | 'quick') => void;
-  layoutMode: ViewMode;
-  setLayoutMode: (mode: ViewMode) => void;
+
+
+
+
 }
 
 export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
   isOpen,
   onClose,
   actions,
-  viewMode,
-  setViewMode,
-  layoutMode,
-  setLayoutMode,
 }) => {
   // Categorize actions
   const actionGroups = [
     {
-      title: 'Vistas y Análisis',
+      title: 'Herramientas',
       items: [
-        ...actions.filter(a => ['toggle-mode', 'kpis-header'].includes(a.id))
+        ...actions.filter(a => ['calculator', 'toggle-mode', 'kpis-header'].includes(a.id))
       ]
     },
     {
@@ -99,27 +95,6 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-4 space-y-8 no-scrollbar">
-              {/* Configuration / Switchers */}
-              <div className="space-y-6 bg-primary/5 p-4 rounded-3xl border border-primary/10">
-                <div className="space-y-4">
-                  <div className="text-xs font-black text-primary/70 tracking-[0.4em] uppercase px-2">
-                    Modo de Visualización
-                  </div>
-                  <CostSheetModeSwitcher viewMode={viewMode} setViewMode={setViewMode} />
-                </div>
-
-                {viewMode === 'expert' && (
-                  <div className="space-y-4 pt-4 border-t border-primary/10">
-                    <div className="text-xs font-black text-primary/70 tracking-[0.4em] uppercase px-2">
-                      Diseño de Tablas
-                    </div>
-                    <div className="flex justify-center">
-                      <ViewSwitcher currentView={layoutMode} onViewChange={(mode) => { setLayoutMode(mode); if (window.innerWidth < 1024) onClose(); }} />
-                    </div>
-                  </div>
-                )}
-              </div>
-
               {actionGroups.map((group, idx) => (
                 group.items.length > 0 && (
                   <div key={idx} className="space-y-4">

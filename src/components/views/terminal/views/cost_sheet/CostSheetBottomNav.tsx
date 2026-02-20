@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { LayoutGrid, FileText, Plus, Package, Settings, FileDown, Layers, Zap, Bot, Sparkles } from 'lucide-react';
+import { LayoutGrid, FileText, Plus, Package, Settings, FileDown, Layers, Zap, Bot, Sparkles, Calculator } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -79,13 +79,13 @@ export const CostSheetBottomNav: React.FC<CostSheetBottomNavProps> = ({
                         <span className="font-bold uppercase tracking-tight text-xs">Modo Rápido</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                        onClick={() => onAction('inventory')}
+                        onClick={() => onAction('calculator')}
                         className="flex items-center gap-3 p-3 rounded-xl focus:bg-primary/10 focus:text-primary cursor-pointer border-none sm:hidden"
                     >
                         <div className="p-2 rounded-lg bg-primary/10">
-                            <Package className="w-4 h-4 text-primary" />
+                            <Calculator className="w-4 h-4 text-primary" />
                         </div>
-                        <span className="font-bold uppercase tracking-tight text-xs">Inventario</span>
+                        <span className="font-bold uppercase tracking-tight text-xs">Calculadora</span>
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
