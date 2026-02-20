@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, Settings2, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '@/lib/utils';
+import { cn, isPerformanceTheme } from '@/lib/utils';
 import { useTheme } from 'next-themes';
 
 interface SearchBarProps {
@@ -73,7 +73,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
           placeholder={placeholder}
           className={cn(
             "w-full pl-12 pr-24 py-3.5 text-base sm:text-lg transition-all outline-none rounded-xl border border-border bg-background",
-            theme !== 'neumo' ? "neu-input" : "focus:border-primary focus:ring-1 focus:ring-primary/20 shadow-sm"
+            !isPerformanceTheme(theme) ? "neu-input" : "focus:border-primary focus:ring-1 focus:ring-primary/20 shadow-sm"
           )}
         />
 
@@ -108,9 +108,9 @@ const SearchBar: React.FC<SearchBarProps> = ({
       <AnimatePresence>
         {isExpanded && children && (
           <motion.div
-            initial={theme === 'neumo' ? { opacity: 0 } : { height: 0, opacity: 0 }}
-            animate={theme === 'neumo' ? { opacity: 1 } : { height: 'auto', opacity: 1 }}
-            exit={theme === 'neumo' ? { opacity: 0 } : { height: 0, opacity: 0 }}
+            initial={isPerformanceTheme(theme) ? { opacity: 0 } : { height: 0, opacity: 0 }}
+            animate={isPerformanceTheme(theme) ? { opacity: 1 } : { height: 'auto', opacity: 1 }}
+            exit={isPerformanceTheme(theme) ? { opacity: 0 } : { height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
