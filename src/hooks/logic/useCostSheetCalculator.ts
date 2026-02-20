@@ -14,7 +14,7 @@ import { FichaJSON, CostRow, Anexo, RowSemanticType, FormaCalculo, BaseRef, Audi
 import { calculateCostSheetHealth, ValidationResult } from '@/lib/cost-engine/validations';
 
 // Helper to safely evaluate a formula string for ANNEXES (keeping it simple for annex rows)
-const evaluateAnnexExpression = (expression: string, rowData: any, header: any, calculatedAnnexes: any[] = []): number => {
+const evaluateAnnexExpression = (expression: string, rowData: any, header: any, calculatedAnnexes: any[] = []): any => {
   let expr = "";
   if (expression === undefined || expression === null || expression === '') return 0;
 
