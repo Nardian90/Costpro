@@ -132,17 +132,17 @@ const template: CostSheetDataContract = {
             {
               "id": "2.2",
               "label": "Vacaciones",
-              "valorHistorico": 3272.4,
+              "valorHistorico": 0,
               "value": 0,
               "baseDeCalculoRef": "2.1",
               "calculationMethod": "FORMULA",
-              "totalFormula": "=PCT(2.1, 9.09)",
-              "formula": "=PCT(2.1, 9.09)",
+              "totalFormula": "=PCT(ref('2.1'), 9.09)",
+              "formula": "=PCT(ref('2.1'), 9.09)",
               "children": [],
               "baseRef": "2.1",
               "isPercent": true,
               "helpText": "",
-              "vhFormula": "=PCT(vh(2.1.1), 9.09)"
+              "vhFormula": "=PCT(vh('2.1.1'), 9.09)"
             }
           ],
           "baseRef": "",
@@ -366,7 +366,7 @@ const template: CostSheetDataContract = {
               "baseDeCalculoRef": "",
               "calculationMethod": "FORMULA",
               "totalFormula": "",
-              "formula": "vh(4.1.1)/vh(1.1.1)*1.1.1",
+              "formula": "vh('4.1.1')/vh('1.1.1')*ref('1.1.1')",
               "children": [],
               "baseRef": "",
               "isPercent": false,
@@ -380,7 +380,7 @@ const template: CostSheetDataContract = {
               "baseDeCalculoRef": "",
               "calculationMethod": "FORMULA",
               "totalFormula": "",
-              "formula": "vh(4.1.1)/vh(1.1.1)*1.1.1",
+              "formula": "vh('4.1.1')/vh('1.1.1')*ref('1.1.1')",
               "children": [],
               "baseRef": "",
               "isPercent": false,
@@ -436,7 +436,7 @@ const template: CostSheetDataContract = {
               "baseDeCalculoRef": "",
               "calculationMethod": "FORMULA",
               "totalFormula": "",
-              "formula": "vh(6.1.1)/vh(1.1.1)*1.1.1",
+              "formula": "vh('6.1.1')/vh('1.1.1')*ref('1.1.1')",
               "children": [],
               "baseRef": "",
               "isPercent": false,
@@ -451,7 +451,7 @@ const template: CostSheetDataContract = {
               "baseDeCalculoRef": "",
               "calculationMethod": "FORMULA",
               "totalFormula": "",
-              "formula": "vh(6.1.2)/vh(1.1.1)*1.1.1",
+              "formula": "vh('6.1.2')/vh('1.1.1')*ref('1.1.1')",
               "children": [],
               "baseRef": "",
               "isPercent": false,
@@ -465,7 +465,7 @@ const template: CostSheetDataContract = {
               "baseDeCalculoRef": "",
               "calculationMethod": "FORMULA",
               "totalFormula": "",
-              "formula": "vh(6.1.3)/vh(1.1.1)*1.1.1",
+              "formula": "vh('6.1.3')/vh('1.1.1')*ref('1.1.1')",
               "children": [],
               "baseRef": "",
               "isPercent": false,
@@ -479,7 +479,7 @@ const template: CostSheetDataContract = {
               "baseDeCalculoRef": "",
               "calculationMethod": "FORMULA",
               "totalFormula": "",
-              "formula": "vh(6.1.4)/vh(1.1.1)*1.1.1",
+              "formula": "vh('6.1.4')/vh('1.1.1')*ref('1.1.1')",
               "children": [],
               "baseRef": "",
               "isPercent": false,
@@ -493,7 +493,7 @@ const template: CostSheetDataContract = {
               "baseDeCalculoRef": "",
               "calculationMethod": "FORMULA",
               "totalFormula": "",
-              "formula": "vh(6.1.5)/vh(1.1.1)*1.1.1",
+              "formula": "vh('6.1.5')/vh('1.1.1')*ref('1.1.1')",
               "children": [],
               "baseRef": "",
               "isPercent": false,
@@ -529,7 +529,7 @@ const template: CostSheetDataContract = {
               "baseDeCalculoRef": "",
               "calculationMethod": "FORMULA",
               "totalFormula": "",
-              "formula": "vh(7.1.1)/vh(1.1.1)*1.1.1",
+              "formula": "vh('7.1.1')/vh('1.1.1')*ref('1.1.1')",
               "children": [],
               "baseRef": "",
               "isPercent": false,
@@ -543,7 +543,7 @@ const template: CostSheetDataContract = {
               "baseDeCalculoRef": "",
               "calculationMethod": "FORMULA",
               "totalFormula": "",
-              "formula": "vh(7.1.2)/vh(1.1.1)*1.1.1",
+              "formula": "vh('7.1.2')/vh('1.1.1')*ref('1.1.1')",
               "children": [],
               "baseRef": "",
               "isPercent": false,
@@ -578,7 +578,7 @@ const template: CostSheetDataContract = {
               "baseDeCalculoRef": "",
               "calculationMethod": "FORMULA",
               "totalFormula": "",
-              "formula": "vh(8.1.1)/vh(1.1.1)*1.1.1",
+              "formula": "vh('8.1.1')/vh('1.1.1')*ref('1.1.1')",
               "children": [],
               "baseRef": "",
               "isPercent": false,
@@ -619,7 +619,7 @@ const template: CostSheetDataContract = {
           "baseDeCalculoRef": "",
           "calculationMethod": "FORMULA",
           "totalFormula": "",
-          "formula": "vh(9.1)/vh(1.1.1)*1.1.1",
+          "formula": "vh('9.1')/vh('1.1.1')*ref('1.1.1')",
           "children": [],
           "baseRef": "",
           "isPercent": false,
@@ -648,8 +648,8 @@ const template: CostSheetDataContract = {
               "value": 0,
               "baseDeCalculoRef": "2.1",
               "calculationMethod": "FORMULA",
-              "totalFormula": "=ROUND2(PCT(2.1 + 4.1.1 + 6.1.1 + 7.1.1, 14))",
-              "formula": "=ROUND2(PCT(2.1 + 4.1.1 + 6.1.1 + 7.1.1, 14))",
+              "totalFormula": "=ROUND2(PCT(ref('2.1') + ref('4.1') + ref('6.1') + ref('7.1'), 14))",
+              "formula": "=(ref('2.1') + ref('4.1.1') + ref('6.1.1') + ref('7.1.1'))*0.14",
               "children": [],
               "baseRef": "2.1",
               "isPercent": false,
@@ -663,8 +663,8 @@ const template: CostSheetDataContract = {
               "value": 0,
               "baseDeCalculoRef": "2.1",
               "calculationMethod": "FORMULA",
-              "totalFormula": "=ROUND2(PCT(2.1 + 4.1.1 + 6.1.1 + 7.1.1, 5))",
-              "formula": "=ROUND2(PCT(2.1 + 4.1.1 + 6.1.1 + 7.1.1, 5))",
+              "totalFormula": "=ROUND2(PCT(ref('2.1') + ref('4.1') + ref('6.1') + ref('7.1'), 5))",
+              "formula": "=( ref('2.1') + ref('4.1.1') + ref('5.1.1') + ref('6.1.1') + ref('7.1.1') ) * 0.05",
               "children": [],
               "baseRef": "2.1",
               "isPercent": false,
@@ -761,8 +761,8 @@ const template: CostSheetDataContract = {
           "value": 0,
           "baseDeCalculoRef": "",
           "calculationMethod": "FORMULA",
-          "totalFormula": "13.1/0.9*0.1",
-          "formula": "13.1/0.9*0.1",
+          "totalFormula": "ref('13.1')/0.9*0.1",
+          "formula": "ref('13.1')/0.9*0.1",
           "children": [],
           "baseRef": "",
           "isPercent": false,
@@ -782,13 +782,13 @@ const template: CostSheetDataContract = {
           "value": 0,
           "baseDeCalculoRef": "",
           "calculationMethod": "FORMULA",
-          "totalFormula": "13.2 + 13.3",
-          "formula": "13.2 + 13.3",
+          "totalFormula": "ref('13.1') + ref('13.2')",
+          "formula": "ref('13.2') + ref('13.3')",
           "children": [],
           "baseRef": "",
           "isPercent": false,
           "helpText": "",
-          "vhFormula": "vh(13.2) +vh(13.3)"
+          "vhFormula": "vh('13.2') +vh('13.3')"
         }
       ]
     },
@@ -872,18 +872,7 @@ const template: CostSheetDataContract = {
           "formula": "consumption_norm * price"
         }
       ],
-      "data": [
-        {
-          "no": 0,
-          "classification": "1.1.1 - De ello: - Insumos (MP)",
-          "code": "",
-          "description": "",
-          "um": "",
-          "consumption_norm": 0,
-          "price": 0,
-          "total": 0
-        }
-      ]
+      "data": []
     },
     {
       "id": "II",
@@ -919,17 +908,7 @@ const template: CostSheetDataContract = {
           "formula": "time_norm * hourly_rate * worker_count"
         }
       ],
-      "data": [
-        {
-          "no": 0,
-          "classification": "2.1 - SALARIO DIRECTO",
-          "description": "",
-          "time_norm": 0,
-          "hourly_rate": 0,
-          "worker_count": 0,
-          "total": 0
-        }
-      ]
+      "data": []
     },
     {
       "id": "III",
