@@ -12,7 +12,7 @@ import {
   Equal,
   Move
 } from 'lucide-react';
-import { cn } from "@/lib/utils";
+import { cn, isDarkTheme } from "@/lib/utils";
 import { useTheme } from 'next-themes';
 import { useUIStore } from '@/store';
 
@@ -84,7 +84,7 @@ export const FloatingCalculator: React.FC = () => {
 
   if (!isMounted) return null;
 
-  const isDark = resolvedTheme === 'dark';
+  const isDark = isDarkTheme(resolvedTheme);
 
   // Enhanced "Abanico" (Fan) Variants
   const fanVariants: Variants = {
@@ -246,7 +246,7 @@ interface CalcButtonProps {
 
 const CalcButton: React.FC<CalcButtonProps> = ({ label, icon, onClick, variant = 'number', className, variants }) => {
   const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === 'dark';
+  const isDark = isDarkTheme(resolvedTheme);
 
   const variantStyles = {
     number: isDark

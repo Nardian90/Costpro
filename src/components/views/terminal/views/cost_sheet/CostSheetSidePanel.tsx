@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { X as XIcon, Calculator, Bot, ChevronRight, Maximize2, Minimize2, LayoutGrid } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn , isDarkTheme} from '@/lib/utils';
 import { useTheme } from 'next-themes';
 import { CospiChat } from './CospiChat';
 import { CostSheetCalculator } from './CostSheetCalculator';
@@ -28,7 +28,7 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
   const [isFullView, setIsFullView] = useState(false);
   const [isTriggerExpanded, setIsTriggerExpanded] = useState(false);
   const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === 'dark';
+  const isDark = isDarkTheme(resolvedTheme);
 
   const panelVariants: Variants = {
     closed: {

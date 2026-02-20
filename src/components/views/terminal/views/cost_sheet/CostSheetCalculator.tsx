@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Calculator, Delete, Divide, Plus, Minus, Equal, X } from 'lucide-react';
-import { cn } from "@/lib/utils";
+import { cn, isDarkTheme } from "@/lib/utils";
 import { useTheme } from 'next-themes';
 
 export const CostSheetCalculator: React.FC = () => {
@@ -11,7 +11,7 @@ export const CostSheetCalculator: React.FC = () => {
   const [equation, setEquation] = useState('');
   const [lastResult, setLastResult] = useState<number | null>(null);
   const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === 'dark';
+  const isDark = isDarkTheme(resolvedTheme);
 
   // Calculator Logic
   const handleNumber = (num: string) => {
@@ -159,7 +159,7 @@ interface CalcButtonProps {
 
 const CalcButton: React.FC<CalcButtonProps> = ({ label, icon, onClick, variant = 'number', className }) => {
   const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === 'dark';
+  const isDark = isDarkTheme(resolvedTheme);
 
   const variantStyles = {
     number: isDark

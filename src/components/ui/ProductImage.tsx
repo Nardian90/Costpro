@@ -4,7 +4,7 @@ import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { useTheme } from 'next-themes';
 import { Package } from 'lucide-react';
-import { getProductImageUrl, cn } from '@/lib/utils';
+import { getProductImageUrl, cn, isPerformanceTheme } from '@/lib/utils';
 
 interface ProductImageProps {
   src?: string | null;
@@ -22,7 +22,7 @@ interface ProductImageProps {
  * A resilient image component that handles:
  * - Next.js Image optimization
  * - Supabase public URL resolution
- * - Theme-based performance rules (hiding images in 'neumo' theme unless forced)
+ * - Theme-based performance rules (hiding images in performance themes unless forced)
  * - Initials-based placeholder fallback when image is missing, broken, or hidden
  * - Stable aspect-ratio via parent or explicit dimensions
  */
@@ -70,9 +70,9 @@ export default function ProductImage({
 
   const textColor = backgroundColor.replace('/10', '').replace('bg-', 'text-').replace('-500', '-600');
 
-  // Logic: Show placeholder if we are in neumo theme (and not forced),
+  // Logic: Show placeholder if we are in performance themes (and not forced),
   // if there's an error loading, or if no source is provided.
-  const showPlaceholder = (theme === 'neumo' && !forceShow) || error || !src;
+  const showPlaceholder = (isPerformanceTheme(theme) && !forceShow) || error || !src;
 
   const imageUrl = src ? getProductImageUrl(src) : null;
 

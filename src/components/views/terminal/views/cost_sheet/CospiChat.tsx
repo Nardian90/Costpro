@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, MessageSquare, Loader2, Bot, Maximize2, Minimize2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn , isDarkTheme} from '@/lib/utils';
 import { useTheme } from 'next-themes';
 
 interface Message {
@@ -23,7 +23,7 @@ export const CospiChat: React.FC<CospiChatProps> = ({ sheetData, isFullView, onT
     const [isLoading, setIsLoading] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
     const { resolvedTheme } = useTheme();
-    const isDark = resolvedTheme === 'dark';
+    const isDark = isDarkTheme(resolvedTheme);
 
     useEffect(() => {
         if (scrollRef.current) {
