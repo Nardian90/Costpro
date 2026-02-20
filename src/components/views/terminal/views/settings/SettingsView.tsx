@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Sun, Moon, Bell, Percent, ShieldCheck, Code } from 'lucide-react';
+import { Sun, Moon, Zap, Laptop, Bell, Percent, ShieldCheck, Code } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useTheme } from 'next-themes';
 import { useTaxes } from '@/hooks/api/useTaxes';
@@ -15,7 +15,8 @@ export default function SettingsView() {
   const { showQueries, setShowQueries } = useUIStore();
   const queryClient = useQueryClient();
   const { data: taxes = [], isLoading: isLoadingTaxes } = useTaxes(user?.activeStoreId);
-  const { setTheme, theme } = useTheme();
+  const { theme } = useTheme();
+  const { themePreference, setThemePreference } = useUIStore();
   const [notifications, setNotifications] = useState({
     lowStock: true,
     salesAlerts: false,
@@ -34,22 +35,24 @@ export default function SettingsView() {
 
           <div className="space-y-4">
             <div className="font-black text-sm uppercase tracking-tight">Tema del Sistema</div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
               {[
-                { id: 'light', label: 'Claro', icon: Sun },
-                { id: 'dark', label: 'Oscuro', icon: Moon },
-                { id: 'neumo', label: 'Rendimiento', icon: Sun },
+                { id: 'light', label: 'Claro', icon: Sun, color: 'text-amber-500' },
+                { id: 'dark', label: 'Oscuro', icon: Moon, color: 'text-primary' },
+                { id: 'fast-light', label: 'Fast Light', icon: Zap, color: 'text-blue-500' },
+                { id: 'fast-dark', label: 'Fast Dark', icon: Zap, color: 'text-emerald-500' },
+                { id: 'auto', label: 'Auto', icon: Laptop, color: 'text-purple-500' },
               ].map((t) => (
                 <button
                   key={t.id}
-                  onClick={() => setTheme(t.id)}
+                  onClick={() => setThemePreference(t.id as any)}
                   className={cn(
                     "p-4 rounded-xl border flex flex-col items-center gap-2 transition-all active:scale-95",
-                    theme === t.id ? "border-primary bg-primary/5 shadow-lg shadow-primary/10" : "border-border hover:bg-muted"
+                    themePreference === t.id ? "border-primary bg-primary/5 shadow-lg shadow-primary/10" : "border-border hover:bg-muted"
                   )}
                 >
-                  <t.icon className={cn("w-5 h-5", theme === t.id ? "text-primary" : "text-muted-foreground")} />
-                  <span className="text-xs font-black uppercase tracking-widest">{t.label}</span>
+                  <t.icon className={cn("w-5 h-5", themePreference === t.id ? t.color : "text-muted-foreground")} />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-center">{t.label}</span>
                 </button>
               ))}
             </div>

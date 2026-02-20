@@ -7,6 +7,7 @@ import { GlobalSessionManager } from "@/components/GlobalSessionManager";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import QueryProvider from "@/components/providers/QueryProvider";
 import { SyncProvider } from "@/components/providers/SyncProvider";
+import IntelligentThemeHandler from "@/components/IntelligentThemeHandler";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -73,11 +74,12 @@ export default function RootLayout({
         translate="no"
       >
         <ThemeProvider
-          attribute="class"
+          attribute="class" enableSystem
           defaultTheme="dark"
           disableTransitionOnChange
-          themes={['light', 'dark', 'neumo']}
+          themes={['light', 'dark', 'fast-light', 'fast-dark', 'auto']}
         >
+          <IntelligentThemeHandler />
           <QueryProvider>
             <SyncProvider>
               <GlobalSessionManager />
