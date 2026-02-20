@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { UserContract } from '@/contracts/user';
 import { useCartStore } from './cart';
 import { useSessionStore } from './session-store';
@@ -56,6 +57,7 @@ interface UIState {
   viewQueries: Record<string, string | null>;
   showQueries: boolean;
   previousView: ViewType | null;
+  themePreference: 'light' | 'dark' | 'fast-light' | 'fast-dark' | 'auto';
   setCurrentView: (view: ViewType) => void;
   setShowQueries: (show: boolean) => void;
   setNotifications: (notifications: NotificationsConfig) => void;
@@ -66,41 +68,56 @@ interface UIState {
   setIsChatBotOpen: (open: boolean) => void;
   setIsCalculatorOpen: (open: boolean) => void;
   setLastQuery: (query: string | null, view?: string) => void;
+  setThemePreference: (pref: 'light' | 'dark' | 'fast-light' | 'fast-dark' | 'auto') => void;
 }
 
-export const useUIStore = create<UIState>((set) => ({
-  currentView: 'dashboard',
-  sidebarOpen: true,
-  isCreateProductModalOpen: false,
-  isChatBotOpen: false,
-  isCalculatorOpen: false,
-  initialProductName: '',
-  notifications: {
-    lowStock: true,
-    salesAlerts: true
-  },
-  viewQueries: {},
-  showQueries: false,
-  previousView: null,
-  setCurrentView: (view) => set((state) => ({
-    previousView: view !== state.currentView ? state.currentView : state.previousView,
-    currentView: view
-  })),
-  setShowQueries: (show) => set({ showQueries: show }),
-  setNotifications: (notifications) => set({ notifications }),
-  toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
-  setSidebarOpen: (open) => set({ sidebarOpen: open }),
-  setIsCreateProductModalOpen: (open) => set({ isCreateProductModalOpen: open }),
-  setIsChatBotOpen: (open) => set({ isChatBotOpen: open }),
-  setIsCalculatorOpen: (open) => set({ isCalculatorOpen: open }),
-  setInitialProductName: (name) => set({ initialProductName: name }),
-  setLastQuery: (query, view) => set((state) => ({
-    viewQueries: {
-      ...state.viewQueries,
-      [view || state.currentView]: query
+export const useUIStore = create<UIState>()(
+  persist(
+    (set) => ({
+      currentView: 'dashboard',
+      sidebarOpen: true,
+      isCreateProductModalOpen: false,
+      isChatBotOpen: false,
+      isCalculatorOpen: false,
+      initialProductName: '',
+      notifications: {
+        lowStock: true,
+        salesAlerts: true
+      },
+      viewQueries: {},
+      showQueries: false,
+      previousView: null,
+      themePreference: 'dark',
+      setCurrentView: (view) => set((state) => ({
+        previousView: view !== state.currentView ? state.currentView : state.previousView,
+        currentView: view
+      })),
+      setShowQueries: (show) => set({ showQueries: show }),
+      setNotifications: (notifications) => set({ notifications }),
+      toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
+      setSidebarOpen: (open) => set({ sidebarOpen: open }),
+      setIsCreateProductModalOpen: (open) => set({ isCreateProductModalOpen: open }),
+      setIsChatBotOpen: (open) => set({ isChatBotOpen: open }),
+      setIsCalculatorOpen: (open) => set({ isCalculatorOpen: open }),
+      setInitialProductName: (name) => set({ initialProductName: name }),
+      setLastQuery: (query, view) => set((state) => ({
+        viewQueries: {
+          ...state.viewQueries,
+          [view || state.currentView]: query
+        }
+      })),
+      setThemePreference: (pref) => set({ themePreference: pref }),
+    }),
+    {
+      name: 'ui-storage',
+      partialize: (state) => ({
+        themePreference: state.themePreference,
+        notifications: state.notifications,
+        showQueries: state.showQueries
+      })
     }
-  })),
-}));
+  )
+);
 
 // --- Helper Hooks ---
 /**
