@@ -45,7 +45,7 @@ const CostSheetView = () => {
   const [activeSubSectionId, setActiveSubSectionId] = useState('group-1-3');
   const [quickModeProducts, setQuickModeProducts] = React.useState<any[] | null>(null);
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
-  const [sidePanelMode, setSidePanelMode] = useState<"calculator" | "ai">("ai");
+  const [sidePanelMode, setSidePanelMode] = useState<"calculator" | "ai" | "both">("ai");
 
   const handleSetActiveSection = (id: string) => {
     setActiveSection(id);
@@ -488,7 +488,7 @@ const CostSheetView = () => {
 
   return (
     <div className="w-full max-w-none px-0 pb-32 pt-0">
-      <CostSheetSidePanel isOpen={isSidePanelOpen} onClose={() => setIsSidePanelOpen(false)} mode={sidePanelMode} sheetData={data} />
+      <CostSheetSidePanel isOpen={isSidePanelOpen} onOpen={(mode) => { setSidePanelMode(mode); setIsSidePanelOpen(true); }} onClose={() => setIsSidePanelOpen(false)} mode={sidePanelMode} sheetData={data} />
       <CostSheetHelpPanel isOpen={isHelpPanelOpen} onClose={() => setIsHelpPanelOpen(false)} />
       <CostSheetActionsPanel
         isOpen={isActionsPanelOpen}
@@ -591,7 +591,6 @@ const CostSheetView = () => {
                         onOpenSections={onOpenSections}
                         isEditing={isEditing}
                         onToggleEditing={() => setIsEditing(!isEditing)}
-                        onOpenSidePanel={(mode) => { setSidePanelMode(mode); setIsSidePanelOpen(true); }}
                     />
                 </div>
 
