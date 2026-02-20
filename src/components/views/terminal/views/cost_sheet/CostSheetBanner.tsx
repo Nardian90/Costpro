@@ -5,8 +5,14 @@ import { useUIStore } from "@/store";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { CostSheetModeDropdown, CostSheetViewMode } from "./CostSheetModeDropdown";
 
-export const CostSheetBanner = () => {
+interface CostSheetBannerProps {
+  viewMode: CostSheetViewMode;
+  setViewMode: (mode: CostSheetViewMode) => void;
+}
+
+export const CostSheetBanner = ({ viewMode, setViewMode }: CostSheetBannerProps) => {
   const { setCurrentView } = useUIStore();
   return (
     <div className="hidden sm:flex flex-col sm:flex-row items-center justify-between gap-4 mb-8 px-2">
@@ -33,8 +39,9 @@ export const CostSheetBanner = () => {
         </div>
       </div>
       <div className="flex items-center gap-4">
+        <CostSheetModeDropdown viewMode={viewMode} setViewMode={setViewMode} />
         <ThemeToggle />
-        <div className="neu-badge !text-success !bg-success/10 border border-success/20 py-1 px-3">
+        <div className="hidden lg:flex neu-badge !text-success !bg-success/10 border border-success/20 py-1 px-3">
           Sistema Activo
         </div>
       </div>
