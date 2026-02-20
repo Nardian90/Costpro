@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import {
   Calculator,
   X,
   Delete,
-  Divide,
   Plus,
   Minus,
+  Divide,
   Equal,
   Move
 } from 'lucide-react';
@@ -128,14 +128,14 @@ export const FloatingCalculator: React.FC = () => {
           <motion.div
             drag
             dragConstraints={constraintsRef}
-            dragElastic={0.1}
+            dragElastic={0.05}
             dragMomentum={false}
             variants={fanVariants}
             initial="closed"
             animate="open"
             exit="closed"
             className={cn(
-              "absolute top-24 right-12 w-full max-w-[320px] rounded-[2rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] overflow-hidden border flex flex-col pointer-events-auto",
+              "absolute top-24 right-12 w-[320px] max-w-[calc(100vw-2rem)] rounded-[2rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] overflow-hidden border flex flex-col pointer-events-auto",
               isDark
                 ? "bg-[#010203]/95 border-[#39FF14]/30 text-white"
                 : "bg-white/95 border-primary/30 text-foreground"
