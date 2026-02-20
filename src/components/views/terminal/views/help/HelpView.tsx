@@ -6,7 +6,7 @@ import {
   Book, HelpCircle, ShoppingCart, Package,
   ShieldCheck, Zap, Cpu, Search, ChevronRight,
   FileText, Calculator, TrendingUp, Info, ArrowLeft,
-  Settings, UserCheck, CreditCard, Layout, Download
+  Settings, UserCheck, CreditCard, Layout, Download, History, Calendar, CheckCircle2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -34,8 +34,9 @@ import IpvFlowDiagram from './help/IpvFlowDiagram';
 import RolesDiagram from './help/RolesDiagram';
 import KidsOnboarding from './help/KidsOnboarding';
 import { useUIStore } from '@/store';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
-type HelpSection = 'intro' | 'costs' | 'pos' | 'inventory' | 'innovation' | 'security' | 'ipv' | 'admin' | 'kids' | 'resolutions';
+type HelpSection = 'intro' | 'costs' | 'pos' | 'inventory' | 'innovation' | 'security' | 'ipv' | 'admin' | 'kids' | 'resolutions' | 'updates';
 
 export default function HelpView() {
   const [selectedSection, setSelectedSection] = useState<HelpSection>('intro');
@@ -50,8 +51,9 @@ export default function HelpView() {
     { id: 'ipv', label: 'Conciliación IPV', icon: CreditCard, color: 'text-blue-600' },
     { id: 'security', label: 'Seguridad RLS', icon: ShieldCheck, color: 'text-rose-500' },
     { id: 'admin', label: 'Administración', icon: Settings, color: 'text-slate-500' },
-    { id: 'kids', label: 'Para Niños', icon: UserCheck, color: 'text-pink-500' },
+    { id: 'kids', label: 'Simplificando', icon: UserCheck, color: 'text-pink-500' },
     { id: 'resolutions', label: 'Resoluciones', icon: Info, color: 'text-blue-400' },
+    { id: 'updates', label: 'Actualizaciones', icon: History, color: 'text-orange-500' },
   ];
 
   return (
@@ -60,6 +62,7 @@ export default function HelpView() {
       <div className="border-b bg-card/50 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-4">
+            <div className="md:hidden"><ThemeToggle /></div>
             <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
               <HelpCircle className="w-7 h-7 text-primary" />
             </div>
@@ -69,6 +72,7 @@ export default function HelpView() {
             </div>
           </div>
           <div className="hidden md:flex items-center gap-3">
+            <ThemeToggle />
 
             <Button
               onClick={() => window.open("/manuals/COSTPRO.pdf", "_blank")}
@@ -188,6 +192,11 @@ export default function HelpView() {
                    <div className="space-y-4">
                       <h2 className="text-[clamp(1.75rem,7vw,2.5rem)] font-black uppercase tracking-tighter leading-tight">Ingeniería de Costos v5</h2>
                       <p className="text-muted-foreground font-medium">Cumplimiento total con normativas vigentes y precisión decimal extendida.</p>
+                   <div className="p-6 rounded-3xl bg-primary/5 border border-primary/10">
+                      <p className="text-sm leading-relaxed text-muted-foreground">
+                        La Ficha de Costo en CostPro no es solo un documento contable; es el núcleo estratégico de su negocio. Basada en la <span className="text-primary font-bold">Resolución 148/2023</span>, permite demostrar las bases de sus precios con total transparencia. El sistema automatiza el cálculo de los 14 niveles de gasto, integrando materias primas (Anexo I), fuerza de trabajo (Anexo II) y gastos indirectos mediante coeficientes precisos, garantizando la racionalidad y legalidad en cada ficha.
+                      </p>
+                   </div>
                    </div>
 
                    <CostFlowDiagram />
@@ -228,6 +237,20 @@ export default function HelpView() {
                   <div className="space-y-4">
                     <h2 className="text-[clamp(1.75rem,7vw,2.5rem)] font-black uppercase tracking-tighter leading-tight">Punto de Venta Móvil</h2>
                     <p className="text-muted-foreground font-medium">Diseñado para entornos de alto tráfico con controles táctiles optimizados.</p>
+                  <div className="grid md:grid-cols-3 gap-6">
+                    <div className="p-6 rounded-3xl bg-card border border-border">
+                      <h4 className="font-black text-[10px] uppercase tracking-widest text-primary mb-2">Velocidad Operativa</h4>
+                      <p className="text-xs text-muted-foreground leading-relaxed">Cada milisegundo cuenta. El POS utiliza una arquitectura de "Estado Local Primero", permitiendo registrar ventas incluso con latencia de red, sincronizando en segundo plano.</p>
+                    </div>
+                    <div className="p-6 rounded-3xl bg-card border border-border">
+                      <h4 className="font-black text-[10px] uppercase tracking-widest text-primary mb-2">Ergonomía Táctil</h4>
+                      <p className="text-xs text-muted-foreground leading-relaxed">El "Sticky Cart" o Carrito Inteligente está diseñado para el pulgar, facilitando la operación con una sola mano en dispositivos móviles durante picos de trabajo.</p>
+                    </div>
+                    <div className="p-6 rounded-3xl bg-card border border-border">
+                      <h4 className="font-black text-[10px] uppercase tracking-widest text-primary mb-2">Integración de Caja</h4>
+                      <p className="text-xs text-muted-foreground leading-relaxed">Vinculación directa con el flujo de efectivo y conciliación IPV, asegurando que cada venta tenga un respaldo financiero rastreable.</p>
+                    </div>
+                  </div>
                   </div>
 
                   <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -253,6 +276,11 @@ export default function HelpView() {
                    <div className="space-y-4">
                     <h2 className="text-[clamp(1.75rem,7vw,2.5rem)] font-black uppercase tracking-tighter leading-tight">Gestión de Almacenes</h2>
                     <p className="text-muted-foreground font-medium">Trazabilidad total de existencias y control de merma.</p>
+                  <div className="p-6 rounded-3xl bg-amber-500/5 border border-amber-500/10">
+                    <p className="text-sm leading-relaxed text-muted-foreground">
+                      El módulo de inventario implementa un sistema de <span className="text-amber-600 font-bold">Burbujas de Contexto</span>. Cada sucursal mantiene su propia existencia aislada, evitando errores de cruce de mercancía. La trazabilidad incluye el registro de lotes, fechas de vencimiento y un control riguroso de mermas, permitiendo auditorías precisas en tiempo real.
+                    </p>
+                  </div>
                   </div>
 
                   <InventoryFlowDiagram />
@@ -271,7 +299,7 @@ export default function HelpView() {
               {selectedSection === 'innovation' && (
                 <div className="space-y-12">
                    <div className="space-y-6">
-                      <div className="p-10 rounded-[3rem] bg-slate-950 text-white border border-white/10 shadow-2xl shadow-primary/10">
+                      <div className="p-10 rounded-[3rem] bg-card dark:bg-slate-950 text-card-foreground dark:text-white border border-border dark:border-white/10 shadow-2xl shadow-primary/10">
                         <div className="flex items-center gap-6 mb-8">
                           <div className="p-4 rounded-2xl bg-primary/10">
                             <Cpu className="w-12 h-12 text-primary" />
@@ -297,6 +325,11 @@ export default function HelpView() {
                    <div className="space-y-4">
                     <h2 className="text-[clamp(1.75rem,7vw,2.5rem)] font-black uppercase tracking-tighter leading-tight">Arquitectura de Seguridad</h2>
                     <p className="text-muted-foreground font-medium">Privacidad de grado empresarial mediante Row-Level Security.</p>
+                  <div className="p-6 rounded-3xl bg-rose-500/5 border border-rose-500/10">
+                    <p className="text-sm leading-relaxed text-muted-foreground">
+                      La seguridad en CostPro no es opcional, está integrada en el ADN de la base de datos. Mediante <span className="text-rose-600 font-bold">Row-Level Security (RLS)</span>, garantizamos que un usuario solo pueda acceder a los datos de las sucursales para las que tiene permiso explícito. Ni siquiera errores en el código frontend pueden exponer datos sensibles de otros clientes.
+                    </p>
+                  </div>
                   </div>
 
                   <SecurityFlowDiagram />
@@ -382,6 +415,97 @@ export default function HelpView() {
                   </div>
                 </div>
               )}
+              {selectedSection === 'updates' && (
+                <div className="space-y-12">
+                  <div className="space-y-4">
+                    <h2 className="text-[clamp(1.75rem,7vw,2.5rem)] font-black uppercase tracking-tighter leading-tight">Historial de Actualizaciones</h2>
+                    <p className="text-muted-foreground font-medium">Registro cronológico de mejoras y nuevas funcionalidades en CostPro.</p>
+                  </div>
+
+                  <div className="space-y-8">
+                    {[
+                      {
+                        version: "v5.7.25",
+                        date: "14 de Marzo, 2026",
+                        title: "Express Generation & Quick Mode",
+                        description: "Optimización drástica en la eficiencia operativa de la ingeniería de costos.",
+                        changes: [
+                          "Implementación del Modo Rápido para entrada express de datos.",
+                          "Integración de Generación Masiva pre-poblada.",
+                          "Documentación didáctica visual mediante diagramas SVG.",
+                          "Sincronización total de versiones en metadatos y UI."
+                        ],
+                        status: "Saludable",
+                        score: "9.65"
+                      },
+                      {
+                        version: "v5.7.24",
+                        date: "6 de Marzo, 2026",
+                        title: "Next-Gen Welcome Landing",
+                        description: "Reposicionamiento estratégico del punto de entrada al sistema.",
+                        changes: [
+                          "Nueva Landing Page de Bienvenida con diseño Bento.",
+                          "Desacoplamiento del flujo de autenticación (Login Modal).",
+                          "Optimizaciones de performance en assets estáticos.",
+                          "Nuevas narrativas de automatización visuales."
+                        ],
+                        status: "Estable",
+                        score: "9.45"
+                      },
+                      {
+                        version: "v5.7.23",
+                        date: "2 de Marzo, 2026",
+                        title: "Hardening & Observability",
+                        description: "Fortalecimiento de la integridad de datos y trazabilidad universal.",
+                        changes: [
+                          "Validación estricta de contratos de API con Zod.",
+                          "Cobertura del 100% de hooks con logging estructurado.",
+                          "Eliminación de ambigüedades en tipos de datos.",
+                          "Mejora en la trazabilidad de transacciones SQL."
+                        ],
+                        status: "Estable",
+                        score: "9.35"
+                      }
+                    ].map((update, i) => (
+                      <div key={i} className="relative pl-8 border-l-2 border-primary/20 pb-8 last:pb-0">
+                        <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary ring-4 ring-background" />
+                        <div className="flex flex-col gap-4 bg-card border border-border p-8 rounded-[2.5rem] hover:border-primary/30 transition-all">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                              <Badge variant="outline" className="rounded-lg font-black bg-primary/10 text-primary border-primary/20">
+                                {update.version}
+                              </Badge>
+                              <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                                <Calendar className="w-3 h-3" />
+                                {update.date}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                               <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Tech Score:</div>
+                               <div className="text-sm font-black text-primary">{update.score}</div>
+                            </div>
+                          </div>
+
+                          <div>
+                            <h3 className="text-xl font-black uppercase tracking-tight mb-2">{update.title}</h3>
+                            <p className="text-sm text-muted-foreground font-medium leading-relaxed">{update.description}</p>
+                          </div>
+
+                          <div className="grid sm:grid-cols-2 gap-3">
+                            {update.changes.map((change, j) => (
+                              <div key={j} className="flex gap-3 items-start">
+                                <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
+                                <span className="text-xs font-medium text-foreground/80">{change}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
 
             </motion.div>
           </AnimatePresence>
