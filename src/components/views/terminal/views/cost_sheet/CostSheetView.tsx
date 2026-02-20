@@ -17,7 +17,6 @@ import CostSheetWizard from './CostSheetWizard';
 import CostSheetSummary from './CostSheetSummary';
 import { CostSheetFormulaGuide } from './CostSheetFormulaGuide';
 import { CostSheetBanner } from './CostSheetBanner';
-import { CostSheetModeSwitcher } from './CostSheetModeSwitcher';
 import { CostSheetAuditView } from './CostSheetAuditView';
 import { CostSheetActionsPanel } from './CostSheetActionsPanel';
 import { CostSheetHelpPanel } from './CostSheetHelpPanel';
@@ -29,7 +28,7 @@ import { useUIStore } from '@/store';
 import { CostSheetMassiveGenerator } from './CostSheetMassiveGenerator';
 import { CostSheetExportModal, ExportOptions } from './CostSheetExportModal';
 import { CostSheetQuickMode } from './CostSheetQuickMode';
-import { CostSheetViewControls } from './CostSheetViewControls';
+import { CostSheetViewMode } from './CostSheetModeDropdown';
 import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
 import ActionMenu from '@/components/ui/ActionMenu';
 import { Layout, Eye, Edit, FileText, Trash2, Download, FileSpreadsheet, Upload, Save, BarChart3, ClipboardList, Activity, MoreVertical, AlertTriangle, ArrowLeft, Table2, Wand2, BookOpen, Zap as ZapIcon, Sparkles, Calculator } from 'lucide-react';
@@ -71,8 +70,17 @@ const CostSheetView = () => {
   } = useCostSheetCalculator(data);
 
   const [isEditing, setIsEditing] = useState(true);
-  const [viewMode, setViewMode] = useState<'expert' | 'assisted' | 'reading' | 'quick'>('expert');
+  const [viewMode, setViewMode] = useState<CostSheetViewMode>('expert');
   const [layoutMode, setLayoutMode] = useState<ViewMode>('grid');
+
+  const handleSetViewMode = (mode: CostSheetViewMode) => {
+    if (mode === 'preview') {
+      setIsEditing(false);
+    } else {
+      setIsEditing(true);
+    }
+    setViewMode(mode);
+  };
 
   React.useEffect(() => {
     setLayoutMode(isMobile ? 'grid' : 'table');
@@ -502,6 +510,8 @@ const CostSheetView = () => {
         isOpen={isActionsPanelOpen}
         onClose={() => setIsActionsPanelOpen(false)}
         actions={secondaryActions}
+        layoutMode={layoutMode}
+        setLayoutMode={setLayoutMode}
       />
 
       <CostSheetSidebarNav
@@ -527,16 +537,9 @@ const CostSheetView = () => {
         onSelect={handleSetActiveSection}
       />
 
-      <CostSheetBanner />
+      <CostSheetBanner viewMode={viewMode} setViewMode={handleSetViewMode} />
 
-      <div className="max-w-6xl mx-auto px-4 mb-8">
-          <CostSheetViewControls
-            viewMode={viewMode}
-            setViewMode={setViewMode}
-            layoutMode={layoutMode}
-            setLayoutMode={setLayoutMode}
-          />
-      </div>
+
 
       {isBlocked && (
           <div className="mb-6 animate-in slide-in-from-top duration-500">
@@ -759,7 +762,7 @@ const CostSheetView = () => {
                 <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => { setIsEditing(true); setViewMode('expert'); }}
+                    onClick={() => { setIsEditing(true); setViewMode('expert'); handleSetViewMode('expert'); }}
                     className="w-full sm:w-auto text-primary hover:bg-primary/10 font-bold uppercase tracking-widest text-xs h-9 px-4 rounded-xl"
                 >
                     <Edit className="w-3.5 h-3.5 mr-2" />
