@@ -162,7 +162,7 @@ export const calculateCostSheetHealth = (
                 const formula = row.formula || row.totalFormula || '';
                 const annexMatches = formula.match(/Anexo\s*['"]?([^'"]+)['"]?/g);
                 if (annexMatches) {
-                    annexMatches.forEach((m: str) => {
+                    annexMatches.forEach((m: string) => {
                         const id = m.replace(/Anexo\s*['"]?/, '').replace(/['"]?$/, '');
                         if (!data.annexes.find((a: any) => a.id === id)) {
                             results.push({
