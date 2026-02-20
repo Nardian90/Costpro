@@ -1,30 +1,22 @@
-
 import { CostSheetDataContract } from '@/contracts/cost-sheet';
 
 const template: CostSheetDataContract = {
-  "id": "costpro-full-v5",
-  "name": "Pan suave",
-  "version": "5.7.25",
-  "metadata": {
-    "author": "Eli - Senior Specialist",
-    "description": "Ficha de referencia para estudio de costos industriales complejos con integración de anexos y fórmulas dinámicas."
-  },
   "header": {
     "code": "=GET_ANEXO_FILA_DATO(\"I\", 1, \"code\")",
     "name": "=GET_ANEXO_FILA_DATO(\"I\", 1, \"description\")",
     "date": new Date().toISOString().split('T')[0],
-    "unit": "=GET_ANEXO_FILA_DATO(\"I\", 1, \"um\")",
     "quantity": "=GET_ANEXO_FILA_DATO(\"I\", 1, \"consumption_norm\")",
     "currency": "CUP",
     "category": "",
-    "type": "-",
+    "type": "EMPRESA",
+    "unit": "=GET_ANEXO_FILA_DATO(\"I\", 1, \"um\")",
     "product_code": "=GET_ANEXO_FILA_DATO(\"I\", 1, \"code\")",
-    "company": "-",
-    "organism": "-",
-    "union": "-",
-    "destination": "-",
-    "production_level": 1,
-    "capacity_utilization": 1,
+    "company": "",
+    "organism": "",
+    "union": "",
+    "destination": "",
+    "production_level": "562",
+    "capacity_utilization": "100.00%",
     "sale_price": "=GET_FILA_DATO(\"16\", \"total\")",
     "client": ""
   },
@@ -740,7 +732,7 @@ const template: CostSheetDataContract = {
           "baseDeCalculoRef": "12",
           "calculationMethod": "FORMULA",
           "totalFormula": "ref('12') * 0.3",
-          "formula": "ref('12') * 0.2900",
+          "formula": "ref('12') * 0.3",
           "children": [],
           "baseRef": "12",
           "isPercent": false,
@@ -880,58 +872,7 @@ const template: CostSheetDataContract = {
           "formula": "consumption_norm * price"
         }
       ],
-      "data": [
-        {
-          "no": 0,
-          "classification": "1.1.1 - De ello: - Insumos (MP)",
-          "code": "",
-          "description": "Harina de Trigo",
-          "um": "Kg",
-          "consumption_norm": 0.28,
-          "price": 250,
-          "total": 0
-        },
-        {
-          "no": 0,
-          "classification": "1.1.1 - De ello: - Insumos (MP)",
-          "code": "",
-          "description": "Agua",
-          "um": "Lt",
-          "consumption_norm": 0.16,
-          "price": 15,
-          "total": 0
-        },
-        {
-          "no": 0,
-          "classification": "1.1.1 - De ello: - Insumos (MP)",
-          "code": "",
-          "description": "Levadura",
-          "um": "Kg",
-          "consumption_norm": 0.008,
-          "price": 400,
-          "total": 0
-        },
-        {
-          "no": 0,
-          "classification": "1.1.1 - De ello: - Insumos (MP)",
-          "code": "",
-          "description": "Sal",
-          "um": "Kg",
-          "consumption_norm": 0.004,
-          "price": 40,
-          "total": 0
-        },
-        {
-          "no": 0,
-          "classification": "1.1.1 - De ello: - Insumos (MP)",
-          "code": "",
-          "description": "Azúcar",
-          "um": "Kg",
-          "consumption_norm": 0.012,
-          "price": 200,
-          "total": 0
-        }
-      ]
+      "data": []
     },
     {
       "id": "II",
@@ -951,7 +892,7 @@ const template: CostSheetDataContract = {
         },
         {
           "key": "time_norm",
-          "label": "Horas por Paquete"
+          "label": "Horas Mensuales"
         },
         {
           "key": "hourly_rate",
@@ -967,17 +908,7 @@ const template: CostSheetDataContract = {
           "formula": "time_norm * hourly_rate * worker_count"
         }
       ],
-      "data": [
-        {
-          "no": 0,
-          "classification": "2.1.1 - De ello: Salarios",
-          "description": "Panadero (Mezcla, formado, horneado)",
-          "time_norm": 0.15,
-          "hourly_rate": 45,
-          "worker_count": 1,
-          "total": 0
-        }
-      ]
+      "data": []
     },
     {
       "id": "III",
@@ -1001,38 +932,19 @@ const template: CostSheetDataContract = {
         },
         {
           "key": "useful_life",
-          "label": "% Deprec. Anual"
+          "label": "% Deprec."
         },
         {
           "key": "quantity",
-          "label": "Meses Vida Útil"
+          "label": "Tiempo Explot."
         },
         {
           "key": "depreciation_cost",
-          "label": "Deprec. Mensual",
+          "label": "Deprec.",
           "formula": "(initial_value * (useful_life / 100)) / quantity"
         }
       ],
-      "data": [
-        {
-          "classification": "3.1.4 - -Maquinas y eq. productivos",
-          "code": "",
-          "name": "Horno Industrial (asignación proporcional)",
-          "initial_value": 500000,
-          "useful_life": 10,
-          "quantity": 12,
-          "depreciation_cost": 0
-        },
-        {
-          "classification": "3.1.4 - -Maquinas y eq. productivos",
-          "code": "",
-          "name": "Amasadora (asignación proporcional)",
-          "initial_value": 150000,
-          "useful_life": 10,
-          "quantity": 12,
-          "depreciation_cost": 0
-        }
-      ]
+      "data": []
     },
     {
       "id": "IV",
@@ -1052,23 +964,10 @@ const template: CostSheetDataContract = {
         },
         {
           "key": "amount",
-          "label": "Importe por Paquete"
+          "label": "Importe"
         }
       ],
-      "data": [
-        {
-          "classification": "3.1 - OTROS GASTOS DIRECTOS",
-          "code": "",
-          "description": "Gas/Energía (horneado proporcional)",
-          "amount": 25
-        },
-        {
-          "classification": "3.1 - OTROS GASTOS DIRECTOS",
-          "code": "",
-          "description": "Empaque/Bolsa para 8 bolas",
-          "amount": 5
-        }
-      ]
+      "data": []
     },
     {
       "id": "V",
@@ -1100,28 +999,19 @@ const template: CostSheetDataContract = {
           "formula": "daily_allowance * days"
         }
       ],
-      "data": [
-        {
-          "classification": "",
-          "code": "",
-          "worker_name": "",
-          "daily_allowance": "",
-          "days": "",
-          "total": 0
-        }
-      ]
+      "data": []
     }
   ],
   "signature": {
     "prepared_by": "Elaborado por:",
     "approved_by": "Aprobado por:"
   },
-  "id": "costpro-ejempo-full-v5",
-  "name": "Producción de Paquete de Pan de 8 Bolas",
+  "id": "costpro-full-v5",
+  "name": "Producción de Pan de Corteza Dura (Lote Especial)",
   "version": "5.7.25",
   "metadata": {
     "author": "Eli - Senior Specialist",
-    "description": "Ficha de costos para panadería - lote unitario de 8 bolas de pan."
+    "description": "Ficha de referencia para estudio de costos industriales complejos con integración de anexos y fórmulas dinámicas."
   },
   "footer": "FIN DEL DOCUMENTO • GENERADO AUTOMÁTICAMENTE POR COSTPRO "
 };
