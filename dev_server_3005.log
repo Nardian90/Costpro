@@ -12,3 +12,8 @@ Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and 
 Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment.
  GET /verify-ui 200 in 624ms (compile: 273ms, render: 351ms)
  GET /verify-ui 200 in 137ms (compile: 36ms, render: 101ms)
+Persisting failed: Unable to write SST file 00000323.sst
+
+Caused by:
+    No such file or directory (os error 2)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
