@@ -19,7 +19,7 @@ export default function EliDiagram() {
   };
 
   return (
-    <div className="w-full overflow-x-auto no-scrollbar bg-slate-950 rounded-[3rem] border border-white/10">
+    <div className="w-full overflow-x-auto no-scrollbar bg-card dark:bg-slate-950 rounded-[3rem] border border-border dark:border-white/10">
       <div className="min-w-[600px] aspect-video flex items-center justify-center p-8 overflow-hidden relative group">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent opacity-50" />
 
