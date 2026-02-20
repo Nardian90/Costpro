@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { produce } from 'immer';
 import Decimal from 'decimal.js';
+import { Parser } from 'expr-eval';
 import {
   CostSheetData,
   CostSheetRow,
@@ -107,12 +108,13 @@ const evaluateAnnexExpression = (expression: string, rowData: any, header: any, 
     });
 
     // Basic arithmetic evaluation
-    if (!/^[0-9.+\-*/() ]+$/.test(expr)) {
-        return isNaN(Number(trimmed)) ? 0 : Number(trimmed);
-    }
-
-    return new Function(`return ${expr}`)();
-  } catch (error) {
+    // Advanced arithmetic evaluation with expr-eval
+    const parser = new Parser();
+    parser.functions.REDONDEO = (val: number, decimals: number = 2) => {
+        return new Decimal(val).toDecimalPlaces(decimals).toNumber();
+    };
+    parser.functions.round = parser.functions.REDONDEO;
+    return parser.evaluate(expr);
     return isNaN(Number(trimmed)) ? 0 : Number(trimmed);
   }
 };
@@ -177,7 +179,7 @@ const evaluateHeaderExpression = (
         });
 
         // ref('...') and vh('...') support in header
-        expr = expr.replace(/\b(ref|vh)\(['"]([^'"]+)['"]\)/g, (_, fn, __, search) => {
+        expr = expr.replace(/\b(ref|vh)\(['"]([^'"]+)['"]\)/g, (_, fn, search) => {
             const field = fn === 'ref' ? 'total' : 'calculatedVH';
             const val = Object.values(calculatedValues).find(v => v.metadata?.id === search || v.metadata?.classification === search);
             if (val) return String((val as any)[field] || 0);
@@ -194,10 +196,15 @@ const evaluateHeaderExpression = (
             }
         }
 
-        // Basic arithmetic evaluation
-        if (/^[0-9.+\-*/() ]+$/.test(expr)) {
-            return new Function(`return ${expr}`)();
-        }
+        // Advanced arithmetic evaluation with expr-eval
+        const parser = new Parser();
+        parser.functions.REDONDEO = (val: number, decimals: number = 2) => {
+            return new Decimal(val).toDecimalPlaces(decimals).toNumber();
+        };
+        // Also map standard round for compatibility
+        parser.functions.round = parser.functions.REDONDEO;
+
+        return parser.evaluate(expr);
 
         // If not simple arithmetic, just return the processed string if it's not a number
         return expr;
