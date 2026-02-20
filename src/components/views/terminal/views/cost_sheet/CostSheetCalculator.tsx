@@ -75,32 +75,27 @@ export const CostSheetCalculator: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [display, equation, lastResult]);
 
-  const itemVariants: Variants = {
-    closed: { opacity: 0, scale: 0.5, rotate: -20, y: 10 },
-    open: { opacity: 1, scale: 1, rotate: 0, y: 0 }
-  };
-
   return (
-    <div className="flex flex-col h-full bg-transparent">
-      {/* Display */}
+    <div className="flex flex-col h-full bg-transparent overflow-hidden">
+      {/* Display - Optimized for ergonomics */}
       <div className={cn(
-        "px-8 py-10 flex flex-col items-end justify-center gap-2 min-h-[140px] relative overflow-hidden",
+        "px-6 py-6 flex flex-col items-end justify-center gap-1 min-h-[100px] shrink-0 relative overflow-hidden",
         isDark ? "bg-black/40" : "bg-slate-50/50"
       )}>
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
-             style={{ backgroundImage: 'linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)', backgroundSize: '15px 15px' }} />
+             style={{ backgroundImage: 'linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)', backgroundSize: '12px 12px' }} />
 
-        <motion.div className="text-xs font-mono h-5 uppercase tracking-[0.2em] font-bold opacity-30">
+        <motion.div className="text-[10px] font-mono h-4 uppercase tracking-[0.2em] font-bold opacity-30">
           {equation || '\u00A0'}
         </motion.div>
         <motion.div
           key={display}
-          initial={{ y: 10, opacity: 0 }}
+          initial={{ y: 5, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           className={cn(
-            "text-5xl font-mono tracking-tighter w-full text-right font-black",
+            "text-4xl font-mono tracking-tighter w-full text-right font-black",
             isDark
-              ? "text-[#39FF14] drop-shadow-[0_0_15px_rgba(57,255,20,0.4)]"
+              ? "text-[#39FF14] drop-shadow-[0_0_10px_rgba(57,255,20,0.4)]"
               : "text-primary"
           )}
         >
@@ -108,31 +103,31 @@ export const CostSheetCalculator: React.FC = () => {
         </motion.div>
       </div>
 
-      {/* Keypad */}
-      <div className="flex-1 p-6 grid grid-cols-4 gap-3 bg-gradient-to-b from-transparent to-black/5">
+      {/* Keypad - Compact for no scroll */}
+      <div className="flex-1 p-4 grid grid-cols-4 gap-2 bg-gradient-to-b from-transparent to-black/5 overflow-hidden">
         <CalcButton label="C" onClick={handleClear} variant="danger" />
-        <CalcButton icon={<Delete className="w-5 h-5" />} onClick={handleBackspace} variant="secondary" />
-        <CalcButton icon={<Divide className="w-5 h-5" />} onClick={() => handleOperator('/')} variant="operator" />
-        <CalcButton icon={<X className="w-5 h-5" />} onClick={() => handleOperator('*')} variant="operator" />
+        <CalcButton icon={<Delete className="w-4 h-4" />} onClick={handleBackspace} variant="secondary" />
+        <CalcButton icon={<Divide className="w-4 h-4" />} onClick={() => handleOperator('/')} variant="operator" />
+        <CalcButton icon={<X className="w-4 h-4" />} onClick={() => handleOperator('*')} variant="operator" />
 
         {[7, 8, 9].map(num => (
           <CalcButton key={num} label={num.toString()} onClick={() => handleNumber(num.toString())} />
         ))}
-        <CalcButton icon={<Minus className="w-5 h-5" />} onClick={() => handleOperator('-')} variant="operator" />
+        <CalcButton icon={<Minus className="w-4 h-4" />} onClick={() => handleOperator('-')} variant="operator" />
 
         {[4, 5, 6].map(num => (
           <CalcButton key={num} label={num.toString()} onClick={() => handleNumber(num.toString())} />
         ))}
-        <CalcButton icon={<Plus className="w-5 h-5" />} onClick={() => handleOperator('+')} variant="operator" />
+        <CalcButton icon={<Plus className="w-4 h-4" />} onClick={() => handleOperator('+')} variant="operator" />
 
         {[1, 2, 3].map(num => (
           <CalcButton key={num} label={num.toString()} onClick={() => handleNumber(num.toString())} />
         ))}
         <CalcButton
-          icon={<Equal className="w-6 h-6" />}
+          icon={<Equal className="w-5 h-5" />}
           onClick={handleCalculate}
           variant="primary"
-          className="row-span-2 h-full shadow-2xl shadow-primary/40"
+          className="row-span-2 h-full"
         />
 
         <CalcButton label="0" onClick={() => handleNumber('0')} className="col-span-2" />
@@ -156,14 +151,14 @@ const CalcButton: React.FC<CalcButtonProps> = ({ label, icon, onClick, variant =
 
   const variantStyles = {
     number: isDark
-      ? "bg-white/5 hover:bg-white/10 text-white border-white/5 shadow-inner"
-      : "bg-muted/30 hover:bg-muted/60 text-foreground border-border/40 shadow-sm",
+      ? "bg-white/5 hover:bg-white/10 text-white border-white/5"
+      : "bg-muted/30 hover:bg-muted/60 text-foreground border-border/40",
     operator: isDark
       ? "bg-[#39FF14]/5 hover:bg-[#39FF14]/20 text-[#39FF14] border-[#39FF14]/10"
       : "bg-primary/5 hover:bg-primary/20 text-primary border-primary/10",
     primary: isDark
-      ? "bg-[#39FF14] hover:bg-[#39FF14]/90 text-black border-[#39FF14] shadow-lg shadow-[#39FF14]/20"
-      : "bg-primary hover:bg-primary/90 text-white border-primary shadow-lg shadow-primary/20",
+      ? "bg-[#39FF14] hover:bg-[#39FF14]/90 text-black border-[#39FF14]"
+      : "bg-primary hover:bg-primary/90 text-white border-primary",
     danger: isDark
       ? "bg-red-500/10 hover:bg-red-500/20 text-red-500 border-red-500/20"
       : "bg-red-500/10 hover:bg-red-500/20 text-red-500 border-red-500/20",
@@ -174,11 +169,10 @@ const CalcButton: React.FC<CalcButtonProps> = ({ label, icon, onClick, variant =
 
   return (
     <motion.button
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.95, transition: { type: "spring", stiffness: 400, damping: 10 } }}
+      whileTap={{ scale: 0.95 }}
       onClick={onClick}
       className={cn(
-        "h-14 rounded-2xl flex items-center justify-center text-base font-black border transition-all duration-200",
+        "h-11 rounded-xl flex items-center justify-center text-sm font-black border transition-all duration-200",
         variantStyles[variant],
         className
       )}
