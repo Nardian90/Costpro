@@ -2,9 +2,10 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X as XIcon, FileText, Trash2, Upload, Save, FileSpreadsheet, Download, Settings } from 'lucide-react';
+import { X as XIcon, FileText, Trash2, Upload, Save, FileSpreadsheet, Download, Settings, Table2, LayoutGrid } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
 
 interface ActionItem {
   id: string;
@@ -15,30 +16,43 @@ interface ActionItem {
   disabled?: boolean;
 }
 
-
-
-
 interface CostSheetActionsPanelProps {
   isOpen: boolean;
   onClose: () => void;
   actions: ActionItem[];
-
-
-
-
+  layoutMode: ViewMode;
+  setLayoutMode: (mode: ViewMode) => void;
 }
 
 export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
   isOpen,
   onClose,
   actions,
+  layoutMode,
+  setLayoutMode
 }) => {
   // Categorize actions
   const actionGroups = [
     {
+      title: 'Vista y Formato',
+      isCustom: true,
+      render: () => (
+        <div className="px-4 py-2 space-y-4">
+           <div className="text-[10px] font-black text-primary/70 tracking-[0.4em] uppercase mb-2">
+              Modo de Diseño
+           </div>
+           <ViewSwitcher
+             currentView={layoutMode}
+             onViewChange={setLayoutMode}
+             className="w-full bg-primary/5 border-primary/10"
+           />
+        </div>
+      )
+    },
+    {
       title: 'Herramientas',
       items: [
-        ...actions.filter(a => ['calculator', 'toggle-mode', 'kpis-header'].includes(a.id))
+        ...actions.filter(a => ['calculator', 'kpis-header'].includes(a.id))
       ]
     },
     {
@@ -95,8 +109,12 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-4 space-y-8 no-scrollbar">
-              {actionGroups.map((group, idx) => (
-                group.items.length > 0 && (
+              {actionGroups.map((group, idx) => {
+                if ('isCustom' in group && group.isCustom) {
+                  return <div key={idx}>{group.render()}</div>;
+                }
+
+                return group.items && group.items.length > 0 && (
                   <div key={idx} className="space-y-4">
                     <div className="px-4 text-xs font-black text-primary/70 tracking-[0.4em] uppercase">
                       {group.title}
@@ -129,8 +147,8 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
                       ))}
                     </div>
                   </div>
-                )
-              ))}
+                );
+              })}
             </div>
 
             {/* Footer */}
