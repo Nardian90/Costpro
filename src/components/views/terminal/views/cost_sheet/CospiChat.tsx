@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Sparkles, MessageSquare, Loader2, Bot, Maximize2, Minimize2 } from 'lucide-react';
+import { Send, MessageSquare, Loader2, Bot, Maximize2, Minimize2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTheme } from 'next-themes';
 
@@ -64,31 +64,35 @@ export const CospiChat: React.FC<CospiChatProps> = ({ sheetData, isFullView, onT
     return (
         <div className={cn(
             "flex flex-col h-full overflow-hidden transition-all duration-500",
-            isFullView ? "p-8" : "p-0"
+            isDark ? "bg-[#010203]" : "bg-transparent",
+            isFullView ? "p-4 sm:p-8" : "p-0"
         )}>
             {/* Header with name and toggle */}
             <div className={cn(
-                "flex items-center justify-between mb-4 px-4 py-2 rounded-2xl",
-                isDark ? "bg-white/5" : "bg-muted/50"
+                "flex items-center justify-between mb-4 px-4 py-3 rounded-2xl border mx-2 sm:mx-0",
+                isDark ? "bg-white/5 border-white/5" : "bg-muted/50 border-border/50"
             )}>
                 <div className="flex items-center gap-3">
                     <div className={cn(
-                        "w-8 h-8 rounded-xl flex items-center justify-center border",
-                        isDark ? "bg-[#39FF14]/10 border-[#39FF14]/20" : "bg-primary/10 border-primary/20"
+                        "w-9 h-9 rounded-xl flex items-center justify-center border transition-all",
+                        isDark ? "bg-[#39FF14]/10 border-[#39FF14]/30" : "bg-primary/10 border-primary/20"
                     )}>
-                        <Bot className={cn("w-4 h-4", isDark ? "text-[#39FF14]" : "text-primary")} />
+                        <Bot className={cn("w-5 h-5", isDark ? "text-[#39FF14]" : "text-primary")} />
                     </div>
                     <div>
-                        <h4 className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 leading-none mb-1">Cospi AI</h4>
-                        <p className="text-[10px] font-black uppercase tracking-widest opacity-90">Asistente Inteligente</p>
+                        <h4 className={cn(
+                            "text-[10px] font-black uppercase tracking-[0.3em] leading-none mb-1",
+                            isDark ? "text-[#39FF14]/60" : "text-primary/60"
+                        )}>Cospi AI</h4>
+                        <p className="text-[11px] font-black uppercase tracking-widest opacity-90">Asistente</p>
                     </div>
                 </div>
                 {onToggleFullView && (
                     <button
                         onClick={onToggleFullView}
                         className={cn(
-                            "p-2 rounded-xl transition-all active:scale-90",
-                            isDark ? "hover:bg-white/10 text-white/50" : "hover:bg-primary/10 text-primary/50"
+                            "p-2.5 rounded-xl transition-all active:scale-90",
+                            isDark ? "hover:bg-white/10 text-[#39FF14]/50 hover:text-[#39FF14]" : "hover:bg-primary/10 text-primary/50 hover:text-primary"
                         )}
                         title={isFullView ? "Vista Normal" : "Vista Completa"}
                     >
@@ -102,18 +106,21 @@ export const CospiChat: React.FC<CospiChatProps> = ({ sheetData, isFullView, onT
                 ref={scrollRef}
                 className={cn(
                     "flex-1 overflow-y-auto space-y-4 no-scrollbar pr-2 transition-all duration-500",
-                    isFullView ? "px-12" : "px-4"
+                    isFullView ? "px-4 sm:px-12" : "px-4"
                 )}
             >
                 {messages.length === 0 && (
-                    <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-4 opacity-50">
-                        <div className="w-16 h-16 rounded-3xl border-2 border-dashed border-current flex items-center justify-center">
-                            <MessageSquare className="w-6 h-6" />
+                    <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-4 opacity-40">
+                        <div className={cn(
+                            "w-16 h-16 rounded-[2rem] border-2 border-dashed flex items-center justify-center animate-pulse",
+                            isDark ? "border-[#39FF14]/30" : "border-primary/30"
+                        )}>
+                            <MessageSquare className={cn("w-6 h-6", isDark ? "text-[#39FF14]" : "text-primary")} />
                         </div>
                         <div>
-                            <p className="text-[10px] font-black uppercase tracking-widest">Inicia una consulta con Cospi</p>
-                            <p className="text-[9px] font-medium max-w-[200px] mt-2 leading-relaxed uppercase tracking-tighter">
-                                Pregúntame sobre la Resolución 148, márgenes de utilidad o cualquier duda técnica.
+                            <p className="text-[10px] font-black uppercase tracking-widest italic">Hola, soy Cospi</p>
+                            <p className="text-[9px] font-bold max-w-[200px] mt-2 leading-relaxed uppercase tracking-tighter">
+                                Pregúntame sobre la Resolución 148 o cálculos técnicos.
                             </p>
                         </div>
                     </div>
@@ -122,11 +129,11 @@ export const CospiChat: React.FC<CospiChatProps> = ({ sheetData, isFullView, onT
                 {messages.map((msg, i) => (
                     <div key={i} className={cn("flex w-full", msg.role === 'user' ? "justify-end" : "justify-start")}>
                         <div className={cn(
-                            "max-w-[90%] p-4 rounded-3xl text-xs font-bold shadow-xl break-words leading-relaxed",
+                            "max-w-[92%] sm:max-w-[85%] p-4 rounded-3xl text-[13px] font-black shadow-xl break-words leading-relaxed transition-all",
                             msg.role === 'user'
-                                ? (isDark ? "bg-[#39FF14] text-black rounded-tr-none" : "bg-primary text-white rounded-tr-none")
+                                ? (isDark ? "bg-[#39FF14] text-black rounded-tr-none shadow-[#39FF14]/10" : "bg-primary text-white rounded-tr-none shadow-primary/10")
                                 : (isDark ? "bg-white/5 border border-white/10 rounded-tl-none" : "bg-muted border border-border rounded-tl-none"),
-                            isFullView && "text-sm max-w-[75%]"
+                            isFullView && "sm:text-sm sm:max-w-[75%]"
                         )}>
                             {msg.content}
                         </div>
@@ -140,7 +147,7 @@ export const CospiChat: React.FC<CospiChatProps> = ({ sheetData, isFullView, onT
                             isDark ? "bg-white/5 border-white/10" : "bg-muted border-border"
                         )}>
                             <Loader2 className={cn("w-4 h-4 animate-spin", isDark ? "text-[#39FF14]" : "text-primary")} />
-                            <span className="text-[9px] font-black uppercase tracking-widest opacity-60">Cospi está pensando...</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Cospi analizando...</span>
                         </div>
                     </div>
                 )}
@@ -148,29 +155,29 @@ export const CospiChat: React.FC<CospiChatProps> = ({ sheetData, isFullView, onT
 
             {/* Input Area */}
             <div className={cn(
-                "mt-4 transition-all duration-500",
-                isFullView ? "px-12 pb-8" : "px-4 pb-4"
+                "mt-4 transition-all duration-500 pb-4 shrink-0",
+                isFullView ? "px-4 sm:px-12 sm:pb-8" : "px-4"
             )}>
                 <div className={cn(
-                    "flex items-center gap-2 p-2 rounded-[2rem] border transition-all shadow-inner",
+                    "flex items-center gap-2 p-2 rounded-[2.5rem] border transition-all shadow-inner",
                     isDark ? "bg-white/5 border-white/10 focus-within:border-[#39FF14]/50" : "bg-white border-border focus-within:border-primary/50"
                 )}>
                     <input
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                        placeholder="Escribe tu consulta aquí..."
-                        className="flex-1 bg-transparent border-none px-4 py-2 text-xs font-bold outline-none placeholder:opacity-30"
+                        placeholder="Consulta técnica..."
+                        className="flex-1 bg-transparent border-none px-4 py-2 text-[13px] font-bold outline-none placeholder:opacity-30"
                     />
                     <button
                         onClick={handleSend}
                         disabled={!input.trim() || isLoading}
                         className={cn(
-                            "w-10 h-10 rounded-2xl flex items-center justify-center transition-all shadow-lg active:scale-90 disabled:opacity-30 disabled:grayscale",
+                            "w-11 h-11 rounded-full flex items-center justify-center transition-all shadow-lg active:scale-90 disabled:opacity-30 disabled:grayscale",
                             isDark ? "bg-[#39FF14] text-black shadow-[#39FF14]/20" : "bg-primary text-white shadow-primary/20"
                         )}
                     >
-                        <Send className="w-4 h-4" />
+                        <Send className="w-5 h-5" />
                     </button>
                 </div>
             </div>
