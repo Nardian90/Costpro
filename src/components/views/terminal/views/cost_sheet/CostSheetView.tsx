@@ -23,16 +23,16 @@ import { CostSheetActionsPanel } from './CostSheetActionsPanel';
 import { CostSheetHelpPanel } from './CostSheetHelpPanel';
 import { CostSheetTemplateExplorer } from "./CostSheetTemplateExplorer";
 import { FolderOpen } from "lucide-react";
-import { CostSheetSidePanel } from './CostSheetSidePanel';
 import { CostSheetSidebarNav } from './CostSheetSidebarNav';
 import { CostSheetBottomNav } from './CostSheetBottomNav';
 import { useUIStore } from '@/store';
 import { CostSheetMassiveGenerator } from './CostSheetMassiveGenerator';
 import { CostSheetExportModal, ExportOptions } from './CostSheetExportModal';
 import { CostSheetQuickMode } from './CostSheetQuickMode';
+import { CostSheetViewControls } from './CostSheetViewControls';
 import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
 import ActionMenu from '@/components/ui/ActionMenu';
-import { Layout, Eye, Edit, FileText, Trash2, Download, FileSpreadsheet, Upload, Save, BarChart3, ClipboardList, Activity, MoreVertical, AlertTriangle, ArrowLeft, Table2, Wand2, BookOpen, Zap as ZapIcon, Sparkles } from 'lucide-react';
+import { Layout, Eye, Edit, FileText, Trash2, Download, FileSpreadsheet, Upload, Save, BarChart3, ClipboardList, Activity, MoreVertical, AlertTriangle, ArrowLeft, Table2, Wand2, BookOpen, Zap as ZapIcon, Sparkles, Calculator } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -45,8 +45,6 @@ const CostSheetView = () => {
   const [activeSection, setActiveSection] = useState('kpis');
   const [activeSubSectionId, setActiveSubSectionId] = useState('group-1-3');
   const [quickModeProducts, setQuickModeProducts] = React.useState<any[] | null>(null);
-  const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
-  const [sidePanelMode, setSidePanelMode] = useState<"calculator" | "ai" | "both">("ai");
 
   const handleSetActiveSection = (id: string) => {
     setActiveSection(id);
@@ -352,6 +350,8 @@ const CostSheetView = () => {
     toast.success("Ficha generada exitosamente en modo experto");
   }, [data, setSheet, setActiveSection, setViewMode]);
 
+  const { setCurrentView, setIsChatBotOpen, setIsCalculatorOpen } = useUIStore();
+
   const allActions = React.useMemo(() => [
     {
         id: 'toggle-mode',
@@ -399,9 +399,16 @@ const CostSheetView = () => {
         },
         variant: 'success' as const
     },
+    {
+        id: 'calculator',
+        label: 'Calculadora',
+        icon: Calculator,
+        onClick: () => setIsCalculatorOpen(true),
+        variant: 'outline' as const
+    }
 
 
-  ], [isEditing, loadExample, reset, handleImportJSON, handleExportJSON, handleExportExcel, handleExportPDF, isBlocked]);
+  ], [isEditing, loadExample, reset, handleImportJSON, handleExportJSON, handleExportExcel, handleExportPDF, isBlocked, setIsCalculatorOpen, data]);
 
   const mainActions = React.useMemo(() => [
 
@@ -443,7 +450,7 @@ const CostSheetView = () => {
 
   const onOpenAnnexes = React.useCallback(() => setIsAnnexesSidebarOpen(true), []);
   const onOpenSections = React.useCallback(() => setIsSectionsSidebarOpen(true), []);
-  const { setCurrentView, setIsChatBotOpen } = useUIStore();
+
   const handleBottomAction = React.useCallback((actionId: string) => {
     switch (actionId) {
         case "export-pdf":
@@ -459,14 +466,14 @@ const CostSheetView = () => {
             setIsActionsPanelOpen(true);
             window.scrollTo({ top: 0, behavior: "smooth" });
             break;
-        case "inventory":
-            setCurrentView("inventory");
+        case "calculator":
+            setIsCalculatorOpen(true);
             break;
         case "ai":
             handleSetActiveSection("ai-chat");
             break;
     }
-  }, [setIsExportModalOpen, handleSetActiveSection, setViewMode, setIsActionsPanelOpen, setCurrentView, setIsChatBotOpen]);
+  }, [setIsExportModalOpen, handleSetActiveSection, setViewMode, setIsActionsPanelOpen, setCurrentView, setIsChatBotOpen, setIsCalculatorOpen]);
 
 
   if (!data || !data.header || !data.annexes || !data.sections) {
@@ -490,23 +497,11 @@ const CostSheetView = () => {
 
   return (
     <div className="w-full max-w-none px-0 pb-32 pt-0">
-      <CostSheetSidePanel
-        isOpen={isSidePanelOpen}
-        onOpen={(mode) => { setSidePanelMode(mode); setIsSidePanelOpen(true); }}
-        onClose={() => setIsSidePanelOpen(false)}
-        onExpand={() => { setActiveSection('ai-chat'); setIsSidePanelOpen(false); }}
-        mode={sidePanelMode}
-        sheetData={data}
-      />
       <CostSheetHelpPanel isOpen={isHelpPanelOpen} onClose={() => setIsHelpPanelOpen(false)} />
       <CostSheetActionsPanel
         isOpen={isActionsPanelOpen}
         onClose={() => setIsActionsPanelOpen(false)}
         actions={secondaryActions}
-        viewMode={viewMode}
-        setViewMode={setViewMode}
-        layoutMode={layoutMode}
-        setLayoutMode={setLayoutMode}
       />
 
       <CostSheetSidebarNav
@@ -533,6 +528,15 @@ const CostSheetView = () => {
       />
 
       <CostSheetBanner />
+
+      <div className="max-w-6xl mx-auto px-4 mb-8">
+          <CostSheetViewControls
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+            layoutMode={layoutMode}
+            setLayoutMode={setLayoutMode}
+          />
+      </div>
 
       {isBlocked && (
           <div className="mb-6 animate-in slide-in-from-top duration-500">
