@@ -2,22 +2,22 @@ import { CostSheetDataContract } from '@/contracts/cost-sheet';
 
 const template: CostSheetDataContract = {
   "header": {
-    "code": "=GET_ANEXO_FILA_DATO(\"I\", 1, \"code\")",
-    "name": "=GET_ANEXO_FILA_DATO(\"I\", 1, \"description\")",
-    "date": new Date().toISOString().split('T')[0],
-    "quantity": "=GET_ANEXO_FILA_DATO(\"I\", 1, \"consumption_norm\")",
+    "code": "",
+    "name": "Pan de Molde",
+    "date": "2026-02-18",
+    "quantity": 1,
     "currency": "CUP",
     "category": "",
     "type": "EMPRESA",
-    "unit": "=GET_ANEXO_FILA_DATO(\"I\", 1, \"um\")",
-    "product_code": "=GET_ANEXO_FILA_DATO(\"I\", 1, \"code\")",
+    "unit": "Kg",
+    "product_code": "",
     "company": "",
     "organism": "",
     "union": "",
     "destination": "",
     "production_level": "562",
-    "capacity_utilization": "100.00%",
-    "sale_price": "=GET_FILA_DATO(\"16\", \"total\")",
+    "capacity_utilization": 0.18,
+    "sale_price": 8929.6,
     "client": ""
   },
   "sections": [
@@ -136,13 +136,13 @@ const template: CostSheetDataContract = {
               "value": 0,
               "baseDeCalculoRef": "2.1",
               "calculationMethod": "FORMULA",
-              "totalFormula": "=PCT(2.1, 9.09)",
-              "formula": "=PCT(2.1, 9.09)",
+              "totalFormula": "=PCT(ref('2.1'), 9.09)",
+              "formula": "=PCT(ref('2.1'), 9.09)",
               "children": [],
               "baseRef": "2.1",
               "isPercent": true,
               "helpText": "",
-              "vhFormula": "=PCT(vh(2.1.1), 9.09)"
+              "vhFormula": "=PCT(vh('2.1.1'), 9.09)"
             }
           ],
           "baseRef": "",
@@ -366,7 +366,7 @@ const template: CostSheetDataContract = {
               "baseDeCalculoRef": "",
               "calculationMethod": "FORMULA",
               "totalFormula": "",
-              "formula": "vh(4.1.1)/vh(1.1.1)*1.1.1",
+              "formula": "vh('4.1.1')/vh('1.1.1')*ref('1.1.1')",
               "children": [],
               "baseRef": "",
               "isPercent": false,
@@ -380,7 +380,7 @@ const template: CostSheetDataContract = {
               "baseDeCalculoRef": "",
               "calculationMethod": "FORMULA",
               "totalFormula": "",
-              "formula": "vh(4.1.1)/vh(1.1.1)*1.1.1",
+              "formula": "vh('4.1.1')/vh('1.1.1')*ref('1.1.1')",
               "children": [],
               "baseRef": "",
               "isPercent": false,
@@ -436,7 +436,7 @@ const template: CostSheetDataContract = {
               "baseDeCalculoRef": "",
               "calculationMethod": "FORMULA",
               "totalFormula": "",
-              "formula": "vh(6.1.1)/vh(1.1.1)*1.1.1",
+              "formula": "vh('6.1.1')/vh('1.1.1')*ref('1.1.1')",
               "children": [],
               "baseRef": "",
               "isPercent": false,
@@ -451,7 +451,7 @@ const template: CostSheetDataContract = {
               "baseDeCalculoRef": "",
               "calculationMethod": "FORMULA",
               "totalFormula": "",
-              "formula": "vh(6.1.2)/vh(1.1.1)*1.1.1",
+              "formula": "vh('6.1.2')/vh('1.1.1')*ref('1.1.1')",
               "children": [],
               "baseRef": "",
               "isPercent": false,
@@ -465,7 +465,7 @@ const template: CostSheetDataContract = {
               "baseDeCalculoRef": "",
               "calculationMethod": "FORMULA",
               "totalFormula": "",
-              "formula": "vh(6.1.3)/vh(1.1.1)*1.1.1",
+              "formula": "vh('6.1.3')/vh('1.1.1')*ref('1.1.1')",
               "children": [],
               "baseRef": "",
               "isPercent": false,
@@ -479,7 +479,7 @@ const template: CostSheetDataContract = {
               "baseDeCalculoRef": "",
               "calculationMethod": "FORMULA",
               "totalFormula": "",
-              "formula": "vh(6.1.4)/vh(1.1.1)*1.1.1",
+              "formula": "vh('6.1.4')/vh('1.1.1')*ref('1.1.1')",
               "children": [],
               "baseRef": "",
               "isPercent": false,
@@ -493,7 +493,7 @@ const template: CostSheetDataContract = {
               "baseDeCalculoRef": "",
               "calculationMethod": "FORMULA",
               "totalFormula": "",
-              "formula": "vh(6.1.5)/vh(1.1.1)*1.1.1",
+              "formula": "vh('6.1.5')/vh('1.1.1')*ref('1.1.1')",
               "children": [],
               "baseRef": "",
               "isPercent": false,
@@ -529,7 +529,7 @@ const template: CostSheetDataContract = {
               "baseDeCalculoRef": "",
               "calculationMethod": "FORMULA",
               "totalFormula": "",
-              "formula": "vh(7.1.1)/vh(1.1.1)*1.1.1",
+              "formula": "vh('7.1.1')/vh('1.1.1')*ref('1.1.1')",
               "children": [],
               "baseRef": "",
               "isPercent": false,
@@ -543,7 +543,7 @@ const template: CostSheetDataContract = {
               "baseDeCalculoRef": "",
               "calculationMethod": "FORMULA",
               "totalFormula": "",
-              "formula": "vh(7.1.2)/vh(1.1.1)*1.1.1",
+              "formula": "vh('7.1.2')/vh('1.1.1')*ref('1.1.1')",
               "children": [],
               "baseRef": "",
               "isPercent": false,
@@ -578,7 +578,7 @@ const template: CostSheetDataContract = {
               "baseDeCalculoRef": "",
               "calculationMethod": "FORMULA",
               "totalFormula": "",
-              "formula": "vh(8.1.1)/vh(1.1.1)*1.1.1",
+              "formula": "vh('8.1.1')/vh('1.1.1')*ref('1.1.1')",
               "children": [],
               "baseRef": "",
               "isPercent": false,
@@ -619,7 +619,7 @@ const template: CostSheetDataContract = {
           "baseDeCalculoRef": "",
           "calculationMethod": "FORMULA",
           "totalFormula": "",
-          "formula": "vh(9.1)/vh(1.1.1)*1.1.1",
+          "formula": "vh('9.1')/vh('1.1.1')*ref('1.1.1')",
           "children": [],
           "baseRef": "",
           "isPercent": false,
@@ -648,8 +648,8 @@ const template: CostSheetDataContract = {
               "value": 0,
               "baseDeCalculoRef": "2.1",
               "calculationMethod": "FORMULA",
-              "totalFormula": "=ROUND2(PCT(2.1 + 4.1.1 + 6.1.1 + 7.1.1, 14))",
-              "formula": "=ROUND2(PCT(2.1 + 4.1.1 + 6.1.1 + 7.1.1, 14))",
+              "totalFormula": "=ROUND2(PCT(ref('2.1') + ref('4.1') + ref('6.1') + ref('7.1'), 14))",
+              "formula": "=(ref('2.1') + ref('4.1.1') + ref('6.1.1') + ref('7.1.1'))*0.14",
               "children": [],
               "baseRef": "2.1",
               "isPercent": false,
@@ -663,8 +663,8 @@ const template: CostSheetDataContract = {
               "value": 0,
               "baseDeCalculoRef": "2.1",
               "calculationMethod": "FORMULA",
-              "totalFormula": "=ROUND2(PCT(2.1 + 4.1.1 + 6.1.1 + 7.1.1, 5))",
-              "formula": "=ROUND2(PCT(2.1 + 4.1.1 + 6.1.1 + 7.1.1, 5))",
+              "totalFormula": "=ROUND2(PCT(ref('2.1') + ref('4.1') + ref('6.1') + ref('7.1'), 5))",
+              "formula": "=( ref('2.1') + ref('4.1.1') + ref('5.1.1') + ref('6.1.1') + ref('7.1.1') ) * 0.05",
               "children": [],
               "baseRef": "2.1",
               "isPercent": false,
@@ -761,8 +761,8 @@ const template: CostSheetDataContract = {
           "value": 0,
           "baseDeCalculoRef": "",
           "calculationMethod": "FORMULA",
-          "totalFormula": "13.1/0.9*0.1",
-          "formula": "13.1/0.9*0.1",
+          "totalFormula": "ref('13.1')/0.9*0.1",
+          "formula": "ref('13.1')/0.9*0.1",
           "children": [],
           "baseRef": "",
           "isPercent": false,
@@ -782,13 +782,13 @@ const template: CostSheetDataContract = {
           "value": 0,
           "baseDeCalculoRef": "",
           "calculationMethod": "FORMULA",
-          "totalFormula": "13.2 + 13.3",
-          "formula": "13.2 + 13.3",
+          "totalFormula": "ref('13.1') + ref('13.2')",
+          "formula": "ref('13.2') + ref('13.3')",
           "children": [],
           "baseRef": "",
           "isPercent": false,
           "helpText": "",
-          "vhFormula": "vh(13.2) +vh(13.3)"
+          "vhFormula": "vh('13.2') +vh('13.3')"
         }
       ]
     },
@@ -877,10 +877,40 @@ const template: CostSheetDataContract = {
           "no": 0,
           "classification": "1.1.1 - De ello: - Insumos (MP)",
           "code": "",
-          "description": "",
-          "um": "",
-          "consumption_norm": 0,
-          "price": 0,
+          "description": "Harina de Trigo",
+          "um": "Kg",
+          "consumption_norm": 1,
+          "price": 150,
+          "total": 0
+        },
+        {
+          "no": 0,
+          "classification": "1.1.1 - De ello: - Insumos (MP)",
+          "code": "",
+          "description": "Levadura",
+          "um": "Kg",
+          "consumption_norm": 0.02,
+          "price": 200,
+          "total": 0
+        },
+        {
+          "no": 0,
+          "classification": "1.1.1 - De ello: - Insumos (MP)",
+          "code": "",
+          "description": "Sal",
+          "um": "Kg",
+          "consumption_norm": 0.015,
+          "price": 40,
+          "total": 0
+        },
+        {
+          "no": 0,
+          "classification": "1.1.1 - De ello: - Insumos (MP)",
+          "code": "",
+          "description": "Azúcar",
+          "um": "Kg",
+          "consumption_norm": 0.05,
+          "price": 120,
           "total": 0
         }
       ]
@@ -922,11 +952,20 @@ const template: CostSheetDataContract = {
       "data": [
         {
           "no": 0,
-          "classification": "2.1 - SALARIO DIRECTO",
-          "description": "",
-          "time_norm": 0,
-          "hourly_rate": 0,
-          "worker_count": 0,
+          "classification": "2.1.1 - De ello: Salarios",
+          "description": "Maestro Panadero",
+          "time_norm": 176,
+          "hourly_rate": 45,
+          "worker_count": 1,
+          "total": 0
+        },
+        {
+          "no": 0,
+          "classification": "2.1.1 - De ello: Salarios",
+          "description": "Ayudante de Panadería",
+          "time_norm": 176,
+          "hourly_rate": 35,
+          "worker_count": 1,
           "total": 0
         }
       ]
@@ -965,7 +1004,26 @@ const template: CostSheetDataContract = {
           "formula": "(initial_value * (useful_life / 100)) / quantity"
         }
       ],
-      "data": []
+      "data": [
+        {
+          "classification": "3.1.4 - -Maquinas y eq. productivos",
+          "code": "",
+          "name": "Horno Industrial Rotatorio",
+          "initial_value": 500000,
+          "useful_life": 10,
+          "quantity": 12,
+          "depreciation_cost": 0
+        },
+        {
+          "classification": "3.1.4 - -Maquinas y eq. productivos",
+          "code": "",
+          "name": "Amasadora Espiral",
+          "initial_value": 150000,
+          "useful_life": 10,
+          "quantity": 12,
+          "depreciation_cost": 0
+        }
+      ]
     },
     {
       "id": "IV",
@@ -988,7 +1046,20 @@ const template: CostSheetDataContract = {
           "label": "Importe"
         }
       ],
-      "data": []
+      "data": [
+        {
+          "classification": "3.1 - OTROS GASTOS DIRECTOS",
+          "code": "",
+          "description": "Gas Propano (Horneado)",
+          "amount": 2500
+        },
+        {
+          "classification": "3.1 - OTROS GASTOS DIRECTOS",
+          "code": "",
+          "description": "Mantenimiento Hornos",
+          "amount": 500
+        }
+      ]
     },
     {
       "id": "V",
@@ -1020,7 +1091,16 @@ const template: CostSheetDataContract = {
           "formula": "daily_allowance * days"
         }
       ],
-      "data": []
+      "data": [
+        {
+          "classification": "",
+          "code": "",
+          "worker_name": "",
+          "daily_allowance": "",
+          "days": "",
+          "total": 0
+        }
+      ]
     }
   ],
   "signature": {
@@ -1028,10 +1108,10 @@ const template: CostSheetDataContract = {
     "approved_by": "Aprobado por:"
   },
   "id": "costpro-full-v5",
-  "name": "Producción de Pan de Corteza Dura (Lote Especial)",
+  "name": "Producción de Pan de Molde",
   "version": "5.7.25",
   "metadata": {
-    "author": "Darian - Senior Specialist",
+    "author": "Eli - Senior Specialist",
     "description": "Ficha de referencia para estudio de costos industriales complejos con integración de anexos y fórmulas dinámicas."
   },
   "footer": "FIN DEL DOCUMENTO • GENERADO AUTOMÁTICAMENTE POR COSTPRO "
