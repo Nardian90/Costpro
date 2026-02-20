@@ -60,7 +60,7 @@ export function ChatBot() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Error al conectar con Eli');
+        throw new Error(errorData.error || 'Error al conectar con Darian');
       }
 
       const data = await response.json();
@@ -106,7 +106,7 @@ export function ChatBot() {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
             onClick={() => setIsOpen(true)}
-            aria-label="Abrir chat con Eli"
+            aria-label="Abrir chat con Darian"
             className="w-14 h-14 rounded-full bg-primary shadow-lg flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-all border-4 border-background relative overflow-hidden group"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
@@ -140,7 +140,7 @@ export function ChatBot() {
                   <Bot className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="font-black text-xs uppercase tracking-tighter">Eli</h3>
+                  <h3 className="font-black text-xs uppercase tracking-tighter">Darian</h3>
                   <div className="flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                     <p className="text-xs opacity-80 uppercase tracking-widest font-bold">Inteligencia Integrada</p>
@@ -233,7 +233,7 @@ export function ChatBot() {
                           <p className="text-xs font-black uppercase text-primary tracking-widest">Hola, {user?.fullName?.split(' ')[0]}</p>
                           {!isConfigured ? (
                             <div className="p-4 rounded-2xl bg-warning/5 border border-warning/20 space-y-3 mt-4">
-                               <p className="text-xs text-warning font-bold uppercase tracking-tight">Eli no configurada</p>
+                               <p className="text-xs text-warning font-bold uppercase tracking-tight">Darian no configurado</p>
                                <p className="text-xs text-muted-foreground font-medium">
                                  Para interactuar conmigo, primero debes ingresar tu API Key en la configuración.
                                </p>
@@ -241,12 +241,12 @@ export function ChatBot() {
                                  onClick={() => setIsSettingsOpen(true)}
                                  className="w-full py-2 bg-warning/10 text-warning rounded-lg text-xs font-black uppercase"
                                >
-                                 Configurar Eli
+                                 Configurar Darian
                                </button>
                             </div>
                           ) : (
                             <p className="text-xs text-muted-foreground font-medium leading-relaxed">
-                              Soy Eli. Mi propósito es asistirte con precisión técnica sobre inventarios, ventas y normativas vigentes del sistema.
+                              Soy Darian. Mi propósito es asistirte con precisión técnica sobre inventarios, ventas y normativas vigentes del sistema.
                             </p>
                           )}
                         </div>

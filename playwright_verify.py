@@ -13,8 +13,8 @@ async def main():
             await page.screenshot(path="verify_cost_view.png")
 
             # Try to click on the AI Chat tab if possible
-            # Based on the code, it has label "Cospi IA"
-            await page.click("text=Cospi IA")
+            # Based on the code, it has label "Darian"
+            await page.click("text=Darian")
             await page.wait_for_timeout(2000)
             await page.screenshot(path="verify_ai_chat.png")
 
