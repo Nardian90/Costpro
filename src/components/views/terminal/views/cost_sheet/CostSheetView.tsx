@@ -490,7 +490,14 @@ const CostSheetView = () => {
 
   return (
     <div className="w-full max-w-none px-0 pb-32 pt-0">
-      <CostSheetSidePanel isOpen={isSidePanelOpen} onOpen={(mode) => { setSidePanelMode(mode); setActiveSection('ai-chat'); }} onClose={() => setIsSidePanelOpen(false)} mode={sidePanelMode} sheetData={data} />
+      <CostSheetSidePanel
+        isOpen={isSidePanelOpen}
+        onOpen={(mode) => { setSidePanelMode(mode); setIsSidePanelOpen(true); }}
+        onClose={() => setIsSidePanelOpen(false)}
+        onExpand={() => { setActiveSection('ai-chat'); setIsSidePanelOpen(false); }}
+        mode={sidePanelMode}
+        sheetData={data}
+      />
       <CostSheetHelpPanel isOpen={isHelpPanelOpen} onClose={() => setIsHelpPanelOpen(false)} />
       <CostSheetActionsPanel
         isOpen={isActionsPanelOpen}

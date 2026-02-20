@@ -64,7 +64,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
     },
     {
       title: "Inteligencia AI",
-      desc: "Asistente Eli para análisis predictivo y consultas en tiempo real.",
+      desc: "Asistente Darian para análisis predictivo y consultas en tiempo real.",
       icon: <BarChart3 className="w-5 h-5" />,
       color: "text-emerald-600",
       bg: "bg-emerald-500/10"
@@ -224,7 +224,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
                   <Zap className="w-5 h-5" />
                 </div>
                 <div className="text-xs font-black uppercase tracking-widest">Inteligencia AI</div>
-                <div className="text-xs text-muted-foreground font-medium">Eli analizando tendencias...</div>
+                <div className="text-xs text-muted-foreground font-medium">Darian analizando tendencias...</div>
               </motion.div>
             </div>
           </motion.div>
@@ -349,7 +349,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
             >
               <div className="text-center">
                 <Zap className="w-8 h-8 mx-auto mb-2 text-primary animate-pulse" />
-                <div className="text-xs font-black uppercase tracking-widest">Eli AI</div>
+                <div className="text-xs font-black uppercase tracking-widest">Darian AI</div>
               </div>
             </motion.div>
           </div>

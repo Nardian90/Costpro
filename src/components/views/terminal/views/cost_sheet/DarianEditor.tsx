@@ -7,6 +7,7 @@ import { cn, isDarkTheme } from '@/lib/utils';
 import { useTheme } from 'next-themes';
 import ReactMarkdown from 'react-markdown';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
+import { useAuthStore } from '@/store';
 import { toast } from 'sonner';
 
 interface Message {
@@ -31,6 +32,7 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
     const { resolvedTheme } = useTheme();
     const isDark = isDarkTheme(resolvedTheme);
     const { setSheet } = useCostSheetStore();
+    const { token } = useAuthStore();
 
     useEffect(() => {
         if (scrollRef.current) {
@@ -62,7 +64,10 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
         try {
             const response = await fetch('/api/cost-sheets/ai/chat', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({
                     messages: newMessages,
                     sheetData

@@ -13,6 +13,7 @@ interface CostSheetSidePanelProps {
   isOpen: boolean;
   onOpen: (mode: 'calculator' | 'ai' | 'both') => void;
   onClose: () => void;
+  onExpand?: () => void;
   mode: 'calculator' | 'ai' | 'both';
   sheetData: any;
 }
@@ -23,6 +24,7 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
   onClose,
   mode,
   sheetData,
+  onExpand
 }) => {
   const isMobile = useIsMobile();
   const [isFullView, setIsFullView] = useState(false);
@@ -260,13 +262,14 @@ export const CostSheetSidePanel: React.FC<CostSheetSidePanelProps> = ({
                 </div>
 
                 <div className="flex items-center gap-2">
-                    {mode === 'ai' && !isMobile && (
+                    {!isMobile && (
                         <button
-                            onClick={() => setIsFullView(!isFullView)}
+                            onClick={onExpand ? onExpand : () => setIsFullView(!isFullView)}
                             className={cn(
                                 "p-2.5 rounded-2xl transition-all active:scale-90",
                                 isDark ? "hover:bg-white/10 text-[hsl(var(--primary))]/50" : "hover:bg-primary/10 text-primary/50"
                             )}
+                            title={onExpand ? "Ampliar a vista completa" : (isFullView ? "Reducir" : "Ampliar")}
                         >
                             {isFullView ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
                         </button>

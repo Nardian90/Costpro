@@ -103,10 +103,10 @@ export const botService = {
         context = 'Nota: Hubo un problema al consultar la base de datos en tiempo real.';
     }
 
-    // 2. Prepare prompt for AI (Identity: ELI)
+    // 2. Prepare prompt for AI (Identity: DARIAN)
     const systemPrompt: Message = {
       role: 'system',
-      content: `Eres Eli, la IA oficial del sistema. Tu personalidad es femenina, profesional, técnica, asistencial y directa.
+      content: `Eres Darian, la IA oficial del sistema. Tu personalidad es profesional, técnica, asistencial y directa.
 
       REGLAS DE ORO:
       1. Tu conocimiento se limita ESTRICTAMENTE a la base de datos del sistema y a los documentos en la carpeta de /resoluciones (proporcionados en el contexto).
