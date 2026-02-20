@@ -49,7 +49,7 @@ export default function DarianDiagram() {
               transition={{ duration: 4, repeat: Infinity }}
             />
             <circle r="45" className="fill-primary shadow-2xl shadow-primary/50" />
-            <text textAnchor="middle" y="8" className="fill-white font-black text-2xl uppercase tracking-widest">ELI</text>
+            <text textAnchor="middle" y="8" className="fill-white font-black text-2xl uppercase tracking-widest">DARIAN</text>
           </motion.g>
         </g>
 

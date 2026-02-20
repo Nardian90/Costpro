@@ -17,7 +17,7 @@ test('DarianDiagram renders correctly', () => {
   const { container } = render(<DarianDiagram />);
 
   expect(container.querySelector('svg')).toBeTruthy();
-  expect(container.textContent).toContain('ELI');
+  expect(container.textContent).toContain('DARIAN');
   expect(container.textContent).toContain('Predictivo');
   expect(container.textContent).toContain('Offline');
 });
