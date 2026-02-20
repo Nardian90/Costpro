@@ -81,6 +81,11 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
   const adj = new Map<string, string[]>();
   const parser = new Parser();
 
+  parser.functions.REDONDEO = (val: number, decimals: number = 2) => val; // Dummy for validation
+  parser.functions.SUM_ANEXO = (a: any, c: any) => 0;
+  parser.functions.GET_ANEXO_FILA_DATO = (a: any, r: any, f: any) => 0;
+  parser.functions.GET_ANEXO_DATO = (a: any, c: any, f: any) => 0;
+  parser.functions.GET_FILA_DATO = (s: any, f: any) => 0;
   ficha.rows.forEach((row) => {
     const deps = extractDependencies(row, ficha.rows);
 
@@ -368,6 +373,9 @@ export function calculateFicha(
   });
 
   const parser = new Parser();
+  parser.functions.REDONDEO = (val: number, decimals: number = 2) => {
+    return new Decimal(val).toDecimalPlaces(decimals).toNumber();
+  };
 
   // Use Decimal for high precision in parser functions
   parser.functions.SUM_ANEXO = (anexoId: string, classification: string) => {
@@ -576,8 +584,9 @@ export function calculateFicha(
                 baseTotalValue = sum;
                 note += `Using prefix match for ${row.classification} from ${base.anexoId} as base. `;
             } else {
-                baseTotalValue = new Decimal(0);
-                note += `No matches for ${row.classification} in ${base.anexoId}. `;
+                // Fallback to total of annex if no prefix match found
+                baseTotalValue = new Decimal(annexTotals.get(base.anexoId) || 0);
+                note += `No prefix match for ${row.classification} in ${base.anexoId}, using Annex Total. `;
             }
 
             baseHistValue = baseTotalValue;

@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { produce } from 'immer';
 import Decimal from 'decimal.js';
+import { Parser } from 'expr-eval';
 import {
   CostSheetData,
   CostSheetRow,
@@ -13,7 +14,8 @@ import { FichaJSON, CostRow, Anexo, RowSemanticType, FormaCalculo, BaseRef, Audi
 import { calculateCostSheetHealth, ValidationResult } from '@/lib/cost-engine/validations';
 
 // Helper to safely evaluate a formula string for ANNEXES (keeping it simple for annex rows)
-const evaluateAnnexExpression = (expression: string, rowData: any, header: any, calculatedAnnexes: any[] = []): number => {
+const evaluateAnnexExpression = (expression: string, rowData: any, header: any, calculatedAnnexes: any[] = []): any => {
+  let expr = "";
   if (expression === undefined || expression === null || expression === '') return 0;
 
   // If it's already a number, return it
@@ -29,7 +31,7 @@ const evaluateAnnexExpression = (expression: string, rowData: any, header: any, 
 
   try {
     // Simple replacement for annex row variables
-    let expr = trimmed;
+    expr = trimmed;
     if (expr.startsWith('=')) expr = expr.substring(1);
 
     // Support GET_ANEXO_DATO and GET_FILA_DATO even in annexes for consistency
@@ -106,14 +108,16 @@ const evaluateAnnexExpression = (expression: string, rowData: any, header: any, 
         return '0';
     });
 
-    // Basic arithmetic evaluation
-    if (!/^[0-9.+\-*/() ]+$/.test(expr)) {
-        return isNaN(Number(trimmed)) ? 0 : Number(trimmed);
-    }
-
-    return new Function(`return ${expr}`)();
+    // Advanced arithmetic evaluation with expr-eval
+    const parser = new Parser();
+    parser.functions.REDONDEO = (val: number, decimals: number = 2) => {
+        return new Decimal(val).toDecimalPlaces(decimals).toNumber();
+    };
+    parser.functions.round = parser.functions.REDONDEO;
+    return parser.evaluate(expr);
   } catch (error) {
-    return isNaN(Number(trimmed)) ? 0 : Number(trimmed);
+    // Return processed expr if evaluation fails
+    return expr;
   }
 };
 
@@ -128,8 +132,9 @@ const evaluateHeaderExpression = (
     const trimmed = String(expression).trim();
     if (!trimmed.startsWith('=')) return expression;
 
+    let expr = '';
     try {
-        let expr = trimmed.substring(1);
+        expr = trimmed.substring(1);
 
         /**
          * GET_ANEXO_FILA_DATO(anexoId, rowIndex, field)
@@ -177,7 +182,7 @@ const evaluateHeaderExpression = (
         });
 
         // ref('...') and vh('...') support in header
-        expr = expr.replace(/\b(ref|vh)\(['"]([^'"]+)['"]\)/g, (_, fn, __, search) => {
+        expr = expr.replace(/\b(ref|vh)\(['"]([^'"]+)['"]\)/g, (_, fn, search) => {
             const field = fn === 'ref' ? 'total' : 'calculatedVH';
             const val = Object.values(calculatedValues).find(v => v.metadata?.id === search || v.metadata?.classification === search);
             if (val) return String((val as any)[field] || 0);
@@ -194,16 +199,17 @@ const evaluateHeaderExpression = (
             }
         }
 
-        // Basic arithmetic evaluation
-        if (/^[0-9.+\-*/() ]+$/.test(expr)) {
-            return new Function(`return ${expr}`)();
-        }
+        // Advanced arithmetic evaluation with expr-eval
+        const parser = new Parser();
+        parser.functions.REDONDEO = (val: number, decimals: number = 2) => {
+            return new Decimal(val).toDecimalPlaces(decimals).toNumber();
+        };
+        // Also map standard round for compatibility
+        parser.functions.round = parser.functions.REDONDEO;
 
-        // If not simple arithmetic, just return the processed string if it's not a number
-        return expr;
+        return parser.evaluate(expr);
     } catch (e) {
-        console.error("Error evaluating header expression:", e);
-        return expression;
+        return expr;
     }
 };
 
