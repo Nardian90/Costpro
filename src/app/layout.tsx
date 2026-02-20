@@ -79,6 +79,7 @@ export default function RootLayout({
           disableTransitionOnChange
           themes={['light', 'dark', 'fast-light', 'fast-dark', 'auto']}
         >
+          <IntelligentThemeHandler />
           <QueryProvider>
             <SyncProvider>
               <GlobalSessionManager />
