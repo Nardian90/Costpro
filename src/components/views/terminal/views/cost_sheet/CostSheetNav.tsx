@@ -2,7 +2,7 @@
 
 import React from 'react';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
-import { Layout, FileSpreadsheet, PenTool, ClipboardList, Menu, ListFilter, Sparkles, Eye, Edit, Zap, Calculator, HelpCircle } from 'lucide-react';
+import { Layout, FileSpreadsheet, PenTool, ClipboardList, Menu, ListFilter, Sparkles, Eye, Edit, Zap, Calculator, HelpCircle, Bot, DatabaseZap } from 'lucide-react';
 import { useUIStore } from '@/store';
 
 interface CostSheetNavProps {
@@ -14,6 +14,7 @@ interface CostSheetNavProps {
   onOpenAnnexes?: () => void;
   onOpenSections?: () => void;
   onOpenHelp?: () => void;
+  onOpenSidePanel?: (mode: 'calculator' | 'ai') => void;
   isEditing?: boolean;
   onToggleEditing?: () => void;
 }
@@ -27,6 +28,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
   onOpenAnnexes,
   onOpenSections,
   onOpenHelp,
+  onOpenSidePanel,
   isEditing,
   onToggleEditing,
 }) => {
@@ -39,7 +41,6 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
     const massiveGenItem = navItems.find(s => s.id === 'massive-gen');
 
     const actions: Action[] = [
-
         ...(onOpenActions ? [{
             id: 'actions-menu',
             label: 'Menú',
@@ -98,7 +99,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
             id: 'calculator-shortcut',
             label: 'Calculadora',
             icon: Calculator,
-            onClick: () => setIsCalculatorOpen(true),
+            onClick: () => onOpenSidePanel ? onOpenSidePanel('calculator') : setIsCalculatorOpen(true),
             className: "text-xs uppercase tracking-wider bg-blue-500/10 text-blue-500 border-blue-500/20"
         },
         ...(onOpenHelp ? [{
@@ -110,12 +111,21 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
         }] : [])
     ];
 
+    // Add Cospi AI before massive-gen
+    actions.push({
+        id: 'cospi-ai',
+        label: 'Cospi',
+        icon: Bot,
+        onClick: () => onOpenSidePanel ? onOpenSidePanel('ai') : null,
+        className: 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20 text-xs uppercase tracking-wider'
+    });
+
     // Add massive-gen at the end with distinctive style
     if (massiveGenItem) {
         actions.push({
             id: massiveGenItem.id,
             label: massiveGenItem.label,
-            icon: Sparkles,
+            icon: DatabaseZap,
             onClick: () => setActiveSection(massiveGenItem.id),
             active: activeSection === massiveGenItem.id,
             className: 'bg-primary/20 border-primary/40 text-primary font-black shadow-[0_0_15px_rgba(57,255,20,0.3)] hover:bg-primary/30 transition-all text-xs uppercase tracking-wider'
@@ -123,7 +133,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
     }
 
     return actions;
-  }, [navItems, activeSection, setActiveSection, annexes, onOpenActions, onOpenAnnexes, onOpenSections, onOpenHelp, setIsCalculatorOpen]);
+  }, [navItems, activeSection, setActiveSection, annexes, onOpenActions, onOpenAnnexes, onOpenSections, onOpenHelp, onOpenSidePanel, setIsCalculatorOpen]);
 
   return (
     <div className="mb-0">
