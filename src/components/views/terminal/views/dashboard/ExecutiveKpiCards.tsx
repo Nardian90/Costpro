@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { TrendingUp, DollarSign, Activity } from 'lucide-react';
-import { cn, formatCurrency } from '@/lib/utils';
+import { cn, formatCurrency , isDarkTheme} from '@/lib/utils';
 import { useTheme } from 'next-themes';
 
 interface KpiCardProps {
@@ -39,7 +39,7 @@ export const ExecutiveKpiCards = ({
   profit: number;
 }) => {
   const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === 'dark';
+  const isDark = isDarkTheme(resolvedTheme);
 
   const cards = [
     {

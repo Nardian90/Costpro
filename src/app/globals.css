@@ -955,12 +955,6 @@
 
 /* Reducción de animaciones para Neumo Ultra-Performance
    Se excluyen componentes críticos de transición como el SplashScreen */
-.neumo *:not(.allow-animations *) {
-  animation-duration: 0.01ms !important;
-  animation-iteration-count: 1 !important;
-  transition-duration: 0.01ms !important;
-  backdrop-filter: none !important;
-}
 
 /* Stitch Proposed Design Utilities */
 
@@ -981,4 +975,88 @@
 .amber-glow-border {
   border-left: 4px solid #FFBF00;
   box-shadow: inset 10px 0 20px -10px rgba(255, 191, 0, 0.15);
+}
+
+/* ============================================
+   FAST THEMES - HIGH PERFORMANCE
+   ============================================ */
+.fast-light {
+  --radius: 0.5rem;
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --shadow-light: transparent;
+  --shadow-dark: transparent;
+  --neumorphic-shadow-out: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --neumorphic-shadow-in: none;
+  --neumorphic-shadow-out-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --neumorphic-shadow-in-sm: none;
+  --neumorphic-shadow-hover: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --primary: #15803d;
+  --primary-foreground: #ffffff;
+  --secondary: #a0aec0;
+  --secondary-foreground: #ffffff;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #f0fdf4;
+  --accent-foreground: #166534;
+  --border: #e2e8f0;
+  --input: #f8fafc;
+  --ring: rgba(22, 163, 74, 0.5);
+  --popover: #ffffff;
+  --popover-foreground: #000000;
+  --sidebar: #f1f5f9;
+  --sidebar-foreground: #000000;
+  --sidebar-primary: #16a34a;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e2e8f0;
+  --sidebar-accent-foreground: #000000;
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: rgba(22, 163, 74, 0.4);
+}
+
+.fast-dark {
+  --radius: 0.5rem;
+  --background: #000000;
+  --foreground: #ffffff;
+  --card: #09090b;
+  --card-foreground: #ffffff;
+  --shadow-light: transparent;
+  --shadow-dark: transparent;
+  --neumorphic-shadow-out: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+  --neumorphic-shadow-in: none;
+  --neumorphic-shadow-out-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+  --neumorphic-shadow-in-sm: none;
+  --neumorphic-shadow-hover: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  --primary: #22c55e;
+  --primary-foreground: #000000;
+  --secondary: #3f3f46;
+  --secondary-foreground: #ffffff;
+  --muted: #18181b;
+  --muted-foreground: #a1a1aa;
+  --accent: #064e3b;
+  --accent-foreground: #22c55e;
+  --border: #27272a;
+  --input: #09090b;
+  --ring: rgba(34, 197, 94, 0.5);
+  --popover: #09090b;
+  --popover-foreground: #ffffff;
+  --sidebar: #000000;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #22c55e;
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: #18181b;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #27272a;
+  --sidebar-ring: rgba(34, 197, 94, 0.4);
+}
+
+.fast-light *:not(.allow-animations *),
+.fast-dark *:not(.allow-animations *),
+.neumo *:not(.allow-animations *) {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  backdrop-filter: none !important;
 }

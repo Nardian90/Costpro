@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { cn, formatCurrency } from '@/lib/utils';
+import { cn, formatCurrency , isDarkTheme} from '@/lib/utils';
 import { TrendingUp, Package, Users, Settings, Zap, Plus, Minus } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Slider } from '@/components/ui/slider';
@@ -33,7 +33,7 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
   onPriceAdjust
 }) => {
   const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === 'dark';
+  const isDark = isDarkTheme(resolvedTheme);
 
   const utilityPercent = totalPrice > 0 ? (utility / totalPrice) * 100 : 0;
   const costPercent = totalPrice > 0 ? (totalCost / totalPrice) * 100 : 0;
