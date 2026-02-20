@@ -1116,7 +1116,7 @@ const template: CostSheetDataContract = {
     "prepared_by": "Elaborado por:",
     "approved_by": "Aprobado por:"
   },
-  "id": "costpro-full-v5",
+  "id": "costpro-ejempo-full-v5",
   "name": "Producción de Paquete de Pan de 8 Bolas",
   "version": "5.7.25",
   "metadata": {
