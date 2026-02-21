@@ -28,7 +28,7 @@ interface CostSheetModeDropdownProps {
 export function CostSheetModeDropdown({ viewMode, setViewMode }: CostSheetModeDropdownProps) {
   const modes: ModeConfig[] = [
     { id: 'quick', label: 'Rápido', icon: Zap, color: 'text-amber-500' },
-    { id: 'expert', label: 'Experto', icon: Table2, color: 'text-primary' },
+    { id: 'expert', label: 'Todo', icon: Table2, color: 'text-primary' },
     { id: 'assisted', label: 'Asistido', icon: Wand2, color: 'text-primary' },
     { id: 'reading', label: 'Lectura', icon: BookOpen, color: 'text-primary' },
     { id: 'preview', label: 'Previsualizar', icon: Eye, color: 'text-primary' },
