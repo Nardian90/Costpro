@@ -73,23 +73,23 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({ onGenera
         </Button>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden">
+      <div className="bg-card dark:bg-background rounded-[2.5rem] border border-border dark:border-border shadow-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
-                <th className="px-6 py-5 text-xs font-black uppercase tracking-[0.2em] text-slate-500 w-16">No.</th>
-                <th className="px-6 py-5 text-xs font-black uppercase tracking-[0.2em] text-slate-500">Producto / Item</th>
-                <th className="px-6 py-5 text-xs font-black uppercase tracking-[0.2em] text-slate-500 w-24">UM</th>
-                <th className="px-6 py-5 text-xs font-black uppercase tracking-[0.2em] text-slate-500 w-32">Cantidad</th>
-                <th className="px-6 py-5 text-xs font-black uppercase tracking-[0.2em] text-slate-500 w-40">Costo Unit.</th>
-                <th className="px-6 py-5 text-xs font-black uppercase tracking-[0.2em] text-slate-500 w-16"></th>
+              <tr className="bg-muted dark:bg-muted border-b border-border/50 dark:border-border">
+                <th className="px-6 py-5 text-xs font-black uppercase tracking-[0.2em] text-muted-foreground w-16">No.</th>
+                <th className="px-6 py-5 text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Producto / Item</th>
+                <th className="px-6 py-5 text-xs font-black uppercase tracking-[0.2em] text-muted-foreground w-24">UM</th>
+                <th className="px-6 py-5 text-xs font-black uppercase tracking-[0.2em] text-muted-foreground w-32">Cantidad</th>
+                <th className="px-6 py-5 text-xs font-black uppercase tracking-[0.2em] text-muted-foreground w-40">Costo Unit.</th>
+                <th className="px-6 py-5 text-xs font-black uppercase tracking-[0.2em] text-muted-foreground w-16"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody className="divide-y divide-border/50 dark:divide-slate-800">
               {rows.map((row, idx) => (
-                <tr key={row.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
-                  <td className="px-6 py-4 font-black text-slate-400 text-sm">
+                <tr key={row.id} className="group hover:bg-muted/50 dark:hover:bg-slate-800/20 transition-colors">
+                  <td className="px-6 py-4 font-black text-muted-foreground text-sm">
                     {idx + 1}
                   </td>
                   <td className="px-6 py-4">
@@ -97,7 +97,7 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({ onGenera
                       value={row.product}
                       onChange={(e) => updateRow(idx, 'product', e.target.value)}
                       placeholder="Ej. Pizza Margherita"
-                      className="bg-transparent border-none focus-visible:ring-1 focus-visible:ring-amber-500/30 font-bold text-slate-700 dark:text-slate-300 placeholder:text-slate-300"
+                      className="bg-transparent border-none focus-visible:ring-1 focus-visible:ring-amber-500/30 font-bold text-foreground dark:text-foreground placeholder:text-slate-300"
                     />
                   </td>
                   <td className="px-6 py-4">
@@ -118,7 +118,7 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({ onGenera
                   </td>
                   <td className="px-6 py-4">
                     <div className="relative">
-                        <span className="absolute left-0 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">$</span>
+                        <span className="absolute left-0 top-1/2 -translate-y-1/2 text-muted-foreground font-bold text-xs">$</span>
                         <Input
                           type="number"
                           value={row.cost}
@@ -140,11 +140,11 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({ onGenera
             </tbody>
           </table>
         </div>
-        <div className="p-4 bg-slate-50/50 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800">
+        <div className="p-4 bg-muted/50 dark:bg-slate-800/30 border-t border-border/50 dark:border-border">
           <Button
             variant="ghost"
             onClick={addRow}
-            className="w-full rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-amber-500/50 hover:bg-amber-500/5 text-slate-500 hover:text-amber-600 font-bold py-8 transition-all"
+            className="w-full rounded-2xl border-2 border-dashed border-border dark:border-slate-700 hover:border-amber-500/50 hover:bg-amber-500/5 text-muted-foreground hover:text-amber-600 font-bold py-8 transition-all"
           >
             <Plus className="mr-2 w-5 h-5" />
             Añadir otro producto
@@ -153,7 +153,7 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({ onGenera
       </div>
 
       <div className="flex justify-center pt-8">
-         <p className="text-xs font-black uppercase tracking-[0.4em] text-slate-400 flex items-center gap-2">
+         <p className="text-xs font-black uppercase tracking-[0.4em] text-muted-foreground flex items-center gap-2">
             <Zap className="w-3 h-3 text-amber-500" />
             Sistema de Generación Express CostPro
          </p>

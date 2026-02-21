@@ -18,7 +18,7 @@ interface CostSheetPreviewProps {
 const CostSheetPreview = React.forwardRef<HTMLDivElement, CostSheetPreviewProps>(({ data, calculatedValues, calculatedAnnexes, calculatedHeader }, ref) => {
   return (
     <div ref={ref} className="max-w-5xl mx-auto">
-      <div className="neu-card !p-0 overflow-hidden border-none shadow-2xl bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
+      <div className="neu-card !p-0 overflow-hidden border-none shadow-2xl bg-card dark:bg-background text-foreground dark:text-foreground">
         <div className="bg-slate-800 p-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-white">
            <div className="font-black text-xl tracking-tighter uppercase italic">COSTPRO <span className="text-primary font-light text-sm not-italic ml-2 tracking-widest">FICHA</span></div>
            <div className="text-xs font-bold opacity-50 uppercase tracking-widest">Documento Oficial de Costos</div>
@@ -46,11 +46,11 @@ const CostSheetPreview = React.forwardRef<HTMLDivElement, CostSheetPreviewProps>
                 />
               </SecurityScrollContainer>
             </div>
-            <div className="pt-10 border-t border-slate-100 dark:border-slate-800">
+            <div className="pt-10 border-t border-border/50 dark:border-border">
                {data?.signature && <CostSheetSignature {...data.signature} />}
             </div>
         </div>
-        <div className="bg-slate-50 dark:bg-slate-950 p-4 text-xs text-center text-slate-400 font-bold uppercase tracking-widest">
+        <div className="bg-muted/30 dark:bg-background/50 p-4 text-xs text-center text-muted-foreground font-bold uppercase tracking-widest">
           Fin del Documento • Generado automáticamente por COSTPRO v1.0
         </div>
       </div>

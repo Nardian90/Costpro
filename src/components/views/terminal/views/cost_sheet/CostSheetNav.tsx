@@ -3,6 +3,7 @@
 import React from 'react';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
 import { Layout, FileSpreadsheet, PenTool, ClipboardList, Menu, ListFilter, Sparkles, Eye, Edit, Zap, HelpCircle, DatabaseZap } from 'lucide-react';
+import { CostSheetFCDropdown } from './CostSheetFCDropdown';
 
 interface CostSheetNavProps {
   navItems: any[];
@@ -56,39 +57,19 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
                 className: "text-xs uppercase tracking-wider"
             };
         }),
-        // Consolidated Sections Button
-        ...(onOpenSections ? [{
-            id: 'open-sections',
-            label: 'Secciones',
-            icon: ListFilter,
-            onClick: onOpenSections,
-            variant: 'default' as const,
-            className: 'bg-primary/5 text-primary border-none shadow-none text-xs uppercase tracking-wider hover:bg-primary/10'
-        }] : []),
-        // Consolidated Annexes Button
-        ...(onOpenAnnexes ? [{
-            id: 'open-annexes',
-            label: 'Anexos',
-            icon: FileSpreadsheet,
-            onClick: onOpenAnnexes,
-            variant: 'default' as const,
-            className: 'bg-primary/5 text-primary border-none shadow-none text-xs uppercase tracking-wider hover:bg-primary/10'
-        }] : []),
+        // FC Dropdown (Grouping Encabezado, Secciones, Anexos, Firmas, Todo)
         {
-            id: 'signature',
-            label: 'Firmas',
-            icon: PenTool,
-            onClick: () => setActiveSection('signature'),
-            active: activeSection === 'signature',
-            className: "text-xs uppercase tracking-wider"
-        },
-        {
-            id: 'expert-view',
-            label: 'Experto',
-            icon: Zap,
-            onClick: () => setActiveSection('all-content'),
-            active: activeSection === 'all-content',
-            className: "text-xs uppercase tracking-wider bg-primary/20 text-primary border-primary/30"
+            id: 'fc-dropdown',
+            label: 'FC',
+            onClick: () => {},
+            component: (
+                <CostSheetFCDropdown
+                    activeSection={activeSection}
+                    setActiveSection={setActiveSection}
+                    onOpenSections={onOpenSections}
+                    onOpenAnnexes={onOpenAnnexes}
+                />
+            )
         },
         ...(onOpenHelp ? [{
             id: 'help-panel',
