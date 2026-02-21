@@ -41,30 +41,30 @@ export const ConcentricDashboardRing: React.FC<ConcentricDashboardRingProps> = (
       <svg className="w-72 h-72 -rotate-90" viewBox="0 0 200 200">
         {/* Outer Ring - Sales (Blue) */}
         <circle
-          className="text-slate-200 dark:text-white/5"
+          className="text-muted dark:text-foreground/10"
           cx="100" cy="100" fill="none" r="90"
           stroke="currentColor" strokeWidth="8"
         />
         <motion.circle
           className="glow-blue"
           cx="100" cy="100" fill="none" r="90"
-          stroke="#00E0FF" strokeWidth="8"
+          className="stroke-blue-400" strokeWidth="8"
           strokeLinecap="round"
           strokeDasharray={c90}
           initial={{ strokeDashoffset: c90 }}
           animate={{ strokeDashoffset: salesOffset }}
           transition={{ duration: 1.5, ease: "circOut" }}
-          style={{ filter: 'drop-shadow(0 0 8px rgba(0, 224, 255, 0.4))' }}
+          style={{ filter: 'drop-shadow(0 0 8px var(--chart-1))' }}
         />
 
         {/* Middle Ring - Costs (White in Dark, Slate in Light) */}
         <circle
-          className="text-slate-200 dark:text-white/5"
+          className="text-muted dark:text-foreground/10"
           cx="100" cy="100" fill="none" r="70"
           stroke="currentColor" strokeWidth="8"
         />
         <motion.circle
-          className="text-slate-400 dark:text-white"
+          className="text-muted-foreground dark:text-foreground"
           cx="100" cy="100" fill="none" r="70"
           stroke="currentColor" strokeWidth="8"
           strokeLinecap="round"
@@ -76,25 +76,25 @@ export const ConcentricDashboardRing: React.FC<ConcentricDashboardRingProps> = (
 
         {/* Inner Ring - Profit (Green) */}
         <circle
-          className="text-slate-200 dark:text-white/5"
+          className="text-muted dark:text-foreground/10"
           cx="100" cy="100" fill="none" r="50"
           stroke="currentColor" strokeWidth="8"
         />
         <motion.circle
           className="glow-green"
           cx="100" cy="100" fill="none" r="50"
-          stroke="#39FF14" strokeWidth="8"
+          className="stroke-primary" strokeWidth="8"
           strokeLinecap="round"
           strokeDasharray={c50}
           initial={{ strokeDashoffset: c50 }}
           animate={{ strokeDashoffset: profitOffset }}
           transition={{ duration: 1.5, delay: 0.4, ease: "circOut" }}
-          style={{ filter: 'drop-shadow(0 0 8px rgba(57, 255, 20, 0.4))' }}
+          style={{ filter: 'drop-shadow(0 0 8px var(--primary))' }}
         />
       </svg>
 
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center rotate-0">
-        <span className="text-xs font-bold tracking-widest text-slate-500 dark:text-slate-400 uppercase">Margen</span>
+        <span className="text-xs font-bold tracking-widest text-muted-foreground dark:text-muted-foreground uppercase">Margen</span>
         <span className="text-4xl font-black tracking-tighter text-foreground">
           {profitPercent.toFixed(0)}<span className="text-primary">%</span>
         </span>

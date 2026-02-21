@@ -41,7 +41,7 @@ export default function IpvFlowDiagram() {
           <rect x="50" y="160" width="150" height="80" rx="10" className="fill-amber-500/10 stroke-amber-500" strokeWidth="2" />
           <text x="125" y="195" textAnchor="middle" className="fill-amber-600 font-bold text-xs uppercase">Extracto Bancario</text>
           <text x="125" y="215" textAnchor="middle" className="fill-amber-400 font-medium text-xs uppercase">(CSV / XLSX)</text>
-          <path d="M200 200 L290 200" stroke="#f59e0b" strokeWidth="2" markerEnd="url(#arrow-amber)" strokeDasharray="4,2" />
+          <path d="M200 200 L290 200" className="stroke-amber-500" strokeWidth="2" markerEnd="url(#arrow-amber)" strokeDasharray="4,2" />
         </motion.g>
 
         {/* IPV Report (Output) */}
@@ -53,7 +53,7 @@ export default function IpvFlowDiagram() {
           <rect x="600" y="160" width="150" height="80" rx="10" className="fill-emerald-500/10 stroke-emerald-500" strokeWidth="2" />
           <text x="675" y="195" textAnchor="middle" className="fill-emerald-600 font-bold text-xs uppercase">Reporte IPV</text>
           <text x="675" y="215" textAnchor="middle" className="fill-emerald-400 font-medium text-xs uppercase">(PDF Certificado)</text>
-          <path d="M500 200 L590 200" stroke="#10b981" strokeWidth="2" markerEnd="url(#arrow-emerald)" />
+          <path d="M500 200 L590 200" className="stroke-emerald-500" strokeWidth="2" markerEnd="url(#arrow-emerald)" />
         </motion.g>
 
         {/* IndexedDB Persistence */}
@@ -65,18 +65,18 @@ export default function IpvFlowDiagram() {
           <path d="M350 350 L450 350 L470 300 L330 300 Z" className="fill-primary/5 stroke-primary/30" strokeWidth="2" />
           <text x="400" y="330" textAnchor="middle" className="fill-primary/60 font-bold text-xs uppercase">Persistencia Local</text>
           <text x="400" y="345" textAnchor="middle" className="fill-primary/40 font-medium text-xs uppercase">(IndexedDB)</text>
-          <path d="M400 300 L400 250" stroke="#6366f1" strokeWidth="2" markerEnd="url(#arrow-blue)" />
+          <path d="M400 300 L400 250" className="stroke-indigo-500" strokeWidth="2" markerEnd="url(#arrow-blue)" />
         </motion.g>
 
         <defs>
           <marker id="arrow-amber" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
-            <polygon points="0 0, 10 3.5, 0 7" fill="#f59e0b" />
+            <polygon points="0 0, 10 3.5, 0 7" className="fill-amber-500" />
           </marker>
           <marker id="arrow-emerald" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
-            <polygon points="0 0, 10 3.5, 0 7" fill="#10b981" />
+            <polygon points="0 0, 10 3.5, 0 7" className="fill-emerald-500" />
           </marker>
           <marker id="arrow-blue" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
-            <polygon points="0 0, 10 3.5, 0 7" fill="#3b82f6" />
+            <polygon points="0 0, 10 3.5, 0 7" className="fill-blue-500" />
           </marker>
         </defs>
 
