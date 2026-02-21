@@ -1,4 +1,5 @@
 'use client';
+import { cn } from '@/lib/utils';
 
 import React from 'react';
 import ActionMenu, { Action } from '@/components/ui/ActionMenu';
@@ -54,7 +55,10 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
                 icon: s.icon || (s.id === 'header' ? Layout : ClipboardList),
                 onClick: () => setActiveSection(s.id),
                 active: isActive,
-                className: "text-xs uppercase tracking-wider"
+                className: cn(
+                    "text-xs uppercase tracking-wider transition-colors",
+                    !isActive && "text-primary/70 hover:text-primary"
+                )
             };
         }),
         // FC Dropdown (Grouping Encabezado, Secciones, Anexos, Firmas, Todo)
@@ -76,7 +80,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
             label: 'Ayuda',
             icon: HelpCircle,
             onClick: onOpenHelp,
-            className: "text-xs uppercase tracking-wider bg-amber-500/10 text-amber-600 border-amber-500/20"
+            className: "text-xs uppercase tracking-wider bg-primary/10 text-primary border-primary/20"
         }] : [])
     ];
 

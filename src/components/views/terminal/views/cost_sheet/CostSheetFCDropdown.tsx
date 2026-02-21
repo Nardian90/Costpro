@@ -56,7 +56,7 @@ export function CostSheetFCDropdown({
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-56 p-2 rounded-2xl bg-card border-border shadow-2xl z-[110]">
-        <div className="px-2 py-1.5 text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1 border-b border-border/50 pb-2">
+        <div className="px-2 py-1.5 text-[10px] font-black uppercase tracking-widest text-primary/50 mb-1 border-b border-border/50 pb-2">
           Componentes de la Ficha
         </div>
         {options.map((opt) => (
@@ -71,7 +71,7 @@ export function CostSheetFCDropdown({
             }}
             className={cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-colors focus:bg-primary/10 focus:text-primary",
-              isOptionActive(opt.id) ? "bg-primary/10 text-primary font-bold" : "text-muted-foreground hover:bg-muted"
+              isOptionActive(opt.id) ? "bg-primary/10 text-primary font-bold" : "text-primary/70 hover:bg-primary/5 hover:text-primary"
             )}
           >
             <opt.icon className="w-4 h-4" />
