@@ -28,7 +28,6 @@ import { toast } from 'sonner';
 import { supabase } from '@/lib/supabaseClient';
 import reinicioTemplate from '@/lib/data/costpro-reinicio';
 import exampleTemplate from '@/lib/data/costpro-ejemplo';
-import fullTemplate from '@/lib/data/costpro-full';
 
 type TemplateCategory = 'system' | 'private' | 'public';
 
@@ -69,14 +68,6 @@ export const CostSheetTemplateExplorer: React.FC = () => {
       category: 'Industria Alimentaria',
       type: 'system',
       data: exampleTemplate
-    },
-    {
-      id: 'sys-full',
-      name: 'Plantilla Full (Lote Especial)',
-      description: 'Referencia avanzada con integración completa de anexos.',
-      category: 'Industria Alimentaria',
-      type: 'system',
-      data: fullTemplate
     }
   ];
 

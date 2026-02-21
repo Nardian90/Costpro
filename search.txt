@@ -1,9 +1,0 @@
-                    <DropdownMenuItem
-                        onClick={() => onAction('inventory')}
-                        className="flex items-center gap-3 p-3 rounded-xl focus:bg-primary/10 focus:text-primary cursor-pointer border-none sm:hidden"
-                    >
-                        <div className="p-2 rounded-lg bg-primary/10">
-                            <Package className="w-4 h-4 text-primary" />
-                        </div>
-                        <span className="font-bold uppercase tracking-tight text-xs">Inventario</span>
-                    </DropdownMenuItem>
