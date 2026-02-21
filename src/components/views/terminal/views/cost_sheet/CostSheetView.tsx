@@ -704,10 +704,6 @@ const CostSheetView = () => {
                     )}
                     {activeSection === "ai-chat" && (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-[600px] flex flex-col">
-                             <h2 className="text-3xl font-black uppercase tracking-tighter italic text-primary mb-6 flex items-center gap-3 px-4">
-                                 <Sparkles className="w-8 h-8" />
-                                 Darian
-                             </h2>
                              <div className="flex-1">
                                 <DarianEditor sheetData={data} isFullView={true} />
                              </div>
