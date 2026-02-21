@@ -2,14 +2,6 @@
 import { CostSheetDataContract } from '@/contracts/cost-sheet';
 
 const template: CostSheetDataContract = {
-  "id": "costpro-full-v5",
-  "name": "Producción de Pan de Corteza Dura (Lote Especial)",
-  "version": "5.7.25",
-  "metadata": {
-    "author": "Darian - Senior Specialist",
-    "description": "Ficha de referencia para estudio de costos industriales complejos con integración de anexos y fórmulas dinámicas."
-  },
-  {
   "header": {
     "code": "",
     "name": "Paquete de Pan de 8 Bolas",
@@ -792,12 +784,12 @@ const template: CostSheetDataContract = {
           "baseDeCalculoRef": "",
           "calculationMethod": "FORMULA",
           "totalFormula": "ref('13.1') + ref('13.2')",
-          "formula": "ref('13.2') + ref('13.3')",
+          "formula": "ref('13.1') + ref('13.2')",
           "children": [],
           "baseRef": "",
           "isPercent": false,
           "helpText": "",
-          "vhFormula": "vh('13.2') +vh('13.3')"
+          "vhFormula": "vh('13.1') + vh('13.2')"
         }
       ]
     },
@@ -812,8 +804,8 @@ const template: CostSheetDataContract = {
           "value": 0,
           "baseDeCalculoRef": "",
           "calculationMethod": "FORMULA",
-          "totalFormula": "=ref('12') / cantidad",
-          "formula": "=ref('12') / cantidad",
+          "totalFormula": "ref('12') / cantidad",
+          "formula": "ref('12') / cantidad",
           "children": [],
           "baseRef": "",
           "isPercent": false,
@@ -832,8 +824,8 @@ const template: CostSheetDataContract = {
           "value": 0,
           "baseDeCalculoRef": "",
           "calculationMethod": "FORMULA",
-          "totalFormula": "=ref('14') / cantidad",
-          "formula": "=ref('14') / cantidad",
+          "totalFormula": "ref('14') / cantidad",
+          "formula": "ref('14') / cantidad",
           "children": [],
           "baseRef": "",
           "isPercent": false,
@@ -1117,7 +1109,7 @@ const template: CostSheetDataContract = {
     "prepared_by": "Elaborado por:",
     "approved_by": "Aprobado por:"
   },
-  "id": "costpro-full-v5",
+  "id": "costpro-ejemplo",
   "name": "Producción de Paquete de Pan de 8 Bolas",
   "version": "5.7.25",
   "metadata": {
