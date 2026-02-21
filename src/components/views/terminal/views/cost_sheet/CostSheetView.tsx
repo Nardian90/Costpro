@@ -398,22 +398,6 @@ const CostSheetView = () => {
     { id: 'export-pdf', label: 'PDF', icon: Download, onClick: () => setIsExportModalOpen(true), variant: (isBlocked ? 'outline' : 'success') as any, disabled: false },
     { id: 'massive-gen', label: 'Gen. Masiva', icon: FileText, onClick: () => { setActiveSection('massive-gen'); setIsActionsPanelOpen(false); }, variant: 'outline' as const },
     {
-        id: 'save-template',
-        label: 'Guardar Plantilla',
-        icon: Save,
-        onClick: () => {
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${data.name || 'plantilla'}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-            toast.success('Plantilla lista para guardar en tu carpeta local');
-        },
-        variant: 'success' as const
-    },
-    {
         id: 'calculator',
         label: 'Calculadora',
         icon: Calculator,
@@ -443,7 +427,6 @@ const CostSheetView = () => {
     { id: "templates", label: "Plantillas", icon: FolderOpen },
     { id: "ai-chat", label: "Darian", icon: Sparkles },
 
-    { id: "header", label: "Encabezado", icon: Layout },
     { id: "massive-gen", label: "Gen. Masiva", icon: FileText }
   ], []);
 
@@ -594,7 +577,7 @@ const CostSheetView = () => {
                     className="w-full sm:w-auto rounded-xl border-primary/20 hover:bg-primary/10 text-primary font-bold uppercase tracking-widest text-xs h-10 px-6 active:scale-95 transition-all"
                   >
                       <Table2 className="w-3.5 h-3.5 mr-2" />
-                      Volver a Modo Experto
+                      Volver a Modo Todo
                   </Button>
               </div>
           )}
@@ -642,7 +625,7 @@ const CostSheetView = () => {
                                 <div className="px-4 py-6 mb-8 bg-primary/5 rounded-[2rem] border border-primary/10">
                                     <h2 className="text-2xl font-black uppercase tracking-tighter italic text-primary flex items-center gap-3">
                                         <ZapIcon className="w-8 h-8" />
-                                        Modo Experto: Vista Consolidada
+                                        Todo: Vista Consolidada
                                     </h2>
                                     <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">Todas las Secciones y Anexos</p>
                                 </div>
@@ -772,7 +755,7 @@ const CostSheetView = () => {
                     className="w-full sm:w-auto text-primary hover:bg-primary/10 font-bold uppercase tracking-widest text-xs h-9 px-4 rounded-xl"
                 >
                     <Edit className="w-3.5 h-3.5 mr-2" />
-                    Ir al Editor (Modo Experto)
+                    Ir al Editor (Modo Todo)
                 </Button>
             </div>
             <div className="w-full flex justify-center">
