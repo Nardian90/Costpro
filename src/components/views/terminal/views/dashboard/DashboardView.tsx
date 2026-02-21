@@ -15,6 +15,7 @@ import type { Product } from '@/types';
 import { useDashboardView } from './useDashboardView';
 import { useAuthStore } from '@/store';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { RecentCostSheets } from './RecentCostSheets';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -128,6 +129,9 @@ export default function DashboardView() {
                   profit={profit}
                 />
               </section>
+
+              {/* Recent Cost Sheets */}
+              <RecentCostSheets />
 
               {/* Action Buttons */}
               <div className="grid grid-cols-2 gap-4">
