@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
          - MANO DE OBRA (Anexo II): Incluye los puestos necesarios (ej. Maestro Panadero, Ayudante), horas y tarifas.
          - OTROS COSTOS (Anexo III/IV): Si aplica, incluye depreciación de equipos clave y otros gastos directos.
          - FORMATO: Usa exclusivamente el bloque 'json_annex_update'.
-           Ejemplo: ```json_annex_update { "resetBeforeApply": true, "header": { "name": "Pan de Molde" }, "annexes": [ { "id": "I", "data": [...] }, { "id": "II", "data": [...] } ] } ```
+           Ejemplo: \`\`\`json_annex_update { "resetBeforeApply": true, "header": { "name": "Pan de Molde" }, "annexes": [ { "id": "I", "data": [...] }, { "id": "II", "data": [...] } ] } \`\`\`
 
       FUENTES DE VERDAD:
       1. BASE NORMATIVA (Resolución 148/2023):
