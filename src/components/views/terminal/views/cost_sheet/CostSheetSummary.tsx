@@ -317,8 +317,8 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
             <header className="mb-10">
               <p className="text-xs uppercase tracking-[0.2em] text-primary mb-2 font-bold">Margen de Utilidad</p>
               <div className="flex items-baseline gap-1">
-                <h1 className="font-display text-6xl font-bold tracking-tighter neon-glow text-foreground">
-                  {sliderValue.toFixed(3)}<span className="text-primary text-3xl ml-1">%</span>
+                <h1 className="font-display text-[clamp(2rem,10vw,3.75rem)] font-bold tracking-tighter neon-glow text-foreground leading-none">
+                  {sliderValue.toFixed(3)}<span className="text-primary text-[clamp(1.25rem,5vw,2.25rem)] ml-1">%</span>
                 </h1>
               </div>
               <p className="text-xs uppercase tracking-widest text-muted-foreground mt-2">Ajuste dinámico sobre costo (13.1/12.1)</p>
@@ -335,7 +335,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => handleSliderChange([Math.max(1, sliderValue - 1)])}
-                    className="p-1 rounded-md bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+                    className="h-11 w-11 flex items-center justify-center shrink-0 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary transition-all active:scale-90"
                   >
                     <Minus className="w-4 h-4" />
                   </button>
@@ -349,7 +349,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
                 />
                   <button
                     onClick={() => handleSliderChange([Math.min(100, sliderValue + 1)])}
-                    className="p-1 rounded-md bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+                    className="h-11 w-11 flex items-center justify-center shrink-0 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary transition-all active:scale-90"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
@@ -368,7 +368,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => handleCoefChange(Math.max(0, localCoef - 0.0001))}
-                    className="p-1 rounded-md bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+                    className="h-11 w-11 flex items-center justify-center shrink-0 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary transition-all active:scale-90"
                   >
                     <Minus className="w-4 h-4" />
                   </button>
@@ -382,7 +382,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
                 />
                   <button
                     onClick={() => handleCoefChange(Math.min(4, localCoef + 0.0001))}
-                    className="p-1 rounded-md bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+                    className="h-11 w-11 flex items-center justify-center shrink-0 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary transition-all active:scale-90"
                   >
                     <Plus className="w-4 h-4" />
                   </button>

@@ -60,8 +60,8 @@ const HealthBattery: React.FC<HealthBatteryProps> = ({ percent, className }) => 
                          <span className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground dark:text-muted-foreground">Estado de Salud</span>
                     </div>
                     <div className="flex items-baseline gap-1">
-                        <h2 className={cn("text-6xl font-black tracking-tighter tabular-nums", colorClass)}>{Math.round(percent)}</h2>
-                        <span className={cn("text-2xl font-black opacity-30", colorClass)}>%</span>
+                        <h2 className={cn("text-[clamp(2.5rem,12vw,3.75rem)] font-black tracking-tighter tabular-nums leading-none", colorClass)}>{Math.round(percent)}</h2>
+                        <span className={cn("text-[clamp(1.25rem,5vw,2rem)] font-black opacity-30", colorClass)}>%</span>
                     </div>
                 </div>
 
