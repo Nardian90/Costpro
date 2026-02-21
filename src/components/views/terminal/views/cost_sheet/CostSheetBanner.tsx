@@ -3,44 +3,68 @@
 import React from 'react';
 import { useUIStore } from "@/store";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Menu } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { CostSheetModeDropdown, CostSheetViewMode } from "./CostSheetModeDropdown";
 
 interface CostSheetBannerProps {
   viewMode: CostSheetViewMode;
   setViewMode: (mode: CostSheetViewMode) => void;
+  onOpenActions?: () => void;
 }
 
-export const CostSheetBanner = ({ viewMode, setViewMode }: CostSheetBannerProps) => {
+export const CostSheetBanner = ({ viewMode, setViewMode, onOpenActions }: CostSheetBannerProps) => {
   const { setCurrentView } = useUIStore();
   return (
-    <div className="hidden sm:flex flex-col sm:flex-row items-center justify-between gap-4 mb-8 px-2">
-      <div className="flex items-center gap-4">
-        <Button
-          variant="outline"
-          size="sm"
-          className="mr-4 rounded-xl border-primary/20 text-primary hover:bg-primary/10 font-black uppercase tracking-widest text-[10px] h-11 px-4"
-          onClick={() => setCurrentView('dashboard')}
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Regresar
-        </Button>
-        <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20 rotate-3">
-          <ShieldCheck className="w-7 h-7 text-white" />
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6 sm:mb-8 px-2 sticky top-0 z-[40] bg-background/80 backdrop-blur-xl py-3 sm:py-0 sm:bg-transparent sm:backdrop-blur-none sm:relative border-b border-white/5 sm:border-none -mx-4 sm:mx-0 px-4 sm:px-2">
+      <div className="flex items-center justify-between w-full sm:w-auto gap-4">
+        <div className="flex items-center gap-2">
+            {onOpenActions && (
+                <button
+                    onClick={onOpenActions}
+                    className="sm:hidden neu-raised-sm w-11 h-11 flex items-center justify-center shrink-0 active:scale-90 transition-transform"
+                    aria-label="Abrir menú de acciones"
+                >
+                    <Menu className="w-5 h-5" />
+                </button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-xl border-primary/20 text-primary hover:bg-primary/10 font-black uppercase tracking-widest text-[10px] h-11 px-4"
+              onClick={() => setCurrentView('dashboard')}
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Regresar
+            </Button>
         </div>
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight leading-tight">
-            Vista Costo
-          </h1>
-          <p className="text-xs font-black uppercase tracking-[0.2em] text-primary/60">
-            Sistema de Gestión COSTPRO
-          </p>
+
+        <div className="flex items-center gap-3">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20 rotate-3 shrink-0">
+              <ShieldCheck className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-3xl font-black text-foreground tracking-tight leading-tight truncate">
+                Vista Costo
+              </h1>
+              <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] text-primary/60 truncate">
+                Sistema de Gestión COSTPRO
+              </p>
+            </div>
+        </div>
+
+        <div className="sm:hidden flex items-center gap-2">
+             <ThemeToggle />
         </div>
       </div>
-      <div className="flex items-center gap-4">
-        <CostSheetModeDropdown viewMode={viewMode} setViewMode={setViewMode} />
-        <ThemeToggle />
+
+      <div className="flex items-center justify-between w-full sm:w-auto gap-4">
+        <div className="flex-1 sm:flex-none">
+            <CostSheetModeDropdown viewMode={viewMode} setViewMode={setViewMode} />
+        </div>
+        <div className="hidden sm:block">
+            <ThemeToggle />
+        </div>
         <div className="hidden lg:flex neu-badge !text-success !bg-success/10 border border-success/20 py-1 px-3">
           Sistema Activo
         </div>
