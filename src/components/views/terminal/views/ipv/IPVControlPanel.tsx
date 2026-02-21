@@ -3,6 +3,7 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import {
+    TrendingUp,
     History,
     Play,
     FileText,
@@ -20,48 +21,27 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { exportFullBackup } from '@/lib/ipv/backup';
+import { db } from '@/lib/dexie';
+import { motion } from 'framer-motion';
 
-interface SectionCardProps {
-    id: string;
-    title: string;
-    description: string;
-    icon: React.ReactNode;
-    onClick: (id: string) => void;
-    color: string;
-    badge?: string;
-    isHero?: boolean;
-    warning?: string;
-}
-
-const SectionCard = ({ id, title, description, icon, onClick, color, badge, isHero, warning }: SectionCardProps) => (
+const SectionCard = ({ title, description, icon, color, badge, onClick, id, isHero, warning }: any) => (
     <Card
         onClick={() => onClick(id)}
-        className={`group p-6 border-2 transition-all cursor-pointer relative overflow-hidden flex flex-col h-full shadow-md hover:shadow-xl active:scale-95 ${
-            isHero
-                ? 'bg-primary border-primary text-primary-foreground hover:bg-primary/90'
-                : 'border-transparent bg-card/50 backdrop-blur-sm hover:border-primary/20'
-        }`}
+        className={`group relative p-6 cursor-pointer overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl border-none ${isHero ? 'bg-primary text-primary-foreground' : 'bg-card/50 backdrop-blur-sm hover:bg-card shadow-lg'}`}
     >
-        {badge && (
-            <div className={`absolute top-2 left-2 px-2 py-0.5 rounded-md text-xs font-black uppercase tracking-tighter z-20 ${
-                isHero ? 'bg-white text-primary' : 'bg-primary text-white'
-            }`}>
-                {badge}
-            </div>
-        )}
-
-        <div className={`absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity ${isHero ? 'text-white' : color}`}>
+        <div className={`absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-all group-hover:scale-110 ${isHero ? 'text-white' : color}`}>
             {React.cloneElement(icon as React.ReactElement<any>, { size: 80 })}
         </div>
 
-        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 shadow-inner ${
-            isHero ? 'bg-white/20' : `${color} bg-opacity-10`
-        }`}>
+        {badge && (
+            <Badge variant="outline" className={`absolute top-4 right-4 text-[10px] font-black tracking-widest uppercase py-1 px-3 border-none ${isHero ? 'bg-white/20 text-white' : 'bg-primary/10 text-primary'}`}>
+                {badge}
+            </Badge>
+        )}
+
+        <div className={`mb-6 p-4 rounded-2xl w-fit ${isHero ? 'bg-white/20' : 'bg-background shadow-inner'}`}>
             {React.cloneElement(icon as React.ReactElement<any>, {
                 size: 24,
                 className: isHero ? 'text-white' : color
@@ -107,6 +87,14 @@ export function IPVControlPanel({ onSelect, onExportBackup, onImportBackup, hasT
         }
     };
     const sections = [
+        {
+            id: 'analytics',
+            title: 'Dashboard',
+            description: 'Cuadro de mando institucional con KPIs financieros y tendencias de liquidez.',
+            icon: <TrendingUp />,
+            color: 'text-primary',
+            isHero: true
+        },
         {
             id: 'help',
             title: 'Guía de Flujo',

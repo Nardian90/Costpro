@@ -28,6 +28,7 @@ import { PivotStatementView } from './PivotStatementView';
 import { IngestionErrorsTable } from './IngestionErrorsTable';
 import { ManualReconciliationView } from './ManualReconciliationView';
 import { IPVControlPanel } from './IPVControlPanel';
+import { IPVInstitutionalDashboard } from './IPVInstitutionalDashboard';
 import { IPVRightSidebar } from './IPVRightSidebar';
 import { MatchingEngine } from '@/lib/ipv/engine';
 import { exportFullBackup, importFullBackup } from '@/lib/ipv/backup';
@@ -41,7 +42,7 @@ import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/comp
 import { IPVHelpDialog } from './IPVHelpDialog';
 
 export default function IPVView() {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('analytics');
   const [isMatching, setIsMatching] = useState(false);
   const [matchMessage, setMatchMessage] = useState('');
   const [matchProgress, setMatchProgress] = useState(0);
@@ -364,7 +365,7 @@ export default function IPVView() {
 
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 px-1">
         <div className="flex items-center gap-4">
-            {activeTab !== 'dashboard' && (
+            {activeTab !== 'dashboard' && activeTab !== 'analytics' && (
                 <Button
                     variant="ghost"
                     size="icon"
@@ -501,11 +502,12 @@ export default function IPVView() {
       <IPVRightSidebar activeTab={activeTab} onSelect={setActiveTab} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        {activeTab !== 'dashboard' && (
+        {activeTab !== 'dashboard' && activeTab !== 'analytics' && (
             <div className="mb-6">
                 <HorizontalScroll containerClassName="bg-muted/50 rounded-2xl p-1">
                     <TabsList className="flex bg-transparent border-none w-max min-w-full h-auto p-0 gap-1">
-                        <TabsTrigger value="dashboard" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Panel</TabsTrigger>
+                        <TabsTrigger value="analytics" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl border-2 border-primary/20 bg-primary/5 text-primary">Dashboard</TabsTrigger>
+                        <TabsTrigger value="dashboard" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Flujo</TabsTrigger>
                         <TabsTrigger value="transactions" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Transacciones</TabsTrigger>
                         <TabsTrigger value="sim" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Simulación</TabsTrigger>
                         <TabsTrigger value="breakdown" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Desglose</TabsTrigger>
@@ -532,7 +534,10 @@ export default function IPVView() {
             </div>
         )}
 
-        <div className={activeTab === 'dashboard' ? '' : 'mt-6 p-0 overflow-hidden border-none shadow-xl bg-card/50 backdrop-blur-sm rounded-3xl'}>
+        <div className={(activeTab === 'dashboard' || activeTab === 'analytics') ? '' : 'mt-6 p-0 overflow-hidden border-none shadow-xl bg-card/50 backdrop-blur-sm rounded-3xl'}>
+          <TabsContent value="analytics" className="m-0">
+            <IPVInstitutionalDashboard transactions={transactions || []} />
+          </TabsContent>
           <TabsContent value="dashboard" className="m-0">
             <IPVControlPanel
               onSelect={(id) => {
