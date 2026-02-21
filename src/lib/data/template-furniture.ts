@@ -178,9 +178,9 @@ const template: CostSheetDataContract = {
         { "key": "total", "label": "Total", "formula": "consumption_norm * price" }
       ],
       "data": [
-        { "classification": "1.1", "description": "Madera de Roble", "um": "m3", "consumption_norm": 0.05, "price": 450000 },
-        { "classification": "1.1", "description": "Barniz Poliuretano", "um": "Lt", "consumption_norm": 0.5, "price": 2500 },
-        { "classification": "1.1", "description": "Tornillos 2 pulg", "um": "Paquete", "consumption_norm": 1, "price": 450 }
+        { "classification": "1.1.1", "description": "Madera de Roble", "um": "m3", "consumption_norm": 0.05, "price": 450000 },
+        { "classification": "1.1.1", "description": "Barniz Poliuretano", "um": "Lt", "consumption_norm": 0.5, "price": 2500 },
+        { "classification": "1.1.1", "description": "Tornillos 2 pulg", "um": "Paquete", "consumption_norm": 1, "price": 450 }
       ]
     },
     {
@@ -194,8 +194,8 @@ const template: CostSheetDataContract = {
         { "key": "total", "label": "Total", "formula": "time_norm * hourly_rate" }
       ],
       "data": [
-        { "classification": "2.1", "description": "Ebanista A", "time_norm": 12, "hourly_rate": 350 },
-        { "classification": "2.1", "description": "Ayudante", "time_norm": 8, "hourly_rate": 180 }
+        { "classification": "2.1.1", "description": "Ebanista A", "time_norm": 12, "hourly_rate": 350 },
+        { "classification": "2.1.1", "description": "Ayudante", "time_norm": 8, "hourly_rate": 180 }
       ]
     },
     {
@@ -223,8 +223,8 @@ const template: CostSheetDataContract = {
         { "key": "amount", "label": "Importe" }
       ],
       "data": [
-        { "classification": "3.1", "description": "Electricidad Taller", "amount": 1200 },
-        { "classification": "3.1", "description": "Mantenimiento Herramientas", "amount": 500 }
+        { "classification": "3.1.1", "description": "Electricidad Taller", "amount": 1200 },
+        { "classification": "3.1.1", "description": "Mantenimiento Herramientas", "amount": 500 }
       ]
     },
     { "id": "V", "title": "V - DIETAS", "columns": [], "data": [] }
