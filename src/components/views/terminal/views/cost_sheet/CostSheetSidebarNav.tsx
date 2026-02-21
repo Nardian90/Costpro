@@ -152,7 +152,7 @@ export const CostSheetSidebarNav: React.FC<CostSheetSidebarNavProps> = ({
                           onClose();
                       }}
                       variant="outline"
-                      className="w-full h-12 rounded-2xl border-primary/20 hover:bg-primary/10 text-primary font-black uppercase tracking-widest text-[10px] gap-2 px-2"
+                      className="w-full h-12 rounded-2xl border-primary/20 hover:bg-primary/10 text-primaryfont-black uppercase tracking-widest text-[10px] gap-2 px-2"
                   >
                       <Calculator className="w-4 h-4" />
                       Calculadora

@@ -111,7 +111,7 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
 
             <div className="w-full sm:w-56 shrink-0">
                 {row.formula ? (
-                   <div className="neu-inset-sm px-4 py-2.5 font-mono text-right text-lg font-black text-primary bg-background/50 border border-primary/10">
+                   <div className="neu-inset-sm px-4 py-2.5 font-mono text-right text-lg font-black text-primarybg-background/50 border border-primary/10">
                         {formatCurrency(calculatedValues[row.id] || 0)}
                    </div>
                 ) : (
@@ -123,7 +123,7 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
                             onChange={(e) => handleInputChange(['sections', (data?.sections || []).indexOf(section), 'rows', rowIndex, 'value'], e.target.value)}
                             className="neu-input !pr-10 text-right font-mono text-lg font-bold"
                         />
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary font-bold">
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primaryfont-bold">
                             $
                         </div>
                     </div>
@@ -179,7 +179,7 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
                               {(annex.columns ?? []).map((col: any) => (
                                   <TableCell key={col?.key} data-label={col?.label} className="p-3 sm:p-4">
                                       {col?.formula ? (
-                                          <div className="neu-inset-sm px-3 py-2 font-mono text-right bg-primary/5 text-primary font-black min-w-[100px] border border-primary/10">
+                                          <div className="neu-inset-sm px-3 py-2 font-mono text-right bg-primary/5 text-primaryfont-black min-w-[100px] border border-primary/10">
                                               {formatCurrency(row?.[col.key] || 0).replace('$', '').trim()}
                                           </div>
                                       ) : (
@@ -213,7 +213,7 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
             <div className="neu-card !p-5 border-primary/20 bg-primary/5 shadow-xl min-w-[240px]">
                 <span className="text-xs text-primary/70 uppercase font-black tracking-[0.2em] block mb-2 text-right">Total {annex.id}</span>
                 <div className="flex items-center justify-end gap-2">
-                    <span className="text-[clamp(1.5rem,5vw,1.875rem)] font-black font-mono text-primary drop-shadow-sm">
+                    <span className="text-[clamp(1.5rem,5vw,1.875rem)] font-black font-mono text-primarydrop-shadow-sm">
                         {formatCurrency(displayData.reduce((acc: number, row: any) => {
                              const totalCol = annex.columns.find((c:any) => c.formula || c.key === 'amount' || c.key === 'total');
                              return acc + (row[totalCol?.key || ''] || 0);
@@ -241,7 +241,7 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
           <Edit className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h2 className="text-lg font-black uppercase tracking-widest text-primary leading-tight">
+          <h2 className="text-lg font-black uppercase tracking-widest text-primaryleading-tight">
             Editor de Ficha
           </h2>
           <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">

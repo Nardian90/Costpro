@@ -573,7 +573,7 @@ const CostSheetView = () => {
       {isEditing ? (
         <div className="animate-in fade-in duration-700 space-y-6">
           {viewMode !== 'expert' && (
-              <div className="flex flex-col sm:flex-row justify-between items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-[1.5rem] mb-6 shadow-sm gap-4">
+              <div className="flex flex-col sm:flex-row justify-between items-center bg-muted/50 border border-slate-200 dark:border-slate-800 p-4 rounded-[1.5rem] mb-6 shadow-sm gap-4">
                   <div className="flex items-center gap-3">
                       <div className="p-2.5 bg-primary/10 rounded-xl">
                           {viewMode === 'assisted' && <Wand2 className="w-5 h-5 text-primary" />}
@@ -591,7 +591,7 @@ const CostSheetView = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => setViewMode('expert')}
-                    className="w-full sm:w-auto rounded-xl border-primary/20 hover:bg-primary/10 text-primary font-bold uppercase tracking-widest text-xs h-10 px-6 active:scale-95 transition-all"
+                    className="w-full sm:w-auto rounded-xl border-primary/20 hover:bg-primary/10 text-primaryfont-bold uppercase tracking-widest text-xs h-10 px-6 active:scale-95 transition-all"
                   >
                       <Table2 className="w-3.5 h-3.5 mr-2" />
                       Volver a Modo Experto
@@ -762,14 +762,14 @@ const CostSheetView = () => {
         <div className="animate-in zoom-in-95 duration-500">
             <div className="max-w-5xl mx-auto mb-6 flex flex-col sm:flex-row justify-between items-center bg-slate-100 dark:bg-slate-800/40 p-3 rounded-2xl gap-3">
                 <div className="flex items-center gap-3 px-2">
-                    <Eye className="w-4 h-4 text-slate-400" />
-                    <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Vista de Previsualización</span>
+                    <Eye className="w-4 h-4 text-muted-foreground/70" />
+                    <span className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Vista de Previsualización</span>
                 </div>
                 <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => { setIsEditing(true); setViewMode('expert'); handleSetViewMode('expert'); }}
-                    className="w-full sm:w-auto text-primary hover:bg-primary/10 font-bold uppercase tracking-widest text-xs h-9 px-4 rounded-xl"
+                    className="w-full sm:w-auto text-primaryhover:bg-primary/10 font-bold uppercase tracking-widest text-xs h-9 px-4 rounded-xl"
                 >
                     <Edit className="w-3.5 h-3.5 mr-2" />
                     Ir al Editor (Modo Experto)

@@ -78,7 +78,7 @@ export function CostSheetModeDropdown({ viewMode, setViewMode }: CostSheetModeDr
             onClick={() => setViewMode(m.id)}
             className={cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-colors focus:bg-primary/10 focus:text-primary",
-              viewMode === m.id ? "bg-primary/10 text-primary font-bold" : "text-muted-foreground hover:bg-muted"
+              viewMode === m.id ? "bg-primary/10 text-primaryfont-bold" : "text-muted-foreground hover:bg-muted"
             )}
           >
             <m.icon className={cn("w-4 h-4", m.color)} />

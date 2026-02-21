@@ -491,7 +491,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                                     variant="outline"
                                     size="sm"
                                     onClick={handleImportClick}
-                                    className="mt-2 rounded-xl text-xs font-black uppercase tracking-widest border-primary/30 text-primary hover:bg-primary/10"
+                                    className="mt-2 rounded-xl text-xs font-black uppercase tracking-widest border-primary/30 text-primaryhover:bg-primary/10"
                                 >
                                     <Upload className="w-3 h-3 mr-2" />
                                     ¿Prefieres importar un Excel?
@@ -562,7 +562,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                             variant="link"
                             size="sm"
                             onClick={exportMassiveTemplate}
-                            className="text-xs font-black uppercase tracking-widest text-muted-foreground hover:text-primary h-auto p-0"
+                            className="text-xs font-black uppercase tracking-widest text-muted-foreground hover:text-primaryh-auto p-0"
                         >
                             <Download className="w-3 h-3 mr-2" />
                             Descargar Plantilla de Importación

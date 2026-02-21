@@ -12,24 +12,24 @@ const CostSheetHeader: React.FC<CostSheetHeaderProps> = ({ header }) => {
     <div className="space-y-6">
       {/* Formal Government Headers */}
       <div className="text-center space-y-1 mb-8">
-        <h2 className="text-sm font-black tracking-[0.25em] text-slate-900 dark:text-white uppercase">
+        <h2 className="text-sm font-black tracking-[0.25em] text-foreground uppercase">
           MINISTERIO DE FINANZAS Y PRECIOS
         </h2>
-        <h3 className="text-xs font-bold tracking-widest text-slate-500 dark:text-slate-400 uppercase">
+        <h3 className="text-xs font-bold tracking-widest text-muted-foreground uppercase">
           FICHA DE COSTOS Y GASTOS DE PRODUCTOS Y SERVICIOS
         </h3>
-        <p className="text-xs font-medium tracking-widest text-slate-400 uppercase">
+        <p className="text-xs font-medium tracking-widest text-muted-foreground/70 uppercase">
           PARA LA EVALUACIÓN DE PRECIOS Y TARIFAS
         </p>
       </div>
 
-      <div className="bg-white/50 dark:bg-slate-900/50 p-6 rounded-[2rem] border border-slate-200 dark:border-primary/20 shadow-xl backdrop-blur-sm">
+      <div className="bg-card/50 p-6 rounded-[2rem] border border-border dark:border-primary/20 shadow-xl backdrop-blur-sm">
         <div className="flex flex-col gap-6">
-          <div className="border-b border-slate-200 dark:border-primary/10 pb-4">
-            <span className="text-xs font-black uppercase tracking-[0.3em] text-primary block mb-2 px-1">
+          <div className="border-b border-border/50 pb-4">
+            <span className="text-xs font-black uppercase tracking-[0.3em] text-primaryblock mb-2 px-1">
               Datos generales de la Ficha de Costo (FC)
             </span>
-            <h1 className="text-3xl font-black text-slate-900 dark:text-white leading-tight uppercase tracking-tight">
+            <h1 className="text-3xl font-black text-foreground leading-tight uppercase tracking-tight">
               {header.name || 'Sin nombre'}
             </h1>
           </div>
@@ -49,12 +49,12 @@ const CostSheetHeader: React.FC<CostSheetHeaderProps> = ({ header }) => {
               { label: 'Precio de Venta', value: header.sale_price, highlight: true },
             ].map((item, idx) => (
               <div key={idx} className={cn("space-y-1", item.highlight && "col-span-1 sm:col-span-2 lg:col-span-1")}>
-                <span className="text-xs font-bold uppercase tracking-widest text-slate-400 block">
+                <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70 block">
                   {item.label}
                 </span>
                 <div className={cn(
                   "font-bold text-sm",
-                  item.highlight ? "text-primary font-black" : "text-slate-700 dark:text-slate-300"
+                  item.highlight ? "text-primary font-black" : "text-foreground"
                 )}>
                   {item.value || 'N/A'}
                 </div>

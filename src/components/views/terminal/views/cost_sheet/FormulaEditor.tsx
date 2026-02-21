@@ -106,7 +106,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
           <div className="flex items-center justify-end gap-1 pr-1 pb-1 sm:pb-0 animate-in fade-in slide-in-from-right-2 duration-200">
              <Popover>
                 <PopoverTrigger asChild>
-                  <button className="p-1 hover:bg-primary/20 text-primary rounded" title="Ayuda">
+                  <button className="p-1 hover:bg-primary/20 text-primaryrounded" title="Ayuda">
                     <HelpCircle className="w-3.5 h-3.5" />
                   </button>
                 </PopoverTrigger>
@@ -144,7 +144,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
 
              <button
                onMouseDown={(e) => { e.preventDefault(); setIsModalOpen(true); }}
-               className="p-1 hover:bg-primary/20 text-primary rounded"
+               className="p-1 hover:bg-primary/20 text-primaryrounded"
                title="Editor Avanzado"
              >
                 <Maximize2 className="w-3.5 h-3.5" />
@@ -152,7 +152,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
 
              <button
                onMouseDown={(e) => { e.preventDefault(); handleSave(value); }}
-               className="p-1 hover:bg-primary/20 text-primary rounded"
+               className="p-1 hover:bg-primary/20 text-primaryrounded"
                title="Guardar (Enter)"
              >
                 <Check className="w-3.5 h-3.5" />
@@ -177,7 +177,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
           {/* Custom Header based on Design */}
           <div className="px-4 sm:px-6 pt-6 pb-4 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3 sm:gap-4 overflow-hidden">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center text-primary shadow-sm dark:shadow-sm shrink-0">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center text-primaryshadow-sm dark:shadow-sm shrink-0">
                 <Terminal className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <div className="min-w-0">
@@ -185,7 +185,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                 <DialogDescription className="sr-only">
                   Editor avanzado para configurar fórmulas y cálculos personalizados en la ficha de costo.
                 </DialogDescription>
-                <p className="text-xs sm:text-xs font-black text-primary uppercase tracking-[0.25em] mt-1.5 opacity-90 truncate">v5.7.25 • Motor de Costos Avanzado</p>
+                <p className="text-xs sm:text-xs font-black text-primaryuppercase tracking-[0.25em] mt-1.5 opacity-90 truncate">v5.7.25 • Motor de Costos Avanzado</p>
               </div>
             </div>
 
@@ -257,7 +257,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                 </div>
 
                 <div className="bg-primary/5 p-3 sm:p-4 rounded-xl border border-primary/10">
-                    <div className="flex items-center gap-2 mb-2 text-primary font-black text-xs uppercase tracking-wider">
+                    <div className="flex items-center gap-2 mb-2 text-primaryfont-black text-xs uppercase tracking-wider">
                         <Info className="w-3.5 h-3.5" />
                         Guía de Referencia Rápida
                     </div>

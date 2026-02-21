@@ -90,25 +90,25 @@ const CostSheetNarrative: React.FC<CostSheetNarrativeProps> = ({ data, calculate
             <h1 className="text-3xl md:text-5xl font-black tracking-tight mb-4">
                 {header?.name || 'Ficha de Costo'}
             </h1>
-            <p className="text-slate-400 text-lg md:text-xl font-medium max-w-2xl leading-relaxed">
+            <p className="text-muted-foreground/70 text-lg md:text-xl font-medium max-w-2xl leading-relaxed">
                 Análisis técnico-económico detallado de la estructura de costos, margen de rentabilidad y proyecciones de venta para el producto <span className="text-white underline decoration-primary decoration-4 underline-offset-4">{header?.product_code || ''}</span>.
             </p>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-12 border-t border-white/10 pt-8">
                 <div>
-                    <p className="text-xs font-black uppercase tracking-widest text-slate-500 mb-1">Costo Total</p>
+                    <p className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-1">Costo Total</p>
                     <p className="text-xl font-bold">{header?.currency} {format(costoYGastoTotal)}</p>
                 </div>
                 <div>
-                    <p className="text-xs font-black uppercase tracking-widest text-slate-500 mb-1">Precio Unitario</p>
+                    <p className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-1">Precio Unitario</p>
                     <p className="text-xl font-bold">{header?.currency} {format(unitPrice)}</p>
                 </div>
                 <div>
-                    <p className="text-xs font-black uppercase tracking-widest text-slate-500 mb-1">Margen (30%)</p>
+                    <p className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-1">Margen (30%)</p>
                     <p className="text-xl font-bold text-success">{header?.currency} {format(utilidad)}</p>
                 </div>
                 <div>
-                    <p className="text-xs font-black uppercase tracking-widest text-slate-500 mb-1">UM</p>
+                    <p className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-1">UM</p>
                     <p className="text-xl font-bold uppercase">{header?.unit || 'Unidad'}</p>
                 </div>
             </div>
@@ -118,14 +118,14 @@ const CostSheetNarrative: React.FC<CostSheetNarrativeProps> = ({ data, calculate
       {/* Intelligent Insights Section */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-6">
-            <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-8 border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div className="bg-muted/50 rounded-[2rem] p-8 border border-slate-200 dark:border-slate-800 shadow-sm">
                 <h3 className="text-xl font-black mb-6 flex items-center gap-3">
                     <div className="w-2 h-8 bg-primary rounded-full" />
                     Análisis Inteligente de Partidas
                 </h3>
 
                 <div className="space-y-6">
-                    <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-lg">
+                    <p className="text-slate-600 dark:text-muted-foreground/70 leading-relaxed text-lg">
                         Tras procesar los datos a través del motor declarativo, se identifica que el <span className="font-bold text-foreground">{(costoYGastoTotal > 0 ? (costoTotal / costoYGastoTotal * 100) : 0).toFixed(1)}%</span> del gasto total se concentra en costos directos de fabricación.
                     </p>
 
@@ -133,13 +133,13 @@ const CostSheetNarrative: React.FC<CostSheetNarrativeProps> = ({ data, calculate
                         <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform">
                             <Target className="w-12 h-12" />
                         </div>
-                        <p className="text-sm font-bold text-primary uppercase tracking-widest mb-2">Principal Impulsor de Costo</p>
+                        <p className="text-sm font-bold text-primaryuppercase tracking-widest mb-2">Principal Impulsor de Costo</p>
                         <p className="text-slate-700 dark:text-slate-300">
-                            La partida <span className="font-black text-foreground underline decoration-primary/30 decoration-2 underline-offset-2">"{largest.label}"</span> representa el <span className="font-black text-primary text-lg">{(costoTotal > 0 ? (largest.value / costoTotal * 100) : 0).toFixed(1)}%</span> del costo de producción. Esta es la variable de mayor sensibilidad para optimizaciones operativas.
+                            La partida <span className="font-black text-foreground underline decoration-primary/30 decoration-2 underline-offset-2">"{largest.label}"</span> representa el <span className="font-black text-primarytext-lg">{(costoTotal > 0 ? (largest.value / costoTotal * 100) : 0).toFixed(1)}%</span> del costo de producción. Esta es la variable de mayor sensibilidad para optimizaciones operativas.
                         </p>
                     </div>
 
-                    <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                    <p className="text-slate-600 dark:text-muted-foreground/70 leading-relaxed">
                         {materialTotal > 0 && (
                             <span className="block mb-2">
                                 <span className="font-bold text-foreground">Gestión de Materiales:</span> Con una inversión de {format(materialTotal)}, el flujo de insumos desde el Anexo I es el pilar de la composición física del producto.
@@ -154,7 +154,7 @@ const CostSheetNarrative: React.FC<CostSheetNarrativeProps> = ({ data, calculate
                 </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-8 border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div className="bg-muted/50 rounded-[2rem] p-8 border border-slate-200 dark:border-slate-800 shadow-sm">
                 <h3 className="text-xl font-black mb-6 flex items-center gap-3">
                     <div className="w-2 h-8 bg-amber-500 rounded-full" />
                     Punto de Equilibrio y Venta
@@ -174,14 +174,14 @@ const CostSheetNarrative: React.FC<CostSheetNarrativeProps> = ({ data, calculate
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
-                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed italic">
+                <p className="text-slate-600 dark:text-muted-foreground/70 text-sm leading-relaxed italic">
                     El gráfico compara el costo unitario de recuperación (Break-even) frente a la tarifa de venta propuesta. La diferencia de <span className="font-bold text-foreground">{format(unitPrice - breakEvenPrice)}</span> representa el margen bruto por {header?.unit || 'unidad'}.
                 </p>
             </div>
         </div>
 
         <div className="space-y-6">
-            <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-8 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col items-center">
+            <div className="bg-muted/50 rounded-[2rem] p-8 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col items-center">
                 <h3 className="text-sm font-black uppercase tracking-widest mb-8 text-center">Estructura de Costos</h3>
                 <div className="h-[200px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
@@ -206,7 +206,7 @@ const CostSheetNarrative: React.FC<CostSheetNarrativeProps> = ({ data, calculate
                         <div key={idx} className="flex items-center justify-between text-xs">
                             <div className="flex items-center gap-2">
                                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
-                                <span className="font-bold text-slate-500 uppercase">{item.name}</span>
+                                <span className="font-bold text-muted-foreground uppercase">{item.name}</span>
                             </div>
                             <span className="font-black text-foreground">{(costoYGastoTotal > 0 ? (item.value / costoYGastoTotal * 100) : 0).toFixed(0)}%</span>
                         </div>
@@ -233,7 +233,7 @@ const CostSheetNarrative: React.FC<CostSheetNarrativeProps> = ({ data, calculate
       </div>
 
       <div className="pt-12 border-t border-slate-200 dark:border-slate-800 text-center">
-        <p className="text-xs font-black uppercase tracking-[0.4em] text-slate-400">
+        <p className="text-xs font-black uppercase tracking-[0.4em] text-muted-foreground/70">
           Documento Confidencial • Generado Automáticamente por CostPro Terminal
         </p>
       </div>

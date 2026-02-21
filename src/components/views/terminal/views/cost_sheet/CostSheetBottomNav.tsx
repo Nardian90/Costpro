@@ -53,7 +53,7 @@ export const CostSheetBottomNav: React.FC<CostSheetBottomNavProps> = ({
                 <DropdownMenuContent align="center" side="top" className="mb-4 bg-popover/95 backdrop-blur-xl border-border/50 rounded-2xl p-2 w-56 animate-in slide-in-from-bottom-2 shadow-2xl">
                     <DropdownMenuItem
                         onClick={() => onAction('export-pdf')}
-                        className="flex items-center gap-3 p-3 rounded-xl focus:bg-primary/10 focus:text-primary cursor-pointer border-none"
+                        className="flex items-center gap-3 p-3 rounded-xl focus:bg-primary/10 focus:text-primarycursor-pointer border-none"
                     >
                         <div className="p-2 rounded-lg bg-primary/10">
                             <FileDown className="w-4 h-4 text-primary" />
@@ -62,7 +62,7 @@ export const CostSheetBottomNav: React.FC<CostSheetBottomNavProps> = ({
                     </DropdownMenuItem>
                     <DropdownMenuItem
                         onClick={() => onAction('massive-pdf')}
-                        className="flex items-center gap-3 p-3 rounded-xl focus:bg-primary/10 focus:text-primary cursor-pointer border-none"
+                        className="flex items-center gap-3 p-3 rounded-xl focus:bg-primary/10 focus:text-primarycursor-pointer border-none"
                     >
                         <div className="p-2 rounded-lg bg-primary/10">
                             <Layers className="w-4 h-4 text-primary" />
@@ -71,7 +71,7 @@ export const CostSheetBottomNav: React.FC<CostSheetBottomNavProps> = ({
                     </DropdownMenuItem>
                     <DropdownMenuItem
                         onClick={() => onAction('quick-mode')}
-                        className="flex items-center gap-3 p-3 rounded-xl focus:bg-primary/10 focus:text-primary cursor-pointer border-none"
+                        className="flex items-center gap-3 p-3 rounded-xl focus:bg-primary/10 focus:text-primarycursor-pointer border-none"
                     >
                         <div className="p-2 rounded-lg bg-primary/10">
                             <Zap className="w-4 h-4 text-primary" />
@@ -80,7 +80,7 @@ export const CostSheetBottomNav: React.FC<CostSheetBottomNavProps> = ({
                     </DropdownMenuItem>
                     <DropdownMenuItem
                         onClick={() => onAction('calculator')}
-                        className="flex items-center gap-3 p-3 rounded-xl focus:bg-primary/10 focus:text-primary cursor-pointer border-none sm:hidden"
+                        className="flex items-center gap-3 p-3 rounded-xl focus:bg-primary/10 focus:text-primarycursor-pointer border-none sm:hidden"
                     >
                         <div className="p-2 rounded-lg bg-primary/10">
                             <Calculator className="w-4 h-4 text-primary" />
@@ -100,7 +100,7 @@ export const CostSheetBottomNav: React.FC<CostSheetBottomNavProps> = ({
           )}
         >
           {isChatBotOpen && (
-              <Sparkles className="absolute -top-1 -right-1 w-3 h-3 text-primary animate-pulse" />
+              <Sparkles className="absolute -top-1 -right-1 w-3 h-3 text-primaryanimate-pulse" />
           )}
           <Bot className={cn("w-5 h-5", isChatBotOpen && "drop-shadow-[0_0_8px_rgba(22,163,74,0.5)]")} />
           <span className="text-xs font-black uppercase tracking-widest leading-none">Darian</span>

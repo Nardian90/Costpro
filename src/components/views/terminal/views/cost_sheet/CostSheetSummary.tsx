@@ -330,12 +330,12 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
               <div className="space-y-4">
                 <div className="flex justify-between items-end">
                   <label className="text-xs uppercase tracking-widest text-muted-foreground font-medium">Margen Deseado</label>
-                  <span className="text-primary font-display font-bold">{sliderValue.toFixed(3)}%</span>
+                  <span className="text-primaryfont-display font-bold">{sliderValue.toFixed(3)}%</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => handleSliderChange([Math.max(1, sliderValue - 1)])}
-                    className="p-1 rounded-md bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+                    className="p-1 rounded-md bg-primary/10 hover:bg-primary/20 text-primarytransition-colors"
                   >
                     <Minus className="w-4 h-4" />
                   </button>
@@ -349,7 +349,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
                 />
                   <button
                     onClick={() => handleSliderChange([Math.min(100, sliderValue + 1)])}
-                    className="p-1 rounded-md bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+                    className="p-1 rounded-md bg-primary/10 hover:bg-primary/20 text-primarytransition-colors"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
@@ -363,12 +363,12 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
               <div className="space-y-4">
                 <div className="flex justify-between items-end">
                   <label className="text-xs uppercase tracking-widest text-muted-foreground font-medium">Coeficiente</label>
-                  <span className="text-primary font-display font-bold">{localCoef.toFixed(4)}</span>
+                  <span className="text-primaryfont-display font-bold">{localCoef.toFixed(4)}</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => handleCoefChange(Math.max(0, localCoef - 0.0001))}
-                    className="p-1 rounded-md bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+                    className="p-1 rounded-md bg-primary/10 hover:bg-primary/20 text-primarytransition-colors"
                   >
                     <Minus className="w-4 h-4" />
                   </button>
@@ -382,7 +382,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
                 />
                   <button
                     onClick={() => handleCoefChange(Math.min(4, localCoef + 0.0001))}
-                    className="p-1 rounded-md bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+                    className="p-1 rounded-md bg-primary/10 hover:bg-primary/20 text-primarytransition-colors"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
@@ -395,7 +395,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
                   <div className="mt-3 p-3 rounded-xl bg-primary/5 border border-primary/10 shadow-[inner_0_1px_2px_rgba(0,0,0,0.1)]">
                     <p className="text-xs text-muted-foreground uppercase tracking-[0.1em] leading-relaxed flex justify-between items-center">
                       <span>Relación Actual (Gtos Ind. / Salario):</span>
-                      <span className="text-primary font-black text-xs">{indirectCoef.toFixed(4)}</span>
+                      <span className="text-primaryfont-black text-xs">{indirectCoef.toFixed(4)}</span>
                     </p>
                   </div>
                 </div>
@@ -417,7 +417,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
               </div>
             </div>
 
-            <footer className="mt-12 pt-6 border-t border-white/5">
+            <footer className="mt-12 pt-6 border-t border-border/40">
               <div className="flex items-center gap-3">
                 <div className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>

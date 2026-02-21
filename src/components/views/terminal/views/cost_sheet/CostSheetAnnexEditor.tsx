@@ -244,7 +244,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
          )}>
             <Table>
                 <TableHeader className={cn(
-                  "bg-slate-100 dark:bg-slate-800/50 text-slate-900 dark:text-white font-black uppercase text-xs tracking-widest border-b border-slate-200 dark:border-slate-700",
+                  "bg-slate-100 dark:bg-slate-800/50 text-foreground font-black uppercase text-xs tracking-widest border-b border-slate-200 dark:border-slate-700",
                   layoutMode === 'grid' ? "hidden md:table-header-group" : "table-header-group"
                 )}>
                     <TableRow className="border-b border-border/50">
@@ -256,7 +256,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                                                (!isMain ? 'w-24' : '')));
                              return (
                                 <TableHead key={col.key} className={cn(
-                                    "font-black py-2 px-2 text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400 whitespace-nowrap",
+                                    "font-black py-2 px-2 text-xs uppercase tracking-widest text-muted-foreground whitespace-nowrap",
                                     widthClass
                                 )}>
                                     {col.label || col.title || col.key}
@@ -281,7 +281,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                                 <TableCell key={col.key} data-label={col.label || col.title || col.key} className={cn("p-3 sm:p-4", widthClass)}>
                                     {col.formula ? (
                                         <div className="relative group/cell">
-                                            <div className={cn("neu-inset-sm px-2 py-1 font-mono text-right bg-primary/5 min-w-[100px] border border-primary/10", isZero(col.key) ? "text-muted-foreground opacity-60 font-medium" : "text-primary font-black")}>
+                                            <div className={cn("neu-inset-sm px-2 py-1 font-mono text-right bg-primary/5 min-w-[100px] border border-primary/10", isZero(col.key) ? "text-muted-foreground opacity-60 font-medium" : "text-primaryfont-black")}>
                                                 {formatCurrency(row[col.key] ?? 0).replace('$', '').trim()}
                                             </div>
                                             <FunctionSquare className="absolute -top-1 -right-1 w-2.5 h-2.5 text-primary/30" />
@@ -324,7 +324,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                                         variant="ghost"
                                         size="icon"
                                         onClick={() => reorderRow(annex.id, rowIndex, 'up')}
-                                        className="p-1 h-8 w-8 text-muted-foreground hover:text-primary transition-all"
+                                        className="p-1 h-8 w-8 text-muted-foreground hover:text-primarytransition-all"
                                         title="Subir"
                                     >
                                         <ChevronUp className="h-4 w-4" />
@@ -333,7 +333,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                                         variant="ghost"
                                         size="icon"
                                         onClick={() => reorderRow(annex.id, rowIndex, 'down')}
-                                        className="p-1 h-8 w-8 text-muted-foreground hover:text-primary transition-all"
+                                        className="p-1 h-8 w-8 text-muted-foreground hover:text-primarytransition-all"
                                         title="Bajar"
                                     >
                                         <ChevronDown className="h-4 w-4" />
@@ -347,7 +347,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                                             setTargetRowIndex(rowIndex);
                                             setIsPickerOpen(true);
                                         }}
-                                        className="p-3 text-primary hover:bg-primary/10 rounded-xl transition-all neu-raised-sm group-hover:scale-110 active:scale-95 min-h-[44px] min-w-[44px]"
+                                        className="p-3 text-primaryhover:bg-primary/10 rounded-xl transition-all neu-raised-sm group-hover:scale-110 active:scale-95 min-h-[44px] min-w-[44px]"
                                         aria-label="Importar desde inventario"
                                     >
                                         <Database className="h-4 w-4" />
@@ -372,7 +372,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                     <TableCell colSpan={annex.columns.length} className="p-0">
                       <div className="flex flex-col sm:flex-row justify-end items-end sm:items-center gap-4 p-6 min-w-full">
                         <span className="text-xs text-primary/70 uppercase font-black tracking-[0.2em]">Total {annex.id}</span>
-                        <span className="text-3xl font-black font-mono text-primary drop-shadow-sm">
+                        <span className="text-3xl font-black font-mono text-primarydrop-shadow-sm">
                           {formatCurrency(totalValue)}
                         </span>
                       </div>
@@ -397,7 +397,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
             <div className="neu-card !p-5 border-primary/20 bg-primary/5 shadow-xl min-w-[240px] w-full">
                 <span className="text-xs text-primary/70 uppercase font-black tracking-[0.2em] block mb-2 text-right">Total {annex.id}</span>
                 <div className="flex items-center justify-end gap-2">
-                    <span className="text-3xl font-black font-mono text-primary drop-shadow-sm">
+                    <span className="text-3xl font-black font-mono text-primarydrop-shadow-sm">
                         {formatCurrency(totalValue)}
                     </span>
                 </div>

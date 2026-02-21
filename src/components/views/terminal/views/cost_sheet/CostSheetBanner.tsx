@@ -20,7 +20,7 @@ export const CostSheetBanner = ({ viewMode, setViewMode }: CostSheetBannerProps)
         <Button
           variant="outline"
           size="sm"
-          className="mr-4 rounded-xl border-primary/20 text-primary hover:bg-primary/10 font-black uppercase tracking-widest text-[10px] h-11 px-4"
+          className="mr-4 rounded-xl border-primary/20 text-primaryhover:bg-primary/10 font-black uppercase tracking-widest text-[10px] h-11 px-4"
           onClick={() => setCurrentView('dashboard')}
         >
           <ArrowLeft className="w-4 h-4 mr-2" />

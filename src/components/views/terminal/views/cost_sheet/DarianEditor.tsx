@@ -133,7 +133,7 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
                     </button>
                 </div>
                 <div className="flex-1 overflow-y-auto p-8 sm:p-12 bg-slate-50/50 dark:bg-transparent">
-                    <div className="max-w-3xl mx-auto min-h-full bg-white dark:bg-slate-900 shadow-xl rounded-sm p-12 border border-border/50">
+                    <div className="max-w-3xl mx-auto min-h-full bg-muted/50 shadow-xl rounded-sm p-12 border border-border/50">
                         {isEditingDoc ? (
                             <textarea value={docContent} onChange={(e) => setDocContent(e.target.value)} className="w-full h-full min-h-[600px] bg-transparent border-none outline-none resize-none font-mono text-sm leading-relaxed" />
                         ) : (
@@ -151,7 +151,7 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
                 </div>
             </div>
 
-            <div className="flex-1 flex flex-col bg-white dark:bg-slate-900 rounded-[2.5rem] border border-border/50 shadow-2xl overflow-hidden">
+            <div className="flex-1 flex flex-col bg-muted/50 rounded-[2.5rem] border border-border/50 shadow-2xl overflow-hidden">
                 <div className="flex items-center justify-between px-6 py-4 border-b border-border/10 bg-muted/10">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20">
@@ -199,7 +199,7 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
                     )}
                 </div>
                 <div className="p-4 bg-muted/10 border-t border-border/5">
-                    <div className="flex items-center gap-2 p-2 rounded-2xl bg-white dark:bg-slate-800 border border-border/50 focus-within:border-primary/50 shadow-inner">
+                    <div className="flex items-center gap-2 p-2 rounded-2xl bg-muted/50 border border-border/50 focus-within:border-primary/50 shadow-inner">
                         <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSend()} placeholder="Generar ficha de..." className="flex-1 bg-transparent border-none px-4 py-2 text-xs font-bold outline-none placeholder:opacity-30" />
                         <button onClick={handleSend} disabled={!input.trim() || isLoading} className="w-10 h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg active:scale-90 disabled:opacity-30"><Send className="w-5 h-5" /></button>
                     </div>

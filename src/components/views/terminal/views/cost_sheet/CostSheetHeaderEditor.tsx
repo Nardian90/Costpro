@@ -28,10 +28,10 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="bg-white dark:bg-slate-900/50 rounded-[2.5rem] border border-slate-200 dark:border-primary/10 overflow-hidden shadow-sm">
+      <div className="bg-muted/50/50 rounded-[2.5rem] border border-border/50 overflow-hidden shadow-sm">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="w-full px-8 py-6 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-primary/5 transition-colors group"
+          className="w-full px-8 py-6 flex items-center justify-between hover:bg-muted/30 dark:hover:bg-primary/5 transition-colors group"
         >
           <div className="flex items-center gap-4">
             <div className="p-3 bg-primary/10 rounded-2xl group-hover:scale-110 transition-transform">
@@ -39,10 +39,10 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({
             </div>
             <div className="text-left">
               <h3 className="text-sm font-black uppercase tracking-widest text-slate-800 dark:text-slate-100">Configuración General</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase mt-0.5">Metadatos y Parámetros Operativos</p>
+              <p className="text-xs text-muted-foreground font-bold uppercase mt-0.5">Metadatos y Parámetros Operativos</p>
             </div>
           </div>
-          {isOpen ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
+          {isOpen ? <ChevronUp className="w-5 h-5 text-muted-foreground/70" /> : <ChevronDown className="w-5 h-5 text-muted-foreground/70" />}
         </button>
 
         {isOpen && (
@@ -74,9 +74,9 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({
 
             return (
               <div key={item.id} className="space-y-2 group">
-                <label htmlFor={item.id} className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 block px-1 group-focus-within:text-primary transition-colors">
+                <label htmlFor={item.id} className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground block px-1 group-focus-within:text-primarytransition-colors">
                   {item.label}
-                  {isFormula && !isEditing && <span className="ml-2 text-primary font-black animate-pulse">fx</span>}
+                  {isFormula && !isEditing && <span className="ml-2 text-primaryfont-black animate-pulse">fx</span>}
                 </label>
                 {(item as any).type === 'select' ? (
                   <select
@@ -87,12 +87,12 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({
                       updateValue(['header', item.id], e.target.value);
                     }}
                     className={cn(
-                      "w-full px-4 py-3 text-sm font-bold border rounded-2xl focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all outline-none shadow-sm text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-primary/10 hover:border-primary/30 appearance-none"
+                      "w-full px-4 py-3 text-sm font-bold border rounded-2xl focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all outline-none shadow-sm text-slate-700 dark:text-slate-200 bg-muted/30 border-border/50 hover:border-primary/30 appearance-none"
                     )}
                   >
                     <option value="">Seleccionar...</option>
                     {((item as any).options || []).map((opt: string) => (
-                      <option key={opt} value={opt} className="dark:bg-slate-900">{opt.charAt(0).toUpperCase() + opt.slice(1)}</option>
+                      <option key={opt} value={opt} className="dark:bg-card">{opt.charAt(0).toUpperCase() + opt.slice(1)}</option>
                     ))}
                   </select>
                 ) : (
@@ -108,9 +108,9 @@ const CostSheetHeaderEditor: React.FC<CostSheetHeaderEditorProps> = ({
                     className={cn(
                       "w-full px-4 py-3 text-sm font-bold border rounded-2xl focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all outline-none shadow-sm",
                       item.readonly
-                          ? "bg-slate-200 dark:bg-slate-900/80 text-slate-500 border-slate-300 dark:border-slate-800 cursor-not-allowed"
-                          : "text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-primary/10 hover:border-primary/30",
-                      isFormula && !isEditing && "text-primary dark:text-[currentColor] drop-shadow-[0_0_8px_hsl(var(--primary)/0.2)]"
+                          ? "bg-muted dark:bg-card/80 text-muted-foreground border-border/50 dark:border-border/50 cursor-not-allowed"
+                          : "text-slate-700 dark:text-slate-200 bg-muted/30 border-border/50 hover:border-primary/30",
+                      isFormula && !isEditing && "text-primary drop-shadow-[0_0_8px_hsl(var(--primary)/0.2)]"
                     )}
                   />
                 )}

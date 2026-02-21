@@ -126,7 +126,7 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                                                     <span className="text-xs font-mono text-muted-foreground">REF: {v.rowId}</span>
                                                 )}
                                             </div>
-                                            <h4 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">{v.title}</h4>
+                                            <h4 className="text-sm font-bold text-foreground group-hover:text-primarytransition-colors">{v.title}</h4>
                                             <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{v.message}</p>
                                         </div>
                                     </div>

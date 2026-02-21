@@ -206,7 +206,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 sm:h-6 sm:w-6 text-primary hover:bg-primary/10"
+                    className="h-8 w-8 sm:h-6 sm:w-6 text-primaryhover:bg-primary/10"
                     onClick={() => addMainRow([...path, 'children'])}
                     title="Añadir hijo"
                 >
@@ -252,7 +252,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                         readOnly={true}
                         />
                         {row.vhFormula && <FunctionSquare className="w-3 h-3 text-primary/40 absolute left-2" />}
-                        {row.is_percent && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">%</span>}
+                        {row.is_percent && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground/70">%</span>}
                         {(hasChildren || row.vhFormula) && <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full animate-pulse" title="Calculado automáticamente" />}
                     </div>
                 )}
@@ -261,7 +261,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
 
         {/* Total */}
         <TableCell
-          className="px-2 py-0.5 text-right font-black tabular-nums text-primary w-[120px] cursor-pointer hover:bg-primary/5 transition-colors text-xs border-r border-border/10"
+          className="px-2 py-0.5 text-right font-black tabular-nums text-primaryw-[120px] cursor-pointer hover:bg-primary/5 transition-colors text-xs border-r border-border/10"
           onClick={() => setIsEditingTotal(true)}
         >
           {isEditingTotal ? (
@@ -319,7 +319,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                             {/* Calculation Context / Auditability */}
                             {(safeCalculated.fuente || safeCalculated.metadata?.rule) && (
                                 <div className="text-xs bg-primary/5 p-2 rounded border border-primary/20 mb-2">
-                                    <span className="font-bold uppercase text-xs block text-primary opacity-70">Contexto / Base Legal</span>
+                                    <span className="font-bold uppercase text-xs block text-primaryopacity-70">Contexto / Base Legal</span>
                                     {safeCalculated.metadata?.rule && <div className="font-black mb-1">{safeCalculated.metadata.rule}</div>}
                                     {safeCalculated.fuente && <div className="italic text-muted-foreground">{safeCalculated.fuente}</div>}
                                 </div>
@@ -335,7 +335,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
 
                             {/* Legacy Warning */}
                             {!hasChildren && !row.is_percent && safeCalculated.total === 0 && ((row.valorHistorico ?? 0) > 0 || !!row.baseDeCalculoRef) && (
-                                <p className="text-xs text-slate-500 italic p-1">
+                                <p className="text-xs text-muted-foreground italic p-1">
                                     Esta fila tiene un total de 0.00 pero tiene una base de cálculo o valor histórico asignado. Verifique el prorrateo o la fórmula.
                                 </p>
                             )}
@@ -349,7 +349,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
 
                 <div className="flex items-center gap-1">
                     {row.formula && <FunctionSquare className="w-3 h-3 text-primary/40" />}
-                    <span className={cn(row.formula && "underline decoration-dotted decoration-primary/30", isZero ? "text-muted-foreground opacity-60 font-medium" : "text-primary font-black")}>
+                    <span className={cn(row.formula && "underline decoration-dotted decoration-primary/30", isZero ? "text-muted-foreground opacity-60 font-medium" : "text-primaryfont-black")}>
                         {formatAccounting(safeCalculated.total)}
                     </span>
                 </div>
@@ -362,7 +362,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
           {row.helpText && (
             <Popover>
               <PopoverTrigger asChild>
-                 <button className="p-2 rounded-full hover:bg-primary/10 text-primary/50 hover:text-primary transition-colors">
+                 <button className="p-2 rounded-full hover:bg-primary/10 text-primary/50 hover:text-primarytransition-colors">
                     <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5" />
                  </button>
               </PopoverTrigger>
@@ -475,7 +475,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
           <div className="py-12 px-4 text-center animate-in fade-in slide-in-from-bottom-4 duration-700">
               <div className="max-w-md mx-auto space-y-6">
                   <div className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center mx-auto mb-8 neu-raised-sm">
-                      <LayoutGrid className="w-10 h-10 text-primary animate-pulse" />
+                      <LayoutGrid className="w-10 h-10 text-primaryanimate-pulse" />
                   </div>
                   <h2 className="text-2xl font-black text-foreground uppercase tracking-tighter italic">Seleccione una Sección</h2>
                   <p className="text-muted-foreground text-sm font-medium leading-relaxed">
@@ -513,7 +513,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                       <Button
                         onClick={addMainSection}
                         variant="outline"
-                        className="w-full p-6 rounded-2xl border-dashed border-2 hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2 bg-primary/5 group"
+                        className="w-full p-6 rounded-2xl border-dashed border-2 hover:border-primary hover:text-primarytransition-all flex items-center justify-center gap-2 bg-primary/5 group"
                       >
                         <Plus className="w-5 h-5 group-hover:scale-110 transition-transform" />
                         <span className="font-bold uppercase tracking-widest text-xs">Nueva Sección</span>
@@ -567,7 +567,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                             <Button
                                 size="sm"
                                 variant="ghost"
-                                className="h-8 w-8 p-0 text-primary hover:bg-primary/10 rounded-full transition-all"
+                                className="h-8 w-8 p-0 text-primaryhover:bg-primary/10 rounded-full transition-all"
                                 onClick={() => setActiveSectionForActions({ section, index: sectionIndex })}
                                 title="Acciones de Sección"
                             >

@@ -44,7 +44,7 @@ const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValue
                 hasChildren && "bg-slate-50/30 dark:bg-slate-900/30"
             )}>
                 {/* No. */}
-                <td className="py-0.5 px-2 text-center font-mono text-xs text-slate-400 w-[60px] whitespace-nowrap">
+                <td className="py-0.5 px-2 text-center font-mono text-xs text-muted-foreground/70 w-[60px] whitespace-nowrap">
                     {numbering}
                 </td>
 
@@ -54,7 +54,7 @@ const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValue
                     style={{ paddingLeft: `${level > 0 ? (level * 20) + 12 : 12}px` }}
                     className={cn(
                         "py-0.5 px-2",
-                        hasChildren ? "font-black text-slate-900 dark:text-white uppercase tracking-tight" : "text-slate-600 dark:text-slate-400 font-medium"
+                        hasChildren ? "font-black text-foreground uppercase tracking-tight" : "text-slate-600 dark:text-muted-foreground/70 font-medium"
                     )}
                 >
                     {row.label}
@@ -64,21 +64,21 @@ const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValue
                         </span>
                     )}
                     {row.is_percent && (
-                        <span className="ml-2 text-xs font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
+                        <span className="ml-2 text-xs font-bold text-muted-foreground/70 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
                             {((row.value || calc.valorHistorico || 0) * 100).toFixed(2)}%
                         </span>
                     )}
                 </td>
 
                 {/* Valor Histórico */}
-                <td data-label="Valor Histórico" className="py-0.5 px-2 text-right font-mono text-slate-500 text-xs w-[140px] whitespace-nowrap">
+                <td data-label="Valor Histórico" className="py-0.5 px-2 text-right font-mono text-muted-foreground text-xs w-[140px] whitespace-nowrap">
                     {calc.valorHistorico > 0 ? calc.valorHistorico.toLocaleString('es-ES', { minimumFractionDigits: 2 }) : '--'}
                 </td>
 
                 {/* Total */}
                 <td data-label="Total" className={cn(
                     "py-0.5 px-2 text-right font-mono font-black text-sm w-[120px] whitespace-nowrap",
-                    hasChildren ? "text-slate-900 dark:text-white" : (isZero ? "text-muted-foreground opacity-60 font-medium" : "text-primary font-black")
+                    hasChildren ? "text-foreground" : (isZero ? "text-muted-foreground opacity-60 font-medium" : "text-primaryfont-black")
                 )}>
                     {formatCurrency(calc.total).replace('$', '').trim()}
                 </td>
@@ -89,7 +89,7 @@ const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValue
   };
 
   return (
-    <div className={cn("overflow-x-auto table-to-cards border border-slate-100 dark:border-slate-800 rounded-3xl overflow-hidden shadow-xl bg-white dark:bg-slate-900", forceTable && "force-table")}>
+    <div className={cn("overflow-x-auto table-to-cards border border-slate-100 dark:border-slate-800 rounded-3xl overflow-hidden shadow-xl bg-muted/50", forceTable && "force-table")}>
       <table className="w-full text-sm">
         <thead className="bg-slate-800 text-white hidden sm:table-header-group">
           <tr>
@@ -99,11 +99,11 @@ const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValue
             <th className="py-1 px-2 text-right font-black uppercase tracking-widest text-xs w-[120px] whitespace-nowrap">Total</th>
           </tr>
         </thead>
-        <tbody className="bg-white dark:bg-slate-900">
+        <tbody className="bg-muted/50">
           {sections.map((section) => (
             <React.Fragment key={section.id}>
               <tr className="bg-emerald-500/5 border-l-2 border-emerald-500/40">
-                  <td colSpan={4} className="px-4 py-2 text-xs font-black text-primary uppercase tracking-[0.2em] border-y border-slate-200 dark:border-slate-800">
+                  <td colSpan={4} className="px-4 py-2 text-xs font-black text-primaryuppercase tracking-[0.2em] border-y border-slate-200 dark:border-slate-800">
                       {section.label}
                   </td>
               </tr>

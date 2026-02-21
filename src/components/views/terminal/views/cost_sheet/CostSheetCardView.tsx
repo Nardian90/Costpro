@@ -247,7 +247,7 @@ const RowCard: React.FC<RowCardProps> = memo(({
                   ) : (
                     <CheckCircle2 className="w-3 h-3 text-emerald-500 opacity-40" />
                   )}
-                  <span className="text-sm font-black text-primary tabular-nums">
+                  <span className="text-sm font-black text-primarytabular-nums">
                     {formatCurrency(safeCalculated.total)}
                   </span>
                 </div>
@@ -390,7 +390,7 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
         <div className="py-12 px-4 text-center animate-in fade-in slide-in-from-bottom-4 duration-700">
             <div className="max-w-md mx-auto space-y-6">
                 <div className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center mx-auto mb-8 neu-raised-sm">
-                    <LayoutGrid className="w-10 h-10 text-primary animate-pulse" />
+                    <LayoutGrid className="w-10 h-10 text-primaryanimate-pulse" />
                 </div>
                 <h2 className="text-2xl font-black text-foreground uppercase tracking-tighter italic">Seleccione una Sección</h2>
                 <div className="grid grid-cols-1 gap-3 pt-4">
@@ -410,7 +410,7 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
                     <Button
                         onClick={addMainSection}
                         variant="outline"
-                        className="w-full h-14 rounded-2xl border-dashed border-2 hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2 bg-primary/5 mt-4"
+                        className="w-full h-14 rounded-2xl border-dashed border-2 hover:border-primary hover:text-primarytransition-all flex items-center justify-center gap-2 bg-primary/5 mt-4"
                     >
                         <Plus className="w-5 h-5" />
                         <span className="font-bold uppercase tracking-widest text-xs">Nueva Sección</span>
@@ -488,7 +488,7 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-9 w-9 p-0 bg-primary/5 text-primary rounded-xl"
+                  className="h-9 w-9 p-0 bg-primary/5 text-primaryrounded-xl"
                   onClick={() => setActiveSectionForActions({ section, index: sectionIndex })}
                 >
                   <Settings2 className="w-4 h-4" />
@@ -514,7 +514,7 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
                 <Button
                     onClick={() => addMainRow(['sections', sectionIndex, 'rows'])}
                     variant="outline"
-                    className="w-full h-12 rounded-2xl border-dashed border-2 hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2 bg-primary/5 mt-4"
+                    className="w-full h-12 rounded-2xl border-dashed border-2 hover:border-primary hover:text-primarytransition-all flex items-center justify-center gap-2 bg-primary/5 mt-4"
                 >
                     <Plus className="w-4 h-4" />
                     <span className="font-bold uppercase tracking-widest text-xs">Añadir Concepto</span>

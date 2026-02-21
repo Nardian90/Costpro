@@ -172,7 +172,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                 token.type === 'function' && "bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20 shadow-[0_2px_8px_rgba(139,92,246,0.1)]",
                 token.type === 'reference' && "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 shadow-[0_2px_8px_rgba(59,130,246,0.1)]",
                 token.type === 'operator' && "bg-slate-500/10 text-slate-600 dark:text-muted-foreground border-slate-500/20",
-                token.type === 'literal' && "bg-primary/10 text-primary border-primary/20",
+                token.type === 'literal' && "bg-primary/10 text-primaryborder-primary/20",
                 token.type === 'punctuation' && "bg-transparent text-muted-foreground dark:text-muted-foreground border-none px-1"
               )}
             >
@@ -198,7 +198,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
             <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-primary flex items-center justify-center shrink-0">
               <CheckCircle2 className="w-3 h-3 sm:w-4 h-4 text-white" />
             </div>
-            <span className="text-xs sm:text-xs font-bold text-primary uppercase tracking-wider leading-tight">
+            <span className="text-xs sm:text-xs font-bold text-primaryuppercase tracking-wider leading-tight">
               Fórmula válida • Resultado: (Evaluando...)
             </span>
           </div>
@@ -215,10 +215,10 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <HorizontalScroll containerClassName="bg-muted dark:bg-background/50 p-1 rounded-xl border border-border dark:border-white/10 overflow-hidden">
             <TabsList className="bg-transparent border-none w-max min-w-full h-auto p-0 gap-1 flex overflow-visible">
-              <TabsTrigger value="functions" className="py-2.5 px-5 sm:px-8 text-xs font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-muted data-[state=active]:text-foreground dark:data-[state=active]:text-primary transition-all shrink-0 border border-transparent data-[state=active]:border-border dark:data-[state=active]:border-primary/20 shadow-none outline-none">Funciones</TabsTrigger>
-              <TabsTrigger value="refs" className="py-2.5 px-5 sm:px-8 text-xs font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-muted data-[state=active]:text-foreground dark:data-[state=active]:text-primary transition-all shrink-0 border border-transparent data-[state=active]:border-border dark:data-[state=active]:border-primary/20 shadow-none outline-none">Referencias</TabsTrigger>
-              <TabsTrigger value="annexes" className="py-2.5 px-5 sm:px-8 text-xs font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-muted data-[state=active]:text-foreground dark:data-[state=active]:text-primary transition-all shrink-0 border border-transparent data-[state=active]:border-border dark:data-[state=active]:border-primary/20 shadow-none outline-none">Anexos</TabsTrigger>
-              <TabsTrigger value="ops" className="py-2.5 px-5 sm:px-8 text-xs font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-muted data-[state=active]:text-foreground dark:data-[state=active]:text-primary transition-all shrink-0 border border-transparent data-[state=active]:border-border dark:data-[state=active]:border-primary/20 shadow-none outline-none">Operadores</TabsTrigger>
+              <TabsTrigger value="functions" className="py-2.5 px-5 sm:px-8 text-xs font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-muted data-[state=active]:text-foreground dark:data-[state=active]:text-primarytransition-all shrink-0 border border-transparent data-[state=active]:border-border dark:data-[state=active]:border-primary/20 shadow-none outline-none">Funciones</TabsTrigger>
+              <TabsTrigger value="refs" className="py-2.5 px-5 sm:px-8 text-xs font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-muted data-[state=active]:text-foreground dark:data-[state=active]:text-primarytransition-all shrink-0 border border-transparent data-[state=active]:border-border dark:data-[state=active]:border-primary/20 shadow-none outline-none">Referencias</TabsTrigger>
+              <TabsTrigger value="annexes" className="py-2.5 px-5 sm:px-8 text-xs font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-muted data-[state=active]:text-foreground dark:data-[state=active]:text-primarytransition-all shrink-0 border border-transparent data-[state=active]:border-border dark:data-[state=active]:border-primary/20 shadow-none outline-none">Anexos</TabsTrigger>
+              <TabsTrigger value="ops" className="py-2.5 px-5 sm:px-8 text-xs font-black uppercase tracking-widest rounded-xl data-[state=active]:bg-background dark:data-[state=active]:bg-muted data-[state=active]:text-foreground dark:data-[state=active]:text-primarytransition-all shrink-0 border border-transparent data-[state=active]:border-border dark:data-[state=active]:border-primary/20 shadow-none outline-none">Operadores</TabsTrigger>
             </TabsList>
           </HorizontalScroll>
 
@@ -315,7 +315,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                     <button
                       key={op.v}
                       onClick={() => addToken(op.v === '(' || op.v === ')' || op.v === ',' ? 'punctuation' : 'operator', op.v, op.l)}
-                      className="flex items-center justify-center h-12 sm:h-16 rounded-xl sm:rounded-xl bg-muted/50 dark:bg-background/50 border border-border dark:border-border hover:border-primary/50 dark:hover:border-primary/50 hover:bg-muted dark:hover:bg-accent text-muted-foreground dark:text-muted-foreground hover:text-primary dark:hover:text-primary transition-all shadow-sm"
+                      className="flex items-center justify-center h-12 sm:h-16 rounded-xl sm:rounded-xl bg-muted/50 dark:bg-background/50 border border-border dark:border-border hover:border-primary/50 dark:hover:border-primary/50 hover:bg-muted dark:hover:bg-accent text-muted-foreground dark:text-muted-foreground hover:text-primarydark:hover:text-primarytransition-all shadow-sm"
                     >
                       {op.i}
                     </button>

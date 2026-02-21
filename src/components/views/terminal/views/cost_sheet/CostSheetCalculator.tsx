@@ -167,7 +167,7 @@ const CalcButton: React.FC<CalcButtonProps> = ({ label, icon, onClick, variant =
       : "bg-muted/30 hover:bg-muted/60 text-foreground border-border/40 shadow-sm",
     operator: isDark
       ? "bg-[hsl(var(--primary))]/5 hover:bg-[hsl(var(--primary))]/20 text-[hsl(var(--primary))] border-[hsl(var(--primary))]/20"
-      : "bg-primary/5 hover:bg-primary/20 text-primary border-primary/10",
+      : "bg-primary/5 hover:bg-primary/20 text-primaryborder-primary/10",
     primary: isDark
       ? "bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/90 text-black border-[hsl(var(--primary))] shadow-lg shadow-[hsl(var(--primary))]/30"
       : "bg-primary hover:bg-primary/90 text-white border-primary shadow-lg shadow-primary/20",

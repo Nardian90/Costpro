@@ -42,7 +42,7 @@ export const CostSheetAuditLog: React.FC<CostSheetAuditLogProps> = memo(({ audit
                  </div>
                  <div className="flex-1 min-w-0">
                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-black text-primary uppercase">Fila {audit.rowId}</span>
+                      <span className="font-black text-primaryuppercase">Fila {audit.rowId}</span>
                       <Badge variant="secondary" className="text-xs h-4 uppercase tracking-tighter">
                         {audit.type}
                       </Badge>
@@ -53,8 +53,8 @@ export const CostSheetAuditLog: React.FC<CostSheetAuditLogProps> = memo(({ audit
                    {audit.prev !== undefined && (
                       <div className="mt-2 font-mono text-xs bg-primary/5 p-1.5 rounded-lg border border-primary/10 inline-flex items-center gap-2">
                         <span className="text-muted-foreground">{audit.prev}</span>
-                        <Zap className="w-2.5 h-2.5 text-primary opacity-50" />
-                        <span className="text-primary font-bold">{audit.now}</span>
+                        <Zap className="w-2.5 h-2.5 text-primaryopacity-50" />
+                        <span className="text-primaryfont-bold">{audit.now}</span>
                       </div>
                    )}
                  </div>

@@ -66,11 +66,11 @@ const CostSheetWizard: React.FC<CostSheetWizardProps> = ({ data, calculatedValue
       <div className="neu-card p-6 bg-slate-50 dark:bg-slate-900/50">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-1">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-primarymb-1">
               Paso {currentStep + 1} de {steps.length}
             </p>
             <h2 className="text-xl font-bold">{step.label}</h2>
-            <p className="text-sm text-slate-500">{step.description}</p>
+            <p className="text-sm text-muted-foreground">{step.description}</p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={handlePrev} disabled={currentStep === 0} className="neu-button">
@@ -119,7 +119,7 @@ const CostSheetWizard: React.FC<CostSheetWizardProps> = ({ data, calculatedValue
 
       {/* Footer Navigation */}
       <div className="flex justify-between items-center py-6 border-t border-slate-200 dark:border-slate-800">
-         <Button variant="ghost" onClick={handlePrev} disabled={currentStep === 0} className="text-slate-500">
+         <Button variant="ghost" onClick={handlePrev} disabled={currentStep === 0} className="text-muted-foreground">
             Regresar a {currentStep > 0 ? steps[currentStep-1].label : '...'}
          </Button>
          <Button onClick={handleNext} disabled={currentStep === steps.length - 1} className="bg-primary text-white px-8">

@@ -205,7 +205,7 @@ export const CostSheetTemplateExplorer: React.FC = () => {
       {/* Header & Search */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-6">
         <div>
-          <h1 className="text-3xl font-black uppercase tracking-tighter italic text-primary flex items-center gap-3">
+          <h1 className="text-3xl font-black uppercase tracking-tighter italic text-primaryflex items-center gap-3">
             <FolderOpen className="w-8 h-8" />
             Explorador de Plantillas
           </h1>
@@ -255,7 +255,7 @@ export const CostSheetTemplateExplorer: React.FC = () => {
             className="flex flex-col items-center justify-center h-[400px] border-2 border-dashed border-primary/20 rounded-[2.5rem] bg-primary/5"
           >
             <div className="p-6 rounded-full bg-primary/10 mb-6">
-              <HardDrive className="w-12 h-12 text-primary animate-pulse" />
+              <HardDrive className="w-12 h-12 text-primaryanimate-pulse" />
             </div>
             <h3 className="text-xl font-black uppercase tracking-tighter italic mb-2">Vincular Carpeta Local</h3>
             <p className="text-sm text-muted-foreground max-w-sm text-center font-medium mb-8">
@@ -291,7 +291,7 @@ export const CostSheetTemplateExplorer: React.FC = () => {
 
             {isLoading && (
               <div className="col-span-full flex justify-center py-20">
-                <RefreshCw className="w-8 h-8 text-primary animate-spin" />
+                <RefreshCw className="w-8 h-8 text-primaryanimate-spin" />
               </div>
             )}
           </div>
@@ -326,13 +326,13 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onImport, onPubli
           <FileText className="w-6 h-6" />
         </div>
         <div className="flex gap-1">
-          <span className="px-3 py-1 rounded-full bg-primary/5 text-[10px] font-black uppercase tracking-widest text-primary border border-primary/10">
+          <span className="px-3 py-1 rounded-full bg-primary/5 text-[10px] font-black uppercase tracking-widest text-primaryborder border-primary/10">
             {template.category || (template.type === 'private' ? 'Local' : 'General')}
           </span>
         </div>
       </div>
 
-      <h3 className="text-lg font-black uppercase tracking-tighter italic mb-2 line-clamp-1 group-hover:text-primary transition-colors">
+      <h3 className="text-lg font-black uppercase tracking-tighter italic mb-2 line-clamp-1 group-hover:text-primarytransition-colors">
         {template.name}
       </h3>
       <p className="text-xs text-muted-foreground font-medium mb-6 line-clamp-2 min-h-[2.5rem]">
@@ -342,7 +342,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onImport, onPubli
       <div className="flex items-center gap-2 pt-4 border-t border-sidebar-border/30">
         <Button
           onClick={onImport}
-          className="flex-1 rounded-xl h-10 bg-primary/10 hover:bg-primary text-primary hover:text-primary-foreground font-black uppercase tracking-widest text-[10px] transition-all"
+          className="flex-1 rounded-xl h-10 bg-primary/10 hover:bg-primary text-primaryhover:text-primary-foreground font-black uppercase tracking-widest text-[10px] transition-all"
         >
           <Download className="w-3.5 h-3.5 mr-2" />
           Importar

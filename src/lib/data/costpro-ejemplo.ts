@@ -9,7 +9,6 @@ const template: CostSheetDataContract = {
     "author": "Darian - Senior Specialist",
     "description": "Ficha de referencia para estudio de costos industriales complejos con integración de anexos y fórmulas dinámicas."
   },
-  {
   "header": {
     "code": "",
     "name": "Paquete de Pan de 8 Bolas",
@@ -1116,13 +1115,6 @@ const template: CostSheetDataContract = {
   "signature": {
     "prepared_by": "Elaborado por:",
     "approved_by": "Aprobado por:"
-  },
-  "id": "costpro-full-v5",
-  "name": "Producción de Paquete de Pan de 8 Bolas",
-  "version": "5.7.25",
-  "metadata": {
-    "author": "Eli - Senior Specialist",
-    "description": "Ficha de costos para panadería - lote unitario de 8 bolas de pan."
   },
   "footer": "FIN DEL DOCUMENTO • GENERADO AUTOMÁTICAMENTE POR COSTPRO "
 };
