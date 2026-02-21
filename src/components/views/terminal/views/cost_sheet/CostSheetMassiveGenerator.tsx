@@ -38,6 +38,8 @@ import { exportToExcel } from '@/services/export-service';
 import { exportMassiveTemplate, importMassiveProducts } from '@/services/excel-service';
 
 interface MassiveResult {
+  um?: string;
+  quantity?: number;
   sku: string;
   name: string;
   cost: number;
@@ -68,6 +70,16 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<MassiveResult[]>([]);
   const [currentIndex, setCurrentIndex] = useState(-1);
+  const [mappingConfig, setMappingConfig] = useState<{
+      targetColumn: 'price' | 'cost' | 'none';
+      modificationRow: string;
+  }>({
+      targetColumn: 'none',
+      modificationRow: '13.1'
+  });
+  const [showMapping, setShowMapping] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
   const [importedProducts, setImportedProducts] = useState<any[]>([]);
   const [exportOptions, setExportOptions] = useState<ExportOptions>({
     includeFC: true,
@@ -78,6 +90,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
     includeFinancialSummary: true,
     includeUtilityNote: true,
     showDateTime: true,
+    alwaysZip: true,
     pdfFormat: "standard"
   });
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -105,13 +118,26 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       try {
         const imported = await importMassiveProducts(file);
         setImportedProducts(imported);
-        reset();
+
+        const initialResults: MassiveResult[] = imported.map((p, idx) => ({
+          sku: p.sku || `IMP-${idx}`,
+          name: p.name,
+          um: p.um,
+          quantity: p.quantity,
+          cost: p.cost || 0,
+          salePrice: p.price || 0,
+          utility: 0,
+          status: 'pending'
+        }));
+        setResults(initialResults);
+        setSelectedIds(new Set(initialResults.map(r => r.sku)));
+        setShowMapping(true);
       } catch (err) {
         console.error(err);
       }
@@ -119,7 +145,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
     e.target.value = '';
   };
 
-  const prepareFichaForProduct = useCallback((baseSheet: any, product: any): FichaJSON => {
+    const prepareFichaForProduct = useCallback((baseSheet: any, product: any): FichaJSON => {
     // 1. Map UI state to Engine-compatible JSON
     const engineRows: CostRow[] = [];
 
@@ -208,45 +234,27 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                 importe: d.total || d.amount || d.depreciation_cost || d.price_total || 0
             }));
 
-            return {
-                ...a,
-                rows: [
-                    ...existingRows,
-                    {
-                        classification: "1.1", // Standard for raw material
-                        code: product.sku || product.id,
-                        description: product.name,
-                    um: product.unit_of_measure || "u",
-                        consumption_norm: product.quantity || 1,
-                        price: product.price || 0,
-                        importe: product.price || 0,
-                        total: product.price || 0
-                    }
-                ]
-            };
-        }
-        const productCost = product.cost ?? product.cost_price ?? 0;
-        if (productCost > 0 && (a.id === 'IV' || a.id === '4')) {
-            const existingRows = (a.data || []).map((d: any) => ({
-                ...d,
-                classification: String(d.classification || d.label || '').split(' - ')[0].trim(),
-                importe: d.total || d.amount || d.depreciation_cost || d.price_total || 0
-            }));
+            // Use product.cost as the base price for the main item in Annex I
+            const basePrice = product.cost || 0;
 
             return {
                 ...a,
                 rows: [
                     ...existingRows,
                     {
-                        classification: "3.1.3", // Contracted services/Other
-                        code: "FIXED_COST",
-                        description: `Costo Fijo Importado: ${product.name}`,
-                        amount: productCost,
-                        importe: productCost
+                        classification: "1.1",
+                        code: product.sku,
+                        description: product.name,
+                        um: product.um || "u",
+                        consumption_norm: product.quantity || 1,
+                        price: basePrice,
+                        importe: basePrice * (product.quantity || 1),
+                        total: basePrice * (product.quantity || 1)
                     }
                 ]
             };
         }
+
         return {
             ...a,
             rows: (a.data || []).map((d: any) => ({
@@ -296,23 +304,68 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
     const zip = new JSZip();
     const blobs: { name: string, blob: Blob }[] = [];
 
-    for (let i = 0; i < products.length; i++) {
+    const itemsToProcess = products.filter(p => selectedIds.has(p.sku));
+    for (let i = 0; i < itemsToProcess.length; i++) {
       if (!isProcessingRef.current) {
         toast.info("Proceso cancelado por el usuario");
         break;
       }
 
       setCurrentIndex(i);
-      const product = products[i];
+      const product = itemsToProcess[i];
 
       try {
-        setResults(prev => prev.map((r, idx) => idx === i ? { ...r, status: 'processing' } : r));
+        setResults(prev => prev.map(r => r.sku === product.sku ? { ...r, status: 'processing' } : r));
 
         // 1. Prepare
         const ficha = prepareFichaForProduct(currentSheet, product);
 
-        // 2. Calculate
-        const result = calculateFicha(ficha);
+                // 2. Calculate
+        let result = calculateFicha(ficha);
+
+        // 3. Smart Adjustment if Target Price is set
+        if (mappingConfig.targetColumn === 'price' && product.salePrice > 0) {
+            const targetPrice = product.salePrice;
+            const modRowId = mappingConfig.modificationRow || '13.1';
+
+            // Initial price
+            let currentPrice = result.summary.grandTotal;
+
+            if (Math.abs(currentPrice - targetPrice) > 0.01) {
+                // Find the row to modify
+                const rowIndex = ficha.rows.findIndex(r => r.id === modRowId || r.classification === modRowId);
+                if (rowIndex !== -1) {
+                    // Try to find sensitivity
+                    const originalVal = ficha.rows[rowIndex].valorHistorico;
+                    ficha.rows[rowIndex].valorHistorico = originalVal + 10; // Add 10 to see effect
+                    const result2 = calculateFicha(ficha);
+                    const price2 = result2.summary.grandTotal;
+
+                    const sensitivity = (price2 - currentPrice) / 10;
+
+                    if (Math.abs(sensitivity) > 0.0001) {
+                        const adjustment = (targetPrice - currentPrice) / sensitivity;
+                        ficha.rows[rowIndex].valorHistorico = originalVal + adjustment;
+
+                        // Final calculation
+                        result = calculateFicha(ficha);
+                    } else {
+                        // If sensitivity is 0, maybe it's a coefficient?
+                        const originalCoef = ficha.rows[rowIndex].coeficiente;
+                        ficha.rows[rowIndex].coeficiente = (originalCoef || 0) + 0.1;
+                        const result3 = calculateFicha(ficha);
+                        const price3 = result3.summary.grandTotal;
+                        const sensitivityCoef = (price3 - currentPrice) / 0.1;
+
+                        if (Math.abs(sensitivityCoef) > 0.0001) {
+                            const adjustment = (targetPrice - currentPrice) / sensitivityCoef;
+                            ficha.rows[rowIndex].coeficiente = (originalCoef || 0) + adjustment;
+                            result = calculateFicha(ficha);
+                        }
+                    }
+                }
+            }
+        }
 
         // Sanity check: if grandTotal is NaN or 0, maybe there's an engine issue
         const isInvalid = isNaN(result.summary.grandTotal) || result.summary.grandTotal === 0;
@@ -342,7 +395,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
         }
 
         // 4. Update Result
-        setResults(prev => prev.map((r, idx) => idx === i ? {
+        setResults(prev => prev.map(r => r.sku === product.sku ? {
           ...r,
           status: 'completed',
           cost: result.summary.totalCost,
@@ -352,17 +405,19 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
 
       } catch (error: any) {
         console.error(`Error processing ${product.name}:`, error);
-        setResults(prev => prev.map((r, idx) => idx === i ? { ...r, status: 'error', error: error.message } : r));
+        setResults(prev => prev.map(r => r.sku === product.sku ? { ...r, status: 'error', error: error.message } : r));
       }
 
-      setProgress(((i + 1) / products.length) * 100);
+      setProgress(((i + 1) / itemsToProcess.length) * 100);
 
       // Small delay to prevent blocking the UI thread and allow browser to breathe
       await new Promise(resolve => setTimeout(resolve, 500));
     }
 
-    // Process Downloads
-    if (blobs.length > 2) {
+        // Process Downloads
+    const shouldZip = exportOptions.alwaysZip || blobs.length > 2;
+
+    if (shouldZip && blobs.length > 0) {
         toast.info("Comprimiendo fichas en un archivo ZIP...");
         blobs.forEach(item => {
             zip.file(item.name, item.blob);
@@ -378,7 +433,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
         window.URL.revokeObjectURL(url);
         toast.success("Archivo ZIP descargado con éxito");
     } else {
-        // Individual downloads for 1 or 2 files
+        // Individual downloads
         blobs.forEach(item => {
             const url = window.URL.createObjectURL(item.blob);
             const a = document.createElement('a');
@@ -617,6 +672,14 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                         />
                         <Label htmlFor="m-includeUtilityNote" className="text-xs font-bold uppercase cursor-pointer">Nota Util.</Label>
                     </div>
+                                        <div className="flex items-center gap-2">
+                        <Switch
+                            id="m-alwaysZip"
+                            checked={exportOptions.alwaysZip}
+                            onCheckedChange={(c) => setExportOptions(prev => ({ ...prev, alwaysZip: c }))}
+                        />
+                        <Label htmlFor="m-alwaysZip" className="text-xs font-bold uppercase cursor-pointer">ZIP</Label>
+                    </div>
                     <div className="flex items-center gap-2">
                         <Switch
                             id="m-showDateTime"
@@ -653,6 +716,44 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                 )}
             </div>
 
+                        {/* Mapping Configuration */}
+            {showMapping && results.length > 0 && (
+                <div className="p-4 rounded-2xl bg-primary/5 border border-primary/20 space-y-4">
+                    <div className="flex items-center justify-between">
+                        <div className="text-sm font-black uppercase tracking-wider text-primary">Configuración de Procesamiento</div>
+                        <Button variant="ghost" size="sm" onClick={() => setShowMapping(false)}><XIcon className="w-4 h-4" /></Button>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label className="text-xs font-bold uppercase">Columna Objetivo</Label>
+                            <select
+                                className="w-full h-10 rounded-xl bg-background border border-input px-3 text-sm"
+                                value={mappingConfig.targetColumn}
+                                onChange={(e) => setMappingConfig(prev => ({ ...prev, targetColumn: e.target.value as any }))}
+                            >
+                                <option value="none">Ninguna (Usar fórmulas actuales)</option>
+                                <option value="price">Precio de Venta</option>
+                                <option value="cost">Precio de Costo</option>
+                            </select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="text-xs font-bold uppercase">Fila a Ajustar (ID)</Label>
+                            <div className="flex gap-2">
+                                <input
+                                    className="flex-1 h-10 rounded-xl bg-background border border-input px-3 text-sm"
+                                    placeholder="Ej: 13.1"
+                                    value={mappingConfig.modificationRow}
+                                    onChange={(e) => setMappingConfig(prev => ({ ...prev, modificationRow: e.target.value }))}
+                                />
+                                <div className="flex items-center text-[10px] text-muted-foreground uppercase font-black bg-sidebar/50 px-2 rounded-lg">
+                                    Default: 13.1 (Utilidad)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Stats / Progress */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10">
@@ -686,8 +787,17 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
             {/* Results Table */}
             <div className="rounded-2xl border border-sidebar-border/50 overflow-hidden bg-background/50 backdrop-blur-md">
                 <Table>
-                    <TableHeader className="bg-sidebar/30">
+                                        <TableHeader className="bg-sidebar/30">
                         <TableRow className="border-sidebar-border/50 hover:bg-transparent">
+                            <TableHead className="w-10">
+                                <Checkbox
+                                    checked={selectedIds.size === results.length && results.length > 0}
+                                    onCheckedChange={(checked) => {
+                                        if (checked) setSelectedIds(new Set(results.map(r => r.sku)));
+                                        else setSelectedIds(new Set());
+                                    }}
+                                />
+                            </TableHead>
                             <TableHead className="text-xs font-black uppercase tracking-widest h-10">SKU</TableHead>
                             <TableHead className="text-xs font-black uppercase tracking-widest h-10">Producto</TableHead>
                             <TableHead className="text-xs font-black uppercase tracking-widest h-10 text-right">Costo</TableHead>
@@ -710,15 +820,70 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            results.map((result, idx) => (
+                                                        results.map((result, idx) => (
                                 <TableRow key={idx} className={cn(
                                     "border-sidebar-border/50 transition-colors",
-                                    idx === currentIndex ? "bg-primary/5" : "hover:bg-sidebar/20"
+                                    idx === currentIndex ? "bg-primary/5" : "hover:bg-sidebar/20",
+                                    !selectedIds.has(result.sku) && "opacity-60"
                                 )}>
-                                    <TableCell className="font-mono text-xs text-muted-foreground">{result.sku}</TableCell>
-                                    <TableCell className="font-bold text-xs max-w-[200px] truncate">{result.name}</TableCell>
-                                    <TableCell className="text-right font-bold text-xs">${result.cost.toLocaleString()}</TableCell>
-                                    <TableCell className="text-right font-bold text-xs text-success">${result.salePrice.toLocaleString()}</TableCell>
+                                    <TableCell>
+                                        <Checkbox
+                                            checked={selectedIds.has(result.sku)}
+                                            onCheckedChange={(checked) => {
+                                                const newSelected = new Set(selectedIds);
+                                                if (checked) newSelected.add(result.sku);
+                                                else newSelected.delete(result.sku);
+                                                setSelectedIds(newSelected);
+                                            }}
+                                            disabled={isProcessing}
+                                        />
+                                    </TableCell>
+                                    <TableCell className="font-mono text-xs text-muted-foreground">
+                                        <input
+                                            className="bg-transparent border-none focus:ring-1 focus:ring-primary rounded px-1 w-full"
+                                            value={result.sku}
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                setResults(prev => prev.map((r, i) => i === idx ? { ...r, sku: val } : r));
+                                            }}
+                                            disabled={isProcessing}
+                                        />
+                                    </TableCell>
+                                    <TableCell className="font-bold text-xs">
+                                         <input
+                                            className="bg-transparent border-none focus:ring-1 focus:ring-primary rounded px-1 w-full"
+                                            value={result.name}
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                setResults(prev => prev.map((r, i) => i === idx ? { ...r, name: val } : r));
+                                            }}
+                                            disabled={isProcessing}
+                                        />
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <input
+                                            type="number"
+                                            className="bg-transparent border-none focus:ring-1 focus:ring-primary rounded px-1 w-20 text-right text-xs font-bold"
+                                            value={result.cost}
+                                            onChange={(e) => {
+                                                const val = parseFloat(e.target.value) || 0;
+                                                setResults(prev => prev.map((r, i) => i === idx ? { ...r, cost: val } : r));
+                                            }}
+                                            disabled={isProcessing}
+                                        />
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <input
+                                            type="number"
+                                            className="bg-transparent border-none focus:ring-1 focus:ring-primary rounded px-1 w-20 text-right text-xs font-bold text-success"
+                                            value={result.salePrice}
+                                            onChange={(e) => {
+                                                const val = parseFloat(e.target.value) || 0;
+                                                setResults(prev => prev.map((r, i) => i === idx ? { ...r, salePrice: val } : r));
+                                            }}
+                                            disabled={isProcessing}
+                                        />
+                                    </TableCell>
                                     <TableCell className="text-right font-bold text-xs text-primary">${result.utility.toLocaleString()}</TableCell>
                                     <TableCell className="text-center">
                                         {result.status === 'processing' && <CostProLoader size={24} showText={false} showSubtext={false} className="mx-auto" />}

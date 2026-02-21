@@ -25,6 +25,7 @@ export interface ExportOptions {
   includeFinancialSummary: boolean;
   includeUtilityNote: boolean;
   showDateTime: boolean;
+  alwaysZip?: boolean;
   pdfFormat: "standard" | "pro";
 }
 
