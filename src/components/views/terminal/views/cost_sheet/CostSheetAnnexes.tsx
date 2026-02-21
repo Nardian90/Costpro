@@ -19,15 +19,15 @@ const CostSheetAnnexes: React.FC<CostSheetAnnexesProps> = ({ annexes, forceTable
         return (
           <div key={annex.id} className="page-break-before space-y-6">
             <div className="text-center space-y-2">
-              <h2 className="text-base font-black uppercase tracking-[0.4em] text-slate-900 dark:text-white">
+              <h2 className="text-base font-black uppercase tracking-[0.4em] text-foreground dark:text-foreground">
                 {annex.id} - {annex.title}
               </h2>
               <div className="h-1 w-24 bg-primary mx-auto rounded-full" />
             </div>
 
-            <div className={cn("overflow-x-auto border table-to-cards border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-lg bg-white dark:bg-slate-900", forceTable && "force-table")}>
+            <div className={cn("overflow-x-auto border table-to-cards border-border dark:border-border rounded-2xl overflow-hidden shadow-lg bg-card dark:bg-background", forceTable && "force-table")}>
               <table className="w-full text-xs">
-                <thead className="bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-700">
+                <thead className="bg-muted dark:bg-muted text-foreground dark:text-foreground border-b border-border dark:border-slate-700">
                   <tr>
                     {annex.columns.map((col: CostSheetColumn) => {
                       const isMain = col.key === 'description' || col.label?.toLowerCase().includes('descripción') || col.label?.toLowerCase().includes('puesto');
@@ -37,7 +37,7 @@ const CostSheetAnnexes: React.FC<CostSheetAnnexesProps> = ({ annexes, forceTable
                                        (!isMain ? 'w-24' : '')));
                       return (
                         <th key={col.key} className={cn(
-                            "p-3 text-left font-black uppercase tracking-widest text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap",
+                            "p-3 text-left font-black uppercase tracking-widest text-xs text-muted-foreground dark:text-muted-foreground whitespace-nowrap",
                             widthClass
                         )}>
                             {col.label || col.title || col.key}
@@ -46,11 +46,11 @@ const CostSheetAnnexes: React.FC<CostSheetAnnexesProps> = ({ annexes, forceTable
                     })}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                <tbody className="divide-y divide-border/50 dark:divide-border">
                   {annex.data.length > 0 ? annex.data.map((row, rowIndex) => {
                     const isZero = (val: any) => Number(val) === 0;
                     return (
-                        <tr key={rowIndex} className="h-8 text-xs hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
+                        <tr key={rowIndex} className="h-8 text-xs hover:bg-muted dark:hover:bg-slate-800/20 transition-colors">
                         {annex.columns.map((col: CostSheetColumn) => {
                             const isMain = col.key === 'description' || col.label?.toLowerCase().includes('descripción') || col.label?.toLowerCase().includes('puesto');
                             const widthClass = col.key === 'no' ? 'w-12' :
@@ -59,10 +59,10 @@ const CostSheetAnnexes: React.FC<CostSheetAnnexesProps> = ({ annexes, forceTable
                                             (!isMain ? 'w-24' : '')));
                             return (
                             <td key={`${rowIndex}-${col.key}`} className={cn(
-                                "py-0.5 px-2 font-mono text-xs text-slate-700 dark:text-slate-300 whitespace-nowrap",
+                                "py-0.5 px-2 font-mono text-xs text-foreground/80 dark:text-foreground/70 whitespace-nowrap",
                                 widthClass
                             )}>
-                            <span className={cn(col.formula ? "text-primary font-black" : "font-medium text-slate-700", isZero(row[col.key]) && "text-muted-foreground opacity-60 font-medium")}>
+                            <span className={cn(col.formula ? "text-primary font-black" : "font-medium text-foreground/80", isZero(row[col.key]) && "text-muted-foreground opacity-60 font-medium")}>
                                 {typeof row[col.key] === 'number'
                                 ? row[col.key].toLocaleString('es-ES', { minimumFractionDigits: 2 })
                                 : (row[col.key] !== undefined && row[col.key] !== null && row[col.key] !== '' ? row[col.key] : '--')
@@ -75,18 +75,18 @@ const CostSheetAnnexes: React.FC<CostSheetAnnexesProps> = ({ annexes, forceTable
                     );
                   }) : (
                     <tr>
-                      <td colSpan={annex.columns.length} className="p-8 text-center italic text-slate-400">
+                      <td colSpan={annex.columns.length} className="p-8 text-center italic text-muted-foreground">
                         No hay datos registrados en este anexo.
                       </td>
                     </tr>
                   )}
                   {/* Total Row */}
                   {annex.data.length > 0 && (
-                    <tr className="bg-slate-50 dark:bg-slate-800/50 font-bold border-t border-slate-200 dark:border-slate-700">
-                        <td colSpan={annex.columns.length - 1} className="p-4 text-right uppercase tracking-[0.2em] text-xs font-black text-slate-500">
+                    <tr className="bg-muted dark:bg-slate-800/50 font-bold border-t border-border dark:border-slate-700">
+                        <td colSpan={annex.columns.length - 1} className="p-4 text-right uppercase tracking-[0.2em] text-xs font-black text-muted-foreground">
                           TOTAL
                         </td>
-                        <td className="p-4 text-right font-mono font-black text-base text-slate-900 dark:text-white border-l border-slate-200 dark:border-slate-700">
+                        <td className="p-4 text-right font-mono font-black text-base text-foreground dark:text-foreground border-l border-border dark:border-slate-700">
                             {formatCurrency(annex.data.reduce((acc, row) => acc + (totalColumn ? (row[totalColumn.key] || 0) : 0), 0)).replace('$', '').trim()}
                         </td>
                     </tr>
