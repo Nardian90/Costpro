@@ -242,9 +242,11 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
                                         ? "bg-primary text-primary-foreground rounded-tr-none"
                                         : (isDark ? "bg-[#0D141C] border border-white/5" : "bg-slate-100 border border-slate-200") + " rounded-tl-none"
                                 )}>
-                                    <ReactMarkdown className="prose prose-sm dark:prose-invert max-w-none">
-                                        {msg.content}
-                                    </ReactMarkdown>
+                                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                                        <ReactMarkdown>
+                                            {msg.content}
+                                        </ReactMarkdown>
+                                    </div>
                                 </div>
                                 {msg.updateData && (
                                     <div className={cn(
