@@ -75,7 +75,7 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
             fill="none"
             stroke="currentColor"
             strokeWidth={strokeWidth}
-            className="text-slate-200/50 dark:text-slate-800/40"
+            className="text-muted/50 dark:text-border/40"
           />
 
           {/* Cost Ring (Background track) */}
@@ -110,16 +110,16 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
             strokeLinecap="round"
             style={{
                 filter: isDark
-                    ? 'drop-shadow(0 0 12px rgba(22, 163, 74, 0.6))'
-                    : 'drop-shadow(0 0 12px rgba(22, 163, 74, 0.3))',
+                    ? 'drop-shadow(0 0 12px var(--primary))'
+                    : 'drop-shadow(0 0 8px var(--primary))',
             }}
           />
         </svg>
 
         {/* Center Content */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
-          <span className="text-[10px] sm:text-xs font-black uppercase tracking-[0.4em] text-slate-500 dark:text-slate-400 mb-1">Total Venta</span>
-          <h2 className="text-[clamp(1.5rem,8vw,3rem)] font-black tracking-tighter text-slate-900 dark:text-white leading-none">
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+          <span className="text-xs font-black uppercase tracking-[0.4em] text-muted-foreground dark:text-muted-foreground/70 mb-1">Total Venta</span>
+          <h2 className="text-5xl font-black tracking-tighter text-foreground dark:text-foreground">
             {formatCurrency(totalPrice).split(',')[0]}
             <span className="text-[clamp(1rem,4vw,1.5rem)] opacity-40">,{formatCurrency(totalPrice).split(',')[1] || '00'}</span>
           </h2>
@@ -138,7 +138,7 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
               e.stopPropagation();
               onPriceAdjust?.(-1);
             }}
-            className="h-11 w-11 flex items-center justify-center shrink-0 rounded-xl bg-slate-100 dark:bg-slate-800/50 hover:bg-primary/10 hover:text-primary transition-all active:scale-95 border border-transparent hover:border-primary/20"
+            className="p-2 rounded-xl bg-muted dark:bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all active:scale-95 border border-transparent hover:border-primary/20"
           >
             <Minus className="w-4 h-4" />
           </button>
@@ -159,7 +159,7 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
               e.stopPropagation();
               onPriceAdjust?.(1);
             }}
-            className="h-11 w-11 flex items-center justify-center shrink-0 rounded-xl bg-slate-100 dark:bg-slate-800/50 hover:bg-primary/10 hover:text-primary transition-all active:scale-95 border border-transparent hover:border-primary/20"
+            className="p-2 rounded-xl bg-muted dark:bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all active:scale-95 border border-transparent hover:border-primary/20"
           >
             <Plus className="w-4 h-4" />
           </button>
@@ -169,14 +169,14 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
       {/* Primary KPI Breakdown */}
       <div className="flex flex-row justify-between items-start w-full px-4 sm:px-8 gap-4">
         <div className="flex flex-col min-w-0">
-            <span className="text-xs sm:text-xs font-bold uppercase tracking-[0.1em] sm:tracking-[0.2em] text-slate-500 mb-2 truncate">Costo Bruto</span>
+            <span className="text-xs sm:text-xs font-bold uppercase tracking-[0.1em] sm:tracking-[0.2em] text-muted-foreground mb-2 truncate">Costo Bruto</span>
             <div className="flex items-baseline gap-1">
-                <span className="text-lg sm:text-2xl font-black tabular-nums truncate text-slate-900 dark:text-white">{formatCurrency(totalCost)}</span>
+                <span className="text-lg sm:text-2xl font-black tabular-nums truncate text-foreground dark:text-foreground">{formatCurrency(totalCost)}</span>
             </div>
-            <p className="text-xs sm:text-xs text-slate-400 mt-1 uppercase font-black tracking-tighter opacity-70">Total Gastos</p>
+            <p className="text-xs sm:text-xs text-muted-foreground/70 mt-1 uppercase font-black tracking-tighter opacity-70">Total Gastos</p>
         </div>
         <div className="flex flex-col items-end text-right min-w-0">
-            <span className="text-xs sm:text-xs font-bold uppercase tracking-[0.1em] sm:tracking-[0.2em] text-slate-500 mb-2 truncate">Utilidad Bruta</span>
+            <span className="text-xs sm:text-xs font-bold uppercase tracking-[0.1em] sm:tracking-[0.2em] text-muted-foreground mb-2 truncate">Utilidad Bruta</span>
             <div className="flex flex-col items-end">
                 <div className="flex items-baseline gap-1">
                     <span className={cn("text-lg sm:text-2xl font-black tabular-nums truncate", brandGreen)}>{formatCurrency(utility)}</span>
@@ -185,7 +185,7 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
                     {markupPercent.toFixed(1)}% sobre costo
                 </div>
             </div>
-            <p className="text-xs sm:text-xs text-slate-400 mt-1 uppercase font-black tracking-tighter opacity-70">Margen Neto</p>
+            <p className="text-xs sm:text-xs text-muted-foreground/70 mt-1 uppercase font-black tracking-tighter opacity-70">Margen Neto</p>
         </div>
       </div>
     </div>
@@ -201,7 +201,7 @@ export const CostSheetTelemetry: React.FC<{ telemetry: TelemetryItem[], classNam
     return (
       <div className={cn("w-full max-w-md mx-auto space-y-8 pt-10 border-t border-border/30", className)}>
         <div className="flex items-center justify-between px-2">
-            <h4 className="text-xs font-black uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">Desglose Operativo</h4>
+            <h4 className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground dark:text-muted-foreground/70">Desglose Operativo</h4>
             <div className="flex items-center gap-2.5">
                 <div className="relative flex h-2 w-2">
                     <span className={cn("animate-ping absolute inline-flex h-full w-full rounded-full opacity-75", brandGreenBg)}></span>
@@ -213,19 +213,19 @@ export const CostSheetTelemetry: React.FC<{ telemetry: TelemetryItem[], classNam
 
         <div className="grid gap-4">
             {telemetry.map((item, idx) => (
-                <div key={idx} className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-[1.5rem] border border-border/40 flex items-center justify-between group hover:border-primary/40 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5">
+                <div key={idx} className="bg-muted/50 dark:bg-background/50 p-4 rounded-[1.5rem] border border-border/40 flex items-center justify-between group hover:border-primary/40 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5">
                     <div className="flex items-center gap-5">
-                        <div className={cn("p-3 rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-border/50 transition-colors duration-300", item.color)}>
+                        <div className={cn("p-3 rounded-2xl bg-card dark:bg-muted shadow-sm border border-border/50 transition-colors duration-300", item.color)}>
                             <item.icon className="w-5 h-5" />
                         </div>
                         <div>
-                            <p className="text-xs font-black text-slate-500 uppercase tracking-widest mb-0.5">{item.label}</p>
-                            <p className="text-base font-black tracking-tight tabular-nums text-slate-900 dark:text-white">{formatCurrency(item.value)}</p>
+                            <p className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-0.5">{item.label}</p>
+                            <p className="text-base font-black tracking-tight tabular-nums text-foreground dark:text-foreground">{formatCurrency(item.value)}</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-4">
                         <div className="text-right">
-                             <p className="text-xs font-black text-slate-400 tracking-tighter">{item.percent.toFixed(1)}%</p>
+                             <p className="text-xs font-black text-muted-foreground/70 tracking-tighter">{item.percent.toFixed(1)}%</p>
                         </div>
                         <div className="flex gap-1 items-end h-8">
                             {[1, 2, 3, 4, 5].map((bar) => {
@@ -235,7 +235,7 @@ export const CostSheetTelemetry: React.FC<{ telemetry: TelemetryItem[], classNam
                                         key={bar}
                                         className={cn(
                                             "w-1.5 rounded-full transition-all duration-700 delay-100",
-                                            active ? brandGreenBg : "bg-slate-200 dark:bg-slate-800"
+                                            active ? brandGreenBg : "bg-muted dark:bg-muted"
                                         )}
                                         style={{
                                             height: `${bar * 20 + 20}%`,

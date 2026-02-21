@@ -39,7 +39,7 @@ export default function InventoryFlowDiagram() {
         >
           <rect x="50" y="150" width="120" height="60" rx="10" className="fill-emerald-500/10 stroke-emerald-500" strokeWidth="2" />
           <text x="110" y="185" textAnchor="middle" className="fill-emerald-600 font-bold text-xs uppercase">Entrada / Compra</text>
-          <path d="M170 180 L290 180" stroke="#10b981" strokeWidth="2" markerEnd="url(#arrow-emerald)" strokeDasharray="4,2" />
+          <path d="M170 180 L290 180" className="stroke-emerald-500" strokeWidth="2" markerEnd="url(#arrow-emerald)" strokeDasharray="4,2" />
         </motion.g>
 
         {/* Exit Flow */}
@@ -50,7 +50,7 @@ export default function InventoryFlowDiagram() {
         >
           <rect x="630" y="150" width="120" height="60" rx="10" className="fill-emerald-600/10 stroke-emerald-600" strokeWidth="2" />
           <text x="690" y="185" textAnchor="middle" className="fill-emerald-700 font-bold text-xs uppercase">Venta / Salida</text>
-          <path d="M510 180 L620 180" stroke="#059669" strokeWidth="2" markerEnd="url(#arrow-green)" strokeDasharray="4,2" />
+          <path d="M510 180 L620 180" className="stroke-primary-dark" strokeWidth="2" markerEnd="url(#arrow-green)" strokeDasharray="4,2" />
         </motion.g>
 
         {/* Adjustments */}
@@ -61,18 +61,18 @@ export default function InventoryFlowDiagram() {
         >
           <rect x="340" y="320" width="120" height="40" rx="10" className="fill-amber-500/10 stroke-amber-500" strokeWidth="2" />
           <text x="400" y="345" textAnchor="middle" className="fill-amber-600 font-bold text-xs uppercase">Ajustes / Merma</text>
-          <path d="M400 320 L400 300" stroke="#f59e0b" strokeWidth="2" markerEnd="url(#arrow-amber)" />
+          <path d="M400 320 L400 300" className="stroke-amber-500" strokeWidth="2" markerEnd="url(#arrow-amber)" />
         </motion.g>
 
         <defs>
           <marker id="arrow-emerald" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
-            <polygon points="0 0, 10 3.5, 0 7" fill="#10b981" />
+            <polygon points="0 0, 10 3.5, 0 7" className="fill-emerald-500" />
           </marker>
           <marker id="arrow-green" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
-            <polygon points="0 0, 10 3.5, 0 7" fill="#16a34a" />
+            <polygon points="0 0, 10 3.5, 0 7" className="fill-primary" />
           </marker>
           <marker id="arrow-amber" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
-            <polygon points="0 0, 10 3.5, 0 7" fill="#f59e0b" />
+            <polygon points="0 0, 10 3.5, 0 7" className="fill-amber-500" />
           </marker>
         </defs>
 
