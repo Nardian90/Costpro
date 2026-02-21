@@ -48,7 +48,7 @@ export const CostSheetSidebarNav: React.FC<CostSheetSidebarNavProps> = ({
                 <div className="p-2 rounded-xl bg-primary/10">
                 {type === 'sections' ? <ListFilter className="w-5 h-5 text-primary" /> : <FileSpreadsheet className="w-5 h-5 text-primary" />}
                 </div>
-                <SheetTitle className="text-xs font-black uppercase tracking-[0.2em] text-foreground">
+                <SheetTitle className="text-xs font-black uppercase tracking-[0.2em] text-primary">
                     {title}
                 </SheetTitle>
                 <SheetDescription className="sr-only">
@@ -69,7 +69,7 @@ export const CostSheetSidebarNav: React.FC<CostSheetSidebarNavProps> = ({
               "w-full flex items-center gap-4 p-4 rounded-2xl transition-all group active:scale-95 text-left border border-transparent",
               isAllActive
                 ? "bg-primary text-white shadow-xl shadow-primary/20 scale-[1.02]"
-                : "hover:bg-primary/5 text-sidebar-foreground/70 hover:border-primary/10"
+                : "hover:bg-primary/5 text-primary/70 hover:text-primary hover:border-primary/10"
             )}
           >
             <div className={cn(
@@ -105,7 +105,7 @@ export const CostSheetSidebarNav: React.FC<CostSheetSidebarNavProps> = ({
                   "w-full flex items-center gap-4 p-4 rounded-2xl transition-all group active:scale-95 text-left border border-transparent",
                   isActive
                     ? "bg-primary text-white shadow-xl shadow-primary/20 scale-[1.02]"
-                    : "hover:bg-primary/5 text-sidebar-foreground/70 hover:border-primary/10"
+                    : "hover:bg-primary/5 text-primary/70 hover:text-primary hover:border-primary/10"
                 )}
               >
                 <div className={cn(

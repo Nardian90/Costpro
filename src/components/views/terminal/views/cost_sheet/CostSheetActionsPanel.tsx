@@ -97,7 +97,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
                 <div className="p-2 rounded-xl bg-primary/10">
                   <Settings className="w-5 h-5 text-primary" />
                 </div>
-                <span className="text-xs font-black uppercase tracking-[0.2em] text-foreground">Acciones</span>
+                <span className="text-xs font-black uppercase tracking-[0.2em] text-primary">Acciones</span>
               </div>
               <button
                 onClick={onClose}
@@ -135,7 +135,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
                               ? "hover:bg-danger/10 text-danger"
                               : item.variant === 'success'
                                 ? "hover:bg-success/10 text-success"
-                                : "hover:bg-primary/5 text-sidebar-foreground/70"
+                                : "hover:bg-primary/5 text-primary/70 hover:text-primary"
                           )}
                         >
                           <item.icon className={cn(

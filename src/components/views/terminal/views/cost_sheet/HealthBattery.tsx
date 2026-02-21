@@ -17,13 +17,13 @@ const HealthBattery: React.FC<HealthBatteryProps> = ({ percent, className }) => 
     ? "text-red-500"
     : isLow
       ? "text-amber-500"
-      : "text-primary dark:text-[currentColor]";
+      : "text-primary";
 
   const bgClass = isCritical
     ? "bg-red-500/10"
     : isLow
       ? "bg-amber-500/10"
-      : "bg-primary/10 dark:bg-[currentColor]/10";
+      : "bg-primary/10";
 
   return (
     <div className={cn("w-full p-8 rounded-[2.5rem] bg-sidebar/30 border border-border/40 backdrop-blur-xl relative overflow-hidden", className)}>
@@ -57,7 +57,7 @@ const HealthBattery: React.FC<HealthBatteryProps> = ({ percent, className }) => 
                 <div className="space-y-1">
                     <div className="flex items-center gap-2">
                          <Activity className={cn("w-3 h-3", colorClass)} />
-                         <span className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground dark:text-muted-foreground">Estado de Salud</span>
+                         <span className="text-xs font-black uppercase tracking-[0.3em] text-primary/70">Estado de Salud</span>
                     </div>
                     <div className="flex items-baseline gap-1">
                         <h2 className={cn("text-[clamp(2.5rem,12vw,3.75rem)] font-black tracking-tighter tabular-nums leading-none", colorClass)}>{Math.round(percent)}</h2>
@@ -76,7 +76,7 @@ const HealthBattery: React.FC<HealthBatteryProps> = ({ percent, className }) => 
                             {percent === 100 ? 'Integridad Total' : percent > 80 ? 'Nivel Excelente' : percent > 50 ? 'Nivel Aceptable' : 'Riesgo Estructural'}
                         </span>
                     </div>
-                    <p className="text-xs font-bold text-muted-foreground leading-relaxed uppercase">
+                    <p className="text-xs font-bold text-primary/60 leading-relaxed uppercase">
                         Basado en validaciones estructurales, rentabilidad y coeficientes indirectos.
                     </p>
                 </div>
