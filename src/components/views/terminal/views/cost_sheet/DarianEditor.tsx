@@ -2,14 +2,28 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, MessageSquare, Loader2, Sparkles, CheckCircle2 } from 'lucide-react';
+import {
+    Send,
+    MessageSquare,
+    Loader2,
+    Sparkles,
+    CheckCircle2,
+    Menu,
+    Wand2,
+    Paperclip,
+    SendHorizontal,
+    ArrowRight,
+    Bot,
+    FileText,
+    BarChart3,
+    Search
+} from 'lucide-react';
 import { cn, isDarkTheme } from '@/lib/utils';
 import { useTheme } from 'next-themes';
 import ReactMarkdown from 'react-markdown';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
 import { useAuthStore } from '@/store';
 import { toast } from 'sonner';
-import reinicioTemplate from '@/lib/data/costpro-reinicio';
 
 interface Message {
     role: 'user' | 'assistant';
@@ -52,12 +66,12 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
         return null;
     };
 
-    const handleSend = async () => {
-        if (!input.trim() || isLoading) return;
+    const handleSend = async (text?: string) => {
+        const messageToSend = typeof text === 'string' ? text : input.trim();
+        if (!messageToSend || isLoading) return;
 
-        const userMessage = input.trim();
         setInput('');
-        const newMessages: Message[] = [...messages, { role: 'user', content: userMessage }];
+        const newMessages: Message[] = [...messages, { role: 'user', content: messageToSend }];
         setMessages(newMessages);
         setIsLoading(true);
 
@@ -80,7 +94,7 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
             const assistantContent = data.text || data.content || '';
 
             const updateData = extractUpdateData(assistantContent);
-            const cleanContent = assistantContent.replace(/```json_annex_update\s*[\s\S]*?\s*```/, '').trim();
+            const cleanContent = assistantContent.replace(/```json_annex_update\s*[\s\S]*?```/, '').trim();
 
             setMessages([...newMessages, {
                 role: 'assistant',
@@ -116,14 +130,8 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
             }
 
             const result = await response.json();
-
-            // Actualizar el estado global con la ficha calculada y guardada
             setSheet(result.data);
-
             toast.success("¡Ficha generada, calculada y persistida!");
-
-            console.log('Ficha guardada con ID:', result.id);
-
         } catch (error: any) {
             console.error('Save Error:', error);
             toast.error("Error al persistir la ficha: " + error.message);
@@ -132,68 +140,208 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
         }
     };
 
+    const suggestions = [
+        { icon: <FileText className="w-3.5 h-3.5" />, label: "Generar PDF" },
+        { icon: <BarChart3 className="w-3.5 h-3.5" />, label: "Reporte Costos" },
+        { icon: <Search className="w-3.5 h-3.5" />, label: "Analizar" },
+    ];
+
     return (
-        <div className="flex flex-col h-[calc(100vh-280px)] min-h-[600px] overflow-hidden gap-6 px-4 pb-4">
-            <div className="flex-1 flex flex-col bg-white dark:bg-slate-900 rounded-[2.5rem] border border-border/50 shadow-2xl overflow-hidden max-w-5xl mx-auto w-full">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-border/10 bg-muted/10">
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20">
-                            <Sparkles className="w-4 h-4 text-primary" />
+        <div className={cn(
+            "flex flex-col overflow-hidden transition-all duration-500 allow-animations",
+            isFullView ? "h-[calc(100vh-280px)] min-h-[600px] px-4 pb-4" : "h-full"
+        )}>
+            <div className={cn(
+                "flex-1 flex flex-col rounded-[2.5rem] border border-border/10 shadow-2xl overflow-hidden max-w-5xl mx-auto w-full transition-colors duration-300",
+                isDark ? "bg-[#05080A] text-white" : "bg-white text-slate-900"
+            )}>
+                {/* Header Section from Stitch - Only in Full View */}
+                {isFullView && (
+                    <nav className={cn(
+                        "px-6 py-4 flex items-center justify-between sticky top-0 z-20 backdrop-blur-xl border-b",
+                        isDark ? "bg-[#0D141C]/80 border-white/5" : "bg-white/80 border-slate-100"
+                    )}>
+                        <div className="flex items-center gap-3">
+                            <button className={cn(
+                                "w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-95",
+                                isDark ? "bg-slate-800 text-primary" : "bg-slate-100 text-slate-600"
+                            )}>
+                                <Menu className="w-5 h-5" />
+                            </button>
+                            <div className="flex flex-col">
+                                <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-primary opacity-80">Assistant</span>
+                                <h1 className="text-lg font-black tracking-tight leading-none">DARIAN</h1>
+                            </div>
                         </div>
-                        <span className="text-[10px] font-black uppercase tracking-widest">Darian Assistant</span>
-                    </div>
-                </div>
-                <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6">
-                    {messages.length === 0 && (
-                        <div className="h-full flex flex-col items-center justify-center text-center opacity-40 space-y-4">
-                             <div className="w-16 h-16 rounded-3xl border-2 border-dashed border-primary/30 flex items-center justify-center animate-pulse">
-                                <MessageSquare className="w-6 h-6 text-primary" />
-                            </div>
-                            <p className="text-xs font-black uppercase tracking-widest leading-relaxed">Pídeme generar una ficha técnica</p>
+                        <div className="flex gap-2">
+                            <button className="w-10 h-10 rounded-full flex items-center justify-center text-primary bg-primary/10 transition-all hover:bg-primary/20">
+                                <Sparkles className="w-5 h-5" />
+                            </button>
                         </div>
-                    )}
-                    {messages.map((msg, i) => (
-                        <div key={i} className={cn("flex flex-col gap-2", msg.role === 'user' ? "items-end" : "items-start")}>
-                            <div className="flex items-center gap-2 px-1">
-                                <span className="text-[8px] font-black uppercase tracking-widest opacity-40">{msg.role === 'assistant' ? 'Darian' : 'Usuario'}</span>
+                    </nav>
+                )}
+
+                <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-8 space-y-8 relative no-scrollbar">
+                    {messages.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-full space-y-10 animate-in fade-in duration-700">
+                            {/* AI Glow and Icon */}
+                            <div className="relative">
+                                <div className="absolute inset-0 bg-primary opacity-20 blur-3xl rounded-full animate-darian-glow"></div>
+                                <div className={cn(
+                                    "relative z-10 w-24 h-24 rounded-3xl border border-primary/20 flex items-center justify-center shadow-2xl",
+                                    isDark ? "bg-[#0D141C]" : "bg-slate-50"
+                                )}>
+                                    <Wand2 className="w-12 h-12 text-primary" />
+                                </div>
                             </div>
-                            <div className={cn("max-w-[95%] p-4 rounded-2xl text-[13px] font-bold leading-relaxed shadow-sm", msg.role === 'user' ? "bg-primary text-primary-foreground rounded-tr-none" : "bg-muted dark:bg-slate-800 text-foreground rounded-tl-none border border-border/50")}>
-                                {msg.content}
+
+                            {/* Welcome Text */}
+                            <div className="text-center max-w-[300px] space-y-3">
+                                <h2 className="text-xl font-black uppercase tracking-tight">¿En qué puedo ayudarte hoy?</h2>
+                                <p className="text-sm opacity-60 font-medium">Genera fichas técnicas, presupuestos o analiza documentos en segundos.</p>
                             </div>
-                            {msg.updateData && (
-                                <div className="mt-2 w-full p-4 bg-primary/10 border border-primary/30 rounded-2xl space-y-3">
-                                    <div className="flex items-start gap-3">
-                                        <div className="bg-primary/20 p-2 rounded-xl"><CheckCircle2 className="w-4 h-4 text-primary" /></div>
-                                        <div>
-                                            <p className="text-[11px] font-black uppercase tracking-tight text-primary">Propuesta Estructurada</p>
-                                            <p className="text-[10px] font-bold opacity-80 uppercase leading-tight mt-1">He preparado datos para {msg.updateData.header?.productName || 'la ficha'}.</p>
+
+                            {/* Suggestion Card with Wave Animation */}
+                            <button
+                                onClick={() => handleSend("Pídeme generar una ficha técnica")}
+                                className={cn(
+                                    "group relative w-full max-w-sm p-8 rounded-2xl border border-white/5 overflow-hidden transition-all duration-300 hover:border-primary/50 text-left",
+                                    isDark ? "bg-[#0D141C]" : "bg-slate-50 shadow-lg"
+                                )}
+                            >
+                                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50"></div>
+                                <div className="relative z-10">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <span className="text-[10px] font-black text-primary tracking-widest uppercase bg-primary/10 px-2 py-1 rounded">Sugerencia</span>
+                                        <div className="flex gap-1">
+                                            <div className="w-1 h-3 bg-primary/40 rounded-full animate-darian-wave" style={{ animationDelay: '0s' }}></div>
+                                            <div className="w-1 h-5 bg-primary/60 rounded-full animate-darian-wave" style={{ animationDelay: '0.2s' }}></div>
+                                            <div className="w-1 h-4 bg-primary rounded-full animate-darian-wave" style={{ animationDelay: '0.4s' }}></div>
+                                            <div className="w-1 h-2 bg-primary/50 rounded-full animate-darian-wave" style={{ animationDelay: '0.1s' }}></div>
                                         </div>
                                     </div>
-                                    <button
-                                        onClick={() => handleApplyUpdate(msg.updateData)}
-                                        disabled={isSaving}
-                                        className="w-full py-2 bg-primary text-black font-black uppercase tracking-widest text-[10px] rounded-xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
-                                    >
-                                        {isSaving && <Loader2 className="w-3 h-3 animate-spin" />}
-                                        {isSaving ? "Guardando..." : "Generar y Persistir"}
-                                    </button>
+                                    <h3 className="text-lg font-black leading-tight uppercase tracking-tight">Pídeme generar una ficha técnica</h3>
+                                    <div className="mt-4 flex items-center text-primary text-xs font-black uppercase tracking-widest gap-2">
+                                        Comenzar ahora
+                                        <ArrowRight className="w-3.5 h-3.5" />
+                                    </div>
                                 </div>
-                            )}
+                            </button>
                         </div>
-                    ))}
+                    ) : (
+                        messages.map((msg, i) => (
+                            <div key={i} className={cn("flex flex-col gap-2", msg.role === 'user' ? "items-end" : "items-start")}>
+                                <div className="flex items-center gap-2 px-1">
+                                    <span className="text-[8px] font-black uppercase tracking-widest opacity-40">
+                                        {msg.role === 'assistant' ? 'Darian' : 'Usuario'}
+                                    </span>
+                                </div>
+                                <div className={cn(
+                                    "max-w-[95%] p-4 rounded-2xl text-[13px] font-bold leading-relaxed shadow-sm",
+                                    msg.role === 'user'
+                                        ? "bg-primary text-primary-foreground rounded-tr-none"
+                                        : (isDark ? "bg-[#0D141C] border border-white/5" : "bg-slate-100 border border-slate-200") + " rounded-tl-none"
+                                )}>
+                                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                                        <ReactMarkdown>
+                                            {msg.content}
+                                        </ReactMarkdown>
+                                    </div>
+                                </div>
+                                {msg.updateData && (
+                                    <div className={cn(
+                                        "mt-2 w-full p-4 border rounded-2xl space-y-3",
+                                        isDark ? "bg-primary/5 border-primary/20" : "bg-primary/5 border-primary/10"
+                                    )}>
+                                        <div className="flex items-start gap-3">
+                                            <div className="bg-primary/20 p-2 rounded-xl"><CheckCircle2 className="w-4 h-4 text-primary" /></div>
+                                            <div>
+                                                <p className="text-[11px] font-black uppercase tracking-tight text-primary">Propuesta Estructurada</p>
+                                                <p className="text-[10px] font-bold opacity-80 uppercase leading-tight mt-1">He preparado datos para {msg.updateData.header?.productName || 'la ficha'}.</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => handleApplyUpdate(msg.updateData)}
+                                            disabled={isSaving}
+                                            className="w-full py-3 bg-primary text-primary-foreground font-black uppercase tracking-widest text-[10px] rounded-xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
+                                        >
+                                            {isSaving && <Loader2 className="w-3 h-3 animate-spin" />}
+                                            {isSaving ? "Guardando..." : "Generar y Persistir"}
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        ))
+                    )}
                     {isLoading && (
                         <div className="flex flex-col items-start gap-2">
                              <span className="text-[8px] font-black uppercase tracking-widest opacity-40 animate-pulse">Darian pensando...</span>
-                             <div className="bg-muted dark:bg-slate-800 p-4 rounded-2xl border border-border/50"><Loader2 className="w-4 h-4 animate-spin text-primary" /></div>
+                             <div className={cn(
+                                 "p-4 rounded-2xl border",
+                                 isDark ? "bg-[#0D141C] border-white/5" : "bg-slate-100 border-slate-200"
+                             )}>
+                                 <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                             </div>
                         </div>
                     )}
                 </div>
-                <div className="p-4 bg-muted/10 border-t border-border/5">
-                    <div className="flex items-center gap-2 p-2 rounded-2xl bg-white dark:bg-slate-800 border border-border/50 focus-within:border-primary/50 shadow-inner">
-                        <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSend()} placeholder="Generar ficha de..." className="flex-1 bg-transparent border-none px-4 py-2 text-xs font-bold outline-none placeholder:opacity-30" />
-                        <button onClick={handleSend} disabled={!input.trim() || isLoading} className="w-10 h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg active:scale-90 disabled:opacity-30"><Send className="w-5 h-5" /></button>
+
+                {/* Input Area from Stitch */}
+                <div className={cn(
+                    "p-6 bg-gradient-to-t from-transparent",
+                    isDark ? "to-[#05080A]" : "to-white"
+                )}>
+                    <div className="relative flex items-center gap-3">
+                        <div className="relative flex-1 group">
+                            <input
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                                className={cn(
+                                    "w-full border-none text-sm py-4 pl-6 pr-12 rounded-2xl focus:ring-1 focus:ring-primary/50 transition-all placeholder:opacity-30 shadow-lg",
+                                    isDark ? "bg-[#0D141C] text-white" : "bg-slate-100 text-slate-900"
+                                )}
+                                placeholder="Generar ficha de..."
+                                type="text"
+                            />
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                                <Paperclip className="w-5 h-5 text-slate-400 cursor-pointer hover:text-primary transition-colors" />
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => handleSend()}
+                            disabled={!input.trim() || isLoading}
+                            className="bg-primary text-primary-foreground w-14 h-14 rounded-2xl flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.4)] active:scale-95 transition-all disabled:opacity-30"
+                        >
+                            <SendHorizontal className="w-6 h-6" />
+                        </button>
+                    </div>
+
+                    {/* Quick Action Pills */}
+                    <div className="flex gap-3 mt-4 overflow-x-auto no-scrollbar pb-2">
+                        {suggestions.map((s, idx) => (
+                            <button
+                                key={idx}
+                                onClick={() => handleSend(s.label)}
+                                className={cn(
+                                    "whitespace-nowrap px-4 py-2 rounded-full border text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all hover:border-primary/50 hover:bg-primary/5",
+                                    isDark ? "border-white/5 bg-[#0D141C] text-slate-400" : "border-slate-200 bg-white text-slate-600 shadow-sm"
+                                )}
+                            >
+                                {s.icon}
+                                {s.label}
+                            </button>
+                        ))}
                     </div>
                 </div>
+
+                {/* Mobile Handle Indicator */}
+                {!isFullView && (
+                    <div className={cn(
+                        "w-12 h-1.5 rounded-full mx-auto mb-4 opacity-20",
+                        isDark ? "bg-slate-700" : "bg-slate-300"
+                    )}></div>
+                )}
             </div>
         </div>
     );

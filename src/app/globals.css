@@ -1060,3 +1060,19 @@
   transition-duration: 0.01ms !important;
   backdrop-filter: none !important;
 }
+
+/* Darian Modern Chat Animations */
+@keyframes darian-wave {
+    0%, 100% { transform: scaleY(0.8) translateY(0); }
+    50% { transform: scaleY(1.2) translateY(-4px); }
+}
+@keyframes darian-glow {
+    0%, 100% { opacity: 0.4; filter: blur(8px); }
+    50% { opacity: 0.8; filter: blur(12px); }
+}
+.animate-darian-wave {
+    animation: darian-wave 4s ease-in-out infinite;
+}
+.animate-darian-glow {
+    animation: darian-glow 2s ease-in-out infinite;
+}
