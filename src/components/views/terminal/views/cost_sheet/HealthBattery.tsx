@@ -32,8 +32,8 @@ const HealthBattery: React.FC<HealthBatteryProps> = ({ percent, className }) => 
         <div className="flex items-center gap-10 relative z-10">
             <div className="relative group">
                 <svg width="60" height="120" viewBox="0 0 60 120" className="drop-shadow-2xl">
-                    <path d="M22 2C22 0.895431 22.8954 0 24 0H36C37.1046 0 38 0.895431 38 2V5H22V2Z" className="fill-slate-300 dark:fill-slate-700" />
-                    <rect x="0" y="5" width="60" height="115" rx="12" className="fill-slate-100 dark:fill-slate-900 stroke-slate-200 dark:stroke-slate-800" strokeWidth="2" />
+                    <path d="M22 2C22 0.895431 22.8954 0 24 0H36C37.1046 0 38 0.895431 38 2V5H22V2Z" className="fill-muted-foreground/30 dark:fill-muted" />
+                    <rect x="0" y="5" width="60" height="115" rx="12" className="fill-muted dark:fill-background stroke-border dark:stroke-border" strokeWidth="2" />
                     <g clipPath="url(#batteryClip)">
                          <rect
                             x="4"
@@ -57,7 +57,7 @@ const HealthBattery: React.FC<HealthBatteryProps> = ({ percent, className }) => 
                 <div className="space-y-1">
                     <div className="flex items-center gap-2">
                          <Activity className={cn("w-3 h-3", colorClass)} />
-                         <span className="text-xs font-black uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">Estado de Salud</span>
+                         <span className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground dark:text-muted-foreground">Estado de Salud</span>
                     </div>
                     <div className="flex items-baseline gap-1">
                         <h2 className={cn("text-6xl font-black tracking-tighter tabular-nums", colorClass)}>{Math.round(percent)}</h2>
@@ -76,7 +76,7 @@ const HealthBattery: React.FC<HealthBatteryProps> = ({ percent, className }) => 
                             {percent === 100 ? 'Integridad Total' : percent > 80 ? 'Nivel Excelente' : percent > 50 ? 'Nivel Aceptable' : 'Riesgo Estructural'}
                         </span>
                     </div>
-                    <p className="text-xs font-bold text-slate-400 leading-relaxed uppercase">
+                    <p className="text-xs font-bold text-muted-foreground leading-relaxed uppercase">
                         Basado en validaciones estructurales, rentabilidad y coeficientes indirectos.
                     </p>
                 </div>
