@@ -208,9 +208,9 @@ const template: CostSheetDataContract = {
         { "key": "total", "label": "Total", "formula": "consumption_norm * price" }
       ],
       "data": [
-        { "classification": "1.1", "description": "Masa de Pizza", "um": "Kg", "consumption_norm": 0.2, "price": 150 },
-        { "classification": "1.1", "description": "Salsa de Tomate", "um": "Kg", "consumption_norm": 0.05, "price": 400 },
-        { "classification": "1.1", "description": "Queso Mozzarella", "um": "Kg", "consumption_norm": 0.1, "price": 2500 }
+        { "classification": "1.1.1", "description": "Masa de Pizza", "um": "Kg", "consumption_norm": 0.2, "price": 150 },
+        { "classification": "1.1.1", "description": "Salsa de Tomate", "um": "Kg", "consumption_norm": 0.05, "price": 400 },
+        { "classification": "1.1.1", "description": "Queso Mozzarella", "um": "Kg", "consumption_norm": 0.1, "price": 2500 }
       ]
     },
     {
@@ -224,7 +224,7 @@ const template: CostSheetDataContract = {
         { "key": "total", "label": "Total", "formula": "time_norm * hourly_rate" }
       ],
       "data": [
-        { "classification": "2.1", "description": "Pizzero", "time_norm": 0.25, "hourly_rate": 200 }
+        { "classification": "2.1.1", "description": "Pizzero", "time_norm": 0.25, "hourly_rate": 200 }
       ]
     },
     { "id": "III", "title": "III - DEPRECIACIÓN", "columns": [], "data": [] },

@@ -177,9 +177,9 @@ const template: CostSheetDataContract = {
         { "key": "total", "label": "Total", "formula": "consumption_norm * price" }
       ],
       "data": [
-        { "classification": "1.1", "description": "Harina de Trigo", "um": "Kg", "consumption_norm": 2.5, "price": 180 },
-        { "classification": "1.1", "description": "Mantequilla Importada", "um": "Kg", "consumption_norm": 1.2, "price": 3500 },
-        { "classification": "1.1", "description": "Leche Entera", "um": "Lt", "consumption_norm": 0.5, "price": 150 }
+        { "classification": "1.1.1", "description": "Harina de Trigo", "um": "Kg", "consumption_norm": 2.5, "price": 180 },
+        { "classification": "1.1.1", "description": "Mantequilla Importada", "um": "Kg", "consumption_norm": 1.2, "price": 3500 },
+        { "classification": "1.1.1", "description": "Leche Entera", "um": "Lt", "consumption_norm": 0.5, "price": 150 }
       ]
     },
     {
@@ -193,7 +193,7 @@ const template: CostSheetDataContract = {
         { "key": "total", "label": "Total", "formula": "time_norm * hourly_rate" }
       ],
       "data": [
-        { "classification": "2.1", "description": "Maestro Pastelero", "time_norm": 3, "hourly_rate": 300 }
+        { "classification": "2.1.1", "description": "Maestro Pastelero", "time_norm": 3, "hourly_rate": 300 }
       ]
     },
     { "id": "III", "title": "III - DEPRECIACIÓN", "columns": [], "data": [] },
@@ -206,8 +206,8 @@ const template: CostSheetDataContract = {
         { "key": "amount", "label": "Importe" }
       ],
       "data": [
-        { "classification": "3.1", "description": "Bolsas de Papel Kraff", "amount": 250 },
-        { "classification": "3.1", "description": "Gas de Horno (estimado)", "amount": 500 }
+        { "classification": "3.1.1", "description": "Bolsas de Papel Kraff", "amount": 250 },
+        { "classification": "3.1.1", "description": "Gas de Horno (estimado)", "amount": 500 }
       ]
     },
     { "id": "V", "title": "V - DIETAS", "columns": [], "data": [] }

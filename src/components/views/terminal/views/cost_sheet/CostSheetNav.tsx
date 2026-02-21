@@ -44,7 +44,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
             icon: Menu,
             onClick: onOpenActions,
             variant: 'default' as const,
-            className: 'bg-primary/10 text-primary border-primary/20 text-xs uppercase tracking-wider'
+            className: 'hidden sm:flex bg-primary/10 text-primary border-primary/20 text-xs uppercase tracking-wider'
         }] : []),
         // FC Dropdown (Grouping Encabezado, Secciones, Anexos, Firmas, Todo) - Moved after Menú and renamed to Fichas
         {
