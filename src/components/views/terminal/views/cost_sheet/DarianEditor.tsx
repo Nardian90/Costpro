@@ -27,6 +27,7 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
     const { resolvedTheme } = useTheme();
     const isDark = isDarkTheme(resolvedTheme);
@@ -94,29 +95,40 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
         }
     };
 
-    const handleApplyUpdate = (updateData: any) => {
+    const handleApplyUpdate = async (updateData: any) => {
+        setIsSaving(true);
         try {
-            // "Agent" behavior: Use reset template if resetBeforeApply is true
-            let newData;
-            if (updateData.resetBeforeApply) {
-                newData = JSON.parse(JSON.stringify(reinicioTemplate));
-            } else {
-                newData = JSON.parse(JSON.stringify(sheetData));
+            const response = await fetch('/api/cost-sheets/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    updateData,
+                    currentData: sheetData
+                }),
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error || 'Error al guardar la ficha');
             }
 
-            if (updateData.annexes) {
-                updateData.annexes.forEach((update: any) => {
-                    const annex = newData.annexes.find((a: any) => a.id === update.id);
-                    if (annex) annex.data = update.data;
-                });
-            }
-            if (updateData.header) {
-                newData.header = { ...newData.header, ...updateData.header };
-            }
-            setSheet(newData);
-            toast.success(updateData.resetBeforeApply ? "¡Ficha reiniciada y actualizada con nuevos datos!" : "¡Ficha de costo actualizada!");
-        } catch (error) {
-            toast.error("No se pudo aplicar la actualización.");
+            const result = await response.json();
+
+            // Actualizar el estado global con la ficha calculada y guardada
+            setSheet(result.data);
+
+            toast.success("¡Ficha generada, calculada y persistida!");
+
+            console.log('Ficha guardada con ID:', result.id);
+
+        } catch (error: any) {
+            console.error('Save Error:', error);
+            toast.error("Error al persistir la ficha: " + error.message);
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -157,7 +169,14 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
                                             <p className="text-[10px] font-bold opacity-80 uppercase leading-tight mt-1">He preparado datos para {msg.updateData.header?.productName || 'la ficha'}.</p>
                                         </div>
                                     </div>
-                                    <button onClick={() => handleApplyUpdate(msg.updateData)} className="w-full py-2 bg-primary text-black font-black uppercase tracking-widest text-[10px] rounded-xl shadow-lg active:scale-95 transition-all">Aplicar Cambios</button>
+                                    <button
+                                        onClick={() => handleApplyUpdate(msg.updateData)}
+                                        disabled={isSaving}
+                                        className="w-full py-2 bg-primary text-black font-black uppercase tracking-widest text-[10px] rounded-xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
+                                    >
+                                        {isSaving && <Loader2 className="w-3 h-3 animate-spin" />}
+                                        {isSaving ? "Guardando..." : "Generar y Persistir"}
+                                    </button>
                                 </div>
                             )}
                         </div>
