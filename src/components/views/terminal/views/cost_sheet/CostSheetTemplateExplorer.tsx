@@ -26,8 +26,15 @@ import { Input } from '@/components/ui/input';
 import { useCostSheetStore } from '@/store';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabaseClient';
+
+// Import Templates
 import reinicioTemplate from '@/lib/data/costpro-reinicio';
 import exampleTemplate from '@/lib/data/costpro-ejemplo';
+import juiceTemplate from '@/lib/data/template-juice';
+import pizzaTemplate from '@/lib/data/template-pizza';
+import pastryTemplate from '@/lib/data/template-pastry';
+import furnitureTemplate from '@/lib/data/template-furniture';
+import industrialTemplate from '@/lib/data/template-industrial';
 
 type TemplateCategory = 'system' | 'private' | 'public';
 
@@ -44,22 +51,62 @@ interface Template {
 export const CostSheetTemplateExplorer: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<TemplateCategory>('system');
   const [searchQuery, setSearchQuery] = useState('');
-  const [localDirectory, setLocalDirectory] = useState<FileSystemDirectoryHandle | null>(null);
-  const [privateTemplates, setPrivateTemplates] = useState<Template[]>([]);
   const [publicTemplates, setPublicTemplates] = useState<Template[]>([]);
+  const [privateTemplates, setPrivateTemplates] = useState<Template[]>([]);
+  const [localDirectory, setLocalDirectory] = useState<FileSystemDirectoryHandle | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const setSheet = useCostSheetStore(state => state.setSheet);
 
-  // System Templates (Hardcoded for now)
+  // System Templates
   const systemTemplates: Template[] = [
     {
       id: 'sys-reinicio',
       name: 'Plantilla de Reinicio',
-      description: 'Estructura base vacía con todas las secciones reglamentarias.',
+      description: 'Estructura base vacía con fórmulas de encabezado dinámicas.',
       category: 'Estándar',
       type: 'system',
       data: reinicioTemplate
+    },
+    {
+      id: 'sys-juice',
+      name: 'Jugo Natural (1L)',
+      description: 'Baja complejidad: Solo gasto material (Anexo I).',
+      category: 'Bebidas',
+      type: 'system',
+      data: juiceTemplate
+    },
+    {
+      id: 'sys-pizza',
+      name: 'Pizza Margarita',
+      description: 'Baja-Media complejidad: Ingredientes y Mano de Obra (I, II).',
+      category: 'Gastronomía',
+      type: 'system',
+      data: pizzaTemplate
+    },
+    {
+      id: 'sys-pastry',
+      name: 'Croissant Artesanal',
+      description: 'Media complejidad: Materiales, Labor y Otros Directos (I, II, IV).',
+      category: 'Repostería',
+      type: 'system',
+      data: pastryTemplate
+    },
+    {
+      id: 'sys-furniture',
+      name: 'Mueble de Roble',
+      description: 'Media-Alta complejidad: Materiales, Labor, Depreciación y Otros (I-IV).',
+      category: 'Carpintería',
+      type: 'system',
+      data: furnitureTemplate
+    },
+    {
+      id: 'sys-industrial',
+      name: 'Pintura Industrial',
+      description: 'Alta complejidad: Todos los anexos con múltiples registros.',
+      category: 'Industrial',
+      type: 'system',
+      data: industrialTemplate
     },
     {
       id: 'sys-ejemplo',
@@ -80,10 +127,20 @@ export const CostSheetTemplateExplorer: React.FC = () => {
         .eq('type', 'public');
 
       if (error) throw error;
-      setPublicTemplates(data || []);
+
+      if (data) {
+        setPublicTemplates(data.map((t: any) => ({
+          id: t.id,
+          name: t.name,
+          description: t.description,
+          category: t.category,
+          type: 'public',
+          data: t.data,
+          updated_at: t.created_at
+        })));
+      }
     } catch (error) {
       console.error('Error fetching public templates:', error);
-      toast.error('No se pudieron cargar las plantillas públicas');
     } finally {
       setIsLoading(false);
     }
@@ -97,30 +154,27 @@ export const CostSheetTemplateExplorer: React.FC = () => {
 
   const handleSelectDirectory = async () => {
     try {
-      // @ts-ignore - File System Access API
-      const handle = await window.showDirectoryPicker();
+      const handle = await (window as any).showDirectoryPicker();
       setLocalDirectory(handle);
       loadPrivateTemplates(handle);
     } catch (error) {
       if ((error as any).name !== 'AbortError') {
-        console.error('Error selecting directory:', error);
-        toast.error('Error al acceder al directorio local');
+        console.error('Error picking directory:', error);
+        toast.error('No se pudo acceder a la carpeta');
       }
     }
   };
 
   const loadPrivateTemplates = async (directoryHandle: FileSystemDirectoryHandle) => {
     setIsLoading(true);
-    const templates: Template[] = [];
     try {
-      // @ts-ignore
-      for await (const entry of directoryHandle.values()) {
+      const templates: Template[] = [];
+      for await (const entry of (directoryHandle as any).values()) {
         if (entry.kind === 'file' && entry.name.endsWith('.json')) {
           const file = await entry.getFile();
           const text = await file.text();
           try {
             const data = JSON.parse(text);
-            // Basic validation that it's a cost sheet
             if (data.sections && data.annexes) {
               templates.push({
                 id: entry.name,
@@ -311,7 +365,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onImport, onPubli
       <div className="flex justify-between items-start mb-4">
         <div className={cn(
           "p-3 rounded-2xl bg-primary/10 text-primary",
-          template.type === 'system' ? "bg-amber-500/10 text-amber-500" :
+          template.id.startsWith('sys-') ? "bg-amber-500/10 text-amber-500" :
           template.type === 'public' ? "bg-blue-500/10 text-blue-500" : ""
         )}>
           <FileText className="w-6 h-6" />
