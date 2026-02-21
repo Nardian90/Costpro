@@ -66,7 +66,7 @@ export default function AcademyView() {
             <GraduationCap className="w-8 h-8 text-primary" />
           </div>
           <div>
-            <h1 className="text-4xl font-black uppercase tracking-tighter italic text-foreground leading-none">Costpro Academia</h1>
+            <h1 className="text-[clamp(1.5rem,6vw,2.25rem)] font-black uppercase tracking-tighter italic text-foreground leading-none">Costpro Academia</h1>
             <p className="text-muted-foreground font-bold text-xs uppercase tracking-widest mt-1 opacity-70">Learning & Mastery Engine</p>
           </div>
         </div>
@@ -112,7 +112,7 @@ export default function AcademyView() {
                     <Zap className="w-12 h-12 text-green-500" />
                 </div>
                 <div className="space-y-2">
-                    <h2 className="text-4xl font-black uppercase tracking-tight italic">¡Sesión Completada!</h2>
+                    <h2 className="text-[clamp(1.5rem,6vw,2.25rem)] font-black uppercase tracking-tight italic">¡Sesión Completada!</h2>
                     <p className="text-muted-foreground font-medium">
                         Has revisado todas las tarjetas programadas para hoy. Tu maestría está aumentando.
                     </p>
@@ -128,11 +128,11 @@ export default function AcademyView() {
               <div className="w-full space-y-12">
                 <div className="flex justify-center gap-12">
                     <div className="text-center">
-                        <span className="text-4xl font-black text-primary tracking-tighter italic">{dueCards.length}</span>
+                        <span className="text-[clamp(1.5rem,6vw,2.25rem)] font-black text-primary tracking-tighter italic">{dueCards.length}</span>
                         <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1">Repasar</p>
                     </div>
                     <div className="text-center">
-                        <span className="text-4xl font-black text-blue-500 tracking-tighter italic">{newCards.length}</span>
+                        <span className="text-[clamp(1.5rem,6vw,2.25rem)] font-black text-blue-500 tracking-tighter italic">{newCards.length}</span>
                         <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1">Aprender</p>
                     </div>
                 </div>

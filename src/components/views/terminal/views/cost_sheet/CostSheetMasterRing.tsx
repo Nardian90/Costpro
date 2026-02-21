@@ -55,16 +55,15 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
   return (
     <div className={cn("flex flex-col items-center gap-10 w-full max-w-md mx-auto", className)}>
       {/* Main Master Ring */}
-      <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
+      <div className="relative flex items-center justify-center mx-auto aspect-square w-full max-w-[320px]">
         {/* Background Glow */}
         <div className="absolute inset-0 bg-primary/10 rounded-full blur-[80px] opacity-50 dark:opacity-100" />
 
         {/* SVG Rings */}
         <svg
-            width={size}
-            height={size}
+            viewBox={`0 0 ${size} ${size}`}
             className={cn(
-                "-rotate-90 transition-all duration-500",
+                "w-full h-full max-w-[320px] -rotate-90 transition-all duration-500",
                 isDark ? "drop-shadow-[0_0_15px_hsl(var(--primary)/0.2)]" : "drop-shadow-[0_0_15px_rgba(22,163,74,0.1)]"
             )}
         >
@@ -122,7 +121,7 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
           <span className="text-xs font-black uppercase tracking-[0.4em] text-muted-foreground dark:text-muted-foreground/70 mb-1">Total Venta</span>
           <h2 className="text-5xl font-black tracking-tighter text-foreground dark:text-foreground">
             {formatCurrency(totalPrice).split(',')[0]}
-            <span className="text-2xl opacity-40">,{formatCurrency(totalPrice).split(',')[1] || '00'}</span>
+            <span className="text-[clamp(1rem,4vw,1.5rem)] opacity-40">,{formatCurrency(totalPrice).split(',')[1] || '00'}</span>
           </h2>
           <div className={cn("flex items-center gap-1.5 mt-3 px-4 py-1.5 rounded-full border backdrop-blur-sm transition-all duration-300", brandGreenAlpha, brandGreenBorder)}>
             <TrendingUp className={cn("w-3.5 h-3.5", brandGreen)} />
