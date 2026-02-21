@@ -33,7 +33,7 @@ export const CostSheetBottomNav: React.FC<CostSheetBottomNavProps> = ({
           onClick={() => onTabChange('kpis')}
           className={cn(
             "flex flex-col items-center gap-1 transition-all duration-300",
-            activeTab === 'kpis' ? "text-primary" : "text-muted-foreground/60"
+            activeTab === 'kpis' ? "text-primary" : "text-primary/60 hover:text-primary transition-colors"
           )}
         >
           <LayoutGrid className={cn("w-5 h-5", activeTab === 'kpis' && "drop-shadow-[0_0_8px_rgba(22,163,74,0.5)]")} />
@@ -96,7 +96,7 @@ export const CostSheetBottomNav: React.FC<CostSheetBottomNavProps> = ({
           onClick={() => onAction('ai')}
           className={cn(
             "flex flex-col items-center gap-1 transition-all duration-300 relative",
-            isChatBotOpen ? "text-primary" : "text-muted-foreground/60"
+            isChatBotOpen ? "text-primary" : "text-primary/60 hover:text-primary transition-colors"
           )}
         >
           {isChatBotOpen && (
@@ -111,7 +111,7 @@ export const CostSheetBottomNav: React.FC<CostSheetBottomNavProps> = ({
           onClick={() => onAction('config')}
           className={cn(
             "flex flex-col items-center gap-1 transition-all duration-300",
-            activeTab === 'config' ? "text-primary" : "text-muted-foreground/60"
+            activeTab === 'config' ? "text-primary" : "text-primary/60 hover:text-primary transition-colors"
           )}
         >
           <Settings className={cn("w-5 h-5", activeTab === 'config' && "drop-shadow-[0_0_8px_rgba(22,163,74,0.5)]")} />
