@@ -2,13 +2,14 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, MessageSquare, Loader2, Bot, Maximize2, Minimize2, FileText, Sparkles, User, Brain, Edit3, CheckCircle2 } from 'lucide-react';
+import { Send, MessageSquare, Loader2, Sparkles, CheckCircle2 } from 'lucide-react';
 import { cn, isDarkTheme } from '@/lib/utils';
 import { useTheme } from 'next-themes';
 import ReactMarkdown from 'react-markdown';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
 import { useAuthStore } from '@/store';
 import { toast } from 'sonner';
+import reinicioTemplate from '@/lib/data/costpro-reinicio';
 
 interface Message {
     role: 'user' | 'assistant';
@@ -26,8 +27,6 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [docContent, setDocContent] = useState('');
-    const [isEditingDoc, setIsEditingDoc] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
     const { resolvedTheme } = useTheme();
     const isDark = isDarkTheme(resolvedTheme);
@@ -88,9 +87,6 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
                 updateData
             }]);
 
-            if (cleanContent.includes('#') || cleanContent.length > 200) {
-                setDocContent(cleanContent);
-            }
         } catch (error: any) {
             setMessages([...newMessages, { role: 'assistant', content: `Lo siento, hubo un error: ${error.message}` }]);
         } finally {
@@ -100,7 +96,14 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
 
     const handleApplyUpdate = (updateData: any) => {
         try {
-            const newData = JSON.parse(JSON.stringify(sheetData));
+            // "Agent" behavior: Use reset template if resetBeforeApply is true
+            let newData;
+            if (updateData.resetBeforeApply) {
+                newData = JSON.parse(JSON.stringify(reinicioTemplate));
+            } else {
+                newData = JSON.parse(JSON.stringify(sheetData));
+            }
+
             if (updateData.annexes) {
                 updateData.annexes.forEach((update: any) => {
                     const annex = newData.annexes.find((a: any) => a.id === update.id);
@@ -111,47 +114,15 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
                 newData.header = { ...newData.header, ...updateData.header };
             }
             setSheet(newData);
-            toast.success("¡Ficha de costo actualizada!");
+            toast.success(updateData.resetBeforeApply ? "¡Ficha reiniciada y actualizada con nuevos datos!" : "¡Ficha de costo actualizada!");
         } catch (error) {
             toast.error("No se pudo aplicar la actualización.");
         }
     };
 
     return (
-        <div className="flex flex-col md:flex-row h-[calc(100vh-280px)] min-h-[600px] overflow-hidden gap-6 px-4 pb-4">
-            <div className={cn(
-                "flex-[1.5] flex flex-col bg-white dark:bg-slate-950 rounded-[2.5rem] border border-border/50 shadow-2xl overflow-hidden",
-                !docContent && "hidden md:flex opacity-80"
-            )}>
-                <div className="flex items-center justify-between px-8 py-4 border-b border-border/10 bg-muted/20">
-                    <div className="flex items-center gap-3">
-                        <FileText className="w-5 h-5 text-primary" />
-                        <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Panel AI – Documento Inteligente</span>
-                    </div>
-                    <button onClick={() => setIsEditingDoc(!isEditingDoc)} className="p-2.5 hover:bg-primary/10 rounded-xl transition-all text-primary">
-                        <Edit3 className="w-4 h-4" />
-                    </button>
-                </div>
-                <div className="flex-1 overflow-y-auto p-8 sm:p-12 bg-slate-50/50 dark:bg-transparent">
-                    <div className="max-w-3xl mx-auto min-h-full bg-white dark:bg-slate-900 shadow-xl rounded-sm p-12 border border-border/50">
-                        {isEditingDoc ? (
-                            <textarea value={docContent} onChange={(e) => setDocContent(e.target.value)} className="w-full h-full min-h-[600px] bg-transparent border-none outline-none resize-none font-mono text-sm leading-relaxed" />
-                        ) : (
-                            <div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none overflow-x-auto">
-                                {docContent ? <ReactMarkdown>{docContent}</ReactMarkdown> : (
-                                    <div className="h-full flex flex-col items-center justify-center text-center opacity-20 py-20">
-                                        <Brain className="w-20 h-20 mb-6" />
-                                        <h3 className="text-xl font-black uppercase tracking-tighter">Documento Inteligente</h3>
-                                        <p className="text-sm font-bold mt-2">Darian generará contenido técnico aquí.</p>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            <div className="flex-1 flex flex-col bg-white dark:bg-slate-900 rounded-[2.5rem] border border-border/50 shadow-2xl overflow-hidden">
+        <div className="flex flex-col h-[calc(100vh-280px)] min-h-[600px] overflow-hidden gap-6 px-4 pb-4">
+            <div className="flex-1 flex flex-col bg-white dark:bg-slate-900 rounded-[2.5rem] border border-border/50 shadow-2xl overflow-hidden max-w-5xl mx-auto w-full">
                 <div className="flex items-center justify-between px-6 py-4 border-b border-border/10 bg-muted/10">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20">
