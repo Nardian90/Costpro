@@ -2,22 +2,22 @@ import { CostSheetDataContract } from '@/contracts/cost-sheet';
 
 const template: CostSheetDataContract = {
   "header": {
-    "code": "",
-    "name": "=GET_ANEXO_FILA_DATO('I', 1, 'description')",
+    "code": "REF-000",
+    "name": "NUEVO PRODUCTO O SERVICIO",
     "date": new Date().toISOString().split('T')[0],
-    "quantity": "=GET_ANEXO_FILA_DATO('I', 1, 'consumption_norm')",
+    "quantity": 1,
     "currency": "CUP",
-    "category": "",
+    "category": "General",
     "type": "EMPRESA",
-    "unit": "=GET_ANEXO_FILA_DATO('I', 1, 'um')",
-    "product_code": "=GET_ANEXO_FILA_DATO('I', 1, 'code')",
+    "unit": "U",
+    "product_code": "P-000",
     "company": "",
     "organism": "",
     "union": "",
     "destination": "",
     "production_level": 0,
     "capacity_utilization": 0,
-    "sale_price": "=GET_FILA_DATO('14', 'total')",
+    "sale_price": 0,
     "client": ""
   },
   "sections": [
@@ -28,157 +28,133 @@ const template: CostSheetDataContract = {
         {
           "id": "1",
           "label": "GASTO MATERIAL",
-          "valorHistorico": 0,
-          "value": 0,
           "calculationMethod": "FORMULA",
           "totalFormula": "sum(children)",
-          "formula": "sum(children)",
           "children": [
-            {
-              "id": "1.1",
-              "label": "De ello: - Insumos (MP)",
-              "valorHistorico": 0,
-              "value": 0,
-              "baseDeCalculoRef": "I",
-              "calculationMethod": "ANEXO",
-              "totalFormula": "AnexoI",
-              "formula": "AnexoI",
-              "children": [],
-              "baseRef": "I"
-            },
-            {
-              "id": "1.2",
-              "label": "- Combustibles y lubricantes",
-              "valorHistorico": 0,
-              "value": 0,
-              "baseDeCalculoRef": "I",
-              "calculationMethod": "ANEXO",
-              "totalFormula": "AnexoI",
-              "formula": "AnexoI",
-              "children": [],
-              "baseRef": "I"
-            },
-            {
-              "id": "1.3",
-              "label": "- Energía",
-              "valorHistorico": 0,
-              "value": 0,
-              "baseDeCalculoRef": "I",
-              "calculationMethod": "ANEXO",
-              "totalFormula": "AnexoI",
-              "formula": "AnexoI",
-              "children": [],
-              "baseRef": "I"
-            }
+            { "id": "1.1", "label": "De ello: - Insumos (MP)", "calculationMethod": "ANEXO", "baseRef": "I", "totalFormula": "AnexoI" },
+            { "id": "1.2", "label": "- Combustibles y lubricantes", "calculationMethod": "ANEXO", "baseRef": "I", "totalFormula": "AnexoI" },
+            { "id": "1.3", "label": "- Energía", "calculationMethod": "ANEXO", "baseRef": "I", "totalFormula": "AnexoI" }
           ]
         }
       ]
     },
     {
       "id": "s2",
-      "label": "Sección 2: Gasto de Fuerza de Trabajo",
+      "label": "Sección 2: SALARIO DIRECTO",
       "rows": [
         {
           "id": "2",
-          "label": "GASTO DE FUERZA DE TRABAJO",
-          "valorHistorico": 0,
-          "value": 0,
+          "label": "SALARIO DIRECTO",
           "calculationMethod": "FORMULA",
           "totalFormula": "sum(children)",
-          "formula": "sum(children)",
           "children": [
-            {
-              "id": "2.1",
-              "label": "De ello: Salarios",
-              "valorHistorico": 0,
-              "value": 0,
-              "baseDeCalculoRef": "II",
-              "calculationMethod": "ANEXO",
-              "totalFormula": "AnexoII",
-              "formula": "AnexoII",
-              "children": [],
-              "baseRef": "II"
-            }
+            { "id": "2.1", "label": "De ello: Salarios", "calculationMethod": "ANEXO", "baseRef": "II", "totalFormula": "AnexoII" }
           ]
         }
       ]
     },
     {
       "id": "s3",
-      "label": "Sección 3: Otros Gastos Directos",
+      "label": "Sección 3: OTROS GASTOS DIRECTOS",
       "rows": [
         {
           "id": "3",
           "label": "OTROS GASTOS DIRECTOS",
-          "valorHistorico": 0,
-          "value": 0,
           "calculationMethod": "FORMULA",
           "totalFormula": "sum(children)",
-          "formula": "sum(children)",
           "children": [
-            {
-              "id": "3.1",
-              "label": "De ello: Otros",
-              "valorHistorico": 0,
-              "value": 0,
-              "baseDeCalculoRef": "IV",
-              "calculationMethod": "ANEXO",
-              "totalFormula": "AnexoIV",
-              "formula": "AnexoIV",
-              "children": [],
-              "baseRef": "IV"
-            }
+            { "id": "3.1", "label": "De ello: Otros", "calculationMethod": "ANEXO", "baseRef": "IV", "totalFormula": "AnexoIV" }
           ]
         }
       ]
     },
     {
       "id": "s4",
-      "label": "Sección 4: Depreciación",
+      "label": "Sección 4: Gastos Asociados Prod.",
       "rows": [
         {
           "id": "4",
-          "label": "DEPRECIACIÓN",
-          "valorHistorico": 0,
-          "value": 0,
-          "baseDeCalculoRef": "III",
-          "calculationMethod": "ANEXO",
-          "totalFormula": "AnexoIII",
-          "formula": "AnexoIII",
-          "children": [],
-          "baseRef": "III"
+          "label": "Gastos Asociados Prod.",
+          "calculationMethod": "FORMULA",
+          "totalFormula": "ref('2.1') * 0.095",
+          "helpText": "9.5% de Contribución Especial a la Seguridad Social"
         }
       ]
     },
     {
       "id": "s5",
-      "label": "Sección 5: Costo Directo",
+      "label": "Sección 5: COSTO TOTAL",
       "rows": [
         {
           "id": "5",
-          "label": "COSTO DIRECTO",
-          "valorHistorico": 0,
-          "value": 0,
+          "label": "COSTO TOTAL",
           "calculationMethod": "FORMULA",
-          "totalFormula": "ref('1') + ref('2') + ref('3') + ref('4')",
-          "formula": "ref('1') + ref('2') + ref('3') + ref('4')",
-          "children": []
+          "totalFormula": "ref('1') + ref('2') + ref('3') + ref('4')"
+        }
+      ]
+    },
+    {
+      "id": "s6",
+      "label": "Sección 6: Gtos. Grales y Admón.",
+      "rows": [
+        {
+          "id": "6",
+          "label": "Gtos. Grales y Admón.",
+          "calculationMethod": "FORMULA",
+          "totalFormula": "ref('2.1') * 0.05",
+          "helpText": "5% Estimado de Gastos de Administración"
+        }
+      ]
+    },
+    {
+      "id": "s7",
+      "label": "Sección 7: Gtos. Dist. y Venta",
+      "rows": [
+        {
+          "id": "7",
+          "label": "Gtos. Dist. y Venta",
+          "calculationMethod": "FORMULA",
+          "totalFormula": "ref('5') * 0.02",
+          "helpText": "2% Estimado de Gastos de Distribución"
+        }
+      ]
+    },
+    {
+      "id": "s8",
+      "label": "Sección 8: Gastos Financieros",
+      "rows": [ { "id": "8", "label": "Gastos Financieros", "calculationMethod": "FORMULA", "totalFormula": "0" } ]
+    },
+    {
+      "id": "s9",
+      "label": "Sección 9: Gasto Financ. OSDE",
+      "rows": [ { "id": "9", "label": "Gasto Financ. OSDE", "calculationMethod": "FORMULA", "totalFormula": "0" } ]
+    },
+    {
+      "id": "s10",
+      "label": "Sección 10: Gastos Tributarios",
+      "rows": [ { "id": "10", "label": "Gastos Tributarios", "calculationMethod": "FORMULA", "totalFormula": "0" } ]
+    },
+    {
+      "id": "s11",
+      "label": "Sección 11: TOTAL DE GASTOS",
+      "rows": [
+        {
+          "id": "11",
+          "label": "TOTAL DE GASTOS",
+          "calculationMethod": "FORMULA",
+          "totalFormula": "ref('6') + ref('7') + ref('8') + ref('9') + ref('10')"
         }
       ]
     },
     {
       "id": "s12",
-      "label": "Sección 12: Costo Total",
+      "label": "Sección 12: TOTAL COSTOS Y GASTOS",
       "rows": [
         {
           "id": "12",
-          "label": "COSTO TOTAL",
-          "valorHistorico": 0,
-          "value": 0,
+          "label": "TOTAL COSTOS Y GASTOS",
           "calculationMethod": "FORMULA",
-          "totalFormula": "ref('5')",
-          "formula": "ref('5')",
-          "children": []
+          "totalFormula": "ref('5') + ref('11')"
         }
       ]
     },
@@ -189,30 +165,15 @@ const template: CostSheetDataContract = {
         {
           "id": "13",
           "label": "Utilidad",
-          "valorHistorico": 0,
-          "value": 0,
-          "baseDeCalculoRef": "12",
           "calculationMethod": "FORMULA",
           "totalFormula": "ref('12') * 0.3",
-          "formula": "ref('12') * 0.3"
+          "helpText": "30% de Margen de Utilidad"
         },
         {
-          "id": "13.1",
-          "label": "Precio antes de Impuesto",
-          "valorHistorico": 0,
-          "value": 0,
-          "calculationMethod": "FORMULA",
-          "totalFormula": "ref('12') + ref('13')",
-          "formula": "ref('12') + ref('13')"
+          "id": "13.1", "label": "Precio antes de Impuesto", "calculationMethod": "FORMULA", "totalFormula": "ref('12') + ref('13')"
         },
         {
-          "id": "13.2",
-          "label": "Imp s/Ventas y Serv",
-          "valorHistorico": 0,
-          "value": 0,
-          "calculationMethod": "FORMULA",
-          "totalFormula": "ref('13.1')/0.9*0.1",
-          "formula": "ref('13.1')/0.9*0.1"
+          "id": "13.2", "label": "Imp s/Ventas y Serv", "calculationMethod": "FORMULA", "totalFormula": "ref('13.1')/0.9*0.1"
         }
       ]
     },
@@ -220,26 +181,29 @@ const template: CostSheetDataContract = {
       "id": "s14",
       "label": "Sección 14: Precio o Tarifa Final",
       "rows": [
-        {
-          "id": "14",
-          "label": "Precio o Tarifa Final",
-          "valorHistorico": 0,
-          "value": 0,
-          "calculationMethod": "FORMULA",
-          "totalFormula": "ref('13.1') + ref('13.2')",
-          "formula": "ref('13.1') + ref('13.2')"
-        }
+        { "id": "14", "label": "Precio o Tarifa Final", "calculationMethod": "FORMULA", "totalFormula": "ref('13.1') + ref('13.2')" }
+      ]
+    },
+    {
+      "id": "s15",
+      "label": "Sección 15: Costo y gasto UNITARIO",
+      "rows": [
+        { "id": "15", "label": "Costo y gasto UNITARIO", "calculationMethod": "FORMULA", "totalFormula": "ref('12') / quantity" }
+      ]
+    },
+    {
+      "id": "s16",
+      "label": "Sección 16: VENTA UNITARIA",
+      "rows": [
+        { "id": "16", "label": "VENTA UNITARIA", "calculationMethod": "FORMULA", "totalFormula": "ref('14') / quantity" }
       ]
     }
   ],
   "annexes": [
     {
-      "id": "I",
-      "title": "I - DESGLOSE DE MATERIAS PRIMAS Y MATERIALES FUNDAMENTALES",
+      "id": "I", "title": "I - DESGLOSE DE MATERIAS PRIMAS Y MATERIALES",
       "columns": [
-        { "key": "no", "label": "NO" },
-        { "key": "classification", "label": "Clasificación" },
-        { "key": "code", "label": "Código" },
+        { "key": "classification", "label": "Clasif" },
         { "key": "description", "label": "Descripción" },
         { "key": "um", "label": "UM" },
         { "key": "consumption_norm", "label": "Norma" },
@@ -249,10 +213,8 @@ const template: CostSheetDataContract = {
       "data": []
     },
     {
-      "id": "II",
-      "title": "II - DESGLOSE DE LOS GASTOS DE SALARIO DE LOS OBREROS",
+      "id": "II", "title": "II - DESGLOSE DE SALARIOS",
       "columns": [
-        { "key": "no", "label": "NO" },
         { "key": "description", "label": "Puesto" },
         { "key": "time_norm", "label": "Horas" },
         { "key": "hourly_rate", "label": "Tarifa" },
@@ -262,20 +224,18 @@ const template: CostSheetDataContract = {
       "data": []
     },
     {
-      "id": "III",
-      "title": "III - ANEXO DE DEPRECIACIÓN DE EQUIPOS",
+      "id": "III", "title": "III - ANEXO DE DEPRECIACIÓN",
       "columns": [
         { "key": "name", "label": "Equipo" },
         { "key": "initial_value", "label": "Valor" },
-        { "key": "useful_life", "label": "% Deprec" },
+        { "key": "useful_life", "label": "% Anual" },
         { "key": "quantity", "label": "Meses" },
         { "key": "depreciation_cost", "label": "Deprec", "formula": "(initial_value * (useful_life / 100)) / quantity" }
       ],
       "data": []
     },
     {
-      "id": "IV",
-      "title": "IV - ANEXO DE OTROS GASTOS DIRECTOS",
+      "id": "IV", "title": "IV - OTROS GASTOS DIRECTOS",
       "columns": [
         { "key": "description", "label": "Descripción" },
         { "key": "amount", "label": "Importe" }
@@ -283,8 +243,7 @@ const template: CostSheetDataContract = {
       "data": []
     },
     {
-      "id": "V",
-      "title": "V - ANEXO DE DIETAS DE TRABAJADORES",
+      "id": "V", "title": "V - DIETAS",
       "columns": [
         { "key": "worker_name", "label": "Nombre" },
         { "key": "daily_allowance", "label": "Dieta" },
@@ -294,18 +253,14 @@ const template: CostSheetDataContract = {
       "data": []
     }
   ],
-  "signature": {
-    "prepared_by": "Elaborado por:",
-    "approved_by": "Aprobado por:"
-  },
+  "signature": { "prepared_by": "", "approved_by": "" },
   "id": "costpro-reinicio",
   "name": "Plantilla de Reinicio",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "metadata": {
     "author": "Jules",
-    "description": "Plantilla base limpia con fórmulas de encabezado automatizadas."
-  },
-  "footer": "FIN DEL DOCUMENTO • GENERADO POR COSTPRO"
+    "description": "Estructura completa de 16 secciones y 5 anexos para nuevos modelos."
+  }
 };
 
 export default template;

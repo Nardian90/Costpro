@@ -1,4 +1,5 @@
 'use client';
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -25,6 +26,7 @@ import { Input } from '@/components/ui/input';
 import { useCostSheetStore } from '@/store';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabaseClient';
+
 // Import Templates
 import reinicioTemplate from '@/lib/data/costpro-reinicio';
 import exampleTemplate from '@/lib/data/costpro-ejemplo';
@@ -38,7 +40,9 @@ import icecreamTemplate from '@/lib/data/template-icecream';
 import repairTemplate from '@/lib/data/template-repair';
 import shoesTemplate from '@/lib/data/template-shoes';
 import logisticsTemplate from '@/lib/data/template-logistics';
+
 type TemplateCategory = 'system' | 'private' | 'public';
+
 interface Template {
   id: string;
   name: string;
@@ -48,6 +52,7 @@ interface Template {
   data: any;
   updated_at?: string;
 }
+
 export const CostSheetTemplateExplorer: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<TemplateCategory>('system');
   const [searchQuery, setSearchQuery] = useState('');
@@ -55,7 +60,9 @@ export const CostSheetTemplateExplorer: React.FC = () => {
   const [privateTemplates, setPrivateTemplates] = useState<Template[]>([]);
   const [localDirectory, setLocalDirectory] = useState<FileSystemDirectoryHandle | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
   const setSheet = useCostSheetStore(state => state.setSheet);
+
   // System Templates
   const systemTemplates: Template[] = [
     {
@@ -105,46 +112,7 @@ export const CostSheetTemplateExplorer: React.FC = () => {
       category: 'Industrial',
       type: 'system',
       data: industrialTemplate
-    },
-    {
-      id: 'sys-consultancy',
-      name: 'Consultoría Estratégica',
-      description: 'Modelo de servicios profesionales y consultoría.',
-      category: 'Servicios',
-      type: 'system',
-      data: consultancyTemplate
-    },
-    {
-      id: 'sys-icecream',
-      name: 'Helado de Chocolate (10L)',
-      description: 'Producción de alimentos con cadena de frío.',
-      category: 'Alimentos',
-      type: 'system',
-      data: icecreamTemplate
-    },
-    {
-      id: 'sys-repair',
-      name: 'Reparación Técnica',
-      description: 'Servicios de reparación y soporte de hardware.',
-      category: 'Servicios',
-      type: 'system',
-      data: repairTemplate
-    },
-    {
-      id: 'sys-shoes',
-      name: 'Zapatos de Cuero',
-      description: 'Fabricación de calzado e industria ligera.',
-      category: 'Manufactura',
-      type: 'system',
-      data: shoesTemplate
-    },
-    {
-      id: 'sys-logistics',
-      name: 'Flete de Carga',
-      description: 'Servicios de logística y transporte nacional.',
-      category: 'Logística',
-      type: 'system',
-      data: logisticsTemplate
+},    {      id: 'sys-consultancy',      name: 'Consultoría Estratégica',      description: 'Modelo de servicios profesionales y consultoría.',      category: 'Servicios',      type: 'system',      data: consultancyTemplate    },    {      id: 'sys-icecream',      name: 'Helado de Chocolate (10L)',      description: 'Producción de alimentos con cadena de frío.',      category: 'Alimentos',      type: 'system',      data: icecreamTemplate    },    {      id: 'sys-repair',      name: 'Reparación Técnica',      description: 'Servicios de reparación y soporte de hardware.',      category: 'Servicios',      type: 'system',      data: repairTemplate    },    {      id: 'sys-shoes',      name: 'Zapatos de Cuero',      description: 'Fabricación de calzado e industria ligera.',      category: 'Manufactura',      type: 'system',      data: shoesTemplate    },    {      id: 'sys-logistics',      name: 'Flete de Carga',      description: 'Servicios de logística y transporte nacional.',      category: 'Logística',      type: 'system',      data: logisticsTemplate
     },
     {
       id: 'sys-ejemplo',
@@ -163,17 +131,17 @@ export const CostSheetTemplateExplorer: React.FC = () => {
         .from('cost_sheet_templates')
         .select('*')
         .eq('type', 'public');
+
       if (error) throw error;
+
       if (data) {
         setPublicTemplates(data.map((t: any) => ({
           id: t.id,
           name: t.name,
           description: t.description,
           category: t.category,
-
-      type: 'public',
-
-      data: t.data,
+          type: 'public',
+          data: t.data,
           updated_at: t.created_at
         })));
       }
@@ -183,11 +151,13 @@ export const CostSheetTemplateExplorer: React.FC = () => {
       setIsLoading(false);
     }
   }, []);
+
   useEffect(() => {
     if (activeCategory === 'public') {
       fetchPublicTemplates();
     }
   }, [activeCategory, fetchPublicTemplates]);
+
   const handleSelectDirectory = async () => {
     try {
       const handle = await (window as any).showDirectoryPicker();
@@ -200,6 +170,7 @@ export const CostSheetTemplateExplorer: React.FC = () => {
       }
     }
   };
+
   const loadPrivateTemplates = async (directoryHandle: FileSystemDirectoryHandle) => {
     setIsLoading(true);
     try {
@@ -215,10 +186,8 @@ export const CostSheetTemplateExplorer: React.FC = () => {
                 id: entry.name,
                 name: data.name || entry.name.replace('.json', ''),
                 description: data.metadata?.description || 'Plantilla guardada localmente',
-
-      type: 'private',
-
-      data: data,
+                type: 'private',
+                data: data,
                 updated_at: new Date(file.lastModified).toISOString()
               });
             }
@@ -235,30 +204,33 @@ export const CostSheetTemplateExplorer: React.FC = () => {
       setIsLoading(false);
     }
   };
+
   const handleImport = (template: Template) => {
     setSheet(template.data);
     toast.success(`Plantilla "${template.name}" cargada correctamente`);
   };
+
   const handlePublish = async (template: Template) => {
     setIsLoading(true);
     try {
       const { data: userData } = await supabase.auth.getUser();
+
       if (!userData.user) {
         toast.error('Debes iniciar sesión para publicar plantillas');
         return;
       }
+
       const { error } = await supabase
         .from('cost_sheet_templates')
         .insert({
           name: template.name,
           description: template.description,
           category: template.category || 'General',
-
-      data: template.data,
-
-      type: 'public',
+          data: template.data,
+          type: 'public',
           created_by: userData.user.id
         });
+
       if (error) throw error;
       toast.success('Plantilla publicada con éxito');
       if (activeCategory === 'public') fetchPublicTemplates();
@@ -269,6 +241,7 @@ export const CostSheetTemplateExplorer: React.FC = () => {
       setIsLoading(false);
     }
   };
+
   const filteredTemplates = (
     activeCategory === 'system' ? systemTemplates :
     activeCategory === 'private' ? privateTemplates :
@@ -277,6 +250,7 @@ export const CostSheetTemplateExplorer: React.FC = () => {
     t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     t.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
   return (
     <div className="w-full max-w-6xl mx-auto space-y-8 p-4">
       {/* Header & Search */}
@@ -290,6 +264,7 @@ export const CostSheetTemplateExplorer: React.FC = () => {
             Gestiona y utiliza modelos de fichas de costo predefinidos o propios
           </p>
         </div>
+
         <div className="relative w-full md:w-96">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
@@ -300,6 +275,7 @@ export const CostSheetTemplateExplorer: React.FC = () => {
           />
         </div>
       </div>
+
       {/* Categories Tabs */}
       <div className="flex gap-2 p-1.5 bg-sidebar/50 backdrop-blur-xl rounded-3xl border border-sidebar-border/50 w-fit mx-auto">
         {(['system', 'private', 'public'] as const).map((cat) => (
@@ -320,6 +296,7 @@ export const CostSheetTemplateExplorer: React.FC = () => {
           </button>
         ))}
       </div>
+
       {/* Main Content Area */}
       <div className="min-h-[400px]">
         {activeCategory === 'private' && !localDirectory ? (
@@ -355,12 +332,14 @@ export const CostSheetTemplateExplorer: React.FC = () => {
                 />
               ))}
             </AnimatePresence>
+
             {filteredTemplates.length === 0 && !isLoading && (
               <div className="col-span-full flex flex-col items-center justify-center py-20 opacity-50">
                 <FileText className="w-16 h-16 mb-4 text-muted-foreground" />
                 <p className="font-black uppercase tracking-widest text-xs">No se encontraron plantillas</p>
               </div>
             )}
+
             {isLoading && (
               <div className="col-span-full flex justify-center py-20">
                 <RefreshCw className="w-8 h-8 text-primary animate-spin" />
@@ -372,11 +351,13 @@ export const CostSheetTemplateExplorer: React.FC = () => {
     </div>
   );
 };
+
 interface TemplateCardProps {
   template: Template;
   onImport: () => void;
   onPublish?: () => void;
 }
+
 const TemplateCard: React.FC<TemplateCardProps> = ({ template, onImport, onPublish }) => {
   return (
     <motion.div
@@ -401,12 +382,14 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onImport, onPubli
           </span>
         </div>
       </div>
+
       <h3 className="text-lg font-black uppercase tracking-tighter italic mb-2 line-clamp-1 group-hover:text-primary transition-colors">
         {template.name}
       </h3>
       <p className="text-xs text-muted-foreground font-medium mb-6 line-clamp-2 min-h-[2.5rem]">
         {template.description}
       </p>
+
       <div className="flex items-center gap-2 pt-4 border-t border-sidebar-border/30">
         <Button
           onClick={onImport}
@@ -432,6 +415,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onImport, onPubli
           <MoreVertical className="w-4 h-4" />
         </Button>
       </div>
+
       {template.updated_at && (
         <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity">
           <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">
