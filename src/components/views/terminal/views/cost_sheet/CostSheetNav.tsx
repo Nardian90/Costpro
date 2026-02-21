@@ -40,12 +40,26 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
     const actions: Action[] = [
         ...(onOpenActions ? [{
             id: 'actions-menu',
-            label: 'Menú',
+            label: '',
             icon: Menu,
             onClick: onOpenActions,
             variant: 'default' as const,
             className: 'bg-primary/10 text-primary border-primary/20 text-xs uppercase tracking-wider'
         }] : []),
+        // FC Dropdown (Grouping Encabezado, Secciones, Anexos, Firmas, Todo) - Moved after Menú and renamed to Fichas
+        {
+            id: 'fc-dropdown',
+            label: 'Fichas',
+            onClick: () => {},
+            component: (
+                <CostSheetFCDropdown
+                    activeSection={activeSection}
+                    setActiveSection={setActiveSection}
+                    onOpenSections={onOpenSections}
+                    onOpenAnnexes={onOpenAnnexes}
+                />
+            )
+        },
         ...filteredNavItems.map(s => {
             const isActive = activeSection === s.id;
 
@@ -61,20 +75,6 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
                 )
             };
         }),
-        // FC Dropdown (Grouping Encabezado, Secciones, Anexos, Firmas, Todo)
-        {
-            id: 'fc-dropdown',
-            label: 'FC',
-            onClick: () => {},
-            component: (
-                <CostSheetFCDropdown
-                    activeSection={activeSection}
-                    setActiveSection={setActiveSection}
-                    onOpenSections={onOpenSections}
-                    onOpenAnnexes={onOpenAnnexes}
-                />
-            )
-        },
         ...(onOpenHelp ? [{
             id: 'help-panel',
             label: 'Ayuda',

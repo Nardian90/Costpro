@@ -368,6 +368,13 @@ const CostSheetView = () => {
 
   const allActions = React.useMemo(() => [
     {
+        id: "go-back",
+        label: "Volver al Inicio",
+        icon: ArrowLeft,
+        onClick: () => setCurrentView("dashboard"),
+        variant: "outline" as const,
+    },
+    {
         id: 'toggle-mode',
         label: isEditing ? 'Previsualizar' : 'Seguir Editando',
         icon: isEditing ? Eye : Edit,
@@ -379,17 +386,7 @@ const CostSheetView = () => {
         },
         variant: 'primary' as const,
     },
-    {
-        id: 'kpis-header',
-        label: 'KPIs',
-        icon: BarChart3,
-        onClick: () => {
-            handleSetActiveSection('kpis');
-            if (!isEditing) setIsEditing(true);
-        },
-        variant: 'success' as const,
-    },
-    { id: 'audit', label: 'Auditoría', icon: Activity, onClick: () => { setActiveSection('audit'); setIsActionsPanelOpen(false); }, variant: 'outline' as const },
+     { id: 'audit', label: 'Auditoría', icon: Activity, onClick: () => { setActiveSection('audit'); setIsActionsPanelOpen(false); }, variant: 'outline' as const },
     { id: 'load-example', label: 'Ejemplo', icon: FileText, onClick: loadExample, variant: 'outline' as const },
     { id: 'reset', label: 'Reiniciar', icon: Trash2, onClick: reset, variant: 'danger' as const },
     { id: 'import-json', label: 'Importar', icon: Upload, onClick: handleImportJSON, variant: 'outline' as const },
@@ -526,7 +523,7 @@ const CostSheetView = () => {
         onSelect={handleSetActiveSection}
       />
 
-      <CostSheetBanner viewMode={viewMode} setViewMode={handleSetViewMode} />
+      <CostSheetBanner viewMode={viewMode} setViewMode={handleSetViewMode} onOpenActions={() => setIsActionsPanelOpen(true)}/>
 
 
 
