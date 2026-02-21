@@ -337,7 +337,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                 if (rowIndex !== -1) {
                     // Try to find sensitivity
                     const originalVal = ficha.rows[rowIndex].valorHistorico;
-                    ficha.rows[rowIndex].valorHistorico = originalVal + 10; // Add 10 to see effect
+                    ficha.rows[rowIndex].valorHistorico = (originalVal || 0) + 10; // Add 10 to see effect
                     const result2 = calculateFicha(ficha);
                     const price2 = result2.summary.grandTotal;
 
@@ -345,7 +345,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
 
                     if (Math.abs(sensitivity) > 0.0001) {
                         const adjustment = (targetPrice - currentPrice) / sensitivity;
-                        ficha.rows[rowIndex].valorHistorico = originalVal + adjustment;
+                        ficha.rows[rowIndex].valorHistorico = (originalVal || 0) + adjustment;
 
                         // Final calculation
                         result = calculateFicha(ficha);
