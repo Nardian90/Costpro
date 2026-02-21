@@ -46,9 +46,9 @@ export const ConcentricDashboardRing: React.FC<ConcentricDashboardRingProps> = (
           stroke="currentColor" strokeWidth="8"
         />
         <motion.circle
-          className="glow-blue"
+          className="glow-blue stroke-blue-400"
           cx="100" cy="100" fill="none" r="90"
-          className="stroke-blue-400" strokeWidth="8"
+           strokeWidth="8"
           strokeLinecap="round"
           strokeDasharray={c90}
           initial={{ strokeDashoffset: c90 }}
@@ -81,9 +81,9 @@ export const ConcentricDashboardRing: React.FC<ConcentricDashboardRingProps> = (
           stroke="currentColor" strokeWidth="8"
         />
         <motion.circle
-          className="glow-green"
+          className="glow-green stroke-primary"
           cx="100" cy="100" fill="none" r="50"
-          className="stroke-primary" strokeWidth="8"
+           strokeWidth="8"
           strokeLinecap="round"
           strokeDasharray={c50}
           initial={{ strokeDashoffset: c50 }}
