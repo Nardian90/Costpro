@@ -52,7 +52,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
     {
       title: 'Herramientas',
       items: [
-        ...actions.filter(a => ['calculator', 'kpis-header'].includes(a.id))
+        ...actions.filter(a => ['calculator'].includes(a.id))
       ]
     },
     {
