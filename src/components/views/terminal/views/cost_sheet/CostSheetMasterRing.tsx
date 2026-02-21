@@ -55,16 +55,15 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
   return (
     <div className={cn("flex flex-col items-center gap-10 w-full max-w-md mx-auto", className)}>
       {/* Main Master Ring */}
-      <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
+      <div className="relative flex items-center justify-center mx-auto aspect-square w-full max-w-[320px]">
         {/* Background Glow */}
         <div className="absolute inset-0 bg-primary/10 rounded-full blur-[80px] opacity-50 dark:opacity-100" />
 
         {/* SVG Rings */}
         <svg
-            width={size}
-            height={size}
+            viewBox={`0 0 ${size} ${size}`}
             className={cn(
-                "-rotate-90 transition-all duration-500",
+                "w-full h-full max-w-[320px] -rotate-90 transition-all duration-500",
                 isDark ? "drop-shadow-[0_0_15px_hsl(var(--primary)/0.2)]" : "drop-shadow-[0_0_15px_rgba(22,163,74,0.1)]"
             )}
         >
@@ -118,11 +117,11 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
         </svg>
 
         {/* Center Content */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-          <span className="text-xs font-black uppercase tracking-[0.4em] text-slate-500 dark:text-slate-400 mb-1">Total Venta</span>
-          <h2 className="text-5xl font-black tracking-tighter text-slate-900 dark:text-white">
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
+          <span className="text-[10px] sm:text-xs font-black uppercase tracking-[0.4em] text-slate-500 dark:text-slate-400 mb-1">Total Venta</span>
+          <h2 className="text-[clamp(1.5rem,8vw,3rem)] font-black tracking-tighter text-slate-900 dark:text-white leading-none">
             {formatCurrency(totalPrice).split(',')[0]}
-            <span className="text-2xl opacity-40">,{formatCurrency(totalPrice).split(',')[1] || '00'}</span>
+            <span className="text-[clamp(1rem,4vw,1.5rem)] opacity-40">,{formatCurrency(totalPrice).split(',')[1] || '00'}</span>
           </h2>
           <div className={cn("flex items-center gap-1.5 mt-3 px-4 py-1.5 rounded-full border backdrop-blur-sm transition-all duration-300", brandGreenAlpha, brandGreenBorder)}>
             <TrendingUp className={cn("w-3.5 h-3.5", brandGreen)} />
@@ -139,7 +138,7 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
               e.stopPropagation();
               onPriceAdjust?.(-1);
             }}
-            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800/50 hover:bg-primary/10 hover:text-primary transition-all active:scale-95 border border-transparent hover:border-primary/20"
+            className="h-11 w-11 flex items-center justify-center shrink-0 rounded-xl bg-slate-100 dark:bg-slate-800/50 hover:bg-primary/10 hover:text-primary transition-all active:scale-95 border border-transparent hover:border-primary/20"
           >
             <Minus className="w-4 h-4" />
           </button>
@@ -160,7 +159,7 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
               e.stopPropagation();
               onPriceAdjust?.(1);
             }}
-            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800/50 hover:bg-primary/10 hover:text-primary transition-all active:scale-95 border border-transparent hover:border-primary/20"
+            className="h-11 w-11 flex items-center justify-center shrink-0 rounded-xl bg-slate-100 dark:bg-slate-800/50 hover:bg-primary/10 hover:text-primary transition-all active:scale-95 border border-transparent hover:border-primary/20"
           >
             <Plus className="w-4 h-4" />
           </button>

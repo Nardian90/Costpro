@@ -79,7 +79,7 @@ export const MasteryDashboard = () => {
             </div>
             <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-1">Dominio Global</p>
-                <h3 className="text-4xl font-black">{stats.avgMastery}%</h3>
+                <h3 className="text-[clamp(1.5rem,6vw,2.25rem)] font-black leading-none">{stats.avgMastery}%</h3>
             </div>
         </Card>
 
@@ -89,7 +89,7 @@ export const MasteryDashboard = () => {
             </div>
             <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-1">Tarjetas Dominadas</p>
-                <h3 className="text-4xl font-black">{stats.mastered}</h3>
+                <h3 className="text-[clamp(1.5rem,6vw,2.25rem)] font-black leading-none">{stats.mastered}</h3>
             </div>
         </Card>
       </div>
