@@ -178,11 +178,11 @@ const template: CostSheetDataContract = {
         { "key": "total", "label": "Total", "formula": "consumption_norm * price" }
       ],
       "data": [
-        { "classification": "1.1", "description": "Resina Acrílica", "um": "Kg", "consumption_norm": 400, "price": 850 },
-        { "classification": "1.1", "description": "Dióxido de Titanio", "um": "Kg", "consumption_norm": 150, "price": 1200 },
-        { "classification": "1.1", "description": "Carbonato de Calcio", "um": "Kg", "consumption_norm": 200, "price": 45 },
-        { "classification": "1.1", "description": "Aditivos y Fungicidas", "um": "Lt", "consumption_norm": 10, "price": 3500 },
-        { "classification": "1.1", "description": "Agua Desionizada", "um": "Lt", "consumption_norm": 350, "price": 15 }
+        { "classification": "1.1.1", "description": "Resina Acrílica", "um": "Kg", "consumption_norm": 400, "price": 850 },
+        { "classification": "1.1.1", "description": "Dióxido de Titanio", "um": "Kg", "consumption_norm": 150, "price": 1200 },
+        { "classification": "1.1.1", "description": "Carbonato de Calcio", "um": "Kg", "consumption_norm": 200, "price": 45 },
+        { "classification": "1.1.1", "description": "Aditivos y Fungicidas", "um": "Lt", "consumption_norm": 10, "price": 3500 },
+        { "classification": "1.1.1", "description": "Agua Desionizada", "um": "Lt", "consumption_norm": 350, "price": 15 }
       ]
     },
     {
@@ -197,9 +197,9 @@ const template: CostSheetDataContract = {
         { "key": "total", "label": "Total", "formula": "time_norm * hourly_rate * worker_count" }
       ],
       "data": [
-        { "description": "Operador de Mezclado", "time_norm": 40, "hourly_rate": 250, "worker_count": 1 },
-        { "description": "Químico de Control", "time_norm": 10, "hourly_rate": 450, "worker_count": 1 },
-        { "description": "Auxiliar de Envasado", "time_norm": 20, "hourly_rate": 150, "worker_count": 1 }
+        { "classification": "2.1.1", "description": "Operador de Mezclado", "time_norm": 40, "hourly_rate": 250, "worker_count": 1 },
+        { "classification": "2.1.1", "description": "Químico de Control", "time_norm": 10, "hourly_rate": 450, "worker_count": 1 },
+        { "classification": "2.1.1", "description": "Auxiliar de Envasado", "time_norm": 20, "hourly_rate": 150, "worker_count": 1 }
       ]
     },
     {
@@ -228,9 +228,9 @@ const template: CostSheetDataContract = {
         { "key": "amount", "label": "Importe" }
       ],
       "data": [
-        { "classification": "3.1", "description": "Consumo Eléctrico Industrial", "amount": 25000 },
-        { "classification": "3.1", "description": "Tratamiento de Residuales", "amount": 12000 },
-        { "classification": "3.1", "description": "Envases (Cubetas 20L x 50)", "amount": 15000 }
+        { "classification": "3.1.1", "description": "Consumo Eléctrico Industrial", "amount": 25000 },
+        { "classification": "3.1.1", "description": "Tratamiento de Residuales", "amount": 12000 },
+        { "classification": "3.1.1", "description": "Envases (Cubetas 20L x 50)", "amount": 15000 }
       ]
     },
     {
