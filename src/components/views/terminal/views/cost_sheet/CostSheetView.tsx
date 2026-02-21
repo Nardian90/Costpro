@@ -43,6 +43,10 @@ const CostSheetView = () => {
   const isMobile = useIsMobile();
   const [activeSection, setActiveSection] = useState('kpis');
   const [activeSubSectionId, setActiveSubSectionId] = useState('group-1-3');
+  const [quickModeMapping, setQuickModeMapping] = useState({
+    targetColumn: 'sale_price' as 'sale_price' | 'total_cost',
+    modificationRow: '13.1'
+  });
   const [quickModeProducts, setQuickModeProducts] = React.useState<any[] | null>(null);
 
   const handleSetActiveSection = (id: string) => {
@@ -79,7 +83,7 @@ const CostSheetView = () => {
     } else {
       setIsEditing(true);
     }
-    setViewMode(mode);
+    if (mode === 'audit') { setActiveSection('audit'); setViewMode('expert'); } else { setViewMode(mode); }
   };
 
   React.useEffect(() => {
@@ -587,12 +591,18 @@ const CostSheetView = () => {
                         annexes={data?.annexes || []}
                         activeSection={activeSection}
                         setActiveSection={handleSetActiveSection}
+                        viewMode={viewMode}
+                        setViewMode={handleSetViewMode}
                         onOpenActions={() => setIsActionsPanelOpen(true)}
                         onOpenHelp={() => setIsHelpPanelOpen(true)}
                         onOpenAnnexes={onOpenAnnexes}
                         onOpenSections={onOpenSections}
-                        isEditing={isEditing}
-                        onToggleEditing={() => setIsEditing(!isEditing)}
+                        onImport={handleImportJSON}
+                        onSave={handleExportJSON}
+                        onExportExcel={handleExportExcel}
+                        onExportPdf={() => setIsExportModalOpen(true)}
+                        onQuickGenerate={() => setViewMode('quick')}
+                        onExpertGenerate={() => { setActiveSection('massive-gen'); setViewMode('expert'); }}
                     />
                 </div>
 
@@ -716,7 +726,7 @@ const CostSheetView = () => {
                     )}
                     {activeSection === 'massive-gen' && (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                             <CostSheetMassiveGenerator isSection={true} initialProducts={quickModeProducts || undefined} />
+                             <CostSheetMassiveGenerator isSection={true} initialProducts={quickModeProducts || undefined} initialMapping={quickModeMapping} />
                         </div>
                     )}
                     </div>
@@ -741,7 +751,7 @@ const CostSheetView = () => {
           )}
 
           {viewMode === 'quick' && (
-              <CostSheetQuickMode onGenerate={handleQuickGenerate} />
+              <CostSheetQuickMode onGenerate={handleQuickGenerate} mapping={quickModeMapping} onMappingChange={setQuickModeMapping} />
           )}
         </div>
       ) : (

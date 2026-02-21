@@ -53,14 +53,14 @@ interface CostSheetMassiveGeneratorProps {
   isOpen?: boolean;
   onClose?: () => void;
   isSection?: boolean;
-  initialProducts?: any[];
+  initialProducts, initialMapping?: any[];
 }
 
 export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps> = ({
   isOpen = false,
   onClose = () => {},
   isSection = false,
-  initialProducts
+  initialProducts, initialMapping
 }) => {
   const { data: currentSheet } = useCostSheetStore();
   const { user } = useAuthStore();
@@ -71,11 +71,11 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
   const [results, setResults] = useState<MassiveResult[]>([]);
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [mappingConfig, setMappingConfig] = useState<{
-      targetColumn: 'price' | 'cost' | 'none';
+      targetColumn: 'price' | 'cost' | 'none' | 'sale_price' | 'total_cost';
       modificationRow: string;
   }>({
-      targetColumn: 'none',
-      modificationRow: '13.1'
+      targetColumn: initialMapping ? initialMapping.targetColumn : 'none',
+      modificationRow: initialMapping ? initialMapping.modificationRow : '13.1'
   });
   const [showMapping, setShowMapping] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -95,10 +95,10 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
   });
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   useEffect(() => {
-    if (initialProducts && initialProducts.length > 0) {
-      setImportedProducts(initialProducts);
+    if (initialProducts, initialMapping && initialProducts, initialMapping.length > 0) {
+      setImportedProducts(initialProducts, initialMapping);
     }
-  }, [initialProducts]);
+  }, [initialProducts, initialMapping]);
 
   // We fetch a large number of products for massive generation
   // In a real scenario, we might want to fetch all pages sequentially
@@ -324,7 +324,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
         let result = calculateFicha(ficha);
 
         // 3. Smart Adjustment if Target Price is set
-        if (mappingConfig.targetColumn === 'price' && product.salePrice > 0) {
+        if ( (mappingConfig.targetColumn === 'price' || mappingConfig.targetColumn === 'sale_price')  && product.salePrice > 0) {
             const targetPrice = product.salePrice;
             const modRowId = mappingConfig.modificationRow || '13.1';
 
@@ -572,7 +572,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                                     <div>
                                         <p className="text-sm font-bold text-success">Listado Importado Exitosamente</p>
                                         <p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">
-                                            Se han cargado {importedProducts.length} productos {initialProducts && initialProducts.length > 0 ? 'desde el Modo Rápido' : 'desde el archivo'}.
+                                            Se han cargado {importedProducts.length} productos {initialProducts, initialMapping && initialProducts, initialMapping.length > 0 ? 'desde el Modo Rápido' : 'desde el archivo'}.
                                         </p>
                                     </div>
                                 </div>
