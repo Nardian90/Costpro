@@ -58,9 +58,6 @@ export const CostSheetBanner = ({ viewMode, setViewMode, onOpenActions }: CostSh
 
       <div className="flex items-center justify-between w-full sm:w-auto gap-4">
         <div className="flex items-center gap-3 flex-1 sm:flex-none">
-            <div className="flex-1 sm:flex-none">
-                <CostSheetModeDropdown viewMode={viewMode} setViewMode={setViewMode} />
-            </div>
             <ThemeToggle />
         </div>
         <div className="hidden lg:flex neu-badge !text-success !bg-success/10 border border-success/20 py-1 px-3">
