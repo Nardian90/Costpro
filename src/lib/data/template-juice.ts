@@ -208,9 +208,9 @@ const template: CostSheetDataContract = {
         { "key": "total", "label": "Total", "formula": "consumption_norm * price" }
       ],
       "data": [
-        { "classification": "1.1", "description": "Mango Fresco", "um": "Kg", "consumption_norm": 1.5, "price": 120 },
-        { "classification": "1.1", "description": "Azúcar Blanca", "um": "Kg", "consumption_norm": 0.1, "price": 100 },
-        { "classification": "1.1", "description": "Agua Tratada", "um": "Lt", "consumption_norm": 0.4, "price": 5 }
+        { "classification": "1.1.1", "description": "Mango Fresco", "um": "Kg", "consumption_norm": 1.5, "price": 120 },
+        { "classification": "1.1.1", "description": "Azúcar Blanca", "um": "Kg", "consumption_norm": 0.1, "price": 100 },
+        { "classification": "1.1.1", "description": "Agua Tratada", "um": "Lt", "consumption_norm": 0.4, "price": 5 }
       ]
     },
     {
@@ -223,7 +223,7 @@ const template: CostSheetDataContract = {
         { "key": "total", "label": "Total", "formula": "time_norm * hourly_rate * worker_count" }
       ],
       "data": [
-        { "description": "Operario de Producción", "time_norm": 0.5, "hourly_rate": 80, "worker_count": 1 }
+        { "classification": "2.1.1", "description": "Operario de Producción", "time_norm": 0.5, "hourly_rate": 80, "worker_count": 1 }
       ]
     },
     {

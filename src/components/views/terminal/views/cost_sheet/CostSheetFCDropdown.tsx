@@ -49,9 +49,9 @@ export function CostSheetFCDropdown({
               ? "neu-inset-sm font-bold text-primary border-primary/40 shadow-none"
               : "bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20"
           )}
-          aria-label="Menú FC"
+          aria-label="Menú Ficha"
         >
-          <span className="text-xs font-black uppercase tracking-[0.2em]">FC</span>
+          <span className="text-xs font-black uppercase tracking-[0.2em]">Ficha</span>
           <ChevronDown className="w-3 h-3 opacity-50 group-hover:opacity-100 transition-opacity" />
         </button>
       </DropdownMenuTrigger>
