@@ -87,16 +87,18 @@ export const exportMassiveTemplate = () => {
       {
         'SKU': 'SKU001',
         'Nombre': 'Producto Ejemplo 1',
-        'Precio': 100.00,
-        'Costo Fijo (opcional)': 0,
-        'Categoría (opcional)': 'General'
+        'UM': 'u',
+        'Cantidad': 1,
+        'Precio Venta': 100.00,
+        'Precio Costo': 60.00
       },
       {
         'SKU': 'SKU002',
         'Nombre': 'Producto Ejemplo 2',
-        'Precio': 250.50,
-        'Costo Fijo (opcional)': 50,
-        'Categoría (opcional)': 'Especial'
+        'UM': 'kg',
+        'Cantidad': 0.5,
+        'Precio Venta': 250.50,
+        'Precio Costo': 120.00
       }
     ];
 
@@ -129,8 +131,10 @@ export const importMassiveProducts = (file: File): Promise<any[]> => {
         const mapped = json.map(row => ({
           sku: row.SKU || row.sku || '',
           name: row.Nombre || row.nombre || row.Name || row.name || 'Sin nombre',
-          price: parseFloat(row.Precio || row.precio || row.Price || row.price) || 0,
-          cost: parseFloat(row['Costo Fijo (opcional)'] || row.cost || 0) || 0,
+          um: row.UM || row.um || 'u',
+          quantity: parseFloat(row.Cantidad || row.cantidad) || 1,
+          price: parseFloat(row['Precio Venta'] || row.price || row.precio) || 0,
+          cost: parseFloat(row['Precio Costo'] || row.cost || row.costo) || 0,
           category: row['Categoría (opcional)'] || row.category || 'Importado'
         })).filter(p => p.sku || p.name);
 
@@ -147,9 +151,6 @@ export const importMassiveProducts = (file: File): Promise<any[]> => {
   });
 };
 
-/**
- * Utility to export the header to Excel
- */
 export const exportHeaderToExcel = (header: CostSheetHeader, fileName?: string) => {
   try {
     const name = fileName || `Encabezado - ${header.name || 'Ficha'}`;
