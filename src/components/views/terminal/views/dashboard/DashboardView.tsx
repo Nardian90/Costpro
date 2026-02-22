@@ -100,7 +100,7 @@ export default function DashboardView() {
                 {/* Mini Stats under the ring */}
                 <div className="grid grid-cols-3 gap-8 w-full max-w-sm mt-4">
                   <div className="flex flex-col items-center">
-                    <div className="w-2 h-2 rounded-full bg-[#00E0FF] mb-2 shadow-[0_0_8px_rgba(0,224,255,0.6)]"></div>
+                    <div className="w-2 h-2 rounded-full bg-[#39FF14] mb-2 shadow-[0_0_8px_rgba(57,255,20,0.6)]"></div>
                     <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter">Ventas</span>
                     <span className="text-sm font-black text-foreground">{formatCurrency(sales)}</span>
                   </div>
@@ -110,7 +110,7 @@ export default function DashboardView() {
                     <span className="text-sm font-black text-foreground">{formatCurrency(costs)}</span>
                   </div>
                   <div className="flex flex-col items-center">
-                    <div className="w-2 h-2 rounded-full bg-[#39FF14] mb-2 shadow-[0_0_8px_rgba(57,255,20,0.6)]"></div>
+                    <div className="w-2 h-2 rounded-full bg-[#00E0FF] mb-2 shadow-[0_0_8px_rgba(0,224,255,0.6)]"></div>
                     <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter">Utilidad</span>
                     <span className="text-sm font-black text-foreground">{formatCurrency(profit)}</span>
                   </div>

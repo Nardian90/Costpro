@@ -26,9 +26,9 @@ export const ConcentricDashboardRing: React.FC<ConcentricDashboardRingProps> = (
   const c50 = 2 * Math.PI * 50; // ~314.16
 
   // We'll show:
-  // Outer (Blue): Sales (always 100% or relative to a target, here we'll just show it full or 100%)
+  // Outer (Green): Sales (always 100% or relative to a target, here we'll just show it full or 100%)
   // Middle (White/Slate): Costs as % of sales
-  // Inner (Green): Profit as % of sales
+  // Inner (Blue): Profit as % of sales
 
   const salesOffset = 0; // 100% full
   const costsOffset = c70 - (Math.min(costsPercent, 100) / 100) * c70;
@@ -39,14 +39,14 @@ export const ConcentricDashboardRing: React.FC<ConcentricDashboardRingProps> = (
       <div className="absolute w-64 h-64 bg-primary/10 rounded-full blur-[100px] -z-10"></div>
 
       <svg className="w-72 h-72 -rotate-90" viewBox="0 0 200 200">
-        {/* Outer Ring - Sales (Blue) */}
+        {/* Outer Ring - Sales (Green) */}
         <circle
           className="text-muted dark:text-foreground/10"
           cx="100" cy="100" fill="none" r="90"
           stroke="currentColor" strokeWidth="8"
         />
         <motion.circle
-          className="glow-blue stroke-blue-400"
+          className="glow-green stroke-primary"
           cx="100" cy="100" fill="none" r="90"
            strokeWidth="8"
           strokeLinecap="round"
@@ -54,7 +54,7 @@ export const ConcentricDashboardRing: React.FC<ConcentricDashboardRingProps> = (
           initial={{ strokeDashoffset: c90 }}
           animate={{ strokeDashoffset: salesOffset }}
           transition={{ duration: 1.5, ease: "circOut" }}
-          style={{ filter: 'drop-shadow(0 0 8px var(--chart-1))' }}
+          style={{ filter: 'drop-shadow(0 0 8px var(--primary))' }}
         />
 
         {/* Middle Ring - Costs (White in Dark, Slate in Light) */}
@@ -74,14 +74,14 @@ export const ConcentricDashboardRing: React.FC<ConcentricDashboardRingProps> = (
           transition={{ duration: 1.5, delay: 0.2, ease: "circOut" }}
         />
 
-        {/* Inner Ring - Profit (Green) */}
+        {/* Inner Ring - Profit (Blue) */}
         <circle
           className="text-muted dark:text-foreground/10"
           cx="100" cy="100" fill="none" r="50"
           stroke="currentColor" strokeWidth="8"
         />
         <motion.circle
-          className="glow-green stroke-primary"
+          className="glow-blue stroke-blue-400"
           cx="100" cy="100" fill="none" r="50"
            strokeWidth="8"
           strokeLinecap="round"
@@ -89,14 +89,14 @@ export const ConcentricDashboardRing: React.FC<ConcentricDashboardRingProps> = (
           initial={{ strokeDashoffset: c50 }}
           animate={{ strokeDashoffset: profitOffset }}
           transition={{ duration: 1.5, delay: 0.4, ease: "circOut" }}
-          style={{ filter: 'drop-shadow(0 0 8px var(--primary))' }}
+          style={{ filter: 'drop-shadow(0 0 8px #00E0FF)' }}
         />
       </svg>
 
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center rotate-0">
         <span className="text-xs font-bold tracking-widest text-muted-foreground dark:text-muted-foreground uppercase">Margen</span>
         <span className="text-4xl font-black tracking-tighter text-foreground">
-          {profitPercent.toFixed(0)}<span className="text-primary">%</span>
+          {profitPercent.toFixed(0)}<span className="text-blue-400">%</span>
         </span>
         <span className="text-xs font-mono text-primary opacity-0">
           {/* We don't have historical delta here yet */}

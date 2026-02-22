@@ -46,10 +46,10 @@ export const ExecutiveKpiCards = ({
       title: 'Ingresos Totales',
       value: sales,
       icon: <TrendingUp className="w-6 h-6" />,
-      iconColor: 'text-[#00E0FF]',
-      iconBg: 'bg-[#00E0FF]/10 border-[#00E0FF]/20',
+      iconColor: 'text-[#39FF14]',
+      iconBg: 'bg-[#39FF14]/10 border-[#39FF14]/20',
       linePath: 'M0 15 Q 10 5, 20 12 T 40 8 T 60 18',
-      lineColor: '#00E0FF'
+      lineColor: '#39FF14'
     },
     {
       title: 'Costo de Ventas',
@@ -64,10 +64,10 @@ export const ExecutiveKpiCards = ({
       title: 'Utilidad Neta',
       value: profit,
       icon: <Activity className="w-6 h-6" />,
-      iconColor: 'text-[#39FF14]',
-      iconBg: 'bg-[#39FF14]/10 border-[#39FF14]/20',
+      iconColor: 'text-[#00E0FF]',
+      iconBg: 'bg-[#00E0FF]/10 border-[#00E0FF]/20',
       linePath: 'M0 18 Q 15 2, 30 14 T 60 2',
-      lineColor: '#39FF14'
+      lineColor: '#00E0FF'
     }
   ];
 
