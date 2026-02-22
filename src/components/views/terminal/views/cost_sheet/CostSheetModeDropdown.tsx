@@ -11,7 +11,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
-export type CostSheetViewMode = 'expert' | 'assisted' | 'reading' | 'preview' | 'audit';
+export type CostSheetViewMode = 'expert' | 'assisted' | 'reading' | 'preview' | 'audit' | 'quick';
 
 interface ModeConfig {
   id: CostSheetViewMode;
