@@ -53,14 +53,16 @@ interface CostSheetMassiveGeneratorProps {
   isOpen?: boolean;
   onClose?: () => void;
   isSection?: boolean;
-  initialProducts, initialMapping?: any[];
+  initialProducts?: any[];
+  initialMapping?: { targetColumn: 'sale_price' | 'total_cost', modificationRow: string };
 }
 
 export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps> = ({
   isOpen = false,
   onClose = () => {},
   isSection = false,
-  initialProducts, initialMapping
+  initialProducts,
+  initialMapping
 }) => {
   const { data: currentSheet } = useCostSheetStore();
   const { user } = useAuthStore();
@@ -74,7 +76,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
       targetColumn: 'price' | 'cost' | 'none' | 'sale_price' | 'total_cost';
       modificationRow: string;
   }>({
-      targetColumn: initialMapping ? initialMapping.targetColumn : 'none',
+      targetColumn: initialMapping ? (initialMapping.targetColumn as any) : 'none',
       modificationRow: initialMapping ? initialMapping.modificationRow : '13.1'
   });
   const [showMapping, setShowMapping] = useState(false);
@@ -94,11 +96,26 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
     pdfFormat: "standard"
   });
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+
   useEffect(() => {
-    if (initialProducts, initialMapping && initialProducts, initialMapping.length > 0) {
-      setImportedProducts(initialProducts, initialMapping);
+    if (initialProducts && initialProducts.length > 0) {
+      setImportedProducts(initialProducts);
+
+      const initialResults: MassiveResult[] = initialProducts.map((p, idx) => ({
+        sku: p.sku || `IMP-${idx}`,
+        name: p.name,
+        um: p.unit_of_measure,
+        quantity: p.quantity,
+        cost: p.price || 0,
+        salePrice: p.sale_price || 0,
+        utility: 0,
+        status: 'pending'
+      }));
+      setResults(initialResults);
+      setSelectedIds(new Set(initialResults.map(r => r.sku)));
+      setShowMapping(true);
     }
-  }, [initialProducts, initialMapping]);
+  }, [initialProducts]);
 
   // We fetch a large number of products for massive generation
   // In a real scenario, we might want to fetch all pages sequentially
@@ -235,7 +252,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
             }));
 
             // Use product.cost as the base price for the main item in Annex I
-            const basePrice = product.cost || 0;
+            const basePrice = product.cost || product.price || 0;
 
             return {
                 ...a,
@@ -245,7 +262,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                         classification: "1.1",
                         code: product.sku,
                         description: product.name,
-                        um: product.um || "u",
+                        um: product.um || product.unit_of_measure || "u",
                         consumption_norm: product.quantity || 1,
                         price: basePrice,
                         importe: basePrice * (product.quantity || 1),
@@ -324,8 +341,8 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
         let result = calculateFicha(ficha);
 
         // 3. Smart Adjustment if Target Price is set
-        if ( (mappingConfig.targetColumn === 'price' || mappingConfig.targetColumn === 'sale_price')  && product.salePrice > 0) {
-            const targetPrice = product.salePrice;
+        const targetPrice = product.salePrice || product.sale_price;
+        if ((mappingConfig.targetColumn === 'price' || mappingConfig.targetColumn === 'sale_price') && targetPrice > 0) {
             const modRowId = mappingConfig.modificationRow || '13.1';
 
             // Initial price
@@ -572,7 +589,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                                     <div>
                                         <p className="text-sm font-bold text-success">Listado Importado Exitosamente</p>
                                         <p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">
-                                            Se han cargado {importedProducts.length} productos {initialProducts, initialMapping && initialProducts, initialMapping.length > 0 ? 'desde el Modo Rápido' : 'desde el archivo'}.
+                                            Se han cargado {importedProducts.length} productos {initialProducts && initialProducts.length > 0 ? 'desde el Modo Rápido' : 'desde el archivo'}.
                                         </p>
                                     </div>
                                 </div>
