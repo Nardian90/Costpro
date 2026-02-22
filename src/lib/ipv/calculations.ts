@@ -1,4 +1,4 @@
-import { IPVProduct, ReconciliationLine } from '@/types/ipv';
+import { BankTransaction, ReconciliationLine, Product } from '@/lib/dexie';
 import { parseObservations } from './parser';
 
 export interface IPVMetrics {
@@ -34,7 +34,7 @@ export interface ProductMetric {
 
 export function calculateIPVMetrics(
   reconciliationLines: ReconciliationLine[],
-  products: IPVProduct[]
+  bankTransactions: BankTransaction[]
 ): IPVMetrics {
   let cashSales = 0;
   let transferSales = 0;
@@ -43,18 +43,22 @@ export function calculateIPVMetrics(
   let totalTaxes = 0;
   let totalCommissions = 0;
 
-  // Calculate from products (Breakdown)
-  products.forEach(p => {
-    cashSales += (p.cash_quantity || 0) * (p.price || 0);
-    transferSales += (p.transfer_quantity || 0) * (p.price || 0);
+  // Calculate from reconciliation lines (Breakdown)
+  reconciliationLines.forEach(line => {
+    const amount = Number(line.importe_linea_cents || 0) / 100;
+    if (line.clasificacion === 'Efectivo') {
+      cashSales += amount;
+    } else {
+      transferSales += amount;
+    }
   });
 
   // Calculate from bank (Reality)
-  reconciliationLines.forEach(line => {
-    const amount = Number(line.importe) || 0;
-    if (line.tipo === 'CR') {
+  bankTransactions.forEach(tx => {
+    const amount = Number(tx.importe_cents || 0);
+    if (tx.tipo === 'Cr') {
       bankCredits += amount;
-      const parsed = parseObservations(line.observaciones || '');
+      const parsed = parseObservations(tx.observaciones || '');
       totalTaxes += parsed.tax;
       totalCommissions += parsed.commission;
     } else {
@@ -65,7 +69,6 @@ export function calculateIPVMetrics(
   const totalSales = cashSales + transferSales;
 
   // Health %: How well bank credits match transfer sales
-  // Blindaje contable: bankCredits should ideally cover transferSales + taxes + commissions
   const expectedCredits = transferSales;
   const healthPercent = expectedCredits === 0
     ? 100
@@ -85,51 +88,75 @@ export function calculateIPVMetrics(
 
 export function getDailySalesHistory(
   reconciliationLines: ReconciliationLine[],
-  products: IPVProduct[]
+  bankTransactions: BankTransaction[]
 ): DailySales[] {
   const history: Record<string, DailySales> = {};
 
   // Group bank data by date
-  reconciliationLines.forEach(line => {
-    const date = line.fecha || 'Sin fecha';
+  bankTransactions.forEach(tx => {
+    const date = tx.fecha || 'Sin fecha';
     if (!history[date]) {
       history[date] = { date, cash: 0, transfer: 0, debits: 0 };
     }
-    const amount = Math.abs(Number(line.importe) || 0);
-    if (line.tipo === 'DB') {
+    const amount = Math.abs(Number(tx.importe_cents || 0));
+    if (tx.tipo === 'Db') {
       history[date].debits += amount;
     }
   });
 
-  // Since products don't have individual dates in the simplified model,
-  // we distribute them or use the reconciliation dates if available.
-  // For this implementation, we'll focus on bank history and total breakdowns.
-  // In a real scenario, products would have a 'last_updated' or similar.
+  // Group reconciliation by date
+  reconciliationLines.forEach(line => {
+    const date = line.fecha_operacion || 'Sin fecha';
+    if (!history[date]) {
+      history[date] = { date, cash: 0, transfer: 0, debits: 0 };
+    }
+    const amount = Number(line.importe_linea_cents || 0) / 100;
+    if (line.clasificacion === 'Efectivo') {
+      history[date].cash += amount;
+    } else {
+      history[date].transfer += amount;
+    }
+  });
 
   return Object.values(history).sort((a, b) => a.date.localeCompare(b.date));
 }
 
-export function getTopProducts(products: IPVProduct[]): ProductMetric[] {
-  return products
-    .map(p => ({
-      name: p.nombre || 'Sin nombre',
-      cash: (p.cash_quantity || 0) * (p.price || 0),
-      transfer: (p.transfer_quantity || 0) * (p.price || 0),
-      total: ((p.cash_quantity || 0) + (p.transfer_quantity || 0)) * (p.price || 0)
+export function getTopProducts(reconciliationLines: ReconciliationLine[]): ProductMetric[] {
+  const productStats: Record<string, { cash: number; transfer: number }> = {};
+
+  reconciliationLines.forEach(line => {
+    const name = line.product_cod; // Use code as key
+    if (!productStats[name]) {
+      productStats[name] = { cash: 0, transfer: 0 };
+    }
+    const amount = Number(line.importe_linea_cents || 0) / 100;
+    if (line.clasificacion === 'Efectivo') {
+      productStats[name].cash += amount;
+    } else {
+      productStats[name].transfer += amount;
+    }
+  });
+
+  return Object.entries(productStats)
+    .map(([name, data]) => ({
+      name,
+      cash: data.cash,
+      transfer: data.transfer,
+      total: data.cash + data.transfer
     }))
     .sort((a, b) => b.total - a.total)
     .slice(0, 10);
 }
 
-export function getTopPayers(reconciliationLines: ReconciliationLine[]): PayerMetric[] {
+export function getTopPayers(bankTransactions: BankTransaction[]): PayerMetric[] {
   const payers: Record<string, { amount: number; count: number }> = {};
 
-  reconciliationLines
-    .filter(line => line.tipo === 'CR')
-    .forEach(line => {
-      const parsed = parseObservations(line.observaciones || '');
+  bankTransactions
+    .filter(tx => tx.tipo === 'Cr')
+    .forEach(tx => {
+      const parsed = parseObservations(tx.observaciones || '');
       const name = parsed.payer || 'OTROS/DESCONOCIDO';
-      const amount = Number(line.importe) || 0;
+      const amount = Number(tx.importe_cents || 0);
 
       if (!payers[name]) {
         payers[name] = { amount: 0, count: 0 };
