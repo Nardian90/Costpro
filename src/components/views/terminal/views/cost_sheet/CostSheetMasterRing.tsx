@@ -119,7 +119,7 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
         {/* Center Content */}
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
           <span className="text-xs font-black uppercase tracking-[0.4em] text-primary/70 mb-1">Total Venta</span>
-          <h2 className="text-5xl font-black tracking-tighter text-primary">
+          <h2 className="text-[clamp(2.25rem,12vw,3rem)] font-black tracking-tighter text-primary">
             {formatCurrency(totalPrice).split(',')[0]}
             <span className="text-[clamp(1rem,4vw,1.5rem)] opacity-40">,{formatCurrency(totalPrice).split(',')[1] || '00'}</span>
           </h2>

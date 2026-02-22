@@ -249,7 +249,7 @@ export default function UserForm({
             onClick={() => append({ store_id: '', role: 'clerk',
       password: '', status: 'active' })}
             className={cn(
-              "flex items-center gap-1 px-2 py-1 rounded-lg transition-all text-xs font-black uppercase",
+              "flex items-center gap-1 px-2 py-2.5 sm:py-1 rounded-lg transition-all text-xs font-black uppercase",
               canAddMoreStores
                 ? "bg-primary/10 text-primary hover:bg-primary/20"
                 : "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
