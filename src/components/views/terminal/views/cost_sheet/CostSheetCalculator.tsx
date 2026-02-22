@@ -102,7 +102,7 @@ export const CostSheetCalculator: React.FC = () => {
           initial={{ y: 5, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           className={cn(
-            "text-5xl font-mono tracking-tighter w-full text-right font-black",
+            "text-[clamp(2.25rem,12vw,3rem)] font-mono tracking-tighter w-full text-right font-black",
             isDark
               ? "text-[hsl(var(--primary))] drop-shadow-[0_0_15px_rgba(22,163,74,0.5)]"
               : "text-primary"

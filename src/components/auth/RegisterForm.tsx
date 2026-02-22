@@ -66,7 +66,7 @@ export default function RegisterForm({ onBackToLogin }: RegisterFormProps) {
   };
 
   return (
-    <div className="p-8 space-y-8 bg-card border border-border shadow-2xl">
+    <div className="p-6 sm:p-8 space-y-8 bg-card border border-border shadow-2xl">
       <div className="flex items-center gap-4">
         <button
           onClick={onBackToLogin}
@@ -76,7 +76,7 @@ export default function RegisterForm({ onBackToLogin }: RegisterFormProps) {
           <ArrowLeft className="w-5 h-5 text-muted-foreground" />
         </button>
         <div className="space-y-1">
-          <h2 className="text-2xl font-black uppercase tracking-tighter text-foreground flex items-center gap-2">
+          <h2 className="text-[clamp(1.25rem,6vw,1.5rem)] font-black uppercase tracking-tighter text-foreground flex items-center gap-2">
              Crear Cuenta
           </h2>
           <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">

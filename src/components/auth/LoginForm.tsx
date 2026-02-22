@@ -114,12 +114,12 @@ export default function LoginForm() {
   }
 
   return (
-    <div className="neu-card w-full max-w-md mx-auto p-8 space-y-8 bg-card border border-border shadow-2xl">
+    <div className="neu-card w-full max-w-md mx-auto p-6 sm:p-8 space-y-8 bg-card border border-border shadow-2xl">
       <div className="text-center space-y-2">
         <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-primary/20">
            <ShieldCheck className="w-8 h-8 text-primary" />
         </div>
-        <h2 className="text-3xl font-black tracking-tighter uppercase text-foreground">
+        <h2 className="text-[clamp(1.5rem,8vw,1.875rem)] font-black tracking-tighter uppercase text-foreground">
           Acceso Terminal
         </h2>
         <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest">
