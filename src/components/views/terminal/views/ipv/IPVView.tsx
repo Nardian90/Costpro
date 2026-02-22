@@ -536,7 +536,7 @@ export default function IPVView() {
 
         <div className={(activeTab === 'dashboard' || activeTab === 'analytics') ? '' : 'mt-6 p-0 overflow-hidden border-none shadow-xl bg-card/50 backdrop-blur-sm rounded-3xl'}>
           <TabsContent value="analytics" className="m-0">
-            <IPVInstitutionalDashboard transactions={transactions || []} />
+            <IPVInstitutionalDashboard transactions={transactions || []} reconciliationLines={reconciliationLines || []} />
           </TabsContent>
           <TabsContent value="dashboard" className="m-0">
             <IPVControlPanel

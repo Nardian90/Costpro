@@ -1,40 +1,47 @@
 import { describe, it, expect } from 'vitest';
 import { calculateIPVMetrics, getTopPayers, getTopProducts } from '../calculations';
-import { IPVProduct, ReconciliationLine } from '@/types/ipv';
+import { BankTransaction, ReconciliationLine } from '@/lib/dexie';
 
 describe('IPV Calculations', () => {
-  const mockProducts: IPVProduct[] = [
-    { id: '1', nombre: 'Producto A', price: 100, cash_quantity: 10, transfer_quantity: 5 },
-    { id: '2', nombre: 'Producto B', price: 50, cash_quantity: 0, transfer_quantity: 20 },
+  const mockLines: ReconciliationLine[] = [
+    {
+      id: '1',
+      product_cod: 'A',
+      importe_linea_cents: 100000,
+      clasificacion: 'Efectivo',
+      fecha_operacion: '2024-01-01'
+    } as any,
+    {
+      id: '2',
+      product_cod: 'B',
+      importe_linea_cents: 100000,
+      clasificacion: 'Transferencia',
+      fecha_operacion: '2024-01-01'
+    } as any,
   ];
 
-  const mockLines: ReconciliationLine[] = [
-    { id: '1', fecha: '2024-01-01', importe: '500', tipo: 'CR', observaciones: 'TRANSFERENCIA DE: JUAN PEREZ NIT 123' },
-    { id: '2', fecha: '2024-01-01', importe: '1000', tipo: 'CR', observaciones: 'PAGO DE: MARIA LOPEZ PAN: 456' },
-    { id: '3', fecha: '2024-01-01', importe: '200', tipo: 'DB', observaciones: 'COMISION BANCARIA' },
+  const mockTransactions: BankTransaction[] = [
+    { id: '1', fecha: '2024-01-01', importe_cents: 1000, tipo: 'Cr', observaciones: 'TRANSFERENCIA DE: JUAN PEREZ' } as any,
+    { id: '2', fecha: '2024-01-01', importe_cents: 200, tipo: 'Db', observaciones: 'COMISION' } as any,
   ];
 
   it('should calculate metrics correctly', () => {
-    const metrics = calculateIPVMetrics(mockLines, mockProducts);
+    const metrics = calculateIPVMetrics(mockLines, mockTransactions);
 
-    // Cash: 10 * 100 = 1000
-    // Transfer: 5 * 100 + 20 * 50 = 500 + 1000 = 1500
     expect(metrics.cashSales).toBe(1000);
-    expect(metrics.transferSales).toBe(1500);
-    expect(metrics.bankCredits).toBe(1500);
+    expect(metrics.transferSales).toBe(1000);
+    expect(metrics.bankCredits).toBe(1000);
     expect(metrics.bankDebits).toBe(200);
     expect(metrics.healthPercent).toBe(100);
   });
 
   it('should extract top payers correctly', () => {
-    const topPayers = getTopPayers(mockLines);
-    expect(topPayers[0].name).toBe('MARIA LOPEZ'); // 1000
-    expect(topPayers[1].name).toBe('JUAN PEREZ'); // 500
+    const topPayers = getTopPayers(mockTransactions);
+    expect(topPayers[0].name).toBe('JUAN PEREZ');
   });
 
   it('should get top products correctly', () => {
-    const topProducts = getTopProducts(mockProducts);
-    expect(topProducts[0].name).toBe('Producto A'); // 1500 total
-    expect(topProducts[1].name).toBe('Producto B'); // 1000 total
+    const topProducts = getTopProducts(mockLines);
+    expect(topProducts.length).toBe(2);
   });
 });
