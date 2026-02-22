@@ -1,91 +1,69 @@
-export interface ParsedTransaction {
-    id: string;
-    fecha: string;
-    pagador: string;
-    cuentaTarjeta: string;
-    esImpuesto: boolean;
-    monto: number;
-    moneda: string;
-    tipo: 'Cr' | 'Db';
-    comision: number;
-    tieneComision: boolean;
-    observaciones: string;
+export interface ParsedObservation {
+  payer: string;
+  account: string;
+  tax: number;
+  commission: number;
 }
 
 /**
- * Procesa un array de transacciones y extrae información vital del campo observaciones
- * utilizando expresiones regulares robustas.
+ * Robustly parses the observations string from a bank transaction to extract
+ * key information for the IPV dashboard.
  */
-export function parseTransactions(data: any[]): ParsedTransaction[] {
-    if (!data) return [];
+export function parseObservations(obs: string): ParsedObservation {
+  if (!obs) {
+    return { payer: '', account: '', tax: 0, commission: 0 };
+  }
 
-    return data.map(tx => {
-        const obs = tx.observaciones || '';
+  // 1. Payer Name Extraction
+  // Look for common prefixes used in bank transfers
+  let payer = '';
+  const payerRegex = /(?:PAGO DE:|TRANSFERENCIA DE:|DE:|ORDENADA POR:|ORDENANTE NOMBRE:)\s*([A-Z\s]+?)(?=\s*(?:NIT|PAN:|Cuenta|\||\d|\n|$))/i;
+  const payerMatch = obs.match(payerRegex);
+  if (payerMatch && payerMatch[1]) {
+    payer = payerMatch[1].trim();
+  }
 
-        // 1. Nombre del Pagador
-        // Extraer el valor que sigue a ORDENADA POR: o ORDENANTE NOMBRE: hasta el siguiente delimitador (PAN, |, o salto de línea).
-        let pagador = 'DESCONOCIDO';
-        const pagadorRegex = /(?:ORDENADA POR:|ORDENANTE NOMBRE:)\s*(.*?)(?=\s*(?:PAN:|\||\n|$))/i;
-        const pagadorMatch = obs.match(pagadorRegex);
-        if (pagadorMatch && pagadorMatch[1]) {
-            pagador = pagadorMatch[1].trim();
-        }
+  // 2. Account/Card Identification
+  let account = '';
+  const accountRegex = /(?:PAN:|Cuenta:)\s*([\d*]+)/i;
+  const accountMatch = obs.match(accountRegex);
+  if (accountMatch && accountMatch[1]) {
+    account = accountMatch[1].trim();
+  }
 
-        // 2. Cuenta/Tarjeta
-        // Extraer el valor numérico después de PAN: o Tarjeta RED:.
-        let cuentaTarjeta = 'N/A';
-        const cuentaRegex = /(?:PAN:|Tarjeta RED:)\s*([\d*]+)/i;
-        const cuentaMatch = obs.match(cuentaRegex);
-        if (cuentaMatch && cuentaMatch[1]) {
-            cuentaTarjeta = cuentaMatch[1].trim();
-        }
+  // 3. Tax Extraction (e.g., from NIT references or explicit tags)
+  let tax = 0;
+  if (obs.toUpperCase().includes('NIT:')) {
+    // Usually if NIT is present, it's a tax-related payment
+    // We try to extract a numeric value if it's explicitly stated as a fee/tax
+    const taxValueRegex = /IMPUESTO[:\s]+([\d.]+)/i;
+    const taxMatch = obs.match(taxValueRegex);
+    if (taxMatch) tax = parseFloat(taxMatch[1]) || 0;
+  }
 
-        // 3. Indicador de Impuestos
-        // Si la observación contiene la subcadena NIT:, marcar como "Pago de Impuesto" (Booleano: true).
-        const esImpuesto = obs.toUpperCase().includes('NIT:');
+  // 4. Commission Extraction
+  let commission = 0;
+  const commissionRegex = /COMISION[:\s]+([\d.]+)/i;
+  const commissionMatch = obs.match(commissionRegex);
+  if (commissionMatch) {
+    commission = parseFloat(commissionMatch[1]) || 0;
+  }
 
-        // 4. Monto y Moneda
-        // Extraer del XML <MON_TRANSA... IMPORTE="X"/> o del texto numérico principal de la tabla.
-        // Priorizamos el XML si está presente.
-        let monto = (tx.importe_cents || 0) / 100;
-        let moneda = 'CUP'; // Moneda por defecto
+  return { payer, account, tax, commission };
+}
 
-        const xmlMontoRegex = /IMPORTE="([^"]+)"/i;
-        const xmlMatch = obs.match(xmlMontoRegex);
-        if (xmlMatch && xmlMatch[1]) {
-            const parsedMonto = parseFloat(xmlMatch[1]);
-            if (!isNaN(parsedMonto)) {
-                monto = parsedMonto;
-            }
-        }
-
-        const xmlMonedaRegex = /MONEDA="([^"]+)"/i;
-        const xmlMonedaMatch = obs.match(xmlMonedaRegex);
-        if (xmlMonedaMatch && xmlMonedaMatch[1]) {
-            moneda = xmlMonedaMatch[1].trim();
-        }
-
-        // 5. Tipo de Transacción
-        // Clasificar como Crédito (Cr) o Débito (Db).
-        const tipo = tx.tipo || 'Cr';
-
-        // 6. Comisión
-        // Evaluar si es mayor a 0 para clasificar "Con Comisión" vs "Sin Comisión".
-        const comision = (tx.comision_cents || 0) / 100;
-        const tieneComision = comision > 0;
-
-        return {
-            id: tx.id,
-            fecha: tx.fecha,
-            pagador,
-            cuentaTarjeta,
-            esImpuesto,
-            monto,
-            moneda,
-            tipo,
-            comision,
-            tieneComision,
-            observaciones: obs
-        };
-    });
+/**
+ * Legacy support for existing parsing logic if needed, but updated to use new robust parser.
+ */
+export function parseTransactions(data: any[]): any[] {
+  if (!data) return [];
+  return data.map(tx => {
+    const parsed = parseObservations(tx.observaciones || '');
+    return {
+      ...tx,
+      pagador: parsed.payer,
+      esImpuesto: parsed.tax > 0 || (tx.observaciones || '').includes('NIT:'),
+      comision: parsed.commission
+    };
+  });
 }

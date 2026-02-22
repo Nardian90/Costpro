@@ -6,9 +6,14 @@ import {
     BarChart, Bar, Cell, PieChart, Pie, AreaChart, Area
 } from 'recharts';
 import { Card } from '@/components/ui/card';
-import { parseTransactions } from '@/lib/ipv/parser';
-import { BankTransaction } from '@/lib/dexie';
+import { BankTransaction, ReconciliationLine } from '@/lib/dexie';
 import { formatCurrency } from '@/lib/utils';
+import {
+    calculateIPVMetrics,
+    getDailySalesHistory,
+    getTopProducts,
+    getTopPayers
+} from '@/lib/ipv/calculations';
 import {
     TrendingUp,
     Users,
@@ -17,165 +22,146 @@ import {
     ArrowUpRight,
     ArrowDownRight,
     DollarSign,
-    FilterX
+    Package,
+    Activity
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
 interface Props {
     transactions: BankTransaction[];
+    reconciliationLines: ReconciliationLine[];
 }
 
-export function IPVInstitutionalDashboard({ transactions }: Props) {
+export function IPVInstitutionalDashboard({ transactions, reconciliationLines }: Props) {
     const [selectedPayer, setSelectedPayer] = useState<string | null>(null);
 
-    const parsedData = useMemo(() => parseTransactions(transactions), [transactions]);
-
-    const filteredData = useMemo(() => {
-        if (!selectedPayer) return parsedData;
-        return parsedData.filter(tx => tx.pagador === selectedPayer);
-    }, [parsedData, selectedPayer]);
-
-    // --- Metrics ---
-    const metrics = useMemo(() => {
-        const totalCr = filteredData.filter(tx => tx.tipo === 'Cr').reduce((sum, tx) => sum + tx.monto, 0);
-        const totalDb = filteredData.filter(tx => tx.tipo === 'Db').reduce((sum, tx) => sum + tx.monto, 0);
-        const taxPayments = filteredData.filter(tx => tx.esImpuesto);
-        const totalTaxes = taxPayments.reduce((sum, tx) => sum + tx.monto, 0);
-        const taxPercentage = totalCr > 0 ? (totalTaxes / totalCr) * 100 : 0;
-        const totalCommissions = filteredData.reduce((sum, tx) => sum + tx.comision, 0);
-
-        return { totalCr, totalDb, taxPercentage, totalCommissions };
-    }, [filteredData]);
-
-    // --- Chart Data ---
-
-    // 1. Time-Series Line Chart
-    const timeSeriesData = useMemo(() => {
-        const groups: Record<string, { fecha: string, Cr: number, Db: number }> = {};
-        filteredData.forEach(tx => {
-            if (!groups[tx.fecha]) groups[tx.fecha] = { fecha: tx.fecha, Cr: 0, Db: 0 };
-            if (tx.tipo === 'Cr') groups[tx.fecha].Cr += tx.monto;
-            else groups[tx.fecha].Db += tx.monto;
+    // Filter transactions if a payer is selected
+    const filteredTransactions = useMemo(() => {
+        if (!selectedPayer) return transactions;
+        return transactions.filter(tx => {
+            const payer = tx.observaciones?.toUpperCase(); // Simplified check for filtering
+            return payer?.includes(selectedPayer.toUpperCase());
         });
-        return Object.values(groups).sort((a, b) => a.fecha.localeCompare(b.fecha));
-    }, [filteredData]);
+    }, [transactions, selectedPayer]);
 
-    // 2. Top Payers
-    const topPayersData = useMemo(() => {
-        const groups: Record<string, number> = {};
-        parsedData.forEach(tx => {
-            if (tx.tipo === 'Cr') {
-                groups[tx.pagador] = (groups[tx.pagador] || 0) + tx.monto;
-            }
-        });
-        return Object.entries(groups)
-            .map(([name, value]) => ({ name, value }))
-            .sort((a, b) => b.value - a.value)
-            .slice(0, 10);
-    }, [parsedData]);
+    const metrics = useMemo(() =>
+        calculateIPVMetrics(reconciliationLines, filteredTransactions),
+    [reconciliationLines, filteredTransactions]);
 
-    // 3. Category Distribution (Donut)
-    const categoryData = useMemo(() => {
-        const tax = filteredData.filter(tx => tx.esImpuesto).reduce((sum, tx) => sum + tx.monto, 0);
-        const regular = filteredData.filter(tx => !tx.esImpuesto).reduce((sum, tx) => sum + tx.monto, 0);
-        return [
-            { name: 'Impuestos', value: tax, color: '#8b5cf6' }, // Purple
-            { name: 'Regulares', value: regular, color: '#3b82f6' }  // Blue
-        ];
-    }, [filteredData]);
+    const dailyHistory = useMemo(() =>
+        getDailySalesHistory(reconciliationLines, filteredTransactions),
+    [reconciliationLines, filteredTransactions]);
 
-    // 4. Commission Analysis (Stacked Bar)
-    const commissionData = useMemo(() => {
-        const withComm = filteredData.filter(tx => tx.tieneComision).length;
-        const withoutComm = filteredData.filter(tx => !tx.tieneComision).length;
-        return [
-            { name: 'Estado', Con: withComm, Sin: withoutComm }
-        ];
-    }, [filteredData]);
+    const topProducts = useMemo(() =>
+        getTopProducts(reconciliationLines),
+    [reconciliationLines]);
+
+    const topPayers = useMemo(() =>
+        getTopPayers(transactions),
+    [transactions]);
+
+    const categoryData = [
+        { name: 'Efectivo', value: metrics.cashSales, color: '#10b981' },
+        { name: 'Transferencia', value: metrics.transferSales, color: '#3b82f6' }
+    ];
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500 pb-10">
             {/* Header / Filter State */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div className="space-y-1">
-                    <h2 className="text-2xl font-black uppercase tracking-tighter text-foreground flex items-center gap-2">
-                        <TrendingUp className="text-primary w-6 h-6" />
-                        Dashboard Financiero Institucional
+                <div>
+                    <h2 className="text-2xl font-black tracking-tight text-foreground uppercase">
+                        Panel de Control Ejecutivo
                     </h2>
-                    <p className="text-xs font-black text-muted-foreground uppercase tracking-widest opacity-70">Análisis Inteligente de Transacciones IPV</p>
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest opacity-70">
+                        Blindaje Contable e Inteligencia de Ventas
+                    </p>
                 </div>
                 {selectedPayer && (
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSelectedPayer(null)}
-                        className="rounded-xl border-primary/20 bg-primary/5 text-xs font-black uppercase"
-                    >
-                        <FilterX className="w-4 h-4 mr-2" />
-                        Limpiar Filtro: {selectedPayer}
-                    </Button>
+                    <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 px-4 py-2 rounded-full flex gap-2 items-center">
+                        Filtrado por: {selectedPayer}
+                        <button onClick={() => setSelectedPayer(null)} className="hover:text-foreground">
+                            <FilterX className="w-3 h-3" />
+                        </button>
+                    </Badge>
                 )}
             </div>
 
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* KPI Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
                 <MetricCard
-                    title="Total Ingresos (Cr)"
-                    value={formatCurrency(metrics.totalCr)}
-                    icon={<ArrowUpRight className="text-emerald-500" />}
+                    title="Ventas Totales"
+                    value={formatCurrency(metrics.totalSales)}
+                    icon={<DollarSign className="w-4 h-4" />}
+                    subtitle="Desglose Declarado"
+                    color="blue"
+                />
+                <MetricCard
+                    title="Ingresos Banco"
+                    value={formatCurrency(metrics.bankCredits)}
+                    icon={<ArrowUpRight className="w-4 h-4" />}
+                    subtitle="Realidad Bancaria"
                     color="emerald"
                 />
                 <MetricCard
-                    title="Total Egresos (Db)"
-                    value={formatCurrency(metrics.totalDb)}
-                    icon={<ArrowDownRight className="text-rose-500" />}
+                    title="Salud Contable"
+                    value={`${metrics.healthPercent.toFixed(1)}%`}
+                    icon={<Activity className="w-4 h-4" />}
+                    subtitle="Conciliación Cr vs Tr"
+                    color={metrics.healthPercent > 95 ? "emerald" : "rose"}
+                />
+                <MetricCard
+                    title="Débitos/Gastos"
+                    value={formatCurrency(metrics.bankDebits)}
+                    icon={<ArrowDownRight className="w-4 h-4" />}
+                    subtitle="Egresos Bancarios"
                     color="rose"
                 />
                 <MetricCard
-                    title="% Pagos Impuestos"
-                    value={`${metrics.taxPercentage.toFixed(1)}%`}
-                    icon={<Percent className="text-purple-500" />}
-                    subtitle="Proveniente de NIT"
+                    title="Impuestos Est."
+                    value={formatCurrency(metrics.totalTaxes)}
+                    icon={<Percent className="w-4 h-4" />}
+                    subtitle="Retenciones/Tasas"
                     color="purple"
                 />
                 <MetricCard
-                    title="Total Comisiones"
+                    title="Comisiones"
                     value={formatCurrency(metrics.totalCommissions)}
-                    icon={<DollarSign className="text-amber-500" />}
-                    subtitle="Cargos Bancarios"
+                    icon={<TrendingUp className="w-4 h-4" />}
+                    subtitle="Costos Bancarios"
                     color="amber"
                 />
             </div>
 
-            {/* Main Charts Grid */}
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-
-                {/* 1. Time-Series Line Chart */}
-                <Card className="xl:col-span-2 p-6 rounded-[32px] border-none bg-card/50 backdrop-blur-sm shadow-xl space-y-4">
+                {/* 1. Main Trend Chart */}
+                <Card className="p-6 rounded-[32px] border-none bg-card/50 backdrop-blur-sm shadow-xl xl:col-span-2 space-y-6">
                     <div className="flex justify-between items-center">
-                        <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Tendencia de Liquidez (Cr vs Db)</h3>
+                        <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                            <TrendingUp className="w-4 h-4" />
+                            Comportamiento Diario de Ventas
+                        </h3>
                     </div>
-                    <div className="h-[350px] w-full">
+                    <div className="h-[400px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={timeSeriesData}>
+                            <AreaChart data={dailyHistory}>
                                 <defs>
-                                    <linearGradient id="colorCr" x1="0" y1="0" x2="0" y2="1">
+                                    <linearGradient id="colorCash" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
                                         <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                                     </linearGradient>
-                                    <linearGradient id="colorDb" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.3}/>
-                                        <stop offset="95%" stopColor="#f43f5e" stopOpacity={0}/>
+                                    <linearGradient id="colorTransfer" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
                                     </linearGradient>
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
                                 <XAxis
-                                    dataKey="fecha"
+                                    dataKey="date"
                                     axisLine={false}
                                     tickLine={false}
                                     tick={{ fontSize: 10, fontWeight: 700, fill: 'currentColor' }}
-                                    dy={10}
                                 />
                                 <YAxis
                                     axisLine={false}
@@ -185,11 +171,11 @@ export function IPVInstitutionalDashboard({ transactions }: Props) {
                                 />
                                 <Tooltip
                                     contentStyle={{ backgroundColor: '#18181b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', fontSize: '12px' }}
-                                    itemStyle={{ fontWeight: 800 }}
                                 />
-                                <Legend verticalAlign="top" align="right" iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', paddingBottom: '20px' }} />
-                                <Area type="monotone" dataKey="Cr" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorCr)" name="Ingresos" />
-                                <Area type="monotone" dataKey="Db" stroke="#f43f5e" strokeWidth={3} fillOpacity={1} fill="url(#colorDb)" name="Egresos" />
+                                <Legend verticalAlign="top" align="right" wrapperStyle={{ fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', paddingBottom: '20px' }} />
+                                <Area type="monotone" dataKey="cash" stroke="#10b981" fill="url(#colorCash)" name="Efectivo" stackId="1" />
+                                <Area type="monotone" dataKey="transfer" stroke="#3b82f6" fill="url(#colorTransfer)" name="Transferencia" stackId="1" />
+                                <Area type="monotone" dataKey="debits" stroke="#f43f5e" fill="transparent" name="Egresos Banco" />
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
@@ -199,103 +185,78 @@ export function IPVInstitutionalDashboard({ transactions }: Props) {
                 <Card className="p-6 rounded-[32px] border-none bg-card/50 backdrop-blur-sm shadow-xl space-y-4">
                     <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                         <Users className="w-4 h-4" />
-                        Top Pagadores (Cr)
+                        Top Pagadores
                     </h3>
-                    <div className="h-[350px] w-full">
+                    <div className="h-[400px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart
-                                data={topPayersData}
-                                layout="vertical"
-                                margin={{ left: -20, right: 20 }}
-                                onClick={(data) => {
-                                    if (data && data.activeLabel) {
-                                        setSelectedPayer(data.activeLabel);
-                                    }
-                                }}
-                            >
+                            <BarChart data={topPayers} layout="vertical" margin={{ left: -20, right: 20 }}>
                                 <XAxis type="number" hide />
-                                <YAxis
-                                    dataKey="name"
-                                    type="category"
-                                    axisLine={false}
-                                    tickLine={false}
-                                    width={100}
-                                    tick={{ fontSize: 9, fontWeight: 800, fill: '#888' }}
-                                />
-                                <Tooltip
-                                    cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                                    contentStyle={{ backgroundColor: '#18181b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px' }}
-                                />
-                                <Bar dataKey="value" radius={[0, 10, 10, 0]} name="Volumen">
-                                    {topPayersData.map((entry, index) => (
-                                        <Cell
-                                            key={`cell-${index}`}
-                                            fill={selectedPayer === entry.name ? '#39FF14' : '#3b82f6'}
-                                            className="cursor-pointer hover:opacity-80 transition-opacity"
-                                        />
+                                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} width={100} tick={{ fontSize: 9, fontWeight: 800, fill: '#888' }} />
+                                <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
+                                <Bar dataKey="amount" radius={[0, 10, 10, 0]} name="Importe" fill="#3b82f6">
+                                    {topPayers.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={selectedPayer === entry.name ? '#39FF14' : '#3b82f6'} onClick={() => setSelectedPayer(entry.name)} className="cursor-pointer" />
                                     ))}
                                 </Bar>
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
-                    <p className="text-[10px] text-center font-bold text-muted-foreground uppercase tracking-widest opacity-50">Haz clic en una barra para filtrar</p>
+                </Card>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* 3. Top Products by Channel */}
+                <Card className="p-6 rounded-[32px] border-none bg-card/50 backdrop-blur-sm shadow-xl space-y-4">
+                    <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                        <Package className="w-4 h-4" />
+                        Top 10 Productos por Canal
+                    </h3>
+                    <div className="h-[350px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={topProducts} layout="vertical" margin={{ left: -20, right: 20 }}>
+                                <XAxis type="number" hide />
+                                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} width={100} tick={{ fontSize: 9, fontWeight: 800, fill: '#888' }} />
+                                <Tooltip />
+                                <Legend />
+                                <Bar dataKey="cash" name="Efectivo" stackId="a" fill="#10b981" />
+                                <Bar dataKey="transfer" name="Transferencia" stackId="a" fill="#3b82f6" />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
                 </Card>
 
-                {/* 3. Distribution & Commissions */}
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-1 gap-6 xl:col-span-1">
-                    {/* Donut Chart */}
-                    <Card className="p-6 rounded-[32px] border-none bg-card/50 backdrop-blur-sm shadow-xl space-y-4">
-                        <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                            <PieIcon className="w-4 h-4" />
-                            Distribución de Pagos
-                        </h3>
-                        <div className="h-[200px] w-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={categoryData}
-                                        innerRadius={60}
-                                        outerRadius={80}
-                                        paddingAngle={5}
-                                        dataKey="value"
-                                    >
-                                        {categoryData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.color} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip
-                                        contentStyle={{ backgroundColor: '#18181b', border: 'none', borderRadius: '12px' }}
-                                    />
-                                    <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: 800, textTransform: 'uppercase' }} />
-                                </PieChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </Card>
-
-                    {/* Stacked Bar for Commissions */}
-                    <Card className="p-6 rounded-[32px] border-none bg-card/50 backdrop-blur-sm shadow-xl space-y-4">
-                        <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground">Análisis de Comisiones</h3>
-                        <div className="h-[120px] w-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={commissionData} layout="vertical">
-                                    <XAxis type="number" hide />
-                                    <YAxis type="category" dataKey="name" hide />
-                                    <Tooltip cursor={false} contentStyle={{ backgroundColor: '#18181b', border: 'none' }} />
-                                    <Legend verticalAlign="bottom" iconType="rect" wrapperStyle={{ fontSize: '10px', fontWeight: 800, textTransform: 'uppercase' }} />
-                                    <Bar dataKey="Con" stackId="a" fill="#f59e0b" name="Con Comisión" radius={[10, 0, 0, 10]} />
-                                    <Bar dataKey="Sin" stackId="a" fill="#94a3b8" name="Sin Comisión" radius={[0, 10, 10, 0]} />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </div>
-                        <p className="text-[10px] text-muted-foreground font-medium uppercase text-center mt-2">Frecuencia de cargos bancarios</p>
-                    </Card>
-                </div>
+                {/* 4. Distribution Mix */}
+                <Card className="p-6 rounded-[32px] border-none bg-card/50 backdrop-blur-sm shadow-xl space-y-4">
+                    <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                        <PieIcon className="w-4 h-4" />
+                        Mix de Canales
+                    </h3>
+                    <div className="h-[350px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie
+                                    data={categoryData}
+                                    innerRadius={80}
+                                    outerRadius={120}
+                                    paddingAngle={5}
+                                    dataKey="value"
+                                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                >
+                                    {categoryData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                    ))}
+                                </Pie>
+                                <Tooltip />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </div>
+                </Card>
             </div>
         </div>
     );
 }
 
-function MetricCard({ title, value, icon, subtitle, color }: { title: string, value: string, icon: React.ReactNode, trend?: string, subtitle?: string, color: string }) {
+function MetricCard({ title, value, icon, subtitle, color }: { title: string, value: string, icon: React.ReactNode, subtitle?: string, color: string }) {
     const colorClasses: Record<string, string> = {
         emerald: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
         rose: 'bg-rose-500/10 text-rose-500 border-rose-500/20',
@@ -319,3 +280,11 @@ function MetricCard({ title, value, icon, subtitle, color }: { title: string, va
         </Card>
     );
 }
+
+const FilterX = ({ className }: { className?: string }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="M4 4h16v2.172a2 2 0 0 1-.586 1.414L15 12l-4.414 4.414a2 2 0 0 1-1.414.586H4V4z"/>
+        <line x1="15" y1="9" x2="9" y2="15"/>
+        <line x1="9" y1="9" x2="15" y2="15"/>
+    </svg>
+);
