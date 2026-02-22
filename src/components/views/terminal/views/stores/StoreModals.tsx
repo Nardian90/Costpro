@@ -65,13 +65,13 @@ export function StoreModals({
         >
             {mode !== 'delete' && (
                 <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="name" className="text-right">Nombre</Label>
-                        <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3" required />
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+                        <Label htmlFor="name" className="text-left sm:text-right">Nombre</Label>
+                        <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="sm:col-span-3" required />
                     </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="address" className="text-right">Dirección</Label>
-                        <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} className="col-span-3" />
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+                        <Label htmlFor="address" className="text-left sm:text-right">Dirección</Label>
+                        <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} className="sm:col-span-3" />
                     </div>
                     <div className="flex justify-end gap-2 mt-4">
                         <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>Cancelar</Button>

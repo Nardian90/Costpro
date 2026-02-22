@@ -326,7 +326,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                     <div className="flex gap-2 sm:gap-3">
                       <input
                         type="number"
-                        className="flex-1 h-10 sm:h-12 px-3 sm:px-4 rounded-lg sm:rounded-xl bg-background dark:bg-muted border-none text-foreground dark:text-white text-xs sm:text-sm focus:ring-2 focus:ring-primary/50 dark:focus:ring-primary/50 transition-all outline-none"
+                        className="flex-1 h-11 sm:h-12 px-3 sm:px-4 rounded-lg sm:rounded-xl bg-background dark:bg-muted border-none text-foreground dark:text-white text-xs sm:text-sm focus:ring-2 focus:ring-primary/50 dark:focus:ring-primary/50 transition-all outline-none"
                         placeholder="Ej: 1500"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
@@ -343,7 +343,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                           if (val) addToken('literal', val, val);
                           input.value = '';
                         }}
-                        className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg sm:rounded-xl bg-primary text-primary-foreground dark:text-black flex items-center justify-center  transition-all shrink-0"
+                        className="h-11 w-11 sm:h-12 sm:w-12 rounded-lg sm:rounded-xl bg-primary text-primary-foreground dark:text-black flex items-center justify-center  transition-all shrink-0"
                       >
                         <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                       </button>
