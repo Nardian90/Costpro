@@ -78,7 +78,7 @@ export default function TransferenciasView() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h2 className="text-2xl font-bold border-l-4 border-primary pl-4 uppercase tracking-tight flex items-center gap-3">
+        <h2 className="text-[clamp(1.25rem,4vw,1.75rem)] font-black border-l-4 border-primary pl-4 uppercase tracking-tighter flex items-center gap-3 text-primary">
           <ArrowLeftRight className="w-8 h-8 text-primary" />
           Transferencias entre Almacenes
         </h2>
@@ -118,7 +118,7 @@ export default function TransferenciasView() {
                 <ArrowLeftRight className="w-10 h-10 text-muted-foreground opacity-20" />
              </div>
              <div>
-                <p className="text-sm font-black uppercase text-muted-foreground tracking-widest">No hay transferencias</p>
+                <p className="text-xs font-black uppercase text-primary/70 tracking-[0.2em]">No hay transferencias</p>
                 <p className="text-xs text-muted-foreground/60 mt-1">
                   {activeTab === 'incoming' ? 'No tienes solicitudes de transferencia pendientes por recibir.' : 'No has realizado ninguna solicitud de transferencia recientemente.'}
                 </p>

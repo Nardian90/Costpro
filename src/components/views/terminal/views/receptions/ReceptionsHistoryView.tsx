@@ -50,7 +50,7 @@ export default function ReceptionsHistoryView() {
   return (
     <>
       <div className="space-y-6">
-        <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase">Recepciones</h2>
+        <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase text-[clamp(1.5rem,5vw,2rem)] font-black uppercase tracking-tighter text-primary"> Recepciones </h2>
 
         <QueryInspector />
 

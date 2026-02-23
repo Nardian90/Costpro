@@ -64,7 +64,7 @@ export default function InventoryCardView({ products, loadMore, hasMore, isLoadi
             )}
 
             {!hasMore && products.length > 0 && (
-                <div className="text-center py-8 text-muted-foreground font-bold text-sm uppercase tracking-widest">
+                <div className="text-center py-8 text-primary/70 font-black text-xs uppercase tracking-[0.2em]">
                     Has llegado al final de la lista.
                 </div>
             )}
@@ -72,7 +72,7 @@ export default function InventoryCardView({ products, loadMore, hasMore, isLoadi
             {!isLoading && products.length === 0 && (
                  <div className="text-center py-20 text-muted-foreground col-span-full">
                     <Package className="w-16 h-16 mx-auto mb-4 opacity-10" />
-                    <p className="font-bold uppercase tracking-widest">No se encontraron productos.</p>
+                    <p className="font-black uppercase tracking-[0.2em] text-primary/70">No se encontraron productos.</p>
                     <p className="text-sm">Intenta ajustar tu búsqueda o filtros.</p>
                 </div>
             )}
