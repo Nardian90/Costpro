@@ -1,4 +1,3 @@
-
 'use client'
 
 import React, { useState, useEffect } from 'react';
@@ -50,32 +49,71 @@ export function StoreModals({
         <BaseModal
             open={isOpen}
             onOpenChange={(open) => !open && onClose()}
-            title={mode === 'edit' ? 'Editar Tienda' : mode === 'create' ? 'Nueva Tienda' : 'Eliminar Tienda'}
-            description={mode === 'delete' ? '¿Estás seguro de que deseas eliminar esta tienda?' : 'Completa los datos de la sucursal.'}
+            title={
+                <span className="text-[clamp(1.25rem,4vw,1.5rem)] font-black uppercase tracking-tighter text-primary">
+                    {mode === 'edit' ? 'Editar Tienda' : mode === 'create' ? 'Nueva Tienda' : 'Eliminar Tienda'}
+                </span>
+            }
+            description={
+                <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70">
+                    {mode === 'delete' ? '¿Estás seguro de que deseas eliminar esta tienda?' : 'Completa los datos de la sucursal.'}
+                </span>
+            }
             footer={
                 mode === 'delete' ? (
-                    <>
-                        <Button variant="outline" onClick={onClose} disabled={isSubmitting}>Cancelar</Button>
-                        <Button variant="destructive" onClick={() => onSubmit('delete', {})} disabled={isSubmitting}>
+                    <div className="flex gap-2 w-full sm:w-auto">
+                        <Button variant="outline" onClick={onClose} disabled={isSubmitting} className="flex-1 sm:flex-none h-11">
+                            Cancelar
+                        </Button>
+                        <Button variant="destructive" onClick={() => onSubmit('delete', {})} disabled={isSubmitting} className="flex-1 sm:flex-none h-11 font-bold uppercase tracking-widest text-xs">
                             {isSubmitting ? 'Eliminando...' : 'Eliminar'}
                         </Button>
-                    </>
+                    </div>
                 ) : null
             }
         >
             {mode !== 'delete' && (
-                <form onSubmit={handleSubmit} className="grid gap-4 py-4">
+                <form onSubmit={handleSubmit} className="grid gap-6 py-4">
                     <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
-                        <Label htmlFor="name" className="text-left sm:text-right">Nombre</Label>
-                        <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="sm:col-span-3" required />
+                        <Label htmlFor="name" className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
+                            Nombre
+                        </Label>
+                        <Input
+                            id="name"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            className="sm:col-span-3 h-11 bg-muted/20 border-primary/10 focus:border-primary/30 transition-all font-bold"
+                            placeholder="Nombre de la sucursal"
+                            required
+                        />
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
-                        <Label htmlFor="address" className="text-left sm:text-right">Dirección</Label>
-                        <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} className="sm:col-span-3" />
+                        <Label htmlFor="address" className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
+                            Dirección
+                        </Label>
+                        <Input
+                            id="address"
+                            value={address}
+                            onChange={(e) => setAddress(e.target.value)}
+                            className="sm:col-span-3 h-11 bg-muted/20 border-primary/10 focus:border-primary/30 transition-all font-bold"
+                            placeholder="Calle, Ciudad, Estado"
+                        />
                     </div>
-                    <div className="flex justify-end gap-2 mt-4">
-                        <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>Cancelar</Button>
-                        <Button type="submit" disabled={isSubmitting}>
+                    <div className="flex flex-col sm:flex-row justify-end gap-3 mt-6">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={onClose}
+                            disabled={isSubmitting}
+                            className="h-11 font-bold"
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="h-11 font-black uppercase tracking-widest text-xs"
+                        >
                             {isSubmitting ? 'Guardando...' : mode === 'edit' ? 'Guardar Cambios' : 'Crear Tienda'}
                         </Button>
                     </div>

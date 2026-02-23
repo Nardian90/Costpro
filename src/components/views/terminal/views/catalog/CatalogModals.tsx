@@ -35,39 +35,39 @@ export const CatalogModals = ({
       <BaseModal
         open={modals.isEditProductModalOpen}
         onOpenChange={modals.setIsEditProductModalOpen}
-        title="Editar Información"
+        title={<span className="text-[clamp(1.25rem,4vw,1.5rem)] font-black uppercase tracking-tighter text-primary">Editar Información</span>}
         maxWidth="sm:max-w-md"
         footer={
           <>
             <SecondaryButton onClick={() => modals.setIsEditProductModalOpen(false)} label="Cerrar" className="flex-1" />
-            <PrimaryButton onClick={handleUpdateProduct} label="Guardar Cambios" className="flex-1" />
+            <PrimaryButton onClick={handleUpdateProduct} label="Guardar Cambios" className="flex-1 h-11" />
           </>
         }
       >
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-black uppercase text-muted-foreground tracking-widest ml-1">Nombre</label>
+            <label className="text-[10px] font-black uppercase text-primary/70 tracking-widest ml-1">Nombre</label>
             <input type="text" value={modals.editingProduct?.name || ''} onChange={(e) => modals.setEditingProduct({ ...modals.editingProduct, name: e.target.value })} className="neu-input w-full font-bold" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-black uppercase text-muted-foreground tracking-widest ml-1 flex justify-between">
+              <label className="text-[10px] font-black uppercase text-primary/70 tracking-widest ml-1 flex justify-between">
                 <span>SKU</span>
                 <span className="text-xs text-primary/70 italic">Único en tienda</span>
               </label>
               <input type="text" value={modals.editingProduct?.sku || ''} onChange={(e) => modals.setEditingProduct({ ...modals.editingProduct, sku: e.target.value })} className="neu-input w-full" />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-black uppercase text-muted-foreground tracking-widest ml-1">Categoría</label>
+              <label className="text-[10px] font-black uppercase text-primary/70 tracking-widest ml-1">Categoría</label>
               <input type="text" value={modals.editingProduct?.category || ''} onChange={(e) => modals.setEditingProduct({ ...modals.editingProduct, category: e.target.value })} className="neu-input w-full" />
             </div>
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-black uppercase text-muted-foreground tracking-widest ml-1">Costo</label>
+            <label className="text-[10px] font-black uppercase text-primary/70 tracking-widest ml-1">Costo</label>
             <input type="number" value={modals.editingProduct?.cost_price || 0} onChange={(e) => modals.setEditingProduct({ ...modals.editingProduct, cost_price: parseFloat(e.target.value) || 0 })} className="neu-input w-full font-bold" />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-black uppercase text-muted-foreground tracking-widest ml-1">Precio</label>
+            <label className="text-[10px] font-black uppercase text-primary/70 tracking-widest ml-1">Precio</label>
             <input type="number" value={modals.editingProduct?.price || 0} onChange={(e) => modals.setEditingProduct({ ...modals.editingProduct, price: parseFloat(e.target.value) || 0 })} className="neu-input w-full font-bold" />
           </div>
 
@@ -78,7 +78,7 @@ export const CatalogModals = ({
             </label>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <span className="text-xs font-black uppercase text-muted-foreground tracking-tighter">Utilidad Bruta</span>
+                <span className="text-[10px] font-black uppercase text-primary/60 tracking-widest">Utilidad Bruta</span>
                 <div className={cn(
                   "font-black text-sm",
                   (modals.editingProduct?.price - modals.editingProduct?.cost_price) < 0 ? "text-danger" : "text-success"
@@ -87,7 +87,7 @@ export const CatalogModals = ({
                 </div>
               </div>
               <div className="space-y-1">
-                <span className="text-xs font-black uppercase text-muted-foreground tracking-tighter">% Margen</span>
+                <span className="text-[10px] font-black uppercase text-primary/60 tracking-widest">% Margen</span>
                 <div className={cn(
                   "font-black text-sm",
                   ((modals.editingProduct?.price || 0) - (modals.editingProduct?.cost_price || 0)) < 0 ? "text-danger" : "text-success"
@@ -106,7 +106,7 @@ export const CatalogModals = ({
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-black uppercase text-muted-foreground tracking-widest ml-1">Imagen</label>
+            <label className="text-[10px] font-black uppercase text-primary/70 tracking-widest ml-1">Imagen</label>
             <div className="flex flex-col items-center gap-6 p-6 neu-inset-sm bg-background/50 rounded-3xl">
               <div className="neu-raised-sm w-40 h-40 flex items-center justify-center overflow-hidden rounded-3xl">
                 <ProductImage
@@ -119,8 +119,8 @@ export const CatalogModals = ({
               <div className="w-full space-y-2">
                 <input type="text" placeholder="O pegar URL" value={modals.editingProduct?.image_url || ''} onChange={(e) => modals.setEditingProduct({ ...modals.editingProduct, image_url: e.target.value })} className="neu-input w-full text-center text-xs" />
                 <input type="file" id="product-image-upload-cat" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleUpdateImage(file); }} />
-                <label htmlFor="product-image-upload-cat" className="w-full">
-                  <SecondaryButton asChild className="w-full cursor-pointer">
+                <label htmlFor="product-image-upload-cat" className="w-full h-11">
+                  <SecondaryButton asChild className="w-full cursor-pointer h-11">
                     <div className="flex items-center gap-2">
                       <Plus className="w-4 h-4" />
                       <span>Subir Nueva Imagen</span>
@@ -136,10 +136,10 @@ export const CatalogModals = ({
       <BaseModal
         open={modals.isVariantsModalOpen}
         onOpenChange={modals.setIsVariantsModalOpen}
-        title={`Variantes - ${modals.editingProduct?.name}`}
+        title={<span className="text-[clamp(1.25rem,4vw,1.5rem)] font-black uppercase tracking-tighter text-primary">Variantes - {modals.editingProduct?.name}</span>}
         maxWidth="sm:max-w-2xl"
         footer={
-          <SecondaryButton onClick={() => modals.setIsVariantsModalOpen(false)} label="Cerrar Panel" className="w-full" />
+          <SecondaryButton onClick={() => modals.setIsVariantsModalOpen(false)} label="Cerrar Panel" className="w-full h-11" />
         }
       >
         <div className="space-y-8">
@@ -165,7 +165,7 @@ export const CatalogModals = ({
               <input type="number" value={modals.newVariantForm.conversion_factor} onChange={(e) => modals.setNewVariantForm({ ...modals.newVariantForm, conversion_factor: parseInt(e.target.value) || 1 })} className="neu-input w-full text-xs" placeholder="Factor" />
             </div>
             <input type="number" value={modals.newVariantForm.price || ''} onChange={(e) => modals.setNewVariantForm({ ...modals.newVariantForm, price: parseFloat(e.target.value) || 0 })} className="neu-input w-full text-xl font-black" placeholder="0.00" />
-            <PrimaryButton onClick={handleAddVariant} label="Registrar Variante" icon={Plus} className="w-full !py-4" />
+            <PrimaryButton onClick={handleAddVariant} label="Registrar Variante" icon={Plus} className="w-full !py-4 h-11" />
           </div>
         </div>
       </BaseModal>
@@ -181,12 +181,12 @@ export const CatalogModals = ({
         }
         maxWidth="sm:max-w-md"
         footer={
-          <PrimaryButton onClick={() => modals.setIsHelpModalOpen(false)} label="Entendido" className="w-full" />
+          <PrimaryButton onClick={() => modals.setIsHelpModalOpen(false)} label="Entendido" className="w-full h-11" />
         }
       >
         <div className="space-y-4 py-4 text-sm">
           <p>Gestión de Precios y Catálogo.</p>
-          <SecondaryButton onClick={() => catalogService.downloadTemplate()} label="Plantilla CSV" icon={FileText} className="w-full" />
+          <SecondaryButton onClick={() => catalogService.downloadTemplate()} label="Plantilla CSV" icon={FileText} className="w-full h-11" />
         </div>
       </BaseModal>
 
@@ -203,7 +203,7 @@ export const CatalogModals = ({
         footer={
           <>
             <SecondaryButton onClick={() => modals.setIsDeleteConfirmOpen(false)} label="Cancelar" className="flex-1" />
-            <PrimaryButton onClick={handleDeleteProduct} label="Eliminar Definitivamente" className="flex-1 bg-danger text-white hover:bg-danger/90 shadow-danger/20" />
+            <PrimaryButton onClick={handleDeleteProduct} label="Eliminar Definitivamente" className="flex-1 bg-danger text-white hover:bg-danger/90 shadow-danger/20 h-11" />
           </>
         }
       >

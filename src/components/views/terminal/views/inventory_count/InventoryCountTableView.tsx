@@ -24,7 +24,7 @@ export default function InventoryCountTableView({
     <div className="overflow-x-auto table-to-cards force-table rounded-2xl shadow-xl border border-white/5 overflow-hidden">
       <table className="w-full">
         <thead>
-          <tr className="bg-muted/50 text-muted-foreground font-black uppercase text-xs tracking-widest">
+          <tr className="bg-muted/50 text-muted-foreground font-black uppercase text-[10px] tracking-[0.2em] text-primary/70">
             <th className="p-4 text-left">Producto / SKU</th>
             <th className="p-4 text-right">Stock Teórico</th>
             <th className="p-4 text-center">Stock Físico (Contado)</th>
@@ -64,7 +64,7 @@ export default function InventoryCountTableView({
                         type="number"
                         value={counted}
                         onChange={(e) => onQuantityChange(product.id, parseInt(e.target.value) || 0)}
-                        className="neu-input w-28 text-center font-black text-xl text-primary bg-primary/5 border-primary/20"
+                        className="neu-input w-28 h-12 text-center font-black text-xl text-primary bg-primary/5 border-primary/20 transition-all focus:ring-4 focus:ring-primary/10"
                       />
                     </div>
                   </td>
