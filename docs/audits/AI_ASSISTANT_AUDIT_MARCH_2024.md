@@ -38,3 +38,10 @@
 4. **Confirmación Visual**: El botón de acción cambia de estado y color tras el guardado, proporcionando feedback inmediato de que la operación en base de datos fue exitosa.
 
 **Conclusión**: El asistente ahora funciona como un agente colaborativo transparente en lugar de una "caja negra" que hace promesas falsas de persistencia automática.
+
+### Actualización Final (Revisión UX):
+- Se detectó que la IA ocasionalmente omitía los bloques de código, causando que el JSON crudo fuera visible.
+- Se implementó un extractor de "fallback" que busca estructuras JSON incluso fuera de bloques.
+- Se mejoró la limpieza del mensaje para eliminar cualquier rastro de JSON del chat, manteniendo la interfaz "digestible".
+- El botón de navegación ahora apunta correctamente a 'all-content' (Vista Todo), cumpliendo el requerimiento de ver la ficha completa cargada.
+- La previsualización de anexos ahora aparece expandida por defecto (`isExpanded: true`).
