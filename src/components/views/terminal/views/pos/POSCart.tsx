@@ -160,7 +160,7 @@ export const POSCart = ({
       id="sale-success-content"
     >
       <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center shadow-xl shadow-green-500/20 relative">
-        <Check className="w-12 h-12 text-white" strokeWidth={3} />
+        <Check className="w-12 h-12 text-primary-foreground" strokeWidth={3} />
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1.5, opacity: 0 }}
@@ -177,7 +177,7 @@ export const POSCart = ({
       <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
         <button
           onClick={generatePDF}
-          className="flex items-center justify-between p-6 rounded-2xl bg-primary text-white shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform group"
+          className="flex items-center justify-between p-6 rounded-2xl bg-primary text-primary-foreground shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform group"
         >
           <div className="text-left">
             <div className="font-black uppercase tracking-widest text-xs opacity-70 mb-1">Exportar</div>
@@ -188,7 +188,7 @@ export const POSCart = ({
 
         <button
           onClick={shareWhatsApp}
-          className="flex items-center justify-between p-6 rounded-2xl bg-green-600 text-white shadow-xl shadow-green-600/20 hover:scale-[1.02] transition-transform group"
+          className="flex items-center justify-between p-6 rounded-2xl bg-primary text-primary-foreground shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform group"
         >
           <div className="text-left">
             <div className="font-black uppercase tracking-widest text-xs opacity-70 mb-1">Compartir</div>
@@ -199,16 +199,16 @@ export const POSCart = ({
 
         <button
           onClick={exportAsImage}
-          className="flex items-center justify-between p-6 rounded-2xl bg-slate-800 text-white shadow-xl shadow-slate-800/20 hover:scale-[1.02] transition-transform group sm:col-span-2"
+          className="flex items-center justify-between p-6 rounded-2xl bg-card text-primary-foreground shadow-xl shadow-border/20 hover:scale-[1.02] transition-transform group sm:col-span-2"
         >
           <div className="text-left flex items-center gap-4">
-            <ImageIcon className="w-8 h-8 text-slate-400" />
+            <ImageIcon className="w-8 h-8 text-muted-foreground" />
             <div>
               <div className="font-black uppercase tracking-widest text-xs opacity-70 mb-1">Guardar como</div>
               <div className="text-xl font-black">Imagen JPG</div>
             </div>
           </div>
-          <div className="px-3 py-1 bg-white/10 rounded-full text-xs font-black uppercase">Alta Calidad</div>
+          <div className="px-3 py-1 bg-primary-foreground/10 rounded-full text-xs font-black uppercase">Alta Calidad</div>
         </button>
       </div>
 
@@ -245,7 +245,7 @@ export const POSCart = ({
         "flex-1 flex flex-col w-full max-w-5xl mx-auto bg-card shadow-2xl",
         isMobile ? "" : "my-0 border-x border-border"
       )}>
-        <div className="bg-primary p-4 sm:p-6 sm:pb-10 flex items-center justify-between text-white relative shrink-0">
+        <div className="bg-primary p-4 sm:p-6 sm:pb-10 flex items-center justify-between text-primary-foreground relative shrink-0">
           <div className="flex flex-col gap-0.5 sm:gap-1">
             <h3 className={cn("font-black uppercase tracking-widest flex items-center gap-2 sm:gap-3", isEasyReading ? "text-2xl" : "text-base sm:text-lg")}>
               <ShoppingCart className={cn(isEasyReading ? "w-7 h-7 sm:w-8 sm:h-8" : "w-5 h-5 sm:w-6 sm:h-6")} />
@@ -260,7 +260,7 @@ export const POSCart = ({
               onClick={() => setIsEasyReading(!isEasyReading)}
               className={cn(
                 "p-2.5 sm:p-3 rounded-lg sm:rounded-xl transition-all active:scale-90 flex items-center gap-2 font-black uppercase tracking-widest text-xs sm:text-xs",
-                isEasyReading ? "bg-white text-primary" : "bg-white/10 hover:bg-white/20 text-white"
+                isEasyReading ? "bg-background text-primary" : "bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground"
               )}
             >
               <div className="w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center border-2 border-current rounded text-xs sm:text-xs">A</div>
@@ -268,7 +268,7 @@ export const POSCart = ({
             </button>
             <button
               onClick={onClose}
-              className="p-2.5 sm:p-3 bg-white/10 hover:bg-white/20 rounded-lg sm:rounded-xl transition-colors active:scale-90"
+              className="p-2.5 sm:p-3 bg-primary-foreground/10 hover:bg-primary-foreground/20 rounded-lg sm:rounded-xl transition-colors active:scale-90"
               aria-label="Cerrar carrito"
             >
               <X className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -296,7 +296,7 @@ export const POSCart = ({
                     <button
                       onClick={() => onCheckout(selectedPayment, (discount && discount.value > 0) ? discount : null)}
                       disabled={isProcessing || items.length === 0}
-                      className="flex-1 h-12 sm:h-14 rounded-xl sm:rounded-2xl bg-primary text-white font-black text-xs sm:text-sm shadow-xl shadow-primary/20 disabled:opacity-50 flex items-center justify-center gap-3 transition-all active:scale-[0.98]"
+                      className="flex-1 h-12 sm:h-14 rounded-xl sm:rounded-2xl bg-primary text-primary-foreground font-black text-xs sm:text-sm shadow-xl shadow-primary/20 disabled:opacity-50 flex items-center justify-center gap-3 transition-all active:scale-[0.98]"
                     >
                       {isProcessing ? (
                         <CostProLoader size={20} showText={false} showSubtext={false} />
@@ -364,7 +364,7 @@ export const POSCart = ({
                                 onClick={() => setDiscount({ type: 'percentage', value: discount?.value || 0 })}
                                 className={cn(
                                   "px-2 py-0.5 rounded-md text-xs font-black uppercase transition-all",
-                                  discount?.type === 'percentage' ? "bg-primary text-white" : "text-muted-foreground"
+                                  discount?.type === 'percentage' ? "bg-primary text-primary-foreground" : "text-muted-foreground"
                                 )}
                               >
                                 %
@@ -373,7 +373,7 @@ export const POSCart = ({
                                 onClick={() => setDiscount({ type: 'fixed', value: discount?.value || 0 })}
                                 className={cn(
                                   "px-2 py-0.5 rounded-md text-xs font-black uppercase transition-all",
-                                  discount?.type === 'fixed' ? "bg-primary text-white" : "text-muted-foreground"
+                                  discount?.type === 'fixed' ? "bg-primary text-primary-foreground" : "text-muted-foreground"
                                 )}
                               >
                                 $
@@ -388,7 +388,7 @@ export const POSCart = ({
                                 onClick={() => setDiscount({ type: discount?.type || 'percentage', value: d })}
                                 className={cn(
                                   "flex-1 py-2 rounded-lg border font-black text-xs uppercase transition-all",
-                                  discount?.value === d && discount?.type === 'percentage' ? "bg-primary text-white border-primary" : "bg-background text-muted-foreground border-border"
+                                  discount?.value === d && discount?.type === 'percentage' ? "bg-primary text-primary-foreground border-primary" : "bg-background text-muted-foreground border-border"
                                 )}
                               >
                                 {d === 0 ? 'Sin' : `${d}%`}
@@ -431,7 +431,7 @@ export const POSCart = ({
                             "p-3 rounded-2xl border-2 transition-all group relative shadow-md",
                             isEasyReading ? "p-6" : "p-3",
                             item.product.stock_current <= 0 ? "border-destructive/20 bg-destructive/5" :
-                            item.product.stock_current < 5 ? "border-amber-200 bg-amber-50/30" : "border-border bg-background"
+                            item.product.stock_current < 5 ? "border-amber-500/20 bg-amber-500/10" : "border-border bg-background"
                           )}
                         >
                           <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 sm:gap-4">
@@ -462,8 +462,8 @@ export const POSCart = ({
                               </div>
                               <div className={cn(
                                 "px-2 py-0.5 rounded-full text-xs font-black uppercase tracking-tight border whitespace-nowrap",
-                                item.product.stock_current > 10 ? "bg-green-500/10 text-green-600 border-green-500/20" :
-                                item.product.stock_current > 0 ? "bg-amber-500/10 text-amber-600 border-amber-500/20" :
+                                item.product.stock_current > 10 ? "bg-primary/10 text-primary border-primary/20" :
+                                item.product.stock_current > 0 ? "bg-amber-500/10 text-amber-500 border-amber-500/20" :
                                 "bg-destructive/10 text-destructive border-destructive/20"
                               )}>
                                 Stock: {item.product.stock_current}
@@ -599,7 +599,7 @@ export const POSCart = ({
                   setShowClearConfirm(false);
                   toast.success('Carrito vaciado');
                 }}
-                className="flex-1 bg-destructive hover:bg-destructive/90 text-white shadow-destructive/20"
+                className="flex-1 bg-destructive hover:bg-destructive/90 text-primary-foreground shadow-destructive/20"
               />
             </>
           }
