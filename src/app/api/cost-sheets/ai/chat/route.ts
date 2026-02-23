@@ -20,13 +20,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Messages are required' }, { status: 400 });
     }
 
-    // Load Normative Base (JSON is preferred for structure)
+    // Load Normative Base
     const jsonPath = path.join(process.cwd(), 'public', 'manuals', '1482023.json');
     let normativeBase = '';
     if (fs.existsSync(jsonPath)) {
       normativeBase = fs.readFileSync(jsonPath, 'utf8');
     } else {
-      // Fallback to PDF text if needed
       normativeBase = "Referencia: Resolución 148/2023 del MFP (Metodología para la elaboración de la ficha de costos).";
     }
 
@@ -41,10 +40,15 @@ export async function POST(req: NextRequest) {
          Actúa como un agente autónomo. Cuando el usuario solicite generar una ficha (ej. "Generar ficha de producción de pan"), debes realizar un proceso completo:
          - REINICIO: Incluye siempre "resetBeforeApply": true en tu JSON para limpiar datos previos.
          - MATERIA PRIMA (Anexo I): Desglosa todos los ingredientes, cantidades y precios reales.
-         - MANO DE OBRA (Anexo II): Incluye los puestos necesarios (ej. Maestro Panadero, Ayudante), horas y tarifas.
+         - MANO DE OBRA (Anexo II): Incluye los puestos necesarios, horas y tarifas.
          - OTROS COSTOS (Anexo III/IV): Si aplica, incluye depreciación de equipos clave y otros gastos directos.
-         - FORMATO: Usa exclusivamente el bloque 'json_annex_update'.
-           Ejemplo: \`\`\`json_annex_update { "resetBeforeApply": true, "header": { "name": "Pan de Molde" }, "annexes": [ { "id": "I", "data": [...] }, { "id": "II", "data": [...] } ] } \`\`\`
+         - FORMATO OBLIGATORIO: Usa exclusivamente el bloque 'json_annex_update' envuelto en triple backticks.
+           Ejemplo: \`\`\`json_annex_update { "resetBeforeApply": true, "header": { "name": "Producto" }, "annexes": [ { "id": "I", "data": [...] } ] } \`\`\`
+
+      REGLAS DE ORO:
+      - NO escribas el JSON fuera de los bloques de código.
+      - NO menciones que has guardado la ficha. Di: "He preparado una propuesta técnica detallada. Puedes revisarla en el chat y aplicarla usando el botón de abajo."
+      - Sé extremadamente conciso. Muestra el bloque JSON y un mensaje de confirmación breve. El usuario verá el desglose visualmente en el chat gracias al sistema de previsualización.
 
       FUENTES DE VERDAD:
       1. BASE NORMATIVA (Resolución 148/2023):
@@ -54,9 +58,8 @@ export async function POST(req: NextRequest) {
       ${JSON.stringify(sheetData, null, 2)}
 
       COMPORTAMIENTO:
-      - Responde de forma profesional, técnica y precisa (Tono "Consultor Contable Senior").
-      - Si detectas errores en la ficha, menciónalos constructivamente.
-      - IMPORTANTE: Cuando generes una nueva ficha, sé extremadamente conciso. Una vez generado el bloque JSON, simplemente confirma con un "He preparado una propuesta técnica detallada. Puedes revisarla en el chat y aplicarla usando el botón de abajo." No muestres el JSON fuera del bloque. Una vez que la apliques, se guardará en el sistema y podrás ver los resultados detallados.
+      - Responde de forma profesional y técnica.
+      - Si generas una propuesta, una vez que el usuario la aplique, se guardará en el sistema y podrá ver los resultados detallados en el modo "Todo".
       `
     };
 
