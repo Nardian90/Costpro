@@ -1,11 +1,17 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X as XIcon, FileText, Trash2, Upload, Save, FileSpreadsheet, Download, Settings, Table2, LayoutGrid } from 'lucide-react';
+import {
+  X as XIcon, FileText, Trash2, Upload, Save, FileSpreadsheet,
+  Download, Settings, Table2, LayoutGrid, ChevronDown,
+  BarChart3, Layout, ListFilter, PenTool, Zap, Wand2,
+  BookOpen, Eye, Activity, Sparkles, FolderOpen, Bot, HelpCircle, Calculator
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
+import ViewSwitcher, { ViewMode as LayoutViewMode } from '@/components/ui/ViewSwitcher';
+import { CostSheetViewMode } from './CostSheetModeDropdown';
 
 interface ActionItem {
   id: string;
@@ -20,53 +26,135 @@ interface CostSheetActionsPanelProps {
   isOpen: boolean;
   onClose: () => void;
   actions: ActionItem[];
-  layoutMode: ViewMode;
-  setLayoutMode: (mode: ViewMode) => void;
+  layoutMode: LayoutViewMode;
+  setLayoutMode: (mode: LayoutViewMode) => void;
+  // New props for better integration
+  activeSection?: string;
+  setActiveSection?: (id: string) => void;
+  viewMode?: CostSheetViewMode;
+  setViewMode?: (mode: CostSheetViewMode) => void;
+  onOpenSections?: () => void;
+  onOpenAnnexes?: () => void;
+  onOpenHelp?: () => void;
+  onQuickGenerate?: () => void;
+  onExpertGenerate?: () => void;
 }
+
+const AccordionGroup = ({
+  title,
+  icon: Icon,
+  children,
+  isOpen,
+  onToggle
+}: {
+  title: string;
+  icon: React.ElementType;
+  children: React.ReactNode;
+  isOpen: boolean;
+  onToggle: () => void;
+}) => {
+  return (
+    <div className="border-b border-sidebar-border/50 last:border-0">
+      <button
+        onClick={onToggle}
+        className={cn(
+          "w-full flex items-center justify-between p-4 transition-colors",
+          isOpen ? "bg-primary/5 text-primary" : "text-primary/60 hover:bg-primary/5 hover:text-primary"
+        )}
+      >
+        <div className="flex items-center gap-3">
+          <Icon className="w-4 h-4" />
+          <span className="text-[10px] font-black uppercase tracking-[0.2em]">{title}</span>
+        </div>
+        <motion.div
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <ChevronDown className="w-4 h-4 opacity-50" />
+        </motion.div>
+      </button>
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            className="overflow-hidden"
+          >
+            <div className="p-2 space-y-1">
+              {children}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
 export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
   isOpen,
   onClose,
   actions,
   layoutMode,
-  setLayoutMode
+  setLayoutMode,
+  activeSection,
+  setActiveSection,
+  viewMode,
+  setViewMode,
+  onOpenSections,
+  onOpenAnnexes,
+  onOpenHelp,
+  onQuickGenerate,
+  onExpertGenerate
 }) => {
-  // Categorize actions
-  const actionGroups = [
-    {
-      title: 'Vista y Formato',
-      isCustom: true,
-      render: () => (
-        <div className="px-4 py-2 space-y-4">
-           <div className="text-[10px] font-black text-primary/70 tracking-[0.4em] uppercase mb-2">
-              Modo de Diseño
-           </div>
-           <ViewSwitcher
-             currentView={layoutMode}
-             onViewChange={setLayoutMode}
-             className="w-full bg-primary/5 border-primary/10"
-           />
-        </div>
-      )
-    },
-    {
-      title: 'Herramientas',
-      items: [
-        ...actions.filter(a => ['calculator'].includes(a.id))
-      ]
-    },
-    {
-      title: 'Gestión',
-      items: [
-        ...actions.filter(a => a.id === 'audit'),
-        ...actions.filter(a => ['load-example', 'reset', 'import-json', 'export-json', 'save-template', 'massive-gen'].includes(a.id))
-      ]
-    },
-    {
-      title: 'Exportar',
-      items: actions.filter(a => ['export-excel', 'export-pdf'].includes(a.id))
-    }
-  ];
+  const [openGroups, setOpenGroups] = useState<string[]>(['ficha']);
+
+  const toggleGroup = (groupId: string) => {
+    setOpenGroups(prev =>
+      prev.includes(groupId)
+        ? prev.filter(g => g !== groupId)
+        : [...prev, groupId]
+    );
+  };
+
+  const handleAction = (onClick: () => void) => {
+    onClick();
+    if (window.innerWidth < 1024) onClose();
+  };
+
+  const actionMap = actions.reduce((acc, action) => {
+    acc[action.id] = action;
+    return acc;
+  }, {} as Record<string, ActionItem>);
+
+  const renderActionButton = (id: string, label: string, icon: React.ElementType, onClick?: () => void, variant?: any, isActive?: boolean) => {
+    const action = actionMap[id];
+    const finalOnClick = onClick || (action ? action.onClick : () => {});
+    const Icon = icon || (action ? action.icon : Settings);
+    const finalVariant = variant || (action ? action.variant : 'outline');
+
+    return (
+      <button
+        key={id}
+        onClick={() => handleAction(finalOnClick)}
+        className={cn(
+          "w-full flex items-center gap-3 p-3 rounded-xl transition-all group active:scale-95 text-left",
+          isActive
+            ? "bg-primary/10 text-primary font-bold shadow-sm"
+            : "hover:bg-primary/5 text-primary/70 hover:text-primary",
+          finalVariant === 'danger' && "hover:bg-danger/10 text-danger",
+          finalVariant === 'success' && "hover:bg-success/10 text-success"
+        )}
+      >
+        <Icon className={cn(
+          "w-4 h-4 transition-colors",
+          isActive ? "text-primary" : "group-hover:text-primary"
+        )} />
+        <span className="text-[10px] font-bold uppercase tracking-widest">{label}</span>
+      </button>
+    );
+  };
 
   return (
     <AnimatePresence>
@@ -78,7 +166,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden"
+            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[90] lg:hidden"
           />
 
           {/* Panel */}
@@ -88,7 +176,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             className={cn(
-              "fixed right-0 top-0 h-screen w-72 bg-sidebar/95 backdrop-blur-2xl border-l border-sidebar-border shadow-2xl z-50 flex flex-col overflow-hidden"
+              "fixed right-0 top-0 h-screen w-80 bg-sidebar/95 backdrop-blur-2xl border-l border-sidebar-border shadow-2xl z-[100] flex flex-col overflow-hidden"
             )}
           >
             {/* Header */}
@@ -97,7 +185,10 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
                 <div className="p-2 rounded-xl bg-primary/10">
                   <Settings className="w-5 h-5 text-primary" />
                 </div>
-                <span className="text-xs font-black uppercase tracking-[0.2em] text-primary">Acciones</span>
+                <div>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary block">Panel de Control</span>
+                    <span className="text-[8px] font-bold uppercase tracking-[0.4em] text-muted-foreground/50">v5.7.25</span>
+                </div>
               </div>
               <button
                 onClick={onClose}
@@ -108,53 +199,96 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-8 no-scrollbar">
-              {actionGroups.map((group, idx) => {
-                if ('isCustom' in group && group.isCustom) {
-                  return <div key={idx}>{group.render()}</div>;
-                }
+            <div className="flex-1 overflow-y-auto no-scrollbar">
 
-                return group.items && group.items.length > 0 && (
-                  <div key={idx} className="space-y-4">
-                    <div className="px-4 text-xs font-black text-primary/70 tracking-[0.4em] uppercase">
-                      {group.title}
-                    </div>
-                    <div className="space-y-1">
-                      {group.items.map(item => (
-                        <button
-                          key={item.id}
-                          disabled={item.disabled}
-                          onClick={() => {
-                            item.onClick();
-                            if (window.innerWidth < 1024) onClose();
-                          }}
-                          className={cn(
-                            "w-full flex items-center gap-4 p-4 rounded-2xl transition-all group active:scale-95 text-left",
-                            "disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100",
-                            item.variant === 'danger'
-                              ? "hover:bg-danger/10 text-danger"
-                              : item.variant === 'success'
-                                ? "hover:bg-success/10 text-success"
-                                : "hover:bg-primary/5 text-primary/70 hover:text-primary"
-                          )}
-                        >
-                          <item.icon className={cn(
-                            "w-5 h-5 transition-colors",
-                            item.variant === 'danger' ? "text-danger" : item.variant === 'success' ? "text-success" : "group-hover:text-primary"
-                          )} />
-                          <span className="text-xs font-bold uppercase tracking-widest">{item.label}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
+              <AccordionGroup
+                title="Ficha y Navegación"
+                icon={LayoutGrid}
+                isOpen={openGroups.includes('ficha')}
+                onToggle={() => toggleGroup('ficha')}
+              >
+                {renderActionButton('kpis', 'Tablero', BarChart3, () => setActiveSection?.('kpis'), 'outline', activeSection === 'kpis')}
+                {renderActionButton('header', 'Encabezado', Layout, () => setActiveSection?.('header'), 'outline', activeSection === 'header')}
+                {renderActionButton('open-sections', 'Secciones', ListFilter, onOpenSections)}
+                {renderActionButton('open-annexes', 'Anexo', FileSpreadsheet, onOpenAnnexes)}
+                {renderActionButton('signature', 'Firmas', PenTool, () => setActiveSection?.('signature'), 'outline', activeSection === 'signature')}
+                {renderActionButton('all-content', 'Vista Consolidada', Zap, () => setActiveSection?.('all-content'), 'outline', activeSection === 'all-content')}
+              </AccordionGroup>
+
+              <AccordionGroup
+                title="Modos de Visualización"
+                icon={Eye}
+                isOpen={openGroups.includes('modos')}
+                onToggle={() => toggleGroup('modos')}
+              >
+                {renderActionButton('mode-expert', 'Completo', Table2, () => setViewMode?.('expert'), 'outline', viewMode === 'expert')}
+                {renderActionButton('mode-assisted', 'Asistido', Wand2, () => setViewMode?.('assisted'), 'outline', viewMode === 'assisted')}
+                {renderActionButton('mode-reading', 'Resumido', BookOpen, () => setViewMode?.('reading'), 'outline', viewMode === 'reading')}
+                {renderActionButton('mode-preview', 'Vistazo', Eye, () => setViewMode?.('preview'), 'outline', viewMode === 'preview')}
+                {renderActionButton('mode-audit', 'Audit', Activity, () => setViewMode?.('audit'), 'outline', viewMode === 'audit')}
+              </AccordionGroup>
+
+              <AccordionGroup
+                title="Inteligencia y Generación"
+                icon={Sparkles}
+                isOpen={openGroups.includes('generacion')}
+                onToggle={() => toggleGroup('generacion')}
+              >
+                {renderActionButton('ai-chat', 'Darian AI', Bot, () => setActiveSection?.('ai-chat'), 'primary', activeSection === 'ai-chat')}
+                {renderActionButton('quick-gen', 'Generar Rápida', Sparkles, onQuickGenerate)}
+                {renderActionButton('expert-gen', 'Generar Experta', Zap, onExpertGenerate)}
+                {renderActionButton('massive-gen', 'Generación Masiva', FileText, () => setActiveSection?.('massive-gen'), 'outline', activeSection === 'massive-gen')}
+              </AccordionGroup>
+
+              <AccordionGroup
+                title="Gestión y Plantillas"
+                icon={FolderOpen}
+                isOpen={openGroups.includes('gestion')}
+                onToggle={() => toggleGroup('gestion')}
+              >
+                {renderActionButton('templates', 'Explorar Plantillas', FolderOpen, () => setActiveSection?.('templates'), 'outline', activeSection === 'templates')}
+                {renderActionButton('load-example', 'Cargar Ejemplo', FileText)}
+                {renderActionButton('export-json', 'Guardar (JSON)', Save)}
+                {renderActionButton('import-json', 'Importar JSON', Upload)}
+                {renderActionButton('reset', 'Reiniciar Ficha', Trash2, undefined, 'danger')}
+              </AccordionGroup>
+
+              <AccordionGroup
+                title="Exportación y Formato"
+                icon={Download}
+                isOpen={openGroups.includes('export')}
+                onToggle={() => toggleGroup('export')}
+              >
+                <div className="px-3 py-4 space-y-4 bg-primary/5 rounded-xl mb-2 mx-2 border border-primary/10">
+                   <div className="text-[8px] font-black text-primary/70 tracking-[0.4em] uppercase">
+                      Modo de Diseño
+                   </div>
+                   <ViewSwitcher
+                     currentView={layoutMode}
+                     onViewChange={setLayoutMode}
+                     className="w-full bg-background border-border"
+                   />
+                </div>
+                {renderActionButton('export-excel', 'Exportar Excel', FileSpreadsheet, undefined, 'primary')}
+                {renderActionButton('export-pdf', 'Exportar PDF', Download, undefined, 'success')}
+              </AccordionGroup>
+
+              <AccordionGroup
+                title="Soporte y Herramientas"
+                icon={HelpCircle}
+                isOpen={openGroups.includes('soporte')}
+                onToggle={() => toggleGroup('soporte')}
+              >
+                {renderActionButton('calculator', 'Calculadora Pro', Calculator)}
+                {renderActionButton('help', 'Centro de Ayuda', HelpCircle, onOpenHelp)}
+              </AccordionGroup>
+
             </div>
 
             {/* Footer */}
             <div className="p-6 border-t border-sidebar-border/50 bg-sidebar/5">
-               <p className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground/50 text-center">
-                  CostPro Terminal v5.7
+               <p className="text-[9px] font-black uppercase tracking-[0.3em] text-muted-foreground/50 text-center">
+                  Soporte: info@costpro.app
                </p>
             </div>
           </motion.aside>

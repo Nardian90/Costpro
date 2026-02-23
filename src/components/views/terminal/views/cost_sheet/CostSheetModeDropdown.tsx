@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Table2, Wand2, BookOpen, Eye, Activity, ChevronDown, LucideIcon } from 'lucide-react';
+import { Table2, Wand2, BookOpen, Eye, Activity, ChevronDown, LucideIcon, BarChart3 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,7 +11,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
-export type CostSheetViewMode = 'expert' | 'assisted' | 'reading' | 'preview' | 'audit' | 'quick';
+export type CostSheetViewMode = 'kpis' | 'expert' | 'assisted' | 'reading' | 'preview' | 'audit' | 'quick';
 
 interface ModeConfig {
   id: CostSheetViewMode;
@@ -26,6 +26,7 @@ interface CostSheetModeDropdownProps {
 
 export function CostSheetModeDropdown({ viewMode, setViewMode }: CostSheetModeDropdownProps) {
   const modes: ModeConfig[] = [
+    { id: 'kpis', label: 'Tablero', icon: BarChart3 },
     { id: 'expert', label: 'Completo', icon: Table2 },
     { id: 'assisted', label: 'Asistido', icon: Wand2 },
     { id: 'reading', label: 'Resumido', icon: BookOpen },
