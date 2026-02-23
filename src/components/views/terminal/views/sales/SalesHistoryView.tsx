@@ -150,7 +150,7 @@ export default function SalesHistoryView() {
                           txn.status === 'pending' ? "bg-amber-500/10 text-amber-600" : "bg-destructive/10 text-destructive"
                         )}>
                           {txn.status === 'completed' ? 'Completada' :
-                           txn.status === 'pending' ? 'Pendiente' : 'Anulada'}
+                           txn.status === 'pending' ? 'Pendiente' : 'Anulado'}
                         </span>
                       </td>
                       <td className="p-4 text-center">
