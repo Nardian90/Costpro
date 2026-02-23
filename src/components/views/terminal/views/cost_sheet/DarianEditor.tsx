@@ -72,7 +72,6 @@ const repairJson = (jsonStr: string): any => {
         return JSON.parse(repaired);
     } catch (e) {
         try {
-            // Intento final: quitar coma final antes de cerrar
             const fallback = repaired.replace(/,\s*[}\]]$/, (m) => m.slice(1));
             return JSON.parse(fallback);
         } catch (e2) {
@@ -245,7 +244,9 @@ export const DarianEditor: React.FC<DarianEditorProps> = ({ sheetData, isFullVie
                         messages.map((msg, i) => (
                             <div key={i} className={cn("flex flex-col gap-2", msg.role === 'user' ? "items-end" : "items-start")}>
                                 <div className={cn("max-w-[95%] p-4 rounded-2xl text-[13px] font-bold leading-relaxed shadow-sm", msg.role === 'user' ? "bg-primary text-primary-foreground" : (isDark ? "bg-[#0D141C] border border-white/5" : "bg-slate-100 border-slate-200"))}>
-                                    <ReactMarkdown className="prose prose-sm dark:prose-invert">{msg.content}</ReactMarkdown>
+                                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                                    </div>
                                     {msg.updateData && <AnnexPreview data={msg.updateData} isDark={isDark} />}
                                 </div>
                                 {msg.updateData && (
