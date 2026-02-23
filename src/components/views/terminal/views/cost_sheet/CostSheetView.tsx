@@ -715,7 +715,7 @@ const CostSheetView = () => {
                     {activeSection === "ai-chat" && (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-[600px] flex flex-col">
                              <div className="flex-1">
-                                <DarianEditor sheetData={data} isFullView={true} />
+                                <DarianEditor sheetData={data} isFullView={true} onSectionChange={setActiveSection} />
                              </div>
                         </div>
                     )}
