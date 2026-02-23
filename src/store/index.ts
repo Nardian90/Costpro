@@ -22,21 +22,28 @@ interface AuthState {
   updateUser: (user: Partial<UserContract>) => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  token: null,
-  loading: true,
-  status: 'loading',
-  isMocked: false,
-  login: (user, token, status = 'authenticated_valid', isMocked = false) =>
-    set({ user, token, loading: false, status, isMocked }),
-  logout: () => set({ user: null, token: null, loading: false, status: 'unauthenticated', isMocked: false }),
-  setLoading: (loading) => set({ loading }),
-  setStatus: (status) => set({ status, loading: status === 'loading' }),
-  updateUser: (updatedFields) => set((state) => ({
-    user: state.user ? { ...state.user, ...updatedFields } : null
-  })),
-}));
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      user: null,
+      token: null,
+      loading: true,
+      status: 'loading',
+      isMocked: false,
+      login: (user, token, status = 'authenticated_valid', isMocked = false) =>
+        set({ user, token, loading: false, status, isMocked }),
+      logout: () => set({ user: null, token: null, loading: false, status: 'unauthenticated', isMocked: false }),
+      setLoading: (loading) => set({ loading }),
+      setStatus: (status) => set({ status, loading: status === 'loading' }),
+      updateUser: (updatedFields) => set((state) => ({
+        user: state.user ? { ...state.user, ...updatedFields } : null
+      })),
+    }),
+    {
+      name: 'auth-storage',
+    }
+  )
+);
 
 // --- UI Store ---
 export type ViewType = 'dashboard' | 'pos' | 'inventory' | 'recepcion' | 'reception_list' | 'transferencias' | 'sales' | 'inventory_count' | 'cost-sheets' | 'reports' | 'catalog' | 'history' | 'inventory_adjustments' | 'audit' | 'cash' | 'users' | 'roles' | 'stores' | 'settings' | 'help' | 'news' | 'rss_management' | 'ipv' | 'support_doc' | 'academy';
@@ -97,9 +104,9 @@ export const useUIStore = create<UIState>()(
       toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
       setIsCreateProductModalOpen: (open) => set({ isCreateProductModalOpen: open }),
+      setInitialProductName: (name) => set({ initialProductName: name }),
       setIsChatBotOpen: (open) => set({ isChatBotOpen: open }),
       setIsCalculatorOpen: (open) => set({ isCalculatorOpen: open }),
-      setInitialProductName: (name) => set({ initialProductName: name }),
       setLastQuery: (query, view) => set((state) => ({
         viewQueries: {
           ...state.viewQueries,
