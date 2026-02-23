@@ -183,6 +183,7 @@ const CostSheetView = () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 ...calculationResult,
+                sections: data.sections,
                 exportOptions: opts
             })
         });
