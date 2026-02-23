@@ -173,9 +173,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
           style={{
             height: logoHeight,
             opacity: logoOpacity,
-            overflow: 'hidden'
+            overflowX: 'auto'
           }}
-          className="border-b border-sidebar-border/50 shrink-0 bg-sidebar/5"
+          className="border-b border-sidebar-border/50 shrink-0 bg-sidebar/5 no-scrollbar"
         >
           <motion.div
             style={{ scale: logoScale }}
