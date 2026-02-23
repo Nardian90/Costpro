@@ -30,7 +30,7 @@ export default function StoresManagementView() {
     <>
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase">Sucursales</h2>
+          <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase text-[clamp(1.5rem,5vw,2rem)] font-black uppercase tracking-tighter text-primary"> Sucursales </h2>
           <ActionMenu
             actions={[
               { id: 'new', label: 'Nueva Sucursal', icon: Plus, onClick: handleCreateStore, variant: 'primary' }

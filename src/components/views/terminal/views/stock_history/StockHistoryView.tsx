@@ -48,7 +48,7 @@ export default function StockHistoryView({}: StockHistoryViewProps) {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-         <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase">Historial de Stock</h2>
+         <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase text-[clamp(1.5rem,5vw,2rem)] font-black uppercase tracking-tighter text-primary"> Historial de Stock </h2>
          <ActionMenu
             actions={[
               { id: 'refresh', label: 'Actualizar', icon: History, onClick: onRefresh, variant: 'primary' }

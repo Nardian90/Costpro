@@ -298,7 +298,7 @@ export default function InventoryCountView() {
           <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
             <ClipboardList className="w-7 h-7 text-primary" />
           </div>
-          <h2 className="text-2xl font-black text-foreground tracking-tighter uppercase leading-tight">Auditoría de Stock</h2>
+          <h2 className="text-2xl font-black text-foreground tracking-tighter uppercase leading-tight text-[clamp(1.5rem,5vw,2rem)] font-black uppercase tracking-tighter text-primary"> Auditoría de Stock </h2>
         </div>
         {!isMobile && (
           <ActionMenu
