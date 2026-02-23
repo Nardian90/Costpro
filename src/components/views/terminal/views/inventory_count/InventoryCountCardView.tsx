@@ -89,7 +89,7 @@ export default function InventoryCountCard({
               <div className="mt-6 flex items-center gap-2">
                 <button
                   onClick={() => onQuantityChange(product.id, Math.max(0, counted - 1))}
-                  className="neu-btn !p-3 hover:bg-danger/10 hover:text-danger group-active:scale-90 transition-all"
+                  className="neu-btn h-12 w-12 !p-3 hover:bg-danger/10 hover:text-danger group-active:scale-90 transition-all"
                 >
                   <Minus className="w-5 h-5" />
                 </button>
@@ -99,13 +99,13 @@ export default function InventoryCountCard({
                     type="number"
                     value={counted}
                     onChange={(e) => onQuantityChange(product.id, parseInt(e.target.value) || 0)}
-                    className="neu-input w-full text-center font-black text-xl text-primary bg-primary/5 border-primary/20 focus:ring-2 ring-primary/20"
+                    className="neu-input w-full h-12 text-center font-black text-xl text-primary bg-primary/5 border-primary/20 focus:ring-4 ring-primary/10 transition-all"
                   />
                 </div>
 
                 <button
                   onClick={() => onQuantityChange(product.id, counted + 1)}
-                  className="neu-btn !p-3 hover:bg-success/10 hover:text-success group-active:scale-90 transition-all"
+                  className="neu-btn h-12 w-12 !p-3 hover:bg-success/10 hover:text-success group-active:scale-90 transition-all"
                 >
                   <Plus className="w-5 h-5" />
                 </button>
