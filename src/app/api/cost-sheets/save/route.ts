@@ -37,6 +37,15 @@ export async function POST(req: NextRequest) {
         baseData = JSON.parse(JSON.stringify(reinicioTemplate));
     }
 
+    // Mapping for default classifications based on Annex ID
+    const defaultClassifications: Record<string, string> = {
+        'I': '1.1.1',
+        'II': '2.1.1',
+        'III': '3.1.1',
+        'IV': '3.2',
+        'V': '3.7'
+    };
+
     // Apply updates from AI with robust matching
     if (updateData.annexes && Array.isArray(updateData.annexes)) {
       updateData.annexes.forEach((update: any, updateIdx: number) => {
@@ -89,8 +98,10 @@ export async function POST(req: NextRequest) {
                     }
                 }
 
-                // Ensure classification exists
-                if (!normalized.classification) normalized.classification = annex.id;
+                // Ensure classification exists and matches the required section sub-rows
+                if (!normalized.classification || normalized.classification === annex.id) {
+                    normalized.classification = defaultClassifications[annex.id] || annex.id;
+                }
 
                 return normalized;
             });
