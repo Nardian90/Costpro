@@ -1,14 +1,13 @@
 'use client';
 
 import React from 'react';
-import { DollarSign, CreditCard, Eye } from 'lucide-react';
+import { DollarSign, CreditCard, Eye, RefreshCcw, Copy, Calculator, CheckSquare, Square } from 'lucide-react';
 import { cn, formatCurrency, formatDate, formatTime } from '@/lib/utils';
 import SearchBar from '@/components/ui/SearchBar';
 import { StateRenderer } from '@/components/ui/StateRenderer';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSalesHistoryView } from './useSalesHistoryView';
 import { TransactionDetailsModal } from './TransactionDetailsModal';
-import { Calculator, CheckSquare, Square } from 'lucide-react';
 import { TaxCalculationModal } from './TaxCalculationModal';
 
 const SalesLoadingSkeleton = () => (
@@ -37,7 +36,10 @@ export default function SalesHistoryView() {
     toggleAll,
     selectedTransactions,
     isTaxModalOpen,
-    setIsTaxModalOpen
+    setIsTaxModalOpen,
+    handleInvert,
+    handleDuplicate,
+    isInverting
   } = useSalesHistoryView();
 
   const allIds = transactions.map(t => t.id);
@@ -152,13 +154,36 @@ export default function SalesHistoryView() {
                         </span>
                       </td>
                       <td className="p-4 text-center">
-                        <button
-                          onClick={() => handleViewDetails(txn)}
-                          className="w-8 h-8 inline-flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-white transition-all active:scale-95"
-                          aria-label="Ver detalles"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => handleViewDetails(txn)}
+                            className="w-8 h-8 inline-flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-white transition-all active:scale-95"
+                            title="Ver detalles"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => {
+                                handleViewDetails(txn); // Para cargar los items
+                                setTimeout(() => handleInvert(txn), 500);
+                            }}
+                            className="w-8 h-8 inline-flex items-center justify-center rounded-lg border border-border hover:bg-destructive hover:text-white transition-all active:scale-95"
+                            title="Invertir Venta (Devolución)"
+                            disabled={txn.status === 'voided' || isInverting}
+                          >
+                            <RefreshCcw className={cn("w-4 h-4", isInverting && "animate-spin")} />
+                          </button>
+                          <button
+                            onClick={() => {
+                                handleViewDetails(txn); // Para cargar los items
+                                setTimeout(() => handleDuplicate(txn), 500);
+                            }}
+                            className="w-8 h-8 inline-flex items-center justify-center rounded-lg border border-border hover:bg-amber-500 hover:text-white transition-all active:scale-95"
+                            title="Duplicar Venta"
+                          >
+                            <Copy className="w-4 h-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
