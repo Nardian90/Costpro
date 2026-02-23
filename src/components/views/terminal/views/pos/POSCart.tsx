@@ -231,7 +231,7 @@ export const POSCart = ({
     initial: isMobile ? { y: '100%' } : { x: 300, opacity: 0 },
     animate: isMobile ? { y: 0 } : { x: 0, opacity: 1 },
     exit: isMobile ? { y: '100%' } : { x: 300, opacity: 0 },
-    transition: { type: 'spring', damping: 25, stiffness: 200 }
+    transition: { type: 'spring', damping: 25, stiffness: 200 } as const
   };
 
   return (
