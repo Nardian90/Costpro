@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Warehouse, Eye, Calendar, Building2, FileText, Pencil, Trash2 } from 'lucide-react';
+import { Warehouse, Eye, Calendar, Building2, FileText, Pencil, Trash2, RefreshCcw, Copy } from 'lucide-react';
 import { cn, formatCurrency, formatDate, formatTime } from '@/lib/utils';
 import { toast } from 'sonner';
 import SearchBar from '@/components/ui/SearchBar';
@@ -34,6 +34,9 @@ export default function ReceptionsHistoryView() {
     isLoading,
     handleViewDetails,
     handleCloseDetails,
+    handleInvert,
+    handleDuplicate,
+    isInverting,
     handleExportCSV,
     receiptItems,
     loadingDetails
@@ -164,18 +167,32 @@ export default function ReceptionsHistoryView() {
                             <Eye className="w-4 h-4" />
                           </button>
                           <button
+                            onClick={() => {
+                                handleViewDetails(rec);
+                                setTimeout(() => handleInvert(rec), 500);
+                            }}
+                            className="w-8 h-8 inline-flex items-center justify-center rounded-lg border border-border hover:bg-destructive hover:text-white transition-all active:scale-95"
+                            title="Invertir Recepción (Disminución)"
+                            disabled={rec.status === 'voided' || isInverting}
+                          >
+                            <RefreshCcw className={cn("w-4 h-4", isInverting && "animate-spin")} />
+                          </button>
+                           <button
+                            onClick={() => {
+                                handleViewDetails(rec);
+                                setTimeout(() => handleDuplicate(rec), 500);
+                            }}
+                            className="w-8 h-8 inline-flex items-center justify-center rounded-lg border border-border hover:bg-amber-500 hover:text-white transition-all active:scale-95"
+                            title="Duplicar Recepción"
+                          >
+                            <Copy className="w-4 h-4" />
+                          </button>
+                          <button
                             onClick={() => handleEdit(rec.id)}
                             className="w-8 h-8 inline-flex items-center justify-center rounded-lg border border-border hover:bg-amber-500 hover:text-white transition-all active:scale-95 priority-low"
                             title="Editar"
                           >
                             <Pencil className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(rec.id)}
-                            className="w-8 h-8 inline-flex items-center justify-center rounded-lg border border-border hover:bg-destructive hover:text-white transition-all active:scale-95 priority-low"
-                            title="Eliminar"
-                          >
-                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
