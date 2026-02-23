@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ShoppingCart, Search, X, Trash2 } from 'lucide-react';
+import { ShoppingCart, Search, X, Trash2, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import SearchBar from '@/components/ui/SearchBar';
@@ -110,6 +110,7 @@ export default function POSView() {
 
   const [showCart, setShowCart] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [selectedProductForVariants, setSelectedProductForVariants] = useState<Product | null>(null);
   const isMobile = useIsMobile();
   const { filteredProducts, categories, selectedCategory, handleCategoryChange, isPending } = usePOSProducts(products, searchTerm);
@@ -129,6 +130,12 @@ export default function POSView() {
     } else {
       toast.error(`Producto con SKU ${sku} no encontrado`);
     }
+  };
+
+  const handleClearCart = () => {
+    clearCart();
+    setShowClearConfirm(false);
+    toast.success('Carrito vaciado');
   };
 
   const cartButton = (
@@ -170,10 +177,7 @@ export default function POSView() {
       icon: Trash2,
       onClick: () => {
         if (getItemCount() > 0) {
-          if (confirm('¿Estás seguro de vaciar el carrito?')) {
-            clearCart();
-            toast.success('Carrito vaciado');
-          }
+          setShowClearConfirm(true);
         }
       },
       category: 'Edición',
@@ -202,7 +206,7 @@ export default function POSView() {
               items={items}
               onRemoveItem={removeItem}
               onUpdateQuantity={updateQuantity}
-              onClearCart={clearCart}
+              onClearCart={() => setShowClearConfirm(true)}
               getSubtotal={getSubtotal}
               getDiscountAmount={getDiscountAmount}
               getTaxAmount={getTaxAmount}
@@ -229,7 +233,7 @@ export default function POSView() {
           onOpenChange={setShowPriceWarning}
           title={
             <div className="text-amber-500 flex items-center gap-2">
-               ⚠ Advertencia de Precio
+               <AlertTriangle className="w-5 h-5" /> Advertencia de Precio
             </div>
           }
           maxWidth="sm:max-w-md"
@@ -243,7 +247,7 @@ export default function POSView() {
               <PrimaryButton
                 onClick={confirmUnpricedCheckout}
                 label="Confirmar Facturación"
-                className="flex-1 bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/20"
+                className="flex-1 bg-amber-500 hover:bg-amber-600 text-primary-foreground shadow-amber-500/20"
               />
             </>
           }
@@ -261,6 +265,40 @@ export default function POSView() {
                 Esta acción quedará registrada en la auditoría del sistema.
               </p>
             </div>
+        </BaseModal>
+
+        {/* Modal de Confirmación de Limpieza de Carrito */}
+        <BaseModal
+          open={showClearConfirm}
+          onOpenChange={setShowClearConfirm}
+          title="Vaciar Carrito"
+          maxWidth="sm:max-w-md"
+          footer={
+            <>
+              <SecondaryButton
+                onClick={() => setShowClearConfirm(false)}
+                label="No, volver"
+                className="flex-1"
+              />
+              <PrimaryButton
+                onClick={handleClearCart}
+                label="Sí, vaciar"
+                className="flex-1 bg-destructive text-destructive-foreground shadow-destructive/20"
+              />
+            </>
+          }
+        >
+          <div className="py-6 text-center space-y-4">
+            <div className="w-16 h-16 bg-destructive/10 text-destructive rounded-full flex items-center justify-center mx-auto mb-4">
+              <Trash2 className="w-8 h-8" />
+            </div>
+            <p className="font-bold text-foreground">
+              ¿Estás seguro de que deseas vaciar el carrito?
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Esta acción no se puede deshacer y todos los productos seleccionados se eliminarán.
+            </p>
+          </div>
         </BaseModal>
 
         <div className="flex-1 w-full space-y-4 sm:space-y-6 lg:order-first">
