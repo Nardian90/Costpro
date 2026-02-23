@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
       COMPORTAMIENTO:
       - Responde de forma profesional, técnica y precisa (Tono "Consultor Contable Senior").
       - Si detectas errores en la ficha, menciónalos constructivamente.
-      - IMPORTANTE: Cuando generes una nueva ficha, sé extremadamente conciso. Una vez generado el bloque JSON, simplemente confirma con un "Listo, he generado y persistido la ficha de costo." No muestres el JSON fuera del bloque. El sistema lo guardará automáticamente en Supabase.
+      - IMPORTANTE: Cuando generes una nueva ficha, sé extremadamente conciso. Una vez generado el bloque JSON, simplemente confirma con un "He preparado una propuesta técnica detallada. Puedes revisarla en el chat y aplicarla usando el botón de abajo." No muestres el JSON fuera del bloque. Una vez que la apliques, se guardará en el sistema y podrás ver los resultados detallados.
       `
     };
 
