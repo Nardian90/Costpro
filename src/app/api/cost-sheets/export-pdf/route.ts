@@ -6,7 +6,10 @@ export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
   try {
-    const { result, exportOptions } = await req.json();
+    const body = await req.json();
+    const result = body.result || body;
+    const exportOptions = body.exportOptions || {};
+
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
     const pageHeight = doc.internal.pageSize.height;
@@ -14,8 +17,10 @@ export async function POST(req: NextRequest) {
     const isPro = exportOptions.pdfFormat === 'pro';
     const primaryColor: [number, number, number] = [26, 82, 118]; // Pro Blue
 
-    const safeLocale = (val: number) =>
-        val.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const safeLocale = (val: number) => {
+        if (typeof val !== 'number') return '0,00';
+        return val.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
 
     const translate = (key: string) => {
         const dict: Record<string, string> = {
@@ -23,6 +28,7 @@ export async function POST(req: NextRequest) {
             'label': 'Concepto',
             'total': 'Total',
             'v_historico': 'V. Histórico',
+            'valorhistorico': 'V. Histórico',
             'um': 'UM',
             'cantidad': 'Cant.',
             'precio': 'Precio',
@@ -32,7 +38,7 @@ export async function POST(req: NextRequest) {
     };
 
     const addHeader = (pdf: jsPDF, title: string) => {
-        const h = result.metadata?.header || {};
+        const h = result.metadata?.header || result.header || {};
 
         pdf.setDrawColor(200);
         pdf.rect(14, 10, 12, 12);
@@ -74,10 +80,10 @@ export async function POST(req: NextRequest) {
 
         pdf.setTextColor(0);
         pdf.setFont("helvetica", "normal");
-        pdf.text(h.name || result.fichaName || "-", 14, 35);
-        pdf.text(h.code || result.fichaId || "-", 55, 35);
+        pdf.text(h.name || result.fichaName || result.name || "-", 14, 35);
+        pdf.text(h.code || result.fichaId || result.id || "-", 55, 35);
         pdf.text(h.unit || "-", 95, 35);
-        pdf.text(String(h.quantity || 1), 135, 35);
+        pdf.text(String(h.quantity || result.meta?.quantity || 1), 135, 35);
 
         pdf.setTextColor(120);
         pdf.setFont("helvetica", "bold");
@@ -91,8 +97,8 @@ export async function POST(req: NextRequest) {
         pdf.text(h.destination || "-", 55, 44);
         pdf.text(h.currency || "CUP", 95, 44);
 
-        const r14 = result.rows.find((r: any) => r.classification === '14');
-        const r16_1 = result.rows.find((r: any) => r.classification === '16.1');
+        const r14 = (result.rows || []).find((r: any) => r.classification === '14' || r.id === '14');
+        const r16_1 = (result.rows || []).find((r: any) => r.classification === '16.1' || r.id === '16.1');
         const finalPrice = r16_1?.total || r14?.total || 0;
 
         if (finalPrice > 0) {
@@ -116,17 +122,17 @@ export async function POST(req: NextRequest) {
 
     if (exportOptions.includeTable) {
         const headers = ['CÓDIGO', 'CONCEPTO', 'UM', 'V. HISTÓRICO', 'TOTAL'];
-        const body = result.rows
+        const body = (result.rows || [])
             .filter((r: any) => {
                 if (exportOptions.skipZeros && r.total === 0) return false;
                 return true;
             })
             .map((r: any) => [
-                r.classification,
+                r.classification || r.id,
                 r.label,
-                r.um || '-',
-                safeLocale(r.v_historico || 0),
-                safeLocale(r.total)
+                r.um || r.unit || '-',
+                safeLocale(r.valorHistorico ?? r.calculatedVH ?? r.v_historico ?? 0),
+                safeLocale(r.total ?? 0)
             ]);
 
         autoTable(doc, {
@@ -161,15 +167,16 @@ export async function POST(req: NextRequest) {
             margin: { top: 45, left: 14, right: 14 },
             didParseCell: (data) => {
                 const rowIndex = data.row.index;
-                const r = result.rows[rowIndex];
+                const r = (result.rows || [])[rowIndex];
                 if (r && data.section === 'body') {
-                    const level = (r.classification.match(/\./g) || []).length;
-                    const labelLower = r.label.toLowerCase();
+                    const classStr = String(r.classification || r.id || '');
+                    const level = (classStr.match(/\./g) || []).length;
+                    const labelLower = (r.label || '').toLowerCase();
                     const isVenta = labelLower.includes('venta');
                     const isCosto = labelLower.includes('costo');
                     const isUtilidad = labelLower.includes('utilidad');
                     const isImpuesto = labelLower.includes('imp s/') || labelLower.includes('impuesto');
-                    const isSpecial = isVenta || isCosto || isUtilidad || isImpuesto || ['13', '13.1', '13.2', '14', '19', '20'].includes(r.classification);
+                    const isSpecial = isVenta || isCosto || isUtilidad || isImpuesto || ['13', '13.1', '13.2', '14', '19', '20'].includes(classStr);
 
                     if (data.column.index === 1) { // CONCEPTO
                         data.cell.styles.cellPadding = { left: 2 + (level * 4) };
@@ -193,7 +200,7 @@ export async function POST(req: NextRequest) {
                             data.cell.styles.textColor = [180, 0, 0];
                             data.cell.styles.fillColor = [255, 248, 248];
                         }
-                        if (['14', '20'].includes(r.classification) || labelLower.includes('total')) {
+                        if (['14', '20'].includes(classStr) || labelLower.includes('total')) {
                             data.cell.styles.lineWidth = { top: 0.1, bottom: 0.3 };
                         }
                     }
@@ -213,16 +220,13 @@ export async function POST(req: NextRequest) {
                         pdf.setLineDashPattern([], 0);
                     }
                 }
-            },
-            didDrawPage: (data) => {
-                // Header already added by custom call if needed, but AutoTable can do it too.
             }
         });
         currentY = (doc as any).lastAutoTable.finalY + 10;
         isFirstPage = false;
     }
 
-    const selectedAnnexes = result.anexos.filter((a: any) => exportOptions.includeAnnexes.includes(a.id));
+    const selectedAnnexes = (result.anexos || []).filter((a: any) => exportOptions.includeAnnexes?.includes(a.id));
     for (const annex of selectedAnnexes) {
         if (currentY > pageHeight - 60) {
             doc.addPage();
@@ -240,8 +244,17 @@ export async function POST(req: NextRequest) {
         currentY += 4;
 
         if (annex.rows && annex.rows.length > 0) {
-            const headers = Object.keys(annex.rows[0]).filter(k => k !== 'importe');
-            const body = annex.rows.map((r: any) => headers.map(h => r[h]));
+            const allKeys = Object.keys(annex.rows[0]);
+            const headers = allKeys.filter(k => k !== 'importe' && k !== 'total' && k !== 'id');
+            // If amount or total exists, add it at the end
+            if (allKeys.includes('importe')) headers.push('importe');
+            else if (allKeys.includes('total')) headers.push('total');
+
+            const body = annex.rows.map((r: any) => headers.map(h => {
+                const val = r[h];
+                if (typeof val === 'number') return safeLocale(val);
+                return val;
+            }));
 
             autoTable(doc, {
                 startY: currentY,
@@ -266,8 +279,8 @@ export async function POST(req: NextRequest) {
     }
 
     const pdfBuffer = doc.output('arraybuffer');
-    const h = result.metadata?.header || {};
-    const safeFilename = `ficha-${h.code || result.fichaId || 'export'}.pdf`.replace(/[\\/\?%*:|"<>]/g, '-');
+    const h = result.metadata?.header || result.header || {};
+    const safeFilename = `ficha-${h.code || result.fichaId || result.id || 'export'}.pdf`.replace(/[\\/\?%*:|"<>]/g, '-');
 
     return new NextResponse(pdfBuffer, {
       headers: {

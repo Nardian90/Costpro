@@ -48,6 +48,7 @@ const CostSheetView = () => {
     modificationRow: '13.1'
   });
   const [quickModeProducts, setQuickModeProducts] = React.useState<any[] | null>(null);
+  const [isQuickModeGenerating, setIsQuickModeGenerating] = React.useState(false);
 
   const handleSetActiveSection = (id: string) => {
     setActiveSection(id);
@@ -325,48 +326,17 @@ const CostSheetView = () => {
   }, [data, calculatedHeader, isBlocked]);
 
     const handleQuickGenerate = React.useCallback((rows: any[]) => {
-    if (rows.length > 1) {
         setQuickModeProducts(rows.map(r => ({
             name: r.product,
             sku: `QM-${r.id}`,
             unit_of_measure: r.um,
             price: r.cost,
-            quantity: r.quantity
+            quantity: r.quantity,
+            sale_price: r.sale_price
         })));
-        setActiveSection("massive-gen");
-        setViewMode("expert");
-        toast.info(`Iniciando generación masiva para ${rows.length} productos`);
-        return;
-    }
-    // 1. Get original template as base
-    const baseTemplate = JSON.parse(JSON.stringify(data));
-
-    // 2. Clear relevant data
-    baseTemplate.header.name = rows[0].product;
-    baseTemplate.header.code = `QS-${Date.now().toString().slice(-4)}`;
-    baseTemplate.header.quantity = rows[0].quantity;
-    baseTemplate.header.unit = rows[0].um;
-
-    // 3. Map rows to Annex I
-    const annexI = baseTemplate.annexes.find((a: any) => a.id === 'I');
-    if (annexI) {
-        annexI.data = rows.map((r, idx) => ({
-            classification: "1.1",
-            code: `ITM-${idx+1}`,
-            description: r.product,
-            um: r.um,
-            consumption_norm: r.quantity,
-            price: r.cost,
-            total: r.quantity * r.cost
-        }));
-    }
-
-    // 4. Update the sheet
-    setSheet(baseTemplate);
-    setViewMode('expert');
-    setActiveSection('kpis');
-    toast.success("Ficha generada exitosamente en modo experto");
-  }, [data, setSheet, setActiveSection, setViewMode]);
+        setIsQuickModeGenerating(true);
+        toast.info(`Iniciando generación para ${rows.length} productos`);
+    }, []);
 
   const { setCurrentView, setIsChatBotOpen, setIsCalculatorOpen } = useUIStore();
 
@@ -397,7 +367,7 @@ const CostSheetView = () => {
     { id: 'export-json', label: 'Guardar', icon: Save, onClick: handleExportJSON, variant: 'outline' as const, disabled: false },
     { id: 'export-excel', label: 'Excel', icon: FileSpreadsheet, onClick: handleExportExcel, variant: (isBlocked ? 'outline' : 'primary') as any, disabled: false },
     { id: 'export-pdf', label: 'PDF', icon: Download, onClick: () => setIsExportModalOpen(true), variant: (isBlocked ? 'outline' : 'success') as any, disabled: false },
-    { id: 'massive-gen', label: 'Gen. Masiva', icon: FileText, onClick: () => { setActiveSection('massive-gen'); setIsActionsPanelOpen(false); }, variant: 'outline' as const },
+    { id: 'massive-gen', label: 'Gen. Masiva', icon: FileText, onClick: () => { setIsQuickModeGenerating(true); setIsActionsPanelOpen(false); }, variant: 'outline' as const },
     {
         id: 'calculator',
         label: 'Calculadora',
@@ -510,7 +480,7 @@ const CostSheetView = () => {
         onOpenAnnexes={onOpenAnnexes}
         onOpenHelp={() => setIsHelpPanelOpen(true)}
         onQuickGenerate={() => setViewMode('quick')}
-        onExpertGenerate={() => { setActiveSection('massive-gen'); setViewMode('expert'); }}
+        onExpertGenerate={() => { setIsQuickModeGenerating(true); setViewMode('expert'); }}
       />
 
       <CostSheetSidebarNav
@@ -611,7 +581,7 @@ const CostSheetView = () => {
                         onExportExcel={handleExportExcel}
                         onExportPdf={() => setIsExportModalOpen(true)}
                         onQuickGenerate={() => setViewMode('quick')}
-                        onExpertGenerate={() => { setActiveSection('massive-gen'); setViewMode('expert'); }}
+                        onExpertGenerate={() => { setIsQuickModeGenerating(true); setViewMode('expert'); }}
                     />
                 </div>
 
@@ -759,8 +729,8 @@ const CostSheetView = () => {
                />
           )}
 
-          {viewMode === 'quick' && (
-              <CostSheetQuickMode onGenerate={handleQuickGenerate} mapping={quickModeMapping} onMappingChange={setQuickModeMapping} />
+          {viewMode === 'quick' && ( isQuickModeGenerating ? ( <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-5xl mx-auto"> <div className="mb-4 flex justify-start"> <Button variant="ghost" size="sm" onClick={() => setIsQuickModeGenerating(false)} className="rounded-xl font-bold uppercase tracking-widest text-[10px] text-muted-foreground hover:text-primary"> <ArrowLeft className="w-3.5 h-3.5 mr-2" /> Volver a Lista </Button> </div> <CostSheetMassiveGenerator isSection={true} initialProducts={quickModeProducts || undefined} initialMapping={quickModeMapping} onClose={() => setIsQuickModeGenerating(false)} /> </div> ) : (
+              <CostSheetQuickMode onGenerate={handleQuickGenerate} mapping={quickModeMapping} onMappingChange={setQuickModeMapping} /> )
           )}
         </div>
       ) : (
