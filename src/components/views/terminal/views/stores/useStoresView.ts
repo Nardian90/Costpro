@@ -1,4 +1,3 @@
-
 'use client'
 
 import { useState, useMemo } from 'react';
@@ -10,7 +9,7 @@ import { logger } from '@/lib/logger';
 import { storeService } from '@/services/store-service';
 import { userService } from '@/services/user-service';
 
-export type StoreFormMode = 'create' | 'edit' | 'delete' | null;
+export type StoreFormMode = 'create' | 'edit' | 'delete' | 'reset' | null;
 
 export function useStoresView() {
     const { user } = useAuthStore();
@@ -60,6 +59,9 @@ export function useStoresView() {
             } else if (mode === 'delete' && selectedStore) {
                 await storeService.deleteStore(selectedStore.id);
                 toast.success('Tienda eliminada');
+            } else if (mode === 'reset' && selectedStore) {
+                await storeService.resetStore(selectedStore.id);
+                toast.success('Tienda reiniciada exitosamente');
             }
             setStoreFormMode(null);
             setSelectedStore(null);
@@ -88,6 +90,11 @@ export function useStoresView() {
         setStoreFormMode('delete');
     };
 
+    const handleResetStore = (store: Store) => {
+        setSelectedStore(store);
+        setStoreFormMode('reset');
+    };
+
     const handleCloseModal = () => {
         setSelectedStore(null);
         setStoreFormMode(null);
@@ -113,6 +120,7 @@ export function useStoresView() {
         handleEditStore,
         handleCreateStore,
         handleDeleteStore,
+        handleResetStore,
         handleCloseModal
     };
 }

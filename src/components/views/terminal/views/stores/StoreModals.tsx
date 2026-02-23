@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Store } from '@/types';
 import { StoreFormMode } from './useStoresView';
+import { AlertTriangle } from 'lucide-react';
 
 interface StoreModalsProps {
     mode: StoreFormMode;
@@ -45,34 +46,66 @@ export function StoreModals({
 
     if (!mode) return null;
 
+    const getTitle = () => {
+        switch (mode) {
+            case 'edit': return 'Editar Tienda';
+            case 'create': return 'Nueva Tienda';
+            case 'delete': return 'Eliminar Tienda';
+            case 'reset': return 'Reiniciar Tienda';
+            default: return '';
+        }
+    };
+
+    const getDescription = () => {
+        switch (mode) {
+            case 'delete': return '¿Estás seguro de que deseas eliminar esta tienda?';
+            case 'reset': return 'Esta acción borrará TODO el catálogo, ventas, recepciones y movimientos de esta tienda. NO se tocarán usuarios ni permisos.';
+            default: return 'Completa los datos de la sucursal.';
+        }
+    };
+
     return (
         <BaseModal
             open={isOpen}
             onOpenChange={(open) => !open && onClose()}
             title={
                 <span className="text-[clamp(1.25rem,4vw,1.5rem)] font-black uppercase tracking-tighter text-primary">
-                    {mode === 'edit' ? 'Editar Tienda' : mode === 'create' ? 'Nueva Tienda' : 'Eliminar Tienda'}
+                    {getTitle()}
                 </span>
             }
             description={
                 <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70">
-                    {mode === 'delete' ? '¿Estás seguro de que deseas eliminar esta tienda?' : 'Completa los datos de la sucursal.'}
+                    {getDescription()}
                 </span>
             }
             footer={
-                mode === 'delete' ? (
+                (mode === 'delete' || mode === 'reset') ? (
                     <div className="flex gap-2 w-full sm:w-auto">
                         <Button variant="outline" onClick={onClose} disabled={isSubmitting} className="flex-1 sm:flex-none h-11">
                             Cancelar
                         </Button>
-                        <Button variant="destructive" onClick={() => onSubmit('delete', {})} disabled={isSubmitting} className="flex-1 sm:flex-none h-11 font-bold uppercase tracking-widest text-xs">
-                            {isSubmitting ? 'Eliminando...' : 'Eliminar'}
+                        <Button
+                            variant={mode === 'delete' ? 'destructive' : 'default'}
+                            onClick={() => onSubmit(mode, {})}
+                            disabled={isSubmitting}
+                            className={`flex-1 sm:flex-none h-11 font-bold uppercase tracking-widest text-xs ${mode === 'reset' ? 'bg-orange-600 hover:bg-orange-700 text-white border-none' : ''}`}
+                        >
+                            {isSubmitting ? (mode === 'delete' ? 'Eliminando...' : 'Reiniciando...') : (mode === 'delete' ? 'Eliminar' : 'Reiniciar')}
                         </Button>
                     </div>
                 ) : null
             }
         >
-            {mode !== 'delete' && (
+            {mode === 'reset' && (
+                <div className="py-4 px-4 rounded-xl bg-orange-500/10 border border-orange-500/20 flex gap-4 items-center mb-4 mt-4">
+                    <AlertTriangle className="w-8 h-8 text-orange-500 shrink-0" />
+                    <p className="text-[10px] font-black uppercase tracking-widest text-orange-600 leading-tight">
+                        ADVERTENCIA: Esta operación es irreversible y afectará a todos los datos operativos de la sucursal {selectedStore?.name}.
+                    </p>
+                </div>
+            )}
+
+            {mode !== 'delete' && mode !== 'reset' && (
                 <form onSubmit={handleSubmit} className="grid gap-6 py-4">
                     <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
                         <Label htmlFor="name" className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
