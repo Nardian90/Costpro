@@ -96,7 +96,7 @@ export const productSchema = z.object({
   id: resilientUuid.pipe(z.string().regex(uuidRegex)).catch(''),
   name: z.string().min(1, "El nombre es obligatorio"),
   description: z.string().nullable().optional(),
-  sku: z.preprocess((val) => val === '' ? null : val, z.string().nullable().optional()),
+  sku: z.string().min(1, 'El SKU es obligatorio'),
   price: z.coerce.number().min(0).optional().default(0),
   cost_price: z.coerce.number().min(0).optional().default(0),
   image_url: z.string().nullable().optional(),
