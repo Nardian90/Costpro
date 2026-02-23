@@ -954,14 +954,14 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
                     </Button>
                 ) : (
                     <>
-                        {!isSection && (
+                        {onClose && (
                             <Button
                                 variant="outline"
                                 onClick={onClose}
                                 disabled={isProcessing}
                                 className="rounded-2xl border-sidebar-border hover:bg-sidebar/50"
                             >
-                                Cerrar
+                                {isSection ? "Volver" : "Cerrar"}
                             </Button>
                         )}
                         <Button
