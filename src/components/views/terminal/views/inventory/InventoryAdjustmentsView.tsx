@@ -12,7 +12,9 @@ import { toast } from 'sonner';
 
 export default function InventoryAdjustmentsView() {
   const { user } = useAuthStore();
-  const { data: movementsData, isLoading, refetch } = useStockMovements(user?.storeId, user?.role === 'admin');
+  // Usamos el mismo storeId que el resto de la app
+  const currentStoreId = user?.activeStoreId || user?.storeId;
+  const { data: movementsData, isLoading, refetch } = useStockMovements(currentStoreId, user?.role === 'admin');
   const [searchTerm, setSearchTerm] = useState('');
 
   const onRefresh = () => {
@@ -20,14 +22,13 @@ export default function InventoryAdjustmentsView() {
     toast.success('Historial de ajustes actualizado.');
   };
 
-  // Filtramos solo aquellos movimientos que provienen de inversiones
-  // Asumimos que el motivo o el tipo contienen 'INVERSION' o son ajustes manuales específicos
   const adjustments = (movementsData || []).filter(mov => {
-    // Aquí filtramos por la lógica solicitada: solo ajustes de ventas o recepciones (inversiones)
-    // Buscamos en reference_doc o movement_type si el RPC los marca ahí
-    const isInversion =
-      (mov.reference_doc && mov.reference_doc.includes('INVERSION')) ||
-      (mov.movement_type === 'SALE_INVERSION' || mov.movement_type === 'RECEPTION_INVERSION');
+    // Filtramos por 'INVERSION' en el documento de referencia o en el tipo de movimiento
+    // Agregamos una comprobación más amplia para asegurar que los registros aparezcan
+    const refDoc = mov.reference_doc?.toUpperCase() || '';
+    const movType = mov.movement_type?.toUpperCase() || '';
+
+    const isInversion = refDoc.includes('INVERSION') || movType.includes('INVERSION');
 
     if (!isInversion) return false;
 
@@ -35,8 +36,9 @@ export default function InventoryAdjustmentsView() {
     const term = searchTerm.toLowerCase();
     const productName = mov.product?.name?.toLowerCase() || '';
     const productSku = mov.product?.sku?.toLowerCase() || '';
-    const refDoc = mov.reference_doc?.toLowerCase() || '';
-    return productName.includes(term) || productSku.includes(term) || refDoc.includes(term);
+    const refDocLower = refDoc.toLowerCase();
+
+    return productName.includes(term) || productSku.includes(term) || refDocLower.includes(term);
   });
 
   return (
@@ -107,6 +109,7 @@ export default function InventoryAdjustmentsView() {
           <div className="text-center py-24 rounded-2xl border-2 border-dashed border-border bg-muted/5">
             <History className="w-16 h-16 mx-auto mb-4 opacity-5" />
             <p className="font-black uppercase tracking-widest text-xs text-muted-foreground">No se encontraron ajustes de inversiones</p>
+            <p className="text-[10px] text-muted-foreground mt-2">ASEGÚRATE DE HABER INVERTIDO UNA VENTA O RECEPCIÓN</p>
           </div>
         )}
       </div>
