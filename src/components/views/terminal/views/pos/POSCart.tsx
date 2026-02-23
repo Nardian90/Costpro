@@ -156,7 +156,7 @@ export const POSCart = ({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-8 max-w-2xl mx-auto w-full"
+      className="flex-1 flex flex-col items-center justify-start pt-12 sm:pt-20 p-6 text-center space-y-8 max-w-2xl mx-auto w-full overflow-y-auto no-scrollbar"
       id="sale-success-content"
     >
       <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center shadow-xl shadow-green-500/20 relative">
@@ -226,24 +226,27 @@ export const POSCart = ({
     </motion.div>
   );
 
-  const Container = isMobile ? 'div' : motion.div;
-  const containerProps = isMobile ? {} : {
-    initial: { x: 300, opacity: 0 },
-    animate: { x: 0, opacity: 1 },
-    exit: { x: 300, opacity: 0 }
+  const Container = motion.div;
+  const containerProps = {
+    initial: isMobile ? { y: '100%' } : { x: 300, opacity: 0 },
+    animate: isMobile ? { y: 0 } : { x: 0, opacity: 1 },
+    exit: isMobile ? { y: '100%' } : { x: 300, opacity: 0 },
+    transition: { type: 'spring', damping: 25, stiffness: 200 }
   };
 
   return (
     <Container
       {...containerProps}
       className={cn(
-        "fixed inset-0 z-[100] bg-background flex flex-col overflow-hidden",
+        isMobile
+          ? "fixed inset-0 z-[100] bg-background flex flex-col overflow-hidden"
+          : "w-full lg:w-[450px] sticky top-[100px] h-[calc(100vh-160px)] flex flex-col overflow-hidden rounded-[2.5rem] border border-border bg-card shadow-2xl relative z-20",
         isEasyReading && "text-xl"
       )}
     >
       <div className={cn(
-        "flex-1 flex flex-col w-full max-w-5xl mx-auto bg-card shadow-2xl",
-        isMobile ? "" : "my-0 border-x border-border"
+        "flex-1 flex flex-col w-full bg-card overflow-hidden",
+        isMobile ? "max-w-5xl mx-auto" : "rounded-[2.5rem]"
       )}>
         <div className="bg-primary p-4 sm:p-6 sm:pb-10 flex items-center justify-between text-primary-foreground relative shrink-0">
           <div className="flex flex-col gap-0.5 sm:gap-1">
