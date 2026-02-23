@@ -37,13 +37,67 @@ export async function POST(req: NextRequest) {
         baseData = JSON.parse(JSON.stringify(reinicioTemplate));
     }
 
-    // Apply updates from AI
-    if (updateData.annexes) {
-      updateData.annexes.forEach((update: any) => {
-        const annex = (baseData.annexes || []).find((a: any) => a.id === update.id);
-        if (annex) annex.data = update.data;
+    // Apply updates from AI with robust matching
+    if (updateData.annexes && Array.isArray(updateData.annexes)) {
+      updateData.annexes.forEach((update: any, updateIdx: number) => {
+        if (!update || !update.data) return;
+
+        const romans = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
+        const arabicToRoman: Record<string, string> = { "1": "I", "2": "II", "3": "III", "4": "IV", "5": "V" };
+
+        let targetId = String(update.id || '').toUpperCase();
+        if (!targetId && updateIdx < romans.length) {
+            targetId = romans[updateIdx];
+        } else if (arabicToRoman[targetId]) {
+            targetId = arabicToRoman[targetId];
+        }
+
+        // Find the best matching annex in baseData
+        const annex = (baseData.annexes || []).find((a: any, aIdx: number) =>
+            a.id === targetId ||
+            a.id === arabicToRoman[targetId] ||
+            (romans[aIdx] === targetId) ||
+            (update.title && a.title && a.title.toLowerCase().includes(update.title.toLowerCase()))
+        );
+
+        if (annex) {
+            // Normalize data items to ensure keys match UI expectations
+            annex.data = update.data.map((item: any) => {
+                const normalized: any = { ...item };
+
+                // Common aliases mapping
+                if (annex.id === 'I') {
+                    if (item.cantidad !== undefined && normalized.consumption_norm === undefined) normalized.consumption_norm = item.cantidad;
+                    if (item.costo !== undefined && normalized.price === undefined) normalized.price = item.costo;
+                }
+                if (annex.id === 'II') {
+                    if (item.horas !== undefined && normalized.time_norm === undefined) normalized.time_norm = item.horas;
+                    if (item.tarifa !== undefined && normalized.hourly_rate === undefined) normalized.hourly_rate = item.tarifa;
+                    if (item.cantidad !== undefined && normalized.worker_count === undefined) normalized.worker_count = item.cantidad;
+                }
+                if (annex.id === 'IV') {
+                    if (item.importe !== undefined && normalized.amount === undefined) normalized.amount = item.importe;
+                }
+
+                // Ensure total calculation if missing but inputs exist
+                if (normalized.total === undefined || normalized.total === 0) {
+                    if (annex.id === 'I' && normalized.consumption_norm && normalized.price) {
+                        normalized.total = parseFloat(normalized.consumption_norm) * parseFloat(normalized.price);
+                    }
+                    if (annex.id === 'II' && normalized.time_norm && normalized.hourly_rate && normalized.worker_count) {
+                        normalized.total = parseFloat(normalized.time_norm) * parseFloat(normalized.hourly_rate) * parseFloat(normalized.worker_count);
+                    }
+                }
+
+                // Ensure classification exists
+                if (!normalized.classification) normalized.classification = annex.id;
+
+                return normalized;
+            });
+        }
       });
     }
+
     if (updateData.header) {
       baseData.header = { ...baseData.header, ...updateData.header };
     }
