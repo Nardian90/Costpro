@@ -6,6 +6,7 @@ import { useReceptions, useReceptionDetails } from '@/hooks/api/useReceptions';
 import { type Receipt, type ReceiptItem } from '@/types';
 import Papa from 'papaparse';
 import { toast } from 'sonner';
+import { useInvertDocument, useDuplicateDocument } from '@/hooks/api/useDocumentActions';
 
 export function useReceptionsHistoryView() {
   const { user } = useAuthStore();
@@ -14,6 +15,10 @@ export function useReceptionsHistoryView() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [selectedReceipt, setSelectedReceipt] = useState<Receipt | null>(null);
+
+  // Document Actions Hooks
+  const invertDocumentMutation = useInvertDocument();
+  const duplicateDocumentMutation = useDuplicateDocument();
 
   const { data: receptions = [], isLoading } = useReceptions(user?.storeId, user?.role === 'admin');
   const { data: receiptItems = [], isLoading: loadingDetails } = useReceptionDetails(selectedReceipt?.id);
@@ -52,6 +57,38 @@ export function useReceptionsHistoryView() {
 
   const handleCloseDetails = () => {
     setSelectedReceipt(null);
+  };
+
+  const handleInvert = async (receipt: Receipt) => {
+    if (receipt.status === 'voided') {
+      toast.error('Esta recepción ya ha sido anulada.');
+      return;
+    }
+
+    if (!confirm(`¿Estás seguro de que deseas invertir la recepción ${receipt.id.split('-')[0]}? Esto anulará el documento y restará los productos del inventario.`)) {
+      return;
+    }
+
+    try {
+      // Nota: Al igual que en ventas, necesitamos los items.
+      // Si no están cargados (porque no es la seleccionada), tendríamos un problema.
+      // Pero usualmente el usuario abre los detalles primero.
+      await invertDocumentMutation.mutateAsync({
+        type: 'reception',
+        id: receipt.id,
+        items: receiptItems.length > 0 && selectedReceipt?.id === receipt.id ? receiptItems : [],
+        storeId: user?.storeId || ''
+      });
+    } catch (error) {
+      console.error('Error inverting reception:', error);
+    }
+  };
+
+  const handleDuplicate = (receipt: Receipt) => {
+    duplicateDocumentMutation.mutate({
+      type: 'reception',
+      items: receiptItems.length > 0 && selectedReceipt?.id === receipt.id ? receiptItems : []
+    });
   };
 
   const handleExportCSV = (receipt: Receipt, items: ReceiptItem[]) => {
@@ -95,6 +132,9 @@ export function useReceptionsHistoryView() {
     isLoading,
     handleViewDetails,
     handleCloseDetails,
+    handleInvert,
+    handleDuplicate,
+    isInverting: invertDocumentMutation.isPending,
     handleExportCSV,
     receiptItems,
     loadingDetails
