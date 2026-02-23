@@ -52,5 +52,17 @@ export const storeService = {
       logger.error('DATABASE', 'DELETE_STORE_FAILED', { storeId, error });
       throw error;
     }
+  },
+
+  async resetStore(storeId: string) {
+    logger.info('DATABASE', 'RESET_STORE', { storeId });
+    const { error } = await supabase.rpc('reset_store_data', {
+      target_store_id: storeId
+    });
+
+    if (error) {
+      logger.error('DATABASE', 'RESET_STORE_FAILED', { storeId, error });
+      throw error;
+    }
   }
 };
