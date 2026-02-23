@@ -72,7 +72,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {
         id: 'almacen',
         label: 'Módulo almacén',
-        items: ['catalog', 'inventory', 'recepcion', 'reception_list', 'transferencias', 'inventory_count', 'history']
+        items: ['catalog', 'inventory', 'recepcion', 'reception_list', 'transferencias', 'inventory_count', 'history', 'inventory_adjustments']
       },
       {
         id: 'administracion',
