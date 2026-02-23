@@ -20,3 +20,7 @@
 El sistema es ahora resiliente a las limitaciones de infraestructura (timeouts) y ofrece una interfaz limpia y profesional ("digestible") para el usuario contable.
 
 **Evaluación Final: 9.9/10**
+
+### Corrección de Tipado (Post-Build):
+- Se resolvió un error de compilación donde `ReactMarkdown` rechazaba la prop `className`.
+- Se volvió al patrón de diseño original envolviendo el componente en un `div` con clases Tailwind Typography (`prose`).
