@@ -48,9 +48,9 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
 }) => {
   const navActions: Action[] = React.useMemo(() => {
     // Filter out items that are now in dropdowns
-    const mainNavItems = navItems.filter(s => !['massive-gen'].includes(s.id));
+    const mainNavItems = navItems.filter(s => !['massive-gen', 'kpis'].includes(s.id));
 
-    const actions: Action[] = [
+        const actions: Action[] = [
         ...(onOpenActions ? [{
             id: 'actions-menu',
             label: '',
@@ -59,6 +59,21 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
             variant: 'default' as const,
             className: 'flex bg-primary/10 text-primary border-primary/20'
         }] : []),
+
+        // Fichas Dropdown (Vistas de la ficha)
+        {
+            id: 'fc-dropdown',
+            label: 'Vistas',
+            onClick: () => {},
+            component: (
+                <CostSheetFCDropdown
+                    activeSection={activeSection}
+                    setActiveSection={setActiveSection}
+                    onOpenSections={onOpenSections}
+                    onOpenAnnexes={onOpenAnnexes}
+                />
+            )
+        },
 
         // 1. Modo Dropdown
         {
@@ -92,21 +107,6 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
                     onSave={onSave || (() => {})}
                     onExportExcel={onExportExcel || (() => {})}
                     onExportPdf={onExportPdf || (() => {})}
-                />
-            )
-        },
-
-        // Fichas Dropdown (Vistas de la ficha)
-        {
-            id: 'fc-dropdown',
-            label: 'Vistas',
-            onClick: () => {},
-            component: (
-                <CostSheetFCDropdown
-                    activeSection={activeSection}
-                    setActiveSection={setActiveSection}
-                    onOpenSections={onOpenSections}
-                    onOpenAnnexes={onOpenAnnexes}
                 />
             )
         },
