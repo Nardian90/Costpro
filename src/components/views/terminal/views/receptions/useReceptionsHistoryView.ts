@@ -1,12 +1,11 @@
-'use client';
+'use client'
 
 import { useState, useMemo } from 'react';
 import { useAuthStore } from '@/store';
 import { useReceptions, useReceptionDetails } from '@/hooks/api/useReceptions';
-import { type Receipt, type ReceiptItem } from '@/types';
-import Papa from 'papaparse';
-import { toast } from 'sonner';
+import { Receipt, ReceiptItem } from '@/types';
 import { useInvertDocument, useDuplicateDocument } from '@/hooks/api/useDocumentActions';
+import { toast } from 'sonner';
 
 export function useReceptionsHistoryView() {
   const { user } = useAuthStore();
@@ -14,49 +13,48 @@ export function useReceptionsHistoryView() {
   const [selectedStatus, setSelectedStatus] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
-  const [selectedReceipt, setSelectedReceipt] = useState<Receipt | null>(null);
+  const [selectedReceiptId, setSelectedReceiptId] = useState<string | null>(null);
 
   // Document Actions Hooks
   const invertDocumentMutation = useInvertDocument();
   const duplicateDocumentMutation = useDuplicateDocument();
 
-  const { data: receptions = [], isLoading } = useReceptions(user?.storeId, user?.role === 'admin');
-  const { data: receiptItems = [], isLoading: loadingDetails } = useReceptionDetails(selectedReceipt?.id);
+  // Data Fetching
+  const { data: receptions = [], isLoading } = useReceptions(user?.activeStoreId || user?.storeId);
 
-  const filteredReceptions = useMemo(() => {
+  const filteredReceipts = useMemo(() => {
     return receptions.filter(r => {
-      const matchesStatus = selectedStatus ? r.status === selectedStatus : true;
+      const matchesSearch = (r.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                             r.supplier?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                             r.reference_doc?.toLowerCase().includes(searchTerm.toLowerCase()));
 
-      const term = searchTerm.toLowerCase();
-      const matchesSearch = searchTerm ? (
-        r.id.toLowerCase().includes(term) ||
-        (r.supplier && r.supplier.toLowerCase().includes(term)) ||
-        (r.reference_doc && r.reference_doc.toLowerCase().includes(term))
-      ) : true;
+      const matchesStatus = !selectedStatus || r.status === selectedStatus;
 
-      const rDate = r.reception_date ? new Date(r.reception_date) : null;
       let matchesDate = true;
-      if (rDate) {
-        if (dateFrom) {
-          matchesDate = matchesDate && rDate >= new Date(dateFrom);
-        }
-        if (dateTo) {
-          matchesDate = matchesDate && rDate <= new Date(dateTo);
-        }
-      } else if (dateFrom || dateTo) {
-        matchesDate = false;
+      if (dateFrom || dateTo) {
+        const date = new Date(r.reception_date || r.created_at || '');
+        if (dateFrom && date < new Date(dateFrom)) matchesDate = false;
+        if (dateTo && date > new Date(dateTo)) matchesDate = false;
       }
 
-      return matchesStatus && matchesSearch && matchesDate;
+      return matchesSearch && matchesStatus && matchesDate;
     });
-  }, [receptions, selectedStatus, searchTerm, dateFrom, dateTo]);
+  }, [receptions, searchTerm, selectedStatus, dateFrom, dateTo]);
+
+  // Fetching items for the modal or action
+  const { data: items = [], isLoading: loadingDetails } = useReceptionDetails(selectedReceiptId || undefined);
+
+  const selectedReceipt = useMemo(() =>
+    receptions.find(r => r.id === selectedReceiptId) || null,
+    [receptions, selectedReceiptId]
+  );
 
   const handleViewDetails = (receipt: Receipt) => {
-    setSelectedReceipt(receipt);
+    setSelectedReceiptId(receipt.id);
   };
 
   const handleCloseDetails = () => {
-    setSelectedReceipt(null);
+    setSelectedReceiptId(null);
   };
 
   const handleInvert = async (receipt: Receipt) => {
@@ -70,14 +68,11 @@ export function useReceptionsHistoryView() {
     }
 
     try {
-      // Nota: Al igual que en ventas, necesitamos los items.
-      // Si no están cargados (porque no es la seleccionada), tendríamos un problema.
-      // Pero usualmente el usuario abre los detalles primero.
       await invertDocumentMutation.mutateAsync({
         type: 'reception',
         id: receipt.id,
-        items: receiptItems.length > 0 && selectedReceipt?.id === receipt.id ? receiptItems : [],
-        storeId: user?.storeId || ''
+        items: items.length > 0 && selectedReceiptId === receipt.id ? items : undefined,
+        storeId: user?.activeStoreId || user?.storeId || ''
       });
     } catch (error) {
       console.error('Error inverting reception:', error);
@@ -87,38 +82,36 @@ export function useReceptionsHistoryView() {
   const handleDuplicate = (receipt: Receipt) => {
     duplicateDocumentMutation.mutate({
       type: 'reception',
-      items: receiptItems.length > 0 && selectedReceipt?.id === receipt.id ? receiptItems : []
+      id: receipt.id,
+      items: items.length > 0 && selectedReceiptId === receipt.id ? items : undefined
     });
   };
 
   const handleExportCSV = (receipt: Receipt, items: ReceiptItem[]) => {
-    if (!items || items.length === 0) {
-      toast.error('No hay productos para exportar.');
-      return;
-    }
+    // Implementación básica de exportación CSV
+    const headers = ['Producto', 'SKU', 'Cantidad', 'Costo Unitario', 'Subtotal'];
+    const rows = items.map(item => [
+      item.products?.name || '',
+      item.products?.sku || '',
+      item.quantity,
+      item.unit_cost,
+      item.quantity * item.unit_cost
+    ]);
 
-    const data = items.map(item => ({
-      SKU: item.products?.sku || 'S/N',
-      Producto: item.products?.name || 'Desconocido',
-      Cantidad: item.quantity,
-      'Costo Unitario': item.unit_cost,
-      Subtotal: (item.quantity * item.unit_cost).toFixed(2)
-    }));
-
-    const csv = Papa.unparse(data);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
+    const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `recepcion_${receipt.reference_doc || receipt.id.split('-')[0]}_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `recepcion_${receipt.id.split('-')[0]}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast.success('Reporte CSV generado con éxito');
   };
 
   return {
+    // State
     searchTerm,
     setSearchTerm,
     selectedStatus,
@@ -127,16 +120,23 @@ export function useReceptionsHistoryView() {
     setDateFrom,
     dateTo,
     setDateTo,
-    selectedReceipt,
-    receptions: filteredReceptions,
+
+    // Data
+    receptions: filteredReceipts,
     isLoading,
+
+    // Modal State & Data
+    selectedReceipt,
+    receiptItems: items,
+    loadingDetails,
+    isDetailsModalOpen: !!selectedReceiptId,
     handleViewDetails,
     handleCloseDetails,
+
+    // Actions
     handleInvert,
     handleDuplicate,
-    isInverting: invertDocumentMutation.isPending,
     handleExportCSV,
-    receiptItems,
-    loadingDetails
+    isInverting: invertDocumentMutation.isPending
   };
 }
