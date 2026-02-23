@@ -44,10 +44,10 @@ export const CostSheetBanner = ({ viewMode, setViewMode, onOpenActions }: CostSh
               <ShieldCheck className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-xl sm:text-3xl font-black text-foreground tracking-tight leading-tight truncate">
+              <h1 className="text-[clamp(1.25rem,6vw,1.875rem)] font-black text-foreground tracking-tight leading-tight truncate">
                 FC
               </h1>
-              <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] text-primary/60 truncate">
+              <p className="text-[clamp(0.6rem,3vw,0.75rem)] font-black uppercase tracking-[0.2em] text-primary/60 truncate">
                 COSTPRO
               </p>
             </div>
