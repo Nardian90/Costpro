@@ -23,7 +23,8 @@ import {
     ArrowDownRight,
     DollarSign,
     Package,
-    Activity
+    Activity,
+    ArrowRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -31,9 +32,10 @@ import { Badge } from '@/components/ui/badge';
 interface Props {
     transactions: BankTransaction[];
     reconciliationLines: ReconciliationLine[];
+    onStart?: () => void;
 }
 
-export function IPVInstitutionalDashboard({ transactions, reconciliationLines }: Props) {
+export function IPVInstitutionalDashboard({ transactions, reconciliationLines, onStart }: Props) {
     const [selectedPayer, setSelectedPayer] = useState<string | null>(null);
 
     // Filter transactions if a payer is selected
@@ -70,13 +72,24 @@ export function IPVInstitutionalDashboard({ transactions, reconciliationLines }:
         <div className="space-y-6 animate-in fade-in duration-500 pb-10">
             {/* Header / Filter State */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h2 className="text-2xl font-black tracking-tight text-foreground uppercase">
-                        Panel de Control Ejecutivo
-                    </h2>
-                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest opacity-70">
-                        Blindaje Contable e Inteligencia de Ventas
-                    </p>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-8">
+                    <div>
+                        <h2 className="text-2xl font-black tracking-tight text-foreground uppercase">
+                            Panel de Control Ejecutivo
+                        </h2>
+                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest opacity-70">
+                            Blindaje Contable e Inteligencia de Ventas
+                        </p>
+                    </div>
+                    {onStart && (
+                        <Button
+                            onClick={onStart}
+                            className="bg-primary text-primary-foreground font-black uppercase tracking-widest px-8 h-12 rounded-2xl shadow-lg hover:scale-105 transition-all flex gap-2 animate-pulse rounded-full"
+                        >
+                            Comenzar
+                            <ArrowRight className="w-5 h-5" />
+                        </Button>
+                    )}
                 </div>
                 {selectedPayer && (
                     <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 px-4 py-2 rounded-full flex gap-2 items-center">
@@ -88,7 +101,6 @@ export function IPVInstitutionalDashboard({ transactions, reconciliationLines }:
                 )}
             </div>
 
-            {/* KPI Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
                 <MetricCard
                     title="Ventas Totales"
