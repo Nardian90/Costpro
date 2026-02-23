@@ -14,7 +14,7 @@ describe('Product Schema', () => {
     expect(result.success).toBe(true);
   });
 
-  it('should validate a product with empty SKU', () => {
+  it('should FAIL a product with empty SKU', () => {
     const emptySkuProduct = {
       id: '550e8400-e29b-41d4-a716-446655440001',
       name: 'Empty SKU Product',
@@ -23,13 +23,10 @@ describe('Product Schema', () => {
       cost_price: 5
     };
     const result = productSchema.safeParse(emptySkuProduct);
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data.sku).toBe(null);
-    }
+    expect(result.success).toBe(false);
   });
 
-  it('should validate a product with null SKU', () => {
+  it('should FAIL a product with null SKU', () => {
     const nullSkuProduct = {
       id: '550e8400-e29b-41d4-a716-446655440002',
       name: 'Null SKU Product',
@@ -38,13 +35,10 @@ describe('Product Schema', () => {
       cost_price: 5
     };
     const result = productSchema.safeParse(nullSkuProduct);
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data.sku).toBe(null);
-    }
+    expect(result.success).toBe(false);
   });
 
-  it('should validate a product without SKU field', () => {
+  it('should FAIL a product without SKU field', () => {
     const noSkuProduct = {
       id: '550e8400-e29b-41d4-a716-446655440003',
       name: 'No SKU Product',
@@ -52,16 +46,14 @@ describe('Product Schema', () => {
       cost_price: 5
     };
     const result = productSchema.safeParse(noSkuProduct);
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data.sku).toBeUndefined();
-    }
+    expect(result.success).toBe(false);
   });
 
   it('should default is_active to true when missing or undefined', () => {
     const productWithoutActive = {
       id: '550e8400-e29b-41d4-a716-446655440004',
       name: 'Missing Active Product',
+      sku: 'PROD-004',
       price: 10,
       cost_price: 5
     };
@@ -92,6 +84,7 @@ describe('Product Schema', () => {
     const productBase = {
       id: '550e8400-e29b-41d4-a716-446655440005',
       name: 'String Boolean Product',
+      sku: 'PROD-005',
       price: 10,
       cost_price: 5
     };

@@ -187,6 +187,12 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
     };
 
     const handleExport = () => {
+        const invalidItems = Array.from(receptionItems.values()).filter(item => !item.product.sku);
+        if (invalidItems.length > 0) {
+            toast.error(`Hay ${invalidItems.length} productos sin SKU. Todos los productos deben tener un SKU para ser recibidos.`);
+            return;
+        }
+
         if (receptionItems.size === 0) {
             toast.error('No hay productos para exportar.');
             return;
@@ -260,6 +266,12 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
             storeId: user?.storeId,
             itemsCount: receptionItems.size
         });
+
+        const invalidItems = Array.from(receptionItems.values()).filter(item => !item.product.sku);
+        if (invalidItems.length > 0) {
+            toast.error(`Hay ${invalidItems.length} productos sin SKU. Todos los productos deben tener un SKU para ser recibidos.`);
+            return;
+        }
 
         if (receptionItems.size === 0) {
             toast.error('Agregue al menos un producto a la recepción.');
