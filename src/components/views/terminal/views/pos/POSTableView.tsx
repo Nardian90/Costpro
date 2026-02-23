@@ -13,7 +13,7 @@ interface POSTableViewProps {
 
 const POSTableView: React.FC<POSTableViewProps> = ({ products, onAddToCart }) => {
   return (
-    <div className="table-scroll-wrapper">
+    <div className="table-scroll-wrapper overflow-x-auto">
       <table className="data-table sticky-column-1 w-full text-sm">
         <thead>
           <tr className="bg-muted/30 text-muted-foreground font-black uppercase text-xs tracking-widest border-b border-border">
@@ -36,17 +36,17 @@ const POSTableView: React.FC<POSTableViewProps> = ({ products, onAddToCart }) =>
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <div className="font-bold truncate max-w-[200px]">{product.name}</div>
+                  <div className="font-bold truncate max-w-[200px] text-foreground">{product.name}</div>
                 </div>
               </td>
               <td className="p-4 font-mono text-xs text-muted-foreground priority-low">{product.sku || '-'}</td>
-              <td className="p-4 text-right font-bold">{product.stock_current}</td>
+              <td className="p-4 text-right font-bold text-foreground">{product.stock_current}</td>
               <td className="p-4 text-right font-black text-primary">{formatCurrency(product.price)}</td>
               <td className="p-4">
                 <div className="flex justify-center">
                   <button
                     onClick={() => onAddToCart(product)}
-                    className="neu-raised-sm min-h-[44px] min-w-[44px] flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all active:scale-90"
+                    className="neu-raised-sm w-11 h-11 flex items-center justify-center text-primary hover:bg-primary hover:text-primary-foreground transition-all active:scale-90"
                     aria-label={`Agregar ${product.name} al carrito`}
                   >
                     <ShoppingCart className="w-5 h-5" />
