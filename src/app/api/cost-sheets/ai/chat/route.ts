@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
       1. SÉ MUY BREVE. No des explicaciones.
       2. MÁXIMO 5 ITEMS por anexo.
       3. COMIENZA EL JSON DE INMEDIATO.
-      4. FORMATO: Usa exclusivamente el bloque ```json_annex_update.
+      4. FORMATO: Usa exclusivamente el bloque \`\`\`json_annex_update.
 
       Regla: "He preparado una propuesta técnica detallada. Puedes revisarla y aplicarla abajo."
 
