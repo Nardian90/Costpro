@@ -150,7 +150,7 @@ export default function ReceptionsHistoryView() {
                           "bg-green-600/10 text-green-700"
                         )}>
                           {rec.status === 'active' ? 'Confirmada' :
-                           rec.status === 'voided' ? 'Anulada' :
+                           rec.status === 'voided' ? 'Anulado' :
                            rec.status === 'pending' ? 'Pendiente' : 'Parcial'}
                         </span>
                       </td>
