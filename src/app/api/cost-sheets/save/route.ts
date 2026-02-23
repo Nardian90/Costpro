@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase as anonSupabase, getSupabaseAuthClient } from '@/lib/supabaseClient';
 import { getServerSession } from "@/lib/auth";
 import { calculateFicha } from '@/lib/cost-engine';
 import reinicioTemplate from '@/lib/data/costpro-reinicio';
@@ -11,10 +11,17 @@ export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(req);
     if (!session) {
+      console.error('[SaveCostSheet] No session found');
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
     const { updateData, currentData } = await req.json();
+    if (!updateData) {
+      return NextResponse.json({ error: 'Faltan datos de actualización' }, { status: 400 });
+    }
+
+    // Use authenticated client for database operations
+    const supabase = getSupabaseAuthClient(session.token);
 
     // 1. Merge with template or current data
     let baseData: CostSheetDataContract;
@@ -24,10 +31,16 @@ export async function POST(req: NextRequest) {
       baseData = currentData || JSON.parse(JSON.stringify(reinicioTemplate));
     }
 
+    // Safety check for baseData
+    if (!baseData || !baseData.header) {
+        console.error('[SaveCostSheet] Invalid baseData or missing header');
+        baseData = JSON.parse(JSON.stringify(reinicioTemplate));
+    }
+
     // Apply updates from AI
     if (updateData.annexes) {
       updateData.annexes.forEach((update: any) => {
-        const annex = baseData.annexes.find((a: any) => a.id === update.id);
+        const annex = (baseData.annexes || []).find((a: any) => a.id === update.id);
         if (annex) annex.data = update.data;
       });
     }
@@ -118,7 +131,7 @@ export async function POST(req: NextRequest) {
         name: baseData.header.name || 'Ficha Generada',
         currency: baseData.header.currency || 'CUP',
         decimals: 2,
-        quantity: baseData.header.quantity || 1,
+        quantity: parseFloat(String(baseData.header.quantity || 1)),
         settings: { allowFormulas: true }
       },
       anexos: (baseData.annexes || []).map(a => ({
@@ -127,27 +140,35 @@ export async function POST(req: NextRequest) {
         rows: (a.data || []).map(d => ({
           ...d,
           classification: String(d.classification || d.label || d.description || '').split(' - ')[0].trim(),
-          importe: d.total || d.amount || d.depreciation_cost || d.price_total || 0
+          importe: parseFloat(String(d.total || d.amount || d.depreciation_cost || d.price_total || 0))
         }))
       })),
       rows: engineRows
     };
 
     // 3. Run Calculation
-    const result = calculateFicha(ficha, { actor: 'ai-system' });
+    let result;
+    try {
+        result = calculateFicha(ficha, { actor: 'ai-system' });
+    } catch (calcError: any) {
+        console.error('[SaveCostSheet] calculateFicha error:', calcError);
+        throw new Error('Error en el motor de cálculo: ' + calcError.message);
+    }
 
     // 4. Map back to UI values for Snapshot
     const calculatedValues: Record<string, any> = {};
-    result.rows.forEach(r => {
-      calculatedValues[r.id] = {
-        total: r.total,
-        valorHistorico: r.valorHistorico || 0,
-        calculatedVH: r.calculatedVH,
-        baseTotal: r.baseTotal || 0,
-        baseValorHistorico: r.baseHist || 0,
-        fuente: r.fuente
-      };
-    });
+    if (result && result.rows) {
+        result.rows.forEach(r => {
+          calculatedValues[r.id] = {
+            total: r.total,
+            valorHistorico: r.valorHistorico || 0,
+            calculatedVH: r.calculatedVH,
+            baseTotal: r.baseTotal || 0,
+            baseValorHistorico: r.baseHist || 0,
+            fuente: r.fuente
+          };
+        });
+    }
 
     // 5. Persist in Supabase
     const exportData = {
@@ -166,7 +187,7 @@ export async function POST(req: NextRequest) {
     const { data: insertedData, error: insertError } = await supabase
       .from('cost_sheets')
       .insert({
-        name: baseData.header.name,
+        name: baseData.header.name || 'Ficha sin nombre',
         description: baseData.metadata?.description || 'Generado por Darian AI',
         category: baseData.header.category || 'General',
         data: exportData,
@@ -175,7 +196,10 @@ export async function POST(req: NextRequest) {
       .select()
       .single();
 
-    if (insertError) throw insertError;
+    if (insertError) {
+        console.error('[SaveCostSheet] Insert error:', insertError);
+        throw insertError;
+    }
 
     return NextResponse.json({
       ok: true,
