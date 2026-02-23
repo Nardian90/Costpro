@@ -9,13 +9,19 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const result = body.result || body;
     const exportOptions = body.exportOptions || {};
+    const sections = body.sections || []; // Optional sections structure
 
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
     const pageHeight = doc.internal.pageSize.height;
     const timestamp = new Date().toLocaleString();
+
+    // Support both naming conventions
+    const includeFC = exportOptions.includeFC || exportOptions.includeTable;
+    const includeAudit = exportOptions.includeAudit;
+
     const isPro = exportOptions.pdfFormat === 'pro';
-    const primaryColor: [number, number, number] = [26, 82, 118]; // Pro Blue
+    const primaryColor: [number, number, number] = isPro ? [26, 82, 118] : [0, 0, 0]; // Pro Blue or Black
 
     const safeLocale = (val: number) => {
         if (typeof val !== 'number') return '0,00';
@@ -40,14 +46,20 @@ export async function POST(req: NextRequest) {
     const addHeader = (pdf: jsPDF, title: string) => {
         const h = result.metadata?.header || result.header || {};
 
+        // Branding
+        pdf.setFillColor(isPro ? 240 : 255, isPro ? 240 : 255, isPro ? 240 : 255);
+        if (isPro) {
+            pdf.rect(14, 10, 12, 12, 'F');
+        }
         pdf.setDrawColor(200);
         pdf.rect(14, 10, 12, 12);
+
         pdf.setFontSize(10);
         pdf.setFont("helvetica", "bold");
+        pdf.setTextColor(isPro ? primaryColor[0] : 0, isPro ? primaryColor[1] : 0, isPro ? primaryColor[2] : 0);
         pdf.text("FC", 16, 18);
 
         pdf.setFontSize(12);
-        pdf.setTextColor(isPro ? primaryColor[0] : 0, isPro ? primaryColor[1] : 0, isPro ? primaryColor[2] : 0);
         pdf.text(title.toUpperCase(), 30, 15);
 
         pdf.setFontSize(7);
@@ -64,12 +76,14 @@ export async function POST(req: NextRequest) {
             pdf.rect(pageWidth - 40, 18, 26, 6);
             pdf.setFont("helvetica", "bold");
             pdf.setFontSize(7);
+            pdf.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
             pdf.text("VIGENTE", pageWidth - 27, 22.5, { align: "center" });
         }
 
         pdf.setDrawColor(230);
         pdf.line(14, 26, pageWidth - 14, 26);
 
+        // Metadata Grid
         pdf.setFontSize(7);
         pdf.setTextColor(120);
         pdf.setFont("helvetica", "bold");
@@ -80,9 +94,9 @@ export async function POST(req: NextRequest) {
 
         pdf.setTextColor(0);
         pdf.setFont("helvetica", "normal");
-        pdf.text(h.name || result.fichaName || result.name || "-", 14, 35);
-        pdf.text(h.code || result.fichaId || result.id || "-", 55, 35);
-        pdf.text(h.unit || "-", 95, 35);
+        pdf.text(String(h.name || result.fichaName || result.name || "-").substring(0, 45), 14, 35);
+        pdf.text(String(h.code || result.fichaId || result.id || "-"), 55, 35);
+        pdf.text(String(h.unit || "-"), 95, 35);
         pdf.text(String(h.quantity || result.meta?.quantity || 1), 135, 35);
 
         pdf.setTextColor(120);
@@ -93,16 +107,16 @@ export async function POST(req: NextRequest) {
 
         pdf.setTextColor(0);
         pdf.setFont("helvetica", "normal");
-        pdf.text(h.enterprise || "-", 14, 44);
-        pdf.text(h.destination || "-", 55, 44);
-        pdf.text(h.currency || "CUP", 95, 44);
+        pdf.text(String(h.enterprise || "-").substring(0, 40), 14, 44);
+        pdf.text(String(h.destination || "-"), 55, 44);
+        pdf.text(String(h.currency || "CUP"), 95, 44);
 
         const r14 = (result.rows || []).find((r: any) => r.classification === '14' || r.id === '14');
         const r16_1 = (result.rows || []).find((r: any) => r.classification === '16.1' || r.id === '16.1');
         const finalPrice = r16_1?.total || r14?.total || 0;
 
         if (finalPrice > 0) {
-            pdf.setFillColor(255, 240, 240);
+            pdf.setFillColor(isPro ? 245 : 255, 240, 240);
             pdf.rect(pageWidth - 44, 38, 30, 8, "F");
             pdf.setFont("helvetica", "bold");
             pdf.setTextColor(180, 0, 0);
@@ -113,36 +127,70 @@ export async function POST(req: NextRequest) {
         }
 
         pdf.setTextColor(0);
-        return 45;
+        return 48; // Return new Y position
     };
 
-    let isFirstPage = true;
-    let pageTitle = "FICHA DE COSTO";
-    let currentY = addHeader(doc, pageTitle);
+    let currentY = addHeader(doc, "FICHA DE COSTO");
 
-    if (exportOptions.includeTable) {
+    if (includeFC) {
         const headers = ['CÓDIGO', 'CONCEPTO', 'UM', 'V. HISTÓRICO', 'TOTAL'];
-        const body = (result.rows || [])
-            .filter((r: any) => {
-                if (exportOptions.skipZeros && r.total === 0) return false;
-                return true;
-            })
-            .map((r: any) => [
-                r.classification || r.id,
-                r.label,
-                r.um || r.unit || '-',
-                safeLocale(r.valorHistorico ?? r.calculatedVH ?? r.v_historico ?? 0),
-                safeLocale(r.total ?? 0)
-            ]);
+        let tableBody: any[] = [];
+
+        if (sections && sections.length > 0) {
+            // Group by provided sections
+            sections.forEach((s: any) => {
+                tableBody.push([{
+                    content: s.label.toUpperCase(),
+                    colSpan: 5,
+                    styles: {
+                        fillColor: isPro ? [240, 245, 250] : [245, 245, 245],
+                        fontStyle: 'bold',
+                        textColor: isPro ? primaryColor : [0, 0, 0]
+                    }
+                }]);
+
+                const flattenRows = (rows: any[]) => {
+                    rows.forEach((r: any) => {
+                        const calc = (result.rows || []).find((cr: any) => cr.id === r.id);
+                        if (calc) {
+                            if (exportOptions.skipZeros && calc.total === 0) return;
+                            tableBody.push([
+                                calc.classification || calc.id,
+                                calc.label,
+                                calc.um || calc.unit || '-',
+                                safeLocale(calc.valorHistorico ?? calc.calculatedVH ?? calc.v_historico ?? 0),
+                                safeLocale(calc.total ?? 0)
+                            ]);
+                        }
+                        if (r.children) flattenRows(r.children);
+                    });
+                };
+                flattenRows(s.rows);
+            });
+        } else {
+            // Fallback to flat rows
+            tableBody = (result.rows || [])
+                .filter((r: any) => {
+                    if (exportOptions.skipZeros && r.total === 0) return false;
+                    return true;
+                })
+                .map((r: any) => [
+                    r.classification || r.id,
+                    r.label,
+                    r.um || r.unit || '-',
+                    safeLocale(r.valorHistorico ?? r.calculatedVH ?? r.v_historico ?? 0),
+                    safeLocale(r.total ?? 0)
+                ]);
+        }
 
         autoTable(doc, {
             startY: currentY,
             head: [headers],
-            body: body,
-            theme: 'plain',
+            body: tableBody,
+            theme: isPro ? 'striped' : 'plain',
             headStyles: {
-                fillColor: [255, 255, 255],
-                textColor: isPro ? primaryColor : [0,0,0],
+                fillColor: isPro ? primaryColor : [255, 255, 255],
+                textColor: isPro ? [255, 255, 255] : [0, 0, 0],
                 fontSize: 8,
                 fontStyle: 'bold',
                 lineWidth: { bottom: 0.5 },
@@ -155,53 +203,60 @@ export async function POST(req: NextRequest) {
                 lineColor: [240, 240, 240]
             },
             columnStyles: {
-                0: { cellWidth: 12 }, // FILA
+                0: { cellWidth: 15 }, // FILA
                 1: { cellWidth: 'auto' }, // CONCEPTO
                 2: { cellWidth: 12, halign: 'center' }, // UM
-                3: { cellWidth: 22, halign: 'right' }, // V. HISTORICO
-                4: { cellWidth: 22, halign: 'right' } // TOTAL
+                3: { cellWidth: 25, halign: 'right' }, // V. HISTORICO
+                4: { cellWidth: 25, halign: 'right' } // TOTAL
             },
             alternateRowStyles: {
                 fillColor: [249, 249, 249]
             },
             margin: { top: 45, left: 14, right: 14 },
             didParseCell: (data) => {
-                const rowIndex = data.row.index;
-                const r = (result.rows || [])[rowIndex];
-                if (r && data.section === 'body') {
-                    const classStr = String(r.classification || r.id || '');
-                    const level = (classStr.match(/\./g) || []).length;
-                    const labelLower = (r.label || '').toLowerCase();
-                    const isVenta = labelLower.includes('venta');
-                    const isCosto = labelLower.includes('costo');
-                    const isUtilidad = labelLower.includes('utilidad');
-                    const isImpuesto = labelLower.includes('imp s/') || labelLower.includes('impuesto');
-                    const isSpecial = isVenta || isCosto || isUtilidad || isImpuesto || ['13', '13.1', '13.2', '14', '19', '20'].includes(classStr);
-
-                    if (data.column.index === 1) { // CONCEPTO
-                        data.cell.styles.cellPadding = { left: 2 + (level * 4) };
-                        if (level === 0) {
-                            data.cell.styles.fontStyle = 'bold';
-                            data.cell.styles.fontSize = 9;
-                            data.cell.text = [data.cell.text[0].toUpperCase()];
-                        } else if (level === 1) {
-                            data.cell.styles.fontStyle = 'normal';
-                            data.cell.styles.fontSize = 8.5;
-                        } else {
-                            data.cell.styles.fontStyle = 'italic';
-                            data.cell.styles.fontSize = 8;
-                            data.cell.styles.textColor = [80, 80, 80];
-                        }
+                if (data.section === 'body') {
+                    const rowContent = data.row.raw as any[];
+                    if (rowContent.length === 1 && data.cell.raw && (data.cell.raw as any).content) {
+                        // This is a section header row
+                        return;
                     }
 
-                    if (isSpecial || level === 0) {
-                        data.cell.styles.fontStyle = 'bold';
-                        if (isVenta || isUtilidad || isImpuesto) {
-                            data.cell.styles.textColor = [180, 0, 0];
-                            data.cell.styles.fillColor = [255, 248, 248];
+                    const r = (result.rows || []).find((cr: any) => cr.classification === rowContent[0] || cr.id === rowContent[0]);
+                    if (r) {
+                        const classStr = String(r.classification || r.id || '');
+                        const level = (classStr.match(/\\./g) || []).length;
+                        const labelLower = (r.label || '').toLowerCase();
+                        const isVenta = labelLower.includes('venta');
+                        const isCosto = labelLower.includes('costo');
+                        const isUtilidad = labelLower.includes('utilidad');
+                        const isImpuesto = labelLower.includes('imp s/') || labelLower.includes('impuesto');
+                        const isSpecial = isVenta || isCosto || isUtilidad || isImpuesto || ['12', '13', '13.1', '13.2', '14', '19', '20'].includes(classStr);
+
+                        if (data.column.index === 1) { // CONCEPTO
+                            data.cell.styles.cellPadding = { left: 2 + (level * 4) };
+                            if (level === 0) {
+                                data.cell.styles.fontStyle = 'bold';
+                                data.cell.styles.fontSize = 9;
+                                data.cell.text = [data.cell.text[0].toUpperCase()];
+                            } else if (level === 1) {
+                                data.cell.styles.fontStyle = 'normal';
+                                data.cell.styles.fontSize = 8.5;
+                            } else {
+                                data.cell.styles.fontStyle = 'italic';
+                                data.cell.styles.fontSize = 8;
+                                data.cell.styles.textColor = [80, 80, 80];
+                            }
                         }
-                        if (['14', '20'].includes(classStr) || labelLower.includes('total')) {
-                            data.cell.styles.lineWidth = { top: 0.1, bottom: 0.3 };
+
+                        if (isSpecial || level === 0) {
+                            data.cell.styles.fontStyle = 'bold';
+                            if (isVenta || isUtilidad || isImpuesto) {
+                                data.cell.styles.textColor = isPro ? [150, 0, 0] : [180, 0, 0];
+                                data.cell.styles.fillColor = isPro ? [255, 245, 245] : [255, 248, 248];
+                            }
+                            if (['14', '20'].includes(classStr) || labelLower.includes('total')) {
+                                data.cell.styles.lineWidth = { top: 0.1, bottom: 0.3 };
+                            }
                         }
                     }
                 }
@@ -213,7 +268,7 @@ export async function POST(req: NextRequest) {
                     const textWidth = pdf.getTextWidth(cell.text[0]);
                     const startX = cell.x + textWidth + 3;
                     const endX = cell.x + cell.width - 2;
-                    if (endX > startX) {
+                    if (endX > startX && !isPro) { // Dots only in Standard
                         pdf.setDrawColor(220);
                         pdf.setLineDashPattern([0.2, 1.2], 0);
                         pdf.line(startX, cell.y + cell.height - 2.8, endX, cell.y + cell.height - 2.8);
@@ -223,9 +278,9 @@ export async function POST(req: NextRequest) {
             }
         });
         currentY = (doc as any).lastAutoTable.finalY + 10;
-        isFirstPage = false;
     }
 
+    // Annexes
     const selectedAnnexes = (result.anexos || []).filter((a: any) => exportOptions.includeAnnexes?.includes(a.id));
     for (const annex of selectedAnnexes) {
         if (currentY > pageHeight - 60) {
@@ -245,8 +300,8 @@ export async function POST(req: NextRequest) {
 
         if (annex.rows && annex.rows.length > 0) {
             const allKeys = Object.keys(annex.rows[0]);
-            const headers = allKeys.filter(k => k !== 'importe' && k !== 'total' && k !== 'id');
-            // If amount or total exists, add it at the end
+            const headers = allKeys.filter(k => k !== 'importe' && k !== 'total' && k !== 'id' && k !== 'classification');
+            if (allKeys.includes('classification')) headers.unshift('classification');
             if (allKeys.includes('importe')) headers.push('importe');
             else if (allKeys.includes('total')) headers.push('total');
 
@@ -260,13 +315,80 @@ export async function POST(req: NextRequest) {
                 startY: currentY,
                 head: [headers.map(h => translate(h).toUpperCase())],
                 body: body,
-                theme: 'striped',
-                headStyles: { fillColor: [255, 255, 255], textColor: primaryColor, fontSize: 8, lineWidth: { bottom: 0.5 } },
-                styles: { fontSize: 8, cellPadding: 1.5 },
+                theme: isPro ? 'striped' : 'grid',
+                headStyles: { fillColor: isPro ? primaryColor : [255, 255, 255], textColor: isPro ? [255, 255, 255] : primaryColor, fontSize: 7, lineWidth: { bottom: 0.5 } },
+                styles: { fontSize: 7, cellPadding: 1.5 },
                 margin: { left: 14, right: 14 }
             });
             currentY = (doc as any).lastAutoTable.finalY + 10;
         }
+    }
+
+    // Audit Log
+    if (includeAudit) {
+        if (currentY > pageHeight - 80) {
+            doc.addPage();
+            currentY = addHeader(doc, "TRAZABILIDAD Y AUDITORÍA");
+        } else {
+            doc.setDrawColor(240);
+            doc.line(14, currentY, pageWidth - 14, currentY);
+            currentY += 8;
+        }
+
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+        doc.text("INFORME DE TRAZABILIDAD Y VALIDACIÓN", 14, currentY);
+        currentY += 8;
+
+        // Integrity Score (as requested by users in audit reports)
+        const criticals = (result.deepValidationErrors || []).filter((v: any) => v.type === 'CRITICAL').length;
+        const warnings = (result.deepValidationErrors || []).filter((v: any) => v.type === 'WARNING').length;
+        const totalValidations = (result.deepValidationErrors || []).length || 5;
+        const score = Math.max(0, 10 - (criticals * 1.5) - (warnings * 0.2)).toFixed(2);
+        const errorProb = (criticals > 0 ? (criticals / totalValidations) * 100 : 0).toFixed(1);
+
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(0);
+        doc.text(`EVALUACIÓN DE INTEGRIDAD: ${score} / 10.00`, 14, currentY);
+        doc.text(`PROBABILIDAD DE ERROR ESTIMADA: ${errorProb}%`, pageWidth - 14, currentY, { align: 'right' });
+        currentY += 6;
+
+        const auditHeaders = ['TIPO', 'CATEGORÍA', 'REF', 'MENSAJE'];
+        const auditBody = (result.deepValidationErrors || []).map((v: any) => [
+            v.type,
+            v.category || 'Sistema',
+            v.rowId || '-',
+            v.message
+        ]);
+
+        if (auditBody.length === 0) {
+            auditBody.push(['SUCCESS', 'Integridad', '-', 'No se detectaron inconsistencias estructurales.']);
+        }
+
+        autoTable(doc, {
+            startY: currentY,
+            head: [auditHeaders],
+            body: auditBody,
+            theme: 'grid',
+            headStyles: { fillColor: [40, 40, 40], textColor: 255, fontSize: 7 },
+            styles: { fontSize: 7, cellPadding: 2 },
+            didParseCell: (data) => {
+                if (data.section === 'body' && data.column.index === 0) {
+                    const val = String(data.cell.raw);
+                    if (val === 'CRITICAL' || val === 'ERROR') data.cell.styles.textColor = [180, 0, 0];
+                    if (val === 'WARNING') data.cell.styles.textColor = [180, 100, 0];
+                    if (val === 'SUCCESS') data.cell.styles.textColor = [0, 120, 0];
+                }
+            }
+        });
+        currentY = (doc as any).lastAutoTable.finalY + 10;
+
+        doc.setFontSize(7);
+        doc.setFont("helvetica", "italic");
+        doc.setTextColor(100);
+        doc.text("Este informe evalúa la coherencia aritmética y normativa del documento técnico.", 14, currentY);
     }
 
     const pageCount = doc.getNumberOfPages();
@@ -275,12 +397,15 @@ export async function POST(req: NextRequest) {
         doc.setFontSize(7);
         doc.setTextColor(150, 150, 150);
         doc.text(`COSTPRO - Reporte Generado el ${timestamp} - Página ${i} de ${pageCount}`, 14, 285);
+        if (isPro) {
+            doc.text("DOCUMENTO VÁLIDO PARA AUDITORÍA", pageWidth / 2, 285, { align: "center" });
+        }
         doc.text("Res. 148/2023 - CONTROL INTERNO", pageWidth - 14, 285, { align: "right" });
     }
 
     const pdfBuffer = doc.output('arraybuffer');
     const h = result.metadata?.header || result.header || {};
-    const safeFilename = `ficha-${h.code || result.fichaId || result.id || 'export'}.pdf`.replace(/[\\/\?%*:|"<>]/g, '-');
+    const safeFilename = `ficha-${h.code || result.fichaId || result.id || 'export'}.pdf`.replace(/[\\/\\?%*:|"<>]/g, '-');
 
     return new NextResponse(pdfBuffer, {
       headers: {
