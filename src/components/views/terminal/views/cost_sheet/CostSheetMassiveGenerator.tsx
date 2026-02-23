@@ -396,6 +396,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ...result,
+            sections: currentSheet?.sections,
             exportOptions
           })
         });
