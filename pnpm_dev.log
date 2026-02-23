@@ -20,3 +20,5 @@ Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and 
  GET / 200 in 138ms (compile: 44ms, render: 93ms)
 ○ Compiling /login ...
  GET /login 200 in 3.1s (compile: 3.1s, render: 59ms)
+ ELIFECYCLE  Command failed.
+[?25h

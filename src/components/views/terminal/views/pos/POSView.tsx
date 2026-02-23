@@ -283,8 +283,7 @@ export default function POSView() {
               <PrimaryButton
                 onClick={handleClearCart}
                 label="Sí, vaciar"
-                className="flex-1"
-                variant="destructive"
+                className="flex-1 bg-destructive text-destructive-foreground shadow-destructive/20"
               />
             </>
           }
