@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Plus, Edit, Trash2, Building, Target, Check } from 'lucide-react';
+import { Plus, Edit, Trash2, Building, Target, Check, RotateCcw } from 'lucide-react';
 import { cn, getStoreLogoUrl } from '@/lib/utils';
 import SearchBar from '@/components/ui/SearchBar';
 import ActionMenu from '@/components/ui/ActionMenu';
@@ -21,6 +21,7 @@ export default function StoresManagementView() {
     handleCreateStore,
     handleEditStore,
     handleDeleteStore,
+    handleResetStore,
     handleSetActiveStore,
     handleCloseModal,
     handleStoreFormSubmit
@@ -79,18 +80,27 @@ export default function StoresManagementView() {
                   </div>
                 )}
 
-                <div className="flex gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => handleEditStore(store)}
-                    className="flex-1 py-2 rounded-xl border border-border hover:bg-muted font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
+                    className="py-2 rounded-xl border border-border hover:bg-muted font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
                   >
                     <Edit className="w-3 h-3" />
                     Info
                   </button>
                   {isAdmin && (
                     <button
+                      onClick={() => handleResetStore(store)}
+                      className="py-2 rounded-xl border border-border hover:bg-orange-500/10 hover:text-orange-500 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      Reiniciar
+                    </button>
+                  )}
+                  {isAdmin && (
+                    <button
                       onClick={() => handleDeleteStore(store)}
-                      className="flex-1 py-2 rounded-xl border border-border hover:bg-destructive/10 hover:text-destructive font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
+                      className="col-span-2 py-2 rounded-xl border border-border hover:bg-destructive/10 hover:text-destructive font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
                     >
                       <Trash2 className="w-3 h-3" />
                       Borrar
