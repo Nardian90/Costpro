@@ -37,8 +37,8 @@ export const CreateProductModal = () => {
   };
 
   const handleCreate = async () => {
-    if (!form.name) {
-      toast.error('El nombre es obligatorio');
+    if (!form.name || !form.sku) {
+      toast.error('El nombre y el SKU son obligatorios');
       return;
     }
     if (!user?.storeId) {
