@@ -252,6 +252,13 @@ export const auditLogSchema = z.object({
   updated_at: z.string().nullable().optional(),
 });
 
+export type AuditLog = z.infer<typeof auditLogSchema> & {
+  profile?: {
+    full_name?: string | null;
+    role?: string | null;
+  } | null;
+};
+
 // ============================================
 // RPC Params and Responses
 // ============================================
