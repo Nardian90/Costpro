@@ -3,13 +3,18 @@
 import React, { useState, useMemo } from 'react';
 import AuditFilters from './AuditFilters';
 import AuditTimeline from './AuditTimeline';
+import AuditTableView from './AuditTableView';
 import { AuditCategory, getAuditCategory } from './AuditEventIcon';
 import { StateRenderer } from '@/components/ui/StateRenderer';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuditLogsView } from './useAuditLogsView';
 import { useStores } from '@/hooks/api/useStores';
 import { useAuthStore } from '@/store';
-import { Shield, X } from 'lucide-react';
+import { Shield, X, Table as TableIcon, List, Download, Loader2 } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Button } from '@/components/ui/button';
+import { exportAuditToPdf } from '@/lib/utils/pdf-export';
+import { toast } from 'sonner';
 
 const AuditLoadingSkeleton = () => (
   <div className="space-y-6">
@@ -41,6 +46,8 @@ export default function AuditLogsView() {
 
   const [selectedCategory, setSelectedCategory] = useState<AuditCategory | 'all'>('all');
   const [selectedUser, setSelectedUser] = useState<string>('all');
+  const [viewMode, setViewMode] = useState<'timeline' | 'table'>('timeline');
+  const [isExporting, setIsExporting] = useState(false);
 
   // Fetch stores for the filter
   const { data: stores = [] } = useStores(
@@ -63,9 +70,6 @@ export default function AuditLogsView() {
 
   const filteredLogs = useMemo(() => {
     return logs.filter(log => {
-      // Backend already filtered by searchTerm, dateRange, and storeId.
-      // We only need to filter by category and user client-side.
-
       // Category filter
       const category = getAuditCategory(log.table_name, log.action);
       const matchesCategory = selectedCategory === 'all' || category === selectedCategory;
@@ -77,22 +81,29 @@ export default function AuditLogsView() {
     });
   }, [logs, selectedCategory, selectedUser]);
 
+  const handleExportPdf = async () => {
+    try {
+      setIsExporting(true);
+      await exportAuditToPdf(filteredLogs);
+      toast.success('Reporte PDF generado con éxito');
+    } catch (err) {
+      console.error('Export error:', err);
+      toast.error('Error al generar el PDF');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const customErrorComponent = error ? (
     <div className="flex flex-col items-center justify-center py-20 gap-4 text-center w-full bg-destructive/5 border border-destructive/20 rounded-2xl p-8">
       <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mb-2">
         <Shield className="w-8 h-8 text-destructive" />
       </div>
       <p className="font-bold text-destructive text-xl uppercase tracking-tight">
-        {error.message.includes('permission denied') || error.message.includes('42501') || error.message.includes('PGRST202')
-          ? 'Acceso Denegado / Error de Sistema'
-          : 'Error de Carga'}
+        Error de Carga
       </p>
       <p className="text-sm text-muted-foreground max-w-xs mx-auto font-medium">
-        {error.message.includes('permission denied') || error.message.includes('42501')
-          ? 'Tus privilegios actuales no permiten consultar el historial de auditoría de este contexto.'
-          : error.message.includes('PGRST202')
-          ? 'El servicio de auditoría no está disponible o requiere actualización de base de datos.'
-          : 'Hubo un problema al recuperar los registros. Por favor, verifica tu conexión.'}
+        {error.message}
       </p>
     </div>
   ) : null;
@@ -103,17 +114,26 @@ export default function AuditLogsView() {
         <X className="w-8 h-8 text-muted-foreground" />
       </div>
       <p className="font-bold text-foreground text-xl uppercase tracking-tight">Sin Resultados</p>
-      <p className="text-sm text-muted-foreground max-w-xs mx-auto font-medium">
-        No se encontraron registros de auditoría que coincidan con los filtros seleccionados.
-      </p>
     </div>
   );
 
   return (
     <div className="space-y-8 pb-20">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-4xl font-black text-foreground tracking-tight uppercase italic">Auditoría</h2>
-        <p className="text-sm text-muted-foreground font-medium">Historial operativo y de control del sistema</p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-4xl font-black text-foreground tracking-tight uppercase italic">Auditoría</h2>
+          <p className="text-sm text-muted-foreground font-medium">Historial operativo y de control del sistema</p>
+        </div>
+
+        <Button
+          variant="outline"
+          onClick={handleExportPdf}
+          disabled={isExporting || filteredLogs.length === 0}
+          className="h-11 px-6 rounded-xl font-black uppercase tracking-widest flex items-center gap-2"
+        >
+          {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+          Exportar PDF
+        </Button>
       </div>
 
       <AuditFilters
@@ -126,7 +146,7 @@ export default function AuditLogsView() {
         availableUsers={availableUsers}
         selectedUser={selectedUser}
         onUserChange={setSelectedUser}
-        availableStores={availableStores.map(s => s.name)} // Keep string for now to match interface
+        availableStores={availableStores.map(s => s.name)}
         selectedStore={stores.find(s => s.id === selectedStoreId)?.name || 'all'}
         onStoreChange={(storeName) => {
           if (storeName === 'all') {
@@ -138,7 +158,34 @@ export default function AuditLogsView() {
         }}
       />
 
-      <div className="mt-8">
+      <Tabs
+        value={viewMode}
+        onValueChange={(v) => setViewMode(v as any)}
+        className="w-full"
+      >
+        <div className="flex justify-between items-center mb-4">
+          <TabsList className="bg-background border border-border p-1 h-12 rounded-xl shadow-sm">
+            <TabsTrigger
+              value="timeline"
+              className="px-6 rounded-lg text-xs font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-white"
+            >
+              <List className="w-4 h-4 mr-2" />
+              Línea de Tiempo
+            </TabsTrigger>
+            <TabsTrigger
+              value="table"
+              className="px-6 rounded-lg text-xs font-black uppercase tracking-widest data-[state=active]:bg-primary data-[state=active]:text-white"
+            >
+              <TableIcon className="w-4 h-4 mr-2" />
+              Tabla
+            </TabsTrigger>
+          </TabsList>
+
+          <div className="text-[10px] font-black uppercase text-muted-foreground tracking-widest bg-muted/30 px-3 py-1.5 rounded-full">
+            {filteredLogs.length} Registros encontrados
+          </div>
+        </div>
+
         <StateRenderer
           isLoading={isLoading}
           error={error}
@@ -147,9 +194,18 @@ export default function AuditLogsView() {
           errorComponent={customErrorComponent}
           emptyComponent={customEmptyComponent}
         >
-          {(data) => <AuditTimeline logs={data} />}
+          {(data) => (
+            <>
+              <TabsContent value="timeline" className="mt-0 focus-visible:outline-none">
+                <AuditTimeline logs={data} />
+              </TabsContent>
+              <TabsContent value="table" className="mt-0 focus-visible:outline-none">
+                <AuditTableView logs={data} />
+              </TabsContent>
+            </>
+          )}
         </StateRenderer>
-      </div>
+      </Tabs>
     </div>
   );
 }
