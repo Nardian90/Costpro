@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid';
 import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
 import { validateRPCArrayResponse, validateRPCResponse } from '@/lib/rpc-validator';
@@ -86,7 +87,8 @@ export function useCreateSale() {
 
   return useMutation({
     mutationFn: async (rawParams: z.input<typeof createSaleParamsSchema>) => {
-      const params = createSaleParamsSchema.parse(rawParams);
+      const paramsWithId = { ...rawParams, p_transaction_id: rawParams.p_transaction_id || uuidv4() };
+      const params = createSaleParamsSchema.parse(paramsWithId);
       if (!navigator.onLine) {
         return await addToQueue('sale', 'CREATE', params);
       }

@@ -313,6 +313,7 @@ export const createSaleParamsSchema = z.object({
   })),
   p_applied_taxes: z.array(z.any()).optional(),
   p_tax_amount: z.number().optional(),
+  p_transaction_id: z.string().regex(uuidRegex).optional(),
 });
 
 export const registerReceptionParamsSchema = z.object({
