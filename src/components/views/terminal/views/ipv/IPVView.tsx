@@ -360,11 +360,11 @@ export default function IPVView() {
     <div className="space-y-6">
       <LoadingOverlay isVisible={isMatching} message={matchMessage} progress={matchProgress} />
       {/* Help Section: Professional Flow */}
-      {isFlowVisible && (
+      {isStarted && isFlowVisible && (
           <Card className="p-6 bg-primary/5 border-none shadow-none rounded-3xl overflow-hidden relative group">
               <button
                   onClick={() => setIsFlowVisible(false)}
-                  className="absolute top-4 right-4 z-20 p-2 rounded-full hover:bg-primary/10 text-primary transition-colors"
+                  className="absolute top-4 right-4 z-20 p-2 rounded-full hover:bg-primary/10 text-primary transition-colors" aria-label="Cerrar flujo de trabajo"
               >
                   <X className="w-5 h-5" />
               </button>
