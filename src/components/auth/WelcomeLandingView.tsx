@@ -123,7 +123,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
               v5.7.25 Hardened Enterprise Release
             </div>
 
-            <h1 className="text-[clamp(1.85rem,10vw,4.5rem)] font-black tracking-tighter leading-[0.9] uppercase text-foreground">
+            <h1 className="text-[clamp(1.5rem,8vw,4.5rem)] font-black tracking-tighter leading-[0.9] uppercase text-foreground">
               Control <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-lime-400 italic">Total</span> <br />
               de su Negocio.
             </h1>
@@ -267,10 +267,10 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
       </section>
 
       {/* Modules Grid - Bento Layout */}
-      <section className="py-16 sm:py-24 px-4 sm:px-6">
+      <section className="py-16 sm:py-24 px-4 sm:px-6 overflow-x-auto">
         <div className="max-w-7xl mx-auto">
           <div className="text-center space-y-4 mb-12 sm:mb-20">
-            <h2 className="text-[clamp(1.85rem,8vw,3rem)] font-black uppercase tracking-tighter">Ecosistema Integrado</h2>
+            <h2 className="text-[clamp(1.5rem,7vw,3rem)] font-black uppercase tracking-tighter">Ecosistema Integrado</h2>
             <p className="text-muted-foreground font-medium max-w-2xl mx-auto leading-relaxed text-sm sm:text-base">
               Módulos técnicos desarrollados bajo estándares de arquitectura empresarial para garantizar la integridad de sus datos y la velocidad operativa.
             </p>
@@ -428,14 +428,14 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
       </section>
 
       {/* Final CTA */}
-      <section className="py-24 px-6">
+      <section className="py-24 px-6 overflow-x-auto">
         <div className="max-w-4xl mx-auto p-8 sm:p-12 lg:p-20 rounded-[4rem] bg-foreground text-background relative overflow-hidden text-center space-y-10">
           <div className="absolute inset-0 opacity-10">
             <CostProLogo size={400} className="absolute -bottom-20 -right-20 rotate-12" />
           </div>
 
           <div className="relative z-10 space-y-6">
-            <h2 className="text-[clamp(2rem,8vw,4rem)] font-black uppercase tracking-tighter leading-none">
+            <h2 className="text-[clamp(1.75rem,8vw,4rem)] font-black uppercase tracking-tighter leading-none">
               ¿Listo para modernizar su gestión?
             </h2>
             <p className="text-lg opacity-70 font-medium max-w-xl mx-auto">
