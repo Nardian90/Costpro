@@ -8,6 +8,7 @@ import { CostSheetFCDropdown } from './CostSheetFCDropdown';
 import { CostSheetModeDropdown, CostSheetViewMode } from './CostSheetModeDropdown';
 import { CostSheetOptionsDropdown } from './CostSheetOptionsDropdown';
 import { CostSheetGenerateDropdown } from './CostSheetGenerateDropdown';
+import { CostSheetHelpDropdown } from './CostSheetHelpDropdown';
 
 interface CostSheetNavProps {
   navItems: any[];
@@ -20,6 +21,8 @@ interface CostSheetNavProps {
   onOpenAnnexes?: () => void;
   onOpenSections?: () => void;
   onOpenHelp?: () => void;
+  onOpenSystemHelp?: () => void;
+  onOpenAcademy?: () => void;
   onImport?: () => void;
   onSave?: () => void;
   onExportExcel?: () => void;
@@ -39,6 +42,8 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
   onOpenAnnexes,
   onOpenSections,
   onOpenHelp,
+  onOpenSystemHelp,
+  onOpenAcademy,
   onImport,
   onSave,
   onExportExcel,
@@ -47,19 +52,10 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
   onExpertGenerate,
 }) => {
   const navActions: Action[] = React.useMemo(() => {
-    // Filter out items that are now in dropdowns
-    const mainNavItems = navItems.filter(s => !['massive-gen', 'kpis'].includes(s.id));
+    // Filter out all items from main nav as requested: "visible solo Ficha, Modo, Generar, Opciones Darian y Ayuda"
+    const mainNavItems = navItems.filter(s => !['massive-gen', 'kpis', 'templates', 'ai-chat'].includes(s.id));
 
         const actions: Action[] = [
-        ...(onOpenActions ? [{
-            id: 'actions-menu',
-            label: '',
-            icon: Menu,
-            onClick: onOpenActions,
-            variant: 'default' as const,
-            className: 'flex bg-primary/10 text-primary border-primary/20'
-        }] : []),
-
         // Fichas Dropdown (Vistas de la ficha)
         {
             id: 'fc-dropdown',
@@ -96,7 +92,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
             )
         },
 
-        // 3. Opciones Dropdown
+        // 3. Opciones Dropdown (Renamed internally to Opciones Darian)
         {
             id: 'options-dropdown',
             label: '',
@@ -107,38 +103,30 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
                     onSave={onSave || (() => {})}
                     onExportExcel={onExportExcel || (() => {})}
                     onExportPdf={onExportPdf || (() => {})}
+                    onOpenDarian={() => setActiveSection('ai-chat')}
                 />
             )
         },
 
-        ...mainNavItems.map(s => {
-            const isActive = activeSection === s.id;
-            return {
-                id: s.id,
-                label: s.label,
-                icon: s.icon || (s.id === 'header' ? Layout : ClipboardList),
-                onClick: () => setActiveSection(s.id),
-                active: isActive,
-                className: cn(
-                    "text-[10px] uppercase tracking-widest transition-colors",
-                    !isActive && "text-muted-foreground hover:text-primary"
-                )
-            };
-        }),
-
-        ...(onOpenHelp ? [{
-            id: 'help-panel',
-            label: 'Ayuda',
-            icon: HelpCircle,
-            onClick: onOpenHelp,
-            className: "text-[10px] uppercase tracking-widest bg-muted/30"
-        }] : [])
+        // 4. Ayuda Dropdown
+        {
+            id: 'help-dropdown',
+            label: '',
+            onClick: () => {},
+            component: (
+                <CostSheetHelpDropdown
+                    onOpenViewHelp={onOpenHelp || (() => {})}
+                    onOpenSystemHelp={onOpenSystemHelp || (() => {})}
+                    onOpenAcademy={onOpenAcademy || (() => {})}
+                />
+            )
+        }
     ];
 
     return actions;
   }, [
     navItems, activeSection, setActiveSection, viewMode, setViewMode,
-    onOpenActions, onOpenAnnexes, onOpenSections, onOpenHelp,
+    onOpenActions, onOpenAnnexes, onOpenSections, onOpenHelp, onOpenSystemHelp, onOpenAcademy,
     onImport, onSave, onExportExcel, onExportPdf, onQuickGenerate, onExpertGenerate
   ]);
 
