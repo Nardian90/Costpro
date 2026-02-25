@@ -57,59 +57,108 @@ export async function POST(req: NextRequest) {
         pdf.setFontSize(10);
         pdf.setFont("helvetica", "bold");
         pdf.setTextColor(isPro ? primaryColor[0] : 0, isPro ? primaryColor[1] : 0, isPro ? primaryColor[2] : 0);
-        pdf.text("FC", 16, 18);
-
-        pdf.setFontSize(12);
-        pdf.text(title.toUpperCase(), 30, 15);
-
-        pdf.setFontSize(7);
-        pdf.setFont("helvetica", "normal");
-        pdf.setTextColor(100, 100, 100);
-        pdf.text("Res. 148/2023 - CONTROL INTERNO", 30, 19);
-
-        pdf.setFontSize(6);
-        pdf.text("DOCUMENTO TÉCNICO DE COSTOS", pageWidth - 14, 12, { align: "right" });
-        pdf.text(`Generado: ${timestamp}`, pageWidth - 14, 15, { align: "right" });
-
         if (isPro) {
-            pdf.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-            pdf.rect(pageWidth - 40, 18, 26, 6);
+            pdf.setFontSize(9);
             pdf.setFont("helvetica", "bold");
+            pdf.text("MINISTERIO DE FINANZAS Y PRECIOS", pageWidth / 2, 8, { align: "center" });
+            pdf.setFontSize(6);
+            pdf.text("FICHA DE COSTOS Y GASTOS DE PRODUCTOS Y SERVICIOS PARA LA EVALUACIÓN DE PRECIOS Y TARIFAS", pageWidth / 2, 11, { align: "center" });
+            pdf.text("(RES 148/2023)", pageWidth / 2, 14, { align: "center" });
+
+            // Badge/Logo area
+            pdf.setFillColor(40, 40, 40);
+            pdf.rect(14, 18, 12, 12, 'F');
+            pdf.setTextColor(255, 255, 255);
+            pdf.setFontSize(8);
+            pdf.text("FC", 20, 26, { align: "center" });
+
+            pdf.setTextColor(0);
+            pdf.setFontSize(10);
+            pdf.text(String(h.enterprise || "JESMARKMC").toUpperCase(), 28, 24);
+            pdf.setFontSize(6);
+            pdf.text("MIPYME", 28, 27);
+        } else {
+            pdf.text("FC", 16, 18);
+
+            pdf.setFontSize(12);
+            pdf.text(title.toUpperCase(), 30, 15);
+
             pdf.setFontSize(7);
-            pdf.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-            pdf.text("VIGENTE", pageWidth - 27, 22.5, { align: "center" });
+            pdf.setFont("helvetica", "normal");
+            pdf.setTextColor(100, 100, 100);
+            pdf.text("Res. 148/2023 - CONTROL INTERNO", 30, 19);
+
+            pdf.setFontSize(6);
+            pdf.text("DOCUMENTO TÉCNICO DE COSTOS", pageWidth - 14, 12, { align: "right" });
+            pdf.text(`Generado: ${timestamp}`, pageWidth - 14, 15, { align: "right" });
         }
 
         pdf.setDrawColor(230);
         pdf.line(14, 26, pageWidth - 14, 26);
 
         // Metadata Grid
-        pdf.setFontSize(7);
-        pdf.setTextColor(120);
-        pdf.setFont("helvetica", "bold");
-        pdf.text("PRODUCTO / SERVICIO", 14, 31);
-        pdf.text("CÓDIGO", 55, 31);
-        pdf.text("UNIDAD DE MEDIDA", 95, 31);
-        pdf.text("CANTIDAD", 135, 31);
+        if (isPro) {
+            pdf.setFontSize(7);
+            pdf.setTextColor(0);
 
-        pdf.setTextColor(0);
-        pdf.setFont("helvetica", "normal");
-        pdf.text(String(h.name || result.fichaName || result.name || "-").substring(0, 45), 14, 35);
-        pdf.text(String(h.code || result.fichaId || result.id || "-"), 55, 35);
-        pdf.text(String(h.unit || "-"), 95, 35);
-        pdf.text(String(h.quantity || result.meta?.quantity || 1), 135, 35);
+            // Left Column
+            pdf.setFont("helvetica", "bold"); pdf.text("ORGANISMO:", 95, 20);
+            pdf.setFont("helvetica", "normal"); pdf.text(String(h.organismo || "-"), 115, 20);
 
-        pdf.setTextColor(120);
-        pdf.setFont("helvetica", "bold");
-        pdf.text("EMPRESA", 14, 40);
-        pdf.text("DESTINO", 55, 40);
-        pdf.text("MONEDA", 95, 40);
+            pdf.setFont("helvetica", "bold"); pdf.text("UNIÓN:", 95, 23);
+            pdf.setFont("helvetica", "normal"); pdf.text(String(h.union || "-"), 115, 23);
 
-        pdf.setTextColor(0);
-        pdf.setFont("helvetica", "normal");
-        pdf.text(String(h.enterprise || "-").substring(0, 40), 14, 44);
-        pdf.text(String(h.destination || "-"), 55, 44);
-        pdf.text(String(h.currency || "CUP"), 95, 44);
+            pdf.setFont("helvetica", "bold"); pdf.text("EMPRESA:", 95, 26);
+            pdf.setFont("helvetica", "normal"); pdf.setTextColor(20, 80, 150); pdf.text(String(h.enterprise || "-"), 115, 26);
+            pdf.setTextColor(0);
+
+            pdf.setFont("helvetica", "bold"); pdf.text("CÓDIGO EMPRESA:", 95, 29);
+            pdf.setFont("helvetica", "normal"); pdf.text(String(h.enterpriseCode || "-"), 125, 29);
+
+            // Right Column
+            pdf.setFont("helvetica", "bold"); pdf.text("ID:", 155, 20);
+            pdf.setFont("helvetica", "normal"); pdf.text(String(result.id || result.fichaId || "-"), 175, 20);
+
+            pdf.setFont("helvetica", "bold"); pdf.text("COD. PROD:", 155, 23);
+            pdf.setFont("helvetica", "normal"); pdf.text(String(h.code || "-"), 175, 23);
+
+            pdf.setFont("helvetica", "bold"); pdf.text("PRODUCTO:", 155, 26);
+            pdf.setFont("helvetica", "normal"); pdf.setTextColor(20, 80, 150); pdf.text(String(h.name || result.name || "-").substring(0, 30), 175, 26);
+            pdf.setTextColor(0);
+
+            pdf.setFont("helvetica", "bold"); pdf.text("UM:", 155, 29);
+            pdf.setFont("helvetica", "normal"); pdf.text(String(h.unit || "-"), 175, 29);
+
+            pdf.setFont("helvetica", "bold"); pdf.text("Cantidad:", 155, 32);
+            pdf.setFont("helvetica", "normal"); pdf.text(String(h.quantity || 1), 175, 32);
+        } else {
+            pdf.setFontSize(7);
+            pdf.setTextColor(120);
+            pdf.setFont("helvetica", "bold");
+            pdf.text("PRODUCTO / SERVICIO", 14, 31);
+            pdf.text("CÓDIGO", 55, 31);
+            pdf.text("UNIDAD DE MEDIDA", 95, 31);
+            pdf.text("CANTIDAD", 135, 31);
+
+            pdf.setTextColor(0);
+            pdf.setFont("helvetica", "normal");
+            pdf.text(String(h.name || result.fichaName || result.name || "-").substring(0, 45), 14, 35);
+            pdf.text(String(h.code || result.fichaId || result.id || "-"), 55, 35);
+            pdf.text(String(h.unit || "-"), 95, 35);
+            pdf.text(String(h.quantity || result.meta?.quantity || 1), 135, 35);
+
+            pdf.setTextColor(120);
+            pdf.setFont("helvetica", "bold");
+            pdf.text("EMPRESA", 14, 40);
+            pdf.text("DESTINO", 55, 40);
+            pdf.text("MONEDA", 95, 40);
+
+            pdf.setTextColor(0);
+            pdf.setFont("helvetica", "normal");
+            pdf.text(String(h.enterprise || "-").substring(0, 40), 14, 44);
+            pdf.text(String(h.destination || "-"), 55, 44);
+            pdf.text(String(h.currency || "CUP"), 95, 44);
+        }
 
         const r14 = (result.rows || []).find((r: any) => r.classification === '14' || r.id === '14');
         const r16_1 = (result.rows || []).find((r: any) => r.classification === '16.1' || r.id === '16.1');
@@ -133,15 +182,51 @@ export async function POST(req: NextRequest) {
     let currentY = addHeader(doc, "FICHA DE COSTO");
 
     if (includeFC) {
-        const headers = ['CÓDIGO', 'CONCEPTO', 'UM', 'V. HISTÓRICO', 'TOTAL'];
+        const headers = isPro
+            ? ['CONCEPTOS DE GASTOS', 'FILA', 'UM', 'ÍNDICE', 'TOTAL']
+            : ['CONCEPTO', 'UM', 'V. HISTÓRICO', 'TOTAL'];
+
         let tableBody: any[] = [];
+
+        const formatLabel = (r: any) => {
+            const classStr = String(r.classification || r.id || '');
+            const level = (classStr.match(/\./g) || []).length;
+            const label = r.label || '';
+
+            if (isPro) {
+                if (level === 0) return '• ' + label;
+                if (classStr.endsWith('.1')) return 'De ello: -' + label;
+                return '-' + label;
+            } else {
+                return classStr + ' ' + label;
+            }
+        };
+
+        const mapRowToTable = (r: any) => {
+            if (isPro) {
+                return [
+                    formatLabel(r),
+                    r.classification || r.id,
+                    r.um || r.unit || '-',
+                    safeLocale(r.coefficient || r.valorHistorico ?? r.calculatedVH ?? r.v_historico ?? 0),
+                    safeLocale(r.total ?? 0)
+                ];
+            } else {
+                return [
+                    formatLabel(r),
+                    r.um || r.unit || '-',
+                    safeLocale(r.valorHistorico ?? r.calculatedVH ?? r.v_historico ?? 0),
+                    safeLocale(r.total ?? 0)
+                ];
+            }
+        };
 
         if (sections && sections.length > 0) {
             // Group by provided sections
             sections.forEach((s: any) => {
                 tableBody.push([{
                     content: s.label.toUpperCase(),
-                    colSpan: 5,
+                    colSpan: isPro ? 5 : 4,
                     styles: {
                         fillColor: isPro ? [240, 245, 250] : [245, 245, 245],
                         fontStyle: 'bold',
@@ -154,13 +239,7 @@ export async function POST(req: NextRequest) {
                         const calc = (result.rows || []).find((cr: any) => cr.id === r.id);
                         if (calc) {
                             if (exportOptions.skipZeros && calc.total === 0) return;
-                            tableBody.push([
-                                calc.classification || calc.id,
-                                calc.label,
-                                calc.um || calc.unit || '-',
-                                safeLocale(calc.valorHistorico ?? calc.calculatedVH ?? calc.v_historico ?? 0),
-                                safeLocale(calc.total ?? 0)
-                            ]);
+                            tableBody.push(mapRowToTable(calc));
                         }
                         if (r.children) flattenRows(r.children);
                     });
@@ -174,40 +253,39 @@ export async function POST(req: NextRequest) {
                     if (exportOptions.skipZeros && r.total === 0) return false;
                     return true;
                 })
-                .map((r: any) => [
-                    r.classification || r.id,
-                    r.label,
-                    r.um || r.unit || '-',
-                    safeLocale(r.valorHistorico ?? r.calculatedVH ?? r.v_historico ?? 0),
-                    safeLocale(r.total ?? 0)
-                ]);
+                .map(mapRowToTable);
         }
 
         autoTable(doc, {
             startY: currentY,
             head: [headers],
             body: tableBody,
-            theme: isPro ? 'striped' : 'plain',
+            theme: isPro ? 'grid' : 'plain',
             headStyles: {
-                fillColor: isPro ? primaryColor : [255, 255, 255],
-                textColor: isPro ? [255, 255, 255] : [0, 0, 0],
+                fillColor: [255, 255, 255],
+                textColor: [0, 0, 0],
                 fontSize: 8,
                 fontStyle: 'bold',
-                lineWidth: { bottom: 0.5 },
-                lineColor: isPro ? primaryColor : [100, 100, 100]
+                lineWidth: { bottom: 0.5, top: 0.5 },
+                lineColor: [0, 0, 0]
             },
             styles: {
                 fontSize: 8,
                 cellPadding: { top: 1.5, bottom: 1.5, left: 2, right: 2 },
                 font: "helvetica",
-                lineColor: [240, 240, 240]
+                lineColor: [220, 220, 220]
             },
-            columnStyles: {
-                0: { cellWidth: 15 }, // FILA
-                1: { cellWidth: 'auto' }, // CONCEPTO
+            columnStyles: isPro ? {
+                0: { cellWidth: 'auto' }, // CONCEPTO
+                1: { cellWidth: 15, halign: 'center' }, // FILA
                 2: { cellWidth: 12, halign: 'center' }, // UM
-                3: { cellWidth: 25, halign: 'right' }, // V. HISTORICO
+                3: { cellWidth: 20, halign: 'right' }, // INDICE
                 4: { cellWidth: 25, halign: 'right' } // TOTAL
+            } : {
+                0: { cellWidth: 'auto' }, // CONCEPTO (Joined)
+                1: { cellWidth: 12, halign: 'center' }, // UM
+                2: { cellWidth: 25, halign: 'right' }, // VH
+                3: { cellWidth: 25, halign: 'right' } // TOTAL
             },
             alternateRowStyles: {
                 fillColor: [249, 249, 249]
@@ -221,29 +299,44 @@ export async function POST(req: NextRequest) {
                         return;
                     }
 
-                    const r = (result.rows || []).find((cr: any) => cr.classification === rowContent[0] || cr.id === rowContent[0]);
+                    // Find row by classification
+                    let classStr = '';
+                    if (isPro) {
+                        classStr = String(rowContent[1] || '');
+                    } else {
+                        const firstWord = String(rowContent[0] || '').split(' ')[0];
+                        classStr = firstWord;
+                    }
+
+                    const r = (result.rows || []).find((cr: any) =>
+                        cr.classification === classStr || cr.id === classStr ||
+                        (cr.classification && String(rowContent[0]).startsWith(cr.classification))
+                    );
+
                     if (r) {
-                        const classStr = String(r.classification || r.id || '');
-                        const level = (classStr.match(/\\./g) || []).length;
+                        const finalClassStr = String(r.classification || r.id || '');
+                        const level = (finalClassStr.match(/\./g) || []).length;
                         const labelLower = (r.label || '').toLowerCase();
                         const isVenta = labelLower.includes('venta');
                         const isCosto = labelLower.includes('costo');
                         const isUtilidad = labelLower.includes('utilidad');
                         const isImpuesto = labelLower.includes('imp s/') || labelLower.includes('impuesto');
-                        const isSpecial = isVenta || isCosto || isUtilidad || isImpuesto || ['12', '13', '13.1', '13.2', '14', '19', '20'].includes(classStr);
+                        const isSpecial = isVenta || isCosto || isUtilidad || isImpuesto || ['12', '13', '13.1', '13.2', '14', '19', '20'].includes(finalClassStr);
 
-                        if (data.column.index === 1) { // CONCEPTO
-                            data.cell.styles.cellPadding = { left: 2 + (level * 4) };
+                        if (data.column.index === 0) { // CONCEPTO
+                            const indent = isPro ? (level * 6) + 2 : (level * 4) + 2;
+                            data.cell.styles.cellPadding = { left: indent };
+
                             if (level === 0) {
                                 data.cell.styles.fontStyle = 'bold';
-                                data.cell.styles.fontSize = 9;
-                                data.cell.text = [data.cell.text[0].toUpperCase()];
+                                data.cell.styles.fontSize = isPro ? 8.5 : 9;
+                                if (!isPro) data.cell.text = [data.cell.text[0].toUpperCase()];
                             } else if (level === 1) {
                                 data.cell.styles.fontStyle = 'normal';
-                                data.cell.styles.fontSize = 8.5;
+                                data.cell.styles.fontSize = 8;
                             } else {
                                 data.cell.styles.fontStyle = 'italic';
-                                data.cell.styles.fontSize = 8;
+                                data.cell.styles.fontSize = 7.5;
                                 data.cell.styles.textColor = [80, 80, 80];
                             }
                         }
@@ -251,18 +344,19 @@ export async function POST(req: NextRequest) {
                         if (isSpecial || level === 0) {
                             data.cell.styles.fontStyle = 'bold';
                             if (isVenta || isUtilidad || isImpuesto) {
-                                data.cell.styles.textColor = isPro ? [150, 0, 0] : [180, 0, 0];
-                                data.cell.styles.fillColor = isPro ? [255, 245, 245] : [255, 248, 248];
+                                data.cell.styles.textColor = isPro ? [120, 0, 0] : [180, 0, 0];
+                                if (!isPro) data.cell.styles.fillColor = [255, 248, 248];
                             }
-                            if (['14', '20'].includes(classStr) || labelLower.includes('total')) {
-                                data.cell.styles.lineWidth = { top: 0.1, bottom: 0.3 };
+                            if (['14', '20'].includes(finalClassStr) || labelLower.includes('total')) {
+                                data.cell.styles.lineWidth = { top: 0.1, bottom: 0.5 };
+                                if (isPro) data.cell.styles.lineColor = [0, 0, 0];
                             }
                         }
                     }
                 }
             },
             didDrawCell: (data) => {
-                if (data.column.index === 1 && data.section === 'body') {
+                if (data.column.index === 0 && data.section === 'body') {
                     const pdf = data.doc;
                     const cell = data.cell;
                     const textWidth = pdf.getTextWidth(cell.text[0]);
