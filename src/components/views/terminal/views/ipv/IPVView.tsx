@@ -44,14 +44,14 @@ import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/comp
 import { IPVHelpDialog } from './IPVHelpDialog';
 
 export default function IPVView() {
-  const [activeTab, setActiveTab] = useState('analytics');
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [isMatching, setIsMatching] = useState(false);
   const [matchMessage, setMatchMessage] = useState('');
   const [matchProgress, setMatchProgress] = useState(0);
   const [kpiFilter, setKpiFilter] = useState<'ALL' | 'CUADRADAS' | 'EN_PROCESO' | 'PENDIENTES'>('ALL');
   const [selectedReconTx, setSelectedReconTx] = useState<BankTransaction | null>(null);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
-  const [isStarted, setIsStarted] = useState(false);
+  const [isStarted, setIsStarted] = useState(true);
   const [isFlowVisible, setIsFlowVisible] = useState(true);
 
   const transactions = useLiveQuery(() => db.bank_statements.orderBy('fecha').toArray());
@@ -527,11 +527,10 @@ export default function IPVView() {
       <IPVRightSidebar activeTab={activeTab} onSelect={setActiveTab} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        {activeTab !== 'dashboard' && activeTab !== 'analytics' && (
             <div className="mb-6">
                 <HorizontalScroll containerClassName="bg-muted/50 rounded-2xl p-1">
                     <TabsList className="flex bg-transparent border-none w-max min-w-full h-auto p-0 gap-1">
-                        <TabsTrigger value="analytics" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl border-2 border-primary/20 bg-primary/5 text-primary">Dashboard</TabsTrigger>
+                        <TabsTrigger value="analytics" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Dashboard</TabsTrigger>
                         <TabsTrigger value="dashboard" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Flujo</TabsTrigger>
                         <TabsTrigger value="transactions" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Transacciones</TabsTrigger>
                         <TabsTrigger value="sim" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Simulación</TabsTrigger>
@@ -550,14 +549,13 @@ export default function IPVView() {
                         <TabsTrigger value="reports" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest text-nowrap shrink-0 rounded-xl">Reportes IPV</TabsTrigger>
                         <TabsTrigger value="rules" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Reglas</TabsTrigger>
                         {selectedReconTx && (
-                            <TabsTrigger value="manual-recon" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl border-2 border-primary/20 bg-primary/5 text-primary">
+                            <TabsTrigger value="manual-recon" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">
                                 Conciliación
                             </TabsTrigger>
                         )}
                     </TabsList>
                 </HorizontalScroll>
             </div>
-        )}
 
         <div className={(activeTab === 'dashboard' || activeTab === 'analytics') ? '' : 'mt-6 p-0 overflow-hidden border-none shadow-xl bg-card/50 backdrop-blur-sm rounded-3xl'}>
           <TabsContent value="analytics" className="m-0">
