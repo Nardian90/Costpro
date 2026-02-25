@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ShoppingCart, Search, X, Trash2, AlertTriangle } from 'lucide-react';
+import { ShoppingCart, Search, X, Trash2, AlertTriangle, QrCode } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import SearchBar from '@/components/ui/SearchBar';
@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AnimatePresence } from 'framer-motion';
 import { usePOSProducts } from '@/hooks/logic/usePOSProducts';
 import { useIsMobile } from '@/hooks/ui/useMobile';
+import { Portal } from "@/components/ui/Portal";
 import {
   Drawer,
   DrawerContent,
@@ -28,25 +29,8 @@ import { usePOSView } from './usePOSView';
 import { QueryInspector } from '@/components/ui/QueryInspector';
 import { PriceSelectorModal } from '@/components/modals/PriceSelectorModal';
 import { BarcodeScanner } from '@/components/modals/BarcodeScanner';
-import { Product } from '@/types';
-import { QrCode } from 'lucide-react';
 import { SpeedDial, SpeedDialAction } from '@/components/ui/SpeedDial';
-
-const EmptyProductsComponent = ({ onClearSearch }: { onClearSearch?: () => void }) => (
-  <div className="col-span-full py-32 text-center border-2 border-dashed border-border rounded-xl bg-card/50">
-    <Search className="w-16 h-16 mx-auto mb-6 opacity-5" />
-    <p className="text-xl font-black text-muted-foreground uppercase tracking-widest">Sin resultados</p>
-    <p className="text-sm text-muted-foreground mt-2">Intenta con otra búsqueda o filtro.</p>
-    {onClearSearch && (
-      <SecondaryButton
-        label="Limpiar búsqueda"
-        onClick={onClearSearch}
-        className="mt-6 mx-auto"
-        icon={X}
-      />
-    )}
-  </div>
-);
+import { Product } from '@/types';
 
 const POSLoadingSkeleton = ({ layoutMode }: { layoutMode: 'grid' | 'table' }) => {
   if (layoutMode === 'table') {
@@ -62,10 +46,12 @@ const POSLoadingSkeleton = ({ layoutMode }: { layoutMode: 'grid' | 'table' }) =>
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
       {[...Array(8)].map((_, i) => (
-        <div key={i} className="neu-card p-4 space-y-4 h-64">
-          <Skeleton className="h-32 w-full rounded-lg" />
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-4 w-1/2" />
+        <div key={i} className="p-4 rounded-3xl border border-border bg-card space-y-4">
+          <Skeleton className="aspect-square w-full rounded-2xl" />
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-3 w-1/2" />
+          </div>
           <div className="flex justify-between items-center pt-2">
             <Skeleton className="h-6 w-16" />
             <Skeleton className="h-8 w-8 rounded-lg" />
@@ -75,6 +61,26 @@ const POSLoadingSkeleton = ({ layoutMode }: { layoutMode: 'grid' | 'table' }) =>
     </div>
   );
 };
+
+const EmptyProductsComponent = ({ onClearSearch }: { onClearSearch?: () => void }) => (
+  <div className="flex flex-col items-center justify-center py-20 px-4 text-center space-y-4">
+    <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mb-4">
+      <Search className="w-10 h-10 text-muted-foreground" />
+    </div>
+    <h3 className="text-xl font-bold uppercase tracking-tight">No se encontraron productos</h3>
+    <p className="text-muted-foreground max-w-xs mx-auto text-sm">
+      Prueba con otros términos de búsqueda o revisa el catálogo de la sucursal.
+    </p>
+    {onClearSearch && (
+      <button
+        onClick={onClearSearch}
+        className="text-primary font-black uppercase text-xs tracking-widest hover:underline"
+      >
+        Limpiar búsqueda
+      </button>
+    )}
+  </div>
+);
 
 export default function POSView() {
   const {
@@ -202,28 +208,57 @@ export default function POSView() {
       <div className="flex flex-col lg:flex-row gap-8 items-start">
         <AnimatePresence>
           {(showCart || lastSale) && (
-            <POSCart
-              items={items}
-              onRemoveItem={removeItem}
-              onUpdateQuantity={updateQuantity}
-              onClearCart={() => setShowClearConfirm(true)}
-              getSubtotal={getSubtotal}
-              getDiscountAmount={getDiscountAmount}
-              getTaxAmount={getTaxAmount}
-              getTotal={getTotal}
-              discount={discount}
-              setDiscount={setDiscount}
-              appliedTaxes={appliedTaxes}
-              toggleTax={toggleTax}
-              isProcessing={isProcessingSale}
-              onCheckout={startCheckout}
-              onClose={() => setShowCart(false)}
-              lastSale={lastSale}
-              onClearLastSale={() => {
-                setLastSale(null);
-                setShowCart(false);
-              }}
-            />
+            isMobile ? (
+              <Portal>
+                <POSCart
+                  items={items}
+                  onRemoveItem={removeItem}
+                  onUpdateQuantity={updateQuantity}
+                  onClearCart={() => setShowClearConfirm(true)}
+                  getSubtotal={getSubtotal}
+                  getDiscountAmount={getDiscountAmount}
+                  getTaxAmount={getTaxAmount}
+                  getTotal={getTotal}
+                  discount={discount}
+                  setDiscount={setDiscount}
+                  appliedTaxes={appliedTaxes}
+                  toggleTax={toggleTax}
+                  isProcessing={isProcessingSale}
+                  onCheckout={startCheckout}
+                  onClose={() => setShowCart(false)}
+                  lastSale={lastSale}
+                  isMobile={isMobile}
+                  onClearLastSale={() => {
+                    setLastSale(null);
+                    setShowCart(false);
+                  }}
+                />
+              </Portal>
+            ) : (
+              <POSCart
+                items={items}
+                onRemoveItem={removeItem}
+                onUpdateQuantity={updateQuantity}
+                onClearCart={() => setShowClearConfirm(true)}
+                getSubtotal={getSubtotal}
+                getDiscountAmount={getDiscountAmount}
+                getTaxAmount={getTaxAmount}
+                getTotal={getTotal}
+                discount={discount}
+                setDiscount={setDiscount}
+                appliedTaxes={appliedTaxes}
+                toggleTax={toggleTax}
+                isProcessing={isProcessingSale}
+                onCheckout={startCheckout}
+                onClose={() => setShowCart(false)}
+                lastSale={lastSale}
+                isMobile={isMobile}
+                onClearLastSale={() => {
+                  setLastSale(null);
+                  setShowCart(false);
+                }}
+              />
+            )
           )}
         </AnimatePresence>
 
