@@ -218,6 +218,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
                 {renderActionButton('open-annexes', 'Anexo', FileSpreadsheet, onOpenAnnexes)}
                 {renderActionButton('signature', 'Firmas', PenTool, () => setActiveSection?.('signature'), 'outline', activeSection === 'signature')}
                 {renderActionButton('all-content', 'Vista Consolidada', Zap, () => setActiveSection?.('all-content'), 'outline', activeSection === 'all-content')}
+                {renderActionButton('expert-content', 'Experto', Zap, () => setActiveSection?.('expert-content'), 'outline', activeSection === 'expert-content')}
               </AccordionGroup>
 
               <AccordionGroup
