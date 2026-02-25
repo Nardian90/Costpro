@@ -1,7 +1,6 @@
-
 'use client';
 
-import React from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import {
   Tooltip,
@@ -36,6 +35,37 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
   sticky = true,
   position = 'top',
 }) => {
+  const [isScrolling, setIsScrolling] = useState(false);
+  const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
+  const lastScrollTime = useRef<number>(0);
+
+  const handleScroll = useCallback(() => {
+    const now = Date.now();
+    lastScrollTime.current = now;
+    if (!isScrolling) setIsScrolling(true);
+
+    if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+    scrollTimeout.current = setTimeout(() => {
+      setIsScrolling(false);
+    }, 150); // Standard delay to distinguish scroll momentum from tap
+  }, [isScrolling]);
+
+  const handleClickCapture = useCallback((e: React.MouseEvent) => {
+    // If we are currently scrolling or just finished (within 150ms),
+    // prevent the click from reaching children (dropdown triggers, buttons)
+    // This implements international UX standards for touch-friendly horizontal menus.
+    if (isScrolling || (Date.now() - lastScrollTime.current < 150)) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }, [isScrolling]);
+
+  useEffect(() => {
+    return () => {
+      if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+    };
+  }, []);
+
   const getVariantClass = (variant?: string, active?: boolean) => {
     if (active) return 'neu-inset-sm font-bold text-primary !scale-100 shadow-none';
     switch (variant) {
@@ -60,7 +90,11 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
       )}
     >
       <div className="neu-card !p-2 sm:!p-3 !rounded-2xl sm:!rounded-3xl shadow-2xl border-white/10 bg-background/95 backdrop-blur-md relative overflow-hidden">
-        <div className="w-full overflow-x-auto flex flex-row flex-nowrap items-center gap-3 p-1 pr-12 sm:pr-1 pb-2 [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-400/50 hover:[&::-webkit-scrollbar-thumb]:bg-gray-500/80 [&::-webkit-scrollbar-thumb]:rounded-full">
+        <div
+          className="w-full overflow-x-auto flex flex-row flex-nowrap items-center gap-3 p-1 pr-12 sm:pr-1 pb-2 [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-400/50 hover:[&::-webkit-scrollbar-thumb]:bg-gray-500/80 [&::-webkit-scrollbar-thumb]:rounded-full"
+          onScroll={handleScroll}
+          onClickCapture={handleClickCapture}
+        >
           <TooltipProvider>
             {actions.map((action) => (
               <React.Fragment key={action.id}>
