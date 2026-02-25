@@ -22,7 +22,7 @@ export const CostSheetBanner = ({ viewMode, setViewMode, onOpenActions }: CostSh
             {onOpenActions && (
                 <button
                     onClick={onOpenActions}
-                    className="sm:hidden neu-raised-sm w-11 h-11 flex items-center justify-center shrink-0 active:scale-90 transition-transform"
+                    className="neu-raised-sm w-11 h-11 flex items-center justify-center shrink-0 active:scale-90 transition-transform"
                     aria-label="Abrir menú de acciones"
                 >
                     <Menu className="w-5 h-5" />

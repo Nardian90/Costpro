@@ -30,11 +30,15 @@ export function CostSheetFCDropdown({
     { id: 'open-sections', label: 'Secciones', icon: ListFilter, onClick: onOpenSections },
     { id: 'open-annexes', label: 'Anexo', icon: FileSpreadsheet, onClick: onOpenAnnexes },
     { id: 'signature', label: 'Firmas', icon: PenTool },
-    { id: 'all-content', label: 'Todo', icon: Zap }, // Renamed from Experto
+    { id: 'all-content', label: 'Todo', icon: Zap },
+    { id: 'expert-content', label: 'Experto', icon: Zap },
   ];
 
   const isOptionActive = (id: string) => {
     if (id === 'open-sections' || id === 'open-annexes') return false; // Sidebars don't have "active" state in this menu normally
+    if (id === 'all-content' || id === 'expert-content') {
+        return activeSection === 'all-content' || activeSection === 'expert-content';
+    }
     return activeSection === id;
   };
 

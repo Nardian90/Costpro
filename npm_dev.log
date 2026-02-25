@@ -1,0 +1,63 @@
+
+> nextjs_tailwind_shadcn_ts@5.7.25 dev
+> next dev -p 3000
+
+▲ Next.js 16.1.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+
+✓ Starting...
+✓ Ready in 4.1s
+○ Compiling /cost-sheets ...
+⨯ ./src/components/views/terminal/views/cost_sheet/CostSheetAnnexEditor.tsx:95:70
+Parsing ecmascript source code failed
+[0m [90m 93 |[39m                 [36mconst[39m numbering [33m=[39m r[33m.[39mid [33m||[39m (parentNumbering
+ [90m 94 |[39m                     [33m?[39m [32m`${parentNumbering}.${idx + 1}`[39m
+[31m[1m>[22m[39m[90m 95 |[39m                     [33m:[39m [32m`${targetSectionId.replace('s','')}.${idx + 1}`[39m[33m;[39m
+ [90m    |[39m                                                                      [31m[1m^[22m[39m
+ [90m 96 |[39m
+ [90m 97 |[39m                 suggestions[33m.[39mpush({ id[33m:[39m numbering[33m,[39m label[33m:[39m r[33m.[39mlabel })[33m;[39m
+ [90m 98 |[39m                 [36mif[39m (r[33m.[39mchildren [33m&&[39m r[33m.[39mchildren[33m.[39mlength [33m>[39m [35m0[39m) {[0m
+
+Expected ',', got ';'
+
+Import trace:
+  Client Component Browser:
+    ./src/components/views/terminal/views/cost_sheet/CostSheetAnnexEditor.tsx [Client Component Browser]
+    ./src/components/views/terminal/views/cost_sheet/CostSheetView.tsx [Client Component Browser]
+    ./src/app/cost-sheets/page.tsx [Client Component Browser]
+    ./src/app/cost-sheets/page.tsx [Server Component]
+
+
+ GET /cost-sheets 500 in 12.0s (compile: 11.6s, render: 342ms)
+⨯ ./src/components/views/terminal/views/cost_sheet/CostSheetAnnexEditor.tsx:95:70
+Parsing ecmascript source code failed
+[0m [90m 93 |[39m                 [36mconst[39m numbering [33m=[39m r[33m.[39mid [33m||[39m (parentNumbering
+ [90m 94 |[39m                     [33m?[39m [32m`${parentNumbering}.${idx + 1}`[39m
+[31m[1m>[22m[39m[90m 95 |[39m                     [33m:[39m [32m`${targetSectionId.replace('s','')}.${idx + 1}`[39m[33m;[39m
+ [90m    |[39m                                                                      [31m[1m^[22m[39m
+ [90m 96 |[39m
+ [90m 97 |[39m                 suggestions[33m.[39mpush({ id[33m:[39m numbering[33m,[39m label[33m:[39m r[33m.[39mlabel })[33m;[39m
+ [90m 98 |[39m                 [36mif[39m (r[33m.[39mchildren [33m&&[39m r[33m.[39mchildren[33m.[39mlength [33m>[39m [35m0[39m) {[0m
+
+Expected ',', got ';'
+
+Import trace:
+  Client Component Browser:
+    ./src/components/views/terminal/views/cost_sheet/CostSheetAnnexEditor.tsx [Client Component Browser]
+    ./src/components/views/terminal/views/cost_sheet/CostSheetView.tsx [Client Component Browser]
+    ./src/app/cost-sheets/page.tsx [Client Component Browser]
+    ./src/app/cost-sheets/page.tsx [Server Component]
+
+
+ GET /cost-sheets 500 in 40ms (compile: 25ms, render: 15ms)
+✓ Compiled in 1300ms
+⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment.
+ GET /cost-sheets 200 in 1369ms (compile: 435ms, render: 934ms)
+ GET /cost-sheets 200 in 117ms (compile: 39ms, render: 79ms)
+ GET /cost-sheets 200 in 117ms (compile: 35ms, render: 82ms)
+○ Compiling / ...
+ HEAD / 200 in 8.1s (compile: 6.8s, render: 1292ms)
+ HEAD / 200 in 151ms (compile: 66ms, render: 85ms)
+ GET /login 200 in 662ms (compile: 289ms, render: 373ms)
