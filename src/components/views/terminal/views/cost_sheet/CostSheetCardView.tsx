@@ -245,7 +245,7 @@ const RowCard: React.FC<RowCardProps> = memo(({
                   ) : (warningErrors.length > 0 || hasEngineWarnings) ? (
                     <AlertTriangle className="w-3 h-3 text-amber-500 animate-bounce" />
                   ) : (
-                    <CheckCircle2 className="w-3 h-3 text-emerald-500 opacity-40" />
+                    <CheckCircle2 className="w-3 h-3 text-primary opacity-40" />
                   )}
                   <span className="text-sm font-black text-primary tabular-nums">
                     {formatCurrency(safeCalculated.total)}
@@ -436,7 +436,7 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
         }}
       />
       {/* Top circular KPIs */}
-      <div className="bg-sidebar/30 backdrop-blur-md rounded-[2.5rem] p-6 border border-border/50 shadow-sm mx-2">
+      <div className="bg-card backdrop-blur-md rounded-[2.5rem] p-6 border border-border/50 shadow-sm mx-2">
         <div className="flex items-center justify-around">
           <CircularProgress
             value={costPercent}
@@ -448,13 +448,13 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
             value={utilityPercent}
             label="Utilidad"
             subLabel={formatCurrency(utility)}
-            color="text-emerald-500"
+            color="text-primary"
           />
           <CircularProgress
             value={pricePercent}
             label="P. Venta"
             subLabel={formatCurrency(finalPrice)}
-            color="text-blue-500"
+            color="text-primary"
           />
         </div>
       </div>
