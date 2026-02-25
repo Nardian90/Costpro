@@ -614,12 +614,12 @@ const CostSheetView = () => {
                         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
                             {activeSection === 'all-content' && (
                                 <>
-                                    <div className="px-4 py-6 mb-8 bg-primary/5 rounded-[2rem] border border-primary/10">
-                                        <h2 className="text-2xl font-black uppercase tracking-tighter italic text-primary flex items-center gap-3">
+                                    <div className="px-8 py-10 mb-12 bg-card rounded-[2.5rem] border border-border shadow-sm">
+                                        <h2 className="text-3xl font-black uppercase tracking-tighter italic text-primary flex items-center gap-3">
                                             <ZapIcon className="w-8 h-8" />
                                             Ficha: Vista Consolidada
                                         </h2>
-                                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">Todas las Secciones y Anexos</p>
+                                        <p className="text-sm font-black uppercase tracking-[0.2em] text-muted-foreground mt-2 pl-1">Todas las Secciones y Anexos</p>
                                     </div>
                                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 mb-12">
                                         <CostSheetHeaderEditor header={data?.header || {}} calculatedHeader={calculatedHeader} />
@@ -657,10 +657,9 @@ const CostSheetView = () => {
                             {(activeSection === 'all-annexes' || activeSection === 'all-content') ? (
                                 (data?.annexes || []).map((annex: any) => (
                                     <LazyRender key={annex.id}>
-                                        <div className="space-y-4">
-                                            <div className="flex items-center gap-3 px-4">
-                                                <div className="w-2 h-8 bg-primary rounded-full" />
-                                                <h3 className="text-xl font-black uppercase tracking-tighter italic">Anexo {annex.id}: {annex.title}</h3>
+                                        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                            <div className="flex items-center gap-4 px-6 py-4 bg-card rounded-2xl border border-border shadow-sm border-l-4 border-l-primary">
+                                                <h3 className="text-xl font-black uppercase tracking-tighter italic text-foreground">Anexo {annex.id}: {annex.title}</h3>
                                             </div>
                                             <CostSheetAnnexEditor
                                                 activeAnnexId={annex.id}
@@ -740,10 +739,10 @@ const CostSheetView = () => {
         </div>
       ) : (
         <div className="animate-in zoom-in-95 duration-500">
-            <div className="max-w-5xl mx-auto mb-6 flex flex-col sm:flex-row justify-between items-center bg-slate-100 dark:bg-slate-800/40 p-3 rounded-2xl gap-3">
+            <div className="max-w-5xl mx-auto mb-6 flex flex-col sm:flex-row justify-between items-center bg-muted/30 p-3 rounded-2xl gap-3">
                 <div className="flex items-center gap-3 px-2">
-                    <Eye className="w-4 h-4 text-slate-400" />
-                    <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Vista de Previsualización</span>
+                    <Eye className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Vista de Previsualización</span>
                 </div>
                 <Button
                     variant="ghost"
