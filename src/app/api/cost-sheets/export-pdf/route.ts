@@ -194,21 +194,21 @@ export async function POST(req: NextRequest) {
             startY: currentY,
             head: [headers],
             body: tableBody,
-            theme: isPro ? 'grid' : 'plain',
+            theme: 'plain',
             headStyles: {
-                fillColor: isPro ? [40, 40, 40] : [255, 255, 255],
-                textColor: isPro ? [255, 255, 255] : [0, 0, 0],
-                fontSize: isPro ? 7.5 : 8,
+                fillColor: isPro ? [255, 255, 255] : [255, 255, 255],
+                textColor: isPro ? [0, 0, 0] : [0, 0, 0],
+                fontSize: isPro ? 8 : 8,
                 fontStyle: 'bold',
-                lineWidth: { bottom: 0.5 },
-                lineColor: isPro ? [40, 40, 40] : [100, 100, 100]
+                lineWidth: { bottom: isPro ? 0.8 : 0.5 },
+                lineColor: isPro ? [0, 0, 0] : [100, 100, 100]
             },
             styles: {
                 fontSize: 8,
-                cellPadding: isPro ? { top: 2, bottom: 2, left: 3, right: 3 } : { top: 1.5, bottom: 1.5, left: 2, right: 2 },
+                cellPadding: isPro ? { top: 2.5, bottom: 2.5, left: 3, right: 3 } : { top: 1.5, bottom: 1.5, left: 2, right: 2 },
                 font: "helvetica",
-                lineColor: isPro ? [230, 230, 230] : [240, 240, 240],
-                lineWidth: isPro ? 0.05 : 0
+                lineColor: [240, 240, 240],
+                lineWidth: 0
             },
             columnStyles: {
                 0: { cellWidth: 15 }, // FILA
@@ -241,7 +241,7 @@ export async function POST(req: NextRequest) {
                         const isSpecial = isVenta || isCosto || isUtilidad || isImpuesto || ['12', '13', '13.1', '13.2', '14', '19', '20'].includes(classStr);
 
                         if (data.column.index === 1) { // CONCEPTO
-                            const indent = isPro ? (level * 6) : (level * 4);
+                            const indent = isPro ? (level * 10) : (level * 4);
                             data.cell.styles.cellPadding = { ...data.cell.styles.cellPadding as any, left: (data.cell.styles.cellPadding as any).left + indent };
 
                             let label = String(data.cell.text[0]);
@@ -254,6 +254,11 @@ export async function POST(req: NextRequest) {
                                 data.cell.styles.fontStyle = 'bold';
                                 data.cell.styles.fontSize = isPro ? 9.5 : 9;
                                 data.cell.text = [label.toUpperCase()];
+                                if (isPro) {
+                                    data.cell.styles.fillColor = [250, 250, 250];
+                                    (data.cell.styles.cellPadding as any).top = 4;
+                                    (data.cell.styles.cellPadding as any).bottom = 4;
+                                }
                             } else if (level === 1) {
                                 data.cell.styles.fontStyle = isPro ? 'bold' : 'normal';
                                 data.cell.styles.fontSize = isPro ? 8.5 : 8.5;
@@ -306,10 +311,13 @@ export async function POST(req: NextRequest) {
 
     // Annexes
     const selectedAnnexes = (result.anexos || []).filter((a: any) => exportOptions.includeAnnexes?.includes(a.id));
+
+    let isFirstAnnex = true;
     for (const annex of selectedAnnexes) {
-        if (currentY > pageHeight - 60) {
+        if (isFirstAnnex || currentY > pageHeight - 60) {
             doc.addPage();
             currentY = addHeader(doc, `ANEXO ${annex.id}`);
+            isFirstAnnex = false;
         } else {
             doc.setDrawColor(240);
             doc.line(14, currentY, pageWidth - 14, currentY);
@@ -339,19 +347,19 @@ export async function POST(req: NextRequest) {
                 startY: currentY,
                 head: [headers.map(h => translate(h).toUpperCase())],
                 body: body,
-                theme: isPro ? 'grid' : 'grid',
+                theme: isPro ? 'plain' : 'grid',
                 headStyles: {
-                    fillColor: isPro ? [60, 60, 60] : [255, 255, 255],
-                    textColor: isPro ? [255, 255, 255] : primaryColor,
+                    fillColor: isPro ? [255, 255, 255] : [255, 255, 255],
+                    textColor: isPro ? [0, 0, 0] : primaryColor,
                     fontSize: 7,
-                    lineWidth: { bottom: 0.5 },
+                    lineWidth: { bottom: isPro ? 0.8 : 0.5 },
                     lineColor: isPro ? [60, 60, 60] : primaryColor
                 },
                 styles: {
                     fontSize: 7,
                     cellPadding: isPro ? 2 : 1.5,
-                    lineColor: isPro ? [230, 230, 230] : [200, 200, 200],
-                    lineWidth: isPro ? 0.05 : 0.1
+                    lineColor: [230, 230, 230],
+                    lineWidth: isPro ? 0 : 0.1
                 },
                 margin: { left: 14, right: 14 }
             });
@@ -429,12 +437,19 @@ export async function POST(req: NextRequest) {
     const pageCount = doc.getNumberOfPages();
     for(let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
-        doc.setFontSize(7);
+        doc.setFontSize(6.5);
         doc.setTextColor(150, 150, 150);
-        doc.text(`COSTPRO - Reporte Generado el ${timestamp} - Página ${i} de ${pageCount}`, 14, 285);
+
+        // Use two lines to avoid horizontal overlap
+        doc.text(`COSTPRO - Generado: ${timestamp}`, 14, 285);
+        doc.text(`Página ${i} de ${pageCount}`, 14, 288);
+
         if (isPro) {
+            doc.setFont("helvetica", "bold");
             doc.text("DOCUMENTO VÁLIDO PARA AUDITORÍA", pageWidth / 2, 285, { align: "center" });
+            doc.setFont("helvetica", "normal");
         }
+
         doc.text("Res. 148/2023 - CONTROL INTERNO", pageWidth - 14, 285, { align: "right" });
     }
 
