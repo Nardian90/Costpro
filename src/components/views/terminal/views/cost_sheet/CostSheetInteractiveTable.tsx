@@ -266,7 +266,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
         >
           {isEditingTotal ? (
             <FormulaEditor
-              initialValue={row.formula || String(safeCalculated.total)}
+              initialValue={row.formula || row.totalFormula || String(safeCalculated.total)}
               onSave={handleTotalSave}
               onCancel={() => setIsEditingTotal(false)}
               suggestions={suggestions}
@@ -348,8 +348,8 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                 </Popover>
 
                 <div className="flex items-center gap-1">
-                    {row.formula && <FunctionSquare className="w-3 h-3 text-primary/40" />}
-                    <span className={cn(row.formula && "underline decoration-dotted decoration-primary/30", isZero ? "text-muted-foreground opacity-60 font-medium" : "text-primary font-black")}>
+                    {(row.formula || row.totalFormula) && <FunctionSquare className="w-3 h-3 text-primary/40" />}
+                    <span className={cn((row.formula || row.totalFormula) && "underline decoration-dotted decoration-primary/30", isZero ? "text-muted-foreground opacity-60 font-medium" : "text-primary font-black")}>
                         {formatAccounting(safeCalculated.total)}
                     </span>
                 </div>
