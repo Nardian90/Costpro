@@ -90,9 +90,9 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
         const suggestions: { id: string, label: string }[] = [];
         const traverse = (rows: any[], parentNumbering?: string) => {
             rows.forEach((r, idx) => {
-                const numbering = parentNumbering
+                const numbering = r.id || (parentNumbering
                     ? `${parentNumbering}.${idx + 1}`
-                    : `${targetSectionId.replace('s','')}.${idx + 1}`;
+                    : `${targetSectionId.replace('s','')}.${idx + 1}`);
 
                 suggestions.push({ id: numbering, label: r.label });
                 if (r.children && r.children.length > 0) {
@@ -301,7 +301,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                                                     if (activeAnnexId === 'I' && col.key === 'description') return undefined;
                                                     if (activeAnnexId === 'II' && isDescriptionColumn) return undefined;
                                                     if (['IV', 'V'].includes(activeAnnexId) && isDescriptionColumn) return undefined;
-                                                    if (col.key === 'classification' || col.key === 'description') return 'classification-suggestions';
+                                                    if (col.key === 'classification' || col.key === 'description') return `classification-suggestions-${activeAnnexId}`;
                                                     return undefined;
                                                 })()}
                                                 className={cn(
@@ -385,7 +385,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
        </div>
 
        {/* Global suggestions for classification column */}
-       <datalist id="classification-suggestions">
+       <datalist id={`classification-suggestions-${activeAnnexId}`}>
           {classificationSuggestions.map(s => (
               <option key={s.id} value={`${s.id} - ${s.label}`} />
           ))}

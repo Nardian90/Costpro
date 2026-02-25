@@ -1,6 +1,7 @@
 'use client';
 import { LazyRender } from '@/components/ui/LazyRender';
 
+import { motion, AnimatePresence } from "framer-motion";
 
 import React, { useState, useMemo, memo } from 'react';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
@@ -411,6 +412,14 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
   const sectionInputRef = React.useRef<HTMLInputElement>(null);
   const [importingSectionIndex, setImportingSectionIndex] = useState<number | null>(null);
   const [activeSectionForActions, setActiveSectionForActions] = useState<{ section: any, index: number } | null>(null);
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+
+  const toggleSection = (sectionId: string) => {
+    setCollapsedSections(prev => ({
+      ...prev,
+      [sectionId]: !prev[sectionId]
+    }));
+  };
 
   // Smooth scroll to active section/group when selected
   React.useEffect(() => {
@@ -576,9 +585,18 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                         </div>
                     </div>
 
-                    <div className="w-full p-0 border-none shadow-none">
-                        <div className="table-scroll-wrapper overflow-x-auto border-border/50">
-                        <Table className="w-full border-collapse min-w-[800px]">
+<AnimatePresence initial={false}>
+                        {!collapsedSections[section.id] && (
+                            <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.3, ease: "easeInOut" }}
+                                className="overflow-hidden"
+                            >
+                                <div className="w-full p-0 border-none shadow-none">
+                                    <div className="table-scroll-wrapper overflow-x-auto border-border/50">
+                                    <Table className="w-full border-collapse min-w-[800px]">
                             <TableHeader className={cn(
                                 "bg-muted/50 text-muted-foreground font-black uppercase text-xs tracking-widest border-b border-border",
                                 !isFirstInGroup && "hidden",
@@ -609,8 +627,11 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                                 ))}
                             </TableBody>
                         </Table>
-                        </div>
-                    </div>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
                 </LazyRender>
                 );

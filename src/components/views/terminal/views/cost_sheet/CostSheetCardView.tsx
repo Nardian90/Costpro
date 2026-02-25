@@ -313,6 +313,14 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
   const sectionInputRef = React.useRef<HTMLInputElement>(null);
   const [importingSectionIndex, setImportingSectionIndex] = useState<number | null>(null);
   const [activeSectionForActions, setActiveSectionForActions] = useState<{ section: any, index: number } | null>(null);
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+
+  const toggleSection = (sectionId: string) => {
+    setCollapsedSections(prev => ({
+      ...prev,
+      [sectionId]: !prev[sectionId]
+    }));
+  };
 
   const handleImportSectionExcel = React.useCallback(async (e: React.ChangeEvent<HTMLInputElement>, sectionIndex: number) => {
     const file = e.target.files?.[0];
@@ -478,7 +486,12 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 px-4 mb-8">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-1 h-6 bg-primary rounded-full" />
+                  <button
+                    onClick={() => toggleSection(section.id)}
+                    className="p-1.5 rounded-lg hover:bg-primary/10 transition-colors group"
+                  >
+                    <ChevronDown className={cn("w-4 h-4 text-primary transition-transform", collapsedSections[section.id] && "-rotate-90")} />
+                  </button>
                   <Input
                     className="h-8 text-xs font-black uppercase tracking-[0.2em] text-foreground bg-transparent border-none focus-visible:ring-0 p-0 w-auto min-w-[200px]"
                     value={section.label}
@@ -495,31 +508,43 @@ const CostSheetCardView: React.FC<CostSheetCardViewProps> = memo(({
                 </Button>
               </div>
 
-              <div className="space-y-1">
-                {(section?.rows || []).map((row, rowIndex) => (
-                  <RowCard
-                    key={row.id}
-                    row={row}
-                    level={0}
-                    index={rowIndex}
-                    numbering={`${sectionIndex + 1}.${rowIndex + 1}`}
-                    calculated={calculatedValues?.[row.id] || {} as any}
-                    calculatedValues={calculatedValues}
-                    path={['sections', sectionIndex, 'rows', rowIndex]}
-                    annexes={annexes}
-                    suggestions={suggestions}
-                  />
-                ))}
+<AnimatePresence initial={false}>
+                {!collapsedSections[section.id] && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                    className="overflow-hidden"
+                  >
+                    <div className="space-y-1 pt-2">
+                      {(section?.rows || []).map((row, rowIndex) => (
+                        <RowCard
+                          key={row.id}
+                          row={row}
+                          level={0}
+                          index={rowIndex}
+                          numbering={`${sectionIndex + 1}.${rowIndex + 1}`}
+                          calculated={calculatedValues?.[row.id] || {} as any}
+                          calculatedValues={calculatedValues}
+                          path={['sections', sectionIndex, 'rows', rowIndex]}
+                          annexes={annexes}
+                          suggestions={suggestions}
+                        />
+                      ))}
 
-                <Button
-                    onClick={() => addMainRow(['sections', sectionIndex, 'rows'])}
-                    variant="outline"
-                    className="w-full h-12 rounded-2xl border-dashed border-2 hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2 bg-primary/5 mt-4"
-                >
-                    <Plus className="w-4 h-4" />
-                    <span className="font-bold uppercase tracking-widest text-xs">Añadir Concepto</span>
-                </Button>
-              </div>
+                      <Button
+                          onClick={() => addMainRow(['sections', sectionIndex, 'rows'])}
+                          variant="outline"
+                          className="w-full h-12 rounded-2xl border-dashed border-2 hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2 bg-primary/5 mt-4"
+                      >
+                          <Plus className="w-4 h-4" />
+                          <span className="font-bold uppercase tracking-widest text-xs">Añadir Concepto</span>
+                      </Button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
             </LazyRender>
           );
