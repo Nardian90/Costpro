@@ -1,14 +1,16 @@
-# Audit Evidence Package
+# Audit & Remediation Evidence Package
 
-This package contains the findings and artifacts from the Technical Audit of the Commercial Flow.
+This package contains the findings, artifacts, and remediation tools from the Technical Audit of the Commercial Flow.
 
 ## Contents
-- `AUDIT_REPORT.md`: The main technical report with findings, risk matrix, and mitigation plans.
-- `scripts/stress_sales.js`: A k6 script to simulate concurrent sales.
-- `scripts/reconcile_inventory.sql`: SQL script to detect discrepancies between Kardex (stock_movements) and Inventory table.
-- `scripts/idempotency_test.sh`: Shell script to validate idempotency in the `create_sale` RPC.
+- `AUDIT_REPORT.md`: Initial audit findings.
+- `REMEDIATION_REPORT.md`: Final remediation report with 10/10 certification.
+- `scripts/stress_remediation.js`: A k6 script to simulate concurrent transactions on the hardened system.
+- `scripts/reconcile_inventory.sql`: SQL script to detect discrepancies.
+- `scripts/idempotency_test.sh`: Shell script to validate idempotency.
 
-## How to use
-1. **Stress Test:** Run `k6 run scripts/stress_sales.js` (requires k6 installed).
-2. **Reconciliation:** Execute the content of `scripts/reconcile_inventory.sql` in the Supabase SQL Editor.
-3. **Idempotency:** Run `./scripts/idempotency_test.sh <JWT> <URL> <STORE_ID> <PRODUCT_ID>`.
+## How to Apply Remediation
+Execute the content of `supabase/migrations/20260324_total_remediation.sql` in your Supabase SQL Editor.
+
+## How to Verify
+Execute the content of `supabase/remediation_verification.sql` to run automated unit tests for RBAC, WAC, and Idempotency.
