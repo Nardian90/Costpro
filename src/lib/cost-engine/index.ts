@@ -94,7 +94,7 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
     const formulaToUse = row.formula || (row as any).totalFormula;
   if (row.formaCalculo === 'FORMULA' && formulaToUse) {
         try {
-            const formulaStr = translateFormulaFromSpanish(row.formula.startsWith('=') ? row.formula.substring(1) : row.formula);
+            const formulaStr = translateFormulaFromSpanish(formulaToUse.startsWith('=') ? formulaToUse.substring(1) : formulaToUse);
             parser.parse(formulaStr);
 
             // check for trivial formulas
