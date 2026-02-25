@@ -49,7 +49,7 @@ export default function ProductReceptionView({ onCancel }: ProductReceptionViewP
                 </div>
                 <button
                     onClick={onCancel}
-                    className="px-8 py-3 bg-amber-500 text-white font-black rounded-xl hover:opacity-90 transition-opacity uppercase text-xs tracking-widest"
+                    className="px-8 py-3 min-h-[44px] flex items-center justify-center bg-amber-500 text-white font-black rounded-xl hover:opacity-90 transition-opacity uppercase text-xs tracking-widest"
                 >
                     Volver al Inventario
                 </button>

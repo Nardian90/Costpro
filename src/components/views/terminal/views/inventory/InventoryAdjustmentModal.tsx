@@ -105,7 +105,7 @@ export default function InventoryAdjustmentModal({
             <Calculator className="w-6 h-6 text-primary" />
           </div>
           <div>
-            <h3 className="text-xl font-black text-foreground uppercase tracking-tighter">
+            <h3 className="text-[clamp(1.125rem,5vw,1.25rem)] font-black text-foreground uppercase tracking-tighter">
               Ajuste de Inventario
             </h3>
             <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
@@ -132,15 +132,15 @@ export default function InventoryAdjustmentModal({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="neu-inset-sm p-4 text-center">
             <p className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-1">Stock Actual</p>
-            <p className="text-xl font-black">{stockActual}</p>
+            <p className="text-[clamp(1rem,5vw,1.25rem)] font-black">{stockActual}</p>
           </div>
           <div className="neu-inset-sm p-4 text-center">
             <p className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-1">Costo Promedio</p>
-            <p className="text-xl font-black text-primary">{formatCurrency(costoPromedioActual)}</p>
+            <p className="text-[clamp(1rem,5vw,1.25rem)] font-black text-primary">{formatCurrency(costoPromedioActual)}</p>
           </div>
           <div className="neu-inset-sm p-4 text-center">
             <p className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-1">Valor Total</p>
-            <p className="text-xl font-black">{formatCurrency(costoTotalActual)}</p>
+            <p className="text-[clamp(1rem,5vw,1.25rem)] font-black">{formatCurrency(costoTotalActual)}</p>
           </div>
         </div>
 
@@ -266,19 +266,19 @@ export default function InventoryAdjustmentModal({
           <div className="grid grid-cols-3 gap-4">
              <div className="text-center">
                 <p className="text-xs font-bold text-muted-foreground uppercase mb-1">Nuevo Stock</p>
-                <p className={cn("text-lg font-black", resultados.nuevo_stock !== stockActual && "text-primary")}>
+                <p className={cn("text-[clamp(1rem,5vw,1.25rem)] font-black", resultados.nuevo_stock !== stockActual && "text-primary")}>
                   {resultados.nuevo_stock}
                 </p>
              </div>
              <div className="text-center border-x border-white/5">
                 <p className="text-xs font-bold text-muted-foreground uppercase mb-1">Nuevo Valor Total</p>
-                <p className={cn("text-lg font-black", resultados.nuevo_costo_total !== costoTotalActual && "text-primary")}>
+                <p className={cn("text-[clamp(1rem,5vw,1.25rem)] font-black", resultados.nuevo_costo_total !== costoTotalActual && "text-primary")}>
                   {formatCurrency(resultados.nuevo_costo_total)}
                 </p>
              </div>
              <div className="text-center">
                 <p className="text-xs font-bold text-muted-foreground uppercase mb-1">Nuevo C. Promedio</p>
-                <p className={cn("text-lg font-black", resultados.nuevo_costo_unitario !== costoPromedioActual && "text-primary")}>
+                <p className={cn("text-[clamp(1rem,5vw,1.25rem)] font-black", resultados.nuevo_costo_unitario !== costoPromedioActual && "text-primary")}>
                   {formatCurrency(resultados.nuevo_costo_unitario)}
                 </p>
              </div>
@@ -304,14 +304,14 @@ export default function InventoryAdjustmentModal({
       )}>
         <button
           onClick={onClose}
-          className="neu-btn flex-1 !py-3 font-black uppercase text-xs tracking-widest"
+          className="neu-btn flex-1 !py-3 min-h-[44px] font-black uppercase text-xs tracking-widest"
           disabled={isProcessing}
         >
           Cancelar
         </button>
         <button
           onClick={handleConfirm}
-          className="neu-btn-primary flex-1 flex items-center justify-center gap-2 !py-3 font-black uppercase text-xs tracking-widest"
+          className="neu-btn-primary flex-1 flex items-center justify-center gap-2 !py-3 min-h-[44px] font-black uppercase text-xs tracking-widest"
           disabled={isProcessing}
         >
           {isProcessing ? (

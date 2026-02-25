@@ -262,7 +262,7 @@ export const POSCart = ({
             <button
               onClick={() => setIsEasyReading(!isEasyReading)}
               className={cn(
-                "p-2.5 sm:p-3 rounded-lg sm:rounded-xl transition-all active:scale-90 flex items-center gap-2 font-black uppercase tracking-widest text-xs sm:text-xs",
+                "p-2.5 sm:p-3 min-h-[44px] rounded-lg sm:rounded-xl transition-all active:scale-90 flex items-center gap-2 font-black uppercase tracking-widest text-xs sm:text-xs",
                 isEasyReading ? "bg-background text-primary" : "bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground"
               )}
             >
@@ -543,7 +543,7 @@ export const POSCart = ({
 
                   <div className="flex justify-between items-center pt-2 border-t border-primary/20">
                     <span className="text-xs font-black uppercase text-foreground tracking-widest">Total Final</span>
-                    <span className="text-2xl font-black text-primary tracking-tighter leading-none">
+                    <span className="text-[clamp(1.25rem,5vw,1.5rem)] font-black text-primary tracking-tighter leading-none">
                       {formatCurrency(Math.max(0, getSubtotal() - getDiscountAmount()))}
                     </span>
                   </div>
