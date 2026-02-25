@@ -480,6 +480,8 @@ const CostSheetView = () => {
         onOpenSections={onOpenSections}
         onOpenAnnexes={onOpenAnnexes}
         onOpenHelp={() => setIsHelpPanelOpen(true)}
+                        onOpenSystemHelp={() => setCurrentView("help")}
+                        onOpenAcademy={() => setCurrentView("academy")}
         onQuickGenerate={() => setViewMode('quick')}
         onExpertGenerate={() => { setIsQuickModeGenerating(true); setViewMode('expert'); }}
       />
@@ -575,6 +577,8 @@ const CostSheetView = () => {
                         setViewMode={handleSetViewMode}
                         onOpenActions={() => setIsActionsPanelOpen(true)}
                         onOpenHelp={() => setIsHelpPanelOpen(true)}
+                        onOpenSystemHelp={() => setCurrentView("help")}
+                        onOpenAcademy={() => setCurrentView("academy")}
                         onOpenAnnexes={onOpenAnnexes}
                         onOpenSections={onOpenSections}
                         onImport={handleImportJSON}
