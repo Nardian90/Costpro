@@ -177,7 +177,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                 <span className="truncate flex-1 cursor-text" onClick={() => setIsEditingLabel(true)}>
                     {row.label}
                     {row.id === '13' && calculatedValues?.['12']?.total > 0 && (
-                        <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-black bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                        <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-black bg-primary/10 text-primary border border-primary/20">
                             {((calculatedValues['13'].total / calculatedValues['12'].total) * 100).toFixed(1)}% s/ costo
                         </span>
                     )}
@@ -253,7 +253,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                         readOnly={true}
                         />
                         {row.vhFormula && <FunctionSquare className="w-3 h-3 text-primary/40 absolute left-2" />}
-                        {row.is_percent && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">%</span>}
+                        {row.is_percent && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground">%</span>}
                         {(hasChildren || row.vhFormula) && <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full animate-pulse" title="Calculado automáticamente" />}
                     </div>
                 )}
@@ -283,16 +283,16 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                             ) : (warningErrors.length > 0 || hasEngineWarnings) && !isZero ? (
                                 <AlertTriangle className="w-4 h-4 text-amber-500 animate-bounce" />
                             ) : (infoErrors.length > 0 && !isZero) ? (
-                                <HelpCircle className="w-4 h-4 text-blue-500 opacity-70 group-hover:opacity-100 transition-opacity" />
+                                <HelpCircle className="w-4 h-4 text-primary opacity-70 group-hover:opacity-100 transition-opacity" />
                             ) : (isResultRow && !isZero) ? (
-                                <CheckCircle2 className="w-4 h-4 text-emerald-500 opacity-40 group-hover:opacity-100 transition-opacity" />
+                                <CheckCircle2 className="w-4 h-4 text-primary opacity-40 group-hover:opacity-100 transition-opacity" />
                             ) : null}
                         </div>
                     </PopoverTrigger>
                     <PopoverContent className="w-80" onClick={(e) => e.stopPropagation()}>
                         <p className={cn(
                             "text-xs font-bold mb-2 uppercase tracking-tight",
-                            criticalErrors.length > 0 ? "text-destructive" : (warningErrors.length > 0 || hasEngineWarnings) ? "text-amber-600" : infoErrors.length > 0 ? "text-blue-600" : "text-emerald-600"
+                            criticalErrors.length > 0 ? "text-destructive" : (warningErrors.length > 0 || hasEngineWarnings) ? "text-amber-600" : infoErrors.length > 0 ? "text-primary" : "text-primary"
                         )}>
                             {criticalErrors.length > 0 ? "Errores Críticos" : (warningErrors.length > 0 || hasEngineWarnings) ? "Advertencias" : infoErrors.length > 0 ? "Información" : "Estado Correcto"}
                         </p>
@@ -303,7 +303,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                                     "text-xs p-2 rounded border flex gap-2",
                                     ve.type === 'CRITICAL' ? "bg-destructive/5 border-destructive/20 text-destructive" :
                                     ve.type === 'WARNING' ? "bg-amber-50 border-amber-200 text-amber-800" :
-                                    "bg-blue-50 border-blue-200 text-blue-800"
+                                    "bg-muted border-border text-foreground"
                                 )}>
                                     <div className="mt-0.5">
                                         {ve.type === 'CRITICAL' ? <XCircle className="w-3 h-3" /> :
@@ -336,13 +336,13 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
 
                             {/* Legacy Warning */}
                             {!hasChildren && !row.is_percent && safeCalculated.total === 0 && ((row.valorHistorico ?? 0) > 0 || !!row.baseDeCalculoRef) && (
-                                <p className="text-xs text-slate-500 italic p-1">
+                                <p className="text-xs text-muted-foreground italic p-1">
                                     Esta fila tiene un total de 0.00 pero tiene una base de cálculo o valor histórico asignado. Verifique el prorrateo o la fórmula.
                                 </p>
                             )}
 
                             {criticalErrors.length === 0 && warningErrors.length === 0 && !hasEngineWarnings && (
-                                <p className="text-xs text-emerald-600 font-medium">Los cálculos de esta fila son consistentes con sus dependencias y reglas contables.</p>
+                                <p className="text-xs text-primary font-medium">Los cálculos de esta fila son consistentes con sus dependencias y reglas contables.</p>
                             )}
                         </div>
                     </PopoverContent>
@@ -563,16 +563,11 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                 return (
                 <LazyRender key={section.id}>
                 <div id={section.id} className="animate-in fade-in slide-in-from-bottom-2 duration-500 mb-8 last:mb-0 scroll-mt-24">
-                    <div className="flex items-center justify-between py-1 px-4 bg-emerald-500/5 border-y border-border/20 border-l-2 border-emerald-500/40">
+                    <div className="flex items-center justify-between py-1 px-4 bg-primary/5 border-y border-border/20 border-l-2 border-primary/20">
                         <div className="flex items-center gap-3">
-                            <button
-                                onClick={() => toggleSection(section.id)}
-                                className="p-1 rounded-lg hover:bg-emerald-500/10 transition-colors group"
-                            >
-                                <ChevronDown className={cn("w-4 h-4 text-emerald-600/60 transition-transform", collapsedSections[section.id] && "-rotate-90")} />
-                            </button>
+                            <div className="w-1 h-4 bg-primary/40 rounded-full" />
                             <Input
-                                className="h-7 text-xs font-black uppercase tracking-[0.2em] text-foreground/80 bg-transparent border-none focus-visible:ring-0 p-0 w-auto min-w-[250px]"
+                                className="h-7 text-xs font-black uppercase tracking-[0.2em] text-foreground bg-transparent border-none focus-visible:ring-0 p-0 w-auto min-w-[250px]"
                                 value={section.label}
                                 onChange={(e) => updateValue(['sections', sectionIndex, 'label'], e.target.value)}
                             />

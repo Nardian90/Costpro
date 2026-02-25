@@ -54,8 +54,8 @@ const CostSheetSignatureEditor = () => {
         </div>
       </div>
 
-      <div className="mt-12 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
-          <p className="text-xs text-center text-slate-400 font-bold uppercase tracking-widest">
+      <div className="mt-12 p-4 bg-muted/30 rounded-2xl border border-dashed border-border">
+          <p className="text-xs text-center text-muted-foreground font-bold uppercase tracking-widest">
             Estas firmas aparecerán en la parte inferior del documento impreso o exportado.
           </p>
       </div>
