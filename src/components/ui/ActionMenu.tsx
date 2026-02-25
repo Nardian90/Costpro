@@ -27,6 +27,7 @@ interface ActionMenuProps {
   className?: string;
   sticky?: boolean;
   position?: 'top' | 'bottom';
+  topOffset?: string;
 }
 
 const ActionMenu: React.FC<ActionMenuProps> = ({
@@ -34,6 +35,7 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
   className,
   sticky = true,
   position = 'top',
+  topOffset,
 }) => {
   const [isScrolling, setIsScrolling] = useState(false);
   const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -83,7 +85,7 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
       className={cn(
         'w-full z-20 transition-all duration-300',
         sticky && (position === 'top'
-          ? 'sticky top-[60px] sm:top-20'
+          ? (topOffset || 'sticky top-[60px] sm:top-[92px]')
           : 'fixed bottom-0 sm:sticky sm:bottom-4 left-0 right-0 p-4 sm:p-0'
         ),
         className
