@@ -10,25 +10,22 @@ export function translateFormulaFromSpanish(formula: string): string {
     'PCT': 'pct',
     'ROUND2': 'round2',
     'HIJOS': 'children',
-    'REF': 'ref',
-    'VH': 'vh',
+    'VALOR': 'valor',
+    'PROR': 'pror',
   };
   let translated = formula;
 
-  // First, handle vh(...) and ref(...) with existing quotes to avoid double wrapping
-  // These are often already in English-like format or handled by smartTranslate
+  // 1. First, handle functions vh(...) and ref(...) with existing quotes or naked IDs
+  // Normalize to lowercase function name and ensure single quotes
+  translated = translated.replace(/\b(vh|ref)\s*\(([^)]+)\)/gi, (match, fn, p1) => {
+      const id = p1.trim().replace(/['"]/g, '');
+      return `${fn.toLowerCase()}('${id}')`;
+  });
 
+  // 2. Map other Spanish keywords
   Object.entries(mapping).forEach(([spanish, english]) => {
     const regex = new RegExp(`\\b${spanish}\\b`, 'gi');
     translated = translated.replace(regex, english);
-  });
-
-  // Normalize vh('...') and ref('...') to ensure they have quotes if they are naked IDs
-  // This helps smartTranslate not touch them again
-  translated = translated.replace(/\b(vh|ref)\s*\(([^'\)]+)\)/gi, (match, fn, p1) => {
-      const id = p1.trim();
-      if (id.startsWith("'") || id.startsWith('"')) return `${fn.toLowerCase()}('${id.substring(1, id.length - 1)}')`;
-      return `${fn.toLowerCase()}('${id}')`;
   });
 
   return translated;
@@ -37,20 +34,31 @@ export function translateFormulaFromSpanish(formula: string): string {
 export function smartTranslate(formula: string, knownIds: Set<string>, knownClasses: Set<string>): string {
   if (!formula) return '0';
 
-  // Pre-translate keywords
+  // Pre-translate keywords and normalize vh/ref calls
   let translated = translateFormulaFromSpanish(formula);
 
-  // Tokenize and replace numbers that match known IDs or Classes,
-  // but ONLY if they are NOT already inside ref('') or vh('')
+  // Macro: pror(vh(X)) -> (VH / vh(X)) * ref(X)
+  // This must happen before we start protecting calls
+  translated = translated.replace(/pror\s*\(\s*vh\s*\(\s*['"]?([^'"]+)['"]?\s*\)\s*\)/gi, (match, id) => {
+    return `(VH / vh('${id.trim()}')) * ref('${id.trim()}')`;
+  });
 
-  // A trick to avoid replacing inside existing calls:
-  // We can look for occurrences of ref('...') and replace them with placeholders
+  // A trick to avoid replacing inside existing calls or literal values:
   const placeholders: string[] = [];
-  translated = translated.replace(/\b(ref|vh)\('([^']+)'\)/g, (match) => {
+
+  // 1. Protect existing ref/vh calls
+  translated = translated.replace(/\b(ref|vh)\s*\('([^']+)'\)/gi, (match) => {
       placeholders.push(match);
       return `__PH${placeholders.length - 1}__`;
   });
 
+  // 2. Protect valor(X) content
+  translated = translated.replace(/\bvalor\s*\(([^)]+)\)/gi, (match, content) => {
+      placeholders.push(content);
+      return `valor(__PH${placeholders.length - 1}__)`;
+  });
+
+  // 3. Tokenize and replace numbers that match known IDs or Classes
   const tokenRegex = /\b(\d+(?:\.\d+)*)\b/g;
   translated = translated.replace(tokenRegex, (match) => {
       if (knownIds.has(match) || knownClasses.has(match)) {
@@ -59,10 +67,10 @@ export function smartTranslate(formula: string, knownIds: Set<string>, knownClas
       return match;
   });
 
-  // Restore placeholders
-  placeholders.forEach((val, idx) => {
-      translated = translated.replace(`__PH${idx}__`, val);
-  });
+  // 4. Restore placeholders
+  for (let i = placeholders.length - 1; i >= 0; i--) {
+      translated = translated.replace(`__PH${i}__`, placeholders[i]);
+  }
 
   return translated;
 }

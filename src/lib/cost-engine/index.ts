@@ -37,8 +37,9 @@ export function extractDependencies(row: CostRow, allRows: CostRow[]): string[] 
     }
   };
 
-  if (row.formaCalculo === 'FORMULA' && row.formula) {
-    extractFromFormula(row.formula);
+  const formulaToUse = row.formula || (row as any).totalFormula;
+  if (row.formaCalculo === 'FORMULA' && formulaToUse) {
+    extractFromFormula(formulaToUse);
   }
 
   if (row.vhFormula) {
@@ -82,6 +83,7 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
   const parser = new Parser();
 
   parser.functions.REDONDEO = (val: number, decimals: number = 2) => val; // Dummy for validation
+  parser.functions.valor = (x: any) => x;
   parser.functions.SUM_ANEXO = (a: any, c: any) => 0;
   parser.functions.GET_ANEXO_FILA_DATO = (a: any, r: any, f: any) => 0;
   parser.functions.GET_ANEXO_DATO = (a: any, c: any, f: any) => 0;
@@ -89,9 +91,10 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
   ficha.rows.forEach((row) => {
     const deps = extractDependencies(row, ficha.rows);
 
-    if (row.formaCalculo === 'FORMULA' && row.formula) {
+    const formulaToUse = row.formula || (row as any).totalFormula;
+  if (row.formaCalculo === 'FORMULA' && formulaToUse) {
         try {
-            const formulaStr = translateFormulaFromSpanish(row.formula.startsWith('=') ? row.formula.substring(1) : row.formula);
+            const formulaStr = translateFormulaFromSpanish(formulaToUse.startsWith('=') ? formulaToUse.substring(1) : formulaToUse);
             parser.parse(formulaStr);
 
             // check for trivial formulas
@@ -246,8 +249,9 @@ export function validateFicha(ficha: FichaJSON): { valid: boolean; errors: strin
     }
 
     // Check ref() in formulas
-    if (row.formaCalculo === 'FORMULA' && row.formula) {
-        const refMatches = row.formula.matchAll(/ref\(['"]([^'"]+)['"]\)/g);
+    const formulaToUse = row.formula || (row as any).totalFormula;
+  if (row.formaCalculo === 'FORMULA' && formulaToUse) {
+        const refMatches = formulaToUse.matchAll(/ref\(['"]([^'"]+)['"]\)/g);
         for (const match of refMatches) {
             const refId = match[1];
             if (!ids.has(refId) && !classifications.has(refId)) {
@@ -373,6 +377,7 @@ export function calculateFicha(
   });
 
   const parser = new Parser();
+  parser.functions.valor = (x: any) => x;
   parser.functions.REDONDEO = (val: number, decimals: number = 2) => {
     return new Decimal(val).toDecimalPlaces(decimals).toNumber();
   };
@@ -524,12 +529,12 @@ export function calculateFicha(
       })
       .sort((a, b) => b.priority - a.priority);
 
-    const ruleOverride = activeRules[0];
-    let formulaToUse = row.formula;
+const ruleOverride = activeRules[0];
+    let formulaToUse = row.formula || (row as any).totalFormula;
     let formaCalculoToUse = row.formaCalculo;
 
     const isParent = ficha.rows.some(r => r.parentId === row.id);
-    if (!formulaToUse && isParent && (formaCalculoToUse === 'FORMULA' || formaCalculoToUse === 'IMPORTAR_ANEXO')) {
+    if (isParent) {
         formulaToUse = 'sum(children)';
         formaCalculoToUse = 'FORMULA';
     }
@@ -732,11 +737,13 @@ export function calculateFicha(
       const current = calculatedRows.get(row.id)!;
 
       // Calculate VH if formula exists
-      if (row.vhFormula) {
+      const isParentRow = ficha.rows.some(r => r.parentId === row.id);
+      const vhFormulaToUse = isParentRow ? 'sum(children)' : row.vhFormula;
+      if (vhFormulaToUse) {
         try {
-            const vhFormulaStrRaw = row.vhFormula.trim().startsWith('=')
-              ? row.vhFormula.trim().substring(1)
-              : row.vhFormula;
+            const vhFormulaStrRaw = vhFormulaToUse.trim().startsWith('=')
+              ? vhFormulaToUse.trim().substring(1)
+              : vhFormulaToUse;
             const vhFormulaStr = smartTranslate(vhFormulaStrRaw, knownIds, knownClasses);
             const vhExpr = parser.parse(vhFormulaStr);
 
