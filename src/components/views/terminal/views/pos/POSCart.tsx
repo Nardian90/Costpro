@@ -31,6 +31,7 @@ interface POSCartProps {
   appliedTaxes: TaxConfiguration[];
   toggleTax: (tax: TaxConfiguration) => void;
   isProcessing: boolean;
+  isMobile?: boolean;
   onCheckout: (paymentMethod: PaymentMethod, discount?: { type: 'fixed' | 'percentage', value: number } | null) => Promise<void>;
   onClose: () => void;
   lastSale?: any;
@@ -49,6 +50,7 @@ export const POSCart = ({
   discount,
   setDiscount,
   appliedTaxes,
+  isMobile: isMobileProp,
   toggleTax,
   isProcessing,
   onCheckout,
@@ -63,7 +65,8 @@ export const POSCart = ({
   const [showOptions, setShowOptions] = useState(false);
   const [isEasyReading, setIsEasyReading] = useState(false);
   const [viewingImage, setViewingImage] = useState<{ url: string, name: string } | null>(null);
-  const isMobile = useIsMobile();
+  const isMobileHook = useIsMobile();
+  const isMobile = isMobileProp ?? isMobileHook;
 
   const generatePDF = () => {
     if (!lastSale) return;
