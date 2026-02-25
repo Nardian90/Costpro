@@ -208,7 +208,7 @@ export async function POST(req: NextRequest) {
                     formatLabel(r),
                     r.classification || r.id,
                     r.um || r.unit || '-',
-                    safeLocale(r.coefficient || r.valorHistorico ?? r.calculatedVH ?? r.v_historico ?? 0),
+                    safeLocale(r.coefficient ?? r.valorHistorico ?? r.calculatedVH ?? r.v_historico ?? 0),
                     safeLocale(r.total ?? 0)
                 ];
             } else {
