@@ -1,25 +1,38 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 // ============================================
 // Enums and Basics
 // ============================================
 
-export const userRoleSchema = z.enum(['admin', 'encargado', 'usuario', 'manager', 'clerk', 'warehouse', 'costo']);
+export const userRoleSchema = z.enum([
+  "admin",
+  "encargado",
+  "usuario",
+  "manager",
+  "clerk",
+  "warehouse",
+  "costo",
+]);
 
 /**
  * Permissive UUID regex that matches the standard 8-4-4-4-12 format
  * without being strict about the version or variant bits.
  */
-export const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export const uuidRegex =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * Resilient UUID schema that handles common "JS-isms" like 'null', 'undefined', or empty strings
  * by converting them to actual null before validation.
  */
-export const resilientUuid = z.preprocess((val) => {
-  if (val === 'null' || val === 'undefined' || val === '' || val === null) return null;
-  return val;
-}, z.string().regex(uuidRegex).nullable().optional()).optional().nullable();
+export const resilientUuid = z
+  .preprocess((val) => {
+    if (val === "null" || val === "undefined" || val === "" || val === null)
+      return null;
+    return val;
+  }, z.string().regex(uuidRegex).nullable().optional())
+  .optional()
+  .nullable();
 
 /**
  * Same as resilientUuid but with a .catch(null) to ensure that even invalid UUID strings
@@ -27,18 +40,24 @@ export const resilientUuid = z.preprocess((val) => {
  */
 export const optionalResilientUuid = resilientUuid.catch(null);
 
-export const paymentMethodSchema = z.enum(['cash', 'card', 'transfer', 'wallet', 'other']);
+export const paymentMethodSchema = z.enum([
+  "cash",
+  "card",
+  "transfer",
+  "wallet",
+  "other",
+]);
 
-export const discountTypeSchema = z.enum(['fixed', 'percentage']);
+export const discountTypeSchema = z.enum(["fixed", "percentage"]);
 
 export const transactionStatusSchema = z.enum([
-  'pending',
-  'completed',
-  'failed',
-  'compensated',
-  'cancelled',
-  'refunded',
-  'voided',
+  "pending",
+  "completed",
+  "failed",
+  "compensated",
+  "cancelled",
+  "refunded",
+  "voided",
 ]);
 
 // ============================================
@@ -58,21 +77,31 @@ export const userStoreMembershipSchema = z.object({
   id: optionalResilientUuid,
   user_id: optionalResilientUuid,
   store_id: optionalResilientUuid,
-  role: userRoleSchema.default('clerk'),
-  status: z.enum(['active', 'revoked']).default('active'),
+  role: userRoleSchema.default("clerk"),
+  status: z.enum(["active", "revoked"]).default("active"),
   created_at: z.string().optional().nullable(),
   updated_at: z.string().optional().nullable(),
   store: z.preprocess(
     (val) => (Array.isArray(val) ? val[0] : val),
-    storeSchema.nullable().optional().catch(null)
+    storeSchema.nullable().optional().catch(null),
   ),
 });
 
 export const profileSchema = z.object({
   id: z.string(),
-  full_name: z.preprocess((val) => (val === '' || val === null ? undefined : val), z.string()).catch('Usuario sin nombre'),
-  email: z.preprocess((val) => (val === '' || val === null ? undefined : val), z.string().email()).catch('no-email@costpro.com'),
-  role: userRoleSchema.catch('clerk'),
+  full_name: z
+    .preprocess(
+      (val) => (val === "" || val === null ? undefined : val),
+      z.string(),
+    )
+    .catch("Usuario sin nombre"),
+  email: z
+    .preprocess(
+      (val) => (val === "" || val === null ? undefined : val),
+      z.string().email(),
+    )
+    .catch("no-email@costpro.com"),
+  role: userRoleSchema.catch("clerk"),
   roles: z.array(userRoleSchema).catch([]),
   role_id: resilientUuid,
   is_active: z.boolean().catch(true),
@@ -86,17 +115,19 @@ export const profileSchema = z.object({
   created_by: resilientUuid,
   created_at: z.string().catch(() => new Date().toISOString()),
   updated_at: z.string().optional().nullable(),
-  memberships: z.preprocess(
-    (val) => (Array.isArray(val) ? val : []),
-    z.array(userStoreMembershipSchema).catch([])
-  ).optional(),
+  memberships: z
+    .preprocess(
+      (val) => (Array.isArray(val) ? val : []),
+      z.array(userStoreMembershipSchema).catch([]),
+    )
+    .optional(),
 });
 
 export const productSchema = z.object({
-  id: resilientUuid.pipe(z.string().regex(uuidRegex)).catch(''),
+  id: resilientUuid.pipe(z.string().regex(uuidRegex)).catch(""),
   name: z.string().min(1, "El nombre es obligatorio"),
   description: z.string().nullable().optional(),
-  sku: z.string().min(1, 'El SKU es obligatorio'),
+  sku: z.string().min(1, "El SKU es obligatorio"),
   price: z.coerce.number().min(0).optional().default(0),
   cost_price: z.coerce.number().min(0).optional().default(0),
   image_url: z.string().nullable().optional(),
@@ -110,20 +141,24 @@ export const productSchema = z.object({
   min_stock: z.coerce.number().optional().default(0),
   store_id: optionalResilientUuid,
   public_image_url: z.string().nullable().optional(),
-  is_active: z.preprocess((val) => {
-    if (val === undefined || val === null) return undefined;
-    if (typeof val === 'string') return val === 'true';
-    return val;
-  }, z.boolean().optional()).default(true),
-  has_movements: z.preprocess((val) => {
-    if (val === undefined || val === null) return undefined;
-    if (typeof val === 'string') return val === 'true';
-    return val;
-  }, z.boolean().optional()).default(false),
+  is_active: z
+    .preprocess((val) => {
+      if (val === undefined || val === null) return undefined;
+      if (typeof val === "string") return val === "true";
+      return val;
+    }, z.boolean().optional())
+    .default(true),
+  has_movements: z
+    .preprocess((val) => {
+      if (val === undefined || val === null) return undefined;
+      if (typeof val === "string") return val === "true";
+      return val;
+    }, z.boolean().optional())
+    .default(false),
 });
 
 export const productVariantSchema = z.object({
-  id: resilientUuid.pipe(z.string().regex(uuidRegex)).catch(''),
+  id: resilientUuid.pipe(z.string().regex(uuidRegex)).catch(""),
   product_id: optionalResilientUuid,
   name: z.string(),
   sku: z.string().nullable().optional(),
@@ -138,7 +173,7 @@ export const createProductInputSchema = productSchema.omit({
   created_at: true,
   updated_at: true,
   public_image_url: true,
-  has_movements: true
+  has_movements: true,
 });
 
 export const updateProductInputSchema = productSchema.partial().omit({
@@ -146,13 +181,13 @@ export const updateProductInputSchema = productSchema.partial().omit({
   created_at: true,
   updated_at: true,
   public_image_url: true,
-  has_movements: true
+  has_movements: true,
 });
 
 export const createProductVariantInputSchema = productVariantSchema.omit({
   id: true,
   created_at: true,
-  updated_at: true
+  updated_at: true,
 });
 
 export const cartItemSchema = z.object({
@@ -162,6 +197,10 @@ export const cartItemSchema = z.object({
   variant: productVariantSchema.nullable(),
   quantity: z.number().positive(),
   price: z.number().min(0),
+  discount_type: z.string().nullable().optional(),
+  discount_value: z.number().optional(),
+  cash_paid: z.number().optional(),
+  transfer_paid: z.number().optional(),
   cost: z.number().min(0),
   subtotal: z.number(),
 });
@@ -170,16 +209,19 @@ export const transactionSchema = z.object({
   id: z.string().regex(uuidRegex).or(z.string()),
   store_id: optionalResilientUuid,
   seller_id: optionalResilientUuid,
-  seller_name: z.string().nullable().optional().catch('Desconocido'),
+  seller_name: z.string().nullable().optional().catch("Desconocido"),
   total_amount: z.coerce.number().catch(0).default(0),
-  status: transactionStatusSchema.catch('pending').default('pending'),
-  created_at: z.preprocess((val) => val || new Date().toISOString(), z.string()),
+  status: transactionStatusSchema.catch("pending").default("pending"),
+  created_at: z.preprocess(
+    (val) => val || new Date().toISOString(),
+    z.string(),
+  ),
   updated_at: z.string().optional().nullable(),
   completed_at: z.string().nullable().optional(),
   cancelled_at: z.string().nullable().optional(),
   void_reason: z.string().nullable().optional(),
-  payment_method: paymentMethodSchema.catch('cash').optional().default('cash'),
-  discount_type: discountTypeSchema.catch('fixed').optional().default('fixed'),
+  payment_method: paymentMethodSchema.catch("cash").optional().default("cash"),
+  discount_type: discountTypeSchema.catch("fixed").optional().default("fixed"),
   discount_value: z.coerce.number().catch(0).default(0),
   subtotal: z.coerce.number().catch(0).default(0),
   tax_amount: z.coerce.number().catch(0).default(0),
@@ -188,12 +230,12 @@ export const transactionSchema = z.object({
 });
 
 export const stockMovementSchema = z.object({
-  id: resilientUuid.pipe(z.string().regex(uuidRegex)).catch(''),
+  id: resilientUuid.pipe(z.string().regex(uuidRegex)).catch(""),
   store_id: optionalResilientUuid,
   product_id: optionalResilientUuid,
   variant_id: optionalResilientUuid,
   quantity_change: z.coerce.number(),
-  movement_type: z.string().default('adjustment'),
+  movement_type: z.string().default("adjustment"),
   reference_id: z.string().nullable().optional(),
   reference_doc: z.string().nullable().optional(),
   movement_date: z.string().nullable().optional(),
@@ -205,11 +247,17 @@ export const stockMovementSchema = z.object({
 });
 
 export const receiptSchema = z.object({
-  id: resilientUuid.pipe(z.string().regex(uuidRegex)).catch(''),
-  created_at: z.preprocess((val) => val || new Date().toISOString(), z.string()),
+  id: resilientUuid.pipe(z.string().regex(uuidRegex)).catch(""),
+  created_at: z.preprocess(
+    (val) => val || new Date().toISOString(),
+    z.string(),
+  ),
   updated_at: z.string().optional().nullable(),
   user_id: optionalResilientUuid,
-  status: z.enum(['active', 'voided', 'pending', 'partial']).catch('active').default('active'),
+  status: z
+    .enum(["active", "voided", "pending", "partial"])
+    .catch("active")
+    .default("active"),
   total_cost: z.coerce.number().catch(0).default(0),
   reference_doc: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
@@ -228,17 +276,21 @@ export const receiptItemSchema = z.object({
   updated_at: z.string().optional(),
   products: z.preprocess(
     (val) => (Array.isArray(val) ? val[0] : val),
-    z.object({
-      name: z.string(),
-      sku: z.string().nullable().optional(),
-      image_url: z.string().nullable().optional(),
-      public_image_url: z.string().nullable().optional(),
-    }).nullable().optional().catch(null)
+    z
+      .object({
+        name: z.string(),
+        sku: z.string().nullable().optional(),
+        image_url: z.string().nullable().optional(),
+        public_image_url: z.string().nullable().optional(),
+      })
+      .nullable()
+      .optional()
+      .catch(null),
   ),
 });
 
 export const auditLogSchema = z.object({
-  id: resilientUuid.pipe(z.string().regex(uuidRegex)).catch(''),
+  id: resilientUuid.pipe(z.string().regex(uuidRegex)).catch(""),
   user_id: optionalResilientUuid,
   action: z.string(),
   table_name: z.string(),
@@ -276,10 +328,13 @@ export const transactionItemSchema = z.object({
   price_at_sale: z.coerce.number(),
   cost_at_sale: z.coerce.number(),
   created_at: z.string(),
-  products: z.object({
-    name: z.string(),
-    sku: z.string().nullable(),
-  }).nullable().optional(),
+  products: z
+    .object({
+      name: z.string(),
+      sku: z.string().nullable(),
+    })
+    .nullable()
+    .optional(),
 });
 
 export const paginatedProductSchema = productSchema.extend({
@@ -304,15 +359,23 @@ export const createSaleParamsSchema = z.object({
   p_subtotal: z.number(),
   p_discount_type: z.string(),
   p_discount_value: z.number(),
-  p_items: z.array(z.object({
-    product_id: z.string().regex(uuidRegex),
-    variant_id: z.string().regex(uuidRegex).nullable(),
-    quantity: z.number().positive(),
-    price: z.number().min(0),
-    cost: z.number().min(0),
-  })),
+  p_items: z.array(
+    z.object({
+      product_id: z.string().regex(uuidRegex),
+      variant_id: z.string().regex(uuidRegex).nullable(),
+      quantity: z.number().positive(),
+      price: z.number().min(0),
+      discount_type: z.string().nullable().optional(),
+      discount_value: z.number().optional(),
+      cash_paid: z.number().optional(),
+      transfer_paid: z.number().optional(),
+      cost: z.number().min(0),
+    }),
+  ),
   p_applied_taxes: z.array(z.any()).optional(),
   p_tax_amount: z.number().optional(),
+  p_cash_amount: z.number().optional(),
+  p_transfer_amount: z.number().optional(),
   p_transaction_id: z.string().regex(uuidRegex).optional(),
 });
 
@@ -321,12 +384,14 @@ export const registerReceptionParamsSchema = z.object({
   p_supplier: z.string().min(1),
   p_reception_date: z.string(),
   p_invoice_number: z.string().min(1),
-  p_items: z.array(z.object({
-    product_id: z.string().regex(uuidRegex).nullable(),
-    sku: z.string().nullable().optional(),
-    quantity: z.number().positive(),
-    unit_cost: z.number().min(0),
-  })),
+  p_items: z.array(
+    z.object({
+      product_id: z.string().regex(uuidRegex).nullable(),
+      sku: z.string().nullable().optional(),
+      quantity: z.number().positive(),
+      unit_cost: z.number().min(0),
+    }),
+  ),
 });
 
 export const adjustStockInputSchema = z.object({
@@ -343,7 +408,7 @@ export const inventoryAdjustmentResponseSchema = z.object({
   nuevo_stock: z.number(),
   nuevo_costo_total: z.number(),
   nuevo_costo_unitario: z.number(),
-  movimiento_registrado: z.boolean()
+  movimiento_registrado: z.boolean(),
 });
 
 export const performInventoryAdjustmentParamsSchema = z.object({
@@ -374,6 +439,10 @@ export const bulkUpdateProductItemSchema = z.object({
   sku: z.string().min(1),
   name: z.string().min(1),
   cost_price: z.number().min(0),
+  discount_type: z.string().nullable().optional(),
+  discount_value: z.number().optional(),
+  cash_paid: z.number().optional(),
+  transfer_paid: z.number().optional(),
   price: z.number().min(0),
   image_url: z.string().nullable().optional(),
   category: z.string().nullable().optional(),
@@ -394,10 +463,14 @@ export const managedCreateUserParamsSchema = z.object({
   p_full_name: z.string().min(1),
   p_role: userRoleSchema,
   p_store_id: z.string().regex(uuidRegex).nullable().optional(),
-  p_memberships: z.array(z.object({
-    store_id: z.string().regex(uuidRegex),
-    role: userRoleSchema
-  })).optional(),
+  p_memberships: z
+    .array(
+      z.object({
+        store_id: z.string().regex(uuidRegex),
+        role: userRoleSchema,
+      }),
+    )
+    .optional(),
   p_max_stores: z.number().int().min(0).optional(),
   p_max_users: z.number().int().min(0).optional(),
   p_password: z.string().min(6).optional(),
@@ -405,50 +478,63 @@ export const managedCreateUserParamsSchema = z.object({
 
 export const manageUserMembershipsParamsSchema = z.object({
   p_user_id: z.string().regex(uuidRegex),
-  p_memberships: z.array(z.object({
-    store_id: z.string().regex(uuidRegex),
-    role: userRoleSchema,
-    status: z.enum(['active', 'revoked']).optional()
-  }))
+  p_memberships: z.array(
+    z.object({
+      store_id: z.string().regex(uuidRegex),
+      role: userRoleSchema,
+      status: z.enum(["active", "revoked"]).optional(),
+    }),
+  ),
 });
 
 // ============================================
 // Cost Sheet
 // ============================================
 
-export const costSheetHeaderSchema = z.object({
-  code: z.string(),
-  name: z.string(),
-  date: z.string(),
-  quantity: z.union([z.number(), z.string()]),
-  currency: z.string(),
-  category: z.string(),
-  type: z.string(),
-  unit: z.string(),
-  product_code: z.string().optional().default(''),
-  company: z.string().optional().default(''),
-  organism: z.string().optional().default(''),
-  union: z.string().optional().default(''),
-  destination: z.string().optional().default(''),
-  production_level: z.union([z.number(), z.string()]).optional().default(0),
-  capacity_utilization: z.union([z.number(), z.string()]).optional().default(0),
-  sale_price: z.union([z.number(), z.string()]).optional().default(0),
-  client: z.string().optional().default(''),
-}).catchall(z.any());
+export const costSheetHeaderSchema = z
+  .object({
+    code: z.string(),
+    name: z.string(),
+    date: z.string(),
+    quantity: z.union([z.number(), z.string()]),
+    currency: z.string(),
+    category: z.string(),
+    type: z.string(),
+    unit: z.string(),
+    product_code: z.string().optional().default(""),
+    company: z.string().optional().default(""),
+    organism: z.string().optional().default(""),
+    union: z.string().optional().default(""),
+    destination: z.string().optional().default(""),
+    production_level: z.union([z.number(), z.string()]).optional().default(0),
+    capacity_utilization: z
+      .union([z.number(), z.string()])
+      .optional()
+      .default(0),
+    sale_price: z.union([z.number(), z.string()]).optional().default(0),
+    client: z.string().optional().default(""),
+  })
+  .catchall(z.any());
 
-export const costSheetRowSchema: z.ZodType<any> = z.lazy(() => z.object({
-  id: z.string(),
-  label: z.string(),
-  valorHistorico: z.number().optional(),
-  value: z.number().optional(),
-  baseDeCalculoRef: z.string().nullable().optional(),
-  base_ref: z.string().nullable().optional(),
-  calculationMethod: z.enum(['Prorrateo', 'ValorFijo', 'FORMULA', 'ANEXO']).optional(),
-  totalFormula: z.string().nullable().optional(),
-  formula: z.string().optional(),
-  is_percent: z.boolean().optional(),
-  children: z.array(costSheetRowSchema).optional(),
-}).catchall(z.any()));
+export const costSheetRowSchema: z.ZodType<any> = z.lazy(() =>
+  z
+    .object({
+      id: z.string(),
+      label: z.string(),
+      valorHistorico: z.number().optional(),
+      value: z.number().optional(),
+      baseDeCalculoRef: z.string().nullable().optional(),
+      base_ref: z.string().nullable().optional(),
+      calculationMethod: z
+        .enum(["Prorrateo", "ValorFijo", "FORMULA", "ANEXO"])
+        .optional(),
+      totalFormula: z.string().nullable().optional(),
+      formula: z.string().optional(),
+      is_percent: z.boolean().optional(),
+      children: z.array(costSheetRowSchema).optional(),
+    })
+    .catchall(z.any()),
+);
 
 export const costSheetSectionSchema = z.object({
   id: z.string(),
@@ -456,55 +542,78 @@ export const costSheetSectionSchema = z.object({
   rows: z.array(costSheetRowSchema),
 });
 
-export const costSheetColumnSchema = z.object({
-  key: z.string(),
-  label: z.string().optional(),
-  title: z.string().optional(),
-  formula: z.string().optional(),
-  type: z.enum(['number', 'string', 'formula', 'text']).optional(),
-}).catchall(z.any());
+export const costSheetColumnSchema = z
+  .object({
+    key: z.string(),
+    label: z.string().optional(),
+    title: z.string().optional(),
+    formula: z.string().optional(),
+    type: z.enum(["number", "string", "formula", "text"]).optional(),
+  })
+  .catchall(z.any());
 
-export const costSheetAnnexSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  columns: z.array(costSheetColumnSchema),
-  data: z.array(z.record(z.string(), z.any())),
-}).catchall(z.any());
+export const costSheetAnnexSchema = z
+  .object({
+    id: z.string(),
+    title: z.string(),
+    columns: z.array(costSheetColumnSchema),
+    data: z.array(z.record(z.string(), z.any())),
+  })
+  .catchall(z.any());
 
-export const costSheetSignatureSchema = z.object({
-  prepared_by: z.string(),
-  approved_by: z.string(),
-}).catchall(z.any());
+export const costSheetSignatureSchema = z
+  .object({
+    prepared_by: z.string(),
+    approved_by: z.string(),
+  })
+  .catchall(z.any());
 
-export const costSheetDataSchema = z.object({
-  header: costSheetHeaderSchema,
-  sections: z.array(costSheetSectionSchema),
-  annexes: z.array(costSheetAnnexSchema),
-  signature: costSheetSignatureSchema,
-}).catchall(z.any());
+export const costSheetDataSchema = z
+  .object({
+    header: costSheetHeaderSchema,
+    sections: z.array(costSheetSectionSchema),
+    annexes: z.array(costSheetAnnexSchema),
+    signature: costSheetSignatureSchema,
+  })
+  .catchall(z.any());
 
 // ============================================
 // Import Schemas
 // ============================================
 
-export const catalogImportRowSchema = z.object({
-  sku: z.string().min(1, "El SKU es obligatorio"),
-  name: z.string().min(1, "El nombre es obligatorio"),
-  cost: z.coerce.number().min(0, "El costo debe ser un número válido (mínimo 0)"),
-  price: z.coerce.number().min(0, "El precio debe ser un número válido (mínimo 0)"),
-  imageUrl: z.string().optional().nullable().default(''),
-}).refine(data => data.price >= data.cost, {
-  message: "El precio de venta no puede ser menor que el costo.",
-  path: ["price"]
-});
+export const catalogImportRowSchema = z
+  .object({
+    sku: z.string().min(1, "El SKU es obligatorio"),
+    name: z.string().min(1, "El nombre es obligatorio"),
+    cost: z.coerce
+      .number()
+      .min(0, "El costo debe ser un número válido (mínimo 0)"),
+    price: z.coerce
+      .number()
+      .min(0, "El precio debe ser un número válido (mínimo 0)"),
+    imageUrl: z.string().optional().nullable().default(""),
+  })
+  .refine((data) => data.price >= data.cost, {
+    message: "El precio de venta no puede ser menor que el costo.",
+    path: ["price"],
+  });
 
 export const receptionImportRowSchema = z.object({
   sku: z.string().min(1, "El SKU es obligatorio"),
-  quantity: z.coerce.number().int().positive("La cantidad debe ser un número entero positivo"),
-  cost: z.coerce.number().min(0, "El costo debe ser un número válido (mínimo 0)"),
+  quantity: z.coerce
+    .number()
+    .int()
+    .positive("La cantidad debe ser un número entero positivo"),
+  cost: z.coerce
+    .number()
+    .min(0, "El costo debe ser un número válido (mínimo 0)"),
 });
 
-export const transferStatusSchema = z.enum(['PENDIENTE', 'CONFIRMADA', 'CANCELADA']);
+export const transferStatusSchema = z.enum([
+  "PENDIENTE",
+  "CONFIRMADA",
+  "CANCELADA",
+]);
 
 export const transferItemSchema = z.object({
   id: optionalResilientUuid,
@@ -526,26 +635,41 @@ export const transferSchema = z.object({
 });
 
 export const transferWithDetailsSchema = transferSchema.extend({
-  origin_store: z.preprocess((val) => (Array.isArray(val) ? val[0] : val), storeSchema.nullable().optional().catch(null)),
-  destination_store: z.preprocess((val) => (Array.isArray(val) ? val[0] : val), storeSchema.nullable().optional().catch(null)),
+  origin_store: z.preprocess(
+    (val) => (Array.isArray(val) ? val[0] : val),
+    storeSchema.nullable().optional().catch(null),
+  ),
+  destination_store: z.preprocess(
+    (val) => (Array.isArray(val) ? val[0] : val),
+    storeSchema.nullable().optional().catch(null),
+  ),
   creator: z.preprocess(
     (val) => (Array.isArray(val) ? val[0] : val),
-    z.object({
-      full_name: z.string(),
-    }).nullable().optional().catch(null)
+    z
+      .object({
+        full_name: z.string(),
+      })
+      .nullable()
+      .optional()
+      .catch(null),
   ),
-  items: z.array(
-    transferItemSchema.extend({
-      product: z.preprocess((val) => (Array.isArray(val) ? val[0] : val), productSchema.nullable().optional().catch(null)),
-    })
-  ).optional(),
+  items: z
+    .array(
+      transferItemSchema.extend({
+        product: z.preprocess(
+          (val) => (Array.isArray(val) ? val[0] : val),
+          productSchema.nullable().optional().catch(null),
+        ),
+      }),
+    )
+    .optional(),
 });
 
 // ============================================
 // Sync Schemas
 // ============================================
 
-export const syncOperationTypeSchema = z.enum(['CREATE', 'UPDATE', 'DELETE']);
+export const syncOperationTypeSchema = z.enum(["CREATE", "UPDATE", "DELETE"]);
 
 export const syncOperationSchema = z.object({
   id: optionalResilientUuid,
@@ -555,7 +679,9 @@ export const syncOperationSchema = z.object({
   payload: z.any(),
   createdAt: z.string(),
   clientClock: z.number(),
-  status: z.enum(['pending', 'in-flight', 'failed', 'synced']).default('pending'),
+  status: z
+    .enum(["pending", "in-flight", "failed", "synced"])
+    .default("pending"),
   attempts: z.number().default(0),
   lastError: z.string().nullable().optional(),
   serverData: z.any().optional(),
@@ -571,7 +697,7 @@ export const syncBatchSchema = z.object({
 
 export const syncResultItemSchema = z.object({
   idempotencyKey: z.string().regex(uuidRegex),
-  status: z.enum(['ok', 'conflict', 'error']),
+  status: z.enum(["ok", "conflict", "error"]),
   serverId: z.any().optional(),
   serverVersion: z.number().optional(),
   serverData: z.any().optional(),
@@ -586,7 +712,14 @@ export const syncBatchResponseSchema = z.object({
 // Report Schemas
 // ============================================
 
-export const reportTypeSchema = z.enum(['sales', 'profit', 'inventory', 'kardex', 'purchases', 'audit']);
+export const reportTypeSchema = z.enum([
+  "sales",
+  "profit",
+  "inventory",
+  "kardex",
+  "purchases",
+  "audit",
+]);
 
 export const reportDefinitionSchema = z.object({
   id: z.string().regex(uuidRegex).optional(),
@@ -612,7 +745,7 @@ export const reportRunSchema = z.object({
   executed_at: z.string().optional(),
   parameters_snapshot: z.any(),
   file_url: z.string().nullable().optional(),
-  status: z.enum(['pending', 'completed', 'failed']).default('pending'),
+  status: z.enum(["pending", "completed", "failed"]).default("pending"),
   error_message: z.string().nullable().optional(),
   store_id: z.string().regex(uuidRegex).optional(),
 });
@@ -633,11 +766,13 @@ export const managedToggleProductActiveParamsSchema = z.object({
 export const createTransferParamsSchema = z.object({
   p_origin_store_id: z.string().regex(uuidRegex),
   p_destination_store_id: z.string().regex(uuidRegex),
-  p_items: z.array(z.object({
-    product_id: z.string().regex(uuidRegex),
-    quantity: z.number().positive(),
-    unit_cost: z.number().min(0),
-  })),
+  p_items: z.array(
+    z.object({
+      product_id: z.string().regex(uuidRegex),
+      quantity: z.number().positive(),
+      unit_cost: z.number().min(0),
+    }),
+  ),
   p_notes: z.string().nullable(),
 });
 
@@ -677,7 +812,7 @@ export const getDashboardKpisParamsSchema = z.object({
 export const taxConfigurationSchema = z.object({
   id: z.string().regex(uuidRegex),
   name: z.string(),
-  type: z.enum(['fixed', 'percentage']),
+  type: z.enum(["fixed", "percentage"]),
   value: z.coerce.number(),
   min_exempt: z.coerce.number().optional().nullable(),
   is_active: z.boolean().default(true),
