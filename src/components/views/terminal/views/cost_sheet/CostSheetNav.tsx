@@ -29,6 +29,7 @@ interface CostSheetNavProps {
   onExportPdf?: () => void;
   onQuickGenerate?: () => void;
   onExpertGenerate?: () => void;
+  topOffset?: string;
 }
 
 const CostSheetNav: React.FC<CostSheetNavProps> = ({
@@ -50,6 +51,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
   onExportPdf,
   onQuickGenerate,
   onExpertGenerate,
+  topOffset,
 }) => {
   const navActions: Action[] = React.useMemo(() => {
     // Filter out all items from main nav as requested: "visible solo Ficha, Modo, Generar, Opciones Darian y Ayuda"
@@ -142,7 +144,8 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
     <div className="mb-0">
       <ActionMenu
         actions={navActions}
-        sticky={false}
+        topOffset={topOffset}
+        sticky={true}
         className="!z-10 shadow-none bg-transparent -mx-4 px-4 py-0"
       />
     </div>

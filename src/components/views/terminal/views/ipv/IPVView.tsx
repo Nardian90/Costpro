@@ -527,7 +527,7 @@ export default function IPVView() {
       <IPVRightSidebar activeTab={activeTab} onSelect={setActiveTab} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <div className="mb-6">
+            <div className="sticky top-[60px] sm:top-[92px] z-20 bg-background/95 backdrop-blur-md mb-6 py-2 -mx-2 px-2 sm:-mx-8 sm:px-8 lg:-mx-12 lg:px-12">
                 <HorizontalScroll containerClassName="bg-muted/50 rounded-2xl p-1">
                     <TabsList className="flex bg-transparent border-none w-max min-w-full h-auto p-0 gap-1">
                         <TabsTrigger value="analytics" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Dashboard</TabsTrigger>
