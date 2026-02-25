@@ -1,6 +1,7 @@
 'use client';
 import { LazyRender } from '@/components/ui/LazyRender';
 
+import { motion, AnimatePresence } from "framer-motion";
 
 import React, { useState, useMemo, memo } from 'react';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
@@ -411,6 +412,14 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
   const sectionInputRef = React.useRef<HTMLInputElement>(null);
   const [importingSectionIndex, setImportingSectionIndex] = useState<number | null>(null);
   const [activeSectionForActions, setActiveSectionForActions] = useState<{ section: any, index: number } | null>(null);
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+
+  const toggleSection = (sectionId: string) => {
+    setCollapsedSections(prev => ({
+      ...prev,
+      [sectionId]: !prev[sectionId]
+    }));
+  };
 
   // Smooth scroll to active section/group when selected
   React.useEffect(() => {
@@ -556,7 +565,12 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                 <div id={section.id} className="animate-in fade-in slide-in-from-bottom-2 duration-500 mb-8 last:mb-0 scroll-mt-24">
                     <div className="flex items-center justify-between py-1 px-4 bg-emerald-500/5 border-y border-border/20 border-l-2 border-emerald-500/40">
                         <div className="flex items-center gap-3">
-                            <div className="w-1 h-4 bg-emerald-500/40 rounded-full" />
+                            <button
+                                onClick={() => toggleSection(section.id)}
+                                className="p-1 rounded-lg hover:bg-emerald-500/10 transition-colors group"
+                            >
+                                <ChevronDown className={cn("w-4 h-4 text-emerald-600/60 transition-transform", collapsedSections[section.id] && "-rotate-90")} />
+                            </button>
                             <Input
                                 className="h-7 text-xs font-black uppercase tracking-[0.2em] text-foreground/80 bg-transparent border-none focus-visible:ring-0 p-0 w-auto min-w-[250px]"
                                 value={section.label}
@@ -576,9 +590,18 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                         </div>
                     </div>
 
-                    <div className="w-full p-0 border-none shadow-none">
-                        <div className="table-scroll-wrapper overflow-x-auto border-border/50">
-                        <Table className="w-full border-collapse min-w-[800px]">
+<AnimatePresence initial={false}>
+                        {!collapsedSections[section.id] && (
+                            <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.3, ease: "easeInOut" }}
+                                className="overflow-hidden"
+                            >
+                                <div className="w-full p-0 border-none shadow-none">
+                                    <div className="table-scroll-wrapper overflow-x-auto border-border/50">
+                                    <Table className="w-full border-collapse min-w-[800px]">
                             <TableHeader className={cn(
                                 "bg-muted/50 text-muted-foreground font-black uppercase text-xs tracking-widest border-b border-border",
                                 !isFirstInGroup && "hidden",
@@ -609,8 +632,11 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                                 ))}
                             </TableBody>
                         </Table>
-                        </div>
-                    </div>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
                 </LazyRender>
                 );

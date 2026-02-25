@@ -57,3 +57,7 @@ Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and 
  GET /cost-sheets 200 in 1369ms (compile: 435ms, render: 934ms)
  GET /cost-sheets 200 in 117ms (compile: 39ms, render: 79ms)
  GET /cost-sheets 200 in 117ms (compile: 35ms, render: 82ms)
+○ Compiling / ...
+ HEAD / 200 in 8.1s (compile: 6.8s, render: 1292ms)
+ HEAD / 200 in 151ms (compile: 66ms, render: 85ms)
+ GET /login 200 in 662ms (compile: 289ms, render: 373ms)
