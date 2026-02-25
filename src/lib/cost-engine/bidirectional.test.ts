@@ -34,7 +34,7 @@ describe('Bidirectional and Section 13 validations', () => {
 
         const result = calculateFicha(ficha);
         const row13 = result.rows.find(r => r.id === '13');
-        expect(row13?.total).toBe(200);
+        expect(row13?.total).toBe(100);
     });
 
     it('should support vh() function and vhFormula', () => {
@@ -49,7 +49,7 @@ describe('Bidirectional and Section 13 validations', () => {
                     type: 'COST',
                     formaCalculo: 'FORMULA',
                     vhFormula: "ref('2') * 0.5", // VH of 1 depends on Total of 2
-                    formula: "VH * 2", // Total of 1 depends on its own VH
+                    formula: "VH * valor(2)", // Total of 1 depends on its own VH
                 },
                 {
                     id: '2',

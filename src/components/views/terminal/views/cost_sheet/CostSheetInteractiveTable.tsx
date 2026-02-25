@@ -226,7 +226,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
         </TableCell>
 
         {/* Valor Histórico / % */}
-        <TableCell className="px-2 py-0.5 text-right w-[140px] cursor-pointer border-r border-border/10" onClick={() => setIsEditingVH(true)}>
+        <TableCell className={cn("px-2 py-0.5 text-right w-[140px] border-r border-border/10", !hasChildren ? "cursor-pointer" : "cursor-default")} onClick={() => !hasChildren && setIsEditingVH(true)}>
             <div className="relative">
                 {isEditingVH ? (
                     <FormulaEditor
@@ -261,12 +261,12 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
 
         {/* Total */}
         <TableCell
-          className="px-2 py-0.5 text-right font-black tabular-nums text-primary w-[120px] cursor-pointer hover:bg-primary/5 transition-colors text-xs border-r border-border/10"
-          onClick={() => setIsEditingTotal(true)}
+          className={cn("px-2 py-0.5 text-right font-black tabular-nums text-primary w-[120px] transition-colors text-xs border-r border-border/10", !hasChildren ? "cursor-pointer hover:bg-primary/5" : "cursor-default opacity-80")}
+          onClick={() => !hasChildren && setIsEditingTotal(true)}
         >
           {isEditingTotal ? (
             <FormulaEditor
-              initialValue={row.formula || String(safeCalculated.total)}
+              initialValue={row.formula || row.totalFormula || String(safeCalculated.total)}
               onSave={handleTotalSave}
               onCancel={() => setIsEditingTotal(false)}
               suggestions={suggestions}
@@ -348,8 +348,8 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                 </Popover>
 
                 <div className="flex items-center gap-1">
-                    {row.formula && <FunctionSquare className="w-3 h-3 text-primary/40" />}
-                    <span className={cn(row.formula && "underline decoration-dotted decoration-primary/30", isZero ? "text-muted-foreground opacity-60 font-medium" : "text-primary font-black")}>
+                    {(row.formula || row.totalFormula) && <FunctionSquare className="w-3 h-3 text-primary/40" />}
+                    <span className={cn((row.formula || row.totalFormula) && "underline decoration-dotted decoration-primary/30", isZero ? "text-muted-foreground opacity-60 font-medium" : "text-primary font-black")}>
                         {formatAccounting(safeCalculated.total)}
                     </span>
                 </div>

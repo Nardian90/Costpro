@@ -358,10 +358,10 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
 
           // Map calculation method
           let formula = r.formula || r.totalFormula;
+          const isParent = r.children && r.children.length > 0;
 
-          // If no formula but has children, default to sum(children) for compatibility
-          // unless it's explicitly set to ValorFijo
-          if (!formula && r.children && r.children.length > 0 && r.calculationMethod !== 'ValorFijo') {
+          // Enforce sum(children) for parents
+          if (isParent) {
               formula = '=sum(children)';
           }
 
