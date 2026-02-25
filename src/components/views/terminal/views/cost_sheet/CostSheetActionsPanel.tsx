@@ -6,7 +6,8 @@ import {
   X as XIcon, FileText, Trash2, Upload, Save, FileSpreadsheet,
   Download, Settings, Table2, LayoutGrid, ChevronDown,
   BarChart3, Layout, ListFilter, PenTool, Zap, Wand2,
-  BookOpen, Eye, Activity, Sparkles, FolderOpen, Bot, HelpCircle, Calculator
+  BookOpen, Eye, Activity, Sparkles, FolderOpen, Bot, HelpCircle, Calculator,
+  LifeBuoy, GraduationCap
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -36,6 +37,8 @@ interface CostSheetActionsPanelProps {
   onOpenSections?: () => void;
   onOpenAnnexes?: () => void;
   onOpenHelp?: () => void;
+  onOpenSystemHelp?: () => void;
+  onOpenAcademy?: () => void;
   onQuickGenerate?: () => void;
   onExpertGenerate?: () => void;
 }
@@ -105,6 +108,8 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
   onOpenSections,
   onOpenAnnexes,
   onOpenHelp,
+  onOpenSystemHelp,
+  onOpenAcademy,
   onQuickGenerate,
   onExpertGenerate
 }) => {
@@ -280,7 +285,9 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
                 onToggle={() => toggleGroup('soporte')}
               >
                 {renderActionButton('calculator', 'Calculadora Pro', Calculator)}
-                {renderActionButton('help', 'Centro de Ayuda', HelpCircle, onOpenHelp)}
+                {renderActionButton('help', 'Ayuda de esta vista', HelpCircle, onOpenHelp)}
+                {renderActionButton('system-help', 'Ayuda del sistema', LifeBuoy, onOpenSystemHelp)}
+                {renderActionButton('academy', 'Academia', GraduationCap, onOpenAcademy)}
               </AccordionGroup>
 
             </div>

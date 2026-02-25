@@ -5,8 +5,7 @@ import { FichaJSON } from './types';
 describe('Cost Engine - Topological Sorting & DAGs', () => {
   it('should correctly calculate linear dependencies spanning across sections (13.3 -> 14.1 -> 13.2)', () => {
     const ficha: FichaJSON = {
-      meta: { id: 'test', decimals: 2 },
-      header: { quantity: 1 },
+      meta: { id: 'test', name: 'Test Ficha', currency: 'CUP', decimals: 2 },
       rows: [
         {
             id: '13.1',
@@ -14,8 +13,7 @@ describe('Cost Engine - Topological Sorting & DAGs', () => {
             label: 'Utilidad',
             type: 'MARGIN',
             formaCalculo: 'FIJO',
-            valorHistorico: 5000,
-            audit: []
+            valorHistorico: 5000
         },
         {
             id: '13.2',
@@ -23,8 +21,7 @@ describe('Cost Engine - Topological Sorting & DAGs', () => {
             label: 'Precio antes de Impuesto',
             type: 'INFO',
             formaCalculo: 'FORMULA',
-            formula: "ref('13.1') + 10000",
-            audit: []
+            formula: "ref('13.1') + 10000"
         },
         {
             id: '13.3',
@@ -32,8 +29,7 @@ describe('Cost Engine - Topological Sorting & DAGs', () => {
             label: 'Imp s/Ventas y Serv',
             type: 'TAX',
             formaCalculo: 'FORMULA',
-            formula: "ref('14.1') - ref('13.2')",
-            audit: []
+            formula: "ref('14.1') - ref('13.2')"
         },
         {
             id: '14.1',
@@ -41,8 +37,7 @@ describe('Cost Engine - Topological Sorting & DAGs', () => {
             label: 'Precio o Tarifa Final',
             type: 'INFO',
             formaCalculo: 'FORMULA',
-            formula: "ref('13.2') / 0.9",
-            audit: []
+            formula: "ref('13.2') / 0.9"
         }
       ],
       anexos: []
@@ -73,8 +68,7 @@ describe('Cost Engine - Topological Sorting & DAGs', () => {
 
   it('should detect actual self-references in Section 13 but allow valid references to other rows', () => {
     const ficha: FichaJSON = {
-      meta: { id: 'test', decimals: 2 },
-      header: { quantity: 1 },
+      meta: { id: 'test', name: 'Test Ficha', currency: 'CUP', decimals: 2 },
       rows: [
         {
             id: '13.1',
@@ -82,8 +76,7 @@ describe('Cost Engine - Topological Sorting & DAGs', () => {
             label: 'Utilidad',
             type: 'MARGIN',
             formaCalculo: 'FORMULA',
-            formula: "ref('13.1') * 1.1", // SELF REFERENCE
-            audit: []
+            formula: "ref('13.1') * 1.1" // SELF REFERENCE
         }
       ],
       anexos: []
