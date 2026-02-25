@@ -45,7 +45,7 @@ export default function InventoryAdjustmentsView() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
          <div>
-            <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase text-primary"> Ajustes de Documentos </h2>
+            <h2 className="text-[clamp(1.5rem,6vw,2.25rem)] font-black text-foreground tracking-tighter uppercase text-primary"> Ajustes de Documentos </h2>
             <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest mt-1">Inversiones de Ventas y Recepciones</p>
          </div>
          <ActionMenu
@@ -94,13 +94,13 @@ export default function InventoryAdjustmentsView() {
               </div>
 
               <div className="flex flex-col sm:items-end gap-1">
-                <div className={cn("text-2xl font-black", mov.quantity_change > 0 ? 'text-green-600' : 'text-destructive')}>
+                <div className={cn("text-[clamp(1.25rem,5vw,1.5rem)] font-black", mov.quantity_change > 0 ? 'text-green-600' : 'text-destructive')}>
                   {mov.quantity_change > 0 ? '+' : ''}{mov.quantity_change}
                   <span className="text-xs ml-1 font-bold">uds</span>
                 </div>
                 <div className="flex flex-col sm:items-end text-[10px] font-black uppercase tracking-tighter text-muted-foreground">
                   <span>{formatDate(mov.created_at)} - {formatTime(mov.created_at)}</span>
-                  <span className="text-primary/70 mt-0.5">REF: {mov.reference_doc || 'SIN REFERENCIA'}</span>
+                  <span className="text-primary/70 mt-0.5 truncate max-w-[200px] inline-block">REF: {mov.reference_doc || 'SIN REFERENCIA'}</span>
                 </div>
               </div>
             </div>
