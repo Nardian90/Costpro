@@ -139,21 +139,22 @@ export async function POST(req: NextRequest) {
         if (sections && sections.length > 0) {
             // Group by provided sections
             sections.forEach((s: any) => {
-                tableBody.push([{
-                    content: s.label.toUpperCase(),
-                    colSpan: 5,
-                    styles: {
-                        fillColor: isPro ? [240, 245, 250] : [245, 245, 245],
-                        fontStyle: 'bold',
-                        textColor: isPro ? primaryColor : [0, 0, 0]
-                    }
-                }]);
+                // Section headers removed as per request
 
                 const flattenRows = (rows: any[]) => {
                     rows.forEach((r: any) => {
                         const calc = (result.rows || []).find((cr: any) => cr.id === r.id);
                         if (calc) {
-                            if (exportOptions.skipZeros && calc.total === 0) return;
+                            const classStr = String(calc.classification || calc.id || '');
+                            const level = (classStr.match(/\./g) || []).length;
+
+                            // Parents (level 0, 1) always visible
+                            // Children (level 2+) hidden if zero and skipZeros is true
+                            const isParent = level < 2;
+                            const isZero = (calc.total ?? 0) === 0;
+
+                            if (exportOptions.skipZeros && isZero && !isParent) return;
+
                             tableBody.push([
                                 calc.classification || calc.id,
                                 calc.label,
@@ -171,7 +172,13 @@ export async function POST(req: NextRequest) {
             // Fallback to flat rows
             tableBody = (result.rows || [])
                 .filter((r: any) => {
-                    if (exportOptions.skipZeros && r.total === 0) return false;
+                    if (exportOptions.skipZeros) {
+                        const classStr = String(r.classification || r.id || '');
+                        const level = (classStr.match(/\./g) || []).length;
+                        const isParent = level < 2;
+                        const isZero = (r.total ?? 0) === 0;
+                        if (isZero && !isParent) return false;
+                    }
                     return true;
                 })
                 .map((r: any) => [
@@ -187,20 +194,21 @@ export async function POST(req: NextRequest) {
             startY: currentY,
             head: [headers],
             body: tableBody,
-            theme: isPro ? 'striped' : 'plain',
+            theme: isPro ? 'grid' : 'plain',
             headStyles: {
-                fillColor: isPro ? primaryColor : [255, 255, 255],
+                fillColor: isPro ? [40, 40, 40] : [255, 255, 255],
                 textColor: isPro ? [255, 255, 255] : [0, 0, 0],
-                fontSize: 8,
+                fontSize: isPro ? 7.5 : 8,
                 fontStyle: 'bold',
                 lineWidth: { bottom: 0.5 },
-                lineColor: isPro ? primaryColor : [100, 100, 100]
+                lineColor: isPro ? [40, 40, 40] : [100, 100, 100]
             },
             styles: {
                 fontSize: 8,
-                cellPadding: { top: 1.5, bottom: 1.5, left: 2, right: 2 },
+                cellPadding: isPro ? { top: 2, bottom: 2, left: 3, right: 3 } : { top: 1.5, bottom: 1.5, left: 2, right: 2 },
                 font: "helvetica",
-                lineColor: [240, 240, 240]
+                lineColor: isPro ? [230, 230, 230] : [240, 240, 240],
+                lineWidth: isPro ? 0.05 : 0
             },
             columnStyles: {
                 0: { cellWidth: 15 }, // FILA
@@ -233,18 +241,34 @@ export async function POST(req: NextRequest) {
                         const isSpecial = isVenta || isCosto || isUtilidad || isImpuesto || ['12', '13', '13.1', '13.2', '14', '19', '20'].includes(classStr);
 
                         if (data.column.index === 1) { // CONCEPTO
-                            data.cell.styles.cellPadding = { left: 2 + (level * 4) };
+                            const indent = isPro ? (level * 6) : (level * 4);
+                            data.cell.styles.cellPadding = { ...data.cell.styles.cellPadding as any, left: (data.cell.styles.cellPadding as any).left + indent };
+
+                            let label = String(data.cell.text[0]);
+                            if (isPro && level > 0) {
+                                if (level === 1) label = "• " + label;
+                                else label = "  - " + label;
+                            }
+
                             if (level === 0) {
                                 data.cell.styles.fontStyle = 'bold';
-                                data.cell.styles.fontSize = 9;
-                                data.cell.text = [data.cell.text[0].toUpperCase()];
+                                data.cell.styles.fontSize = isPro ? 9.5 : 9;
+                                data.cell.text = [label.toUpperCase()];
                             } else if (level === 1) {
-                                data.cell.styles.fontStyle = 'normal';
-                                data.cell.styles.fontSize = 8.5;
+                                data.cell.styles.fontStyle = isPro ? 'bold' : 'normal';
+                                data.cell.styles.fontSize = isPro ? 8.5 : 8.5;
+                                data.cell.text = [label];
                             } else {
                                 data.cell.styles.fontStyle = 'italic';
                                 data.cell.styles.fontSize = 8;
-                                data.cell.styles.textColor = [80, 80, 80];
+                                data.cell.styles.textColor = isPro ? [60, 60, 60] : [80, 80, 80];
+                                data.cell.text = [label];
+                            }
+
+                            // Focus on elements with value
+                            if (isPro && (r.total ?? 0) > 0 && level > 0) {
+                                data.cell.styles.textColor = [0, 0, 0];
+                                if (level >= 2) data.cell.styles.fontStyle = 'normal';
                             }
                         }
 
@@ -315,9 +339,20 @@ export async function POST(req: NextRequest) {
                 startY: currentY,
                 head: [headers.map(h => translate(h).toUpperCase())],
                 body: body,
-                theme: isPro ? 'striped' : 'grid',
-                headStyles: { fillColor: isPro ? primaryColor : [255, 255, 255], textColor: isPro ? [255, 255, 255] : primaryColor, fontSize: 7, lineWidth: { bottom: 0.5 } },
-                styles: { fontSize: 7, cellPadding: 1.5 },
+                theme: isPro ? 'grid' : 'grid',
+                headStyles: {
+                    fillColor: isPro ? [60, 60, 60] : [255, 255, 255],
+                    textColor: isPro ? [255, 255, 255] : primaryColor,
+                    fontSize: 7,
+                    lineWidth: { bottom: 0.5 },
+                    lineColor: isPro ? [60, 60, 60] : primaryColor
+                },
+                styles: {
+                    fontSize: 7,
+                    cellPadding: isPro ? 2 : 1.5,
+                    lineColor: isPro ? [230, 230, 230] : [200, 200, 200],
+                    lineWidth: isPro ? 0.05 : 0.1
+                },
                 margin: { left: 14, right: 14 }
             });
             currentY = (doc as any).lastAutoTable.finalY + 10;
