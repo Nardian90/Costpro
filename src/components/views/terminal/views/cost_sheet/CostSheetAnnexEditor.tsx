@@ -305,7 +305,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                                                     return undefined;
                                                 })()}
                                                 className={cn(
-                                                    "neu-input !p-2 min-w-[80px] text-xs font-bold text-slate-900 dark:text-slate-100 border-transparent hover:border-primary/20 focus:border-primary bg-white/50 dark:bg-slate-900/50",
+                                                    "neu-input !p-2 min-w-[80px] text-xs font-bold text-foreground border-transparent hover:border-primary/20 focus:border-primary bg-muted/20",
                                                     typeof annexes[annexIndex].data[rowIndex][col.key] === 'string' && annexes[annexIndex].data[rowIndex][col.key] !== '' && "border-primary/20 bg-primary/5", typeof row[col.key] === "number" && isZero(col.key) && "text-muted-foreground opacity-60 font-medium"
                                                 )}
                                             />
