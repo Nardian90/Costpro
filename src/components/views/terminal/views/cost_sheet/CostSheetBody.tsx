@@ -6,6 +6,7 @@ import { cn, formatCurrency } from '@/lib/utils';
 // Define the richer structure for a single calculated value
 type CalculatedRowValue = {
   valorHistorico: number;
+  calculatedVH?: number;
   baseTotal: number;
   coeficiente: number;
   total: number;
@@ -32,7 +33,7 @@ type CostSheetBodyProps = {
 
 const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValues, forceTable }) => {
   const renderRow = (row: any, level: number = 0, numbering: string) => {
-      const calc = calculatedValues[row.id] || { total: 0, valorHistorico: 0, baseTotal: 0, coeficiente: 0 };
+      const calc = calculatedValues[row.id] || { total: 0, valorHistorico: 0, calculatedVH: 0, baseTotal: 0, coeficiente: 0 };
       const isZero = Number(calc.total) === 0;
       const hasChildren = row.children && row.children.length > 0;
 
@@ -72,7 +73,7 @@ const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValue
 
                 {/* Valor Histórico */}
                 <td data-label="Valor Histórico" className="py-0.5 px-2 text-right font-mono text-muted-foreground text-xs w-[140px] whitespace-nowrap">
-                    {calc.valorHistorico > 0 ? calc.valorHistorico.toLocaleString('es-ES', { minimumFractionDigits: 2 }) : '--'}
+                    {(calc.calculatedVH ?? calc.valorHistorico) >= 0 ? (calc.calculatedVH ?? calc.valorHistorico).toLocaleString('es-ES', { minimumFractionDigits: 2 }) : '--'}
                 </td>
 
                 {/* Total */}
