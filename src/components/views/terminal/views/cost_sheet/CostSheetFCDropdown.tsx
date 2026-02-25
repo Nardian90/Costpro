@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Layout, ListFilter, FileSpreadsheet, PenTool, Zap, ChevronDown, BarChart3 } from 'lucide-react';
+import { Layout, ListFilter, FileSpreadsheet, PenTool, Zap, ChevronDown, FolderOpen } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,7 +25,7 @@ export function CostSheetFCDropdown({
   onOpenAnnexes,
 }: CostSheetFCDropdownProps) {
   const options = [
-    { id: 'kpis', label: 'Tablero', icon: BarChart3 },
+    { id: 'templates', label: 'Plantillas', icon: FolderOpen },
     { id: 'header', label: 'Encabezado', icon: Layout },
     { id: 'open-sections', label: 'Secciones', icon: ListFilter, onClick: onOpenSections },
     { id: 'open-annexes', label: 'Anexo', icon: FileSpreadsheet, onClick: onOpenAnnexes },
