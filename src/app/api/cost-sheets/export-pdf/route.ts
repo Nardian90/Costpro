@@ -232,16 +232,13 @@ export async function POST(req: NextRequest) {
                     const r = (result.rows || []).find((cr: any) => cr.classification === rowContent[0] || cr.id === rowContent[0]);
                     if (r) {
                         const classStr = String(r.classification || r.id || '');
-                        const level = (classStr.match(/\\./g) || []).length;
+                        const level = (classStr.match(/\./g) || []).length;
                         const labelLower = (r.label || '').toLowerCase();
-                        const isVenta = labelLower.includes('venta');
-                        const isCosto = labelLower.includes('costo');
-                        const isUtilidad = labelLower.includes('utilidad');
-                        const isImpuesto = labelLower.includes('imp s/') || labelLower.includes('impuesto');
-                        const isSpecial = isVenta || isCosto || isUtilidad || isImpuesto || ['12', '13', '13.1', '13.2', '14', '19', '20'].includes(classStr);
+                        const isRed = labelLower.includes('utilidad') || labelLower.includes('precio');
+                        const isSpecial = isRed || ['12', '13', '13.1', '13.2', '14', '19', '20'].includes(classStr);
 
                         if (data.column.index === 1) { // CONCEPTO
-                            const indent = isPro ? (level * 10) : (level * 4);
+                            const indent = isPro ? (level * 7) : (level * 4);
                             data.cell.styles.cellPadding = { ...data.cell.styles.cellPadding as any, left: (data.cell.styles.cellPadding as any).left + indent };
 
                             let label = String(data.cell.text[0]);
@@ -256,8 +253,8 @@ export async function POST(req: NextRequest) {
                                 data.cell.text = [label.toUpperCase()];
                                 if (isPro) {
                                     data.cell.styles.fillColor = [250, 250, 250];
-                                    (data.cell.styles.cellPadding as any).top = 4;
-                                    (data.cell.styles.cellPadding as any).bottom = 4;
+                                    (data.cell.styles.cellPadding as any).top = 3;
+                                    (data.cell.styles.cellPadding as any).bottom = 3;
                                 }
                             } else if (level === 1) {
                                 data.cell.styles.fontStyle = isPro ? 'bold' : 'normal';
@@ -279,7 +276,7 @@ export async function POST(req: NextRequest) {
 
                         if (isSpecial || level === 0) {
                             data.cell.styles.fontStyle = 'bold';
-                            if (isVenta || isUtilidad || isImpuesto) {
+                            if (isRed) {
                                 data.cell.styles.textColor = isPro ? [150, 0, 0] : [180, 0, 0];
                                 data.cell.styles.fillColor = isPro ? [255, 245, 245] : [255, 248, 248];
                             }
