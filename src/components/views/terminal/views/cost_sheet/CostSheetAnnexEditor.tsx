@@ -125,8 +125,9 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
   const totalValue = React.useMemo(() => {
     if (!annex?.columns || !displayData) return 0;
 
+
     const totalCol = annex.columns.find((c: CostSheetColumn) =>
-        ['total', 'amount', 'depreciation_cost', 'price_total'].includes(c.key)
+        ['total', 'amount', 'depreciation_cost', 'price_total', 'value', 'importe'].includes(c.key)
     );
     const key = totalCol?.key;
     if (!key) return 0;
