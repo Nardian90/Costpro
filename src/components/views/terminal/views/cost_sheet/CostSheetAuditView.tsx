@@ -109,7 +109,7 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                                             "bg-primary/10 text-primary"
                                         )}>
                                             {v.category === 'Integridad Estructural' ? <Calculator className="w-4 h-4" /> :
-                                             v.category === 'Rentabilidad' ? <Target className="w-4 h-4" /> :
+                                             v.category === 'Rentabilidad' ? <Target className="w-4 h-4" /> : v.category === 'Formato Estándar Recomendado' ? <Activity className="w-4 h-4" /> :
                                              <Zap className="w-4 h-4" />}
                                         </div>
                                         <div className="flex-1 min-w-0">
