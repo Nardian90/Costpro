@@ -103,7 +103,7 @@ export default function POSView() {
     discount,
     setDiscount,
     appliedTaxes,
-    toggleTax,
+    toggleTax, updateItemDiscount, updateItemPayment, prorateGlobalPayment,
     getItemCount,
     startCheckout,
     confirmUnpricedCheckout,
@@ -223,6 +223,9 @@ export default function POSView() {
                   setDiscount={setDiscount}
                   appliedTaxes={appliedTaxes}
                   toggleTax={toggleTax}
+                  updateItemDiscount={updateItemDiscount}
+                  updateItemPayment={updateItemPayment}
+                  prorateGlobalPayment={prorateGlobalPayment}
                   isProcessing={isProcessingSale}
                   onCheckout={startCheckout}
                   onClose={() => setShowCart(false)}
@@ -248,6 +251,9 @@ export default function POSView() {
                 setDiscount={setDiscount}
                 appliedTaxes={appliedTaxes}
                 toggleTax={toggleTax}
+                  updateItemDiscount={updateItemDiscount}
+                  updateItemPayment={updateItemPayment}
+                  prorateGlobalPayment={prorateGlobalPayment}
                 isProcessing={isProcessingSale}
                 onCheckout={startCheckout}
                 onClose={() => setShowCart(false)}
