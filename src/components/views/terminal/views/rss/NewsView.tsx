@@ -87,7 +87,7 @@ export default function NewsView() {
             </div>
             <div className="shrink-0 flex flex-col items-end">
               {exchangeRateNews.exchangeRateData ? (
-                <div className="text-5xl font-black text-primary tracking-tighter">
+                <div className="text-[clamp(2.5rem,10vw,3.5rem)] font-black text-primary tracking-tighter">
                   {exchangeRateNews.exchangeRateData.value} <span className="text-xl uppercase ml-1">CUP</span>
                 </div>
               ) : (
