@@ -611,57 +611,106 @@ export function IPVReportView() {
                 <TableHead>Estado</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {!reports || reports.length === 0 ? (
-                <TableRow><TableCell colSpan={6} className="h-24 text-center text-muted-foreground">No hay reportes generados.</TableCell></TableRow>
-              ) : (
-                reports.map((r) => (
-                  <TableRow key={r.id}>
-                    <TableCell className="sticky-column-1 font-bold">{formatDate(r.fecha_reporte)}</TableCell>
-                    <TableCell className="text-right font-black">{formatCurrency(r.total_ventas_cents)}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(r.resumen_efectivo_cents)}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(r.resumen_transferencia_cents)}</TableCell>
-                    <TableCell><Badge variant={r.estado === 'CERRADO' ? 'default' : 'outline'} className={r.estado === 'CERRADO' ? 'bg-green-500' : ''}>{r.estado}</Badge></TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                          <Tooltip>
-                              <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => { setPreviewReport(r); setIsPreviewOpen(true); }}><Eye className="w-4 h-4" /></Button></TooltipTrigger>
-                              <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-card border-2">Visualiza el detalle de productos y ventas de este reporte antes de exportar.</TooltipContent>
-                          </Tooltip>
-                          <Tooltip>
-                              <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => exportPDF(r)}><Download className="w-4 h-4" /></Button></TooltipTrigger>
-                              <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-card border-2">Descarga el reporte diario en formato PDF.</TooltipContent>
-                          </Tooltip>
-                          {r.estado === 'BORRADOR' && (
-                              <>
-                                  <Tooltip>
-                                      <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500" onClick={() => handleRefreshReport(r)}><RefreshCw className="w-3 h-3" /></Button></TooltipTrigger>
-                                      <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-card border-2">Recalcular reporte.</TooltipContent>
-                                  </Tooltip>
-                                  <Tooltip>
-                                      <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-orange-500" onClick={() => handleCloseReport(r.id)}><Lock className="w-4 h-4" /></Button></TooltipTrigger>
-                                      <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-card border-2">Cerrar reporte.</TooltipContent>
-                                  </Tooltip>
-                                  <Tooltip>
-                                      <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-red-500" onClick={() => handleAnularReport(r.id)}><RotateCcw className="w-4 h-4" /></Button></TooltipTrigger>
-                                      <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-card border-2">Anular reporte.</TooltipContent>
-                                  </Tooltip>
-                              </>
-                          )}
-                          <Tooltip>
-                              <TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDeleteReport(r.id)}><Trash2 className="w-4 h-4" /></Button></TooltipTrigger>
-                              <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-card border-2 text-destructive">Eliminar reporte.</TooltipContent>
-                          </Tooltip>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-        <IPVPreviewModal report={previewReport} open={isPreviewOpen} onOpenChange={setIsPreviewOpen} onExportPDF={exportPDF} />
+            ) : (
+              reports.map((r) => (
+                <TableRow key={r.id}>
+                  <TableCell className="sticky-column-1 font-bold">
+                    {formatDate(r.fecha_reporte)}
+                  </TableCell>
+                  <TableCell className="text-right font-black">{formatCurrency(r.total_ventas_cents)}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(r.resumen_efectivo_cents)}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(r.resumen_transferencia_cents)}</TableCell>
+                  <TableCell>
+                    <Badge variant={r.estado === 'CERRADO' ? 'default' : 'outline'} className={r.estado === 'CERRADO' ? 'bg-green-500' : ''}>
+                        {r.estado}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-11 w-11 text-primary" onClick={() => {
+                                    setPreviewReport(r);
+                                    setIsPreviewOpen(true);
+                                }}>
+                                    <Eye className="w-5 h-5" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-card border-2">
+                                Visualiza el detalle de productos y ventas de este reporte antes de exportar.
+                            </TooltipContent>
+                        </Tooltip>
+
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-11 w-11" onClick={() => exportPDF(r)}>
+                                    <Download className="w-5 h-5" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-card border-2">
+                                Descarga el reporte diario en formato PDF.
+                            </TooltipContent>
+                        </Tooltip>
+
+                        {r.estado === 'BORRADOR' && (
+                            <>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-11 w-11 text-blue-500" onClick={() => handleRefreshReport(r)}>
+                                            <RefreshCw className="w-4 h-4" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-card border-2">
+                                        Recalcular: Actualiza las ventas del reporte si realizaste cambios en la conciliación después de generarlo.
+                                    </TooltipContent>
+                                </Tooltip>
+
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-11 w-11 text-orange-500" onClick={() => handleCloseReport(r.id)}>
+                                            <Lock className="w-5 h-5" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-card border-2">
+                                        Cerrar Reporte: Marca el reporte como inmutable para el cierre oficial.
+                                    </TooltipContent>
+                                </Tooltip>
+
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-11 w-11 text-red-500" onClick={() => handleAnularReport(r.id)}>
+                                            <RotateCcw className="w-5 h-5" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-card border-2">
+                                        Anular: Marca el reporte como inválido (requiere ajuste contable).
+                                    </TooltipContent>
+                                </Tooltip>
+                            </>
+                        )}
+
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-11 w-11 text-destructive hover:bg-destructive/10"
+                                  onClick={() => handleDeleteReport(r.id)}
+                                >
+                                    <Trash2 className="w-5 h-5" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-card border-2 text-destructive">
+                                Eliminar Reporte permanentemente.
+                            </TooltipContent>
+                        </Tooltip>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
       </div>
 
       <BaseModal

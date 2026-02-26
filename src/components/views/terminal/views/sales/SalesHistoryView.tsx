@@ -157,31 +157,31 @@ export default function SalesHistoryView() {
                         <div className="flex items-center justify-center gap-2">
                           <button
                             onClick={() => handleViewDetails(txn)}
-                            className="w-8 h-8 inline-flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-white transition-all active:scale-95"
+                            className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-white transition-all active:scale-95"
                             title="Ver detalles"
                           >
-                            <Eye className="w-4 h-4" />
+                            <Eye className="w-5 h-5" />
                           </button>
                           <button
                             onClick={() => {
                                 handleViewDetails(txn); // Para cargar los items
                                 setTimeout(() => handleInvert(txn), 500);
                             }}
-                            className="w-8 h-8 inline-flex items-center justify-center rounded-lg border border-border hover:bg-destructive hover:text-white transition-all active:scale-95"
+                            className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-destructive hover:text-white transition-all active:scale-95"
                             title="Invertir Venta (Devolución)"
                             disabled={txn.status === 'voided' || isInverting}
                           >
-                            <RefreshCcw className={cn("w-4 h-4", isInverting && "animate-spin")} />
+                            <RefreshCcw className={cn("w-5 h-5", isInverting && "animate-spin")} />
                           </button>
                           <button
                             onClick={() => {
                                 handleViewDetails(txn); // Para cargar los items
                                 setTimeout(() => handleDuplicate(txn), 500);
                             }}
-                            className="w-8 h-8 inline-flex items-center justify-center rounded-lg border border-border hover:bg-amber-500 hover:text-white transition-all active:scale-95"
+                            className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-amber-500 hover:text-white transition-all active:scale-95"
                             title="Duplicar Venta"
                           >
-                            <Copy className="w-4 h-4" />
+                            <Copy className="w-5 h-5" />
                           </button>
                         </div>
                       </td>
