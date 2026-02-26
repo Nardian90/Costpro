@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { BaseModal } from "@/components/ui/BaseModal";
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type BankTransaction, type Product } from '@/lib/dexie';
 import {
@@ -93,17 +94,21 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
   }, [transactions, searchTerm, typeFilter, kpiFilter, txReconciliationTotals]);
 
   const handleDelete = async (referencia: string) => {
-    if (confirm('¿Eliminar esta transacción?')) {
+    askConfirmation('Confirmar Acción', ''¿Eliminar esta transacción?'', async () => {
+
       await db.bank_statements.delete(referencia);
-    }
+
+}, 'destructive')
   };
 
   const handleResetReconciliation = async (tx: BankTransaction) => {
-    if (confirm(`¿Reiniciar conciliación para ${tx.referencia_origen}? Se borrarán todos los productos asociados.`)) {
+    askConfirmation('Confirmar Acción', '`¿Reiniciar conciliación para ${tx.referencia_origen}? Se borrarán todos los productos asociados.`', async () => {
+
         await db.reconciliation_lines.where('transaction_ref').equals(tx.referencia_origen).delete();
         await db.bank_statements.update(tx.referencia_origen, {
             estado_conciliacion: 'PENDIENTE'
-        });
+
+}, 'default'));
     }
   };
 
@@ -121,7 +126,8 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
 
   const bulkResetMatching = async () => {
     if (filtered.length === 0) return;
-    if (confirm(`¿REINICIAR CONCILIACIÓN de ${filtered.length} transacciones visibles? Se borrarán todos los productos asociados.`)) {
+    askConfirmation('Confirmar Acción', '`¿REINICIAR CONCILIACIÓN de ${filtered.length} transacciones visibles? Se borrarán todos los productos asociados.`', async () => {
+
         const ids = filtered.map(t => t.referencia_origen);
 
         // Ejecutar en una transacción de Dexie para asegurar consistencia
@@ -129,7 +135,8 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
             await db.reconciliation_lines.where('transaction_ref').anyOf(ids).delete();
             await db.bank_statements.where('referencia_origen').anyOf(ids).modify({
                 estado_conciliacion: 'PENDIENTE'
-            });
+
+}, 'default'));
         });
     }
   };
@@ -637,6 +644,23 @@ function BulkForceMatchPopover({ transactions }: { transactions: BankTransaction
     const reconciliationLines = useLiveQuery(() => db.reconciliation_lines.toArray());
     const rules = useLiveQuery(() => db.matching_rules.toArray());
     const [searchTerm, setSearchTerm] = useState('');
+  const [confirmation, setConfirmation] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    variant?: 'default' | 'destructive';
+  }>({
+    open: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
+
+  const askConfirmation = (title: string, message: string, onConfirm: () => void, variant: 'default' | 'destructive' = 'default') => {
+    setConfirmation({ open: true, title, message, onConfirm, variant });
+  };
+
 
     const useStockLimit = rules?.some(r => r.tipo === 'STOCK_LIMIT' && r.activo);
 
@@ -1003,6 +1027,33 @@ function QuickAdjustPopover({ transaction, remaining, onSuccess }: { transaction
                         ))}
                     </div>
                 </div>
+      <BaseModal
+        open={confirmation.open}
+        onOpenChange={(open) => setConfirmation(prev => ({ ...prev, open }))}
+        title={confirmation.title}
+        footer={
+          <div className="flex gap-2 w-full pt-4">
+            <Button variant="outline" onClick={() => setConfirmation(prev => ({ ...prev, open: false }))} className="flex-1 h-11 font-black uppercase text-xs tracking-widest">
+              Cancelar
+            </Button>
+            <Button
+              variant={confirmation.variant === 'destructive' ? 'destructive' : 'default'}
+              onClick={() => {
+                confirmation.onConfirm();
+                setConfirmation(prev => ({ ...prev, open: false }));
+              }}
+              className="flex-1 h-11 font-black uppercase text-xs tracking-widest"
+            >
+              Confirmar
+            </Button>
+          </div>
+        }
+      >
+        <div className="py-4">
+          <p className="text-sm text-muted-foreground font-medium">{confirmation.message}</p>
+        </div>
+      </BaseModal>
+
             </PopoverContent>
         </Popover>
     );

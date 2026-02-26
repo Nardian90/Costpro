@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { BaseModal } from "@/components/ui/BaseModal";
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type DailyIPVReport } from '@/lib/dexie';
 import {
@@ -39,6 +40,23 @@ import {
 } from '@/components/ui/tooltip';
 
 export function IPVReportView() {
+  const [confirmation, setConfirmation] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    variant?: 'default' | 'destructive';
+  }>({
+    open: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
+
+  const askConfirmation = (title: string, message: string, onConfirm: () => void, variant: 'default' | 'destructive' = 'default') => {
+    setConfirmation({ open: true, title, message, onConfirm, variant });
+  };
+
   const reports = useLiveQuery(() => db.ipv_reports.orderBy('fecha_reporte').reverse().toArray());
   const [selectedMonth, setSelectedMonth] = React.useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = React.useState(new Date().getFullYear());
@@ -154,7 +172,7 @@ export function IPVReportView() {
   };
 
   const generateMonthlyReports = async () => {
-      if (!confirm(`¿Generar reportes para todo el mes ${selectedMonth}/${selectedYear}? Se omitirán los días que ya tengan reportes.`)) return;
+      askConfirmation('Generar Mensual', `¿Generar reportes para todo el mes ${selectedMonth}/${selectedYear}? Se omitirán los días que ya tengan reportes.`, async () => {
 
       toast.loading('Generando reportes mensuales...', { id: 'monthly-gen' });
 
@@ -184,6 +202,8 @@ export function IPVReportView() {
           toast.error('Error durante la generación mensual', { id: 'monthly-gen' });
       }
   };
+    });
+
 
   const generateRangeReports = async () => {
     if (dateFrom > dateTo) {
@@ -191,7 +211,7 @@ export function IPVReportView() {
       return;
     }
 
-    if (!confirm(`¿Generar reportes desde ${dateFrom} hasta ${dateTo}? Se omitirán los días existentes.`)) return;
+    askConfirmation('Generar Rango', `¿Generar reportes desde ${dateFrom} hasta ${dateTo}? Se omitirán los días existentes.`, async () => {
 
     setIsLoading(true);
     setLoadingMessage('Generando reportes del rango...');
@@ -226,6 +246,8 @@ export function IPVReportView() {
       setIsLoading(false);
     }
   };
+    });
+
 
   const deleteRangeReports = async () => {
     if (dateFrom > dateTo) {
@@ -233,7 +255,7 @@ export function IPVReportView() {
       return;
     }
 
-    if (!confirm(`¿ELIMINAR TODOS los reportes IPV entre ${dateFrom} y ${dateTo}? Esta acción es irreversible.`)) return;
+    askConfirmation('Borrar Rango', `¿ELIMINAR TODOS los reportes IPV entre ${dateFrom} y ${dateTo}? Esta acción es irreversible.`, async () => {
 
     try {
       const toDelete = await db.ipv_reports
@@ -251,6 +273,8 @@ export function IPVReportView() {
       toast.error('Error al eliminar reportes');
     }
   };
+    });
+
 
   const exportRangePDF = async () => {
     if (dateFrom > dateTo) {
@@ -267,7 +291,7 @@ export function IPVReportView() {
       return;
     }
 
-    if (!confirm(`¿Exportar ${rangeReports.length} reportes en un único PDF consolidado?`)) return;
+    askConfirmation('Exportar PDF', `¿Exportar ${rangeReports.length} reportes en un único PDF consolidado?`, async () => {
 
     setIsLoading(true);
     setLoadingMessage('Generando PDF consolidado...');
@@ -342,6 +366,8 @@ export function IPVReportView() {
       setIsLoading(false);
     }
   };
+    });
+
 
   const exportPDF = async (report: DailyIPVReport, includeDetails: boolean = false) => {
     try {
@@ -448,24 +474,30 @@ export function IPVReportView() {
   };
 
   const handleCloseReport = async (id: string) => {
-      if (confirm('¿Cerrar este reporte? Se volverá inmutable.')) {
-          await db.ipv_reports.update(id, { estado: 'CERRADO' });
+      askConfirmation('Confirmar Acción', ''¿Cerrar este reporte? Se volverá inmutable.'', async () => {
+
+          await db.ipv_reports.update(id, { estado: 'CERRADO'
+}, 'default'));
           toast.success('Reporte cerrado');
       }
   };
 
   const handleAnularReport = async (id: string) => {
-    if (confirm('¿Anular este reporte? Esto obligará a generar un ajuste contable.')) {
-        await db.ipv_reports.update(id, { estado: 'ANULADO' });
+    askConfirmation('Confirmar Acción', ''¿Anular este reporte? Esto obligará a generar un ajuste contable.'', async () => {
+
+        await db.ipv_reports.update(id, { estado: 'ANULADO'
+}, 'destructive'));
         toast.warning('Reporte anulado');
     }
   };
 
   const handleDeleteReport = async (id: string) => {
-    if (confirm('¿ELIMINAR ESTE REPORTE? Esta acción no se puede deshacer.')) {
+    askConfirmation('Confirmar Acción', ''¿ELIMINAR ESTE REPORTE? Esta acción no se puede deshacer.'', async () => {
+
       await db.ipv_reports.delete(id);
       toast.success('Reporte eliminado permanentemente');
-    }
+
+}, 'default')
   };
 
   const exportAllMonthPDFs = async () => {
@@ -479,7 +511,7 @@ export function IPVReportView() {
         return;
     }
 
-    if (!confirm(`¿Exportar ${monthReports.length} reportes PDF? Se descargarán uno tras otro.`)) return;
+    askConfirmation('Exportación Masiva', `¿Exportar ${monthReports.length} reportes PDF? Se descargarán uno tras otro.`, async () => {
 
     for (const report of monthReports) {
         await exportPDF(report);
@@ -488,6 +520,8 @@ export function IPVReportView() {
     }
     toast.success('Exportación masiva finalizada');
   };
+    });
+
 
   const exportConsolidatedMonthlyPDF = async () => {
     const monthReports = reports?.filter(r => {
@@ -580,13 +614,15 @@ export function IPVReportView() {
   };
 
   const handleRefreshReport = async (report: DailyIPVReport) => {
-    if (confirm('¿Recalcular este reporte con los datos actuales de conciliación?')) {
+    askConfirmation('Confirmar Acción', ''¿Recalcular este reporte con los datos actuales de conciliación?'', async () => {
+
         const lines = await db.reconciliation_lines.where('fecha_operacion').equals(report.fecha_reporte).toArray();
 
         if (lines.length === 0) {
             toast.error('No hay transacciones conciliadas para esta fecha');
             return;
-        }
+
+}, 'default')
 
         const productGroups: Record<string, any> = {};
         let totalVentas = 0;
@@ -912,5 +948,59 @@ export function IPVReportView() {
         onExportPDF={exportPDF}
       />
     </div>
+      <BaseModal
+        open={confirmation.open}
+        onOpenChange={(open) => setConfirmation(prev => ({ ...prev, open }))}
+        title={confirmation.title}
+        footer={
+          <div className="flex gap-2 w-full pt-4">
+            <Button variant="outline" onClick={() => setConfirmation(prev => ({ ...prev, open: false }))} className="flex-1 h-11 font-black uppercase text-xs tracking-widest">
+              Cancelar
+            </Button>
+            <Button
+              variant={confirmation.variant === 'destructive' ? 'destructive' : 'default'}
+              onClick={() => {
+                confirmation.onConfirm();
+                setConfirmation(prev => ({ ...prev, open: false }));
+              }}
+              className="flex-1 h-11 font-black uppercase text-xs tracking-widest"
+            >
+              Confirmar
+            </Button>
+          </div>
+        }
+      >
+        <div className="py-4">
+          <p className="text-sm text-muted-foreground font-medium">{confirmation.message}</p>
+        </div>
+      <BaseModal
+        open={confirmation.open}
+        onOpenChange={(open) => setConfirmation(prev => ({ ...prev, open }))}
+        title={confirmation.title}
+        footer={
+          <div className="flex gap-2 w-full pt-4">
+            <Button variant="outline" onClick={() => setConfirmation(prev => ({ ...prev, open: false }))} className="flex-1 h-11 font-black uppercase text-xs tracking-widest">
+              Cancelar
+            </Button>
+            <Button
+              variant={confirmation.variant === 'destructive' ? 'destructive' : 'default'}
+              onClick={() => {
+                confirmation.onConfirm();
+                setConfirmation(prev => ({ ...prev, open: false }));
+              }}
+              className="flex-1 h-11 font-black uppercase text-xs tracking-widest"
+            >
+              Confirmar
+            </Button>
+          </div>
+        }
+      >
+        <div className="py-4">
+          <p className="text-sm text-muted-foreground font-medium">{confirmation.message}</p>
+        </div>
+      </BaseModal>
+
+      </BaseModal>
+
   );
 }

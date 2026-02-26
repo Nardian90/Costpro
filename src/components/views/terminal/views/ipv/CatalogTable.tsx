@@ -12,6 +12,7 @@ import {
   TableRow
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { BaseModal } from "@/components/ui/BaseModal";
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -46,6 +47,25 @@ export function CatalogTable() {
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const [stockFilter, setStockFilter] = useState<'all' | 'with_stock' | 'without_stock'>('all');
+
+  const [confirmation, setConfirmation] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    variant?: 'default' | 'destructive';
+  }>({
+    open: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
+
+  const askConfirmation = (title: string, message: string, onConfirm: () => void, variant: 'default' | 'destructive' = 'default') => {
+    setConfirmation({ open: true, title, message, onConfirm, variant });
+  };
+
+
 
   const user = useAuthStore(state => state.user);
   const isAdmin = hasRole(user, 'admin');
@@ -164,10 +184,10 @@ export function CatalogTable() {
   };
 
   const handleDelete = async (cod: string) => {
-    if (confirm('¿Eliminar este producto del catálogo?')) {
+    askConfirmation('¿Eliminar producto?', '¿Estás seguro de que deseas eliminar este producto del catálogo?', async () => {
       await db.products.delete(cod);
       toast.success('Producto eliminado');
-    }
+    }, 'destructive');
   };
 
   const startEditing = (product: Product) => {
@@ -225,29 +245,30 @@ export function CatalogTable() {
         return;
     }
 
-    if (!confirm(`¿Normalizar ${negativeProducts.length} productos con stock negativo? Se ajustará el stock inicial para que el final sea positivo.`)) return;
+    askConfirmation('Normalizar Existencias', `¿Normalizar ${negativeProducts.length} productos con stock negativo? Se ajustará el stock inicial para que el final sea positivo.`, async () => {
+        try {
+            for (const p of negativeProducts) {
+                const stats = inventoryStats[p.cod];
+                const currentNegative = stats.final;
+                const adjustment = Math.abs(currentNegative);
+                const newInitial = (p.stock_inicial_manual || 0) + adjustment;
 
-    try {
-        for (const p of negativeProducts) {
-            const stats = inventoryStats[p.cod];
-            const currentNegative = stats.final;
-            const adjustment = Math.abs(currentNegative);
-            const newInitial = (p.stock_inicial_manual || 0) + adjustment;
-
-            await db.products.update(p.cod, {
-                stock_inicial_manual: newInitial
-            });
+                await db.products.update(p.cod, {
+                    stock_inicial_manual: newInitial
+                });
+            }
+            toast.success('Existencias normalizadas exitosamente');
+        } catch (error) {
+            toast.error('Error al normalizar existencias');
         }
-        toast.success('Existencias normalizadas exitosamente');
-    } catch (error) {
-        toast.error('Error al normalizar existencias');
-    }
+    });
   };
+    });
 
   const clearCatalog = async () => {
-    if (confirm('¿ESTÁS SEGURO? Se borrará TODO el catálogo cargado actualmente.')) {
+    askConfirmation('Vaciar Catálogo', '¿ESTÁS SEGURO? Se borrará TODO el catálogo cargado actualmente.', async () => {
         await db.products.clear();
-    }
+    }, 'destructive');
   };
 
   const handleAcceptSuggestions = async () => {
@@ -261,21 +282,22 @@ export function CatalogTable() {
         return;
     }
 
-    if (!confirm(`¿Aplicar ${withSuggestions.length} sugerencias de precio inteligentes a los productos seleccionados?`)) return;
-
-    try {
-        const updates = withSuggestions.map(p => ({
-            ...p,
-            precio_base_cents: p.precio_base_cents || p.precio_cents,
-            precio_cents: p.suggestedPrice as number,
-            updated_at: new Date().toISOString()
-        }));
-        await db.products.bulkPut(updates);
-        toast.success('Sugerencias aplicadas');
-    } catch (error) {
-        toast.error('Error al aplicar sugerencias');
-    }
+    askConfirmation('Aplicar Sugerencias', `¿Aplicar ${withSuggestions.length} sugerencias de precio inteligentes a los productos seleccionados?`, async () => {
+        try {
+            const updates = withSuggestions.map(p => ({
+                ...p,
+                precio_base_cents: p.precio_base_cents || p.precio_cents,
+                precio_cents: p.suggestedPrice as number,
+                updated_at: new Date().toISOString()
+            }));
+            await db.products.bulkPut(updates);
+            toast.success('Sugerencias aplicadas');
+        } catch (error) {
+            toast.error('Error al aplicar sugerencias');
+        }
+    });
   };
+    });
 
   const handleBulkPriority = async (mode: 'auto' | 'hybrid' | 'manual') => {
     if (!products) return;
@@ -286,17 +308,18 @@ export function CatalogTable() {
         return;
     }
 
-    if (!confirm(`¿Establecer modo de prioridad "${mode}" para ${targetProducts.length} productos seleccionados?`)) return;
-
-    try {
-        const updates = targetProducts.map(p => ({ ...p, priorityMode: mode }));
-        await db.products.bulkPut(updates);
-        toast.success(`Prioridad ${mode} aplicada`);
-        handleRecalculateIntelligence();
-    } catch (error) {
-        toast.error('Error al actualizar prioridades');
-    }
+    askConfirmation('Cambiar Prioridad', `¿Establecer modo de prioridad \"${mode}\" para ${targetProducts.length} productos seleccionados?`, async () => {
+        try {
+            const updates = targetProducts.map(p => ({ ...p, priorityMode: mode }));
+            await db.products.bulkPut(updates);
+            toast.success(`Prioridad ${mode} aplicada`);
+            handleRecalculateIntelligence();
+        } catch (error) {
+            toast.error('Error al actualizar prioridades');
+        }
+    });
   };
+    });
 
   const handleBulkPercentageAdjustment = async () => {
     const targetProducts = selectedProductIds.length > 0
@@ -333,24 +356,26 @@ export function CatalogTable() {
       const targetProducts = (products || []).filter(p => selectedProductIds.includes(p.cod));
       if (targetProducts.length === 0) return;
 
-      if (!confirm(`¿Restablecer precios base para ${targetProducts.length} productos seleccionados?`)) return;
-      try {
-          const updates = targetProducts
-              .filter(p => p.precio_base_cents !== undefined)
-              .map(p => ({
-                  ...p,
-                  precio_cents: p.precio_base_cents as number,
-                  precio_base_cents: undefined
-              }));
+      askConfirmation('Restablecer Precios', `¿Restablecer precios base para ${targetProducts.length} productos seleccionados?`, async () => {
+          try {
+              const updates = targetProducts
+                  .filter(p => p.precio_base_cents !== undefined)
+                  .map(p => ({
+                      ...p,
+                      precio_cents: p.precio_base_cents as number,
+                      precio_base_cents: undefined
+                  }));
 
-          if (updates.length > 0) {
-              await db.products.bulkPut(updates);
+              if (updates.length > 0) {
+                  await db.products.bulkPut(updates);
+              }
+              toast.success('Precios restablecidos');
+          } catch (error) {
+              toast.error('Error al restablecer precios');
           }
-          toast.success('Precios restablecidos');
-      } catch (error) {
-          toast.error('Error al restablecer precios');
-      }
+      });
   };
+    });
 
   const handleRecalculateIntelligence = async () => {
     if (!products || !reconciliationLines) return;
@@ -401,56 +426,56 @@ export function CatalogTable() {
         return;
     }
 
-    if (!confirm('¿Sincronizar con el catálogo real del sistema? Los productos locales con el mismo código serán actualizados.')) return;
+    askConfirmation('Sincronizar Catálogo', '¿Sincronizar con el catálogo real del sistema? Los productos locales con el mismo código serán actualizados.', async () => {
+        setIsSyncing(true);
+        toast.loading('Sincronizando catálogo...', { id: 'sync-catalog' });
 
-    setIsSyncing(true);
-    toast.loading('Sincronizando catálogo...', { id: 'sync-catalog' });
+        try {
+            console.log('Sincronizando con tienda:', stores[0].name, stores[0].id);
+            const { data, error } = await supabase.rpc('get_products_for_pos', {
+                p_store_id: stores[0].id,
+                p_search_term: '',
+                p_category: ''
+            });
 
-    try {
-        console.log('Sincronizando con tienda:', stores[0].name, stores[0].id);
-        const { data, error } = await supabase.rpc('get_products_for_pos', {
-            p_store_id: stores[0].id,
-            p_search_term: '',
-            p_category: ''
-        });
+            if (error) {
+                console.error('RPC Error:', error);
+                throw new Error(`Error del servidor: ${error.message}`);
+            }
 
-        if (error) {
-            console.error('RPC Error:', error);
-            throw new Error(`Error del servidor: ${error.message}`);
+            const systemProducts = (data || []).map((p: any) => ({
+                cod: p.sku || p.id, // Preferir SKU si existe
+                descripcion: p.name,
+                um: 'UNIDADES', // Valor por defecto
+                es_paquete: false,
+                contenido_paquete: 1,
+                precio_cents: p.price || 0,
+                prioridad_algoritmo: 3,
+                activo: true,
+                stock_inicial_manual: Math.round(p.stock_quantity || 0),
+                created_at: new Date().toISOString()
+            }));
+
+            await db.products.bulkPut(systemProducts);
+            toast.success(`Sincronización completa: ${systemProducts.length} productos cargados`, { id: 'sync-catalog' });
+        } catch (error) {
+            console.error(error);
+            toast.error('Error al sincronizar con el sistema', { id: 'sync-catalog' });
+        } finally {
+            setIsSyncing(false);
         }
-
-        const systemProducts = (data || []).map((p: any) => ({
-            cod: p.sku || p.id, // Preferir SKU si existe
-            descripcion: p.name,
-            um: 'UNIDADES', // Valor por defecto
-            es_paquete: false,
-            contenido_paquete: 1,
-            precio_cents: p.price || 0,
-            prioridad_algoritmo: 3,
-            activo: true,
-            stock_inicial_manual: Math.round(p.stock_quantity || 0),
-            created_at: new Date().toISOString()
-        }));
-
-        await db.products.bulkPut(systemProducts);
-        toast.success(`Sincronización completa: ${systemProducts.length} productos cargados`, { id: 'sync-catalog' });
-    } catch (error) {
-        console.error(error);
-        toast.error('Error al sincronizar con el sistema', { id: 'sync-catalog' });
-    } finally {
-        setIsSyncing(false);
-    }
+    });
   };
 
   const handleRecalculateReportsChain = async () => {
-    if (confirm('¿Recalcular toda la cadena de reportes IPV?')) {
+    askConfirmation('Recalcular IPVs', '¿Recalcular toda la cadena de reportes IPV?', async () => {
         try {
             await recalculateIPVReportsChain(db);
             toast.success('Cadena de reportes recalculada exitosamente');
         } catch (error) {
             toast.error('Error al recalcular los reportes');
         }
-    }
+    });
   };
 
   return (
@@ -1018,6 +1043,33 @@ export function CatalogTable() {
         </div>
       )}
     </div>
+      <BaseModal
+        open={confirmation.open}
+        onOpenChange={(open) => setConfirmation(prev => ({ ...prev, open }))}
+        title={confirmation.title}
+        footer={
+          <div className="flex gap-2 w-full pt-4">
+            <Button variant="outline" onClick={() => setConfirmation(prev => ({ ...prev, open: false }))} className="flex-1 h-11 font-black uppercase text-xs tracking-widest">
+              Cancelar
+            </Button>
+            <Button
+              variant={confirmation.variant === 'destructive' ? 'destructive' : 'default'}
+              onClick={() => {
+                confirmation.onConfirm();
+                setConfirmation(prev => ({ ...prev, open: false }));
+              }}
+              className="flex-1 h-11 font-black uppercase text-xs tracking-widest"
+            >
+              Confirmar
+            </Button>
+          </div>
+        }
+      >
+        <div className="py-4">
+          <p className="text-sm text-muted-foreground font-medium">{confirmation.message}</p>
+        </div>
+      </BaseModal>
+
   );
 }
 
@@ -1236,6 +1288,8 @@ function NewProductCard({ editForm, setEditForm, onSave, onCancel }: any) {
                 <Button className="flex-1 neu-btn-primary h-12 sm:h-10 font-black text-xs uppercase" onClick={onSave}><Check className="w-4 h-4 mr-2" /> Guardar</Button>
                 <Button variant="ghost" className="h-12 sm:h-10 text-xs uppercase font-bold" onClick={onCancel}>Cancelar</Button>
             </div>
+
+
         </Card>
     );
 }

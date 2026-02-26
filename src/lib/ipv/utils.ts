@@ -51,13 +51,12 @@ export async function calculateCurrentStock(db: any, productCod: string): Promis
 
     const initialStock = product.stock_inicial_manual || 0;
 
-    // Sumar ventas (salidas)
-    const sales = await db.reconciliation_lines.where('product_cod').equals(productCod).toArray();
-    const totalSold = sales.reduce((sum: number, line: any) => sum + (line.cantidad || 0), 0);
+    // Sumar movimientos (ventas son positivas, entradas negativas)
+    const movements = await db.reconciliation_lines.where('product_cod').equals(productCod).toArray();
+    const totalMovement = movements.reduce((sum: number, line: any) => sum + (line.cantidad || 0), 0);
 
-    // TODO: En el futuro sumar entradas (ajustes/compras)
 
-    return initialStock - totalSold;
+    return initialStock - totalMovement;
 }
 
 /**
@@ -70,10 +69,10 @@ export async function getCompleteStockMap(db: any): Promise<Map<string, number>>
     const map = new Map<string, number>();
 
     for (const p of products) {
-        const sold = lines
+        const netMovement = lines
             .filter((l: any) => l.product_cod === p.cod)
             .reduce((sum: number, l: any) => sum + l.cantidad, 0);
-        map.set(p.cod, (p.stock_inicial_manual || 0) - sold);
+        map.set(p.cod, (p.stock_inicial_manual || 0) - netMovement);
     }
 
     return map;

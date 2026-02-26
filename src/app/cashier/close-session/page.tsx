@@ -9,6 +9,7 @@ import { Product, ProductVariant } from "@/types";
 import { useAuthStore } from "@/store";
 import { useCartStore } from "@/store/cart";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 interface Difference {
   productId: string;
@@ -43,9 +44,9 @@ export default function CloseSessionPage() {
         if (!response.ok) throw new Error("Failed to fetch products");
         const data = await response.json();
         setProducts(data);
-      } catch (error) {
+      } catch (error: any) {
         console.error(error);
-        // TODO: Show error message to user
+        toast.error("Error al cargar productos: " + error.message)
       } finally {
         setIsLoading(false);
       }
@@ -133,9 +134,9 @@ export default function CloseSessionPage() {
       setCart(result.saleId, result.saleItems);
       router.push("/cashier");
 
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      // TODO: Show error message to user
+      toast.error("Error al procesar el ajuste: " + error.message)
     } finally {
       setIsSubmitting(false);
     }
