@@ -107,38 +107,32 @@ export function BankIngestion() {
     }
   }, []);
 
+
   const resetBankData = async () => {
     askConfirmation('Confirmar Acción', '¿ELIMINAR TODAS LAS TRANSACCIONES? Esta acción borrará todo el historial bancario cargado y no se puede deshacer.', async () => {
-
       await db.bank_statements.clear();
       await db.reconciliation_lines.clear();
       toast.success('Datos bancarios y conciliaciones eliminados correctamente');
-
-    }, 'destructive')
+    }, 'destructive');
   };
 
   const resetCatalog = async () => {
     askConfirmation('Confirmar Acción', '¿ELIMINAR TODO EL CATÁLOGO? Se borrarán todos los productos y configuraciones de matching.', async () => {
-
       await db.products.clear();
       toast.success('Catálogo de productos vaciado');
-
-    }, 'destructive')
+    }, 'destructive');
   };
 
   const resetAllMatching = async () => {
     askConfirmation('Confirmar Acción', '¿REINICIAR TODAS LAS CONCILIACIONES? Se borrarán los resultados de matching pero se mantendrán las transacciones y el catálogo.', async () => {
-
       await db.reconciliation_lines.clear();
-      await db.bank_statements.toCollection().modify({ estado_conciliacion: 'PENDIENTE'
-    }, 'destructive'));
+      await db.bank_statements.toCollection().modify({ estado_conciliacion: 'PENDIENTE' });
       toast.success('Todas las transacciones han vuelto al estado PENDIENTE');
-    }
+    }, 'destructive');
   };
 
   const resetEverything = async () => {
     askConfirmation('Confirmar Acción', '¿REINICIO TOTAL DEL SISTEMA? Se borrará TODO: Transacciones, Catálogo, Reportes, Reglas y Conciliaciones. Esta acción es irreversible.', async () => {
-
         await Promise.all([
             db.bank_statements.clear(),
             db.products.clear(),
@@ -150,9 +144,9 @@ export function BankIngestion() {
             db.matching_cache.clear()
         ]);
         toast.success('Sistema IPV reiniciado completamente');
-
-    }, 'destructive')
+    }, 'destructive');
   };
+
 
   const downloadTemplate = (format: 'csv' | 'xlsx') => {
     const headers = ['Fecha', 'Ref_Corriente', 'Ref_Origen', 'Observaciones', 'Importe', 'Tipo'];

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { BaseModal } from "@/components/ui/BaseModal";
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type DailyIPVReport } from '@/lib/dexie';
@@ -172,7 +172,7 @@ export function IPVReportView() {
   };
 
   const generateMonthlyReports = async () => {
-      askConfirmation('Generar Mensual', `¿Generar reportes para todo el mes ${selectedMonth}/${selectedYear}? Se omitirán los días que ya tengan reportes.`, async () => {
+    askConfirmation('Generar Mensual', `¿Generar reportes para todo el mes ${selectedMonth}/${selectedYear}? Se omitirán los días que ya tengan reportes.`, async () => {
 
       toast.loading('Generando reportes mensuales...', { id: 'monthly-gen' });
 
@@ -201,16 +201,11 @@ export function IPVReportView() {
           console.error(error);
           toast.error('Error durante la generación mensual', { id: 'monthly-gen' });
       }
-  };
     });
+  };
 
 
   const generateRangeReports = async () => {
-    if (dateFrom > dateTo) {
-      toast.error('La fecha inicial no puede ser mayor a la final');
-      return;
-    }
-
     askConfirmation('Generar Rango', `¿Generar reportes desde ${dateFrom} hasta ${dateTo}? Se omitirán los días existentes.`, async () => {
 
     setIsLoading(true);
@@ -245,16 +240,11 @@ export function IPVReportView() {
     } finally {
       setIsLoading(false);
     }
-  };
     });
+  };
 
 
   const deleteRangeReports = async () => {
-    if (dateFrom > dateTo) {
-      toast.error('Rango de fechas inválido');
-      return;
-    }
-
     askConfirmation('Borrar Rango', `¿ELIMINAR TODOS los reportes IPV entre ${dateFrom} y ${dateTo}? Esta acción es irreversible.`, async () => {
 
     try {
@@ -272,25 +262,11 @@ export function IPVReportView() {
     } catch (error) {
       toast.error('Error al eliminar reportes');
     }
-  };
     });
+  };
 
 
   const exportRangePDF = async () => {
-    if (dateFrom > dateTo) {
-      toast.error('Rango de fechas inválido');
-      return;
-    }
-
-    const rangeReports = reports?.filter(r =>
-      r.fecha_reporte >= dateFrom && r.fecha_reporte <= dateTo
-    ).sort((a,b) => b.fecha_reporte.localeCompare(a.fecha_reporte)); // DESC as per spec
-
-    if (!rangeReports || rangeReports.length === 0) {
-      toast.error('No hay reportes en el rango para exportar');
-      return;
-    }
-
     askConfirmation('Exportar PDF', `¿Exportar ${rangeReports.length} reportes en un único PDF consolidado?`, async () => {
 
     setIsLoading(true);
@@ -365,8 +341,8 @@ export function IPVReportView() {
     } finally {
       setIsLoading(false);
     }
-  };
     });
+  };
 
 
   const exportPDF = async (report: DailyIPVReport, includeDetails: boolean = false) => {
@@ -474,43 +450,27 @@ export function IPVReportView() {
   };
 
   const handleCloseReport = async (id: string) => {
-      askConfirmation('Confirmar Acción', ''¿Cerrar este reporte? Se volverá inmutable.'', async () => {
-
-          await db.ipv_reports.update(id, { estado: 'CERRADO'
-}, 'default'));
+      askConfirmation('Confirmar Acción', '¿Cerrar este reporte? Se volverá inmutable.', async () => {
+          await db.ipv_reports.update(id, { estado: 'CERRADO' });
           toast.success('Reporte cerrado');
-      }
+      }, 'default');
   };
 
   const handleAnularReport = async (id: string) => {
-    askConfirmation('Confirmar Acción', ''¿Anular este reporte? Esto obligará a generar un ajuste contable.'', async () => {
-
-        await db.ipv_reports.update(id, { estado: 'ANULADO'
-}, 'destructive'));
+    askConfirmation('Confirmar Acción', '¿Anular este reporte? Esto obligará a generar un ajuste contable.', async () => {
+        await db.ipv_reports.update(id, { estado: 'ANULADO' });
         toast.warning('Reporte anulado');
-    }
+    }, 'destructive');
   };
 
   const handleDeleteReport = async (id: string) => {
-    askConfirmation('Confirmar Acción', ''¿ELIMINAR ESTE REPORTE? Esta acción no se puede deshacer.'', async () => {
-
+    askConfirmation('Confirmar Acción', '¿ELIMINAR ESTE REPORTE? Esta acción no se puede deshacer.', async () => {
       await db.ipv_reports.delete(id);
       toast.success('Reporte eliminado permanentemente');
-
-}, 'default')
+    }, 'destructive');
   };
 
   const exportAllMonthPDFs = async () => {
-    const monthReports = reports?.filter(r => {
-        const date = new Date(r.fecha_reporte + 'T12:00:00');
-        return (date.getMonth() + 1) === selectedMonth && date.getFullYear() === selectedYear;
-    });
-
-    if (!monthReports || monthReports.length === 0) {
-        toast.error('No hay reportes para el mes seleccionado');
-        return;
-    }
-
     askConfirmation('Exportación Masiva', `¿Exportar ${monthReports.length} reportes PDF? Se descargarán uno tras otro.`, async () => {
 
     for (const report of monthReports) {
@@ -519,14 +479,16 @@ export function IPVReportView() {
         await new Promise(r => setTimeout(r, 500));
     }
     toast.success('Exportación masiva finalizada');
-  };
     });
+  };
 
 
   const exportConsolidatedMonthlyPDF = async () => {
     const monthReports = reports?.filter(r => {
         const date = new Date(r.fecha_reporte + 'T12:00:00');
-        return (date.getMonth() + 1) === selectedMonth && date.getFullYear() === selectedYear;
+        return (
+    <>
+date.getMonth() + 1) === selectedMonth && date.getFullYear() === selectedYear;
     }).sort((a,b) => a.fecha_reporte.localeCompare(b.fecha_reporte));
 
     if (!monthReports || monthReports.length === 0) {
@@ -614,15 +576,14 @@ export function IPVReportView() {
   };
 
   const handleRefreshReport = async (report: DailyIPVReport) => {
-    askConfirmation('Confirmar Acción', ''¿Recalcular este reporte con los datos actuales de conciliación?'', async () => {
+    askConfirmation('Confirmar Acción', '¿Recalcular este reporte con los datos actuales de conciliación?', async () => {
 
         const lines = await db.reconciliation_lines.where('fecha_operacion').equals(report.fecha_reporte).toArray();
 
         if (lines.length === 0) {
             toast.error('No hay transacciones conciliadas para esta fecha');
             return;
-
-}, 'default')
+        }
 
         const productGroups: Record<string, any> = {};
         let totalVentas = 0;
@@ -689,6 +650,9 @@ export function IPVReportView() {
   };
 
   return (
+    <>
+
+
     <div className="space-y-6">
       <LoadingOverlay isVisible={isLoading} message={loadingMessage} />
       {/* Panel de rango de fechas */}
@@ -756,10 +720,14 @@ export function IPVReportView() {
                         const d = new Date(2000, i);
                         const label = isNaN(d.getTime()) ? `MES ${i+1}` : d.toLocaleString('es', { month: 'long' }).toUpperCase();
                         return (
+    <>
+
                             <option key={i + 1} value={i + 1}>
                                 {label}
                             </option>
-                        );
+
+    </>
+  );
                     })}
                 </select>
                 <select
@@ -881,7 +849,7 @@ export function IPVReportView() {
                         </Tooltip>
 
                         {r.estado === 'BORRADOR' && (
-                            <>
+
                                 <Tooltip>
                                     <TooltipTrigger asChild>
                                         <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500" onClick={() => handleRefreshReport(r)}>
@@ -914,7 +882,7 @@ export function IPVReportView() {
                                         Anular: Marca el reporte como inválido (requiere ajuste contable).
                                     </TooltipContent>
                                 </Tooltip>
-                            </>
+
                         )}
 
                         <Tooltip>
@@ -973,34 +941,9 @@ export function IPVReportView() {
         <div className="py-4">
           <p className="text-sm text-muted-foreground font-medium">{confirmation.message}</p>
         </div>
-      <BaseModal
-        open={confirmation.open}
-        onOpenChange={(open) => setConfirmation(prev => ({ ...prev, open }))}
-        title={confirmation.title}
-        footer={
-          <div className="flex gap-2 w-full pt-4">
-            <Button variant="outline" onClick={() => setConfirmation(prev => ({ ...prev, open: false }))} className="flex-1 h-11 font-black uppercase text-xs tracking-widest">
-              Cancelar
-            </Button>
-            <Button
-              variant={confirmation.variant === 'destructive' ? 'destructive' : 'default'}
-              onClick={() => {
-                confirmation.onConfirm();
-                setConfirmation(prev => ({ ...prev, open: false }));
-              }}
-              className="flex-1 h-11 font-black uppercase text-xs tracking-widest"
-            >
-              Confirmar
-            </Button>
-          </div>
-        }
-      >
-        <div className="py-4">
-          <p className="text-sm text-muted-foreground font-medium">{confirmation.message}</p>
-        </div>
       </BaseModal>
 
-      </BaseModal>
 
+    </>
   );
 }
