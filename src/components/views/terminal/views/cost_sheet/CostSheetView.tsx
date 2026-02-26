@@ -567,12 +567,13 @@ const CostSheetView = () => {
 
           {viewMode === 'expert' && (
             <>
-                <div className="sticky top-[48px] z-30 py-1 bg-background/60 backdrop-blur-md border-b border-border/5 -mx-4 px-4 overflow-hidden">
+                <div className="mb-6 -mx-4 px-4 z-30">
                     <CostSheetNav
                         navItems={navItems}
                         annexes={data?.annexes || []}
                         activeSection={activeSection}
                         setActiveSection={handleSetActiveSection}
+                        topOffset="sticky top-0"
                         viewMode={viewMode}
                         setViewMode={handleSetViewMode}
                         onOpenActions={() => setIsActionsPanelOpen(true)}
