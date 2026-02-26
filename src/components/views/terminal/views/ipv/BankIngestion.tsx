@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
+import { BaseModal } from "@/components/ui/BaseModal";
 import { motion } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
 import { db, type BankTransaction } from '@/lib/dexie';
@@ -22,6 +23,23 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 
 export function BankIngestion() {
+  const [confirmation, setConfirmation] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    variant?: 'default' | 'destructive';
+  }>({
+    open: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
+
+  const askConfirmation = (title: string, message: string, onConfirm: () => void, variant: 'default' | 'destructive' = 'default') => {
+    setConfirmation({ open: true, title, message, onConfirm, variant });
+  };
+
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     for (const file of acceptedFiles) {
       const extension = file.name.split('.').pop()?.toLowerCase();
@@ -90,30 +108,37 @@ export function BankIngestion() {
   }, []);
 
   const resetBankData = async () => {
-    if (confirm('¿ELIMINAR TODAS LAS TRANSACCIONES? Esta acción borrará todo el historial bancario cargado y no se puede deshacer.')) {
+    askConfirmation('Confirmar Acción', '¿ELIMINAR TODAS LAS TRANSACCIONES? Esta acción borrará todo el historial bancario cargado y no se puede deshacer.', async () => {
+
       await db.bank_statements.clear();
       await db.reconciliation_lines.clear();
       toast.success('Datos bancarios y conciliaciones eliminados correctamente');
-    }
+
+    }, 'destructive')
   };
 
   const resetCatalog = async () => {
-    if (confirm('¿ELIMINAR TODO EL CATÁLOGO? Se borrarán todos los productos y configuraciones de matching.')) {
+    askConfirmation('Confirmar Acción', '¿ELIMINAR TODO EL CATÁLOGO? Se borrarán todos los productos y configuraciones de matching.', async () => {
+
       await db.products.clear();
       toast.success('Catálogo de productos vaciado');
-    }
+
+    }, 'destructive')
   };
 
   const resetAllMatching = async () => {
-    if (confirm('¿REINICIAR TODAS LAS CONCILIACIONES? Se borrarán los resultados de matching pero se mantendrán las transacciones y el catálogo.')) {
+    askConfirmation('Confirmar Acción', '¿REINICIAR TODAS LAS CONCILIACIONES? Se borrarán los resultados de matching pero se mantendrán las transacciones y el catálogo.', async () => {
+
       await db.reconciliation_lines.clear();
-      await db.bank_statements.toCollection().modify({ estado_conciliacion: 'PENDIENTE' });
+      await db.bank_statements.toCollection().modify({ estado_conciliacion: 'PENDIENTE'
+    }, 'destructive'));
       toast.success('Todas las transacciones han vuelto al estado PENDIENTE');
     }
   };
 
   const resetEverything = async () => {
-    if (confirm('¿REINICIO TOTAL DEL SISTEMA? Se borrará TODO: Transacciones, Catálogo, Reportes, Reglas y Conciliaciones. Esta acción es irreversible.')) {
+    askConfirmation('Confirmar Acción', '¿REINICIO TOTAL DEL SISTEMA? Se borrará TODO: Transacciones, Catálogo, Reportes, Reglas y Conciliaciones. Esta acción es irreversible.', async () => {
+
         await Promise.all([
             db.bank_statements.clear(),
             db.products.clear(),
@@ -125,7 +150,8 @@ export function BankIngestion() {
             db.matching_cache.clear()
         ]);
         toast.success('Sistema IPV reiniciado completamente');
-    }
+
+    }, 'destructive')
   };
 
   const downloadTemplate = (format: 'csv' | 'xlsx') => {
@@ -459,5 +485,32 @@ export function BankIngestion() {
           </div>
       </div>
     </div>
+      <BaseModal
+        open={confirmation.open}
+        onOpenChange={(open) => setConfirmation(prev => ({ ...prev, open }))}
+        title={confirmation.title}
+        footer={
+          <div className="flex gap-2 w-full pt-4">
+            <Button variant="outline" onClick={() => setConfirmation(prev => ({ ...prev, open: false }))} className="flex-1 h-11 font-black uppercase text-xs tracking-widest">
+              Cancelar
+            </Button>
+            <Button
+              variant={confirmation.variant === 'destructive' ? 'destructive' : 'default'}
+              onClick={() => {
+                confirmation.onConfirm();
+                setConfirmation(prev => ({ ...prev, open: false }));
+              }}
+              className="flex-1 h-11 font-black uppercase text-xs tracking-widest"
+            >
+              Confirmar
+            </Button>
+          </div>
+        }
+      >
+        <div className="py-4">
+          <p className="text-sm text-muted-foreground font-medium">{confirmation.message}</p>
+        </div>
+      </BaseModal>
+
   );
 }
