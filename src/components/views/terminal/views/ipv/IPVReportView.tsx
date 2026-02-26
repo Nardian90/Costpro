@@ -821,11 +821,11 @@ export function IPVReportView() {
                     <div className="flex justify-end gap-2">
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => {
+                                <Button variant="ghost" size="icon" className="h-11 w-11 text-primary" onClick={() => {
                                     setPreviewReport(r);
                                     setIsPreviewOpen(true);
                                 }}>
-                                    <Eye className="w-4 h-4" />
+                                    <Eye className="w-5 h-5" />
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-card border-2">
@@ -835,8 +835,8 @@ export function IPVReportView() {
 
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => exportPDF(r)}>
-                                    <Download className="w-4 h-4" />
+                                <Button variant="ghost" size="icon" className="h-11 w-11" onClick={() => exportPDF(r)}>
+                                    <Download className="w-5 h-5" />
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-card border-2">
@@ -848,8 +848,8 @@ export function IPVReportView() {
                             <>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500" onClick={() => handleRefreshReport(r)}>
-                                            <RefreshCw className="w-3 h-3" />
+                                        <Button variant="ghost" size="icon" className="h-11 w-11 text-blue-500" onClick={() => handleRefreshReport(r)}>
+                                            <RefreshCw className="w-4 h-4" />
                                         </Button>
                                     </TooltipTrigger>
                                     <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-card border-2">
@@ -859,8 +859,8 @@ export function IPVReportView() {
 
                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-orange-500" onClick={() => handleCloseReport(r.id)}>
-                                            <Lock className="w-4 h-4" />
+                                        <Button variant="ghost" size="icon" className="h-11 w-11 text-orange-500" onClick={() => handleCloseReport(r.id)}>
+                                            <Lock className="w-5 h-5" />
                                         </Button>
                                     </TooltipTrigger>
                                     <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-card border-2">
@@ -870,8 +870,8 @@ export function IPVReportView() {
 
                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500" onClick={() => handleAnularReport(r.id)}>
-                                            <RotateCcw className="w-4 h-4" />
+                                        <Button variant="ghost" size="icon" className="h-11 w-11 text-red-500" onClick={() => handleAnularReport(r.id)}>
+                                            <RotateCcw className="w-5 h-5" />
                                         </Button>
                                     </TooltipTrigger>
                                     <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-card border-2">
@@ -886,10 +886,10 @@ export function IPVReportView() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                                  className="h-11 w-11 text-destructive hover:bg-destructive/10"
                                   onClick={() => handleDeleteReport(r.id)}
                                 >
-                                    <Trash2 className="w-4 h-4" />
+                                    <Trash2 className="w-5 h-5" />
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent className="max-w-xs text-xs font-medium p-3 bg-card border-2 text-destructive">
