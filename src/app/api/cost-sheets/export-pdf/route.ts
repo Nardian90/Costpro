@@ -23,11 +23,11 @@ export async function POST(req: NextRequest) {
     const isPro = exportOptions.pdfFormat === 'pro';
     const primaryColor: [number, number, number] = isPro ? [26, 82, 118] : [0, 0, 0]; // Pro Blue or Black
 
-    const safeLocale = (val: number) => {
-        if (typeof val !== 'number') return '0,00';
-        return val.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const safeLocale = (val: any) => {
+        const n = parseFloat(String(val));
+        if (isNaN(n)) return val;
+        return n.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     };
-
     const translate = (key: string) => {
         const dict: Record<string, string> = {
             'classification': 'Fila',
@@ -94,8 +94,8 @@ export async function POST(req: NextRequest) {
 
         pdf.setTextColor(0);
         pdf.setFont("helvetica", "normal");
-        pdf.text(String(h.name || result.fichaName || result.name || "-").substring(0, 45), 14, 35);
-        pdf.text(String(h.code || result.fichaId || result.id || "-"), 55, 35);
+        pdf.text(String(h.name ?? result.fichaName ?? result.name ?? "-").substring(0, 45), 14, 35);
+        pdf.text(String(h.code ?? result.fichaId ?? result.id ?? "-"), 55, 35);
         pdf.text(String(h.unit || "-"), 95, 35);
         pdf.text(String(h.quantity || result.meta?.quantity || 1), 135, 35);
 
@@ -111,8 +111,14 @@ export async function POST(req: NextRequest) {
         pdf.text(String(h.destination || "-"), 55, 44);
         pdf.text(String(h.currency || "CUP"), 95, 44);
 
-        const r14 = (result.rows || []).find((r: any) => r.classification === '14' || r.id === '14');
-        const r16_1 = (result.rows || []).find((r: any) => r.classification === '16.1' || r.id === '16.1');
+        let r14 = (result.rows || []).find((r: any) => r.classification === "14" || r.id === "14");
+        let r16_1 = (result.rows || []).find((r: any) => r.classification === "16.1" || r.id === "16.1");
+        if (!r14 && result.metadata?.calculationSnapshot?.values) {
+            r14 = result.metadata.calculationSnapshot.values["14"] || Object.values(result.metadata.calculationSnapshot.values).find((v: any) => v.classification === "14");
+        }
+        if (!r16_1 && result.metadata?.calculationSnapshot?.values) {
+            r16_1 = result.metadata.calculationSnapshot.values["16.1"] || Object.values(result.metadata.calculationSnapshot.values).find((v: any) => v.classification === "16.1");
+        }
         const finalPrice = r16_1?.total || r14?.total || 0;
 
         if (finalPrice > 0) {
@@ -143,7 +149,11 @@ export async function POST(req: NextRequest) {
 
                 const flattenRows = (rows: any[]) => {
                     rows.forEach((r: any) => {
-                        const calc = (result.rows || []).find((cr: any) => cr.id === r.id);
+                        let calc = (result.rows || []).find((cr: any) => cr.id === r.id);
+                        if (!calc && result.metadata?.calculationSnapshot?.values) {
+                            const snap = result.metadata.calculationSnapshot.values[r.id];
+                            if (snap) calc = { ...r, ...snap };
+                        }
                         if (calc) {
                             const classStr = String(calc.classification || calc.id || '');
                             const level = (classStr.match(/\./g) || []).length;
@@ -151,7 +161,7 @@ export async function POST(req: NextRequest) {
                             // Parents (level 0, 1) always visible
                             // Children (level 2+) hidden if zero and skipZeros is true
                             const isParent = level < 2;
-                            const isZero = (calc.total ?? 0) === 0;
+                            const isZero = parseFloat(String(calc.total ?? 0)) === 0;
 
                             if (exportOptions.skipZeros && isZero && !isParent) return;
 
@@ -169,22 +179,26 @@ export async function POST(req: NextRequest) {
                 flattenRows(s.rows);
             });
         } else {
-            // Fallback to flat rows
-            tableBody = (result.rows || [])
+            // Fallback to flat rows or snapshot
+            let sourceRows = result.rows || [];
+            if (sourceRows.length === 0 && result.metadata?.calculationSnapshot?.values) {
+                sourceRows = Object.entries(result.metadata.calculationSnapshot.values).map(([id, val]: [string, any]) => ({
+                    id, ...val
+                }));
+            }
+            tableBody = sourceRows
                 .filter((r: any) => {
                     if (exportOptions.skipZeros) {
-                        const classStr = String(r.classification || r.id || '');
+                        const classStr = String(r.classification || r.id || "");
                         const level = (classStr.match(/\./g) || []).length;
                         const isParent = level < 2;
-                        const isZero = (r.total ?? 0) === 0;
+                        const isZero = parseFloat(String(r.total ?? 0)) === 0;
                         if (isZero && !isParent) return false;
                     }
                     return true;
                 })
                 .map((r: any) => [
-                    r.classification || r.id,
-                    r.label,
-                    r.um || r.unit || '-',
+                    r.classification || r.id, r.label, r.um || r.unit || "-",
                     safeLocale(r.valorHistorico ?? r.calculatedVH ?? r.v_historico ?? 0),
                     safeLocale(r.total ?? 0)
                 ]);
@@ -229,7 +243,12 @@ export async function POST(req: NextRequest) {
                         return;
                     }
 
-                    const r = (result.rows || []).find((cr: any) => cr.classification === rowContent[0] || cr.id === rowContent[0]);
+                    let r = (result.rows || []).find((cr: any) => cr.classification === rowContent[0] || cr.id === rowContent[0]);
+                    if (!r && result.metadata?.calculationSnapshot?.values) {
+                        const snapEntries = Object.entries(result.metadata.calculationSnapshot.values);
+                        const match = snapEntries.find(([id, val]: [string, any]) => id === rowContent[0] || val.classification === rowContent[0]);
+                        if (match) r = { id: match[0], ...(match[1] as any) };
+                    }
                     if (r) {
                         const classStr = String(r.classification || r.id || '');
                         const level = (classStr.match(/\./g) || []).length;
@@ -327,16 +346,17 @@ export async function POST(req: NextRequest) {
         doc.text((annex.name || annex.id).toUpperCase(), 14, currentY);
         currentY += 4;
 
-        if (annex.rows && annex.rows.length > 0) {
-            const allKeys = Object.keys(annex.rows[0]);
-            const headers = allKeys.filter(k => k !== 'importe' && k !== 'total' && k !== 'id' && k !== 'classification');
-            if (allKeys.includes('classification')) headers.unshift('classification');
-            if (allKeys.includes('importe')) headers.push('importe');
-            else if (allKeys.includes('total')) headers.push('total');
+        const annexRows = annex.rows || annex.data || [];
+        if (annexRows.length > 0) {
+            const allKeys = Object.keys(annexRows[0]);
+            const headers = allKeys.filter(k => k !== "importe" && k !== "total" && k !== "id" && k !== "classification");
+            if (allKeys.includes("classification")) headers.unshift("classification");
+            if (allKeys.includes("importe")) headers.push("importe");
+            else if (allKeys.includes("total")) headers.push("total");
 
-            const body = annex.rows.map((r: any) => headers.map(h => {
+            const body = annexRows.map((r: any) => headers.map(h => {
                 const val = r[h];
-                if (typeof val === 'number') return safeLocale(val);
+                if (typeof val === "number" || (typeof val === "string" && /^-?\d*\.?\d+$/.test(val.trim()))) return safeLocale(val);
                 return val;
             }));
 
