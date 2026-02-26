@@ -164,6 +164,8 @@ export default function TerminalShell() { // Renamed from TerminalView
   };
 
   // The renderView function is now simplified and will be replaced with lazy loading
+
+
   const renderView = (view: ViewType) => {
     switch (view) {
         case 'dashboard': return <DashboardView />;
@@ -185,7 +187,6 @@ export default function TerminalShell() { // Renamed from TerminalView
         case 'ipv': return <IPVView />;
         case 'academy': return <AcademyView />;
         case 'inventory_adjustments': return <InventoryAdjustmentsView />;
-
         case 'settings': return <SettingsView />;
         case 'help': return <HelpView />;
         case 'recepcion': return <ProductReceptionView onCancel={() => setCurrentView('inventory')} />;
@@ -193,7 +194,7 @@ export default function TerminalShell() { // Renamed from TerminalView
         case 'transferencias': return <TransferenciasView />;
         default: return <div>Default View Placeholder</div>;
     }
-}
+  };
   const renderActiveView = () => {
     if (isBlockingRequired) {
       return (

@@ -84,7 +84,7 @@ const CostSheetView = () => {
     } else {
       setIsEditing(true);
     }
-    if (mode === 'audit') { setActiveSection('audit'); setViewMode('expert'); } else if (mode === 'kpis') { setActiveSection('kpis'); setViewMode('expert'); } else if (mode == 'expert') { setActiveSection('expert-content'); setViewMode('expert'); } else { setViewMode(mode); }
+    if (mode === 'audit') { setActiveSection('audit'); setViewMode('expert'); } else if (mode === 'kpis') { setActiveSection('kpis'); setViewMode('expert'); } else { setViewMode(mode); }
   };
 
   React.useEffect(() => {
@@ -167,7 +167,7 @@ const CostSheetView = () => {
   const [isMassiveGeneratorOpen, setIsMassiveGeneratorOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
-  const isAnnexActive = React.useMemo(() => (data?.annexes || []).some((a: any) => a.id === activeSection) || activeSection === 'all-annexes' || activeSection === 'expert-content', [data?.annexes, activeSection]);
+  const isAnnexActive = React.useMemo(() => (data?.annexes || []).some((a: any) => a.id === activeSection) || activeSection === 'all-annexes' || activeSection === 'all-content' || activeSection === 'expert-content', [data?.annexes, activeSection]);
 
   const handleExportPDF = React.useCallback(async (options: ExportOptions) => {
     setIsExportModalOpen(false);
@@ -567,12 +567,13 @@ const CostSheetView = () => {
 
           {viewMode === 'expert' && (
             <>
-                <CostSheetNav
+                <div className="mb-6 -mx-4 px-4 z-30">
+                    <CostSheetNav
                         navItems={navItems}
                         annexes={data?.annexes || []}
                         activeSection={activeSection}
                         setActiveSection={handleSetActiveSection}
-                        topOffset="top-[60px] sm:top-[92px]"
+                        topOffset="sticky top-0"
                         viewMode={viewMode}
                         setViewMode={handleSetViewMode}
                         onOpenActions={() => setIsActionsPanelOpen(true)}
@@ -588,6 +589,7 @@ const CostSheetView = () => {
                         onQuickGenerate={() => setViewMode('quick')}
                         onExpertGenerate={() => { setIsQuickModeGenerating(true); setViewMode('expert'); }}
                     />
+                </div>
 
                 <div className="mt-4 w-full flex justify-center">
                     <div className="w-full max-w-6xl">
@@ -609,9 +611,9 @@ const CostSheetView = () => {
                             <CostSheetHeaderEditor header={data?.header || {}} calculatedHeader={calculatedHeader} />
                         </div>
                     )}
-                    {(activeSection === 'main' || activeSection === 'expert-content') && (
+                    {(activeSection === 'main' || activeSection === 'all-content' || activeSection === 'expert-content') && (
                         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
-                            {(activeSection === 'expert-content') && (
+                            {(activeSection === 'all-content' || activeSection === 'expert-content') && (
                                 <>
                                     <div className="px-8 py-10 mb-12 bg-card rounded-[2.5rem] border border-border shadow-sm">
                                         <h2 className="text-3xl font-black uppercase tracking-tighter italic text-primary flex items-center gap-3">
@@ -633,7 +635,7 @@ const CostSheetView = () => {
                                         groupedSections={groupedSections}
                                         calculatedValues={calculatedValues}
                                         annexes={data?.annexes || []}
-                                        activeSubSectionId={(activeSection === 'expert-content') ? 'all' : activeSubSectionId}
+                                        activeSubSectionId={(activeSection === 'all-content' || activeSection === 'expert-content') ? 'all' : activeSubSectionId}
                                         setActiveSubSectionId={setActiveSubSectionId}
                                         onOpenSections={() => setIsSectionsSidebarOpen(true)}
                                     />
@@ -643,7 +645,7 @@ const CostSheetView = () => {
                                         groupedSections={groupedSections}
                                         calculatedValues={calculatedValues}
                                         annexes={data?.annexes || []}
-                                        activeSubSectionId={(activeSection === 'expert-content') ? 'all' : activeSubSectionId}
+                                        activeSubSectionId={(activeSection === 'all-content' || activeSection === 'expert-content') ? 'all' : activeSubSectionId}
                                         setActiveSubSectionId={setActiveSubSectionId}
                                         onOpenSections={() => setIsSectionsSidebarOpen(true)}
                                     />
@@ -653,7 +655,7 @@ const CostSheetView = () => {
                     )}
                     {isAnnexActive && (
                         <div className="space-y-12">
-                            {(activeSection === 'all-annexes' || activeSection === 'expert-content') ? (
+                            {(activeSection === 'all-annexes' || activeSection === 'all-content' || activeSection === 'expert-content') ? (
                                 (data?.annexes || []).map((annex: any) => (
                                     <LazyRender key={annex.id}>
                                         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -675,7 +677,7 @@ const CostSheetView = () => {
                                     calculatedAnnexes={calculatedAnnexes}
                                 />
                             )}
-                            {(activeSection === 'expert-content') && (
+                            {(activeSection === 'all-content' || activeSection === 'expert-content') && (
                                 <div className="mt-12 pt-12 border-t border-border/50 animate-in fade-in duration-700">
                                     <CostSheetSignatureEditor />
                                 </div>
