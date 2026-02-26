@@ -107,7 +107,6 @@ export function CatalogTable() {
             sales,
             final: initial - sales
         };
-    });
 
     return stats;
   }, [products, reports, reconciliationLines]);
@@ -263,7 +262,6 @@ export function CatalogTable() {
         }
     });
   };
-    });
 
   const clearCatalog = async () => {
     askConfirmation('Vaciar Catálogo', '¿ESTÁS SEGURO? Se borrará TODO el catálogo cargado actualmente.', async () => {
@@ -297,7 +295,6 @@ export function CatalogTable() {
         }
     });
   };
-    });
 
   const handleBulkPriority = async (mode: 'auto' | 'hybrid' | 'manual') => {
     if (!products) return;
@@ -319,7 +316,6 @@ export function CatalogTable() {
         }
     });
   };
-    });
 
   const handleBulkPercentageAdjustment = async () => {
     const targetProducts = selectedProductIds.length > 0
@@ -375,7 +371,6 @@ export function CatalogTable() {
           }
       });
   };
-    });
 
   const handleRecalculateIntelligence = async () => {
     if (!products || !reconciliationLines) return;
@@ -464,7 +459,6 @@ export function CatalogTable() {
         } finally {
             setIsSyncing(false);
         }
-    });
   };
 
   const handleRecalculateReportsChain = async () => {
@@ -475,10 +469,10 @@ export function CatalogTable() {
         } catch (error) {
             toast.error('Error al recalcular los reportes');
         }
-    });
   };
 
   return (
+    <>
     <div className="space-y-4">
       <div className="p-3 sm:p-4 flex flex-col lg:flex-row gap-4 bg-background/50 border-b items-center justify-between">
         <div className="flex flex-col sm:flex-row gap-4 flex-1 w-full lg:max-w-3xl items-center">
@@ -1069,7 +1063,7 @@ export function CatalogTable() {
           <p className="text-sm text-muted-foreground font-medium">{confirmation.message}</p>
         </div>
       </BaseModal>
-
+    </>
   );
 }
 

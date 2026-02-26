@@ -58,6 +58,23 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
   const [typeFilter, setTypeFilter] = useState<'ALL' | 'Cr' | 'Db'>('ALL');
   const [showExcluded, setShowExcluded] = useState(true);
 
+  const [confirmation, setConfirmation] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    variant?: 'default' | 'destructive';
+  }>({
+    open: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
+
+  const askConfirmation = (title: string, message: string, onConfirm: () => void, variant: 'default' | 'destructive' = 'default') => {
+    setConfirmation({ open: true, title, message, onConfirm, variant });
+  };
+
   const filtered = React.useMemo(() => {
     return transactions.filter(t => {
         // Excluded Filter
@@ -93,30 +110,25 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
     });
   }, [transactions, searchTerm, typeFilter, kpiFilter, txReconciliationTotals]);
 
-  const handleDelete = async (referencia: string) => {
-    askConfirmation('Confirmar Acción', ''¿Eliminar esta transacción?'', async () => {
-
+    const handleDelete = async (referencia: string) => {
+    askConfirmation('Confirmar Acción', '¿Eliminar esta transacción?', async () => {
       await db.bank_statements.delete(referencia);
-
-}, 'destructive')
+      toast.success('Transacción eliminada');
+    }, 'destructive');
   };
 
   const handleResetReconciliation = async (tx: BankTransaction) => {
-    askConfirmation('Confirmar Acción', '`¿Reiniciar conciliación para ${tx.referencia_origen}? Se borrarán todos los productos asociados.`', async () => {
-
+    askConfirmation('Confirmar Acción', `¿Reiniciar conciliación para ${tx.referencia_origen}? Se borrarán todos los productos asociados.`, async () => {
         await db.reconciliation_lines.where('transaction_ref').equals(tx.referencia_origen).delete();
         await db.bank_statements.update(tx.referencia_origen, {
             estado_conciliacion: 'PENDIENTE'
-
-}, 'default'));
-    }
+        });
+        toast.success('Conciliación reiniciada');
+    }, 'destructive');
   };
 
-
   const toggleExclusion = async (tx: BankTransaction, forcedValue?: boolean) => {
-      // Si forcedValue viene de Radix Checkbox, invertimos su lógica (Checked = !Excluido)
       const newValue = forcedValue !== undefined ? !forcedValue : !tx.excluido;
-
       await db.bank_statements.update(tx.referencia_origen, {
           excluido: newValue,
           estado_conciliacion: newValue ? 'NO_PROCESAR' : 'PENDIENTE',
@@ -126,19 +138,16 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
 
   const bulkResetMatching = async () => {
     if (filtered.length === 0) return;
-    askConfirmation('Confirmar Acción', '`¿REINICIAR CONCILIACIÓN de ${filtered.length} transacciones visibles? Se borrarán todos los productos asociados.`', async () => {
-
+    askConfirmation('Confirmar Acción', `¿REINICIAR CONCILIACIÓN de ${filtered.length} transacciones visibles? Se borrarán todos los productos asociados.`, async () => {
         const ids = filtered.map(t => t.referencia_origen);
-
-        // Ejecutar en una transacción de Dexie para asegurar consistencia
         await db.transaction('rw', [db.reconciliation_lines, db.bank_statements], async () => {
             await db.reconciliation_lines.where('transaction_ref').anyOf(ids).delete();
             await db.bank_statements.where('referencia_origen').anyOf(ids).modify({
                 estado_conciliacion: 'PENDIENTE'
-
-}, 'default'));
+            });
         });
-    }
+        toast.success('Reinicio masivo completado');
+    }, 'destructive');
   };
 
   const getStatusBadge = (status: string, diffCents: number, matchedTotal: number) => {
@@ -155,6 +164,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
   };
 
   return (
+    <>
     <div className="space-y-4">
       <div className="p-3 sm:p-4 flex flex-col lg:flex-row gap-3 bg-background/50 border-b items-center">
         <div className="relative flex-1 w-full">
@@ -470,6 +480,33 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
 
       <ColumnHelpModal open={helpOpen} onOpenChange={setHelpOpen} />
     </div>
+      <BaseModal
+        open={confirmation.open}
+        onOpenChange={(open) => setConfirmation(prev => ({ ...prev, open }))}
+        title={confirmation.title}
+        footer={
+          <div className="flex gap-2 w-full pt-4">
+            <Button variant="outline" onClick={() => setConfirmation(prev => ({ ...prev, open: false }))} className="flex-1 h-11 font-black uppercase text-xs tracking-widest">
+              Cancelar
+            </Button>
+            <Button
+              variant={confirmation.variant === 'destructive' ? 'destructive' : 'default'}
+              onClick={() => {
+                confirmation.onConfirm();
+                setConfirmation(prev => ({ ...prev, open: false }));
+              }}
+              className="flex-1 h-11 font-black uppercase text-xs tracking-widest"
+            >
+              Confirmar
+            </Button>
+          </div>
+        }
+      >
+        <div className="py-4">
+          <p className="text-sm text-muted-foreground font-medium">{confirmation.message}</p>
+        </div>
+      </BaseModal>
+    </>
   );
 }
 
@@ -1027,32 +1064,7 @@ function QuickAdjustPopover({ transaction, remaining, onSuccess }: { transaction
                         ))}
                     </div>
                 </div>
-      <BaseModal
-        open={confirmation.open}
-        onOpenChange={(open) => setConfirmation(prev => ({ ...prev, open }))}
-        title={confirmation.title}
-        footer={
-          <div className="flex gap-2 w-full pt-4">
-            <Button variant="outline" onClick={() => setConfirmation(prev => ({ ...prev, open: false }))} className="flex-1 h-11 font-black uppercase text-xs tracking-widest">
-              Cancelar
-            </Button>
-            <Button
-              variant={confirmation.variant === 'destructive' ? 'destructive' : 'default'}
-              onClick={() => {
-                confirmation.onConfirm();
-                setConfirmation(prev => ({ ...prev, open: false }));
-              }}
-              className="flex-1 h-11 font-black uppercase text-xs tracking-widest"
-            >
-              Confirmar
-            </Button>
-          </div>
-        }
-      >
-        <div className="py-4">
-          <p className="text-sm text-muted-foreground font-medium">{confirmation.message}</p>
-        </div>
-      </BaseModal>
+
 
             </PopoverContent>
         </Popover>
