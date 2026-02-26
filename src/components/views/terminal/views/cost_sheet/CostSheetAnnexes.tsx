@@ -12,9 +12,10 @@ type CostSheetAnnexesProps = {
 const CostSheetAnnexes: React.FC<CostSheetAnnexesProps> = ({ annexes, forceTable }) => {
   return (
     <div className="space-y-16">
+
       {annexes.map((annex) => {
         // Find the column that represents the total for summary calculation
-        const totalColumn = annex.columns.find(c => c.key === 'total' || c.key === 'amount' || c.key === 'depreciation_cost' || c.key === 'total_cost');
+        const totalColumn = annex.columns.find(c => c.key === 'total' || c.key === 'amount' || c.key === 'depreciation_cost' || c.key === 'total_cost' || c.key === 'value' || c.key === 'importe');
 
         return (
           <div key={annex.id} className="page-break-before space-y-6">
@@ -80,15 +81,41 @@ const CostSheetAnnexes: React.FC<CostSheetAnnexesProps> = ({ annexes, forceTable
                       </td>
                     </tr>
                   )}
+
                   {/* Total Row */}
                   {annex.data.length > 0 && (
                     <tr className="bg-muted/50 font-bold border-t border-border">
-                        <td colSpan={annex.columns.length - 1} className="p-4 text-right uppercase tracking-[0.2em] text-xs font-black text-muted-foreground">
-                          TOTAL
-                        </td>
-                        <td className="p-4 text-right font-mono font-black text-base text-foreground text-foreground border-l border-border">
-                            {formatCurrency(annex.data.reduce((acc, row) => acc + (totalColumn ? (row[totalColumn.key] || 0) : 0), 0)).replace('$', '').trim()}
-                        </td>
+                        {(() => {
+                            const totalColIndex = totalColumn ? annex.columns.findIndex(c => c.key === totalColumn.key) : annex.columns.length - 1;
+                            const cells = [];
+
+
+                            // Label cell
+                            if (totalColIndex > 0) {
+                                cells.push(
+                                    <td key="total-label" colSpan={totalColIndex} className="p-4 text-right uppercase tracking-[0.2em] text-xs font-black text-muted-foreground">
+                                        TOTAL
+                                    </td>
+                                );
+                            }
+
+                            // Total value cell
+                            cells.push(
+                                <td key="total-value" className="p-4 text-right font-mono font-black text-base text-foreground border-l border-border">
+                                    {totalColIndex === 0 && <span className="mr-4 text-xs font-black text-muted-foreground uppercase tracking-widest">TOTAL</span>}
+                                    {formatCurrency(annex.data.reduce((acc, row) => acc + (totalColumn ? (row[totalColumn.key] || 0) : 0), 0)).replace('$', '').trim()}
+                                </td>
+                            );
+
+                            // Remaining empty cells
+                            if (totalColIndex < annex.columns.length - 1) {
+                                for (let i = totalColIndex + 1; i < annex.columns.length; i++) {
+                                    cells.push(<td key={`empty-${i}`} className="p-4"></td>);
+                                }
+                            }
+
+                            return cells;
+                        })()}
                     </tr>
                   )}
                 </tbody>

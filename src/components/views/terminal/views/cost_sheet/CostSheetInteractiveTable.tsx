@@ -560,15 +560,28 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                 const sectionNum = parseInt(section.id.replace('s', ''), 10);
                 const isStickyHeaderSection = sectionNum >= 1 && sectionNum <= 3;
 
+
                 return (
                 <LazyRender key={section.id}>
                 <div id={section.id} className="animate-in fade-in slide-in-from-bottom-2 duration-500 mb-8 last:mb-0 scroll-mt-24">
                     <div className="flex items-center justify-between py-1 px-4 bg-primary/5 border-y border-border/20 border-l-2 border-primary/20">
-                        <div className="flex items-center gap-3">
-                            <div className="w-1 h-4 bg-primary/40 rounded-full" />
+
+                        <div className="flex items-center gap-3 cursor-pointer group/header" onClick={() => toggleSection(section.id)}>
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 p-0 hover:bg-primary/10 text-primary transition-all"
+                                    // onClick handled by parent div
+                                >
+                                    <ChevronRight className={cn("h-4 w-4 transition-transform duration-300", !collapsedSections[section.id] && "rotate-90")} />
+                                </Button>
+                                <div className="w-1 h-4 bg-primary/40 rounded-full group-hover/header:bg-primary transition-colors" />
+                            </div>
                             <Input
-                                className="h-7 text-xs font-black uppercase tracking-[0.2em] text-foreground bg-transparent border-none focus-visible:ring-0 p-0 w-auto min-w-[250px]"
+                                className="h-7 text-xs font-black uppercase tracking-[0.2em] text-foreground bg-transparent border-none focus-visible:ring-0 p-0 w-auto min-w-[250px] cursor-text"
                                 value={section.label}
+                                onClick={(e) => e.stopPropagation()}
                                 onChange={(e) => updateValue(['sections', sectionIndex, 'label'], e.target.value)}
                             />
                         </div>
