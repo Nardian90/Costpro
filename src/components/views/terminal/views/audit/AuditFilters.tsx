@@ -52,7 +52,7 @@ export default function AuditFilters({
           <input
             type="text"
             placeholder="Buscar por usuario, producto, acción..."
-            className="w-full pl-10 pr-4 py-3.5 rounded-xl border border-border bg-card text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[44px]"
+            className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-card text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-all"
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
           />
@@ -60,7 +60,7 @@ export default function AuditFilters({
         <button
           onClick={() => setIsExpanded(!isExpanded)}
           className={cn(
-            "flex items-center justify-center gap-2 px-6 py-3 rounded-xl border font-black uppercase text-xs tracking-widest transition-all min-h-[44px]",
+            "flex items-center justify-center gap-2 px-6 py-3 rounded-xl border font-black uppercase text-xs tracking-widest transition-all",
             isExpanded ? "bg-primary text-primary-foreground border-primary" : "bg-card text-foreground border-border hover:bg-muted"
           )}
         >
@@ -81,7 +81,7 @@ export default function AuditFilters({
                     key={cat.id}
                     onClick={() => onCategoryChange(cat.id)}
                     className={cn(
-                      "px-3 py-2 rounded-lg text-xs font-black uppercase transition-all border min-h-[44px] min-w-[44px]",
+                      "px-3 py-1.5 rounded-lg text-xs font-black uppercase transition-all border",
                       selectedCategory === cat.id
                         ? `${cat.color} text-white border-transparent shadow-lg scale-105`
                         : "bg-muted/50 text-muted-foreground border-border hover:border-muted-foreground/30"
@@ -119,7 +119,7 @@ export default function AuditFilters({
                   <span className="text-xs font-bold text-muted-foreground uppercase ml-1">Desde</span>
                   <input
                     type="date"
-                    className="w-full p-2.5 rounded-lg border border-border bg-background text-xs font-bold outline-none focus:ring-1 focus:ring-primary min-h-[44px]"
+                    className="w-full p-2 rounded-lg border border-border bg-background text-xs font-bold outline-none focus:ring-1 focus:ring-primary"
                     value={dateRange.from}
                     onChange={(e) => onDateRangeChange({ ...dateRange, from: e.target.value })}
                   />
@@ -128,7 +128,7 @@ export default function AuditFilters({
                   <span className="text-xs font-bold text-muted-foreground uppercase ml-1">Hasta</span>
                   <input
                     type="date"
-                    className="w-full p-2.5 rounded-lg border border-border bg-background text-xs font-bold outline-none focus:ring-1 focus:ring-primary min-h-[44px]"
+                    className="w-full p-2 rounded-lg border border-border bg-background text-xs font-bold outline-none focus:ring-1 focus:ring-primary"
                     value={dateRange.to}
                     onChange={(e) => onDateRangeChange({ ...dateRange, to: e.target.value })}
                   />
@@ -141,7 +141,7 @@ export default function AuditFilters({
               <label className="text-xs font-black uppercase text-muted-foreground tracking-widest">Contexto</label>
               <div className="space-y-2">
                 <select
-                  className="w-full p-2.5 rounded-lg border border-border bg-background text-xs font-bold outline-none focus:ring-1 focus:ring-primary min-h-[44px]"
+                  className="w-full p-2 rounded-lg border border-border bg-background text-xs font-bold outline-none focus:ring-1 focus:ring-primary"
                   value={selectedUser}
                   onChange={(e) => onUserChange(e.target.value)}
                 >
@@ -151,7 +151,7 @@ export default function AuditFilters({
                   ))}
                 </select>
                 <select
-                  className="w-full p-2.5 rounded-lg border border-border bg-background text-xs font-bold outline-none focus:ring-1 focus:ring-primary min-h-[44px]"
+                  className="w-full p-2 rounded-lg border border-border bg-background text-xs font-bold outline-none focus:ring-1 focus:ring-primary"
                   value={selectedStore}
                   onChange={(e) => onStoreChange(e.target.value)}
                 >
@@ -173,7 +173,7 @@ export default function AuditFilters({
                   onUserChange('all');
                   onStoreChange('all');
                 }}
-                className="text-xs font-black uppercase text-muted-foreground hover:text-destructive transition-colors flex items-center gap-1 min-h-[44px] px-4"
+                className="text-xs font-black uppercase text-muted-foreground hover:text-destructive transition-colors flex items-center gap-1"
              >
                <X size={12} /> Limpiar Filtros
              </button>

@@ -45,6 +45,14 @@ export function isProductAMedida(um: string): boolean {
 /**
  * Calcula la existencia actual de un producto basándose en su stock inicial y movimientos
  */
+
+/**
+ * Calcula la existencia actual de un producto basándose en su stock inicial y movimientos
+ */
+
+/**
+ * Calcula la existencia actual de un producto basándose en su stock inicial y movimientos
+ */
 export async function calculateCurrentStock(db: any, productCod: string): Promise<number> {
     const product = await db.products.where('cod').equals(productCod).first();
     if (!product) return 0;
@@ -53,11 +61,12 @@ export async function calculateCurrentStock(db: any, productCod: string): Promis
 
     // Sumar movimientos (ventas son positivas, entradas negativas)
     const movements = await db.reconciliation_lines.where('product_cod').equals(productCod).toArray();
-    const totalMovement = movements.reduce((sum: number, line: any) => sum + (line.cantidad || 0), 0);
+    const netMovement = movements.reduce((sum: number, line: any) => sum + (line.cantidad || 0), 0);
 
-
-    return initialStock - totalMovement;
+    // TODO: En el futuro sumar entradas reales de inventario si están disponibles en Dexie
+    return initialStock - netMovement;
 }
+
 
 /**
  * Calcula el mapa de stock completo para todos los productos activos.
