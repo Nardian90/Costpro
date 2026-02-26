@@ -82,7 +82,7 @@ const evaluateAnnexExpression = (expression: string, rowData: any, header: any, 
 
         // Calculate total regardless (used for fallback or explicit TotalAnexo request)
         const total = targetAnnex.data.reduce((sum: number, r: any) => {
-             const val = r.total || r.amount || r.depreciation_cost || r.price_total || 0;
+             const val = [ r.total, r.amount, r.depreciation_cost, r.price_total, r.importe ].find(v => v !== undefined && v !== null) ?? 0;
              return sum + (typeof val === 'number' ? val : 0);
         }, 0);
 
@@ -97,7 +97,7 @@ const evaluateAnnexExpression = (expression: string, rowData: any, header: any, 
 
             if (matches.length > 0) {
                 const sum = matches.reduce((acc: number, d: any) => {
-                    const val = d.total || d.amount || d.depreciation_cost || d.price_total || 0;
+                    const val = [ d.total, d.amount, d.depreciation_cost, d.price_total, d.importe ].find(v => v !== undefined && v !== null) ?? 0;
                     return acc + (typeof val === 'number' ? val : 0);
                 }, 0);
                 return String(sum);
@@ -290,7 +290,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
     const totals: { [key: string]: number } = {};
     calculatedAnnexes.forEach(a => {
       const total = (a.data || []).reduce((sum: number, row: any) => {
-        const val = row.total || row.amount || row.depreciation_cost || row.price_total || 0;
+        const val = [row.total, row.amount, row.depreciation_cost, row.price_total, row.importe].find(v => v !== undefined && v !== null) ?? 0;
         return sum + (typeof val === 'number' ? val : 0);
       }, 0);
       totals[a.id] = total;
@@ -437,7 +437,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
             ...d,
             // Normalize classification by taking the prefix before ' - ' (e.g. "1.1 - Insumos" -> "1.1")
             classification: String(d.classification || d.label || '').split(' - ')[0].trim(),
-            importe: d.total || d.amount || d.depreciation_cost || d.price_total || 0
+            importe: (() => { const val = [d.total, d.amount, d.depreciation_cost, d.price_total, d.importe].find(v => v !== undefined && v !== null); return parseFloat(String(val ?? 0)) || 0; })()
           }))
         })),
         rows: engineRows
