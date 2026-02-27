@@ -53,7 +53,7 @@ export default function ReceptionsHistoryView() {
   return (
     <>
       <div className="space-y-6">
-        <h2 className="text-[clamp(2rem,8vw,3rem)] font-black text-foreground tracking-tighter uppercase text-primary"> Recepciones </h2>
+        <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase text-[clamp(1.5rem,5vw,2rem)] font-black uppercase tracking-tighter text-primary"> Recepciones </h2>
 
         <QueryInspector />
 
@@ -161,38 +161,38 @@ export default function ReceptionsHistoryView() {
                         <div className="flex items-center justify-center gap-2">
                           <button
                             onClick={() => handleViewDetails(rec)}
-                            className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-white transition-all active:scale-95"
+                            className="w-8 h-8 inline-flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-white transition-all active:scale-95"
                             title="Ver productos"
                           >
-                            <Eye className="w-5 h-5" />
+                            <Eye className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => {
                                 handleViewDetails(rec);
                                 setTimeout(() => handleInvert(rec), 500);
                             }}
-                            className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-destructive hover:text-white transition-all active:scale-95"
+                            className="w-8 h-8 inline-flex items-center justify-center rounded-lg border border-border hover:bg-destructive hover:text-white transition-all active:scale-95"
                             title="Invertir Recepción (Disminución)"
                             disabled={rec.status === 'voided' || isInverting}
                           >
-                            <RefreshCcw className={cn("w-5 h-5", isInverting && "animate-spin")} />
+                            <RefreshCcw className={cn("w-4 h-4", isInverting && "animate-spin")} />
                           </button>
                            <button
                             onClick={() => {
                                 handleViewDetails(rec);
                                 setTimeout(() => handleDuplicate(rec), 500);
                             }}
-                            className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-amber-500 hover:text-white transition-all active:scale-95"
+                            className="w-8 h-8 inline-flex items-center justify-center rounded-lg border border-border hover:bg-amber-500 hover:text-white transition-all active:scale-95"
                             title="Duplicar Recepción"
                           >
-                            <Copy className="w-5 h-5" />
+                            <Copy className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleEdit(rec.id)}
-                            className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-amber-500 hover:text-white transition-all active:scale-95 priority-low"
+                            className="w-8 h-8 inline-flex items-center justify-center rounded-lg border border-border hover:bg-amber-500 hover:text-white transition-all active:scale-95 priority-low"
                             title="Editar"
                           >
-                            <Pencil className="w-5 h-5" />
+                            <Pencil className="w-4 h-4" />
                           </button>
                         </div>
                       </td>

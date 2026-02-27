@@ -45,7 +45,6 @@ const ReceptionsHistoryView = lazy(() => import('./terminal/views/receptions/Rec
 const NewsView = lazy(() => import('./terminal/views/rss/NewsView'));
 const RSSManagementView = lazy(() => import('./terminal/views/rss/RSSManagementView'));
 
-// TODO: Map remaining views
 const InventoryView = lazy(() => import('./terminal/views/inventory/InventoryView'));
 const CashClosureView = lazy(() => import('./terminal/views/cash_closure/CashClosureView'));
 const StockHistoryView = lazy(() => import('./terminal/views/stock_history/StockHistoryView'));
@@ -165,6 +164,8 @@ export default function TerminalShell() { // Renamed from TerminalView
   };
 
   // The renderView function is now simplified and will be replaced with lazy loading
+
+
   const renderView = (view: ViewType) => {
     switch (view) {
         case 'dashboard': return <DashboardView />;
@@ -186,8 +187,6 @@ export default function TerminalShell() { // Renamed from TerminalView
         case 'ipv': return <IPVView />;
         case 'academy': return <AcademyView />;
         case 'inventory_adjustments': return <InventoryAdjustmentsView />;
-
-        // --- Placeholders for remaining views ---
         case 'settings': return <SettingsView />;
         case 'help': return <HelpView />;
         case 'recepcion': return <ProductReceptionView onCancel={() => setCurrentView('inventory')} />;
@@ -195,7 +194,7 @@ export default function TerminalShell() { // Renamed from TerminalView
         case 'transferencias': return <TransferenciasView />;
         default: return <div>Default View Placeholder</div>;
     }
-}
+  };
   const renderActiveView = () => {
     if (isBlockingRequired) {
       return (

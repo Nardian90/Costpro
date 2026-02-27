@@ -45,20 +45,28 @@ export function isProductAMedida(um: string): boolean {
 /**
  * Calcula la existencia actual de un producto basándose en su stock inicial y movimientos
  */
+
+/**
+ * Calcula la existencia actual de un producto basándose en su stock inicial y movimientos
+ */
+
+/**
+ * Calcula la existencia actual de un producto basándose en su stock inicial y movimientos
+ */
 export async function calculateCurrentStock(db: any, productCod: string): Promise<number> {
     const product = await db.products.where('cod').equals(productCod).first();
     if (!product) return 0;
 
     const initialStock = product.stock_inicial_manual || 0;
 
-    // Sumar ventas (salidas)
-    const sales = await db.reconciliation_lines.where('product_cod').equals(productCod).toArray();
-    const totalSold = sales.reduce((sum: number, line: any) => sum + (line.cantidad || 0), 0);
+    // Sumar movimientos (ventas son positivas, entradas negativas)
+    const movements = await db.reconciliation_lines.where('product_cod').equals(productCod).toArray();
+    const netMovement = movements.reduce((sum: number, line: any) => sum + (line.cantidad || 0), 0);
 
-    // TODO: En el futuro sumar entradas (ajustes/compras)
-
-    return initialStock - totalSold;
+    // TODO: En el futuro sumar entradas reales de inventario si están disponibles en Dexie
+    return initialStock - netMovement;
 }
+
 
 /**
  * Calcula el mapa de stock completo para todos los productos activos.
@@ -70,10 +78,10 @@ export async function getCompleteStockMap(db: any): Promise<Map<string, number>>
     const map = new Map<string, number>();
 
     for (const p of products) {
-        const sold = lines
+        const netMovement = lines
             .filter((l: any) => l.product_cod === p.cod)
             .reduce((sum: number, l: any) => sum + l.cantidad, 0);
-        map.set(p.cod, (p.stock_inicial_manual || 0) - sold);
+        map.set(p.cod, (p.stock_inicial_manual || 0) - netMovement);
     }
 
     return map;

@@ -121,7 +121,7 @@ export default function AuditLogsView() {
     <div className="space-y-8 pb-20">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div className="flex flex-col gap-1">
-          <h2 className="text-[clamp(2rem,8vw,3rem)] font-black text-foreground tracking-tight uppercase italic">Auditoría</h2>
+          <h2 className="text-4xl font-black text-foreground tracking-tight uppercase italic">Auditoría</h2>
           <p className="text-sm text-muted-foreground font-medium">Historial operativo y de control del sistema</p>
         </div>
 
