@@ -16,7 +16,7 @@ import CostSheetNarrative from './CostSheetNarrative';
 import CostSheetWizard from './CostSheetWizard';
 import CostSheetSummary from './CostSheetSummary';
 import { CostSheetFormulaGuide } from './CostSheetFormulaGuide';
-import { CostSheetBanner } from './CostSheetBanner';
+
 import { CostSheetAuditView } from './CostSheetAuditView';
 import { CostSheetActionsPanel } from './CostSheetActionsPanel';
 import { CostSheetHelpPanel } from './CostSheetHelpPanel';
@@ -377,7 +377,6 @@ const CostSheetView = () => {
         variant: 'outline' as const
     }
 
-
   ], [isEditing, loadExample, reset, handleImportJSON, handleExportJSON, handleExportExcel, handleExportPDF, isBlocked, setIsCalculatorOpen, data]);
 
   const mainActions = React.useMemo(() => [
@@ -444,7 +443,6 @@ const CostSheetView = () => {
     }
   }, [setIsExportModalOpen, handleSetActiveSection, setViewMode, setIsActionsPanelOpen, setCurrentView, setIsChatBotOpen, setIsCalculatorOpen]);
 
-
   if (!data || !data.header || !data.annexes || !data.sections) {
     return (
       <div className="w-full max-w-none px-2 pb-32 pt-0">
@@ -509,10 +507,6 @@ const CostSheetView = () => {
         onSelect={handleSetActiveSection}
       />
 
-      <CostSheetBanner viewMode={viewMode} setViewMode={handleSetViewMode} onOpenActions={() => setIsActionsPanelOpen(true)}/>
-
-
-
       {isBlocked && (
           <div className="mb-6 animate-in slide-in-from-top duration-500">
               <div className="bg-destructive/10 border border-destructive/20 rounded-2xl p-4 flex items-start gap-4 shadow-sm">
@@ -526,8 +520,6 @@ const CostSheetView = () => {
               </div>
           </div>
       )}
-
-
 
       <CostSheetExportModal
         isOpen={isExportModalOpen}
@@ -573,7 +565,6 @@ const CostSheetView = () => {
                         annexes={data?.annexes || []}
                         activeSection={activeSection}
                         setActiveSection={handleSetActiveSection}
-                        topOffset="sticky top-0"
                         viewMode={viewMode}
                         setViewMode={handleSetViewMode}
                         onOpenActions={() => setIsActionsPanelOpen(true)}
