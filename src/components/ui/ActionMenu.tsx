@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Tooltip,
@@ -38,19 +39,49 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
   topOffset,
 }) => {
   const [isScrolling, setIsScrolling] = useState(false);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
   const lastScrollTime = useRef<number>(0);
+
+  const checkScroll = useCallback(() => {
+    if (scrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+      setShowLeftArrow(scrollLeft > 10);
+      setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
+    }
+  }, []);
 
   const handleScroll = useCallback(() => {
     const now = Date.now();
     lastScrollTime.current = now;
     if (!isScrolling) setIsScrolling(true);
 
+    checkScroll();
+
     if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
     scrollTimeout.current = setTimeout(() => {
       setIsScrolling(false);
     }, 150); // Standard delay to distinguish scroll momentum from tap
-  }, [isScrolling]);
+  }, [isScrolling, checkScroll]);
+
+  const scrollBy = (offset: number) => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ left: offset, behavior: 'smooth' });
+    }
+  };
+
+  useEffect(() => {
+    checkScroll();
+    // Add a small delay to ensure layout is complete
+    const timer = setTimeout(checkScroll, 100);
+    window.addEventListener('resize', checkScroll);
+    return () => {
+      window.removeEventListener('resize', checkScroll);
+      clearTimeout(timer);
+    };
+  }, [checkScroll, actions]);
 
   const handleClickCapture = useCallback((e: React.MouseEvent) => {
     // If we are currently scrolling or just finished (within 150ms),
@@ -91,9 +122,38 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
         className
       )}
     >
-      <div className="neu-card !p-2 sm:!p-3 !rounded-2xl sm:!rounded-3xl shadow-2xl border-white/10 bg-background/95 backdrop-blur-md relative overflow-hidden">
+      <div className="neu-card !p-2 sm:!p-3 !rounded-2xl sm:!rounded-3xl shadow-2xl border-white/10 bg-background/95 backdrop-blur-md relative overflow-hidden group">
+        {/* Left Scroll Button */}
+        <div className={cn(
+          "absolute left-0 top-0 bottom-0 w-12 z-30 flex items-center justify-start pl-2 bg-gradient-to-r from-background to-transparent transition-opacity duration-300 pointer-events-none sm:hidden",
+          showLeftArrow ? "opacity-100" : "opacity-0"
+        )}>
+          <button
+            onClick={() => scrollBy(-200)}
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-background/80 backdrop-blur-md border border-white/10 shadow-lg text-primary pointer-events-auto active:scale-90 transition-transform"
+            aria-label="Scroll left"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Right Scroll Button */}
+        <div className={cn(
+          "absolute right-0 top-0 bottom-0 w-12 z-30 flex items-center justify-end pr-2 bg-gradient-to-l from-background to-transparent transition-opacity duration-300 pointer-events-none sm:hidden",
+          showRightArrow ? "opacity-100" : "opacity-0"
+        )}>
+          <button
+            onClick={() => scrollBy(200)}
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-background/80 backdrop-blur-md border border-white/10 shadow-lg text-primary pointer-events-auto active:scale-90 transition-transform"
+            aria-label="Scroll right"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
+
         <div
-          className="w-full overflow-x-auto flex flex-row flex-nowrap items-center gap-3 p-1 pr-12 sm:pr-1 pb-2 [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-400/50 hover:[&::-webkit-scrollbar-thumb]:bg-gray-500/80 [&::-webkit-scrollbar-thumb]:rounded-full"
+          ref={scrollRef}
+          className="w-full overflow-x-auto flex flex-row flex-nowrap items-center gap-3 p-1 pr-1 pb-2 [scrollbar-width:none] sm:[scrollbar-width:thin] [&::-webkit-scrollbar]:h-0 sm:[&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-400/50 hover:[&::-webkit-scrollbar-thumb]:bg-gray-500/80 [&::-webkit-scrollbar-thumb]:rounded-full"
           onScroll={handleScroll}
           onClickCapture={handleClickCapture}
         >
@@ -132,8 +192,7 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
           </TooltipProvider>
         </div>
 
-        {/* Scroll Indicator (Fade effect) */}
-        <div className="sm:hidden absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-background to-transparent pointer-events-none rounded-r-2xl z-10" />
+
       </div>
     </div>
   );
