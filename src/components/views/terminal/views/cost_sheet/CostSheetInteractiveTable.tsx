@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 import React, { useState, useMemo, memo } from 'react';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
-import { ChevronRight, HelpCircle, CornerDownRight, AlertTriangle, ListFilter, LayoutGrid, ArrowRight, FunctionSquare, Plus, Trash2, Edit2, ChevronUp, ChevronDown, Download, Upload, CheckCircle2, XCircle, MoreVertical, Settings2 } from 'lucide-react';
+import { ChevronRight, HelpCircle, CornerDownRight, AlertTriangle, ListFilter, LayoutGrid, Sparkles, Wand2, ArrowRight, FunctionSquare, Plus, Trash2, Edit2, ChevronUp, ChevronDown, Download, Upload, CheckCircle2, XCircle, MoreVertical, Settings2 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -13,8 +13,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { cn, formatAccounting } from '@/lib/utils';
 import { FormulaEditor } from './FormulaEditor';
+import { toast } from "sonner";
 import { exportSectionToExcel, importSectionFromExcel } from '@/services/excel-service';
 import { CostSheetSectionActionsPanel } from './CostSheetSectionActionsPanel';
+import reinicioTemplate from '@/lib/data/costpro-reinicio';
 import {
   CostSheetRow as RowData,
   CostSheetSection,
@@ -62,6 +64,52 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
   const addMainRow = useCostSheetStore(state => state.addMainRow);
   const removeMainRow = useCostSheetStore(state => state.removeMainRow);
   const reorderMainRow = useCostSheetStore(state => state.reorderMainRow);
+  const applySuggestedFormula = () => {
+    const findInSections = (sections: any[]): any => {
+      for (const s of sections) {
+        for (const r of s.rows) {
+          const found = findInRow(r);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+    const findInRow = (r: any): any => {
+      if (r.id === row.id) return r;
+      if (r.children) {
+        for (const child of r.children) {
+          const found = findInRow(child);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+
+    const suggestedRow = findInSections(reinicioTemplate.sections);
+    if (suggestedRow) {
+      const updates: any[] = [];
+      if (suggestedRow.totalFormula) {
+        updates.push({ path: [...path, 'totalFormula'], value: suggestedRow.totalFormula });
+        updates.push({ path: [...path, 'calculationMethod'], value: 'FORMULA' });
+      }
+      if (suggestedRow.vhFormula) {
+        updates.push({ path: [...path, 'vhFormula'], value: suggestedRow.vhFormula });
+      }
+      if (suggestedRow.formula) {
+        updates.push({ path: [...path, 'formula'], value: suggestedRow.formula });
+      }
+
+      if (updates.length > 0) {
+        updateValues(updates);
+        toast.success(`Fórmula sugerida aplicada a: ${row.label}`);
+      } else {
+        toast.info("No hay una fórmula específica sugerida para esta fila.");
+      }
+    } else {
+      toast.error("No se encontró una fila equivalente en la plantilla de referencia.");
+    }
+  };
+
 
   const hasChildren = row.children && row.children.length > 0;
 
@@ -366,17 +414,28 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
         </TableCell>
 
         {/* Ayuda - Hidden on very small screens */}
-        <TableCell className="px-2 py-0.5 text-center w-[80px] hidden sm:table-cell">
-          {row.helpText && (
-            <Popover>
-              <PopoverTrigger asChild>
-                 <button className="p-2 rounded-full hover:bg-primary/10 text-primary/50 hover:text-primary transition-colors">
-                    <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5" />
-                 </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-72 sm:w-80"><p className="text-sm">{row.helpText}</p></PopoverContent>
-            </Popover>
-          )}
+        <TableCell className="px-2 py-0.5 text-center w-[100px] hidden sm:table-cell">
+          <div className="flex items-center justify-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-primary hover:bg-primary/10 rounded-full transition-all"
+              onClick={applySuggestedFormula}
+              title="Aplicar fórmula sugerida (VH y Total)"
+            >
+              <Wand2 className="w-4 h-4" />
+            </Button>
+            {row.helpText && (
+              <Popover>
+                <PopoverTrigger asChild>
+                   <button className="p-2 rounded-full hover:bg-primary/10 text-primary/50 hover:text-primary transition-colors">
+                      <HelpCircle className="w-4 h-4" />
+                   </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-72 sm:w-80"><p className="text-sm">{row.helpText}</p></PopoverContent>
+              </Popover>
+            )}
+          </div>
         </TableCell>
       </TableRow>
 
@@ -628,7 +687,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                                     <TableHead className="w-[80px] px-2 py-0.5 text-center font-black uppercase tracking-widest border-r border-border/10">UM</TableHead>
                                     <TableHead className="w-[140px] px-2 py-0.5 text-right font-black uppercase tracking-widest border-r border-border/10">Valor Histórico</TableHead>
                                     <TableHead className="w-[120px] px-2 py-0.5 text-right font-black uppercase tracking-widest border-r border-border/10">Total</TableHead>
-                                    <TableHead className="w-[80px] px-2 py-0.5 text-center font-black uppercase tracking-widest hidden sm:table-cell">Ayuda</TableHead>
+                                    <TableHead className="w-[100px] px-2 py-0.5 text-center font-black uppercase tracking-widest hidden sm:table-cell">Acciones</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
