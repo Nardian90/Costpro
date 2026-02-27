@@ -116,7 +116,7 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({
       </div>
 
       <div className="bg-card dark:bg-slate-900 rounded-[2.5rem] border border-border shadow-xl overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto table-to-cards rounded-2xl">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-muted/50 border-b border-border">
@@ -131,11 +131,11 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({
             </thead>
             <tbody className="divide-y divide-border/50">
               {rows.map((row, idx) => (
-                <tr key={row.id} className="group hover:bg-primary/5 transition-colors">
-                  <td className="px-6 py-3 font-black text-muted-foreground text-[10px]">
+                <tr key={row.id} className="group hover:bg-primary/5 transition-colors h-auto sm:h-12">
+                  <td data-label="No." className="px-6 py-3 font-black text-muted-foreground text-[10px]">
                     {idx + 1}
                   </td>
-                  <td className="px-6 py-3">
+                  <td data-label="Producto" className="px-6 py-3">
                     <Input
                       value={row.product}
                       onChange={(e) => updateRow(idx, 'product', e.target.value)}
@@ -143,7 +143,7 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({
                       className="bg-transparent border-none focus-visible:ring-0 font-bold text-sm h-8"
                     />
                   </td>
-                  <td className="px-6 py-3">
+                  <td data-label="UM" className="px-6 py-3">
                     <Input
                       value={row.um}
                       onChange={(e) => updateRow(idx, 'um', e.target.value)}
@@ -151,7 +151,7 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({
                       className="bg-transparent border-none focus-visible:ring-0 text-center font-bold text-xs h-8"
                     />
                   </td>
-                  <td className="px-6 py-3">
+                  <td data-label="Cantidad" className="px-6 py-3">
                     <Input
                       type="number"
                       value={row.quantity}
@@ -159,7 +159,7 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({
                       className="bg-transparent border-none focus-visible:ring-0 text-right font-black text-sm h-8"
                     />
                   </td>
-                  <td className="px-6 py-3">
+                  <td data-label="Costo" className="px-6 py-3">
                     <div className="relative">
                         <span className="absolute left-0 top-1/2 -translate-y-1/2 text-[10px] font-black text-muted-foreground">$</span>
                         <Input
@@ -170,7 +170,7 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({
                         />
                     </div>
                   </td>
-                  <td className="px-6 py-3 bg-amber-500/5">
+                  <td data-label="Precio Venta" className="px-6 py-3 bg-amber-500/5">
                     <div className="relative">
                         <span className="absolute left-0 top-1/2 -translate-y-1/2 text-[10px] font-black text-amber-500/50">$</span>
                         <Input
@@ -182,7 +182,7 @@ export const CostSheetQuickMode: React.FC<CostSheetQuickModeProps> = ({
                         />
                     </div>
                   </td>
-                  <td className="px-6 py-3 text-center">
+                  <td data-label="Acciones" className="px-6 py-3 text-center">
                     <button
                       onClick={() => removeRow(idx)}
                       className="p-1.5 text-destructive/30 hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all"
