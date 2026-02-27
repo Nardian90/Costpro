@@ -1,9 +1,9 @@
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
 
 export async function generateLegalPdf(model: any, data: any) {
-  const doc = new jsPDF() as any;
+  const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
 
   // Header Box
@@ -16,12 +16,12 @@ export async function generateLegalPdf(model: any, data: any) {
   doc.setFontSize(10);
   doc.text('ENTIDAD:', 15, 20);
   doc.setFont('helvetica', 'normal');
-  doc.text(data.entidad_nombre || '__________________________________', 40, 20);
+  doc.text(String(data.entidad_nombre || '__________________________________'), 40, 20);
 
   doc.setFont('helvetica', 'bold');
   doc.text('CÓDIGO:', 15, 28);
   doc.setFont('helvetica', 'normal');
-  doc.text(data.entidad_codigo || '__________', 40, 28);
+  doc.text(String(data.entidad_codigo || '__________'), 40, 28);
 
   // Model ID (Top Right)
   doc.setFont('helvetica', 'bold');
@@ -50,10 +50,10 @@ export async function generateLegalPdf(model: any, data: any) {
         displayValue = JSON.stringify(value, null, 2);
       }
 
-      return [label.toUpperCase(), displayValue || ''];
+      return [label.toUpperCase(), String(displayValue || '')];
     });
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: 75,
     head: [['CONCEPTO / DATO', 'INFORMACIÓN REGISTRADA']],
     body: tableRows,
