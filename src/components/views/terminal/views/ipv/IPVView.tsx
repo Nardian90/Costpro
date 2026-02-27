@@ -52,7 +52,6 @@ export default function IPVView() {
   const [selectedReconTx, setSelectedReconTx] = useState<BankTransaction | null>(null);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isStarted, setIsStarted] = useState(true);
-  const [isFlowVisible, setIsFlowVisible] = useState(true);
 
   const transactions = useLiveQuery(() => db.bank_statements.orderBy('fecha').toArray());
   const rules = useLiveQuery(() => db.matching_rules.toArray());
@@ -359,34 +358,7 @@ export default function IPVView() {
     <TooltipProvider delayDuration={200}>
     <div className="space-y-6">
       <LoadingOverlay isVisible={isMatching} message={matchMessage} progress={matchProgress} />
-      {/* Help Section: Professional Flow */}
-      {isStarted && isFlowVisible && (
-          <Card className="p-6 bg-primary/5 border-none shadow-none rounded-3xl overflow-hidden relative group">
-              <button
-                  onClick={() => setIsFlowVisible(false)}
-                  className="absolute top-4 right-4 z-20 p-2 rounded-full hover:bg-primary/10 text-primary transition-colors" aria-label="Cerrar flujo de trabajo"
-              >
-                  <X className="w-5 h-5" />
-              </button>
-              <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-                  <Settings className="w-32 h-32" />
-              </div>
-              <div className="relative z-10 space-y-4">
-                  <div className="flex items-center gap-2 text-primary">
-                      <CheckCircle2 className="w-5 h-5" />
-                      <h2 className="font-black uppercase tracking-widest text-sm">Flujo de Trabajo Profesional</h2>
-                  </div>
-                  <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 sm:gap-6">
-                      <FlowStep number="1" title="Ingesta" desc="Carga de extractos bancarios." />
-                      <FlowStep number="2" title="Catálogo" desc="Productos, precios y stock." />
-                      <FlowStep number="3" title="Matching" desc="Ejecución del motor automático." />
-                      <FlowStep number="4" title="Análisis" desc="Revisión de desgloses y cuadre." />
-                      <FlowStep number="5" title="Reportes" desc="Generación de IPV fiscal." />
-                      <FlowStep number="6" title="Auditoría" desc="Control de errores y respaldo." />
-                  </div>
-              </div>
-          </Card>
-      )}
+
 
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 px-1">
         <div className="flex items-center gap-4">
@@ -634,17 +606,6 @@ export default function IPVView() {
   );
 }
 
-function FlowStep({ number, title, desc }: { number: string, title: string, desc: string }) {
-    return (
-        <div className="flex gap-3 items-start">
-            <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-black">{number}</span>
-            <div>
-                <p className="text-xs font-black uppercase text-primary tracking-tighter">{title}</p>
-                <p className="text-xs text-muted-foreground leading-tight font-medium">{desc}</p>
-            </div>
-        </div>
-    );
-}
 
 function StatCard({ title, value, icon, trend, subtitle, active, onClick, isCurrency = false }: { title: string, value: number, icon: React.ReactNode, trend?: string, subtitle?: string, active?: boolean, onClick?: () => void, isCurrency?: boolean }) {
   return (
