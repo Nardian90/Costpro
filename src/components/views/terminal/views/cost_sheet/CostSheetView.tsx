@@ -84,7 +84,7 @@ const CostSheetView = () => {
     } else {
       setIsEditing(true);
     }
-    if (mode === 'audit') { setActiveSection('audit'); setViewMode('expert'); } else if (mode === 'kpis') { setActiveSection('kpis'); setViewMode('expert'); } else { setViewMode(mode); }
+    if (mode === 'audit') { setActiveSection('audit'); setViewMode('expert'); } else if (mode === 'kpis') { setActiveSection('kpis'); setViewMode('expert'); } else if (mode === 'expert') { setActiveSection('expert-content'); setViewMode('expert'); } else { setViewMode(mode); }
   };
 
   React.useEffect(() => {

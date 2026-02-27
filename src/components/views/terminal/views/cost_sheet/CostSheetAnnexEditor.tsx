@@ -72,39 +72,86 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
   const calculatedAnnex = React.useMemo(() => (calculatedAnnexes || []).find((a: any) => a?.id === activeAnnexId), [calculatedAnnexes, activeAnnexId]);
 
   // Extract classifications from sections based on annex ID
-  const classificationSuggestions = React.useMemo(() => {
-    let targetSectionId = '';
-    if (activeAnnexId === 'I') targetSectionId = 's1';
-    else if (activeAnnexId === 'II') targetSectionId = 's2';
-    else if (activeAnnexId === 'III' || activeAnnexId === 'IV' || activeAnnexId === 'V') targetSectionId = 's3';
-    else {
-        const roman = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
-        const num = roman.indexOf(activeAnnexId) + 1;
-        if (num > 0) targetSectionId = `s${num}`;
-    }
-
-    const section = sections.find(s => s.id === targetSectionId || s.id === targetSectionId.replace('s', ''));
-    if (!section) return [];
-
-    const getLeafRows = (rows: any[]) => {
+        const classificationSuggestions = React.useMemo(() => {
+    const getSuggestions = () => {
         const suggestions: { id: string, label: string }[] = [];
+
+        // Strategy 1: Find rows in all sections that explicitly reference this annex via baseRef
+        const traverseByBaseRef = (rows: any[], parentNumbering?: string) => {
+            rows.forEach((r, idx) => {
+                const numbering = r.id || (parentNumbering
+                    ? `${parentNumbering}.${idx + 1}`
+                    : `${idx + 1}`);
+
+                if (r.baseRef === activeAnnexId || r.baseRef === `Anexo${activeAnnexId}`) {
+                    suggestions.push({ id: numbering, label: r.label });
+                    // Also suggest a sub-level if it feeds from an annex
+                    suggestions.push({ id: `${numbering}.1`, label: `${r.label} (Detalle)` });
+                }
+
+                if (r.children) traverseByBaseRef(r.children, numbering);
+            });
+        };
+
+        sections.forEach(s => traverseByBaseRef(s.rows || []));
+
+        if (suggestions.length > 0) return suggestions;
+
+        // Strategy 2: Fallback to hardcoded section mapping if no baseRef found
+        let targetSectionId = '';
+        if (activeAnnexId === 'I') targetSectionId = '1';
+        else if (activeAnnexId === 'II') targetSectionId = '2';
+        else if (activeAnnexId === 'III') targetSectionId = '3.1';
+        else if (activeAnnexId === 'IV') targetSectionId = '3';
+        else if (activeAnnexId === 'V') targetSectionId = '3.7';
+        else {
+            const roman = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+            const num = roman.indexOf(activeAnnexId) + 1;
+            if (num > 0) targetSectionId = `s${num}`;
+        }
+
+        const findSectionRows = (targetId: string) => {
+            const section = sections.find(s => s.id === targetId || s.id === (targetId.startsWith('s') ? targetId : 's' + targetId));
+            if (section) return section.rows || [];
+
+            // Look for specific row ID
+            for (const s of sections) {
+                const search = (rows: any[]): any[] | null => {
+                    for (const r of rows) {
+                        if (r.id === targetId) return r.children || [r];
+                        if (r.children) {
+                            const res = search(r.children);
+                            if (res) return res;
+                        }
+                    }
+                    return null;
+                };
+                const res = search(s.rows || []);
+                if (res) return res;
+            }
+            return [];
+        };
+
+        const sectionRows = findSectionRows(targetSectionId);
         const traverse = (rows: any[], parentNumbering?: string) => {
             rows.forEach((r, idx) => {
                 const numbering = r.id || (parentNumbering
                     ? `${parentNumbering}.${idx + 1}`
-                    : `${targetSectionId.replace('s','')}.${idx + 1}`);
+                    : (targetSectionId.includes('.') ? targetSectionId : `${targetSectionId.replace('s','')}.${idx + 1}`));
 
                 suggestions.push({ id: numbering, label: r.label });
-                if (r.children && r.children.length > 0) {
-                    traverse(r.children, numbering);
+                // If it's a leaf row in the section mapping, suggest a sub-level for the annex
+                if (!r.children || r.children.length === 0) {
+                     suggestions.push({ id: `${numbering}.1`, label: `${r.label} (Detalle)` });
                 }
+                if (r.children) traverse(r.children, numbering);
             });
         };
-        traverse(rows || []);
+        traverse(sectionRows);
         return suggestions;
     };
 
-    return getLeafRows(section.rows || []);
+    return getSuggestions();
   }, [sections, activeAnnexId]);
 
   if (!annex) {
