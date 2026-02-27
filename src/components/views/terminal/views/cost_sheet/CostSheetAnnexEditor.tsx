@@ -243,7 +243,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
            "table-to-cards rounded-2xl shadow-2xl border border-white/5 bg-background/30",
            layoutMode === 'table' && "force-table"
          )}>
-            <Table>
+            <Table className={cn(layoutMode === "grid" && "sm:data-table")}>
                 <TableHeader className={cn(
                   "bg-slate-100 dark:bg-slate-800/50 text-slate-900 dark:text-white font-black uppercase text-xs tracking-widest border-b border-slate-200 dark:border-slate-700",
                   layoutMode === 'grid' ? "hidden md:table-header-group" : "table-header-group"
@@ -271,7 +271,7 @@ const CostSheetAnnexEditor: React.FC<CostSheetAnnexEditorProps> = React.memo(({
                     {displayData.map((row: any, rowIndex: number) => {
                         const isZero = (colKey: string) => Number(row[colKey]) === 0;
                         return (
-                        <TableRow key={rowIndex} className="h-8 text-xs border-b border-border/30 hover:bg-primary/5 transition-colors group">
+                        <TableRow key={rowIndex} className="h-auto sm:h-8 text-xs border-b border-border/30 hover:bg-primary/5 transition-colors group">
                             {annex.columns.map((col: CostSheetColumn) => {
                                 const isMain = col.key === 'description' || col.label?.toLowerCase().includes('descripción') || col.label?.toLowerCase().includes('puesto');
                                 const widthClass = col.key === 'no' ? 'w-12' :

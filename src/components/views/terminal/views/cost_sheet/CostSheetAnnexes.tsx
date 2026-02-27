@@ -51,7 +51,7 @@ const CostSheetAnnexes: React.FC<CostSheetAnnexesProps> = ({ annexes, forceTable
                   {annex.data.length > 0 ? annex.data.map((row, rowIndex) => {
                     const isZero = (val: any) => Number(val) === 0;
                     return (
-                        <tr key={rowIndex} className="h-8 text-xs hover:bg-muted dark:hover:bg-muted/30 transition-colors">
+                        <tr key={rowIndex} className="h-auto sm:h-8 text-xs hover:bg-muted dark:hover:bg-muted/30 transition-colors">
                         {annex.columns.map((col: CostSheetColumn) => {
                             const isMain = col.key === 'description' || col.label?.toLowerCase().includes('descripción') || col.label?.toLowerCase().includes('puesto');
                             const widthClass = col.key === 'no' ? 'w-12' :
@@ -59,7 +59,7 @@ const CostSheetAnnexes: React.FC<CostSheetAnnexesProps> = ({ annexes, forceTable
                                             (col.key === 'total' || col.key === 'amount' ? 'w-32' :
                                             (!isMain ? 'w-24' : '')));
                             return (
-                            <td key={`${rowIndex}-${col.key}`} className={cn(
+                            <td key={`${rowIndex}-${col.key}`} data-label={col.label || col.title || col.key} className={cn(
                                 "py-0.5 px-2 font-mono text-xs text-foreground/80 text-foreground/70 whitespace-nowrap",
                                 widthClass
                             )}>
