@@ -18,6 +18,29 @@ interface LegalConsultantProps {
 export default function LegalConsultant({ resolutions, loading, onSelectModel }: LegalConsultantProps) {
   const [activeResId, setActiveResId] = useState<string | null>(null);
 
+  const formatResolutionText = (text: string) => {
+    if (!text) return null;
+
+    // Split text into lines/paragraphs and handle the uppercase keywords
+    const paragraphs = text.split('\n');
+
+    return paragraphs.map((p, idx) => {
+      // Find patterns like "POR CUANTO:", "PRIMERO:", "RESOLUCION:" (all caps ending in :)
+      const parts = p.split(/([A-Z\s]+:)/g);
+
+      return (
+        <p key={idx} className="mb-4 text-justify text-black dark:text-white font-medium leading-relaxed">
+          {parts.map((part, pIdx) => {
+            if (/^[A-Z\s]+:$/.test(part)) {
+              return <strong key={pIdx} className="font-black text-foreground">{part}</strong>;
+            }
+            return part;
+          })}
+        </p>
+      );
+    });
+  };
+
   if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -88,7 +111,7 @@ export default function LegalConsultant({ resolutions, loading, onSelectModel }:
               exit={{ opacity: 0, x: -20 }}
               className="space-y-8"
             >
-              <div className="bg-background border-2 border-primary/10 rounded-3xl overflow-hidden shadow-sm">
+              <div className="bg-white dark:bg-zinc-900 border-2 border-primary/10 rounded-3xl overflow-hidden shadow-sm">
                 <div className="p-8 border-b border-primary/5 bg-primary/5">
                   <div className="flex items-center gap-2 text-primary text-[10px] font-black uppercase tracking-[0.2em] mb-2">
                     <BookOpen className="w-4 h-4" />
@@ -98,8 +121,8 @@ export default function LegalConsultant({ resolutions, loading, onSelectModel }:
                     {resolutions.find(r => r.id === activeResId)?.title}
                   </h2>
                 </div>
-                <div className="p-8 max-h-[400px] overflow-y-auto text-sm leading-relaxed text-muted-foreground font-medium whitespace-pre-wrap no-scrollbar">
-                  {resolutions.find(r => r.id === activeResId)?.full_text}
+                <div className="p-8 max-h-[500px] overflow-y-auto text-sm no-scrollbar">
+                  {formatResolutionText(resolutions.find(r => r.id === activeResId)?.full_text)}
                 </div>
               </div>
 
