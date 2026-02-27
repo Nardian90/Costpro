@@ -1,10 +1,10 @@
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import { AuditLog } from '@/types';
 import { format } from 'date-fns';
 
 export async function exportAuditToPdf(logs: AuditLog[]) {
-  const doc = new jsPDF() as any;
+  const doc = new jsPDF();
 
   // Header
   doc.setFontSize(20);
@@ -24,7 +24,7 @@ export async function exportAuditToPdf(logs: AuditLog[]) {
     log.store_name || 'Global'
   ]);
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: 45,
     head: [['Fecha', 'Usuario', 'Acción', 'Módulo', 'Sucursal']],
     body: tableData,
