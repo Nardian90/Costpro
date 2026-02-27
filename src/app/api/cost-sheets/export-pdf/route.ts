@@ -361,10 +361,22 @@ export async function POST(req: NextRequest) {
                 return val;
             }));
 
+            const totalKey = allKeys.find(k => ["importe", "total", "amount", "value"].includes(k.toLowerCase())) || headers[headers.length - 1];
+            const totalSum = annexRows.reduce((acc: number, r: any) => {
+                const val = r[totalKey] || 0;
+                const num = typeof val === 'number' ? val : parseFloat(String(val).replace(/[^0-9.-]+/g,""));
+                return acc + (isNaN(num) ? 0 : num);
+            }, 0);
+
             autoTable(doc, {
                 startY: currentY,
                 head: [headers.map(h => translate(h).toUpperCase())],
                 body: body,
+                foot: [[{
+                    content: "TOTAL ANEXO " + annex.id + ": " + safeLocale(totalSum),
+                    colSpan: headers.length,
+                    styles: { halign: 'right', fontStyle: 'bold', fontSize: 8, textColor: primaryColor, fillColor: isPro ? [240, 240, 240] : [245, 245, 245] }
+                }]],
                 theme: isPro ? 'plain' : 'grid',
                 headStyles: {
                     fillColor: isPro ? [255, 255, 255] : [255, 255, 255],
