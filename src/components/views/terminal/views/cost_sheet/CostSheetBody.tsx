@@ -71,9 +71,14 @@ const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValue
                     )}
                 </td>
 
+                {/* UM */}
+                <td data-label="UM" className="py-0.5 px-2 text-center font-mono text-muted-foreground text-[10px] w-[80px] whitespace-nowrap italic">
+                    {row.um || row.unit || '-'}
+                </td>
+
                 {/* Valor Histórico */}
                 <td data-label="Valor Histórico" className="py-0.5 px-2 text-right font-mono text-muted-foreground text-xs w-[140px] whitespace-nowrap">
-                    {(calc.calculatedVH !== undefined && calc.calculatedVH !== null) ? calc.calculatedVH.toLocaleString('es-ES', { minimumFractionDigits: 2 }) : (calc.valorHistorico > 0 ? calc.valorHistorico.toLocaleString('es-ES', { minimumFractionDigits: 2 }) : '--')}
+                    {(calc.calculatedVH ?? calc.valorHistorico ?? 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </td>
 
                 {/* Total */}
@@ -96,6 +101,7 @@ const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValue
           <tr>
             <th className="py-1 px-2 text-center font-black uppercase tracking-widest text-xs w-[60px] whitespace-nowrap">No.</th>
             <th className="py-1 px-2 text-left font-black uppercase tracking-widest text-xs">Concepto</th>
+            <th className="py-1 px-2 text-center font-black uppercase tracking-widest text-xs w-[80px] whitespace-nowrap">UM</th>
             <th className="py-1 px-2 text-right font-black uppercase tracking-widest text-xs w-[140px] whitespace-nowrap">Valor Histórico</th>
             <th className="py-1 px-2 text-right font-black uppercase tracking-widest text-xs w-[120px] whitespace-nowrap">Total</th>
           </tr>
@@ -104,7 +110,7 @@ const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValue
           {sections.map((section) => (
             <React.Fragment key={section.id}>
               <tr className="bg-primary/5 border-l-2 border-primary/20">
-                  <td colSpan={4} className="px-4 py-2 text-xs font-black text-primary uppercase tracking-[0.2em] border-y border-border">
+                  <td colSpan={5} className="px-4 py-2 text-xs font-black text-primary uppercase tracking-[0.2em] border-y border-border">
                       {section.label}
                   </td>
               </tr>
