@@ -31,68 +31,7 @@ import { exportFullBackup } from '@/lib/ipv/backup';
 import { db } from '@/lib/dexie';
 import { motion } from 'framer-motion';
 
-const WorkflowBanner = () => (
-    <div className="w-full bg-emerald-950/30 border border-emerald-500/20 rounded-3xl overflow-hidden hidden xl:block mb-8">
-        <div className="flex items-center justify-between px-8 py-5">
-            <div className="flex items-center gap-4 mr-12 shrink-0">
-                <div className="p-2 bg-emerald-500/20 rounded-xl">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                </div>
-                <span className="text-xs font-black uppercase tracking-[0.2em] text-emerald-500">Flujo de Trabajo Profesional</span>
-            </div>
-            <div className="flex-1 flex justify-between gap-6 overflow-x-auto no-scrollbar">
-                {[
-                    { n: 1, t: 'Ingesta', d: 'Carga de extractos bancarios.' },
-                    { n: 2, t: 'Catálogo', d: 'Gestión de productos y precios.' },
-                    { n: 3, t: 'Matching', d: 'Motor de conciliación automática.' },
-                    { n: 4, t: 'Análisis', d: 'Revisión de desgloses detallados.' },
-                    { n: 5, t: 'Reportes', d: 'Generación de IPV fiscal y salida.' },
-                    { n: 6, t: 'Auditoría', d: 'Control de errores y respaldo local.' },
-                ].map((s) => (
-                    <div key={s.n} className="flex items-center gap-3 shrink-0">
-                        <span className="w-7 h-7 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center text-[10px] font-black border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.1)]">{s.n}</span>
-                        <div className="flex flex-col">
-                            <p className="text-[10px] font-black uppercase text-white/90 leading-tight tracking-tight">{s.t}</p>
-                            <p className="text-[9px] text-white/40 font-medium leading-tight max-w-[120px] truncate">{s.d}</p>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        </div>
-    </div>
-);
 
-const StepCard = ({ title, description, icon, badge, onClick, id, warning }: any) => (
-    <Card
-        onClick={() => onClick(id)}
-        className="group relative p-8 flex flex-col items-center text-center gap-5 border-2 border-border/50 bg-card/30 backdrop-blur-sm hover:border-primary/50 hover:bg-primary/5 transition-all cursor-pointer overflow-hidden rounded-[2.5rem]"
-    >
-        <div className="p-5 rounded-3xl bg-muted/20 text-primary group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
-            {React.cloneElement(icon, { className: 'w-7 h-7' })}
-        </div>
-        <div className="space-y-2">
-            <h3 className="text-sm font-black uppercase tracking-tight">{title}</h3>
-            <p className="text-[11px] text-muted-foreground font-medium leading-relaxed px-2">
-                {description}
-            </p>
-        </div>
-        <Badge variant="secondary" className="mt-auto font-black text-[10px] uppercase tracking-widest opacity-50 group-hover:opacity-100 transition-opacity bg-muted/50 py-1.5 px-4 rounded-full">
-            {badge}
-        </Badge>
-        {warning && (
-            <div className="absolute top-4 right-4">
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <div className="p-1.5 bg-amber-500/10 rounded-full border border-amber-500/20">
-                            <AlertCircle className="w-4 h-4 text-amber-500 animate-pulse" />
-                        </div>
-                    </TooltipTrigger>
-                    <TooltipContent className="bg-popover border-2 font-bold text-xs">{warning}</TooltipContent>
-                </Tooltip>
-            </div>
-        )}
-    </Card>
-);
 
 const ActionCard = ({ title, description, icon, onClick, id, variant = 'dark' }: any) => (
     <Card
@@ -134,51 +73,6 @@ export function IPVControlPanel({ onSelect, onExportBackup, onImportBackup, hasT
         }
     };
 
-    const steps = [
-        {
-            id: 'ingestion',
-            title: 'Extracto',
-            description: 'Importación de archivos y carga de transferencias bancarias.',
-            icon: <FileUp />,
-            badge: 'Paso 1'
-        },
-        {
-            id: 'catalog',
-            title: 'Catálogo',
-            description: 'Gestión de productos, precios y niveles de stock inicial.',
-            icon: <Package />,
-            badge: 'Paso 2'
-        },
-        {
-            id: 'transactions',
-            title: 'Transacciones',
-            description: 'Matching automático y conciliación manual de cobros.',
-            icon: <Network />,
-            badge: 'Paso 3',
-            warning: !hasTransactions ? 'Cargue extractos primero' : (!hasProducts ? 'Cargue catálogo primero' : undefined)
-        },
-        {
-            id: 'breakdown',
-            title: 'Desglose',
-            description: 'Vista detallada de productos por cada transacción bancaria.',
-            icon: <FileText />,
-            badge: 'Paso 4'
-        },
-        {
-            id: 'pivot',
-            title: 'Consolidado',
-            description: 'Resumen agrupado por fecha y tipo de operación financiera.',
-            icon: <LayoutGrid />,
-            badge: 'Paso 5'
-        },
-        {
-            id: 'reports',
-            title: 'Reportes',
-            description: 'Generación y descarga de documentos fiscales oficiales.',
-            icon: <ClipboardList />,
-            badge: 'Paso 6'
-        }
-    ];
 
     const mainActions = [
         {
@@ -188,13 +82,7 @@ export function IPVControlPanel({ onSelect, onExportBackup, onImportBackup, hasT
             icon: <TrendingUp />,
             variant: 'primary'
         },
-        {
-            id: 'help',
-            title: 'Guía de Flujo',
-            description: 'Protocolo estándar para una conciliación 100% precisa.',
-            icon: <ShieldCheck />,
-            variant: 'primary'
-        },
+
         {
             id: 'sim',
             title: 'Simulación',
@@ -220,7 +108,6 @@ export function IPVControlPanel({ onSelect, onExportBackup, onImportBackup, hasT
 
     return (
         <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <WorkflowBanner />
 
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
                 <div className="space-y-2">
@@ -261,21 +148,7 @@ export function IPVControlPanel({ onSelect, onExportBackup, onImportBackup, hasT
                 </div>
             </div>
 
-            <div className="space-y-6">
-                <div className="flex items-center gap-3">
-                    <ArrowRight className="w-5 h-5 text-primary" />
-                    <h3 className="text-sm font-black uppercase tracking-[0.2em] text-muted-foreground">Centro de Control IPV</h3>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-5">
-                    {steps.map(step => (
-                        <StepCard
-                            key={step.id}
-                            {...step}
-                            onClick={onSelect}
-                        />
-                    ))}
-                </div>
-            </div>
+
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
                 {mainActions.map(action => (
