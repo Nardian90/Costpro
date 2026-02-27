@@ -85,7 +85,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
       return null;
     };
 
-    const suggestedRow = findInSections(reinicioTemplate.sections);
+    const suggestedRow = findInSections((reinicioTemplate as any).sections);
     if (suggestedRow) {
       const updates: any[] = [];
       if (suggestedRow.totalFormula) {
