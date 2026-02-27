@@ -98,9 +98,9 @@ export function ChatBot() {
   const isConfigured = !!(user?.aiApiKey && user?.aiApiKey.length > 5);
 
   return (
-    <div className={cn("fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[100] flex flex-col items-end", currentView === "cost-sheets" && !isOpen && "hidden lg:flex")}>
+    <div className={cn("fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[100] flex flex-col items-end", currentView === "cost-sheets" && !isOpen && "hidden")}>
       <AnimatePresence>
-        {!isOpen && (
+        {!isOpen && currentView !== "cost-sheets" && (
           <motion.button
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
