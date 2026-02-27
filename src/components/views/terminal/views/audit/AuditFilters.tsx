@@ -60,7 +60,7 @@ export default function AuditFilters({
         <button
           onClick={() => setIsExpanded(!isExpanded)}
           className={cn(
-            "flex items-center justify-center gap-2 px-6 py-3 rounded-xl border font-black uppercase text-xs tracking-widest transition-all",
+            "flex items-center justify-center gap-2 px-6 h-11 rounded-xl border font-black uppercase text-xs tracking-widest transition-all",
             isExpanded ? "bg-primary text-primary-foreground border-primary" : "bg-card text-foreground border-border hover:bg-muted"
           )}
         >
