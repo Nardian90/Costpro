@@ -222,7 +222,7 @@ export default function TerminalShell() { // Renamed from TerminalView
     return renderView(currentView);
   };
 
-  const isIntegroView = currentView === 'help' || currentView === 'cost-sheets';
+  const isIntegroView = currentView === 'help';
 
   return (
     <div className="min-h-screen flex bg-background text-foreground max-w-full overflow-x-hidden">
