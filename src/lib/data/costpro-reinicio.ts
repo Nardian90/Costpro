@@ -1,6 +1,6 @@
-import { FichaJSON } from '../cost-engine/types';
 
-const template: FichaJSON = {
+
+const template: any = {
   "header": {
     "code": "=GET_ANEXO_FILA_DATO(\"I\", 1, \"code\")",
     "name": "Plantilla de Reinicio",
