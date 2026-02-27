@@ -2,4 +2,86 @@
 > nextjs_tailwind_shadcn_ts@5.7.25 dev
 > next dev -p 3000
 
-sh: 1: next: not found
+▲ Next.js 16.1.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+
+✓ Starting...
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+✓ Ready in 1137ms
+○ Compiling / ...
+⨯ ./src/components/views/terminal/views/ipv/RelacionBancariaView.tsx:233:97
+Parsing ecmascript source code failed
+[0m [90m 231 |[39m           [33m<[39m[33mdiv[39m className[33m=[39m[32m"flex items-center gap-2 px-2"[39m[33m>[39m
+ [90m 232 |[39m             [33m<[39m[33mdiv[39m className[33m=[39m[32m"w-1 h-6 bg-blue-500 rounded-full"[39m [33m/[39m[33m>[39m
+[31m[1m>[22m[39m[90m 233 |[39m             [33m<[39m[33mh3[39m className[33m=[39m[32m"text-lg font-black uppercase tracking-tighter"[39m[33m>[39m[33mCódigo[39m [33mQR[39m ([33mComisión[39m [33m>[39m [35m0[39m)[33m<[39m[33m/[39m[33mh3[39m[33m>[39m
+ [90m     |[39m                                                                                                 [31m[1m^[22m[39m
+ [90m 234 |[39m             [33m<[39m[33mBadge[39m className[33m=[39m[32m"bg-blue-500/10 text-blue-600 border-blue-500/20"[39m[33m>[39m{qrOperations[33m.[39mlength}[33m<[39m[33m/[39m[33mBadge[39m[33m>[39m
+ [90m 235 |[39m           [33m<[39m[33m/[39m[33mdiv[39m[33m>[39m
+ [90m 236 |[39m           [33m<[39m[33mdiv[39m className[33m=[39m[32m"border rounded-2xl overflow-hidden bg-background"[39m[33m>[39m[0m
+
+Unexpected token. Did you mean `{'>'}` or `&gt;`?
+
+Import traces:
+  Client Component Browser:
+    ./src/components/views/terminal/views/ipv/RelacionBancariaView.tsx [Client Component Browser]
+    ./src/components/views/terminal/views/ipv/IPVView.tsx [Client Component Browser]
+    ./src/components/views/TerminalShell.tsx [Client Component Browser]
+    ./src/components/views/TerminalShell.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/views/terminal/views/ipv/RelacionBancariaView.tsx [Client Component SSR]
+    ./src/components/views/terminal/views/ipv/IPVView.tsx [Client Component SSR]
+    ./src/components/views/TerminalShell.tsx [Client Component SSR]
+    ./src/components/views/TerminalShell.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+
+ GET / 500 in 27.5s (compile: 27.3s, render: 193ms)
+⨯ ./src/components/views/terminal/views/ipv/RelacionBancariaView.tsx:233:97
+Parsing ecmascript source code failed
+[0m [90m 231 |[39m           [33m<[39m[33mdiv[39m className[33m=[39m[32m"flex items-center gap-2 px-2"[39m[33m>[39m
+ [90m 232 |[39m             [33m<[39m[33mdiv[39m className[33m=[39m[32m"w-1 h-6 bg-blue-500 rounded-full"[39m [33m/[39m[33m>[39m
+[31m[1m>[22m[39m[90m 233 |[39m             [33m<[39m[33mh3[39m className[33m=[39m[32m"text-lg font-black uppercase tracking-tighter"[39m[33m>[39m[33mCódigo[39m [33mQR[39m ([33mComisión[39m [33m>[39m [35m0[39m)[33m<[39m[33m/[39m[33mh3[39m[33m>[39m
+ [90m     |[39m                                                                                                 [31m[1m^[22m[39m
+ [90m 234 |[39m             [33m<[39m[33mBadge[39m className[33m=[39m[32m"bg-blue-500/10 text-blue-600 border-blue-500/20"[39m[33m>[39m{qrOperations[33m.[39mlength}[33m<[39m[33m/[39m[33mBadge[39m[33m>[39m
+ [90m 235 |[39m           [33m<[39m[33m/[39m[33mdiv[39m[33m>[39m
+ [90m 236 |[39m           [33m<[39m[33mdiv[39m className[33m=[39m[32m"border rounded-2xl overflow-hidden bg-background"[39m[33m>[39m[0m
+
+Unexpected token. Did you mean `{'>'}` or `&gt;`?
+
+Import traces:
+  Client Component Browser:
+    ./src/components/views/terminal/views/ipv/RelacionBancariaView.tsx [Client Component Browser]
+    ./src/components/views/terminal/views/ipv/IPVView.tsx [Client Component Browser]
+    ./src/components/views/TerminalShell.tsx [Client Component Browser]
+    ./src/components/views/TerminalShell.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/views/terminal/views/ipv/RelacionBancariaView.tsx [Client Component SSR]
+    ./src/components/views/terminal/views/ipv/IPVView.tsx [Client Component SSR]
+    ./src/components/views/TerminalShell.tsx [Client Component SSR]
+    ./src/components/views/TerminalShell.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+
+ GET / 500 in 50ms (compile: 33ms, render: 18ms)
+✓ Compiled in 279ms
+⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment.
+ GET / 200 in 1103ms (compile: 426ms, render: 677ms)
+ GET /login 200 in 2.2s (compile: 2.2s, render: 36ms)
+ GET / 200 in 116ms (compile: 37ms, render: 80ms)
+ GET /login 200 in 73ms (compile: 41ms, render: 32ms)
+⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment.
+ GET / 200 in 400ms (compile: 109ms, render: 292ms)
+ GET /login 200 in 67ms (compile: 27ms, render: 40ms)
+ GET / 200 in 123ms (compile: 37ms, render: 86ms)
+ GET /login 200 in 71ms (compile: 34ms, render: 36ms)
