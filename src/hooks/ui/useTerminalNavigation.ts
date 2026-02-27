@@ -4,7 +4,7 @@ import {
   BarChart3, ShoppingCart, Package, Warehouse, Receipt,
   ClipboardList, FileText, History, Shield, DollarSign,
   Users, Building, Settings, HelpCircle, ArrowLeftRight, GraduationCap,
-  Newspaper, Rss, TrendingUp, ShieldCheck, RefreshCcw
+  Newspaper, Rss, TrendingUp, ShieldCheck, RefreshCcw, Scale
 } from 'lucide-react';
 import { type UserRole } from '@/types';
 import { UserContract } from '@/contracts/user';
@@ -15,7 +15,7 @@ export interface NavigationItem {
   icon: any;
   label: string;
   roles: UserRole[];
-  category: 'OPERACIONES' | 'INVENTARIO' | 'GESTIÓN' | 'SOPORTE';
+  category: 'OPERACIONES' | 'INVENTARIO' | 'GESTIÓN' | 'LEGAL';
 }
 
 export function useTerminalNavigation(user: UserContract | null, sidebarSearch: string) {
@@ -53,9 +53,10 @@ export function useTerminalNavigation(user: UserContract | null, sidebarSearch: 
       { id: 'rss_management', icon: Rss, label: 'Feed RSS', roles: ['admin'], category: 'GESTIÓN' },
       { id: 'settings', icon: Settings, label: 'Configuración', roles: ['admin', 'manager', 'encargado'], category: 'GESTIÓN' },
 
-      { id: 'support_doc', icon: FileText, label: 'Manual', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'SOPORTE' },
-      { id: 'help', icon: HelpCircle, label: 'Ayuda', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'SOPORTE' },
-      { id: 'academy', icon: GraduationCap, label: 'Academia', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'SOPORTE' },
+      { id: 'legal', icon: Scale, label: 'Legal', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'LEGAL' },
+      { id: 'support_doc', icon: FileText, label: 'Manual', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'LEGAL' },
+      { id: 'help', icon: HelpCircle, label: 'Ayuda', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'LEGAL' },
+      { id: 'academy', icon: GraduationCap, label: 'Academia', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'LEGAL' },
     ];
 
     const filteredByRole = all.filter(i => i.roles.some(r => hasRole(user, r)));

@@ -93,10 +93,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
         ]
       },
       {
-        id: 'soporte',
-        label: 'SOPORTE Y AYUDA',
+        id: 'legal_module',
+        label: 'NORMATIVAS / LEGAL',
         isDirect: true,
-        items: ['help', 'academy']
+        items: ['legal', 'support_doc', 'help', 'academy']
       }
     ];
     return structure;
