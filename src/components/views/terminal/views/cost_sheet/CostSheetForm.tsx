@@ -162,7 +162,7 @@ const CostSheetForm: React.FC<CostSheetFormProps> = ({
 
          <div className="w-full">
            <div className="overflow-x-auto table-to-cards rounded-2xl shadow-2xl border border-white/5 bg-background/30">
-              <Table>
+              <Table className="sm:data-table">
                   <TableHeader className="bg-muted/50 hidden sm:table-header-group">
                       <TableRow className="border-b border-border/50">
                           {annex.columns.map((col: any) => (

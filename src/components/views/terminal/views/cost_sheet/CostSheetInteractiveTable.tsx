@@ -138,17 +138,17 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
   return (
     <>
       <TableRow className={cn(
-        "h-8 text-xs",
+        "h-auto sm:h-8 text-xs",
         "border-t border-border/30 hover:bg-primary/5 transition-colors group",
         isResultRow && "bg-primary/5 font-bold"
       )}>
         {/* No. */}
-        <TableCell className="w-[60px] px-2 py-0.5 text-center text-xs font-black text-muted-foreground/60 tabular-nums border-r border-border/10">
+        <TableCell data-label="No." className="w-[60px] px-2 py-0.5 text-center text-xs font-black text-muted-foreground/60 tabular-nums border-r border-border/10">
             {numbering}
         </TableCell>
 
         {/* Concepto */}
-        <TableCell style={{ paddingLeft: `${level * 16 + 8}px` }} className="px-2 py-0.5 font-medium text-foreground border-r border-border/10">
+        <TableCell data-label="Concepto" style={{ paddingLeft: `${level * 16 + 8}px` }} className="px-2 py-0.5 font-medium text-foreground border-r border-border/10">
           <div className="flex items-center gap-1.5 min-w-0 group/row">
             {hasChildren && (
               <button onClick={handleToggle} className="p-1 rounded-full hover:bg-primary/10 shrink-0">
@@ -227,12 +227,12 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
         </TableCell>
 
         {/* UM */}
-        <TableCell className="px-2 py-0.5 text-center w-[80px] border-r border-border/10 italic text-muted-foreground/80 font-mono text-[10px]">
+        <TableCell data-label="UM" className="px-2 py-0.5 text-center w-[80px] border-r border-border/10 italic text-muted-foreground/80 font-mono text-[10px]">
             {row.um || row.unit || '-'}
         </TableCell>
 
         {/* Valor Histórico / % */}
-        <TableCell className={cn("px-2 py-0.5 text-right w-[140px] border-r border-border/10", !hasChildren ? "cursor-pointer" : "cursor-default")} onClick={() => !hasChildren && setIsEditingVH(true)}>
+        <TableCell data-label="Valor Histórico" className={cn("px-2 py-0.5 text-right w-[140px] border-r border-border/10", !hasChildren ? "cursor-pointer" : "cursor-default")} onClick={() => !hasChildren && setIsEditingVH(true)}>
             <div className="relative">
                 {isEditingVH ? (
                     <FormulaEditor
@@ -622,7 +622,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                                 !isFirstInGroup && "hidden",
                                 (isStickyHeaderSection && isFirstInGroup) && "sticky top-0 z-20"
                             )}>
-                                <TableRow className="hover:bg-transparent border-none h-8 text-xs">
+                                <TableRow className="hover:bg-transparent border-none h-auto sm:h-8 text-xs">
                                     <TableHead className="w-[60px] px-2 py-0.5 text-center font-black uppercase tracking-widest border-r border-border/10">No.</TableHead>
                                     <TableHead className="px-2 py-0.5 text-left font-black uppercase tracking-widest border-r border-border/10">Concepto</TableHead>
                                     <TableHead className="w-[80px] px-2 py-0.5 text-center font-black uppercase tracking-widest border-r border-border/10">UM</TableHead>

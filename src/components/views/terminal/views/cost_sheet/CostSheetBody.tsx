@@ -40,7 +40,7 @@ const CostSheetBody: React.FC<CostSheetBodyProps> = ({ sections, calculatedValue
       return (
         <React.Fragment key={row.id}>
             <tr className={cn(
-                "h-8 text-xs",
+                "h-auto sm:h-8 text-xs",
                 "border-b border-border/50 hover:bg-muted/50/50 hover:bg-primary/10 transition-colors",
                 hasChildren && "bg-muted/30 bg-background/30"
             )}>
