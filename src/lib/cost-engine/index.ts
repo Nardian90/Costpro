@@ -308,7 +308,7 @@ export function calculateFicha(
     const classMap = new Map<string, Decimal>();
     anexo.rows.forEach((row) => {
       const current = classMap.get(row.classification) || new Decimal(0);
-      classMap.set(row.classification, current.plus(new Decimal(row.importe || 0)));
+      classMap.set(row.classification, current.plus(new Decimal(row.importe || 0)).toDecimalPlaces(decimals));
     });
     annexSumMap.set(anexo.id, classMap);
   });
