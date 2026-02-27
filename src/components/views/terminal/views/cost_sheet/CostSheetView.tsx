@@ -38,6 +38,8 @@ import { toast } from 'sonner';
 import { useAuthStore } from '@/store';
 import { exportToPDF, exportToCSV } from '@/services/export-service';
 import { useIsMobile } from '@/hooks/ui/useMobile';
+import { SpeedDial, SpeedDialAction } from "@/components/ui/SpeedDial";
+import { Bot } from "lucide-react";
 
 const CostSheetView = () => {
   const isMobile = useIsMobile();
@@ -443,6 +445,32 @@ const CostSheetView = () => {
     }
   }, [setIsExportModalOpen, handleSetActiveSection, setViewMode, setIsActionsPanelOpen, setCurrentView, setIsChatBotOpen, setIsCalculatorOpen]);
 
+  const speedDialActions: SpeedDialAction[] = [
+    {
+      id: "ai-chat",
+      label: "Chat con Darian AI",
+      icon: Bot,
+      onClick: () => setIsChatBotOpen(true),
+      category: "Acción",
+      variant: "primary"
+    },
+    {
+      id: "export-pdf",
+      label: "Exportar a PDF",
+      icon: Download,
+      onClick: () => setIsExportModalOpen(true),
+      category: "Acción",
+      variant: "success"
+    },
+    {
+      id: "calculator",
+      label: "Calculadora",
+      icon: Calculator,
+      onClick: () => setIsCalculatorOpen(true),
+      category: "Acción"
+    }
+  ];
+
   if (!data || !data.header || !data.annexes || !data.sections) {
     return (
       <div className="w-full max-w-none px-2 pb-32 pt-0">
@@ -763,6 +791,7 @@ const CostSheetView = () => {
         onTabChange={handleSetActiveSection}
         onAction={handleBottomAction}
       />
+      <SpeedDial actions={speedDialActions} />
     </div>
   );
 };

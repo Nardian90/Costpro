@@ -52,9 +52,10 @@ export const SpeedDial: React.FC<SpeedDialProps> = ({ actions, className }) => {
                             setIsOpen(false);
                           }}
                           className={cn(
-                            "flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border-2 transition-transform active:scale-95",
-                            action.variant === 'destructive' ? "bg-destructive text-white border-destructive" :
-                            action.variant === 'success' ? "bg-green-600 text-white border-green-600" :
+                            "flex items-center gap-3 px-4 py-3 rounded-2xl transition-all active:scale-95 neu-raised-sm hover:neu-raised-hover border-2",
+                            action.variant === 'destructive' ? "bg-destructive/10 text-danger border-danger/20" :
+                            action.variant === 'success' ? "bg-primary/10 text-primary border-primary/20" :
+                            action.variant === 'primary' ? "bg-primary text-primary-foreground border-primary" :
                             "bg-card text-foreground border-border"
                           )}
                         >
@@ -73,8 +74,8 @@ export const SpeedDial: React.FC<SpeedDialProps> = ({ actions, className }) => {
           layout
           onClick={() => setIsOpen(!isOpen)}
           className={cn(
-            "w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all active:scale-90 z-20",
-            isOpen ? "bg-background border-2 border-border text-foreground rotate-0" : "bg-primary text-white"
+            "w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all active:scale-90 z-20 neu-raised hover:neu-raised-hover",
+            isOpen ? "bg-background border-2 border-primary text-primary rotate-0" : "bg-primary text-primary-foreground"
           )}
         >
           {isOpen ? (
