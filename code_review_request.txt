@@ -1,0 +1,27 @@
+I have implemented the "Recibo de Ingreso" (Income Receipt) section in the IPV view using the SC-3-01 model.
+
+Changes made:
+1. Updated `src/lib/dexie.ts`:
+   - Added `IPVSettings` interface.
+   - Added `ipv_settings` table to the `IPVDatabase`.
+   - Bumped DB version to 7.
+
+2. Updated `src/components/views/terminal/views/legal/LegalPdfExporter.ts`:
+   - Enhanced `generateLegalPdf` to support a `skipCopy` option for the SC-3-01 model.
+
+3. Created `src/components/views/terminal/views/ipv/IncomeReceiptPreview.tsx`:
+   - A component that visually replicates the SC-3-01 model in the UI (Original version).
+
+4. Created `src/components/views/terminal/views/ipv/IncomeReceiptSection.tsx`:
+   - The main section UI with configuration for entity data, serial numbers, deliverer, etc.
+   - Implemented logic to group cash transactions (from `reconciliation_lines`) by day or by transaction reference.
+   - Supports "Global" (total per day/ref) or "Detailed" (per product) grouping.
+   - Integrated PDF export.
+
+5. Updated `src/components/views/terminal/views/ipv/IPVView.tsx`:
+   - Added the "Recibos" tab and integrated the `IncomeReceiptSection`.
+
+Please review the code for:
+- Correctness of the grouping logic in `IncomeReceiptSection.tsx`.
+- Styling consistency with the existing terminal UI.
+- Proper integration with Dexie and the PDF exporter.
