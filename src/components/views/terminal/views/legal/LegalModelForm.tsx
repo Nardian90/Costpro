@@ -2,10 +2,10 @@
 
 import * as React from 'react';
 import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import {
   FileText, Download, X,
-  User, AlertCircle
+  User, AlertCircle, Plus, Trash2
 } from 'lucide-react';
 import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabaseClient';
@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { generateLegalPdf } from './LegalPdfExporter';
+import { numeroALetras } from '@/lib/utils/number-to-words-es';
 
 interface LegalModelFormProps {
   model: any;
@@ -21,9 +22,21 @@ interface LegalModelFormProps {
 
 export default function LegalModelForm({ model, onCancel }: LegalModelFormProps) {
   const { user } = useAuthStore();
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm();
+  const { register, handleSubmit, setValue, watch, control, formState: { errors } } = useForm({
+    defaultValues: {
+      conceptos_tabla: [{ concepto: '', importe: 0 }]
+    }
+  });
+
+  const { fields: tableFields, append, remove } = useFieldArray({
+    control,
+    name: "conceptos_tabla" as never
+  });
+
   const [loading, setLoading] = useState(false);
   const [profiles, setProfiles] = useState<any[]>([]);
+
+  const watchTable = watch("conceptos_tabla" as never) as any[];
 
   useEffect(() => {
     if (user) {
@@ -32,6 +45,15 @@ export default function LegalModelForm({ model, onCancel }: LegalModelFormProps)
     }
     fetchProfiles();
   }, [user, setValue]);
+
+  // Auto-calculate total and letters for SC-3-01
+  useEffect(() => {
+    if (model.code === 'SC-3-01' && watchTable) {
+      const total = watchTable.reduce((acc, curr) => acc + (Number(curr.importe) || 0), 0);
+      setValue('total', total);
+      setValue('cantidad_letras', numeroALetras(total));
+    }
+  }, [watchTable, model.code, setValue]);
 
   async function fetchProfiles() {
     const { data } = await supabase.from('profiles').select('id, full_name').eq('is_active', true);
@@ -54,7 +76,61 @@ export default function LegalModelForm({ model, onCancel }: LegalModelFormProps)
   const renderField = (field: any) => {
     const commonClasses = "w-full h-14 bg-background border-2 border-primary/10 rounded-xl px-4 text-sm font-bold focus:outline-none focus:border-primary transition-all uppercase tracking-wider";
 
+    if (field.readonly) {
+       return (
+         <div className={cn(commonClasses, "flex items-center bg-primary/5 text-primary opacity-80 cursor-not-allowed")}>
+           {watch(field.name) || '---'}
+         </div>
+       );
+    }
+
     switch (field.type) {
+      case 'table':
+        return (
+          <div className="space-y-4">
+            <div className="grid grid-cols-12 gap-4 px-2 mb-2">
+              <div className="col-span-8 text-[10px] font-black uppercase tracking-widest opacity-40">Concepto</div>
+              <div className="col-span-3 text-[10px] font-black uppercase tracking-widest opacity-40">Importe</div>
+            </div>
+            {tableFields.map((item, index) => (
+              <div key={item.id} className="grid grid-cols-12 gap-4 animate-in slide-in-from-left-2 duration-300">
+                <div className="col-span-8">
+                  <input
+                    {...register(`conceptos_tabla.${index}.concepto` as any, { required: true })}
+                    placeholder="DESCRIPCIÓN DEL CONCEPTO..."
+                    className={cn(commonClasses, "h-12")}
+                  />
+                </div>
+                <div className="col-span-3">
+                  <input
+                    type="number"
+                    step="0.01"
+                    {...register(`conceptos_tabla.${index}.importe` as any, { required: true })}
+                    placeholder="0.00"
+                    className={cn(commonClasses, "h-12")}
+                  />
+                </div>
+                <div className="col-span-1 flex items-center justify-center">
+                  <button
+                    type="button"
+                    onClick={() => remove(index)}
+                    className="p-2 text-danger hover:bg-danger/10 rounded-lg transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => append({ concepto: '', importe: 0 })}
+              className="flex items-center gap-2 px-4 py-2 text-xs font-black text-primary hover:bg-primary/5 rounded-xl transition-all uppercase tracking-widest"
+            >
+              <Plus className="w-4 h-4" />
+              Agregar Fila
+            </button>
+          </div>
+        );
       case 'textarea':
         return (
           <textarea
@@ -138,7 +214,7 @@ export default function LegalModelForm({ model, onCancel }: LegalModelFormProps)
       <form onSubmit={handleSubmit(onSubmit)} className="p-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {model.fields.map((field: any) => (
-            <div key={field.name} className={cn("space-y-2", field.type === 'textarea' || field.type === 'json' ? "md:col-span-2" : "")}>
+            <div key={field.name} className={cn("space-y-2", field.type === 'textarea' || field.type === 'json' || field.type === 'table' ? "md:col-span-2" : "")}>
               <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">
                 {field.label}
                 {field.required && <span className="text-danger ml-1">*</span>}
