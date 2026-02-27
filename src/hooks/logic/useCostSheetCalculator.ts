@@ -401,6 +401,7 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
             parentId: parentId, // Correctly pass parentId for semantic validation
             classification: currentNumbering, // Use visual numbering for smart matching
             label: r.label,
+            um: r.um || r.unit,
             type,
             formaCalculo,
             valorHistorico: vhSums[r.id] ?? r.valorHistorico ?? r.value,

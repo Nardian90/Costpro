@@ -33,6 +33,7 @@ export interface CostRow {
   classification: string;           // ej "1","1.1","3.2"
   type: RowSemanticType;            // Semantic classification
   label: string;
+  um?: string | null;
   valorHistorico?: number | null;   // input del usuario (acepta 0.01)
   vhFormula?: string | null;        // expresión para Valor Histórico
   formaCalculo: FormaCalculo;

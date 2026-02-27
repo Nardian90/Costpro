@@ -226,6 +226,11 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
           </div>
         </TableCell>
 
+        {/* UM */}
+        <TableCell className="px-2 py-0.5 text-center w-[80px] border-r border-border/10 italic text-muted-foreground/80 font-mono text-[10px]">
+            {row.um || row.unit || '-'}
+        </TableCell>
+
         {/* Valor Histórico / % */}
         <TableCell className={cn("px-2 py-0.5 text-right w-[140px] border-r border-border/10", !hasChildren ? "cursor-pointer" : "cursor-default")} onClick={() => !hasChildren && setIsEditingVH(true)}>
             <div className="relative">
@@ -248,8 +253,10 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                         value={hasChildren
                         ? formatAccounting(safeCalculated.calculatedVH ?? safeCalculated.valorHistorico ?? 0)
                         : (row.vhFormula
-                            ? formatAccounting(safeCalculated.calculatedVH ?? 0)
-                            : (row.hasOwnProperty('valorHistorico') ? formatAccounting(row.valorHistorico ?? 0) : (row.is_percent ? ((row.value ?? 0) * 100).toFixed(3) : formatAccounting(row.value ?? 0))))}
+                            ? formatAccounting(safeCalculated.calculatedVH ?? safeCalculated.valorHistorico ?? 0)
+                            : (row.hasOwnProperty('valorHistorico')
+                                ? formatAccounting(safeCalculated.calculatedVH ?? row.valorHistorico ?? 0)
+                                : (row.is_percent ? ((row.value ?? 0) * 100).toFixed(3) : formatAccounting(safeCalculated.calculatedVH ?? row.value ?? 0))))}
                         readOnly={true}
                         />
                         {row.vhFormula && <FunctionSquare className="w-3 h-3 text-primary/40 absolute left-2" />}
@@ -618,6 +625,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                                 <TableRow className="hover:bg-transparent border-none h-8 text-xs">
                                     <TableHead className="w-[60px] px-2 py-0.5 text-center font-black uppercase tracking-widest border-r border-border/10">No.</TableHead>
                                     <TableHead className="px-2 py-0.5 text-left font-black uppercase tracking-widest border-r border-border/10">Concepto</TableHead>
+                                    <TableHead className="w-[80px] px-2 py-0.5 text-center font-black uppercase tracking-widest border-r border-border/10">UM</TableHead>
                                     <TableHead className="w-[140px] px-2 py-0.5 text-right font-black uppercase tracking-widest border-r border-border/10">Valor Histórico</TableHead>
                                     <TableHead className="w-[120px] px-2 py-0.5 text-right font-black uppercase tracking-widest border-r border-border/10">Total</TableHead>
                                     <TableHead className="w-[80px] px-2 py-0.5 text-center font-black uppercase tracking-widest hidden sm:table-cell">Ayuda</TableHead>
