@@ -160,23 +160,23 @@ export function IngestionErrorsTable() {
                             <div className="flex justify-end gap-1">
                                 {isEditing ? (
                                     <>
-                                        <Button variant="ghost" size="icon" className="h-11 w-11 text-green-500" onClick={saveEditing}>
-                                            <Check className="w-5 h-5" />
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-green-500" onClick={saveEditing}>
+                                            <Check className="w-4 h-4" />
                                         </Button>
-                                        <Button variant="ghost" size="icon" className="h-11 w-11 text-muted-foreground" onClick={cancelEditing}>
-                                            <X className="w-5 h-5" />
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={cancelEditing}>
+                                            <X className="w-4 h-4" />
                                         </Button>
                                     </>
                                 ) : (
                                     <>
-                                        <Button variant="ghost" size="icon" className="h-11 w-11 text-primary" onClick={() => startEditing(err)}>
-                                            <Edit2 className="w-5 h-5" />
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => startEditing(err)}>
+                                            <Edit2 className="w-4 h-4" />
                                         </Button>
-                                        <Button variant="ghost" size="icon" className="h-11 w-11 text-green-600 hover:bg-green-500/10" onClick={() => handleRetry(err)} title="Reintentar Ingesta">
-                                            <RefreshCw className="w-5 h-5" />
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:bg-green-500/10" onClick={() => handleRetry(err)} title="Reintentar Ingesta">
+                                            <RefreshCw className="w-4 h-4" />
                                         </Button>
-                                        <Button variant="ghost" size="icon" className="h-11 w-11 text-destructive" onClick={() => handleDelete(err.id)}>
-                                            <Trash2 className="w-5 h-5" />
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(err.id)}>
+                                            <Trash2 className="w-4 h-4" />
                                         </Button>
                                     </>
                                 )}

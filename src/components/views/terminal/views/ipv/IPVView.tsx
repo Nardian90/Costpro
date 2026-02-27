@@ -395,14 +395,14 @@ export default function IPVView() {
                     variant="ghost"
                     size="icon"
                     onClick={() => setActiveTab('dashboard')}
-                    className="h-10 w-10 rounded-xl hover:bg-primary/10 hover:text-primary transition-all shadow-sm active:scale-95"
+                    className="h-11 w-11 rounded-xl hover:bg-primary/10 hover:text-primary transition-all shadow-sm active:scale-95"
                 >
                     <Settings className="w-5 h-5 rotate-180" />
                 </Button>
             )}
             <div>
                 <div className="flex items-center gap-2">
-                    <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-primary uppercase">IPV Builder</h1>
+                    <h1 className="text-[clamp(2rem,8vw,3rem)] font-black tracking-tight text-primary uppercase">IPV Builder</h1>
                     <IPVHelpDialog open={isHelpOpen} onOpenChange={setIsHelpOpen} />
                 </div>
                 <p className="text-xs sm:text-sm text-muted-foreground font-medium">Conciliación bancaria y generación de IPV</p>
@@ -530,15 +530,15 @@ export default function IPVView() {
             <div className="sticky top-[60px] sm:top-[92px] z-20 bg-background/95 backdrop-blur-md mb-6 py-2 -mx-2 px-2 sm:-mx-8 sm:px-8 lg:-mx-12 lg:px-12">
                 <HorizontalScroll containerClassName="bg-muted/50 rounded-2xl p-1">
                     <TabsList className="flex bg-transparent border-none w-max min-w-full h-auto p-0 gap-1">
-                        <TabsTrigger value="analytics" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Dashboard</TabsTrigger>
-                        <TabsTrigger value="dashboard" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Flujo</TabsTrigger>
-                        <TabsTrigger value="transactions" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Transacciones</TabsTrigger>
-                        <TabsTrigger value="sim" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Simulación</TabsTrigger>
-                        <TabsTrigger value="breakdown" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Desglose</TabsTrigger>
-                        <TabsTrigger value="pivot" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Consolidado</TabsTrigger>
-                        <TabsTrigger value="catalog" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Catálogo</TabsTrigger>
-                        <TabsTrigger value="ingestion" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest text-nowrap shrink-0 rounded-xl">Extracto</TabsTrigger>
-                        <TabsTrigger value="errors" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest relative shrink-0 rounded-xl">
+                        <TabsTrigger value="analytics" className="px-4 py-4 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Dashboard</TabsTrigger>
+                        <TabsTrigger value="dashboard" className="px-4 py-4 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Flujo</TabsTrigger>
+                        <TabsTrigger value="transactions" className="px-4 py-4 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Transacciones</TabsTrigger>
+                        <TabsTrigger value="sim" className="px-4 py-4 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Simulación</TabsTrigger>
+                        <TabsTrigger value="breakdown" className="px-4 py-4 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Desglose</TabsTrigger>
+                        <TabsTrigger value="pivot" className="px-4 py-4 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Consolidado</TabsTrigger>
+                        <TabsTrigger value="catalog" className="px-4 py-4 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Catálogo</TabsTrigger>
+                        <TabsTrigger value="ingestion" className="px-4 py-4 text-xs sm:text-xs font-black uppercase tracking-widest text-nowrap shrink-0 rounded-xl">Extracto</TabsTrigger>
+                        <TabsTrigger value="errors" className="px-4 py-4 text-xs sm:text-xs font-black uppercase tracking-widest relative shrink-0 rounded-xl">
                             Errores
                             {ingestionErrorsCount > 0 && (
                                 <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs text-white font-black shadow-sm animate-pulse">
@@ -546,10 +546,10 @@ export default function IPVView() {
                                 </span>
                             )}
                         </TabsTrigger>
-                        <TabsTrigger value="reports" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest text-nowrap shrink-0 rounded-xl">Reportes IPV</TabsTrigger>
-                        <TabsTrigger value="rules" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Reglas</TabsTrigger>
+                        <TabsTrigger value="reports" className="px-4 py-4 text-xs sm:text-xs font-black uppercase tracking-widest text-nowrap shrink-0 rounded-xl">Reportes IPV</TabsTrigger>
+                        <TabsTrigger value="rules" className="px-4 py-4 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Reglas</TabsTrigger>
                         {selectedReconTx && (
-                            <TabsTrigger value="manual-recon" className="px-4 py-3 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">
+                            <TabsTrigger value="manual-recon" className="px-4 py-4 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">
                                 Conciliación
                             </TabsTrigger>
                         )}
@@ -655,7 +655,7 @@ function StatCard({ title, value, icon, trend, subtitle, active, onClick, isCurr
       <div className="flex flex-col items-center sm:items-start space-y-0.5 sm:space-y-1">
         <p className="text-xs sm:text-xs font-black text-muted-foreground uppercase tracking-widest">{title}</p>
         <div className="flex items-baseline gap-1.5 sm:gap-2">
-            <h3 className="text-xl sm:text-2xl font-black">{isCurrency ? formatCurrency(value) : value}</h3>
+            <h3 className="text-[clamp(1.5rem,6vw,2.5rem)] font-black">{isCurrency ? formatCurrency(value) : value}</h3>
             {trend && (
                 <Badge variant="outline" className="text-xs h-4 px-1 font-bold text-green-600 bg-green-500/10 border-green-500/20">
                     {trend}
