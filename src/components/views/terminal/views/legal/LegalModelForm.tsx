@@ -1,8 +1,8 @@
 'use client';
 
 import * as React from 'react';
-import { useState, useEffect } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useState, useEffect, useMemo } from 'react';
+import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import {
   FileText, Download, X,
   User, AlertCircle, Plus, Trash2
@@ -23,10 +23,11 @@ interface LegalModelFormProps {
 export default function LegalModelForm({ model, onCancel }: LegalModelFormProps) {
   const { user } = useAuthStore();
 
-  // Use any to allow dynamic keys since fields are defined in database
-  const { register, handleSubmit, setValue, watch, control, formState: { errors } } = useForm<any>({
+  const { register, handleSubmit, setValue, control, formState: { errors } } = useForm<any>({
     defaultValues: {
-      conceptos_tabla: [{ concepto: '', importe: 0 }]
+      conceptos_tabla: [{ concepto: '', importe: 0 }],
+      total: 0,
+      cantidad_letras: 'CERO'
     }
   });
 
@@ -38,7 +39,26 @@ export default function LegalModelForm({ model, onCancel }: LegalModelFormProps)
   const [loading, setLoading] = useState(false);
   const [profiles, setProfiles] = useState<any[]>([]);
 
-  const watchTable = watch("conceptos_tabla");
+  // useWatch is more reliable for real-time tracking of field arrays
+  const watchTable = useWatch({
+    control,
+    name: "conceptos_tabla"
+  });
+
+  // Calculate total and letters in real-time
+  const totals = useMemo(() => {
+    if (!watchTable || !Array.isArray(watchTable)) return { total: 0, letras: 'CERO' };
+
+    const sum = watchTable.reduce((acc: number, curr: any) => {
+      const val = parseFloat(curr?.importe);
+      return acc + (isNaN(val) ? 0 : val);
+    }, 0);
+
+    return {
+      total: sum,
+      letras: numeroALetras(sum)
+    };
+  }, [watchTable]);
 
   useEffect(() => {
     if (user) {
@@ -48,24 +68,33 @@ export default function LegalModelForm({ model, onCancel }: LegalModelFormProps)
     fetchProfiles();
   }, [user, setValue]);
 
-  // Auto-calculate total and letters for SC-3-01
+  // Sync totals to form state so they are included in onSubmit data
   useEffect(() => {
-    if (model.code === 'SC-3-01' && watchTable) {
-      const total = watchTable.reduce((acc: number, curr: any) => acc + (Number(curr.importe) || 0), 0);
-      setValue('total', total);
-      setValue('cantidad_letras', numeroALetras(total));
-    }
-  }, [watchTable, model.code, setValue]);
+    setValue('total', totals.total);
+    setValue('cantidad_letras', totals.letras);
+  }, [totals, setValue]);
 
   async function fetchProfiles() {
     const { data } = await supabase.from('profiles').select('id, full_name').eq('is_active', true);
     setProfiles(data || []);
   }
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (formData: any) => {
     try {
       setLoading(true);
-      await generateLegalPdf(model, data);
+      // Ensure we use the most fresh calculated values
+      const dataToExport = {
+        ...formData,
+        total: totals.total,
+        cantidad_letras: totals.letras,
+        // Ensure numbers are properly typed for the PDF engine
+        conceptos_tabla: (formData.conceptos_tabla || []).map((c: any) => ({
+          ...c,
+          importe: parseFloat(c.importe) || 0
+        }))
+      };
+
+      await generateLegalPdf(model, dataToExport);
       toast.success('Modelo generado y descargado con éxito');
     } catch (error) {
       console.error('Error generating PDF:', error);
@@ -79,9 +108,13 @@ export default function LegalModelForm({ model, onCancel }: LegalModelFormProps)
     const commonClasses = "w-full h-14 bg-background border-2 border-primary/10 rounded-xl px-4 text-sm font-bold focus:outline-none focus:border-primary transition-all uppercase tracking-wider";
 
     if (field.readonly) {
+       let displayValue = '';
+       if (field.name === 'total') displayValue = totals.total.toFixed(2);
+       else if (field.name === 'cantidad_letras') displayValue = totals.letras;
+
        return (
-         <div className={cn(commonClasses, "flex items-center bg-primary/5 text-primary opacity-80 cursor-not-allowed")}>
-           {watch(field.name) || '---'}
+         <div className={cn(commonClasses, "flex items-center bg-primary/5 text-primary font-black shadow-inner")}>
+           {displayValue || '---'}
          </div>
        );
     }
@@ -91,15 +124,15 @@ export default function LegalModelForm({ model, onCancel }: LegalModelFormProps)
         return (
           <div className="space-y-4">
             <div className="grid grid-cols-12 gap-4 px-2 mb-2">
-              <div className="col-span-8 text-[10px] font-black uppercase tracking-widest opacity-40">Concepto</div>
-              <div className="col-span-3 text-[10px] font-black uppercase tracking-widest opacity-40">Importe</div>
+              <div className="col-span-8 text-[10px] font-black uppercase tracking-widest opacity-40">Concepto / Detalle del Cobro</div>
+              <div className="col-span-3 text-[10px] font-black uppercase tracking-widest opacity-40 text-right">Importe ($)</div>
             </div>
             {tableFields.map((item, index) => (
               <div key={item.id} className="grid grid-cols-12 gap-4 animate-in slide-in-from-left-2 duration-300">
                 <div className="col-span-8">
                   <input
                     {...register(`conceptos_tabla.${index}.concepto` as any, { required: true })}
-                    placeholder="DESCRIPCIÓN DEL CONCEPTO..."
+                    placeholder="Escriba el concepto..."
                     className={cn(commonClasses, "h-12")}
                   />
                 </div>
@@ -109,7 +142,7 @@ export default function LegalModelForm({ model, onCancel }: LegalModelFormProps)
                     step="0.01"
                     {...register(`conceptos_tabla.${index}.importe` as any, { required: true })}
                     placeholder="0.00"
-                    className={cn(commonClasses, "h-12")}
+                    className={cn(commonClasses, "h-12 text-right")}
                   />
                 </div>
                 <div className="col-span-1 flex items-center justify-center">
@@ -126,10 +159,10 @@ export default function LegalModelForm({ model, onCancel }: LegalModelFormProps)
             <button
               type="button"
               onClick={() => append({ concepto: '', importe: 0 })}
-              className="flex items-center gap-2 px-4 py-2 text-xs font-black text-primary hover:bg-primary/5 rounded-xl transition-all uppercase tracking-widest"
+              className="flex items-center gap-2 px-4 py-2 text-xs font-black text-primary hover:bg-primary/5 rounded-xl transition-all uppercase tracking-widest border-2 border-dashed border-primary/20 hover:border-primary/40"
             >
               <Plus className="w-4 h-4" />
-              Agregar Fila
+              Añadir Línea de Concepto
             </button>
           </div>
         );
@@ -159,17 +192,6 @@ export default function LegalModelForm({ model, onCancel }: LegalModelFormProps)
         return <input type="datetime-local" {...register(field.name, { required: field.required })} className={commonClasses} />;
       case 'number':
         return <input type="number" step="0.01" {...register(field.name, { required: field.required })} className={commonClasses} />;
-      case 'json':
-        return (
-          <div className="p-4 bg-primary/5 rounded-xl border-2 border-dashed border-primary/20">
-            <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-2">Editor de Tabla / JSON</p>
-            <textarea
-              {...register(field.name)}
-              className={cn(commonClasses, "h-24 py-4 font-mono text-xs")}
-              placeholder="INGRESA LOS DATOS EN FORMATO TEXTO O LISTA..."
-            />
-          </div>
-        );
       default:
         return (
           <div className="relative">
@@ -197,7 +219,7 @@ export default function LegalModelForm({ model, onCancel }: LegalModelFormProps)
     >
       <div className="p-8 border-b border-primary/5 bg-primary/5 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
             <FileText className="w-6 h-6 text-white" />
           </div>
           <div>
