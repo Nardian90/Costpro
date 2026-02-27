@@ -155,6 +155,7 @@ export async function POST(req: NextRequest) {
                             if (snap) calc = { ...r, ...snap };
                         }
                         if (calc) {
+                            calc = { ...r, ...calc };
                             const classStr = String(calc.classification || calc.id || '');
                             const level = (classStr.match(/\./g) || []).length;
 
@@ -169,7 +170,7 @@ export async function POST(req: NextRequest) {
                                 calc.classification || calc.id,
                                 calc.label,
                                 calc.um || calc.unit || '-',
-                                safeLocale(calc.valorHistorico ?? calc.calculatedVH ?? calc.v_historico ?? 0),
+                                safeLocale(calc.calculatedVH ?? calc.valorHistorico ?? calc.v_historico ?? 0),
                                 safeLocale(calc.total ?? 0)
                             ]);
                         }
@@ -199,7 +200,7 @@ export async function POST(req: NextRequest) {
                 })
                 .map((r: any) => [
                     r.classification || r.id, r.label, r.um || r.unit || "-",
-                    safeLocale(r.valorHistorico ?? r.calculatedVH ?? r.v_historico ?? 0),
+                    safeLocale(r.calculatedVH ?? r.valorHistorico ?? r.v_historico ?? 0),
                     safeLocale(r.total ?? 0)
                 ]);
         }
