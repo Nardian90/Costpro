@@ -3,7 +3,7 @@ import { FichaJSON } from '../cost-engine/types';
 const template: FichaJSON = {
   "header": {
     "code": "=GET_ANEXO_FILA_DATO(\"I\", 1, \"code\")",
-    "name": "Plantilla de Reinicio",
+    "name": "Lavar",
     "date": "2026-02-26",
     "quantity": 1,
     "currency": "CUP",
@@ -34,7 +34,7 @@ const template: FichaJSON = {
             {
               "id": "1.1",
               "label": "De ello: - Insumos (MP)",
-              "valorHistorico": 0,
+              "valorHistorico": 229632,
               "calculationMethod": "FORMULA",
               "totalFormula": "AnexoI",
               "baseRef": "I",
@@ -78,7 +78,7 @@ const template: FichaJSON = {
             {
               "id": "2.1",
               "label": "De ello: Salarios",
-              "valorHistorico": 0,
+              "valorHistorico": 4418,
               "calculationMethod": "FORMULA",
               "totalFormula": "AnexoII",
               "baseRef": "II",
@@ -218,7 +218,7 @@ const template: FichaJSON = {
             {
               "id": "4.2",
               "label": "-Otros gastos",
-              "valorHistorico": 0,
+              "valorHistorico": 51944,
               "calculationMethod": "FORMULA",
               "totalFormula": "vh('4.1.1')/vh('1.1.1')*ref('1.1.1')",
               "formula": "vh('4.1.2')/vh('1.1.1')*ref('1.1.1')",
@@ -253,7 +253,7 @@ const template: FichaJSON = {
             {
               "id": "6.1",
               "label": "- Salarios",
-              "valorHistorico": 0,
+              "valorHistorico": 87272,
               "calculationMethod": "FORMULA",
               "totalFormula": "vh('6.1.1')/vh('1.1.1')*ref('1.1.1')",
               "vhFormula": ""
@@ -273,7 +273,7 @@ const template: FichaJSON = {
             {
               "id": "6.4",
               "label": "- Energia",
-              "valorHistorico": 0,
+              "valorHistorico": 4000,
               "calculationMethod": "FORMULA",
               "totalFormula": "vh('6.1.4')/vh('1.1.1')*ref('1.1.1')",
               "vhFormula": ""
@@ -491,53 +491,185 @@ const template: FichaJSON = {
       "id": "I",
       "title": "I - DESGLOSE DE MATERIAS PRIMAS Y MATERIALES FUNDAMENTALES",
       "columns": [
-        { "key": "no", "label": "NO" },
-        { "key": "classification", "label": "Clasificación" },
-        { "key": "code", "label": "Código" },
-        { "key": "description", "label": "Descripción de la Mat. Prima" },
-        { "key": "um", "label": "UM" },
-        { "key": "consumption_norm", "label": "Norma de Consumo" },
-        { "key": "price", "label": "Precio Unitario" },
-        { "key": "total", "label": "Total", "formula": "consumption_norm * price" }
+        {
+          "key": "no",
+          "label": "NO"
+        },
+        {
+          "key": "classification",
+          "label": "Clasificación"
+        },
+        {
+          "key": "code",
+          "label": "Código"
+        },
+        {
+          "key": "description",
+          "label": "Descripción de la Mat. Prima"
+        },
+        {
+          "key": "um",
+          "label": "UM"
+        },
+        {
+          "key": "consumption_norm",
+          "label": "Norma de Consumo"
+        },
+        {
+          "key": "price",
+          "label": "Precio Unitario"
+        },
+        {
+          "key": "total",
+          "label": "Total",
+          "formula": "consumption_norm * price"
+        }
       ],
-      "data": []
+      "data": [
+        {
+          "no": 0,
+          "classification": "1.1.1 - De ello: - Insumos (MP)",
+          "code": 1,
+          "description": "Detergente líquido ",
+          "um": "ml",
+          "consumption_norm": 80,
+          "price": 0.9125,
+          "total": 0
+        },
+        {
+          "no": 0,
+          "classification": "1.1.1 - De ello: - Insumos (MP)",
+          "code": 2,
+          "description": "Agua",
+          "um": "L",
+          "consumption_norm": 105,
+          "price": 5,
+          "total": 0
+        },
+        {
+          "no": 0,
+          "classification": "1..1.3 - - Energía",
+          "code": 0,
+          "description": "Energia",
+          "um": "Kw",
+          "consumption_norm": 1,
+          "price": 7,
+          "total": 0
+        }
+      ]
     },
     {
       "id": "II",
       "title": "II - DESGLOSE DE LOS GASTOS DE SALARIO DE LOS OBREROS",
       "columns": [
-        { "key": "no", "label": "NO" },
-        { "key": "classification", "label": "Clasificación" },
-        { "key": "description", "label": "Descripción del Puesto" },
-        { "key": "time_norm", "label": "Horas Mensuales" },
-        { "key": "hourly_rate", "label": "Tarifa $/h" },
-        { "key": "worker_count", "label": "Cant. Obreros" },
-        { "key": "total", "label": "Total", "formula": "time_norm * hourly_rate * worker_count" }
+        {
+          "key": "no",
+          "label": "NO"
+        },
+        {
+          "key": "classification",
+          "label": "Clasificación"
+        },
+        {
+          "key": "description",
+          "label": "Descripción del Puesto"
+        },
+        {
+          "key": "time_norm",
+          "label": "Horas Mensuales"
+        },
+        {
+          "key": "hourly_rate",
+          "label": "Tarifa $/h"
+        },
+        {
+          "key": "worker_count",
+          "label": "Cant. Obreros"
+        },
+        {
+          "key": "total",
+          "label": "Total",
+          "formula": "time_norm * hourly_rate * worker_count"
+        }
       ],
-      "data": []
+      "data": [
+        {
+          "no": 0,
+          "classification": "2.1.1 - De ello: Salarios",
+          "description": "Operaria",
+          "time_norm": 1,
+          "hourly_rate": 47,
+          "worker_count": 1,
+          "total": 0
+        }
+      ]
     },
     {
       "id": "III",
       "title": "III - ANEXO DE DEPRECIACIÓN DE EQUIPOS",
       "columns": [
-        { "key": "classification", "label": "Clasif." },
-        { "key": "code", "label": "Código" },
-        { "key": "name", "label": "Descripción del Equipo" },
-        { "key": "initial_value", "label": "Valor de Compra" },
-        { "key": "useful_life", "label": "% Deprec." },
-        { "key": "quantity", "label": "Tiempo Explot." },
-        { "key": "depreciation_cost", "label": "Deprec.", "formula": "(initial_value * (useful_life / 100)) / quantity" }
+        {
+          "key": "classification",
+          "label": "Clasif."
+        },
+        {
+          "key": "code",
+          "label": "Código"
+        },
+        {
+          "key": "name",
+          "label": "Descripción del Equipo"
+        },
+        {
+          "key": "initial_value",
+          "label": "Valor de Compra"
+        },
+        {
+          "key": "useful_life",
+          "label": "% Deprec."
+        },
+        {
+          "key": "quantity",
+          "label": "Tiempo Explot."
+        },
+        {
+          "key": "depreciation_cost",
+          "label": "Deprec.",
+          "formula": "(initial_value * (useful_life / 100)) / quantity"
+        }
       ],
-      "data": []
+      "data": [
+        {
+          "classification": "3.1.1.5 - -Aparatos y eq. técnicos",
+          "code": 1,
+          "name": "Lavadora automátic",
+          "initial_value": 382612.5,
+          "useful_life": 10,
+          "quantity": 240,
+          "depreciation_cost": 0
+        }
+      ]
     },
     {
       "id": "IV",
       "title": "IV - ANEXO DE OTROS GASTOS DIRECTOS",
       "columns": [
-        { "key": "classification", "label": "Clasificación" },
-        { "key": "code", "label": "Código" },
-        { "key": "description", "label": "Descripción" },
-        { "key": "amount", "label": "Importe" }
+        {
+          "key": "classification",
+          "label": "Clasificación"
+        },
+        {
+          "key": "code",
+          "label": "Código"
+        },
+        {
+          "key": "description",
+          "label": "Descripción"
+        },
+        {
+          "key": "amount",
+          "label": "Importe"
+        }
       ],
       "data": []
     },
@@ -545,23 +677,45 @@ const template: FichaJSON = {
       "id": "V",
       "title": "V - ANEXO DE DIETAS DE TRABAJADORES",
       "columns": [
-        { "key": "classification", "label": "Clasificación" },
-        { "key": "code", "label": "Código" },
-        { "key": "worker_name", "label": "Nombre del Trabajador" },
-        { "key": "daily_allowance", "label": "Gasto de Dieta Diario" },
-        { "key": "days", "label": "Días" },
-        { "key": "total", "label": "Total", "formula": "daily_allowance * days" }
+        {
+          "key": "classification",
+          "label": "Clasificación"
+        },
+        {
+          "key": "code",
+          "label": "Código"
+        },
+        {
+          "key": "worker_name",
+          "label": "Nombre del Trabajador"
+        },
+        {
+          "key": "daily_allowance",
+          "label": "Gasto de Dieta Diario"
+        },
+        {
+          "key": "days",
+          "label": "Días"
+        },
+        {
+          "key": "total",
+          "label": "Total",
+          "formula": "daily_allowance * days"
+        }
       ],
       "data": []
     }
   ],
-  "signature": { "prepared_by": "Elaborado por:", "approved_by": "Aprobado por:" },
-  "id": "costpro-reinicio",
-  "name": "Plantilla de Reinicio",
+  "signature": {
+    "prepared_by": "Elaborado por:",
+    "approved_by": "Aprobado por:"
+  },
+  "id": "costpro-lavar",
+  "name": "Lavar",
   "version": "5.7.25",
   "metadata": {
     "author": "Jules",
-    "description": "Plantilla base con metodología de 16 secciones y carga dinámica de encabezado desde Anexo I.",
+    "description": "Plantilla para servicios de lavado con carga dinámica.",
     "integrity": "full"
   }
 };

@@ -38,6 +38,7 @@ import icecreamTemplate from '@/lib/data/template-icecream';
 import repairTemplate from '@/lib/data/template-repair';
 import shoesTemplate from '@/lib/data/template-shoes';
 import logisticsTemplate from '@/lib/data/template-logistics';
+import lavarTemplate from "@/lib/data/template-lavar";
 type TemplateCategory = 'system' | 'private' | 'public';
 interface Template {
   id: string;
@@ -58,6 +59,14 @@ export const CostSheetTemplateExplorer: React.FC = () => {
   const setSheet = useCostSheetStore(state => state.setSheet);
   // System Templates
   const systemTemplates: Template[] = [
+    {
+      id: "sys-lavar",
+      name: "Lavar",
+      description: "Plantilla para servicios de lavado con carga dinámica.",
+      category: "Servicios",
+      type: "system",
+      data: lavarTemplate
+    },
     {
       id: 'sys-reinicio',
       name: 'Plantilla de Reinicio',
