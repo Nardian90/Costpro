@@ -22,7 +22,9 @@ interface LegalModelFormProps {
 
 export default function LegalModelForm({ model, onCancel }: LegalModelFormProps) {
   const { user } = useAuthStore();
-  const { register, handleSubmit, setValue, watch, control, formState: { errors } } = useForm({
+
+  // Use any to allow dynamic keys since fields are defined in database
+  const { register, handleSubmit, setValue, watch, control, formState: { errors } } = useForm<any>({
     defaultValues: {
       conceptos_tabla: [{ concepto: '', importe: 0 }]
     }
@@ -30,13 +32,13 @@ export default function LegalModelForm({ model, onCancel }: LegalModelFormProps)
 
   const { fields: tableFields, append, remove } = useFieldArray({
     control,
-    name: "conceptos_tabla" as never
+    name: "conceptos_tabla"
   });
 
   const [loading, setLoading] = useState(false);
   const [profiles, setProfiles] = useState<any[]>([]);
 
-  const watchTable = watch("conceptos_tabla" as never) as any[];
+  const watchTable = watch("conceptos_tabla");
 
   useEffect(() => {
     if (user) {
@@ -49,7 +51,7 @@ export default function LegalModelForm({ model, onCancel }: LegalModelFormProps)
   // Auto-calculate total and letters for SC-3-01
   useEffect(() => {
     if (model.code === 'SC-3-01' && watchTable) {
-      const total = watchTable.reduce((acc, curr) => acc + (Number(curr.importe) || 0), 0);
+      const total = watchTable.reduce((acc: number, curr: any) => acc + (Number(curr.importe) || 0), 0);
       setValue('total', total);
       setValue('cantidad_letras', numeroALetras(total));
     }
