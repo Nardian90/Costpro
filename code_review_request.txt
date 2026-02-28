@@ -1,0 +1,5 @@
+I have fixed the build error related to the `Button` variant.
+
+The error was: Type '"primary" | "outline"' is not assignable to type '"default" | "secondary" | "destructive" | "link" | "outline" | "ghost" | null | undefined'.
+
+I have updated `src/components/views/terminal/views/ipv/IncomeReceiptSection.tsx` to use `variant="default"` instead of `variant="primary"` for the active grouping mode buttons and the export button. I've also manually applied the primary styling to the export button using Tailwind classes to maintain the desired look while satisfying TypeScript.
