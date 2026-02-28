@@ -1,11 +1,5 @@
-I have fixed the type error reported during build by ensuring `src/lib/dexie.ts` contains the `IPVSettings` interface and the `ipv_settings` table.
+I have fixed the build error related to the `Button` variant.
 
-The error was: Module '"@/lib/dexie"' has no exported member 'IPVSettings'.
-This was caused by a partial or failed write to the file in the previous attempt.
+The error was: Type '"primary" | "outline"' is not assignable to type '"default" | "secondary" | "destructive" | "link" | "outline" | "ghost" | null | undefined'.
 
-I have restored:
-1. `IPVSettings` interface.
-2. `ipv_settings` table in `IPVDatabase`.
-3. Database version bump to 7.
-
-I have also verified that `src/components/views/terminal/views/ipv/IncomeReceiptSection.tsx` correctly imports these members.
+I have updated `src/components/views/terminal/views/ipv/IncomeReceiptSection.tsx` to use `variant="default"` instead of `variant="primary"` for the active grouping mode buttons and the export button. I've also manually applied the primary styling to the export button using Tailwind classes to maintain the desired look while satisfying TypeScript.

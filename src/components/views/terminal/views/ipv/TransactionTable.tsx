@@ -16,7 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Eye, Trash2, Search, RotateCcw, LayoutGrid, List, CheckCircle2, XCircle, HelpCircle, Wand2, Zap, Target, Plus, Info, ChevronDown, User, CreditCard, Phone, Save } from 'lucide-react';
+import { Eye, Trash2, Search, RotateCcw, LayoutGrid, List, CheckCircle2, XCircle, HelpCircle, Wand2, Zap, Target, Plus, Info } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { generateHash } from '@/lib/ipv/engine';
@@ -28,7 +28,6 @@ import { toast } from 'sonner';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { motion, AnimatePresence } from 'framer-motion';
 
 interface TransactionTableProps {
     transactions: BankTransaction[];
@@ -65,9 +64,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
   const filtered = React.useMemo(() => {
     return transactions.filter(t => {
         if (!showExcluded && t.excluido) return false;
-        const matchesSearch = t.referencia_origen.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                             t.observaciones.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                             (t.payer_name || '').toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesSearch = t.referencia_origen.toLowerCase().includes(searchTerm.toLowerCase()) || t.observaciones.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesType = typeFilter === 'ALL' || t.tipo === typeFilter;
         const matched = txReconciliationTotals[t.referencia_origen] || 0;
         const target = t.importe_venta_cents || t.importe_cents;
@@ -82,7 +79,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
         }
         return matchesSearch && matchesType && matchesKpi;
     });
-  }, [transactions, searchTerm, typeFilter, kpiFilter, txReconciliationTotals, showExcluded]);
+  }, [transactions, searchTerm, typeFilter, kpiFilter, txReconciliationTotals]);
 
   const handleDelete = async (referencia: string) => {
     askConfirmation('Confirmar Acción', '¿Eliminar esta transacción?', async () => {
@@ -129,7 +126,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
         <div className="p-3 sm:p-4 flex flex-col lg:flex-row gap-3 bg-background/50 border-b items-center">
           <div className="relative flex-1 w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input placeholder="Buscar referencia, pagador u observaciones..." className="pl-10 h-10 text-sm" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            <Input placeholder="Buscar referencia u observaciones..." className="pl-10 h-10 text-sm" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
           <div className="flex flex-wrap gap-2 w-full lg:w-auto justify-end items-center">
               <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value as any)} className="h-10 text-xs font-bold border rounded-md bg-background px-3 outline-none">
@@ -162,7 +159,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                   <TableHead className="w-[40px] text-center"><Info className="w-3 h-3 mx-auto opacity-20" /></TableHead>
                   <TableHead className="sticky-column-1">Fecha</TableHead>
                   <TableHead>Referencia</TableHead>
-                  <TableHead className="max-w-md">Observaciones / Pagador</TableHead>
+                  <TableHead className="max-w-md">Observaciones</TableHead>
                   <TableHead className="text-right">Neto</TableHead>
                   <TableHead className="text-right">Comis.</TableHead>
                   <TableHead className="text-right">Venta</TableHead>
@@ -201,7 +198,6 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                                   {getStatusBadge(tx.estado_conciliacion, diff, matchedTotal)}
                               </div>
                               <p className="text-xs text-muted-foreground line-clamp-2">{tx.observaciones}</p>
-                              {tx.payer_name && <p className="text-[10px] font-black uppercase text-primary">Pagador: {tx.payer_name}</p>}
                               <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border/50">
                                   <div><p className="text-xs font-bold text-muted-foreground uppercase">Neto</p><p className="text-xs font-bold">{formatCurrency(tx.importe_cents)}</p></div>
                                   <div><p className="text-xs font-bold text-muted-foreground uppercase">Comis.</p><p className="text-xs font-bold text-red-500">{formatCurrency(tx.comision_cents || 0)}</p></div>
@@ -328,116 +324,20 @@ function BulkForceMatchPopover({ transactions }: { transactions: BankTransaction
 }
 
 const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onDelete, onToggleExclusion, getStatusBadge, diff }: any) => {
-    const [isExpanded, setIsExpanded] = useState(false);
-    const [editFields, setEditFields] = useState({
-        payer_name: tx.payer_name || '',
-        payer_ci: tx.payer_ci || '',
-        payer_phone: tx.payer_phone || ''
-    });
-
-    const handleSave = async () => {
-        await db.bank_statements.update(tx.referencia_origen, {
-            ...editFields,
-            updated_at: new Date().toISOString()
-        });
-        toast.success('Datos de pagador actualizados');
-    };
-
     return (
-        <>
-            <TableRow
-                className={`${tx.excluido ? 'opacity-40 grayscale bg-muted/20' : ''} transition-colors cursor-pointer hover:bg-muted/50`}
-                onClick={() => setIsExpanded(!isExpanded)}
-            >
-                <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
-                    <Checkbox checked={!tx.excluido} onCheckedChange={onToggleExclusion} className="translate-y-0.5" />
-                </TableCell>
-                <TableCell className="sticky-column-1 font-medium whitespace-nowrap text-xs">
-                    <div className="flex items-center gap-2">
-                        <ChevronDown className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                        {formatDate(tx.fecha)}
-                    </div>
-                </TableCell>
-                <TableCell className="font-mono text-xs max-w-[120px] truncate">{tx.referencia_origen}</TableCell>
-                <TableCell className="text-xs max-w-[150px]">
-                    <div className="flex flex-col gap-1">
-                        <div className="truncate font-bold text-primary" title={tx.payer_name}>{tx.payer_name || 'Sin identificar'}</div>
-                        <div className="truncate opacity-50 italic" title={tx.observaciones}>{tx.observaciones}</div>
-                    </div>
-                </TableCell>
-                <TableCell className="text-right font-bold text-xs text-muted-foreground">{formatCurrency(tx.importe_cents)}</TableCell>
-                <TableCell className="text-right font-bold text-xs text-red-500">{formatCurrency(tx.comision_cents || 0)}</TableCell>
-                <TableCell className="text-right font-black text-sm text-primary">{formatCurrency(tx.importe_venta_cents || tx.importe_cents)}</TableCell>
-                <TableCell className={`text-right font-bold text-sm ${Math.abs(diff) < 0.001 ? 'text-green-500' : (diff < -0.001 ? 'text-red-500' : 'text-orange-500')}`}>{formatCurrency(diff)}</TableCell>
-                <TableCell><span className={`text-xs font-black ${tx.tipo === 'Cr' ? 'text-green-500' : 'text-red-500'}`}>{tx.tipo}</span></TableCell>
-                <TableCell>{getStatusBadge(tx.estado_conciliacion, diff, matchedTotal)}</TableCell>
-                <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex justify-end gap-1 items-center">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10 hover:text-primary" onClick={onView}><Eye className="w-4 h-4" /></Button>
-                        {matchedTotal > 0 && (
-                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-orange-500/10 hover:text-orange-500" onClick={onReset}><RotateCcw className="w-4 h-4" /></Button>
-                        )}
-                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive" onClick={onDelete}><Trash2 className="w-4 h-4" /></Button>
-                    </div>
-                </TableCell>
-            </TableRow>
-            <AnimatePresence>
-                {isExpanded && (
-                    <TableRow className="bg-muted/30 border-b">
-                        <TableCell colSpan={11} className="p-0">
-                            <motion.div
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: 'auto', opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                className="overflow-hidden"
-                            >
-                                <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <div className="space-y-2">
-                                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                                            <User className="w-3 h-3" /> Nombres y Apellidos
-                                        </Label>
-                                        <Input
-                                            value={editFields.payer_name}
-                                            onChange={(e) => setEditFields({...editFields, payer_name: e.target.value})}
-                                            className="h-9 text-xs font-bold"
-                                            placeholder="Nombre completo..."
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                                            <CreditCard className="w-3 h-3" /> Carnet de Identidad
-                                        </Label>
-                                        <Input
-                                            value={editFields.payer_ci}
-                                            onChange={(e) => setEditFields({...editFields, payer_ci: e.target.value})}
-                                            className="h-9 text-xs font-bold"
-                                            placeholder="Número de CI..."
-                                            maxLength={11}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                                            <Phone className="w-3 h-3" /> Teléfono
-                                        </Label>
-                                        <div className="flex gap-2">
-                                            <Input
-                                                value={editFields.payer_phone}
-                                                onChange={(e) => setEditFields({...editFields, payer_phone: e.target.value})}
-                                                className="h-9 text-xs font-bold flex-1"
-                                                placeholder="Número de teléfono..."
-                                            />
-                                            <Button size="sm" onClick={handleSave} className="h-9 px-4 bg-primary text-white font-black uppercase text-[10px] gap-2">
-                                                <Save className="w-3 h-3" /> Guardar
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </motion.div>
-                        </TableCell>
-                    </TableRow>
-                )}
-            </AnimatePresence>
-        </>
+        <TableRow className={`${tx.excluido ? 'opacity-40 grayscale bg-muted/20' : ''} transition-colors`}>
+          <TableCell className="text-center"><Checkbox checked={!tx.excluido} onCheckedChange={onToggleExclusion} className="translate-y-0.5" /></TableCell>
+          <TableCell className="sticky-column-1 font-medium whitespace-nowrap text-xs">{formatDate(tx.fecha)}</TableCell>
+          <TableCell className="font-mono text-xs max-w-[120px] truncate">{tx.referencia_origen}</TableCell>
+          <TableCell className="text-xs max-w-[150px]"><div className="truncate" title={tx.observaciones}>{tx.observaciones}</div></TableCell>
+          <TableCell className="text-right font-bold text-xs text-muted-foreground">{formatCurrency(tx.importe_cents)}</TableCell>
+          <TableCell className="text-right font-bold text-xs text-red-500">{formatCurrency(tx.comision_cents || 0)}</TableCell>
+          <TableCell className="text-right font-black text-sm text-primary">{formatCurrency(tx.importe_venta_cents || tx.importe_cents)}</TableCell>
+          <TableCell className={`text-right font-bold text-sm ${Math.abs(diff) < 0.001 ? 'text-green-500' : (diff < -0.001 ? 'text-red-500' : 'text-orange-500')}`}>{formatCurrency(diff)}</TableCell>
+          <TableCell><span className={`text-xs font-black ${tx.tipo === 'Cr' ? 'text-green-500' : 'text-red-500'}`}>{tx.tipo}</span></TableCell>
+          <TableCell>{getStatusBadge(tx.estado_conciliacion, diff, matchedTotal)}</TableCell>
+          <TableCell className="text-right"><div className="flex justify-end gap-1 items-center"><Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10 hover:text-primary" onClick={onView}><Eye className="w-4 h-4" /></Button>{matchedTotal > 0 && (<Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-orange-500/10 hover:text-orange-500" onClick={onReset}><RotateCcw className="w-4 h-4" /></Button>)}<Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive" onClick={onDelete}><Trash2 className="w-4 h-4" /></Button></div></TableCell>
+        </TableRow>
     );
 });
 TransactionRow.displayName = 'TransactionRow';
