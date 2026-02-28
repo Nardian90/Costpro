@@ -22,7 +22,17 @@ import {
     PlayCircle,
     Package,
     Network,
-    ShieldCheck
+    ShieldCheck,
+    Workflow,
+    PackageSearch,
+    Table2,
+    Cpu,
+    Zap,
+    BarChart4,
+    FileSearch,
+    Receipt,
+    ArrowRightLeft,
+    QrCode
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -82,12 +92,60 @@ export function IPVControlPanel({ onSelect, onExportBackup, onImportBackup, hasT
             icon: <TrendingUp />,
             variant: 'primary'
         },
-
+        {
+            id: 'dashboard',
+            title: 'Flujo',
+            description: 'Panel de control con acceso directo a todos los módulos del sistema.',
+            icon: <Workflow />,
+            variant: 'dark'
+        },
+        {
+            id: 'ingestion',
+            title: 'Extracto',
+            description: 'Importación y procesamiento de archivos bancarios.',
+            icon: <Database />,
+            variant: 'dark'
+        },
+        {
+            id: 'catalog',
+            title: 'Catálogo',
+            description: 'Gestión de productos, precios y prioridades de inventario.',
+            icon: <PackageSearch />,
+            variant: 'dark'
+        },
+        {
+            id: 'transactions',
+            title: 'Transacciones',
+            description: 'Listado completo de movimientos bancarios y estados.',
+            icon: <Table2 />,
+            variant: 'dark'
+        },
+        {
+            id: 'rules',
+            title: 'Reglas',
+            description: 'Configuración de algoritmos de matching y límites.',
+            icon: <Cpu />,
+            variant: 'dark'
+        },
         {
             id: 'sim',
             title: 'Simulación',
             description: 'Modelado de escenarios y distribución de metas globales.',
-            icon: <PlayCircle />,
+            icon: <Zap />,
+            variant: 'dark'
+        },
+        {
+            id: 'breakdown',
+            title: 'Desglose',
+            description: 'Análisis detallado de la venta real y conciliada.',
+            icon: <BarChart4 />,
+            variant: 'dark'
+        },
+        {
+            id: 'pivot',
+            title: 'Consolidado',
+            description: 'Vista pivot de movimientos bancarios por categoría.',
+            icon: <FileSearch />,
             variant: 'dark'
         },
         {
@@ -98,10 +156,31 @@ export function IPVControlPanel({ onSelect, onExportBackup, onImportBackup, hasT
             variant: 'dark'
         },
         {
-            id: 'rules',
-            title: 'Reglas',
-            description: 'Configuración de algoritmos de matching y límites.',
-            icon: <Settings />,
+            id: 'reports',
+            title: 'Reportes IPV',
+            description: 'Generación de informes oficiales IPV diarios y mensuales.',
+            icon: <FileText />,
+            variant: 'dark'
+        },
+        {
+            id: 'receipts',
+            title: 'Recibos',
+            description: 'Generación de modelos SC-3-01 de ingresos en efectivo.',
+            icon: <Receipt />,
+            variant: 'dark'
+        },
+        {
+            id: 'transfers',
+            title: 'Transferencias',
+            description: 'Reporte especializado de ingresos vía transferencias.',
+            icon: <ArrowRightLeft />,
+            variant: 'dark'
+        },
+        {
+            id: 'qr',
+            title: 'Pagos QR',
+            description: 'Reporte especializado de pagos por Código QR.',
+            icon: <QrCode />,
             variant: 'dark'
         }
     ];
@@ -150,7 +229,7 @@ export function IPVControlPanel({ onSelect, onExportBackup, onImportBackup, hasT
 
 
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {mainActions.map(action => (
                     <ActionCard
                         key={action.id}
