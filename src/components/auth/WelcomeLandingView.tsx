@@ -293,7 +293,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
                   Motor de ingeniería con 14 secciones de gasto, 5 anexos técnicos y validación de ciclos en tiempo real.
                 </p>
               </div>
-              <div className="aspect-video rounded-2xl bg-muted/50 border border-border/50 overflow-hidden relative p-4 group-hover:border-primary/30 transition-colors">
+              <div className="aspect-video rounded-2xl bg-muted/50 border border-border/50 overflow-hidden relative p-4">
                 <div className="absolute inset-0 bg-gradient-to-tr from-violet-500/5 to-transparent" />
                 <div className="space-y-2 relative z-10">
                   <div className="h-4 w-3/4 bg-violet-500/20 rounded-full animate-pulse" />
@@ -461,7 +461,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
       </section>
 
       {/* Simple Footer */}
-      <footer className="py-12 border-t border-border/50 overflow-hidden">
+      <footer className="py-12 border-t border-border/50 overflow-x-auto no-scrollbar">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8 md:gap-6">
           <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
             <CostProLogo size={30} animated={false} className="grayscale" />
@@ -477,8 +477,8 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
               Soporte WhatsApp
               <ExternalLink className="w-2.5 h-2.5" />
             </a>
-            <a href="#" className="hover:text-primary transition-colors flex items-center min-h-[44px] px-2">Términos</a>
-            <a href="#" className="hover:text-primary transition-colors flex items-center min-h-[44px] px-2">Privacidad</a>
+            <a href="#" className="hover:text-primary transition-colors flex items-center min-h-[44px]">Términos</a>
+            <a href="#" className="hover:text-primary transition-colors flex items-center min-h-[44px]">Privacidad</a>
           </div>
         </div>
       </footer>

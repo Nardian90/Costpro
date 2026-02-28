@@ -17,8 +17,7 @@ import {
   CheckCircle2,
   X,
   ArrowRight,
-  Clock,
-  Printer
+  Clock
 } from 'lucide-react';
 import { BankIngestion } from './BankIngestion';
 import { TransactionTable } from './TransactionTable';
@@ -33,7 +32,6 @@ import { ManualReconciliationView } from './ManualReconciliationView';
 import { IPVControlPanel } from './IPVControlPanel';
 import { IPVInstitutionalDashboard } from './IPVInstitutionalDashboard';
 import { IPVRightSidebar } from './IPVRightSidebar';
-import { RelacionBancariaView } from './RelacionBancariaView';
 import { MatchingEngine } from '@/lib/ipv/engine';
 import { exportFullBackup, importFullBackup } from '@/lib/ipv/backup';
 import { recalculateIPVReportsChain } from '@/lib/ipv/utils';
@@ -507,7 +505,6 @@ export default function IPVView() {
                         <TabsTrigger value="analytics" className="px-4 py-4 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Dashboard</TabsTrigger>
                         <TabsTrigger value="dashboard" className="px-4 py-4 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Flujo</TabsTrigger>
                         <TabsTrigger value="transactions" className="px-4 py-4 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Transacciones</TabsTrigger>
-                        <TabsTrigger value="relacion-bancaria" className="px-4 py-4 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Relación Bancaria</TabsTrigger>
                         <TabsTrigger value="sim" className="px-4 py-4 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Simulación</TabsTrigger>
                         <TabsTrigger value="breakdown" className="px-4 py-4 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Desglose</TabsTrigger>
                         <TabsTrigger value="pivot" className="px-4 py-4 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Consolidado</TabsTrigger>
@@ -559,10 +556,6 @@ export default function IPVView() {
               }}
               onForceMatch={handleForceMatch}
             />
-          </TabsContent>
-
-          <TabsContent value="relacion-bancaria" className="m-0">
-            <RelacionBancariaView />
           </TabsContent>
 
           <TabsContent value="manual-recon" className="m-0">

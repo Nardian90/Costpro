@@ -2,7 +2,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { type BankTransaction } from '../dexie';
 import { generateHash } from './engine';
 import { extractCommission, standardizeDate } from './utils';
-import { parseObservations } from './parser';
 
 /**
  * Parses a BANDEC (Banco de Crédito y Comercio) TXT bank statement.
@@ -83,6 +82,8 @@ export async function parseBandecTxt(text: string): Promise<BankTransaction[]> {
 
 async function finalizeTx(tx: BankTransaction, buffer: string[]): Promise<BankTransaction> {
     // Process observations buffer to make it cleaner
+    // We can extract specific info from XML tags if needed later,
+    // for now we just join them into a readable block.
     const rawObs = buffer.join(' ');
 
     // Clean XML tags for better readability in the UI
@@ -93,13 +94,9 @@ async function finalizeTx(tx: BankTransaction, buffer: string[]): Promise<BankTr
 
     tx.observaciones = cleanObs;
 
-    const parsed = parseObservations(rawObs); // Use raw for better extraction from XML if needed
-    tx.comision_cents = parsed.commission || extractCommission(cleanObs);
-    tx.importe_venta_cents = tx.importe_cents + tx.comision_cents;
-
-    tx.payer_name = parsed.payer;
-    tx.payer_ci = parsed.ci;
-    tx.payer_phone = parsed.phone;
+    const commission = extractCommission(cleanObs);
+    tx.comision_cents = commission;
+    tx.importe_venta_cents = tx.importe_cents + commission;
 
     tx.ingestion_hash = await generateHash(`${tx.referencia_origen}-${tx.fecha}-${tx.importe_cents}`);
 

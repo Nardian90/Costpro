@@ -229,7 +229,7 @@ export function IncomeReceiptSection() {
                     <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Modo Agrupación</label>
                     <div className="grid grid-cols-2 gap-2">
                         <Button
-                            variant={settings.agrupacion_modo === 'GLOBAL' ? 'primary' : 'outline'}
+                            variant={settings.agrupacion_modo === 'GLOBAL' ? 'default' : 'outline'}
                             onClick={() => handleUpdateSettings({ agrupacion_modo: 'GLOBAL' })}
                             className="h-10 text-[10px] font-black uppercase gap-2 rounded-xl"
                         >
@@ -237,7 +237,7 @@ export function IncomeReceiptSection() {
                             Global
                         </Button>
                         <Button
-                            variant={settings.agrupacion_modo === 'DETALLADO' ? 'primary' : 'outline'}
+                            variant={settings.agrupacion_modo === 'DETALLADO' ? 'default' : 'outline'}
                             onClick={() => handleUpdateSettings({ agrupacion_modo: 'DETALLADO' })}
                             className="h-10 text-[10px] font-black uppercase gap-2 rounded-xl"
                         >
@@ -346,7 +346,7 @@ export function IncomeReceiptSection() {
             <Button
                 disabled={!currentReceipt}
                 onClick={handleExportPdf}
-                className="neu-btn-primary h-12 px-6 rounded-2xl font-black uppercase tracking-widest text-xs gap-3 shadow-xl active:scale-95 transition-all"
+                className="h-12 px-6 rounded-2xl font-black uppercase tracking-widest text-xs gap-3 shadow-xl active:scale-95 transition-all bg-primary text-white hover:bg-primary/90"
             >
                 <Download className="w-4 h-4" />
                 Exportar Original PDF
