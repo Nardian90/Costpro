@@ -18,6 +18,9 @@ export interface BankTransaction {
   created_at: string;
   updated_at?: string;
   ingestion_hash: string;      // HASH para idempotencia
+  payer_name?: string;
+  payer_ci?: string;
+  payer_phone?: string;
 }
 
 export interface Product {
@@ -159,8 +162,8 @@ export class IPVDatabase extends Dexie {
 
   constructor() {
     super('IPVDB');
-    this.version(6).stores({
-      bank_statements: '&referencia_origen, fecha, importe_cents, ingestion_hash',
+    this.version(7).stores({
+      bank_statements: '&referencia_origen, fecha, importe_cents, ingestion_hash, payer_name, payer_ci, payer_phone',
       products: '&cod, descripcion, precio_cents, prioridad_algoritmo, activo, stock_inicial_manual, isWildcardCandidate',
       matching_rules: '&id, tipo, prioridad',
       reconciliation_lines: '&id, transaction_ref, reconciliation_hash, fecha_operacion',
