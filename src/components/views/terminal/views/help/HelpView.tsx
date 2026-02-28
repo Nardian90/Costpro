@@ -6,7 +6,7 @@ import {
   Book, HelpCircle, ShoppingCart, Package,
   ShieldCheck, Zap, Cpu, Search, ChevronRight,
   FileText, Calculator, TrendingUp, Info, ArrowLeft,
-  Settings, UserCheck, CreditCard, Layout, Download, History, Calendar, CheckCircle2
+  Settings, UserCheck, CreditCard, Layout, Download, History, Calendar, CheckCircle2, GraduationCap
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,7 @@ import { Badge } from '@/components/ui/badge';
 // Diagrams
 import CostFlowDiagram from './help/CostFlowDiagram';
 import QuickModeMassiveDiagram from './help/QuickModeMassiveDiagram';
+import AcademyFlowDiagram from './help/AcademyFlowDiagram';
 import StickyCartFlowDiagram from './help/StickyCartFlowDiagram';
 import MobilePosDiagram from './help/MobilePosDiagram';
 import SalesFlowDiagram from './help/SalesFlowDiagram';
@@ -36,7 +37,7 @@ import KidsOnboarding from './help/KidsOnboarding';
 import { useUIStore } from '@/store';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
-type HelpSection = 'intro' | 'costs' | 'pos' | 'inventory' | 'innovation' | 'security' | 'ipv' | 'admin' | 'kids' | 'resolutions' | 'updates';
+type HelpSection = 'intro' | 'costs' | 'pos' | 'inventory' | 'innovation' | 'academy' | 'security' | 'ipv' | 'admin' | 'kids' | 'resolutions' | 'updates';
 
 export default function HelpView() {
   const [selectedSection, setSelectedSection] = useState<HelpSection>('intro');
@@ -48,6 +49,7 @@ export default function HelpView() {
     { id: 'pos', label: 'Punto de Venta', icon: ShoppingCart, color: 'text-primary' },
     { id: 'inventory', label: 'Inventario', icon: Package, color: 'text-amber-500' },
     { id: 'innovation', label: 'Inteligencia AI', icon: Cpu, color: 'text-emerald-500' },
+    { id: 'academy', label: 'Academia', icon: GraduationCap, color: 'text-indigo-500' },
     { id: 'ipv', label: 'Conciliación IPV', icon: CreditCard, color: 'text-blue-600' },
     { id: 'security', label: 'Seguridad RLS', icon: ShieldCheck, color: 'text-rose-500' },
     { id: 'admin', label: 'Administración', icon: Settings, color: 'text-slate-500' },
@@ -68,7 +70,7 @@ export default function HelpView() {
             </div>
             <div>
               <h1 className="text-xl font-black uppercase tracking-tighter">Centro de Ayuda Profesional</h1>
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.3em]">Documentación Técnica CostPro v5.7</p>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.3em]">Documentación Técnica CostPro v5.7.25</p>
             </div>
           </div>
           <div className="hidden md:flex items-center gap-3">
@@ -310,13 +312,44 @@ export default function HelpView() {
                           </div>
                         </div>
                         <p className="text-lg font-medium leading-relaxed opacity-80 max-w-2xl">
-                          Darian no es solo un chat; es un motor de análisis que integra sus estados financieros,
-                          inventario crítico y tendencias de mercado para ofrecer una visión 360° de su negocio,
-                          incluso sin conexión a internet.
+                          Darian ha evolucionado. Ahora potenciado por <span className="text-primary font-bold">Gemini 1.5 Flash</span>, ofrece una resiliencia superior con gestión avanzada de errores y una capacidad de análisis extendida para sus finanzas y operativa diaria.
                         </p>
                       </div>
                       <DarianDiagram />
                    </div>
+                </div>
+              )}
+
+              {selectedSection === 'academy' && (
+                <div className="space-y-12">
+                   <div className="space-y-4">
+                    <h2 className="text-[clamp(1.75rem,7vw,2.5rem)] font-black uppercase tracking-tighter leading-tight">Academia de Maestría</h2>
+                    <p className="text-muted-foreground font-medium">Entrenamiento continuo potenciado por IA y datos estructurados.</p>
+                    <div className="p-6 rounded-3xl bg-indigo-500/5 border border-indigo-500/10">
+                      <p className="text-sm leading-relaxed text-muted-foreground">
+                        La Academia es su herramienta para dominar CostPro. <span className="text-indigo-600 font-bold">La gran diferencia:</span> Antes el sistema solo leía el PDF (como un profesor leyendo un libro), ahora busca archivos JSON compañeros (como si el profesor tuviera notas estructuradas adicionales) para generar flashcards con una precisión técnica sin precedentes.
+                      </p>
+                    </div>
+                  </div>
+
+                  <AcademyFlowDiagram />
+
+                  <div className="grid md:grid-cols-2 gap-8">
+                    <div className="p-8 rounded-[2.5rem] bg-emerald-500/5 border border-emerald-500/10 space-y-4">
+                      <Brain className="w-8 h-8 text-emerald-500" />
+                      <h4 className="font-black text-xs uppercase">Aprendizaje Adaptativo</h4>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        El sistema prioriza las tarjetas que más le cuestan, asegurando un dominio total de la operativa comercial y las normativas vigentes.
+                      </p>
+                    </div>
+                    <div className="p-8 rounded-[2.5rem] bg-blue-500/5 border border-blue-500/10 space-y-4">
+                      <Library className="w-8 h-8 text-blue-500" />
+                      <h4 className="font-black text-xs uppercase">Biblioteca Dinámica</h4>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Convierta cualquier manual técnico o resolución ministerial en un juego de flashcards en cuestión de segundos.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -427,19 +460,32 @@ export default function HelpView() {
                       {
                         version: "v5.7.25",
                         date: "14 de Marzo, 2026",
+                        title: "Academy & AI Mastery",
+                        description: "Sincronización total de la Academia con datos estructurados y motor de IA de última generación.",
+                        changes: [
+                          "Soporte para Compañeros JSON en Academia para precisión extrema.",
+                          "Migración a Gemini 1.5 Flash y hardening de gestión de errores AI.",
+                          "Nuevo diagrama de flujo de la Academia en la sección de Ayuda.",
+                          "Sincronización global de versiones en metadatos y UI."
+                        ],
+                        status: "Saludable",
+                        score: "9.85"
+                      },
+                      {
+                        version: "v5.7.24",
+                        date: "6 de Marzo, 2026",
                         title: "Express Generation & Quick Mode",
                         description: "Optimización drástica en la eficiencia operativa de la ingeniería de costos.",
                         changes: [
                           "Implementación del Modo Rápido para entrada express de datos.",
                           "Integración de Generación Masiva pre-poblada.",
-                          "Documentación didáctica visual mediante diagramas SVG.",
-                          "Sincronización total de versiones en metadatos y UI."
+                          "Documentación didáctica visual mediante diagramas SVG."
                         ],
-                        status: "Saludable",
+                        status: "Estable",
                         score: "9.65"
                       },
                       {
-                        version: "v5.7.24",
+                        version: "v5.7.23",
                         date: "6 de Marzo, 2026",
                         title: "Next-Gen Welcome Landing",
                         description: "Reposicionamiento estratégico del punto de entrada al sistema.",
@@ -453,7 +499,7 @@ export default function HelpView() {
                         score: "9.45"
                       },
                       {
-                        version: "v5.7.23",
+                        version: "v5.7.22",
                         date: "2 de Marzo, 2026",
                         title: "Hardening & Observability",
                         description: "Fortalecimiento de la integridad de datos y trazabilidad universal.",
