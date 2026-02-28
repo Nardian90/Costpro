@@ -22,8 +22,7 @@ import {
     PlayCircle,
     Package,
     Network,
-    ShieldCheck,
-    Printer
+    ShieldCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -83,13 +82,7 @@ export function IPVControlPanel({ onSelect, onExportBackup, onImportBackup, hasT
             icon: <TrendingUp />,
             variant: 'primary'
         },
-        {
-            id: 'relacion-bancaria',
-            title: 'Relación Bancaria',
-            description: 'Control de transferencias y pagos por QR para exportación.',
-            icon: <Printer />,
-            variant: 'dark'
-        },
+
         {
             id: 'sim',
             title: 'Simulación',

@@ -18,9 +18,6 @@ export interface BankTransaction {
   created_at: string;
   updated_at?: string;
   ingestion_hash: string;      // HASH para idempotencia
-  payer_name?: string;
-  payer_ci?: string;
-  payer_phone?: string;
 }
 
 export interface Product {
@@ -147,6 +144,17 @@ export interface MatchingCache {
   updated_at: string;
 }
 
+export interface IPVSettings {
+  id: string; // "current"
+  entidad_nombre: string;
+  entidad_codigo: string;
+  persona_entrega: string;
+  consecutivo_inicio: number;
+  agrupacion_modo: 'GLOBAL' | 'DETALLADO';
+  desglose_modo: 'DIA' | 'TRANSACCION';
+  updated_at: string;
+}
+
 // --- Dexie Database ---
 
 export class IPVDatabase extends Dexie {
@@ -159,11 +167,12 @@ export class IPVDatabase extends Dexie {
   daily_aggregates!: Table<DailyAggregate>;
   matching_cache!: Table<MatchingCache>;
   ingestion_errors!: Table<IngestionError>;
+  ipv_settings!: Table<IPVSettings>;
 
   constructor() {
     super('IPVDB');
     this.version(7).stores({
-      bank_statements: '&referencia_origen, fecha, importe_cents, ingestion_hash, payer_name, payer_ci, payer_phone',
+      bank_statements: '&referencia_origen, fecha, importe_cents, ingestion_hash',
       products: '&cod, descripcion, precio_cents, prioridad_algoritmo, activo, stock_inicial_manual, isWildcardCandidate',
       matching_rules: '&id, tipo, prioridad',
       reconciliation_lines: '&id, transaction_ref, reconciliation_hash, fecha_operacion',
@@ -171,7 +180,8 @@ export class IPVDatabase extends Dexie {
       cash_adjustments: '&id, fecha',
       daily_aggregates: '&fecha',
       matching_cache: '&importe_cents',
-      ingestion_errors: 'id, fecha, referencia_origen'
+      ingestion_errors: 'id, fecha, referencia_origen',
+      ipv_settings: 'id'
     });
   }
 }

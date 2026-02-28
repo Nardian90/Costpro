@@ -2,7 +2,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
 
-export async function generateLegalPdf(model: any, data: any) {
+export async function generateLegalPdf(model: any, data: any, options: { skipCopy?: boolean } = {}) {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -102,17 +102,20 @@ export async function generateLegalPdf(model: any, data: any) {
       doc.text('FIRMA ENTREGA', pageWidth - 65, sigY + 5);
     };
 
-    // Draw Original and Copy
+    // Draw Original
     drawReceipt(0, "ORIGINAL");
 
-    // Scissor line
-    doc.setLineDashPattern([2, 2], 0);
-    doc.setDrawColor(150);
-    doc.line(0, pageHeight / 2, pageWidth, pageHeight / 2);
-    doc.setLineDashPattern([], 0);
-    doc.setDrawColor(0);
+    if (!options || !options.skipCopy) {
+      // Scissor line
+      doc.setLineDashPattern([2, 2], 0);
+      doc.setDrawColor(150);
+      doc.line(0, pageHeight / 2, pageWidth, pageHeight / 2);
+      doc.setLineDashPattern([], 0);
+      doc.setDrawColor(0);
 
-    drawReceipt(pageHeight / 2, "COPIA");
+      // Draw Copy
+      drawReceipt(pageHeight / 2, "COPIA");
+    }
 
   } else {
     // Standard layout for other models (Unchanged but ensuring autoTable call)
