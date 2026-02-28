@@ -1,5 +1,1 @@
-
-> nextjs_tailwind_shadcn_ts@5.7.25 dev
-> next dev -p 3000
-
-sh: 1: next: not found
+-bash: ./node_modules/.bin/next: No such file or directory

@@ -82,7 +82,8 @@ export const calculateCostSheetHealth = (
                     type: 'WARNING',
                     category: 'Rentabilidad',
                     title: 'Utilidad Excesiva',
-                    message: `La relación utilidad/costo (${(ratio * 100).toFixed(2)}%) supera el límite prudencial del 30%.`,
+                    message: `La relación utilidad/costo (${(ratio * 100).toFixed(2)}%) supera el límite del 30% establecido por la Resolución 148.`,
+                    rowId: utilId,
                     value: ratio
                 });
             } else {
@@ -90,7 +91,8 @@ export const calculateCostSheetHealth = (
                     type: 'SUCCESS',
                     category: 'Rentabilidad',
                     title: 'Rentabilidad Validada',
-                    message: `La relación utilidad/costo (${(ratio * 100).toFixed(2)}%) está dentro del rango prudencial.`,
+                    message: `La relación utilidad/costo (${(ratio * 100).toFixed(2)}%) cumple con la Resolución 148.`,
+                    rowId: utilId,
                     value: ratio
                 });
             }

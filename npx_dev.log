@@ -14,32 +14,28 @@ Progress: resolved 0, reused 0, downloaded 1, added 0
    │                                          │
    ╰──────────────────────────────────────────╯
 
-Progress: resolved 61, reused 0, downloaded 61, added 0
-Progress: resolved 74, reused 0, downloaded 74, added 0
-Progress: resolved 84, reused 0, downloaded 84, added 0
-Progress: resolved 97, reused 0, downloaded 97, added 0
-Progress: resolved 109, reused 0, downloaded 109, added 0
+Progress: resolved 57, reused 0, downloaded 57, added 0
+Progress: resolved 77, reused 0, downloaded 77, added 0
+Progress: resolved 81, reused 0, downloaded 81, added 0
+Progress: resolved 99, reused 0, downloaded 99, added 0
 Progress: resolved 110, reused 0, downloaded 110, added 0
 Progress: resolved 110, reused 0, downloaded 111, added 0
-Progress: resolved 173, reused 0, downloaded 165, added 0
-Progress: resolved 282, reused 0, downloaded 268, added 0
-Progress: resolved 391, reused 0, downloaded 377, added 0
-Progress: resolved 446, reused 0, downloaded 434, added 0
-Progress: resolved 504, reused 0, downloaded 493, added 0
-Progress: resolved 588, reused 0, downloaded 556, added 0
-Progress: resolved 600, reused 0, downloaded 560, added 0
-Progress: resolved 629, reused 0, downloaded 565, added 0
-Progress: resolved 661, reused 0, downloaded 578, added 0
-Progress: resolved 777, reused 0, downloaded 700, added 0
-Progress: resolved 978, reused 0, downloaded 902, added 0
-Progress: resolved 1122, reused 0, downloaded 987, added 0
-Progress: resolved 1252, reused 0, downloaded 1117, added 0
+Progress: resolved 202, reused 0, downloaded 188, added 0
+Progress: resolved 378, reused 0, downloaded 364, added 0
+Progress: resolved 417, reused 0, downloaded 405, added 0
+Progress: resolved 436, reused 0, downloaded 425, added 0
+Progress: resolved 521, reused 0, downloaded 474, added 0
+Progress: resolved 533, reused 0, downloaded 479, added 0
+Progress: resolved 577, reused 0, downloaded 527, added 0
+Progress: resolved 610, reused 0, downloaded 540, added 0
+Progress: resolved 811, reused 0, downloaded 725, added 0
+Progress: resolved 1028, reused 0, downloaded 891, added 0
+Progress: resolved 1252, reused 0, downloaded 1118, added 0
  WARN  9 deprecated subdependencies found: core-js@2.6.12, fsevents@1.2.13, glob@7.2.3, inflight@1.0.6, intersection-observer@0.10.0, resolve-url@0.2.1, source-map-resolve@0.5.3, source-map-url@0.4.1, urix@0.1.0
-Progress: resolved 1260, reused 0, downloaded 1128, added 0
 Packages: +1120
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-Progress: resolved 1260, reused 0, downloaded 1128, added 413
-Progress: resolved 1260, reused 0, downloaded 1128, added 951
+Progress: resolved 1260, reused 0, downloaded 1128, added 97
+Progress: resolved 1260, reused 0, downloaded 1128, added 972
 Progress: resolved 1260, reused 0, downloaded 1128, added 1119
 Progress: resolved 1260, reused 0, downloaded 1128, added 1120, done
 
@@ -168,7 +164,7 @@ devDependencies:
 │   to run scripts.                                                            │
 │                                                                              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
-Done in 31.2s using pnpm v10.28.0
+Done in 27.8s using pnpm v10.28.0
 
 ▲ Next.js 16.1.6 (Turbopack)
 - Local:         http://localhost:3000
@@ -180,10 +176,92 @@ This information is used to shape Next.js' roadmap and prioritize features.
 You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
 https://nextjs.org/telemetry
 
-✓ Ready in 32.7s
+✓ Ready in 29.3s
 ○ Compiling / ...
 ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
 Supabase environment variables are missing. Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment.
- GET / 200 in 28.0s (compile: 26.9s, render: 1102ms)
+ GET / 200 in 163ms (compile: 48ms, render: 115ms)
+ GET / 200 in 570ms (compile: 392ms, render: 178ms)
+ GET / 200 in 114ms (compile: 24ms, render: 90ms)
+ GET / 200 in 221ms (compile: 31ms, render: 190ms)
+ GET / 200 in 124ms (compile: 36ms, render: 88ms)
+ GET / 200 in 140ms (compile: 49ms, render: 91ms)
+ GET / 200 in 109ms (compile: 25ms, render: 85ms)
+ GET / 200 in 217ms (compile: 28ms, render: 190ms)
 ○ Compiling /login ...
-✓ Finished writing to filesystem cache in 10.8s
+ GET /login 200 in 3.5s (compile: 3.2s, render: 323ms)
+ GET /terminal?view=cost-sheets 404 in 1692ms (compile: 1530ms, render: 161ms)
+ GET / 200 in 120ms (compile: 37ms, render: 84ms)
+ GET / 200 in 156ms (compile: 36ms, render: 120ms)
+ GET /login 200 in 71ms (compile: 37ms, render: 34ms)
+ GET /terminal?view=cost-sheets 404 in 193ms (compile: 80ms, render: 113ms)
+ GET / 200 in 93ms (compile: 23ms, render: 70ms)
+ GET / 200 in 83ms (compile: 23ms, render: 60ms)
+ GET /login 200 in 58ms (compile: 33ms, render: 25ms)
+ GET /terminal?view=cost-sheets 404 in 152ms (compile: 62ms, render: 90ms)
+ GET / 200 in 121ms (compile: 37ms, render: 84ms)
+ GET / 200 in 159ms (compile: 54ms, render: 104ms)
+ GET /login 200 in 73ms (compile: 39ms, render: 33ms)
+ GET /terminal?view=cost-sheets 404 in 180ms (compile: 89ms, render: 91ms)
+ GET / 200 in 104ms (compile: 26ms, render: 78ms)
+ GET / 200 in 128ms (compile: 36ms, render: 91ms)
+ GET /login 200 in 63ms (compile: 29ms, render: 34ms)
+⨯ ./src/components/views/terminal/views/cost_sheet/CostSheetInteractiveTable.tsx:88:11
+Ecmascript file had an error
+[0m [90m 86 |[39m       [36mreturn[39m [36mnull[39m[33m;[39m
+ [90m 87 |[39m     }[33m;[39m
+[31m[1m>[22m[39m[90m 88 |[39m     [36mconst[39m findInRow [33m=[39m (r[33m:[39m any)[33m:[39m any [33m=>[39m {
+ [90m    |[39m           [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 89 |[39m       [36mif[39m (r[33m.[39mid [33m===[39m row[33m.[39mid) [36mreturn[39m r[33m;[39m
+ [90m 90 |[39m       [36mif[39m (r[33m.[39mchildren) {
+ [90m 91 |[39m         [36mfor[39m ([36mconst[39m child [36mof[39m r[33m.[39mchildren) {[0m
+
+the name `findInRow` is defined multiple times
+
+Import traces:
+  Client Component Browser:
+    ./src/components/views/terminal/views/cost_sheet/CostSheetInteractiveTable.tsx [Client Component Browser]
+    ./src/components/views/terminal/views/cost_sheet/CostSheetView.tsx [Client Component Browser]
+    ./src/components/views/TerminalShell.tsx [Client Component Browser]
+    ./src/components/views/TerminalShell.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/views/terminal/views/cost_sheet/CostSheetInteractiveTable.tsx [Client Component SSR]
+    ./src/components/views/terminal/views/cost_sheet/CostSheetView.tsx [Client Component SSR]
+    ./src/components/views/TerminalShell.tsx [Client Component SSR]
+    ./src/components/views/TerminalShell.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+
+ GET / 500 in 3.5s (compile: 3.3s, render: 269ms)
+⨯ ./src/components/views/terminal/views/cost_sheet/CostSheetInteractiveTable.tsx:88:11
+Ecmascript file had an error
+[0m [90m 86 |[39m       [36mreturn[39m [36mnull[39m[33m;[39m
+ [90m 87 |[39m     }[33m;[39m
+[31m[1m>[22m[39m[90m 88 |[39m     [36mconst[39m findInRow [33m=[39m (r[33m:[39m any)[33m:[39m any [33m=>[39m {
+ [90m    |[39m           [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 89 |[39m       [36mif[39m (r[33m.[39mid [33m===[39m row[33m.[39mid) [36mreturn[39m r[33m;[39m
+ [90m 90 |[39m       [36mif[39m (r[33m.[39mchildren) {
+ [90m 91 |[39m         [36mfor[39m ([36mconst[39m child [36mof[39m r[33m.[39mchildren) {[0m
+
+the name `findInRow` is defined multiple times
+
+Import traces:
+  Client Component Browser:
+    ./src/components/views/terminal/views/cost_sheet/CostSheetInteractiveTable.tsx [Client Component Browser]
+    ./src/components/views/terminal/views/cost_sheet/CostSheetView.tsx [Client Component Browser]
+    ./src/components/views/TerminalShell.tsx [Client Component Browser]
+    ./src/components/views/TerminalShell.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/views/terminal/views/cost_sheet/CostSheetInteractiveTable.tsx [Client Component SSR]
+    ./src/components/views/terminal/views/cost_sheet/CostSheetView.tsx [Client Component SSR]
+    ./src/components/views/TerminalShell.tsx [Client Component SSR]
+    ./src/components/views/TerminalShell.tsx [Server Component]
+    ./src/app/page.tsx [Server Component]
+
+
+ GET / 500 in 52ms (compile: 36ms, render: 16ms)
+ GET /terminal?view=cost-sheets 404 in 147ms (compile: 46ms, render: 102ms)

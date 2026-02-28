@@ -112,7 +112,7 @@ export function ChatBot() {
             whileTap={{ scale: 0.9 }}
           >
             <div className="absolute inset-0 bg-gradient-to-tr from-primary via-primary/80 to-violet-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <MessageSquare className="w-6 h-6 relative z-10" />
+            <div className="flex flex-col items-center gap-1 z-10"><MessageSquare className="w-6 h-6 text-white" /><span className="text-[8px] font-black uppercase text-white tracking-widest">Chat AI</span></div>
             <Sparkles className="absolute -top-1 -right-1 w-4 h-4 text-amber-300 opacity-0 group-hover:opacity-100 transition-all duration-500 delay-100" />
           </motion.button>
         )}

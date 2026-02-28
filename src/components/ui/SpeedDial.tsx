@@ -75,13 +75,13 @@ export const SpeedDial: React.FC<SpeedDialProps> = ({ actions, className }) => {
           onClick={() => setIsOpen(!isOpen)}
           className={cn(
             "w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all active:scale-90 z-20 neu-raised hover:neu-raised-hover",
-            isOpen ? "bg-background border-2 border-primary text-primary rotate-0" : "bg-primary text-primary-foreground"
+            isOpen ? "bg-background border-2 border-primary text-primary rotate-0" : "bg-primary text-white"
           )}
         >
           {isOpen ? (
             <X className="w-7 h-7" />
           ) : (
-            <Plus className="w-7 h-7" />
+            <div className="flex flex-col items-center justify-center scale-75"><Plus className="w-8 h-8 text-white" /></div>
           )}
         </motion.button>
 

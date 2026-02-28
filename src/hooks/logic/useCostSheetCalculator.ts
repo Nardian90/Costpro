@@ -494,6 +494,17 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
       // Calculate health validations
       const health = calculateCostSheetHealth(template, newCalculatedValues, finalHeader);
 
+      // Merge health validations into rows
+      health.validations.forEach(v => {
+          if (v.rowId && newCalculatedValues[v.rowId]) {
+              newCalculatedValues[v.rowId].validationErrors = [
+                  ...(newCalculatedValues[v.rowId].validationErrors || []),
+                  { message: v.message, type: v.type, code: v.category }
+              ];
+              newCalculatedValues[v.rowId].hasWarnings = true;
+          }
+      });
+
       setResultState({
           calculatedValues: newCalculatedValues,
           calculatedHeader: finalHeader,
