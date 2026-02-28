@@ -102,7 +102,7 @@ export default function HelpView() {
               key={section.id}
               onClick={() => setSelectedSection(section.id as HelpSection)}
               className={cn(
-                "flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl transition-all whitespace-nowrap font-black text-[10px] uppercase tracking-widest",
+                "flex-shrink-0 flex items-center gap-2 px-4 h-11 rounded-xl transition-all whitespace-nowrap font-black text-[10px] uppercase tracking-widest",
                 selectedSection === section.id
                   ? "bg-primary text-white"
                   : "bg-background border border-border text-muted-foreground hover:bg-muted"
@@ -190,7 +190,7 @@ export default function HelpView() {
               {selectedSection === 'costs' && (
                 <div className="space-y-12">
                    <div className="space-y-4">
-                      <h2 className="text-[clamp(1.75rem,7vw,2.5rem)] font-black uppercase tracking-tighter leading-tight">Ingeniería de Costos v5</h2>
+                      <h2 className="text-[clamp(1.5rem,7vw,2.25rem)] font-black uppercase tracking-tighter leading-tight">Ingeniería de Costos v5</h2>
                       <p className="text-muted-foreground font-medium">Cumplimiento total con normativas vigentes y precisión decimal extendida.</p>
                    <div className="p-6 rounded-3xl bg-primary/5 border border-primary/10">
                       <p className="text-sm leading-relaxed text-muted-foreground">
@@ -235,7 +235,7 @@ export default function HelpView() {
               {selectedSection === 'pos' && (
                 <div className="space-y-12">
                   <div className="space-y-4">
-                    <h2 className="text-[clamp(1.75rem,7vw,2.5rem)] font-black uppercase tracking-tighter leading-tight">Punto de Venta Móvil</h2>
+                    <h2 className="text-[clamp(1.5rem,7vw,2.25rem)] font-black uppercase tracking-tighter leading-tight">Punto de Venta Móvil</h2>
                     <p className="text-muted-foreground font-medium">Diseñado para entornos de alto tráfico con controles táctiles optimizados.</p>
                   <div className="grid md:grid-cols-3 gap-6">
                     <div className="p-6 rounded-3xl bg-card border border-border">
@@ -274,7 +274,7 @@ export default function HelpView() {
               {selectedSection === 'inventory' && (
                 <div className="space-y-12">
                    <div className="space-y-4">
-                    <h2 className="text-[clamp(1.75rem,7vw,2.5rem)] font-black uppercase tracking-tighter leading-tight">Gestión de Almacenes</h2>
+                    <h2 className="text-[clamp(1.5rem,7vw,2.25rem)] font-black uppercase tracking-tighter leading-tight">Gestión de Almacenes</h2>
                     <p className="text-muted-foreground font-medium">Trazabilidad total de existencias y control de merma.</p>
                   <div className="p-6 rounded-3xl bg-amber-500/5 border border-amber-500/10">
                     <p className="text-sm leading-relaxed text-muted-foreground">
@@ -323,7 +323,7 @@ export default function HelpView() {
               {selectedSection === 'security' && (
                 <div className="space-y-12">
                    <div className="space-y-4">
-                    <h2 className="text-[clamp(1.75rem,7vw,2.5rem)] font-black uppercase tracking-tighter leading-tight">Arquitectura de Seguridad</h2>
+                    <h2 className="text-[clamp(1.5rem,7vw,2.25rem)] font-black uppercase tracking-tighter leading-tight">Arquitectura de Seguridad</h2>
                     <p className="text-muted-foreground font-medium">Privacidad de grado empresarial mediante Row-Level Security.</p>
                   <div className="p-6 rounded-3xl bg-rose-500/5 border border-rose-500/10">
                     <p className="text-sm leading-relaxed text-muted-foreground">
@@ -354,7 +354,7 @@ export default function HelpView() {
               {selectedSection === 'ipv' && (
                 <div className="space-y-12">
                    <div className="space-y-4">
-                    <h2 className="text-[clamp(1.75rem,7vw,2.5rem)] font-black uppercase tracking-tighter leading-tight">Conciliación Bancaria IPV</h2>
+                    <h2 className="text-[clamp(1.5rem,7vw,2.25rem)] font-black uppercase tracking-tighter leading-tight">Conciliación Bancaria IPV</h2>
                     <p className="text-muted-foreground font-medium">Sincronización automática entre ventas POS y movimientos de cuenta.</p>
                   </div>
                   <IpvFlowDiagram />
@@ -364,7 +364,7 @@ export default function HelpView() {
               {selectedSection === 'admin' && (
                 <div className="space-y-12">
                    <div className="space-y-4">
-                    <h2 className="text-[clamp(1.75rem,7vw,2.5rem)] font-black uppercase tracking-tighter leading-tight">Panel de Administración</h2>
+                    <h2 className="text-[clamp(1.5rem,7vw,2.25rem)] font-black uppercase tracking-tighter leading-tight">Panel de Administración</h2>
                     <p className="text-muted-foreground font-medium">Gestión centralizada de usuarios, roles y sucursales.</p>
                   </div>
                   <RolesDiagram />
@@ -383,7 +383,7 @@ export default function HelpView() {
               {selectedSection === "resolutions" && (
                 <div className="space-y-12">
                   <div className="space-y-4">
-                    <h2 className="text-[clamp(1.75rem,7vw,2.5rem)] font-black uppercase tracking-tighter leading-tight">Base Normativa</h2>
+                    <h2 className="text-[clamp(1.5rem,7vw,2.25rem)] font-black uppercase tracking-tighter leading-tight">Base Normativa</h2>
                     <p className="text-muted-foreground font-medium">Resoluciones y leyes que rigen la ingeniería de costos en Cuba.</p>
                   </div>
 
@@ -418,7 +418,7 @@ export default function HelpView() {
               {selectedSection === 'updates' && (
                 <div className="space-y-12">
                   <div className="space-y-4">
-                    <h2 className="text-[clamp(1.75rem,7vw,2.5rem)] font-black uppercase tracking-tighter leading-tight">Historial de Actualizaciones</h2>
+                    <h2 className="text-[clamp(1.5rem,7vw,2.25rem)] font-black uppercase tracking-tighter leading-tight">Historial de Actualizaciones</h2>
                     <p className="text-muted-foreground font-medium">Registro cronológico de mejoras y nuevas funcionalidades en CostPro.</p>
                   </div>
 
