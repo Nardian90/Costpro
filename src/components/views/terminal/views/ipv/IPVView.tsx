@@ -17,7 +17,19 @@ import {
   CheckCircle2,
   X,
   ArrowRight,
-  Clock
+  Clock,
+  TrendingUp,
+  Workflow,
+  Database,
+  Table2,
+  Cpu,
+  Zap,
+  BarChart4,
+  PackageSearch,
+  FileSearch,
+  Receipt,
+  ArrowRightLeft,
+  QrCode
 } from 'lucide-react';
 import { BankIngestion } from './BankIngestion';
 import { TransactionTable } from './TransactionTable';
@@ -32,10 +44,13 @@ import { ManualReconciliationView } from './ManualReconciliationView';
 import { IPVControlPanel } from './IPVControlPanel';
 import { IPVInstitutionalDashboard } from './IPVInstitutionalDashboard';
 import { IPVRightSidebar } from './IPVRightSidebar';
+import { IncomeReceiptSection } from './IncomeReceiptSection';
+import { TransferQRReportView } from './TransferQRReportView';
+import { IPVReportsDropdown } from './IPVReportsDropdown';
 import { MatchingEngine } from '@/lib/ipv/engine';
 import { exportFullBackup, importFullBackup } from '@/lib/ipv/backup';
 import { recalculateIPVReportsChain } from '@/lib/ipv/utils';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
 import { HorizontalScroll } from '@/components/ui/HorizontalScroll';
@@ -44,7 +59,7 @@ import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/comp
 import { IPVHelpDialog } from './IPVHelpDialog';
 
 export default function IPVView() {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('analytics');
   const [isMatching, setIsMatching] = useState(false);
   const [matchMessage, setMatchMessage] = useState('');
   const [matchProgress, setMatchProgress] = useState(0);
@@ -341,6 +356,25 @@ export default function IPVView() {
     }
   ], [handleGlobalRecalculate, handleRunMatching]);
 
+  const menuActions: Action[] = useMemo(() => [
+    { id: 'analytics', label: 'Dashboard', icon: TrendingUp, onClick: () => setActiveTab('analytics'), active: activeTab === 'analytics' },
+    { id: 'dashboard', label: 'Flujo', icon: Workflow, onClick: () => setActiveTab('dashboard'), active: activeTab === 'dashboard' },
+    { id: 'ingestion', label: 'Extracto', icon: Database, onClick: () => setActiveTab('ingestion'), active: activeTab === 'ingestion' },
+    { id: 'catalog', label: 'Catálogo', icon: PackageSearch, onClick: () => setActiveTab('catalog'), active: activeTab === 'catalog' },
+    { id: 'transactions', label: 'Transacciones', icon: Table2, onClick: () => setActiveTab('transactions'), active: activeTab === 'transactions' },
+    { id: 'rules', label: 'Reglas', icon: Cpu, onClick: () => setActiveTab('rules'), active: activeTab === 'rules' },
+    { id: 'sim', label: 'Simulación', icon: Zap, onClick: () => setActiveTab('sim'), active: activeTab === 'sim' },
+    { id: 'breakdown', label: 'Desglose', icon: BarChart4, onClick: () => setActiveTab('breakdown'), active: activeTab === 'breakdown' },
+    { id: 'pivot', label: 'Consolidado', icon: FileSearch, onClick: () => setActiveTab('pivot'), active: activeTab === 'pivot' },
+    { id: 'errors', label: 'Errores', icon: AlertCircle, onClick: () => setActiveTab('errors'), active: activeTab === 'errors' },
+    {
+        id: 'reports-dropdown',
+        label: '',
+        onClick: () => {},
+        component: <IPVReportsDropdown activeTab={activeTab} onSelect={setActiveTab} />
+    }
+  ], [activeTab]);
+
   if (!isStarted) {
     return (
         <div className="space-y-6 animate-in fade-in duration-700">
@@ -498,109 +532,128 @@ export default function IPVView() {
 
       <IPVRightSidebar activeTab={activeTab} onSelect={setActiveTab} />
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <div className="sticky top-[60px] sm:top-[92px] z-20 bg-background/95 backdrop-blur-md mb-6 py-2 -mx-0 px-0 sm:-mx-8 sm:px-8 lg:-mx-12 lg:px-12">
-                <HorizontalScroll containerClassName="bg-muted/50 rounded-2xl p-1">
-                    <TabsList className="flex bg-transparent border-none w-max min-w-full h-auto p-0 gap-1">
-                        <TabsTrigger value="analytics" className="px-4 py-4 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Dashboard</TabsTrigger>
-                        <TabsTrigger value="dashboard" className="px-4 py-4 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Flujo</TabsTrigger>
-                        <TabsTrigger value="transactions" className="px-4 py-4 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Transacciones</TabsTrigger>
-                        <TabsTrigger value="sim" className="px-4 py-4 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Simulación</TabsTrigger>
-                        <TabsTrigger value="breakdown" className="px-4 py-4 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Desglose</TabsTrigger>
-                        <TabsTrigger value="pivot" className="px-4 py-4 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Consolidado</TabsTrigger>
-                        <TabsTrigger value="catalog" className="px-4 py-4 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Catálogo</TabsTrigger>
-                        <TabsTrigger value="ingestion" className="px-4 py-4 text-xs sm:text-xs font-black uppercase tracking-widest text-nowrap shrink-0 rounded-xl">Extracto</TabsTrigger>
-                        <TabsTrigger value="errors" className="px-4 py-4 text-xs sm:text-xs font-black uppercase tracking-widest relative shrink-0 rounded-xl">
-                            Errores
-                            {ingestionErrorsCount > 0 && (
-                                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs text-white font-black shadow-sm animate-pulse">
-                                    {ingestionErrorsCount}
-                                </span>
-                            )}
-                        </TabsTrigger>
-                        <TabsTrigger value="reports" className="px-4 py-4 text-xs sm:text-xs font-black uppercase tracking-widest text-nowrap shrink-0 rounded-xl">Reportes IPV</TabsTrigger>
-                        <TabsTrigger value="rules" className="px-4 py-4 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">Reglas</TabsTrigger>
-                        {selectedReconTx && (
-                            <TabsTrigger value="manual-recon" className="px-4 py-4 text-xs sm:text-xs font-black uppercase tracking-widest shrink-0 rounded-xl">
-                                Conciliación
-                            </TabsTrigger>
-                        )}
-                    </TabsList>
-                </HorizontalScroll>
-            </div>
+      <div className="w-full">
+            <ActionMenu
+                actions={menuActions}
+                sticky={true}
+                topOffset="sticky top-[60px] sm:top-[92px]"
+                className="mb-6 !-mx-4 px-4 py-2"
+            />
 
         <div className={(activeTab === 'dashboard' || activeTab === 'analytics') ? '' : 'mt-6 p-0 overflow-hidden border-none shadow-xl bg-card/50 backdrop-blur-sm rounded-3xl'}>
-          <TabsContent value="analytics" className="m-0">
-            <IPVInstitutionalDashboard transactions={transactions || []} reconciliationLines={reconciliationLines || []} />
-          </TabsContent>
-          <TabsContent value="dashboard" className="m-0">
-            <IPVControlPanel
-              onSelect={(id) => {
-                  if (id === 'help') setIsHelpOpen(true);
-                  else setActiveTab(id);
-              }}
-              onExportBackup={() => exportFullBackup(db)}
-              onImportBackup={handleImportBackup}
-              hasTransactions={!!transactions && transactions.length > 0}
-              hasProducts={!!products && products.length > 0}
-            />
-          </TabsContent>
-          <TabsContent value="transactions" className="m-0">
-            <TransactionTable
-              transactions={transactions || []}
-              kpiFilter={kpiFilter}
-              txReconciliationTotals={txTotals}
-              onReconcile={(tx) => {
-                setSelectedReconTx(tx);
-                setActiveTab('manual-recon');
-              }}
-              onForceMatch={handleForceMatch}
-            />
-          </TabsContent>
-
-          <TabsContent value="manual-recon" className="m-0">
-            <ManualReconciliationView
-                transaction={selectedReconTx}
-                onBack={() => {
-                    setActiveTab('transactions');
-                    setSelectedReconTx(null);
+          {activeTab === 'analytics' && (
+            <div className="m-0 animate-in fade-in duration-500">
+                <IPVInstitutionalDashboard transactions={transactions || []} reconciliationLines={reconciliationLines || []} />
+            </div>
+          )}
+          {activeTab === 'dashboard' && (
+            <div className="m-0 animate-in fade-in duration-500">
+                <IPVControlPanel
+                onSelect={(id) => {
+                    if (id === 'help') setIsHelpOpen(true);
+                    else setActiveTab(id);
                 }}
-            />
-          </TabsContent>
+                onExportBackup={() => exportFullBackup(db)}
+                onImportBackup={handleImportBackup}
+                hasTransactions={!!transactions && transactions.length > 0}
+                hasProducts={!!products && products.length > 0}
+                />
+            </div>
+          )}
+          {activeTab === 'transactions' && (
+            <div className="m-0 animate-in fade-in duration-500">
+                <TransactionTable
+                transactions={transactions || []}
+                kpiFilter={kpiFilter}
+                txReconciliationTotals={txTotals}
+                onReconcile={(tx) => {
+                    setSelectedReconTx(tx);
+                    setActiveTab('manual-recon');
+                }}
+                onForceMatch={handleForceMatch}
+                />
+            </div>
+          )}
 
-          <TabsContent value="sim" className="m-0">
-            <MatchingSimulation products={products || []} rules={rules || []} />
-          </TabsContent>
+          {activeTab === 'manual-recon' && (
+            <div className="m-0 animate-in fade-in duration-500">
+                <ManualReconciliationView
+                    transaction={selectedReconTx}
+                    onBack={() => {
+                        setActiveTab('transactions');
+                        setSelectedReconTx(null);
+                    }}
+                />
+            </div>
+          )}
 
-          <TabsContent value="breakdown" className="m-0">
-            <TransactionBreakdown />
-          </TabsContent>
+          {activeTab === 'sim' && (
+            <div className="m-0 animate-in fade-in duration-500">
+                <MatchingSimulation products={products || []} rules={rules || []} />
+            </div>
+          )}
 
-          <TabsContent value="pivot" className="m-0">
-            <PivotStatementView />
-          </TabsContent>
+          {activeTab === 'breakdown' && (
+            <div className="m-0 animate-in fade-in duration-500">
+                <TransactionBreakdown />
+            </div>
+          )}
 
-          <TabsContent value="catalog" className="m-0">
-            <CatalogTable />
-          </TabsContent>
+          {activeTab === 'pivot' && (
+            <div className="m-0 animate-in fade-in duration-500">
+                <PivotStatementView />
+            </div>
+          )}
 
-          <TabsContent value="ingestion" className="m-0 p-6">
-            <BankIngestion />
-          </TabsContent>
+          {activeTab === 'catalog' && (
+            <div className="m-0 animate-in fade-in duration-500">
+                <CatalogTable />
+            </div>
+          )}
 
-          <TabsContent value="reports" className="m-0">
-            <IPVReportView />
-          </TabsContent>
+          {activeTab === 'ingestion' && (
+            <div className="m-0 p-6 animate-in fade-in duration-500">
+                <BankIngestion />
+            </div>
+          )}
 
-          <TabsContent value="rules" className="m-0 p-6">
-            <MatchingRulesEditor />
-          </TabsContent>
+          {activeTab === 'reports' && (
+            <div className="m-0 animate-in fade-in duration-500">
+                <IPVReportView />
+            </div>
+          )}
 
-          <TabsContent value="errors" className="m-0">
-            <IngestionErrorsTable />
-          </TabsContent>
+          {activeTab === 'receipts' && (
+            <div className="m-0 p-6 animate-in fade-in duration-500">
+                <IncomeReceiptSection />
+            </div>
+          )}
+
+          {activeTab === 'transfers' && (
+            <div className="m-0 p-6 animate-in fade-in duration-500">
+                <TransferQRReportView type="TRANSFER" />
+            </div>
+          )}
+
+          {activeTab === 'qr' && (
+            <div className="m-0 p-6 animate-in fade-in duration-500">
+                <TransferQRReportView type="QR" />
+            </div>
+          )}
+
+          {activeTab === 'rules' && (
+            <div className="m-0 p-6 animate-in fade-in duration-500">
+                <MatchingRulesEditor />
+            </div>
+          )}
+
+          {activeTab === 'errors' && (
+            <div className="m-0 animate-in fade-in duration-500">
+                <IngestionErrorsTable />
+            </div>
+          )}
         </div>
-      </Tabs>
+      </div>
     </div>
     </TooltipProvider>
   );
