@@ -184,17 +184,6 @@ export function IPVControlPanel({ onSelect, onExportBackup, onImportBackup, hasT
             variant: 'dark'
         }
     ];
-            icon: <ArrowRightLeft />,
-            variant: 'dark'
-        },
-        {
-            id: 'qr',
-            title: 'Pagos QR',
-            description: 'Reporte especializado de pagos por Código QR.',
-            icon: <QrCode />,
-            variant: 'dark'
-        }
-    ];
 
     return (
         <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
