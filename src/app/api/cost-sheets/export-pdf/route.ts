@@ -30,6 +30,13 @@ export async function POST(req: NextRequest) {
     };
     const translate = (key: string) => {
         const dict: Record<string, string> = {
+            'description': 'Descripción',
+            'no': 'No.',
+            'unit': 'UM',
+            'quantity': 'Cant.',
+            'price': 'Precio',
+            'amount': 'Importe',
+            'value': 'Valor',
             'classification': 'Fila',
             'label': 'Concepto',
             'total': 'Total',
