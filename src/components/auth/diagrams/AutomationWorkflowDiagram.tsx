@@ -6,10 +6,10 @@ import { FileSpreadsheet, Cpu, FileText, Zap } from 'lucide-react';
 export default function AutomationWorkflowDiagram() {
   return (
     <div
-      className="relative w-full min-h-[500px] lg:aspect-[16/9] bg-gradient-to-br from-primary/10 via-background to-violet-500/10 rounded-[2.5rem] sm:rounded-[3rem] border border-border/50 overflow-hidden flex items-center justify-center p-6 sm:p-12 shadow-2xl"
+      className="relative w-full min-h-[500px] lg:aspect-[16/9] bg-gradient-to-br from-primary/10 via-background to-violet-500/10 rounded-[2.5rem] sm:rounded-[3rem] border border-border/50 overflow-x-auto no-scrollbar flex items-center justify-center p-6 sm:p-12 shadow-2xl"
       style={{ willChange: 'transform', backfaceVisibility: 'hidden' }}
     >
-      <div className="flex flex-col sm:flex-row items-center justify-between w-full max-w-4xl relative z-10 gap-8 sm:gap-4">
+      <div className="flex flex-col sm:flex-row items-center justify-between w-full min-w-[600px] max-w-4xl relative z-10 gap-8 sm:gap-4">
 
         {/* Excel Side */}
         <motion.div
