@@ -30,6 +30,19 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
     const warnings = validations.filter(v => v.type === 'WARNING');
     const successes = validations.filter(v => v.type === 'SUCCESS');
 
+
+    const rowNotes = useMemo(() => {
+        const notes: { id: string, label: string, note: string }[] = [];
+        const processRows = (rows: any[]) => {
+            rows.forEach((r: any) => {
+                if (r.note) notes.push({ id: r.id, label: r.label, note: r.note });
+                if (r.children) processRows(r.children);
+            });
+        };
+        if (data.sections) data.sections.forEach((s: any) => processRows(s.rows));
+        return notes;
+    }, [data.sections]);
+
     return (
         <div className="space-y-8 pb-20">
             {/* Summary Cards */}
@@ -73,6 +86,31 @@ export const CostSheetAuditView: React.FC<CostSheetAuditViewProps> = ({
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Technical Notes Section */}
+            {rowNotes.length > 0 && (
+                <Card className="border-border/50 dark:border-white/5 bg-background/50 backdrop-blur-sm rounded-[2rem]">
+                    <CardHeader className="border-b border-border/50 dark:border-white/5 pb-4">
+                        <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
+                            <Info className="w-4 h-4 text-amber-500" />
+                            Notas Técnicas y Observaciones
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                        <div className="divide-y divide-border/50 dark:divide-white/5">
+                            {rowNotes.map((note, i) => (
+                                <div key={i} className="p-4 hover:bg-muted/30 transition-all">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className="text-[10px] font-black uppercase bg-primary/10 text-primary px-2 py-0.5 rounded">Fila {note.id}</span>
+                                        <span className="text-xs font-bold truncate">{note.label}</span>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground italic pl-2 border-l-2 border-primary/20 ml-1">{note.note}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
             {/* Expanded Audit List */}
             <Card className="border-border/50 dark:border-white/5 bg-background/50 backdrop-blur-sm rounded-[2rem]">

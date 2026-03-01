@@ -1,11 +1,13 @@
 'use client';
+import { METHODOLOGY_HELP, getRowHelp } from "@/lib/data/methodology-help";
+
 import { LazyRender } from '@/components/ui/LazyRender';
 
 import { motion, AnimatePresence } from "framer-motion";
 
 import React, { useState, useMemo, memo } from 'react';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
-import { ChevronRight, HelpCircle, CornerDownRight, AlertTriangle, ListFilter, LayoutGrid, Sparkles, Wand2, ArrowRight, FunctionSquare, Plus, Trash2, Edit2, ChevronUp, ChevronDown, Download, Upload, CheckCircle2, XCircle, MoreVertical, Settings2, StickyNote } from 'lucide-react';
+import { ChevronRight, HelpCircle, CornerDownRight, AlertTriangle, ListFilter, LayoutGrid, Sparkles, Wand2, ArrowRight, FunctionSquare, Plus, Trash2, Edit2, BookOpen, ChevronUp, ChevronDown, Download, Upload, CheckCircle2, XCircle, MoreVertical, Settings2 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -17,7 +19,6 @@ import { toast } from "sonner";
 import { exportSectionToExcel, importSectionFromExcel } from '@/services/excel-service';
 import { CostSheetSectionActionsPanel } from './CostSheetSectionActionsPanel';
 import reinicioTemplate from '@/lib/data/costpro-reinicio';
-import { getMethodologyHelp } from '@/lib/data/methodology-help';
 import {
   CostSheetRow as RowData,
   CostSheetSection,
@@ -65,7 +66,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
   const addMainRow = useCostSheetStore(state => state.addMainRow);
   const removeMainRow = useCostSheetStore(state => state.removeMainRow);
   const reorderMainRow = useCostSheetStore(state => state.reorderMainRow);
-  const applySuggestedFormula = () => {
+      const applySuggestedFormula = () => {
     const findInRow = (r: any): any => {
       if (r.id === row.id) return r;
       if (r.children) {
@@ -79,6 +80,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
 
     const findInSections = (sections: any[]): any => {
       for (const s of sections) {
+        if (!s.rows) continue;
         for (const r of s.rows) {
           const found = findInRow(r);
           if (found) return found;
@@ -90,26 +92,24 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
     const suggestedRow = findInSections((reinicioTemplate as any).sections);
     if (suggestedRow) {
       const updates: any[] = [];
-
-      const totalFormula = suggestedRow.totalFormula || suggestedRow.formula;
-      if (totalFormula) {
-        updates.push({ path: [...path, 'totalFormula'], value: totalFormula });
-        updates.push({ path: [...path, 'formula'], value: totalFormula });
+      const totalF = suggestedRow.totalFormula || suggestedRow.formula;
+      if (totalF) {
+        updates.push({ path: [...path, 'totalFormula'], value: totalF });
+        updates.push({ path: [...path, 'formula'], value: totalF });
         updates.push({ path: [...path, 'calculationMethod'], value: 'FORMULA' });
       }
-
       if (suggestedRow.vhFormula) {
         updates.push({ path: [...path, 'vhFormula'], value: suggestedRow.vhFormula });
       }
 
       if (updates.length > 0) {
         updateValues(updates);
-        toast.success(`Metodología aplicada a: ${row.label}`);
+        toast.success(`Fórmulas sugeridas aplicadas a: ${row.label}`);
       } else {
-        toast.info("No hay una fórmula específica sugerida para esta fila.");
+        toast.info("No hay fórmulas sugeridas para esta fila.");
       }
     } else {
-      toast.error("No se encontró una fila equivalente en la plantilla de referencia.");
+      toast.error("No se encontró la fila en la plantilla.");
     }
   };
 
@@ -235,8 +235,45 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
                 </span>
             )}
 
-            {/* Row Actions */}
+                        {/* Row Actions */}
             <div className="hidden group-hover/row:flex items-center gap-0.5 ml-auto shrink-0 animate-in fade-in slide-in-from-right-2">
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 text-primary hover:bg-primary/10">
+                            <BookOpen className="h-3.5 w-3.5" />
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80">
+                        <div className="space-y-2">
+                            <h4 className="font-bold text-xs uppercase text-primary">Ayuda Metodológica (Res. 148)</h4>
+                            <p className="text-xs text-muted-foreground leading-relaxed">
+                                {getRowHelp(row.id)}
+                            </p>
+                        </div>
+                    </PopoverContent>
+                </Popover>
+
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Button variant="ghost" size="icon" className={cn("h-6 w-6 text-primary hover:bg-primary/10", row.note && "text-amber-500")}>
+                            <Edit2 className="h-3.5 w-3.5" />
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80">
+                        <div className="space-y-2">
+                            <h4 className="font-bold text-xs uppercase text-primary">Notas / Observaciones</h4>
+                            <textarea
+                                className="w-full min-h-[80px] text-xs bg-muted/30 border-border rounded-lg p-2 focus:ring-1 focus:ring-primary outline-none"
+                                defaultValue={row.note || ""}
+                                placeholder="Agregar una nota técnica para esta fila..."
+                                onBlur={(e) => updateValue([...path, 'note'], e.target.value)}
+                            />
+                        </div>
+                    </PopoverContent>
+                </Popover>
+
+                <div className="w-[1px] h-4 bg-border/40 mx-1" />
+
                 <Button
                     variant="ghost"
                     size="icon"
@@ -416,98 +453,28 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
           )}
         </TableCell>
 
-        {/* Acciones de Item */}
-        <TableCell className="px-2 py-0.5 text-center w-[160px] border-r border-border/10">
-          <div className="flex items-center justify-center gap-0.5">
-            {/* Validation Status */}
-            <Popover>
-                <PopoverTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full p-0">
-                        {criticalErrors.length > 0 ? (
-                            <XCircle className="w-4 h-4 text-destructive animate-pulse" />
-                        ) : (warningErrors.length > 0 || hasEngineWarnings) ? (
-                            <AlertTriangle className="w-4 h-4 text-amber-500" />
-                        ) : (
-                            <CheckCircle2 className="w-4 h-4 text-primary/60 hover:text-primary" />
-                        )}
-                    </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80">
-                    <div className="space-y-3">
-                        <h4 className="font-black text-xs uppercase tracking-widest border-b pb-2">Estado del Item: {row.id}</h4>
-                        <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                            {(safeCalculated.validationErrors || []).map((ve, idx) => (
-                                <div key={idx} className={cn(
-                                    "text-xs p-2 rounded border flex gap-2",
-                                    ve.type === 'CRITICAL' ? "bg-destructive/5 border-destructive/20 text-destructive" :
-                                    ve.type === 'WARNING' ? "bg-amber-50 border-amber-200 text-amber-800" :
-                                    "bg-primary/5 border-primary/20 text-primary"
-                                )}>
-                                    {ve.message}
-                                </div>
-                            ))}
-                            {(safeCalculated.validationErrors || []).length === 0 && (
-                                <p className="text-xs text-primary font-medium p-2">Este ítem cumple con los requisitos estructurales y de rentabilidad.</p>
-                            )}
-                        </div>
-                    </div>
-                </PopoverContent>
-            </Popover>
-
-            {/* Note */}
-            <Popover>
-                <PopoverTrigger asChild>
-                    <Button variant="ghost" size="icon" className={cn("h-7 w-7 rounded-full p-0", row.note && "text-primary bg-primary/10")}>
-                        <StickyNote className="w-4 h-4" />
-                    </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80">
-                    <div className="space-y-3">
-                        <h4 className="font-black text-xs uppercase tracking-widest">Observaciones / Notas</h4>
-                        <Input
-                            placeholder="Agregar nota..."
-                            defaultValue={row.note || ''}
-                            className="text-xs"
-                            onBlur={(e) => handleValueChange('note', e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                    handleValueChange('note', (e.target as HTMLInputElement).value);
-                                    toast.success("Nota actualizada");
-                                }
-                            }}
-                        />
-                    </div>
-                </PopoverContent>
-            </Popover>
-
-            {/* Help / Methodology */}
-            <Popover>
-                <PopoverTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full p-0">
-                        <HelpCircle className="w-4 h-4 text-primary/60 hover:text-primary" />
-                    </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80">
-                    <div className="space-y-3">
-                        <h4 className="font-black text-xs uppercase tracking-widest text-primary border-b border-primary/20 pb-2">Metodología Res. 148</h4>
-                        <p className="text-xs leading-relaxed text-muted-foreground italic">
-                            {getMethodologyHelp(row.id, row.label)}
-                        </p>
-                        {row.helpText && <p className="text-xs border-t pt-2 mt-2">{row.helpText}</p>}
-                    </div>
-                </PopoverContent>
-            </Popover>
-
-            {/* Apply Formula */}
+        {/* Ayuda - Hidden on very small screens */}
+        <TableCell className="px-2 py-0.5 text-center w-[100px] hidden sm:table-cell">
+          <div className="flex items-center justify-center gap-1">
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 text-primary hover:bg-primary/10 rounded-full transition-all"
+              className="h-8 w-8 text-primary hover:bg-primary/10 rounded-full transition-all"
               onClick={applySuggestedFormula}
-              title="Aplicar metodología sugerida (VH y Total)"
+              title="Aplicar fórmula sugerida (VH y Total)"
             >
               <Wand2 className="w-4 h-4" />
             </Button>
+            {row.helpText && (
+              <Popover>
+                <PopoverTrigger asChild>
+                   <button className="p-2 rounded-full hover:bg-primary/10 text-primary/50 hover:text-primary transition-colors">
+                      <HelpCircle className="w-4 h-4" />
+                   </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-72 sm:w-80"><p className="text-sm">{row.helpText}</p></PopoverContent>
+              </Popover>
+            )}
           </div>
         </TableCell>
       </TableRow>
@@ -760,7 +727,7 @@ const CostSheetInteractiveTable: React.FC<CostSheetInteractiveTableProps> = memo
                                     <TableHead className="w-[80px] px-2 py-0.5 text-center font-black uppercase tracking-widest border-r border-border/10">UM</TableHead>
                                     <TableHead className="w-[140px] px-2 py-0.5 text-right font-black uppercase tracking-widest border-r border-border/10">Valor Histórico</TableHead>
                                     <TableHead className="w-[120px] px-2 py-0.5 text-right font-black uppercase tracking-widest border-r border-border/10">Total</TableHead>
-                                    <TableHead className="w-[160px] px-2 py-0.5 text-center font-black uppercase tracking-widest hidden sm:table-cell">Acciones</TableHead>
+                                    <TableHead className="w-[100px] px-2 py-0.5 text-center font-black uppercase tracking-widest hidden sm:table-cell">Acciones</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>

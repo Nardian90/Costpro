@@ -112,8 +112,8 @@ export function ChatBot() {
             whileTap={{ scale: 0.9 }}
           >
             <div className="absolute inset-0 bg-gradient-to-tr from-primary via-primary/80 to-violet-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <div className="flex flex-col items-center gap-1 z-10"><MessageSquare className="w-6 h-6 text-white" /><span className="text-[8px] font-black uppercase text-white tracking-widest">Chat AI</span></div>
-            <Sparkles className="absolute -top-1 -right-1 w-4 h-4 text-amber-300 opacity-0 group-hover:opacity-100 transition-all duration-500 delay-100" />
+            <MessageSquare className="w-6 h-6 relative z-10 text-white" />
+            <Sparkles className="absolute -top-1 -right-1 w-5 h-5 text-amber-400 font-bold opacity-0 group-hover:opacity-100 transition-all duration-500 delay-100" />
           </motion.button>
         )}
 
@@ -140,10 +140,10 @@ export function ChatBot() {
                   <Bot className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="font-black text-xs uppercase tracking-tighter">Darian</h3>
+                  <h3 className="font-black text-xs uppercase tracking-tighter text-white">Darian</h3>
                   <div className="flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    <p className="text-xs opacity-80 uppercase tracking-widest font-bold">Inteligencia Integrada</p>
+                    <p className="text-xs opacity-90 text-white uppercase tracking-widest font-bold">Inteligencia Integrada</p>
                   </div>
                 </div>
               </div>

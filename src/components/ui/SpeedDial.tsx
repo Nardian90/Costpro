@@ -59,7 +59,7 @@ export const SpeedDial: React.FC<SpeedDialProps> = ({ actions, className }) => {
                             "bg-card text-foreground border-border"
                           )}
                         >
-                          <span className="text-sm font-bold">{action.label}</span>
+                          <span className="text-sm font-black uppercase tracking-tight">{action.label}</span>
                           <action.icon className="w-5 h-5" />
                         </motion.button>
                       ))}
@@ -75,13 +75,13 @@ export const SpeedDial: React.FC<SpeedDialProps> = ({ actions, className }) => {
           onClick={() => setIsOpen(!isOpen)}
           className={cn(
             "w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all active:scale-90 z-20 neu-raised hover:neu-raised-hover",
-            isOpen ? "bg-background border-2 border-primary text-primary rotate-0" : "bg-primary text-white"
+            isOpen ? "bg-background border-2 border-primary text-primary rotate-0" : "bg-primary text-primary-foreground"
           )}
         >
           {isOpen ? (
-            <X className="w-7 h-7" />
+            <X className="w-7 h-7 text-white stroke-[3]" />
           ) : (
-            <div className="flex flex-col items-center justify-center scale-75"><Plus className="w-8 h-8 text-white" /></div>
+            <Plus className="w-7 h-7 text-white stroke-[3]" />
           )}
         </motion.button>
 

@@ -494,17 +494,24 @@ export const useCostSheetCalculator = (template: CostSheetData) => {
       // Calculate health validations
       const health = calculateCostSheetHealth(template, newCalculatedValues, finalHeader);
 
+
       // Merge health validations into rows
       health.validations.forEach(v => {
           if (v.rowId && newCalculatedValues[v.rowId]) {
-              newCalculatedValues[v.rowId].validationErrors = [
-                  ...(newCalculatedValues[v.rowId].validationErrors || []),
-                  { message: v.message, type: v.type, code: v.category }
+              const row = newCalculatedValues[v.rowId];
+              // Map SUCCESS to INFO for compatibility
+              const type = v.type === 'SUCCESS' ? 'INFO' : v.type;
+
+              row.validationErrors = [
+                  ...(row.validationErrors || []),
+                  { message: v.message, type, code: v.category }
               ];
-              newCalculatedValues[v.rowId].hasWarnings = true;
+
+              if (type === 'CRITICAL' || type === 'WARNING') {
+                  row.hasWarnings = true;
+              }
           }
       });
-
       setResultState({
           calculatedValues: newCalculatedValues,
           calculatedHeader: finalHeader,

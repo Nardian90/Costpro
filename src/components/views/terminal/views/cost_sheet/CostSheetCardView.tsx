@@ -1,3 +1,4 @@
+import { getRowHelp } from "@/lib/data/methodology-help";
 'use client';
 import { LazyRender } from '@/components/ui/LazyRender';
 import { toast } from 'sonner';
@@ -167,6 +168,29 @@ const RowCard: React.FC<RowCardProps> = memo(({
                 </PopoverTrigger>
                 <PopoverContent className="w-48 p-2 rounded-2xl shadow-xl z-50" align="end">
                   <div className="grid grid-cols-1 gap-1">
+                                        <Button variant="ghost" size="sm" className="justify-start gap-2 text-xs font-bold uppercase tracking-widest rounded-lg text-primary" onClick={(e) => { e.stopPropagation(); }}>
+                      <HelpCircle className="w-3.5 h-3.5" />
+                      <Popover>
+                        <PopoverTrigger asChild><span>Metodología</span></PopoverTrigger>
+                        <PopoverContent className="w-80 text-xs font-normal normal-case">{getRowHelp(row.id)}</PopoverContent>
+                      </Popover>
+                    </Button>
+                    <div className="w-full h-[1px] bg-border/40 my-1" />
+                    <Button variant="ghost" size="sm" className={cn("justify-start gap-2 text-xs font-bold uppercase tracking-widest rounded-lg", row.note && "text-amber-500")} onClick={(e) => { e.stopPropagation(); }}>
+                      <Edit2 className="w-3.5 h-3.5" />
+                      <Popover>
+                        <PopoverTrigger asChild><span>{row.note ? "Ver Nota" : "Agregar Nota"}</span></PopoverTrigger>
+                        <PopoverContent className="w-80">
+                            <h4 className="font-bold text-xs uppercase text-primary mb-2">Notas / Observaciones</h4>
+                            <textarea
+                                className="w-full min-h-[80px] text-xs bg-muted/30 border-border rounded-lg p-2 focus:ring-1 focus:ring-primary outline-none normal-case font-normal"
+                                defaultValue={row.note || ""}
+                                placeholder="Agregar una nota técnica..."
+                                onBlur={(e) => updateValue([...path, 'note'], e.target.value)}
+                            />
+                        </PopoverContent>
+                      </Popover>
+                    </Button>
                     <Button variant="ghost" size="sm" className="justify-start gap-2 text-xs font-bold uppercase tracking-widest rounded-lg" onClick={() => reorderMainRow(path, 'up')}>
                       <ChevronUp className="w-3.5 h-3.5" /> Subir
                     </Button>
