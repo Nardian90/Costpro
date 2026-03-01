@@ -26,13 +26,14 @@ import { generateLegalPdf } from '../legal/LegalPdfExporter';
 import { IncomeReceiptPreview } from './IncomeReceiptPreview';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
+import { CostProLoader } from '@/components/ui/CostProLoader';
 
 export function IncomeReceiptSection() {
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [selectedReceiptIndex, setSelectedReceiptIndex] = useState(0);
 
   // Dexie Data
-  const lines = useLiveQuery(() => db.reconciliation_lines.where('clasificacion').equals('Efectivo').toArray());
+  const lines = useLiveQuery(() => db.reconciliation_lines.where('clasificacion').anyOf(['Efectivo', 'Cash', 'cash', 'efectivo']).toArray());
   const products = useLiveQuery(() => db.products.toArray());
   const settings = useLiveQuery(() => db.ipv_settings.get('current'));
 
@@ -77,8 +78,7 @@ export function IncomeReceiptSection() {
     return Object.entries(grouped)
       .sort(([a], [b]) => b.localeCompare(a))
       .map(([key, groupLines], index) => {
-        const totalCents = groupLines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
-        const total = totalCents;
+        const total = groupLines.reduce((sum, l) => sum + l.importe_linea_cents, 0);
 
         // Conceptos
         let conceptos_tabla: { concepto: string; importe: number }[] = [];
@@ -114,6 +114,14 @@ export function IncomeReceiptSection() {
       });
   }, [lines, settings, productMap]);
 
+  if (!settings) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <CostProLoader />
+      </div>
+    );
+  }
+
   const currentReceipt = receipts[selectedReceiptIndex];
 
   const handleUpdateSettings = async (updates: Partial<IPVSettings>) => {
@@ -131,10 +139,9 @@ export function IncomeReceiptSection() {
       const model = {
         code: 'SC-3-01',
         name: 'RECIBO DE INGRESO DE EFECTIVO',
-        fields: [] // Exporter might need this
+        fields: []
       };
 
-      // Transform for PDF Exporter
       const dataForPdf = {
         ...currentReceipt,
         fecha_emision: formatDate(currentReceipt.fecha_emision)
@@ -148,25 +155,23 @@ export function IncomeReceiptSection() {
     }
   };
 
-  if (!settings) return null;
-
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full min-h-[600px] animate-in fade-in duration-500">
-      {/* Sidebar: List and Config */}
-      <div className="lg:col-span-4 flex flex-col gap-6">
-        <Card className="p-4 border-2 border-primary/10 bg-card/50 backdrop-blur-sm shadow-xl rounded-3xl">
-          <div className="flex items-center justify-between mb-4 px-2">
-            <div className="flex items-center gap-2">
-              <FileText className="w-5 h-5 text-primary" />
-              <h3 className="text-sm font-black uppercase tracking-tight">Recibos Generados</h3>
-            </div>
+    <div className="grid lg:grid-cols-12 gap-8 items-start">
+      {/* Sidebar: Controls & List */}
+      <div className="lg:col-span-4 space-y-6">
+        <Card className="p-6 rounded-[2.5rem] shadow-xl border-none bg-card/50 backdrop-blur-md">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
+              <Settings className="w-4 h-4 text-primary" />
+              Gestión de Recibos
+            </h3>
             <Button
               variant="ghost"
-              size="icon"
+              size="sm"
               onClick={() => setIsConfigOpen(!isConfigOpen)}
-              className={cn("h-9 w-9 rounded-xl transition-all", isConfigOpen && "bg-primary text-white hover:bg-primary/90")}
+              className={cn("h-8 px-3 rounded-xl text-[10px] font-black uppercase transition-all", isConfigOpen ? "bg-primary text-white" : "hover:bg-primary/10")}
             >
-              <Settings className="w-4 h-4" />
+              Configurar
             </Button>
           </div>
 
@@ -174,10 +179,10 @@ export function IncomeReceiptSection() {
             {isConfigOpen ? (
               <motion.div
                 key="config"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 10 }}
-                className="space-y-4 p-2"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="space-y-4"
               >
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Entidad</label>
