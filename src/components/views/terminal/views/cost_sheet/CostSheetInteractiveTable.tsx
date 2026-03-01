@@ -66,6 +66,17 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
   const removeMainRow = useCostSheetStore(state => state.removeMainRow);
   const reorderMainRow = useCostSheetStore(state => state.reorderMainRow);
   const applySuggestedFormula = () => {
+    const findInRow = (r: any): any => {
+      if (r.id === row.id) return r;
+      if (r.children) {
+        for (const child of r.children) {
+          const found = findInRow(child);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+
     const findInSections = (sections: any[]): any => {
       for (const s of sections) {
         for (const r of s.rows) {
@@ -75,26 +86,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
       }
       return null;
     };
-    const findInRow = (r: any): any => {
-      if (r.id === row.id) return r;
-      if (r.children) {
-        for (const child of r.children) {
-          const found = findInRow(child);
-          if (found) return found;
-        }
-      }
-      return null;
-    };
-    const findInRow = (r: any): any => {
-      if (r.id === row.id) return r;
-      if (r.children) {
-        for (const child of r.children) {
-          const found = findInRow(child);
-          if (found) return found;
-        }
-      }
-      return null;
-    };
+
     const suggestedRow = findInSections((reinicioTemplate as any).sections);
     if (suggestedRow) {
       const updates: any[] = [];

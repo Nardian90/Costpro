@@ -265,3 +265,4 @@ Import traces:
 
  GET / 500 in 52ms (compile: 36ms, render: 16ms)
  GET /terminal?view=cost-sheets 404 in 147ms (compile: 46ms, render: 102ms)
+✓ Compiled in 2.4s
