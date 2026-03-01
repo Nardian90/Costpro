@@ -46,6 +46,8 @@ export interface User {
   active_store_id?: string | null;
   role_id?: string | null;
   logo_url?: string | null;
+  reeup?: string | null;
+  bank_account?: string | null;
   max_stores_limit?: number;
   max_users_limit?: number;
   created_by?: string | null;
@@ -134,6 +136,8 @@ export interface Store {
   name: string;
   address?: string | null;
   logo_url?: string | null;
+  reeup?: string | null;
+  bank_account?: string | null;
   is_active?: boolean;
   created_at?: string;
 }
@@ -498,6 +502,8 @@ export type Profile = {
   active_store_id?: string | null;
   role_id?: string | null;
   logo_url?: string | null;
+  reeup?: string | null;
+  bank_account?: string | null;
   max_stores_limit?: number;
   max_users_limit?: number;
   created_by?: string | null;

@@ -24,11 +24,11 @@ export const storeService = {
     return data as Store;
   },
 
-  async updateStore(storeId: string, name: string, address: string) {
+  async updateStore(storeId: string, name: string, address: string, additionalData?: Partial<Store>) {
     logger.info('DATABASE', 'UPDATE_STORE', { storeId, name, address });
     const { data, error } = await supabase
       .from('stores')
-      .update({ name, address })
+      .update({ name, address, ...additionalData })
       .eq('id', storeId)
       .select()
       .single();

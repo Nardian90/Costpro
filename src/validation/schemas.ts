@@ -69,6 +69,8 @@ export const storeSchema = z.object({
   name: z.string(),
   address: z.string().nullable().optional(),
   logo_url: z.string().nullable().optional(),
+  reeup: z.string().nullable().optional(),
+  bank_account: z.string().nullable().optional(),
   is_active: z.boolean().optional(),
   created_at: z.string().optional(),
 });
@@ -108,6 +110,8 @@ export const profileSchema = z.object({
   store_id: resilientUuid,
   active_store_id: resilientUuid,
   logo_url: z.string().nullable().optional(),
+  reeup: z.string().nullable().optional(),
+  bank_account: z.string().nullable().optional(),
   ai_provider: z.string().optional(),
   ai_api_key: z.string().nullable().optional(),
   max_stores_limit: z.number().optional(),
