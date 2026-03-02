@@ -123,43 +123,47 @@ export default function LegalModelForm({ model, onCancel }: LegalModelFormProps)
       case 'table':
         return (
           <div className="space-y-4">
-            <div className="grid grid-cols-12 gap-4 px-2 mb-2">
-              <div className="col-span-8 text-[10px] font-black uppercase tracking-widest opacity-40">Concepto / Detalle del Cobro</div>
-              <div className="col-span-3 text-[10px] font-black uppercase tracking-widest opacity-40 text-right">Importe ($)</div>
-            </div>
-            {tableFields.map((item, index) => (
-              <div key={item.id} className="grid grid-cols-12 gap-4 animate-in slide-in-from-left-2 duration-300">
-                <div className="col-span-8">
-                  <input
-                    {...register(`conceptos_tabla.${index}.concepto` as any, { required: true })}
-                    placeholder="Escriba el concepto..."
-                    className={cn(commonClasses, "h-12")}
-                  />
+            <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+              <div className="min-w-[500px] space-y-4">
+                <div className="grid grid-cols-12 gap-4 px-2 mb-2">
+                  <div className="col-span-8 text-[10px] font-black uppercase tracking-widest opacity-40">Concepto / Detalle del Cobro</div>
+                  <div className="col-span-3 text-[10px] font-black uppercase tracking-widest opacity-40 text-right">Importe ($)</div>
                 </div>
-                <div className="col-span-3">
-                  <input
-                    type="number"
-                    step="0.01"
-                    {...register(`conceptos_tabla.${index}.importe` as any, { required: true })}
-                    placeholder="0.00"
-                    className={cn(commonClasses, "h-12 text-right")}
-                  />
-                </div>
-                <div className="col-span-1 flex items-center justify-center">
-                  <button
-                    type="button"
-                    onClick={() => remove(index)}
-                    className="p-2 text-danger hover:bg-danger/10 rounded-lg transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
+                {tableFields.map((item, index) => (
+                  <div key={item.id} className="grid grid-cols-12 gap-4 animate-in slide-in-from-left-2 duration-300">
+                    <div className="col-span-8">
+                      <input
+                        {...register(`conceptos_tabla.${index}.concepto` as any, { required: true })}
+                        placeholder="Escriba el concepto..."
+                        className={cn(commonClasses, "h-12")}
+                      />
+                    </div>
+                    <div className="col-span-3">
+                      <input
+                        type="number"
+                        step="0.01"
+                        {...register(`conceptos_tabla.${index}.importe` as any, { required: true })}
+                        placeholder="0.00"
+                        className={cn(commonClasses, "h-12 text-right")}
+                      />
+                    </div>
+                    <div className="col-span-1 flex items-center justify-center">
+                      <button
+                        type="button"
+                        onClick={() => remove(index)}
+                        className="w-11 h-11 flex items-center justify-center text-danger hover:bg-danger/10 rounded-lg transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
             <button
               type="button"
               onClick={() => append({ concepto: '', importe: 0 })}
-              className="flex items-center gap-2 px-4 py-2 text-xs font-black text-primary hover:bg-primary/5 rounded-xl transition-all uppercase tracking-widest border-2 border-dashed border-primary/20 hover:border-primary/40"
+              className="flex items-center gap-2 px-4 h-11 text-xs font-black text-primary hover:bg-primary/5 rounded-xl transition-all uppercase tracking-widest border-2 border-dashed border-primary/20 hover:border-primary/40"
             >
               <Plus className="w-4 h-4" />
               Añadir Línea de Concepto
