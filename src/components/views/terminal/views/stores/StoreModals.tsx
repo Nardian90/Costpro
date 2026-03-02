@@ -7,7 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Store } from '@/types';
 import { StoreFormMode } from './useStoresView';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Upload, X, ImageIcon } from 'lucide-react';
+import { supabase } from '@/lib/supabaseClient';
+import { toast } from 'sonner';
 
 interface StoreModalsProps {
     mode: StoreFormMode;
@@ -28,20 +30,76 @@ export function StoreModals({
 }: StoreModalsProps) {
     const [name, setName] = useState('');
     const [address, setAddress] = useState('');
+    const [reeup, setReeup] = useState('');
+    const [bankAccount, setBankAccount] = useState('');
+    const [logoUrl, setLogoUrl] = useState('');
+    const [isUploading, setIsUploading] = useState(false);
 
     useEffect(() => {
         if (selectedStore && mode === 'edit') {
             setName(selectedStore.name);
             setAddress(selectedStore.address || '');
+            setReeup(selectedStore.reeup || '');
+            setBankAccount(selectedStore.bank_account || '');
+            setLogoUrl(selectedStore.logo_url || '');
         } else {
             setName('');
             setAddress('');
+            setReeup('');
+            setBankAccount('');
+            setLogoUrl('');
         }
     }, [selectedStore, mode, isOpen]);
 
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Validations
+        if (!file.type.startsWith('image/')) {
+            toast.error('Solo se permiten archivos de imagen');
+            return;
+        }
+        if (file.size > 1024 * 1024) {
+            toast.error('El tamaño máximo es 1MB');
+            return;
+        }
+
+        setIsUploading(true);
+        try {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+            const filePath = `store-logos/${fileName}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('stores')
+                .upload(filePath, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('stores')
+                .getPublicUrl(filePath);
+
+            setLogoUrl(publicUrl);
+            toast.success('Logo subido correctamente');
+        } catch (error: any) {
+            console.error('Error uploading logo:', error);
+            toast.error('Error al subir el logo');
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSubmit(mode, { name, address });
+        onSubmit(mode, {
+            name,
+            address,
+            reeup,
+            bank_account: bankAccount,
+            logo_url: logoUrl
+        });
     };
 
     if (!mode) return null;
@@ -131,6 +189,63 @@ export function StoreModals({
                             className="sm:col-span-3 h-11 bg-muted/20 border-primary/10 focus:border-primary/30 transition-all font-bold"
                             placeholder="Calle, Ciudad, Estado"
                         />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+                        <Label htmlFor="reeup" className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
+                            Código Reeup
+                        </Label>
+                        <Input
+                            id="reeup"
+                            value={reeup}
+                            onChange={(e) => setReeup(e.target.value)}
+                            className="sm:col-span-3 h-11 bg-muted/20 border-primary/10 focus:border-primary/30 transition-all font-bold"
+                            placeholder="50004478172"
+                        />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+                        <Label htmlFor="bank_account" className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70">
+                            Cuenta Bancaria
+                        </Label>
+                        <Input
+                            id="bank_account"
+                            value={bankAccount}
+                            onChange={(e) => setBankAccount(e.target.value)}
+                            className="sm:col-span-3 h-11 bg-muted/20 border-primary/10 focus:border-primary/30 transition-all font-bold"
+                            placeholder="0664-6340-0042-1716"
+                        />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-2 sm:gap-4">
+                        <Label className="text-left sm:text-right font-black uppercase text-[10px] tracking-widest text-primary/70 pt-3">
+                            Logo
+                        </Label>
+                        <div className="sm:col-span-3 flex items-center gap-4">
+                            <div className="relative w-20 h-20 rounded-xl border-2 border-dashed border-primary/20 bg-muted/10 flex items-center justify-center overflow-hidden group">
+                                {logoUrl ? (
+                                    <>
+                                        <img src={logoUrl} alt="Preview" className="w-full h-full object-cover" />
+                                        <button
+                                            type="button"
+                                            onClick={() => setLogoUrl('')}
+                                            className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
+                                        >
+                                            <X className="w-5 h-5" />
+                                        </button>
+                                    </>
+                                ) : (
+                                    <ImageIcon className="w-6 h-6 text-muted-foreground/30" />
+                                )}
+                            </div>
+                            <div className="flex-1">
+                                <label className="cursor-pointer">
+                                    <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
+                                        <Upload className="w-4 h-4" />
+                                        <span className="text-xs font-black uppercase tracking-widest">{isUploading ? 'Subiendo...' : 'Subir Logo'}</span>
+                                    </div>
+                                    <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} disabled={isUploading} />
+                                </label>
+                                <p className="text-[9px] font-bold text-muted-foreground mt-2 uppercase">Formato: JPG, PNG. Máx: 1MB.</p>
+                            </div>
+                        </div>
                     </div>
                     <div className="flex flex-col sm:flex-row justify-end gap-3 mt-6">
                         <Button

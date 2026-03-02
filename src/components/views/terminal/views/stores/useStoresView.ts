@@ -51,7 +51,11 @@ export function useStoresView() {
         setIsSubmitting(true);
         try {
             if (mode === 'edit' && selectedStore) {
-                await storeService.updateStore(selectedStore.id, data.name || '', data.address || '');
+                await storeService.updateStore(selectedStore.id, data.name || '', data.address || '', {
+                    reeup: data.reeup,
+                    bank_account: data.bank_account,
+                    logo_url: data.logo_url
+                });
                 toast.success('Tienda actualizada');
             } else if (mode === 'create') {
                 await storeService.createStore(data.name || '', data.address || '', user?.id);
