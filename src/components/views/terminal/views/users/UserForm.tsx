@@ -249,7 +249,7 @@ export default function UserForm({
             onClick={() => append({ store_id: '', role: 'clerk',
       password: '', status: 'active' })}
             className={cn(
-              "flex items-center gap-1 px-2 py-2.5 sm:py-1 rounded-lg transition-all text-xs font-black uppercase",
+              "flex items-center gap-1 px-4 h-11 rounded-lg transition-all text-xs font-black uppercase",
               canAddMoreStores
                 ? "bg-primary/10 text-primary hover:bg-primary/20"
                 : "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
@@ -325,7 +325,7 @@ export default function UserForm({
               <button
                 type="button"
                 onClick={() => remove(index)}
-                className="absolute top-2 right-2 sm:relative sm:top-0 sm:right-0 p-3.5 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-white transition-all mb-0.5"
+                className="absolute top-2 right-2 sm:relative sm:top-0 sm:right-0 w-11 h-11 flex items-center justify-center rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-white transition-all mb-0.5"
                 title="Eliminar tienda"
               >
                 <Trash2 className="w-4 h-4" />
