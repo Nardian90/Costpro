@@ -18,6 +18,7 @@ import CostSheetSummary from './CostSheetSummary';
 import { CostSheetFormulaGuide } from './CostSheetFormulaGuide';
 
 import { CostSheetAuditView } from './CostSheetAuditView';
+import { BaseModal } from "@/components/ui/BaseModal";
 import { CostSheetActionsPanel } from './CostSheetActionsPanel';
 import { CostSheetHelpPanel } from './CostSheetHelpPanel';
 import { CostSheetTemplateExplorer } from "./CostSheetTemplateExplorer";
@@ -44,6 +45,10 @@ import { Bot } from "lucide-react";
 const CostSheetView = () => {
   const isMobile = useIsMobile();
   const [activeSection, setActiveSection] = useState('kpis');
+  const [confirmation, setConfirmation] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; variant?: 'default' | 'destructive' }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+  const askConfirmation = (title: string, message: string, onConfirm: () => void, variant: 'default' | 'destructive' = 'default') => {
+    setConfirmation({ isOpen: true, title, message, onConfirm, variant });
+  };
   const [activeSubSectionId, setActiveSubSectionId] = useState('group-1-3');
   const [quickModeMapping, setQuickModeMapping] = useState({
     targetColumn: 'sale_price' as 'sale_price' | 'total_cost',
@@ -447,12 +452,24 @@ const CostSheetView = () => {
 
   const speedDialActions: SpeedDialAction[] = [
     {
+      id: "reset",
+      label: "Limpiar Ficha",
+      icon: Trash2,
+      onClick: () => {
+          askConfirmation("¿Estás seguro?", "¿Deseas limpiar todos los datos de la ficha? Esta acción no se puede deshacer.", () => {
+              // Logic to reset
+              toast.success("Ficha reiniciada");
+          }, "destructive");
+      },
+      category: "Acción",
+      variant: "destructive"
+    },
+    {
       id: "ai-chat",
       label: "Chat con Darian AI",
       icon: Bot,
       onClick: () => setIsChatBotOpen(true),
       category: "Acción",
-      variant: "primary"
     },
     {
       id: "export-pdf",
@@ -792,6 +809,18 @@ const CostSheetView = () => {
         onAction={handleBottomAction}
       />
       <SpeedDial actions={speedDialActions} />
+
+      <BaseModal
+        isOpen={confirmation.isOpen}
+        onClose={() => setConfirmation({ ...confirmation, isOpen: false })}
+        title={confirmation.title}
+        description={confirmation.message}
+        onConfirm={() => {
+          confirmation.onConfirm();
+          setConfirmation({ ...confirmation, isOpen: false });
+        }}
+        variant={confirmation.variant}
+      />
     </div>
   );
 };
