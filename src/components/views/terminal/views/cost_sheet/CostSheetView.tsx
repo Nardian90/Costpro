@@ -811,16 +811,33 @@ const CostSheetView = () => {
       <SpeedDial actions={speedDialActions} />
 
       <BaseModal
-        isOpen={confirmation.isOpen}
-        onClose={() => setConfirmation({ ...confirmation, isOpen: false })}
+        open={confirmation.isOpen}
+        onOpenChange={(open) => setConfirmation({ ...confirmation, isOpen: open })}
         title={confirmation.title}
-        description={confirmation.message}
-        onConfirm={() => {
-          confirmation.onConfirm();
-          setConfirmation({ ...confirmation, isOpen: false });
-        }}
-        variant={confirmation.variant}
-      />
+        footer={
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmation({ ...confirmation, isOpen: false })}
+              className="flex-1 sm:flex-none"
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant={confirmation.variant === 'destructive' ? 'destructive' : 'default'}
+              onClick={() => {
+                confirmation.onConfirm();
+                setConfirmation({ ...confirmation, isOpen: false });
+              }}
+              className="flex-1 sm:flex-none"
+            >
+              Confirmar
+            </Button>
+          </div>
+        }
+      >
+        <p className="text-sm text-muted-foreground">{confirmation.message}</p>
+      </BaseModal>
     </div>
   );
 };
