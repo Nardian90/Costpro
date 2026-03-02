@@ -155,7 +155,7 @@ export default function LoginForm() {
             <button
               type="button"
               onClick={handleForgotPassword}
-              className="text-[9px] font-black uppercase tracking-tighter text-primary hover:underline"
+              className="text-[9px] font-black uppercase tracking-tighter text-primary hover:underline h-11 flex items-center"
             >
               ¿Olvidaste tu contraseña?
             </button>
@@ -175,7 +175,7 @@ export default function LoginForm() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              className="absolute right-0 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>

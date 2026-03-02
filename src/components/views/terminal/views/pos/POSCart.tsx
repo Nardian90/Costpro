@@ -740,7 +740,7 @@ export const POSCart = ({
                                 onClick={() =>
                                   onRemoveItem(item.product_id, item.variant_id)
                                 }
-                                className="text-muted-foreground/30 hover:text-destructive transition-all active:scale-95 p-1"
+                                className="w-11 h-11 flex items-center justify-center text-muted-foreground/30 hover:text-destructive transition-all active:scale-95"
                                 aria-label="Eliminar producto"
                               >
                                 <X className="w-6 h-6 sm:w-5 sm:h-5" />
