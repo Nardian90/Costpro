@@ -880,7 +880,7 @@ export const POSCart = ({
                           prorateGlobalPayment?.(total / 2, total / 2);
                           setSelectedPayment("mixed");
                         }}
-                        className="text-[10px] font-bold text-primary hover:underline"
+                        className="h-11 min-h-[44px] px-3 flex items-center justify-center text-[10px] font-bold text-primary hover:underline"
                       >
                         50/50
                       </button>
@@ -890,7 +890,7 @@ export const POSCart = ({
                           prorateGlobalPayment?.(total, 0);
                           setSelectedPayment("mixed");
                         }}
-                        className="text-[10px] font-bold text-primary hover:underline"
+                        className="h-11 min-h-[44px] px-3 flex items-center justify-center text-[10px] font-bold text-primary hover:underline"
                       >
                         Todo Efectivo
                       </button>
@@ -906,7 +906,7 @@ export const POSCart = ({
                         <input
                           type="number"
                           placeholder="Efectivo"
-                          className="w-full bg-background border border-border/50 rounded-xl pl-9 pr-3 py-2 text-sm font-black"
+                          className="w-full h-11 bg-background border border-border/50 rounded-xl pl-9 pr-3 text-sm font-black"
                           value={items
                             .reduce((acc, i) => acc + (i.cash_paid || 0), 0)
                             .toFixed(2)}
@@ -931,7 +931,7 @@ export const POSCart = ({
                         <input
                           type="number"
                           placeholder="Transferencia"
-                          className="w-full bg-background border border-border/50 rounded-xl pl-9 pr-3 py-2 text-sm font-black"
+                          className="w-full h-11 bg-background border border-border/50 rounded-xl pl-9 pr-3 text-sm font-black"
                           value={items
                             .reduce((acc, i) => acc + (i.transfer_paid || 0), 0)
                             .toFixed(2)}
