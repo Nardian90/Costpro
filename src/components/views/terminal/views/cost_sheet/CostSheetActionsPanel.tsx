@@ -62,7 +62,7 @@ const AccordionGroup = ({
         onClick={onToggle}
         className={cn(
           "w-full flex items-center justify-between p-4 transition-colors",
-          isOpen ? "bg-primary/5 text-[#00FF00]" : "text-[#00FF00]/60 hover:bg-[#00FF00]/5 hover:text-[#00FF00]"
+          isOpen ? "bg-primary/5 text-primary" : "text-primary/60 hover:bg-primary/5 hover:text-primary"
         )}
       >
         <div className="flex items-center gap-3">
@@ -146,15 +146,15 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
         className={cn(
           "w-full flex items-center gap-3 p-3 rounded-xl transition-all group active:scale-95 text-left",
           isActive
-            ? "bg-[#00FF00]/10 text-[#00FF00] font-bold shadow-sm"
-            : "hover:bg-[#00FF00]/5 text-[#00FF00]/70 hover:text-[#00FF00]",
+            ? "bg-primary/10 text-primary font-bold shadow-sm"
+            : "hover:bg-primary/5 text-primary/70 hover:text-primary",
           finalVariant === 'danger' && "hover:bg-danger/10 text-danger",
           finalVariant === 'success' && "hover:bg-success/10 text-success"
         )}
       >
         <Icon className={cn(
           "w-4 h-4 transition-colors",
-          isActive ? "text-[#00FF00]" : "group-hover:text-[#00FF00]"
+          isActive ? "text-primary" : "group-hover:text-primary"
         )} />
         <span className="text-[10px] font-bold uppercase tracking-widest">{label}</span>
       </button>
@@ -187,17 +187,17 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
             {/* Header */}
             <div className="p-6 border-b border-sidebar-border/50 flex items-center justify-between bg-sidebar/5">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-[#00FF00]/10">
-                  <Settings className="w-5 h-5 text-[#00FF00]" />
+                <div className="p-2 rounded-xl bg-primary/10">
+                  <Settings className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#00FF00] block">Panel de Control</span>
-                    <span className="text-[8px] font-bold uppercase tracking-[0.4em] text-[#00FF00]/50">v5.7.25</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary block">Panel de Control</span>
+                    <span className="text-[8px] font-bold uppercase tracking-[0.4em] text-primary/50">v5.7.25</span>
                 </div>
               </div>
               <button
                 onClick={onClose}
-                className="p-2 rounded-xl hover:bg-[#00FF00]/10 text-[#00FF00] transition-colors active:scale-95"
+                className="p-2 rounded-xl hover:bg-primary/10 text-primary transition-colors active:scale-95"
               >
                 <XIcon className="w-5 h-5" />
               </button>
@@ -265,8 +265,8 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
                 isOpen={openGroups.includes('export')}
                 onToggle={() => toggleGroup('export')}
               >
-                <div className="px-3 py-4 space-y-4 bg-primary/5 rounded-xl mb-2 mx-2 border border-[#00FF00]/10">
-                   <div className="text-[8px] font-black text-[#00FF00]/70 tracking-[0.4em] uppercase">
+                <div className="px-3 py-4 space-y-4 bg-primary/5 rounded-xl mb-2 mx-2 border border-primary/10">
+                   <div className="text-[8px] font-black text-primary/70 tracking-[0.4em] uppercase">
                       Modo de Diseño
                    </div>
                    <ViewSwitcher
@@ -295,7 +295,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
 
             {/* Footer */}
             <div className="p-6 border-t border-sidebar-border/50 bg-sidebar/5">
-               <p className="text-[9px] font-black uppercase tracking-[0.3em] text-[#00FF00]/50 text-center">
+               <p className="text-[9px] font-black uppercase tracking-[0.3em] text-primary/50 text-center">
                   Soporte: info@costpro.app
                </p>
             </div>

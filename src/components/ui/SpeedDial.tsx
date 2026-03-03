@@ -34,7 +34,7 @@ export const SpeedDial: React.FC<SpeedDialProps> = ({ actions, className }) => {
             <div className="flex flex-col items-end gap-6 mb-2">
               {categories.map((cat) => (
                 <div key={cat} className="flex flex-col items-end gap-2">
-                  <span className="text-xs font-black uppercase tracking-widest text-[#00FF00] bg-background/80 backdrop-blur-sm px-2 py-0.5 rounded border border-[#00FF00]/20">
+                  <span className="text-xs font-black uppercase tracking-widest text-primary bg-background/80 backdrop-blur-sm px-2 py-0.5 rounded border border-primary/20">
                     {cat}
                   </span>
                   <div className="flex flex-col items-end gap-2">
@@ -54,13 +54,13 @@ export const SpeedDial: React.FC<SpeedDialProps> = ({ actions, className }) => {
                           className={cn(
                             "flex items-center gap-3 px-4 py-3 rounded-2xl transition-all active:scale-95 neu-raised-sm hover:neu-raised-hover border-2",
                             action.variant === 'destructive' ? "bg-destructive/10 text-danger border-danger/20" :
-                            action.variant === 'success' ? "bg-primary/10 text-[#00FF00] border-[#00FF00]/20" :
-                            action.variant === 'primary' ? "bg-primary text-[#00FF00] border-[#00FF00]" :
-                            "bg-card text-[#00FF00] border-[#00FF00]/20"
+                            action.variant === 'success' ? "bg-primary/10 text-primary border-primary/20" :
+                            action.variant === 'primary' ? "bg-primary text-primary border-primary" :
+                            "bg-card text-primary border-primary/20"
                           )}
                         >
                           <span className="text-sm font-bold uppercase tracking-widest">{action.label}</span>
-                          <action.icon className="w-5 h-5 text-[#00FF00]" />
+                          <action.icon className="w-5 h-5 text-primary" />
                         </motion.button>
                       ))}
                   </div>
@@ -75,7 +75,7 @@ export const SpeedDial: React.FC<SpeedDialProps> = ({ actions, className }) => {
           onClick={() => setIsOpen(!isOpen)}
           className={cn(
             "w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all active:scale-90 z-20 neu-raised hover:neu-raised-hover",
-            isOpen ? "bg-background border-2 border-[#00FF00] text-[#00FF00] rotate-0" : "bg-primary text-[#00FF00]"
+            isOpen ? "bg-background border-2 border-primary text-primary rotate-0" : "bg-primary text-primary"
           )}
         >
           {isOpen ? (
