@@ -223,9 +223,10 @@ export async function POST(req: NextRequest) {
                         const isRed = ['14', '15', '16', '16.1', '17', '20'].includes(classStr);
                         const labelLower = (r.label || '').toLowerCase();
 
+                        const level = classStr.split('.').length - 1;
+
                         // Hierarchical indentation
                         if (data.column.index === 1) {
-                            const level = classStr.split('.').length - 1;
                             const label = r.label || '';
                             data.cell.styles.cellPadding = { left: 2 + (level * 4) };
 
