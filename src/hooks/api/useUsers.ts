@@ -20,7 +20,7 @@ export function useUsers(currentUserId: string, isAdmin: boolean, isEncargado: b
 
       if (isAdmin || isEncargado) {
         try {
-          const profileColumns = 'id, full_name, email, role, role_id, roles, active_store_id, logo_url, is_active, store_id, created_at';
+          const profileColumns = 'id, full_name, email, role, role_id, roles, active_store_id, logo_url, is_active, store_id, created_at, plan';
 
           // Fetch profiles and memberships separately to avoid "memberships column not found" cache errors
           let profilesQuery = supabase.from('profiles').select(profileColumns).order('full_name');

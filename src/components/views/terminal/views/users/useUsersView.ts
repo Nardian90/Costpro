@@ -211,6 +211,19 @@ export function useUsersView() {
         }
     };
 
+
+    const handleUpdatePlan = async (userId: string, plan: string) => {
+        try {
+            await updateUserMutation.mutateAsync({
+                id: userId,
+                plan: plan
+            });
+            toast.success(`Plan actualizado a ${plan.toUpperCase()}`);
+        } catch (error: any) {
+            toast.error(error.message || 'Error al actualizar el plan');
+        }
+    };
+
     return {
         // State
         searchTerm,
@@ -235,6 +248,7 @@ export function useUsersView() {
         handleToggleUserStatus,
         handleDeleteUser,
         handleResetPassword,
+        handleUpdatePlan,
         isSubmittingUser: createUserMutation.isPending || updateUserMutation.isPending || manageMembershipsMutation.isPending,
         allowedRoles: getAllowedRoles(user?.role as UserRole)
     };
