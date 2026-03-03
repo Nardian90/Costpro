@@ -81,7 +81,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           'users',
           'roles',
           'stores',
-          'reports',
+          'reports', 'health',
           'audit',
           'settings',
           {

@@ -1,14 +1,14 @@
-import { useMemo, useCallback, useRef } from 'react';
-import { useMotionValue, useTransform } from 'framer-motion';
-import {
+import { HeartPulse, useMemo, useCallback, useRef } from 'react';
+import { HeartPulse, useMotionValue, useTransform } from 'framer-motion';
+import { HeartPulse,
   BarChart3, ShoppingCart, Package, Warehouse, Receipt,
   ClipboardList, FileText, History, Shield, DollarSign,
   Users, Building, Settings, HelpCircle, ArrowLeftRight, GraduationCap,
   Newspaper, Rss, TrendingUp, ShieldCheck, RefreshCcw, Scale
 } from 'lucide-react';
-import { type UserRole } from '@/types';
-import { UserContract } from '@/contracts/user';
-import { hasRole } from '@/lib/roles';
+import { HeartPulse, type UserRole } from '@/types';
+import { HeartPulse, UserContract } from '@/contracts/user';
+import { HeartPulse, hasRole } from '@/lib/roles';
 
 export interface NavigationItem {
   id: string;
@@ -47,6 +47,7 @@ export function useTerminalNavigation(user: UserContract | null, sidebarSearch: 
       { id: 'reports', icon: FileText, label: 'Reportes', roles: ['admin', 'manager', 'encargado'], category: 'GESTIÓN' },
       { id: 'ipv', icon: FileText, label: 'IPV', roles: ['admin', 'manager', 'encargado'], category: 'GESTIÓN' },
       { id: 'audit', icon: Shield, label: 'Auditoría', roles: ['manager', 'admin', 'encargado'], category: 'GESTIÓN' },
+      { id: 'health', icon: HeartPulse, label: 'Salud', roles: ['admin', 'manager'], category: 'GESTIÓN' },
       { id: 'users', icon: Users, label: 'Usuarios', roles: ['admin', 'encargado', 'manager'], category: 'GESTIÓN' },
       { id: 'roles', icon: ShieldCheck, label: 'Roles', roles: ['admin'], category: 'GESTIÓN' },
       { id: 'stores', icon: Building, label: 'Tiendas', roles: ['admin', 'encargado', 'manager'], category: 'GESTIÓN' },
