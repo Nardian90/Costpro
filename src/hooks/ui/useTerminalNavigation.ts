@@ -4,7 +4,7 @@ import {
   BarChart3, ShoppingCart, Package, Warehouse, Receipt,
   ClipboardList, FileText, History, Shield, DollarSign,
   Users, Building, Settings, HelpCircle, ArrowLeftRight, GraduationCap,
-  Newspaper, Rss, TrendingUp, ShieldCheck, RefreshCcw, Scale, Rocket
+  Newspaper, Rss, TrendingUp, ShieldCheck, RefreshCcw, Scale
 } from 'lucide-react';
 import { type UserRole } from '@/types';
 import { UserContract } from '@/contracts/user';
@@ -54,7 +54,6 @@ export function useTerminalNavigation(user: UserContract | null, sidebarSearch: 
       { id: 'settings', icon: Settings, label: 'Configuración', roles: ['admin', 'manager', 'encargado'], category: 'GESTIÓN' },
 
       { id: 'legal', icon: Scale, label: 'Legal', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'LEGAL' },
-      { id: 'release_gate', icon: Rocket, label: 'Release Gate', roles: ['admin', 'manager', 'encargado'], category: 'LEGAL' },
       { id: 'support_doc', icon: FileText, label: 'Manual', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'LEGAL' },
       { id: 'help', icon: HelpCircle, label: 'Ayuda', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'LEGAL' },
       { id: 'academy', icon: GraduationCap, label: 'Academia', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'LEGAL' },
