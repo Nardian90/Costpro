@@ -1,106 +1,120 @@
-/**
- * Market Readiness Index (MRI) Engine
- * Implements a 1-10 scoring model across a domain-weighted framework.
- */
-
-export interface MRIDomain {
+export interface DomainScore {
   id: string;
-  name: string;
-  score: number; // 1-10
-  weight: number; // 0-1
-  observations: string[];
+  label: string;
+  weight: number;
+  score: number;
+  criteria: string[];
 }
+
+export const MRI_DOMAINS: DomainScore[] = [
+  {
+    id: 'architecture',
+    label: 'Arquitectura & Diseño',
+    weight: 0.15,
+    score: 0,
+    criteria: ['Modularidad', 'Separación de capas', 'Gestión de dependencias', 'Documentación', 'Manejo de errores', 'Escalabilidad']
+  },
+  {
+    id: 'code_quality',
+    label: 'Calidad de Código',
+    weight: 0.15,
+    score: 0,
+    criteria: ['Estándares definidos', 'Code review', 'Complejidad ciclomática', 'Código muerto', 'Pruebas', 'Análisis estático']
+  },
+  {
+    id: 'testing',
+    label: 'Testing & Cobertura',
+    weight: 0.15,
+    score: 0,
+    criteria: ['Unit testing', 'Integración', 'E2E', 'Regresión', 'Stress testing', 'Evidencia']
+  },
+  {
+    id: 'security',
+    label: 'Seguridad',
+    weight: 0.15,
+    score: 0,
+    criteria: ['OWASP Top 10', 'Autenticación', 'RBAC', 'Encriptación', 'Secretos', 'Logs auditables']
+  },
+  {
+    id: 'performance',
+    label: 'Rendimiento & Escalabilidad',
+    weight: 0.10,
+    score: 0,
+    criteria: ['SLA definidos', 'Tests de carga', 'Concurrencia', 'Cache', 'Escalado horizontal']
+  },
+  {
+    id: 'devops',
+    label: 'DevOps & Deploy',
+    weight: 0.10,
+    score: 0,
+    criteria: ['CI/CD', 'Build reproducible', 'Rollback probado', 'IaC', 'Entornos alineados']
+  },
+  {
+    id: 'database',
+    label: 'Base de Datos',
+    weight: 0.05,
+    score: 0,
+    criteria: ['Índices optimizados', 'Migraciones', 'Backups probados', 'Plan DRP']
+  },
+  {
+    id: 'ux_ui',
+    label: 'UX/UI & Producto',
+    weight: 0.05,
+    score: 0,
+    criteria: ['Flujos críticos', 'Consistencia visual', 'Accesibilidad', 'Feedback Beta']
+  },
+  {
+    id: 'observability',
+    label: 'Observabilidad & Soporte',
+    weight: 0.05,
+    score: 0,
+    criteria: ['Logs centralizados', 'Métricas de negocio', 'Alertas', 'Dashboard operativo']
+  },
+  {
+    id: 'compliance',
+    label: 'Cumplimiento Legal',
+    weight: 0.05,
+    score: 0,
+    criteria: ['Privacidad', 'Licencias', 'T&C', 'Regulaciones']
+  }
+];
 
 export interface HardStop {
   id: string;
-  name: string;
-  passed: boolean;
-  critical: boolean;
+  label: string;
+  active: boolean;
 }
 
-export interface MRIResult {
-  score: number;
-  status: 'GO' | 'GO_OBSERVATIONS' | 'NO_GO' | 'ENTERPRISE_READY';
-  domains: MRIDomain[];
-  hardStops: HardStop[];
-  timestamp: string;
-}
+export const HARD_STOPS: HardStop[] = [
+  { id: 'security_vuln', label: 'Vulnerabilidad crítica abierta', active: false },
+  { id: 'no_rollback', label: 'No existe rollback probado', active: false },
+  { id: 'low_coverage', label: 'Cobertura < 60%', active: false },
+  { id: 'no_backup', label: 'No hay backup probado', active: false }
+];
 
-export const MRI_WEIGHTS: Record<string, number> = {
-  architecture: 0.10,
-  code_quality: 0.10,
-  testing: 0.15,
-  security: 0.15,
-  performance: 0.10,
-  devops: 0.10,
-  db: 0.10,
-  ux: 0.10,
-  observability: 0.05,
-  compliance: 0.05,
+export type Dictamen = 'NO GO' | 'GO CON OBSERVACIONES' | 'GO' | 'ENTERPRISE READY';
+
+export const calculateMRI = (domainScores: Record<string, number>): number => {
+  return MRI_DOMAINS.reduce((acc, domain) => {
+    const score = domainScores[domain.id] || 0;
+    return acc + (score * domain.weight);
+  }, 0);
 };
 
-export const MRI_THRESHOLDS = {
-  NO_GO: 6.0,
-  GO_OBSERVATIONS: 7.5,
-  GO: 9.0,
-  ENTERPRISE_READY: 10.0,
+export const getDictamen = (mri: number, hardStops: Record<string, boolean>): Dictamen => {
+  const hasHardStop = Object.values(hardStops).some(val => val === true);
+  if (hasHardStop || mri < 6) return 'NO GO';
+  if (mri < 7.5) return 'GO CON OBSERVACIONES';
+  if (mri < 9) return 'GO';
+  return 'ENTERPRISE READY';
 };
 
-export function calculateMRI(domains: MRIDomain[], hardStops: HardStop[]): MRIResult {
-  const anyHardStopFailed = hardStops.some(hs => hs.critical && !hs.passed);
-
-  let totalScore = 0;
-  let totalWeight = 0;
-
-  domains.forEach(domain => {
-    totalScore += domain.score * domain.weight;
-    totalWeight += domain.weight;
-  });
-
-  const finalScore = totalWeight > 0 ? totalScore / totalWeight : 0;
-
-  let status: MRIResult['status'] = 'NO_GO';
-
-  if (anyHardStopFailed || finalScore < MRI_THRESHOLDS.NO_GO) {
-    status = 'NO_GO';
-  } else if (finalScore < MRI_THRESHOLDS.GO_OBSERVATIONS) {
-    status = 'GO_OBSERVATIONS';
-  } else if (finalScore < MRI_THRESHOLDS.GO) {
-    status = 'GO';
-  } else {
-    status = 'ENTERPRISE_READY';
+export const getDictamenColor = (dictamen: Dictamen): string => {
+  switch (dictamen) {
+    case 'NO GO': return 'text-danger bg-danger/10 border-danger/20';
+    case 'GO CON OBSERVACIONES': return 'text-warning bg-warning/10 border-warning/20';
+    case 'GO': return 'text-primary bg-primary/10 border-primary/20';
+    case 'ENTERPRISE READY': return 'text-success bg-success/10 border-success/20';
+    default: return 'text-muted-foreground bg-muted/10 border-muted/20';
   }
-
-  return {
-    score: Number(finalScore.toFixed(2)),
-    status,
-    domains,
-    hardStops,
-    timestamp: new Date().toISOString(),
-  };
-}
-
-// Default mock data for v5.7.25
-export const DEFAULT_MRI_DATA: MRIResult = {
-  score: 8.8,
-  status: 'GO',
-  domains: [
-    { id: 'architecture', name: 'Arquitectura', score: 9.0, weight: 0.10, observations: ['Clean Architecture implementada'] },
-    { id: 'code_quality', name: 'Calidad de Código', score: 8.5, weight: 0.10, observations: ['Linting estricto'] },
-    { id: 'testing', name: 'Testing', score: 8.0, weight: 0.15, observations: ['Unitarias al 70%', 'Faltan E2E completas'] },
-    { id: 'security', name: 'Seguridad', score: 9.5, weight: 0.15, observations: ['RLS verificado', 'RBAC sólido'] },
-    { id: 'performance', name: 'Rendimiento', score: 8.8, weight: 0.10, observations: ['LCP < 2.5s'] },
-    { id: 'devops', name: 'DevOps', score: 9.0, weight: 0.10, observations: ['CI/CD automatizado'] },
-    { id: 'db', name: 'Base de Datos', score: 9.2, weight: 0.10, observations: ['Índices optimizados'] },
-    { id: 'ux', name: 'UX/UI', score: 8.5, weight: 0.10, observations: ['Responsive verificado'] },
-    { id: 'observability', name: 'Observabilidad', score: 8.5, weight: 0.05, observations: ['Dashboard de Salud implementado v2'] },
-    { id: 'compliance', name: 'Cumplimiento', score: 9.5, weight: 0.05, observations: ['Modelos SC actualizados'] },
-  ],
-  hardStops: [
-    { id: 'vulnerabilities', name: 'Vulnerabilidades Críticas', passed: true, critical: true },
-    { id: 'rollback', name: 'Plan de Rollback', passed: true, critical: true },
-    { id: 'coverage', name: 'Cobertura > 60%', passed: true, critical: true },
-    { id: 'backup', name: 'Backup Verificado', passed: true, critical: true },
-  ],
-  timestamp: new Date().toISOString(),
 };
