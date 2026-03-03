@@ -1018,7 +1018,6 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
             </div>
         </div>
     </div>
-    </div>
     )}
     </>
   );
