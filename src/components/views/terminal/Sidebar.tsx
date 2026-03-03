@@ -3,10 +3,10 @@
 import * as React from 'react';
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, LogOut, ChevronDown, Calculator } from 'lucide-react';
+import { Search, LogOut, Zap, ChevronDown, Calculator } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import CostProLogo from '@/components/CostProLogo';
-import { ViewType, useUIStore } from '@/store';
+import { ViewType, useUIStore, useAuthStore } from '@/store';
 import { NavigationItem } from '@/hooks/ui/useTerminalNavigation';
 
 interface SidebarProps {
@@ -39,6 +39,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   navRef
 }) => {
   const { isCalculatorOpen, setIsCalculatorOpen } = useUIStore();
+  const { user } = useAuthStore();
   const [expandedModules, setExpandedModules] = useState<string[]>(['estrategico']);
 
   const STRUCTURE = useMemo(() => {
@@ -316,6 +317,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </nav>
 
         <div className="p-4 border-t border-sidebar-border/50 shrink-0 space-y-1">
+
+          {user?.plan === 'free' && (
+            <button
+              onClick={() => {
+                const whatsappNumber = "+5353183215";
+                const message = encodeURIComponent("Hola, me interesa obtener el Plan Pro de CostoPro para tener acceso ilimitado.");
+                window.open(`https://wa.me/${whatsappNumber}?text=${message}`, '_blank');
+              }}
+              className="w-full flex items-center gap-4 p-3.5 rounded-xl transition-all group active:scale-95 bg-primary/10 text-primary border border-primary/20 font-black mb-2 animate-pulse"
+            >
+              <Zap className="w-4.5 h-4.5 text-primary" />
+              <div className="flex flex-col items-start">
+                <span className="text-[10px] uppercase tracking-widest">Plan Gratuito</span>
+                <span className="text-[8px] uppercase tracking-[0.2em] opacity-70">Subir a PRO</span>
+              </div>
+            </button>
+          )}
           <button
             onClick={() => setIsCalculatorOpen(!isCalculatorOpen)}
             className={cn(
