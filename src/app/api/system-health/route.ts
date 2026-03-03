@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { calculateMRI, DEFAULT_MRI_DATA } from '@/lib/release-gate/mri-engine';
+import { calculateMRI, DEFAULT_MRI_DATA } from '@/lib/release_gate/mri-engine';
 import { calculateSHI, MOCK_SYSTEM_HEALTH_V2 } from '@/lib/observability/health-engine';
 
 export const dynamic = 'force-dynamic';

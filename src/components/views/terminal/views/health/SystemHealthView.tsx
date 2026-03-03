@@ -15,7 +15,7 @@ import { ApplicationMetrics } from './ApplicationMetrics';
 import { SecurityMetrics } from './SecurityMetrics';
 import { ReleaseGateStatus } from './ReleaseGateStatus';
 import { CostProLoader } from '@/components/ui/CostProLoader';
-import { ReleaseGatePdfExporter } from '@/lib/release-gate/ReleaseGatePdfExporter';
+import { ReleaseGatePdfExporter } from '@/lib/release_gate/ReleaseGatePdfExporter';
 
 import {
   DropdownMenu,
