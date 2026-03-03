@@ -525,6 +525,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
   const isQuickProcessing = isQuickAction && isProcessing;
 
   const content = (
+    <>
     {isQuickProcessing ? (
       <div className="flex flex-col items-center justify-center h-[500px] bg-card/50 backdrop-blur-xl rounded-[2.5rem] border-2 border-primary/20 animate-in zoom-in-95 duration-500 shadow-2xl">
         <CostProLoader size={160} text="PROCESANDO" subtext="Generando fichas masivas..." />
@@ -1019,6 +1020,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
     </div>
     </div>
     )}
+    </>
   );
 
   if (isSection) {
