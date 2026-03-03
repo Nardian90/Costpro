@@ -32,7 +32,8 @@ import { CostSheetQuickMode } from './CostSheetQuickMode';
 import { CostSheetViewMode } from './CostSheetModeDropdown';
 import ViewSwitcher, { ViewMode } from '@/components/ui/ViewSwitcher';
 import ActionMenu from '@/components/ui/ActionMenu';
-import { Layout, Eye, Edit, FileText, Trash2, Download, FileSpreadsheet, Upload, Save, BarChart3, ClipboardList, Activity, MoreVertical, AlertTriangle, ArrowLeft, Table2, Wand2, BookOpen, Zap as ZapIcon, Sparkles, Calculator } from 'lucide-react';
+import { cn, formatDate, formatCurrency } from '@/lib/utils';
+import { Layout, Eye, Edit, FileText, Trash2, Download, FileSpreadsheet, Upload, Save, BarChart3, ClipboardList, Activity, MoreVertical, AlertTriangle, ArrowLeft, Table2, Wand2, BookOpen, Zap as ZapIcon, Sparkles, Calculator, Tag } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -451,6 +452,14 @@ const CostSheetView = () => {
   }, [setIsExportModalOpen, handleSetActiveSection, setViewMode, setIsActionsPanelOpen, setCurrentView, setIsChatBotOpen, setIsCalculatorOpen]);
 
   const speedDialActions: SpeedDialAction[] = [
+    {
+      id: "sale-price-display",
+      label: `Precio: ${formatCurrency(calculatedValues["14"]?.total || 0)}`,
+      icon: Tag,
+      onClick: () => toast.info(`El precio de venta actual es ${formatCurrency(calculatedValues["14"]?.total || 0)}`),
+      category: "Gestión",
+      variant: "success"
+    },
     {
       id: "reset",
       label: "Limpiar Ficha",
