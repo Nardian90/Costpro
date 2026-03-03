@@ -46,7 +46,7 @@ export const useAuthStore = create<AuthState>()(
 );
 
 // --- UI Store ---
-export type ViewType = 'dashboard' | 'pos' | 'inventory' | 'recepcion' | 'reception_list' | 'transferencias' | 'sales' | 'inventory_count' | 'cost-sheets' | 'reports' | 'catalog' | 'history' | 'inventory_adjustments' | 'audit' | 'cash' | 'users' | 'roles' | 'stores' | 'settings' | 'help' | 'news' | 'rss_management' | 'ipv' | 'support_doc' | 'academy' | 'legal';
+export type ViewType = 'dashboard' | 'pos' | 'inventory' | 'recepcion' | 'reception_list' | 'transferencias' | 'sales' | 'inventory_count' | 'cost-sheets' | 'reports' | 'catalog' | 'history' | 'inventory_adjustments' | 'audit' | 'cash' | 'users' | 'roles' | 'stores' | 'settings' | 'help' | 'news' | 'rss_management' | 'ipv' | 'support_doc' | 'academy' | 'legal' | 'health';
 
 interface NotificationsConfig {
   lowStock: boolean;
