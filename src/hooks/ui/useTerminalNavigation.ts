@@ -1,14 +1,14 @@
-import { HeartPulse, useMemo, useCallback, useRef } from 'react';
-import { HeartPulse, useMotionValue, useTransform } from 'framer-motion';
-import { HeartPulse,
+import { useMemo, useCallback, useRef } from 'react';
+import { useMotionValue, useTransform } from 'framer-motion';
+import {
   BarChart3, ShoppingCart, Package, Warehouse, Receipt,
   ClipboardList, FileText, History, Shield, DollarSign,
   Users, Building, Settings, HelpCircle, ArrowLeftRight, GraduationCap,
-  Newspaper, Rss, TrendingUp, ShieldCheck, RefreshCcw, Scale
+  Newspaper, Rss, TrendingUp, ShieldCheck, RefreshCcw, Scale, HeartPulse
 } from 'lucide-react';
-import { HeartPulse, type UserRole } from '@/types';
-import { HeartPulse, UserContract } from '@/contracts/user';
-import { HeartPulse, hasRole } from '@/lib/roles';
+import { type UserRole } from '@/types';
+import { UserContract } from '@/contracts/user';
+import { hasRole } from '@/lib/roles';
 
 export interface NavigationItem {
   id: string;
