@@ -423,7 +423,7 @@ const CostSheetSummary: React.FC<CostSheetSummaryProps> = memo(({
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
                 </div>
-                <p className="text-xs text-muted-foreground uppercase tracking-widest leading-tight">
+                <p className="text-[clamp(0.7rem,2vw,0.75rem)] text-muted-foreground uppercase tracking-widest leading-tight">
                   El sistema recalcula automáticamente el precio final y los impuestos basándose en este margen de utilidad.
                 </p>
               </div>
