@@ -16,8 +16,8 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, act
 
   return (
     <BaseModal
-      isOpen={isOpen}
-      onClose={onClose}
+      open={isOpen}
+      onOpenChange={(open) => !open && onClose()}
       title="Plan Pro Requerido"
       showCloseButton
     >
