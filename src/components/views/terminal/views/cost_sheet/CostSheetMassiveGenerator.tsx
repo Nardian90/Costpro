@@ -55,6 +55,8 @@ interface CostSheetMassiveGeneratorProps {
   isSection?: boolean;
   initialProducts?: any[];
   initialMapping?: { targetColumn: 'sale_price' | 'total_cost', modificationRow: string };
+  autoStart?: boolean;
+  isQuickAction?: boolean;
 }
 
 export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps> = ({
@@ -62,7 +64,9 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
   onClose = () => {},
   isSection = false,
   initialProducts,
-  initialMapping
+  initialMapping,
+  autoStart = false,
+  isQuickAction = false
 }) => {
   const { data: currentSheet } = useCostSheetStore();
   const { user } = useAuthStore();
@@ -113,6 +117,12 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
       }));
       setResults(initialResults);
       setSelectedIds(new Set(initialResults.map(r => r.sku)));
+      if (autoStart) {
+          // Delayed start to ensure everything is initialized
+          setTimeout(() => {
+            runMassiveGeneration();
+          }, 500);
+      }
       setShowMapping(true);
     }
   }, [initialProducts]);
@@ -154,6 +164,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
         }));
         setResults(initialResults);
         setSelectedIds(new Set(initialResults.map(r => r.sku)));
+
         setShowMapping(true);
       } catch (err) {
         console.error(err);
@@ -301,6 +312,17 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
   }, []);
 
   const runMassiveGeneration = async () => {
+    // Force standard options for quick action
+    if (isQuickAction) {
+        setExportOptions(prev => ({
+            ...prev,
+            pdfFormat: 'standard',
+            includeAudit: false,
+            includeFC: true,
+            alwaysZip: true
+        }));
+    }
+
     if (products.length === 0) {
       toast.error("No hay productos cargados para procesar.");
       return;
@@ -397,7 +419,13 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
           body: JSON.stringify({
             ...result,
             sections: currentSheet?.sections,
-            exportOptions
+            exportOptions: isQuickAction ? {
+                ...exportOptions,
+                pdfFormat: 'standard',
+                includeAudit: false,
+                includeFC: true,
+                alwaysZip: true
+            } : exportOptions
           })
         });
 
@@ -433,7 +461,7 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
     }
 
         // Process Downloads
-    const shouldZip = exportOptions.alwaysZip || blobs.length > 2;
+    const shouldZip = (isQuickAction ? true : exportOptions.alwaysZip) || blobs.length > 2;
 
     if (shouldZip && blobs.length > 0) {
         toast.info("Comprimiendo fichas en un archivo ZIP...");
@@ -494,8 +522,20 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
       setIsProcessing(false);
   };
 
+  const isQuickProcessing = isQuickAction && isProcessing;
+
   const content = (
-    <div className={cn(
+    <>
+    {isQuickProcessing ? (
+      <div className="flex flex-col items-center justify-center h-[500px] bg-card/50 backdrop-blur-xl rounded-[2.5rem] border-2 border-primary/20 animate-in zoom-in-95 duration-500 shadow-2xl">
+        <CostProLoader size={160} text="PROCESANDO" subtext="Generando fichas masivas..." />
+        <div className="w-64 mt-8 space-y-2">
+            <Progress value={progress} className="h-2 bg-primary/10" />
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-center text-primary/60">Ficha {currentIndex + 1} de {selectedIds.size}</p>
+        </div>
+      </div>
+    ) : (
+      <div className={cn(
         "flex flex-col overflow-hidden",
         isSection ? "w-full bg-card rounded-3xl border border-border shadow-sm" : "max-w-4xl max-h-[90vh] bg-sidebar/95 backdrop-blur-2xl border-sidebar-border shadow-2xl rounded-3xl"
     )}>
@@ -978,6 +1018,8 @@ export const CostSheetMassiveGenerator: React.FC<CostSheetMassiveGeneratorProps>
             </div>
         </div>
     </div>
+    )}
+    </>
   );
 
   if (isSection) {

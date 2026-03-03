@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { Parser } from 'expr-eval';
 
 export const runtime = 'nodejs';
 
@@ -23,11 +24,27 @@ export async function POST(req: NextRequest) {
     const isPro = exportOptions.pdfFormat === 'pro';
     const primaryColor: [number, number, number] = isPro ? [26, 82, 118] : [0, 0, 0]; // Pro Blue or Black
 
+    const parser = new Parser();
+
     const safeLocale = (val: any) => {
         const n = parseFloat(String(val));
         if (isNaN(n)) return val;
         return n.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     };
+
+    const evaluateFormula = (val: any, context: any = {}) => {
+        const str = String(val || "");
+        if (!str.startsWith('=')) return val;
+
+        try {
+            const formula = str.substring(1);
+            return parser.parse(formula).evaluate(context);
+        } catch (e) {
+            console.error('Formula evaluation error in PDF header:', e);
+            return val;
+        }
+    };
+
     const translate = (key: string) => {
         const dict: Record<string, string> = {
             'description': 'Descripción',
@@ -51,7 +68,19 @@ export async function POST(req: NextRequest) {
     };
 
     const addHeader = (pdf: jsPDF, title: string) => {
-        const h = result.metadata?.header || result.header || {};
+        const h = { ...(result.metadata?.header || result.header || {}) };
+
+        // Prepare context for formulas in header
+        // Header formulas might want to reference other header values
+        const formulaContext = { ...h };
+
+        // Evaluate header fields if they are formulas
+        h.name = evaluateFormula(h.name, formulaContext);
+        h.code = evaluateFormula(h.code, formulaContext);
+        h.unit = evaluateFormula(h.unit, formulaContext);
+        h.quantity = evaluateFormula(h.quantity, formulaContext);
+        h.enterprise = evaluateFormula(h.enterprise, formulaContext);
+        h.destination = evaluateFormula(h.destination, formulaContext);
 
         // Branding
         pdf.setFillColor(isPro ? 240 : 255, isPro ? 240 : 255, isPro ? 240 : 255);
@@ -149,141 +178,59 @@ export async function POST(req: NextRequest) {
         const headers = ['CÓDIGO', 'CONCEPTO', 'UM', 'V. HISTÓRICO', 'TOTAL'];
         let tableBody: any[] = [];
 
-        if (sections && sections.length > 0) {
-            // Group by provided sections
-            sections.forEach((s: any) => {
-                // Section headers removed as per request
+        // Use result.rows which are already calculated by the engine
+        const rows = result.rows || [];
 
-                const flattenRows = (rows: any[]) => {
-                    rows.forEach((r: any) => {
-                        let calc = (result.rows || []).find((cr: any) => cr.id === r.id);
-                        if (!calc && result.metadata?.calculationSnapshot?.values) {
-                            const snap = result.metadata.calculationSnapshot.values[r.id];
-                            if (snap) calc = { ...r, ...snap };
-                        }
-                        if (calc) {
-                            calc = { ...r, ...calc };
-                            const classStr = String(calc.classification || calc.id || '');
-                            const level = (classStr.match(/\./g) || []).length;
-
-                            // Parents (level 0, 1) always visible
-                            // Children (level 2+) hidden if zero and skipZeros is true
-                            const isParent = level < 2;
-                            const isZero = parseFloat(String(calc.total ?? 0)) === 0;
-
-                            if (exportOptions.skipZeros && isZero && !isParent) return;
-
-                            tableBody.push([
-                                calc.classification || calc.id,
-                                calc.label,
-                                calc.um || calc.unit || '-',
-                                safeLocale(calc.calculatedVH ?? calc.valorHistorico ?? calc.v_historico ?? 0),
-                                safeLocale(calc.total ?? 0)
-                            ]);
-                        }
-                        if (r.children) flattenRows(r.children);
-                    });
-                };
-                flattenRows(s.rows);
-            });
-        } else {
-            // Fallback to flat rows or snapshot
-            let sourceRows = result.rows || [];
-            if (sourceRows.length === 0 && result.metadata?.calculationSnapshot?.values) {
-                sourceRows = Object.entries(result.metadata.calculationSnapshot.values).map(([id, val]: [string, any]) => ({
-                    id, ...val
-                }));
-            }
-            tableBody = sourceRows
-                .filter((r: any) => {
-                    if (exportOptions.skipZeros) {
-                        const classStr = String(r.classification || r.id || "");
-                        const level = (classStr.match(/\./g) || []).length;
-                        const isParent = level < 2;
-                        const isZero = parseFloat(String(r.total ?? 0)) === 0;
-                        if (isZero && !isParent) return false;
-                    }
-                    return true;
-                })
-                .map((r: any) => [
-                    r.classification || r.id, r.label, r.um || r.unit || "-",
-                    safeLocale(r.calculatedVH ?? r.valorHistorico ?? r.v_historico ?? 0),
-                    safeLocale(r.total ?? 0)
-                ]);
-        }
+        tableBody = rows.map((r: any) => [
+            r.classification || r.id || '',
+            r.label || '',
+            r.um || '',
+            safeLocale(r.calculatedVH || r.valorHistorico || 0),
+            safeLocale(r.total || 0)
+        ]);
 
         autoTable(doc, {
             startY: currentY,
             head: [headers],
             body: tableBody,
-            theme: 'plain',
+            theme: isPro ? 'plain' : 'grid',
             headStyles: {
                 fillColor: isPro ? [255, 255, 255] : [255, 255, 255],
-                textColor: isPro ? [0, 0, 0] : [0, 0, 0],
-                fontSize: isPro ? 8 : 8,
-                fontStyle: 'bold',
-                lineWidth: { bottom: isPro ? 0.8 : 0.5 },
-                lineColor: isPro ? [0, 0, 0] : [100, 100, 100]
+                textColor: isPro ? [0, 0, 0] : primaryColor,
+                fontSize: 8,
+                lineWidth: { bottom: isPro ? 1 : 0.5 },
+                lineColor: isPro ? [60, 60, 60] : primaryColor
             },
             styles: {
-                fontSize: 8,
-                cellPadding: isPro ? { top: 2.5, bottom: 2.5, left: 3, right: 3 } : { top: 1.5, bottom: 1.5, left: 2, right: 2 },
-                font: "helvetica",
-                lineColor: [240, 240, 240],
-                lineWidth: 0
+                fontSize: 7.5,
+                cellPadding: isPro ? 3 : 2,
+                lineColor: [230, 230, 230],
+                lineWidth: isPro ? 0 : 0.1
             },
             columnStyles: {
-                0: { cellWidth: 15 }, // FILA
-                1: { cellWidth: 'auto' }, // CONCEPTO
-                2: { cellWidth: 12, halign: 'center' }, // UM
-                3: { cellWidth: 25, halign: 'right' }, // V. HISTORICO
-                4: { cellWidth: 25, halign: 'right' } // TOTAL
+                0: { cellWidth: 15, halign: 'center' },
+                2: { cellWidth: 15, halign: 'center' },
+                3: { cellWidth: 25, halign: 'right' },
+                4: { cellWidth: 25, halign: 'right' }
             },
-            alternateRowStyles: {
-                fillColor: [249, 249, 249]
-            },
-            margin: { top: 45, left: 14, right: 14 },
             didParseCell: (data) => {
                 if (data.section === 'body') {
-                    const rowContent = data.row.raw as any[];
-                    if (rowContent.length === 1 && data.cell.raw && (data.cell.raw as any).content) {
-                        // This is a section header row
-                        return;
-                    }
-
-                    let r = (result.rows || []).find((cr: any) => cr.classification === rowContent[0] || cr.id === rowContent[0]);
-                    if (!r && result.metadata?.calculationSnapshot?.values) {
-                        const snapEntries = Object.entries(result.metadata.calculationSnapshot.values);
-                        const match = snapEntries.find(([id, val]: [string, any]) => id === rowContent[0] || val.classification === rowContent[0]);
-                        if (match) r = { id: match[0], ...(match[1] as any) };
-                    }
+                    const rowIndex = data.row.index;
+                    const r = rows[rowIndex];
                     if (r) {
                         const classStr = String(r.classification || r.id || '');
-                        const level = (classStr.match(/\./g) || []).length;
+                        const isSpecial = classStr.includes('.') === false;
+                        const isRed = ['14', '15', '16', '16.1', '17', '20'].includes(classStr);
                         const labelLower = (r.label || '').toLowerCase();
-                        const isRed = labelLower.includes('utilidad') || labelLower.includes('precio');
-                        const isSpecial = isRed || ['12', '13', '13.1', '13.2', '14', '19', '20'].includes(classStr);
 
-                        if (data.column.index === 1) { // CONCEPTO
-                            const indent = isPro ? (level * 7) : (level * 4);
-                            data.cell.styles.cellPadding = { ...data.cell.styles.cellPadding as any, left: (data.cell.styles.cellPadding as any).left + indent };
+                        const level = classStr.split('.').length - 1;
 
-                            let label = String(data.cell.text[0]);
-                            if (isPro && level > 0) {
-                                if (level === 1) label = "• " + label;
-                                else label = "  - " + label;
-                            }
+                        // Hierarchical indentation
+                        if (data.column.index === 1) {
+                            const label = r.label || '';
+                            data.cell.styles.cellPadding = { left: 2 + (level * 4) };
 
-                            if (level === 0) {
-                                data.cell.styles.fontStyle = 'bold';
-                                data.cell.styles.fontSize = isPro ? 9.5 : 9;
-                                data.cell.text = [label.toUpperCase()];
-                                if (isPro) {
-                                    data.cell.styles.fillColor = [250, 250, 250];
-                                    (data.cell.styles.cellPadding as any).top = 3;
-                                    (data.cell.styles.cellPadding as any).bottom = 3;
-                                }
-                            } else if (level === 1) {
+                            if (level === 1) {
                                 data.cell.styles.fontStyle = isPro ? 'bold' : 'normal';
                                 data.cell.styles.fontSize = isPro ? 8.5 : 8.5;
                                 data.cell.text = [label];
@@ -491,7 +438,11 @@ export async function POST(req: NextRequest) {
     }
 
     const pdfBuffer = doc.output('arraybuffer');
-    const h = result.metadata?.header || result.header || {};
+    const h = { ...(result.metadata?.header || result.header || {}) };
+
+    // Evaluate formulas for filename too
+    h.code = evaluateFormula(h.code, h);
+
     const safeFilename = `ficha-${h.code || result.fichaId || result.id || 'export'}.pdf`.replace(/[\\/\\?%*:|"<>]/g, '-');
 
     return new NextResponse(pdfBuffer, {
