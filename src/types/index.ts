@@ -512,6 +512,7 @@ export type Profile = {
   memberships?: UserStoreMembership[];
   ai_provider?: string | null;
   ai_api_key?: string | null;
+  plan?: "free" | "pro" | string;
 };
 
 export interface SalesKPIs {

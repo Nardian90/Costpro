@@ -7,6 +7,7 @@ import SearchBar from '@/components/ui/SearchBar';
 import ActionMenu from '@/components/ui/ActionMenu';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useUsersView } from './useUsersView';
 import { UserFormModal } from './UserFormModal';
 
@@ -23,7 +24,7 @@ export default function UsersManagementView() {
     handleCloseModal,
     handleUserFormSubmit,
     handleToggleUserStatus,
-    handleDeleteUser, handleResetPassword,
+    handleDeleteUser, handleResetPassword, handleUpdatePlan,
     isSubmittingUser,
     allowedRoles,
     isAdmin,
@@ -91,6 +92,7 @@ export default function UsersManagementView() {
                 <th className="p-4 text-left">Inscripción</th>
                 <th className="p-4 text-center">Días Activos</th>
                 <th className="p-4 text-left">Accesos Multi-Tienda</th>
+                <th className="p-4 text-center">Plan</th>
                 <th className="p-4 text-center">Estado</th>
                 <th className="p-4 text-center">Acciones</th>
               </tr>
@@ -139,6 +141,31 @@ export default function UsersManagementView() {
                       )}
                     </div>
                   </td>
+
+                  <td className="p-4 text-center">
+                    {isAdmin ? (
+                      <Select
+                        defaultValue={u.plan || 'free'}
+                        onValueChange={(val) => handleUpdatePlan(u.id, val)}
+                      >
+                        <SelectTrigger className="w-[100px] h-8 text-[10px] font-black uppercase">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="free" className="text-[10px] font-black uppercase">Gratis</SelectItem>
+                          <SelectItem value="pro" className="text-[10px] font-black uppercase">Pro</SelectItem>
+                          <SelectItem value="enterprise" className="text-[10px] font-black uppercase">Enterprise</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <span className={cn(
+                        "px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest",
+                        u.plan === 'pro' ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'
+                      )}>
+                        {u.plan || 'free'}
+                      </span>
+                    )}
+                  </td>
                   <td className="p-4 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <Switch
@@ -185,7 +212,7 @@ export default function UsersManagementView() {
               ))}
               {users.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="p-12 text-center py-20">
+                  <td colSpan={8} className="p-12 text-center py-20">
                     <p className="text-muted-foreground uppercase font-black tracking-widest text-xs mb-2">
                       No se encontraron usuarios
                     </p>
