@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Activity, RefreshCw, AlertCircle, FileText,
-  Settings, Clock, ShieldCheck, ChevronDown
+  Settings, Clock, ShieldCheck, ChevronDown, Info
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -23,6 +23,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 export default function SystemHealthView() {
   const [data, setData] = useState<any>(null);
@@ -168,6 +175,89 @@ export default function SystemHealthView() {
           </button>
         </div>
       </footer>
+
+      {/* Metric Definitions & Documentation Accordion */}
+      <section className="bg-card/50 rounded-[40px] border border-border/50 p-8">
+        <div className="flex items-center gap-3 mb-8">
+          <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
+            <Info className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-lg font-black uppercase tracking-tighter">Guía de Interpretación de Métricas</h2>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Entienda los indicadores clave de su infraestructura</p>
+          </div>
+        </div>
+
+        <Accordion type="single" collapsible className="w-full space-y-4">
+          <AccordionItem value="infrastructure" className="border-none bg-background/40 rounded-3xl px-6">
+            <AccordionTrigger className="hover:no-underline py-6">
+              <span className="text-xs font-black uppercase tracking-widest flex items-center gap-3">
+                <Activity className="w-4 h-4 text-blue-500" />
+                Infraestructura (SHI - 35%)
+              </span>
+            </AccordionTrigger>
+            <AccordionContent className="text-[11px] leading-relaxed text-muted-foreground pb-6 uppercase font-medium">
+              Monitorea el estado físico y de red del sistema. Incluye:
+              <ul className="list-disc pl-5 mt-3 space-y-2 opacity-80">
+                <li><strong className="text-primary">Uptime:</strong> Tiempo de actividad garantizado (Objetivo: 99.9%).</li>
+                <li><strong className="text-primary">Latencia p95:</strong> Tiempo de respuesta del 95% de las peticiones (Umbral: 350ms).</li>
+                <li><strong className="text-primary">Recursos:</strong> Uso de CPU y Memoria para prevenir cuellos de botella.</li>
+              </ul>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="application" className="border-none bg-background/40 rounded-3xl px-6">
+            <AccordionTrigger className="hover:no-underline py-6">
+              <span className="text-xs font-black uppercase tracking-widest flex items-center gap-3">
+                <Settings className="w-4 h-4 text-emerald-500" />
+                Operaciones & Aplicación (SHI - 25%)
+              </span>
+            </AccordionTrigger>
+            <AccordionContent className="text-[11px] leading-relaxed text-muted-foreground pb-6 uppercase font-medium">
+              Evalúa la salud de la lógica de negocio y sincronización.
+              <ul className="list-disc pl-5 mt-3 space-y-2 opacity-80">
+                <li><strong className="text-primary">Sincronización:</strong> Estado de la réplica Dexie-Supabase en tiempo real.</li>
+                <li><strong className="text-primary">Integridad DB:</strong> Verificaciones automáticas de esquemas y relaciones.</li>
+                <li><strong className="text-primary">Conciliación:</strong> Salud de los cierres de caja y transacciones.</li>
+              </ul>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="security" className="border-none bg-background/40 rounded-3xl px-6">
+            <AccordionTrigger className="hover:no-underline py-6">
+              <span className="text-xs font-black uppercase tracking-widest flex items-center gap-3">
+                <ShieldCheck className="w-4 h-4 text-rose-500" />
+                Seguridad & GRC (SHI - 25%)
+              </span>
+            </AccordionTrigger>
+            <AccordionContent className="text-[11px] leading-relaxed text-muted-foreground pb-6 uppercase font-medium">
+              Gobernanza de acceso y protección de datos.
+              <ul className="list-disc pl-5 mt-3 space-y-2 opacity-80">
+                <li><strong className="text-primary">RLS Violations:</strong> Intentos de acceso no autorizado a nivel de fila.</li>
+                <li><strong className="text-primary">RBAC Alerts:</strong> Fallos persistentes en control de acceso por roles.</li>
+                <li><strong className="text-primary">Amenazas:</strong> Detección de patrones de ataque (fuerza bruta, inyección).</li>
+              </ul>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="release-gate" className="border-none bg-background/40 rounded-3xl px-6">
+            <AccordionTrigger className="hover:no-underline py-6">
+              <span className="text-xs font-black uppercase tracking-widest flex items-center gap-3">
+                <FileText className="w-4 h-4 text-violet-500" />
+                Market Readiness Index (MRI - 15%)
+              </span>
+            </AccordionTrigger>
+            <AccordionContent className="text-[11px] leading-relaxed text-muted-foreground pb-6 uppercase font-medium">
+              Calidad técnica para despliegue en producción (Enterprise Ready).
+              <ul className="list-disc pl-5 mt-3 space-y-2 opacity-80">
+                <li><strong className="text-primary">Hard Stops:</strong> Bloqueadores críticos (vulnerabilidades, sin backup).</li>
+                <li><strong className="text-primary">Cobertura:</strong> Mínimo 60% de pruebas automatizadas.</li>
+                <li><strong className="text-primary">Compliance:</strong> Adherencia a normativas legales SC-series.</li>
+              </ul>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      </section>
     </div>
   );
 }
