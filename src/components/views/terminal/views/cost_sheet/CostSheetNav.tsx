@@ -63,7 +63,7 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
             label: "",
             onClick: onOpenActions || (() => {}),
             icon: Menu,
-            className: "neu-raised-sm w-11 h-11 flex items-center justify-center shrink-0 active:scale-90 transition-transform text-[#00FF00] hover:bg-primary/10",
+            className: "neu-raised-sm w-11 h-11 flex items-center justify-center shrink-0 active:scale-90 transition-transform text-primary dark:text-white hover:bg-primary/10",
             tooltip: "Panel de Control"
         },
         // Fichas Dropdown (Vistas de la ficha)
