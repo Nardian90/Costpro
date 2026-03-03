@@ -428,7 +428,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
       </section>
 
       {/* Final CTA */}
-      <section className="py-24 px-6 overflow-x-auto">
+      <section className="py-24 px-4 sm:px-6 overflow-x-auto">
         <div className="max-w-4xl mx-auto p-8 sm:p-12 lg:p-20 rounded-[4rem] bg-foreground text-background relative overflow-hidden text-center space-y-10">
           <div className="absolute inset-0 opacity-10">
             <CostProLogo size={400} className="absolute -bottom-20 -right-20 rotate-12" />
@@ -462,7 +462,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
 
       {/* Simple Footer */}
       <footer className="py-12 border-t border-border/50 overflow-x-auto no-scrollbar">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8 md:gap-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row justify-between items-center gap-8 md:gap-6">
           <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
             <CostProLogo size={30} animated={false} className="grayscale" />
             <span className="text-xs font-bold text-muted-foreground">© 2026 CostPro Enterprise. Todos los derechos reservados.</span>
