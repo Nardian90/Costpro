@@ -23,6 +23,7 @@ export interface UserContract {
   memberships: UserStoreMembership[];
   aiProvider: string;
   aiApiKey: string;
+  plan: string;
 }
 
 /**
@@ -46,6 +47,7 @@ export const UserFactory = {
     memberships: [],
     aiProvider: 'gemini',
     aiApiKey: '',
+    plan: "free",
     ...initialValues,
   }),
 };
@@ -78,4 +80,5 @@ export const mapProfileToContract = (p: Profile): UserContract => ({
   memberships: p.memberships || [],
   aiProvider: p.ai_provider || 'gemini',
   aiApiKey: p.ai_api_key || '',
+  plan: p.plan || "free",
 });

@@ -36,6 +36,8 @@ import { Layout, Eye, Edit, FileText, Trash2, Download, FileSpreadsheet, Upload,
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { usageService } from '@/services/usage-service';
+import { UpgradeModal } from '@/components/modals/UpgradeModal';
 import { useAuthStore } from '@/store';
 import { exportToPDF, exportToCSV } from '@/services/export-service';
 import { useIsMobile } from '@/hooks/ui/useMobile';
@@ -173,10 +175,20 @@ const CostSheetView = () => {
   const [isAnnexesSidebarOpen, setIsAnnexesSidebarOpen] = useState(false);
   const [isMassiveGeneratorOpen, setIsMassiveGeneratorOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
   const isAnnexActive = React.useMemo(() => (data?.annexes || []).some((a: any) => a.id === activeSection) || activeSection === 'all-annexes' || activeSection === 'all-content' || activeSection === 'expert-content', [data?.annexes, activeSection]);
 
   const handleExportPDF = React.useCallback(async (options: ExportOptions) => {
+    // Usage Quota Check
+    if (user) {
+        const { allowed } = await usageService.checkQuota(user.id, 'fc_export', user.plan);
+        if (!allowed) {
+            setIsUpgradeModalOpen(true);
+            return;
+        }
+    }
+
     setIsExportModalOpen(false);
     if (isBlocked) {
         toast.warning("Exportando con advertencias: La ficha contiene errores críticos de validación.");
@@ -222,6 +234,7 @@ const CostSheetView = () => {
             const success = await downloadPDF(options, `ficha-consolidada-${safeBaseName}.pdf`);
             if (success) {
                 toast.success("PDF consolidado generado con éxito", { id: toastId });
+                if (user) await usageService.trackUsage(user.id, "fc_export", user.plan);
                 return;
             }
         } else {
@@ -333,7 +346,16 @@ const CostSheetView = () => {
     toast.success("JSON exportado correctamente");
   }, [data, calculatedHeader, isBlocked]);
 
-    const handleQuickGenerate = React.useCallback((rows: any[]) => {
+    const handleQuickGenerate = React.useCallback(async (rows: any[]) => {
+    if (user) {
+        const { allowed } = await usageService.checkQuota(user.id, 'fc_create', user.plan);
+        if (!allowed) {
+            setIsUpgradeModalOpen(true);
+            return;
+        }
+    }
+
+        if (user) await usageService.trackUsage(user.id, "fc_create", user.plan);
         setQuickModeProducts(rows.map(r => ({
             name: r.product,
             sku: `QM-${r.id}`,
