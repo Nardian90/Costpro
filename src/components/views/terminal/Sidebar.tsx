@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, LogOut, Zap, ChevronDown, Calculator } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import CostProLogo from '@/components/CostProLogo';
-import { ViewType, useUIStore } from '@/store';
+import { ViewType, useUIStore, useAuthStore } from '@/store';
 import { NavigationItem } from '@/hooks/ui/useTerminalNavigation';
 
 interface SidebarProps {
@@ -39,6 +39,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   navRef
 }) => {
   const { isCalculatorOpen, setIsCalculatorOpen } = useUIStore();
+  const { user } = useAuthStore();
   const [expandedModules, setExpandedModules] = useState<string[]>(['estrategico']);
 
   const STRUCTURE = useMemo(() => {
