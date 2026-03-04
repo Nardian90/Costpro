@@ -58,14 +58,6 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
     const mainNavItems = navItems.filter(s => !['massive-gen', 'kpis', 'templates', 'ai-chat'].includes(s.id));
 
         const actions: Action[] = [
-        {
-            id: "open-actions",
-            label: "",
-            onClick: onOpenActions || (() => {}),
-            icon: Menu,
-            className: "neu-raised-sm w-11 h-11 flex items-center justify-center shrink-0 active:scale-90 transition-transform text-primary dark:text-primary hover:bg-primary/10",
-            tooltip: "Panel de Control"
-        },
         // Fichas Dropdown (Vistas de la ficha)
         {
             id: 'fc-dropdown',
@@ -130,6 +122,21 @@ const CostSheetNav: React.FC<CostSheetNavProps> = ({
                     onOpenAcademy={onOpenAcademy || (() => {})}
                 />
             )
+        },
+        {
+            id: "open-actions",
+            label: "",
+            onClick: () => {},
+            component: (
+                <button
+                    onClick={onOpenActions || (() => {})}
+                    className="neu-raised-sm w-11 h-11 flex items-center justify-center shrink-0 active:scale-90 transition-transform text-primary dark:text-white hover:bg-primary/10 ml-auto"
+                    title="Panel de Control"
+                >
+                    <Menu className="w-5 h-5" />
+                </button>
+            ),
+            tooltip: "Panel de Control"
         }
     ];
 
