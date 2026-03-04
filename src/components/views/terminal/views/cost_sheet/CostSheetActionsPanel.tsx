@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  X as XIcon, FileText, Trash2, Upload, Save, FileSpreadsheet,
+  X as XIcon, Search, FileText, Trash2, Upload, Save, FileSpreadsheet,
   Download, Settings, Table2, LayoutGrid, ChevronDown,
   BarChart3, Layout, ListFilter, PenTool, Zap, Wand2,
   BookOpen, Eye, Activity, Sparkles, FolderOpen, Bot, HelpCircle, Calculator,
@@ -47,15 +47,20 @@ const AccordionGroup = ({
   title,
   icon: Icon,
   children,
-  isOpen,
-  onToggle
+  onToggle,
+  isVisible = true,
+  isSearchActive = false
 }: {
+  isVisible?: boolean;
+  isSearchActive?: boolean;
   title: string;
   icon: React.ElementType;
   children: React.ReactNode;
   isOpen: boolean;
   onToggle: () => void;
 }) => {
+  if (!isVisible) return null;
+
   return (
     <div className="border-b border-sidebar-border/50 last:border-0">
       <button
@@ -77,7 +82,7 @@ const AccordionGroup = ({
         </motion.div>
       </button>
       <AnimatePresence initial={false}>
-        {isOpen && (
+        {(isOpen || isSearchActive) && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
@@ -96,23 +101,16 @@ const AccordionGroup = ({
 };
 
 export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
-  isOpen,
-  onClose,
-  actions,
-  layoutMode,
-  setLayoutMode,
-  activeSection,
-  setActiveSection,
-  viewMode,
-  setViewMode,
-  onOpenSections,
-  onOpenAnnexes,
-  onOpenHelp,
-  onOpenSystemHelp,
-  onOpenAcademy,
-  onQuickGenerate,
-  onExpertGenerate
 }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const hasMatchingActions = (labels: string[]) => {
+    if (!searchTerm) return true;
+    return labels.some(label => label.toLowerCase().includes(searchTerm.toLowerCase()));
+  };
+
+
+
   const [openGroups, setOpenGroups] = useState<string[]>(['ficha']);
 
   const toggleGroup = (groupId: string) => {
@@ -144,18 +142,15 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
         key={id}
         onClick={() => handleAction(finalOnClick)}
         className={cn(
-          "w-full flex items-center gap-3 p-3 rounded-xl transition-all group active:scale-95 text-left",
+          "w-full flex items-center gap-4 p-3.5 rounded-xl transition-all group active:scale-95 text-left mb-1",
           isActive
-            ? "bg-primary/10 text-primary font-bold shadow-sm"
-            : "hover:bg-primary/5 text-primary/70 hover:text-primary",
+            ? "bg-primary text-white shadow-lg shadow-primary/20 font-black"
+            : "hover:bg-primary/5 text-primary/70 font-bold",
           finalVariant === 'danger' && "hover:bg-danger/10 text-danger",
           finalVariant === 'success' && "hover:bg-success/10 text-success"
         )}
       >
-        <Icon className={cn(
-          "w-4 h-4 transition-colors",
-          isActive ? "text-primary" : "group-hover:text-primary"
-        )} />
+        <Icon className={cn("w-4.5 h-4.5", isActive ? "text-white" : "group-hover:text-primary transition-colors")} />
         <span className="text-[10px] font-bold uppercase tracking-widest">{label}</span>
       </button>
     );
@@ -163,7 +158,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
 
   return (
     <AnimatePresence>
-      {isOpen && (
+      {(isOpen || isSearchActive) && (
         <>
           {/* Backdrop */}
           <motion.div
@@ -181,7 +176,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             className={cn(
-              "fixed right-0 top-0 h-screen w-80 bg-sidebar/95 backdrop-blur-2xl border-l border-sidebar-border shadow-2xl z-[100] flex flex-col overflow-hidden"
+              "fixed right-0 top-0 h-screen w-80 bg-sidebar/90 backdrop-blur-2xl border-l border-sidebar-border shadow-2xl z-[100] flex flex-col overflow-hidden"
             )}
           >
             {/* Header */}
@@ -203,64 +198,88 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
               </button>
             </div>
 
+            {/* Search Bar */}
+            <div className="px-6 py-4 shrink-0 border-b border-sidebar-border/30 bg-sidebar/5">
+              <div className="relative group">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="BUSCAR ACCIÓN..."
+                  className="w-full h-11 bg-background/50 border border-primary/10 rounded-xl pl-9 pr-4 text-xs font-black focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all uppercase tracking-[0.2em] placeholder:text-muted-foreground/30"
+                />
+              </div>
+            </div>
+
             {/* Content */}
             <div className="flex-1 overflow-y-auto no-scrollbar">
 
               <AccordionGroup
                 title="Ficha y Navegación"
+                isVisible={hasMatchingActions(['Tablero', 'Encabezado', 'Secciones', 'Anexo', 'Firmas', 'Vista Consolidada', 'Experto'])}
+                isSearchActive={!!searchTerm}
                 icon={LayoutGrid}
                 isOpen={openGroups.includes('ficha')}
                 onToggle={() => toggleGroup('ficha')}
               >
-                {renderActionButton('kpis', 'Tablero', BarChart3, () => setActiveSection?.('kpis'), 'outline', activeSection === 'kpis')}
-                {renderActionButton('header', 'Encabezado', Layout, () => setActiveSection?.('header'), 'outline', activeSection === 'header')}
-                {renderActionButton('open-sections', 'Secciones', ListFilter, onOpenSections)}
-                {renderActionButton('open-annexes', 'Anexo', FileSpreadsheet, onOpenAnnexes)}
-                {renderActionButton('signature', 'Firmas', PenTool, () => setActiveSection?.('signature'), 'outline', activeSection === 'signature')}
-                {renderActionButton('all-content', 'Vista Consolidada', Zap, () => setActiveSection?.('all-content'), 'outline', activeSection === 'all-content')}
-                {renderActionButton('expert-content', 'Experto', Zap, () => setActiveSection?.('expert-content'), 'outline', activeSection === 'expert-content')}
+                {('Tablero'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('kpis', 'Tablero', BarChart3, () => setActiveSection?.('kpis'), 'outline', activeSection === 'kpis')}
+                {('Encabezado'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('header', 'Encabezado', Layout, () => setActiveSection?.('header'), 'outline', activeSection === 'header')}
+                {('Secciones'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('open-sections', 'Secciones', ListFilter, onOpenSections)}
+                {('Anexo'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('open-annexes', 'Anexo', FileSpreadsheet, onOpenAnnexes)}
+                {('Firmas'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('signature', 'Firmas', PenTool, () => setActiveSection?.('signature'), 'outline', activeSection === 'signature')}
+                {('Vista Consolidada'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('all-content', 'Vista Consolidada', Zap, () => setActiveSection?.('all-content'), 'outline', activeSection === 'all-content')}
+                {('Experto'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('expert-content', 'Experto', Zap, () => setActiveSection?.('expert-content'), 'outline', activeSection === 'expert-content')}
               </AccordionGroup>
 
               <AccordionGroup
                 title="Modos de Visualización"
+                isVisible={hasMatchingActions(['Completo', 'Asistido', 'Resumido', 'Vistazo', 'Audit'])}
+                isSearchActive={!!searchTerm}
                 icon={Eye}
                 isOpen={openGroups.includes('modos')}
                 onToggle={() => toggleGroup('modos')}
               >
-                {renderActionButton('mode-expert', 'Completo', Table2, () => setViewMode?.('expert'), 'outline', viewMode === 'expert')}
-                {renderActionButton('mode-assisted', 'Asistido', Wand2, () => setViewMode?.('assisted'), 'outline', viewMode === 'assisted')}
-                {renderActionButton('mode-reading', 'Resumido', BookOpen, () => setViewMode?.('reading'), 'outline', viewMode === 'reading')}
-                {renderActionButton('mode-preview', 'Vistazo', Eye, () => setViewMode?.('preview'), 'outline', viewMode === 'preview')}
-                {renderActionButton('mode-audit', 'Audit', Activity, () => setViewMode?.('audit'), 'outline', viewMode === 'audit')}
+                {('Completo'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('mode-expert', 'Completo', Table2, () => setViewMode?.('expert'), 'outline', viewMode === 'expert')}
+                {('Asistido'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('mode-assisted', 'Asistido', Wand2, () => setViewMode?.('assisted'), 'outline', viewMode === 'assisted')}
+                {('Resumido'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('mode-reading', 'Resumido', BookOpen, () => setViewMode?.('reading'), 'outline', viewMode === 'reading')}
+                {('Vistazo'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('mode-preview', 'Vistazo', Eye, () => setViewMode?.('preview'), 'outline', viewMode === 'preview')}
+                {('Audit'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('mode-audit', 'Audit', Activity, () => setViewMode?.('audit'), 'outline', viewMode === 'audit')}
               </AccordionGroup>
 
               <AccordionGroup
                 title="Inteligencia y Generación"
+                isVisible={hasMatchingActions(['Darian AI', 'Generar Rápida', 'Generar Experta', 'Generación Masiva'])}
+                isSearchActive={!!searchTerm}
                 icon={Sparkles}
                 isOpen={openGroups.includes('generacion')}
                 onToggle={() => toggleGroup('generacion')}
               >
-                {renderActionButton('ai-chat', 'Darian AI', Bot, () => setActiveSection?.('ai-chat'), 'primary', activeSection === 'ai-chat')}
-                {renderActionButton('quick-gen', 'Generar Rápida', Sparkles, onQuickGenerate)}
-                {renderActionButton('expert-gen', 'Generar Experta', Zap, onExpertGenerate)}
-                {renderActionButton('massive-gen', 'Generación Masiva', FileText, () => setActiveSection?.('massive-gen'), 'outline', activeSection === 'massive-gen')}
+                {('Darian AI'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('ai-chat', 'Darian AI', Bot, () => setActiveSection?.('ai-chat'), 'primary', activeSection === 'ai-chat')}
+                {('Generar Rápida'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('quick-gen', 'Generar Rápida', Sparkles, onQuickGenerate)}
+                {('Generar Experta'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('expert-gen', 'Generar Experta', Zap, onExpertGenerate)}
+                {('Generación Masiva'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('massive-gen', 'Generación Masiva', FileText, () => setActiveSection?.('massive-gen'), 'outline', activeSection === 'massive-gen')}
               </AccordionGroup>
 
               <AccordionGroup
                 title="Gestión y Plantillas"
+                isVisible={hasMatchingActions(['Explorar Plantillas', 'Cargar Ejemplo', 'Guardar (JSON)', 'Importar JSON', 'Reiniciar Ficha'])}
+                isSearchActive={!!searchTerm}
                 icon={FolderOpen}
                 isOpen={openGroups.includes('gestion')}
                 onToggle={() => toggleGroup('gestion')}
               >
-                {renderActionButton('templates', 'Explorar Plantillas', FolderOpen, () => setActiveSection?.('templates'), 'outline', activeSection === 'templates')}
-                {renderActionButton('load-example', 'Cargar Ejemplo', FileText)}
-                {renderActionButton('export-json', 'Guardar (JSON)', Save)}
-                {renderActionButton('import-json', 'Importar JSON', Upload)}
-                {renderActionButton('reset', 'Reiniciar Ficha', Trash2, undefined, 'danger')}
+                {('Explorar Plantillas'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('templates', 'Explorar Plantillas', FolderOpen, () => setActiveSection?.('templates'), 'outline', activeSection === 'templates')}
+                {('Cargar Ejemplo'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('load-example', 'Cargar Ejemplo', FileText)}
+                {('Guardar (JSON)'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('export-json', 'Guardar (JSON)', Save)}
+                {('Importar JSON'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('import-json', 'Importar JSON', Upload)}
+                {('Reiniciar Ficha'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('reset', 'Reiniciar Ficha', Trash2, undefined, 'danger')}
               </AccordionGroup>
 
               <AccordionGroup
                 title="Exportación y Formato"
+                isVisible={hasMatchingActions(['Exportar Excel', 'Exportar PDF'])}
+                isSearchActive={!!searchTerm}
                 icon={Download}
                 isOpen={openGroups.includes('export')}
                 onToggle={() => toggleGroup('export')}
@@ -275,20 +294,22 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
                      className="w-full bg-background border-border"
                    />
                 </div>
-                {renderActionButton('export-excel', 'Exportar Excel', FileSpreadsheet, undefined, 'primary')}
-                {renderActionButton('export-pdf', 'Exportar PDF', Download, undefined, 'success')}
+                {('Exportar Excel'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('export-excel', 'Exportar Excel', FileSpreadsheet, undefined, 'primary')}
+                {('Exportar PDF'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('export-pdf', 'Exportar PDF', Download, undefined, 'success')}
               </AccordionGroup>
 
               <AccordionGroup
                 title="Soporte y Herramientas"
+                isVisible={hasMatchingActions(['Calculadora Pro', 'Ayuda de esta vista', 'Ayuda del sistema', 'Academia'])}
+                isSearchActive={!!searchTerm}
                 icon={HelpCircle}
                 isOpen={openGroups.includes('soporte')}
                 onToggle={() => toggleGroup('soporte')}
               >
-                {renderActionButton('calculator', 'Calculadora Pro', Calculator)}
-                {renderActionButton('help', 'Ayuda de esta vista', HelpCircle, onOpenHelp)}
-                {renderActionButton('system-help', 'Ayuda del sistema', LifeBuoy, onOpenSystemHelp)}
-                {renderActionButton('academy', 'Academia', GraduationCap, onOpenAcademy)}
+                {('Calculadora Pro'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('calculator', 'Calculadora Pro', Calculator)}
+                {('Ayuda de esta vista'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('help', 'Ayuda de esta vista', HelpCircle, onOpenHelp)}
+                {('Ayuda del sistema'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('system-help', 'Ayuda del sistema', LifeBuoy, onOpenSystemHelp)}
+                {('Academia'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('academy', 'Academia', GraduationCap, onOpenAcademy)}
               </AccordionGroup>
 
             </div>
