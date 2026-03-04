@@ -68,7 +68,7 @@ const AccordionGroup = ({
         onClick={onToggle}
         className={cn(
           "w-full flex items-center justify-between p-4 transition-colors",
-          isOpen ? "bg-primary/5 text-primary" : "text-primary/60 hover:bg-primary/5 hover:text-primary"
+          isOpen ? "bg-primary/5 text-sidebar-foreground" : "text-sidebar-foreground/60 hover:bg-primary/5 hover:text-sidebar-foreground"
         )}
       >
         <div className="flex items-center gap-3">
@@ -162,12 +162,12 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
           "w-full flex items-center gap-4 p-3.5 rounded-xl transition-all group active:scale-95 text-left mb-1",
           isActive
             ? "bg-primary text-white shadow-lg shadow-primary/20 font-black"
-            : "hover:bg-primary/5 text-primary/70 font-bold",
+            : "hover:bg-primary/5 text-sidebar-foreground/70 font-bold",
           finalVariant === 'danger' && "hover:bg-danger/10 text-danger",
           finalVariant === 'success' && "hover:bg-success/10 text-success"
         )}
       >
-        <Icon className={cn("w-4.5 h-4.5", isActive ? "text-white" : "group-hover:text-primary transition-colors")} />
+        <Icon className={cn("w-4.5 h-4.5", isActive ? "text-white" : "group-hover:text-sidebar-foreground transition-colors")} />
         <span className="text-[10px] font-bold uppercase tracking-widest">{label}</span>
       </button>
     );
@@ -203,8 +203,8 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
                   <Settings className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary block">Panel de Control</span>
-                    <span className="text-[8px] font-bold uppercase tracking-[0.4em] text-primary/50">v5.7.25</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-sidebar-foreground block">Panel de Control</span>
+                    <span className="text-[8px] font-bold uppercase tracking-[0.4em] text-sidebar-foreground/50">v5.7.25</span>
                 </div>
               </div>
               <button
@@ -218,7 +218,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
             {/* Search Bar */}
             <div className="px-6 py-4 shrink-0 border-b border-sidebar-border/30 bg-sidebar/5">
               <div className="relative group">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-sidebar-foreground/50 group-focus-within:text-primary transition-colors" />
                 <input
                   type="text"
                   value={searchTerm}
@@ -302,7 +302,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
                 onToggle={() => toggleGroup('export')}
               >
                 <div className="px-3 py-4 space-y-4 bg-primary/5 rounded-xl mb-2 mx-2 border border-primary/10">
-                   <div className="text-[8px] font-black text-primary/70 tracking-[0.4em] uppercase">
+                   <div className="text-[8px] font-black text-sidebar-foreground/70 tracking-[0.4em] uppercase">
                       Modo de Diseño
                    </div>
                    <ViewSwitcher
@@ -333,7 +333,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
 
             {/* Footer */}
             <div className="p-6 border-t border-sidebar-border/50 bg-sidebar/5">
-               <p className="text-[9px] font-black uppercase tracking-[0.3em] text-primary/50 text-center">
+               <p className="text-[9px] font-black uppercase tracking-[0.3em] text-sidebar-foreground/50 text-center">
                   Soporte: info@costpro.app
                </p>
             </div>
