@@ -47,6 +47,7 @@ const AccordionGroup = ({
   title,
   icon: Icon,
   children,
+  isOpen,
   onToggle,
   isVisible = true,
   isSearchActive = false
