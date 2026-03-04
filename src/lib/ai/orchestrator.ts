@@ -23,7 +23,7 @@ export function getLLMProvider(type?: string, apiKey?: string): LLMProvider {
     default:
       return new GeminiAdapter(
         apiKey || process.env.GEMINI_API_KEY || 'AIzaSyBV8-Gev1bjoemUuGtjmpGbeSFMvdmTOR4',
-        process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite'
+        process.env.GEMINI_MODEL || 'gemini-2.0-flash'
       );
   }
 }
