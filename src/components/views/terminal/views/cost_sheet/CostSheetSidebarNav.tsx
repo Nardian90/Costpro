@@ -46,9 +46,9 @@ export const CostSheetSidebarNav: React.FC<CostSheetSidebarNavProps> = ({
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
                 <div className="p-2 rounded-xl bg-primary/10">
-                {type === 'sections' ? <ListFilter className="w-5 h-5 text-primary" /> : <FileSpreadsheet className="w-5 h-5 text-primary" />}
+                {type === 'sections' ? <ListFilter className="w-5 h-5 text-sidebar-foreground" /> : <FileSpreadsheet className="w-5 h-5 text-primary" />}
                 </div>
-                <SheetTitle className="text-xs font-black uppercase tracking-[0.2em] text-primary">
+                <SheetTitle className="text-xs font-black uppercase tracking-[0.2em] text-sidebar-foreground">
                     {title}
                 </SheetTitle>
                 <SheetDescription className="sr-only">
@@ -69,7 +69,7 @@ export const CostSheetSidebarNav: React.FC<CostSheetSidebarNavProps> = ({
               "w-full flex items-center gap-4 p-4 rounded-2xl transition-all group active:scale-95 text-left border border-transparent",
               isAllActive
                 ? "bg-primary text-white shadow-xl shadow-primary/20 scale-[1.02]"
-                : "hover:bg-primary/5 text-primary/70 hover:text-primary hover:border-primary/10"
+                : "hover:bg-primary/5 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:border-primary/10"
             )}
           >
             <div className={cn(
@@ -82,7 +82,7 @@ export const CostSheetSidebarNav: React.FC<CostSheetSidebarNavProps> = ({
                 <span className="text-xs font-black uppercase tracking-widest leading-none mb-1">
                     Todos
                 </span>
-                <span className={cn("text-[10px] font-bold uppercase tracking-tight truncate", isAllActive ? "text-white/70" : "text-muted-foreground")}>
+                <span className={cn("text-[10px] font-bold uppercase tracking-tight truncate", isAllActive ? "text-white/70" : "text-sidebar-foreground/50")}>
                     Ver todas las {type === 'sections' ? 'secciones' : 'anexos'} juntas
                 </span>
             </div>
@@ -105,7 +105,7 @@ export const CostSheetSidebarNav: React.FC<CostSheetSidebarNavProps> = ({
                   "w-full flex items-center gap-4 p-4 rounded-2xl transition-all group active:scale-95 text-left border border-transparent",
                   isActive
                     ? "bg-primary text-white shadow-xl shadow-primary/20 scale-[1.02]"
-                    : "hover:bg-primary/5 text-primary/70 hover:text-primary hover:border-primary/10"
+                    : "hover:bg-primary/5 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:border-primary/10"
                 )}
               >
                 <div className={cn(
@@ -123,7 +123,7 @@ export const CostSheetSidebarNav: React.FC<CostSheetSidebarNavProps> = ({
                         {type === 'annexes' ? `Anexo ${item.id}` : item.label}
                     </span>
                     {type === 'annexes' && (
-                        <span className={cn("text-xs font-bold uppercase tracking-tight truncate max-w-[180px]", isActive ? "text-white/70" : "text-muted-foreground")}>
+                        <span className={cn("text-xs font-bold uppercase tracking-tight truncate max-w-[180px]", isActive ? "text-white/70" : "text-sidebar-foreground/50")}>
                             {item.title}
                         </span>
                     )}
@@ -159,7 +159,7 @@ export const CostSheetSidebarNav: React.FC<CostSheetSidebarNavProps> = ({
                   </Button>
                 </div>
             )}
-            <p className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground/50 text-center">
+            <p className="text-xs font-black uppercase tracking-[0.3em] text-sidebar-foreground/50 text-center">
                 Navegación de Ficha
             </p>
         </div>
