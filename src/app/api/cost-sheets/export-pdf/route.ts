@@ -20,6 +20,9 @@ export async function POST(req: NextRequest) {
     // Support both naming conventions
     const includeFC = exportOptions.includeFC || exportOptions.includeTable;
     const includeAudit = exportOptions.includeAudit;
+    const skipZeros = exportOptions.skipZeros === true;
+    const showDateTime = exportOptions.showDateTime !== false; // Default true
+    const includeUtilityNote = exportOptions.includeUtilityNote === true;
 
     const isPro = exportOptions.pdfFormat === 'pro';
     const primaryColor: [number, number, number] = isPro ? [26, 82, 118] : [0, 0, 0]; // Pro Blue or Black
@@ -71,7 +74,6 @@ export async function POST(req: NextRequest) {
         const h = { ...(result.metadata?.header || result.header || {}) };
 
         // Prepare context for formulas in header
-        // Header formulas might want to reference other header values
         const formulaContext = { ...h };
 
         // Evaluate header fields if they are formulas
@@ -105,7 +107,9 @@ export async function POST(req: NextRequest) {
 
         pdf.setFontSize(6);
         pdf.text("DOCUMENTO TÉCNICO DE COSTOS", pageWidth - 14, 12, { align: "right" });
-        pdf.text(`Generado: ${timestamp}`, pageWidth - 14, 15, { align: "right" });
+        if (showDateTime) {
+            pdf.text(`Generado: ${timestamp}`, pageWidth - 14, 15, { align: "right" });
+        }
 
         if (isPro) {
             pdf.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
@@ -179,7 +183,16 @@ export async function POST(req: NextRequest) {
         let tableBody: any[] = [];
 
         // Use result.rows which are already calculated by the engine
-        const rows = result.rows || [];
+        let rows = result.rows || [];
+
+        if (skipZeros) {
+            rows = rows.filter((r: any) => {
+                const isParent = rows.some((other: any) => String(other.parentId || "") === String(r.id));
+                const total = r.total || 0;
+                if (!isParent && total === 0) return false;
+                return true;
+            });
+        }
 
         tableBody = rows.map((r: any) => [
             r.classification || r.id || '',
@@ -280,8 +293,44 @@ export async function POST(req: NextRequest) {
         currentY = (doc as any).lastAutoTable.finalY + 10;
     }
 
+    // Utility Note
+    if (includeUtilityNote) {
+        const r13 = (result.rows || []).find((r: any) => r.classification === "13" || r.id === "13");
+        if (r13 && (r13.total || 0) > 0) {
+            if (currentY > pageHeight - 40) {
+                doc.addPage();
+                currentY = 30;
+            }
+            doc.setFontSize(8);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+            doc.text("NOTA SOBRE UTILIDAD Y RENTABILIDAD", 14, currentY);
+            currentY += 5;
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(80);
+            const utilityPercent = r13.coeficiente ? (r13.coeficiente * 100).toFixed(2) : "Calculado";
+            doc.text(`Se ha aplicado un margen de utilidad del ${utilityPercent}% sobre la base de cálculo correspondiente, resultando en un valor de ${safeLocale(r13.total)}.`, 14, currentY, { maxWidth: pageWidth - 28 });
+            currentY += 12;
+        }
+    }
+
     // Annexes
-    const selectedAnnexes = (result.anexos || []).filter((a: any) => exportOptions.includeAnnexes?.includes(a.id));
+    let selectedAnnexes = (result.anexos || []).filter((a: any) => exportOptions.includeAnnexes?.includes(a.id));
+
+    if (skipZeros) {
+        selectedAnnexes = selectedAnnexes.filter((a: any) => {
+            const annexRows = a.rows || a.data || [];
+            if (annexRows.length === 0) return false;
+            const firstRow = annexRows[0];
+            const totalKey = Object.keys(firstRow).find(k => ["importe", "total", "amount", "value"].includes(k.toLowerCase())) || "total";
+            const totalSum = annexRows.reduce((acc: number, r: any) => {
+                const val = r[totalKey] || 0;
+                const num = typeof val === "number" ? val : parseFloat(String(val).replace(/[^0-9.-]+/g,""));
+                return acc + (isNaN(num) ? 0 : num);
+            }, 0);
+            return totalSum > 0;
+        });
+    }
 
     let isFirstAnnex = true;
     for (const annex of selectedAnnexes) {
@@ -425,8 +474,10 @@ export async function POST(req: NextRequest) {
         doc.setTextColor(150, 150, 150);
 
         // Use two lines to avoid horizontal overlap
-        doc.text(`COSTPRO - Generado: ${timestamp}`, 14, 285);
-        doc.text(`Página ${i} de ${pageCount}`, 14, 288);
+        doc.text(`COSTPRO - Página ${i} de ${pageCount}`, 14, 285);
+        if (showDateTime) {
+            doc.text(`Generado: ${timestamp}`, 14, 288);
+        }
 
         if (isPro) {
             doc.setFont("helvetica", "bold");
