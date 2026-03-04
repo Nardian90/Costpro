@@ -26,15 +26,15 @@ const CostSheetHeader: React.FC<CostSheetHeaderProps> = ({ header }) => {
       <div className="bg-white/50 dark:bg-slate-900/50 p-6 rounded-[2rem] border border-slate-200 dark:border-primary/20 shadow-xl backdrop-blur-sm">
         <div className="flex flex-col gap-6">
           <div className="border-b border-slate-200 dark:border-primary/10 pb-4">
-            <span className="text-xs font-black uppercase tracking-[0.3em] text-primary block mb-2 px-1">
+            <span className="text-[clamp(0.6rem,2vw,0.75rem)] font-black uppercase tracking-[0.3em] text-primary block mb-2 px-1">
               Datos generales de la Ficha de Costo (FC)
             </span>
-            <h1 className="text-3xl font-black text-slate-900 dark:text-white leading-tight uppercase tracking-tight">
+            <h1 className="text-[clamp(1.5rem,6vw,2.5rem)] font-black text-slate-900 dark:text-white leading-tight uppercase tracking-tight">
               {header.name || 'Sin nombre'}
             </h1>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 sm:gap-x-6 gap-y-6 overflow-x-auto no-scrollbar">
             {[
               { label: 'No. FC', value: header.code },
               { label: 'Cod. Producto', value: header.product_code },
