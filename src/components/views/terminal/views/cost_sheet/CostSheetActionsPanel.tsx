@@ -102,6 +102,22 @@ const AccordionGroup = ({
 };
 
 export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
+  isOpen,
+  onClose,
+  actions,
+  layoutMode,
+  setLayoutMode,
+  activeSection,
+  setActiveSection,
+  viewMode,
+  setViewMode,
+  onOpenSections,
+  onOpenAnnexes,
+  onOpenHelp,
+  onOpenSystemHelp,
+  onOpenAcademy,
+  onQuickGenerate,
+  onExpertGenerate
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -159,7 +175,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
 
   return (
     <AnimatePresence>
-      {(isOpen || isSearchActive) && (
+      {isOpen && (
         <>
           {/* Backdrop */}
           <motion.div
