@@ -176,11 +176,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             opacity: logoOpacity,
             overflowX: 'auto'
           }}
-          className="border-b border-sidebar-border/50 shrink-0 bg-sidebar/5 no-scrollbar"
+          className="border-b border-sidebar-border/50 shrink-0 bg-sidebar/5 no-scrollbar max-w-full overflow-x-hidden"
         >
           <motion.div
             style={{ scale: logoScale }}
-            className="p-8 h-[160px] flex flex-col justify-center"
+            className="px-4 py-8 sm:p-8 h-[160px] flex flex-col justify-center"
           >
             <CostProLogo size={50} animated={true} />
             <div className="mt-4">
