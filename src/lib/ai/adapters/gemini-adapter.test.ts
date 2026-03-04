@@ -45,7 +45,7 @@ describe('GeminiAdapter', () => {
     // Check model config
     expect(getGenerativeModelMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        model: 'gemini-2.5-flash-lite',
+        model: 'gemini-2.0-flash',
         systemInstruction: 'You are an assistant'
       }),
       { apiVersion: 'v1beta' }
@@ -86,6 +86,6 @@ describe('GeminiAdapter', () => {
     generateContentMock.mockRejectedValue(new Error('404 Not Found'));
 
     await expect(adapter.getResponse([{ role: 'user', content: 'hi' }]))
-      .rejects.toThrow('Error de Modelo: El modelo gemini-2.5-flash-lite no está disponible');
+      .rejects.toThrow('Error de Modelo: El modelo gemini-2.0-flash no está disponible');
   });
 });
