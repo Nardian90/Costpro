@@ -35,8 +35,8 @@ export const Header = ({
 
   return (
     <header className="bg-background/80 backdrop-blur-xl p-2 sm:p-6 sticky top-0 z-30 border-b border-white/5 w-full">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4 flex-1 overflow-hidden">
+      <div className="flex items-center justify-between gap-2 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-4 flex-1 overflow-hidden">
           <button
             onClick={toggleSidebar}
             className="neu-raised-sm w-11 h-11 flex items-center justify-center shrink-0 active:scale-90 transition-transform"
