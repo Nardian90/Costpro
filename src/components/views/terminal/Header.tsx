@@ -38,7 +38,10 @@ export const Header = ({
   // Determine which list of stores to show
   const storesToShow = user?.role === 'admin' && allStores.length > 0
     ? allStores.map(s => ({ id: s.id, name: s.name }))
-    : user?.memberships?.map(m => ({ id: m.store_id, name: m.store?.name || `Sucursal ${m.store_id.slice(0, 4)}` })) || [];
+    : user?.memberships?.map(m => ({
+        id: m.store_id || '',
+        name: m.store?.name || (m.store_id ? `Sucursal ${m.store_id.slice(0, 4)}` : 'Desconocida')
+      })) || [];
 
   const activeStoreName = storesToShow.find(s => s.id === user?.activeStoreId)?.name || 'Seleccionar Tienda';
 
