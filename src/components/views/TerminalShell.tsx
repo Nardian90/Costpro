@@ -13,13 +13,11 @@ import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useQueryClient } from '@tanstack/react-query';
 import { useStores } from '@/hooks/api/useStores';
-import {
-  prefetchProducts,
-  prefetchTransactions,
-  prefetchDashboardData,
-  prefetchAuditLogs,
-  prefetchReceptions
-} from '@/lib/query-inspector-utils';
+import { prefetchProducts } from '@/hooks/api/useProducts';
+import { prefetchTransactions } from '@/hooks/api/useTransactions';
+import { prefetchDashboardData } from '@/hooks/api/useDashboard';
+import { prefetchAuditLogs } from '@/hooks/api/useAuditLogs';
+import { prefetchReceptions } from '@/hooks/api/useReceptions';
 import { CostProLoader } from '@/components/ui/CostProLoader';
 import { FloatingCalculator } from '@/components/ui/FloatingCalculator';
 import { ChatBot } from '@/components/ui/ChatBot';
@@ -28,23 +26,23 @@ import { MobileSafeContainer } from '@/components/ui/MobileSafeContainer';
 import { toast } from 'sonner';
 
 // Lazy load views
-const DashboardView = lazy(() => import('./terminal/views/DashboardView'));
-const POSView = lazy(() => import('./terminal/views/POSView'));
-const SalesHistoryView = lazy(() => import('./terminal/views/SalesHistoryView'));
-const UsersManagementView = lazy(() => import('./terminal/views/UsersManagementView'));
-const RolesManagementView = lazy(() => import('./terminal/views/RolesManagementView'));
+const DashboardView = lazy(() => import('./terminal/views/dashboard/DashboardView'));
+const POSView = lazy(() => import('./terminal/views/pos/POSView'));
+const SalesHistoryView = lazy(() => import('./terminal/views/sales/SalesHistoryView'));
+const UsersManagementView = lazy(() => import('./terminal/views/users/UsersManagementView'));
+const RolesManagementView = lazy(() => import('./terminal/views/users/RolesManagementView'));
 const StoresManagementView = lazy(() => import('./terminal/views/stores/StoresManagementView'));
-const NewsView = lazy(() => import('./terminal/views/NewsView'));
-const RSSManagementView = lazy(() => import('./terminal/views/RSSManagementView'));
-const AuditLogsView = lazy(() => import('./terminal/views/AuditLogsView'));
-const InventoryView = lazy(() => import('./terminal/views/InventoryView'));
-const CashClosureView = lazy(() => import('./terminal/views/CashClosureView'));
-const StockHistoryView = lazy(() => import('./terminal/views/StockHistoryView'));
-const CatalogView = lazy(() => import('./terminal/views/CatalogView'));
-const InventoryCountView = lazy(() => import('./terminal/views/InventoryCountView'));
-const CostSheetView = lazy(() => import('./terminal/views/cost-sheets/CostSheetView'));
-const ReceptionsHistoryView = lazy(() => import('./terminal/views/inventory/ReceptionsHistoryView'));
-const SettingsView = lazy(() => import('./terminal/views/SettingsView'));
+const NewsView = lazy(() => import('./terminal/views/rss/NewsView'));
+const RSSManagementView = lazy(() => import('./terminal/views/rss/RSSManagementView'));
+const AuditLogsView = lazy(() => import('./terminal/views/audit/AuditLogsView'));
+const InventoryView = lazy(() => import('./terminal/views/inventory/InventoryView'));
+const CashClosureView = lazy(() => import('./terminal/views/cash_closure/CashClosureView'));
+const StockHistoryView = lazy(() => import('./terminal/views/stock_history/StockHistoryView'));
+const CatalogView = lazy(() => import('./terminal/views/catalog/CatalogView'));
+const InventoryCountView = lazy(() => import('./terminal/views/inventory_count/InventoryCountView'));
+const CostSheetView = lazy(() => import('./terminal/views/cost_sheet/CostSheetView'));
+const ReceptionsHistoryView = lazy(() => import('./terminal/views/receptions/ReceptionsHistoryView'));
+const SettingsView = lazy(() => import('./terminal/views/settings/SettingsView'));
 const HelpView = lazy(() => import('./terminal/views/help/HelpView'));
 const TransferenciasView = lazy(() => import('./terminal/views/transfers/TransferenciasView'));
 const ProductReceptionView = lazy(() => import('./terminal/views/inventory/ProductReceptionView'));
