@@ -204,8 +204,7 @@ const CostSheetView = () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 ...calculationResult,
-                sections: data.sections,
-                exportOptions: opts
+                sections: data.sections, signature: data.signature, notes: data.footer || data.metadata?.notes, exportOptions: opts
             })
         });
 
@@ -394,7 +393,7 @@ const CostSheetView = () => {
     },
      { id: 'audit', label: 'Auditoría', icon: Activity, onClick: () => { setActiveSection('audit'); setIsActionsPanelOpen(false); }, variant: 'outline' as const },
     { id: 'load-example', label: 'Ejemplo', icon: FileText, onClick: loadExample, variant: 'outline' as const },
-    { id: 'reset', label: 'Reiniciar', icon: Trash2, onClick: reset, variant: 'danger' as const },
+
     { id: 'import-json', label: 'Importar', icon: Upload, onClick: handleImportJSON, variant: 'outline' as const },
     { id: 'export-json', label: 'Guardar', icon: Save, onClick: handleExportJSON, variant: 'outline' as const, disabled: false },
     { id: 'export-excel', label: 'Excel', icon: FileSpreadsheet, onClick: handleExportExcel, variant: (isBlocked ? 'outline' : 'primary') as any, disabled: false },
@@ -484,17 +483,16 @@ const CostSheetView = () => {
       variant: "success"
     },
     {
-      id: "reset",
-      label: "Limpiar Ficha",
-      icon: Trash2,
+      id: "expert",
+      label: "Experto",
+      icon: ZapIcon,
       onClick: () => {
-          askConfirmation("¿Estás seguro?", "¿Deseas limpiar todos los datos de la ficha? Esta acción no se puede deshacer.", () => {
-              // Logic to reset
-              toast.success("Ficha reiniciada");
-          }, "destructive");
+          setActiveSection("expert-content");
+          setViewMode("expert");
+          toast.success("Modo Experto Activado");
       },
       category: "Acción",
-      variant: "destructive"
+      variant: "primary"
     },
     {
       id: "ai-chat",
