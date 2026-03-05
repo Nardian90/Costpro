@@ -393,7 +393,7 @@ const CostSheetView = () => {
     },
      { id: 'audit', label: 'Auditoría', icon: Activity, onClick: () => { setActiveSection('audit'); setIsActionsPanelOpen(false); }, variant: 'outline' as const },
     { id: 'load-example', label: 'Ejemplo', icon: FileText, onClick: loadExample, variant: 'outline' as const },
-    { id: 'reset', label: 'Reiniciar', icon: Trash2, onClick: reset, variant: 'danger' as const },
+
     { id: 'import-json', label: 'Importar', icon: Upload, onClick: handleImportJSON, variant: 'outline' as const },
     { id: 'export-json', label: 'Guardar', icon: Save, onClick: handleExportJSON, variant: 'outline' as const, disabled: false },
     { id: 'export-excel', label: 'Excel', icon: FileSpreadsheet, onClick: handleExportExcel, variant: (isBlocked ? 'outline' : 'primary') as any, disabled: false },
@@ -482,7 +482,7 @@ const CostSheetView = () => {
       category: "Gestión",
       variant: "success"
     },
-        {
+    {
       id: "expert",
       label: "Experto",
       icon: ZapIcon,
@@ -493,10 +493,6 @@ const CostSheetView = () => {
       },
       category: "Acción",
       variant: "primary"
-    }, "destructive");
-      },
-      category: "Acción",
-      variant: "destructive"
     },
     {
       id: "ai-chat",
