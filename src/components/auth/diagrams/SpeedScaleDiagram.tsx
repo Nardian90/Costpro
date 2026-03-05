@@ -7,7 +7,7 @@ import { Timer, Zap, ArrowUpRight, TrendingUp } from 'lucide-react';
 export default function SpeedScaleDiagram() {
   return (
     <div
-      className="relative w-full min-h-[400px] lg:aspect-[16/9] bg-gradient-to-br from-violet-600/10 via-background to-primary/10 rounded-[2.5rem] sm:rounded-[3rem] border border-border/50 overflow-hidden flex flex-col items-center justify-center p-6 sm:p-10 shadow-2xl"
+      className="relative w-full min-h-[400px] lg:aspect-[16/9] bg-gradient-to-br from-violet-600/10 via-background to-primary/10 rounded-[2.5rem] sm:rounded-[3rem] border border-border/50 overflow-x-auto flex flex-col items-center justify-center p-4 sm:p-10 shadow-2xl"
       style={{ willChange: 'transform', backfaceVisibility: 'hidden' }}
     >
       {/* Decorative Glows */}
