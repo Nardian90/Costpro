@@ -1,34 +1,33 @@
-
 'use client'
 
 import { useState, useMemo } from 'react';
 import { useAuthStore } from '@/store';
 import { useDashboardData } from '@/hooks/api/useDashboard';
-import { startOfDay, startOfMonth, startOfYear, addDays, addMonths, addYears, format } from 'date-fns';
+import { startOfDay, startOfMonth, startOfYear, addDays, addMonths, addYears } from 'date-fns';
 
 export type DashboardTimeRange = 'day' | 'month' | 'year';
 
 export function useDashboardView() {
   const { user } = useAuthStore();
   const [timeRange, setTimeRange] = useState<DashboardTimeRange>('day');
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   const { dateFrom, dateTo } = useMemo(() => {
-    const now = new Date();
     let from: Date;
     let to: Date;
 
     switch (timeRange) {
       case 'month':
-        from = startOfMonth(now);
+        from = startOfMonth(selectedDate);
         to = addMonths(from, 1);
         break;
       case 'year':
-        from = startOfYear(now);
+        from = startOfYear(selectedDate);
         to = addYears(from, 1);
         break;
       case 'day':
       default:
-        from = startOfDay(now);
+        from = startOfDay(selectedDate);
         to = addDays(from, 1);
         break;
     }
@@ -37,7 +36,7 @@ export function useDashboardView() {
       dateFrom: from.toISOString(),
       dateTo: to.toISOString()
     };
-  }, [timeRange]);
+  }, [timeRange, selectedDate]);
 
   const { data: dashboardData, isLoading: isLoadingData } = useDashboardData(
     user?.storeId,
@@ -51,6 +50,8 @@ export function useDashboardView() {
     summary: dashboardData?.summary,
     kpis: dashboardData?.kpis,
     timeRange,
-    setTimeRange
+    setTimeRange,
+    selectedDate,
+    setSelectedDate
   };
 }
