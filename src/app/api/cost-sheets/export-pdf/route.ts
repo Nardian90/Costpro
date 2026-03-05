@@ -197,7 +197,7 @@ export async function POST(req: NextRequest) {
         tableBody = rows.map((r: any) => [
             r.classification || r.id || '',
             r.label || '',
-            r.um || '',
+            r.um || 'Pesos',
             safeLocale(r.calculatedVH || r.valorHistorico || 0),
             safeLocale(r.total || 0)
         ]);
@@ -291,6 +291,25 @@ export async function POST(req: NextRequest) {
             }
         });
         currentY = (doc as any).lastAutoTable.finalY + 10;
+    // General Notes / Footer
+    const notes = result.notes || result.footer || result.metadata?.notes || "";
+    if (notes && notes.trim().length > 0) {
+        if (currentY > pageHeight - 30) {
+            doc.addPage();
+            currentY = 20;
+        }
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+        doc.text("NOTAS Y OBSERVACIONES:", 14, currentY);
+        currentY += 5;
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(60);
+        const splitNotes = doc.splitTextToSize(notes, pageWidth - 28);
+        doc.text(splitNotes, 14, currentY);
+        currentY += (splitNotes.length * 4) + 8;
+    }
+
     }
 
     // Utility Note
@@ -465,6 +484,43 @@ export async function POST(req: NextRequest) {
         doc.setFont("helvetica", "italic");
         doc.setTextColor(100);
         doc.text("Este informe evalúa la coherencia aritmética y normativa del documento técnico.", 14, currentY);
+    }
+
+
+    // Signature Section
+    const sig = result.signature || result.metadata?.signature || {};
+    if (sig.prepared_by || sig.approved_by) {
+        if (currentY > pageHeight - 50) {
+            doc.addPage();
+            currentY = 30;
+        } else {
+            currentY += 15;
+        }
+
+        doc.setDrawColor(200);
+        doc.line(14, currentY, pageWidth - 14, currentY);
+        currentY += 10;
+
+        const colWidth = (pageWidth - 28) / 2;
+
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(0);
+
+        doc.text("ELABORADO POR:", 14, currentY);
+        doc.text("APROBADO POR:", 14 + colWidth, currentY);
+
+        currentY += 12;
+        doc.line(14, currentY, 14 + colWidth - 10, currentY);
+        doc.line(14 + colWidth, currentY, pageWidth - 14, currentY);
+
+        currentY += 5;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(7);
+        doc.text(String(sig.prepared_by || "__________________________"), 14, currentY, { maxWidth: colWidth - 10 });
+        doc.text(String(sig.approved_by || "__________________________"), 14 + colWidth, currentY, { maxWidth: colWidth - 10 });
+
+        currentY += 15;
     }
 
     const pageCount = doc.getNumberOfPages();

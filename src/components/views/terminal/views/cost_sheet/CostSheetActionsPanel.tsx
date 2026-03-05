@@ -280,7 +280,7 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
 
               <AccordionGroup
                 title="Gestión y Plantillas"
-                isVisible={hasMatchingActions(['Explorar Plantillas', 'Cargar Ejemplo', 'Guardar (JSON)', 'Importar JSON', 'Reiniciar Ficha'])}
+                isVisible={hasMatchingActions(['Explorar Plantillas', 'Cargar Ejemplo', 'Guardar (JSON)', 'Importar JSON'])}
                 isSearchActive={!!searchTerm}
                 icon={FolderOpen}
                 isOpen={openGroups.includes('gestion')}
@@ -290,7 +290,6 @@ export const CostSheetActionsPanel: React.FC<CostSheetActionsPanelProps> = ({
                 {('Cargar Ejemplo'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('load-example', 'Cargar Ejemplo', FileText)}
                 {('Guardar (JSON)'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('export-json', 'Guardar (JSON)', Save)}
                 {('Importar JSON'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('import-json', 'Importar JSON', Upload)}
-                {('Reiniciar Ficha'.toLowerCase().includes(searchTerm.toLowerCase()) || !searchTerm) && renderActionButton('reset', 'Reiniciar Ficha', Trash2, undefined, 'danger')}
               </AccordionGroup>
 
               <AccordionGroup
