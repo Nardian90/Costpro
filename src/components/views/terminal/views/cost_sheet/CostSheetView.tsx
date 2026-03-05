@@ -204,8 +204,7 @@ const CostSheetView = () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 ...calculationResult,
-                sections: data.sections,
-                exportOptions: opts
+                sections: data.sections, signature: data.signature, notes: data.footer || data.metadata?.notes, exportOptions: opts
             })
         });
 
@@ -483,15 +482,18 @@ const CostSheetView = () => {
       category: "Gestión",
       variant: "success"
     },
-    {
-      id: "reset",
-      label: "Limpiar Ficha",
-      icon: Trash2,
+        {
+      id: "expert",
+      label: "Experto",
+      icon: ZapIcon,
       onClick: () => {
-          askConfirmation("¿Estás seguro?", "¿Deseas limpiar todos los datos de la ficha? Esta acción no se puede deshacer.", () => {
-              // Logic to reset
-              toast.success("Ficha reiniciada");
-          }, "destructive");
+          setActiveSection("expert-content");
+          setViewMode("expert");
+          toast.success("Modo Experto Activado");
+      },
+      category: "Acción",
+      variant: "primary"
+    }, "destructive");
       },
       category: "Acción",
       variant: "destructive"
