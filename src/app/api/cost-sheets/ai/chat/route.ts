@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getLLMProvider } from '@/lib/ai/orchestrator';
+import { getLLMProviderWithUserKey } from '@/lib/ai/orchestrator';
 import { getServerSession } from "@/lib/auth";
 
 export const runtime = 'nodejs';
@@ -23,7 +23,6 @@ export async function POST(req: NextRequest) {
     }
 
     // Sanitize sheetData to avoid sending too much data to the LLM
-    // We only need the core structure for context to avoid payload size errors
     const sanitizedSheetData = sheetData ? {
       header: sheetData.header,
       sectionsCount: sheetData.sections?.length || 0,
@@ -58,8 +57,8 @@ export async function POST(req: NextRequest) {
     };
 
     try {
-      // Default to gemini if not provided
-      const provider = getLLMProvider(aiProvider, aiApiKey);
+      // Use user-specific key if available
+      const provider = await getLLMProviderWithUserKey(session.user.id, aiProvider, aiApiKey);
       const response = await provider.getResponse([systemPrompt, ...messages], { temperature: 0.1 });
 
       if (!response || !response.text) {
