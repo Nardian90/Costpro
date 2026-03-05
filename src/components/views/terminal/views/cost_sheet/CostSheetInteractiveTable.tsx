@@ -59,6 +59,7 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
   const [isEditingTotal, setIsEditingTotal] = useState(false);
   const [isEditingVH, setIsEditingVH] = useState(false);
   const [isEditingLabel, setIsEditingLabel] = useState(false);
+  const [isEditingUM, setIsEditingUM] = useState(false);
   const updateValue = useCostSheetStore(state => state.updateValue);
   const updateValues = useCostSheetStore(state => state.updateValues);
   const addMainRow = useCostSheetStore(state => state.addMainRow);
@@ -274,9 +275,31 @@ const CostSheetRow: React.FC<RowProps> = memo(({ row, level, index, numbering, c
           </div>
         </TableCell>
 
-        {/* UM */}
-        <TableCell data-label="UM" className="px-2 py-0.5 text-center w-[80px] border-r border-border/10 italic text-muted-foreground/80 font-mono text-[10px]">
-            {row.um || row.unit || '-'}
+                {/* UM */}
+        <TableCell
+            data-label="UM"
+            className="px-2 py-0.5 text-center w-[80px] border-r border-border/10 italic text-muted-foreground/80 font-mono text-[10px] cursor-pointer hover:bg-primary/5"
+            onClick={() => setIsEditingUM(true)}
+        >
+            {isEditingUM ? (
+                <Input
+                    autoFocus
+                    className="h-6 text-[10px] px-1 py-0 text-center font-mono"
+                    defaultValue={row.um || row.unit || "Pesos"}
+                    onBlur={(e) => {
+                        handleValueChange("um", e.target.value);
+                        setIsEditingUM(false);
+                    }}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                            handleValueChange("um", (e.target as HTMLInputElement).value);
+                            setIsEditingUM(false);
+                        }
+                    }}
+                />
+            ) : (
+                row.um || row.unit || "Pesos"
+            )}
         </TableCell>
 
         {/* Valor Histórico / % */}
