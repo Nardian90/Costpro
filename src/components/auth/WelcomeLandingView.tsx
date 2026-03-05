@@ -75,7 +75,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
     <div className="min-h-screen bg-background overflow-x-hidden">
       {/* Header / Nav */}
       <header className={`sticky top-0 z-50 bg-background/80 ${isHydrated ? 'backdrop-blur-[10px]' : ''} border-b border-border/50 transition-all duration-500`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between gap-1.5 sm:gap-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between gap-1 sm:gap-4">
           <div className="flex items-center gap-2 sm:gap-8 shrink-0">
             <CostProLogo size={32} animated={false} className="sm:scale-100 scale-90" />
             <div className="hidden sm:block">
@@ -128,11 +128,11 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
               de su Negocio.
             </h1>
 
-            <p className="text-lg sm:text-xl text-muted-foreground font-medium max-w-xl leading-relaxed">
+            <p className="text-[clamp(1.125rem,2vw,1.25rem)] text-muted-foreground font-medium max-w-xl leading-relaxed">
               La plataforma integral de gestión diseñada para escalar MiPyMEs con precisión técnica, automatización de costos y operativa móvil de alto rendimiento.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
+            <div className="flex flex-col sm:flex-row gap-3 pt-4">
               <button
                 onClick={onLoginClick}
                 className="neu-btn h-14 px-10 w-full sm:w-auto text-sm font-black uppercase tracking-widest border border-border rounded-xl hover:bg-muted/50 transition-colors"
@@ -191,7 +191,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
                   <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Ventas Hoy</span>
                   <BadgeCheck className="w-4 h-4 text-primary" />
                 </div>
-                <div className="text-3xl font-black tracking-tight">$42,950.00</div>
+                <div className="text-[clamp(1.5rem,5vw,1.875rem)] font-black tracking-tight">$42,950.00</div>
                 <div className="h-1.5 w-full bg-primary/10 rounded-full overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
@@ -210,7 +210,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
                   <span className="text-xs font-black uppercase tracking-widest opacity-70">Stock Crítico</span>
                   <Package className="w-4 h-4 opacity-70" />
                 </div>
-                <div className="text-3xl font-black tracking-tight">12 Items</div>
+                <div className="text-[clamp(1.5rem,5vw,1.875rem)] font-black tracking-tight">12 Items</div>
                 <p className="text-xs font-bold opacity-80 uppercase leading-tight">Acción inmediata requerida en sucursal Norte.</p>
               </motion.div>
 
