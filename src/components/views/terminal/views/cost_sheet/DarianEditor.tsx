@@ -1,12 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Bot, SendHorizontal, Loader2, Sparkles, ExternalLink, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '@/lib/utils';
+import { cn, isDarkTheme } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
-import { useCostSheetStore } from '@/store/costSheetStore';
-import { useAuthStore } from '@/store/authStore';
+import { useCostSheetStore, useAuthStore } from '@/store';
 import { useTheme } from 'next-themes';
-import { isDarkTheme } from '@/lib/theme-utils';
 import { toast } from 'sonner';
 
 interface Message {
