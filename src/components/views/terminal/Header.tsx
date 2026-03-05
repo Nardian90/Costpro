@@ -44,31 +44,40 @@ export const Header = ({
           >
             {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
-          <div className="flex items-center gap-3 overflow-x-auto min-w-0 flex-1 no-scrollbar">
-            <h1 className="text-[clamp(1rem,5vw,1.5rem)] font-black uppercase tracking-tighter text-primary whitespace-nowrap min-w-0">
+
+          <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto min-w-0 flex-1 no-scrollbar pr-2">
+            <h1 className="text-[clamp(0.75rem,3.5vw,1.5rem)] font-black uppercase tracking-tighter text-primary whitespace-nowrap shrink-0">
               {navigationItems.find(i => i.id === currentView)?.label || 'Panel'}
             </h1>
-            <div className="h-4 w-[1px] bg-white/10 hidden sm:block shrink-0" />
 
-            <div className="hidden sm:flex items-center gap-3">
-              <p className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] truncate">
+            <div className="h-4 w-[1px] bg-white/10 shrink-0 mx-1 hidden sm:block" />
+
+            <div className="flex items-center gap-2 min-w-0 shrink-0">
+              <p className="text-[10px] sm:text-xs font-black text-muted-foreground uppercase tracking-[0.1em] sm:tracking-[0.2em] truncate hidden lg:block">
                 {user?.fullName}
               </p>
 
-              {user?.memberships && user.memberships.length > 1 && (
-                <div className="flex items-center gap-2 px-3 py-1 rounded-lg border border-primary/20 bg-primary/5">
-                  <BuildingIcon className="w-3 h-3 text-primary" />
-                  <select
-                    value={user.activeStoreId || ''}
-                    onChange={(e) => handleSetActiveStore(e.target.value)}
-                    className="bg-transparent text-xs font-black uppercase text-primary outline-none cursor-pointer border-none p-0 focus:ring-0"
-                  >
-                    {user.memberships.map((m: any) => (
-                      <option key={m.store_id} value={m.store_id} className="text-foreground bg-background">
-                        {m.store?.name || `Sucursal ${m.store_id.slice(0, 4)}`}
-                      </option>
-                    ))}
-                  </select>
+              {user?.memberships && user.memberships.length > 0 && (
+                <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg border border-primary/20 bg-primary/5 min-w-0 max-w-[140px] sm:max-w-none">
+                  <BuildingIcon className="w-3 h-3 text-primary shrink-0" />
+                  {user.memberships.length > 1 ? (
+                    <select
+                      value={user.activeStoreId || ''}
+                      onChange={(e) => handleSetActiveStore(e.target.value)}
+                      className="bg-transparent text-[9px] sm:text-xs font-black uppercase text-primary outline-none cursor-pointer border-none p-0 focus:ring-0 truncate w-full min-w-[70px] appearance-none sm:appearance-auto"
+                      title="Cambiar sucursal activa"
+                    >
+                      {user.memberships.map((m: any) => (
+                        <option key={m.store_id} value={m.store_id} className="text-foreground bg-background">
+                          {m.store?.name || `Sucursal ${m.store_id.slice(0, 4)}`}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <span className="text-[9px] sm:text-xs font-black uppercase text-primary truncate max-w-[100px] sm:max-w-none">
+                      {user.memberships[0].store?.name || `Sucursal ${user.memberships[0].store_id?.slice(0, 4)}`}
+                    </span>
+                  )}
                 </div>
               )}
             </div>
