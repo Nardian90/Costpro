@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Menu, X, HelpCircle, Bell, Building as BuildingIcon, AlertTriangle } from 'lucide-react';
+import { Menu, X, HelpCircle, Bell, Building as BuildingIcon, AlertTriangle, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuthStore, ViewType } from '@/store';
@@ -20,6 +20,7 @@ interface HeaderProps {
   onViewChange: (view: ViewType) => void;
   user: UserContract | null;
   handleSetActiveStore: (id: string) => void;
+  allStores?: any[];
 }
 
 export const Header = ({
@@ -29,12 +30,23 @@ export const Header = ({
   navigationItems,
   onViewChange,
   user,
-  handleSetActiveStore
+  handleSetActiveStore,
+  allStores = []
 }: HeaderProps) => {
   const isMocked = useAuthStore(state => state.isMocked);
 
+  // Determine which list of stores to show
+  const storesToShow = user?.role === 'admin' && allStores.length > 0
+    ? allStores.map(s => ({ id: s.id, name: s.name }))
+    : user?.memberships?.map(m => ({
+        id: m.store_id || '',
+        name: m.store?.name || (m.store_id ? `Sucursal ${m.store_id.slice(0, 4)}` : 'Desconocida')
+      })) || [];
+
+  const activeStoreName = storesToShow.find(s => s.id === user?.activeStoreId)?.name || 'Seleccionar Tienda';
+
   return (
-    <header className="bg-background/80 backdrop-blur-xl p-2 sm:p-6 sticky top-0 z-30 border-b border-white/5 w-full">
+    <header className="bg-background/80 backdrop-blur-xl p-2 sm:px-6 sm:py-4 sticky top-0 z-30 border-b border-white/5 w-full">
       <div className="flex items-center justify-between gap-2 sm:gap-4">
         <div className="flex items-center gap-2 sm:gap-4 flex-1 overflow-hidden">
           <button
@@ -44,33 +56,54 @@ export const Header = ({
           >
             {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
-          <div className="flex items-center gap-3 overflow-x-auto min-w-0 flex-1 no-scrollbar">
-            <h1 className="text-[clamp(1rem,5vw,1.5rem)] font-black uppercase tracking-tighter text-primary whitespace-nowrap min-w-0">
+
+          <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto min-w-0 flex-1 no-scrollbar pr-2">
+            <h1 className="text-[clamp(0.75rem,3.5vw,1.25rem)] font-black uppercase tracking-tighter text-primary whitespace-nowrap shrink-0">
               {navigationItems.find(i => i.id === currentView)?.label || 'Panel'}
             </h1>
-            <div className="h-4 w-[1px] bg-white/10 hidden sm:block shrink-0" />
 
-            <div className="hidden sm:flex items-center gap-3">
-              <p className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] truncate">
-                {user?.fullName}
-              </p>
+            <div className="h-4 w-[1px] bg-white/10 shrink-0 mx-1 hidden sm:block" />
 
-              {user?.memberships && user.memberships.length > 1 && (
-                <div className="flex items-center gap-2 px-3 py-1 rounded-lg border border-primary/20 bg-primary/5">
-                  <BuildingIcon className="w-3 h-3 text-primary" />
-                  <select
-                    value={user.activeStoreId || ''}
-                    onChange={(e) => handleSetActiveStore(e.target.value)}
-                    className="bg-transparent text-xs font-black uppercase text-primary outline-none cursor-pointer border-none p-0 focus:ring-0"
-                  >
-                    {user.memberships.map((m: any) => (
-                      <option key={m.store_id} value={m.store_id} className="text-foreground bg-background">
-                        {m.store?.name || `Sucursal ${m.store_id.slice(0, 4)}`}
-                      </option>
-                    ))}
-                  </select>
+            <div className="flex items-center gap-2 min-w-0 shrink-0">
+              {storesToShow.length > 0 && (
+                <div className="relative flex items-center min-w-0">
+                  <div className={cn(
+                    "flex items-center gap-2 px-3 py-2 rounded-xl border transition-all duration-300 min-w-0 h-11",
+                    storesToShow.length > 1
+                      ? "bg-primary text-white border-primary shadow-lg shadow-primary/20 hover:opacity-90"
+                      : "bg-primary/5 text-primary border-primary/20"
+                  )}>
+                    <BuildingIcon className={cn("w-4 h-4 shrink-0", storesToShow.length > 1 ? "text-white" : "text-primary")} />
+
+                    {storesToShow.length > 1 ? (
+                      <div className="relative flex items-center gap-1 min-w-0">
+                        <select
+                          value={user?.activeStoreId || ''}
+                          onChange={(e) => handleSetActiveStore(e.target.value)}
+                          className="bg-transparent text-[10px] sm:text-xs font-black uppercase outline-none cursor-pointer border-none p-0 focus:ring-0 truncate w-full min-w-[100px] max-w-[180px] appearance-none"
+                          title="Cambiar sucursal activa"
+                        >
+                          <option value="" disabled className="text-foreground bg-background">Sucursal...</option>
+                          {storesToShow.map((s) => (
+                            <option key={s.id} value={s.id} className="text-foreground bg-background">
+                              {s.name}
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDown className="w-3 h-3 text-white/70 shrink-0 pointer-events-none" />
+                      </div>
+                    ) : (
+                      <span className="text-[10px] sm:text-xs font-black uppercase truncate max-w-[150px]">
+                        {activeStoreName}
+                      </span>
+                    )}
+                  </div>
                 </div>
               )}
+
+              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] truncate hidden lg:block ml-2 opacity-60">
+                {user?.fullName}
+              </p>
             </div>
           </div>
         </div>
@@ -85,7 +118,7 @@ export const Header = ({
             onClick={() => onViewChange('help')}
             className={cn(
               "neu-raised-sm w-11 h-11 flex items-center justify-center relative active:scale-90 transition-transform",
-              currentView === 'help' && "bg-primary text-white"
+              currentView === 'help' && "bg-primary text-white shadow-lg shadow-primary/20"
             )}
             aria-label="Ayuda"
           >
