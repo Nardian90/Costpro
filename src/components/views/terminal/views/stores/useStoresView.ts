@@ -8,12 +8,14 @@ import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
 import { storeService } from '@/services/store-service';
 import { userService } from '@/services/user-service';
+import { useQueryClient } from '@tanstack/react-query';
 
 export type StoreFormMode = 'create' | 'edit' | 'delete' | 'reset' | null;
 
 export function useStoresView() {
-    const { user } = useAuthStore();
+    const { user, updateUser } = useAuthStore();
     const [searchTerm, setSearchTerm] = useState('');
+    const queryClient = useQueryClient();
 
     // Modal State
     const [storeFormMode, setStoreFormMode] = useState<StoreFormMode>(null);
@@ -37,9 +39,19 @@ export function useStoresView() {
     const handleSetActiveStore = async (storeId: string) => {
         if (!user) return;
         try {
+          // Update local state
+          updateUser({ activeStoreId: storeId });
+          // Persist to DB
           await userService.setActiveStore(user.id, storeId);
-          toast.success('Tienda cambiada. La página se recargará.');
-          setTimeout(() => window.location.reload(), 1000);
+          toast.success('Tienda cambiada exitosamente');
+
+          // Invalidate queries to refresh data in current view without reload
+          queryClient.invalidateQueries({ queryKey: ['products'] });
+          queryClient.invalidateQueries({ queryKey: ['transactions'] });
+          queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+          queryClient.invalidateQueries({ queryKey: ['inventory'] });
+          queryClient.invalidateQueries({ queryKey: ['cost-sheets'] });
+
         } catch (error: any) {
           logger.error('DATABASE', 'SET_ACTIVE_STORE_FAILED', { storeId, error });
           toast.error('Error al cambiar de tienda');
@@ -69,7 +81,10 @@ export function useStoresView() {
             }
             setStoreFormMode(null);
             setSelectedStore(null);
-            setTimeout(() => window.location.reload(), 1000);
+
+            // Invalidate stores query
+            queryClient.invalidateQueries({ queryKey: ['stores'] });
+
         } catch (error: any) {
             logger.error('DATABASE', 'STORE_OPERATION_FAILED', { mode, error });
             toast.error(error.message || 'Error en la operación');
