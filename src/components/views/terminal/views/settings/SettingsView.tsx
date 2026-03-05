@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Sun, Moon, Zap, Laptop, Bell, Percent, ShieldCheck, Code } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Sun, Moon, Zap, Laptop, Bell, Percent, ShieldCheck, Code, Key, Plus, Trash2, Edit2, Loader2, Bot, Save, X } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useTheme } from 'next-themes';
 import { useTaxes } from '@/hooks/api/useTaxes';
@@ -9,6 +9,14 @@ import { useAuthStore, useUIStore } from '@/store';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+
+interface AIKey {
+  id: string;
+  provider: string;
+  api_key: string;
+  label: string;
+  is_active: boolean;
+}
 
 export default function SettingsView() {
   const { user } = useAuthStore();
@@ -22,12 +30,106 @@ export default function SettingsView() {
     salesAlerts: false,
   });
 
+  // AI Keys State
+  const [aiKeys, setAiKeys] = useState<AIKey[]>([]);
+  const [isLoadingKeys, setIsLoadingKeys] = useState(true);
+  const [isAddingKey, setIsAddingKey] = useState(false);
+  const [editingKeyId, setEditingKeyId] = useState<string | null>(null);
+  const [newKey, setNewKey] = useState({ provider: 'gemini', label: '', api_key: '' });
+
+  useEffect(() => {
+    fetchAIKeys();
+  }, []);
+
+  const fetchAIKeys = async () => {
+    setIsLoadingKeys(true);
+    try {
+      const { data, error } = await supabase
+        .from('ai_api_keys')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setAiKeys(data || []);
+    } catch (error: any) {
+      toast.error('Error al cargar llaves de AI');
+    } finally {
+      setIsLoadingKeys(false);
+    }
+  };
+
+  const handleAddKey = async () => {
+    if (!newKey.label || !newKey.api_key) {
+      toast.error('Por favor completa todos los campos');
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('ai_api_keys')
+        .insert([{ ...newKey, user_id: user?.id }])
+        .select();
+
+      if (error) throw error;
+
+      setAiKeys([data[0], ...aiKeys]);
+      setNewKey({ provider: 'gemini', label: '', api_key: '' });
+      setIsAddingKey(false);
+      toast.success('Llave agregada correctamente');
+    } catch (error: any) {
+      toast.error('Error al guardar la llave');
+    }
+  };
+
+  const handleDeleteKey = async (id: string) => {
+    try {
+      const { error } = await supabase.from('ai_api_keys').delete().eq('id', id);
+      if (error) throw error;
+      setAiKeys(aiKeys.filter(k => k.id !== id));
+      toast.success('Llave eliminada');
+    } catch (error: any) {
+      toast.error('Error al eliminar');
+    }
+  };
+
+  const handleToggleKeyStatus = async (key: AIKey) => {
+    try {
+      const { error } = await supabase
+        .from('ai_api_keys')
+        .update({ is_active: !key.is_active })
+        .eq('id', key.id);
+
+      if (error) throw error;
+      setAiKeys(aiKeys.map(k => k.id === key.id ? { ...k, is_active: !k.is_active } : k));
+      toast.success('Estado actualizado');
+    } catch (error: any) {
+      toast.error('Error al actualizar estado');
+    }
+  };
+
+  const handleUpdateKey = async (id: string, updatedFields: Partial<AIKey>) => {
+    try {
+      const { error } = await supabase
+        .from('ai_api_keys')
+        .update(updatedFields)
+        .eq('id', id);
+
+      if (error) throw error;
+      setAiKeys(aiKeys.map(k => k.id === id ? { ...k, ...updatedFields } : k));
+      setEditingKeyId(null);
+      toast.success('Llave actualizada');
+    } catch (error: any) {
+      toast.error('Error al actualizar');
+    }
+  };
+
   return (
-    <div className="space-y-10 max-w-4xl">
+    <div className="space-y-10 max-w-4xl pb-20">
       <h2 className="text-3xl font-black text-foreground tracking-tighter uppercase">Configuración</h2>
 
       <div className="space-y-8">
-        <div className="p-8 rounded-2xl border border-border bg-card shadow-sm">
+        {/* Appearance Section */}
+        <div className="p-8 rounded-3xl border border-border bg-card shadow-sm">
           <h3 className="text-lg font-black uppercase tracking-widest text-primary flex items-center gap-3 mb-8">
             <Sun className="w-5 h-5" />
             Interfaz y Apariencia
@@ -73,7 +175,6 @@ export default function SettingsView() {
               </div>
               <button
                 onClick={() => setShowQueries(!showQueries)}
-                data-testid="toggle-show-queries"
                 className={cn(
                   "px-4 py-2 rounded-lg font-black uppercase text-xs tracking-widest transition-all",
                   showQueries ? "bg-primary/10 text-primary border border-primary/20" : "bg-muted text-muted-foreground border border-border"
@@ -85,7 +186,152 @@ export default function SettingsView() {
           </div>
         </div>
 
-        <div className="p-8 rounded-2xl border border-border bg-card shadow-sm">
+        {/* AI Configuration Section */}
+        <div className="p-8 rounded-3xl border border-border bg-card shadow-sm">
+          <div className="flex items-center justify-between mb-8">
+            <h3 className="text-lg font-black uppercase tracking-widest text-primary flex items-center gap-3">
+              <Bot className="w-5 h-5" />
+              Configuración de Darian AI
+            </h3>
+            <button
+              onClick={() => setIsAddingKey(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl font-black uppercase text-xs tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/20"
+            >
+              <Plus className="w-4 h-4" /> Agregar API Key
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            {isAddingKey && (
+              <div className="p-6 rounded-2xl border-2 border-primary/30 bg-primary/5 animate-in slide-in-from-top-4 duration-300">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Proveedor</label>
+                    <select
+                      value={newKey.provider}
+                      onChange={(e) => setNewKey({ ...newKey, provider: e.target.value })}
+                      className="w-full h-11 bg-background border-border rounded-xl px-4 text-xs font-bold focus:ring-1 focus:ring-primary outline-none"
+                    >
+                      <option value="gemini">Google Gemini</option>
+                      <option value="gpt">OpenAI GPT</option>
+                      <option value="qwen">Alibaba Qwen</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Etiqueta (Ej: Personal, Pro)</label>
+                    <input
+                      type="text"
+                      value={newKey.label}
+                      onChange={(e) => setNewKey({ ...newKey, label: e.target.value })}
+                      className="w-full h-11 bg-background border-border rounded-xl px-4 text-xs font-bold focus:ring-1 focus:ring-primary outline-none"
+                      placeholder="Mi API Key"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2 mb-6">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">API Key</label>
+                  <div className="relative">
+                    <input
+                      type="password"
+                      value={newKey.api_key}
+                      onChange={(e) => setNewKey({ ...newKey, api_key: e.target.value })}
+                      className="w-full h-11 bg-background border-border rounded-xl px-4 pr-10 text-xs font-bold focus:ring-1 focus:ring-primary outline-none"
+                      placeholder="sk-..."
+                    />
+                    <Key className="absolute right-3 top-3 w-5 h-5 text-muted-foreground" />
+                  </div>
+                </div>
+                <div className="flex gap-2 justify-end">
+                  <button onClick={() => setIsAddingKey(false)} className="px-6 py-2.5 rounded-xl border border-border text-[10px] font-black uppercase tracking-widest hover:bg-muted transition-colors">Cancelar</button>
+                  <button onClick={handleAddKey} className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all">Guardar Llave</button>
+                </div>
+              </div>
+            )}
+
+            {isLoadingKeys ? (
+              <div className="flex flex-col items-center justify-center py-12 opacity-50">
+                <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
+                <p className="text-[10px] font-black uppercase tracking-widest">Cargando llaves...</p>
+              </div>
+            ) : aiKeys.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed border-border rounded-2xl bg-background/30 text-center px-6">
+                <Bot className="w-12 h-12 text-muted-foreground/30 mb-4" />
+                <p className="text-sm font-black uppercase tracking-tighter mb-1">Sin Llaves Configuradas</p>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Agrega tu propia API Key para evitar límites de cuota</p>
+              </div>
+            ) : (
+              <div className="overflow-hidden border border-border rounded-2xl bg-background/50">
+                <table className="w-full text-left">
+                  <thead className="bg-muted/50 border-b border-border">
+                    <tr>
+                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest">Proveedor</th>
+                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest">Etiqueta</th>
+                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-center">Estado</th>
+                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-right">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {aiKeys.map((key) => (
+                      <tr key={key.id} className="hover:bg-muted/30 transition-colors">
+                        <td className="px-6 py-4">
+                          <span className="px-2 py-1 rounded-md bg-primary/10 text-primary text-[9px] font-black uppercase tracking-tighter">
+                            {key.provider}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          {editingKeyId === key.id ? (
+                            <input
+                              type="text"
+                              defaultValue={key.label}
+                              onBlur={(e) => handleUpdateKey(key.id, { label: e.target.value })}
+                              onKeyDown={(e) => e.key === 'Enter' && handleUpdateKey(key.id, { label: (e.target as HTMLInputElement).value })}
+                              autoFocus
+                              className="w-full h-8 bg-background border-border rounded-lg px-2 text-xs font-bold outline-none ring-1 ring-primary"
+                            />
+                          ) : (
+                            <span className="text-xs font-bold uppercase tracking-tight">{key.label}</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex justify-center">
+                            <button
+                              onClick={() => handleToggleKeyStatus(key)}
+                              className={cn(
+                                "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-all",
+                                key.is_active ? "bg-green-500/10 text-green-600 border border-green-500/20" : "bg-muted text-muted-foreground border border-border"
+                              )}
+                            >
+                              {key.is_active ? 'Activa' : 'Inactiva'}
+                            </button>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex justify-end items-center gap-3">
+                            <button
+                              onClick={() => setEditingKeyId(key.id)}
+                              className="p-2 hover:bg-primary/10 rounded-lg text-muted-foreground hover:text-primary transition-colors"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteKey(key.id)}
+                              className="p-2 hover:bg-destructive/10 rounded-lg text-muted-foreground hover:text-destructive transition-colors"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Taxes Section */}
+        <div className="p-8 rounded-3xl border border-border bg-card shadow-sm">
           <h3 className="text-lg font-black uppercase tracking-widest text-primary flex items-center gap-3 mb-8">
             <Percent className="w-5 h-5" />
             Gestión de Impuestos
@@ -139,7 +385,8 @@ export default function SettingsView() {
           </div>
         </div>
 
-        <div className="p-8 rounded-2xl border border-border bg-card shadow-sm">
+        {/* Notifications Section */}
+        <div className="p-8 rounded-3xl border border-border bg-card shadow-sm">
           <h3 className="text-lg font-black uppercase tracking-widest text-primary flex items-center gap-3 mb-8">
             <Bell className="w-5 h-5" />
             Notificaciones

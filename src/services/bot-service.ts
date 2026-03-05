@@ -2,7 +2,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import * as fs from 'fs';
 import * as path from 'path';
 import { getLLMProvider } from '@/lib/ai/orchestrator';
-import { Message } from '@/lib/ai/types';
+import { Message, LLMProvider } from '@/lib/ai/types';
 import { dashboardKpiResponseSchema } from '@/validation/schemas';
 import { SalesKPIs } from '@/types';
 
@@ -33,7 +33,7 @@ export const botService = {
     userId: string,
     storeId: string,
     messages: Message[],
-    aiProvider?: string,
+    aiProviderOrInstance?: string | LLMProvider,
     aiApiKey?: string
   ) {
     if (!messages || messages.length === 0) {
@@ -127,7 +127,13 @@ export const botService = {
     };
 
     // 3. Call AI
-    const provider = getLLMProvider(aiProvider, aiApiKey);
+    let provider: LLMProvider;
+    if (typeof aiProviderOrInstance === 'object' && aiProviderOrInstance !== null && 'getResponse' in aiProviderOrInstance) {
+        provider = aiProviderOrInstance as LLMProvider;
+    } else {
+        provider = getLLMProvider(aiProviderOrInstance as string, aiApiKey);
+    }
+
     const response = await provider.getResponse([systemPrompt, ...messages]);
 
     // 4. Audit interaction
