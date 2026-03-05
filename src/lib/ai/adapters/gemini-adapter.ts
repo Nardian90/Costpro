@@ -29,6 +29,7 @@ export class GeminiAdapter implements LLMProvider {
       }
 
       // v1beta is required for system instructions in some model versions
+      // gemini-2.0-flash works well with v1beta
       const model = genAI.getGenerativeModel(modelConfig, { apiVersion: 'v1beta' });
 
       // Format messages for the SDK
@@ -62,14 +63,19 @@ export class GeminiAdapter implements LLMProvider {
       const result = await model.generateContent({
         contents,
         generationConfig: {
-          temperature: options?.temperature ?? 0.7,
+          temperature: options?.temperature ?? 0.1, // Defaulting to low temperature for precision
           topK: options?.topK ?? 40,
           topP: options?.topP ?? 0.95,
-          maxOutputTokens: options?.maxTokens ?? 1024,
+          maxOutputTokens: options?.maxTokens ?? 2048,
         }
       });
 
       const response = await result.response;
+
+      if (!response) {
+        throw new Error("Respuesta vacía del servidor de Google.");
+      }
+
       const text = response.text();
 
       return {
@@ -81,10 +87,14 @@ export class GeminiAdapter implements LLMProvider {
     } catch (error: any) {
       console.error('GeminiAdapter Error:', error.message);
 
-      const msg = error.message.toLowerCase();
+      const msg = error.message?.toLowerCase() || "";
 
       if (msg.includes('401') || msg.includes('unauthorized') || msg.includes('invalid api key')) {
         throw new Error("Error de API Key: La clave proporcionada no es válida o ha expirado. Verifica tu configuración.");
+      }
+
+      if (msg.includes('429') || msg.includes('quota') || msg.includes('too many requests')) {
+        throw new Error("Error de Cuota: Se ha alcanzado el límite de solicitudes gratuitas. Por favor, espera un minuto o usa una clave Pro.");
       }
 
       if (msg.includes('403') || msg.includes('permission_denied')) {
@@ -93,6 +103,10 @@ export class GeminiAdapter implements LLMProvider {
 
       if (msg.includes('404') || msg.includes('not found') || msg.includes('no longer available')) {
         throw new Error(`Error de Modelo: El modelo ${this.modelName} no está disponible. Es posible que Google lo haya retirado o el nombre sea incorrecto.`);
+      }
+
+      if (msg.includes('safety') || msg.includes('blocked')) {
+        throw new Error("Error de Seguridad: El modelo bloqueó la respuesta por políticas de seguridad de contenido.");
       }
 
       throw new Error(`Error de AI (${this.modelName}): ${error.message}`);
