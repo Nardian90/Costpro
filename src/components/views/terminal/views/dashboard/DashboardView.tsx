@@ -1,8 +1,9 @@
 'use client';
+
 import React from 'react';
 import dynamic from 'next/dynamic';
 import {
-  Calendar,
+  Calendar as CalendarIcon,
   FileDown,
   Settings2,
 } from 'lucide-react';
@@ -16,25 +17,40 @@ import { useAuthStore } from '@/store';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+
 // Lazy load heavy dashboard components to improve TBT and LCP
 const ConcentricDashboardRing = dynamic(() => import('./ConcentricDashboardRing').then(mod => mod.ConcentricDashboardRing), {
   loading: () => <div className="h-[280px] w-[280px] rounded-full bg-muted/20 animate-pulse flex items-center justify-center text-xs text-muted-foreground uppercase font-black">Cargando Visualización...</div>,
   ssr: false
 });
+
 const ExecutiveKpiCards = dynamic(() => import('./ExecutiveKpiCards').then(mod => mod.ExecutiveKpiCards), {
   loading: () => <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[120px] animate-pulse bg-muted/5 rounded-3xl" />,
   ssr: false
 });
+
 export default function DashboardView() {
   const { user } = useAuthStore();
-  const { summary, kpis, isLoading, timeRange, setTimeRange } = useDashboardView();
+  const {
+    summary,
+    kpis,
+    isLoading,
+    timeRange,
+    setTimeRange,
+    selectedDate,
+    setSelectedDate
+  } = useDashboardView();
   const { setCurrentView } = useUIStore();
   const {
     data: productsData,
     isLoading: isLoadingProducts,
     error: productsError
   } = useProducts(user?.storeId);
+
   const products = productsData || [];
+
   return (
     <div className="space-y-8 max-w-4xl mx-auto">
       {/* Header with Title and Time Range */}
@@ -51,7 +67,7 @@ export default function DashboardView() {
               className="bg-card/50 border border-border p-1 rounded-2xl w-full sm:w-auto"
             >
               <ToggleGroupItem value="day" className="flex-1 sm:flex-none text-xs font-black uppercase tracking-widest px-4 py-2 rounded-xl data-[state=on]:bg-primary data-[state=on]:text-primary-foreground transition-all">
-                Hoy
+                Día
               </ToggleGroupItem>
               <ToggleGroupItem value="month" className="flex-1 sm:flex-none text-xs font-black uppercase tracking-widest px-4 py-2 rounded-xl data-[state=on]:bg-primary data-[state=on]:text-primary-foreground transition-all">
                 Mes
@@ -60,12 +76,32 @@ export default function DashboardView() {
                 Año
               </ToggleGroupItem>
             </ToggleGroup>
-            <div className="hidden lg:flex items-center gap-2 py-2 px-4 rounded-xl border border-border bg-card/50 text-xs font-black uppercase tracking-widest text-muted-foreground min-w-[140px] justify-center">
-              <Calendar className="w-3.5 h-3.5" />
-              {timeRange === 'day' ? formatDate(new Date()) : (timeRange === 'month' ? format(new Date(), 'MMMM yyyy', { locale: es }) : format(new Date(), 'yyyy'))}
-            </div>
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className="flex items-center gap-2 py-2 px-4 rounded-xl border border-border bg-card/50 text-xs font-black uppercase tracking-widest text-muted-foreground min-w-[140px] justify-center hover:bg-card hover:text-foreground transition-colors w-full sm:w-auto">
+                  <CalendarIcon className="w-3.5 h-3.5" />
+                  {timeRange === 'day'
+                    ? formatDate(selectedDate)
+                    : (timeRange === 'month'
+                        ? format(selectedDate, 'MMMM yyyy', { locale: es })
+                        : format(selectedDate, 'yyyy'))}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 border-border bg-card shadow-2xl rounded-2xl" align="end">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(date) => date && setSelectedDate(date)}
+                  initialFocus
+                  locale={es}
+                  className="rounded-2xl"
+                />
+              </PopoverContent>
+            </Popover>
         </div>
       </div>
+
       <StateRenderer
         isLoading={isLoading || isLoadingProducts}
         error={productsError}
@@ -76,6 +112,7 @@ export default function DashboardView() {
           const sales = kpis?.gross_sales || 0;
           const costs = kpis?.cost_of_goods || 0;
           const profit = kpis?.profit || 0;
+
           return (
             <div className="flex flex-col gap-10">
               {/* Concentric Ring Section */}
@@ -85,10 +122,11 @@ export default function DashboardView() {
                   costs={costs}
                   profit={profit}
                 />
+
                 {/* Mini Stats under the ring */}
                 <div className="grid grid-cols-3 gap-8 w-full max-w-sm mt-4">
                   <div className="flex flex-col items-center">
-                    <div className="w-2 h-2 rounded-full bg-[#39FF14] mb-2 shadow-[0_0_8px_rgba(57,255,20,0.6)]"></div>
+                    <div className="w-2 h-2 rounded-full bg-primary mb-2 shadow-[0_0_8px_rgba(var(--primary),0.6)]"></div>
                     <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter">Ventas</span>
                     <span className="text-sm font-black text-foreground">{formatCurrency(sales)}</span>
                   </div>
@@ -104,6 +142,7 @@ export default function DashboardView() {
                   </div>
                 </div>
               </div>
+
               {/* Summary Cards with Sparklines */}
               <section className="space-y-4">
                 <div className="flex justify-between items-end px-1">
@@ -116,10 +155,11 @@ export default function DashboardView() {
                   profit={profit}
                 />
               </section>
+
               {/* Action Buttons */}
               <div className="grid grid-cols-2 gap-4">
                 <button className="bg-card/50 border border-border py-5 rounded-[24px] flex flex-col items-center justify-center group active:scale-95 transition-all hover:bg-card">
-                  <FileDown className="w-6 h-6 text-slate-500 group-hover:text-[#39FF14] transition-colors" />
+                  <FileDown className="w-6 h-6 text-slate-500 group-hover:text-primary transition-colors" />
                   <span className="text-xs font-black mt-2 text-slate-400 uppercase tracking-widest">Reporte</span>
                 </button>
                 <button
@@ -130,6 +170,7 @@ export default function DashboardView() {
                   <span className="text-xs font-black mt-2 text-slate-400 uppercase tracking-widest">Ajustes</span>
                 </button>
               </div>
+
               {/* Alerts Section (from original dashboard) */}
               <DashboardAlertsSection
                 products={products}
@@ -143,9 +184,12 @@ export default function DashboardView() {
     </div>
   );
 }
+
 function DashboardAlertsSection({ products, onViewInventory, onGoToCatalog }: { products: Product[], onViewInventory: () => void, onGoToCatalog: () => void }) {
   const criticalProducts = products.filter(p => (p.stock_current ?? 0) <= (p.min_stock ?? 0));
+
   if (criticalProducts.length === 0) return null;
+
   return (
     <div className="p-6 rounded-[32px] border border-destructive/10 bg-card/30 shadow-sm mt-4">
       <h3 className="text-sm font-black text-destructive uppercase tracking-widest flex items-center gap-2 mb-6">
