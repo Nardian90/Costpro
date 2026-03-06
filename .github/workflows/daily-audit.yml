@@ -1,0 +1,24 @@
+name: Daily AI System Audit
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Run Audit
+        run: python3 scripts/audit-agent.py
+      - name: Commit changes
+        run: |
+          git config --global user.name "AI Auditor Agent"
+          git config --global user.email "auditor-agent@costpro.ai"
+          git add docs/mapa_vistas.md public/system_architecture.json logs/audit_log.json public/system_health.json public/health_timeline.json
+          git commit -m "chore: daily system audit [skip ci]" || echo "No changes to commit"

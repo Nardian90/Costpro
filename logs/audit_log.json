@@ -1,0 +1,40 @@
+{
+  "date": "2026-03-06",
+  "new_views": [],
+  "modified_views": [],
+  "health_score": 9.8,
+  "issues_detected": [
+    "Falta de tipograf\u00eda fluida (clamp) en src/components/SplashScreen.tsx",
+    "Uso de console.log detectado en src/components/ServiceWorkerRegister.tsx",
+    "Falta de tipograf\u00eda fluida (clamp) en src/components/ServiceWorkerRegister.tsx",
+    "Falta de tipograf\u00eda fluida (clamp) en src/components/theme-provider.tsx",
+    "Falta de tipograf\u00eda fluida (clamp) en src/components/IntelligentThemeHandler.tsx",
+    "Falta de tipograf\u00eda fluida (clamp) en src/components/GlobalSessionManager.tsx",
+    "Falta de tipograf\u00eda fluida (clamp) en src/components/views/TerminalShell.tsx",
+    "Posible incumplimiento de touch targets (44px) en src/components/views/TerminalShell.tsx",
+    "Falta de tipograf\u00eda fluida (clamp) en src/components/views/terminal/views/cash_closure/CashClosureView.tsx",
+    "Posible incumplimiento de touch targets (44px) en src/components/views/terminal/views/stores/StoresManagementView.tsx",
+    "Posible incumplimiento de touch targets (44px) en src/components/views/terminal/views/academy/Flashcard.tsx",
+    "Archivo extenso (532 l\u00edneas) en src/components/views/terminal/views/help/HelpView.tsx",
+    "Falta de tipograf\u00eda fluida (clamp) en src/components/views/terminal/views/help/help/IpvFlowDiagram.tsx",
+    "Falta de tipograf\u00eda fluida (clamp) en src/components/views/terminal/views/help/help/CostFlowDiagram.tsx",
+    "Posible incumplimiento de touch targets (44px) en src/components/views/terminal/views/help/help/InventoryAdjustmentFlowDiagram.tsx",
+    "Falta de tipograf\u00eda fluida (clamp) en src/components/views/terminal/views/help/help/UserFlowDiagram.tsx",
+    "Falta de tipograf\u00eda fluida (clamp) en src/components/views/terminal/views/help/help/InventoryFlowDiagram.tsx",
+    "Falta de tipograf\u00eda fluida (clamp) en src/components/views/terminal/views/help/help/StickyCartFlowDiagram.tsx",
+    "Posible incumplimiento de touch targets (44px) en src/components/views/terminal/views/help/help/StickyCartFlowDiagram.tsx",
+    "Falta de tipograf\u00eda fluida (clamp) en src/components/views/terminal/views/help/help/MobileFlowDiagram.tsx"
+  ],
+  "refactor_suggestions": [
+    "Implementar tipograf\u00eda fluida con clamp() en vistas que a\u00fan usan px/rem est\u00e1ticos.",
+    "Asegurar que todos los botones e inputs cumplan con el est\u00e1ndar de 44px de touch target.",
+    "Reducir el tama\u00f1o de archivos que exceden las 500 l\u00edneas mediante sub-componentes.",
+    "Eliminar console.log de archivos de producci\u00f3n."
+  ],
+  "system_metrics": {
+    "total_views": 42,
+    "total_components": 204,
+    "total_services": 13,
+    "total_hooks": 28
+  }
+}
