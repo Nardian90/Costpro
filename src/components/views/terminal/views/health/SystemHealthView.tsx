@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Activity, RefreshCw, AlertCircle, FileText,
-  Settings, Clock, ShieldCheck, ChevronDown, Info
+  Settings, Clock, ShieldCheck, ChevronDown, Info,
+  LayoutGrid, Share2, History, ShieldAlert
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -16,6 +17,10 @@ import { SecurityMetrics } from './SecurityMetrics';
 import { ReleaseGateStatus } from './ReleaseGateStatus';
 import { CostProLoader } from '@/components/ui/CostProLoader';
 import { ReleaseGatePdfExporter } from '@/lib/release_gate/ReleaseGatePdfExporter';
+
+import { AuditSummary } from './AuditSummary';
+import { SystemDependencyGraph } from './SystemDependencyGraph';
+import { ViewNavigator } from './ViewNavigator';
 
 import {
   DropdownMenu,
@@ -71,7 +76,7 @@ export default function SystemHealthView() {
   const { shi, mri, timestamp, version } = data;
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700 pb-20">
+    <div className="space-y-12 animate-in fade-in duration-700 pb-20">
       {/* Top Banner */}
       <HealthStatusHeader
         score={shi.score}
@@ -79,7 +84,7 @@ export default function SystemHealthView() {
         version={version}
       />
 
-      {/* Control Bar */}
+      {/* Control Bar & Quick Stats */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2">
         <div className="flex items-center gap-3">
           <div className="px-3 py-1.5 rounded-xl bg-card border border-border/50 flex items-center gap-2">
@@ -104,25 +109,38 @@ export default function SystemHealthView() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {/* Main Grid: Core Metrics & Dependency Graph */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         <div className="space-y-8">
           <InfrastructureMetrics metrics={shi.metrics} trends={shi.trends} />
           <ApplicationMetrics metrics={shi.metrics} trends={shi.trends} />
         </div>
 
         <div className="space-y-8">
+          <SystemDependencyGraph />
           <SecurityMetrics metrics={shi.metrics} />
-          <ReleaseGateStatus mri={mri} />
         </div>
       </div>
 
-      {/* Footer Info & Alerts */}
-            <section className="bg-card/30 p-8 rounded-[40px] border border-border/50 relative overflow-hidden">
+      {/* Navigation Layer */}
+      <section className="bg-card/30 p-8 rounded-[40px] border border-border/50">
+         <ViewNavigator />
+      </section>
+
+      {/* Audit Layer */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <AuditSummary />
+        <ReleaseGateStatus mri={mri} />
+      </div>
+
+      {/* Logs & Console */}
+      <section className="bg-card/30 p-8 rounded-[40px] border border-border/50 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32" />
         <HealthAgentLogs />
       </section>
 
-<footer className="flex flex-col md:flex-row gap-6">
+      {/* Alert Console & Actions */}
+      <footer className="flex flex-col md:flex-row gap-6">
         <div className="flex-1 bg-card/30 p-6 rounded-[32px] border border-border/50 min-h-[160px] relative overflow-hidden">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
