@@ -69,7 +69,7 @@ export const MasteryDashboard = () => {
             </div>
             <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80 mb-1">Nivel Actual</p>
-                <h3 className="text-2xl font-black uppercase italic tracking-tighter">{level}</h3>
+                <h3 className="text-[clamp(1.25rem,5vw,1.5rem)] font-black uppercase italic tracking-tighter leading-tight">{level}</h3>
             </div>
         </Card>
 

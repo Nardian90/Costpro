@@ -67,7 +67,7 @@ export default function HelpView() {
               <HelpCircle className="w-7 h-7 text-primary" />
             </div>
             <div>
-              <h1 className="text-xl font-black uppercase tracking-tighter">Centro de Ayuda Profesional</h1>
+              <h1 className="text-[clamp(1.1rem,4vw,1.25rem)] font-black uppercase tracking-tighter leading-tight">Centro de Ayuda Profesional</h1>
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.3em]">Documentación Técnica CostPro v5.7</p>
             </div>
           </div>
@@ -76,7 +76,7 @@ export default function HelpView() {
 
             <Button
               onClick={() => window.open("/manuals/COSTPRO.pdf", "_blank")}
-              variant="ghost" size="sm" className="font-bold text-xs uppercase tracking-widest gap-2"
+              variant="ghost" size="sm" className="h-11 font-bold text-xs uppercase tracking-widest gap-2"
             >
                <Download className="w-4 h-4" />
                Manual PDF
@@ -84,7 +84,7 @@ export default function HelpView() {
             {previousView && (
               <Button
                 onClick={() => setCurrentView(previousView)}
-                variant="default" size="sm" className="bg-primary text-white font-black text-xs uppercase tracking-widest gap-2 rounded-xl px-6 shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+                variant="default" size="sm" className="h-11 bg-primary text-white font-black text-xs uppercase tracking-widest gap-2 rounded-xl px-6 shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
               >
                 <ArrowLeft className="w-4 h-4" />
                 Volver
@@ -299,14 +299,14 @@ export default function HelpView() {
               {selectedSection === 'innovation' && (
                 <div className="space-y-12">
                    <div className="space-y-6">
-                      <div className="p-10 rounded-[3rem] bg-card dark:bg-slate-950 text-card-foreground dark:text-white border border-border dark:border-white/10 shadow-2xl shadow-primary/10">
-                        <div className="flex items-center gap-6 mb-8">
-                          <div className="p-4 rounded-2xl bg-primary/10">
+                      <div className="p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] bg-card dark:bg-slate-950 text-card-foreground dark:text-white border border-border dark:border-white/10 shadow-2xl shadow-primary/10">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-6 mb-8">
+                          <div className="p-4 rounded-2xl bg-primary/10 w-fit">
                             <Cpu className="w-12 h-12 text-primary" />
                           </div>
                           <div>
-                            <h3 className="text-3xl font-black uppercase tracking-tighter">Darian: Inteligencia Aumentada</h3>
-                            <p className="text-primary font-bold text-xs uppercase tracking-[0.2em]">Orquestador de Decisiones CostPro</p>
+                            <h3 className="text-[clamp(1.5rem,6vw,1.875rem)] font-black uppercase tracking-tighter leading-none">Darian: Inteligencia Aumentada</h3>
+                            <p className="text-primary font-bold text-xs uppercase tracking-[0.2em] mt-2">Orquestador de Decisiones CostPro</p>
                           </div>
                         </div>
                         <p className="text-lg font-medium leading-relaxed opacity-80 max-w-2xl">

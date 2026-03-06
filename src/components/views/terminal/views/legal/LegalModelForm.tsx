@@ -219,9 +219,9 @@ export default function LegalModelForm({ model, onCancel }: LegalModelFormProps)
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-background border-2 border-primary/10 rounded-3xl overflow-hidden shadow-2xl"
+      className="bg-background border-2 border-primary/10 rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl"
     >
-      <div className="p-8 border-b border-primary/5 bg-primary/5 flex items-center justify-between">
+      <div className="p-6 md:p-8 border-b border-primary/5 bg-primary/5 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
             <FileText className="w-6 h-6 text-white" />
@@ -239,7 +239,7 @@ export default function LegalModelForm({ model, onCancel }: LegalModelFormProps)
         </button>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="p-8">
+      <form onSubmit={handleSubmit(onSubmit)} className="p-6 md:p-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {model.fields.map((field: any) => (
             <div key={field.name} className={cn("space-y-2", field.type === 'textarea' || field.type === 'json' || field.type === 'table' ? "md:col-span-2" : "")}>
@@ -258,7 +258,7 @@ export default function LegalModelForm({ model, onCancel }: LegalModelFormProps)
           ))}
         </div>
 
-        <div className="mt-12 flex items-center justify-end gap-4 border-t border-primary/5 pt-8">
+        <div className="mt-12 flex flex-col sm:flex-row items-center justify-end gap-4 border-t border-primary/5 pt-8">
           <button
             type="button"
             onClick={onCancel}
@@ -269,7 +269,7 @@ export default function LegalModelForm({ model, onCancel }: LegalModelFormProps)
           <button
             type="submit"
             disabled={loading}
-            className="px-8 h-14 bg-primary text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all flex items-center gap-3"
+            className="w-full sm:w-auto px-8 h-14 bg-primary text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-3"
           >
             {loading ? (
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
