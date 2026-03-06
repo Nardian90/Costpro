@@ -21,7 +21,7 @@ import { ReleaseGatePdfExporter } from '@/lib/release_gate/ReleaseGatePdfExporte
 import { AuditSummary } from './AuditSummary';
 import { SystemDependencyGraph } from './SystemDependencyGraph';
 import { ViewNavigator } from './ViewNavigator';
-import { ArchitectureAuditGrid } from './ArchitectureAuditGrid';
+import { ArchitectureAuditTable } from './ArchitectureAuditTable';
 import { DetailedRelationshipGraph } from './DetailedRelationshipGraph';
 
 import {
@@ -168,9 +168,9 @@ export default function SystemHealthView() {
         </div>
       </div>
 
-      {/* Architecture Audit Grid - The "Mapa de Vistas" */}
+      {/* Architecture Audit Table - The "Mapa de Vistas" Pro Table */}
       <section>
-        <ArchitectureAuditGrid />
+        <ArchitectureAuditTable />
       </section>
 
       {/* Relationship Graph - The "Grafo de Relaciones" */}
