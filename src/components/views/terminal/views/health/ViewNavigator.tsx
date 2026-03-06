@@ -3,12 +3,11 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { VIEW_REGISTRY } from '@/config/viewRegistry';
-import { useTerminalNavigation } from '@/hooks/ui/useTerminalNavigation';
+import { useUIStore, ViewType } from '@/store';
 import { LayoutGrid, ArrowRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 export function ViewNavigator() {
-  const { setCurrentView } = useTerminalNavigation();
+  const { setCurrentView } = useUIStore();
 
   // Filter key views for navigation
   const keyViews = VIEW_REGISTRY.filter(v =>
@@ -29,7 +28,7 @@ export function ViewNavigator() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: idx * 0.05 }}
-            onClick={() => setCurrentView(view.id as any)}
+            onClick={() => setCurrentView(view.id as ViewType)}
             className="group flex flex-col p-4 rounded-2xl bg-card/30 border border-border/50 hover:border-primary/40 hover:bg-card/50 transition-all text-left relative overflow-hidden"
           >
             <div className="absolute top-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity">
