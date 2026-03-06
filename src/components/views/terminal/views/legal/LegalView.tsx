@@ -71,8 +71,8 @@ export default function LegalView() {
             <Scale className="w-8 h-8 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-black uppercase tracking-tight">Consultor Legal</h1>
-            <p className="text-muted-foreground font-medium uppercase text-xs tracking-widest mt-1 opacity-70">
+            <h1 className="text-[clamp(1.5rem,6vw,2.25rem)] font-black uppercase tracking-tight leading-none">Consultor Legal</h1>
+            <p className="text-muted-foreground font-medium uppercase text-[10px] sm:text-xs tracking-widest mt-2 opacity-70">
               Normativas, Resoluciones y Modelos Oficiales
             </p>
           </div>

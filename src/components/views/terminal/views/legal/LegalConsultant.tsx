@@ -117,7 +117,7 @@ export default function LegalConsultant({ resolutions, loading, onSelectModel }:
                     <BookOpen className="w-4 h-4" />
                     Vista de Lectura Interactiva
                   </div>
-                  <h2 className="text-2xl font-black uppercase tracking-tight">
+                  <h2 className="text-[clamp(1.25rem,5vw,1.5rem)] font-black uppercase tracking-tight leading-tight">
                     {resolutions.find(r => r.id === activeResId)?.title}
                   </h2>
                 </div>
