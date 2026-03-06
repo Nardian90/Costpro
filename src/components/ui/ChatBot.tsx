@@ -102,7 +102,15 @@ export function ChatBot() {
       }
 
     } catch (error: any) {
-      toast.error(error.message);
+      const errorMsg = error.message || '';
+      if (errorMsg.includes('Límite de IA alcanzado') || errorMsg.includes('Balance') || errorMsg.includes('Quota')) {
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: '⚠️ ' + errorMsg + ' Puedes cambiar a otro proveedor o ingresar tu propia clave en los ajustes (icono de engranaje arriba).'
+        }]);
+      } else {
+        toast.error(errorMsg);
+      }
     } finally {
       setIsLoading(false);
     }
