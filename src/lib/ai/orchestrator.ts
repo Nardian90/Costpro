@@ -64,9 +64,10 @@ export async function getLLMProviderWithUserKey(userId: string, type?: string, f
     }
   }
 
-  // 3. Always add DeepSeek as final fallback if not already present
-  if (!providers.some(p => p instanceof DeepSeekAdapter)) {
-     providers.push(new DeepSeekAdapter(process.env.DEEPSEEK_API_KEY || DEEPSEEK_DEFAULT_KEY));
+  // 3. Always add DeepSeek as final fallback ONLY IF we have a key for it
+  const dsKey = process.env.DEEPSEEK_API_KEY || DEEPSEEK_DEFAULT_KEY;
+  if (dsKey && !providers.some(p => p instanceof DeepSeekAdapter)) {
+     providers.push(new DeepSeekAdapter(dsKey));
   }
 
   return new FallbackAdapter(providers);
