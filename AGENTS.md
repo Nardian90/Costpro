@@ -19,3 +19,13 @@ Tu única misión es elevar la robustez de la responsividad móvil (Mobile Harde
 
 ## FORMATO DE SALIDA
 Entrega únicamente el CSS modificado o las clases de utilidad necesarias. No refactorices lógica JS.
+## AI System Auditor Protocol
+The project includes an automated AI Auditor script located at `scripts/audit-agent.py`.
+This script should be run daily to maintain:
+1. **Mapa Arquitectónico Vivo**: `docs/mapa_vistas.md`
+2. **Registro Técnico de Auditoría**: `logs/audit_log.json`
+3. **Estado de Salud del Sistema**: `public/system_health.json`
+4. **Línea de Tiempo de Mantenimientos**: `public/health_timeline.json`
+5. **Modelo de Arquitectura Visual**: `public/system_architecture.json`
+
+To execute the audit manually, run `npm run audit`.

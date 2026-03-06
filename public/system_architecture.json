@@ -1,0 +1,4196 @@
+{
+  "architecture": [
+    {
+      "name": "ThemeToggle",
+      "path": "src/components/ThemeToggle.tsx",
+      "type": "component",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "store",
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "SplashScreen",
+      "path": "src/components/SplashScreen.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "CostProLogo"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostProLogo",
+      "path": "src/components/CostProLogo.tsx",
+      "type": "component",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "ServiceWorkerRegister",
+      "path": "src/components/ServiceWorkerRegister.tsx",
+      "type": "component",
+      "health": 9.5,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "theme-provider",
+      "path": "src/components/theme-provider.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "IntelligentThemeHandler",
+      "path": "src/components/IntelligentThemeHandler.tsx",
+      "type": "component",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "store"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "GlobalSessionManager",
+      "path": "src/components/GlobalSessionManager.tsx",
+      "type": "component",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "useSessionManager",
+        "session-store"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "TerminalShell",
+      "path": "src/components/views/TerminalShell.tsx",
+      "type": "component",
+      "health": 9.4,
+      "status": "Bueno",
+      "dependencies": [
+        "store",
+        "Sidebar",
+        "Header",
+        "useTerminalNavigation",
+        "useMobile"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "Sidebar",
+      "path": "src/components/views/terminal/Sidebar.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "CostProLogo",
+        "store",
+        "useTerminalNavigation"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "Header",
+      "path": "src/components/views/terminal/Header.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "ThemeToggle",
+        "store",
+        "user",
+        "useTerminalNavigation"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "StockHistoryView",
+      "path": "src/components/views/terminal/views/stock_history/StockHistoryView.tsx",
+      "type": "view",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "SearchBar",
+        "ActionMenu",
+        "QueryInspector",
+        "useStockMovements"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CashClosureView",
+      "path": "src/components/views/terminal/views/cash_closure/CashClosureView.tsx",
+      "type": "view",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "ActionMenu",
+        "useCashClosures",
+        "store"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "StoresManagementView",
+      "path": "src/components/views/terminal/views/stores/StoresManagementView.tsx",
+      "type": "view",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "SearchBar",
+        "ActionMenu",
+        "useStoresView",
+        "StoreModals"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "useStoresView",
+      "path": "src/components/views/terminal/views/stores/useStoresView.ts",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "store",
+        "useStores",
+        "types",
+        "logger",
+        "store-service"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "StoreModals",
+      "path": "src/components/views/terminal/views/stores/StoreModals.tsx",
+      "type": "component",
+      "health": 9.7,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "BaseModal",
+        "button",
+        "input",
+        "label",
+        "types"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "MasteryDashboard",
+      "path": "src/components/views/terminal/views/academy/MasteryDashboard.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "supabaseClient",
+        "store",
+        "card",
+        "progress"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "AcademyView",
+      "path": "src/components/views/terminal/views/academy/AcademyView.tsx",
+      "type": "view",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "useAcademyStore",
+        "store",
+        "Flashcard",
+        "MasteryDashboard",
+        "button"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "Flashcard",
+      "path": "src/components/views/terminal/views/academy/Flashcard.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "card",
+        "button",
+        "utils",
+        "useAcademyStore"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "HelpView",
+      "path": "src/components/views/terminal/views/help/HelpView.tsx",
+      "type": "view",
+      "health": 9.4,
+      "status": "Bueno",
+      "dependencies": [
+        "utils",
+        "button",
+        "badge",
+        "CostFlowDiagram",
+        "QuickModeMassiveDiagram"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "IpvFlowDiagram",
+      "path": "src/components/views/terminal/views/help/help/IpvFlowDiagram.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostFlowDiagram",
+      "path": "src/components/views/terminal/views/help/help/CostFlowDiagram.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "InventoryAdjustmentFlowDiagram",
+      "path": "src/components/views/terminal/views/help/help/InventoryAdjustmentFlowDiagram.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "DarianDiagram",
+      "path": "src/components/views/terminal/views/help/help/DarianDiagram.tsx",
+      "type": "component",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "UserFlowDiagram",
+      "path": "src/components/views/terminal/views/help/help/UserFlowDiagram.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "InventoryFlowDiagram",
+      "path": "src/components/views/terminal/views/help/help/InventoryFlowDiagram.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "StickyCartFlowDiagram",
+      "path": "src/components/views/terminal/views/help/help/StickyCartFlowDiagram.tsx",
+      "type": "component",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "MobileFlowDiagram",
+      "path": "src/components/views/terminal/views/help/help/MobileFlowDiagram.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "SecurityFlowDiagram",
+      "path": "src/components/views/terminal/views/help/help/SecurityFlowDiagram.tsx",
+      "type": "component",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "MobilePosDiagram",
+      "path": "src/components/views/terminal/views/help/help/MobilePosDiagram.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "StoreSkuDiagram",
+      "path": "src/components/views/terminal/views/help/help/StoreSkuDiagram.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "QuickModeMassiveDiagram",
+      "path": "src/components/views/terminal/views/help/help/QuickModeMassiveDiagram.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "RolesDiagram",
+      "path": "src/components/views/terminal/views/help/help/RolesDiagram.tsx",
+      "type": "component",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CashFlowDiagram",
+      "path": "src/components/views/terminal/views/help/help/CashFlowDiagram.tsx",
+      "type": "component",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "KidsOnboarding",
+      "path": "src/components/views/terminal/views/help/help/KidsOnboarding.tsx",
+      "type": "component",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "SalesFlowDiagram",
+      "path": "src/components/views/terminal/views/help/help/SalesFlowDiagram.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "OfflineSyncDiagram",
+      "path": "src/components/views/terminal/views/help/help/OfflineSyncDiagram.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "TaxCalculationModal",
+      "path": "src/components/views/terminal/views/sales/TaxCalculationModal.tsx",
+      "type": "component",
+      "health": 9.4,
+      "status": "Bueno",
+      "dependencies": [
+        "utils",
+        "types",
+        "useTaxes",
+        "store"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "useSalesHistoryView",
+      "path": "src/components/views/terminal/views/sales/useSalesHistoryView.ts",
+      "type": "component",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "store",
+        "useTransactions",
+        "types",
+        "useDocumentActions"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "SalesHistoryView",
+      "path": "src/components/views/terminal/views/sales/SalesHistoryView.tsx",
+      "type": "view",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "SearchBar",
+        "StateRenderer",
+        "skeleton",
+        "useSalesHistoryView"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "TransactionDetailsModal",
+      "path": "src/components/views/terminal/views/sales/TransactionDetailsModal.tsx",
+      "type": "component",
+      "health": 9.4,
+      "status": "Bueno",
+      "dependencies": [
+        "BaseModal",
+        "table",
+        "badge",
+        "utils",
+        "types"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "StickyCartSummary",
+      "path": "src/components/views/terminal/views/pos/StickyCartSummary.tsx",
+      "type": "component",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "POSView",
+      "path": "src/components/views/terminal/views/pos/POSView.tsx",
+      "type": "view",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "SearchBar",
+        "ActionMenu",
+        "atomic",
+        "POSTableView"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "POSTableView",
+      "path": "src/components/views/terminal/views/pos/POSTableView.tsx",
+      "type": "view",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "types",
+        "utils",
+        "ProductImage"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "POSCart",
+      "path": "src/components/views/terminal/views/pos/POSCart.tsx",
+      "type": "component",
+      "health": 9.2,
+      "status": "Bueno",
+      "dependencies": [
+        "CostProLoader",
+        "ProductImage",
+        "utils",
+        "types",
+        "useMobile"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "usePOSView",
+      "path": "src/components/views/terminal/views/pos/usePOSView.ts",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "logger",
+        "utils",
+        "store",
+        "useProducts",
+        "useTransactions"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "ProductReceptionView",
+      "path": "src/components/views/terminal/views/inventory/ProductReceptionView.tsx",
+      "type": "view",
+      "health": 8.8,
+      "status": "Bueno",
+      "dependencies": [
+        "supabaseClient",
+        "store",
+        "types",
+        "useInventory",
+        "useDebounce"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "InventoryTableView",
+      "path": "src/components/views/terminal/views/inventory/InventoryTableView.tsx",
+      "type": "view",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "types",
+        "utils",
+        "CostProLoader",
+        "ProductImage"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "InventoryView",
+      "path": "src/components/views/terminal/views/inventory/InventoryView.tsx",
+      "type": "view",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "store",
+        "useInventory",
+        "InventoryCardView",
+        "InventoryTableView",
+        "ProductReceptionView"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "InventoryAdjustmentModal",
+      "path": "src/components/views/terminal/views/inventory/InventoryAdjustmentModal.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "types",
+        "inventory-logic",
+        "utils",
+        "useMobile"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "InventoryAdjustmentsView",
+      "path": "src/components/views/terminal/views/inventory/InventoryAdjustmentsView.tsx",
+      "type": "view",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "SearchBar",
+        "ActionMenu",
+        "QueryInspector",
+        "useStockMovements"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "InventoryCardView",
+      "path": "src/components/views/terminal/views/inventory/InventoryCardView.tsx",
+      "type": "view",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "types",
+        "utils",
+        "CostProLoader",
+        "atomic"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "IngestionErrorsTable",
+      "path": "src/components/views/terminal/views/ipv/IngestionErrorsTable.tsx",
+      "type": "component",
+      "health": 9.4,
+      "status": "Bueno",
+      "dependencies": [
+        "dexie",
+        "badge",
+        "button",
+        "input",
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "IncomeReceiptPreview",
+      "path": "src/components/views/terminal/views/ipv/IncomeReceiptPreview.tsx",
+      "type": "component",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "card",
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "IPVRightSidebar",
+      "path": "src/components/views/terminal/views/ipv/IPVRightSidebar.tsx",
+      "type": "component",
+      "health": 9.4,
+      "status": "Bueno",
+      "dependencies": [
+        "button"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "PivotStatementView",
+      "path": "src/components/views/terminal/views/ipv/PivotStatementView.tsx",
+      "type": "view",
+      "health": 9.3,
+      "status": "Bueno",
+      "dependencies": [
+        "dexie",
+        "card",
+        "button",
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "IPVHelpDialog",
+      "path": "src/components/views/terminal/views/ipv/IPVHelpDialog.tsx",
+      "type": "component",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "button",
+        "badge",
+        "scroll-area"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "IPVView",
+      "path": "src/components/views/terminal/views/ipv/IPVView.tsx",
+      "type": "view",
+      "health": 9.2,
+      "status": "Bueno",
+      "dependencies": [
+        "dexie",
+        "card",
+        "tabs",
+        "button",
+        "badge"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "MatchingSimulation",
+      "path": "src/components/views/terminal/views/ipv/MatchingSimulation.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "dexie",
+        "engine",
+        "button",
+        "input",
+        "card"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "ManualReconciliationView",
+      "path": "src/components/views/terminal/views/ipv/ManualReconciliationView.tsx",
+      "type": "view",
+      "health": 9.2,
+      "status": "Bueno",
+      "dependencies": [
+        "button",
+        "dexie",
+        "utils",
+        "badge",
+        "scroll-area"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "IPVPreviewModal",
+      "path": "src/components/views/terminal/views/ipv/IPVPreviewModal.tsx",
+      "type": "component",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "table",
+        "badge",
+        "button",
+        "checkbox",
+        "label"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "MatchingRulesEditor",
+      "path": "src/components/views/terminal/views/ipv/MatchingRulesEditor.tsx",
+      "type": "component",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "dexie",
+        "button",
+        "card",
+        "switch",
+        "label"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "TransactionBreakdown",
+      "path": "src/components/views/terminal/views/ipv/TransactionBreakdown.tsx",
+      "type": "component",
+      "health": 9.5,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "dexie",
+        "table",
+        "badge",
+        "input",
+        "button"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "TransferQRReportView",
+      "path": "src/components/views/terminal/views/ipv/TransferQRReportView.tsx",
+      "type": "view",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "supabaseClient",
+        "store",
+        "dexie",
+        "card",
+        "badge"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "IPVReportView",
+      "path": "src/components/views/terminal/views/ipv/IPVReportView.tsx",
+      "type": "view",
+      "health": 8.9,
+      "status": "Bueno",
+      "dependencies": [
+        "BaseModal",
+        "dexie",
+        "button",
+        "badge",
+        "input"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "IPVControlPanel",
+      "path": "src/components/views/terminal/views/ipv/IPVControlPanel.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "card",
+        "button",
+        "badge",
+        "tooltip",
+        "backup"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CatalogTable",
+      "path": "src/components/views/terminal/views/ipv/CatalogTable.tsx",
+      "type": "component",
+      "health": 8.9,
+      "status": "Bueno",
+      "dependencies": [
+        "dexie",
+        "badge",
+        "BaseModal",
+        "button",
+        "card"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "TransactionTable",
+      "path": "src/components/views/terminal/views/ipv/TransactionTable.tsx",
+      "type": "component",
+      "health": 9.5,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "BaseModal",
+        "dexie",
+        "badge",
+        "button",
+        "card"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "IPVInstitutionalDashboard",
+      "path": "src/components/views/terminal/views/ipv/IPVInstitutionalDashboard.tsx",
+      "type": "component",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "card",
+        "dexie",
+        "utils",
+        "button",
+        "badge"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "IPVReportsDropdown",
+      "path": "src/components/views/terminal/views/ipv/IPVReportsDropdown.tsx",
+      "type": "component",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "button",
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "BankIngestion",
+      "path": "src/components/views/terminal/views/ipv/BankIngestion.tsx",
+      "type": "component",
+      "health": 9.5,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "BaseModal",
+        "dexie",
+        "engine",
+        "bandecParser",
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "IncomeReceiptSection",
+      "path": "src/components/views/terminal/views/ipv/IncomeReceiptSection.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "dexie",
+        "card",
+        "button",
+        "input",
+        "badge"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostSheetQuickMode",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetQuickMode.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "button",
+        "input"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "FormulaBuilder",
+      "path": "src/components/views/terminal/views/cost_sheet/FormulaBuilder.tsx",
+      "type": "component",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "scroll-area",
+        "HorizontalScroll"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostSheetSignature",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetSignature.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostSheetCalculator",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetCalculator.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostSheetHeaderEditor",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetHeaderEditor.tsx",
+      "type": "component",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "cost-sheet-store",
+        "card",
+        "input",
+        "label",
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "ProductInventoryPicker",
+      "path": "src/components/views/terminal/views/cost_sheet/ProductInventoryPicker.tsx",
+      "type": "component",
+      "health": 9.4,
+      "status": "Bueno",
+      "dependencies": [
+        "BaseModal",
+        "useProducts",
+        "SearchBar",
+        "table",
+        "skeleton"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "FormulaEditor",
+      "path": "src/components/views/terminal/views/cost_sheet/FormulaEditor.tsx",
+      "type": "component",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "badge",
+        "FormulaBuilder"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostSheetBody",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetBody.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostSheetGenerateDropdown",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetGenerateDropdown.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostSheetInteractiveTable",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetInteractiveTable.tsx",
+      "type": "component",
+      "health": 9.1,
+      "status": "Bueno",
+      "dependencies": [
+        "LazyRender",
+        "cost-sheet-store",
+        "popover",
+        "select",
+        "input"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostSheetAnnexEditor",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetAnnexEditor.tsx",
+      "type": "component",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "cost-sheet-store",
+        "useCostSheetCalculator",
+        "input",
+        "table",
+        "button"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostSheetTemplateExplorer",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetTemplateExplorer.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "button",
+        "input",
+        "store",
+        "supabaseClient"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostSheetNav",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetNav.tsx",
+      "type": "component",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "ActionMenu",
+        "CostSheetFCDropdown",
+        "CostSheetModeDropdown",
+        "CostSheetOptionsDropdown"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostSheetSummary",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetSummary.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "cost-sheet",
+        "cost-sheet-store",
+        "slider",
+        "HealthBattery"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostSheetOptionsDropdown",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetOptionsDropdown.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "store"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostSheetAuditView",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetAuditView.tsx",
+      "type": "view",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "card",
+        "badge",
+        "scroll-area",
+        "utils",
+        "CostSheetAuditLog"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostSheetHelpDropdown",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetHelpDropdown.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostSheetForm",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetForm.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "cost-sheet-store",
+        "input",
+        "label",
+        "table",
+        "button"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostSheetMassiveGenerator",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetMassiveGenerator.tsx",
+      "type": "component",
+      "health": 9.2,
+      "status": "Bueno",
+      "dependencies": [
+        "button",
+        "progress",
+        "tabs",
+        "utils",
+        "cost-sheet-store"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "DarianEditor",
+      "path": "src/components/views/terminal/views/cost_sheet/DarianEditor.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "store"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostSheetSidePanel",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetSidePanel.tsx",
+      "type": "component",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "DarianEditor",
+        "CostSheetCalculator",
+        "useMobile"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostSheetBottomNav",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetBottomNav.tsx",
+      "type": "component",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "store"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostSheetAnnexes",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetAnnexes.tsx",
+      "type": "component",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "cost-sheet"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "HealthBattery",
+      "path": "src/components/views/terminal/views/cost_sheet/HealthBattery.tsx",
+      "type": "component",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostSheetExportModal",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetExportModal.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "button",
+        "checkbox",
+        "switch",
+        "label",
+        "scroll-area"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostSheetSectionActionsPanel",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetSectionActionsPanel.tsx",
+      "type": "component",
+      "health": 9.4,
+      "status": "Bueno",
+      "dependencies": [
+        "utils",
+        "button"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostSheetFormulaGuide",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetFormulaGuide.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostSheetHeader",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetHeader.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostSheetBanner",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetBanner.tsx",
+      "type": "component",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "store",
+        "button",
+        "ThemeToggle",
+        "CostSheetModeDropdown"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostSheetHelpPanel",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetHelpPanel.tsx",
+      "type": "component",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "CostSheetFormulaGuide"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostSheetNarrative",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetNarrative.tsx",
+      "type": "component",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostSheetSignatureEditor",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetSignatureEditor.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "cost-sheet-store",
+        "input"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostSheetView",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetView.tsx",
+      "type": "view",
+      "health": 9.2,
+      "status": "Bueno",
+      "dependencies": [
+        "DarianEditor",
+        "LazyRender",
+        "cost-sheet-store",
+        "useCostSheetCalculator",
+        "CostSheetNav"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CircularProgress",
+      "path": "src/components/views/terminal/views/cost_sheet/CircularProgress.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostSheetPreview",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetPreview.tsx",
+      "type": "component",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "CostSheetHeader",
+        "CostSheetBody",
+        "CostSheetAnnexes",
+        "CostSheetSignature",
+        "SecurityScrollContainer"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostSheetSidebarNav",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetSidebarNav.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "store",
+        "button",
+        "cost-sheet-store"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostSheetWizard",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetWizard.tsx",
+      "type": "component",
+      "health": 9.4,
+      "status": "Bueno",
+      "dependencies": [
+        "button",
+        "CostSheetHeaderEditor",
+        "CostSheetAnnexEditor",
+        "CostSheetInteractiveTable",
+        "CostSheetSignatureEditor"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostSheetActionsPanel",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetActionsPanel.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "button",
+        "ViewSwitcher",
+        "CostSheetModeDropdown"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostSheetModeDropdown",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetModeDropdown.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostSheetMasterRing",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetMasterRing.tsx",
+      "type": "component",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "slider"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostSheetFCDropdown",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetFCDropdown.tsx",
+      "type": "component",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostSheetAuditLog",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetAuditLog.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "card",
+        "badge",
+        "scroll-area",
+        "types",
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostSheetCardView",
+      "path": "src/components/views/terminal/views/cost_sheet/CostSheetCardView.tsx",
+      "type": "view",
+      "health": 9.1,
+      "status": "Bueno",
+      "dependencies": [
+        "LazyRender",
+        "excel-service",
+        "utils",
+        "cost-sheet-store",
+        "cost-sheet"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "AuditLogsModal",
+      "path": "src/components/views/terminal/views/reports/AuditLogsModal.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "useAuditLogs",
+        "AuditTimeline",
+        "StateRenderer",
+        "skeleton"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "ReportsView",
+      "path": "src/components/views/terminal/views/reports/ReportsView.tsx",
+      "type": "view",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "card",
+        "button",
+        "ActionMenu",
+        "CostProLoader",
+        "store"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "ReportConfigPanel",
+      "path": "src/components/views/terminal/views/reports/ReportConfigPanel.tsx",
+      "type": "component",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "card",
+        "input",
+        "label",
+        "select",
+        "checkbox"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "ReportPreview",
+      "path": "src/components/views/terminal/views/reports/ReportPreview.tsx",
+      "type": "component",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "card",
+        "types",
+        "reports",
+        "store",
+        "CostProLoader"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "UserFormModal",
+      "path": "src/components/views/terminal/views/users/UserFormModal.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "BaseModal",
+        "UserForm",
+        "user",
+        "types"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "useUsersView",
+      "path": "src/components/views/terminal/views/users/useUsersView.ts",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "store",
+        "useUsers",
+        "useStores",
+        "UserForm",
+        "user"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "UserForm",
+      "path": "src/components/views/terminal/views/users/UserForm.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "user",
+        "types"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "RoleForm",
+      "path": "src/components/views/terminal/views/users/RoleForm.tsx",
+      "type": "component",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "types"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "UsersManagementView",
+      "path": "src/components/views/terminal/views/users/UsersManagementView.tsx",
+      "type": "view",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "SearchBar",
+        "ActionMenu",
+        "button",
+        "switch"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "RolesManagementView",
+      "path": "src/components/views/terminal/views/users/RolesManagementView.tsx",
+      "type": "view",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "SearchBar",
+        "ActionMenu",
+        "useRoles",
+        "BaseModal"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "LegalView",
+      "path": "src/components/views/terminal/views/legal/LegalView.tsx",
+      "type": "view",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "supabaseClient",
+        "LegalConsultant",
+        "LegalModelForm"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "LegalPdfExporter",
+      "path": "src/components/views/terminal/views/legal/LegalPdfExporter.ts",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "LegalConsultant",
+      "path": "src/components/views/terminal/views/legal/LegalConsultant.tsx",
+      "type": "component",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "LegalModelForm",
+      "path": "src/components/views/terminal/views/legal/LegalModelForm.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "store",
+        "supabaseClient",
+        "utils",
+        "LegalPdfExporter",
+        "number-to-words-es"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "InventoryCountTableView",
+      "path": "src/components/views/terminal/views/inventory_count/InventoryCountTableView.tsx",
+      "type": "view",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "types",
+        "utils",
+        "InventoryCountView"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "InventoryCountView",
+      "path": "src/components/views/terminal/views/inventory_count/InventoryCountView.tsx",
+      "type": "view",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "store",
+        "types",
+        "ActionMenu",
+        "SearchBar",
+        "QueryInspector"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "InventoryCountCardView",
+      "path": "src/components/views/terminal/views/inventory_count/InventoryCountCardView.tsx",
+      "type": "view",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "types",
+        "utils",
+        "InventoryCountView"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "SystemHealthView",
+      "path": "src/components/views/terminal/views/health/SystemHealthView.tsx",
+      "type": "view",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "HealthStatusHeader",
+        "InfrastructureMetrics",
+        "ApplicationMetrics",
+        "SecurityMetrics"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "InfrastructureMetrics",
+      "path": "src/components/views/terminal/views/health/InfrastructureMetrics.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "progress"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "HealthStatusHeader",
+      "path": "src/components/views/terminal/views/health/HealthStatusHeader.tsx",
+      "type": "component",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "SecurityMetrics",
+      "path": "src/components/views/terminal/views/health/SecurityMetrics.tsx",
+      "type": "component",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "ReleaseGateStatus",
+      "path": "src/components/views/terminal/views/health/ReleaseGateStatus.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "HealthAgentLogs",
+      "path": "src/components/views/terminal/views/health/HealthAgentLogs.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "supabaseClient",
+        "system-health",
+        "card",
+        "badge",
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "ApplicationMetrics",
+      "path": "src/components/views/terminal/views/health/ApplicationMetrics.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "ConcentricDashboardRing",
+      "path": "src/components/views/terminal/views/dashboard/ConcentricDashboardRing.tsx",
+      "type": "view",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "useDashboardView",
+      "path": "src/components/views/terminal/views/dashboard/useDashboardView.ts",
+      "type": "view",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "store",
+        "useDashboard"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "RecentCostSheets",
+      "path": "src/components/views/terminal/views/dashboard/RecentCostSheets.tsx",
+      "type": "view",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "useCostSheets",
+        "utils",
+        "store",
+        "cost-sheet-store"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "ExecutiveKpiCards",
+      "path": "src/components/views/terminal/views/dashboard/ExecutiveKpiCards.tsx",
+      "type": "view",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "DashboardView",
+      "path": "src/components/views/terminal/views/dashboard/DashboardView.tsx",
+      "type": "view",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "store",
+        "useProducts",
+        "StateRenderer",
+        "types"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CatalogModals",
+      "path": "src/components/views/terminal/views/catalog/CatalogModals.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "BaseModal",
+        "ProductImage",
+        "atomic",
+        "utils",
+        "types"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CatalogView",
+      "path": "src/components/views/terminal/views/catalog/CatalogView.tsx",
+      "type": "view",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "store",
+        "useProducts",
+        "CostProLoader",
+        "ActionMenu",
+        "useMobile"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "SettingsView",
+      "path": "src/components/views/terminal/views/settings/SettingsView.tsx",
+      "type": "view",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "useTaxes",
+        "store",
+        "supabaseClient"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "ReceptionsHistoryView",
+      "path": "src/components/views/terminal/views/receptions/ReceptionsHistoryView.tsx",
+      "type": "view",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "SearchBar",
+        "QueryInspector",
+        "StateRenderer",
+        "skeleton"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "ReceptionDetailsModal",
+      "path": "src/components/views/terminal/views/receptions/ReceptionDetailsModal.tsx",
+      "type": "component",
+      "health": 9.4,
+      "status": "Bueno",
+      "dependencies": [
+        "BaseModal",
+        "types",
+        "skeleton",
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "useReceptionsHistoryView",
+      "path": "src/components/views/terminal/views/receptions/useReceptionsHistoryView.ts",
+      "type": "component",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "store",
+        "useReceptions",
+        "types",
+        "useDocumentActions"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "NewsView",
+      "path": "src/components/views/terminal/views/rss/NewsView.tsx",
+      "type": "view",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "useRSS",
+        "StateRenderer",
+        "types"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "RSSManagementView",
+      "path": "src/components/views/terminal/views/rss/RSSManagementView.tsx",
+      "type": "view",
+      "health": 9.4,
+      "status": "Bueno",
+      "dependencies": [
+        "utils",
+        "useRSS",
+        "StateRenderer"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "AuditEventIcon",
+      "path": "src/components/views/terminal/views/audit/AuditEventIcon.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "AuditEventMeta",
+      "path": "src/components/views/terminal/views/audit/AuditEventMeta.tsx",
+      "type": "component",
+      "health": 9.4,
+      "status": "Bueno",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "AuditTimeline",
+      "path": "src/components/views/terminal/views/audit/AuditTimeline.tsx",
+      "type": "component",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "types",
+        "AuditEventCard",
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "AuditEventCard",
+      "path": "src/components/views/terminal/views/audit/AuditEventCard.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "types",
+        "AuditEventIcon",
+        "AuditEventMeta",
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "AuditTableView",
+      "path": "src/components/views/terminal/views/audit/AuditTableView.tsx",
+      "type": "view",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "schemas",
+        "AuditEventIcon",
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "useAuditLogsView",
+      "path": "src/components/views/terminal/views/audit/useAuditLogsView.ts",
+      "type": "component",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "useAuditLogs",
+        "useDebounce"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "AuditLogsView",
+      "path": "src/components/views/terminal/views/audit/AuditLogsView.tsx",
+      "type": "view",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "AuditFilters",
+        "AuditTimeline",
+        "AuditTableView",
+        "AuditEventIcon",
+        "StateRenderer"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "AuditFilters",
+      "path": "src/components/views/terminal/views/audit/AuditFilters.tsx",
+      "type": "component",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "AuditEventIcon"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CreateTransferModal",
+      "path": "src/components/views/terminal/views/transfers/CreateTransferModal.tsx",
+      "type": "component",
+      "health": 9.4,
+      "status": "Bueno",
+      "dependencies": [
+        "store",
+        "BaseModal",
+        "useInventory",
+        "useTransfers",
+        "useDebounce"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "TransferDetailsModal",
+      "path": "src/components/views/terminal/views/transfers/TransferDetailsModal.tsx",
+      "type": "component",
+      "health": 9.4,
+      "status": "Bueno",
+      "dependencies": [
+        "store",
+        "BaseModal",
+        "useTransfers",
+        "StateRenderer",
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "TransferenciasView",
+      "path": "src/components/views/terminal/views/transfers/TransferenciasView.tsx",
+      "type": "view",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "store",
+        "useTransfers",
+        "ActionMenu",
+        "StateRenderer",
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "ExecutiveDemoView",
+      "path": "src/components/views/executive-demo/ExecutiveDemoView.tsx",
+      "type": "component",
+      "health": 9.4,
+      "status": "Bueno",
+      "dependencies": [
+        "button",
+        "progress",
+        "badge",
+        "card",
+        "demo-products"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "QueryProvider",
+      "path": "src/components/providers/QueryProvider.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "SyncProvider",
+      "path": "src/components/providers/SyncProvider.tsx",
+      "type": "component",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "useSync"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "LoginForm",
+      "path": "src/components/auth/LoginForm.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "store",
+        "supabaseClient",
+        "RegisterForm",
+        "input",
+        "logger"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "RegisterForm",
+      "path": "src/components/auth/RegisterForm.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "supabaseClient",
+        "logger",
+        "input"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "WelcomeLandingView",
+      "path": "src/components/auth/WelcomeLandingView.tsx",
+      "type": "component",
+      "health": 9.4,
+      "status": "Bueno",
+      "dependencies": [
+        "CostProLogo",
+        "ThemeToggle",
+        "AutomationWorkflowDiagram",
+        "SpeedScaleDiagram",
+        "usePWA"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "SpeedScaleDiagram",
+      "path": "src/components/auth/diagrams/SpeedScaleDiagram.tsx",
+      "type": "component",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "AutomationWorkflowDiagram",
+      "path": "src/components/auth/diagrams/AutomationWorkflowDiagram.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "BarcodeScanner",
+      "path": "src/components/modals/BarcodeScanner.tsx",
+      "type": "component",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "BaseModal",
+        "atomic"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "PriceSelectorModal",
+      "path": "src/components/modals/PriceSelectorModal.tsx",
+      "type": "component",
+      "health": 9.4,
+      "status": "Bueno",
+      "dependencies": [
+        "BaseModal",
+        "atomic",
+        "utils",
+        "types"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "UpgradeModal",
+      "path": "src/components/modals/UpgradeModal.tsx",
+      "type": "component",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "BaseModal",
+        "button"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CreateProductModal",
+      "path": "src/components/modals/CreateProductModal.tsx",
+      "type": "component",
+      "health": 9.4,
+      "status": "Bueno",
+      "dependencies": [
+        "BaseModal",
+        "atomic",
+        "store",
+        "useProducts"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "SyncConflictModal",
+      "path": "src/components/modals/SyncConflictModal.tsx",
+      "type": "component",
+      "health": 9.4,
+      "status": "Bueno",
+      "dependencies": [
+        "BaseModal",
+        "atomic",
+        "offline-storage",
+        "SyncProvider"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "navigation-menu",
+      "path": "src/components/ui/navigation-menu.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "hover-card",
+      "path": "src/components/ui/hover-card.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "button",
+      "path": "src/components/ui/button.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "alert-dialog",
+      "path": "src/components/ui/alert-dialog.tsx",
+      "type": "component",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "button"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "textarea",
+      "path": "src/components/ui/textarea.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "aspect-ratio",
+      "path": "src/components/ui/aspect-ratio.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "toggle",
+      "path": "src/components/ui/toggle.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "toast",
+      "path": "src/components/ui/toast.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "MobileSafeContainer",
+      "path": "src/components/ui/MobileSafeContainer.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "chart",
+      "path": "src/components/ui/chart.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "popover",
+      "path": "src/components/ui/popover.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "form",
+      "path": "src/components/ui/form.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "label"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "label",
+      "path": "src/components/ui/label.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "input-otp",
+      "path": "src/components/ui/input-otp.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "dropdown-menu",
+      "path": "src/components/ui/dropdown-menu.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "accordion",
+      "path": "src/components/ui/accordion.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "sheet",
+      "path": "src/components/ui/sheet.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "separator",
+      "path": "src/components/ui/separator.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "resizable",
+      "path": "src/components/ui/resizable.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "toggle-group",
+      "path": "src/components/ui/toggle-group.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "toggle"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "scroll-area",
+      "path": "src/components/ui/scroll-area.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "input",
+      "path": "src/components/ui/input.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "StateRenderer",
+      "path": "src/components/ui/StateRenderer.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "CostProLoader"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "SpeedDial",
+      "path": "src/components/ui/SpeedDial.tsx",
+      "type": "component",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "Portal"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "sidebar",
+      "path": "src/components/ui/sidebar.tsx",
+      "type": "component",
+      "health": 9.2,
+      "status": "Bueno",
+      "dependencies": [
+        "useMobile",
+        "utils",
+        "button",
+        "input",
+        "separator"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "tabs",
+      "path": "src/components/ui/tabs.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "skeleton",
+      "path": "src/components/ui/skeleton.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "badge",
+      "path": "src/components/ui/badge.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "SecurityScrollContainer",
+      "path": "src/components/ui/SecurityScrollContainer.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "radio-group",
+      "path": "src/components/ui/radio-group.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "collapsible",
+      "path": "src/components/ui/collapsible.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "pagination",
+      "path": "src/components/ui/pagination.tsx",
+      "type": "component",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "button"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "ScrollToTop",
+      "path": "src/components/ui/ScrollToTop.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "sonner",
+      "path": "src/components/ui/sonner.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "carousel",
+      "path": "src/components/ui/carousel.tsx",
+      "type": "component",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "button"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CostProLoader",
+      "path": "src/components/ui/CostProLoader.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "LoadingOverlay",
+      "path": "src/components/ui/LoadingOverlay.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "CostProLoader"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "select",
+      "path": "src/components/ui/select.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "checkbox",
+      "path": "src/components/ui/checkbox.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "DataDecryption",
+      "path": "src/components/ui/DataDecryption.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "calendar",
+      "path": "src/components/ui/calendar.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "button"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "PWAInstallModal",
+      "path": "src/components/ui/PWAInstallModal.tsx",
+      "type": "component",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "table",
+      "path": "src/components/ui/table.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "progress",
+      "path": "src/components/ui/progress.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "ProductImage",
+      "path": "src/components/ui/ProductImage.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "slider",
+      "path": "src/components/ui/slider.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "breadcrumb",
+      "path": "src/components/ui/breadcrumb.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "menubar",
+      "path": "src/components/ui/menubar.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "tooltip",
+      "path": "src/components/ui/tooltip.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "HorizontalScroll",
+      "path": "src/components/ui/HorizontalScroll.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "SearchBar",
+      "path": "src/components/ui/SearchBar.tsx",
+      "type": "component",
+      "health": 9.4,
+      "status": "Bueno",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "SyncStatusBadge",
+      "path": "src/components/ui/SyncStatusBadge.tsx",
+      "type": "component",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "SyncProvider",
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "QueryInspector",
+      "path": "src/components/ui/QueryInspector.tsx",
+      "type": "component",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "store",
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "drawer",
+      "path": "src/components/ui/drawer.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "switch",
+      "path": "src/components/ui/switch.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "LazyRender",
+      "path": "src/components/ui/LazyRender.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "context-menu",
+      "path": "src/components/ui/context-menu.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "ActionMenu",
+      "path": "src/components/ui/ActionMenu.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "command",
+      "path": "src/components/ui/command.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "FloatingCalculator",
+      "path": "src/components/ui/FloatingCalculator.tsx",
+      "type": "component",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "store"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "BaseModal",
+      "path": "src/components/ui/BaseModal.tsx",
+      "type": "component",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "alert",
+      "path": "src/components/ui/alert.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "card",
+      "path": "src/components/ui/card.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "dialog",
+      "path": "src/components/ui/dialog.tsx",
+      "type": "component",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "CyberShell",
+      "path": "src/components/ui/CyberShell.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "avatar",
+      "path": "src/components/ui/avatar.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "toaster",
+      "path": "src/components/ui/toaster.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "useToast"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "ChatBot",
+      "path": "src/components/ui/ChatBot.tsx",
+      "type": "component",
+      "health": 9.3,
+      "status": "Bueno",
+      "dependencies": [
+        "store",
+        "utils",
+        "user-service"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "Portal",
+      "path": "src/components/ui/Portal.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "ViewSwitcher",
+      "path": "src/components/ui/ViewSwitcher.tsx",
+      "type": "component",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "index",
+      "path": "src/components/ui/atomic/index.tsx",
+      "type": "component",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "utils",
+        "ProductImage",
+        "HorizontalScroll",
+        "types"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "query-inspector-utils",
+      "path": "src/lib/query-inspector-utils.ts",
+      "type": "utility",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "dexie",
+      "path": "src/lib/dexie.ts",
+      "type": "utility",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "supabaseClient",
+      "path": "src/lib/supabaseClient.ts",
+      "type": "utility",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "rpc-validator",
+      "path": "src/lib/rpc-validator.ts",
+      "type": "utility",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "logger",
+      "path": "src/lib/logger.ts",
+      "type": "utility",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "roles",
+      "path": "src/lib/roles.ts",
+      "type": "utility",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "types"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "errorHandler",
+      "path": "src/lib/errorHandler.ts",
+      "type": "utility",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "logger"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "plan-utils",
+      "path": "src/lib/plan-utils.ts",
+      "type": "utility",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "usage-service",
+        "user"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "db",
+      "path": "src/lib/db.ts",
+      "type": "utility",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "inventory-logic",
+      "path": "src/lib/inventory-logic.ts",
+      "type": "utility",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "auth",
+      "path": "src/lib/auth.ts",
+      "type": "utility",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "supabaseClient"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "utils",
+      "path": "src/lib/utils.ts",
+      "type": "utility",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "supabaseClient",
+        "types"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "navigation",
+      "path": "src/lib/navigation.ts",
+      "type": "utility",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "template-industrial",
+      "path": "src/lib/data/template-industrial.ts",
+      "type": "utility",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "cost-sheet"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "template-pizza",
+      "path": "src/lib/data/template-pizza.ts",
+      "type": "utility",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "cost-sheet"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "template-furniture",
+      "path": "src/lib/data/template-furniture.ts",
+      "type": "utility",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "cost-sheet"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "template-lavar",
+      "path": "src/lib/data/template-lavar.ts",
+      "type": "utility",
+      "health": 9.2,
+      "status": "Bueno",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "template-shoes",
+      "path": "src/lib/data/template-shoes.ts",
+      "type": "utility",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "cost-sheet"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "template-icecream",
+      "path": "src/lib/data/template-icecream.ts",
+      "type": "utility",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "cost-sheet"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "template-repair",
+      "path": "src/lib/data/template-repair.ts",
+      "type": "utility",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "cost-sheet"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "demo-products",
+      "path": "src/lib/data/demo-products.ts",
+      "type": "utility",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "costpro-reinicio",
+      "path": "src/lib/data/costpro-reinicio.ts",
+      "type": "utility",
+      "health": 9.2,
+      "status": "Bueno",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "template-consultancy",
+      "path": "src/lib/data/template-consultancy.ts",
+      "type": "utility",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "cost-sheet"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "costpro-ejemplo",
+      "path": "src/lib/data/costpro-ejemplo.ts",
+      "type": "utility",
+      "health": 9.2,
+      "status": "Bueno",
+      "dependencies": [
+        "cost-sheet"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "template-logistics",
+      "path": "src/lib/data/template-logistics.ts",
+      "type": "utility",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "cost-sheet"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "template-pastry",
+      "path": "src/lib/data/template-pastry.ts",
+      "type": "utility",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "cost-sheet"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "template-juice",
+      "path": "src/lib/data/template-juice.ts",
+      "type": "utility",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "cost-sheet"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "sm2",
+      "path": "src/lib/academy/sm2.ts",
+      "type": "utility",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "ReleaseGatePdfExporter",
+      "path": "src/lib/release_gate/ReleaseGatePdfExporter.ts",
+      "type": "utility",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "mri-engine",
+      "path": "src/lib/release_gate/mri-engine.ts",
+      "type": "utility",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "pdf-export",
+      "path": "src/lib/utils/pdf-export.ts",
+      "type": "utility",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "types"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "number-to-words-es",
+      "path": "src/lib/utils/number-to-words-es.ts",
+      "type": "utility",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "health-engine",
+      "path": "src/lib/observability/health-engine.ts",
+      "type": "utility",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "system-health",
+      "path": "src/lib/observability/system-health.ts",
+      "type": "utility",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "health-alerts",
+      "path": "src/lib/observability/health-alerts.ts",
+      "type": "utility",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "supabaseClient",
+        "health-engine"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "intelligence",
+      "path": "src/lib/ipv/intelligence.ts",
+      "type": "utility",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "dexie"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "bandecParser",
+      "path": "src/lib/ipv/bandecParser.ts",
+      "type": "utility",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "dexie",
+        "engine",
+        "utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "parser",
+      "path": "src/lib/ipv/parser.ts",
+      "type": "utility",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "backup",
+      "path": "src/lib/ipv/backup.ts",
+      "type": "utility",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "calculations",
+      "path": "src/lib/ipv/calculations.ts",
+      "type": "utility",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "dexie",
+        "parser"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "engine",
+      "path": "src/lib/ipv/engine.ts",
+      "type": "utility",
+      "health": 9.2,
+      "status": "Bueno",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "utils",
+      "path": "src/lib/ipv/utils.ts",
+      "type": "utility",
+      "health": 9.7,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "dexie"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "matching.worker",
+      "path": "src/lib/ipv/matching.worker.ts",
+      "type": "utility",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "engine"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "schemas",
+      "path": "src/lib/cost-engine/schemas.ts",
+      "type": "utility",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "validations",
+      "path": "src/lib/cost-engine/validations.ts",
+      "type": "utility",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "cost-sheet"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "index",
+      "path": "src/lib/cost-engine/index.ts",
+      "type": "utility",
+      "health": 9.2,
+      "status": "Bueno",
+      "dependencies": [
+        "formula-utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "formula-utils",
+      "path": "src/lib/cost-engine/formula-utils.ts",
+      "type": "utility",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "types",
+      "path": "src/lib/cost-engine/types.ts",
+      "type": "utility",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "orchestrator",
+      "path": "src/lib/ai/orchestrator.ts",
+      "type": "utility",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "types",
+        "gemini-adapter",
+        "gpt-adapter",
+        "qwen-adapter",
+        "deepseek-adapter"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "types",
+      "path": "src/lib/ai/types.ts",
+      "type": "utility",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "gemini-adapter",
+      "path": "src/lib/ai/adapters/gemini-adapter.ts",
+      "type": "utility",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "types"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "kimi-adapter",
+      "path": "src/lib/ai/adapters/kimi-adapter.ts",
+      "type": "utility",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "openai-compatible-adapter"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "fallback-adapter",
+      "path": "src/lib/ai/adapters/fallback-adapter.ts",
+      "type": "utility",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "types"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "qwen-adapter",
+      "path": "src/lib/ai/adapters/qwen-adapter.ts",
+      "type": "utility",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "types"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "openai-compatible-adapter",
+      "path": "src/lib/ai/adapters/openai-compatible-adapter.ts",
+      "type": "utility",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "types"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "gpt-adapter",
+      "path": "src/lib/ai/adapters/gpt-adapter.ts",
+      "type": "utility",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "openai-compatible-adapter"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "deepseek-adapter",
+      "path": "src/lib/ai/adapters/deepseek-adapter.ts",
+      "type": "utility",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "openai-compatible-adapter"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "registry",
+      "path": "src/lib/ai/tools/registry.ts",
+      "type": "utility",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "viewRegistry",
+        "definitions",
+        "system-health"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "definitions",
+      "path": "src/lib/ai/tools/definitions.ts",
+      "type": "utility",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "types"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "offline-storage",
+      "path": "src/lib/sync/offline-storage.ts",
+      "type": "utility",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "schemas"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "useSync",
+      "path": "src/hooks/useSync.ts",
+      "type": "hook",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "offline-storage",
+        "schemas",
+        "store"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "useCostSheetCalculator",
+      "path": "src/hooks/logic/useCostSheetCalculator.ts",
+      "type": "hook",
+      "health": 9.2,
+      "status": "Bueno",
+      "dependencies": [
+        "cost-engine",
+        "types",
+        "validations"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "useCostEngine",
+      "path": "src/hooks/logic/useCostEngine.ts",
+      "type": "hook",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "types"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "useSessionManager",
+      "path": "src/hooks/logic/useSessionManager.ts",
+      "type": "hook",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "store",
+        "session-store",
+        "supabaseClient",
+        "navigation",
+        "user"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "usePOSProducts",
+      "path": "src/hooks/logic/usePOSProducts.ts",
+      "type": "hook",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "types"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "useInventory",
+      "path": "src/hooks/api/useInventory.ts",
+      "type": "hook",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "supabaseClient",
+        "schemas",
+        "rpc-validator",
+        "base",
+        "SyncProvider"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "useStockMovements",
+      "path": "src/hooks/api/useStockMovements.ts",
+      "type": "hook",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "supabaseClient",
+        "base",
+        "rpc-validator",
+        "schemas"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "useDocumentActions",
+      "path": "src/hooks/api/useDocumentActions.ts",
+      "type": "hook",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "supabaseClient",
+        "store",
+        "base"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "useDashboard",
+      "path": "src/hooks/api/useDashboard.ts",
+      "type": "hook",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "supabaseClient",
+        "schemas",
+        "rpc-validator",
+        "base",
+        "types"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "useStores",
+      "path": "src/hooks/api/useStores.ts",
+      "type": "hook",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "supabaseClient",
+        "logger",
+        "schemas",
+        "rpc-validator",
+        "base"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "useAuditLogs",
+      "path": "src/hooks/api/useAuditLogs.ts",
+      "type": "hook",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "supabaseClient",
+        "rpc-validator",
+        "schemas",
+        "base"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "useTaxes",
+      "path": "src/hooks/api/useTaxes.ts",
+      "type": "hook",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "supabaseClient",
+        "schemas",
+        "rpc-validator",
+        "base",
+        "types"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "useUsers",
+      "path": "src/hooks/api/useUsers.ts",
+      "type": "hook",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "supabaseClient",
+        "logger",
+        "base",
+        "rpc-validator",
+        "schemas"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "useRSS",
+      "path": "src/hooks/api/useRSS.ts",
+      "type": "hook",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "rss-service",
+        "types"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "useProducts",
+      "path": "src/hooks/api/useProducts.ts",
+      "type": "hook",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "supabaseClient",
+        "schemas",
+        "rpc-validator",
+        "utils",
+        "base"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "useCashClosures",
+      "path": "src/hooks/api/useCashClosures.ts",
+      "type": "hook",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "cash-service",
+        "types",
+        "base"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "base",
+      "path": "src/hooks/api/base.ts",
+      "type": "hook",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "supabaseClient",
+        "logger",
+        "store",
+        "query-inspector-utils"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "useReceptions",
+      "path": "src/hooks/api/useReceptions.ts",
+      "type": "hook",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "supabaseClient",
+        "rpc-validator",
+        "schemas",
+        "base"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "useRoles",
+      "path": "src/hooks/api/useRoles.ts",
+      "type": "hook",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "supabaseClient",
+        "logger",
+        "base",
+        "types"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "useTransactions",
+      "path": "src/hooks/api/useTransactions.ts",
+      "type": "hook",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "supabaseClient",
+        "rpc-validator",
+        "base",
+        "SyncProvider"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "useCostSheets",
+      "path": "src/hooks/api/useCostSheets.ts",
+      "type": "hook",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "supabaseClient"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "useTransfers",
+      "path": "src/hooks/api/useTransfers.ts",
+      "type": "hook",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "transfer-service",
+        "SyncProvider",
+        "base"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "usePWA",
+      "path": "src/hooks/ui/usePWA.ts",
+      "type": "hook",
+      "health": 9.6,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "useTerminalNavigation",
+      "path": "src/hooks/ui/useTerminalNavigation.ts",
+      "type": "hook",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "types",
+        "user",
+        "roles"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "useToast",
+      "path": "src/hooks/ui/useToast.ts",
+      "type": "hook",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "useDebounce",
+      "path": "src/hooks/ui/useDebounce.ts",
+      "type": "hook",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "useCatalogModals",
+      "path": "src/hooks/ui/useCatalogModals.ts",
+      "type": "hook",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "useMobile",
+      "path": "src/hooks/ui/useMobile.ts",
+      "type": "hook",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "store-service",
+      "path": "src/services/store-service.ts",
+      "type": "service",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "supabaseClient",
+        "logger",
+        "types"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "rss-service",
+      "path": "src/services/rss-service.ts",
+      "type": "service",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "supabaseClient",
+        "types"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "audit-service",
+      "path": "src/services/audit-service.ts",
+      "type": "service",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "supabaseClient"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "report-service",
+      "path": "src/services/report-service.ts",
+      "type": "service",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "supabaseClient",
+        "types"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "transfer-service",
+      "path": "src/services/transfer-service.ts",
+      "type": "service",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "supabaseClient",
+        "types",
+        "rpc-validator"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "bot-service",
+      "path": "src/services/bot-service.ts",
+      "type": "service",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "orchestrator",
+        "types",
+        "definitions",
+        "registry",
+        "viewRegistry"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "usage-service",
+      "path": "src/services/usage-service.ts",
+      "type": "service",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "supabaseClient"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "excel-service",
+      "path": "src/services/excel-service.ts",
+      "type": "service",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "cost-sheet"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "catalog-service",
+      "path": "src/services/catalog-service.ts",
+      "type": "service",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "types",
+        "supabaseClient",
+        "import-service",
+        "schemas"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "import-service",
+      "path": "src/services/import-service.ts",
+      "type": "service",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "user-service",
+      "path": "src/services/user-service.ts",
+      "type": "service",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "supabaseClient",
+        "logger",
+        "types",
+        "schemas",
+        "rpc-validator"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "cash-service",
+      "path": "src/services/cash-service.ts",
+      "type": "service",
+      "health": 10.0,
+      "status": "\u00d3ptimo",
+      "dependencies": [
+        "supabaseClient",
+        "types",
+        "schemas"
+      ],
+      "lastAudit": "2026-03-06"
+    },
+    {
+      "name": "export-service",
+      "path": "src/services/export-service.ts",
+      "type": "service",
+      "health": 9.8,
+      "status": "\u00d3ptimo",
+      "dependencies": [],
+      "lastAudit": "2026-03-06"
+    }
+  ],
+  "stats": {
+    "totalViews": 42,
+    "totalComponents": 204,
+    "totalServices": 13,
+    "totalHooks": 28,
+    "totalUtilities": 60
+  }
+}
