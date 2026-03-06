@@ -2,7 +2,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { getViewDetails } from '@/config/viewRegistry';
 import { TOOLS } from "./definitions";
 import { z } from 'zod';
-import { logSystemHealth } from '../observability/system-health';
+import { logSystemHealth } from '../../observability/system-health';
 
 export interface ToolHandlerContext {
   supabase: SupabaseClient;
