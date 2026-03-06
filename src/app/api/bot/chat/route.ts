@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { messages, storeId, aiProvider, aiApiKey } = body;
+    const { messages, storeId, aiProvider, aiApiKey, botContext } = body;
 
     if (!messages || !Array.isArray(messages) || !storeId) {
       return NextResponse.json({ error: 'Faltan parámetros requeridos (messages, storeId)' }, { status: 400 });
@@ -21,7 +21,6 @@ export async function POST(req: NextRequest) {
     const authSupabase = getSupabaseAuthClient(session.token);
 
     try {
-      // Fetch provider with user key if available
       const provider = await getLLMProviderWithUserKey(session.user.id, aiProvider, aiApiKey);
 
       const response = await botService.handleChat(
@@ -29,7 +28,9 @@ export async function POST(req: NextRequest) {
         session.user.id,
         storeId,
         messages,
-        provider
+        provider,
+        aiApiKey,
+        botContext
       );
       return NextResponse.json(response);
     } catch (botError: any) {
