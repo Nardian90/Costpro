@@ -14,7 +14,7 @@ export interface ToolHandlerContext {
 const schemas = {
   open_view: z.object({
     viewId: z.string().min(1),
-    params: z.record(z.any()).optional()
+    params: z.record(z.string(), z.any()).optional()
   }),
   explain_view: z.object({
     viewId: z.string().optional()
@@ -22,15 +22,15 @@ const schemas = {
   search_entity: z.object({
     entity: z.enum(["product", "costSheet", "transaction", "supply"]),
     query: z.string().min(1),
-    filters: z.record(z.any()).optional()
+    filters: z.record(z.string(), z.any()).optional()
   }),
   fill_form: z.object({
     formName: z.string().min(1),
-    data: z.record(z.any())
+    data: z.record(z.string(), z.any())
   }),
   submit_form: z.object({
     formName: z.string().min(1),
-    data: z.record(z.any())
+    data: z.record(z.string(), z.any())
   }),
   set_ui_mode: z.object({
     mode: z.enum(["standard", "expert"])
