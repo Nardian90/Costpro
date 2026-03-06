@@ -4,12 +4,14 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Share2, Search, Filter, Info, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
 interface Node {
   id: string;
   name: string;
   type: string;
   health: number;
+  path: string;
 }
 
 interface Edge {
@@ -28,7 +30,13 @@ export function DetailedRelationshipGraph() {
       .then(res => res.json())
       .then(json => {
         setData({
-          nodes: json.nodes.map((n: any) => ({ id: n.id, name: n.name, type: n.type, health: n.health })),
+          nodes: json.nodes.map((n: any) => ({
+            id: n.id,
+            name: n.name,
+            type: n.type,
+            health: n.health,
+            path: n.path || ''
+          })),
           edges: json.edges
         });
         setLoading(false);
