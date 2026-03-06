@@ -4,7 +4,6 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { ShieldCheck, History, User, Terminal, Calendar } from 'lucide-react';
 import { useAuditLogs } from '@/hooks/api/useAuditLogs';
-import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -63,8 +62,8 @@ export function AuditSummary() {
                   </div>
                 </div>
 
-                <div className="text-xs font-bold text-foreground/80 truncate mb-1">
-                  {log.description}
+                <div className="text-xs font-bold text-foreground/80 truncate mb-1 uppercase tracking-tight">
+                  {log.action} en {log.table_name.replace(/_/g, ' ')}
                 </div>
 
                 <div className="flex items-center gap-3">
@@ -77,7 +76,7 @@ export function AuditSummary() {
                   <div className="flex items-center gap-1 opacity-40">
                     <History className="w-3 h-3" />
                     <span className="text-[9px] font-bold uppercase tracking-tighter">
-                      {log.entity_name}
+                      {log.store_name || 'Global'}
                     </span>
                   </div>
                 </div>

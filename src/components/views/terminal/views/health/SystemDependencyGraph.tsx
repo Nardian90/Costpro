@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, Variants } from 'framer-motion';
 import { Database, Cpu, Cloud, Smartphone, ShieldCheck, Share2 } from 'lucide-react';
 
 export function SystemDependencyGraph() {
@@ -20,9 +20,13 @@ export function SystemDependencyGraph() {
     show: { opacity: 1, scale: 1, y: 0 }
   };
 
-  const lineVariants = {
+  const lineVariants: Variants = {
     hidden: { pathLength: 0, opacity: 0 },
-    show: { pathLength: 1, opacity: 1, transition: { duration: 1.5, ease: "easeInOut" } }
+    show: {
+      pathLength: 1,
+      opacity: 1,
+      transition: { duration: 1.5, ease: "easeInOut" }
+    }
   };
 
   return (
