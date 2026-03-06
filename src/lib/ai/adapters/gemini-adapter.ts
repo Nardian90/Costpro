@@ -38,7 +38,7 @@ export class GeminiAdapter implements LLMProvider {
 
       const model = genAI.getGenerativeModel(modelConfig, { apiVersion: 'v1beta' });
 
-      const contents: any[] = [];
+      let contents: any[] = [];
 
       chatMessages.forEach((msg) => {
         if (msg.role === 'tool') {
@@ -85,6 +85,8 @@ export class GeminiAdapter implements LLMProvider {
 
       if (contents.length === 0) {
         contents.push({ role: 'user', parts: [{ text: 'Hola' }] });
+      } else if (contents[0].role === 'model') {
+        contents = [{ role: 'user', parts: [{ text: '[Contexto]' }] }, ...contents];
       }
 
       const result = await model.generateContent({
