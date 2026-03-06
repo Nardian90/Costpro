@@ -101,6 +101,60 @@ export const VIEW_REGISTRY: ViewRegistryItem[] = [
     route: "/terminal?view=reports",
     description: "Generación de reportes avanzados y analítica de datos.",
     actions: ["generate_custom_report"]
+  },
+  {
+    id: "academy",
+    route: "/terminal?view=academy",
+    description: "Academia de capacitación y aprendizaje para el personal.",
+    actions: ["start_lesson", "view_progress"]
+  },
+  {
+    id: "audit",
+    route: "/terminal?view=audit",
+    description: "Logs de auditoría y rastreo de acciones de usuarios en el sistema.",
+    actions: ["view_audit_logs", "export_audit"]
+  },
+  {
+    id: "cash",
+    route: "/terminal?view=cash",
+    description: "Gestión de caja, cierres y arqueos de efectivo.",
+    actions: ["close_cash", "view_closures"]
+  },
+  {
+    id: "history",
+    route: "/terminal?view=history",
+    description: "Historial de movimientos de inventario y trazabilidad de productos.",
+    actions: ["view_stock_history"]
+  },
+  {
+    id: "inventory_adjustments",
+    route: "/terminal?view=inventory_adjustments",
+    description: "Ajustes manuales de inventario por merma, rotura o corrección.",
+    actions: ["create_adjustment"]
+  },
+  {
+    id: "inventory_count",
+    route: "/terminal?view=inventory_count",
+    description: "Realización de conteos físicos y auditoría de stock.",
+    actions: ["start_count", "reconcile_count"]
+  },
+  {
+    id: "news",
+    route: "/terminal?view=news",
+    description: "Noticias y comunicados internos de la empresa.",
+    actions: ["read_news"]
+  },
+  {
+    id: "roles",
+    route: "/terminal?view=roles",
+    description: "Gestión de roles y permisos del sistema.",
+    actions: ["manage_permissions"]
+  },
+  {
+    id: "rss_management",
+    route: "/terminal?view=rss_management",
+    description: "Configuración de fuentes de noticias RSS externas.",
+    actions: ["add_source"]
   }
 ];
 
