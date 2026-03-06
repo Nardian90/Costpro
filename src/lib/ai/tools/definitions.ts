@@ -3,6 +3,7 @@ import { ToolDefinition } from '../types';
 export const TOOLS: ToolDefinition[] = [
   {
     name: "open_view",
+    allowedRoles: ['admin', 'manager', 'vendedor', 'costo'],
     description: "Navega a una vista específica del sistema.",
     parameters: {
       type: "object",
@@ -15,6 +16,7 @@ export const TOOLS: ToolDefinition[] = [
   },
   {
     name: "explain_view",
+    allowedRoles: ['admin', 'manager', 'vendedor', 'costo'],
     description: "Explica el propósito y las acciones disponibles en la vista actual o una específica.",
     parameters: {
       type: "object",
@@ -25,6 +27,7 @@ export const TOOLS: ToolDefinition[] = [
   },
   {
     name: "fill_form",
+    allowedRoles: ['admin', 'manager', 'vendedor', 'costo'],
     description: "Completa los campos de un formulario sin enviarlo. Útil para que el usuario revise antes de guardar.",
     parameters: {
       type: "object",
@@ -37,6 +40,7 @@ export const TOOLS: ToolDefinition[] = [
   },
   {
     name: "submit_form",
+    allowedRoles: ['admin', 'manager'],
     description: "Completa y envía un formulario directamente.",
     parameters: {
       type: "object",
@@ -49,6 +53,7 @@ export const TOOLS: ToolDefinition[] = [
   },
   {
     name: "search_entity",
+    allowedRoles: ['admin', 'manager', 'vendedor', 'costo'],
     description: "Busca registros en el sistema (productos, fichas de costo, transacciones).",
     parameters: {
       type: "object",
@@ -62,6 +67,7 @@ export const TOOLS: ToolDefinition[] = [
   },
   {
     name: "execute_action",
+    allowedRoles: ['admin', 'manager'],
     description: "Ejecuta una acción específica del sistema.",
     parameters: {
       type: "object",
@@ -74,6 +80,7 @@ export const TOOLS: ToolDefinition[] = [
   },
   {
     name: "export_document",
+    allowedRoles: ['admin', 'manager'],
     description: "Genera y descarga un documento (PDF, Excel).",
     parameters: {
       type: "object",
@@ -87,6 +94,7 @@ export const TOOLS: ToolDefinition[] = [
   },
   {
     name: "set_ui_mode",
+    allowedRoles: ['admin', 'manager', 'costo'],
     description: "Cambia el modo de la interfaz de usuario.",
     parameters: {
       type: "object",

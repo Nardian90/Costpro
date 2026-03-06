@@ -20,6 +20,7 @@ export interface ToolCall {
 export interface ToolDefinition {
   name: string;
   description: string;
+  allowedRoles?: string[];
   parameters: {
     type: 'object';
     properties: Record<string, any>;

@@ -26,6 +26,7 @@ export async function POST(req: NextRequest) {
       const response = await botService.handleChat(
         authSupabase,
         session.user.id,
+        session.user.role || "vendedor",
         storeId,
         messages,
         provider,

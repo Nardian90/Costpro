@@ -9,7 +9,7 @@ import { createClient } from '@supabase/supabase-js';
 
 export type ProviderType = 'gemini' | 'gpt' | 'qwen' | 'deepseek' | 'kimi';
 
-const DEEPSEEK_DEFAULT_KEY = 'sk-f06c43aaa1574f71987cf396605aa1aa';
+const DEEPSEEK_DEFAULT_KEY = '';
 
 // Create a minimal client to fetch keys if needed
 // This should only be used on the server side
@@ -99,7 +99,7 @@ export function getLLMProvider(type?: string, apiKey?: string): LLMProvider {
     case 'gemini':
     default:
       return new GeminiAdapter(
-        apiKey || process.env.GEMINI_API_KEY || 'AIzaSyBV8-Gev1bjoemUuGtjmpGbeSFMvdmTOR4',
+        apiKey || process.env.GEMINI_API_KEY || '',
         process.env.GEMINI_MODEL || 'gemini-2.0-flash'
       );
   }

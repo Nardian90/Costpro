@@ -32,12 +32,18 @@ export const botService = {
   async handleChat(
     supabase: SupabaseClient,
     userId: string,
+    userRole: string,
     storeId: string,
     messages: Message[],
     aiProviderOrInstance?: string | LLMProvider,
     aiApiKey?: string,
     botContext?: BotContext
   ) {
+    const totalLength = messages.reduce((acc, m) => acc + (m.content?.length || 0), 0);
+    if (totalLength > 10000) {
+      throw new Error("El mensaje es demasiado largo para ser procesado.");
+    }
+
     if (!messages || messages.length === 0) {
       return { text: 'Hola! ¿En qué puedo ayudarte hoy?', metadata: { model: 'default' } };
     }
@@ -91,11 +97,26 @@ export const botService = {
     let iterations = 0;
     const MAX_ITERATIONS = 5;
     const actions: any[] = [];
+    const correlationId = crypto.randomUUID();
+    const toolLogs: any[] = [];
 
     while (iterations < MAX_ITERATIONS) {
-      const response = await provider.getResponse(currentMessages, { tools: TOOLS });
+const MAX_RETRIES = 3;
+    let retryCount = 0;
+    let response: any;
+    while (retryCount < MAX_RETRIES) {
+      try {
+        response = await provider.getResponse(currentMessages, { tools: TOOLS });
+        break;
+      } catch (err: any) {
+        retryCount++;
+        if (retryCount >= MAX_RETRIES) throw err;
+        console.warn(`[BotService] LLM Error (attempt ${retryCount}):`, err.message);
+        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount)); // Exponential backoff
+      }
+    }
 
-      if (!response.tool_calls || response.tool_calls.length === 0) {
+      if (!response || !response.tool_calls || response.tool_calls.length === 0) {
         finalResponse = {
           ...response,
           metadata: {
@@ -113,11 +134,29 @@ export const botService = {
       });
 
       for (const toolCall of response.tool_calls) {
+        const startTime = Date.now();
+        let status = 'success';
+        let errorMessage = null;
+
         const result = await executeTool(
           toolCall.function.name,
           JSON.parse(toolCall.function.arguments),
-          { supabase, userId, storeId }
+          { supabase, userId, userRole, storeId }
         );
+
+        if (result.error) {
+          status = 'error';
+          errorMessage = result.error;
+        }
+
+        toolLogs.push({
+          tool_name: toolCall.function.name,
+          parameters: toolCall.function.arguments,
+          duration_ms: Date.now() - startTime,
+          status,
+          error_message: errorMessage,
+          timestamp: new Date().toISOString()
+        });
 
         if (result.action) {
           actions.push(result.action);
@@ -144,7 +183,9 @@ export const botService = {
           iterations,
           last_query: messages[messages.length - 1].content.substring(0, 100),
           provider: finalResponse?.metadata?.model,
-          actions_count: actions.length
+          actions_count: actions.length,
+          correlation_id: correlationId,
+          tool_executions: toolLogs
         }
       });
     } catch (e) {
