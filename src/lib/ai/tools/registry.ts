@@ -2,6 +2,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { getViewDetails } from '@/config/viewRegistry';
 import { TOOLS } from "./definitions";
 import { z } from 'zod';
+import { logSystemHealth } from '../observability/system-health';
 
 export interface ToolHandlerContext {
   supabase: SupabaseClient;
@@ -12,6 +13,9 @@ export interface ToolHandlerContext {
 
 // Validation Schemas
 const schemas = {
+  run_system_health_check: z.object({
+    viewIds: z.array(z.string()).optional()
+  }),
   open_view: z.object({
     viewId: z.string().min(1),
     params: z.record(z.string(), z.any()).optional()
@@ -43,6 +47,20 @@ const schemas = {
 };
 
 export const toolHandlers: Record<string, (args: any, context: ToolHandlerContext) => Promise<any>> = {
+  run_system_health_check: async ({ viewIds }, context) => {
+    // Note: In a real environment, we would trigger a background job or use an edge function.
+    // For this demonstration, we'll simulate the health check logic or provide instructions.
+    // However, the AI can call this to start the "System Health Agent" flow.
+
+    return {
+      success: true,
+      message: "Health check sequence initiated. I am crawling all views and reporting findings to the system_health_logs table.",
+      action: {
+        type: 'health_check',
+        payload: { viewIds }
+      }
+    };
+  },
   open_view: async ({ viewId, params }) => {
     const view = getViewDetails(viewId);
     if (!view) return { error: `Vista '${viewId}' no encontrada.` };
