@@ -215,6 +215,8 @@ export default function SettingsView() {
                       <option value="gemini">Google Gemini</option>
                       <option value="gpt">OpenAI GPT</option>
                       <option value="qwen">Alibaba Qwen</option>
+                      <option value="deepseek">DeepSeek AI</option>
+                      <option value="kimi">Moonshot Kimi</option>
                     </select>
                   </div>
                   <div className="space-y-2">
