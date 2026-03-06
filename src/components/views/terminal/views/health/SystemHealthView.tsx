@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import {
+import { HealthAgentLogs } from './HealthAgentLogs';
   Accordion,
   AccordionContent,
   AccordionItem,
@@ -116,7 +117,12 @@ export default function SystemHealthView() {
       </div>
 
       {/* Footer Info & Alerts */}
-      <footer className="flex flex-col md:flex-row gap-6">
+            <section className="bg-card/30 p-8 rounded-[40px] border border-border/50 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32" />
+        <HealthAgentLogs />
+      </section>
+
+<footer className="flex flex-col md:flex-row gap-6">
         <div className="flex-1 bg-card/30 p-6 rounded-[32px] border border-border/50 min-h-[160px] relative overflow-hidden">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
