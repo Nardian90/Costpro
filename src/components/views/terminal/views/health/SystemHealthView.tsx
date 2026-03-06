@@ -24,8 +24,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import {
 import { HealthAgentLogs } from './HealthAgentLogs';
+import {
   Accordion,
   AccordionContent,
   AccordionItem,
