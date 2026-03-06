@@ -103,5 +103,16 @@ export const TOOLS: ToolDefinition[] = [
       },
       required: ["mode"]
     }
+  },
+  {
+    name: "run_system_health_check",
+    allowedRoles: ['admin', 'manager'],
+    description: "Inicia un recorrido automático de todas las vistas del sistema para detectar errores de UI y funcionalidad. Genera capturas de pantalla y registros de salud en Supabase.",
+    parameters: {
+      type: "object",
+      properties: {
+        viewIds: { type: "array", items: { type: "string" }, description: "Lista opcional de IDs de vistas a revisar. Si se omite, se revisan todas." }
+      }
+    }
   }
 ];
