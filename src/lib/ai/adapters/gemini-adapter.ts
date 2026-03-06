@@ -1,4 +1,4 @@
-import { LLMProvider, Message, LLMResponse } from '../types';
+import { LLMProvider, Message, LLMResponse, ToolCall } from '../types';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export class GeminiAdapter implements LLMProvider {
@@ -18,42 +18,69 @@ export class GeminiAdapter implements LLMProvider {
     try {
       const genAI = new GoogleGenerativeAI(this.apiKey);
 
-      // Separate system message and chat history
       const systemMessage = messages.find(m => m.role === 'system');
       const chatMessages = messages.filter(m => m.role !== 'system');
 
-      // Initialize model with system instruction if present
       const modelConfig: any = { model: this.modelName };
       if (systemMessage) {
         modelConfig.systemInstruction = systemMessage.content;
       }
 
-      // v1beta is required for system instructions in some model versions
-      // gemini-2.0-flash works well with v1beta
+      if (options?.tools && options.tools.length > 0) {
+        modelConfig.tools = [{
+          functionDeclarations: options.tools.map((t: any) => ({
+            name: t.name,
+            description: t.description,
+            parameters: t.parameters
+          }))
+        }];
+      }
+
       const model = genAI.getGenerativeModel(modelConfig, { apiVersion: 'v1beta' });
 
-      // Format messages for the SDK
       const contents: any[] = [];
 
       chatMessages.forEach((msg) => {
-        const role = msg.role === 'assistant' ? 'model' : 'user';
-
-        if (contents.length === 0) {
-          if (role !== 'user') {
-            contents.push({ role: 'user', parts: [{ text: '[Contexto]' }] });
-            contents.push({ role: 'model', parts: [{ text: msg.content }] });
-          } else {
-            contents.push({ role: 'user', parts: [{ text: msg.content }] });
-          }
+        if (msg.role === 'tool') {
+          contents.push({
+            role: 'function',
+            parts: [{
+              functionResponse: {
+                name: msg.name,
+                response: { content: msg.content }
+              }
+            }]
+          });
           return;
         }
 
-        const last = contents[contents.length - 1];
-        if (last.role === role) {
-          last.parts.push({ text: msg.content });
-        } else {
-          contents.push({ role, parts: [{ text: msg.content }] });
+        const role = msg.role === 'assistant' ? 'model' : 'user';
+        const parts: any[] = [];
+
+        if (msg.tool_calls) {
+          msg.tool_calls.forEach(tc => {
+            parts.push({
+              functionCall: {
+                name: tc.function.name,
+                args: JSON.parse(tc.function.arguments)
+              }
+            });
+          });
         }
+
+        if (msg.content) {
+          parts.push({ text: msg.content });
+        }
+
+        if (contents.length > 0) {
+          const last = contents[contents.length - 1];
+          if (last.role === role) {
+            last.parts.push(...parts);
+            return;
+          }
+        }
+
+        contents.push({ role, parts });
       });
 
       if (contents.length === 0) {
@@ -63,7 +90,7 @@ export class GeminiAdapter implements LLMProvider {
       const result = await model.generateContent({
         contents,
         generationConfig: {
-          temperature: options?.temperature ?? 0.1, // Defaulting to low temperature for precision
+          temperature: options?.temperature ?? 0.1,
           topK: options?.topK ?? 40,
           topP: options?.topP ?? 0.95,
           maxOutputTokens: options?.maxTokens ?? 2048,
@@ -71,18 +98,32 @@ export class GeminiAdapter implements LLMProvider {
       });
 
       const response = await result.response;
+      if (!response) throw new Error("Respuesta vacía del servidor de Google.");
 
-      if (!response) {
-        throw new Error("Respuesta vacía del servidor de Google.");
-      }
+      const parts = response.candidates?.[0]?.content?.parts || [];
+      let text = '';
+      const tool_calls: ToolCall[] = [];
 
-      const text = response.text();
+      parts.forEach((part: any) => {
+        if (part.text) {
+          text += part.text;
+        }
+        if (part.functionCall) {
+          tool_calls.push({
+            id: `call_${Math.random().toString(36).substring(7)}`,
+            type: 'function',
+            function: {
+              name: part.functionCall.name,
+              arguments: JSON.stringify(part.functionCall.args)
+            }
+          });
+        }
+      });
 
       return {
         text,
-        metadata: {
-          model: this.modelName,
-        }
+        tool_calls: tool_calls.length > 0 ? tool_calls : undefined,
+        metadata: { model: this.modelName }
       };
     } catch (error: any) {
       console.error('GeminiAdapter Error:', error.message);

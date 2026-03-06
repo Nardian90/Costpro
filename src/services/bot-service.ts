@@ -2,11 +2,13 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import * as fs from 'fs';
 import * as path from 'path';
 import { getLLMProvider } from '@/lib/ai/orchestrator';
-import { Message, LLMProvider } from '@/lib/ai/types';
-import { dashboardKpiResponseSchema } from '@/validation/schemas';
-import { SalesKPIs } from '@/types';
+import { Message, LLMProvider, BotContext } from '@/lib/ai/types';
+import { TOOLS } from '@/lib/ai/tools/definitions';
+import { executeTool } from '@/lib/ai/tools/registry';
+import { VIEW_REGISTRY } from '@/config/viewRegistry';
+import { AI_FORM_SCHEMAS } from '@/validation/forms/ai-form-schemas';
 
-async function getKnowledgeBaseContext(query: string): Promise<string> {
+async function getKnowledgeBaseContext(): Promise<string> {
   const dirPath = path.join(process.cwd(), 'docs/knowledge/resolutions');
   if (!fs.existsSync(dirPath)) return '';
 
@@ -16,7 +18,6 @@ async function getKnowledgeBaseContext(query: string): Promise<string> {
     for (const file of files) {
       if (file.endsWith('.md') || file.endsWith('.json') || file.endsWith('.txt')) {
         const content = fs.readFileSync(path.join(dirPath, file), 'utf-8');
-        // Simple heuristic: if query mentions words in the file or if it's a general query
         knowledge += `\n--- DOCUMENTO: ${file} ---\n${content}\n`;
       }
     }
@@ -34,124 +35,122 @@ export const botService = {
     storeId: string,
     messages: Message[],
     aiProviderOrInstance?: string | LLMProvider,
-    aiApiKey?: string
+    aiApiKey?: string,
+    botContext?: BotContext
   ) {
     if (!messages || messages.length === 0) {
-        return { text: 'Hola! ¿En qué puedo ayudarte hoy?', metadata: { model: 'default' } };
+      return { text: 'Hola! ¿En qué puedo ayudarte hoy?', metadata: { model: 'default' } };
     }
 
-    // 1. Fetch context data based on the last message if needed
-    const lastMessage = messages[messages.length - 1].content.toLowerCase();
-    let context = '';
-    let knowledgeBase = '';
+    const knowledgeBase = await getKnowledgeBaseContext();
+    const viewsContext = VIEW_REGISTRY.map(v => `- ${v.id}: ${v.description}`).join('\n');
+    const formsContext = JSON.stringify(AI_FORM_SCHEMAS, null, 2);
 
-    try {
-        // Fetch Knowledge Base (Resolutions/Library)
-        knowledgeBase = await getKnowledgeBaseContext(lastMessage);
-
-        if (lastMessage.includes('stock') || lastMessage.includes('inventario') || lastMessage.includes('agotado') || lastMessage.includes('crítico')) {
-        const { data: stockData } = await supabase
-            .from('products')
-            .select('name, stock_current, min_stock')
-            .eq('store_id', storeId)
-            .is('is_active', true)
-            .filter('stock_current', 'lt', 'min_stock');
-
-        if (stockData && stockData.length > 0) {
-            context = `Productos con stock crítico: ${stockData.map(p => `${p.name} (Stock: ${p.stock_current}, Mínimo: ${p.min_stock})`).join(', ')}`;
-        } else {
-            context = `No hay productos bajo el stock mínimo actualmente.`;
-        }
-        } else if (
-          lastMessage.includes('ventas') ||
-          lastMessage.includes('hoy') ||
-          lastMessage.includes('resumen') ||
-          lastMessage.includes('ganancia') ||
-          lastMessage.includes('utilidad') ||
-          lastMessage.includes('costo') ||
-          lastMessage.includes('margen')
-        ) {
-            // Unify with Dashboard Source of Truth (get_dashboard_kpis RPC)
-            const { data: rawKpis, error: rpcError } = await supabase.rpc('get_dashboard_kpis', {
-              p_store_id: storeId
-            });
-
-            if (rpcError) throw rpcError;
-
-            // Strict Validation & Typing (Data Contract)
-            const validatedKpis = (rawKpis as any[] || []).map(k => dashboardKpiResponseSchema.parse(k)) as SalesKPIs[];
-
-            if (validatedKpis.length > 0) {
-                const d = validatedKpis[0];
-                const profit = Number(d.total_profit);
-                const sales = Number(d.total_sales);
-
-                context = `DATOS REALES DEL DASHBOARD (Hoy):
-                - Ventas Brutas: ${sales}
-                - Costo de Mercadería (CMV): ${d.total_cost ?? 'Sin calcular'}
-                - Ganancia (Utilidad Bruta): ${d.total_profit ?? 'Sin calcular'}
-                - Margen Estimado: ${sales > 0 && d.total_profit ? ((profit / sales) * 100).toFixed(1) + '%' : 'N/A'}
-                - Transacciones: ${d.transaction_count}
-                - Ticket Promedio: ${d.avg_ticket}
-                - Métodos: Efectivo (${d.total_cash}), Transferencia/Otros (${d.total_card})`;
-            } else {
-                context = `No hay datos de ventas registrados para hoy en el dashboard.`;
-            }
-        }
-    } catch (err) {
-        console.error('Error fetching context for bot:', err);
-        context = 'Nota: Hubo un problema al consultar la base de datos en tiempo real.';
-    }
-
-    // 2. Prepare prompt for AI (Identity: DARIAN)
     const systemPrompt: Message = {
       role: 'system',
-      content: `Eres Darian, la IA oficial del sistema. Tu personalidad es profesional, técnica, asistencial y directa.
+      content: `Eres Darian, el AI Application Controller oficial del sistema. Tu propósito es ser la interfaz inteligente que controla toda la aplicación mediante lenguaje natural.
+
+      CAPACIDADES:
+      1. NAVEGACIÓN: Puedes abrir cualquier vista usando 'open_view'.
+      2. ACCIONES: Puedes ejecutar acciones como crear fichas, exportar PDFs, etc.
+      3. FORMULARIOS: Puedes completar formularios para el usuario.
+      4. EXPLICACIÓN: Puedes explicar el funcionamiento de cada módulo.
 
       REGLAS DE ORO:
-      1. Tu conocimiento se limita ESTRICTAMENTE a la base de datos del sistema y a los documentos en la carpeta de /resoluciones (proporcionados en el contexto).
-      2. SEGURIDAD: Nunca reveles información de una tienda (Shop_ID) a un usuario que no pertenezca a ella. Actualmente estás operando en la Tienda con ID: ${storeId}. Si detectas que se solicita información de otra tienda, indica que no tienes registros asociados.
-      3. ESTILO: Respuestas claras, sin rodeos. Si no encuentras la información en el sistema o en la biblioteca, di: "No dispongo de registros o resoluciones en mi biblioteca para responder a esa consulta".
-      4. Eres experta en las resoluciones almacenadas; cítalas cuando sea necesario.
-      5. Tu objetivo es dar respuestas precisas y técnicas.
+      1. Tu personalidad es profesional, técnica y ejecutiva.
+      2. No solo respondas preguntas, ACTÚA. Si el usuario dice "Llévame a ventas", usa el tool 'open_view'.
+      3. SEGURIDAD: Solo opera dentro de la Tienda ID: ${storeId}.
+      4. CONTEXTO: Utiliza la información del contexto actual para tus decisiones.
 
-      BIBLIOTECA DE RESOLUCIONES Y MANUALES:
-      ${knowledgeBase || 'No hay documentos cargados en la biblioteca actualmente.'}
+      VISTAS DISPONIBLES:
+      ${viewsContext}
 
-      DATOS DE LA TIENDA EN TIEMPO REAL (ID: ${storeId}):
-      Contexto actual: ${context || 'Sin datos de base de datos para esta consulta.'}
+      FORMULARIOS SOPORTADOS Y SUS ESQUEMAS:
+      ${formsContext}
 
-      GUÍA TÉCNICA (Fichas de Costo):
-      - Soporte de fórmulas: SUMA, PROMEDIO, MAX, MIN, PCT(val, %), ROUND2.
-      - Referencias: ref('ID'), AnexoI...AnexoV, VH (Valor Histórico), BASE_TOTAL.`
+      CONTEXTO ACTUAL DEL SISTEMA:
+      - Usuario: ${userId}
+      - Tienda: ${storeId}
+      - Vista Actual: ${botContext?.currentView || 'Desconocida'}
+      - Registro Activo: ${botContext?.activeRecordId || 'Ninguno'}
+      - Modo UI: ${botContext?.uiMode || 'standard'}
+
+      BIBLIOTECA DE RESOLUCIONES:
+      ${knowledgeBase || 'Sin documentos cargados.'}`
     };
 
-    // 3. Call AI
     let provider: LLMProvider;
     if (typeof aiProviderOrInstance === 'object' && aiProviderOrInstance !== null && 'getResponse' in aiProviderOrInstance) {
-        provider = aiProviderOrInstance as LLMProvider;
+      provider = aiProviderOrInstance as LLMProvider;
     } else {
-        provider = getLLMProvider(aiProviderOrInstance as string, aiApiKey);
+      provider = getLLMProvider(aiProviderOrInstance as string, aiApiKey);
     }
 
-    const response = await provider.getResponse([systemPrompt, ...messages]);
+    let currentMessages = [systemPrompt, ...messages];
+    let finalResponse;
+    let iterations = 0;
+    const MAX_ITERATIONS = 5;
+    const actions: any[] = [];
 
-    // 4. Audit interaction
-    try {
-        await supabase.from('audit_logs').insert({
-            user_id: userId,
-            action: 'BOT_QUERY',
-            table_name: 'bot_interactions',
-            store_id: storeId,
-            metadata: {
-                query_preview: messages[messages.length - 1].content.substring(0, 100),
-                provider: response.metadata?.model
-            }
+    while (iterations < MAX_ITERATIONS) {
+      const response = await provider.getResponse(currentMessages, { tools: TOOLS });
+
+      if (!response.tool_calls || response.tool_calls.length === 0) {
+        finalResponse = {
+          ...response,
+          metadata: {
+            ...response.metadata,
+            actions: actions.length > 0 ? actions : undefined
+          }
+        };
+        break;
+      }
+
+      currentMessages.push({
+        role: 'assistant',
+        content: response.text || '',
+        tool_calls: response.tool_calls
+      });
+
+      for (const toolCall of response.tool_calls) {
+        const result = await executeTool(
+          toolCall.function.name,
+          JSON.parse(toolCall.function.arguments),
+          { supabase, userId, storeId }
+        );
+
+        if (result.action) {
+          actions.push(result.action);
+        }
+
+        currentMessages.push({
+          role: 'tool',
+          name: toolCall.function.name,
+          tool_call_id: toolCall.id,
+          content: JSON.stringify(result)
         });
-    } catch (e) {
-        console.error('Audit failed for bot query', e);
+      }
+
+      iterations++;
     }
 
-    return response;
+    try {
+      await supabase.from('audit_logs').insert({
+        user_id: userId,
+        action: 'AI_CONTROLLER_QUERY',
+        table_name: 'bot_interactions',
+        store_id: storeId,
+        metadata: {
+          iterations,
+          last_query: messages[messages.length - 1].content.substring(0, 100),
+          provider: finalResponse?.metadata?.model,
+          actions_count: actions.length
+        }
+      });
+    } catch (e) {
+      console.error('Audit failed', e);
+    }
+
+    return finalResponse;
   }
 };

@@ -7,13 +7,16 @@ import { useAuthStore, useUIStore } from '@/store';
 import { cn } from '@/lib/utils';
 import { userService } from '@/services/user-service';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 
 interface Message {
-  role: 'user' | 'assistant' | 'system';
+  role: 'user' | 'assistant' | 'system' | 'tool';
   content: string;
+  tool_calls?: any[];
 }
 
 export function ChatBot() {
+  const router = useRouter();
   const { isChatBotOpen: isOpen, setIsChatBotOpen: setIsOpen, currentView } = useUIStore();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [input, setInput] = useState('');
@@ -33,6 +36,33 @@ export function ChatBot() {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, isLoading]);
+
+  const handleAction = (action: any) => {
+    console.log('[AI Controller] Action received:', action);
+
+    switch (action.type) {
+      case 'navigation':
+        toast.info(`Navegando a ${action.payload.viewId}...`);
+        router.push(action.payload.route);
+        break;
+
+      case 'form_fill':
+        toast.success(`Formulario ${action.payload.formName} completado por Darian`);
+        window.dispatchEvent(new CustomEvent('ai:fill-form', { detail: action.payload }));
+        break;
+
+      case 'export':
+        toast.success(`Archivo ${action.payload.type.toUpperCase()} listo para descargar`);
+        break;
+
+      case 'ui_mode':
+        toast.info(`Cambiando a modo ${action.payload.mode}`);
+        break;
+
+      default:
+        console.warn('Acción AI desconocida:', action.type);
+    }
+  };
 
   const handleSend = async () => {
     if (!input.trim() || isLoading || !user) return;
@@ -54,20 +84,25 @@ export function ChatBot() {
           messages: newMessages,
           storeId: user.activeStoreId,
           aiProvider: user.aiProvider,
-          aiApiKey: user.aiApiKey
+          aiApiKey: user.aiApiKey,
+          botContext: {
+            currentView,
+            uiMode: 'standard'
+          }
         }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Error al conectar con Darian');
-      }
+      if (!response.ok) throw new Error('Error al conectar con Darian');
 
       const data = await response.json();
       setMessages([...newMessages, { role: 'assistant', content: data.text }]);
+
+      if (data.metadata?.actions) {
+        data.metadata.actions.forEach(handleAction);
+      }
+
     } catch (error: any) {
       toast.error(error.message);
-      setMessages([...newMessages, { role: 'assistant', content: `Lo siento, hubo un error: ${error.message}` }]);
     } finally {
       setIsLoading(false);
     }
@@ -78,63 +113,61 @@ export function ChatBot() {
     setIsSaving(true);
     try {
       await userService.updateAISettings(user.id, tempProvider, tempApiKey);
-
-      const updatedData: any = { aiProvider: tempProvider };
-      if (tempApiKey) {
-        updatedData.aiApiKey = tempApiKey;
-      }
-
-      updateUser(updatedData);
-      toast.success('Configuración de IA guardada');
+      updateUser({
+        ...user,
+        aiProvider: tempProvider as any,
+        aiApiKey: tempApiKey || user.aiApiKey
+      });
+      toast.success('Configuración de IA actualizada');
       setIsSettingsOpen(false);
-      setTempApiKey(''); // Clear sensitive key from state
-    } catch (error: any) {
+      setTempApiKey('');
+    } catch (error) {
       toast.error('Error al guardar configuración');
     } finally {
       setIsSaving(false);
     }
   };
 
-  const isConfigured = !!(user?.aiApiKey && user?.aiApiKey.length > 5);
+  const isConfigured = !!user?.aiProvider && (!!user?.aiApiKey || user.aiProvider === 'qwen');
 
   return (
-    <div className={cn("fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[100] flex flex-col items-end", currentView === "cost-sheets" && !isOpen && "hidden")}>
+    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-4">
       <AnimatePresence>
-        {!isOpen && currentView !== "cost-sheets" && (
+        {!isOpen && (
           <motion.button
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0, opacity: 0 }}
+            initial={{ scale: 0, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0, opacity: 0, y: 20 }}
             onClick={() => setIsOpen(true)}
-            aria-label="Abrir chat con Darian"
-            className="w-14 h-14 rounded-full bg-primary shadow-lg flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-all border-4 border-background relative overflow-hidden group"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
+            className="w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-2xl flex items-center justify-center hover:scale-110 transition-transform group relative overflow-hidden"
           >
-            <div className="absolute inset-0 bg-gradient-to-tr from-primary via-primary/80 to-violet-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <MessageSquare className="w-6 h-6 relative z-10" />
-            <Sparkles className="absolute -top-1 -right-1 w-4 h-4 text-amber-300 opacity-0 group-hover:opacity-100 transition-all duration-500 delay-100" />
+            <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <MessageSquare className="w-6 h-6" />
+            <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-400 border-2 border-background rounded-full animate-pulse" />
           </motion.button>
         )}
+      </AnimatePresence>
 
+      <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ y: 100, opacity: 0, scale: 0.95 }}
-            animate={{ y: 0, opacity: 1, scale: 1 }}
-            exit={{ y: 100, opacity: 0, scale: 0.95 }}
-            className="w-[calc(100vw-2rem)] sm:w-[400px] h-[500px] max-h-[calc(100dvh-6rem)] bg-background border border-border rounded-3xl shadow-2xl flex flex-col overflow-hidden"
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            className="w-[380px] h-[600px] bg-background border border-border shadow-2xl rounded-[32px] flex flex-col overflow-hidden relative"
           >
             {/* Header */}
-            <div className="p-4 bg-primary text-primary-foreground flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-                  className="hover:bg-white/10 p-2 rounded-xl transition-colors"
-                  title="Configuración de IA"
-                >
-                  <Settings className={`w-4 h-4 ${isSettingsOpen ? 'animate-spin-slow' : ''}`} />
-                </button>
-              </div>
+            <div className="h-20 bg-primary text-primary-foreground flex items-center justify-between px-6 relative overflow-hidden shrink-0">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-3xl" />
+
+              <button
+                onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+                className="w-11 h-11 flex items-center justify-center hover:bg-white/10 rounded-xl transition-colors"
+                title="Configuración de IA"
+              >
+                <Settings className={`w-4 h-4 ${isSettingsOpen ? 'animate-spin-slow' : ''}`} />
+              </button>
+
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center border border-white/30">
                   <Bot className="w-6 h-6" />
@@ -143,13 +176,14 @@ export function ChatBot() {
                   <h3 className="font-black text-xs uppercase tracking-tighter">Darian</h3>
                   <div className="flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    <p className="text-xs opacity-80 uppercase tracking-widest font-bold">Inteligencia Integrada</p>
+                    <p className="text-xs opacity-80 uppercase tracking-widest font-bold">Controller Activo</p>
                   </div>
                 </div>
               </div>
+
               <button
                 onClick={() => setIsOpen(false)}
-                className="hover:bg-white/10 p-2 rounded-xl transition-colors"
+                className="w-11 h-11 flex items-center justify-center hover:bg-white/10 rounded-xl transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -174,7 +208,7 @@ export function ChatBot() {
                             <button
                               key={p}
                               onClick={() => setTempProvider(p)}
-                              className={`py-2 px-3 rounded-xl border-2 text-xs font-black uppercase tracking-tight transition-all ${
+                              className={`h-11 px-3 rounded-xl border-2 text-xs font-black uppercase tracking-tight transition-all ${
                                 tempProvider === p
                                 ? 'border-primary bg-primary/5 text-primary'
                                 : 'border-border bg-background text-muted-foreground'
@@ -196,7 +230,7 @@ export function ChatBot() {
                             onCopy={(e) => e.preventDefault()}
                             onCut={(e) => e.preventDefault()}
                             placeholder={user?.aiApiKey ? '••••••••••••••••' : 'Pega tu clave aquí...'}
-                            className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-xs focus:ring-2 focus:ring-primary/20 outline-none pr-10"
+                            className="w-full h-12 bg-background border border-border rounded-xl px-4 text-xs focus:ring-2 focus:ring-primary/20 outline-none pr-10"
                           />
                           <Key className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground opacity-50" />
                         </div>
@@ -210,7 +244,7 @@ export function ChatBot() {
                       <button
                         onClick={handleSaveSettings}
                         disabled={isSaving || (tempProvider === user?.aiProvider && !tempApiKey)}
-                        className="w-full py-3 bg-primary text-primary-foreground rounded-xl text-xs font-black uppercase tracking-widest shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
+                        className="w-full h-14 bg-primary text-primary-foreground rounded-xl text-xs font-black uppercase tracking-widest shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
                       >
                         {isSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
                         {isSaving ? 'Guardando...' : 'Actualizar Configuración'}
@@ -239,14 +273,14 @@ export function ChatBot() {
                                </p>
                                <button
                                  onClick={() => setIsSettingsOpen(true)}
-                                 className="w-full py-2 bg-warning/10 text-warning rounded-lg text-xs font-black uppercase"
+                                 className="w-full h-11 bg-warning/10 text-warning rounded-lg text-xs font-black uppercase"
                                >
                                  Configurar Darian
                                </button>
                             </div>
                           ) : (
                             <p className="text-xs text-muted-foreground font-medium leading-relaxed">
-                              Soy Darian. Mi propósito es asistirte con precisión técnica sobre inventarios, ventas y normativas vigentes del sistema.
+                              Soy Darian, tu Controller AI. Puedo navegar, completar formularios y explicarte el sistema.
                             </p>
                           )}
                         </div>
@@ -267,7 +301,7 @@ export function ChatBot() {
                       <div className="flex justify-start">
                         <div className="bg-background border border-border p-3 rounded-2xl rounded-tl-none flex items-center gap-2 shadow-sm">
                           <Loader2 className="w-3 h-3 animate-spin text-primary" />
-                          <span className="text-xs font-black text-muted-foreground uppercase tracking-widest">Analizando...</span>
+                          <span className="text-xs font-black text-muted-foreground uppercase tracking-widest">Ejecutando...</span>
                         </div>
                       </div>
                     )}
@@ -285,13 +319,13 @@ export function ChatBot() {
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                     disabled={!isConfigured}
-                    placeholder={isConfigured ? "Consultar stock, ventas, sugerencias..." : "Configura tu IA para comenzar"}
-                    className="flex-1 bg-transparent border-none px-3 py-1.5 text-xs font-medium focus:outline-none placeholder:text-muted-foreground/50"
+                    placeholder={isConfigured ? "Navega, crea, busca..." : "Configura tu IA para comenzar"}
+                    className="flex-1 bg-transparent border-none px-3 py-1.5 text-xs font-medium focus:outline-none placeholder:text-muted-foreground/50 h-11"
                   />
                   <button
                     disabled={!input.trim() || isLoading || !isConfigured}
                     onClick={handleSend}
-                    className="w-10 h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 disabled:opacity-50 transition-all shadow-md active:scale-95"
+                    className="w-11 h-11 rounded-xl bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 disabled:opacity-50 transition-all shadow-md active:scale-95 shrink-0"
                   >
                     <Send className="w-4 h-4" />
                   </button>

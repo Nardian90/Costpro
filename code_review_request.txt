@@ -1,8 +1,0 @@
-I have implemented a persistent store selector in the application header (Header.tsx) and integrated it with the global state (TerminalShell.tsx).
-
-Key changes:
-1. Header.tsx: Replaced native select with a DropdownMenu (consistent with ThemeToggle). It displays the active store name and allows switching if multiple memberships/stores exist.
-2. TerminalShell.tsx: Now fetches all stores for admins (to populate the header) and provides a 'handleSetActiveStore' function that updates the local auth state and invalidates relevant TanStack Query caches (products, transactions, etc.) for a seamless transition.
-3. useStoresView.ts: Updated to avoid page reloads during store switching.
-
-Build is passing locally. Please review for structural integrity and UI consistency.
