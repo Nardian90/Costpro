@@ -127,8 +127,30 @@ export class GeminiAdapter implements LLMProvider {
       };
     } catch (error: any) {
       console.error('GeminiAdapter Error:', error.message);
-      // Re-throw standardized errors as before...
-      throw error;
+
+      const msg = error.message?.toLowerCase() || "";
+
+      if (msg.includes('401') || msg.includes('unauthorized') || msg.includes('invalid api key')) {
+        throw new Error("Error de API Key: La clave proporcionada no es válida o ha expirado. Verifica tu configuración.");
+      }
+
+      if (msg.includes('429') || msg.includes('quota') || msg.includes('too many requests')) {
+        throw new Error("Error de Cuota: Se ha alcanzado el límite de solicitudes gratuitas. Por favor, espera un minuto o usa una clave Pro.");
+      }
+
+      if (msg.includes('403') || msg.includes('permission_denied')) {
+        throw new Error("Error de Permisos: Tu API Key no tiene acceso a este modelo o se ha alcanzado el límite de cuota.");
+      }
+
+      if (msg.includes('404') || msg.includes('not found') || msg.includes('no longer available')) {
+        throw new Error(`Error de Modelo: El modelo ${this.modelName} no está disponible. Es posible que Google lo haya retirado o el nombre sea incorrecto.`);
+      }
+
+      if (msg.includes('safety') || msg.includes('blocked')) {
+        throw new Error("Error de Seguridad: El modelo bloqueó la respuesta por políticas de seguridad de contenido.");
+      }
+
+      throw new Error(`Error de AI (${this.modelName}): ${error.message}`);
     }
   }
 }
