@@ -1,0 +1,349 @@
+import os
+import re
+import json
+import datetime
+import hashlib
+
+# Configuration
+BASE_PATHS = ["src/app", "src/components", "src/lib"]
+DOCS_MAP = "docs/mapa_vistas.md"
+ARCH_JSON = "public/system_architecture.json"
+GRAPH_JSON = "public/architecture_graph.json"
+AUDIT_LOG = "logs/audit_log.json"
+HEALTH_JSON = "public/system_health.json"
+TIMELINE_JSON = "public/health_timeline.json"
+
+def get_type(path):
+    if "components/views/terminal/views" in path:
+        if path.endswith("View.tsx") or path.endswith("ManagementView.tsx") or "dashboard" in path:
+            return "view"
+    if "components" in path:
+        return "component"
+    if "hooks" in path:
+        return "hook"
+    if "services" in path:
+        return "service"
+    if "lib" in path:
+        return "utility"
+    return "unknown"
+
+def resolve_import(import_path, current_file_path):
+    # Resolve aliases
+    if import_path.startswith("@/"):
+        resolved = import_path.replace("@/", "src/")
+    elif import_path.startswith("."):
+        dir_name = os.path.dirname(current_file_path)
+        resolved = os.path.normpath(os.path.join(dir_name, import_path))
+    else:
+        return None # External or unhandled
+
+    # Check common extensions
+    for ext in [".tsx", ".ts", ".jsx", ".js", ""]:
+        full_path = resolved + ext
+        if os.path.exists(full_path) and os.path.isfile(full_path):
+            return full_path
+        # Also check if it's a directory with index.ts/tsx
+        if os.path.isdir(full_path):
+            for i_ext in ["/index.ts", "/index.tsx", "/index.js"]:
+                if os.path.exists(full_path + i_ext):
+                    return full_path + i_ext
+
+    return None
+
+def extract_dependencies(content, current_file_path):
+    # Match ES6 imports
+    imports = re.findall(r'from [\'"](.*)[\'"]', content)
+    resolved_deps = []
+    for imp in imports:
+        resolved = resolve_import(imp, current_file_path)
+        if resolved:
+            rel_resolved = os.path.relpath(resolved, start=os.getcwd())
+            resolved_deps.append(rel_resolved)
+    return list(set(resolved_deps))
+
+def calculate_complexity(content):
+    # Basic estimation of cyclomatic complexity
+    # Keywords that increase complexity
+    keywords = [r'\bif\b', r'\bfor\b', r'\bwhile\b', r'\bcase\b', r'\b&&\b', r'\b\|\|\b', r'\?']
+    complexity = 1
+    for kw in keywords:
+        complexity += len(re.findall(kw, content))
+    return complexity
+
+def calculate_score(path, content, metrics):
+    score_arch = 10.0
+    score_quality = 10.0
+    score_ui = 10.0
+    score_integration = 10.0
+    issues = []
+
+    lines = content.splitlines()
+    loc = len(lines)
+    complexity = metrics['cyclomaticComplexity']
+
+    # Architecture (30%)
+    if loc > 500:
+        score_arch -= 2.0
+        issues.append(f"Archivo extenso ({loc} líneas)")
+    if metrics['outDegree'] > 15:
+        score_arch -= 1.5
+        issues.append(f"Alto acoplamiento saliente ({metrics['outDegree']})")
+
+    # Quality (30%)
+    if "TODO" in content: score_quality -= 0.5
+    if "FIXME" in content: score_quality -= 1.0
+    if "console.log" in content:
+        score_quality -= 1.0
+        issues.append("Uso de console.log detectado")
+    if complexity >= 40:
+        score_quality -= 3.0
+        issues.append(f"Complejidad ciclomática crítica ({complexity})")
+    elif complexity >= 25:
+        score_quality -= 1.5
+        issues.append(f"Complejidad ciclomática alta ({complexity})")
+
+    # UI/UX (20%)
+    if path.endswith((".tsx", ".jsx")):
+        if "clamp(" not in content and "text-[" not in content:
+            score_ui -= 1.0
+            issues.append("Falta de tipografía fluida (clamp)")
+        if "h-11" not in content and "h-12" not in content and "min-h-[44px]" not in content and ("button" in content.lower() or "Button" in content):
+            score_ui -= 1.0
+            issues.append("Posible incumplimiento de touch targets (44px)")
+
+    # Integration (20%)
+    if metrics['outDegree'] > 10:
+        score_integration -= 2.0
+        issues.append("Exceso de dependencias directas")
+
+    final_score = (score_arch * 0.3) + (score_quality * 0.3) + (score_ui * 0.2) + (score_integration * 0.2)
+    return round(max(0, final_score), 1), issues
+
+def get_status_label(score):
+    if score >= 9.5: return "Óptimo"
+    if score >= 8.0: return "Bueno"
+    if score >= 6.0: return "Riesgo"
+    return "Crítico"
+
+def get_md_health_status(score):
+    if score >= 9.5: return "Óptimo"
+    if score >= 6.0: return "Advertencia"
+    return "Crítico"
+
+def scan_project():
+    nodes = {}
+    edges = []
+
+    # First pass: identify all nodes
+    for base in BASE_PATHS:
+        if not os.path.exists(base): continue
+        for root, _, files in os.walk(base):
+            for file in files:
+                if file.endswith((".tsx", ".ts", ".js", ".jsx")):
+                    if ".test." in file or "__tests__" in root or "node_modules" in root:
+                        continue
+                    full_path = os.path.join(root, file)
+                    rel_path = os.path.relpath(full_path, start=os.getcwd())
+                    itype = get_type(rel_path)
+                    if itype == "unknown": continue
+
+                    try:
+                        with open(full_path, 'r', encoding='utf-8') as f:
+                            content = f.read()
+                    except: continue
+
+                    node_id = os.path.splitext(file)[0]
+                    nodes[rel_path] = {
+                        "id": node_id,
+                        "name": node_id,
+                        "type": itype,
+                        "path": rel_path,
+                        "content": content,
+                        "lines": len(content.splitlines()),
+                        "complexity": calculate_complexity(content),
+                        "dependencies": []
+                    }
+
+    # Second pass: identify edges and resolve dependencies
+    for path, node in nodes.items():
+        deps = extract_dependencies(node['content'], path)
+        node['dependencies'] = deps
+        for dep_path in deps:
+            if dep_path in nodes:
+                edges.append({"from": node['id'], "to": nodes[dep_path]['id']})
+
+    # Calculate Degrees
+    in_degrees = {node['id']: 0 for node in nodes.values()}
+    out_degrees = {node['id']: 0 for node in nodes.values()}
+    for edge in edges:
+        out_degrees[edge['from']] += 1
+        in_degrees[edge['to']] += 1
+
+    # Final items for architecture
+    items = []
+    all_issues = []
+
+    for path, node in nodes.items():
+        node_id = node['id']
+        metrics = {
+            "inDegree": in_degrees[node_id],
+            "outDegree": out_degrees[node_id],
+            "lines": node['lines'],
+            "cyclomaticComplexity": node['complexity']
+        }
+
+        raw_coupling = (0.35 * metrics['outDegree'] +
+                        0.25 * metrics['inDegree'] +
+                        0.2 * (metrics['lines'] / 100.0) +
+                        0.2 * (metrics['cyclomaticComplexity'] / 5.0))
+        metrics['couplingScore'] = round(min(10, raw_coupling), 1)
+
+        score, issues = calculate_score(path, node['content'], metrics)
+
+        item = {
+            "id": node_id,
+            "name": node_id,
+            "type": node['type'],
+            "path": path,
+            "health": score,
+            "status": get_status_label(score),
+            "lastAudit": datetime.date.today().isoformat(),
+            "metrics": metrics,
+            "dependencies": [nodes[d]['id'] for d in node['dependencies'] if d in nodes]
+        }
+        items.append(item)
+        for issue in issues:
+            all_issues.append({"component": node_id, "issue": issue})
+
+    return items, edges, all_issues
+
+def update_files(items, edges, all_issues):
+    # Ensure directories exist
+    os.makedirs("public", exist_ok=True)
+    os.makedirs("docs", exist_ok=True)
+    os.makedirs("logs", exist_ok=True)
+
+    # 1. architecture_graph.json
+    graph_stats = {
+        "totalNodes": len(items),
+        "totalEdges": len(edges),
+        "topCoupled": [i['name'] for i in sorted(items, key=lambda x: x['metrics']['couplingScore'], reverse=True)[:5]],
+        "communities": []
+    }
+    graph_data = {
+        "nodes": items,
+        "edges": edges,
+        "graphStats": graph_stats
+    }
+    with open(GRAPH_JSON, 'w') as f:
+        json.dump(graph_data, f, indent=2)
+
+    # 2. system_architecture.json
+    stats = {
+        "totalViews": len([i for i in items if i["type"] == "view"]),
+        "totalComponents": len([i for i in items if i["type"] == "component"]),
+        "totalServices": len([i for i in items if i["type"] == "service"]),
+        "totalHooks": len([i for i in items if i["type"] == "hook"]),
+        "totalUtilities": len([i for i in items if i["type"] == "utility"])
+    }
+    arch_data = {
+        "architecture": items,
+        "stats": stats
+    }
+    with open(ARCH_JSON, 'w') as f:
+        json.dump(arch_data, f, indent=2)
+
+    # 3. docs/mapa_vistas.md
+    header = "| Nombre | Ruta | Tipo | Estado Salud | Dependencias | Última Auditoría |\n"
+    separator = "| ------ | ---- | ---- | ------------ | ------------ | ---------------- |\n"
+    rows = ""
+    sorted_items = sorted(items, key=lambda x: (x['type'], x['name']))
+    for item in sorted_items:
+        health_str = get_md_health_status(item['health'])
+        rows += f"| {item['name']} | {item['path']} | {item['type']} | {health_str} | {', '.join(item['dependencies'])} | {item['lastAudit']} |\n"
+
+    with open(DOCS_MAP, 'w') as f:
+        f.write("# Mapa Arquitectónico Vivo\n\n")
+        f.write(header + separator + rows)
+
+    # 4. logs/audit_log.json
+    avg_health = round(sum(i["health"] for i in items) / len(items), 1) if items else 0
+    refactor_suggestions = []
+    for i in sorted(items, key=lambda x: x['metrics']['couplingScore'], reverse=True)[:5]:
+        if i['metrics']['couplingScore'] >= 8.0:
+            refactor_suggestions.append({
+                "component": i['name'],
+                "priority": "high",
+                "rationale": f"High coupling ({i['metrics']['couplingScore']}) + Complexity ({i['metrics']['cyclomaticComplexity']})",
+                "suggestion": "Consider splitting into sub-components or extracting logic to a dedicated hook/service.",
+                "estimatedEffort": "L" if i['metrics']['lines'] > 500 else "M"
+            })
+
+    new_log = {
+        "date": datetime.date.today().isoformat(),
+        "hash": hashlib.sha256(json.dumps(arch_data, sort_keys=True).encode()).hexdigest(),
+        "health_score": avg_health,
+        "issues_detected": all_issues[:20],
+        "refactor_suggestions": refactor_suggestions,
+        "system_metrics": stats
+    }
+
+    logs = []
+    if os.path.exists(AUDIT_LOG):
+        try:
+            with open(AUDIT_LOG, 'r') as f:
+                logs = json.load(f)
+                if not isinstance(logs, list): logs = [logs]
+        except: pass
+    logs.insert(0, new_log)
+    with open(AUDIT_LOG, 'w') as f:
+        json.dump(logs[:365], f, indent=2)
+
+    # 5. system_health.json
+    health_data = {
+        "systemHealth": avg_health,
+        "status": "healthy" if avg_health >= 8.0 else "warning" if avg_health >= 6.0 else "critical",
+        "trend": "stable",
+        "viewsAudited": stats['totalViews'],
+        "newViews": 0,
+        "criticalIssues": len([i for i in items if i["health"] < 6.0]),
+        "warnings": len([i for i in items if 6.0 <= i["health"] < 8.0]),
+        "lastAudit": datetime.date.today().isoformat()
+    }
+    with open(HEALTH_JSON, 'w') as f:
+        json.dump(health_data, f, indent=2)
+
+    # 6. health_timeline.json
+    timeline = []
+    if os.path.exists(TIMELINE_JSON):
+        try:
+            with open(TIMELINE_JSON, 'r') as f:
+                timeline = json.load(f).get("timeline", [])
+        except: pass
+
+    new_event = {
+        "date": datetime.date.today().isoformat(),
+        "score": avg_health,
+        "status": get_status_label(avg_health),
+        "actionsPerformed": [
+            "Actualización del mapa arquitectónico",
+            "Generación de architecture_graph.json",
+            "Auditoría de acoplamiento y complejidad"
+        ]
+    }
+    if not timeline or timeline[0]['date'] != new_event['date']:
+        timeline.insert(0, new_event)
+    else:
+        timeline[0] = new_event
+
+    with open(TIMELINE_JSON, 'w') as f:
+        json.dump({"timeline": timeline[:5]}, f, indent=2)
+
+def main():
+    items, edges, all_issues = scan_project()
+    update_files(items, edges, all_issues)
+    avg_health = round(sum(i["health"] for i in items) / len(items), 1) if items else 0
+    print(f"Audit completed. System Health: {avg_health}")
+
+if __name__ == "__main__":
+    main()

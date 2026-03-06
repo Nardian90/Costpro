@@ -1,0 +1,10 @@
+{
+  "systemHealth": 9.7,
+  "status": "healthy",
+  "trend": "stable",
+  "viewsAudited": 42,
+  "newViews": 0,
+  "criticalIssues": 0,
+  "warnings": 3,
+  "lastAudit": "2026-03-06"
+}

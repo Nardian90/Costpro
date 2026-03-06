@@ -1,4 +1,27 @@
-import { SupabaseClient } from '@supabase/supabase-js';
+import sys
+
+file_path = 'src/services/bot-service.ts'
+with open(file_path, 'r') as f:
+    lines = f.readlines()
+
+new_lines = []
+skip = False
+for line in lines:
+    if 'async function getKnowledgeBaseContext(): Promise<string>' in line and 'let cachedKnowledge' not in lines[0]:
+         # We already have the new version at the top but the old one might still be there due to failed regex
+         pass
+
+    # Clean up the duplicate/broken parts
+    if ' ---\\n${content}\\n`;' in line:
+        skip = False
+        continue
+    if skip:
+        continue
+
+    new_lines.append(line)
+
+# Let's just rewrite the file with a clean version of what I want
+clean_content = """import { SupabaseClient } from '@supabase/supabase-js';
 import * as fs from 'fs';
 import * as path from 'path';
 import { getLLMProvider } from '@/lib/ai/orchestrator';
@@ -27,7 +50,7 @@ async function getKnowledgeBaseContext(): Promise<string> {
     for (const file of files) {
       if (file.endsWith('.md') || file.endsWith('.json') || file.endsWith('.txt')) {
         const fileContent = fs.readFileSync(path.join(dirPath, file), 'utf-8');
-        knowledge += `\n[DOC: ${file}]\n${fileContent}\n`;
+        knowledge += `\\n[DOC: ${file}]\\n${fileContent}\\n`;
       }
     }
     cachedKnowledge = knowledge;
@@ -37,12 +60,6 @@ async function getKnowledgeBaseContext(): Promise<string> {
     console.error('Error reading knowledge base:', err);
     return '';
   }
-}
-
-function isLegalQuery(messages: Message[]): boolean {
-  const lastMessage = messages[messages.length - 1]?.content?.toLowerCase() || '';
-  const legalKeywords = ['resolución', 'ley', 'normativa', 'legal', 'artículo', 'regulación', 'sc-3-01', 'modelo'];
-  return legalKeywords.some(keyword => lastMessage.includes(keyword));
 }
 
 export const botService = {
@@ -56,6 +73,7 @@ export const botService = {
     aiApiKey?: string,
     botContext?: BotContext
   ) {
+    // Limit message history to save tokens
     const maxHistory = 10;
     const historyToProcess = messages.length > maxHistory
       ? messages.slice(-maxHistory)
@@ -70,23 +88,17 @@ export const botService = {
       return { text: 'Hola! ¿En qué puedo ayudarte hoy?', metadata: { model: 'default' } };
     }
 
-    // Optimization: Only load Knowledge Base if the query seems relevant
-    let knowledgeBase = '';
-    if (isLegalQuery(historyToProcess)) {
-      knowledgeBase = await getKnowledgeBaseContext();
-    }
-
-    // Compact context representation
-    const viewsContext = VIEW_REGISTRY.map(v => `${v.id}:${v.description.substring(0, 60)}`).join('|');
+    const knowledgeBase = await getKnowledgeBaseContext();
+    // Compact context representation to save tokens
+    const viewsContext = VIEW_REGISTRY.map(v => `${v.id}:${v.description.substring(0, 100)}`).join('|');
     const formsContext = JSON.stringify(AI_FORM_SCHEMAS);
 
     const systemPrompt: Message = {
       role: 'system',
-      content: `Darian AI. Tienda:${storeId}. Rol:${userRole}.
-Vistas:${viewsContext}
-Forms:${formsContext}
-${knowledgeBase ? 'KB:' + knowledgeBase : 'KB: No cargada (pregunta específicamente por resoluciones si la necesitas).'}
-Reglas: Actúa siempre con tools si es posible. Solo Tienda:${storeId}.`
+      content: `Darian AI. Tienda ${storeId}.
+      Vistas: ${viewsContext}
+      Forms: ${formsContext}
+      KB: ${knowledgeBase || 'N/A'}`
     };
 
     let provider: LLMProvider;
@@ -105,11 +117,6 @@ Reglas: Actúa siempre con tools si es posible. Solo Tienda:${storeId}.`
     const toolLogs: any[] = [];
 
     while (iterations < MAX_ITERATIONS) {
-      // Mandatory delay between iterations to respect RPM limits (especially Gemini free)
-      if (iterations > 0) {
-        await new Promise(resolve => setTimeout(resolve, 1500));
-      }
-
       const MAX_RETRIES = 3;
       let retryCount = 0;
       let response: any;
@@ -117,7 +124,7 @@ Reglas: Actúa siempre con tools si es posible. Solo Tienda:${storeId}.`
         try {
           response = await provider.getResponse(currentMessages, {
             tools: TOOLS,
-            maxTokens: iterations < MAX_ITERATIONS - 1 ? 800 : 2000
+            maxTokens: iterations < MAX_ITERATIONS - 1 ? 800 : 2000 // Optimized token limit
           });
           break;
         } catch (err: any) {
@@ -125,7 +132,7 @@ Reglas: Actúa siempre con tools si es posible. Solo Tienda:${storeId}.`
           const isQuota = msg.includes('429') || msg.includes('quota') || msg.includes('limit');
           retryCount++;
           if (retryCount >= MAX_RETRIES) throw err;
-          const delay = isQuota ? 3000 * retryCount : 1000 * retryCount;
+          const delay = isQuota ? 2000 * retryCount : 1000 * retryCount;
           await new Promise(resolve => setTimeout(resolve, delay));
         }
       }
@@ -209,3 +216,7 @@ Reglas: Actúa siempre con tools si es posible. Solo Tienda:${storeId}.`
     return finalResponse;
   }
 };
+"""
+
+with open(file_path, 'w') as f:
+    f.write(clean_content)

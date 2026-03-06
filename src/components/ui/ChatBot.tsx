@@ -68,7 +68,8 @@ export function ChatBot() {
     if (!input.trim() || isLoading || !user) return;
 
     const userMessage: Message = { role: 'user', content: input };
-    const newMessages = [...messages, userMessage];
+    // Mantener solo los últimos 10 mensajes en el historial para optimizar tokens
+    const newMessages = [...messages, userMessage].slice(-10);
     setMessages(newMessages);
     setInput('');
     setIsLoading(true);
@@ -102,7 +103,15 @@ export function ChatBot() {
       }
 
     } catch (error: any) {
-      toast.error(error.message);
+      const errorMsg = error.message || '';
+      if (errorMsg.includes('Límite de IA alcanzado') || errorMsg.includes('Balance') || errorMsg.includes('Quota')) {
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: '⚠️ ' + errorMsg + ' Puedes cambiar a otro proveedor o ingresar tu propia clave en los ajustes (icono de engranaje arriba).'
+        }]);
+      } else {
+        toast.error(errorMsg);
+      }
     } finally {
       setIsLoading(false);
     }

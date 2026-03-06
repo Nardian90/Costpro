@@ -3,6 +3,7 @@
   "version": "5.7.25",
   "private": true,
   "scripts": {
+    "audit": "python3 scripts/audit-agent.py",
     "dev": "next dev -p 3000",
     "prebuild": "prisma generate",
     "build": "next build && cpx \".next/static/**/*\" .next/standalone/.next/static && cpx \"public/**/*\" .next/standalone/public",

@@ -1,4 +1,8 @@
-import { SupabaseClient } from '@supabase/supabase-js';
+import sys
+
+file_path = 'src/services/bot-service.ts'
+
+clean_content = """import { SupabaseClient } from '@supabase/supabase-js';
 import * as fs from 'fs';
 import * as path from 'path';
 import { getLLMProvider } from '@/lib/ai/orchestrator';
@@ -27,7 +31,7 @@ async function getKnowledgeBaseContext(): Promise<string> {
     for (const file of files) {
       if (file.endsWith('.md') || file.endsWith('.json') || file.endsWith('.txt')) {
         const fileContent = fs.readFileSync(path.join(dirPath, file), 'utf-8');
-        knowledge += `\n[DOC: ${file}]\n${fileContent}\n`;
+        knowledge += `\\n[DOC: ${file}]\\n${fileContent}\\n`;
       }
     }
     cachedKnowledge = knowledge;
@@ -209,3 +213,7 @@ Reglas: Actúa siempre con tools si es posible. Solo Tienda:${storeId}.`
     return finalResponse;
   }
 };
+"""
+
+with open(file_path, 'w') as f:
+    f.write(clean_content)
