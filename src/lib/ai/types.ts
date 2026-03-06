@@ -37,6 +37,7 @@ export interface LLMResponse {
 export interface LLMProvider {
   getResponse(messages: Message[], options?: {
     temperature?: number;
+    maxTokens?: number;
     tools?: ToolDefinition[];
     tool_choice?: 'auto' | 'none' | { type: 'function'; function: { name: string } };
   }): Promise<LLMResponse>;

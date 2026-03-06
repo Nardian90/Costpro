@@ -10,10 +10,10 @@ describe('View Registry Consistency', () => {
 
     VIEW_REGISTRY.forEach(view => {
       // Check for 'case 'viewId':' in the shell render function
-      const caseRegex = new RegExp("case ['\"]" + view.id + "['\"]:", 'g');
+      const caseRegex = new RegExp(`case ['"]${view.id}['"]:`, 'g');
       const hasCase = caseRegex.test(shellContent);
 
-      expect(hasCase, "View ID '" + view.id + "' from registry is missing its 'case' in TerminalShell.tsx render function").toBe(true);
+      expect(hasCase, `View ID '${view.id}' from registry is missing its 'case' in TerminalShell.tsx render function`).toBe(true);
     });
   });
 

@@ -20,7 +20,19 @@ export class FallbackAdapter implements LLMProvider {
       }
     }
 
+    // Si llegamos aquí, todos fallaron. Buscamos si hay errores de cuota/balance
+    const hasQuotaError = errors.some(e =>
+      e.message.toLowerCase().includes('cuota') ||
+      e.message.toLowerCase().includes('quota') ||
+      e.message.toLowerCase().includes('balance') ||
+      e.message.toLowerCase().includes('limit')
+    );
+
+    if (hasQuotaError) {
+      throw new Error("Límite de IA alcanzado: Todos los proveedores gratuitos están agotados. Por favor, configura tu propia API Key en los ajustes del chat o espera un momento.");
+    }
+
     const errorMsg = errors.map(e => e.message).join(' | ');
-    throw new Error(`Todos los proveedores de AI fallaron: ${errorMsg}`);
+    throw new Error(`Error de comunicación con la IA: ${errorMsg}`);
   }
 }

@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Activity, RefreshCw, AlertCircle, FileText,
-  Settings, Clock, ShieldCheck, ChevronDown, Info
+  Settings, Clock, ShieldCheck, ChevronDown, Info,
+  LayoutGrid, Share2, History, ShieldAlert, Cpu, Database, Server
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -16,6 +17,12 @@ import { SecurityMetrics } from './SecurityMetrics';
 import { ReleaseGateStatus } from './ReleaseGateStatus';
 import { CostProLoader } from '@/components/ui/CostProLoader';
 import { ReleaseGatePdfExporter } from '@/lib/release_gate/ReleaseGatePdfExporter';
+
+import { AuditSummary } from './AuditSummary';
+import { SystemDependencyGraph } from './SystemDependencyGraph';
+import { ViewNavigator } from './ViewNavigator';
+import { ArchitectureAuditGrid } from './ArchitectureAuditGrid';
+import { DetailedRelationshipGraph } from './DetailedRelationshipGraph';
 
 import {
   DropdownMenu,
@@ -31,12 +38,14 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Badge } from '@/components/ui/badge';
 
 export default function SystemHealthView() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const [pollingInterval, setPollingInterval] = useState(30000); // Default 30s
+  const [auditSummary, setAuditSummary] = useState<any>(null);
 
   const fetchHealth = async () => {
     try {
@@ -44,6 +53,11 @@ export default function SystemHealthView() {
       const json = await res.json();
       setData(json);
       setLastUpdate(new Date());
+
+      // Fetch audit summary
+      const auditRes = await fetch('/system_health.json');
+      const auditJson = await auditRes.json();
+      setAuditSummary(auditJson);
     } catch (error) {
       console.error('Error fetching health:', error);
       toast.error('Error al conectar con el motor de observabilidad');
@@ -71,7 +85,7 @@ export default function SystemHealthView() {
   const { shi, mri, timestamp, version } = data;
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700 pb-20">
+    <div className="space-y-12 animate-in fade-in duration-700 pb-20">
       {/* Top Banner */}
       <HealthStatusHeader
         score={shi.score}
@@ -79,7 +93,7 @@ export default function SystemHealthView() {
         version={version}
       />
 
-      {/* Control Bar */}
+      {/* Control Bar & Quick Stats */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2">
         <div className="flex items-center gap-3">
           <div className="px-3 py-1.5 rounded-xl bg-card border border-border/50 flex items-center gap-2">
@@ -93,17 +107,55 @@ export default function SystemHealthView() {
               <DropdownMenuContent className="bg-sidebar/90 backdrop-blur-xl border-primary/10 rounded-xl">
                 <DropdownMenuItem onClick={() => setPollingInterval(30000)} className="text-[10px] font-black uppercase tracking-widest">30 Segundos</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setPollingInterval(60000)} className="text-[10px] font-black uppercase tracking-widest">60 Segundos</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setPollingInterval(0)} className="text-[10px] font-black uppercase tracking-widest">Manual / Pausado</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setPollingInterval(300000)} className="text-[10px] font-black uppercase tracking-widest">5 Minutos</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setPollingInterval(0)} className="text-[10px] font-black uppercase tracking-widest">Manual</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </div>
 
-        <div className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-40">
-          Entorno: {data.environment.toUpperCase()} | Engine: 10/10 Enterprise Readiness
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[9px] font-black uppercase tracking-widest opacity-60">Engine: Active</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+            <span className="text-[9px] font-black uppercase tracking-widest opacity-60">Region: us-east-1</span>
+          </div>
         </div>
       </div>
 
+      {/* Audit Agent Summary Section */}
+      {auditSummary && (
+        <section className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="md:col-span-1 bg-primary/10 border border-primary/20 rounded-[32px] p-6 flex flex-col items-center justify-center text-center">
+             <ShieldAlert className="w-10 h-10 text-primary mb-3" />
+             <div className="text-3xl font-black text-primary mb-1">{auditSummary.systemHealth.toFixed(1)}</div>
+             <div className="text-[10px] font-black uppercase tracking-widest opacity-60">Global Architecture Health</div>
+          </div>
+
+          <div className="md:col-span-3 bg-card/30 border border-border/50 rounded-[32px] p-6 grid grid-cols-3 gap-6">
+            <div className="flex flex-col">
+              <span className="text-[10px] font-black uppercase tracking-widest opacity-50 mb-2">Vistas Auditadas</span>
+              <div className="text-2xl font-black">{auditSummary.viewsAudited}</div>
+              <div className="text-[9px] font-bold text-emerald-500 uppercase mt-1">100% Cobertura</div>
+            </div>
+            <div className="flex flex-col border-x border-border/30 px-6">
+              <span className="text-[10px] font-black uppercase tracking-widest opacity-50 mb-2">Alertas de Auditor</span>
+              <div className="text-2xl font-black text-amber-500">{auditSummary.warnings}</div>
+              <div className="text-[9px] font-bold text-amber-500 uppercase mt-1">Revisiones Sugeridas</div>
+            </div>
+            <div className="flex flex-col pl-6">
+              <span className="text-[10px] font-black uppercase tracking-widest opacity-50 mb-2">Última Auditoría</span>
+              <div className="text-2xl font-black">{auditSummary.lastAudit}</div>
+              <div className="text-[9px] font-bold text-blue-500 uppercase mt-1">Audit Agent Script</div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Main Metrics Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="space-y-8">
           <InfrastructureMetrics metrics={shi.metrics} trends={shi.trends} />
@@ -111,18 +163,40 @@ export default function SystemHealthView() {
         </div>
 
         <div className="space-y-8">
+          <SystemDependencyGraph />
           <SecurityMetrics metrics={shi.metrics} />
-          <ReleaseGateStatus mri={mri} />
         </div>
       </div>
 
-      {/* Footer Info & Alerts */}
-            <section className="bg-card/30 p-8 rounded-[40px] border border-border/50 relative overflow-hidden">
+      {/* Architecture Audit Grid - The "Mapa de Vistas" */}
+      <section>
+        <ArchitectureAuditGrid />
+      </section>
+
+      {/* Relationship Graph - The "Grafo de Relaciones" */}
+      <section>
+        <DetailedRelationshipGraph />
+      </section>
+
+      {/* Navigation Layer */}
+      <section className="bg-card/30 p-8 rounded-[40px] border border-border/50">
+         <ViewNavigator />
+      </section>
+
+      {/* Audit Layer */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <AuditSummary />
+        <ReleaseGateStatus mri={mri} />
+      </div>
+
+      {/* Logs & Console */}
+      <section className="bg-card/30 p-8 rounded-[40px] border border-border/50 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32" />
         <HealthAgentLogs />
       </section>
 
-<footer className="flex flex-col md:flex-row gap-6">
+      {/* Alert Console & Actions */}
+      <footer className="flex flex-col md:flex-row gap-6">
         <div className="flex-1 bg-card/30 p-6 rounded-[32px] border border-border/50 min-h-[160px] relative overflow-hidden">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
