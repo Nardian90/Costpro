@@ -2,15 +2,12 @@
   "timeline": [
     {
       "date": "2026-03-06",
-      "score": 9.8,
+      "score": 9.7,
       "status": "\u00d3ptimo",
-      "newViews": 0,
-      "issuesDetected": 39,
       "actionsPerformed": [
         "Actualizaci\u00f3n del mapa arquitect\u00f3nico",
-        "Auditor\u00eda t\u00e9cnica de componentes",
-        "C\u00e1lculo de Score de Salud Global",
-        "Generaci\u00f3n de sugerencias de refactorizaci\u00f3n"
+        "Generaci\u00f3n de architecture_graph.json",
+        "Auditor\u00eda de acoplamiento y complejidad"
       ]
     }
   ]
