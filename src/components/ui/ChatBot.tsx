@@ -112,10 +112,7 @@ export function ChatBot() {
     if (!user) return;
     setIsSaving(true);
     try {
-      await userService.updateProfile(token!, {
-        aiProvider: tempProvider as any,
-        aiApiKey: tempApiKey || undefined
-      });
+      await userService.updateAISettings(user.id, tempProvider, tempApiKey);
       updateUser({
         ...user,
         aiProvider: tempProvider as any,
