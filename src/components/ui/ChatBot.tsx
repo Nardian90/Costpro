@@ -68,7 +68,8 @@ export function ChatBot() {
     if (!input.trim() || isLoading || !user) return;
 
     const userMessage: Message = { role: 'user', content: input };
-    const newMessages = [...messages, userMessage];
+    // Mantener solo los últimos 10 mensajes en el historial para optimizar tokens
+    const newMessages = [...messages, userMessage].slice(-10);
     setMessages(newMessages);
     setInput('');
     setIsLoading(true);
