@@ -103,7 +103,7 @@ export const botService = {
     while (iterations < MAX_ITERATIONS) {
 const MAX_RETRIES = 3;
     let retryCount = 0;
-    let response;
+    let response: any;
     while (retryCount < MAX_RETRIES) {
       try {
         response = await provider.getResponse(currentMessages, { tools: TOOLS });
@@ -116,7 +116,7 @@ const MAX_RETRIES = 3;
       }
     }
 
-      if (!response.tool_calls || response.tool_calls.length === 0) {
+      if (!response || !response.tool_calls || response.tool_calls.length === 0) {
         finalResponse = {
           ...response,
           metadata: {
