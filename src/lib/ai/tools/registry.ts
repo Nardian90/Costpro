@@ -1,11 +1,46 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { getViewDetails } from '@/config/viewRegistry';
+import { TOOLS } from "./definitions";
+import { z } from 'zod';
 
 export interface ToolHandlerContext {
   supabase: SupabaseClient;
   userId: string;
+  userRole: string;
   storeId: string;
 }
+
+// Validation Schemas
+const schemas = {
+  open_view: z.object({
+    viewId: z.string().min(1),
+    params: z.record(z.any()).optional()
+  }),
+  explain_view: z.object({
+    viewId: z.string().optional()
+  }),
+  search_entity: z.object({
+    entity: z.enum(["product", "costSheet", "transaction", "supply"]),
+    query: z.string().min(1),
+    filters: z.record(z.any()).optional()
+  }),
+  fill_form: z.object({
+    formName: z.string().min(1),
+    data: z.record(z.any())
+  }),
+  submit_form: z.object({
+    formName: z.string().min(1),
+    data: z.record(z.any())
+  }),
+  set_ui_mode: z.object({
+    mode: z.enum(["standard", "expert"])
+  }),
+  export_document: z.object({
+    type: z.enum(["pdf", "excel"]),
+    entityType: z.string().min(1),
+    entityId: z.string().min(1)
+  })
+};
 
 export const toolHandlers: Record<string, (args: any, context: ToolHandlerContext) => Promise<any>> = {
   open_view: async ({ viewId, params }) => {
@@ -42,7 +77,7 @@ export const toolHandlers: Record<string, (args: any, context: ToolHandlerContex
       .from(table)
       .select('*')
       .eq('store_id', storeId)
-      .ilike('name', `%${query}%`)
+      .ilike('name', `%${query.replace(/[%_]/g, '\\$&')}%`) // Basic sanitization
       .limit(5);
 
     if (error) return { error: error.message };
@@ -53,8 +88,24 @@ export const toolHandlers: Record<string, (args: any, context: ToolHandlerContex
     return { success: true, action: { type: 'form_fill', payload: { formName, data } } };
   },
 
-  submit_form: async ({ formName, data }) => {
-    return { success: true, action: { type: 'form_submit', payload: { formName, data } } };
+  submit_form: async ({ formName, data }, { supabase, userId }) => {
+    // Basic idempotency check: don't submit exact same data twice in short time
+    const { data: recent } = await supabase
+      .from('audit_logs')
+      .select('metadata')
+      .eq('user_id', userId)
+      .eq('action', 'AI_FORM_SUBMIT_EXEC')
+      .gt('created_at', new Date(Date.now() - 30000).toISOString())
+      .limit(1);
+
+    if (recent && recent.some(r => JSON.stringify(r.metadata.data) === JSON.stringify(data))) {
+       return { error: "Acción duplicada detectada. Por favor, espera un momento." };
+    }
+
+    return {
+      success: true,
+      action: { type: 'form_submit', payload: { formName, data } }
+    };
   },
 
   set_ui_mode: async ({ mode }) => {
@@ -71,10 +122,33 @@ export const toolHandlers: Record<string, (args: any, context: ToolHandlerContex
 };
 
 export async function executeTool(name: string, args: any, context: ToolHandlerContext) {
+  const toolDef = TOOLS.find(t => t.name === name);
+  if (!toolDef) {
+    return { error: `Herramienta '${name}' no definida en el sistema.` };
+  }
+
+  // RBAC Validation
+  if (toolDef.allowedRoles && !toolDef.allowedRoles.includes(context.userRole)) {
+    return {
+      error: `Acceso denegado: El rol '${context.userRole}' no tiene permiso para ejecutar la acción '${name}'.`
+    };
+  }
+
+  // Parameter Validation
+  const schema = (schemas as any)[name];
+  if (schema) {
+    const result = schema.safeParse(args);
+    if (!result.success) {
+      return { error: `Argumentos inválidos para '${name}': ${result.error.message}` };
+    }
+    args = result.data;
+  }
+
   const handler = toolHandlers[name];
   if (!handler) {
     return { error: `Herramienta '${name}' no implementada.` };
   }
+
   try {
     return await handler(args, context);
   } catch (err: any) {
