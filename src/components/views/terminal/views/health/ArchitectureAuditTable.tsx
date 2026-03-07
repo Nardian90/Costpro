@@ -1,78 +1,64 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
-import {
-  ShieldCheck, AlertTriangle, AlertCircle,
-  Search, Filter, ExternalLink, FileCode,
-  LayoutGrid, Activity, Info
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
-
-interface AuditItem {
-  id: string;
-  name: string;
-  type: string;
-  path: string;
-  health: number;
-  status: string;
-  lastAudit: string;
-  metrics: {
-    inDegree: number;
-    outDegree: number;
-    lines: number;
-    cyclomaticComplexity: number;
-    couplingScore: number;
-  };
-  dependencies: string[];
-}
+import {
+  Search, FileCode, LayoutGrid, Info,
+  ShieldCheck, AlertTriangle, AlertCircle,
+  ChevronLeft, ChevronRight
+} from 'lucide-react';
+import {
+  Table, TableBody, TableCell, TableHead,
+  TableHeader, TableRow
+} from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 export function ArchitectureAuditTable() {
-  const [data, setData] = useState<AuditItem[]>([]);
+  const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [globalSearch, setGlobalSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [healthFilter, setHealthFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
-    fetch('/system_architecture.json')
-      .then(res => res.json())
-      .then(json => {
-        setData(json.architecture || []);
+    const fetchData = async () => {
+      try {
+        const response = await fetch('/architecture_map.json');
+        const json = await response.json();
+        setData(json.components || []);
+      } catch (error) {
+        console.error('Error loading architecture map:', error);
+      } finally {
         setLoading(false);
-      })
-      .catch(err => {
-        console.error('Error loading architecture audit:', err);
-        setLoading(false);
-      });
+      }
+    };
+    fetchData();
   }, []);
 
   const filteredData = useMemo(() => {
     return data.filter(item => {
-      const matchesSearch =
-        item.name.toLowerCase().includes(globalSearch.toLowerCase()) ||
-        item.path.toLowerCase().includes(globalSearch.toLowerCase());
-
+      const matchesSearch = item.name.toLowerCase().includes(globalSearch.toLowerCase()) ||
+                           item.path.toLowerCase().includes(globalSearch.toLowerCase());
       const matchesType = typeFilter === 'all' || item.type === typeFilter;
-
-      let matchesHealth = true;
-      if (healthFilter === 'optimal') matchesHealth = item.health >= 9.5;
-      else if (healthFilter === 'warning') matchesHealth = item.health >= 6.0 && item.health < 9.5;
-      else if (healthFilter === 'critical') matchesHealth = item.health < 6.0;
+      const matchesHealth = healthFilter === 'all' ||
+                           (healthFilter === 'optimal' && item.health >= 9.5) ||
+                           (healthFilter === 'warning' && item.health >= 6.0 && item.health < 9.5) ||
+                           (healthFilter === 'critical' && item.health < 6.0);
 
       return matchesSearch && matchesType && matchesHealth;
     });
   }, [data, globalSearch, typeFilter, healthFilter]);
+
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredData.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredData, currentPage]);
+
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
   const getHealthStyle = (score: number) => {
     if (score >= 9.5) return { color: "text-emerald-500", icon: <ShieldCheck className="w-4 h-4" />, label: "ÓPTIMO", bg: "bg-emerald-500/10" };
@@ -80,6 +66,10 @@ export function ArchitectureAuditTable() {
     if (score >= 6.0) return { color: "text-amber-500", icon: <AlertTriangle className="w-4 h-4" />, label: "ADVERTENCIA", bg: "bg-amber-500/10" };
     return { color: "text-rose-500", icon: <AlertCircle className="w-4 h-4" />, label: "CRÍTICO", bg: "bg-rose-500/10" };
   };
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [globalSearch, typeFilter, healthFilter]);
 
   if (loading) return <div className="h-48 flex items-center justify-center font-black opacity-40 uppercase tracking-widest">Cargando Mapa de Vistas...</div>;
 
@@ -147,7 +137,7 @@ export function ArchitectureAuditTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredData.length > 0 ? filteredData.map((item, idx) => {
+            {paginatedData.length > 0 ? paginatedData.map((item, idx) => {
               const health = getHealthStyle(item.health);
               return (
                 <motion.tr
@@ -224,12 +214,38 @@ export function ArchitectureAuditTable() {
       </div>
 
       <div className="flex items-center justify-between px-2 pt-2">
-        <div className="flex items-center gap-2">
-          <Info className="w-3.5 h-3.5 text-muted-foreground" />
-          <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">
-            Mostrando {filteredData.length} de {data.length} componentes auditados
-          </span>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Info className="w-3.5 h-3.5 text-muted-foreground" />
+            <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">
+              Mostrando {paginatedData.length} de {filteredData.length} resultados
+            </span>
+          </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="w-8 h-8 rounded-lg border border-border/50 flex items-center justify-center hover:bg-primary/5 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <div className="px-3 h-8 flex items-center justify-center rounded-lg bg-primary/10 border border-primary/20 text-[10px] font-black">
+                {currentPage} / {totalPages}
+              </div>
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="w-8 h-8 rounded-lg border border-border/50 flex items-center justify-center hover:bg-primary/5 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
+
         <div className="flex items-center gap-4">
            <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-emerald-500" />
