@@ -9,8 +9,6 @@ import { createClient } from '@supabase/supabase-js';
 
 export type ProviderType = 'gemini' | 'gpt' | 'qwen' | 'deepseek' | 'kimi';
 
-const DEEPSEEK_DEFAULT_KEY = '';
-
 // Create a minimal client to fetch keys if needed
 // This should only be used on the server side
 const getSupabaseServer = () => {
@@ -43,7 +41,11 @@ export async function getLLMProviderWithUserKey(userId: string, type?: string, f
       }
     }
   }
-  providers.push(getLLMProvider(providerType, initialKey));
+
+  const mainProvider = getLLMProvider(providerType, initialKey);
+  if (initialKey) {
+    providers.push(mainProvider);
+  }
 
   // 2. Add fallbacks from active user keys
   if (userId) {
@@ -64,10 +66,27 @@ export async function getLLMProviderWithUserKey(userId: string, type?: string, f
     }
   }
 
-  // 3. Always add DeepSeek as final fallback ONLY IF we have a key for it
-  const dsKey = process.env.DEEPSEEK_API_KEY || DEEPSEEK_DEFAULT_KEY;
-  if (dsKey && !providers.some(p => p instanceof DeepSeekAdapter)) {
-     providers.push(new DeepSeekAdapter(dsKey));
+  // 3. System Fallback: If no user keys, try to find a global system key in DB
+  if (providers.length === 0) {
+    const supabase = getSupabaseServer();
+    if (supabase) {
+      const { data } = await supabase
+        .from('ai_api_keys')
+        .select('provider, api_key')
+        .is('user_id', null)
+        .eq('is_active', true)
+        .limit(1)
+        .maybeSingle();
+
+      if (data) {
+        providers.push(getLLMProvider(data.provider, data.api_key));
+      }
+    }
+  }
+
+  if (providers.length === 0) {
+    // If still no keys, return a provider that will throw a descriptive error when used
+    return mainProvider;
   }
 
   return new FallbackAdapter(providers);
@@ -79,28 +98,28 @@ export function getLLMProvider(type?: string, apiKey?: string): LLMProvider {
   switch (providerType) {
     case 'gpt':
       return new GPTAdapter(
-        apiKey || process.env.OPENAI_API_KEY || '',
+        apiKey || '',
         process.env.OPENAI_MODEL || 'gpt-4o'
       );
     case 'qwen':
       return new QwenAdapter(
-        apiKey || process.env.QWEN_API_KEY || '',
+        apiKey || '',
         process.env.QWEN_MODEL || 'qwen-turbo'
       );
     case 'deepseek':
       return new DeepSeekAdapter(
-        apiKey || process.env.DEEPSEEK_API_KEY || DEEPSEEK_DEFAULT_KEY,
+        apiKey || '',
         process.env.DEEPSEEK_MODEL || 'deepseek-chat'
       );
     case 'kimi':
       return new KimiAdapter(
-        apiKey || process.env.KIMI_API_KEY || '',
+        apiKey || '',
         process.env.KIMI_MODEL || 'moonshot-v1-8k'
       );
     case 'gemini':
     default:
       return new GeminiAdapter(
-        apiKey || process.env.GEMINI_API_KEY || '',
+        apiKey || '',
         process.env.GEMINI_MODEL || 'gemini-2.0-flash'
       );
   }

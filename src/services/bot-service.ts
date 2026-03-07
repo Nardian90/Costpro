@@ -45,6 +45,13 @@ function isLegalQuery(messages: Message[]): boolean {
   return legalKeywords.some(keyword => lastMessage.includes(keyword));
 }
 
+function isLightQuery(messages: Message[]): boolean {
+  const lastMessage = messages[messages.length - 1]?.content?.toLowerCase() || '';
+  const lightKeywords = ['hola', 'buenos días', 'buenas tardes', 'quien eres', 'qué puedes hacer', 'gracias', 'chau', 'adios'];
+  // If it's very short and contains light keywords, or is just a greeting
+  return lastMessage.length < 50 && lightKeywords.some(k => lastMessage.includes(k));
+}
+
 export const botService = {
   async handleChat(
     supabase: SupabaseClient,
@@ -70,23 +77,28 @@ export const botService = {
       return { text: 'Hola! ¿En qué puedo ayudarte hoy?', metadata: { model: 'default' } };
     }
 
+    const lightQuery = isLightQuery(historyToProcess);
+
     // Optimization: Only load Knowledge Base if the query seems relevant
     let knowledgeBase = '';
-    if (isLegalQuery(historyToProcess)) {
+    if (!lightQuery && isLegalQuery(historyToProcess)) {
       knowledgeBase = await getKnowledgeBaseContext();
     }
 
-    // Compact context representation
-    const viewsContext = VIEW_REGISTRY.map(v => `${v.id}:${v.description.substring(0, 60)}`).join('|');
-    const formsContext = JSON.stringify(AI_FORM_SCHEMAS);
+    // Compact context representation - Only include full context if NOT a light query
+    const viewsContext = lightQuery
+      ? "Responde de forma breve y amable."
+      : VIEW_REGISTRY.map(v => `${v.id}:${v.description.substring(0, 60)}`).join('|');
+
+    const formsContext = lightQuery ? "" : JSON.stringify(AI_FORM_SCHEMAS);
 
     const systemPrompt: Message = {
       role: 'system',
       content: `Darian AI. Tienda:${storeId}. Rol:${userRole}.
-Vistas:${viewsContext}
-Forms:${formsContext}
-${knowledgeBase ? 'KB:' + knowledgeBase : 'KB: No cargada (pregunta específicamente por resoluciones si la necesitas).'}
-Reglas: Actúa siempre con tools si es posible. Solo Tienda:${storeId}.`
+Vista Actual: ${botContext?.currentView || 'unknown'}.
+${lightQuery ? '' : 'Vistas:' + viewsContext + '\nForms:' + formsContext}
+${knowledgeBase ? 'KB:' + knowledgeBase : ''}
+Reglas: ${lightQuery ? 'Eres un asistente amable. No uses tools para saludos.' : 'Actúa siempre con tools si es posible. Solo Tienda:' + storeId + '. Solo ejecuta run_system_health_check si el usuario lo pide explícitamente y está en la vista salud.'}`
     };
 
     let provider: LLMProvider;
@@ -99,7 +111,7 @@ Reglas: Actúa siempre con tools si es posible. Solo Tienda:${storeId}.`
     let currentMessages = [systemPrompt, ...historyToProcess];
     let finalResponse;
     let iterations = 0;
-    const MAX_ITERATIONS = 5;
+    const MAX_ITERATIONS = lightQuery ? 1 : 5;
     const actions: any[] = [];
     const correlationId = crypto.randomUUID();
     const toolLogs: any[] = [];
@@ -116,7 +128,7 @@ Reglas: Actúa siempre con tools si es posible. Solo Tienda:${storeId}.`
       while (retryCount < MAX_RETRIES) {
         try {
           response = await provider.getResponse(currentMessages, {
-            tools: TOOLS,
+            tools: lightQuery ? [] : TOOLS,
             maxTokens: iterations < MAX_ITERATIONS - 1 ? 800 : 2000
           });
           break;
