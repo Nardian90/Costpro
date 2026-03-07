@@ -14,7 +14,7 @@ import {
     TableFooter
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Download, FileSpreadsheet, ChevronRight, ChevronDown, Calendar, Filter } from 'lucide-react';
+import { Download, FileSpreadsheet, ChevronRight, ChevronDown, Calendar, Filter, CreditCard, Banknote, QrCode } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -22,6 +22,7 @@ import { toast } from 'sonner';
 
 export function PivotStatementView() {
     const transactions = useLiveQuery(() => db.bank_statements.toArray());
+    const reconLines = useLiveQuery(() => db.reconciliation_lines.toArray());
     const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
     const [filterType, setFilterType] = useState<'ALL' | 'Cr' | 'Db'>('ALL');
     const [groupBy, setGroupBy] = useState<'day' | 'month' | 'year'>('month');
@@ -38,7 +39,12 @@ export function PivotStatementView() {
             totalCr: number;
             totalDb: number;
             netAmount: number;
-            transactions: BankTransaction[]
+            transactions: BankTransaction[];
+            breakdown: {
+                cash: number;
+                transfer: number;
+                qr: number;
+            }
         }> = {};
 
         filtered.forEach(t => {
@@ -68,7 +74,8 @@ export function PivotStatementView() {
                     totalCr: 0,
                     totalDb: 0,
                     netAmount: 0,
-                    transactions: []
+                    transactions: [],
+                    breakdown: { cash: 0, transfer: 0, qr: 0 }
                 };
             }
 
@@ -78,10 +85,20 @@ export function PivotStatementView() {
             else g.totalDb += t.importe_cents;
             g.netAmount += (t.tipo === 'Cr' ? t.importe_cents : -t.importe_cents);
             g.transactions.push(t);
+
+            // Calculate breakdown from reconLines for this transaction
+            if (reconLines) {
+                const txLines = reconLines.filter(l => l.transaction_ref === t.referencia_origen);
+                txLines.forEach(l => {
+                    if (l.clasificacion === 'Efectivo') g.breakdown.cash += l.importe_linea_cents;
+                    else if (l.clasificacion === 'Transferencia') g.breakdown.transfer += l.importe_linea_cents;
+                    else if (l.clasificacion === 'QR') g.breakdown.qr += l.importe_linea_cents;
+                });
+            }
         });
 
         return Object.values(groups).sort((a, b) => b.key.localeCompare(a.key));
-    }, [transactions, filterType, groupBy]);
+    }, [transactions, reconLines, filterType, groupBy]);
 
     const toggleGroup = (key: string) => {
         setExpandedGroups(prev =>
@@ -228,26 +245,67 @@ export function PivotStatementView() {
                                         </TableCell>
                                     </TableRow>
                                     {expandedGroups.includes(g.key) && (
-                                        <TableRow className="bg-muted/10">
-                                            <TableCell colSpan={6} className="p-0">
-                                                <div className="p-4 border-l-4 border-primary ml-8 my-2 space-y-2">
-                                                    <div className="grid grid-cols-4 text-xs font-black text-muted-foreground uppercase tracking-tighter pb-1 border-b">
-                                                        <span>Fecha</span>
-                                                        <span className="col-span-2">Referencia / Observaciones</span>
-                                                        <span className="text-right">Importe</span>
-                                                    </div>
-                                                    {g.transactions.sort((a,b) => a.fecha.localeCompare(b.fecha)).map(t => (
-                                                        <div key={t.id} className="grid grid-cols-4 text-xs items-center py-1">
-                                                            <span className="font-medium">{formatDate(t.fecha)}</span>
-                                                            <div className="col-span-2 flex flex-col">
-                                                                <span className="font-mono font-bold text-xs">{t.referencia_origen}</span>
-                                                                <span className="text-muted-foreground truncate" title={t.observaciones}>{t.observaciones}</span>
+                                        <TableRow className="bg-muted/5">
+                                            <TableCell colSpan={6} className="p-0 border-b">
+                                                <div className="p-6 space-y-6">
+                                                    {/* Payment Breakdown */}
+                                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                                        <Card className="p-3 bg-green-500/5 border-green-500/10 flex items-center gap-3">
+                                                            <div className="p-2 bg-green-500/20 rounded-lg text-green-600">
+                                                                <CreditCard className="w-4 h-4" />
                                                             </div>
-                                                            <span className={`text-right font-black ${t.tipo === 'Cr' ? 'text-green-500' : 'text-red-500'}`}>
-                                                                {t.tipo === 'Db' ? '-' : ''}{formatCurrency(t.importe_cents)}
-                                                            </span>
+                                                            <div>
+                                                                <p className="text-[10px] font-black uppercase text-green-600/60 leading-none mb-1">Transferencia</p>
+                                                                <p className="text-sm font-black">{formatCurrency(g.breakdown.transfer)}</p>
+                                                            </div>
+                                                        </Card>
+                                                        <Card className="p-3 bg-blue-500/5 border-blue-500/10 flex items-center gap-3">
+                                                            <div className="p-2 bg-blue-500/20 rounded-lg text-blue-600">
+                                                                <Banknote className="w-4 h-4" />
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-[10px] font-black uppercase text-blue-600/60 leading-none mb-1">Efectivo</p>
+                                                                <p className="text-sm font-black">{formatCurrency(g.breakdown.cash)}</p>
+                                                            </div>
+                                                        </Card>
+                                                        <Card className="p-3 bg-purple-500/5 border-purple-500/10 flex items-center gap-3">
+                                                            <div className="p-2 bg-purple-500/20 rounded-lg text-purple-600">
+                                                                <QrCode className="w-4 h-4" />
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-[10px] font-black uppercase text-purple-600/60 leading-none mb-1">QR / Enlace</p>
+                                                                <p className="text-sm font-black">{formatCurrency(g.breakdown.qr)}</p>
+                                                            </div>
+                                                        </Card>
+                                                    </div>
+
+                                                    <div className="space-y-2">
+                                                        <div className="flex items-center gap-2 mb-2">
+                                                            <Calendar className="w-4 h-4 text-primary" />
+                                                            <h4 className="text-xs font-black uppercase tracking-widest text-primary">Detalle de Transacciones</h4>
                                                         </div>
-                                                    ))}
+                                                        <div className="rounded-xl border overflow-hidden bg-background">
+                                                            <div className="grid grid-cols-4 text-[10px] font-black text-muted-foreground uppercase tracking-wider p-3 bg-muted/30 border-b">
+                                                                <span>Fecha</span>
+                                                                <span className="col-span-2">Referencia / Observaciones</span>
+                                                                <span className="text-right">Importe</span>
+                                                            </div>
+                                                            <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
+                                                                {g.transactions.sort((a,b) => a.fecha.localeCompare(b.fecha)).map(t => (
+                                                                    <div key={t.id} className="grid grid-cols-4 text-xs items-center p-3 border-b last:border-0 hover:bg-muted/20 transition-colors">
+                                                                        <span className="font-medium text-[10px]">{formatDate(t.fecha)}</span>
+                                                                        <div className="col-span-2 flex flex-col">
+                                                                            <span className="font-mono font-bold text-[10px] truncate">{t.referencia_origen}</span>
+                                                                            <span className="text-[10px] text-muted-foreground truncate" title={t.observaciones}>{t.observaciones}</span>
+                                                                        </div>
+                                                                        <span className={`text-right font-black ${t.tipo === 'Cr' ? 'text-green-500' : 'text-red-500'}`}>
+                                                                            {t.tipo === 'Db' ? '-' : ''}{formatCurrency(t.importe_cents)}
+                                                                        </span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </TableCell>
                                         </TableRow>

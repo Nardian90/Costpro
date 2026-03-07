@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/dialog';
 
 export function TransactionBreakdown() {
+  const [classificationFilter, setClassificationFilter] = useState<'ALL' | 'Efectivo' | 'Transferencia' | 'QR'>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
   const [editingLine, setEditingLine] = useState<any>(null);
   const [editAmount, setEditAmount] = useState<number>(0);
@@ -45,12 +46,14 @@ export function TransactionBreakdown() {
       const prod = productMap.get(l.product_cod);
       const search = searchTerm.toLowerCase();
 
-      return (
+      const matchesSearch = (
         l.transaction_ref.toLowerCase().includes(search) ||
         l.product_cod.toLowerCase().includes(search) ||
         (prod?.descripcion.toLowerCase().includes(search)) ||
         (tx?.observaciones.toLowerCase().includes(search))
       );
+      const matchesClassification = classificationFilter === "ALL" || l.clasificacion === classificationFilter;
+      return matchesSearch && matchesClassification;
     }).sort((a, b) => b.fecha_operacion.localeCompare(a.fecha_operacion));
   }, [lines, txMap, productMap, searchTerm]);
 
@@ -245,14 +248,26 @@ export function TransactionBreakdown() {
         </div>
 
       <div className="p-4 bg-background/50 border-b flex flex-col md:flex-row justify-between items-center gap-4 rounded-2xl">
-        <div className="relative flex-1 w-full max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por transacción, producto o descripción..."
-            className="pl-10 h-10 font-medium"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="flex flex-1 w-full gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por transacción, producto o descripción..."
+              className="pl-10 h-10 font-medium"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <select
+            value={classificationFilter}
+            onChange={(e) => setClassificationFilter(e.target.value as any)}
+            className="h-10 text-xs font-bold border rounded-md bg-background px-3 outline-none min-w-[140px] uppercase shadow-sm border-primary/10"
+          >
+            <option value="ALL">TODOS LOS TIPOS</option>
+            <option value="Efectivo">EFECTIVO</option>
+            <option value="Transferencia">TRANSFERENCIA</option>
+            <option value="QR">QR</option>
+          </select>
         </div>
         <div className="flex items-center gap-4">
             <Badge variant="outline" className="h-10 px-4 font-black text-xs gap-2 bg-background/50 border-primary/20">
