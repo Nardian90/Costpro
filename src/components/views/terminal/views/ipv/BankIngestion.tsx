@@ -2,15 +2,13 @@
 
 import React, { useState, useCallback } from 'react';
 import { BaseModal } from "@/components/ui/BaseModal";
-import { motion } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
 import { db, type BankTransaction } from '@/lib/dexie';
 import { generateHash } from '@/lib/ipv/engine';
 import { parseBandecTxt } from '@/lib/ipv/bandecParser';
 import { extractCommission, standardizeDate } from '@/lib/ipv/utils';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { FileUp, Download, Info, FileSpreadsheet, FileText, Upload, HelpCircle, Trash2, RefreshCw, Plus } from 'lucide-react';
+import { Upload, RotateCcw, FileUp, Download, Info, FileSpreadsheet, FileText, HelpCircle, Trash2, RefreshCw, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
@@ -36,14 +34,14 @@ export function BankIngestion() {
       const extension = file.name.split('.').pop()?.toLowerCase();
       if (extension === 'csv') {
         Papa.parse(file, {
-          header: true, skipEmptyLines: true,
+          header: true,
+          skipEmptyLines: true,
           complete: async (results) => {
-            const data = results.data as any[];
-            if (data.length > 0) {
-                const headers = Object.keys(data[0]).map(h => h.toLowerCase());
-                const isCatalog = headers.includes('precio') || headers.includes('precio_cents') || headers.includes('cod');
-                if (isCatalog) await processCatalogData(data);
-                else await processBankData(data);
+            if (results.data.length > 0) {
+              const headers = Object.keys(results.data[0]).map(h => h.toLowerCase());
+              const isCatalog = headers.includes('precio') || headers.includes('precio_cents') || headers.includes('cod');
+              if (isCatalog) await processCatalogData(results.data);
+              else await processBankData(results.data);
             }
           }
         });
@@ -68,12 +66,7 @@ export function BankIngestion() {
           const text = e.target?.result as string;
           const transactions = await parseBandecTxt(text);
           if (transactions.length > 0) {
-            let imported = 0;
-            for (const tx of transactions) {
-              try { await db.bank_statements.put(tx); imported++; }
-              catch (error) { console.error('Error TXT:', error); }
-            }
-            toast.success(`BANDEC TXT: ${imported} procesados`);
+            await processBankData(transactions);
           } else toast.error('No se encontraron transacciones');
         };
         reader.readAsText(file);
@@ -115,39 +108,6 @@ export function BankIngestion() {
     }, 'destructive');
   };
 
-  const downloadTemplate = (format: 'csv' | 'xlsx') => {
-    const headers = ['Fecha', 'Ref_Corriente', 'Ref_Origen', 'Observaciones', 'Importe', 'Tipo'];
-    const sampleData = [{ Fecha: '01/08/2025', Ref_Corriente: 'REF1', Ref_Origen: 'ORIG1', Observaciones: 'OBS', Importe: '100.00', Tipo: 'Cr' }];
-    if (format === 'csv') {
-      const csv = Papa.unparse({ fields: headers, data: sampleData });
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url; link.download = 'plantilla.csv'; link.click();
-    } else {
-      const ws = XLSX.utils.json_to_sheet(sampleData, { header: headers });
-      const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Template');
-      XLSX.writeFile(wb, 'plantilla.xlsx');
-    }
-  };
-
-  const exportCatalog = async (format: 'csv' | 'xlsx') => {
-    const products = await db.products.toArray();
-    if (products.length === 0) { toast.error('Nada que exportar'); return; }
-    const data = products.map(({ created_at, updated_at, ...p }) => p);
-    if (format === 'csv') {
-        const csv = Papa.unparse(data);
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url; link.download = 'catalogo.csv'; link.click();
-    } else {
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Productos');
-        XLSX.writeFile(wb, 'catalogo.xlsx');
-    }
-  };
-
   const processCatalogData = async (data: any[]) => {
     try {
         let imported = 0;
@@ -170,32 +130,106 @@ export function BankIngestion() {
 
   const processBankData = async (data: any[]) => {
     let imported = 0;
+    let errorsCount = 0;
+
+    const lastTx = await db.bank_statements.orderBy('fecha').last();
+    const lastDate = lastTx ? lastTx.fecha : null;
+
     for (const row of data) {
       try {
-        const fecha = standardizeDate(row['Fecha'] || row['fecha']);
-        const ref_origen = String(row['Ref_Origen'] || row['referencia_origen'] || '').trim();
-        const importe = parseFloat(String(row['Importe'] || 0).replace(',', ''));
-        if (!fecha || !ref_origen) continue;
+        const fecha = row.fecha || standardizeDate(row['Fecha'] || row['fecha']);
+        const ref_origen_raw = String(row.referencia_origen || row['Ref_Origen'] || row['referencia_origen'] || '').trim();
+        const importe = row.importe_cents || parseFloat(String(row['Importe'] || 0).replace(',', ''));
+
+        if (!fecha || !ref_origen_raw) continue;
+
+        if (lastDate && fecha <= lastDate) {
+            await db.ingestion_errors.add({
+                id: uuidv4(),
+                fecha,
+                referencia_corta: ref_origen_raw,
+                referencia_origen: ref_origen_raw,
+                observaciones: String(row.observaciones || row['Observaciones'] || '').trim(),
+                importe_cents: importe,
+                tipo: importe < 0 ? 'Db' : 'Cr',
+                error_note: `Fecha no íntegra: ${fecha} <= ${lastDate}`,
+                raw_data: row,
+                created_at: new Date().toISOString()
+            });
+            errorsCount++;
+            continue;
+        }
+
+        let finalRef = ref_origen_raw;
+        let exists = await db.bank_statements.get(finalRef);
+        if (exists) {
+            let counter = 1;
+            const originalRef = finalRef;
+            while (exists) {
+                finalRef = `${originalRef}-${counter}`;
+                exists = await db.bank_statements.get(finalRef);
+                counter++;
+            }
+        }
+
         const tx: BankTransaction = {
-          id: uuidv4(), fecha, referencia_corta: row['Ref_Corriente'] || ref_origen, referencia_origen: ref_origen,
-          observaciones: String(row['Observaciones'] || '').trim(), importe_cents: importe, comision_cents: 0,
-          importe_venta_cents: importe, tipo: importe < 0 ? 'Db' : 'Cr', estado_conciliacion: 'PENDIENTE',
-          excluido: false, created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
-          ingestion_hash: await generateHash(`${ref_origen}-${fecha}-${importe}`)
+          id: uuidv4(),
+          fecha,
+          referencia_corta: row.referencia_corta || row['Ref_Corriente'] || finalRef,
+          referencia_origen: finalRef,
+          observaciones: String(row.observaciones || row['Observaciones'] || '').trim(),
+          importe_cents: importe,
+          comision_cents: row.comision_cents || 0,
+          importe_venta_cents: row.importe_venta_cents || importe,
+          tipo: row.tipo || (importe < 0 ? 'Db' : 'Cr'),
+          estado_conciliacion: 'PENDIENTE',
+          excluido: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          ingestion_hash: await generateHash(`${finalRef}-${fecha}-${importe}`)
         };
-        await db.bank_statements.put(tx);
+
+        await db.bank_statements.add(tx);
         imported++;
-      } catch (error) { console.error('Error banco:', error); }
+      } catch (error: any) {
+          console.error('Error banco:', error);
+          try {
+              await db.ingestion_errors.add({
+                  id: uuidv4(),
+                  fecha: row.fecha || 'N/A',
+                  referencia_corta: 'N/A',
+                  referencia_origen: 'N/A',
+                  observaciones: 'Error durante el procesamiento',
+                  importe_cents: 0,
+                  tipo: 'Cr',
+                  error_note: error.message || 'Error desconocido',
+                  raw_data: row,
+                  created_at: new Date().toISOString()
+              });
+          } catch (e) {}
+          errorsCount++;
+      }
     }
-    toast.success(`${imported} transacciones procesadas`);
+
+    if (imported > 0) toast.success(`${imported} transacciones procesadas`);
+    if (errorsCount > 0) toast.error(`${errorsCount} transacciones con errores`);
   };
 
   const loadDemoStatement = async () => {
       const prods = await db.products.toArray();
       if (prods.length === 0) { toast.error('Carga catálogo primero'); return; }
+
+      const lastTx = await db.bank_statements.orderBy('fecha').last();
+      let targetDate = new Date().toISOString().split('T')[0];
+      if (lastTx && targetDate <= lastTx.fecha) {
+          const d = new Date(lastTx.fecha);
+          d.setDate(d.getDate() + 1);
+          targetDate = d.toISOString().split('T')[0];
+      }
+
       const ref = `VB${Math.random().toString(36).substring(7).toUpperCase()}`;
       const demo: BankTransaction = {
-          id: uuidv4(), fecha: new Date().toISOString().split('T')[0], referencia_corta: ref, referencia_origen: ref,
+          id: uuidv4(), fecha: targetDate, referencia_corta: ref, referencia_origen: ref,
           observaciones: 'PAGO DEMO', importe_cents: prods[0].precio_cents, tipo: 'Cr',
           estado_conciliacion: 'PENDIENTE', created_at: new Date().toISOString(), ingestion_hash: 'DEMO'
       };
