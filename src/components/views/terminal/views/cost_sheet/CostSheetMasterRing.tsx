@@ -138,7 +138,7 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
               e.stopPropagation();
               onPriceAdjust?.(-1);
             }}
-            className="p-2 rounded-xl bg-muted dark:bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all active:scale-95 border border-transparent hover:border-primary/20"
+            className="h-11 w-11 flex items-center justify-center shrink-0 rounded-xl bg-muted dark:bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all active:scale-95 border border-transparent hover:border-primary/20"
           >
             <Minus className="w-4 h-4" />
           </button>
@@ -159,7 +159,7 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
               e.stopPropagation();
               onPriceAdjust?.(1);
             }}
-            className="p-2 rounded-xl bg-muted dark:bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all active:scale-95 border border-transparent hover:border-primary/20"
+            className="h-11 w-11 flex items-center justify-center shrink-0 rounded-xl bg-muted dark:bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all active:scale-95 border border-transparent hover:border-primary/20"
           >
             <Plus className="w-4 h-4" />
           </button>
@@ -167,7 +167,7 @@ export const CostSheetMasterRing: React.FC<CostSheetMasterRingProps> = ({
       )}
 
       {/* Primary KPI Breakdown */}
-      <div className="flex flex-row justify-between items-start w-full px-4 sm:px-8 gap-4">
+      <div className="flex flex-row justify-between items-start w-full px-4 sm:px-8 gap-2 sm:gap-4">
         <div className="flex flex-col min-w-0">
             <span className="text-xs sm:text-xs font-bold uppercase tracking-[0.1em] sm:tracking-[0.2em] text-primary/70 mb-2 truncate">Costo Bruto</span>
             <div className="flex items-baseline gap-1">
