@@ -38,7 +38,7 @@ export function BankIngestion() {
           skipEmptyLines: true,
           complete: async (results) => {
             if (results.data.length > 0) {
-              const headers = Object.keys(results.data[0]).map(h => h.toLowerCase());
+              const headers = Object.keys(results.data[0] as object).map(h => h.toLowerCase());
               const isCatalog = headers.includes('precio') || headers.includes('precio_cents') || headers.includes('cod');
               if (isCatalog) await processCatalogData(results.data);
               else await processBankData(results.data);
@@ -53,7 +53,7 @@ export function BankIngestion() {
           const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
           const jsonData = XLSX.utils.sheet_to_json(firstSheet) as any[];
           if (jsonData.length > 0) {
-              const headers = Object.keys(jsonData[0]).map(h => h.toLowerCase());
+              const headers = Object.keys(jsonData[0] as object).map(h => h.toLowerCase());
               const isCatalog = headers.includes('precio') || headers.includes('precio_cents') || headers.includes('cod');
               if (isCatalog) await processCatalogData(jsonData);
               else await processBankData(jsonData);
