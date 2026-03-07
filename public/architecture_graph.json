@@ -6,7 +6,7 @@
       "type": "component",
       "path": "src/components/ThemeToggle.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 4,
@@ -18,7 +18,10 @@
       "dependencies": [
         "utils",
         "dropdown-menu"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico ThemeToggle encargado de soportar la funcionalidad operativa del módulo components.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "SplashScreen",
@@ -26,7 +29,7 @@
       "type": "component",
       "path": "src/components/SplashScreen.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -37,7 +40,10 @@
       },
       "dependencies": [
         "CostProLogo"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico SplashScreen encargado de soportar la funcionalidad operativa del módulo components.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostProLogo",
@@ -45,7 +51,7 @@
       "type": "component",
       "path": "src/components/CostProLogo.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 3,
@@ -54,7 +60,10 @@
         "cyclomaticComplexity": 5,
         "couplingScore": 1.2
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico CostProLogo encargado de soportar la funcionalidad operativa del módulo components.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "ServiceWorkerRegister",
@@ -62,7 +71,7 @@
       "type": "component",
       "path": "src/components/ServiceWorkerRegister.tsx",
       "health": 9.5,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -71,7 +80,10 @@
         "cyclomaticComplexity": 4,
         "couplingScore": 0.2
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico ServiceWorkerRegister encargado de soportar la funcionalidad operativa del módulo components.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "theme-provider",
@@ -79,7 +91,7 @@
       "type": "component",
       "path": "src/components/theme-provider.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -88,7 +100,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.1
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico theme-provider encargado de soportar la funcionalidad operativa del módulo components.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "IntelligentThemeHandler",
@@ -96,7 +111,7 @@
       "type": "component",
       "path": "src/components/IntelligentThemeHandler.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -105,7 +120,10 @@
         "cyclomaticComplexity": 12,
         "couplingScore": 0.6
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico IntelligentThemeHandler encargado de soportar la funcionalidad operativa del módulo components.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "GlobalSessionManager",
@@ -113,7 +131,7 @@
       "type": "component",
       "path": "src/components/GlobalSessionManager.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -122,7 +140,10 @@
         "cyclomaticComplexity": 3,
         "couplingScore": 0.2
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico GlobalSessionManager encargado de soportar la funcionalidad operativa del módulo components.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "TerminalShell",
@@ -148,7 +169,10 @@
         "CostProLoader",
         "Sidebar",
         "ChatBot"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico TerminalShell encargado de soportar la funcionalidad operativa del módulo views.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "Sidebar",
@@ -156,7 +180,7 @@
       "type": "component",
       "path": "src/components/views/terminal/Sidebar.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -168,7 +192,10 @@
       "dependencies": [
         "utils",
         "CostProLogo"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico Sidebar encargado de soportar la funcionalidad operativa del módulo terminal.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "Header",
@@ -176,7 +203,7 @@
       "type": "component",
       "path": "src/components/views/terminal/Header.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -192,7 +219,10 @@
         "SyncConflictModal",
         "ThemeToggle",
         "popover"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico Header encargado de soportar la funcionalidad operativa del módulo terminal.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "StockHistoryView",
@@ -200,7 +230,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/stock_history/StockHistoryView.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -214,7 +244,10 @@
         "ActionMenu",
         "utils",
         "QueryInspector"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico StockHistoryView encargado de soportar la funcionalidad operativa del módulo stock_history.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CashClosureView",
@@ -234,7 +267,10 @@
       "dependencies": [
         "utils",
         "ActionMenu"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CashClosureView encargado de soportar la funcionalidad operativa del módulo cash_closure.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "StoresManagementView",
@@ -242,7 +278,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/stores/StoresManagementView.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -257,7 +293,10 @@
         "useStoresView",
         "utils",
         "StoreModals"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico StoresManagementView encargado de soportar la funcionalidad operativa del módulo stores.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "useStoresView",
@@ -265,7 +304,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/stores/useStoresView.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -276,7 +315,10 @@
       },
       "dependencies": [
         "logger"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico useStoresView encargado de soportar la funcionalidad operativa del módulo stores.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "StoreModals",
@@ -300,7 +342,10 @@
         "supabaseClient",
         "BaseModal",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico StoreModals encargado de soportar la funcionalidad operativa del módulo stores.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "MasteryDashboard",
@@ -308,7 +353,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/academy/MasteryDashboard.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -321,7 +366,10 @@
         "progress",
         "card",
         "supabaseClient"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico MasteryDashboard encargado de soportar la funcionalidad operativa del módulo academy.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "AcademyView",
@@ -329,7 +377,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/academy/AcademyView.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -343,7 +391,10 @@
         "Flashcard",
         "CostProLoader",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico AcademyView encargado de soportar la funcionalidad operativa del módulo academy.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "Flashcard",
@@ -351,7 +402,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/academy/Flashcard.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -364,7 +415,10 @@
         "utils",
         "card",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico Flashcard encargado de soportar la funcionalidad operativa del módulo academy.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "HelpView",
@@ -401,7 +455,10 @@
         "StoreSkuDiagram",
         "DarianDiagram",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico HelpView encargado de soportar la funcionalidad operativa del módulo help.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "IpvFlowDiagram",
@@ -409,7 +466,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/help/help/IpvFlowDiagram.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -418,7 +475,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico IpvFlowDiagram encargado de soportar la funcionalidad operativa del módulo help.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostFlowDiagram",
@@ -426,7 +486,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/help/help/CostFlowDiagram.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -435,7 +495,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico CostFlowDiagram encargado de soportar la funcionalidad operativa del módulo help.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "InventoryAdjustmentFlowDiagram",
@@ -443,7 +506,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/help/help/InventoryAdjustmentFlowDiagram.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -452,7 +515,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico InventoryAdjustmentFlowDiagram encargado de soportar la funcionalidad operativa del módulo help.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "DarianDiagram",
@@ -460,7 +526,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/help/help/DarianDiagram.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -469,7 +535,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico DarianDiagram encargado de soportar la funcionalidad operativa del módulo help.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "UserFlowDiagram",
@@ -477,7 +546,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/help/help/UserFlowDiagram.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -486,7 +555,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.2
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico UserFlowDiagram encargado de soportar la funcionalidad operativa del módulo help.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "InventoryFlowDiagram",
@@ -494,7 +566,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/help/help/InventoryFlowDiagram.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -503,7 +575,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico InventoryFlowDiagram encargado de soportar la funcionalidad operativa del módulo help.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "StickyCartFlowDiagram",
@@ -511,7 +586,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/help/help/StickyCartFlowDiagram.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -520,7 +595,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.4
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico StickyCartFlowDiagram encargado de soportar la funcionalidad operativa del módulo help.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "MobileFlowDiagram",
@@ -528,7 +606,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/help/help/MobileFlowDiagram.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -537,7 +615,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.2
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico MobileFlowDiagram encargado de soportar la funcionalidad operativa del módulo help.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "SecurityFlowDiagram",
@@ -545,7 +626,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/help/help/SecurityFlowDiagram.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -554,7 +635,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico SecurityFlowDiagram encargado de soportar la funcionalidad operativa del módulo help.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "MobilePosDiagram",
@@ -562,7 +646,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/help/help/MobilePosDiagram.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -571,7 +655,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.4
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico MobilePosDiagram encargado de soportar la funcionalidad operativa del módulo help.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "StoreSkuDiagram",
@@ -579,7 +666,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/help/help/StoreSkuDiagram.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -588,7 +675,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.4
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico StoreSkuDiagram encargado de soportar la funcionalidad operativa del módulo help.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "QuickModeMassiveDiagram",
@@ -596,7 +686,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/help/help/QuickModeMassiveDiagram.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -605,7 +695,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico QuickModeMassiveDiagram encargado de soportar la funcionalidad operativa del módulo help.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "RolesDiagram",
@@ -613,7 +706,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/help/help/RolesDiagram.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -622,7 +715,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico RolesDiagram encargado de soportar la funcionalidad operativa del módulo help.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CashFlowDiagram",
@@ -630,7 +726,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/help/help/CashFlowDiagram.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -639,7 +735,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.2
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico CashFlowDiagram encargado de soportar la funcionalidad operativa del módulo help.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "KidsOnboarding",
@@ -647,7 +746,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/help/help/KidsOnboarding.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -656,7 +755,10 @@
         "cyclomaticComplexity": 2,
         "couplingScore": 0.8
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico KidsOnboarding encargado de soportar la funcionalidad operativa del módulo help.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "SalesFlowDiagram",
@@ -664,7 +766,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/help/help/SalesFlowDiagram.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -673,7 +775,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.4
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico SalesFlowDiagram encargado de soportar la funcionalidad operativa del módulo help.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "OfflineSyncDiagram",
@@ -681,7 +786,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/help/help/OfflineSyncDiagram.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -690,7 +795,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico OfflineSyncDiagram encargado de soportar la funcionalidad operativa del módulo help.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "TaxCalculationModal",
@@ -698,7 +806,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/sales/TaxCalculationModal.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -710,7 +818,10 @@
       "dependencies": [
         "dialog",
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico TaxCalculationModal encargado de soportar la funcionalidad operativa del módulo sales.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "useSalesHistoryView",
@@ -718,7 +829,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/sales/useSalesHistoryView.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -727,7 +838,10 @@
         "cyclomaticComplexity": 13,
         "couplingScore": 1.0
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico useSalesHistoryView encargado de soportar la funcionalidad operativa del módulo sales.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "SalesHistoryView",
@@ -735,7 +849,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/sales/SalesHistoryView.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -752,7 +866,10 @@
         "useSalesHistoryView",
         "utils",
         "StateRenderer"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico SalesHistoryView encargado de soportar la funcionalidad operativa del módulo sales.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "TransactionDetailsModal",
@@ -760,7 +877,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/sales/TransactionDetailsModal.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -775,7 +892,10 @@
         "supabaseClient",
         "utils",
         "BaseModal"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico TransactionDetailsModal encargado de soportar la funcionalidad operativa del módulo sales.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "StickyCartSummary",
@@ -783,7 +903,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/pos/StickyCartSummary.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -794,7 +914,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico StickyCartSummary encargado de soportar la funcionalidad operativa del módulo pos.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "POSView",
@@ -830,7 +953,10 @@
         "index",
         "POSTableView",
         "POSCart"
-      ]
+      ],
+      "business_logic": "Interfaz de venta rápida diseñada para la eficiencia operativa. Soporta múltiples métodos de pago y descuentos, descontando automáticamente el inventario en tiempo real.",
+      "is_documented": true,
+      "documentation_quality": 10.0
     },
     {
       "id": "POSTableView",
@@ -838,7 +964,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/pos/POSTableView.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -850,7 +976,10 @@
       "dependencies": [
         "utils",
         "ProductImage"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico POSTableView encargado de soportar la funcionalidad operativa del módulo pos.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "POSCart",
@@ -873,7 +1002,10 @@
         "utils",
         "CostProLoader",
         "BaseModal"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico POSCart encargado de soportar la funcionalidad operativa del módulo pos.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "usePOSView",
@@ -881,7 +1013,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/pos/usePOSView.ts",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -893,7 +1025,10 @@
       "dependencies": [
         "utils",
         "logger"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico usePOSView encargado de soportar la funcionalidad operativa del módulo pos.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "ProductReceptionView",
@@ -917,7 +1052,10 @@
         "ActionMenu",
         "SecurityScrollContainer",
         "BaseModal"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico ProductReceptionView encargado de soportar la funcionalidad operativa del módulo inventory.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "InventoryTableView",
@@ -925,7 +1063,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/inventory/InventoryTableView.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -938,7 +1076,10 @@
         "utils",
         "CostProLoader",
         "ProductImage"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico InventoryTableView encargado de soportar la funcionalidad operativa del módulo inventory.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "InventoryView",
@@ -946,7 +1087,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/inventory/InventoryView.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -967,7 +1108,10 @@
         "index",
         "InventoryCardView",
         "ProductReceptionView"
-      ]
+      ],
+      "business_logic": "Panel de control de existencias. Proporciona visibilidad total sobre el stock actual, costos acumulados y alertas de reposición para evitar quiebres de inventario.",
+      "is_documented": true,
+      "documentation_quality": 10.0
     },
     {
       "id": "InventoryAdjustmentModal",
@@ -975,7 +1119,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/inventory/InventoryAdjustmentModal.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -988,7 +1132,10 @@
         "drawer",
         "inventory-logic",
         "utils"
-      ]
+      ],
+      "business_logic": "Controla las desviaciones de inventario. Cada ajuste requiere una justificación que se audita automáticamente para prevenir mermas no autorizadas o fraudes.",
+      "is_documented": true,
+      "documentation_quality": 10.0
     },
     {
       "id": "InventoryAdjustmentsView",
@@ -996,7 +1143,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/inventory/InventoryAdjustmentsView.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -1010,7 +1157,10 @@
         "ActionMenu",
         "utils",
         "QueryInspector"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico InventoryAdjustmentsView encargado de soportar la funcionalidad operativa del módulo inventory.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "InventoryCardView",
@@ -1018,7 +1168,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/inventory/InventoryCardView.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1031,7 +1181,10 @@
         "utils",
         "CostProLoader",
         "index"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico InventoryCardView encargado de soportar la funcionalidad operativa del módulo inventory.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "IngestionErrorsTable",
@@ -1039,7 +1192,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/ipv/IngestionErrorsTable.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1057,7 +1210,10 @@
         "engine",
         "utils",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico IngestionErrorsTable encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "IncomeReceiptPreview",
@@ -1065,7 +1221,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/ipv/IncomeReceiptPreview.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1077,7 +1233,10 @@
       "dependencies": [
         "utils",
         "card"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico IncomeReceiptPreview encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "IPVRightSidebar",
@@ -1085,7 +1244,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/ipv/IPVRightSidebar.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1097,7 +1256,10 @@
       "dependencies": [
         "tooltip",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico IPVRightSidebar encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "PivotStatementView",
@@ -1120,7 +1282,10 @@
         "table",
         "utils",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico PivotStatementView encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "IPVHelpDialog",
@@ -1128,7 +1293,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/ipv/IPVHelpDialog.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1143,7 +1308,10 @@
         "dialog",
         "badge",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico IPVHelpDialog encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "IPVView",
@@ -1191,7 +1359,10 @@
         "tabs",
         "engine",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico IPVView encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "MatchingSimulation",
@@ -1217,7 +1388,10 @@
         "engine",
         "utils",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico MatchingSimulation encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "ManualReconciliationView",
@@ -1243,7 +1417,10 @@
         "engine",
         "utils",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico ManualReconciliationView encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "IPVPreviewModal",
@@ -1251,7 +1428,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/ipv/IPVPreviewModal.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1270,7 +1447,10 @@
         "badge",
         "utils",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico IPVPreviewModal encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "MatchingRulesEditor",
@@ -1294,7 +1474,10 @@
         "card",
         "label",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico MatchingRulesEditor encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "TransactionBreakdown",
@@ -1319,7 +1502,10 @@
         "dialog",
         "utils",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico TransactionBreakdown encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "TransferQRReportView",
@@ -1327,7 +1513,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/ipv/TransferQRReportView.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1346,7 +1532,10 @@
         "supabaseClient",
         "utils",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico TransferQRReportView encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "IPVReportView",
@@ -1374,7 +1563,10 @@
         "utils",
         "BaseModal",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico IPVReportView encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "IPVControlPanel",
@@ -1382,7 +1574,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/ipv/IPVControlPanel.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1398,7 +1590,10 @@
         "backup",
         "badge",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico IPVControlPanel encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CatalogTable",
@@ -1431,7 +1626,10 @@
         "utils",
         "BaseModal",
         "button"
-      ]
+      ],
+      "business_logic": "El cerebro de los productos. Centraliza el costo unitario y el precio de venta sugerido, asegurando que todos los puntos de venta operen con márgenes unificados.",
+      "is_documented": true,
+      "documentation_quality": 10.0
     },
     {
       "id": "TransactionTable",
@@ -1465,7 +1663,10 @@
         "utils",
         "BaseModal",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico TransactionTable encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "IPVInstitutionalDashboard",
@@ -1473,7 +1674,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/ipv/IPVInstitutionalDashboard.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1489,7 +1690,10 @@
         "calculations",
         "utils",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico IPVInstitutionalDashboard encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "IPVReportsDropdown",
@@ -1497,7 +1701,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/ipv/IPVReportsDropdown.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1510,7 +1714,10 @@
         "utils",
         "dropdown-menu",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico IPVReportsDropdown encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "BankIngestion",
@@ -1535,7 +1742,10 @@
         "engine",
         "BaseModal",
         "button"
-      ]
+      ],
+      "business_logic": "Punto de entrada para la digitalización de la economía. Transforma estados de cuenta bancarios en registros contables, eliminando errores manuales en la conciliación de pagos QR y transferencias.",
+      "is_documented": true,
+      "documentation_quality": 10.0
     },
     {
       "id": "IncomeReceiptSection",
@@ -1543,7 +1753,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/ipv/IncomeReceiptSection.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1563,7 +1773,10 @@
         "utils",
         "CostProLoader",
         "button"
-      ]
+      ],
+      "business_logic": "Garantiza la transparencia fiscal. Genera el Modelo SC-3-01, documento legal indispensable para la declaración de ingresos ante las autoridades pertinentes.",
+      "is_documented": true,
+      "documentation_quality": 10.0
     },
     {
       "id": "CostSheetQuickMode",
@@ -1571,7 +1784,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetQuickMode.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1584,7 +1797,10 @@
         "select",
         "input",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetQuickMode encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "FormulaBuilder",
@@ -1592,7 +1808,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/FormulaBuilder.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1606,7 +1822,10 @@
         "tabs",
         "HorizontalScroll",
         "scroll-area"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico FormulaBuilder encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetSignature",
@@ -1614,7 +1833,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetSignature.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1623,7 +1842,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.3
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetSignature encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetCalculator",
@@ -1642,7 +1864,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetCalculator encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetHeaderEditor",
@@ -1650,7 +1875,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetHeaderEditor.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -1664,7 +1889,10 @@
         "card",
         "label",
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetHeaderEditor encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "ProductInventoryPicker",
@@ -1672,7 +1900,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/ProductInventoryPicker.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1688,7 +1916,10 @@
         "index",
         "utils",
         "BaseModal"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico ProductInventoryPicker encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "FormulaEditor",
@@ -1696,7 +1927,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/FormulaEditor.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -1711,7 +1942,10 @@
         "dialog",
         "utils",
         "popover"
-      ]
+      ],
+      "business_logic": "Permite la personalización de algoritmos de formación de precios. Es la herramienta para directivos para ajustar márgenes de contribución y coeficientes de gastos indirectos sin intervención técnica.",
+      "is_documented": true,
+      "documentation_quality": 10.0
     },
     {
       "id": "CostSheetBody",
@@ -1719,7 +1953,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetBody.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1730,7 +1964,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetBody encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetGenerateDropdown",
@@ -1738,7 +1975,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetGenerateDropdown.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1749,7 +1986,10 @@
       },
       "dependencies": [
         "dropdown-menu"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetGenerateDropdown encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetInteractiveTable",
@@ -1777,7 +2017,10 @@
         "select",
         "button",
         "popover"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetInteractiveTable encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetAnnexEditor",
@@ -1801,7 +2044,10 @@
         "ViewSwitcher",
         "table",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetAnnexEditor encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetTemplateExplorer",
@@ -1836,7 +2082,10 @@
         "template-repair",
         "costpro-ejemplo",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetTemplateExplorer encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetNav",
@@ -1844,7 +2093,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetNav.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1861,7 +2110,10 @@
         "ActionMenu",
         "utils",
         "CostSheetFCDropdown"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetNav encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetSummary",
@@ -1883,7 +2135,10 @@
         "slider",
         "utils",
         "HealthBattery"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetSummary encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetOptionsDropdown",
@@ -1891,7 +2146,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetOptionsDropdown.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1902,7 +2157,10 @@
       },
       "dependencies": [
         "dropdown-menu"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetOptionsDropdown encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetAuditView",
@@ -1910,7 +2168,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetAuditView.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1926,7 +2184,10 @@
         "badge",
         "utils",
         "CostSheetAuditLog"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetAuditView encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetHelpDropdown",
@@ -1934,7 +2195,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetHelpDropdown.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1945,7 +2206,10 @@
       },
       "dependencies": [
         "dropdown-menu"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetHelpDropdown encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetForm",
@@ -1968,7 +2232,10 @@
         "label",
         "utils",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetForm encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetMassiveGenerator",
@@ -1999,7 +2266,10 @@
         "utils",
         "CostProLoader",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetMassiveGenerator encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "DarianEditor",
@@ -2007,7 +2277,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/DarianEditor.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -2018,7 +2288,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico DarianEditor encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetSidePanel",
@@ -2039,7 +2312,10 @@
         "utils",
         "CostSheetCalculator",
         "DarianEditor"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetSidePanel encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetBottomNav",
@@ -2047,7 +2323,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetBottomNav.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2059,7 +2335,10 @@
       "dependencies": [
         "utils",
         "dropdown-menu"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetBottomNav encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetAnnexes",
@@ -2067,7 +2346,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetAnnexes.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2078,7 +2357,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetAnnexes encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "HealthBattery",
@@ -2086,7 +2368,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/HealthBattery.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2097,7 +2379,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico HealthBattery encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetExportModal",
@@ -2105,7 +2390,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetExportModal.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -2121,7 +2406,10 @@
         "label",
         "dialog",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetExportModal encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetSectionActionsPanel",
@@ -2129,7 +2417,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetSectionActionsPanel.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -2142,7 +2430,10 @@
         "sheet",
         "utils",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetSectionActionsPanel encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetFormulaGuide",
@@ -2150,7 +2441,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetFormulaGuide.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -2161,7 +2452,10 @@
       },
       "dependencies": [
         "accordion"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetFormulaGuide encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetHeader",
@@ -2169,7 +2463,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetHeader.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2180,7 +2474,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetHeader encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetBanner",
@@ -2188,7 +2485,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetBanner.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -2201,7 +2498,10 @@
         "ThemeToggle",
         "CostSheetModeDropdown",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetBanner encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetHelpPanel",
@@ -2209,7 +2509,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetHelpPanel.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2221,7 +2521,10 @@
       "dependencies": [
         "utils",
         "CostSheetFormulaGuide"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetHelpPanel encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetNarrative",
@@ -2229,7 +2532,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetNarrative.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2240,7 +2543,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetNarrative encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetSignatureEditor",
@@ -2248,7 +2554,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetSignatureEditor.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -2259,7 +2565,10 @@
       },
       "dependencies": [
         "input"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetSignatureEditor encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetView",
@@ -2308,7 +2617,10 @@
         "CostSheetNarrative",
         "CostSheetHeaderEditor",
         "CostSheetPreview"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetView encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CircularProgress",
@@ -2316,7 +2628,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CircularProgress.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2327,7 +2639,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CircularProgress encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetPreview",
@@ -2335,7 +2650,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetPreview.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2350,7 +2665,10 @@
         "CostSheetHeader",
         "SecurityScrollContainer",
         "CostSheetBody"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetPreview encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetSidebarNav",
@@ -2358,7 +2676,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetSidebarNav.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -2371,7 +2689,10 @@
         "sheet",
         "utils",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetSidebarNav encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetWizard",
@@ -2379,7 +2700,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetWizard.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2396,7 +2717,10 @@
         "CostSheetSidebarNav",
         "CostSheetHeaderEditor",
         "button"
-      ]
+      ],
+      "business_logic": "Facilita la creación estandarizada de fichas de costo. Automatiza la aplicación de la Resolución 12/2007 para asegurar que todos los cálculos de precios cumplan con la normativa legal vigente.",
+      "is_documented": true,
+      "documentation_quality": 10.0
     },
     {
       "id": "CostSheetActionsPanel",
@@ -2418,7 +2742,10 @@
         "ViewSwitcher",
         "CostSheetModeDropdown",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetActionsPanel encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetModeDropdown",
@@ -2426,7 +2753,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetModeDropdown.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 4,
@@ -2438,7 +2765,10 @@
       "dependencies": [
         "utils",
         "dropdown-menu"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetModeDropdown encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetMasterRing",
@@ -2446,7 +2776,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetMasterRing.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2458,7 +2788,10 @@
       "dependencies": [
         "utils",
         "slider"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetMasterRing encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetFCDropdown",
@@ -2466,7 +2799,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetFCDropdown.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2478,7 +2811,10 @@
       "dependencies": [
         "utils",
         "dropdown-menu"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetFCDropdown encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetAuditLog",
@@ -2486,7 +2822,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetAuditLog.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2501,7 +2837,10 @@
         "card",
         "badge",
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetAuditLog encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetCardView",
@@ -2527,7 +2866,10 @@
         "CostSheetSectionActionsPanel",
         "utils",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetCardView encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "AuditLogsModal",
@@ -2535,7 +2877,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/reports/AuditLogsModal.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2549,7 +2891,10 @@
         "skeleton",
         "dialog",
         "StateRenderer"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico AuditLogsModal encargado de soportar la funcionalidad operativa del módulo reports.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "ReportsView",
@@ -2557,7 +2902,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/reports/ReportsView.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -2574,7 +2919,10 @@
         "ReportPreview",
         "CostProLoader",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico ReportsView encargado de soportar la funcionalidad operativa del módulo reports.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "ReportConfigPanel",
@@ -2582,7 +2930,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/reports/ReportConfigPanel.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2601,7 +2949,10 @@
         "select",
         "button",
         "command"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico ReportConfigPanel encargado de soportar la funcionalidad operativa del módulo reports.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "ReportPreview",
@@ -2609,7 +2960,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/reports/ReportPreview.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2621,7 +2972,10 @@
       "dependencies": [
         "card",
         "CostProLoader"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico ReportPreview encargado de soportar la funcionalidad operativa del módulo reports.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "UserFormModal",
@@ -2629,7 +2983,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/users/UserFormModal.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2641,7 +2995,10 @@
       "dependencies": [
         "UserForm",
         "BaseModal"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico UserFormModal encargado de soportar la funcionalidad operativa del módulo users.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "useUsersView",
@@ -2662,7 +3019,10 @@
         "roles",
         "supabaseClient",
         "UserForm"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico useUsersView encargado de soportar la funcionalidad operativa del módulo users.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "UserForm",
@@ -2670,7 +3030,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/users/UserForm.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -2681,7 +3041,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico UserForm encargado de soportar la funcionalidad operativa del módulo users.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "RoleForm",
@@ -2689,7 +3052,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/users/RoleForm.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2700,7 +3063,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico RoleForm encargado de soportar la funcionalidad operativa del módulo users.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "UsersManagementView",
@@ -2708,7 +3074,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/users/UsersManagementView.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -2726,7 +3092,10 @@
         "utils",
         "select",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico UsersManagementView encargado de soportar la funcionalidad operativa del módulo users.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "RolesManagementView",
@@ -2734,7 +3103,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/users/RolesManagementView.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -2749,7 +3118,10 @@
         "utils",
         "RoleForm",
         "BaseModal"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico RolesManagementView encargado de soportar la funcionalidad operativa del módulo users.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "LegalView",
@@ -2757,7 +3129,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/legal/LegalView.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -2771,7 +3143,10 @@
         "LegalModelForm",
         "supabaseClient",
         "LegalConsultant"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico LegalView encargado de soportar la funcionalidad operativa del módulo legal.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "LegalPdfExporter",
@@ -2779,7 +3154,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/legal/LegalPdfExporter.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -2788,7 +3163,10 @@
         "cyclomaticComplexity": 10,
         "couplingScore": 1.3
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico LegalPdfExporter encargado de soportar la funcionalidad operativa del módulo legal.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "LegalConsultant",
@@ -2796,7 +3174,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/legal/LegalConsultant.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2807,7 +3185,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico LegalConsultant encargado de soportar la funcionalidad operativa del módulo legal.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "LegalModelForm",
@@ -2815,7 +3196,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/legal/LegalModelForm.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2829,7 +3210,10 @@
         "number-to-words-es",
         "supabaseClient",
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico LegalModelForm encargado de soportar la funcionalidad operativa del módulo legal.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "InventoryCountTableView",
@@ -2837,7 +3221,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/inventory_count/InventoryCountTableView.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2849,7 +3233,10 @@
       "dependencies": [
         "utils",
         "InventoryCountView"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico InventoryCountTableView encargado de soportar la funcionalidad operativa del módulo inventory_count.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "InventoryCountView",
@@ -2874,7 +3261,10 @@
         "QueryInspector",
         "SecurityScrollContainer",
         "InventoryCountTableView"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico InventoryCountView encargado de soportar la funcionalidad operativa del módulo inventory_count.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "InventoryCountCardView",
@@ -2882,7 +3272,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/inventory_count/InventoryCountCardView.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2894,7 +3284,10 @@
       "dependencies": [
         "utils",
         "InventoryCountView"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico InventoryCountCardView encargado de soportar la funcionalidad operativa del módulo inventory_count.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "ViewNavigator",
@@ -2902,7 +3295,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/health/ViewNavigator.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2911,7 +3304,10 @@
         "cyclomaticComplexity": 2,
         "couplingScore": 0.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico ViewNavigator encargado de soportar la funcionalidad operativa del módulo health.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "SystemHealthView",
@@ -2946,7 +3342,10 @@
         "badge",
         "utils",
         "CostProLoader"
-      ]
+      ],
+      "business_logic": "El panel de control ejecutivo. Traduce métricas técnicas complejas en un Índice de Salud (SHI) que permite a los dueños de negocio entender la estabilidad y seguridad de su inversión tecnológica.",
+      "is_documented": true,
+      "documentation_quality": 10.0
     },
     {
       "id": "InfrastructureMetrics",
@@ -2954,7 +3353,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/health/InfrastructureMetrics.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2966,7 +3365,10 @@
       "dependencies": [
         "utils",
         "progress"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico InfrastructureMetrics encargado de soportar la funcionalidad operativa del módulo health.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "AuditSummary",
@@ -2974,7 +3376,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/health/AuditSummary.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2983,7 +3385,10 @@
         "cyclomaticComplexity": 4,
         "couplingScore": 0.6
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "El 'ojo que todo lo ve'. Registra cada cambio sensible en el sistema, permitiendo reconstruir eventos en caso de discrepancias operativas o auditorías de seguridad.",
+      "is_documented": true,
+      "documentation_quality": 10.0
     },
     {
       "id": "HealthStatusHeader",
@@ -2991,7 +3396,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/health/HealthStatusHeader.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3002,7 +3407,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico HealthStatusHeader encargado de soportar la funcionalidad operativa del módulo health.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "SecurityMetrics",
@@ -3010,7 +3418,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/health/SecurityMetrics.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3021,7 +3429,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico SecurityMetrics encargado de soportar la funcionalidad operativa del módulo health.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "ReleaseGateStatus",
@@ -3029,7 +3440,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/health/ReleaseGateStatus.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3040,7 +3451,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico ReleaseGateStatus encargado de soportar la funcionalidad operativa del módulo health.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "ArchitectureAuditTable",
@@ -3048,7 +3462,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/health/ArchitectureAuditTable.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3062,7 +3476,10 @@
         "input",
         "badge",
         "table"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico ArchitectureAuditTable encargado de soportar la funcionalidad operativa del módulo health.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "DetailedRelationshipGraph",
@@ -3070,7 +3487,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/health/DetailedRelationshipGraph.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3082,7 +3499,10 @@
       "dependencies": [
         "utils",
         "badge"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico DetailedRelationshipGraph encargado de soportar la funcionalidad operativa del módulo health.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "SystemDependencyGraph",
@@ -3090,7 +3510,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/health/SystemDependencyGraph.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3099,7 +3519,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico SystemDependencyGraph encargado de soportar la funcionalidad operativa del módulo health.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "HealthAgentLogs",
@@ -3107,7 +3530,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/health/HealthAgentLogs.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3122,7 +3545,10 @@
         "badge",
         "supabaseClient",
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico HealthAgentLogs encargado de soportar la funcionalidad operativa del módulo health.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "ApplicationMetrics",
@@ -3130,7 +3556,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/health/ApplicationMetrics.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3141,7 +3567,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico ApplicationMetrics encargado de soportar la funcionalidad operativa del módulo health.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "ConcentricDashboardRing",
@@ -3149,7 +3578,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/dashboard/ConcentricDashboardRing.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -3160,7 +3589,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico ConcentricDashboardRing encargado de soportar la funcionalidad operativa del módulo dashboard.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "useDashboardView",
@@ -3168,7 +3600,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/dashboard/useDashboardView.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3177,7 +3609,10 @@
         "cyclomaticComplexity": 8,
         "couplingScore": 0.7
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico useDashboardView encargado de soportar la funcionalidad operativa del módulo dashboard.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "RecentCostSheets",
@@ -3185,7 +3620,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/dashboard/RecentCostSheets.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -3196,7 +3631,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico RecentCostSheets encargado de soportar la funcionalidad operativa del módulo dashboard.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "ExecutiveKpiCards",
@@ -3204,7 +3642,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/dashboard/ExecutiveKpiCards.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -3215,7 +3653,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico ExecutiveKpiCards encargado de soportar la funcionalidad operativa del módulo dashboard.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "DashboardView",
@@ -3223,7 +3664,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/dashboard/DashboardView.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -3239,7 +3680,10 @@
         "utils",
         "StateRenderer",
         "useDashboardView"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico DashboardView encargado de soportar la funcionalidad operativa del módulo dashboard.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CatalogModals",
@@ -3261,7 +3705,10 @@
         "index",
         "utils",
         "BaseModal"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CatalogModals encargado de soportar la funcionalidad operativa del módulo catalog.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CatalogView",
@@ -3269,7 +3716,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/catalog/CatalogView.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -3287,7 +3734,10 @@
         "QueryInspector",
         "utils",
         "CostProLoader"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CatalogView encargado de soportar la funcionalidad operativa del módulo catalog.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "SettingsView",
@@ -3295,7 +3745,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/settings/SettingsView.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -3307,7 +3757,10 @@
       "dependencies": [
         "utils",
         "supabaseClient"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico SettingsView encargado de soportar la funcionalidad operativa del módulo settings.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "ReceptionsHistoryView",
@@ -3315,7 +3768,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/receptions/ReceptionsHistoryView.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -3332,7 +3785,10 @@
         "ReceptionDetailsModal",
         "utils",
         "QueryInspector"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico ReceptionsHistoryView encargado de soportar la funcionalidad operativa del módulo receptions.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "ReceptionDetailsModal",
@@ -3340,7 +3796,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/receptions/ReceptionDetailsModal.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3353,7 +3809,10 @@
         "utils",
         "BaseModal",
         "skeleton"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico ReceptionDetailsModal encargado de soportar la funcionalidad operativa del módulo receptions.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "useReceptionsHistoryView",
@@ -3361,7 +3820,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/receptions/useReceptionsHistoryView.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3370,7 +3829,10 @@
         "cyclomaticComplexity": 18,
         "couplingScore": 1.3
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico useReceptionsHistoryView encargado de soportar la funcionalidad operativa del módulo receptions.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "NewsView",
@@ -3378,7 +3840,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/rss/NewsView.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -3390,7 +3852,10 @@
       "dependencies": [
         "utils",
         "StateRenderer"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico NewsView encargado de soportar la funcionalidad operativa del módulo rss.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "RSSManagementView",
@@ -3398,7 +3863,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/rss/RSSManagementView.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -3410,7 +3875,10 @@
       "dependencies": [
         "utils",
         "StateRenderer"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico RSSManagementView encargado de soportar la funcionalidad operativa del módulo rss.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "AuditEventIcon",
@@ -3418,7 +3886,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/audit/AuditEventIcon.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 4,
@@ -3429,7 +3897,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico AuditEventIcon encargado de soportar la funcionalidad operativa del módulo audit.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "AuditEventMeta",
@@ -3437,7 +3908,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/audit/AuditEventMeta.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3448,7 +3919,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico AuditEventMeta encargado de soportar la funcionalidad operativa del módulo audit.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "AuditTimeline",
@@ -3456,7 +3930,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/audit/AuditTimeline.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -3468,7 +3942,10 @@
       "dependencies": [
         "utils",
         "AuditEventCard"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico AuditTimeline encargado de soportar la funcionalidad operativa del módulo audit.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "AuditEventCard",
@@ -3489,7 +3966,10 @@
         "AuditEventIcon",
         "utils",
         "AuditEventMeta"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico AuditEventCard encargado de soportar la funcionalidad operativa del módulo audit.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "AuditTableView",
@@ -3497,7 +3977,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/audit/AuditTableView.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3509,7 +3989,10 @@
       "dependencies": [
         "AuditEventIcon",
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico AuditTableView encargado de soportar la funcionalidad operativa del módulo audit.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "useAuditLogsView",
@@ -3517,7 +4000,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/audit/useAuditLogsView.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3526,7 +4009,10 @@
         "cyclomaticComplexity": 3,
         "couplingScore": 0.4
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico useAuditLogsView encargado de soportar la funcionalidad operativa del módulo audit.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "AuditLogsView",
@@ -3534,7 +4020,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/audit/AuditLogsView.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -3554,7 +4040,10 @@
         "useAuditLogsView",
         "StateRenderer",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico AuditLogsView encargado de soportar la funcionalidad operativa del módulo audit.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "AuditFilters",
@@ -3562,7 +4051,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/audit/AuditFilters.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3574,7 +4063,10 @@
       "dependencies": [
         "utils",
         "AuditEventIcon"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico AuditFilters encargado de soportar la funcionalidad operativa del módulo audit.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CreateTransferModal",
@@ -3582,7 +4074,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/transfers/CreateTransferModal.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3594,7 +4086,10 @@
       "dependencies": [
         "utils",
         "BaseModal"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CreateTransferModal encargado de soportar la funcionalidad operativa del módulo transfers.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "TransferDetailsModal",
@@ -3602,7 +4097,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/transfers/TransferDetailsModal.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3615,7 +4110,10 @@
         "utils",
         "StateRenderer",
         "BaseModal"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico TransferDetailsModal encargado de soportar la funcionalidad operativa del módulo transfers.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "TransferenciasView",
@@ -3623,7 +4121,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/transfers/TransferenciasView.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -3638,7 +4136,10 @@
         "ActionMenu",
         "utils",
         "StateRenderer"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico TransferenciasView encargado de soportar la funcionalidad operativa del módulo transfers.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "ExecutiveDemoView",
@@ -3646,7 +4147,7 @@
       "type": "component",
       "path": "src/components/views/executive-demo/ExecutiveDemoView.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -3663,7 +4164,10 @@
         "utils",
         "CostProLoader",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico ExecutiveDemoView encargado de soportar la funcionalidad operativa del módulo executive-demo.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "QueryProvider",
@@ -3671,7 +4175,7 @@
       "type": "component",
       "path": "src/components/providers/QueryProvider.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -3680,7 +4184,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.1
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico QueryProvider encargado de soportar la funcionalidad operativa del módulo providers.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "SyncProvider",
@@ -3688,7 +4195,7 @@
       "type": "component",
       "path": "src/components/providers/SyncProvider.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -3697,7 +4204,10 @@
         "cyclomaticComplexity": 2,
         "couplingScore": 0.6
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico SyncProvider encargado de soportar la funcionalidad operativa del módulo providers.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "LoginForm",
@@ -3705,7 +4215,7 @@
       "type": "component",
       "path": "src/components/auth/LoginForm.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -3720,7 +4230,10 @@
         "supabaseClient",
         "logger",
         "RegisterForm"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico LoginForm encargado de soportar la funcionalidad operativa del módulo auth.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "RegisterForm",
@@ -3728,7 +4241,7 @@
       "type": "component",
       "path": "src/components/auth/RegisterForm.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3741,7 +4254,10 @@
         "input",
         "logger",
         "supabaseClient"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico RegisterForm encargado de soportar la funcionalidad operativa del módulo auth.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "WelcomeLandingView",
@@ -3765,7 +4281,10 @@
         "utils",
         "AutomationWorkflowDiagram",
         "ThemeToggle"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico WelcomeLandingView encargado de soportar la funcionalidad operativa del módulo auth.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "SpeedScaleDiagram",
@@ -3773,7 +4292,7 @@
       "type": "component",
       "path": "src/components/auth/diagrams/SpeedScaleDiagram.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3782,7 +4301,10 @@
         "cyclomaticComplexity": 4,
         "couplingScore": 0.7
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico SpeedScaleDiagram encargado de soportar la funcionalidad operativa del módulo diagrams.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "AutomationWorkflowDiagram",
@@ -3790,7 +4312,7 @@
       "type": "component",
       "path": "src/components/auth/diagrams/AutomationWorkflowDiagram.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3799,7 +4321,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.6
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico AutomationWorkflowDiagram encargado de soportar la funcionalidad operativa del módulo diagrams.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "BarcodeScanner",
@@ -3807,7 +4332,7 @@
       "type": "component",
       "path": "src/components/modals/BarcodeScanner.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3819,7 +4344,10 @@
       "dependencies": [
         "index",
         "BaseModal"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico BarcodeScanner encargado de soportar la funcionalidad operativa del módulo modals.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "PriceSelectorModal",
@@ -3827,7 +4355,7 @@
       "type": "component",
       "path": "src/components/modals/PriceSelectorModal.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3840,7 +4368,10 @@
         "utils",
         "index",
         "BaseModal"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico PriceSelectorModal encargado de soportar la funcionalidad operativa del módulo modals.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "UpgradeModal",
@@ -3848,7 +4379,7 @@
       "type": "component",
       "path": "src/components/modals/UpgradeModal.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3860,7 +4391,10 @@
       "dependencies": [
         "BaseModal",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico UpgradeModal encargado de soportar la funcionalidad operativa del módulo modals.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CreateProductModal",
@@ -3868,7 +4402,7 @@
       "type": "component",
       "path": "src/components/modals/CreateProductModal.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3880,7 +4414,10 @@
       "dependencies": [
         "index",
         "BaseModal"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico CreateProductModal encargado de soportar la funcionalidad operativa del módulo modals.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "SyncConflictModal",
@@ -3888,7 +4425,7 @@
       "type": "component",
       "path": "src/components/modals/SyncConflictModal.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3902,7 +4439,10 @@
         "index",
         "SyncProvider",
         "BaseModal"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico SyncConflictModal encargado de soportar la funcionalidad operativa del módulo modals.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "navigation-menu",
@@ -3910,7 +4450,7 @@
       "type": "component",
       "path": "src/components/ui/navigation-menu.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -3921,7 +4461,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "hover-card",
@@ -3929,7 +4472,7 @@
       "type": "component",
       "path": "src/components/ui/hover-card.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -3940,7 +4483,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "button",
@@ -3948,7 +4494,7 @@
       "type": "component",
       "path": "src/components/ui/button.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 48,
@@ -3959,7 +4505,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "alert-dialog",
@@ -3967,7 +4516,7 @@
       "type": "component",
       "path": "src/components/ui/alert-dialog.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -3979,7 +4528,10 @@
       "dependencies": [
         "utils",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "textarea",
@@ -3987,7 +4539,7 @@
       "type": "component",
       "path": "src/components/ui/textarea.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -3998,7 +4550,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "aspect-ratio",
@@ -4006,7 +4561,7 @@
       "type": "component",
       "path": "src/components/ui/aspect-ratio.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -4015,7 +4570,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.1
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "toggle",
@@ -4023,7 +4581,7 @@
       "type": "component",
       "path": "src/components/ui/toggle.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -4034,7 +4592,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "toast",
@@ -4042,7 +4603,7 @@
       "type": "component",
       "path": "src/components/ui/toast.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -4053,7 +4614,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "MobileSafeContainer",
@@ -4061,7 +4625,7 @@
       "type": "component",
       "path": "src/components/ui/MobileSafeContainer.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -4072,7 +4636,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "chart",
@@ -4091,7 +4658,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "popover",
@@ -4099,7 +4669,7 @@
       "type": "component",
       "path": "src/components/ui/popover.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 7,
@@ -4110,7 +4680,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "form",
@@ -4118,7 +4691,7 @@
       "type": "component",
       "path": "src/components/ui/form.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -4130,7 +4703,10 @@
       "dependencies": [
         "utils",
         "label"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "label",
@@ -4138,7 +4714,7 @@
       "type": "component",
       "path": "src/components/ui/label.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 12,
@@ -4149,7 +4725,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "input-otp",
@@ -4157,7 +4736,7 @@
       "type": "component",
       "path": "src/components/ui/input-otp.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -4168,7 +4747,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "dropdown-menu",
@@ -4176,7 +4758,7 @@
       "type": "component",
       "path": "src/components/ui/dropdown-menu.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 10,
@@ -4187,7 +4769,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "accordion",
@@ -4195,7 +4780,7 @@
       "type": "component",
       "path": "src/components/ui/accordion.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 3,
@@ -4206,7 +4791,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "sheet",
@@ -4214,7 +4802,7 @@
       "type": "component",
       "path": "src/components/ui/sheet.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 3,
@@ -4225,7 +4813,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "separator",
@@ -4233,7 +4824,7 @@
       "type": "component",
       "path": "src/components/ui/separator.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -4244,7 +4835,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "resizable",
@@ -4252,7 +4846,7 @@
       "type": "component",
       "path": "src/components/ui/resizable.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -4263,7 +4857,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "toggle-group",
@@ -4271,7 +4868,7 @@
       "type": "component",
       "path": "src/components/ui/toggle-group.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -4283,7 +4880,10 @@
       "dependencies": [
         "utils",
         "toggle"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "scroll-area",
@@ -4291,7 +4891,7 @@
       "type": "component",
       "path": "src/components/ui/scroll-area.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 8,
@@ -4302,7 +4902,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "input",
@@ -4310,7 +4913,7 @@
       "type": "component",
       "path": "src/components/ui/input.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 24,
@@ -4321,7 +4924,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "StateRenderer",
@@ -4329,7 +4935,7 @@
       "type": "component",
       "path": "src/components/ui/StateRenderer.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 11,
@@ -4340,7 +4946,10 @@
       },
       "dependencies": [
         "CostProLoader"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "SpeedDial",
@@ -4348,7 +4957,7 @@
       "type": "component",
       "path": "src/components/ui/SpeedDial.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -4360,7 +4969,10 @@
       "dependencies": [
         "utils",
         "Portal"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "sidebar",
@@ -4385,7 +4997,10 @@
         "separator",
         "utils",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "tabs",
@@ -4393,7 +5008,7 @@
       "type": "component",
       "path": "src/components/ui/tabs.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 4,
@@ -4404,7 +5019,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "skeleton",
@@ -4412,7 +5030,7 @@
       "type": "component",
       "path": "src/components/ui/skeleton.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 10,
@@ -4423,7 +5041,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "badge",
@@ -4431,7 +5052,7 @@
       "type": "component",
       "path": "src/components/ui/badge.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 25,
@@ -4442,7 +5063,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "SecurityScrollContainer",
@@ -4450,7 +5074,7 @@
       "type": "component",
       "path": "src/components/ui/SecurityScrollContainer.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 3,
@@ -4461,7 +5085,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "radio-group",
@@ -4469,7 +5096,7 @@
       "type": "component",
       "path": "src/components/ui/radio-group.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -4480,7 +5107,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "collapsible",
@@ -4488,7 +5118,7 @@
       "type": "component",
       "path": "src/components/ui/collapsible.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -4497,7 +5127,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.1
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "pagination",
@@ -4505,7 +5138,7 @@
       "type": "component",
       "path": "src/components/ui/pagination.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -4517,7 +5150,10 @@
       "dependencies": [
         "utils",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "ScrollToTop",
@@ -4525,7 +5161,7 @@
       "type": "component",
       "path": "src/components/ui/ScrollToTop.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -4536,7 +5172,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "sonner",
@@ -4544,7 +5183,7 @@
       "type": "component",
       "path": "src/components/ui/sonner.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -4553,7 +5192,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.1
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "carousel",
@@ -4561,7 +5203,7 @@
       "type": "component",
       "path": "src/components/ui/carousel.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -4573,7 +5215,10 @@
       "dependencies": [
         "utils",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "CostProLoader",
@@ -4581,7 +5226,7 @@
       "type": "component",
       "path": "src/components/ui/CostProLoader.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 14,
@@ -4592,7 +5237,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "LoadingOverlay",
@@ -4600,7 +5248,7 @@
       "type": "component",
       "path": "src/components/ui/LoadingOverlay.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -4611,7 +5259,10 @@
       },
       "dependencies": [
         "CostProLoader"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "select",
@@ -4619,7 +5270,7 @@
       "type": "component",
       "path": "src/components/ui/select.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 4,
@@ -4630,7 +5281,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "checkbox",
@@ -4638,7 +5292,7 @@
       "type": "component",
       "path": "src/components/ui/checkbox.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 5,
@@ -4649,7 +5303,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "DataDecryption",
@@ -4657,7 +5314,7 @@
       "type": "component",
       "path": "src/components/ui/DataDecryption.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -4666,7 +5323,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.1
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "calendar",
@@ -4674,7 +5334,7 @@
       "type": "component",
       "path": "src/components/ui/calendar.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -4686,7 +5346,10 @@
       "dependencies": [
         "utils",
         "button"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "PWAInstallModal",
@@ -4694,7 +5357,7 @@
       "type": "component",
       "path": "src/components/ui/PWAInstallModal.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -4706,7 +5369,10 @@
       "dependencies": [
         "dialog",
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "table",
@@ -4714,7 +5380,7 @@
       "type": "component",
       "path": "src/components/ui/table.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 16,
@@ -4725,7 +5391,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "progress",
@@ -4733,7 +5402,7 @@
       "type": "component",
       "path": "src/components/ui/progress.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 5,
@@ -4744,7 +5413,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "ProductImage",
@@ -4752,7 +5424,7 @@
       "type": "component",
       "path": "src/components/ui/ProductImage.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 6,
@@ -4763,7 +5435,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "slider",
@@ -4771,7 +5446,7 @@
       "type": "component",
       "path": "src/components/ui/slider.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -4782,7 +5457,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "breadcrumb",
@@ -4790,7 +5468,7 @@
       "type": "component",
       "path": "src/components/ui/breadcrumb.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -4801,7 +5479,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "menubar",
@@ -4809,7 +5490,7 @@
       "type": "component",
       "path": "src/components/ui/menubar.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -4820,7 +5501,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "tooltip",
@@ -4828,7 +5512,7 @@
       "type": "component",
       "path": "src/components/ui/tooltip.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 9,
@@ -4839,7 +5523,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "HorizontalScroll",
@@ -4847,7 +5534,7 @@
       "type": "component",
       "path": "src/components/ui/HorizontalScroll.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 3,
@@ -4858,7 +5545,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "SearchBar",
@@ -4866,7 +5556,7 @@
       "type": "component",
       "path": "src/components/ui/SearchBar.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 11,
@@ -4877,7 +5567,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "SyncStatusBadge",
@@ -4885,7 +5578,7 @@
       "type": "component",
       "path": "src/components/ui/SyncStatusBadge.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -4897,7 +5590,10 @@
       "dependencies": [
         "utils",
         "SyncProvider"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "QueryInspector",
@@ -4905,7 +5601,7 @@
       "type": "component",
       "path": "src/components/ui/QueryInspector.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 7,
@@ -4916,7 +5612,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "drawer",
@@ -4924,7 +5623,7 @@
       "type": "component",
       "path": "src/components/ui/drawer.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -4935,7 +5634,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "switch",
@@ -4943,7 +5645,7 @@
       "type": "component",
       "path": "src/components/ui/switch.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 6,
@@ -4954,7 +5656,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "LazyRender",
@@ -4962,7 +5667,7 @@
       "type": "component",
       "path": "src/components/ui/LazyRender.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 3,
@@ -4971,7 +5676,10 @@
         "cyclomaticComplexity": 7,
         "couplingScore": 1.1
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "context-menu",
@@ -4979,7 +5687,7 @@
       "type": "component",
       "path": "src/components/ui/context-menu.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -4990,7 +5698,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "ActionMenu",
@@ -5010,7 +5721,10 @@
       "dependencies": [
         "utils",
         "tooltip"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "command",
@@ -5018,7 +5732,7 @@
       "type": "component",
       "path": "src/components/ui/command.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5030,7 +5744,10 @@
       "dependencies": [
         "utils",
         "dialog"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "FloatingCalculator",
@@ -5038,7 +5755,7 @@
       "type": "component",
       "path": "src/components/ui/FloatingCalculator.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5049,7 +5766,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "BaseModal",
@@ -5057,7 +5777,7 @@
       "type": "component",
       "path": "src/components/ui/BaseModal.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 22,
@@ -5069,7 +5789,10 @@
       "dependencies": [
         "dialog",
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "alert",
@@ -5077,7 +5800,7 @@
       "type": "component",
       "path": "src/components/ui/alert.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -5088,7 +5811,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "card",
@@ -5096,7 +5822,7 @@
       "type": "component",
       "path": "src/components/ui/card.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 21,
@@ -5107,7 +5833,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "dialog",
@@ -5115,7 +5844,7 @@
       "type": "component",
       "path": "src/components/ui/dialog.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 12,
@@ -5126,7 +5855,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "CyberShell",
@@ -5134,7 +5866,7 @@
       "type": "component",
       "path": "src/components/ui/CyberShell.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -5143,7 +5875,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.1
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "avatar",
@@ -5151,7 +5886,7 @@
       "type": "component",
       "path": "src/components/ui/avatar.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -5162,7 +5897,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "toaster",
@@ -5170,7 +5908,7 @@
       "type": "component",
       "path": "src/components/ui/toaster.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -5181,7 +5919,10 @@
       },
       "dependencies": [
         "toast"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "ChatBot",
@@ -5200,7 +5941,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "Portal",
@@ -5208,7 +5952,7 @@
       "type": "component",
       "path": "src/components/ui/Portal.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -5217,7 +5961,10 @@
         "cyclomaticComplexity": 2,
         "couplingScore": 0.6
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "ViewSwitcher",
@@ -5225,7 +5972,7 @@
       "type": "component",
       "path": "src/components/ui/ViewSwitcher.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 5,
@@ -5236,7 +5983,10 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "index",
@@ -5257,7 +6007,10 @@
         "utils",
         "HorizontalScroll",
         "ProductImage"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "query-inspector-utils",
@@ -5265,7 +6018,7 @@
       "type": "utility",
       "path": "src/lib/query-inspector-utils.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -5274,7 +6027,10 @@
         "cyclomaticComplexity": 20,
         "couplingScore": 1.0
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico query-inspector-utils encargado de soportar la funcionalidad operativa del módulo lib.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "dexie",
@@ -5282,7 +6038,7 @@
       "type": "utility",
       "path": "src/lib/dexie.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 21,
@@ -5291,7 +6047,10 @@
         "cyclomaticComplexity": 23,
         "couplingScore": 6.6
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico dexie encargado de soportar la funcionalidad operativa del módulo lib.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "supabaseClient",
@@ -5299,7 +6058,7 @@
       "type": "utility",
       "path": "src/lib/supabaseClient.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 17,
@@ -5308,7 +6067,10 @@
         "cyclomaticComplexity": 4,
         "couplingScore": 4.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico supabaseClient encargado de soportar la funcionalidad operativa del módulo lib.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "rpc-validator",
@@ -5316,7 +6078,7 @@
       "type": "utility",
       "path": "src/lib/rpc-validator.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -5325,7 +6087,10 @@
         "cyclomaticComplexity": 12,
         "couplingScore": 0.7
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico rpc-validator encargado de soportar la funcionalidad operativa del módulo lib.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "logger",
@@ -5333,7 +6098,7 @@
       "type": "utility",
       "path": "src/lib/logger.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 5,
@@ -5342,7 +6107,10 @@
         "cyclomaticComplexity": 6,
         "couplingScore": 1.6
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico logger encargado de soportar la funcionalidad operativa del módulo lib.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "roles",
@@ -5350,7 +6118,7 @@
       "type": "utility",
       "path": "src/lib/roles.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -5359,7 +6127,10 @@
         "cyclomaticComplexity": 20,
         "couplingScore": 1.4
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente de Seguridad y Gobernanza. Gestiona permisos, roles y sesiones de usuario.",
+      "is_documented": false,
+      "documentation_quality": 5.0
     },
     {
       "id": "errorHandler",
@@ -5367,7 +6138,7 @@
       "type": "utility",
       "path": "src/lib/errorHandler.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -5378,7 +6149,10 @@
       },
       "dependencies": [
         "logger"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico errorHandler encargado de soportar la funcionalidad operativa del módulo lib.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "plan-utils",
@@ -5386,7 +6160,7 @@
       "type": "utility",
       "path": "src/lib/plan-utils.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -5395,7 +6169,10 @@
         "cyclomaticComplexity": 3,
         "couplingScore": 0.1
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico plan-utils encargado de soportar la funcionalidad operativa del módulo lib.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "db",
@@ -5403,7 +6180,7 @@
       "type": "utility",
       "path": "src/lib/db.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -5412,7 +6189,10 @@
         "cyclomaticComplexity": 5,
         "couplingScore": 0.2
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico db encargado de soportar la funcionalidad operativa del módulo lib.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "inventory-logic",
@@ -5420,7 +6200,7 @@
       "type": "utility",
       "path": "src/lib/inventory-logic.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5429,7 +6209,10 @@
         "cyclomaticComplexity": 10,
         "couplingScore": 0.8
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico inventory-logic encargado de soportar la funcionalidad operativa del módulo lib.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "auth",
@@ -5437,7 +6220,7 @@
       "type": "utility",
       "path": "src/lib/auth.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -5448,7 +6231,10 @@
       },
       "dependencies": [
         "supabaseClient"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico auth encargado de soportar la funcionalidad operativa del módulo lib.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "utils",
@@ -5456,7 +6242,7 @@
       "type": "utility",
       "path": "src/lib/utils.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 180,
@@ -5467,7 +6253,10 @@
       },
       "dependencies": [
         "supabaseClient"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico utils encargado de soportar la funcionalidad operativa del módulo lib.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "navigation",
@@ -5475,7 +6264,7 @@
       "type": "utility",
       "path": "src/lib/navigation.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5484,7 +6273,10 @@
         "cyclomaticComplexity": 5,
         "couplingScore": 0.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico navigation encargado de soportar la funcionalidad operativa del módulo lib.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "template-industrial",
@@ -5492,7 +6284,7 @@
       "type": "utility",
       "path": "src/lib/data/template-industrial.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5501,7 +6293,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.9
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico template-industrial encargado de soportar la funcionalidad operativa del módulo data.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "template-pizza",
@@ -5509,7 +6304,7 @@
       "type": "utility",
       "path": "src/lib/data/template-pizza.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5518,7 +6313,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.8
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico template-pizza encargado de soportar la funcionalidad operativa del módulo data.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "template-furniture",
@@ -5526,7 +6324,7 @@
       "type": "utility",
       "path": "src/lib/data/template-furniture.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5535,7 +6333,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.9
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico template-furniture encargado de soportar la funcionalidad operativa del módulo data.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "template-lavar",
@@ -5552,7 +6353,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 1.7
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico template-lavar encargado de soportar la funcionalidad operativa del módulo data.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "template-shoes",
@@ -5560,7 +6364,7 @@
       "type": "utility",
       "path": "src/lib/data/template-shoes.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5569,7 +6373,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.9
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico template-shoes encargado de soportar la funcionalidad operativa del módulo data.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "template-icecream",
@@ -5577,7 +6384,7 @@
       "type": "utility",
       "path": "src/lib/data/template-icecream.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5586,7 +6393,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.9
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico template-icecream encargado de soportar la funcionalidad operativa del módulo data.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "template-repair",
@@ -5594,7 +6404,7 @@
       "type": "utility",
       "path": "src/lib/data/template-repair.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5603,7 +6413,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.8
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico template-repair encargado de soportar la funcionalidad operativa del módulo data.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "demo-products",
@@ -5611,7 +6424,7 @@
       "type": "utility",
       "path": "src/lib/data/demo-products.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5620,7 +6433,10 @@
         "cyclomaticComplexity": 2,
         "couplingScore": 0.4
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico demo-products encargado de soportar la funcionalidad operativa del módulo data.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "costpro-reinicio",
@@ -5637,7 +6453,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 1.7
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico costpro-reinicio encargado de soportar la funcionalidad operativa del módulo data.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "template-consultancy",
@@ -5645,7 +6464,7 @@
       "type": "utility",
       "path": "src/lib/data/template-consultancy.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5654,7 +6473,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.8
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico template-consultancy encargado de soportar la funcionalidad operativa del módulo data.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "costpro-ejemplo",
@@ -5671,7 +6493,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 1.3
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico costpro-ejemplo encargado de soportar la funcionalidad operativa del módulo data.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "template-logistics",
@@ -5679,7 +6504,7 @@
       "type": "utility",
       "path": "src/lib/data/template-logistics.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5688,7 +6513,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.9
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico template-logistics encargado de soportar la funcionalidad operativa del módulo data.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "template-pastry",
@@ -5696,7 +6524,7 @@
       "type": "utility",
       "path": "src/lib/data/template-pastry.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5705,7 +6533,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.9
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico template-pastry encargado de soportar la funcionalidad operativa del módulo data.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "template-juice",
@@ -5713,7 +6544,7 @@
       "type": "utility",
       "path": "src/lib/data/template-juice.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5722,7 +6553,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.9
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico template-juice encargado de soportar la funcionalidad operativa del módulo data.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "sm2",
@@ -5730,7 +6564,7 @@
       "type": "utility",
       "path": "src/lib/academy/sm2.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -5739,7 +6573,10 @@
         "cyclomaticComplexity": 5,
         "couplingScore": 0.3
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico sm2 encargado de soportar la funcionalidad operativa del módulo academy.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "ReleaseGatePdfExporter",
@@ -5747,7 +6584,7 @@
       "type": "utility",
       "path": "src/lib/release_gate/ReleaseGatePdfExporter.ts",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5756,7 +6593,10 @@
         "cyclomaticComplexity": 36,
         "couplingScore": 1.9
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico ReleaseGatePdfExporter encargado de soportar la funcionalidad operativa del módulo release_gate.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "mri-engine",
@@ -5764,7 +6604,7 @@
       "type": "utility",
       "path": "src/lib/release_gate/mri-engine.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -5773,7 +6613,10 @@
         "cyclomaticComplexity": 6,
         "couplingScore": 0.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico mri-engine encargado de soportar la funcionalidad operativa del módulo release_gate.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "pdf-export",
@@ -5781,7 +6624,7 @@
       "type": "utility",
       "path": "src/lib/utils/pdf-export.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5790,7 +6633,10 @@
         "cyclomaticComplexity": 2,
         "couplingScore": 0.4
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico pdf-export encargado de soportar la funcionalidad operativa del módulo utils.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "number-to-words-es",
@@ -5798,7 +6644,7 @@
       "type": "utility",
       "path": "src/lib/utils/number-to-words-es.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -5807,7 +6653,10 @@
         "cyclomaticComplexity": 14,
         "couplingScore": 1.2
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico number-to-words-es encargado de soportar la funcionalidad operativa del módulo utils.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "health-engine",
@@ -5815,7 +6664,7 @@
       "type": "utility",
       "path": "src/lib/observability/health-engine.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5824,7 +6673,10 @@
         "cyclomaticComplexity": 22,
         "couplingScore": 1.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico health-engine encargado de soportar la funcionalidad operativa del módulo observability.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "system-health",
@@ -5832,7 +6684,7 @@
       "type": "utility",
       "path": "src/lib/observability/system-health.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -5841,7 +6693,10 @@
         "cyclomaticComplexity": 9,
         "couplingScore": 0.9
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico system-health encargado de soportar la funcionalidad operativa del módulo observability.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "health-alerts",
@@ -5849,7 +6704,7 @@
       "type": "utility",
       "path": "src/lib/observability/health-alerts.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -5861,7 +6716,10 @@
       "dependencies": [
         "health-engine",
         "supabaseClient"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico health-alerts encargado de soportar la funcionalidad operativa del módulo observability.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "intelligence",
@@ -5869,7 +6727,7 @@
       "type": "utility",
       "path": "src/lib/ipv/intelligence.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5880,7 +6738,10 @@
       },
       "dependencies": [
         "dexie"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico intelligence encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "bandecParser",
@@ -5888,7 +6749,7 @@
       "type": "utility",
       "path": "src/lib/ipv/bandecParser.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5901,7 +6762,10 @@
         "dexie",
         "utils",
         "engine"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico bandecParser encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "parser",
@@ -5909,7 +6773,7 @@
       "type": "utility",
       "path": "src/lib/ipv/parser.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5918,7 +6782,10 @@
         "cyclomaticComplexity": 19,
         "couplingScore": 1.1
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico parser encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "backup",
@@ -5926,7 +6793,7 @@
       "type": "utility",
       "path": "src/lib/ipv/backup.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -5935,7 +6802,10 @@
         "cyclomaticComplexity": 5,
         "couplingScore": 0.8
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico backup encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "calculations",
@@ -5943,7 +6813,7 @@
       "type": "utility",
       "path": "src/lib/ipv/calculations.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5955,7 +6825,10 @@
       "dependencies": [
         "dexie",
         "parser"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico calculations encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "engine",
@@ -5974,7 +6847,10 @@
       },
       "dependencies": [
         "dexie"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico engine encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "utils",
@@ -5993,7 +6869,10 @@
       },
       "dependencies": [
         "dexie"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico utils encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "matching.worker",
@@ -6001,7 +6880,7 @@
       "type": "utility",
       "path": "src/lib/ipv/matching.worker.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -6012,7 +6891,10 @@
       },
       "dependencies": [
         "engine"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico matching.worker encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "schemas",
@@ -6020,7 +6902,7 @@
       "type": "utility",
       "path": "src/lib/cost-engine/schemas.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -6029,7 +6911,10 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.2
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico schemas encargado de soportar la funcionalidad operativa del módulo cost-engine.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "validations",
@@ -6046,7 +6931,10 @@
         "cyclomaticComplexity": 101,
         "couplingScore": 5.2
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico validations encargado de soportar la funcionalidad operativa del módulo cost-engine.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "index",
@@ -6066,7 +6954,10 @@
       "dependencies": [
         "formula-utils",
         "types"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico index encargado de soportar la funcionalidad operativa del módulo cost-engine.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "formula-utils",
@@ -6074,7 +6965,7 @@
       "type": "utility",
       "path": "src/lib/cost-engine/formula-utils.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -6083,7 +6974,10 @@
         "cyclomaticComplexity": 8,
         "couplingScore": 0.7
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico formula-utils encargado de soportar la funcionalidad operativa del módulo cost-engine.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "types",
@@ -6091,7 +6985,7 @@
       "type": "utility",
       "path": "src/lib/cost-engine/types.ts",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 9,
@@ -6100,7 +6994,10 @@
         "cyclomaticComplexity": 35,
         "couplingScore": 3.9
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico types encargado de soportar la funcionalidad operativa del módulo cost-engine.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "orchestrator",
@@ -6108,7 +7005,7 @@
       "type": "utility",
       "path": "src/lib/ai/orchestrator.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -6125,7 +7022,10 @@
         "deepseek-adapter",
         "gpt-adapter",
         "fallback-adapter"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico orchestrator encargado de soportar la funcionalidad operativa del módulo ai.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "types",
@@ -6133,7 +7033,7 @@
       "type": "utility",
       "path": "src/lib/ai/types.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 9,
@@ -6142,7 +7042,10 @@
         "cyclomaticComplexity": 18,
         "couplingScore": 3.1
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico types encargado de soportar la funcionalidad operativa del módulo ai.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "gemini-adapter",
@@ -6150,7 +7053,7 @@
       "type": "utility",
       "path": "src/lib/ai/adapters/gemini-adapter.ts",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -6161,7 +7064,10 @@
       },
       "dependencies": [
         "types"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico gemini-adapter encargado de soportar la funcionalidad operativa del módulo adapters.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "kimi-adapter",
@@ -6169,7 +7075,7 @@
       "type": "utility",
       "path": "src/lib/ai/adapters/kimi-adapter.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -6180,7 +7086,10 @@
       },
       "dependencies": [
         "openai-compatible-adapter"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico kimi-adapter encargado de soportar la funcionalidad operativa del módulo adapters.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "fallback-adapter",
@@ -6188,7 +7097,7 @@
       "type": "utility",
       "path": "src/lib/ai/adapters/fallback-adapter.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -6199,7 +7108,10 @@
       },
       "dependencies": [
         "types"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico fallback-adapter encargado de soportar la funcionalidad operativa del módulo adapters.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "qwen-adapter",
@@ -6207,7 +7119,7 @@
       "type": "utility",
       "path": "src/lib/ai/adapters/qwen-adapter.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -6218,7 +7130,10 @@
       },
       "dependencies": [
         "types"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico qwen-adapter encargado de soportar la funcionalidad operativa del módulo adapters.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "openai-compatible-adapter",
@@ -6226,7 +7141,7 @@
       "type": "utility",
       "path": "src/lib/ai/adapters/openai-compatible-adapter.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 3,
@@ -6237,7 +7152,10 @@
       },
       "dependencies": [
         "types"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico openai-compatible-adapter encargado de soportar la funcionalidad operativa del módulo adapters.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "gpt-adapter",
@@ -6245,7 +7163,7 @@
       "type": "utility",
       "path": "src/lib/ai/adapters/gpt-adapter.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -6256,7 +7174,10 @@
       },
       "dependencies": [
         "openai-compatible-adapter"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico gpt-adapter encargado de soportar la funcionalidad operativa del módulo adapters.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "deepseek-adapter",
@@ -6264,7 +7185,7 @@
       "type": "utility",
       "path": "src/lib/ai/adapters/deepseek-adapter.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -6275,7 +7196,10 @@
       },
       "dependencies": [
         "openai-compatible-adapter"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico deepseek-adapter encargado de soportar la funcionalidad operativa del módulo adapters.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "registry",
@@ -6283,7 +7207,7 @@
       "type": "utility",
       "path": "src/lib/ai/tools/registry.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -6295,7 +7219,10 @@
       "dependencies": [
         "system-health",
         "definitions"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico registry encargado de soportar la funcionalidad operativa del módulo tools.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "definitions",
@@ -6303,7 +7230,7 @@
       "type": "utility",
       "path": "src/lib/ai/tools/definitions.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -6314,7 +7241,10 @@
       },
       "dependencies": [
         "types"
-      ]
+      ],
+      "business_logic": "[No definido en el manual] Componente técnico definitions encargado de soportar la funcionalidad operativa del módulo tools.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "offline-storage",
@@ -6322,7 +7252,7 @@
       "type": "utility",
       "path": "src/lib/sync/offline-storage.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -6331,7 +7261,10 @@
         "cyclomaticComplexity": 7,
         "couplingScore": 0.8
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "[No definido en el manual] Componente técnico offline-storage encargado de soportar la funcionalidad operativa del módulo sync.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     }
   ],
   "edges": [
