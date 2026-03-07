@@ -6,7 +6,7 @@
       "type": "component",
       "path": "src/components/ThemeToggle.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 4,
@@ -18,7 +18,8 @@
       "dependencies": [
         "utils",
         "dropdown-menu"
-      ]
+      ],
+      "business_logic": "Componente técnico ThemeToggle encargado de soportar la funcionalidad operativa del módulo components."
     },
     {
       "id": "SplashScreen",
@@ -26,7 +27,7 @@
       "type": "component",
       "path": "src/components/SplashScreen.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -37,7 +38,8 @@
       },
       "dependencies": [
         "CostProLogo"
-      ]
+      ],
+      "business_logic": "Componente técnico SplashScreen encargado de soportar la funcionalidad operativa del módulo components."
     },
     {
       "id": "CostProLogo",
@@ -45,7 +47,7 @@
       "type": "component",
       "path": "src/components/CostProLogo.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 3,
@@ -54,7 +56,8 @@
         "cyclomaticComplexity": 5,
         "couplingScore": 1.2
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico CostProLogo encargado de soportar la funcionalidad operativa del módulo components."
     },
     {
       "id": "ServiceWorkerRegister",
@@ -62,7 +65,7 @@
       "type": "component",
       "path": "src/components/ServiceWorkerRegister.tsx",
       "health": 9.5,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -71,7 +74,8 @@
         "cyclomaticComplexity": 4,
         "couplingScore": 0.2
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico ServiceWorkerRegister encargado de soportar la funcionalidad operativa del módulo components."
     },
     {
       "id": "theme-provider",
@@ -79,7 +83,7 @@
       "type": "component",
       "path": "src/components/theme-provider.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -88,7 +92,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.1
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico theme-provider encargado de soportar la funcionalidad operativa del módulo components."
     },
     {
       "id": "IntelligentThemeHandler",
@@ -96,7 +101,7 @@
       "type": "component",
       "path": "src/components/IntelligentThemeHandler.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -105,7 +110,8 @@
         "cyclomaticComplexity": 12,
         "couplingScore": 0.6
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico IntelligentThemeHandler encargado de soportar la funcionalidad operativa del módulo components."
     },
     {
       "id": "GlobalSessionManager",
@@ -113,7 +119,7 @@
       "type": "component",
       "path": "src/components/GlobalSessionManager.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -122,7 +128,8 @@
         "cyclomaticComplexity": 3,
         "couplingScore": 0.2
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico GlobalSessionManager encargado de soportar la funcionalidad operativa del módulo components."
     },
     {
       "id": "TerminalShell",
@@ -148,7 +155,8 @@
         "CostProLoader",
         "Sidebar",
         "ChatBot"
-      ]
+      ],
+      "business_logic": "Contenedor principal de la interfaz de usuario que gestiona la persistencia de la tienda activa y la navegación segura entre vistas especializadas."
     },
     {
       "id": "Sidebar",
@@ -156,7 +164,7 @@
       "type": "component",
       "path": "src/components/views/terminal/Sidebar.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -168,7 +176,8 @@
       "dependencies": [
         "utils",
         "CostProLogo"
-      ]
+      ],
+      "business_logic": "Componente técnico Sidebar encargado de soportar la funcionalidad operativa del módulo terminal."
     },
     {
       "id": "Header",
@@ -176,7 +185,7 @@
       "type": "component",
       "path": "src/components/views/terminal/Header.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -192,7 +201,8 @@
         "SyncConflictModal",
         "ThemeToggle",
         "popover"
-      ]
+      ],
+      "business_logic": "Componente técnico Header encargado de soportar la funcionalidad operativa del módulo terminal."
     },
     {
       "id": "StockHistoryView",
@@ -200,7 +210,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/stock_history/StockHistoryView.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -214,7 +224,8 @@
         "ActionMenu",
         "utils",
         "QueryInspector"
-      ]
+      ],
+      "business_logic": "Componente técnico StockHistoryView encargado de soportar la funcionalidad operativa del módulo stock_history."
     },
     {
       "id": "CashClosureView",
@@ -234,7 +245,8 @@
       "dependencies": [
         "utils",
         "ActionMenu"
-      ]
+      ],
+      "business_logic": "Componente técnico CashClosureView encargado de soportar la funcionalidad operativa del módulo cash_closure."
     },
     {
       "id": "StoresManagementView",
@@ -242,7 +254,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/stores/StoresManagementView.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -257,7 +269,8 @@
         "useStoresView",
         "utils",
         "StoreModals"
-      ]
+      ],
+      "business_logic": "Componente técnico StoresManagementView encargado de soportar la funcionalidad operativa del módulo stores."
     },
     {
       "id": "useStoresView",
@@ -265,7 +278,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/stores/useStoresView.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -276,7 +289,8 @@
       },
       "dependencies": [
         "logger"
-      ]
+      ],
+      "business_logic": "Componente técnico useStoresView encargado de soportar la funcionalidad operativa del módulo stores."
     },
     {
       "id": "StoreModals",
@@ -300,7 +314,8 @@
         "supabaseClient",
         "BaseModal",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico StoreModals encargado de soportar la funcionalidad operativa del módulo stores."
     },
     {
       "id": "MasteryDashboard",
@@ -308,7 +323,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/academy/MasteryDashboard.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -321,7 +336,8 @@
         "progress",
         "card",
         "supabaseClient"
-      ]
+      ],
+      "business_logic": "Componente técnico MasteryDashboard encargado de soportar la funcionalidad operativa del módulo academy."
     },
     {
       "id": "AcademyView",
@@ -329,7 +345,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/academy/AcademyView.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -343,7 +359,8 @@
         "Flashcard",
         "CostProLoader",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico AcademyView encargado de soportar la funcionalidad operativa del módulo academy."
     },
     {
       "id": "Flashcard",
@@ -351,7 +368,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/academy/Flashcard.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -364,7 +381,8 @@
         "utils",
         "card",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico Flashcard encargado de soportar la funcionalidad operativa del módulo academy."
     },
     {
       "id": "HelpView",
@@ -401,7 +419,8 @@
         "StoreSkuDiagram",
         "DarianDiagram",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico HelpView encargado de soportar la funcionalidad operativa del módulo help."
     },
     {
       "id": "IpvFlowDiagram",
@@ -409,7 +428,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/help/help/IpvFlowDiagram.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -418,7 +437,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico IpvFlowDiagram encargado de soportar la funcionalidad operativa del módulo help."
     },
     {
       "id": "CostFlowDiagram",
@@ -426,7 +446,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/help/help/CostFlowDiagram.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -435,7 +455,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico CostFlowDiagram encargado de soportar la funcionalidad operativa del módulo help."
     },
     {
       "id": "InventoryAdjustmentFlowDiagram",
@@ -443,7 +464,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/help/help/InventoryAdjustmentFlowDiagram.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -452,7 +473,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico InventoryAdjustmentFlowDiagram encargado de soportar la funcionalidad operativa del módulo help."
     },
     {
       "id": "DarianDiagram",
@@ -460,7 +482,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/help/help/DarianDiagram.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -469,7 +491,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico DarianDiagram encargado de soportar la funcionalidad operativa del módulo help."
     },
     {
       "id": "UserFlowDiagram",
@@ -477,7 +500,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/help/help/UserFlowDiagram.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -486,7 +509,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.2
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico UserFlowDiagram encargado de soportar la funcionalidad operativa del módulo help."
     },
     {
       "id": "InventoryFlowDiagram",
@@ -494,7 +518,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/help/help/InventoryFlowDiagram.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -503,7 +527,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico InventoryFlowDiagram encargado de soportar la funcionalidad operativa del módulo help."
     },
     {
       "id": "StickyCartFlowDiagram",
@@ -511,7 +536,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/help/help/StickyCartFlowDiagram.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -520,7 +545,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.4
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico StickyCartFlowDiagram encargado de soportar la funcionalidad operativa del módulo help."
     },
     {
       "id": "MobileFlowDiagram",
@@ -528,7 +554,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/help/help/MobileFlowDiagram.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -537,7 +563,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.2
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico MobileFlowDiagram encargado de soportar la funcionalidad operativa del módulo help."
     },
     {
       "id": "SecurityFlowDiagram",
@@ -545,7 +572,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/help/help/SecurityFlowDiagram.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -554,7 +581,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico SecurityFlowDiagram encargado de soportar la funcionalidad operativa del módulo help."
     },
     {
       "id": "MobilePosDiagram",
@@ -562,7 +590,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/help/help/MobilePosDiagram.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -571,7 +599,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.4
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico MobilePosDiagram encargado de soportar la funcionalidad operativa del módulo help."
     },
     {
       "id": "StoreSkuDiagram",
@@ -579,7 +608,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/help/help/StoreSkuDiagram.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -588,7 +617,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.4
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico StoreSkuDiagram encargado de soportar la funcionalidad operativa del módulo help."
     },
     {
       "id": "QuickModeMassiveDiagram",
@@ -596,7 +626,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/help/help/QuickModeMassiveDiagram.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -605,7 +635,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico QuickModeMassiveDiagram encargado de soportar la funcionalidad operativa del módulo help."
     },
     {
       "id": "RolesDiagram",
@@ -613,7 +644,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/help/help/RolesDiagram.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -622,7 +653,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico RolesDiagram encargado de soportar la funcionalidad operativa del módulo help."
     },
     {
       "id": "CashFlowDiagram",
@@ -630,7 +662,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/help/help/CashFlowDiagram.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -639,7 +671,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.2
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico CashFlowDiagram encargado de soportar la funcionalidad operativa del módulo help."
     },
     {
       "id": "KidsOnboarding",
@@ -647,7 +680,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/help/help/KidsOnboarding.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -656,7 +689,8 @@
         "cyclomaticComplexity": 2,
         "couplingScore": 0.8
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico KidsOnboarding encargado de soportar la funcionalidad operativa del módulo help."
     },
     {
       "id": "SalesFlowDiagram",
@@ -664,7 +698,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/help/help/SalesFlowDiagram.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -673,7 +707,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.4
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico SalesFlowDiagram encargado de soportar la funcionalidad operativa del módulo help."
     },
     {
       "id": "OfflineSyncDiagram",
@@ -681,7 +716,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/help/help/OfflineSyncDiagram.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -690,7 +725,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico OfflineSyncDiagram encargado de soportar la funcionalidad operativa del módulo help."
     },
     {
       "id": "TaxCalculationModal",
@@ -698,7 +734,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/sales/TaxCalculationModal.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -710,7 +746,8 @@
       "dependencies": [
         "dialog",
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico TaxCalculationModal encargado de soportar la funcionalidad operativa del módulo sales."
     },
     {
       "id": "useSalesHistoryView",
@@ -718,7 +755,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/sales/useSalesHistoryView.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -727,7 +764,8 @@
         "cyclomaticComplexity": 13,
         "couplingScore": 1.0
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico useSalesHistoryView encargado de soportar la funcionalidad operativa del módulo sales."
     },
     {
       "id": "SalesHistoryView",
@@ -735,7 +773,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/sales/SalesHistoryView.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -752,7 +790,8 @@
         "useSalesHistoryView",
         "utils",
         "StateRenderer"
-      ]
+      ],
+      "business_logic": "Componente técnico SalesHistoryView encargado de soportar la funcionalidad operativa del módulo sales."
     },
     {
       "id": "TransactionDetailsModal",
@@ -760,7 +799,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/sales/TransactionDetailsModal.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -775,7 +814,8 @@
         "supabaseClient",
         "utils",
         "BaseModal"
-      ]
+      ],
+      "business_logic": "Componente técnico TransactionDetailsModal encargado de soportar la funcionalidad operativa del módulo sales."
     },
     {
       "id": "StickyCartSummary",
@@ -783,7 +823,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/pos/StickyCartSummary.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -794,7 +834,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico StickyCartSummary encargado de soportar la funcionalidad operativa del módulo pos."
     },
     {
       "id": "POSView",
@@ -830,7 +871,8 @@
         "index",
         "POSTableView",
         "POSCart"
-      ]
+      ],
+      "business_logic": "Componente técnico POSView encargado de soportar la funcionalidad operativa del módulo pos."
     },
     {
       "id": "POSTableView",
@@ -838,7 +880,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/pos/POSTableView.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -850,7 +892,8 @@
       "dependencies": [
         "utils",
         "ProductImage"
-      ]
+      ],
+      "business_logic": "Componente técnico POSTableView encargado de soportar la funcionalidad operativa del módulo pos."
     },
     {
       "id": "POSCart",
@@ -873,7 +916,8 @@
         "utils",
         "CostProLoader",
         "BaseModal"
-      ]
+      ],
+      "business_logic": "Componente técnico POSCart encargado de soportar la funcionalidad operativa del módulo pos."
     },
     {
       "id": "usePOSView",
@@ -881,7 +925,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/pos/usePOSView.ts",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -893,7 +937,8 @@
       "dependencies": [
         "utils",
         "logger"
-      ]
+      ],
+      "business_logic": "Componente técnico usePOSView encargado de soportar la funcionalidad operativa del módulo pos."
     },
     {
       "id": "ProductReceptionView",
@@ -917,7 +962,8 @@
         "ActionMenu",
         "SecurityScrollContainer",
         "BaseModal"
-      ]
+      ],
+      "business_logic": "Componente técnico ProductReceptionView encargado de soportar la funcionalidad operativa del módulo inventory."
     },
     {
       "id": "InventoryTableView",
@@ -925,7 +971,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/inventory/InventoryTableView.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -938,7 +984,8 @@
         "utils",
         "CostProLoader",
         "ProductImage"
-      ]
+      ],
+      "business_logic": "Componente técnico InventoryTableView encargado de soportar la funcionalidad operativa del módulo inventory."
     },
     {
       "id": "InventoryView",
@@ -946,7 +993,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/inventory/InventoryView.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -967,7 +1014,8 @@
         "index",
         "InventoryCardView",
         "ProductReceptionView"
-      ]
+      ],
+      "business_logic": "Componente técnico InventoryView encargado de soportar la funcionalidad operativa del módulo inventory."
     },
     {
       "id": "InventoryAdjustmentModal",
@@ -975,7 +1023,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/inventory/InventoryAdjustmentModal.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -988,7 +1036,8 @@
         "drawer",
         "inventory-logic",
         "utils"
-      ]
+      ],
+      "business_logic": "Gestiona entradas y salidas excepcionales de inventario, asegurando la trazabilidad mediante el registro automático en el Kardex del sistema."
     },
     {
       "id": "InventoryAdjustmentsView",
@@ -996,7 +1045,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/inventory/InventoryAdjustmentsView.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -1010,7 +1059,8 @@
         "ActionMenu",
         "utils",
         "QueryInspector"
-      ]
+      ],
+      "business_logic": "Componente técnico InventoryAdjustmentsView encargado de soportar la funcionalidad operativa del módulo inventory."
     },
     {
       "id": "InventoryCardView",
@@ -1018,7 +1068,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/inventory/InventoryCardView.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1031,7 +1081,8 @@
         "utils",
         "CostProLoader",
         "index"
-      ]
+      ],
+      "business_logic": "Componente técnico InventoryCardView encargado de soportar la funcionalidad operativa del módulo inventory."
     },
     {
       "id": "IngestionErrorsTable",
@@ -1039,7 +1090,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/ipv/IngestionErrorsTable.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1057,7 +1108,8 @@
         "engine",
         "utils",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico IngestionErrorsTable encargado de soportar la funcionalidad operativa del módulo ipv."
     },
     {
       "id": "IncomeReceiptPreview",
@@ -1065,7 +1117,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/ipv/IncomeReceiptPreview.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1077,7 +1129,8 @@
       "dependencies": [
         "utils",
         "card"
-      ]
+      ],
+      "business_logic": "Componente técnico IncomeReceiptPreview encargado de soportar la funcionalidad operativa del módulo ipv."
     },
     {
       "id": "IPVRightSidebar",
@@ -1085,7 +1138,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/ipv/IPVRightSidebar.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1097,7 +1150,8 @@
       "dependencies": [
         "tooltip",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico IPVRightSidebar encargado de soportar la funcionalidad operativa del módulo ipv."
     },
     {
       "id": "PivotStatementView",
@@ -1120,7 +1174,8 @@
         "table",
         "utils",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico PivotStatementView encargado de soportar la funcionalidad operativa del módulo ipv."
     },
     {
       "id": "IPVHelpDialog",
@@ -1128,7 +1183,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/ipv/IPVHelpDialog.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1143,7 +1198,8 @@
         "dialog",
         "badge",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico IPVHelpDialog encargado de soportar la funcionalidad operativa del módulo ipv."
     },
     {
       "id": "IPVView",
@@ -1191,7 +1247,8 @@
         "tabs",
         "engine",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico IPVView encargado de soportar la funcionalidad operativa del módulo ipv."
     },
     {
       "id": "MatchingSimulation",
@@ -1217,7 +1274,8 @@
         "engine",
         "utils",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico MatchingSimulation encargado de soportar la funcionalidad operativa del módulo ipv."
     },
     {
       "id": "ManualReconciliationView",
@@ -1243,7 +1301,8 @@
         "engine",
         "utils",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico ManualReconciliationView encargado de soportar la funcionalidad operativa del módulo ipv."
     },
     {
       "id": "IPVPreviewModal",
@@ -1251,7 +1310,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/ipv/IPVPreviewModal.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1270,7 +1329,8 @@
         "badge",
         "utils",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico IPVPreviewModal encargado de soportar la funcionalidad operativa del módulo ipv."
     },
     {
       "id": "MatchingRulesEditor",
@@ -1294,7 +1354,8 @@
         "card",
         "label",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico MatchingRulesEditor encargado de soportar la funcionalidad operativa del módulo ipv."
     },
     {
       "id": "TransactionBreakdown",
@@ -1319,7 +1380,8 @@
         "dialog",
         "utils",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico TransactionBreakdown encargado de soportar la funcionalidad operativa del módulo ipv."
     },
     {
       "id": "TransferQRReportView",
@@ -1327,7 +1389,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/ipv/TransferQRReportView.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1346,7 +1408,8 @@
         "supabaseClient",
         "utils",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico TransferQRReportView encargado de soportar la funcionalidad operativa del módulo ipv."
     },
     {
       "id": "IPVReportView",
@@ -1374,7 +1437,8 @@
         "utils",
         "BaseModal",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico IPVReportView encargado de soportar la funcionalidad operativa del módulo ipv."
     },
     {
       "id": "IPVControlPanel",
@@ -1382,7 +1446,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/ipv/IPVControlPanel.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1398,7 +1462,8 @@
         "backup",
         "badge",
         "button"
-      ]
+      ],
+      "business_logic": "Centro de mando para la reconciliación de ingresos, permitiendo el cierre diario de cajas y la validación de depósitos contra ventas reales."
     },
     {
       "id": "CatalogTable",
@@ -1431,7 +1496,8 @@
         "utils",
         "BaseModal",
         "button"
-      ]
+      ],
+      "business_logic": "Gestión centralizada de productos y servicios, permitiendo la sincronización de precios y categorías entre múltiples puntos de venta."
     },
     {
       "id": "TransactionTable",
@@ -1465,7 +1531,8 @@
         "utils",
         "BaseModal",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico TransactionTable encargado de soportar la funcionalidad operativa del módulo ipv."
     },
     {
       "id": "IPVInstitutionalDashboard",
@@ -1473,7 +1540,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/ipv/IPVInstitutionalDashboard.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1489,7 +1556,8 @@
         "calculations",
         "utils",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico IPVInstitutionalDashboard encargado de soportar la funcionalidad operativa del módulo ipv."
     },
     {
       "id": "IPVReportsDropdown",
@@ -1497,7 +1565,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/ipv/IPVReportsDropdown.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1510,7 +1578,8 @@
         "utils",
         "dropdown-menu",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico IPVReportsDropdown encargado de soportar la funcionalidad operativa del módulo ipv."
     },
     {
       "id": "BankIngestion",
@@ -1535,7 +1604,8 @@
         "engine",
         "BaseModal",
         "button"
-      ]
+      ],
+      "business_logic": "Módulo de procesamiento de estados de cuenta bancarios (BANDEC/Metropolitano) para conciliación automática de transferencias y depósitos QR."
     },
     {
       "id": "IncomeReceiptSection",
@@ -1543,7 +1613,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/ipv/IncomeReceiptSection.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1563,7 +1633,8 @@
         "utils",
         "CostProLoader",
         "button"
-      ]
+      ],
+      "business_logic": "Generación de comprobantes de ingreso oficiales (Modelo SC-3-01) basados en las resoluciones vigentes para la legalización de ventas diarias."
     },
     {
       "id": "CostSheetQuickMode",
@@ -1571,7 +1642,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetQuickMode.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1584,7 +1655,8 @@
         "select",
         "input",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico CostSheetQuickMode encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "FormulaBuilder",
@@ -1592,7 +1664,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/FormulaBuilder.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1606,7 +1678,8 @@
         "tabs",
         "HorizontalScroll",
         "scroll-area"
-      ]
+      ],
+      "business_logic": "Componente técnico FormulaBuilder encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "CostSheetSignature",
@@ -1614,7 +1687,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetSignature.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1623,7 +1696,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.3
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico CostSheetSignature encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "CostSheetCalculator",
@@ -1642,7 +1716,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Motor de cálculo en tiempo real que aplica márgenes de utilidad, impuestos y coeficientes de gastos indirectos sobre el costo base."
     },
     {
       "id": "CostSheetHeaderEditor",
@@ -1650,7 +1725,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetHeaderEditor.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -1664,7 +1739,8 @@
         "card",
         "label",
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico CostSheetHeaderEditor encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "ProductInventoryPicker",
@@ -1672,7 +1748,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/ProductInventoryPicker.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1688,7 +1764,8 @@
         "index",
         "utils",
         "BaseModal"
-      ]
+      ],
+      "business_logic": "Componente técnico ProductInventoryPicker encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "FormulaEditor",
@@ -1696,7 +1773,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/FormulaEditor.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -1711,7 +1788,8 @@
         "dialog",
         "utils",
         "popover"
-      ]
+      ],
+      "business_logic": "Editor visual para la definición de algoritmos de costo, permitiendo a los usuarios avanzados personalizar la lógica de formación de precios sin programar."
     },
     {
       "id": "CostSheetBody",
@@ -1719,7 +1797,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetBody.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1730,7 +1808,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico CostSheetBody encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "CostSheetGenerateDropdown",
@@ -1738,7 +1817,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetGenerateDropdown.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1749,7 +1828,8 @@
       },
       "dependencies": [
         "dropdown-menu"
-      ]
+      ],
+      "business_logic": "Componente técnico CostSheetGenerateDropdown encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "CostSheetInteractiveTable",
@@ -1777,7 +1857,8 @@
         "select",
         "button",
         "popover"
-      ]
+      ],
+      "business_logic": "Componente técnico CostSheetInteractiveTable encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "CostSheetAnnexEditor",
@@ -1801,7 +1882,8 @@
         "ViewSwitcher",
         "table",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico CostSheetAnnexEditor encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "CostSheetTemplateExplorer",
@@ -1836,7 +1918,8 @@
         "template-repair",
         "costpro-ejemplo",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico CostSheetTemplateExplorer encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "CostSheetNav",
@@ -1844,7 +1927,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetNav.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1861,7 +1944,8 @@
         "ActionMenu",
         "utils",
         "CostSheetFCDropdown"
-      ]
+      ],
+      "business_logic": "Componente técnico CostSheetNav encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "CostSheetSummary",
@@ -1883,7 +1967,8 @@
         "slider",
         "utils",
         "HealthBattery"
-      ]
+      ],
+      "business_logic": "Componente técnico CostSheetSummary encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "CostSheetOptionsDropdown",
@@ -1891,7 +1976,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetOptionsDropdown.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1902,7 +1987,8 @@
       },
       "dependencies": [
         "dropdown-menu"
-      ]
+      ],
+      "business_logic": "Componente técnico CostSheetOptionsDropdown encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "CostSheetAuditView",
@@ -1910,7 +1996,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetAuditView.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1926,7 +2012,8 @@
         "badge",
         "utils",
         "CostSheetAuditLog"
-      ]
+      ],
+      "business_logic": "Componente técnico CostSheetAuditView encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "CostSheetHelpDropdown",
@@ -1934,7 +2021,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetHelpDropdown.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -1945,7 +2032,8 @@
       },
       "dependencies": [
         "dropdown-menu"
-      ]
+      ],
+      "business_logic": "Componente técnico CostSheetHelpDropdown encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "CostSheetForm",
@@ -1968,7 +2056,8 @@
         "label",
         "utils",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico CostSheetForm encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "CostSheetMassiveGenerator",
@@ -1999,7 +2088,8 @@
         "utils",
         "CostProLoader",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico CostSheetMassiveGenerator encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "DarianEditor",
@@ -2007,7 +2097,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/DarianEditor.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -2018,7 +2108,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico DarianEditor encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "CostSheetSidePanel",
@@ -2039,7 +2130,8 @@
         "utils",
         "CostSheetCalculator",
         "DarianEditor"
-      ]
+      ],
+      "business_logic": "Componente técnico CostSheetSidePanel encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "CostSheetBottomNav",
@@ -2047,7 +2139,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetBottomNav.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2059,7 +2151,8 @@
       "dependencies": [
         "utils",
         "dropdown-menu"
-      ]
+      ],
+      "business_logic": "Componente técnico CostSheetBottomNav encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "CostSheetAnnexes",
@@ -2067,7 +2160,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetAnnexes.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2078,7 +2171,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico CostSheetAnnexes encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "HealthBattery",
@@ -2086,7 +2180,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/HealthBattery.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2097,7 +2191,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico HealthBattery encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "CostSheetExportModal",
@@ -2105,7 +2200,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetExportModal.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -2121,7 +2216,8 @@
         "label",
         "dialog",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico CostSheetExportModal encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "CostSheetSectionActionsPanel",
@@ -2129,7 +2225,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetSectionActionsPanel.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -2142,7 +2238,8 @@
         "sheet",
         "utils",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico CostSheetSectionActionsPanel encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "CostSheetFormulaGuide",
@@ -2150,7 +2247,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetFormulaGuide.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -2161,7 +2258,8 @@
       },
       "dependencies": [
         "accordion"
-      ]
+      ],
+      "business_logic": "Componente técnico CostSheetFormulaGuide encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "CostSheetHeader",
@@ -2169,7 +2267,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetHeader.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2180,7 +2278,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico CostSheetHeader encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "CostSheetBanner",
@@ -2188,7 +2287,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetBanner.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -2201,7 +2300,8 @@
         "ThemeToggle",
         "CostSheetModeDropdown",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico CostSheetBanner encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "CostSheetHelpPanel",
@@ -2209,7 +2309,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetHelpPanel.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2221,7 +2321,8 @@
       "dependencies": [
         "utils",
         "CostSheetFormulaGuide"
-      ]
+      ],
+      "business_logic": "Componente técnico CostSheetHelpPanel encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "CostSheetNarrative",
@@ -2229,7 +2330,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetNarrative.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2240,7 +2341,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico CostSheetNarrative encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "CostSheetSignatureEditor",
@@ -2248,7 +2350,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetSignatureEditor.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -2259,7 +2361,8 @@
       },
       "dependencies": [
         "input"
-      ]
+      ],
+      "business_logic": "Componente técnico CostSheetSignatureEditor encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "CostSheetView",
@@ -2308,7 +2411,8 @@
         "CostSheetNarrative",
         "CostSheetHeaderEditor",
         "CostSheetPreview"
-      ]
+      ],
+      "business_logic": "Componente técnico CostSheetView encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "CircularProgress",
@@ -2316,7 +2420,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CircularProgress.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2327,7 +2431,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico CircularProgress encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "CostSheetPreview",
@@ -2335,7 +2440,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetPreview.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2350,7 +2455,8 @@
         "CostSheetHeader",
         "SecurityScrollContainer",
         "CostSheetBody"
-      ]
+      ],
+      "business_logic": "Componente técnico CostSheetPreview encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "CostSheetSidebarNav",
@@ -2358,7 +2464,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetSidebarNav.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -2371,7 +2477,8 @@
         "sheet",
         "utils",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico CostSheetSidebarNav encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "CostSheetWizard",
@@ -2379,7 +2486,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetWizard.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2396,7 +2503,8 @@
         "CostSheetSidebarNav",
         "CostSheetHeaderEditor",
         "button"
-      ]
+      ],
+      "business_logic": "Guía paso a paso para la creación de fichas de costo, integrando datos de inventario y fórmulas dinámicas para el cálculo de precios de venta."
     },
     {
       "id": "CostSheetActionsPanel",
@@ -2418,7 +2526,8 @@
         "ViewSwitcher",
         "CostSheetModeDropdown",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico CostSheetActionsPanel encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "CostSheetModeDropdown",
@@ -2426,7 +2535,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetModeDropdown.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 4,
@@ -2438,7 +2547,8 @@
       "dependencies": [
         "utils",
         "dropdown-menu"
-      ]
+      ],
+      "business_logic": "Componente técnico CostSheetModeDropdown encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "CostSheetMasterRing",
@@ -2446,7 +2556,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetMasterRing.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2458,7 +2568,8 @@
       "dependencies": [
         "utils",
         "slider"
-      ]
+      ],
+      "business_logic": "Componente técnico CostSheetMasterRing encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "CostSheetFCDropdown",
@@ -2466,7 +2577,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetFCDropdown.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2478,7 +2589,8 @@
       "dependencies": [
         "utils",
         "dropdown-menu"
-      ]
+      ],
+      "business_logic": "Componente técnico CostSheetFCDropdown encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "CostSheetAuditLog",
@@ -2486,7 +2598,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/cost_sheet/CostSheetAuditLog.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2501,7 +2613,8 @@
         "card",
         "badge",
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico CostSheetAuditLog encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "CostSheetCardView",
@@ -2527,7 +2640,8 @@
         "CostSheetSectionActionsPanel",
         "utils",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico CostSheetCardView encargado de soportar la funcionalidad operativa del módulo cost_sheet."
     },
     {
       "id": "AuditLogsModal",
@@ -2535,7 +2649,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/reports/AuditLogsModal.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2549,7 +2663,8 @@
         "skeleton",
         "dialog",
         "StateRenderer"
-      ]
+      ],
+      "business_logic": "Componente técnico AuditLogsModal encargado de soportar la funcionalidad operativa del módulo reports."
     },
     {
       "id": "ReportsView",
@@ -2557,7 +2672,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/reports/ReportsView.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -2574,7 +2689,8 @@
         "ReportPreview",
         "CostProLoader",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico ReportsView encargado de soportar la funcionalidad operativa del módulo reports."
     },
     {
       "id": "ReportConfigPanel",
@@ -2582,7 +2698,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/reports/ReportConfigPanel.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2601,7 +2717,8 @@
         "select",
         "button",
         "command"
-      ]
+      ],
+      "business_logic": "Componente técnico ReportConfigPanel encargado de soportar la funcionalidad operativa del módulo reports."
     },
     {
       "id": "ReportPreview",
@@ -2609,7 +2726,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/reports/ReportPreview.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2621,7 +2738,8 @@
       "dependencies": [
         "card",
         "CostProLoader"
-      ]
+      ],
+      "business_logic": "Componente técnico ReportPreview encargado de soportar la funcionalidad operativa del módulo reports."
     },
     {
       "id": "UserFormModal",
@@ -2629,7 +2747,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/users/UserFormModal.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2641,7 +2759,8 @@
       "dependencies": [
         "UserForm",
         "BaseModal"
-      ]
+      ],
+      "business_logic": "Componente técnico UserFormModal encargado de soportar la funcionalidad operativa del módulo users."
     },
     {
       "id": "useUsersView",
@@ -2662,7 +2781,8 @@
         "roles",
         "supabaseClient",
         "UserForm"
-      ]
+      ],
+      "business_logic": "Componente técnico useUsersView encargado de soportar la funcionalidad operativa del módulo users."
     },
     {
       "id": "UserForm",
@@ -2670,7 +2790,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/users/UserForm.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -2681,7 +2801,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico UserForm encargado de soportar la funcionalidad operativa del módulo users."
     },
     {
       "id": "RoleForm",
@@ -2689,7 +2810,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/users/RoleForm.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2700,7 +2821,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico RoleForm encargado de soportar la funcionalidad operativa del módulo users."
     },
     {
       "id": "UsersManagementView",
@@ -2708,7 +2830,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/users/UsersManagementView.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -2726,7 +2848,8 @@
         "utils",
         "select",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico UsersManagementView encargado de soportar la funcionalidad operativa del módulo users."
     },
     {
       "id": "RolesManagementView",
@@ -2734,7 +2857,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/users/RolesManagementView.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -2749,7 +2872,8 @@
         "utils",
         "RoleForm",
         "BaseModal"
-      ]
+      ],
+      "business_logic": "Componente técnico RolesManagementView encargado de soportar la funcionalidad operativa del módulo users."
     },
     {
       "id": "LegalView",
@@ -2757,7 +2881,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/legal/LegalView.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -2771,7 +2895,8 @@
         "LegalModelForm",
         "supabaseClient",
         "LegalConsultant"
-      ]
+      ],
+      "business_logic": "Componente técnico LegalView encargado de soportar la funcionalidad operativa del módulo legal."
     },
     {
       "id": "LegalPdfExporter",
@@ -2779,7 +2904,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/legal/LegalPdfExporter.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -2788,7 +2913,8 @@
         "cyclomaticComplexity": 10,
         "couplingScore": 1.3
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico LegalPdfExporter encargado de soportar la funcionalidad operativa del módulo legal."
     },
     {
       "id": "LegalConsultant",
@@ -2796,7 +2922,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/legal/LegalConsultant.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2807,7 +2933,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico LegalConsultant encargado de soportar la funcionalidad operativa del módulo legal."
     },
     {
       "id": "LegalModelForm",
@@ -2815,7 +2942,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/legal/LegalModelForm.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2829,7 +2956,8 @@
         "number-to-words-es",
         "supabaseClient",
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico LegalModelForm encargado de soportar la funcionalidad operativa del módulo legal."
     },
     {
       "id": "InventoryCountTableView",
@@ -2837,7 +2965,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/inventory_count/InventoryCountTableView.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2849,7 +2977,8 @@
       "dependencies": [
         "utils",
         "InventoryCountView"
-      ]
+      ],
+      "business_logic": "Componente técnico InventoryCountTableView encargado de soportar la funcionalidad operativa del módulo inventory_count."
     },
     {
       "id": "InventoryCountView",
@@ -2874,7 +3003,8 @@
         "QueryInspector",
         "SecurityScrollContainer",
         "InventoryCountTableView"
-      ]
+      ],
+      "business_logic": "Componente técnico InventoryCountView encargado de soportar la funcionalidad operativa del módulo inventory_count."
     },
     {
       "id": "InventoryCountCardView",
@@ -2882,7 +3012,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/inventory_count/InventoryCountCardView.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2894,7 +3024,8 @@
       "dependencies": [
         "utils",
         "InventoryCountView"
-      ]
+      ],
+      "business_logic": "Componente técnico InventoryCountCardView encargado de soportar la funcionalidad operativa del módulo inventory_count."
     },
     {
       "id": "ViewNavigator",
@@ -2902,7 +3033,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/health/ViewNavigator.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2911,7 +3042,8 @@
         "cyclomaticComplexity": 2,
         "couplingScore": 0.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Hub central de navegación que permite el acceso rápido a los módulos críticos del sistema, optimizando el flujo de trabajo operativo."
     },
     {
       "id": "SystemHealthView",
@@ -2946,7 +3078,8 @@
         "badge",
         "utils",
         "CostProLoader"
-      ]
+      ],
+      "business_logic": "Panel ejecutivo que consolida métricas de infraestructura, seguridad y calidad de código en un Índice de Salud del Sistema (SHI) unificado."
     },
     {
       "id": "InfrastructureMetrics",
@@ -2954,7 +3087,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/health/InfrastructureMetrics.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2966,7 +3099,8 @@
       "dependencies": [
         "utils",
         "progress"
-      ]
+      ],
+      "business_logic": "Componente técnico InfrastructureMetrics encargado de soportar la funcionalidad operativa del módulo health."
     },
     {
       "id": "AuditSummary",
@@ -2974,7 +3108,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/health/AuditSummary.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -2983,7 +3117,8 @@
         "cyclomaticComplexity": 4,
         "couplingScore": 0.6
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Registro histórico de acciones administrativas y de usuario, proporcionando una capa de transparencia y seguridad para auditorías externas."
     },
     {
       "id": "HealthStatusHeader",
@@ -2991,7 +3126,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/health/HealthStatusHeader.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3002,7 +3137,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico HealthStatusHeader encargado de soportar la funcionalidad operativa del módulo health."
     },
     {
       "id": "SecurityMetrics",
@@ -3010,7 +3146,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/health/SecurityMetrics.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3021,7 +3157,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico SecurityMetrics encargado de soportar la funcionalidad operativa del módulo health."
     },
     {
       "id": "ReleaseGateStatus",
@@ -3029,7 +3166,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/health/ReleaseGateStatus.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3040,7 +3177,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico ReleaseGateStatus encargado de soportar la funcionalidad operativa del módulo health."
     },
     {
       "id": "ArchitectureAuditTable",
@@ -3048,7 +3186,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/health/ArchitectureAuditTable.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3062,7 +3200,8 @@
         "input",
         "badge",
         "table"
-      ]
+      ],
+      "business_logic": "Visualización técnica del estado de salud de los componentes, analizando acoplamiento, complejidad ciclomática y cobertura de auditoría."
     },
     {
       "id": "DetailedRelationshipGraph",
@@ -3070,7 +3209,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/health/DetailedRelationshipGraph.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3082,7 +3221,8 @@
       "dependencies": [
         "utils",
         "badge"
-      ]
+      ],
+      "business_logic": "Componente técnico DetailedRelationshipGraph encargado de soportar la funcionalidad operativa del módulo health."
     },
     {
       "id": "SystemDependencyGraph",
@@ -3090,7 +3230,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/health/SystemDependencyGraph.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3099,7 +3239,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico SystemDependencyGraph encargado de soportar la funcionalidad operativa del módulo health."
     },
     {
       "id": "HealthAgentLogs",
@@ -3107,7 +3248,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/health/HealthAgentLogs.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3122,7 +3263,8 @@
         "badge",
         "supabaseClient",
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico HealthAgentLogs encargado de soportar la funcionalidad operativa del módulo health."
     },
     {
       "id": "ApplicationMetrics",
@@ -3130,7 +3272,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/health/ApplicationMetrics.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3141,7 +3283,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico ApplicationMetrics encargado de soportar la funcionalidad operativa del módulo health."
     },
     {
       "id": "ConcentricDashboardRing",
@@ -3149,7 +3292,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/dashboard/ConcentricDashboardRing.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -3160,7 +3303,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico ConcentricDashboardRing encargado de soportar la funcionalidad operativa del módulo dashboard."
     },
     {
       "id": "useDashboardView",
@@ -3168,7 +3312,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/dashboard/useDashboardView.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3177,7 +3321,8 @@
         "cyclomaticComplexity": 8,
         "couplingScore": 0.7
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico useDashboardView encargado de soportar la funcionalidad operativa del módulo dashboard."
     },
     {
       "id": "RecentCostSheets",
@@ -3185,7 +3330,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/dashboard/RecentCostSheets.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -3196,7 +3341,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico RecentCostSheets encargado de soportar la funcionalidad operativa del módulo dashboard."
     },
     {
       "id": "ExecutiveKpiCards",
@@ -3204,7 +3350,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/dashboard/ExecutiveKpiCards.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -3215,7 +3361,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico ExecutiveKpiCards encargado de soportar la funcionalidad operativa del módulo dashboard."
     },
     {
       "id": "DashboardView",
@@ -3223,7 +3370,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/dashboard/DashboardView.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -3239,7 +3386,8 @@
         "utils",
         "StateRenderer",
         "useDashboardView"
-      ]
+      ],
+      "business_logic": "Componente técnico DashboardView encargado de soportar la funcionalidad operativa del módulo dashboard."
     },
     {
       "id": "CatalogModals",
@@ -3261,7 +3409,8 @@
         "index",
         "utils",
         "BaseModal"
-      ]
+      ],
+      "business_logic": "Componente técnico CatalogModals encargado de soportar la funcionalidad operativa del módulo catalog."
     },
     {
       "id": "CatalogView",
@@ -3269,7 +3418,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/catalog/CatalogView.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -3287,7 +3436,8 @@
         "QueryInspector",
         "utils",
         "CostProLoader"
-      ]
+      ],
+      "business_logic": "Componente técnico CatalogView encargado de soportar la funcionalidad operativa del módulo catalog."
     },
     {
       "id": "SettingsView",
@@ -3295,7 +3445,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/settings/SettingsView.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -3307,7 +3457,8 @@
       "dependencies": [
         "utils",
         "supabaseClient"
-      ]
+      ],
+      "business_logic": "Componente técnico SettingsView encargado de soportar la funcionalidad operativa del módulo settings."
     },
     {
       "id": "ReceptionsHistoryView",
@@ -3315,7 +3466,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/receptions/ReceptionsHistoryView.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -3332,7 +3483,8 @@
         "ReceptionDetailsModal",
         "utils",
         "QueryInspector"
-      ]
+      ],
+      "business_logic": "Componente técnico ReceptionsHistoryView encargado de soportar la funcionalidad operativa del módulo receptions."
     },
     {
       "id": "ReceptionDetailsModal",
@@ -3340,7 +3492,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/receptions/ReceptionDetailsModal.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3353,7 +3505,8 @@
         "utils",
         "BaseModal",
         "skeleton"
-      ]
+      ],
+      "business_logic": "Componente técnico ReceptionDetailsModal encargado de soportar la funcionalidad operativa del módulo receptions."
     },
     {
       "id": "useReceptionsHistoryView",
@@ -3361,7 +3514,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/receptions/useReceptionsHistoryView.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3370,7 +3523,8 @@
         "cyclomaticComplexity": 18,
         "couplingScore": 1.3
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico useReceptionsHistoryView encargado de soportar la funcionalidad operativa del módulo receptions."
     },
     {
       "id": "NewsView",
@@ -3378,7 +3532,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/rss/NewsView.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -3390,7 +3544,8 @@
       "dependencies": [
         "utils",
         "StateRenderer"
-      ]
+      ],
+      "business_logic": "Componente técnico NewsView encargado de soportar la funcionalidad operativa del módulo rss."
     },
     {
       "id": "RSSManagementView",
@@ -3398,7 +3553,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/rss/RSSManagementView.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -3410,7 +3565,8 @@
       "dependencies": [
         "utils",
         "StateRenderer"
-      ]
+      ],
+      "business_logic": "Componente técnico RSSManagementView encargado de soportar la funcionalidad operativa del módulo rss."
     },
     {
       "id": "AuditEventIcon",
@@ -3418,7 +3574,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/audit/AuditEventIcon.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 4,
@@ -3429,7 +3585,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico AuditEventIcon encargado de soportar la funcionalidad operativa del módulo audit."
     },
     {
       "id": "AuditEventMeta",
@@ -3437,7 +3594,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/audit/AuditEventMeta.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3448,7 +3605,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico AuditEventMeta encargado de soportar la funcionalidad operativa del módulo audit."
     },
     {
       "id": "AuditTimeline",
@@ -3456,7 +3614,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/audit/AuditTimeline.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -3468,7 +3626,8 @@
       "dependencies": [
         "utils",
         "AuditEventCard"
-      ]
+      ],
+      "business_logic": "Componente técnico AuditTimeline encargado de soportar la funcionalidad operativa del módulo audit."
     },
     {
       "id": "AuditEventCard",
@@ -3489,7 +3648,8 @@
         "AuditEventIcon",
         "utils",
         "AuditEventMeta"
-      ]
+      ],
+      "business_logic": "Componente técnico AuditEventCard encargado de soportar la funcionalidad operativa del módulo audit."
     },
     {
       "id": "AuditTableView",
@@ -3497,7 +3657,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/audit/AuditTableView.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3509,7 +3669,8 @@
       "dependencies": [
         "AuditEventIcon",
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico AuditTableView encargado de soportar la funcionalidad operativa del módulo audit."
     },
     {
       "id": "useAuditLogsView",
@@ -3517,7 +3678,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/audit/useAuditLogsView.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3526,7 +3687,8 @@
         "cyclomaticComplexity": 3,
         "couplingScore": 0.4
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico useAuditLogsView encargado de soportar la funcionalidad operativa del módulo audit."
     },
     {
       "id": "AuditLogsView",
@@ -3534,7 +3696,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/audit/AuditLogsView.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -3554,7 +3716,8 @@
         "useAuditLogsView",
         "StateRenderer",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico AuditLogsView encargado de soportar la funcionalidad operativa del módulo audit."
     },
     {
       "id": "AuditFilters",
@@ -3562,7 +3725,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/audit/AuditFilters.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3574,7 +3737,8 @@
       "dependencies": [
         "utils",
         "AuditEventIcon"
-      ]
+      ],
+      "business_logic": "Componente técnico AuditFilters encargado de soportar la funcionalidad operativa del módulo audit."
     },
     {
       "id": "CreateTransferModal",
@@ -3582,7 +3746,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/transfers/CreateTransferModal.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3594,7 +3758,8 @@
       "dependencies": [
         "utils",
         "BaseModal"
-      ]
+      ],
+      "business_logic": "Componente técnico CreateTransferModal encargado de soportar la funcionalidad operativa del módulo transfers."
     },
     {
       "id": "TransferDetailsModal",
@@ -3602,7 +3767,7 @@
       "type": "component",
       "path": "src/components/views/terminal/views/transfers/TransferDetailsModal.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3615,7 +3780,8 @@
         "utils",
         "StateRenderer",
         "BaseModal"
-      ]
+      ],
+      "business_logic": "Componente técnico TransferDetailsModal encargado de soportar la funcionalidad operativa del módulo transfers."
     },
     {
       "id": "TransferenciasView",
@@ -3623,7 +3789,7 @@
       "type": "view",
       "path": "src/components/views/terminal/views/transfers/TransferenciasView.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -3638,7 +3804,8 @@
         "ActionMenu",
         "utils",
         "StateRenderer"
-      ]
+      ],
+      "business_logic": "Componente técnico TransferenciasView encargado de soportar la funcionalidad operativa del módulo transfers."
     },
     {
       "id": "ExecutiveDemoView",
@@ -3646,7 +3813,7 @@
       "type": "component",
       "path": "src/components/views/executive-demo/ExecutiveDemoView.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -3663,7 +3830,8 @@
         "utils",
         "CostProLoader",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico ExecutiveDemoView encargado de soportar la funcionalidad operativa del módulo executive-demo."
     },
     {
       "id": "QueryProvider",
@@ -3671,7 +3839,7 @@
       "type": "component",
       "path": "src/components/providers/QueryProvider.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -3680,7 +3848,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.1
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico QueryProvider encargado de soportar la funcionalidad operativa del módulo providers."
     },
     {
       "id": "SyncProvider",
@@ -3688,7 +3857,7 @@
       "type": "component",
       "path": "src/components/providers/SyncProvider.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -3697,7 +3866,8 @@
         "cyclomaticComplexity": 2,
         "couplingScore": 0.6
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico SyncProvider encargado de soportar la funcionalidad operativa del módulo providers."
     },
     {
       "id": "LoginForm",
@@ -3705,7 +3875,7 @@
       "type": "component",
       "path": "src/components/auth/LoginForm.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -3720,7 +3890,8 @@
         "supabaseClient",
         "logger",
         "RegisterForm"
-      ]
+      ],
+      "business_logic": "Componente técnico LoginForm encargado de soportar la funcionalidad operativa del módulo auth."
     },
     {
       "id": "RegisterForm",
@@ -3728,7 +3899,7 @@
       "type": "component",
       "path": "src/components/auth/RegisterForm.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3741,7 +3912,8 @@
         "input",
         "logger",
         "supabaseClient"
-      ]
+      ],
+      "business_logic": "Componente técnico RegisterForm encargado de soportar la funcionalidad operativa del módulo auth."
     },
     {
       "id": "WelcomeLandingView",
@@ -3765,7 +3937,8 @@
         "utils",
         "AutomationWorkflowDiagram",
         "ThemeToggle"
-      ]
+      ],
+      "business_logic": "Componente técnico WelcomeLandingView encargado de soportar la funcionalidad operativa del módulo auth."
     },
     {
       "id": "SpeedScaleDiagram",
@@ -3773,7 +3946,7 @@
       "type": "component",
       "path": "src/components/auth/diagrams/SpeedScaleDiagram.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3782,7 +3955,8 @@
         "cyclomaticComplexity": 4,
         "couplingScore": 0.7
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico SpeedScaleDiagram encargado de soportar la funcionalidad operativa del módulo diagrams."
     },
     {
       "id": "AutomationWorkflowDiagram",
@@ -3790,7 +3964,7 @@
       "type": "component",
       "path": "src/components/auth/diagrams/AutomationWorkflowDiagram.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3799,7 +3973,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.6
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico AutomationWorkflowDiagram encargado de soportar la funcionalidad operativa del módulo diagrams."
     },
     {
       "id": "BarcodeScanner",
@@ -3807,7 +3982,7 @@
       "type": "component",
       "path": "src/components/modals/BarcodeScanner.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3819,7 +3994,8 @@
       "dependencies": [
         "index",
         "BaseModal"
-      ]
+      ],
+      "business_logic": "Componente técnico BarcodeScanner encargado de soportar la funcionalidad operativa del módulo modals."
     },
     {
       "id": "PriceSelectorModal",
@@ -3827,7 +4003,7 @@
       "type": "component",
       "path": "src/components/modals/PriceSelectorModal.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3840,7 +4016,8 @@
         "utils",
         "index",
         "BaseModal"
-      ]
+      ],
+      "business_logic": "Componente técnico PriceSelectorModal encargado de soportar la funcionalidad operativa del módulo modals."
     },
     {
       "id": "UpgradeModal",
@@ -3848,7 +4025,7 @@
       "type": "component",
       "path": "src/components/modals/UpgradeModal.tsx",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3860,7 +4037,8 @@
       "dependencies": [
         "BaseModal",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico UpgradeModal encargado de soportar la funcionalidad operativa del módulo modals."
     },
     {
       "id": "CreateProductModal",
@@ -3868,7 +4046,7 @@
       "type": "component",
       "path": "src/components/modals/CreateProductModal.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3880,7 +4058,8 @@
       "dependencies": [
         "index",
         "BaseModal"
-      ]
+      ],
+      "business_logic": "Componente técnico CreateProductModal encargado de soportar la funcionalidad operativa del módulo modals."
     },
     {
       "id": "SyncConflictModal",
@@ -3888,7 +4067,7 @@
       "type": "component",
       "path": "src/components/modals/SyncConflictModal.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -3902,7 +4081,8 @@
         "index",
         "SyncProvider",
         "BaseModal"
-      ]
+      ],
+      "business_logic": "Componente técnico SyncConflictModal encargado de soportar la funcionalidad operativa del módulo modals."
     },
     {
       "id": "navigation-menu",
@@ -3910,7 +4090,7 @@
       "type": "component",
       "path": "src/components/ui/navigation-menu.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -3921,7 +4101,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico navigation-menu encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "hover-card",
@@ -3929,7 +4110,7 @@
       "type": "component",
       "path": "src/components/ui/hover-card.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -3940,7 +4121,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico hover-card encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "button",
@@ -3948,7 +4130,7 @@
       "type": "component",
       "path": "src/components/ui/button.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 48,
@@ -3959,7 +4141,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico button encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "alert-dialog",
@@ -3967,7 +4150,7 @@
       "type": "component",
       "path": "src/components/ui/alert-dialog.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -3979,7 +4162,8 @@
       "dependencies": [
         "utils",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico alert-dialog encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "textarea",
@@ -3987,7 +4171,7 @@
       "type": "component",
       "path": "src/components/ui/textarea.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -3998,7 +4182,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico textarea encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "aspect-ratio",
@@ -4006,7 +4191,7 @@
       "type": "component",
       "path": "src/components/ui/aspect-ratio.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -4015,7 +4200,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.1
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico aspect-ratio encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "toggle",
@@ -4023,7 +4209,7 @@
       "type": "component",
       "path": "src/components/ui/toggle.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -4034,7 +4220,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico toggle encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "toast",
@@ -4042,7 +4229,7 @@
       "type": "component",
       "path": "src/components/ui/toast.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -4053,7 +4240,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico toast encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "MobileSafeContainer",
@@ -4061,7 +4249,7 @@
       "type": "component",
       "path": "src/components/ui/MobileSafeContainer.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -4072,7 +4260,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico MobileSafeContainer encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "chart",
@@ -4091,7 +4280,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico chart encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "popover",
@@ -4099,7 +4289,7 @@
       "type": "component",
       "path": "src/components/ui/popover.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 7,
@@ -4110,7 +4300,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico popover encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "form",
@@ -4118,7 +4309,7 @@
       "type": "component",
       "path": "src/components/ui/form.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -4130,7 +4321,8 @@
       "dependencies": [
         "utils",
         "label"
-      ]
+      ],
+      "business_logic": "Componente técnico form encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "label",
@@ -4138,7 +4330,7 @@
       "type": "component",
       "path": "src/components/ui/label.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 12,
@@ -4149,7 +4341,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico label encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "input-otp",
@@ -4157,7 +4350,7 @@
       "type": "component",
       "path": "src/components/ui/input-otp.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -4168,7 +4361,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico input-otp encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "dropdown-menu",
@@ -4176,7 +4370,7 @@
       "type": "component",
       "path": "src/components/ui/dropdown-menu.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 10,
@@ -4187,7 +4381,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico dropdown-menu encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "accordion",
@@ -4195,7 +4390,7 @@
       "type": "component",
       "path": "src/components/ui/accordion.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 3,
@@ -4206,7 +4401,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico accordion encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "sheet",
@@ -4214,7 +4410,7 @@
       "type": "component",
       "path": "src/components/ui/sheet.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 3,
@@ -4225,7 +4421,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico sheet encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "separator",
@@ -4233,7 +4430,7 @@
       "type": "component",
       "path": "src/components/ui/separator.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -4244,7 +4441,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico separator encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "resizable",
@@ -4252,7 +4450,7 @@
       "type": "component",
       "path": "src/components/ui/resizable.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -4263,7 +4461,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico resizable encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "toggle-group",
@@ -4271,7 +4470,7 @@
       "type": "component",
       "path": "src/components/ui/toggle-group.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -4283,7 +4482,8 @@
       "dependencies": [
         "utils",
         "toggle"
-      ]
+      ],
+      "business_logic": "Componente técnico toggle-group encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "scroll-area",
@@ -4291,7 +4491,7 @@
       "type": "component",
       "path": "src/components/ui/scroll-area.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 8,
@@ -4302,7 +4502,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico scroll-area encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "input",
@@ -4310,7 +4511,7 @@
       "type": "component",
       "path": "src/components/ui/input.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 24,
@@ -4321,7 +4522,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico input encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "StateRenderer",
@@ -4329,7 +4531,7 @@
       "type": "component",
       "path": "src/components/ui/StateRenderer.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 11,
@@ -4340,7 +4542,8 @@
       },
       "dependencies": [
         "CostProLoader"
-      ]
+      ],
+      "business_logic": "Componente técnico StateRenderer encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "SpeedDial",
@@ -4348,7 +4551,7 @@
       "type": "component",
       "path": "src/components/ui/SpeedDial.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -4360,7 +4563,8 @@
       "dependencies": [
         "utils",
         "Portal"
-      ]
+      ],
+      "business_logic": "Componente técnico SpeedDial encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "sidebar",
@@ -4385,7 +4589,8 @@
         "separator",
         "utils",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico sidebar encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "tabs",
@@ -4393,7 +4598,7 @@
       "type": "component",
       "path": "src/components/ui/tabs.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 4,
@@ -4404,7 +4609,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico tabs encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "skeleton",
@@ -4412,7 +4618,7 @@
       "type": "component",
       "path": "src/components/ui/skeleton.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 10,
@@ -4423,7 +4629,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico skeleton encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "badge",
@@ -4431,7 +4638,7 @@
       "type": "component",
       "path": "src/components/ui/badge.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 25,
@@ -4442,7 +4649,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico badge encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "SecurityScrollContainer",
@@ -4450,7 +4658,7 @@
       "type": "component",
       "path": "src/components/ui/SecurityScrollContainer.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 3,
@@ -4461,7 +4669,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico SecurityScrollContainer encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "radio-group",
@@ -4469,7 +4678,7 @@
       "type": "component",
       "path": "src/components/ui/radio-group.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -4480,7 +4689,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico radio-group encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "collapsible",
@@ -4488,7 +4698,7 @@
       "type": "component",
       "path": "src/components/ui/collapsible.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -4497,7 +4707,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.1
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico collapsible encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "pagination",
@@ -4505,7 +4716,7 @@
       "type": "component",
       "path": "src/components/ui/pagination.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -4517,7 +4728,8 @@
       "dependencies": [
         "utils",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico pagination encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "ScrollToTop",
@@ -4525,7 +4737,7 @@
       "type": "component",
       "path": "src/components/ui/ScrollToTop.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -4536,7 +4748,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico ScrollToTop encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "sonner",
@@ -4544,7 +4757,7 @@
       "type": "component",
       "path": "src/components/ui/sonner.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -4553,7 +4766,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.1
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico sonner encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "carousel",
@@ -4561,7 +4775,7 @@
       "type": "component",
       "path": "src/components/ui/carousel.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -4573,7 +4787,8 @@
       "dependencies": [
         "utils",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico carousel encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "CostProLoader",
@@ -4581,7 +4796,7 @@
       "type": "component",
       "path": "src/components/ui/CostProLoader.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 14,
@@ -4592,7 +4807,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico CostProLoader encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "LoadingOverlay",
@@ -4600,7 +4816,7 @@
       "type": "component",
       "path": "src/components/ui/LoadingOverlay.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -4611,7 +4827,8 @@
       },
       "dependencies": [
         "CostProLoader"
-      ]
+      ],
+      "business_logic": "Componente técnico LoadingOverlay encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "select",
@@ -4619,7 +4836,7 @@
       "type": "component",
       "path": "src/components/ui/select.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 4,
@@ -4630,7 +4847,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico select encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "checkbox",
@@ -4638,7 +4856,7 @@
       "type": "component",
       "path": "src/components/ui/checkbox.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 5,
@@ -4649,7 +4867,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico checkbox encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "DataDecryption",
@@ -4657,7 +4876,7 @@
       "type": "component",
       "path": "src/components/ui/DataDecryption.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -4666,7 +4885,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.1
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico DataDecryption encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "calendar",
@@ -4674,7 +4894,7 @@
       "type": "component",
       "path": "src/components/ui/calendar.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -4686,7 +4906,8 @@
       "dependencies": [
         "utils",
         "button"
-      ]
+      ],
+      "business_logic": "Componente técnico calendar encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "PWAInstallModal",
@@ -4694,7 +4915,7 @@
       "type": "component",
       "path": "src/components/ui/PWAInstallModal.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -4706,7 +4927,8 @@
       "dependencies": [
         "dialog",
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico PWAInstallModal encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "table",
@@ -4714,7 +4936,7 @@
       "type": "component",
       "path": "src/components/ui/table.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 16,
@@ -4725,7 +4947,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico table encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "progress",
@@ -4733,7 +4956,7 @@
       "type": "component",
       "path": "src/components/ui/progress.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 5,
@@ -4744,7 +4967,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico progress encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "ProductImage",
@@ -4752,7 +4976,7 @@
       "type": "component",
       "path": "src/components/ui/ProductImage.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 6,
@@ -4763,7 +4987,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico ProductImage encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "slider",
@@ -4771,7 +4996,7 @@
       "type": "component",
       "path": "src/components/ui/slider.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -4782,7 +5007,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico slider encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "breadcrumb",
@@ -4790,7 +5016,7 @@
       "type": "component",
       "path": "src/components/ui/breadcrumb.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -4801,7 +5027,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico breadcrumb encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "menubar",
@@ -4809,7 +5036,7 @@
       "type": "component",
       "path": "src/components/ui/menubar.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -4820,7 +5047,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico menubar encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "tooltip",
@@ -4828,7 +5056,7 @@
       "type": "component",
       "path": "src/components/ui/tooltip.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 9,
@@ -4839,7 +5067,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico tooltip encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "HorizontalScroll",
@@ -4847,7 +5076,7 @@
       "type": "component",
       "path": "src/components/ui/HorizontalScroll.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 3,
@@ -4858,7 +5087,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico HorizontalScroll encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "SearchBar",
@@ -4866,7 +5096,7 @@
       "type": "component",
       "path": "src/components/ui/SearchBar.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 11,
@@ -4877,7 +5107,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico SearchBar encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "SyncStatusBadge",
@@ -4885,7 +5116,7 @@
       "type": "component",
       "path": "src/components/ui/SyncStatusBadge.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -4897,7 +5128,8 @@
       "dependencies": [
         "utils",
         "SyncProvider"
-      ]
+      ],
+      "business_logic": "Componente técnico SyncStatusBadge encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "QueryInspector",
@@ -4905,7 +5137,7 @@
       "type": "component",
       "path": "src/components/ui/QueryInspector.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 7,
@@ -4916,7 +5148,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico QueryInspector encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "drawer",
@@ -4924,7 +5157,7 @@
       "type": "component",
       "path": "src/components/ui/drawer.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -4935,7 +5168,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico drawer encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "switch",
@@ -4943,7 +5177,7 @@
       "type": "component",
       "path": "src/components/ui/switch.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 6,
@@ -4954,7 +5188,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico switch encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "LazyRender",
@@ -4962,7 +5197,7 @@
       "type": "component",
       "path": "src/components/ui/LazyRender.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 3,
@@ -4971,7 +5206,8 @@
         "cyclomaticComplexity": 7,
         "couplingScore": 1.1
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico LazyRender encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "context-menu",
@@ -4979,7 +5215,7 @@
       "type": "component",
       "path": "src/components/ui/context-menu.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -4990,7 +5226,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico context-menu encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "ActionMenu",
@@ -5010,7 +5247,8 @@
       "dependencies": [
         "utils",
         "tooltip"
-      ]
+      ],
+      "business_logic": "Componente técnico ActionMenu encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "command",
@@ -5018,7 +5256,7 @@
       "type": "component",
       "path": "src/components/ui/command.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5030,7 +5268,8 @@
       "dependencies": [
         "utils",
         "dialog"
-      ]
+      ],
+      "business_logic": "Componente técnico command encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "FloatingCalculator",
@@ -5038,7 +5277,7 @@
       "type": "component",
       "path": "src/components/ui/FloatingCalculator.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5049,7 +5288,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico FloatingCalculator encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "BaseModal",
@@ -5057,7 +5297,7 @@
       "type": "component",
       "path": "src/components/ui/BaseModal.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 22,
@@ -5069,7 +5309,8 @@
       "dependencies": [
         "dialog",
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico BaseModal encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "alert",
@@ -5077,7 +5318,7 @@
       "type": "component",
       "path": "src/components/ui/alert.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -5088,7 +5329,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico alert encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "card",
@@ -5096,7 +5338,7 @@
       "type": "component",
       "path": "src/components/ui/card.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 21,
@@ -5107,7 +5349,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico card encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "dialog",
@@ -5115,7 +5358,7 @@
       "type": "component",
       "path": "src/components/ui/dialog.tsx",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 12,
@@ -5126,7 +5369,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico dialog encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "CyberShell",
@@ -5134,7 +5378,7 @@
       "type": "component",
       "path": "src/components/ui/CyberShell.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -5143,7 +5387,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.1
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico CyberShell encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "avatar",
@@ -5151,7 +5396,7 @@
       "type": "component",
       "path": "src/components/ui/avatar.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -5162,7 +5407,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico avatar encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "toaster",
@@ -5170,7 +5416,7 @@
       "type": "component",
       "path": "src/components/ui/toaster.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -5181,7 +5427,8 @@
       },
       "dependencies": [
         "toast"
-      ]
+      ],
+      "business_logic": "Componente técnico toaster encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "ChatBot",
@@ -5200,7 +5447,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico ChatBot encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "Portal",
@@ -5208,7 +5456,7 @@
       "type": "component",
       "path": "src/components/ui/Portal.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -5217,7 +5465,8 @@
         "cyclomaticComplexity": 2,
         "couplingScore": 0.6
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico Portal encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "ViewSwitcher",
@@ -5225,7 +5474,7 @@
       "type": "component",
       "path": "src/components/ui/ViewSwitcher.tsx",
       "health": 9.8,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 5,
@@ -5236,7 +5485,8 @@
       },
       "dependencies": [
         "utils"
-      ]
+      ],
+      "business_logic": "Componente técnico ViewSwitcher encargado de soportar la funcionalidad operativa del módulo ui."
     },
     {
       "id": "index",
@@ -5257,7 +5507,8 @@
         "utils",
         "HorizontalScroll",
         "ProductImage"
-      ]
+      ],
+      "business_logic": "Componente técnico index encargado de soportar la funcionalidad operativa del módulo atomic."
     },
     {
       "id": "query-inspector-utils",
@@ -5265,7 +5516,7 @@
       "type": "utility",
       "path": "src/lib/query-inspector-utils.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -5274,7 +5525,8 @@
         "cyclomaticComplexity": 20,
         "couplingScore": 1.0
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico query-inspector-utils encargado de soportar la funcionalidad operativa del módulo lib."
     },
     {
       "id": "dexie",
@@ -5282,7 +5534,7 @@
       "type": "utility",
       "path": "src/lib/dexie.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 21,
@@ -5291,7 +5543,8 @@
         "cyclomaticComplexity": 23,
         "couplingScore": 6.6
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico dexie encargado de soportar la funcionalidad operativa del módulo lib."
     },
     {
       "id": "supabaseClient",
@@ -5299,7 +5552,7 @@
       "type": "utility",
       "path": "src/lib/supabaseClient.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 17,
@@ -5308,7 +5561,8 @@
         "cyclomaticComplexity": 4,
         "couplingScore": 4.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico supabaseClient encargado de soportar la funcionalidad operativa del módulo lib."
     },
     {
       "id": "rpc-validator",
@@ -5316,7 +5570,7 @@
       "type": "utility",
       "path": "src/lib/rpc-validator.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -5325,7 +5579,8 @@
         "cyclomaticComplexity": 12,
         "couplingScore": 0.7
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico rpc-validator encargado de soportar la funcionalidad operativa del módulo lib."
     },
     {
       "id": "logger",
@@ -5333,7 +5588,7 @@
       "type": "utility",
       "path": "src/lib/logger.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 5,
@@ -5342,7 +5597,8 @@
         "cyclomaticComplexity": 6,
         "couplingScore": 1.6
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico logger encargado de soportar la funcionalidad operativa del módulo lib."
     },
     {
       "id": "roles",
@@ -5350,7 +5606,7 @@
       "type": "utility",
       "path": "src/lib/roles.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -5359,7 +5615,8 @@
         "cyclomaticComplexity": 20,
         "couplingScore": 1.4
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico roles encargado de soportar la funcionalidad operativa del módulo lib."
     },
     {
       "id": "errorHandler",
@@ -5367,7 +5624,7 @@
       "type": "utility",
       "path": "src/lib/errorHandler.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -5378,7 +5635,8 @@
       },
       "dependencies": [
         "logger"
-      ]
+      ],
+      "business_logic": "Componente técnico errorHandler encargado de soportar la funcionalidad operativa del módulo lib."
     },
     {
       "id": "plan-utils",
@@ -5386,7 +5644,7 @@
       "type": "utility",
       "path": "src/lib/plan-utils.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -5395,7 +5653,8 @@
         "cyclomaticComplexity": 3,
         "couplingScore": 0.1
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico plan-utils encargado de soportar la funcionalidad operativa del módulo lib."
     },
     {
       "id": "db",
@@ -5403,7 +5662,7 @@
       "type": "utility",
       "path": "src/lib/db.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -5412,7 +5671,8 @@
         "cyclomaticComplexity": 5,
         "couplingScore": 0.2
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico db encargado de soportar la funcionalidad operativa del módulo lib."
     },
     {
       "id": "inventory-logic",
@@ -5420,7 +5680,7 @@
       "type": "utility",
       "path": "src/lib/inventory-logic.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5429,7 +5689,8 @@
         "cyclomaticComplexity": 10,
         "couplingScore": 0.8
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico inventory-logic encargado de soportar la funcionalidad operativa del módulo lib."
     },
     {
       "id": "auth",
@@ -5437,7 +5698,7 @@
       "type": "utility",
       "path": "src/lib/auth.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -5448,7 +5709,8 @@
       },
       "dependencies": [
         "supabaseClient"
-      ]
+      ],
+      "business_logic": "Componente técnico auth encargado de soportar la funcionalidad operativa del módulo lib."
     },
     {
       "id": "utils",
@@ -5456,7 +5718,7 @@
       "type": "utility",
       "path": "src/lib/utils.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 180,
@@ -5467,7 +5729,8 @@
       },
       "dependencies": [
         "supabaseClient"
-      ]
+      ],
+      "business_logic": "Componente técnico utils encargado de soportar la funcionalidad operativa del módulo lib."
     },
     {
       "id": "navigation",
@@ -5475,7 +5738,7 @@
       "type": "utility",
       "path": "src/lib/navigation.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5484,7 +5747,8 @@
         "cyclomaticComplexity": 5,
         "couplingScore": 0.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico navigation encargado de soportar la funcionalidad operativa del módulo lib."
     },
     {
       "id": "template-industrial",
@@ -5492,7 +5756,7 @@
       "type": "utility",
       "path": "src/lib/data/template-industrial.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5501,7 +5765,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.9
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico template-industrial encargado de soportar la funcionalidad operativa del módulo data."
     },
     {
       "id": "template-pizza",
@@ -5509,7 +5774,7 @@
       "type": "utility",
       "path": "src/lib/data/template-pizza.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5518,7 +5783,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.8
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico template-pizza encargado de soportar la funcionalidad operativa del módulo data."
     },
     {
       "id": "template-furniture",
@@ -5526,7 +5792,7 @@
       "type": "utility",
       "path": "src/lib/data/template-furniture.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5535,7 +5801,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.9
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico template-furniture encargado de soportar la funcionalidad operativa del módulo data."
     },
     {
       "id": "template-lavar",
@@ -5552,7 +5819,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 1.7
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico template-lavar encargado de soportar la funcionalidad operativa del módulo data."
     },
     {
       "id": "template-shoes",
@@ -5560,7 +5828,7 @@
       "type": "utility",
       "path": "src/lib/data/template-shoes.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5569,7 +5837,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.9
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico template-shoes encargado de soportar la funcionalidad operativa del módulo data."
     },
     {
       "id": "template-icecream",
@@ -5577,7 +5846,7 @@
       "type": "utility",
       "path": "src/lib/data/template-icecream.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5586,7 +5855,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.9
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico template-icecream encargado de soportar la funcionalidad operativa del módulo data."
     },
     {
       "id": "template-repair",
@@ -5594,7 +5864,7 @@
       "type": "utility",
       "path": "src/lib/data/template-repair.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5603,7 +5873,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.8
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico template-repair encargado de soportar la funcionalidad operativa del módulo data."
     },
     {
       "id": "demo-products",
@@ -5611,7 +5882,7 @@
       "type": "utility",
       "path": "src/lib/data/demo-products.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5620,7 +5891,8 @@
         "cyclomaticComplexity": 2,
         "couplingScore": 0.4
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico demo-products encargado de soportar la funcionalidad operativa del módulo data."
     },
     {
       "id": "costpro-reinicio",
@@ -5637,7 +5909,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 1.7
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico costpro-reinicio encargado de soportar la funcionalidad operativa del módulo data."
     },
     {
       "id": "template-consultancy",
@@ -5645,7 +5918,7 @@
       "type": "utility",
       "path": "src/lib/data/template-consultancy.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5654,7 +5927,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.8
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico template-consultancy encargado de soportar la funcionalidad operativa del módulo data."
     },
     {
       "id": "costpro-ejemplo",
@@ -5671,7 +5945,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 1.3
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico costpro-ejemplo encargado de soportar la funcionalidad operativa del módulo data."
     },
     {
       "id": "template-logistics",
@@ -5679,7 +5954,7 @@
       "type": "utility",
       "path": "src/lib/data/template-logistics.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5688,7 +5963,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.9
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico template-logistics encargado de soportar la funcionalidad operativa del módulo data."
     },
     {
       "id": "template-pastry",
@@ -5696,7 +5972,7 @@
       "type": "utility",
       "path": "src/lib/data/template-pastry.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5705,7 +5981,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.9
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico template-pastry encargado de soportar la funcionalidad operativa del módulo data."
     },
     {
       "id": "template-juice",
@@ -5713,7 +5990,7 @@
       "type": "utility",
       "path": "src/lib/data/template-juice.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5722,7 +5999,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.9
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico template-juice encargado de soportar la funcionalidad operativa del módulo data."
     },
     {
       "id": "sm2",
@@ -5730,7 +6008,7 @@
       "type": "utility",
       "path": "src/lib/academy/sm2.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -5739,7 +6017,8 @@
         "cyclomaticComplexity": 5,
         "couplingScore": 0.3
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico sm2 encargado de soportar la funcionalidad operativa del módulo academy."
     },
     {
       "id": "ReleaseGatePdfExporter",
@@ -5747,7 +6026,7 @@
       "type": "utility",
       "path": "src/lib/release_gate/ReleaseGatePdfExporter.ts",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5756,7 +6035,8 @@
         "cyclomaticComplexity": 36,
         "couplingScore": 1.9
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico ReleaseGatePdfExporter encargado de soportar la funcionalidad operativa del módulo release_gate."
     },
     {
       "id": "mri-engine",
@@ -5764,7 +6044,7 @@
       "type": "utility",
       "path": "src/lib/release_gate/mri-engine.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -5773,7 +6053,8 @@
         "cyclomaticComplexity": 6,
         "couplingScore": 0.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico mri-engine encargado de soportar la funcionalidad operativa del módulo release_gate."
     },
     {
       "id": "pdf-export",
@@ -5781,7 +6062,7 @@
       "type": "utility",
       "path": "src/lib/utils/pdf-export.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5790,7 +6071,8 @@
         "cyclomaticComplexity": 2,
         "couplingScore": 0.4
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico pdf-export encargado de soportar la funcionalidad operativa del módulo utils."
     },
     {
       "id": "number-to-words-es",
@@ -5798,7 +6080,7 @@
       "type": "utility",
       "path": "src/lib/utils/number-to-words-es.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -5807,7 +6089,8 @@
         "cyclomaticComplexity": 14,
         "couplingScore": 1.2
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico number-to-words-es encargado de soportar la funcionalidad operativa del módulo utils."
     },
     {
       "id": "health-engine",
@@ -5815,7 +6098,7 @@
       "type": "utility",
       "path": "src/lib/observability/health-engine.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5824,7 +6107,8 @@
         "cyclomaticComplexity": 22,
         "couplingScore": 1.5
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico health-engine encargado de soportar la funcionalidad operativa del módulo observability."
     },
     {
       "id": "system-health",
@@ -5832,7 +6116,7 @@
       "type": "utility",
       "path": "src/lib/observability/system-health.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -5841,7 +6125,8 @@
         "cyclomaticComplexity": 9,
         "couplingScore": 0.9
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico system-health encargado de soportar la funcionalidad operativa del módulo observability."
     },
     {
       "id": "health-alerts",
@@ -5849,7 +6134,7 @@
       "type": "utility",
       "path": "src/lib/observability/health-alerts.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -5861,7 +6146,8 @@
       "dependencies": [
         "health-engine",
         "supabaseClient"
-      ]
+      ],
+      "business_logic": "Componente técnico health-alerts encargado de soportar la funcionalidad operativa del módulo observability."
     },
     {
       "id": "intelligence",
@@ -5869,7 +6155,7 @@
       "type": "utility",
       "path": "src/lib/ipv/intelligence.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5880,7 +6166,8 @@
       },
       "dependencies": [
         "dexie"
-      ]
+      ],
+      "business_logic": "Componente técnico intelligence encargado de soportar la funcionalidad operativa del módulo ipv."
     },
     {
       "id": "bandecParser",
@@ -5888,7 +6175,7 @@
       "type": "utility",
       "path": "src/lib/ipv/bandecParser.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5901,7 +6188,8 @@
         "dexie",
         "utils",
         "engine"
-      ]
+      ],
+      "business_logic": "Componente técnico bandecParser encargado de soportar la funcionalidad operativa del módulo ipv."
     },
     {
       "id": "parser",
@@ -5909,7 +6197,7 @@
       "type": "utility",
       "path": "src/lib/ipv/parser.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5918,7 +6206,8 @@
         "cyclomaticComplexity": 19,
         "couplingScore": 1.1
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico parser encargado de soportar la funcionalidad operativa del módulo ipv."
     },
     {
       "id": "backup",
@@ -5926,7 +6215,7 @@
       "type": "utility",
       "path": "src/lib/ipv/backup.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 2,
@@ -5935,7 +6224,8 @@
         "cyclomaticComplexity": 5,
         "couplingScore": 0.8
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico backup encargado de soportar la funcionalidad operativa del módulo ipv."
     },
     {
       "id": "calculations",
@@ -5943,7 +6233,7 @@
       "type": "utility",
       "path": "src/lib/ipv/calculations.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -5955,7 +6245,8 @@
       "dependencies": [
         "dexie",
         "parser"
-      ]
+      ],
+      "business_logic": "Componente técnico calculations encargado de soportar la funcionalidad operativa del módulo ipv."
     },
     {
       "id": "engine",
@@ -5974,7 +6265,8 @@
       },
       "dependencies": [
         "dexie"
-      ]
+      ],
+      "business_logic": "Componente técnico engine encargado de soportar la funcionalidad operativa del módulo ipv."
     },
     {
       "id": "utils",
@@ -5993,7 +6285,8 @@
       },
       "dependencies": [
         "dexie"
-      ]
+      ],
+      "business_logic": "Componente técnico utils encargado de soportar la funcionalidad operativa del módulo ipv."
     },
     {
       "id": "matching.worker",
@@ -6001,7 +6294,7 @@
       "type": "utility",
       "path": "src/lib/ipv/matching.worker.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -6012,7 +6305,8 @@
       },
       "dependencies": [
         "engine"
-      ]
+      ],
+      "business_logic": "Componente técnico matching.worker encargado de soportar la funcionalidad operativa del módulo ipv."
     },
     {
       "id": "schemas",
@@ -6020,7 +6314,7 @@
       "type": "utility",
       "path": "src/lib/cost-engine/schemas.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -6029,7 +6323,8 @@
         "cyclomaticComplexity": 1,
         "couplingScore": 0.2
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico schemas encargado de soportar la funcionalidad operativa del módulo cost-engine."
     },
     {
       "id": "validations",
@@ -6046,7 +6341,8 @@
         "cyclomaticComplexity": 101,
         "couplingScore": 5.2
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico validations encargado de soportar la funcionalidad operativa del módulo cost-engine."
     },
     {
       "id": "index",
@@ -6066,7 +6362,8 @@
       "dependencies": [
         "formula-utils",
         "types"
-      ]
+      ],
+      "business_logic": "Componente técnico index encargado de soportar la funcionalidad operativa del módulo cost-engine."
     },
     {
       "id": "formula-utils",
@@ -6074,7 +6371,7 @@
       "type": "utility",
       "path": "src/lib/cost-engine/formula-utils.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -6083,7 +6380,8 @@
         "cyclomaticComplexity": 8,
         "couplingScore": 0.7
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico formula-utils encargado de soportar la funcionalidad operativa del módulo cost-engine."
     },
     {
       "id": "types",
@@ -6091,7 +6389,7 @@
       "type": "utility",
       "path": "src/lib/cost-engine/types.ts",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 9,
@@ -6100,7 +6398,8 @@
         "cyclomaticComplexity": 35,
         "couplingScore": 3.9
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico types encargado de soportar la funcionalidad operativa del módulo cost-engine."
     },
     {
       "id": "orchestrator",
@@ -6108,7 +6407,7 @@
       "type": "utility",
       "path": "src/lib/ai/orchestrator.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -6125,7 +6424,8 @@
         "deepseek-adapter",
         "gpt-adapter",
         "fallback-adapter"
-      ]
+      ],
+      "business_logic": "Componente técnico orchestrator encargado de soportar la funcionalidad operativa del módulo ai."
     },
     {
       "id": "types",
@@ -6133,7 +6433,7 @@
       "type": "utility",
       "path": "src/lib/ai/types.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 9,
@@ -6142,7 +6442,8 @@
         "cyclomaticComplexity": 18,
         "couplingScore": 3.1
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico types encargado de soportar la funcionalidad operativa del módulo ai."
     },
     {
       "id": "gemini-adapter",
@@ -6150,7 +6451,7 @@
       "type": "utility",
       "path": "src/lib/ai/adapters/gemini-adapter.ts",
       "health": 9.6,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -6161,7 +6462,8 @@
       },
       "dependencies": [
         "types"
-      ]
+      ],
+      "business_logic": "Componente técnico gemini-adapter encargado de soportar la funcionalidad operativa del módulo adapters."
     },
     {
       "id": "kimi-adapter",
@@ -6169,7 +6471,7 @@
       "type": "utility",
       "path": "src/lib/ai/adapters/kimi-adapter.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -6180,7 +6482,8 @@
       },
       "dependencies": [
         "openai-compatible-adapter"
-      ]
+      ],
+      "business_logic": "Componente técnico kimi-adapter encargado de soportar la funcionalidad operativa del módulo adapters."
     },
     {
       "id": "fallback-adapter",
@@ -6188,7 +6491,7 @@
       "type": "utility",
       "path": "src/lib/ai/adapters/fallback-adapter.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -6199,7 +6502,8 @@
       },
       "dependencies": [
         "types"
-      ]
+      ],
+      "business_logic": "Componente técnico fallback-adapter encargado de soportar la funcionalidad operativa del módulo adapters."
     },
     {
       "id": "qwen-adapter",
@@ -6207,7 +6511,7 @@
       "type": "utility",
       "path": "src/lib/ai/adapters/qwen-adapter.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -6218,7 +6522,8 @@
       },
       "dependencies": [
         "types"
-      ]
+      ],
+      "business_logic": "Componente técnico qwen-adapter encargado de soportar la funcionalidad operativa del módulo adapters."
     },
     {
       "id": "openai-compatible-adapter",
@@ -6226,7 +6531,7 @@
       "type": "utility",
       "path": "src/lib/ai/adapters/openai-compatible-adapter.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 3,
@@ -6237,7 +6542,8 @@
       },
       "dependencies": [
         "types"
-      ]
+      ],
+      "business_logic": "Componente técnico openai-compatible-adapter encargado de soportar la funcionalidad operativa del módulo adapters."
     },
     {
       "id": "gpt-adapter",
@@ -6245,7 +6551,7 @@
       "type": "utility",
       "path": "src/lib/ai/adapters/gpt-adapter.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -6256,7 +6562,8 @@
       },
       "dependencies": [
         "openai-compatible-adapter"
-      ]
+      ],
+      "business_logic": "Componente técnico gpt-adapter encargado de soportar la funcionalidad operativa del módulo adapters."
     },
     {
       "id": "deepseek-adapter",
@@ -6264,7 +6571,7 @@
       "type": "utility",
       "path": "src/lib/ai/adapters/deepseek-adapter.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -6275,7 +6582,8 @@
       },
       "dependencies": [
         "openai-compatible-adapter"
-      ]
+      ],
+      "business_logic": "Componente técnico deepseek-adapter encargado de soportar la funcionalidad operativa del módulo adapters."
     },
     {
       "id": "registry",
@@ -6283,7 +6591,7 @@
       "type": "utility",
       "path": "src/lib/ai/tools/registry.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 0,
@@ -6295,7 +6603,8 @@
       "dependencies": [
         "system-health",
         "definitions"
-      ]
+      ],
+      "business_logic": "Componente técnico registry encargado de soportar la funcionalidad operativa del módulo tools."
     },
     {
       "id": "definitions",
@@ -6303,7 +6612,7 @@
       "type": "utility",
       "path": "src/lib/ai/tools/definitions.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -6314,7 +6623,8 @@
       },
       "dependencies": [
         "types"
-      ]
+      ],
+      "business_logic": "Componente técnico definitions encargado de soportar la funcionalidad operativa del módulo tools."
     },
     {
       "id": "offline-storage",
@@ -6322,7 +6632,7 @@
       "type": "utility",
       "path": "src/lib/sync/offline-storage.ts",
       "health": 10.0,
-      "status": "\u00d3ptimo",
+      "status": "Óptimo",
       "lastAudit": "2026-03-06",
       "metrics": {
         "inDegree": 1,
@@ -6331,7 +6641,8 @@
         "cyclomaticComplexity": 7,
         "couplingScore": 0.8
       },
-      "dependencies": []
+      "dependencies": [],
+      "business_logic": "Componente técnico offline-storage encargado de soportar la funcionalidad operativa del módulo sync."
     }
   ],
   "stats": {

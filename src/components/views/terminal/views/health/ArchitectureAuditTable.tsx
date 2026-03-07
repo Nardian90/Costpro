@@ -1,88 +1,119 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Search, FileCode, LayoutGrid, Info,
-  ShieldCheck, AlertTriangle, AlertCircle,
-  ChevronLeft, ChevronRight
+  Search,
+  FileCode,
+  AlertTriangle,
+  CheckCircle2,
+  Info,
+  ShieldAlert,
+  ChevronLeft,
+  ChevronRight,
+  BookOpen,
+  X
 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import {
-  Table, TableBody, TableCell, TableHead,
-  TableHeader, TableRow
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 
 export function ArchitectureAuditTable() {
   const [data, setData] = useState<any[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [globalSearch, setGlobalSearch] = useState<string>('');
-  const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [healthFilter, setHealthFilter] = useState<string>('all');
-  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [loading, setLoading] = useState(true);
+  const [globalSearch, setGlobalSearch] = useState('');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [healthFilter, setHealthFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedComponent, setSelectedComponent] = useState<any>(null);
   const itemsPerPage = 10;
 
   useEffect(() => {
-    const fetchData = async () => {
+    async function fetchData() {
       try {
-        const response = await fetch('/architecture_map.json');
-        if (response.ok) {
-          const json = await response.json();
-          setData(json.components || []);
-        }
+        const response = await fetch('/architecture_graph.json');
+        const json = await response.json();
+        // Convert the map from graph nodes to array
+        const nodes = Object.values(json.nodes || {});
+        setData(nodes);
       } catch (error) {
-        console.error('Error loading architecture map:', error);
+        console.error("Error loading architecture data:", error);
+        // Fallback to system_architecture.json if graph fails
+        try {
+          const fallbackResponse = await fetch('/system_architecture.json');
+          const fallbackJson = await fallbackResponse.json();
+          setData(fallbackJson.architecture || []);
+        } catch (e) {
+          console.error("Critical error loading architecture maps:", e);
+        }
       } finally {
         setLoading(false);
       }
-    };
+    }
     fetchData();
   }, []);
 
-  const filteredData = useMemo(() => {
-    return data.filter((item: any) => {
-      const name = item.name || '';
-      const path = item.path || '';
-      const matchesSearch = name.toLowerCase().includes(globalSearch.toLowerCase()) ||
-                           path.toLowerCase().includes(globalSearch.toLowerCase());
-      const matchesType = typeFilter === 'all' || item.type === typeFilter;
-      const matchesHealth = healthFilter === 'all' ||
-                           (healthFilter === 'optimal' && item.health >= 9.5) ||
-                           (healthFilter === 'warning' && item.health >= 6.0 && item.health < 9.5) ||
-                           (healthFilter === 'critical' && item.health < 6.0);
+  const filteredData = data.filter(item => {
+    const matchesSearch = item.name?.toLowerCase().includes(globalSearch.toLowerCase()) ||
+                         item.path?.toLowerCase().includes(globalSearch.toLowerCase());
+    const matchesType = typeFilter === 'all' || item.type === typeFilter;
 
-      return matchesSearch && matchesType && matchesHealth;
-    });
-  }, [data, globalSearch, typeFilter, healthFilter]);
+    let matchesHealth = true;
+    if (healthFilter === 'optimal') matchesHealth = item.health >= 9.5;
+    else if (healthFilter === 'warning') matchesHealth = item.health >= 6.0 && item.health < 9.5;
+    else if (healthFilter === 'critical') matchesHealth = item.health < 6.0;
 
-  const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    return filteredData.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredData, currentPage]);
+    return matchesSearch && matchesType && matchesHealth;
+  });
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const paginatedData = filteredData.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const getHealthStyle = (score: number) => {
-    if (score >= 9.5) return { color: "text-emerald-500", icon: <ShieldCheck className="w-4 h-4" />, label: "ÓPTIMO", bg: "bg-emerald-500/10" };
-    if (score >= 8.0) return { color: "text-blue-500", icon: <Info className="w-4 h-4" />, label: "BUENO", bg: "bg-blue-500/10" };
-    if (score >= 6.0) return { color: "text-amber-500", icon: <AlertTriangle className="w-4 h-4" />, label: "ADVERTENCIA", bg: "bg-amber-500/10" };
-    return { color: "text-rose-500", icon: <AlertCircle className="w-4 h-4" />, label: "CRÍTICO", bg: "bg-rose-500/10" };
+    if (score >= 9.5) return {
+      color: 'text-emerald-500',
+      bg: 'bg-emerald-500/10',
+      icon: <CheckCircle2 className="w-3.5 h-3.5" />,
+      label: 'Óptimo'
+    };
+    if (score >= 6.0) return {
+      color: 'text-amber-500',
+      bg: 'bg-amber-500/10',
+      icon: <AlertTriangle className="w-3.5 h-3.5" />,
+      label: 'Advertencia'
+    };
+    return {
+      color: 'text-rose-500',
+      bg: 'bg-rose-500/10',
+      icon: <ShieldAlert className="w-3.5 h-3.5" />,
+      label: 'Crítico'
+    };
   };
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [globalSearch, typeFilter, healthFilter]);
-
-  if (loading) return <div className="h-48 flex items-center justify-center font-black opacity-40 uppercase tracking-widest">Cargando Mapa de Vistas...</div>;
-
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div className="space-y-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
-            <LayoutGrid className="w-5 h-5 text-primary" />
+          <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
+            <FileCode className="w-5 h-5 text-primary" />
           </div>
           <div>
             <h3 className="text-sm font-black uppercase tracking-tighter">Auditoría Arquitectónica: Mapa de Vistas</h3>
@@ -97,14 +128,20 @@ export function ArchitectureAuditTable() {
               type="text"
               placeholder="BUSCAR EN EL MAPA..."
               value={globalSearch}
-              onChange={(e) => setGlobalSearch(e.target.value)}
+              onChange={(e) => {
+                setGlobalSearch(e.target.value);
+                setCurrentPage(1);
+              }}
               className="bg-background/50 border-border/50 rounded-xl pl-9 pr-4 py-2 text-[10px] font-black uppercase tracking-widest h-10 w-64 focus-visible:ring-primary/30"
             />
           </div>
 
           <select
             value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
+            onChange={(e) => {
+              setTypeFilter(e.target.value);
+              setCurrentPage(1);
+            }}
             className="bg-background/50 border border-border/50 rounded-xl px-4 py-2 text-[10px] font-black uppercase tracking-widest h-10 focus:outline-none focus:border-primary/50"
           >
             <option value="all">TODOS LOS TIPOS</option>
@@ -117,7 +154,10 @@ export function ArchitectureAuditTable() {
 
           <select
             value={healthFilter}
-            onChange={(e) => setHealthFilter(e.target.value)}
+            onChange={(e) => {
+              setHealthFilter(e.target.value);
+              setCurrentPage(1);
+            }}
             className="bg-background/50 border border-border/50 rounded-xl px-4 py-2 text-[10px] font-black uppercase tracking-widest h-10 focus:outline-none focus:border-primary/50"
           >
             <option value="all">TODOS LOS ESTADOS</option>
@@ -136,8 +176,7 @@ export function ArchitectureAuditTable() {
               <TableHead className="text-[10px] font-black uppercase tracking-widest h-12">Tipo</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest h-12">Estado Salud</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest h-12 text-center">Acoplamiento</TableHead>
-              <TableHead className="text-[10px] font-black uppercase tracking-widest h-12">Dependencias</TableHead>
-              <TableHead className="text-[10px] font-black uppercase tracking-widest h-12 text-right">Auditoría</TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest h-12">Acción</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -150,7 +189,8 @@ export function ArchitectureAuditTable() {
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.01 }}
-                  className="group hover:bg-primary/5 border-border/30 transition-colors"
+                  className="group hover:bg-primary/5 border-border/30 transition-colors cursor-pointer"
+                  onClick={() => setSelectedComponent(item)}
                 >
                   <TableCell className="py-4">
                     <div className="flex items-center gap-3">
@@ -186,27 +226,16 @@ export function ArchitectureAuditTable() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="flex -space-x-1.5 overflow-hidden">
-                      {(item.dependencies || []).slice(0, 4).map((dep: any, i: number) => (
-                        <div key={i} title={dep} className="w-6 h-6 rounded-full bg-background border-2 border-card flex items-center justify-center">
-                          <span className="text-[8px] font-black uppercase text-primary/70">{dep[0]}</span>
-                        </div>
-                      ))}
-                      {(item.dependencies || []).length > 4 && (
-                        <div className="w-6 h-6 rounded-full bg-muted border-2 border-card flex items-center justify-center">
-                          <span className="text-[8px] font-black">+{item.dependencies.length - 4}</span>
-                        </div>
-                      )}
+                    <div className="flex items-center gap-2 text-[9px] font-black uppercase text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                      <BookOpen className="w-3 h-3" />
+                      <span>Ver Lógica</span>
                     </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <span className="text-[10px] font-mono text-muted-foreground uppercase">{item.lastAudit}</span>
                   </TableCell>
                 </motion.tr>
               );
             }) : (
               <TableRow>
-                <TableCell colSpan={6} className="h-32 text-center">
+                <TableCell colSpan={5} className="h-32 text-center">
                    <div className="flex flex-col items-center justify-center opacity-40">
                       <Search className="w-8 h-8 mb-2" />
                       <p className="text-[10px] font-black uppercase tracking-widest">No se encontraron resultados para los filtros aplicados</p>
@@ -218,6 +247,7 @@ export function ArchitectureAuditTable() {
         </Table>
       </div>
 
+      {/* Pagination and Summary */}
       <div className="flex items-center justify-between px-2 pt-2">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
@@ -230,7 +260,10 @@ export function ArchitectureAuditTable() {
           {totalPages > 1 && (
             <div className="flex items-center gap-1">
               <button
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentPage(p => Math.max(1, p - 1));
+                }}
                 disabled={currentPage === 1}
                 className="w-8 h-8 rounded-lg border border-border/50 flex items-center justify-center hover:bg-primary/5 disabled:opacity-30 disabled:pointer-events-none transition-colors"
               >
@@ -240,7 +273,10 @@ export function ArchitectureAuditTable() {
                 {currentPage} / {totalPages}
               </div>
               <button
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentPage(p => Math.min(totalPages, p + 1));
+                }}
                 disabled={currentPage === totalPages}
                 className="w-8 h-8 rounded-lg border border-border/50 flex items-center justify-center hover:bg-primary/5 disabled:opacity-30 disabled:pointer-events-none transition-colors"
               >
@@ -249,22 +285,93 @@ export function ArchitectureAuditTable() {
             </div>
           )}
         </div>
-
-        <div className="flex items-center gap-4">
-           <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-emerald-500" />
-              <span className="text-[8px] font-black uppercase text-muted-foreground">ÓPTIMO</span>
-           </div>
-           <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-amber-500" />
-              <span className="text-[8px] font-black uppercase text-muted-foreground">ADVERTENCIA</span>
-           </div>
-           <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-rose-500" />
-              <span className="text-[8px] font-black uppercase text-muted-foreground">CRÍTICO</span>
-           </div>
-        </div>
       </div>
+
+      {/* Business Logic Detail Sheet */}
+      <Sheet open={!!selectedComponent} onOpenChange={() => setSelectedComponent(null)}>
+        <SheetContent side="right" className="w-full sm:max-w-md border-l border-border/50 bg-card/95 backdrop-blur-xl">
+          <SheetHeader className="mb-8">
+            <div className="flex items-center gap-3 mb-2">
+               <Badge variant="outline" className="text-[10px] font-black uppercase border-primary/20 bg-primary/5 text-primary">
+                {selectedComponent?.type}
+              </Badge>
+              <span className="text-[10px] font-mono text-muted-foreground opacity-50">{selectedComponent?.lastAudit}</span>
+            </div>
+            <SheetTitle className="text-2xl font-black uppercase tracking-tighter leading-none">
+              {selectedComponent?.name}
+            </SheetTitle>
+            <SheetDescription className="text-[11px] font-mono break-all opacity-60">
+              {selectedComponent?.path}
+            </SheetDescription>
+          </SheetHeader>
+
+          <div className="space-y-8">
+            <section>
+              <div className="flex items-center gap-2 mb-4">
+                <BookOpen className="w-4 h-4 text-primary" />
+                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Contexto de Negocio (PRO)</h4>
+              </div>
+              <div className="p-6 rounded-[24px] bg-primary/5 border border-primary/10 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                   <FileCode className="w-12 h-12" />
+                </div>
+                <p className="text-sm font-bold leading-relaxed text-foreground/90 relative z-10">
+                  {selectedComponent?.business_logic || "No hay descripción de lógica de negocio disponible para este componente."}
+                </p>
+              </div>
+            </section>
+
+            <section>
+              <div className="flex items-center gap-2 mb-4">
+                <ShieldAlert className="w-4 h-4 text-primary" />
+                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Métricas Técnicas</h4>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-4 rounded-2xl bg-background/50 border border-border/50">
+                  <span className="text-[9px] font-black uppercase text-muted-foreground block mb-1">Salud</span>
+                  <span className={cn("text-lg font-black", getHealthStyle(selectedComponent?.health || 0).color)}>
+                    {(selectedComponent?.health || 0).toFixed(1)}/10
+                  </span>
+                </div>
+                <div className="p-4 rounded-2xl bg-background/50 border border-border/50">
+                  <span className="text-[9px] font-black uppercase text-muted-foreground block mb-1">Complejidad</span>
+                  <span className="text-lg font-black text-foreground">
+                    {selectedComponent?.metrics?.cyclomaticComplexity || 0}
+                  </span>
+                </div>
+                <div className="p-4 rounded-2xl bg-background/50 border border-border/50">
+                  <span className="text-[9px] font-black uppercase text-muted-foreground block mb-1">Líneas de Código</span>
+                  <span className="text-lg font-black text-foreground">
+                    {selectedComponent?.metrics?.lines || 0}
+                  </span>
+                </div>
+                <div className="p-4 rounded-2xl bg-background/50 border border-border/50">
+                  <span className="text-[9px] font-black uppercase text-muted-foreground block mb-1">Acoplamiento</span>
+                  <span className="text-lg font-black text-foreground">
+                    {selectedComponent?.metrics?.couplingScore || 0}
+                  </span>
+                </div>
+              </div>
+            </section>
+
+            {selectedComponent?.dependencies?.length > 0 && (
+              <section>
+                <div className="flex items-center gap-2 mb-4">
+                  <Info className="w-4 h-4 text-primary" />
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Dependencias Críticas</h4>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {selectedComponent.dependencies.map((dep: string, i: number) => (
+                    <Badge key={i} variant="secondary" className="bg-muted/50 text-[10px] font-bold py-1 px-3 rounded-lg">
+                      {dep}
+                    </Badge>
+                  ))}
+                </div>
+              </section>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
