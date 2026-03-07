@@ -50,7 +50,7 @@ export async function GET(request: Request) {
       shi: shiResult,
       mri: mriResult,
       timestamp: new Date().toISOString(),
-      version: '5.7.25',
+      version: '5.8.0',
       environment: process.env.NODE_ENV === 'production' ? 'enterprise' : 'development',
     });
   } catch (error) {

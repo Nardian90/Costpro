@@ -29,8 +29,22 @@ export default function IpvFlowDiagram() {
           className="fill-blue-500/10 stroke-blue-500"
           strokeWidth="3"
         />
-        <text x="400" y="195" textAnchor="middle" className="fill-blue-600 font-black text-xs uppercase">Motor de Matching</text>
-        <text x="400" y="220" textAnchor="middle" className="fill-blue-400 font-bold text-xs uppercase">(Multi-Pass AI)</text>
+        <text x="400" y="185" textAnchor="middle" className="fill-blue-600 font-black text-xs uppercase">Motor de Matching</text>
+        <text x="400" y="205" textAnchor="middle" className="fill-blue-400 font-bold text-[10px] uppercase">Clasificación Automática</text>
+
+        {/* Classification Tags */}
+        <g transform="translate(310, 220)">
+          <rect width="55" height="18" rx="4" className="fill-orange-500/10 stroke-orange-500/30" />
+          <text x="27.5" y="12" textAnchor="middle" className="fill-orange-600 font-black text-[8px] uppercase">Efectivo</text>
+        </g>
+        <g transform="translate(372, 220)">
+          <rect width="55" height="18" rx="4" className="fill-blue-500/10 stroke-blue-500/30" />
+          <text x="27.5" y="12" textAnchor="middle" className="fill-blue-600 font-black text-[8px] uppercase">Transf.</text>
+        </g>
+        <g transform="translate(434, 220)">
+          <rect width="55" height="18" rx="4" className="fill-emerald-500/10 stroke-emerald-500/30" />
+          <text x="27.5" y="12" textAnchor="middle" className="fill-emerald-600 font-black text-[8px] uppercase">QR</text>
+        </g>
 
         {/* Bank Extract (Input) */}
         <motion.g
@@ -51,8 +65,13 @@ export default function IpvFlowDiagram() {
           transition={{ delay: 1, duration: 1 }}
         >
           <rect x="600" y="160" width="150" height="80" rx="10" className="fill-emerald-500/10 stroke-emerald-500" strokeWidth="2" />
-          <text x="675" y="195" textAnchor="middle" className="fill-emerald-600 font-bold text-xs uppercase">Reporte IPV</text>
-          <text x="675" y="215" textAnchor="middle" className="fill-emerald-400 font-medium text-xs uppercase">(PDF Certificado)</text>
+
+          {/* Brand Logo Placeholder */}
+          <circle cx="675" cy="180" r="12" className="fill-emerald-500/20 stroke-emerald-500" strokeDasharray="2,2" />
+          <path d="M670 180 L675 185 L680 175" className="stroke-emerald-600 fill-none" strokeWidth="2" />
+
+          <text x="675" y="205" textAnchor="middle" className="fill-emerald-600 font-bold text-[10px] uppercase">Reporte IPV + Logo</text>
+          <text x="675" y="220" textAnchor="middle" className="fill-emerald-400 font-medium text-[9px] uppercase">(Modelo SC-3-01)</text>
           <path d="M500 200 L590 200" className="stroke-emerald-500" strokeWidth="2" markerEnd="url(#arrow-emerald)" />
         </motion.g>
 
