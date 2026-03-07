@@ -26,6 +26,9 @@ importers:
       '@mdxeditor/editor':
         specifier: ^3.39.1
         version: 3.52.3(@codemirror/language@6.12.1)(@lezer/highlight@1.2.3)(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(yjs@13.6.29)
+      '@prisma/client':
+        specifier: 4.16.2
+        version: 4.16.2(prisma@4.16.2)
       '@radix-ui/react-accordion':
         specifier: ^1.2.11
         version: 1.2.12(@types/react-dom@19.2.3(@types/react@19.2.8))(@types/react@19.2.8)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -206,6 +209,9 @@ importers:
       pdf-parse:
         specifier: ^1.1.1
         version: 1.1.1
+      prisma:
+        specifier: 4.16.2
+        version: 4.16.2
       react:
         specifier: ^19.0.0
         version: 19.2.3
@@ -282,9 +288,6 @@ importers:
       '@playwright/test':
         specifier: ^1.58.2
         version: 1.58.2
-      '@prisma/client':
-        specifier: 4.16.2
-        version: 4.16.2(prisma@4.16.2)
       '@tailwindcss/postcss':
         specifier: ^4
         version: 4.1.18
@@ -327,9 +330,6 @@ importers:
       jsdom:
         specifier: ^27.4.0
         version: 27.4.0
-      prisma:
-        specifier: 4.16.2
-        version: 4.16.2
       tailwindcss:
         specifier: ^4
         version: 4.1.18
