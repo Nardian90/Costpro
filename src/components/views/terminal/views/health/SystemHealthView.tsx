@@ -50,7 +50,7 @@ export default function SystemHealthView() {
       setData(json);
       setLastUpdate(new Date());
 
-      const auditRes = await fetch('/public/system_health.json');
+      const auditRes = await fetch('/system_health.json');
       if (auditRes.ok) {
         const auditJson = await auditRes.json();
         setAuditSummary(auditJson);

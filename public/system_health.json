@@ -1,7 +1,10 @@
 {
-  "lastAudit": "2026-03-07",
+  "systemHealth": 9.7,
   "status": "healthy",
-  "systemHealth": 9.6,
   "trend": "stable",
-  "viewsAudited": 42
+  "viewsAudited": 42,
+  "newViews": 0,
+  "criticalIssues": 0,
+  "warnings": 3,
+  "lastAudit": "2026-03-06"
 }
