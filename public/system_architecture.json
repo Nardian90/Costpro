@@ -19,7 +19,9 @@
         "utils",
         "dropdown-menu"
       ],
-      "business_logic": "Componente técnico ThemeToggle encargado de soportar la funcionalidad operativa del módulo components."
+      "business_logic": "[No definido en el manual] Componente técnico ThemeToggle encargado de soportar la funcionalidad operativa del módulo components.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "SplashScreen",
@@ -39,7 +41,9 @@
       "dependencies": [
         "CostProLogo"
       ],
-      "business_logic": "Componente técnico SplashScreen encargado de soportar la funcionalidad operativa del módulo components."
+      "business_logic": "[No definido en el manual] Componente técnico SplashScreen encargado de soportar la funcionalidad operativa del módulo components.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostProLogo",
@@ -57,7 +61,9 @@
         "couplingScore": 1.2
       },
       "dependencies": [],
-      "business_logic": "Componente técnico CostProLogo encargado de soportar la funcionalidad operativa del módulo components."
+      "business_logic": "[No definido en el manual] Componente técnico CostProLogo encargado de soportar la funcionalidad operativa del módulo components.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "ServiceWorkerRegister",
@@ -75,7 +81,9 @@
         "couplingScore": 0.2
       },
       "dependencies": [],
-      "business_logic": "Componente técnico ServiceWorkerRegister encargado de soportar la funcionalidad operativa del módulo components."
+      "business_logic": "[No definido en el manual] Componente técnico ServiceWorkerRegister encargado de soportar la funcionalidad operativa del módulo components.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "theme-provider",
@@ -93,7 +101,9 @@
         "couplingScore": 0.1
       },
       "dependencies": [],
-      "business_logic": "Componente técnico theme-provider encargado de soportar la funcionalidad operativa del módulo components."
+      "business_logic": "[No definido en el manual] Componente técnico theme-provider encargado de soportar la funcionalidad operativa del módulo components.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "IntelligentThemeHandler",
@@ -111,7 +121,9 @@
         "couplingScore": 0.6
       },
       "dependencies": [],
-      "business_logic": "Componente técnico IntelligentThemeHandler encargado de soportar la funcionalidad operativa del módulo components."
+      "business_logic": "[No definido en el manual] Componente técnico IntelligentThemeHandler encargado de soportar la funcionalidad operativa del módulo components.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "GlobalSessionManager",
@@ -129,7 +141,9 @@
         "couplingScore": 0.2
       },
       "dependencies": [],
-      "business_logic": "Componente técnico GlobalSessionManager encargado de soportar la funcionalidad operativa del módulo components."
+      "business_logic": "[No definido en el manual] Componente técnico GlobalSessionManager encargado de soportar la funcionalidad operativa del módulo components.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "TerminalShell",
@@ -156,7 +170,9 @@
         "Sidebar",
         "ChatBot"
       ],
-      "business_logic": "Contenedor principal de la interfaz de usuario que gestiona la persistencia de la tienda activa y la navegación segura entre vistas especializadas."
+      "business_logic": "[No definido en el manual] Componente técnico TerminalShell encargado de soportar la funcionalidad operativa del módulo views.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "Sidebar",
@@ -177,7 +193,9 @@
         "utils",
         "CostProLogo"
       ],
-      "business_logic": "Componente técnico Sidebar encargado de soportar la funcionalidad operativa del módulo terminal."
+      "business_logic": "[No definido en el manual] Componente técnico Sidebar encargado de soportar la funcionalidad operativa del módulo terminal.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "Header",
@@ -202,7 +220,9 @@
         "ThemeToggle",
         "popover"
       ],
-      "business_logic": "Componente técnico Header encargado de soportar la funcionalidad operativa del módulo terminal."
+      "business_logic": "[No definido en el manual] Componente técnico Header encargado de soportar la funcionalidad operativa del módulo terminal.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "StockHistoryView",
@@ -225,7 +245,9 @@
         "utils",
         "QueryInspector"
       ],
-      "business_logic": "Componente técnico StockHistoryView encargado de soportar la funcionalidad operativa del módulo stock_history."
+      "business_logic": "[No definido en el manual] Componente técnico StockHistoryView encargado de soportar la funcionalidad operativa del módulo stock_history.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CashClosureView",
@@ -246,7 +268,9 @@
         "utils",
         "ActionMenu"
       ],
-      "business_logic": "Componente técnico CashClosureView encargado de soportar la funcionalidad operativa del módulo cash_closure."
+      "business_logic": "[No definido en el manual] Componente técnico CashClosureView encargado de soportar la funcionalidad operativa del módulo cash_closure.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "StoresManagementView",
@@ -270,7 +294,9 @@
         "utils",
         "StoreModals"
       ],
-      "business_logic": "Componente técnico StoresManagementView encargado de soportar la funcionalidad operativa del módulo stores."
+      "business_logic": "[No definido en el manual] Componente técnico StoresManagementView encargado de soportar la funcionalidad operativa del módulo stores.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "useStoresView",
@@ -290,7 +316,9 @@
       "dependencies": [
         "logger"
       ],
-      "business_logic": "Componente técnico useStoresView encargado de soportar la funcionalidad operativa del módulo stores."
+      "business_logic": "[No definido en el manual] Componente técnico useStoresView encargado de soportar la funcionalidad operativa del módulo stores.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "StoreModals",
@@ -315,7 +343,9 @@
         "BaseModal",
         "button"
       ],
-      "business_logic": "Componente técnico StoreModals encargado de soportar la funcionalidad operativa del módulo stores."
+      "business_logic": "[No definido en el manual] Componente técnico StoreModals encargado de soportar la funcionalidad operativa del módulo stores.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "MasteryDashboard",
@@ -337,7 +367,9 @@
         "card",
         "supabaseClient"
       ],
-      "business_logic": "Componente técnico MasteryDashboard encargado de soportar la funcionalidad operativa del módulo academy."
+      "business_logic": "[No definido en el manual] Componente técnico MasteryDashboard encargado de soportar la funcionalidad operativa del módulo academy.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "AcademyView",
@@ -360,7 +392,9 @@
         "CostProLoader",
         "button"
       ],
-      "business_logic": "Componente técnico AcademyView encargado de soportar la funcionalidad operativa del módulo academy."
+      "business_logic": "[No definido en el manual] Componente técnico AcademyView encargado de soportar la funcionalidad operativa del módulo academy.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "Flashcard",
@@ -382,7 +416,9 @@
         "card",
         "button"
       ],
-      "business_logic": "Componente técnico Flashcard encargado de soportar la funcionalidad operativa del módulo academy."
+      "business_logic": "[No definido en el manual] Componente técnico Flashcard encargado de soportar la funcionalidad operativa del módulo academy.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "HelpView",
@@ -420,7 +456,9 @@
         "DarianDiagram",
         "button"
       ],
-      "business_logic": "Componente técnico HelpView encargado de soportar la funcionalidad operativa del módulo help."
+      "business_logic": "[No definido en el manual] Componente técnico HelpView encargado de soportar la funcionalidad operativa del módulo help.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "IpvFlowDiagram",
@@ -438,7 +476,9 @@
         "couplingScore": 0.5
       },
       "dependencies": [],
-      "business_logic": "Componente técnico IpvFlowDiagram encargado de soportar la funcionalidad operativa del módulo help."
+      "business_logic": "[No definido en el manual] Componente técnico IpvFlowDiagram encargado de soportar la funcionalidad operativa del módulo help.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostFlowDiagram",
@@ -456,7 +496,9 @@
         "couplingScore": 0.5
       },
       "dependencies": [],
-      "business_logic": "Componente técnico CostFlowDiagram encargado de soportar la funcionalidad operativa del módulo help."
+      "business_logic": "[No definido en el manual] Componente técnico CostFlowDiagram encargado de soportar la funcionalidad operativa del módulo help.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "InventoryAdjustmentFlowDiagram",
@@ -474,7 +516,9 @@
         "couplingScore": 0.5
       },
       "dependencies": [],
-      "business_logic": "Componente técnico InventoryAdjustmentFlowDiagram encargado de soportar la funcionalidad operativa del módulo help."
+      "business_logic": "[No definido en el manual] Componente técnico InventoryAdjustmentFlowDiagram encargado de soportar la funcionalidad operativa del módulo help.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "DarianDiagram",
@@ -492,7 +536,9 @@
         "couplingScore": 0.5
       },
       "dependencies": [],
-      "business_logic": "Componente técnico DarianDiagram encargado de soportar la funcionalidad operativa del módulo help."
+      "business_logic": "[No definido en el manual] Componente técnico DarianDiagram encargado de soportar la funcionalidad operativa del módulo help.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "UserFlowDiagram",
@@ -510,7 +556,9 @@
         "couplingScore": 0.2
       },
       "dependencies": [],
-      "business_logic": "Componente técnico UserFlowDiagram encargado de soportar la funcionalidad operativa del módulo help."
+      "business_logic": "[No definido en el manual] Componente técnico UserFlowDiagram encargado de soportar la funcionalidad operativa del módulo help.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "InventoryFlowDiagram",
@@ -528,7 +576,9 @@
         "couplingScore": 0.5
       },
       "dependencies": [],
-      "business_logic": "Componente técnico InventoryFlowDiagram encargado de soportar la funcionalidad operativa del módulo help."
+      "business_logic": "[No definido en el manual] Componente técnico InventoryFlowDiagram encargado de soportar la funcionalidad operativa del módulo help.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "StickyCartFlowDiagram",
@@ -546,7 +596,9 @@
         "couplingScore": 0.4
       },
       "dependencies": [],
-      "business_logic": "Componente técnico StickyCartFlowDiagram encargado de soportar la funcionalidad operativa del módulo help."
+      "business_logic": "[No definido en el manual] Componente técnico StickyCartFlowDiagram encargado de soportar la funcionalidad operativa del módulo help.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "MobileFlowDiagram",
@@ -564,7 +616,9 @@
         "couplingScore": 0.2
       },
       "dependencies": [],
-      "business_logic": "Componente técnico MobileFlowDiagram encargado de soportar la funcionalidad operativa del módulo help."
+      "business_logic": "[No definido en el manual] Componente técnico MobileFlowDiagram encargado de soportar la funcionalidad operativa del módulo help.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "SecurityFlowDiagram",
@@ -582,7 +636,9 @@
         "couplingScore": 0.5
       },
       "dependencies": [],
-      "business_logic": "Componente técnico SecurityFlowDiagram encargado de soportar la funcionalidad operativa del módulo help."
+      "business_logic": "[No definido en el manual] Componente técnico SecurityFlowDiagram encargado de soportar la funcionalidad operativa del módulo help.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "MobilePosDiagram",
@@ -600,7 +656,9 @@
         "couplingScore": 0.4
       },
       "dependencies": [],
-      "business_logic": "Componente técnico MobilePosDiagram encargado de soportar la funcionalidad operativa del módulo help."
+      "business_logic": "[No definido en el manual] Componente técnico MobilePosDiagram encargado de soportar la funcionalidad operativa del módulo help.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "StoreSkuDiagram",
@@ -618,7 +676,9 @@
         "couplingScore": 0.4
       },
       "dependencies": [],
-      "business_logic": "Componente técnico StoreSkuDiagram encargado de soportar la funcionalidad operativa del módulo help."
+      "business_logic": "[No definido en el manual] Componente técnico StoreSkuDiagram encargado de soportar la funcionalidad operativa del módulo help.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "QuickModeMassiveDiagram",
@@ -636,7 +696,9 @@
         "couplingScore": 0.5
       },
       "dependencies": [],
-      "business_logic": "Componente técnico QuickModeMassiveDiagram encargado de soportar la funcionalidad operativa del módulo help."
+      "business_logic": "[No definido en el manual] Componente técnico QuickModeMassiveDiagram encargado de soportar la funcionalidad operativa del módulo help.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "RolesDiagram",
@@ -654,7 +716,9 @@
         "couplingScore": 0.5
       },
       "dependencies": [],
-      "business_logic": "Componente técnico RolesDiagram encargado de soportar la funcionalidad operativa del módulo help."
+      "business_logic": "[No definido en el manual] Componente técnico RolesDiagram encargado de soportar la funcionalidad operativa del módulo help.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CashFlowDiagram",
@@ -672,7 +736,9 @@
         "couplingScore": 0.2
       },
       "dependencies": [],
-      "business_logic": "Componente técnico CashFlowDiagram encargado de soportar la funcionalidad operativa del módulo help."
+      "business_logic": "[No definido en el manual] Componente técnico CashFlowDiagram encargado de soportar la funcionalidad operativa del módulo help.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "KidsOnboarding",
@@ -690,7 +756,9 @@
         "couplingScore": 0.8
       },
       "dependencies": [],
-      "business_logic": "Componente técnico KidsOnboarding encargado de soportar la funcionalidad operativa del módulo help."
+      "business_logic": "[No definido en el manual] Componente técnico KidsOnboarding encargado de soportar la funcionalidad operativa del módulo help.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "SalesFlowDiagram",
@@ -708,7 +776,9 @@
         "couplingScore": 0.4
       },
       "dependencies": [],
-      "business_logic": "Componente técnico SalesFlowDiagram encargado de soportar la funcionalidad operativa del módulo help."
+      "business_logic": "[No definido en el manual] Componente técnico SalesFlowDiagram encargado de soportar la funcionalidad operativa del módulo help.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "OfflineSyncDiagram",
@@ -726,7 +796,9 @@
         "couplingScore": 0.5
       },
       "dependencies": [],
-      "business_logic": "Componente técnico OfflineSyncDiagram encargado de soportar la funcionalidad operativa del módulo help."
+      "business_logic": "[No definido en el manual] Componente técnico OfflineSyncDiagram encargado de soportar la funcionalidad operativa del módulo help.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "TaxCalculationModal",
@@ -747,7 +819,9 @@
         "dialog",
         "utils"
       ],
-      "business_logic": "Componente técnico TaxCalculationModal encargado de soportar la funcionalidad operativa del módulo sales."
+      "business_logic": "[No definido en el manual] Componente técnico TaxCalculationModal encargado de soportar la funcionalidad operativa del módulo sales.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "useSalesHistoryView",
@@ -765,7 +839,9 @@
         "couplingScore": 1.0
       },
       "dependencies": [],
-      "business_logic": "Componente técnico useSalesHistoryView encargado de soportar la funcionalidad operativa del módulo sales."
+      "business_logic": "[No definido en el manual] Componente técnico useSalesHistoryView encargado de soportar la funcionalidad operativa del módulo sales.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "SalesHistoryView",
@@ -791,7 +867,9 @@
         "utils",
         "StateRenderer"
       ],
-      "business_logic": "Componente técnico SalesHistoryView encargado de soportar la funcionalidad operativa del módulo sales."
+      "business_logic": "[No definido en el manual] Componente técnico SalesHistoryView encargado de soportar la funcionalidad operativa del módulo sales.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "TransactionDetailsModal",
@@ -815,7 +893,9 @@
         "utils",
         "BaseModal"
       ],
-      "business_logic": "Componente técnico TransactionDetailsModal encargado de soportar la funcionalidad operativa del módulo sales."
+      "business_logic": "[No definido en el manual] Componente técnico TransactionDetailsModal encargado de soportar la funcionalidad operativa del módulo sales.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "StickyCartSummary",
@@ -835,7 +915,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico StickyCartSummary encargado de soportar la funcionalidad operativa del módulo pos."
+      "business_logic": "[No definido en el manual] Componente técnico StickyCartSummary encargado de soportar la funcionalidad operativa del módulo pos.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "POSView",
@@ -872,7 +954,9 @@
         "POSTableView",
         "POSCart"
       ],
-      "business_logic": "Componente técnico POSView encargado de soportar la funcionalidad operativa del módulo pos."
+      "business_logic": "Interfaz de venta rápida diseñada para la eficiencia operativa. Soporta múltiples métodos de pago y descuentos, descontando automáticamente el inventario en tiempo real.",
+      "is_documented": true,
+      "documentation_quality": 10.0
     },
     {
       "id": "POSTableView",
@@ -893,7 +977,9 @@
         "utils",
         "ProductImage"
       ],
-      "business_logic": "Componente técnico POSTableView encargado de soportar la funcionalidad operativa del módulo pos."
+      "business_logic": "[No definido en el manual] Componente técnico POSTableView encargado de soportar la funcionalidad operativa del módulo pos.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "POSCart",
@@ -917,7 +1003,9 @@
         "CostProLoader",
         "BaseModal"
       ],
-      "business_logic": "Componente técnico POSCart encargado de soportar la funcionalidad operativa del módulo pos."
+      "business_logic": "[No definido en el manual] Componente técnico POSCart encargado de soportar la funcionalidad operativa del módulo pos.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "usePOSView",
@@ -938,7 +1026,9 @@
         "utils",
         "logger"
       ],
-      "business_logic": "Componente técnico usePOSView encargado de soportar la funcionalidad operativa del módulo pos."
+      "business_logic": "[No definido en el manual] Componente técnico usePOSView encargado de soportar la funcionalidad operativa del módulo pos.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "ProductReceptionView",
@@ -963,7 +1053,9 @@
         "SecurityScrollContainer",
         "BaseModal"
       ],
-      "business_logic": "Componente técnico ProductReceptionView encargado de soportar la funcionalidad operativa del módulo inventory."
+      "business_logic": "[No definido en el manual] Componente técnico ProductReceptionView encargado de soportar la funcionalidad operativa del módulo inventory.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "InventoryTableView",
@@ -985,7 +1077,9 @@
         "CostProLoader",
         "ProductImage"
       ],
-      "business_logic": "Componente técnico InventoryTableView encargado de soportar la funcionalidad operativa del módulo inventory."
+      "business_logic": "[No definido en el manual] Componente técnico InventoryTableView encargado de soportar la funcionalidad operativa del módulo inventory.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "InventoryView",
@@ -1015,7 +1109,9 @@
         "InventoryCardView",
         "ProductReceptionView"
       ],
-      "business_logic": "Componente técnico InventoryView encargado de soportar la funcionalidad operativa del módulo inventory."
+      "business_logic": "Panel de control de existencias. Proporciona visibilidad total sobre el stock actual, costos acumulados y alertas de reposición para evitar quiebres de inventario.",
+      "is_documented": true,
+      "documentation_quality": 10.0
     },
     {
       "id": "InventoryAdjustmentModal",
@@ -1037,7 +1133,9 @@
         "inventory-logic",
         "utils"
       ],
-      "business_logic": "Gestiona entradas y salidas excepcionales de inventario, asegurando la trazabilidad mediante el registro automático en el Kardex del sistema."
+      "business_logic": "Controla las desviaciones de inventario. Cada ajuste requiere una justificación que se audita automáticamente para prevenir mermas no autorizadas o fraudes.",
+      "is_documented": true,
+      "documentation_quality": 10.0
     },
     {
       "id": "InventoryAdjustmentsView",
@@ -1060,7 +1158,9 @@
         "utils",
         "QueryInspector"
       ],
-      "business_logic": "Componente técnico InventoryAdjustmentsView encargado de soportar la funcionalidad operativa del módulo inventory."
+      "business_logic": "[No definido en el manual] Componente técnico InventoryAdjustmentsView encargado de soportar la funcionalidad operativa del módulo inventory.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "InventoryCardView",
@@ -1082,7 +1182,9 @@
         "CostProLoader",
         "index"
       ],
-      "business_logic": "Componente técnico InventoryCardView encargado de soportar la funcionalidad operativa del módulo inventory."
+      "business_logic": "[No definido en el manual] Componente técnico InventoryCardView encargado de soportar la funcionalidad operativa del módulo inventory.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "IngestionErrorsTable",
@@ -1109,7 +1211,9 @@
         "utils",
         "button"
       ],
-      "business_logic": "Componente técnico IngestionErrorsTable encargado de soportar la funcionalidad operativa del módulo ipv."
+      "business_logic": "[No definido en el manual] Componente técnico IngestionErrorsTable encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "IncomeReceiptPreview",
@@ -1130,7 +1234,9 @@
         "utils",
         "card"
       ],
-      "business_logic": "Componente técnico IncomeReceiptPreview encargado de soportar la funcionalidad operativa del módulo ipv."
+      "business_logic": "[No definido en el manual] Componente técnico IncomeReceiptPreview encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "IPVRightSidebar",
@@ -1151,7 +1257,9 @@
         "tooltip",
         "button"
       ],
-      "business_logic": "Componente técnico IPVRightSidebar encargado de soportar la funcionalidad operativa del módulo ipv."
+      "business_logic": "[No definido en el manual] Componente técnico IPVRightSidebar encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "PivotStatementView",
@@ -1175,7 +1283,9 @@
         "utils",
         "button"
       ],
-      "business_logic": "Componente técnico PivotStatementView encargado de soportar la funcionalidad operativa del módulo ipv."
+      "business_logic": "[No definido en el manual] Componente técnico PivotStatementView encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "IPVHelpDialog",
@@ -1199,7 +1309,9 @@
         "badge",
         "button"
       ],
-      "business_logic": "Componente técnico IPVHelpDialog encargado de soportar la funcionalidad operativa del módulo ipv."
+      "business_logic": "[No definido en el manual] Componente técnico IPVHelpDialog encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "IPVView",
@@ -1248,7 +1360,9 @@
         "engine",
         "button"
       ],
-      "business_logic": "Componente técnico IPVView encargado de soportar la funcionalidad operativa del módulo ipv."
+      "business_logic": "[No definido en el manual] Componente técnico IPVView encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "MatchingSimulation",
@@ -1275,7 +1389,9 @@
         "utils",
         "button"
       ],
-      "business_logic": "Componente técnico MatchingSimulation encargado de soportar la funcionalidad operativa del módulo ipv."
+      "business_logic": "[No definido en el manual] Componente técnico MatchingSimulation encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "ManualReconciliationView",
@@ -1302,7 +1418,9 @@
         "utils",
         "button"
       ],
-      "business_logic": "Componente técnico ManualReconciliationView encargado de soportar la funcionalidad operativa del módulo ipv."
+      "business_logic": "[No definido en el manual] Componente técnico ManualReconciliationView encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "IPVPreviewModal",
@@ -1330,7 +1448,9 @@
         "utils",
         "button"
       ],
-      "business_logic": "Componente técnico IPVPreviewModal encargado de soportar la funcionalidad operativa del módulo ipv."
+      "business_logic": "[No definido en el manual] Componente técnico IPVPreviewModal encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "MatchingRulesEditor",
@@ -1355,7 +1475,9 @@
         "label",
         "button"
       ],
-      "business_logic": "Componente técnico MatchingRulesEditor encargado de soportar la funcionalidad operativa del módulo ipv."
+      "business_logic": "[No definido en el manual] Componente técnico MatchingRulesEditor encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "TransactionBreakdown",
@@ -1381,7 +1503,9 @@
         "utils",
         "button"
       ],
-      "business_logic": "Componente técnico TransactionBreakdown encargado de soportar la funcionalidad operativa del módulo ipv."
+      "business_logic": "[No definido en el manual] Componente técnico TransactionBreakdown encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "TransferQRReportView",
@@ -1409,7 +1533,9 @@
         "utils",
         "button"
       ],
-      "business_logic": "Componente técnico TransferQRReportView encargado de soportar la funcionalidad operativa del módulo ipv."
+      "business_logic": "[No definido en el manual] Componente técnico TransferQRReportView encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "IPVReportView",
@@ -1438,7 +1564,9 @@
         "BaseModal",
         "button"
       ],
-      "business_logic": "Componente técnico IPVReportView encargado de soportar la funcionalidad operativa del módulo ipv."
+      "business_logic": "[No definido en el manual] Componente técnico IPVReportView encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "IPVControlPanel",
@@ -1463,7 +1591,9 @@
         "badge",
         "button"
       ],
-      "business_logic": "Centro de mando para la reconciliación de ingresos, permitiendo el cierre diario de cajas y la validación de depósitos contra ventas reales."
+      "business_logic": "[No definido en el manual] Componente técnico IPVControlPanel encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CatalogTable",
@@ -1497,7 +1627,9 @@
         "BaseModal",
         "button"
       ],
-      "business_logic": "Gestión centralizada de productos y servicios, permitiendo la sincronización de precios y categorías entre múltiples puntos de venta."
+      "business_logic": "El cerebro de los productos. Centraliza el costo unitario y el precio de venta sugerido, asegurando que todos los puntos de venta operen con márgenes unificados.",
+      "is_documented": true,
+      "documentation_quality": 10.0
     },
     {
       "id": "TransactionTable",
@@ -1532,7 +1664,9 @@
         "BaseModal",
         "button"
       ],
-      "business_logic": "Componente técnico TransactionTable encargado de soportar la funcionalidad operativa del módulo ipv."
+      "business_logic": "[No definido en el manual] Componente técnico TransactionTable encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "IPVInstitutionalDashboard",
@@ -1557,7 +1691,9 @@
         "utils",
         "button"
       ],
-      "business_logic": "Componente técnico IPVInstitutionalDashboard encargado de soportar la funcionalidad operativa del módulo ipv."
+      "business_logic": "[No definido en el manual] Componente técnico IPVInstitutionalDashboard encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "IPVReportsDropdown",
@@ -1579,7 +1715,9 @@
         "dropdown-menu",
         "button"
       ],
-      "business_logic": "Componente técnico IPVReportsDropdown encargado de soportar la funcionalidad operativa del módulo ipv."
+      "business_logic": "[No definido en el manual] Componente técnico IPVReportsDropdown encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "BankIngestion",
@@ -1605,7 +1743,9 @@
         "BaseModal",
         "button"
       ],
-      "business_logic": "Módulo de procesamiento de estados de cuenta bancarios (BANDEC/Metropolitano) para conciliación automática de transferencias y depósitos QR."
+      "business_logic": "Punto de entrada para la digitalización de la economía. Transforma estados de cuenta bancarios en registros contables, eliminando errores manuales en la conciliación de pagos QR y transferencias.",
+      "is_documented": true,
+      "documentation_quality": 10.0
     },
     {
       "id": "IncomeReceiptSection",
@@ -1634,7 +1774,9 @@
         "CostProLoader",
         "button"
       ],
-      "business_logic": "Generación de comprobantes de ingreso oficiales (Modelo SC-3-01) basados en las resoluciones vigentes para la legalización de ventas diarias."
+      "business_logic": "Garantiza la transparencia fiscal. Genera el Modelo SC-3-01, documento legal indispensable para la declaración de ingresos ante las autoridades pertinentes.",
+      "is_documented": true,
+      "documentation_quality": 10.0
     },
     {
       "id": "CostSheetQuickMode",
@@ -1656,7 +1798,9 @@
         "input",
         "button"
       ],
-      "business_logic": "Componente técnico CostSheetQuickMode encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetQuickMode encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "FormulaBuilder",
@@ -1679,7 +1823,9 @@
         "HorizontalScroll",
         "scroll-area"
       ],
-      "business_logic": "Componente técnico FormulaBuilder encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico FormulaBuilder encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetSignature",
@@ -1697,7 +1843,9 @@
         "couplingScore": 0.3
       },
       "dependencies": [],
-      "business_logic": "Componente técnico CostSheetSignature encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetSignature encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetCalculator",
@@ -1717,7 +1865,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Motor de cálculo en tiempo real que aplica márgenes de utilidad, impuestos y coeficientes de gastos indirectos sobre el costo base."
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetCalculator encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetHeaderEditor",
@@ -1740,7 +1890,9 @@
         "label",
         "utils"
       ],
-      "business_logic": "Componente técnico CostSheetHeaderEditor encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetHeaderEditor encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "ProductInventoryPicker",
@@ -1765,7 +1917,9 @@
         "utils",
         "BaseModal"
       ],
-      "business_logic": "Componente técnico ProductInventoryPicker encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico ProductInventoryPicker encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "FormulaEditor",
@@ -1789,7 +1943,9 @@
         "utils",
         "popover"
       ],
-      "business_logic": "Editor visual para la definición de algoritmos de costo, permitiendo a los usuarios avanzados personalizar la lógica de formación de precios sin programar."
+      "business_logic": "Permite la personalización de algoritmos de formación de precios. Es la herramienta para directivos para ajustar márgenes de contribución y coeficientes de gastos indirectos sin intervención técnica.",
+      "is_documented": true,
+      "documentation_quality": 10.0
     },
     {
       "id": "CostSheetBody",
@@ -1809,7 +1965,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico CostSheetBody encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetBody encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetGenerateDropdown",
@@ -1829,7 +1987,9 @@
       "dependencies": [
         "dropdown-menu"
       ],
-      "business_logic": "Componente técnico CostSheetGenerateDropdown encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetGenerateDropdown encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetInteractiveTable",
@@ -1858,7 +2018,9 @@
         "button",
         "popover"
       ],
-      "business_logic": "Componente técnico CostSheetInteractiveTable encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetInteractiveTable encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetAnnexEditor",
@@ -1883,7 +2045,9 @@
         "table",
         "button"
       ],
-      "business_logic": "Componente técnico CostSheetAnnexEditor encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetAnnexEditor encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetTemplateExplorer",
@@ -1919,7 +2083,9 @@
         "costpro-ejemplo",
         "button"
       ],
-      "business_logic": "Componente técnico CostSheetTemplateExplorer encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetTemplateExplorer encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetNav",
@@ -1945,7 +2111,9 @@
         "utils",
         "CostSheetFCDropdown"
       ],
-      "business_logic": "Componente técnico CostSheetNav encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetNav encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetSummary",
@@ -1968,7 +2136,9 @@
         "utils",
         "HealthBattery"
       ],
-      "business_logic": "Componente técnico CostSheetSummary encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetSummary encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetOptionsDropdown",
@@ -1988,7 +2158,9 @@
       "dependencies": [
         "dropdown-menu"
       ],
-      "business_logic": "Componente técnico CostSheetOptionsDropdown encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetOptionsDropdown encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetAuditView",
@@ -2013,7 +2185,9 @@
         "utils",
         "CostSheetAuditLog"
       ],
-      "business_logic": "Componente técnico CostSheetAuditView encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetAuditView encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetHelpDropdown",
@@ -2033,7 +2207,9 @@
       "dependencies": [
         "dropdown-menu"
       ],
-      "business_logic": "Componente técnico CostSheetHelpDropdown encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetHelpDropdown encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetForm",
@@ -2057,7 +2233,9 @@
         "utils",
         "button"
       ],
-      "business_logic": "Componente técnico CostSheetForm encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetForm encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetMassiveGenerator",
@@ -2089,7 +2267,9 @@
         "CostProLoader",
         "button"
       ],
-      "business_logic": "Componente técnico CostSheetMassiveGenerator encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetMassiveGenerator encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "DarianEditor",
@@ -2109,7 +2289,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico DarianEditor encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico DarianEditor encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetSidePanel",
@@ -2131,7 +2313,9 @@
         "CostSheetCalculator",
         "DarianEditor"
       ],
-      "business_logic": "Componente técnico CostSheetSidePanel encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetSidePanel encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetBottomNav",
@@ -2152,7 +2336,9 @@
         "utils",
         "dropdown-menu"
       ],
-      "business_logic": "Componente técnico CostSheetBottomNav encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetBottomNav encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetAnnexes",
@@ -2172,7 +2358,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico CostSheetAnnexes encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetAnnexes encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "HealthBattery",
@@ -2192,7 +2380,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico HealthBattery encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico HealthBattery encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetExportModal",
@@ -2217,7 +2407,9 @@
         "dialog",
         "button"
       ],
-      "business_logic": "Componente técnico CostSheetExportModal encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetExportModal encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetSectionActionsPanel",
@@ -2239,7 +2431,9 @@
         "utils",
         "button"
       ],
-      "business_logic": "Componente técnico CostSheetSectionActionsPanel encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetSectionActionsPanel encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetFormulaGuide",
@@ -2259,7 +2453,9 @@
       "dependencies": [
         "accordion"
       ],
-      "business_logic": "Componente técnico CostSheetFormulaGuide encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetFormulaGuide encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetHeader",
@@ -2279,7 +2475,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico CostSheetHeader encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetHeader encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetBanner",
@@ -2301,7 +2499,9 @@
         "CostSheetModeDropdown",
         "button"
       ],
-      "business_logic": "Componente técnico CostSheetBanner encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetBanner encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetHelpPanel",
@@ -2322,7 +2522,9 @@
         "utils",
         "CostSheetFormulaGuide"
       ],
-      "business_logic": "Componente técnico CostSheetHelpPanel encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetHelpPanel encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetNarrative",
@@ -2342,7 +2544,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico CostSheetNarrative encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetNarrative encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetSignatureEditor",
@@ -2362,7 +2566,9 @@
       "dependencies": [
         "input"
       ],
-      "business_logic": "Componente técnico CostSheetSignatureEditor encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetSignatureEditor encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetView",
@@ -2412,7 +2618,9 @@
         "CostSheetHeaderEditor",
         "CostSheetPreview"
       ],
-      "business_logic": "Componente técnico CostSheetView encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetView encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CircularProgress",
@@ -2432,7 +2640,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico CircularProgress encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico CircularProgress encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetPreview",
@@ -2456,7 +2666,9 @@
         "SecurityScrollContainer",
         "CostSheetBody"
       ],
-      "business_logic": "Componente técnico CostSheetPreview encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetPreview encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetSidebarNav",
@@ -2478,7 +2690,9 @@
         "utils",
         "button"
       ],
-      "business_logic": "Componente técnico CostSheetSidebarNav encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetSidebarNav encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetWizard",
@@ -2504,7 +2718,9 @@
         "CostSheetHeaderEditor",
         "button"
       ],
-      "business_logic": "Guía paso a paso para la creación de fichas de costo, integrando datos de inventario y fórmulas dinámicas para el cálculo de precios de venta."
+      "business_logic": "Facilita la creación estandarizada de fichas de costo. Automatiza la aplicación de la Resolución 12/2007 para asegurar que todos los cálculos de precios cumplan con la normativa legal vigente.",
+      "is_documented": true,
+      "documentation_quality": 10.0
     },
     {
       "id": "CostSheetActionsPanel",
@@ -2527,7 +2743,9 @@
         "CostSheetModeDropdown",
         "button"
       ],
-      "business_logic": "Componente técnico CostSheetActionsPanel encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetActionsPanel encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetModeDropdown",
@@ -2548,7 +2766,9 @@
         "utils",
         "dropdown-menu"
       ],
-      "business_logic": "Componente técnico CostSheetModeDropdown encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetModeDropdown encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetMasterRing",
@@ -2569,7 +2789,9 @@
         "utils",
         "slider"
       ],
-      "business_logic": "Componente técnico CostSheetMasterRing encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetMasterRing encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetFCDropdown",
@@ -2590,7 +2812,9 @@
         "utils",
         "dropdown-menu"
       ],
-      "business_logic": "Componente técnico CostSheetFCDropdown encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetFCDropdown encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetAuditLog",
@@ -2614,7 +2838,9 @@
         "badge",
         "utils"
       ],
-      "business_logic": "Componente técnico CostSheetAuditLog encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetAuditLog encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CostSheetCardView",
@@ -2641,7 +2867,9 @@
         "utils",
         "button"
       ],
-      "business_logic": "Componente técnico CostSheetCardView encargado de soportar la funcionalidad operativa del módulo cost_sheet."
+      "business_logic": "[No definido en el manual] Componente técnico CostSheetCardView encargado de soportar la funcionalidad operativa del módulo cost_sheet.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "AuditLogsModal",
@@ -2664,7 +2892,9 @@
         "dialog",
         "StateRenderer"
       ],
-      "business_logic": "Componente técnico AuditLogsModal encargado de soportar la funcionalidad operativa del módulo reports."
+      "business_logic": "[No definido en el manual] Componente técnico AuditLogsModal encargado de soportar la funcionalidad operativa del módulo reports.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "ReportsView",
@@ -2690,7 +2920,9 @@
         "CostProLoader",
         "button"
       ],
-      "business_logic": "Componente técnico ReportsView encargado de soportar la funcionalidad operativa del módulo reports."
+      "business_logic": "[No definido en el manual] Componente técnico ReportsView encargado de soportar la funcionalidad operativa del módulo reports.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "ReportConfigPanel",
@@ -2718,7 +2950,9 @@
         "button",
         "command"
       ],
-      "business_logic": "Componente técnico ReportConfigPanel encargado de soportar la funcionalidad operativa del módulo reports."
+      "business_logic": "[No definido en el manual] Componente técnico ReportConfigPanel encargado de soportar la funcionalidad operativa del módulo reports.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "ReportPreview",
@@ -2739,7 +2973,9 @@
         "card",
         "CostProLoader"
       ],
-      "business_logic": "Componente técnico ReportPreview encargado de soportar la funcionalidad operativa del módulo reports."
+      "business_logic": "[No definido en el manual] Componente técnico ReportPreview encargado de soportar la funcionalidad operativa del módulo reports.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "UserFormModal",
@@ -2760,7 +2996,9 @@
         "UserForm",
         "BaseModal"
       ],
-      "business_logic": "Componente técnico UserFormModal encargado de soportar la funcionalidad operativa del módulo users."
+      "business_logic": "[No definido en el manual] Componente técnico UserFormModal encargado de soportar la funcionalidad operativa del módulo users.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "useUsersView",
@@ -2782,7 +3020,9 @@
         "supabaseClient",
         "UserForm"
       ],
-      "business_logic": "Componente técnico useUsersView encargado de soportar la funcionalidad operativa del módulo users."
+      "business_logic": "[No definido en el manual] Componente técnico useUsersView encargado de soportar la funcionalidad operativa del módulo users.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "UserForm",
@@ -2802,7 +3042,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico UserForm encargado de soportar la funcionalidad operativa del módulo users."
+      "business_logic": "[No definido en el manual] Componente técnico UserForm encargado de soportar la funcionalidad operativa del módulo users.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "RoleForm",
@@ -2822,7 +3064,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico RoleForm encargado de soportar la funcionalidad operativa del módulo users."
+      "business_logic": "[No definido en el manual] Componente técnico RoleForm encargado de soportar la funcionalidad operativa del módulo users.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "UsersManagementView",
@@ -2849,7 +3093,9 @@
         "select",
         "button"
       ],
-      "business_logic": "Componente técnico UsersManagementView encargado de soportar la funcionalidad operativa del módulo users."
+      "business_logic": "[No definido en el manual] Componente técnico UsersManagementView encargado de soportar la funcionalidad operativa del módulo users.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "RolesManagementView",
@@ -2873,7 +3119,9 @@
         "RoleForm",
         "BaseModal"
       ],
-      "business_logic": "Componente técnico RolesManagementView encargado de soportar la funcionalidad operativa del módulo users."
+      "business_logic": "[No definido en el manual] Componente técnico RolesManagementView encargado de soportar la funcionalidad operativa del módulo users.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "LegalView",
@@ -2896,7 +3144,9 @@
         "supabaseClient",
         "LegalConsultant"
       ],
-      "business_logic": "Componente técnico LegalView encargado de soportar la funcionalidad operativa del módulo legal."
+      "business_logic": "[No definido en el manual] Componente técnico LegalView encargado de soportar la funcionalidad operativa del módulo legal.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "LegalPdfExporter",
@@ -2914,7 +3164,9 @@
         "couplingScore": 1.3
       },
       "dependencies": [],
-      "business_logic": "Componente técnico LegalPdfExporter encargado de soportar la funcionalidad operativa del módulo legal."
+      "business_logic": "[No definido en el manual] Componente técnico LegalPdfExporter encargado de soportar la funcionalidad operativa del módulo legal.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "LegalConsultant",
@@ -2934,7 +3186,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico LegalConsultant encargado de soportar la funcionalidad operativa del módulo legal."
+      "business_logic": "[No definido en el manual] Componente técnico LegalConsultant encargado de soportar la funcionalidad operativa del módulo legal.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "LegalModelForm",
@@ -2957,7 +3211,9 @@
         "supabaseClient",
         "utils"
       ],
-      "business_logic": "Componente técnico LegalModelForm encargado de soportar la funcionalidad operativa del módulo legal."
+      "business_logic": "[No definido en el manual] Componente técnico LegalModelForm encargado de soportar la funcionalidad operativa del módulo legal.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "InventoryCountTableView",
@@ -2978,7 +3234,9 @@
         "utils",
         "InventoryCountView"
       ],
-      "business_logic": "Componente técnico InventoryCountTableView encargado de soportar la funcionalidad operativa del módulo inventory_count."
+      "business_logic": "[No definido en el manual] Componente técnico InventoryCountTableView encargado de soportar la funcionalidad operativa del módulo inventory_count.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "InventoryCountView",
@@ -3004,7 +3262,9 @@
         "SecurityScrollContainer",
         "InventoryCountTableView"
       ],
-      "business_logic": "Componente técnico InventoryCountView encargado de soportar la funcionalidad operativa del módulo inventory_count."
+      "business_logic": "[No definido en el manual] Componente técnico InventoryCountView encargado de soportar la funcionalidad operativa del módulo inventory_count.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "InventoryCountCardView",
@@ -3025,7 +3285,9 @@
         "utils",
         "InventoryCountView"
       ],
-      "business_logic": "Componente técnico InventoryCountCardView encargado de soportar la funcionalidad operativa del módulo inventory_count."
+      "business_logic": "[No definido en el manual] Componente técnico InventoryCountCardView encargado de soportar la funcionalidad operativa del módulo inventory_count.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "ViewNavigator",
@@ -3043,7 +3305,9 @@
         "couplingScore": 0.5
       },
       "dependencies": [],
-      "business_logic": "Hub central de navegación que permite el acceso rápido a los módulos críticos del sistema, optimizando el flujo de trabajo operativo."
+      "business_logic": "[No definido en el manual] Componente técnico ViewNavigator encargado de soportar la funcionalidad operativa del módulo health.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "SystemHealthView",
@@ -3079,7 +3343,9 @@
         "utils",
         "CostProLoader"
       ],
-      "business_logic": "Panel ejecutivo que consolida métricas de infraestructura, seguridad y calidad de código en un Índice de Salud del Sistema (SHI) unificado."
+      "business_logic": "El panel de control ejecutivo. Traduce métricas técnicas complejas en un Índice de Salud (SHI) que permite a los dueños de negocio entender la estabilidad y seguridad de su inversión tecnológica.",
+      "is_documented": true,
+      "documentation_quality": 10.0
     },
     {
       "id": "InfrastructureMetrics",
@@ -3100,7 +3366,9 @@
         "utils",
         "progress"
       ],
-      "business_logic": "Componente técnico InfrastructureMetrics encargado de soportar la funcionalidad operativa del módulo health."
+      "business_logic": "[No definido en el manual] Componente técnico InfrastructureMetrics encargado de soportar la funcionalidad operativa del módulo health.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "AuditSummary",
@@ -3118,7 +3386,9 @@
         "couplingScore": 0.6
       },
       "dependencies": [],
-      "business_logic": "Registro histórico de acciones administrativas y de usuario, proporcionando una capa de transparencia y seguridad para auditorías externas."
+      "business_logic": "El 'ojo que todo lo ve'. Registra cada cambio sensible en el sistema, permitiendo reconstruir eventos en caso de discrepancias operativas o auditorías de seguridad.",
+      "is_documented": true,
+      "documentation_quality": 10.0
     },
     {
       "id": "HealthStatusHeader",
@@ -3138,7 +3408,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico HealthStatusHeader encargado de soportar la funcionalidad operativa del módulo health."
+      "business_logic": "[No definido en el manual] Componente técnico HealthStatusHeader encargado de soportar la funcionalidad operativa del módulo health.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "SecurityMetrics",
@@ -3158,7 +3430,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico SecurityMetrics encargado de soportar la funcionalidad operativa del módulo health."
+      "business_logic": "[No definido en el manual] Componente técnico SecurityMetrics encargado de soportar la funcionalidad operativa del módulo health.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "ReleaseGateStatus",
@@ -3178,7 +3452,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico ReleaseGateStatus encargado de soportar la funcionalidad operativa del módulo health."
+      "business_logic": "[No definido en el manual] Componente técnico ReleaseGateStatus encargado de soportar la funcionalidad operativa del módulo health.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "ArchitectureAuditTable",
@@ -3201,7 +3477,9 @@
         "badge",
         "table"
       ],
-      "business_logic": "Visualización técnica del estado de salud de los componentes, analizando acoplamiento, complejidad ciclomática y cobertura de auditoría."
+      "business_logic": "[No definido en el manual] Componente técnico ArchitectureAuditTable encargado de soportar la funcionalidad operativa del módulo health.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "DetailedRelationshipGraph",
@@ -3222,7 +3500,9 @@
         "utils",
         "badge"
       ],
-      "business_logic": "Componente técnico DetailedRelationshipGraph encargado de soportar la funcionalidad operativa del módulo health."
+      "business_logic": "[No definido en el manual] Componente técnico DetailedRelationshipGraph encargado de soportar la funcionalidad operativa del módulo health.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "SystemDependencyGraph",
@@ -3240,7 +3520,9 @@
         "couplingScore": 0.5
       },
       "dependencies": [],
-      "business_logic": "Componente técnico SystemDependencyGraph encargado de soportar la funcionalidad operativa del módulo health."
+      "business_logic": "[No definido en el manual] Componente técnico SystemDependencyGraph encargado de soportar la funcionalidad operativa del módulo health.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "HealthAgentLogs",
@@ -3264,7 +3546,9 @@
         "supabaseClient",
         "utils"
       ],
-      "business_logic": "Componente técnico HealthAgentLogs encargado de soportar la funcionalidad operativa del módulo health."
+      "business_logic": "[No definido en el manual] Componente técnico HealthAgentLogs encargado de soportar la funcionalidad operativa del módulo health.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "ApplicationMetrics",
@@ -3284,7 +3568,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico ApplicationMetrics encargado de soportar la funcionalidad operativa del módulo health."
+      "business_logic": "[No definido en el manual] Componente técnico ApplicationMetrics encargado de soportar la funcionalidad operativa del módulo health.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "ConcentricDashboardRing",
@@ -3304,7 +3590,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico ConcentricDashboardRing encargado de soportar la funcionalidad operativa del módulo dashboard."
+      "business_logic": "[No definido en el manual] Componente técnico ConcentricDashboardRing encargado de soportar la funcionalidad operativa del módulo dashboard.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "useDashboardView",
@@ -3322,7 +3610,9 @@
         "couplingScore": 0.7
       },
       "dependencies": [],
-      "business_logic": "Componente técnico useDashboardView encargado de soportar la funcionalidad operativa del módulo dashboard."
+      "business_logic": "[No definido en el manual] Componente técnico useDashboardView encargado de soportar la funcionalidad operativa del módulo dashboard.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "RecentCostSheets",
@@ -3342,7 +3632,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico RecentCostSheets encargado de soportar la funcionalidad operativa del módulo dashboard."
+      "business_logic": "[No definido en el manual] Componente técnico RecentCostSheets encargado de soportar la funcionalidad operativa del módulo dashboard.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "ExecutiveKpiCards",
@@ -3362,7 +3654,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico ExecutiveKpiCards encargado de soportar la funcionalidad operativa del módulo dashboard."
+      "business_logic": "[No definido en el manual] Componente técnico ExecutiveKpiCards encargado de soportar la funcionalidad operativa del módulo dashboard.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "DashboardView",
@@ -3387,7 +3681,9 @@
         "StateRenderer",
         "useDashboardView"
       ],
-      "business_logic": "Componente técnico DashboardView encargado de soportar la funcionalidad operativa del módulo dashboard."
+      "business_logic": "[No definido en el manual] Componente técnico DashboardView encargado de soportar la funcionalidad operativa del módulo dashboard.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CatalogModals",
@@ -3410,7 +3706,9 @@
         "utils",
         "BaseModal"
       ],
-      "business_logic": "Componente técnico CatalogModals encargado de soportar la funcionalidad operativa del módulo catalog."
+      "business_logic": "[No definido en el manual] Componente técnico CatalogModals encargado de soportar la funcionalidad operativa del módulo catalog.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CatalogView",
@@ -3437,7 +3735,9 @@
         "utils",
         "CostProLoader"
       ],
-      "business_logic": "Componente técnico CatalogView encargado de soportar la funcionalidad operativa del módulo catalog."
+      "business_logic": "[No definido en el manual] Componente técnico CatalogView encargado de soportar la funcionalidad operativa del módulo catalog.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "SettingsView",
@@ -3458,7 +3758,9 @@
         "utils",
         "supabaseClient"
       ],
-      "business_logic": "Componente técnico SettingsView encargado de soportar la funcionalidad operativa del módulo settings."
+      "business_logic": "[No definido en el manual] Componente técnico SettingsView encargado de soportar la funcionalidad operativa del módulo settings.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "ReceptionsHistoryView",
@@ -3484,7 +3786,9 @@
         "utils",
         "QueryInspector"
       ],
-      "business_logic": "Componente técnico ReceptionsHistoryView encargado de soportar la funcionalidad operativa del módulo receptions."
+      "business_logic": "[No definido en el manual] Componente técnico ReceptionsHistoryView encargado de soportar la funcionalidad operativa del módulo receptions.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "ReceptionDetailsModal",
@@ -3506,7 +3810,9 @@
         "BaseModal",
         "skeleton"
       ],
-      "business_logic": "Componente técnico ReceptionDetailsModal encargado de soportar la funcionalidad operativa del módulo receptions."
+      "business_logic": "[No definido en el manual] Componente técnico ReceptionDetailsModal encargado de soportar la funcionalidad operativa del módulo receptions.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "useReceptionsHistoryView",
@@ -3524,7 +3830,9 @@
         "couplingScore": 1.3
       },
       "dependencies": [],
-      "business_logic": "Componente técnico useReceptionsHistoryView encargado de soportar la funcionalidad operativa del módulo receptions."
+      "business_logic": "[No definido en el manual] Componente técnico useReceptionsHistoryView encargado de soportar la funcionalidad operativa del módulo receptions.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "NewsView",
@@ -3545,7 +3853,9 @@
         "utils",
         "StateRenderer"
       ],
-      "business_logic": "Componente técnico NewsView encargado de soportar la funcionalidad operativa del módulo rss."
+      "business_logic": "[No definido en el manual] Componente técnico NewsView encargado de soportar la funcionalidad operativa del módulo rss.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "RSSManagementView",
@@ -3566,7 +3876,9 @@
         "utils",
         "StateRenderer"
       ],
-      "business_logic": "Componente técnico RSSManagementView encargado de soportar la funcionalidad operativa del módulo rss."
+      "business_logic": "[No definido en el manual] Componente técnico RSSManagementView encargado de soportar la funcionalidad operativa del módulo rss.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "AuditEventIcon",
@@ -3586,7 +3898,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico AuditEventIcon encargado de soportar la funcionalidad operativa del módulo audit."
+      "business_logic": "[No definido en el manual] Componente técnico AuditEventIcon encargado de soportar la funcionalidad operativa del módulo audit.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "AuditEventMeta",
@@ -3606,7 +3920,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico AuditEventMeta encargado de soportar la funcionalidad operativa del módulo audit."
+      "business_logic": "[No definido en el manual] Componente técnico AuditEventMeta encargado de soportar la funcionalidad operativa del módulo audit.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "AuditTimeline",
@@ -3627,7 +3943,9 @@
         "utils",
         "AuditEventCard"
       ],
-      "business_logic": "Componente técnico AuditTimeline encargado de soportar la funcionalidad operativa del módulo audit."
+      "business_logic": "[No definido en el manual] Componente técnico AuditTimeline encargado de soportar la funcionalidad operativa del módulo audit.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "AuditEventCard",
@@ -3649,7 +3967,9 @@
         "utils",
         "AuditEventMeta"
       ],
-      "business_logic": "Componente técnico AuditEventCard encargado de soportar la funcionalidad operativa del módulo audit."
+      "business_logic": "[No definido en el manual] Componente técnico AuditEventCard encargado de soportar la funcionalidad operativa del módulo audit.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "AuditTableView",
@@ -3670,7 +3990,9 @@
         "AuditEventIcon",
         "utils"
       ],
-      "business_logic": "Componente técnico AuditTableView encargado de soportar la funcionalidad operativa del módulo audit."
+      "business_logic": "[No definido en el manual] Componente técnico AuditTableView encargado de soportar la funcionalidad operativa del módulo audit.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "useAuditLogsView",
@@ -3688,7 +4010,9 @@
         "couplingScore": 0.4
       },
       "dependencies": [],
-      "business_logic": "Componente técnico useAuditLogsView encargado de soportar la funcionalidad operativa del módulo audit."
+      "business_logic": "[No definido en el manual] Componente técnico useAuditLogsView encargado de soportar la funcionalidad operativa del módulo audit.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "AuditLogsView",
@@ -3717,7 +4041,9 @@
         "StateRenderer",
         "button"
       ],
-      "business_logic": "Componente técnico AuditLogsView encargado de soportar la funcionalidad operativa del módulo audit."
+      "business_logic": "[No definido en el manual] Componente técnico AuditLogsView encargado de soportar la funcionalidad operativa del módulo audit.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "AuditFilters",
@@ -3738,7 +4064,9 @@
         "utils",
         "AuditEventIcon"
       ],
-      "business_logic": "Componente técnico AuditFilters encargado de soportar la funcionalidad operativa del módulo audit."
+      "business_logic": "[No definido en el manual] Componente técnico AuditFilters encargado de soportar la funcionalidad operativa del módulo audit.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CreateTransferModal",
@@ -3759,7 +4087,9 @@
         "utils",
         "BaseModal"
       ],
-      "business_logic": "Componente técnico CreateTransferModal encargado de soportar la funcionalidad operativa del módulo transfers."
+      "business_logic": "[No definido en el manual] Componente técnico CreateTransferModal encargado de soportar la funcionalidad operativa del módulo transfers.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "TransferDetailsModal",
@@ -3781,7 +4111,9 @@
         "StateRenderer",
         "BaseModal"
       ],
-      "business_logic": "Componente técnico TransferDetailsModal encargado de soportar la funcionalidad operativa del módulo transfers."
+      "business_logic": "[No definido en el manual] Componente técnico TransferDetailsModal encargado de soportar la funcionalidad operativa del módulo transfers.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "TransferenciasView",
@@ -3805,7 +4137,9 @@
         "utils",
         "StateRenderer"
       ],
-      "business_logic": "Componente técnico TransferenciasView encargado de soportar la funcionalidad operativa del módulo transfers."
+      "business_logic": "[No definido en el manual] Componente técnico TransferenciasView encargado de soportar la funcionalidad operativa del módulo transfers.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "ExecutiveDemoView",
@@ -3831,7 +4165,9 @@
         "CostProLoader",
         "button"
       ],
-      "business_logic": "Componente técnico ExecutiveDemoView encargado de soportar la funcionalidad operativa del módulo executive-demo."
+      "business_logic": "[No definido en el manual] Componente técnico ExecutiveDemoView encargado de soportar la funcionalidad operativa del módulo executive-demo.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "QueryProvider",
@@ -3849,7 +4185,9 @@
         "couplingScore": 0.1
       },
       "dependencies": [],
-      "business_logic": "Componente técnico QueryProvider encargado de soportar la funcionalidad operativa del módulo providers."
+      "business_logic": "[No definido en el manual] Componente técnico QueryProvider encargado de soportar la funcionalidad operativa del módulo providers.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "SyncProvider",
@@ -3867,7 +4205,9 @@
         "couplingScore": 0.6
       },
       "dependencies": [],
-      "business_logic": "Componente técnico SyncProvider encargado de soportar la funcionalidad operativa del módulo providers."
+      "business_logic": "[No definido en el manual] Componente técnico SyncProvider encargado de soportar la funcionalidad operativa del módulo providers.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "LoginForm",
@@ -3891,7 +4231,9 @@
         "logger",
         "RegisterForm"
       ],
-      "business_logic": "Componente técnico LoginForm encargado de soportar la funcionalidad operativa del módulo auth."
+      "business_logic": "[No definido en el manual] Componente técnico LoginForm encargado de soportar la funcionalidad operativa del módulo auth.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "RegisterForm",
@@ -3913,7 +4255,9 @@
         "logger",
         "supabaseClient"
       ],
-      "business_logic": "Componente técnico RegisterForm encargado de soportar la funcionalidad operativa del módulo auth."
+      "business_logic": "[No definido en el manual] Componente técnico RegisterForm encargado de soportar la funcionalidad operativa del módulo auth.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "WelcomeLandingView",
@@ -3938,7 +4282,9 @@
         "AutomationWorkflowDiagram",
         "ThemeToggle"
       ],
-      "business_logic": "Componente técnico WelcomeLandingView encargado de soportar la funcionalidad operativa del módulo auth."
+      "business_logic": "[No definido en el manual] Componente técnico WelcomeLandingView encargado de soportar la funcionalidad operativa del módulo auth.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "SpeedScaleDiagram",
@@ -3956,7 +4302,9 @@
         "couplingScore": 0.7
       },
       "dependencies": [],
-      "business_logic": "Componente técnico SpeedScaleDiagram encargado de soportar la funcionalidad operativa del módulo diagrams."
+      "business_logic": "[No definido en el manual] Componente técnico SpeedScaleDiagram encargado de soportar la funcionalidad operativa del módulo diagrams.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "AutomationWorkflowDiagram",
@@ -3974,7 +4322,9 @@
         "couplingScore": 0.6
       },
       "dependencies": [],
-      "business_logic": "Componente técnico AutomationWorkflowDiagram encargado de soportar la funcionalidad operativa del módulo diagrams."
+      "business_logic": "[No definido en el manual] Componente técnico AutomationWorkflowDiagram encargado de soportar la funcionalidad operativa del módulo diagrams.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "BarcodeScanner",
@@ -3995,7 +4345,9 @@
         "index",
         "BaseModal"
       ],
-      "business_logic": "Componente técnico BarcodeScanner encargado de soportar la funcionalidad operativa del módulo modals."
+      "business_logic": "[No definido en el manual] Componente técnico BarcodeScanner encargado de soportar la funcionalidad operativa del módulo modals.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "PriceSelectorModal",
@@ -4017,7 +4369,9 @@
         "index",
         "BaseModal"
       ],
-      "business_logic": "Componente técnico PriceSelectorModal encargado de soportar la funcionalidad operativa del módulo modals."
+      "business_logic": "[No definido en el manual] Componente técnico PriceSelectorModal encargado de soportar la funcionalidad operativa del módulo modals.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "UpgradeModal",
@@ -4038,7 +4392,9 @@
         "BaseModal",
         "button"
       ],
-      "business_logic": "Componente técnico UpgradeModal encargado de soportar la funcionalidad operativa del módulo modals."
+      "business_logic": "[No definido en el manual] Componente técnico UpgradeModal encargado de soportar la funcionalidad operativa del módulo modals.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "CreateProductModal",
@@ -4059,7 +4415,9 @@
         "index",
         "BaseModal"
       ],
-      "business_logic": "Componente técnico CreateProductModal encargado de soportar la funcionalidad operativa del módulo modals."
+      "business_logic": "[No definido en el manual] Componente técnico CreateProductModal encargado de soportar la funcionalidad operativa del módulo modals.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "SyncConflictModal",
@@ -4082,7 +4440,9 @@
         "SyncProvider",
         "BaseModal"
       ],
-      "business_logic": "Componente técnico SyncConflictModal encargado de soportar la funcionalidad operativa del módulo modals."
+      "business_logic": "[No definido en el manual] Componente técnico SyncConflictModal encargado de soportar la funcionalidad operativa del módulo modals.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "navigation-menu",
@@ -4102,7 +4462,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico navigation-menu encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "hover-card",
@@ -4122,7 +4484,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico hover-card encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "button",
@@ -4142,7 +4506,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico button encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "alert-dialog",
@@ -4163,7 +4529,9 @@
         "utils",
         "button"
       ],
-      "business_logic": "Componente técnico alert-dialog encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "textarea",
@@ -4183,7 +4551,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico textarea encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "aspect-ratio",
@@ -4201,7 +4571,9 @@
         "couplingScore": 0.1
       },
       "dependencies": [],
-      "business_logic": "Componente técnico aspect-ratio encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "toggle",
@@ -4221,7 +4593,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico toggle encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "toast",
@@ -4241,7 +4615,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico toast encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "MobileSafeContainer",
@@ -4261,7 +4637,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico MobileSafeContainer encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "chart",
@@ -4281,7 +4659,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico chart encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "popover",
@@ -4301,7 +4681,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico popover encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "form",
@@ -4322,7 +4704,9 @@
         "utils",
         "label"
       ],
-      "business_logic": "Componente técnico form encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "label",
@@ -4342,7 +4726,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico label encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "input-otp",
@@ -4362,7 +4748,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico input-otp encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "dropdown-menu",
@@ -4382,7 +4770,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico dropdown-menu encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "accordion",
@@ -4402,7 +4792,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico accordion encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "sheet",
@@ -4422,7 +4814,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico sheet encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "separator",
@@ -4442,7 +4836,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico separator encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "resizable",
@@ -4462,7 +4858,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico resizable encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "toggle-group",
@@ -4483,7 +4881,9 @@
         "utils",
         "toggle"
       ],
-      "business_logic": "Componente técnico toggle-group encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "scroll-area",
@@ -4503,7 +4903,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico scroll-area encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "input",
@@ -4523,7 +4925,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico input encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "StateRenderer",
@@ -4543,7 +4947,9 @@
       "dependencies": [
         "CostProLoader"
       ],
-      "business_logic": "Componente técnico StateRenderer encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "SpeedDial",
@@ -4564,7 +4970,9 @@
         "utils",
         "Portal"
       ],
-      "business_logic": "Componente técnico SpeedDial encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "sidebar",
@@ -4590,7 +4998,9 @@
         "utils",
         "button"
       ],
-      "business_logic": "Componente técnico sidebar encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "tabs",
@@ -4610,7 +5020,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico tabs encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "skeleton",
@@ -4630,7 +5042,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico skeleton encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "badge",
@@ -4650,7 +5064,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico badge encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "SecurityScrollContainer",
@@ -4670,7 +5086,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico SecurityScrollContainer encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "radio-group",
@@ -4690,7 +5108,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico radio-group encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "collapsible",
@@ -4708,7 +5128,9 @@
         "couplingScore": 0.1
       },
       "dependencies": [],
-      "business_logic": "Componente técnico collapsible encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "pagination",
@@ -4729,7 +5151,9 @@
         "utils",
         "button"
       ],
-      "business_logic": "Componente técnico pagination encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "ScrollToTop",
@@ -4749,7 +5173,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico ScrollToTop encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "sonner",
@@ -4767,7 +5193,9 @@
         "couplingScore": 0.1
       },
       "dependencies": [],
-      "business_logic": "Componente técnico sonner encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "carousel",
@@ -4788,7 +5216,9 @@
         "utils",
         "button"
       ],
-      "business_logic": "Componente técnico carousel encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "CostProLoader",
@@ -4808,7 +5238,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico CostProLoader encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "LoadingOverlay",
@@ -4828,7 +5260,9 @@
       "dependencies": [
         "CostProLoader"
       ],
-      "business_logic": "Componente técnico LoadingOverlay encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "select",
@@ -4848,7 +5282,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico select encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "checkbox",
@@ -4868,7 +5304,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico checkbox encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "DataDecryption",
@@ -4886,7 +5324,9 @@
         "couplingScore": 0.1
       },
       "dependencies": [],
-      "business_logic": "Componente técnico DataDecryption encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "calendar",
@@ -4907,7 +5347,9 @@
         "utils",
         "button"
       ],
-      "business_logic": "Componente técnico calendar encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "PWAInstallModal",
@@ -4928,7 +5370,9 @@
         "dialog",
         "utils"
       ],
-      "business_logic": "Componente técnico PWAInstallModal encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "table",
@@ -4948,7 +5392,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico table encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "progress",
@@ -4968,7 +5414,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico progress encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "ProductImage",
@@ -4988,7 +5436,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico ProductImage encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "slider",
@@ -5008,7 +5458,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico slider encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "breadcrumb",
@@ -5028,7 +5480,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico breadcrumb encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "menubar",
@@ -5048,7 +5502,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico menubar encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "tooltip",
@@ -5068,7 +5524,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico tooltip encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "HorizontalScroll",
@@ -5088,7 +5546,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico HorizontalScroll encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "SearchBar",
@@ -5108,7 +5568,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico SearchBar encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "SyncStatusBadge",
@@ -5129,7 +5591,9 @@
         "utils",
         "SyncProvider"
       ],
-      "business_logic": "Componente técnico SyncStatusBadge encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "QueryInspector",
@@ -5149,7 +5613,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico QueryInspector encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "drawer",
@@ -5169,7 +5635,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico drawer encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "switch",
@@ -5189,7 +5657,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico switch encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "LazyRender",
@@ -5207,7 +5677,9 @@
         "couplingScore": 1.1
       },
       "dependencies": [],
-      "business_logic": "Componente técnico LazyRender encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "context-menu",
@@ -5227,7 +5699,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico context-menu encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "ActionMenu",
@@ -5248,7 +5722,9 @@
         "utils",
         "tooltip"
       ],
-      "business_logic": "Componente técnico ActionMenu encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "command",
@@ -5269,7 +5745,9 @@
         "utils",
         "dialog"
       ],
-      "business_logic": "Componente técnico command encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "FloatingCalculator",
@@ -5289,7 +5767,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico FloatingCalculator encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "BaseModal",
@@ -5310,7 +5790,9 @@
         "dialog",
         "utils"
       ],
-      "business_logic": "Componente técnico BaseModal encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "alert",
@@ -5330,7 +5812,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico alert encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "card",
@@ -5350,7 +5834,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico card encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "dialog",
@@ -5370,7 +5856,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico dialog encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "CyberShell",
@@ -5388,7 +5876,9 @@
         "couplingScore": 0.1
       },
       "dependencies": [],
-      "business_logic": "Componente técnico CyberShell encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "avatar",
@@ -5408,7 +5898,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico avatar encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "toaster",
@@ -5428,7 +5920,9 @@
       "dependencies": [
         "toast"
       ],
-      "business_logic": "Componente técnico toaster encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "ChatBot",
@@ -5448,7 +5942,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico ChatBot encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "Portal",
@@ -5466,7 +5962,9 @@
         "couplingScore": 0.6
       },
       "dependencies": [],
-      "business_logic": "Componente técnico Portal encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "ViewSwitcher",
@@ -5486,7 +5984,9 @@
       "dependencies": [
         "utils"
       ],
-      "business_logic": "Componente técnico ViewSwitcher encargado de soportar la funcionalidad operativa del módulo ui."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "index",
@@ -5508,7 +6008,9 @@
         "HorizontalScroll",
         "ProductImage"
       ],
-      "business_logic": "Componente técnico index encargado de soportar la funcionalidad operativa del módulo atomic."
+      "business_logic": "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI).",
+      "is_documented": false,
+      "documentation_quality": 4.0
     },
     {
       "id": "query-inspector-utils",
@@ -5526,7 +6028,9 @@
         "couplingScore": 1.0
       },
       "dependencies": [],
-      "business_logic": "Componente técnico query-inspector-utils encargado de soportar la funcionalidad operativa del módulo lib."
+      "business_logic": "[No definido en el manual] Componente técnico query-inspector-utils encargado de soportar la funcionalidad operativa del módulo lib.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "dexie",
@@ -5544,7 +6048,9 @@
         "couplingScore": 6.6
       },
       "dependencies": [],
-      "business_logic": "Componente técnico dexie encargado de soportar la funcionalidad operativa del módulo lib."
+      "business_logic": "[No definido en el manual] Componente técnico dexie encargado de soportar la funcionalidad operativa del módulo lib.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "supabaseClient",
@@ -5562,7 +6068,9 @@
         "couplingScore": 4.5
       },
       "dependencies": [],
-      "business_logic": "Componente técnico supabaseClient encargado de soportar la funcionalidad operativa del módulo lib."
+      "business_logic": "[No definido en el manual] Componente técnico supabaseClient encargado de soportar la funcionalidad operativa del módulo lib.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "rpc-validator",
@@ -5580,7 +6088,9 @@
         "couplingScore": 0.7
       },
       "dependencies": [],
-      "business_logic": "Componente técnico rpc-validator encargado de soportar la funcionalidad operativa del módulo lib."
+      "business_logic": "[No definido en el manual] Componente técnico rpc-validator encargado de soportar la funcionalidad operativa del módulo lib.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "logger",
@@ -5598,7 +6108,9 @@
         "couplingScore": 1.6
       },
       "dependencies": [],
-      "business_logic": "Componente técnico logger encargado de soportar la funcionalidad operativa del módulo lib."
+      "business_logic": "[No definido en el manual] Componente técnico logger encargado de soportar la funcionalidad operativa del módulo lib.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "roles",
@@ -5616,7 +6128,9 @@
         "couplingScore": 1.4
       },
       "dependencies": [],
-      "business_logic": "Componente técnico roles encargado de soportar la funcionalidad operativa del módulo lib."
+      "business_logic": "[No definido en el manual] Componente de Seguridad y Gobernanza. Gestiona permisos, roles y sesiones de usuario.",
+      "is_documented": false,
+      "documentation_quality": 5.0
     },
     {
       "id": "errorHandler",
@@ -5636,7 +6150,9 @@
       "dependencies": [
         "logger"
       ],
-      "business_logic": "Componente técnico errorHandler encargado de soportar la funcionalidad operativa del módulo lib."
+      "business_logic": "[No definido en el manual] Componente técnico errorHandler encargado de soportar la funcionalidad operativa del módulo lib.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "plan-utils",
@@ -5654,7 +6170,9 @@
         "couplingScore": 0.1
       },
       "dependencies": [],
-      "business_logic": "Componente técnico plan-utils encargado de soportar la funcionalidad operativa del módulo lib."
+      "business_logic": "[No definido en el manual] Componente técnico plan-utils encargado de soportar la funcionalidad operativa del módulo lib.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "db",
@@ -5672,7 +6190,9 @@
         "couplingScore": 0.2
       },
       "dependencies": [],
-      "business_logic": "Componente técnico db encargado de soportar la funcionalidad operativa del módulo lib."
+      "business_logic": "[No definido en el manual] Componente técnico db encargado de soportar la funcionalidad operativa del módulo lib.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "inventory-logic",
@@ -5690,7 +6210,9 @@
         "couplingScore": 0.8
       },
       "dependencies": [],
-      "business_logic": "Componente técnico inventory-logic encargado de soportar la funcionalidad operativa del módulo lib."
+      "business_logic": "[No definido en el manual] Componente técnico inventory-logic encargado de soportar la funcionalidad operativa del módulo lib.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "auth",
@@ -5710,7 +6232,9 @@
       "dependencies": [
         "supabaseClient"
       ],
-      "business_logic": "Componente técnico auth encargado de soportar la funcionalidad operativa del módulo lib."
+      "business_logic": "[No definido en el manual] Componente técnico auth encargado de soportar la funcionalidad operativa del módulo lib.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "utils",
@@ -5730,7 +6254,9 @@
       "dependencies": [
         "supabaseClient"
       ],
-      "business_logic": "Componente técnico utils encargado de soportar la funcionalidad operativa del módulo lib."
+      "business_logic": "[No definido en el manual] Componente técnico utils encargado de soportar la funcionalidad operativa del módulo lib.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "navigation",
@@ -5748,7 +6274,9 @@
         "couplingScore": 0.5
       },
       "dependencies": [],
-      "business_logic": "Componente técnico navigation encargado de soportar la funcionalidad operativa del módulo lib."
+      "business_logic": "[No definido en el manual] Componente técnico navigation encargado de soportar la funcionalidad operativa del módulo lib.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "template-industrial",
@@ -5766,7 +6294,9 @@
         "couplingScore": 0.9
       },
       "dependencies": [],
-      "business_logic": "Componente técnico template-industrial encargado de soportar la funcionalidad operativa del módulo data."
+      "business_logic": "[No definido en el manual] Componente técnico template-industrial encargado de soportar la funcionalidad operativa del módulo data.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "template-pizza",
@@ -5784,7 +6314,9 @@
         "couplingScore": 0.8
       },
       "dependencies": [],
-      "business_logic": "Componente técnico template-pizza encargado de soportar la funcionalidad operativa del módulo data."
+      "business_logic": "[No definido en el manual] Componente técnico template-pizza encargado de soportar la funcionalidad operativa del módulo data.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "template-furniture",
@@ -5802,7 +6334,9 @@
         "couplingScore": 0.9
       },
       "dependencies": [],
-      "business_logic": "Componente técnico template-furniture encargado de soportar la funcionalidad operativa del módulo data."
+      "business_logic": "[No definido en el manual] Componente técnico template-furniture encargado de soportar la funcionalidad operativa del módulo data.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "template-lavar",
@@ -5820,7 +6354,9 @@
         "couplingScore": 1.7
       },
       "dependencies": [],
-      "business_logic": "Componente técnico template-lavar encargado de soportar la funcionalidad operativa del módulo data."
+      "business_logic": "[No definido en el manual] Componente técnico template-lavar encargado de soportar la funcionalidad operativa del módulo data.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "template-shoes",
@@ -5838,7 +6374,9 @@
         "couplingScore": 0.9
       },
       "dependencies": [],
-      "business_logic": "Componente técnico template-shoes encargado de soportar la funcionalidad operativa del módulo data."
+      "business_logic": "[No definido en el manual] Componente técnico template-shoes encargado de soportar la funcionalidad operativa del módulo data.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "template-icecream",
@@ -5856,7 +6394,9 @@
         "couplingScore": 0.9
       },
       "dependencies": [],
-      "business_logic": "Componente técnico template-icecream encargado de soportar la funcionalidad operativa del módulo data."
+      "business_logic": "[No definido en el manual] Componente técnico template-icecream encargado de soportar la funcionalidad operativa del módulo data.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "template-repair",
@@ -5874,7 +6414,9 @@
         "couplingScore": 0.8
       },
       "dependencies": [],
-      "business_logic": "Componente técnico template-repair encargado de soportar la funcionalidad operativa del módulo data."
+      "business_logic": "[No definido en el manual] Componente técnico template-repair encargado de soportar la funcionalidad operativa del módulo data.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "demo-products",
@@ -5892,7 +6434,9 @@
         "couplingScore": 0.4
       },
       "dependencies": [],
-      "business_logic": "Componente técnico demo-products encargado de soportar la funcionalidad operativa del módulo data."
+      "business_logic": "[No definido en el manual] Componente técnico demo-products encargado de soportar la funcionalidad operativa del módulo data.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "costpro-reinicio",
@@ -5910,7 +6454,9 @@
         "couplingScore": 1.7
       },
       "dependencies": [],
-      "business_logic": "Componente técnico costpro-reinicio encargado de soportar la funcionalidad operativa del módulo data."
+      "business_logic": "[No definido en el manual] Componente técnico costpro-reinicio encargado de soportar la funcionalidad operativa del módulo data.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "template-consultancy",
@@ -5928,7 +6474,9 @@
         "couplingScore": 0.8
       },
       "dependencies": [],
-      "business_logic": "Componente técnico template-consultancy encargado de soportar la funcionalidad operativa del módulo data."
+      "business_logic": "[No definido en el manual] Componente técnico template-consultancy encargado de soportar la funcionalidad operativa del módulo data.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "costpro-ejemplo",
@@ -5946,7 +6494,9 @@
         "couplingScore": 1.3
       },
       "dependencies": [],
-      "business_logic": "Componente técnico costpro-ejemplo encargado de soportar la funcionalidad operativa del módulo data."
+      "business_logic": "[No definido en el manual] Componente técnico costpro-ejemplo encargado de soportar la funcionalidad operativa del módulo data.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "template-logistics",
@@ -5964,7 +6514,9 @@
         "couplingScore": 0.9
       },
       "dependencies": [],
-      "business_logic": "Componente técnico template-logistics encargado de soportar la funcionalidad operativa del módulo data."
+      "business_logic": "[No definido en el manual] Componente técnico template-logistics encargado de soportar la funcionalidad operativa del módulo data.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "template-pastry",
@@ -5982,7 +6534,9 @@
         "couplingScore": 0.9
       },
       "dependencies": [],
-      "business_logic": "Componente técnico template-pastry encargado de soportar la funcionalidad operativa del módulo data."
+      "business_logic": "[No definido en el manual] Componente técnico template-pastry encargado de soportar la funcionalidad operativa del módulo data.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "template-juice",
@@ -6000,7 +6554,9 @@
         "couplingScore": 0.9
       },
       "dependencies": [],
-      "business_logic": "Componente técnico template-juice encargado de soportar la funcionalidad operativa del módulo data."
+      "business_logic": "[No definido en el manual] Componente técnico template-juice encargado de soportar la funcionalidad operativa del módulo data.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "sm2",
@@ -6018,7 +6574,9 @@
         "couplingScore": 0.3
       },
       "dependencies": [],
-      "business_logic": "Componente técnico sm2 encargado de soportar la funcionalidad operativa del módulo academy."
+      "business_logic": "[No definido en el manual] Componente técnico sm2 encargado de soportar la funcionalidad operativa del módulo academy.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "ReleaseGatePdfExporter",
@@ -6036,7 +6594,9 @@
         "couplingScore": 1.9
       },
       "dependencies": [],
-      "business_logic": "Componente técnico ReleaseGatePdfExporter encargado de soportar la funcionalidad operativa del módulo release_gate."
+      "business_logic": "[No definido en el manual] Componente técnico ReleaseGatePdfExporter encargado de soportar la funcionalidad operativa del módulo release_gate.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "mri-engine",
@@ -6054,7 +6614,9 @@
         "couplingScore": 0.5
       },
       "dependencies": [],
-      "business_logic": "Componente técnico mri-engine encargado de soportar la funcionalidad operativa del módulo release_gate."
+      "business_logic": "[No definido en el manual] Componente técnico mri-engine encargado de soportar la funcionalidad operativa del módulo release_gate.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "pdf-export",
@@ -6072,7 +6634,9 @@
         "couplingScore": 0.4
       },
       "dependencies": [],
-      "business_logic": "Componente técnico pdf-export encargado de soportar la funcionalidad operativa del módulo utils."
+      "business_logic": "[No definido en el manual] Componente técnico pdf-export encargado de soportar la funcionalidad operativa del módulo utils.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "number-to-words-es",
@@ -6090,7 +6654,9 @@
         "couplingScore": 1.2
       },
       "dependencies": [],
-      "business_logic": "Componente técnico number-to-words-es encargado de soportar la funcionalidad operativa del módulo utils."
+      "business_logic": "[No definido en el manual] Componente técnico number-to-words-es encargado de soportar la funcionalidad operativa del módulo utils.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "health-engine",
@@ -6108,7 +6674,9 @@
         "couplingScore": 1.5
       },
       "dependencies": [],
-      "business_logic": "Componente técnico health-engine encargado de soportar la funcionalidad operativa del módulo observability."
+      "business_logic": "[No definido en el manual] Componente técnico health-engine encargado de soportar la funcionalidad operativa del módulo observability.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "system-health",
@@ -6126,7 +6694,9 @@
         "couplingScore": 0.9
       },
       "dependencies": [],
-      "business_logic": "Componente técnico system-health encargado de soportar la funcionalidad operativa del módulo observability."
+      "business_logic": "[No definido en el manual] Componente técnico system-health encargado de soportar la funcionalidad operativa del módulo observability.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "health-alerts",
@@ -6147,7 +6717,9 @@
         "health-engine",
         "supabaseClient"
       ],
-      "business_logic": "Componente técnico health-alerts encargado de soportar la funcionalidad operativa del módulo observability."
+      "business_logic": "[No definido en el manual] Componente técnico health-alerts encargado de soportar la funcionalidad operativa del módulo observability.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "intelligence",
@@ -6167,7 +6739,9 @@
       "dependencies": [
         "dexie"
       ],
-      "business_logic": "Componente técnico intelligence encargado de soportar la funcionalidad operativa del módulo ipv."
+      "business_logic": "[No definido en el manual] Componente técnico intelligence encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "bandecParser",
@@ -6189,7 +6763,9 @@
         "utils",
         "engine"
       ],
-      "business_logic": "Componente técnico bandecParser encargado de soportar la funcionalidad operativa del módulo ipv."
+      "business_logic": "[No definido en el manual] Componente técnico bandecParser encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "parser",
@@ -6207,7 +6783,9 @@
         "couplingScore": 1.1
       },
       "dependencies": [],
-      "business_logic": "Componente técnico parser encargado de soportar la funcionalidad operativa del módulo ipv."
+      "business_logic": "[No definido en el manual] Componente técnico parser encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "backup",
@@ -6225,7 +6803,9 @@
         "couplingScore": 0.8
       },
       "dependencies": [],
-      "business_logic": "Componente técnico backup encargado de soportar la funcionalidad operativa del módulo ipv."
+      "business_logic": "[No definido en el manual] Componente técnico backup encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "calculations",
@@ -6246,7 +6826,9 @@
         "dexie",
         "parser"
       ],
-      "business_logic": "Componente técnico calculations encargado de soportar la funcionalidad operativa del módulo ipv."
+      "business_logic": "[No definido en el manual] Componente técnico calculations encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "engine",
@@ -6266,7 +6848,9 @@
       "dependencies": [
         "dexie"
       ],
-      "business_logic": "Componente técnico engine encargado de soportar la funcionalidad operativa del módulo ipv."
+      "business_logic": "[No definido en el manual] Componente técnico engine encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "utils",
@@ -6286,7 +6870,9 @@
       "dependencies": [
         "dexie"
       ],
-      "business_logic": "Componente técnico utils encargado de soportar la funcionalidad operativa del módulo ipv."
+      "business_logic": "[No definido en el manual] Componente técnico utils encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "matching.worker",
@@ -6306,7 +6892,9 @@
       "dependencies": [
         "engine"
       ],
-      "business_logic": "Componente técnico matching.worker encargado de soportar la funcionalidad operativa del módulo ipv."
+      "business_logic": "[No definido en el manual] Componente técnico matching.worker encargado de soportar la funcionalidad operativa del módulo ipv.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "schemas",
@@ -6324,7 +6912,9 @@
         "couplingScore": 0.2
       },
       "dependencies": [],
-      "business_logic": "Componente técnico schemas encargado de soportar la funcionalidad operativa del módulo cost-engine."
+      "business_logic": "[No definido en el manual] Componente técnico schemas encargado de soportar la funcionalidad operativa del módulo cost-engine.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "validations",
@@ -6342,7 +6932,9 @@
         "couplingScore": 5.2
       },
       "dependencies": [],
-      "business_logic": "Componente técnico validations encargado de soportar la funcionalidad operativa del módulo cost-engine."
+      "business_logic": "[No definido en el manual] Componente técnico validations encargado de soportar la funcionalidad operativa del módulo cost-engine.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "index",
@@ -6363,7 +6955,9 @@
         "formula-utils",
         "types"
       ],
-      "business_logic": "Componente técnico index encargado de soportar la funcionalidad operativa del módulo cost-engine."
+      "business_logic": "[No definido en el manual] Componente técnico index encargado de soportar la funcionalidad operativa del módulo cost-engine.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "formula-utils",
@@ -6381,7 +6975,9 @@
         "couplingScore": 0.7
       },
       "dependencies": [],
-      "business_logic": "Componente técnico formula-utils encargado de soportar la funcionalidad operativa del módulo cost-engine."
+      "business_logic": "[No definido en el manual] Componente técnico formula-utils encargado de soportar la funcionalidad operativa del módulo cost-engine.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "types",
@@ -6399,7 +6995,9 @@
         "couplingScore": 3.9
       },
       "dependencies": [],
-      "business_logic": "Componente técnico types encargado de soportar la funcionalidad operativa del módulo cost-engine."
+      "business_logic": "[No definido en el manual] Componente técnico types encargado de soportar la funcionalidad operativa del módulo cost-engine.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "orchestrator",
@@ -6425,7 +7023,9 @@
         "gpt-adapter",
         "fallback-adapter"
       ],
-      "business_logic": "Componente técnico orchestrator encargado de soportar la funcionalidad operativa del módulo ai."
+      "business_logic": "[No definido en el manual] Componente técnico orchestrator encargado de soportar la funcionalidad operativa del módulo ai.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "types",
@@ -6443,7 +7043,9 @@
         "couplingScore": 3.1
       },
       "dependencies": [],
-      "business_logic": "Componente técnico types encargado de soportar la funcionalidad operativa del módulo ai."
+      "business_logic": "[No definido en el manual] Componente técnico types encargado de soportar la funcionalidad operativa del módulo ai.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "gemini-adapter",
@@ -6463,7 +7065,9 @@
       "dependencies": [
         "types"
       ],
-      "business_logic": "Componente técnico gemini-adapter encargado de soportar la funcionalidad operativa del módulo adapters."
+      "business_logic": "[No definido en el manual] Componente técnico gemini-adapter encargado de soportar la funcionalidad operativa del módulo adapters.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "kimi-adapter",
@@ -6483,7 +7087,9 @@
       "dependencies": [
         "openai-compatible-adapter"
       ],
-      "business_logic": "Componente técnico kimi-adapter encargado de soportar la funcionalidad operativa del módulo adapters."
+      "business_logic": "[No definido en el manual] Componente técnico kimi-adapter encargado de soportar la funcionalidad operativa del módulo adapters.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "fallback-adapter",
@@ -6503,7 +7109,9 @@
       "dependencies": [
         "types"
       ],
-      "business_logic": "Componente técnico fallback-adapter encargado de soportar la funcionalidad operativa del módulo adapters."
+      "business_logic": "[No definido en el manual] Componente técnico fallback-adapter encargado de soportar la funcionalidad operativa del módulo adapters.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "qwen-adapter",
@@ -6523,7 +7131,9 @@
       "dependencies": [
         "types"
       ],
-      "business_logic": "Componente técnico qwen-adapter encargado de soportar la funcionalidad operativa del módulo adapters."
+      "business_logic": "[No definido en el manual] Componente técnico qwen-adapter encargado de soportar la funcionalidad operativa del módulo adapters.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "openai-compatible-adapter",
@@ -6543,7 +7153,9 @@
       "dependencies": [
         "types"
       ],
-      "business_logic": "Componente técnico openai-compatible-adapter encargado de soportar la funcionalidad operativa del módulo adapters."
+      "business_logic": "[No definido en el manual] Componente técnico openai-compatible-adapter encargado de soportar la funcionalidad operativa del módulo adapters.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "gpt-adapter",
@@ -6563,7 +7175,9 @@
       "dependencies": [
         "openai-compatible-adapter"
       ],
-      "business_logic": "Componente técnico gpt-adapter encargado de soportar la funcionalidad operativa del módulo adapters."
+      "business_logic": "[No definido en el manual] Componente técnico gpt-adapter encargado de soportar la funcionalidad operativa del módulo adapters.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "deepseek-adapter",
@@ -6583,7 +7197,9 @@
       "dependencies": [
         "openai-compatible-adapter"
       ],
-      "business_logic": "Componente técnico deepseek-adapter encargado de soportar la funcionalidad operativa del módulo adapters."
+      "business_logic": "[No definido en el manual] Componente técnico deepseek-adapter encargado de soportar la funcionalidad operativa del módulo adapters.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "registry",
@@ -6604,7 +7220,9 @@
         "system-health",
         "definitions"
       ],
-      "business_logic": "Componente técnico registry encargado de soportar la funcionalidad operativa del módulo tools."
+      "business_logic": "[No definido en el manual] Componente técnico registry encargado de soportar la funcionalidad operativa del módulo tools.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "definitions",
@@ -6624,7 +7242,9 @@
       "dependencies": [
         "types"
       ],
-      "business_logic": "Componente técnico definitions encargado de soportar la funcionalidad operativa del módulo tools."
+      "business_logic": "[No definido en el manual] Componente técnico definitions encargado de soportar la funcionalidad operativa del módulo tools.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     },
     {
       "id": "offline-storage",
@@ -6642,7 +7262,9 @@
         "couplingScore": 0.8
       },
       "dependencies": [],
-      "business_logic": "Componente técnico offline-storage encargado de soportar la funcionalidad operativa del módulo sync."
+      "business_logic": "[No definido en el manual] Componente técnico offline-storage encargado de soportar la funcionalidad operativa del módulo sync.",
+      "is_documented": false,
+      "documentation_quality": 3.0
     }
   ],
   "stats": {
