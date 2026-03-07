@@ -1,47 +1,21 @@
 import React from 'react';
+import { supabase } from '@/lib/supabaseClient';
+import { getSystemHealthLogs, SystemHealthLog } from '@/lib/observability/system-health';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, CheckCircle2, AlertTriangle, Bug, Target } from 'lucide-react';
+import { AlertCircle, CheckCircle2, AlertTriangle, Bug, Camera } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 export function HealthAgentLogs() {
-  const [logs, setLogs] = React.useState<any[]>([]);
+  const [logs, setLogs] = React.useState<SystemHealthLog[]>([]);
   const [loading, setLoading] = React.useState(true);
 
   const fetchLogs = React.useCallback(async () => {
     try {
-      const response = await fetch('/logs/audit_log.json');
-      if (response.ok) {
-        const json = await response.json();
-        // Flatten historical issues and suggestions for the UI
-        const allFindings: any[] = [];
-        json.slice(0, 5).forEach((entry: any) => {
-          (entry.issues_detected || []).forEach((issue: any) => {
-            allFindings.push({
-              id: issue.id,
-              status: issue.severity === 'critical' ? 'critical' : 'warning',
-              view_name: issue.component,
-              description: issue.summary,
-              timestamp: entry.date,
-              priority: issue.severity === 'critical' ? 'high' : 'medium'
-            });
-          });
-          (entry.refactor_suggestions || []).forEach((sug: any, idx: number) => {
-            allFindings.push({
-              id: `SUG-${entry.date}-${idx}`,
-              status: 'info',
-              view_name: sug.component,
-              description: sug.rationale,
-              suggestion: sug.suggestion,
-              timestamp: entry.date,
-              priority: sug.priority
-            });
-          });
-        });
-        setLogs(allFindings);
-      }
+      const data = await getSystemHealthLogs(supabase);
+      setLogs(data as SystemHealthLog[]);
     } catch (error) {
       console.error('Error fetching health logs:', error);
     } finally {
@@ -51,6 +25,18 @@ export function HealthAgentLogs() {
 
   React.useEffect(() => {
     fetchLogs();
+
+    // Set up real-time subscription
+    const channel = supabase
+      .channel('system_health_logs_changes')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'system_health_logs' }, (payload) => {
+        setLogs(prev => [payload.new as SystemHealthLog, ...prev].slice(0, 50));
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [fetchLogs]);
 
   if (loading) {
@@ -90,13 +76,11 @@ export function HealthAgentLogs() {
               <div className="flex gap-4">
                 <div className={cn(
                   "w-10 h-10 rounded-2xl flex items-center justify-center shrink-0",
-                  log.status === 'critical' ? "bg-rose-500/10 text-rose-500" :
-                  log.status === 'warning' ? "bg-amber-500/10 text-amber-500" :
-                  log.status === 'info' ? "bg-blue-500/10 text-blue-500" : "bg-emerald-500/10 text-emerald-500"
+                  log.status === 'error' || log.status === 'critical' ? "bg-rose-500/10 text-rose-500" :
+                  log.status === 'warning' ? "bg-amber-500/10 text-amber-500" : "bg-emerald-500/10 text-emerald-500"
                 )}>
-                  {log.status === 'critical' ? <AlertCircle className="w-5 h-5" /> :
-                   log.status === 'warning' ? <AlertTriangle className="w-5 h-5" /> :
-                   log.status === 'info' ? <Target className="w-5 h-5" /> : <CheckCircle2 className="w-5 h-5" />}
+                  {log.status === 'error' || log.status === 'critical' ? <AlertCircle className="w-5 h-5" /> :
+                   log.status === 'warning' ? <AlertTriangle className="w-5 h-5" /> : <CheckCircle2 className="w-5 h-5" />}
                 </div>
 
                 <div className="flex-1 space-y-1">

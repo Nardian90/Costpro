@@ -27,10 +27,10 @@ export function ArchitectureAuditTable() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('/public/system_architecture.json');
+        const response = await fetch('/architecture_map.json');
         if (response.ok) {
           const json = await response.json();
-          setData(json.architecture || []);
+          setData(json.components || []);
         }
       } catch (error) {
         console.error('Error loading architecture map:', error);
