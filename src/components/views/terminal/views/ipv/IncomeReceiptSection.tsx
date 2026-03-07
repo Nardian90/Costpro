@@ -11,17 +11,14 @@ import {
     Download,
     FileText,
     Printer,
-    Plus,
-    Trash2,
-    History,
+    Settings2,
     Calendar,
     ChevronLeft,
     ChevronRight,
-    Settings2,
     Image as ImageIcon
 } from 'lucide-react';
 import { IncomeReceiptPreview } from './IncomeReceiptPreview';
-import { generateLegalPdf } from '../../legal/LegalPdfExporter';
+import { generateLegalPdf } from '../legal/LegalPdfExporter';
 import { format, subDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -45,7 +42,11 @@ export function IncomeReceiptSection() {
           updated_at: new Date().toISOString(),
           paper_size: 'LETTER',
           entidad_nombre: 'ENTIDAD POR DEFECTO',
-          entidad_codigo: '0000'
+          entidad_codigo: '0000',
+          persona_entrega: 'RESPONSABLE',
+          consecutivo_inicio: 1,
+          agrupacion_modo: 'GLOBAL',
+          desglose_modo: 'TRANSACCION'
         });
       }
     };
@@ -59,15 +60,15 @@ export function IncomeReceiptSection() {
     const grouped = reconciliationLines.reduce((acc, line) => {
       if (line.clasificacion !== 'Efectivo') return acc;
 
-      const dateStr = line.fecha_conciliacion.split('T')[0];
+      const dateStr = line.fecha_operacion.split('T')[0];
       if (dateStr < dateFrom || dateStr > dateTo) return acc;
 
       if (!acc[line.transaction_ref]) {
         acc[line.transaction_ref] = {
           ref: line.transaction_ref,
-          fecha: line.fecha_conciliacion,
+          fecha: line.fecha_operacion,
           lines: [],
-          persona: line.vendedor_id || 'CLIENTE MOSTRADOR'
+          persona: 'CLIENTE MOSTRADOR'
         };
       }
       acc[line.transaction_ref].lines.push(line);
@@ -75,7 +76,7 @@ export function IncomeReceiptSection() {
     }, {} as Record<string, any>);
 
     return Object.values(grouped).map((group: any, idx) => {
-      const total = group.lines.reduce((sum: number, l: any) => sum + (l.importe_linea_cents / 100), 0);
+      const total = group.lines.reduce((sum: number, l: any) => sum + (l.importe_linea_cents), 0);
       return {
         entidad_nombre: settings?.entidad_nombre || 'SUCURSAL COSTPRO',
         entidad_codigo: settings?.entidad_codigo || 'SC-01',
@@ -85,12 +86,12 @@ export function IncomeReceiptSection() {
         conceptos_tabla: group.lines.map((l: any) => {
           const p = products.find(prod => prod.cod === l.product_cod);
           return {
-            concepto: p ? p.nombre : `PRODUCTO ${l.product_cod}`,
-            importe: l.importe_linea_cents / 100
+            concepto: p ? p.descripcion : `PRODUCTO ${l.product_cod}`,
+            importe: l.importe_linea_cents
           };
         }),
         total,
-        cantidad_letras: 'CANTIDAD POR DETERMINAR', // Logic for number to words could be added here
+        cantidad_letras: 'CANTIDAD POR DETERMINAR',
         logo_url: settings?.logo_url
       };
     });
@@ -99,6 +100,7 @@ export function IncomeReceiptSection() {
   const currentReceipt = receipts[selectedReceiptIndex];
 
   const handleUpdateSettings = async (updates: Partial<IPVSettings>) => {
+    if (!settings) return;
     await db.ipv_settings.update('current', {
       ...updates,
       updated_at: new Date().toISOString()
@@ -297,7 +299,7 @@ export function IncomeReceiptSection() {
                         variant="ghost"
                         size="icon"
                         disabled={selectedReceiptIndex >= receipts.length - 1}
-                        onClick={() => setSelectedReceiptIndex(prev => prev + 1)}
+                        onClick={() => setSelectedReceiptIndex(prev => prev - 1)}
                         className="h-8 w-8 rounded-lg"
                     >
                         <ChevronRight className="w-4 h-4" />
