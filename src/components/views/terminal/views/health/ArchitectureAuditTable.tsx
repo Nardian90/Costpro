@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 export function ArchitectureAuditTable() {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [globalSearch, setGlobalSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
@@ -28,8 +28,10 @@ export function ArchitectureAuditTable() {
     const fetchData = async () => {
       try {
         const response = await fetch('/architecture_map.json');
-        const json = await response.json();
-        setData(json.components || []);
+        if (response.ok) {
+          const json = await response.json();
+          setData(json.components || []);
+        }
       } catch (error) {
         console.error('Error loading architecture map:', error);
       } finally {
@@ -41,8 +43,10 @@ export function ArchitectureAuditTable() {
 
   const filteredData = useMemo(() => {
     return data.filter(item => {
-      const matchesSearch = item.name.toLowerCase().includes(globalSearch.toLowerCase()) ||
-                           item.path.toLowerCase().includes(globalSearch.toLowerCase());
+      const name = item.name || '';
+      const path = item.path || '';
+      const matchesSearch = name.toLowerCase().includes(globalSearch.toLowerCase()) ||
+                           path.toLowerCase().includes(globalSearch.toLowerCase());
       const matchesType = typeFilter === 'all' || item.type === typeFilter;
       const matchesHealth = healthFilter === 'all' ||
                            (healthFilter === 'optimal' && item.health >= 9.5) ||
@@ -60,7 +64,7 @@ export function ArchitectureAuditTable() {
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
-  const getHealthStyle = (score: number) => {
+  const getHealthStyle = (score) => {
     if (score >= 9.5) return { color: "text-emerald-500", icon: <ShieldCheck className="w-4 h-4" />, label: "ÓPTIMO", bg: "bg-emerald-500/10" };
     if (score >= 8.0) return { color: "text-blue-500", icon: <Info className="w-4 h-4" />, label: "BUENO", bg: "bg-blue-500/10" };
     if (score >= 6.0) return { color: "text-amber-500", icon: <AlertTriangle className="w-4 h-4" />, label: "ADVERTENCIA", bg: "bg-amber-500/10" };
@@ -74,7 +78,7 @@ export function ArchitectureAuditTable() {
   if (loading) return <div className="h-48 flex items-center justify-center font-black opacity-40 uppercase tracking-widest">Cargando Mapa de Vistas...</div>;
 
   return (
-    <div className="space-y-6 bg-card/30 p-8 rounded-[40px] border border-border/50">
+    <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
@@ -139,9 +143,10 @@ export function ArchitectureAuditTable() {
           <TableBody>
             {paginatedData.length > 0 ? paginatedData.map((item, idx) => {
               const health = getHealthStyle(item.health);
+              const couplingScore = item.metrics ? item.metrics.couplingScore : 0;
               return (
                 <motion.tr
-                  key={item.id}
+                  key={item.id || idx}
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.01 }}
@@ -171,25 +176,25 @@ export function ArchitectureAuditTable() {
                   </TableCell>
                   <TableCell className="text-center">
                     <div className="flex flex-col items-center">
-                      <span className="text-xs font-black text-foreground">{item.metrics.couplingScore}</span>
+                      <span className="text-xs font-black text-foreground">{couplingScore}</span>
                       <div className="w-12 h-1 bg-muted rounded-full mt-1 overflow-hidden">
                         <div
                           className="h-full bg-primary rounded-full"
-                          style={{ width: `${Math.min(100, item.metrics.couplingScore * 10)}%` }}
+                          style={{ width: (couplingScore * 10).toString() + '%' }}
                         />
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex -space-x-1.5 overflow-hidden">
-                      {item.dependencies.slice(0, 4).map((dep, i) => (
+                      {(item.dependencies || []).slice(0, 4).map((dep, i) => (
                         <div key={i} title={dep} className="w-6 h-6 rounded-full bg-background border-2 border-card flex items-center justify-center">
                           <span className="text-[8px] font-black uppercase text-primary/70">{dep[0]}</span>
                         </div>
                       ))}
-                      {item.dependencies.length > 4 && (
+                      {(item.dependencies || []).length > 4 && (
                         <div className="w-6 h-6 rounded-full bg-muted border-2 border-card flex items-center justify-center">
-                          <span className="text-[8px] font-black">+{item.dependencies.length - 4}</span>
+                          <span className="text-[8px] font-black">+{(item.dependencies.length - 4).toString()}</span>
                         </div>
                       )}
                     </div>
@@ -218,11 +223,10 @@ export function ArchitectureAuditTable() {
           <div className="flex items-center gap-2">
             <Info className="w-3.5 h-3.5 text-muted-foreground" />
             <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">
-              Mostrando {paginatedData.length} de {filteredData.length} resultados
+              Mostrando {paginatedData.length.toString()} de {filteredData.length.toString()} resultados
             </span>
           </div>
 
-          {/* Pagination Controls */}
           {totalPages > 1 && (
             <div className="flex items-center gap-1">
               <button
@@ -233,7 +237,7 @@ export function ArchitectureAuditTable() {
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <div className="px-3 h-8 flex items-center justify-center rounded-lg bg-primary/10 border border-primary/20 text-[10px] font-black">
-                {currentPage} / {totalPages}
+                {currentPage.toString()} / {totalPages.toString()}
               </div>
               <button
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
