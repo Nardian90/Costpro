@@ -29,3 +29,10 @@ This script should be run daily to maintain:
 5. **Modelo de Arquitectura Visual**: `public/system_architecture.json`
 
 To execute the audit manually, run `npm run audit`.
+
+## Repository Structure & Documentation (v5.8.0)
+- **scripts/remediation/**: Contains one-off scripts for bug fixes and data migrations.
+- **docs/audits/archive/**: Historical audit reports from previous development cycles.
+- **docs/technical/patches/**: Archive of Git patches and diffs used for specific fixes.
+- **public/system_architecture.json**: Enriched with `business_logic` descriptions for the Health View.
+- **Health View**: The `ArchitectureAuditTable` component now includes a side panel to display the "Business Logic Context" of each system component.
