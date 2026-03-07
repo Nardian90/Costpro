@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { AddTransactionModal } from './AddTransactionModal';
 import { BaseModal } from "@/components/ui/BaseModal";
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type BankTransaction, type Product } from '@/lib/dexie';
@@ -43,6 +44,7 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
   const [layoutMode, setLayoutMode] = useState<'table' | 'cards'>('table');
   const [typeFilter, setTypeFilter] = useState<'ALL' | 'Cr' | 'Db'>('ALL');
   const [showExcluded, setShowExcluded] = useState(true);
+  const [isAddTxOpen, setIsAddTxOpen] = useState(false);
 
   const [confirmation, setConfirmation] = useState<{
     open: boolean;
@@ -145,6 +147,8 @@ export function TransactionTable({ transactions, kpiFilter, txReconciliationTota
                       <BulkForceMatchPopover transactions={filtered} />
                   </div>
               </div>
+              <Button variant="default" size="sm" onClick={() => setIsAddTxOpen(true)} className="h-10 px-4 neu-btn-primary text-xs font-black uppercase italic"><Plus className="w-4 h-4 mr-2" /> Nueva Transacción</Button>
+          <AddTransactionModal open={isAddTxOpen} onOpenChange={setIsAddTxOpen} />
               <Button variant="outline" size="icon" onClick={() => setHelpOpen(true)} className="h-10 w-10 text-primary border-primary/20 hover:bg-primary/5"><HelpCircle className="w-4 h-4" /></Button>
               <Button variant="outline" size="icon" onClick={() => setLayoutMode('table')} className={`h-10 w-10 ${layoutMode === 'table' ? 'bg-primary/10 text-primary border-primary/20' : ''}`}><List className="w-4 h-4" /></Button>
               <Button variant="outline" size="icon" onClick={() => setLayoutMode('cards')} className={`h-10 w-10 ${layoutMode === 'cards' ? 'bg-primary/10 text-primary border-primary/20' : ''}`}><LayoutGrid className="w-4 h-4" /></Button>
