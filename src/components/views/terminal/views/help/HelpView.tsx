@@ -487,7 +487,7 @@ export default function HelpView() {
                           </div>
 
                           <div>
-                            <h3 className="text-xl font-black uppercase tracking-tight mb-2">{update.title}</h3>
+                            <h3 className="text-[clamp(1.1rem,4vw,1.25rem)] font-black uppercase tracking-tight mb-2">{update.title}</h3>
                             <p className="text-sm text-muted-foreground font-medium leading-relaxed">{update.description}</p>
                           </div>
 
