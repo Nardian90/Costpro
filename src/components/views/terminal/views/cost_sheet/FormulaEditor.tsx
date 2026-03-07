@@ -185,7 +185,7 @@ export const FormulaEditor: React.FC<FormulaEditorProps> = ({
                 <DialogDescription className="sr-only">
                   Editor avanzado para configurar fórmulas y cálculos personalizados en la ficha de costo.
                 </DialogDescription>
-                <p className="text-xs sm:text-xs font-black text-primary uppercase tracking-[0.25em] mt-1.5 opacity-90 truncate">v5.7.25 • Motor de Costos Avanzado</p>
+                <p className="text-xs sm:text-xs font-black text-primary uppercase tracking-[0.25em] mt-1.5 opacity-90 truncate">v5.8.0 • Motor de Costos Avanzado</p>
               </div>
             </div>
 

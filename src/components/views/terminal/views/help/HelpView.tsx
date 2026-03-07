@@ -68,7 +68,7 @@ export default function HelpView() {
             </div>
             <div>
               <h1 className="text-[clamp(1.1rem,4vw,1.25rem)] font-black uppercase tracking-tighter leading-tight">Centro de Ayuda Profesional</h1>
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.3em]">Documentación Técnica CostPro v5.7</p>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.3em]">Documentación Técnica CostPro v5.8</p>
             </div>
           </div>
           <div className="hidden md:flex items-center gap-3">
@@ -355,9 +355,35 @@ export default function HelpView() {
                 <div className="space-y-12">
                    <div className="space-y-4">
                     <h2 className="text-[clamp(1.5rem,7vw,2.25rem)] font-black uppercase tracking-tighter leading-tight">Conciliación Bancaria IPV</h2>
-                    <p className="text-muted-foreground font-medium">Sincronización automática entre ventas POS y movimientos de cuenta.</p>
+                    <p className="text-muted-foreground font-medium">Sincronización inteligente entre ventas y movimientos bancarios.</p>
+                    <div className="p-6 rounded-3xl bg-blue-500/5 border border-blue-500/10 space-y-4">
+                      <p className="text-sm leading-relaxed text-muted-foreground">
+                        La conciliación IPV ahora es más granular. Imagine una tienda donde antes mezclábamos todas las monedas en un solo cajón. Ahora, Juan (su cajero) puede separar visualmente qué entró por <span className="text-primary font-bold">Efectivo</span>, qué por <span className="text-blue-600 font-bold">Transferencia</span> y qué mediante <span className="text-emerald-600 font-bold">QR</span>.
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="p-4 rounded-2xl bg-card border border-border">
+                          <h4 className="text-[10px] font-black uppercase tracking-widest mb-1 text-orange-500">Efectivo</h4>
+                          <p className="text-[10px] text-muted-foreground">Cuadre físico manual y depósitos directos.</p>
+                        </div>
+                        <div className="p-4 rounded-2xl bg-card border border-border">
+                          <h4 className="text-[10px] font-black uppercase tracking-widest mb-1 text-blue-500">Transferencia</h4>
+                          <p className="text-[10px] text-muted-foreground">Matching automático por referencia bancaria.</p>
+                        </div>
+                        <div className="p-4 rounded-2xl bg-card border border-border">
+                          <h4 className="text-[10px] font-black uppercase tracking-widest mb-1 text-emerald-500">QR / Pasarela</h4>
+                          <p className="text-[10px] text-muted-foreground">Confirmación inmediata de pagos digitales.</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   <IpvFlowDiagram />
+
+                  <div className="bg-primary/5 p-8 rounded-[2.5rem] space-y-4">
+                    <h4 className="font-black text-xs uppercase tracking-[0.3em] text-primary">Identidad Visual en Recibos</h4>
+                    <p className="text-sm font-medium">
+                      Sus recibos de ingreso (Modelo SC-3-01) ahora integran el logotipo de su empresa automáticamente, garantizando una imagen profesional ante sus clientes y entidades regulatorias.
+                    </p>
+                  </div>
                 </div>
               )}
 
@@ -369,11 +395,19 @@ export default function HelpView() {
                   </div>
                   <RolesDiagram />
 
-                  <div className="bg-primary/5 p-8 rounded-[2.5rem] space-y-4">
-                    <h4 className="font-black text-xs uppercase tracking-[0.3em] text-primary">Gestión de Usuarios</h4>
-                    <p className="text-sm font-medium">
-                      Como administrador, puede crear usuarios con roles específicos (Admin, Encargado, Cajero, Costo) y asignarles sucursales activas.
-                    </p>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="bg-primary/5 p-8 rounded-[2.5rem] space-y-4">
+                      <h4 className="font-black text-xs uppercase tracking-[0.3em] text-primary">Gestión de Usuarios</h4>
+                      <p className="text-sm font-medium">
+                        Como administrador, puede crear usuarios con roles específicos y asignarles sucursales activas. La seguridad RLS garantiza que cada quien vea solo lo que le corresponde.
+                      </p>
+                    </div>
+                    <div className="bg-violet-500/5 p-8 rounded-[2.5rem] space-y-4">
+                      <h4 className="font-black text-xs uppercase tracking-[0.3em] text-violet-500">Store Selector</h4>
+                      <p className="text-sm font-medium">
+                        Navegue entre múltiples sucursales sin cerrar sesión. El selector persistente en la cabecera mantiene su contexto de trabajo en todo momento.
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
@@ -424,6 +458,20 @@ export default function HelpView() {
 
                   <div className="space-y-8">
                     {[
+                      {
+                        version: "v5.8.0",
+                        date: "25 de Marzo, 2026",
+                        title: "Advanced IPV & Multi-Store Control",
+                        description: "Salto evolutivo en la conciliación financiera y control multi-sucursal.",
+                        changes: [
+                          "Clasificación avanzada de transacciones (Efectivo/Transferencia/QR).",
+                          "Selector de sucursales persistente en cabecera global.",
+                          "Branding automático con logos en recibos SC-3-01.",
+                          "Refuerzo de accesibilidad: touch targets de 44px en toda la App."
+                        ],
+                        status: "Saludable",
+                        score: "9.80"
+                      },
                       {
                         version: "v5.7.25",
                         date: "14 de Marzo, 2026",
