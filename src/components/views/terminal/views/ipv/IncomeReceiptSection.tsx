@@ -18,7 +18,8 @@ import {
   ChevronRight,
   ChevronLeft,
   LayoutGrid,
-  List, Image as ImageIcon
+  List,
+  Image as ImageIcon
 } from 'lucide-react';
 import { formatCurrency, formatDate, cn } from '@/lib/utils';
 import { numeroALetras } from '@/lib/utils/number-to-words-es';
@@ -107,9 +108,9 @@ export function IncomeReceiptSection() {
           persona_entrega: settings.persona_entrega,
           entidad_nombre: settings.entidad_nombre,
           entidad_codigo: settings.entidad_codigo,
+          logo_url: settings.logo_url,
           conceptos_tabla,
           total,
-          logo_url: settings.logo_url,
           cantidad_letras: numeroALetras(total)
         };
       });
@@ -186,9 +187,6 @@ export function IncomeReceiptSection() {
                 className="space-y-4"
               >
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Entidad</label>
-                  <Input
-                <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">URL Logo Empresa</label>
                   <div className="relative">
                     <Input
@@ -200,6 +198,9 @@ export function IncomeReceiptSection() {
                     <ImageIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   </div>
                 </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-muted-foreground ml-1">Entidad</label>
+                  <Input
                     value={settings.entidad_nombre}
                     onChange={(e) => handleUpdateSettings({ entidad_nombre: e.target.value })}
                     className="h-10 text-xs font-bold uppercase"
