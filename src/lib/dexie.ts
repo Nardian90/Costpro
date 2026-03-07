@@ -156,6 +156,7 @@ export interface IPVSettings {
   consecutivo_inicio: number;
   agrupacion_modo: 'GLOBAL' | 'DETALLADO';
   desglose_modo: 'DIA' | 'TRANSACCION';
+  logo_url?: string;
   updated_at: string;
 }
 

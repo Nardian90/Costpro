@@ -15,6 +15,7 @@ interface IncomeReceiptPreviewProps {
     conceptos_tabla: { concepto: string; importe: number }[];
     total: number;
     cantidad_letras: string;
+    logo_url?: string;
   };
   className?: string;
 }
@@ -25,14 +26,21 @@ export function IncomeReceiptPreview({ data, className }: IncomeReceiptPreviewPr
       {/* Header Box */}
       <div className="border-2 border-black p-4 mb-6">
         <div className="flex justify-between items-start">
-          <div className="space-y-1">
-            <div className="flex gap-2 text-sm">
-              <span className="font-bold">ENTIDAD:</span>
-              <span className="border-b border-black flex-1 min-w-[200px] uppercase">{data.entidad_nombre}</span>
-            </div>
-            <div className="flex gap-2 text-sm">
-              <span className="font-bold">CÓDIGO:</span>
-              <span className="border-b border-black flex-1 min-w-[200px] uppercase">{data.entidad_codigo}</span>
+          <div className="flex gap-4 items-start">
+            {data.logo_url && (
+              <div className="w-16 h-16 flex-shrink-0 border border-black/10 p-1">
+                <img src={data.logo_url} alt="Logo" className="w-full h-full object-contain" />
+              </div>
+            )}
+            <div className="space-y-1">
+              <div className="flex gap-2 text-sm">
+                <span className="font-bold">ENTIDAD:</span>
+                <span className="border-b border-black flex-1 min-w-[200px] uppercase">{data.entidad_nombre}</span>
+              </div>
+              <div className="flex gap-2 text-sm">
+                <span className="font-bold">CÓDIGO:</span>
+                <span className="border-b border-black flex-1 min-w-[200px] uppercase">{data.entidad_codigo}</span>
+              </div>
             </div>
           </div>
           <div className="text-right">

@@ -15,16 +15,27 @@ export async function generateLegalPdf(model: any, data: any, options: { skipCop
       doc.setLineWidth(0.5);
       doc.rect(10, yOffset + 10, pageWidth - 20, 28);
 
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(10);
-      doc.text('ENTIDAD:', 15, yOffset + 18);
-      doc.setFont('helvetica', 'normal');
-      doc.text(String(data.entidad_nombre || ''), 40, yOffset + 18);
+      const hasLogo = !!data.logo_url;
+      const textStartX = hasLogo ? 40 : 15;
+
+      if (hasLogo) {
+        try {
+          doc.addImage(data.logo_url, 'JPEG', 15, yOffset + 14, 20, 20);
+        } catch (e) {
+          console.warn('Could not add logo to PDF', e);
+        }
+      }
 
       doc.setFont('helvetica', 'bold');
-      doc.text('CÓDIGO:', 15, yOffset + 26);
+      doc.setFontSize(10);
+      doc.text('ENTIDAD:', textStartX, yOffset + 18);
       doc.setFont('helvetica', 'normal');
-      doc.text(String(data.entidad_codigo || ''), 40, yOffset + 26);
+      doc.text(String(data.entidad_nombre || ''), textStartX + 25, yOffset + 18);
+
+      doc.setFont('helvetica', 'bold');
+      doc.text('CÓDIGO:', textStartX, yOffset + 26);
+      doc.setFont('helvetica', 'normal');
+      doc.text(String(data.entidad_codigo || ''), textStartX + 25, yOffset + 26);
 
       // Model ID & Copy Label
       doc.setFont('helvetica', 'bold');
@@ -118,23 +129,34 @@ export async function generateLegalPdf(model: any, data: any, options: { skipCop
     }
 
   } else {
-    // Standard layout for other models (Unchanged but ensuring autoTable call)
+    // Standard layout for other models
     const pageWidth = doc.internal.pageSize.getWidth();
 
     doc.setDrawColor(0);
     doc.setLineWidth(0.5);
     doc.rect(10, 10, pageWidth - 20, 40);
 
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    doc.text('ENTIDAD:', 15, 20);
-    doc.setFont('helvetica', 'normal');
-    doc.text(String(data.entidad_nombre || ''), 40, 20);
+    const hasLogo = !!data.logo_url;
+    const textStartX = hasLogo ? 40 : 15;
+
+    if (hasLogo) {
+      try {
+        doc.addImage(data.logo_url, 'JPEG', 15, 15, 20, 20);
+      } catch (e) {
+        console.warn('Could not add logo to PDF', e);
+      }
+    }
 
     doc.setFont('helvetica', 'bold');
-    doc.text('CÓDIGO:', 15, 28);
+    doc.setFontSize(10);
+    doc.text('ENTIDAD:', textStartX, 20);
     doc.setFont('helvetica', 'normal');
-    doc.text(String(data.entidad_codigo || ''), 40, 28);
+    doc.text(String(data.entidad_nombre || ''), textStartX + 25, 20);
+
+    doc.setFont('helvetica', 'bold');
+    doc.text('CÓDIGO:', textStartX, 28);
+    doc.setFont('helvetica', 'normal');
+    doc.text(String(data.entidad_codigo || ''), textStartX + 25, 28);
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(14);
@@ -148,7 +170,7 @@ export async function generateLegalPdf(model: any, data: any, options: { skipCop
     doc.text(model.name, pageWidth / 2, 65, { align: 'center' });
 
     const tableRows = Object.entries(data)
-      .filter(([key]) => !['entidad_nombre', 'entidad_codigo', 'total', 'cantidad_letras', 'conceptos_tabla'].includes(key))
+      .filter(([key]) => !['entidad_nombre', 'entidad_codigo', 'total', 'cantidad_letras', 'conceptos_tabla', 'logo_url'].includes(key))
       .map(([key, value]) => {
         const field = model.fields.find((f: any) => f.name === key);
         const label = field ? field.label : key;
