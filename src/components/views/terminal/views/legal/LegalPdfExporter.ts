@@ -3,205 +3,155 @@ import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
 
 export async function generateLegalPdf(model: any, data: any, options: { skipCopy?: boolean } = {}) {
-  const doc = new jsPDF();
+  const orientation = 'p';
+  const unit = 'mm';
+  const format_size = data.paper_size === 'A4' ? 'a4' : 'letter';
+  const doc = new jsPDF(orientation, unit, format_size);
+
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
 
-  if (model.code === 'SC-3-01') {
-    // Specialized layout for Cash Receipt: Half page duplicate
-    const drawReceipt = (yOffset: number, copyLabel: string) => {
-      // Header Section Box
-      doc.setDrawColor(0);
-      doc.setLineWidth(0.5);
-      doc.rect(10, yOffset + 10, pageWidth - 20, 28);
+  const drawReceipt = (docInstance: jsPDF, receiptData: any, yOffset: number, copyLabel: string) => {
+    // Header Section Box
+    docInstance.setDrawColor(0);
+    docInstance.setLineWidth(0.5);
+    docInstance.rect(10, yOffset + 10, pageWidth - 20, 28);
 
-      const hasLogo = !!data.logo_url;
-      const textStartX = hasLogo ? 40 : 15;
-
-      if (hasLogo) {
-        try {
-          doc.addImage(data.logo_url, 'JPEG', 15, yOffset + 14, 20, 20);
-        } catch (e) {
-          console.warn('Could not add logo to PDF', e);
-        }
-      }
-
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(10);
-      doc.text('ENTIDAD:', textStartX, yOffset + 18);
-      doc.setFont('helvetica', 'normal');
-      doc.text(String(data.entidad_nombre || ''), textStartX + 25, yOffset + 18);
-
-      doc.setFont('helvetica', 'bold');
-      doc.text('CÓDIGO:', textStartX, yOffset + 26);
-      doc.setFont('helvetica', 'normal');
-      doc.text(String(data.entidad_codigo || ''), textStartX + 25, yOffset + 26);
-
-      // Model ID & Copy Label
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(12);
-      doc.text('MODELO ' + model.code, pageWidth - 65, yOffset + 18);
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'italic');
-      doc.text('Uso Obligatorio - ' + copyLabel, pageWidth - 65, yOffset + 23);
-
-      // Date and Serial No in same row (bottom of header box)
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(9);
-      doc.text('FECHA:', 15, yOffset + 33);
-      doc.setFont('helvetica', 'normal');
-      doc.text(String(data.fecha_emision || ''), 30, yOffset + 33);
-
-      doc.setFont('helvetica', 'bold');
-      doc.text('NO. CONSECUTIVO:', pageWidth - 85, yOffset + 33);
-      doc.setFont('helvetica', 'normal');
-      doc.text(String(data.numero_consecutivo || ''), pageWidth - 45, yOffset + 33);
-
-      // Main Title
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(14);
-      doc.text(model.name, pageWidth / 2, yOffset + 48, { align: 'center' });
-
-      // Persona entrega
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'bold');
-      doc.text('RECIBÍ DE:', 15, yOffset + 58);
-      doc.setFont('helvetica', 'normal');
-      doc.text(String(data.persona_entrega || '').toUpperCase(), 40, yOffset + 58);
-
-      // Table for concepts
-      const tableRows = (data.conceptos_tabla || []).map((row: any) => [
-        String(row.concept || row.concepto || '').toUpperCase(),
-        Number(row.amount || row.importe || 0).toFixed(2)
-      ]);
-
-      autoTable(doc, {
-        startY: yOffset + 63,
-        head: [['CONCEPTO', 'IMPORTE ($)']],
-        body: tableRows,
-        theme: 'grid',
-        headStyles: { fillColor: [0, 0, 0], textColor: [255, 255, 255], halign: 'center', fontSize: 9 },
-        bodyStyles: { fontSize: 8, cellPadding: 3 },
-        columnStyles: { 0: { cellWidth: pageWidth - 60 }, 1: { halign: 'right', cellWidth: 30 } },
-        margin: { left: 15, right: 15 }
-      });
-
-      const finalY = (doc as any).lastAutoTable.finalY;
-
-      // Total Line (Bold and emphasized)
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(11);
-      doc.text('TOTAL:', pageWidth - 60, finalY + 12);
-      doc.text(Number(data.total || 0).toFixed(2), pageWidth - 30, finalY + 12, { align: 'right' });
-
-      // Amount in words
-      doc.setFontSize(9);
-      doc.text('CANTIDAD EN LETRAS:', 15, finalY + 20);
-      doc.setFont('helvetica', 'normal');
-      const textWidth = pageWidth - 30;
-      doc.text(String(data.cantidad_letras || 'CERO').toUpperCase(), 15, finalY + 26, { maxWidth: textWidth });
-
-      // Signature section (Adjust based on finalY)
-      const sigY = finalY + 45;
-      doc.setLineWidth(0.2);
-      doc.line(20, sigY, 80, sigY);
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'bold');
-      doc.text('FIRMA CAJERO', 35, sigY + 5);
-
-      doc.line(pageWidth - 80, sigY, pageWidth - 20, sigY);
-      doc.text('FIRMA ENTREGA', pageWidth - 65, sigY + 5);
-    };
-
-    // Draw Original
-    drawReceipt(0, "ORIGINAL");
-
-    if (!options || !options.skipCopy) {
-      // Scissor line
-      doc.setLineDashPattern([2, 2], 0);
-      doc.setDrawColor(150);
-      doc.line(0, pageHeight / 2, pageWidth, pageHeight / 2);
-      doc.setLineDashPattern([], 0);
-      doc.setDrawColor(0);
-
-      // Draw Copy
-      drawReceipt(pageHeight / 2, "COPIA");
-    }
-
-  } else {
-    // Standard layout for other models
-    const pageWidth = doc.internal.pageSize.getWidth();
-
-    doc.setDrawColor(0);
-    doc.setLineWidth(0.5);
-    doc.rect(10, 10, pageWidth - 20, 40);
-
-    const hasLogo = !!data.logo_url;
+    const hasLogo = !!receiptData.logo_url;
     const textStartX = hasLogo ? 40 : 15;
 
     if (hasLogo) {
       try {
-        doc.addImage(data.logo_url, 'JPEG', 15, 15, 20, 20);
+        const logoFormat = receiptData.logo_url.split(';')[0].split('/')[1].toUpperCase();
+        docInstance.addImage(receiptData.logo_url, logoFormat === 'PNG' ? 'PNG' : 'JPEG', 15, yOffset + 14, 20, 20);
       } catch (e) {
         console.warn('Could not add logo to PDF', e);
       }
     }
 
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    doc.text('ENTIDAD:', textStartX, 20);
-    doc.setFont('helvetica', 'normal');
-    doc.text(String(data.entidad_nombre || ''), textStartX + 25, 20);
+    docInstance.setFont('helvetica', 'bold');
+    docInstance.setFontSize(10);
+    docInstance.text('ENTIDAD:', textStartX, yOffset + 18);
+    docInstance.setFont('helvetica', 'normal');
+    docInstance.text(String(receiptData.entidad_nombre || ''), textStartX + 25, yOffset + 18);
 
-    doc.setFont('helvetica', 'bold');
-    doc.text('CÓDIGO:', textStartX, 28);
-    doc.setFont('helvetica', 'normal');
-    doc.text(String(data.entidad_codigo || ''), textStartX + 25, 28);
+    docInstance.setFont('helvetica', 'bold');
+    docInstance.text('CÓDIGO:', textStartX, yOffset + 26);
+    docInstance.setFont('helvetica', 'normal');
+    docInstance.text(String(receiptData.entidad_codigo || ''), textStartX + 25, yOffset + 26);
 
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(14);
-    doc.text('MODELO ' + model.code, pageWidth - 60, 25);
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'italic');
-    doc.text('Uso Obligatorio', pageWidth - 60, 32);
+    // Model ID & Copy Label
+    docInstance.setFont('helvetica', 'bold');
+    docInstance.setFontSize(12);
+    docInstance.text('MODELO ' + model.code, pageWidth - 65, yOffset + 18);
+    docInstance.setFontSize(8);
+    docInstance.setFont('helvetica', 'italic');
+    docInstance.text('Uso Obligatorio' + (copyLabel ? ' - ' + copyLabel : ''), pageWidth - 65, yOffset + 23);
 
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(16);
-    doc.text(model.name, pageWidth / 2, 65, { align: 'center' });
+    // Dates and Serial No
+    docInstance.setFont('helvetica', 'bold');
+    docInstance.setFontSize(8);
+    docInstance.text('FECHA DE EMISIÓN:', 15, yOffset + 33);
+    docInstance.setFont('helvetica', 'normal');
+    docInstance.text(String(receiptData.fecha_emision || ''), 45, yOffset + 33);
 
-    const tableRows = Object.entries(data)
-      .filter(([key]) => !['entidad_nombre', 'entidad_codigo', 'total', 'cantidad_letras', 'conceptos_tabla', 'logo_url'].includes(key))
-      .map(([key, value]) => {
-        const field = model.fields.find((f: any) => f.name === key);
-        const label = field ? field.label : key;
-        let displayValue = value;
-        if (typeof value === 'object' && value !== null) displayValue = JSON.stringify(value, null, 2);
-        return [label.toUpperCase(), String(displayValue || '')];
-      });
+    docInstance.setFont('helvetica', 'bold');
+    docInstance.text('FECHA DEL COBRO:', 80, yOffset + 33);
+    docInstance.setFont('helvetica', 'normal');
+    docInstance.text(String(receiptData.fecha_emision || ''), 110, yOffset + 33);
 
-    autoTable(doc, {
-      startY: 75,
-      head: [['CONCEPTO / DATO', 'INFORMACIÓN REGISTRADA']],
+    docInstance.setFont('helvetica', 'bold');
+    docInstance.text('NO. CONSECUTIVO:', pageWidth - 65, yOffset + 33);
+    docInstance.setFont('helvetica', 'normal');
+    docInstance.text(String(receiptData.numero_consecutivo || ''), pageWidth - 35, yOffset + 33);
+
+    // Main Title
+    docInstance.setFont('helvetica', 'bold');
+    docInstance.setFontSize(14);
+    docInstance.text(model.name, pageWidth / 2, yOffset + 48, { align: 'center' });
+
+    // Persona entrega
+    docInstance.setFontSize(10);
+    docInstance.setFont('helvetica', 'bold');
+    docInstance.text('RECIBÍ DE:', 15, yOffset + 58);
+    docInstance.setFont('helvetica', 'normal');
+    docInstance.text(String(receiptData.persona_entrega || '').toUpperCase(), 40, yOffset + 58);
+
+    // Table for concepts
+    const tableRows = (receiptData.conceptos_tabla || []).map((row: any) => [
+      String(row.concept || row.concepto || '').toUpperCase(),
+      Number(row.amount || row.importe || 0).toFixed(2)
+    ]);
+
+    autoTable(docInstance, {
+      startY: yOffset + 63,
+      head: [['CONCEPTO', 'IMPORTE ($)']],
       body: tableRows,
       theme: 'grid',
-      headStyles: { fillColor: [0, 0, 0], textColor: [255, 255, 255], halign: 'center' },
-      columnStyles: { 0: { cellWidth: 70, fontStyle: 'bold', fillColor: [245, 245, 245] } },
+      headStyles: { fillColor: [0, 0, 0], textColor: [255, 255, 255], halign: 'center', fontSize: 9 },
+      bodyStyles: { fontSize: 8, cellPadding: 3 },
+      columnStyles: { 0: { cellWidth: pageWidth - 60 }, 1: { halign: 'right', cellWidth: 30 } },
       margin: { left: 15, right: 15 }
     });
 
-    const finalY = (doc as any).lastAutoTable.finalY + 20;
-    if (finalY < pageHeight - 40) {
-      doc.line(20, finalY + 15, 80, finalY + 15);
-      doc.text('FIRMA RESPONSABLE', 30, finalY + 20);
-      doc.line(pageWidth - 80, finalY + 15, pageWidth - 20, finalY + 15);
-      doc.text('FIRMA RECIBIDO', pageWidth - 65, finalY + 20);
-    }
-  }
+    const finalY = (docInstance as any).lastAutoTable.finalY;
 
-  // System Stamp
-  doc.setFontSize(7);
-  doc.setTextColor(150);
-  doc.text('COSTPRO TERMINAL LEGAL - ' + format(new Date(), 'dd/MM/yyyy HH:mm'), 15, pageHeight - 5);
+    // Total Line
+    docInstance.setFont('helvetica', 'bold');
+    docInstance.setFontSize(11);
+    docInstance.text('TOTAL:', pageWidth - 60, finalY + 12);
+    docInstance.text(Number(receiptData.total || 0).toFixed(2), pageWidth - 30, finalY + 12, { align: 'right' });
+
+    // Amount in words
+    docInstance.setFontSize(9);
+    docInstance.text('CANTIDAD EN LETRAS:', 15, finalY + 20);
+    docInstance.setFont('helvetica', 'normal');
+    const textWidth = pageWidth - 30;
+    docInstance.text(String(receiptData.cantidad_letras || 'CERO').toUpperCase(), 15, finalY + 26, { maxWidth: textWidth });
+
+    // Signature section
+    const sigY = finalY + 45;
+    docInstance.setLineWidth(0.2);
+    docInstance.line(20, sigY, 80, sigY);
+    docInstance.setFontSize(7);
+    docInstance.setFont('helvetica', 'bold');
+    docInstance.text('FIRMA CAJERO', 35, sigY + 5);
+
+    docInstance.line(pageWidth - 85, sigY, pageWidth - 15, sigY);
+    docInstance.text('FIRMA DE LA PERSONA QUE ENTREGA EL EFECTIVO', pageWidth - 85, sigY + 5, { maxWidth: 70, align: 'center' });
+  };
+
+  if (model.code === 'SC-3-01') {
+    if (data.isMassExport && data.receipts) {
+      for (let i = 0; i < data.receipts.length; i += 2) {
+        if (i > 0) doc.addPage();
+        drawReceipt(doc, data.receipts[i], 0, "");
+        if (data.receipts[i+1]) {
+          doc.setLineDashPattern([2, 2], 0);
+          doc.setDrawColor(150);
+          doc.line(0, pageHeight / 2, pageWidth, pageHeight / 2);
+          doc.setLineDashPattern([], 0);
+          doc.setDrawColor(0);
+          drawReceipt(doc, data.receipts[i+1], pageHeight / 2, "");
+        }
+      }
+    } else {
+      drawReceipt(doc, data, 0, "ORIGINAL");
+      if (!options || !options.skipCopy) {
+        doc.setLineDashPattern([2, 2], 0);
+        doc.setDrawColor(150);
+        doc.line(0, pageHeight / 2, pageWidth, pageHeight / 2);
+        doc.setLineDashPattern([], 0);
+        doc.setDrawColor(0);
+        drawReceipt(doc, data, pageHeight / 2, "COPIA");
+      }
+    }
+  } else {
+    // Other models layout...
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.text(model.name, pageWidth / 2, 65, { align: 'center' });
+  }
 
   doc.save(`${model.code}_${format(new Date(), 'yyyyMMdd_HHmm')}.pdf`);
 }

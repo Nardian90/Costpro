@@ -1,9 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
 
 interface IncomeReceiptPreviewProps {
   data: {
@@ -35,11 +33,11 @@ export function IncomeReceiptPreview({ data, className }: IncomeReceiptPreviewPr
             <div className="space-y-1">
               <div className="flex gap-2 text-sm">
                 <span className="font-bold">ENTIDAD:</span>
-                <span className="border-b border-black flex-1 min-w-[200px] uppercase">{data.entidad_nombre}</span>
+                <span className="border-b border-black flex-1 min-w-[200px] uppercase font-medium">{data.entidad_nombre}</span>
               </div>
               <div className="flex gap-2 text-sm">
                 <span className="font-bold">CÓDIGO:</span>
-                <span className="border-b border-black flex-1 min-w-[200px] uppercase">{data.entidad_codigo}</span>
+                <span className="border-b border-black flex-1 min-w-[200px] uppercase font-medium">{data.entidad_codigo}</span>
               </div>
             </div>
           </div>
@@ -48,33 +46,42 @@ export function IncomeReceiptPreview({ data, className }: IncomeReceiptPreviewPr
             <div className="text-[10px] italic">Uso Obligatorio - ORIGINAL</div>
           </div>
         </div>
-        <div className="flex justify-between items-end mt-4">
-          <div className="flex gap-2 text-sm">
-            <span className="font-bold">FECHA:</span>
-            <span className="border-b border-black uppercase">{data.fecha_emision}</span>
+
+        {/* Dates Row */}
+        <div className="grid grid-cols-2 gap-4 mt-4 border-t border-black/10 pt-3">
+          <div className="flex gap-2 text-[10px] items-center">
+            <span className="font-black uppercase text-muted-foreground whitespace-nowrap">Fecha de Emisión:</span>
+            <span className="border-b border-black flex-1 font-bold uppercase">{data.fecha_emision}</span>
           </div>
-          <div className="flex gap-2 text-sm">
+          <div className="flex gap-2 text-[10px] items-center">
+            <span className="font-black uppercase text-muted-foreground whitespace-nowrap">Fecha del Cobro:</span>
+            <span className="border-b border-black flex-1 font-bold uppercase">{data.fecha_emision}</span>
+          </div>
+        </div>
+
+        <div className="flex justify-end mt-2">
+          <div className="flex gap-2 text-sm items-center">
             <span className="font-bold">NO. CONSECUTIVO:</span>
-            <span className="border-b border-black min-w-[80px] text-center">{data.numero_consecutivo}</span>
+            <span className="border-b border-black min-w-[80px] text-center font-bold">{data.numero_consecutivo}</span>
           </div>
         </div>
       </div>
 
       {/* Title */}
-      <h2 className="text-xl font-bold text-center mb-8 uppercase tracking-widest">RECIBO DE INGRESO DE EFECTIVO</h2>
+      <h2 className="text-xl font-bold text-center mb-8 uppercase tracking-widest border-b-2 border-black pb-2">RECIBO DE INGRESO DE EFECTIVO</h2>
 
       {/* Recibi de */}
-      <div className="flex gap-2 mb-6 text-sm">
+      <div className="flex gap-2 mb-6 text-sm items-baseline">
         <span className="font-bold shrink-0">RECIBÍ DE:</span>
-        <span className="border-b border-black flex-1 uppercase font-medium">{data.persona_entrega}</span>
+        <span className="border-b border-black flex-1 uppercase font-medium tracking-wide">{data.persona_entrega}</span>
       </div>
 
       {/* Table */}
       <table className="w-full border-collapse mb-6 text-sm">
         <thead>
           <tr>
-            <th className="border border-black bg-black text-white p-2 text-left uppercase text-xs">Concepto</th>
-            <th className="border border-black bg-black text-white p-2 text-right uppercase text-xs w-32">Importe ($)</th>
+            <th className="border border-black bg-black text-white p-2 text-left uppercase text-xs tracking-widest">Concepto</th>
+            <th className="border border-black bg-black text-white p-2 text-right uppercase text-xs w-32 tracking-widest">Importe ($)</th>
           </tr>
         </thead>
         <tbody>
@@ -96,35 +103,35 @@ export function IncomeReceiptPreview({ data, className }: IncomeReceiptPreviewPr
       </table>
 
       {/* Total */}
-      <div className="flex justify-end gap-4 mb-6">
-        <span className="font-bold text-lg">TOTAL:</span>
-        <span className="font-black text-xl border-b-2 border-black min-w-[120px] text-right">
+      <div className="flex justify-end gap-4 mb-6 items-center">
+        <span className="font-bold text-lg tracking-tighter">TOTAL:</span>
+        <span className="font-black text-xl border-b-2 border-black min-w-[140px] text-right bg-gray-50 px-2">
           {data.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </span>
       </div>
 
       {/* Amount in words */}
-      <div className="mb-12">
-        <div className="text-xs font-bold uppercase mb-1">Cantidad en letras:</div>
-        <div className="text-sm italic border-b border-black pb-1 uppercase">{data.cantidad_letras}</div>
+      <div className="mb-12 bg-gray-50 p-3 border-l-4 border-black">
+        <div className="text-[10px] font-black uppercase mb-1 text-muted-foreground tracking-widest">Cantidad en letras:</div>
+        <div className="text-sm font-bold border-b border-black/20 pb-1 uppercase italic tracking-tight">{data.cantidad_letras}</div>
       </div>
 
       {/* Signatures */}
-      <div className="flex justify-around items-end pt-12 pb-4">
-        <div className="flex flex-col items-center w-48">
+      <div className="flex justify-around items-end pt-16 pb-4 gap-12">
+        <div className="flex flex-col items-center flex-1">
           <div className="w-full border-t border-black mb-2"></div>
-          <span className="text-[10px] font-bold uppercase">Firma Cajero</span>
+          <span className="text-[10px] font-black uppercase tracking-widest text-center">Firma Cajero</span>
         </div>
-        <div className="flex flex-col items-center w-48">
+        <div className="flex flex-col items-center flex-1">
           <div className="w-full border-t border-black mb-2"></div>
-          <span className="text-[10px] font-bold uppercase">Firma Entrega</span>
+          <span className="text-[10px] font-black uppercase tracking-widest text-center">Firma de la persona que entrega el efectivo</span>
         </div>
       </div>
 
-      {/* Footer info */}
-      <div className="text-[8px] text-gray-400 mt-8 flex justify-between uppercase">
-        <span>COSTPRO TERMINAL LEGAL - {format(new Date(), 'dd/MM/yyyy HH:mm')}</span>
-        <span>Previsualización del Sistema</span>
+      {/* Footer info - CLEANED */}
+      <div className="text-[9px] text-gray-400 mt-12 flex justify-between border-t border-gray-100 pt-2 font-medium">
+        <span className="uppercase tracking-widest">Modelo Oficial SC-3-01</span>
+        <span className="uppercase tracking-widest">Previsualización del Sistema</span>
       </div>
     </div>
   );

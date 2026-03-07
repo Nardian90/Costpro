@@ -157,6 +157,7 @@ export interface IPVSettings {
   agrupacion_modo: 'GLOBAL' | 'DETALLADO';
   desglose_modo: 'DIA' | 'TRANSACCION';
   logo_url?: string;
+  paper_size?: 'LETTER' | 'A4';
   updated_at: string;
 }
 
