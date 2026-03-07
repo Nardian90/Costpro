@@ -292,9 +292,20 @@ export function ArchitectureAuditTable() {
         <SheetContent side="right" className="w-full sm:max-w-md border-l border-border/50 bg-card/95 backdrop-blur-xl">
           <SheetHeader className="mb-8">
             <div className="flex items-center gap-3 mb-2">
-               <Badge variant="outline" className="text-[10px] font-black uppercase border-primary/20 bg-primary/5 text-primary">
-                {selectedComponent?.type}
-              </Badge>
+               <div className="flex items-center gap-2">
+                <Badge variant="outline" className="text-[10px] font-black uppercase border-primary/20 bg-primary/5 text-primary">
+                  {selectedComponent?.type}
+                </Badge>
+                {selectedComponent?.is_documented ? (
+                  <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[9px] font-black uppercase">
+                    Documentado
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-[9px] font-black uppercase opacity-40">
+                    Sin Manual
+                  </Badge>
+                )}
+              </div>
               <span className="text-[10px] font-mono text-muted-foreground opacity-50">{selectedComponent?.lastAudit}</span>
             </div>
             <SheetTitle className="text-2xl font-black uppercase tracking-tighter leading-none">
@@ -350,6 +361,18 @@ export function ArchitectureAuditTable() {
                   <span className="text-lg font-black text-foreground">
                     {selectedComponent?.metrics?.couplingScore || 0}
                   </span>
+                </div>
+                <div className="p-4 rounded-2xl bg-primary/5 border border-primary/20 col-span-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[9px] font-black uppercase text-primary tracking-widest">Calidad de Documentación</span>
+                    <span className="text-xs font-black text-primary">{selectedComponent?.documentation_quality || 0}/10</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-primary/10 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-primary transition-all duration-500"
+                      style={{ width: `${(selectedComponent?.documentation_quality || 0) * 10}%` }}
+                    />
+                  </div>
                 </div>
               </div>
             </section>
