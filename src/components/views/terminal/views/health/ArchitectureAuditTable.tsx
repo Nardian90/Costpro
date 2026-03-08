@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   BookOpen,
+  HelpCircle,
   X
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -176,6 +177,7 @@ export function ArchitectureAuditTable() {
               <TableHead className="text-[10px] font-black uppercase tracking-widest h-12">Tipo</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest h-12">Estado Salud</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest h-12 text-center">Acoplamiento</TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest h-12">Pregunta Crítica</TableHead>
               <TableHead className="text-[10px] font-black uppercase tracking-widest h-12">Acción</TableHead>
             </TableRow>
           </TableHeader>
@@ -183,6 +185,7 @@ export function ArchitectureAuditTable() {
             {paginatedData.length > 0 ? paginatedData.map((item: any, idx: number) => {
               const health = getHealthStyle(item.health);
               const couplingScore = item.metrics ? item.metrics.couplingScore : 0;
+              const criticalQuestion = item.openQuestions && item.openQuestions.length > 0 ? item.openQuestions[0] : null;
               return (
                 <motion.tr
                   key={item.id || idx}
@@ -225,6 +228,18 @@ export function ArchitectureAuditTable() {
                       </div>
                     </div>
                   </TableCell>
+                  <TableCell className="max-w-[200px]">
+                    {criticalQuestion ? (
+                      <div className="flex items-start gap-2 p-2 rounded-lg bg-amber-500/5 border border-amber-500/10">
+                        <HelpCircle className="w-3 h-3 text-amber-500 shrink-0 mt-0.5" />
+                        <span className="text-[9px] font-bold text-foreground/70 leading-tight line-clamp-2 italic">
+                          {criticalQuestion}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-[9px] font-medium opacity-20 uppercase tracking-widest ml-2">—</span>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2 text-[9px] font-black uppercase text-primary opacity-0 group-hover:opacity-100 transition-opacity">
                       <BookOpen className="w-3 h-3" />
@@ -235,7 +250,7 @@ export function ArchitectureAuditTable() {
               );
             }) : (
               <TableRow>
-                <TableCell colSpan={5} className="h-32 text-center">
+                <TableCell colSpan={6} className="h-32 text-center">
                    <div className="flex flex-col items-center justify-center opacity-40">
                       <Search className="w-8 h-8 mb-2" />
                       <p className="text-[10px] font-black uppercase tracking-widest">No se encontraron resultados para los filtros aplicados</p>
