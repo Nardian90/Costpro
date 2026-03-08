@@ -561,18 +561,20 @@ export default function HelpView() {
       </div>
 
       {/* Footer */}
-      <div className="p-6 border-t bg-card/50 flex flex-col sm:flex-row items-center justify-between gap-6">
-        <div className="flex items-center gap-3">
-          <HelpCircle className="w-5 h-5 text-primary" />
-          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">¿Necesita asistencia técnica personalizada?</span>
-        </div>
-        <div className="flex gap-4">
-          <Button
-            onClick={() => window.open("https://wa.me/5353183215", "_blank")}
-            className="h-11 rounded-xl font-bold text-xs uppercase tracking-widest px-8"
-          >
-            Chat con Soporte
-          </Button>
+      <div className="p-6 border-t bg-card/50">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-3 text-center sm:text-left">
+            <HelpCircle className="w-5 h-5 text-primary shrink-0" />
+            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-relaxed">¿Necesita asistencia técnica personalizada?</span>
+          </div>
+          <div className="flex gap-4 w-full sm:w-auto">
+            <Button
+              onClick={() => window.open("https://wa.me/5353183215", "_blank")}
+              className="h-11 w-full sm:w-auto rounded-xl font-bold text-xs uppercase tracking-widest px-8 active:scale-95 transition-transform"
+            >
+              Chat con Soporte
+            </Button>
+          </div>
         </div>
       </div>
     </div>

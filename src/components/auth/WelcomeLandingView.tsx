@@ -461,24 +461,26 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
       </section>
 
       {/* Simple Footer */}
-      <footer className="py-12 border-t border-border/50 overflow-x-auto no-scrollbar">
+      <footer className="py-12 border-t border-border/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row justify-between items-center gap-8 md:gap-6">
           <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
             <CostProLogo size={30} animated={false} className="grayscale" />
             <span className="text-xs font-bold text-muted-foreground">© 2026 CostPro Enterprise. Todos los derechos reservados.</span>
           </div>
-          <div className="flex flex-wrap justify-center gap-x-8 gap-y-2 text-xs font-black uppercase tracking-widest text-muted-foreground">
-            <a
-              href="https://wa.me/5353183215"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-primary transition-colors flex items-center gap-1 min-h-[44px]"
-            >
-              Soporte WhatsApp
-              <ExternalLink className="w-2.5 h-2.5" />
-            </a>
-            <a href="#" className="hover:text-primary transition-colors flex items-center min-h-[44px]">Términos</a>
-            <a href="#" className="hover:text-primary transition-colors flex items-center min-h-[44px]">Privacidad</a>
+          <div className="w-full md:w-auto overflow-x-auto no-scrollbar">
+            <div className="flex flex-nowrap md:flex-wrap justify-center gap-x-8 gap-y-2 text-xs font-black uppercase tracking-widest text-muted-foreground min-w-max md:min-w-0 px-4 md:px-0">
+              <a
+                href="https://wa.me/5353183215"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-primary transition-colors flex items-center gap-1 min-h-[44px]"
+              >
+                Soporte WhatsApp
+                <ExternalLink className="w-2.5 h-2.5" />
+              </a>
+              <a href="#" className="hover:text-primary transition-colors flex items-center min-h-[44px]">Términos</a>
+              <a href="#" className="hover:text-primary transition-colors flex items-center min-h-[44px]">Privacidad</a>
+            </div>
           </div>
         </div>
       </footer>
