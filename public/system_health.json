@@ -6,5 +6,8 @@
   "newViews": 0,
   "criticalIssues": 0,
   "warnings": 3,
-  "lastAudit": "2026-03-07"
+  "lastAudit": "2026-03-07",
+  "documentation_health": 5.71,
+  "documented_components": 190,
+  "total_components": 311
 }
