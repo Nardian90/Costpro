@@ -1,16 +1,6 @@
 {
   "timeline": [
     {
-      "date": "2026-03-07",
-      "score": 9.7,
-      "status": "\u00d3ptimo",
-      "actionsPerformed": [
-        "Actualizaci\u00f3n del mapa arquitect\u00f3nico",
-        "Generaci\u00f3n de architecture_graph.json",
-        "Auditor\u00eda de acoplamiento y complejidad"
-      ]
-    },
-    {
       "date": "2026-03-06",
       "score": 9.7,
       "status": "\u00d3ptimo",
