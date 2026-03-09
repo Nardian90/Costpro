@@ -7,7 +7,7 @@ import {
   Shield, TrendingUp, BarChart3, FileText,
   Check, Play, MousePointer2, ExternalLink,
   Store, Utensils, Factory, Briefcase, Zap,
-  MessageCircle, Smartphone, Download
+  MessageCircle, Smartphone, Download, HelpCircle
 } from 'lucide-react';
 import Link from 'next/link';
 import CostProLogo from '@/components/CostProLogo';
@@ -17,6 +17,7 @@ import SpeedScaleDiagram from './diagrams/SpeedScaleDiagram';
 import { usePWA } from '@/hooks/ui/usePWA';
 import { cn } from '@/lib/utils';
 import { PWAInstallModal } from '@/components/ui/PWAInstallModal';
+import { useUIStore } from '@/store';
 
 interface WelcomeLandingViewProps {
   onLoginClick: () => void;
@@ -27,6 +28,7 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
   const [isPWAModalOpen, setIsPWAModalOpen] = useState(false);
   const [randomDiagram, setRandomDiagram] = useState<number>(0);
   const { isInstallable, installApp } = usePWA();
+  const { setCurrentView, setLastQuery } = useUIStore();
 
   useEffect(() => {
     setRandomDiagram(Math.random() > 0.5 ? 1 : 2);
@@ -38,6 +40,11 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
     if (result === false) {
       setIsPWAModalOpen(true);
     }
+  };
+
+  const goToHelpSlideshow = () => {
+    setLastQuery('slideshow', 'help');
+    setCurrentView('help');
   };
 
   const modules = [
@@ -83,6 +90,13 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
             </div>
           </div>
           <div className="flex items-center gap-1 sm:gap-3">
+             <button
+              onClick={goToHelpSlideshow}
+              className="h-11 px-2.5 sm:px-6 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-widest flex items-center gap-1 sm:gap-2 text-muted-foreground hover:bg-muted transition-all active:scale-95 group shrink-0"
+            >
+              <HelpCircle className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">¿Qué es CostPro?</span>
+            </button>
             <button
               onClick={onLoginClick}
               className="h-11 px-2.5 sm:px-6 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-widest flex items-center gap-1 sm:gap-2 border-2 border-border bg-background/50 hover:bg-muted transition-all active:scale-95 group shrink-0 shadow-sm"
@@ -98,208 +112,89 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
                   ? "bg-primary text-white shadow-[0_0_20px_rgba(16,185,129,0.3)]"
                   : "bg-muted text-muted-foreground border border-border"
               )}
-              title="Instalar APP"
             >
-              <Download className="w-4 h-4 sm:w-3.5 sm:h-3.5 shrink-0" />
-              <span className="hidden sm:block">Instalar APP</span>
+              <Download className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">App</span>
             </button>
           </div>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="pt-24 sm:pt-40 pb-20 px-4 sm:px-6">
-        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="space-y-8"
-          >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 border border-primary/10 text-primary text-xs font-black uppercase tracking-widest">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-              </span>
-              v5.8.0 Hardened Enterprise Release
-            </div>
-
-            <h1 className="text-[clamp(1.5rem,8vw,4.5rem)] font-black tracking-tighter leading-[0.9] uppercase text-foreground">
-              Control <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-lime-400 italic">Total</span> <br />
-              de su Negocio.
-            </h1>
-
-            <p className="text-[clamp(1.125rem,2vw,1.25rem)] text-muted-foreground font-medium max-w-xl leading-relaxed">
-              La plataforma integral de gestión diseñada para escalar MiPyMEs con precisión técnica, automatización de costos y operativa móvil de alto rendimiento.
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-3 pt-4">
-              <button
-                onClick={onLoginClick}
-                className="neu-btn h-14 px-10 w-full sm:w-auto text-sm font-black uppercase tracking-widest border border-border rounded-xl hover:bg-muted/50 transition-colors"
-              >
-                Comenzar Ahora
-              </button>
-              <button
-                onClick={handleInstallClick}
-                className={cn(
-                  "neu-btn h-14 px-10 w-full sm:w-auto text-sm font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2",
-                  isInstallable
-                    ? "neu-btn-primary shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:shadow-[0_0_40px_rgba(16,185,129,0.35)]"
-                    : "bg-muted text-muted-foreground border border-border"
-                )}
-              >
-                <Smartphone className="w-5 h-5" />
-                Instalar APP
-              </button>
-              <Link href="/demo/executive" className="w-full sm:w-auto">
-                <button className="h-14 px-10 w-full text-sm font-black uppercase tracking-widest border border-border rounded-xl hover:bg-muted/50 transition-colors">
-                  Ver Demo Online
-                </button>
-              </Link>
-            </div>
-
-            <div className="flex items-center gap-6 pt-8 grayscale opacity-50">
-              <div className="flex items-center gap-2">
-                <Shield className="w-5 h-5" />
-                <span className="text-xs font-bold uppercase tracking-widest">Aislamiento RLS</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5" />
-                <span className="text-xs font-bold uppercase tracking-widest">Escalabilidad Cloud</span>
-              </div>
-            </div>
-          </motion.div>
-
+      <section className="relative pt-12 sm:pt-20 pb-20 sm:pb-32 px-4 sm:px-6">
+        <div className="max-w-7xl mx-auto text-center space-y-8 sm:space-y-12">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2 }}
-            className="relative"
+            className="inline-flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-2.5 sm:py-3 rounded-2xl bg-primary/5 border border-primary/10 text-primary text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em]"
           >
-            <div className="aspect-square rounded-[3rem] bg-gradient-to-tr from-primary/20 via-primary/5 to-transparent border border-primary/10 overflow-hidden relative group">
-              <div className="absolute inset-0 flex items-center justify-center">
-                 <CostProLogo size={240} animated className="opacity-10 scale-150 rotate-12 group-hover:rotate-0 transition-transform duration-1000" />
-              </div>
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+            </span>
+            CostPro Profesional v5.8.0
+          </motion.div>
 
-              {/* Floating Cards Mockup */}
-              <motion.div
-                animate={{ y: [0, -10, 0] }}
-                transition={{ duration: 4, repeat: Infinity }}
-                className={`absolute top-6 sm:top-10 right-4 sm:right-10 p-4 sm:p-6 rounded-3xl bg-background/80 ${isHydrated ? 'backdrop-blur-2xl' : ''} border border-border/50 shadow-[0_20px_50px_rgba(0,0,0,0.1)] space-y-4 w-48 sm:w-64 z-10 transition-all duration-700`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Ventas Hoy</span>
-                  <BadgeCheck className="w-4 h-4 text-primary" />
-                </div>
-                <div className="text-[clamp(1.5rem,5vw,1.875rem)] font-black tracking-tight">$42,950.00</div>
-                <div className="h-1.5 w-full bg-primary/10 rounded-full overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: "75%" }}
-                    className="h-full bg-primary"
-                  />
-                </div>
-              </motion.div>
+          <div className="space-y-4 sm:space-y-6 max-w-5xl mx-auto">
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-[clamp(2.5rem,10vw,5.5rem)] font-black uppercase tracking-tighter leading-[0.9] text-foreground"
+            >
+              Domine su <br /> <span className="text-primary italic">Rentabilidad</span>
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="text-lg sm:text-xl md:text-2xl text-muted-foreground font-medium max-w-2xl mx-auto leading-relaxed"
+            >
+              La plataforma definitiva para MiPyMEs que buscan precisión matemática en sus costos y agilidad total en sus ventas.
+            </motion.p>
+          </div>
 
-              <motion.div
-                animate={{ y: [0, 10, 0] }}
-                transition={{ duration: 5, repeat: Infinity }}
-                className="absolute bottom-6 sm:bottom-10 left-4 sm:left-10 p-4 sm:p-6 rounded-3xl bg-primary text-white shadow-[0_20px_50px_rgba(16,185,129,0.3)] space-y-4 w-48 sm:w-64 z-10"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black uppercase tracking-widest opacity-70">Stock Crítico</span>
-                  <Package className="w-4 h-4 opacity-70" />
-                </div>
-                <div className="text-[clamp(1.5rem,5vw,1.875rem)] font-black tracking-tight">12 Items</div>
-                <p className="text-xs font-bold opacity-80 uppercase leading-tight">Acción inmediata requerida en sucursal Norte.</p>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 1 }}
-                className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-4 sm:p-6 rounded-3xl bg-background/40 ${isHydrated ? 'backdrop-blur-xl' : ''} border border-white/10 shadow-2xl w-32 sm:w-48 text-center space-y-2 transition-all duration-700`}
-              >
-                <div className="w-10 h-10 rounded-full bg-violet-500/20 flex items-center justify-center mx-auto text-violet-500">
-                  <Zap className="w-5 h-5" />
-                </div>
-                <div className="text-xs font-black uppercase tracking-widest">Inteligencia AI</div>
-                <div className="text-xs text-muted-foreground font-medium">Darian analizando tendencias...</div>
-              </motion.div>
-            </div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 pt-4"
+          >
+            <button
+              onClick={onLoginClick}
+              className="w-full sm:w-auto px-10 py-5 bg-foreground text-background rounded-2xl text-sm font-black uppercase tracking-widest hover:scale-105 transition-all shadow-2xl active:scale-95"
+            >
+              Empezar Ahora
+            </button>
+            <button
+              onClick={goToHelpSlideshow}
+              className="w-full sm:w-auto px-10 py-5 bg-background border-2 border-border rounded-2xl text-sm font-black uppercase tracking-widest hover:bg-muted transition-all flex items-center justify-center gap-2 group"
+            >
+              <Play className="w-4 h-4 fill-current group-hover:scale-110 transition-transform" />
+              Ver Demo Visual
+            </button>
           </motion.div>
         </div>
       </section>
 
-      {/* Sectors Trust Signals */}
-      <section className="py-12 border-y border-border/50 bg-muted/10 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex overflow-x-auto md:flex-wrap justify-start md:justify-between items-center gap-8 md:gap-4 opacity-50 grayscale no-scrollbar scroll-smooth">
-          <div className="flex items-center gap-3 shrink-0">
-            <Utensils className="w-5 h-5" />
-            <span className="text-xs font-black uppercase tracking-[0.2em]">Restaurante</span>
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <Store className="w-5 h-5" />
-            <span className="text-xs font-black uppercase tracking-[0.2em]">Retail & Comercio</span>
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <Factory className="w-5 h-5" />
-            <span className="text-xs font-black uppercase tracking-[0.2em]">Manufactura</span>
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <Briefcase className="w-5 h-5" />
-            <span className="text-xs font-black uppercase tracking-[0.2em]">Servicios Prof.</span>
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <TrendingUp className="w-5 h-5" />
-            <span className="text-xs font-black uppercase tracking-[0.2em]">Franquicias</span>
-          </div>
-        </div>
-        <style jsx>{`
-          .no-scrollbar::-webkit-scrollbar {
-            display: none;
-          }
-          .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-          }
-        `}</style>
-      </section>
-
-      {/* Modules Grid - Bento Layout */}
-      <section className="py-16 sm:py-24 px-4 sm:px-6 overflow-x-auto">
+      {/* Bento Showcase */}
+      <section className="py-12 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center space-y-4 mb-12 sm:mb-20">
-            <h2 className="text-[clamp(1.5rem,7vw,3rem)] font-black uppercase tracking-tighter">Ecosistema Integrado</h2>
-            <p className="text-muted-foreground font-medium max-w-2xl mx-auto leading-relaxed text-sm sm:text-base">
-              Módulos técnicos desarrollados bajo estándares de arquitectura empresarial para garantizar la integridad de sus datos y la velocidad operativa.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-6 md:grid-rows-2 gap-4 h-full lg:h-[600px]">
-            {/* Main Feature - Bento 1 */}
+          <div className="grid grid-cols-1 md:grid-cols-6 lg:grid-cols-4 gap-4 sm:gap-6 auto-rows-[200px] sm:auto-rows-[250px]">
+            {/* Bento 1 - Costs */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="md:col-span-3 md:row-span-2 p-5 sm:p-10 rounded-[2rem] sm:rounded-[2.5rem] bg-background border border-border hover:border-primary/20 transition-all group flex flex-col justify-between"
+              className="md:col-span-3 lg:col-span-2 p-6 sm:p-10 rounded-[2.5rem] bg-violet-500/5 border border-violet-500/10 hover:border-violet-500/30 transition-all group flex flex-col justify-between"
             >
-              <div>
-                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-violet-500/10 text-violet-600 flex items-center justify-center mb-6 sm:mb-8 group-hover:scale-110 transition-transform">
-                  <FileText className="w-6 h-6 sm:w-7 sm:h-7" />
-                </div>
-                <h3 className="text-[clamp(1.5rem,5vw,1.875rem)] font-black uppercase tracking-tight mb-4">Gestión de Costos</h3>
-                <p className="text-lg text-muted-foreground leading-relaxed font-medium mb-8">
-                  Motor de ingeniería con 14 secciones de gasto, 5 anexos técnicos y validación de ciclos en tiempo real.
-                </p>
+              <div className="w-12 h-12 rounded-2xl bg-violet-500/10 text-violet-600 flex items-center justify-center mb-4 group-hover:-translate-y-1 transition-transform">
+                <FileText className="w-6 h-6" />
               </div>
-              <div className="aspect-video rounded-2xl bg-muted/50 border border-border/50 overflow-hidden relative p-4">
-                <div className="absolute inset-0 bg-gradient-to-tr from-violet-500/5 to-transparent" />
-                <div className="space-y-2 relative z-10">
-                  <div className="h-4 w-3/4 bg-violet-500/20 rounded-full animate-pulse" />
-                  <div className="h-4 w-1/2 bg-violet-500/10 rounded-full animate-pulse delay-75" />
-                  <div className="h-4 w-2/3 bg-violet-500/10 rounded-full animate-pulse delay-150" />
-                </div>
+              <div className="space-y-2">
+                <h3 className="text-xl sm:text-2xl font-black uppercase tracking-tight">Ingeniería de Costos</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed font-medium">
+                  Motor declarativo con 14 niveles de gasto alineado a la Res. 148/2023.
+                </p>
               </div>
             </motion.div>
 
@@ -309,20 +204,18 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
-              className="md:col-span-3 md:row-span-1 p-5 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] bg-background border border-border hover:border-primary/20 transition-all group flex gap-4 sm:gap-8 items-center"
+              className="md:col-span-3 lg:col-span-1 p-5 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] bg-primary/5 border border-primary/10 hover:border-primary/30 transition-all group"
             >
-              <div className="shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center group-hover:rotate-12 transition-transform">
-                <ShoppingCart className="w-7 h-7 sm:w-8 sm:h-8" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-3 sm:mb-4 group-hover:-translate-y-1 transition-transform">
+                <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
-              <div>
-                <h3 className="text-lg sm:text-xl font-black uppercase tracking-tight mb-1 sm:mb-2">Punto de Venta</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed font-medium">
-                  TPV móvil optimizado para operaciones de alta velocidad con sincronización offline.
-                </p>
-              </div>
+              <h3 className="text-base sm:text-lg font-black uppercase tracking-tight mb-1 sm:mb-2">TPV Móvil</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed font-medium">
+                Operaciones ultra rápidas con carrito inteligente.
+              </p>
             </motion.div>
 
-            {/* Bento 3 - Inventory */}
+            {/* Bento 3 - Multi-Store */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -399,14 +292,22 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
                 </div>
               </div>
 
-              <Link href="/demo/executive">
+              <div className="flex flex-wrap gap-4">
+                 <Link href="/demo/executive">
+                  <button
+                    className="neu-btn border-2 border-violet-600 text-violet-600 h-14 px-10 text-sm font-black uppercase tracking-widest hover:bg-violet-600 hover:text-white transition-all flex items-center gap-2"
+                  >
+                    Ver esta funcionalidad
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </Link>
                 <button
-                  className="neu-btn border-2 border-violet-600 text-violet-600 h-14 px-10 text-sm font-black uppercase tracking-widest hover:bg-violet-600 hover:text-white transition-all flex items-center gap-2"
+                  onClick={goToHelpSlideshow}
+                  className="h-14 px-10 rounded-2xl bg-muted text-muted-foreground text-sm font-black uppercase tracking-widest hover:bg-muted/70 transition-all"
                 >
-                  Ver esta funcionalidad
-                  <ArrowRight className="w-4 h-4" />
+                  Ver Resumen General
                 </button>
-              </Link>
+              </div>
             </div>
 
             <div className="order-2 lg:order-2 space-y-8">
@@ -443,12 +344,18 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
             </p>
           </div>
 
-          <div className="relative z-10">
+          <div className="relative z-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
               onClick={onLoginClick}
-              className="px-12 py-5 bg-primary text-white rounded-2xl text-base font-black uppercase tracking-widest hover:scale-105 transition-transform shadow-2xl"
+              className="w-full sm:w-auto px-12 py-5 bg-primary text-white rounded-2xl text-base font-black uppercase tracking-widest hover:scale-105 transition-transform shadow-2xl"
             >
-              Acceso Inmediato de Clientes
+              Acceso Inmediato
+            </button>
+            <button
+              onClick={goToHelpSlideshow}
+              className="w-full sm:w-auto px-12 py-5 bg-background text-foreground rounded-2xl text-base font-black uppercase tracking-widest hover:bg-muted transition-all border border-border"
+            >
+              Ver qué incluye
             </button>
           </div>
 
@@ -511,14 +418,6 @@ export default function WelcomeLandingView({ onLoginClick }: WelcomeLandingViewP
           </motion.a>
         )}
       </AnimatePresence>
-    </div>
-  );
-}
-
-function BadgeCheck({ className }: { className?: string }) {
-  return (
-    <div className={`flex items-center justify-center rounded-full bg-emerald-500/20 p-1 ${className}`}>
-      <Check className="w-3 h-3 text-emerald-600" />
     </div>
   );
 }
