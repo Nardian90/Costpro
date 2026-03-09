@@ -76,7 +76,7 @@ export const Header = ({
                   <DropdownMenuTrigger asChild>
                     <button
                       className={cn(
-                        "group relative flex items-center gap-2 px-3 h-11 rounded-xl transition-all outline-none border min-w-0 max-w-[220px] sm:max-w-none",
+                        "group relative flex items-center gap-2 px-3 h-11 rounded-xl transition-all outline-none border min-w-0 max-w-[130px] sm:max-w-none",
                         storesToShow.length > 1
                           ? "bg-primary text-white border-primary shadow-lg shadow-primary/20 hover:opacity-90"
                           : "bg-muted/50 border-border/50 text-primary cursor-default"
@@ -101,7 +101,7 @@ export const Header = ({
                   </DropdownMenuTrigger>
 
                   {storesToShow.length > 1 && (
-                    <DropdownMenuContent align="start" className="w-64 p-2 rounded-2xl bg-card border-border shadow-2xl z-40">
+                    <DropdownMenuContent align="start" className="w-[calc(100vw-32px)] sm:w-64 p-2 rounded-2xl bg-card border-border shadow-2xl z-40">
                       <div className="px-2 py-1.5 text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">
                         Cambiar Sucursal
                       </div>
