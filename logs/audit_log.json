@@ -1,12 +1,12 @@
 [
   {
-    "date": "2026-03-06",
-    "hash": "f02280c2289a1ece79fb8ae83990eed578ff5c4cdf9496f72b88a001e7321628",
+    "date": "2026-03-08",
+    "hash": "0c5214ade125d738ee75358e72ad66c26d7bb23b2337959d6c1eb666e15c763c",
     "health_score": 9.7,
     "issues_detected": [
       {
         "component": "SplashScreen",
-        "issue": "Falta de tipograf\u00eda fluida (clamp)"
+        "issue": "Falta de tipografía fluida (clamp)"
       },
       {
         "component": "ServiceWorkerRegister",
@@ -14,27 +14,27 @@
       },
       {
         "component": "ServiceWorkerRegister",
-        "issue": "Falta de tipograf\u00eda fluida (clamp)"
+        "issue": "Falta de tipografía fluida (clamp)"
       },
       {
         "component": "theme-provider",
-        "issue": "Falta de tipograf\u00eda fluida (clamp)"
+        "issue": "Falta de tipografía fluida (clamp)"
       },
       {
         "component": "IntelligentThemeHandler",
-        "issue": "Falta de tipograf\u00eda fluida (clamp)"
+        "issue": "Falta de tipografía fluida (clamp)"
       },
       {
         "component": "GlobalSessionManager",
-        "issue": "Falta de tipograf\u00eda fluida (clamp)"
+        "issue": "Falta de tipografía fluida (clamp)"
       },
       {
         "component": "TerminalShell",
-        "issue": "Complejidad ciclom\u00e1tica cr\u00edtica (52)"
+        "issue": "Complejidad ciclomática crítica (52)"
       },
       {
         "component": "TerminalShell",
-        "issue": "Falta de tipograf\u00eda fluida (clamp)"
+        "issue": "Falta de tipografía fluida (clamp)"
       },
       {
         "component": "TerminalShell",
@@ -42,19 +42,19 @@
       },
       {
         "component": "Sidebar",
-        "issue": "Complejidad ciclom\u00e1tica alta (26)"
+        "issue": "Complejidad ciclomática alta (26)"
       },
       {
         "component": "Header",
-        "issue": "Complejidad ciclom\u00e1tica alta (25)"
+        "issue": "Complejidad ciclomática alta (25)"
       },
       {
         "component": "CashClosureView",
-        "issue": "Complejidad ciclom\u00e1tica alta (28)"
+        "issue": "Complejidad ciclomática alta (28)"
       },
       {
         "component": "CashClosureView",
-        "issue": "Falta de tipograf\u00eda fluida (clamp)"
+        "issue": "Falta de tipografía fluida (clamp)"
       },
       {
         "component": "StoresManagementView",
@@ -62,7 +62,7 @@
       },
       {
         "component": "StoreModals",
-        "issue": "Complejidad ciclom\u00e1tica alta (26)"
+        "issue": "Complejidad ciclomática alta (26)"
       },
       {
         "component": "Flashcard",
@@ -70,7 +70,269 @@
       },
       {
         "component": "HelpView",
-        "issue": "Archivo extenso (532 l\u00edneas)"
+        "issue": "Archivo extenso (582 líneas)"
+      },
+      {
+        "component": "HelpView",
+        "issue": "Alto acoplamiento saliente (19)"
+      },
+      {
+        "component": "HelpView",
+        "issue": "Exceso de dependencias directas"
+      },
+      {
+        "component": "CostFlowDiagram",
+        "issue": "Falta de tipografía fluida (clamp)"
+      }
+    ],
+    "refactor_suggestions": [
+      {
+        "component": "IPVView",
+        "priority": "high",
+        "rationale": "High coupling (10) + Complexity (37)",
+        "suggestion": "Consider splitting into sub-components or extracting logic to a dedicated hook/service.",
+        "estimatedEffort": "L"
+      },
+      {
+        "component": "CatalogTable",
+        "priority": "high",
+        "rationale": "High coupling (10) + Complexity (99)",
+        "suggestion": "Consider splitting into sub-components or extracting logic to a dedicated hook/service.",
+        "estimatedEffort": "L"
+      },
+      {
+        "component": "CostSheetMassiveGenerator",
+        "priority": "high",
+        "rationale": "High coupling (10) + Complexity (124)",
+        "suggestion": "Consider splitting into sub-components or extracting logic to a dedicated hook/service.",
+        "estimatedEffort": "L"
+      },
+      {
+        "component": "CostSheetView",
+        "priority": "high",
+        "rationale": "High coupling (10) + Complexity (94)",
+        "suggestion": "Consider splitting into sub-components or extracting logic to a dedicated hook/service.",
+        "estimatedEffort": "L"
+      },
+      {
+        "component": "button",
+        "priority": "high",
+        "rationale": "High coupling (10) + Complexity (3)",
+        "suggestion": "Consider splitting into sub-components or extracting logic to a dedicated hook/service.",
+        "estimatedEffort": "M"
+      }
+    ],
+    "system_metrics": {
+      "totalViews": 42,
+      "totalComponents": 210,
+      "totalServices": 0,
+      "totalHooks": 0,
+      "totalUtilities": 60
+    }
+  },
+  {
+    "date": "2026-03-07",
+    "hash": "5be8863afdd18f63315b88abe060f13e6776b29fdf1afff37a97413b12c9504d",
+    "health_score": 9.7,
+    "issues_detected": [
+      {
+        "component": "SplashScreen",
+        "issue": "Falta de tipografía fluida (clamp)"
+      },
+      {
+        "component": "ServiceWorkerRegister",
+        "issue": "Uso de console.log detectado"
+      },
+      {
+        "component": "ServiceWorkerRegister",
+        "issue": "Falta de tipografía fluida (clamp)"
+      },
+      {
+        "component": "theme-provider",
+        "issue": "Falta de tipografía fluida (clamp)"
+      },
+      {
+        "component": "IntelligentThemeHandler",
+        "issue": "Falta de tipografía fluida (clamp)"
+      },
+      {
+        "component": "GlobalSessionManager",
+        "issue": "Falta de tipografía fluida (clamp)"
+      },
+      {
+        "component": "TerminalShell",
+        "issue": "Complejidad ciclomática crítica (52)"
+      },
+      {
+        "component": "TerminalShell",
+        "issue": "Falta de tipografía fluida (clamp)"
+      },
+      {
+        "component": "TerminalShell",
+        "issue": "Posible incumplimiento de touch targets (44px)"
+      },
+      {
+        "component": "Sidebar",
+        "issue": "Complejidad ciclomática alta (26)"
+      },
+      {
+        "component": "Header",
+        "issue": "Complejidad ciclomática alta (25)"
+      },
+      {
+        "component": "CashClosureView",
+        "issue": "Complejidad ciclomática alta (28)"
+      },
+      {
+        "component": "CashClosureView",
+        "issue": "Falta de tipografía fluida (clamp)"
+      },
+      {
+        "component": "StoresManagementView",
+        "issue": "Posible incumplimiento de touch targets (44px)"
+      },
+      {
+        "component": "StoreModals",
+        "issue": "Complejidad ciclomática alta (26)"
+      },
+      {
+        "component": "Flashcard",
+        "issue": "Posible incumplimiento de touch targets (44px)"
+      },
+      {
+        "component": "HelpView",
+        "issue": "Archivo extenso (580 líneas)"
+      },
+      {
+        "component": "HelpView",
+        "issue": "Alto acoplamiento saliente (19)"
+      },
+      {
+        "component": "HelpView",
+        "issue": "Exceso de dependencias directas"
+      },
+      {
+        "component": "CostFlowDiagram",
+        "issue": "Falta de tipografía fluida (clamp)"
+      }
+    ],
+    "refactor_suggestions": [
+      {
+        "component": "IPVView",
+        "priority": "high",
+        "rationale": "High coupling (10) + Complexity (37)",
+        "suggestion": "Consider splitting into sub-components or extracting logic to a dedicated hook/service.",
+        "estimatedEffort": "L"
+      },
+      {
+        "component": "CatalogTable",
+        "priority": "high",
+        "rationale": "High coupling (10) + Complexity (99)",
+        "suggestion": "Consider splitting into sub-components or extracting logic to a dedicated hook/service.",
+        "estimatedEffort": "L"
+      },
+      {
+        "component": "CostSheetMassiveGenerator",
+        "priority": "high",
+        "rationale": "High coupling (10) + Complexity (124)",
+        "suggestion": "Consider splitting into sub-components or extracting logic to a dedicated hook/service.",
+        "estimatedEffort": "L"
+      },
+      {
+        "component": "CostSheetView",
+        "priority": "high",
+        "rationale": "High coupling (10) + Complexity (94)",
+        "suggestion": "Consider splitting into sub-components or extracting logic to a dedicated hook/service.",
+        "estimatedEffort": "L"
+      },
+      {
+        "component": "button",
+        "priority": "high",
+        "rationale": "High coupling (10) + Complexity (3)",
+        "suggestion": "Consider splitting into sub-components or extracting logic to a dedicated hook/service.",
+        "estimatedEffort": "M"
+      }
+    ],
+    "system_metrics": {
+      "totalViews": 42,
+      "totalComponents": 210,
+      "totalServices": 0,
+      "totalHooks": 0,
+      "totalUtilities": 60
+    }
+  },
+  {
+    "date": "2026-03-06",
+    "hash": "f02280c2289a1ece79fb8ae83990eed578ff5c4cdf9496f72b88a001e7321628",
+    "health_score": 9.7,
+    "issues_detected": [
+      {
+        "component": "SplashScreen",
+        "issue": "Falta de tipografía fluida (clamp)"
+      },
+      {
+        "component": "ServiceWorkerRegister",
+        "issue": "Uso de console.log detectado"
+      },
+      {
+        "component": "ServiceWorkerRegister",
+        "issue": "Falta de tipografía fluida (clamp)"
+      },
+      {
+        "component": "theme-provider",
+        "issue": "Falta de tipografía fluida (clamp)"
+      },
+      {
+        "component": "IntelligentThemeHandler",
+        "issue": "Falta de tipografía fluida (clamp)"
+      },
+      {
+        "component": "GlobalSessionManager",
+        "issue": "Falta de tipografía fluida (clamp)"
+      },
+      {
+        "component": "TerminalShell",
+        "issue": "Complejidad ciclomática crítica (52)"
+      },
+      {
+        "component": "TerminalShell",
+        "issue": "Falta de tipografía fluida (clamp)"
+      },
+      {
+        "component": "TerminalShell",
+        "issue": "Posible incumplimiento de touch targets (44px)"
+      },
+      {
+        "component": "Sidebar",
+        "issue": "Complejidad ciclomática alta (26)"
+      },
+      {
+        "component": "Header",
+        "issue": "Complejidad ciclomática alta (25)"
+      },
+      {
+        "component": "CashClosureView",
+        "issue": "Complejidad ciclomática alta (28)"
+      },
+      {
+        "component": "CashClosureView",
+        "issue": "Falta de tipografía fluida (clamp)"
+      },
+      {
+        "component": "StoresManagementView",
+        "issue": "Posible incumplimiento de touch targets (44px)"
+      },
+      {
+        "component": "StoreModals",
+        "issue": "Complejidad ciclomática alta (26)"
+      },
+      {
+        "component": "Flashcard",
+        "issue": "Posible incumplimiento de touch targets (44px)"
+      },
+      {
+        "component": "HelpView",
+        "issue": "Archivo extenso (532 líneas)"
       },
       {
         "component": "HelpView",
@@ -82,7 +344,7 @@
       },
       {
         "component": "IpvFlowDiagram",
-        "issue": "Falta de tipograf\u00eda fluida (clamp)"
+        "issue": "Falta de tipografía fluida (clamp)"
       }
     ],
     "refactor_suggestions": [
@@ -137,7 +399,7 @@
     "issues_detected": [
       {
         "component": "SplashScreen",
-        "issue": "Falta de tipograf\u00eda fluida (clamp)"
+        "issue": "Falta de tipografía fluida (clamp)"
       },
       {
         "component": "ServiceWorkerRegister",
@@ -145,27 +407,27 @@
       },
       {
         "component": "ServiceWorkerRegister",
-        "issue": "Falta de tipograf\u00eda fluida (clamp)"
+        "issue": "Falta de tipografía fluida (clamp)"
       },
       {
         "component": "theme-provider",
-        "issue": "Falta de tipograf\u00eda fluida (clamp)"
+        "issue": "Falta de tipografía fluida (clamp)"
       },
       {
         "component": "IntelligentThemeHandler",
-        "issue": "Falta de tipograf\u00eda fluida (clamp)"
+        "issue": "Falta de tipografía fluida (clamp)"
       },
       {
         "component": "GlobalSessionManager",
-        "issue": "Falta de tipograf\u00eda fluida (clamp)"
+        "issue": "Falta de tipografía fluida (clamp)"
       },
       {
         "component": "TerminalShell",
-        "issue": "Complejidad ciclom\u00e1tica cr\u00edtica (52)"
+        "issue": "Complejidad ciclomática crítica (52)"
       },
       {
         "component": "TerminalShell",
-        "issue": "Falta de tipograf\u00eda fluida (clamp)"
+        "issue": "Falta de tipografía fluida (clamp)"
       },
       {
         "component": "TerminalShell",
@@ -173,19 +435,19 @@
       },
       {
         "component": "Sidebar",
-        "issue": "Complejidad ciclom\u00e1tica alta (26)"
+        "issue": "Complejidad ciclomática alta (26)"
       },
       {
         "component": "Header",
-        "issue": "Complejidad ciclom\u00e1tica alta (25)"
+        "issue": "Complejidad ciclomática alta (25)"
       },
       {
         "component": "CashClosureView",
-        "issue": "Complejidad ciclom\u00e1tica alta (28)"
+        "issue": "Complejidad ciclomática alta (28)"
       },
       {
         "component": "CashClosureView",
-        "issue": "Falta de tipograf\u00eda fluida (clamp)"
+        "issue": "Falta de tipografía fluida (clamp)"
       },
       {
         "component": "StoresManagementView",
@@ -193,7 +455,7 @@
       },
       {
         "component": "StoreModals",
-        "issue": "Complejidad ciclom\u00e1tica alta (26)"
+        "issue": "Complejidad ciclomática alta (26)"
       },
       {
         "component": "Flashcard",
@@ -201,7 +463,7 @@
       },
       {
         "component": "HelpView",
-        "issue": "Archivo extenso (532 l\u00edneas)"
+        "issue": "Archivo extenso (532 líneas)"
       },
       {
         "component": "HelpView",
@@ -213,7 +475,7 @@
       },
       {
         "component": "IpvFlowDiagram",
-        "issue": "Falta de tipograf\u00eda fluida (clamp)"
+        "issue": "Falta de tipografía fluida (clamp)"
       }
     ],
     "refactor_suggestions": [
@@ -268,7 +530,7 @@
     "issues_detected": [
       {
         "component": "SplashScreen",
-        "issue": "Falta de tipograf\u00eda fluida (clamp)"
+        "issue": "Falta de tipografía fluida (clamp)"
       },
       {
         "component": "ServiceWorkerRegister",
@@ -276,27 +538,27 @@
       },
       {
         "component": "ServiceWorkerRegister",
-        "issue": "Falta de tipograf\u00eda fluida (clamp)"
+        "issue": "Falta de tipografía fluida (clamp)"
       },
       {
         "component": "theme-provider",
-        "issue": "Falta de tipograf\u00eda fluida (clamp)"
+        "issue": "Falta de tipografía fluida (clamp)"
       },
       {
         "component": "IntelligentThemeHandler",
-        "issue": "Falta de tipograf\u00eda fluida (clamp)"
+        "issue": "Falta de tipografía fluida (clamp)"
       },
       {
         "component": "GlobalSessionManager",
-        "issue": "Falta de tipograf\u00eda fluida (clamp)"
+        "issue": "Falta de tipografía fluida (clamp)"
       },
       {
         "component": "TerminalShell",
-        "issue": "Complejidad ciclom\u00e1tica cr\u00edtica (52)"
+        "issue": "Complejidad ciclomática crítica (52)"
       },
       {
         "component": "TerminalShell",
-        "issue": "Falta de tipograf\u00eda fluida (clamp)"
+        "issue": "Falta de tipografía fluida (clamp)"
       },
       {
         "component": "TerminalShell",
@@ -304,19 +566,19 @@
       },
       {
         "component": "Sidebar",
-        "issue": "Complejidad ciclom\u00e1tica alta (26)"
+        "issue": "Complejidad ciclomática alta (26)"
       },
       {
         "component": "Header",
-        "issue": "Complejidad ciclom\u00e1tica alta (25)"
+        "issue": "Complejidad ciclomática alta (25)"
       },
       {
         "component": "CashClosureView",
-        "issue": "Complejidad ciclom\u00e1tica alta (28)"
+        "issue": "Complejidad ciclomática alta (28)"
       },
       {
         "component": "CashClosureView",
-        "issue": "Falta de tipograf\u00eda fluida (clamp)"
+        "issue": "Falta de tipografía fluida (clamp)"
       },
       {
         "component": "StoresManagementView",
@@ -324,7 +586,7 @@
       },
       {
         "component": "StoreModals",
-        "issue": "Complejidad ciclom\u00e1tica alta (26)"
+        "issue": "Complejidad ciclomática alta (26)"
       },
       {
         "component": "Flashcard",
@@ -332,7 +594,7 @@
       },
       {
         "component": "HelpView",
-        "issue": "Archivo extenso (532 l\u00edneas)"
+        "issue": "Archivo extenso (532 líneas)"
       },
       {
         "component": "HelpView",
@@ -344,7 +606,7 @@
       },
       {
         "component": "IpvFlowDiagram",
-        "issue": "Falta de tipograf\u00eda fluida (clamp)"
+        "issue": "Falta de tipografía fluida (clamp)"
       }
     ],
     "refactor_suggestions": [
@@ -399,7 +661,7 @@
     "issues_detected": [
       {
         "component": "SplashScreen",
-        "issue": "Falta de tipograf\u00eda fluida (clamp)"
+        "issue": "Falta de tipografía fluida (clamp)"
       },
       {
         "component": "ServiceWorkerRegister",
@@ -407,27 +669,27 @@
       },
       {
         "component": "ServiceWorkerRegister",
-        "issue": "Falta de tipograf\u00eda fluida (clamp)"
+        "issue": "Falta de tipografía fluida (clamp)"
       },
       {
         "component": "theme-provider",
-        "issue": "Falta de tipograf\u00eda fluida (clamp)"
+        "issue": "Falta de tipografía fluida (clamp)"
       },
       {
         "component": "IntelligentThemeHandler",
-        "issue": "Falta de tipograf\u00eda fluida (clamp)"
+        "issue": "Falta de tipografía fluida (clamp)"
       },
       {
         "component": "GlobalSessionManager",
-        "issue": "Falta de tipograf\u00eda fluida (clamp)"
+        "issue": "Falta de tipografía fluida (clamp)"
       },
       {
         "component": "TerminalShell",
-        "issue": "Complejidad ciclom\u00e1tica cr\u00edtica (52)"
+        "issue": "Complejidad ciclomática crítica (52)"
       },
       {
         "component": "TerminalShell",
-        "issue": "Falta de tipograf\u00eda fluida (clamp)"
+        "issue": "Falta de tipografía fluida (clamp)"
       },
       {
         "component": "TerminalShell",
@@ -435,19 +697,19 @@
       },
       {
         "component": "Sidebar",
-        "issue": "Complejidad ciclom\u00e1tica alta (26)"
+        "issue": "Complejidad ciclomática alta (26)"
       },
       {
         "component": "Header",
-        "issue": "Complejidad ciclom\u00e1tica alta (25)"
+        "issue": "Complejidad ciclomática alta (25)"
       },
       {
         "component": "CashClosureView",
-        "issue": "Complejidad ciclom\u00e1tica alta (28)"
+        "issue": "Complejidad ciclomática alta (28)"
       },
       {
         "component": "CashClosureView",
-        "issue": "Falta de tipograf\u00eda fluida (clamp)"
+        "issue": "Falta de tipografía fluida (clamp)"
       },
       {
         "component": "StoresManagementView",
@@ -455,7 +717,7 @@
       },
       {
         "component": "StoreModals",
-        "issue": "Complejidad ciclom\u00e1tica alta (26)"
+        "issue": "Complejidad ciclomática alta (26)"
       },
       {
         "component": "Flashcard",
@@ -463,7 +725,7 @@
       },
       {
         "component": "HelpView",
-        "issue": "Archivo extenso (532 l\u00edneas)"
+        "issue": "Archivo extenso (532 líneas)"
       },
       {
         "component": "HelpView",
@@ -475,7 +737,7 @@
       },
       {
         "component": "IpvFlowDiagram",
-        "issue": "Falta de tipograf\u00eda fluida (clamp)"
+        "issue": "Falta de tipografía fluida (clamp)"
       }
     ],
     "refactor_suggestions": [
@@ -529,32 +791,32 @@
     "modified_views": [],
     "health_score": 9.8,
     "issues_detected": [
-      "Falta de tipograf\u00eda fluida (clamp) en src/components/SplashScreen.tsx",
+      "Falta de tipografía fluida (clamp) en src/components/SplashScreen.tsx",
       "Uso de console.log detectado en src/components/ServiceWorkerRegister.tsx",
-      "Falta de tipograf\u00eda fluida (clamp) en src/components/ServiceWorkerRegister.tsx",
-      "Falta de tipograf\u00eda fluida (clamp) en src/components/theme-provider.tsx",
-      "Falta de tipograf\u00eda fluida (clamp) en src/components/IntelligentThemeHandler.tsx",
-      "Falta de tipograf\u00eda fluida (clamp) en src/components/GlobalSessionManager.tsx",
-      "Falta de tipograf\u00eda fluida (clamp) en src/components/views/TerminalShell.tsx",
+      "Falta de tipografía fluida (clamp) en src/components/ServiceWorkerRegister.tsx",
+      "Falta de tipografía fluida (clamp) en src/components/theme-provider.tsx",
+      "Falta de tipografía fluida (clamp) en src/components/IntelligentThemeHandler.tsx",
+      "Falta de tipografía fluida (clamp) en src/components/GlobalSessionManager.tsx",
+      "Falta de tipografía fluida (clamp) en src/components/views/TerminalShell.tsx",
       "Posible incumplimiento de touch targets (44px) en src/components/views/TerminalShell.tsx",
-      "Falta de tipograf\u00eda fluida (clamp) en src/components/views/terminal/views/cash_closure/CashClosureView.tsx",
+      "Falta de tipografía fluida (clamp) en src/components/views/terminal/views/cash_closure/CashClosureView.tsx",
       "Posible incumplimiento de touch targets (44px) en src/components/views/terminal/views/stores/StoresManagementView.tsx",
       "Posible incumplimiento de touch targets (44px) en src/components/views/terminal/views/academy/Flashcard.tsx",
-      "Archivo extenso (532 l\u00edneas) en src/components/views/terminal/views/help/HelpView.tsx",
-      "Falta de tipograf\u00eda fluida (clamp) en src/components/views/terminal/views/help/help/IpvFlowDiagram.tsx",
-      "Falta de tipograf\u00eda fluida (clamp) en src/components/views/terminal/views/help/help/CostFlowDiagram.tsx",
+      "Archivo extenso (532 líneas) en src/components/views/terminal/views/help/HelpView.tsx",
+      "Falta de tipografía fluida (clamp) en src/components/views/terminal/views/help/help/IpvFlowDiagram.tsx",
+      "Falta de tipografía fluida (clamp) en src/components/views/terminal/views/help/help/CostFlowDiagram.tsx",
       "Posible incumplimiento de touch targets (44px) en src/components/views/terminal/views/help/help/InventoryAdjustmentFlowDiagram.tsx",
-      "Falta de tipograf\u00eda fluida (clamp) en src/components/views/terminal/views/help/help/UserFlowDiagram.tsx",
-      "Falta de tipograf\u00eda fluida (clamp) en src/components/views/terminal/views/help/help/InventoryFlowDiagram.tsx",
-      "Falta de tipograf\u00eda fluida (clamp) en src/components/views/terminal/views/help/help/StickyCartFlowDiagram.tsx",
+      "Falta de tipografía fluida (clamp) en src/components/views/terminal/views/help/help/UserFlowDiagram.tsx",
+      "Falta de tipografía fluida (clamp) en src/components/views/terminal/views/help/help/InventoryFlowDiagram.tsx",
+      "Falta de tipografía fluida (clamp) en src/components/views/terminal/views/help/help/StickyCartFlowDiagram.tsx",
       "Posible incumplimiento de touch targets (44px) en src/components/views/terminal/views/help/help/StickyCartFlowDiagram.tsx",
-      "Falta de tipograf\u00eda fluida (clamp) en src/components/views/terminal/views/help/help/MobileFlowDiagram.tsx"
+      "Falta de tipografía fluida (clamp) en src/components/views/terminal/views/help/help/MobileFlowDiagram.tsx"
     ],
     "refactor_suggestions": [
-      "Implementar tipograf\u00eda fluida con clamp() en vistas que a\u00fan usan px/rem est\u00e1ticos.",
-      "Asegurar que todos los botones e inputs cumplan con el est\u00e1ndar de 44px de touch target.",
-      "Reducir el tama\u00f1o de archivos que exceden las 500 l\u00edneas mediante sub-componentes.",
-      "Eliminar console.log de archivos de producci\u00f3n."
+      "Implementar tipografía fluida con clamp() en vistas que aún usan px/rem estáticos.",
+      "Asegurar que todos los botones e inputs cumplan con el estándar de 44px de touch target.",
+      "Reducir el tamaño de archivos que exceden las 500 líneas mediante sub-componentes.",
+      "Eliminar console.log de archivos de producción."
     ],
     "system_metrics": {
       "total_views": 42,
