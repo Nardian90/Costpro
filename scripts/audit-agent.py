@@ -189,6 +189,29 @@ def get_md_health_status(score):
     if score >= 6.0: return "Advertencia"
     return "Crítico"
 
+def load_existing_architecture():
+    if os.path.exists(ARCH_JSON):
+        try:
+            with open(ARCH_JSON, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return {item['id']: item for item in data.get('architecture', [])}
+        except: return {}
+    return {}
+
+def get_logic_for_component(node_id, path, existing_item):
+    if existing_item and existing_item.get('is_documented'):
+        return (existing_item.get('business_logic'),
+                True,
+                existing_item.get('documentation_quality', 10),
+                existing_item.get('openQuestions', []))
+
+    # Default logic for undocumented components
+    itype = get_type(path)
+    parts = path.split('/')
+    module = parts[4] if len(parts) > 4 else parts[1] if len(parts) > 1 else "root"
+    logic = f"[No definido en el manual] Componente técnico {node_id} encargado de soportar la funcionalidad operativa del módulo {module}."
+    return logic, False, 3.0, []
+
 def scan_project():
     nodes = {}
     edges = []
@@ -255,6 +278,8 @@ def scan_project():
         metrics['couplingScore'] = round(min(10, raw_coupling), 1)
 
         score, issues = calculate_score(path, node['content'], metrics)
+        logic, is_doc, quality, open_questions = get_logic_for_component(node_id, path, existing_arch.get(node_id))
+
         logic, is_doc, quality, open_questions = get_logic_for_component(node_id, path, existing_arch.get(node_id))
 
         item = {
@@ -331,6 +356,17 @@ def update_all_outputs(items, edges, all_issues):
 
     # logs/audit_log.json (Restore logic)
     avg_health = round(sum(i["health"] for i in items) / len(items), 1) if items else 0
+
+    stats = {
+        "totalViews": len([i for i in items if i["type"] == "view"]),
+        "totalComponents": len([i for i in items if i["type"] == "component"]),
+        "totalServices": len([i for i in items if i["type"] == "service"]),
+        "totalHooks": len([i for i in items if i["type"] == "hook"]),
+        "totalUtilities": len([i for i in items if i["type"] == "utility"])
+    }
+
+    arch_data = {"architecture": items, "stats": stats}
+
     refactor_suggestions = []
     for i in sorted(items, key=lambda x: x['metrics']['couplingScore'], reverse=True)[:5]:
         if i['metrics']['couplingScore'] >= 8.0:
