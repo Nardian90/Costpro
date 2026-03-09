@@ -1,0 +1,253 @@
+{
+  "app": "CostPro",
+  "version": "5.8.0",
+  "updated_at": "2026-03-09T18:12:52Z",
+  "modules": {
+    "terminal": "Punto central para las operaciones diarias, incluyendo ventas, inventario y gestión.",
+    "multitienda": "Control consolidado y navegación entre todas las sucursales del negocio.",
+    "ipv": "Módulo especializado para conciliación bancaria y reportes automatizados de índices de precios."
+  },
+  "flows": [
+    {
+      "id": "cost_sheet_flow",
+      "title": "Cómo crear una Ficha de Costo",
+      "role": "contabilidad",
+      "story": {
+        "before": "Calcular los costos de producción requería hojas de cálculo complejas y propensas a errores que eran difíciles de mantener actualizadas.",
+        "now": "Simplemente ingresas los componentes y el motor de CostPro calcula todo instantáneamente con precisión total.",
+        "why": "Garantiza que sus precios siempre cubran sus costos y márgenes deseados, manteniendo la rentabilidad de su negocio."
+      },
+      "steps": [
+        {
+          "step": 1,
+          "title": "Acceder al Módulo",
+          "explanation": "Abra la sección de 'Fichas de Costo' desde el menú de la terminal."
+        },
+        {
+          "step": 2,
+          "title": "Definir el Producto",
+          "explanation": "Inicie una nueva ficha y nombre el producto o servicio que desea costear."
+        },
+        {
+          "step": 3,
+          "title": "Agregar Componentes",
+          "explanation": "Seleccione materias primas, mano de obra y costos indirectos del catálogo."
+        },
+        {
+          "step": 4,
+          "title": "Verificar Cálculos",
+          "explanation": "Revise los totales automatizados y la bitácora de auditoría para entender cómo se calcula cada centavo."
+        },
+        {
+          "step": 5,
+          "title": "Guardar y Exportar",
+          "explanation": "Finalice la ficha y genere un reporte PDF profesional para sus registros oficiales."
+        }
+      ],
+      "visuals": {
+        "screenshot": "pending_capture",
+        "svg_diagram": {
+          "type": "workflow",
+          "steps": [
+            "Abrir Fichas",
+            "Agregar Ingredientes",
+            "Establecer Márgenes",
+            "Revisar Auditoría",
+            "Exportar PDF"
+          ]
+        }
+      }
+    },
+    {
+      "id": "sale_flow",
+      "title": "Cómo Realizar una Venta",
+      "role": "cajero",
+      "story": {
+        "before": "El cajero debía recordar precios o buscar en listas manuales, retrasando la atención al cliente.",
+        "now": "Haga clic en las tarjetas de productos o escanee códigos de barras para armar el carrito al instante.",
+        "why": "Reduce los tiempos de espera y asegura que cada venta se registre correctamente en el inventario."
+      },
+      "steps": [
+        {
+          "step": 1,
+          "title": "Abrir el TPV",
+          "explanation": "Entre en la vista de 'Punto de Venta' para ver el catálogo interactivo de productos."
+        },
+        {
+          "step": 2,
+          "title": "Seleccionar Productos",
+          "explanation": "Toque los productos o use la barra de búsqueda para agregar artículos al carrito del cliente."
+        },
+        {
+          "step": 3,
+          "title": "Revisar el Carrito",
+          "explanation": "Ajuste las cantidades o aplique descuentos si está autorizado."
+        },
+        {
+          "step": 4,
+          "title": "Completar el Pago",
+          "explanation": "Seleccione el método de pago (Efectivo, Transferencia, etc.) y confirme la transacción."
+        }
+      ],
+      "visuals": {
+        "screenshot": "pending_capture",
+        "svg_diagram": {
+          "type": "workflow",
+          "steps": [
+            "Abrir TPV",
+            "Seleccionar items",
+            "Elegir pago",
+            "Confirmar venta"
+          ]
+        }
+      }
+    },
+    {
+      "id": "cash_closure_flow",
+      "title": "Cierre de Caja",
+      "role": "cajero",
+      "story": {
+        "before": "Cerrar el día significaba largos conteos manuales y diferencias difíciles de explicar.",
+        "now": "El sistema le guía a través del conteo y resalta cualquier discrepancia inmediatamente.",
+        "why": "Brinda tranquilidad tanto al cajero como al dueño al asegurar que cada peso esté contabilizado."
+      },
+      "steps": [
+        {
+          "step": 1,
+          "title": "Iniciar el Cierre",
+          "explanation": "Vaya al módulo de 'Caja' y seleccione 'Nuevo Cierre'."
+        },
+        {
+          "step": 2,
+          "title": "Contar Efectivo Físico",
+          "explanation": "Cuente todo el dinero en la gaveta desglosado por denominación."
+        },
+        {
+          "step": 3,
+          "title": "Ingresar los Montos",
+          "explanation": "Escriba las cantidades en el formulario de cierre del sistema."
+        },
+        {
+          "step": 4,
+          "title": "Comparar y Finalizar",
+          "explanation": "Revise la diferencia con el total del sistema y guarde el informe de cierre."
+        }
+      ],
+      "visuals": {
+        "screenshot": "pending_capture",
+        "svg_diagram": {
+          "type": "workflow",
+          "steps": [
+            "Iniciar Cierre",
+            "Conteo Físico",
+            "Ingresar Totales",
+            "Verificar Diferencia",
+            "Generar Reporte"
+          ]
+        }
+      }
+    },
+    {
+      "id": "inventory_flow",
+      "title": "Recibir Nueva Mercancía",
+      "role": "almacen",
+      "story": {
+        "before": "La mercancía nueva se recibía sin un registro adecuado, lo que causaba confusión sobre lo que realmente estaba disponible.",
+        "now": "Cada entrada se vincula a un proveedor y una factura, actualizando el stock y los costos automáticamente.",
+        "why": "Mantiene un registro en tiempo real de sus activos y evita la falta de productos o el exceso de stock."
+      },
+      "steps": [
+        {
+          "step": 1,
+          "title": "Abrir Recepción",
+          "explanation": "Navegue al módulo de 'Recepción' en la sección de almacén."
+        },
+        {
+          "step": 2,
+          "title": "Registrar Datos de Factura",
+          "explanation": "Ingrese el nombre del proveedor y el número de factura o referencia."
+        },
+        {
+          "step": 3,
+          "title": "Agregar Productos",
+          "explanation": "Liste los productos recibidos y la cantidad de cada uno."
+        },
+        {
+          "step": 4,
+          "title": "Confirmar la Entrada",
+          "explanation": "Guarde el documento para actualizar los niveles de inventario en todo el sistema."
+        }
+      ],
+      "visuals": {
+        "screenshot": "pending_capture",
+        "svg_diagram": {
+          "type": "workflow",
+          "steps": [
+            "Nueva Recepción",
+            "Datos de Proveedor",
+            "Seleccionar Productos",
+            "Actualizar Stock"
+          ]
+        }
+      }
+    },
+    {
+      "id": "ipv_reconciliation_flow",
+      "title": "Conciliación Bancaria (IPV)",
+      "role": "contabilidad",
+      "story": {
+        "before": "Hacer coincidir cientos de transferencias bancarias con ventas individuales era una pesadilla manual.",
+        "now": "El IPV Builder utiliza algoritmos inteligentes para conectar automáticamente los pagos con los productos.",
+        "why": "Ahorra horas de trabajo administrativo y asegura que sus reportes financieros sean 100% precisos."
+      },
+      "steps": [
+        {
+          "step": 1,
+          "title": "Subir Extracto Bancario",
+          "explanation": "Importe su archivo CSV o XLSX del banco en el módulo IPV."
+        },
+        {
+          "step": 2,
+          "title": "Ejecutar el Matching",
+          "explanation": "Inicie el proceso automatizado que encuentra la mejor combinación de productos para cada transferencia."
+        },
+        {
+          "step": 3,
+          "title": "Revisar Excepciones",
+          "explanation": "Ajuste manualmente cualquier transacción que el sistema no pudo emparejar con total certeza."
+        },
+        {
+          "step": 4,
+          "title": "Cerrar el Periodo",
+          "explanation": "Genere el reporte IPV final y bloquee los datos del periodo."
+        }
+      ],
+      "visuals": {
+        "screenshot": "pending_capture",
+        "svg_diagram": {
+          "type": "workflow",
+          "steps": [
+            "Importar Extracto",
+            "Auto-Match",
+            "Revisar Manuales",
+            "Bloquear Periodo",
+            "Generar PDF IPV"
+          ]
+        }
+      }
+    }
+  ],
+  "visual_assets": {
+    "screenshots": [],
+    "svg_diagrams": []
+  },
+  "history": {
+    "documentation_changes": [
+      {
+        "version": "5.8.0",
+        "date": "2026-03-09",
+        "description": "Creación inicial del Sistema de Ayuda estructurado basado en flujos operativos."
+      }
+    ]
+  }
+}
