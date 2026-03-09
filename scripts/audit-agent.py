@@ -14,6 +14,23 @@ AUDIT_LOG = "logs/audit_log.json"
 HEALTH_JSON = "public/system_health.json"
 TIMELINE_JSON = "public/health_timeline.json"
 
+MANUAL_MAPPING = {
+    "CostSheetWizard": "Facilita la creación estandarizada de fichas de costo. Automatiza la aplicación de la Resolución 12/2007 para asegurar que todos los cálculos de precios cumplan con la normativa legal vigente.",
+    "FormulaEditor": "Permite la personalización de algoritmos de formación de precios. Es la herramienta para directivos para ajustar márgenes de contribución y coeficientes de gastos indirectos sin intervención técnica.",
+    "BankIngestion": "Punto de entrada para la digitalización de la economía. Transforma estados de cuenta bancarios en registros contables, eliminando errores manuales en la conciliación de pagos QR y transferencias.",
+    "IncomeReceiptSection": "Garantiza la transparencia fiscal. Genera el Modelo SC-3-01, documento legal indispensable para la declaración de ingresos ante las autoridades pertinentes.",
+    "InventoryAdjustmentModal": "Controla las desviaciones de inventario. Cada ajuste requiere una justificación que se audita automáticamente para prevenir mermas no autorizadas o fraudes.",
+    "CatalogTable": "El cerebro de los productos. Centraliza el costo unitario y el precio de venta sugerido, asegurando que todos los puntos de venta operen con márgenes unificados.",
+    "SystemHealthView": "El panel de control ejecutivo. Traduce métricas técnicas complejas en un Índice de Salud (SHI) que permite a los dueños de negocio entender la estabilidad y seguridad de su inversión tecnológica.",
+    "AuditSummary": "El 'ojo que todo lo ve'. Registra cada cambio sensible en el sistema, permitiendo reconstruir eventos en caso de discrepancias operativas o auditorías de seguridad.",
+    "CashRegister": "Gestiona el flujo de efectivo en el punto de venta. Permite realizar aperturas, arqueos y cierres de caja, asegurando la integridad financiera de las operaciones diarias.",
+    "RoleManager": "Controla el acceso granular al sistema. Define qué acciones puede realizar cada perfil (Admin, Encargado, Cajero, Almacén) según las políticas de seguridad de la empresa.",
+    "UserManager": "Administración centralizada de identidades. Permite la creación y gestión de credenciales para el personal, manteniendo la trazabilidad de acciones por usuario.",
+    "POSView": "Interfaz de venta rápida diseñada para la eficiencia operativa. Soporta múltiples métodos de pago y descuentos, descontando automáticamente el inventario en tiempo real.",
+    "InventoryView": "Panel de control de existencias. Proporciona visibilidad total sobre el stock actual, costos acumulados y alertas de reposición para evitar quiebres de inventario.",
+    "PurchaseOrder": "Módulo de reaprovisionamiento. Formaliza la recepción de mercancía de proveedores, actualizando costos y existencias de manera automatizada.",
+}
+
 def get_type(path):
     if "components/views/terminal/views" in path:
         if path.endswith("View.tsx") or path.endswith("ManagementView.tsx") or "dashboard" in path:
@@ -29,30 +46,25 @@ def get_type(path):
     return "unknown"
 
 def resolve_import(import_path, current_file_path):
-    # Resolve aliases
     if import_path.startswith("@/"):
         resolved = import_path.replace("@/", "src/")
     elif import_path.startswith("."):
         dir_name = os.path.dirname(current_file_path)
         resolved = os.path.normpath(os.path.join(dir_name, import_path))
     else:
-        return None # External or unhandled
+        return None
 
-    # Check common extensions
     for ext in [".tsx", ".ts", ".jsx", ".js", ""]:
         full_path = resolved + ext
         if os.path.exists(full_path) and os.path.isfile(full_path):
             return full_path
-        # Also check if it's a directory with index.ts/tsx
         if os.path.isdir(full_path):
             for i_ext in ["/index.ts", "/index.tsx", "/index.js"]:
                 if os.path.exists(full_path + i_ext):
                     return full_path + i_ext
-
     return None
 
 def extract_dependencies(content, current_file_path):
-    # Match ES6 imports
     imports = re.findall(r'from [\'"](.*)[\'"]', content)
     resolved_deps = []
     for imp in imports:
@@ -63,12 +75,63 @@ def extract_dependencies(content, current_file_path):
     return list(set(resolved_deps))
 
 def calculate_complexity(content):
-    # Basic estimation of cyclomatic complexity
     keywords = [r'\bif\b', r'\bfor\b', r'\bwhile\b', r'\bcase\b', r'\b&&\b', r'\b\|\|\b', r'\?']
     complexity = 1
     for kw in keywords:
         complexity += len(re.findall(kw, content))
     return complexity
+
+def load_existing_architecture():
+    if not os.path.exists(ARCH_JSON):
+        return {}
+    try:
+        with open(ARCH_JSON, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            # Return a map of ID -> item
+            return {item['id']: item for item in data.get('architecture', [])}
+    except:
+        return {}
+
+def get_logic_for_component(name, path, existing_item):
+    # 1. Preserve existing manual high-quality documentation if it exists
+    if existing_item and existing_item.get('is_documented'):
+        # Only preserve if it looks like manual (not inferred)
+        # Inferred descriptions usually start with "[No definido en el manual]"
+        if not str(existing_item.get('business_logic', '')).startswith("[No definido"):
+            return existing_item.get('business_logic'), True, existing_item.get('documentation_quality', 7.0), existing_item.get('openQuestions', [])
+
+    # 2. Check explicit mapping
+    if name in MANUAL_MAPPING:
+        return MANUAL_MAPPING[name], True, 10.0, existing_item.get('openQuestions', []) if existing_item else []
+
+    # 3. Check path-based inference
+    description = ""
+    is_documented = False
+    quality = 0.0
+
+    if "features/ipv" in path or "views/ipv" in path:
+        description = "[No definido en el manual] Componente del módulo IPV (Ingresos, Pagos y Ventas). Se encarga de la gestión de transacciones bancarias y conciliación contable."
+        quality = 6.0
+    elif "features/inventory" in path or "views/inventory" in path:
+        description = "[No definido en el manual] Componente del módulo de Inventario. Soporta el control de existencias y trazabilidad de productos."
+        quality = 6.0
+    elif "features/pos" in path or "views/pos" in path:
+        description = "[No definido en el manual] Componente del Punto de Venta. Facilita la operación comercial y facturación al cliente final."
+        quality = 6.0
+    elif "features/cost-sheets" in path or "views/cost_sheet" in path:
+        description = "[No definido en el manual] Componente del motor de fichas de costo. Participa en el cálculo de formación de precios y márgenes comerciales."
+        quality = 6.0
+    elif "features/auth" in path or "roles" in path or "auth" in path.lower():
+        description = "[No definido en el manual] Componente de Seguridad y Gobernanza. Gestiona permisos, roles y sesiones de usuario."
+        quality = 5.0
+    elif "components/ui" in path:
+        description = "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI)."
+        quality = 4.0
+    else:
+        description = f"[No definido en el manual] Componente técnico {name} encargado de soportar la funcionalidad operativa del módulo {os.path.basename(os.path.dirname(path))}."
+        quality = 3.0
+
+    return description, False, quality, existing_item.get('openQuestions', []) if existing_item else []
 
 def calculate_score(path, content, metrics):
     score_arch = 10.0
@@ -81,7 +144,6 @@ def calculate_score(path, content, metrics):
     loc = len(lines)
     complexity = metrics['cyclomaticComplexity']
 
-    # Architecture (30%)
     if loc > 500:
         score_arch -= 2.0
         issues.append(f"Archivo extenso ({loc} líneas)")
@@ -89,7 +151,6 @@ def calculate_score(path, content, metrics):
         score_arch -= 1.5
         issues.append(f"Alto acoplamiento saliente ({metrics['outDegree']})")
 
-    # Quality (30%)
     if "TODO" in content: score_quality -= 0.5
     if "FIXME" in content: score_quality -= 1.0
     if "console.log" in content:
@@ -102,7 +163,6 @@ def calculate_score(path, content, metrics):
         score_quality -= 1.5
         issues.append(f"Complejidad ciclomática alta ({complexity})")
 
-    # UI/UX (20%)
     if path.endswith((".tsx", ".jsx")):
         if "clamp(" not in content and "text-[" not in content:
             score_ui -= 1.0
@@ -111,7 +171,6 @@ def calculate_score(path, content, metrics):
             score_ui -= 1.0
             issues.append("Posible incumplimiento de touch targets (44px)")
 
-    # Integration (20%)
     if metrics['outDegree'] > 10:
         score_integration -= 2.0
         issues.append("Exceso de dependencias directas")
@@ -158,7 +217,6 @@ def scan_project():
     edges = []
     existing_arch = load_existing_architecture()
 
-    # First pass: identify all nodes
     for base in BASE_PATHS:
         if not os.path.exists(base): continue
         for root, _, files in os.walk(base):
@@ -188,7 +246,6 @@ def scan_project():
                         "dependencies": []
                     }
 
-    # Second pass: identify edges and resolve dependencies
     for path, node in nodes.items():
         deps = extract_dependencies(node['content'], path)
         node['dependencies'] = deps
@@ -196,14 +253,12 @@ def scan_project():
             if dep_path in nodes:
                 edges.append({"from": node['id'], "to": nodes[dep_path]['id']})
 
-    # Calculate Degrees
     in_degrees = {node['id']: 0 for node in nodes.values()}
     out_degrees = {node['id']: 0 for node in nodes.values()}
     for edge in edges:
         out_degrees[edge['from']] += 1
         in_degrees[edge['to']] += 1
 
-    # Final items for architecture
     items = []
     all_issues = []
 
@@ -223,6 +278,7 @@ def scan_project():
         metrics['couplingScore'] = round(min(10, raw_coupling), 1)
 
         score, issues = calculate_score(path, node['content'], metrics)
+        logic, is_doc, quality, open_questions = get_logic_for_component(node_id, path, existing_arch.get(node_id))
 
         logic, is_doc, quality, open_questions = get_logic_for_component(node_id, path, existing_arch.get(node_id))
 
@@ -254,6 +310,7 @@ def run_phase_1():
     items, edges, all_issues = scan_project()
     os.makedirs("docs", exist_ok=True)
 
+    # 1. Update docs/mapa_vistas.md
     header = "| Nombre | Ruta | Tipo | Estado Salud | Dependencias | Última Auditoría |\n"
     separator = "| ------ | ---- | ---- | ------------ | ------------ | ---------------- |\n"
     rows = ""
@@ -265,33 +322,27 @@ def run_phase_1():
     with open(DOCS_MAP, 'w', encoding='utf-8') as f:
         f.write("# Mapa Arquitectónico Vivo\n\n")
         f.write(header + separator + rows)
-    print(f"Phase 1 complete. Updated {DOCS_MAP}")
 
-def run_phase_2():
-    print("Executing Phase 2: Dependency Graph Generation...")
-    items, edges, all_issues = scan_project()
+    # 2. Update JSONs and Logs
+    update_all_outputs(items, edges, all_issues)
+    print(f"Phase 1 complete. Updated {DOCS_MAP}, JSONs and Logs.")
+
+def update_all_outputs(items, edges, all_issues):
     os.makedirs("public", exist_ok=True)
+    os.makedirs("logs", exist_ok=True)
 
+    # architecture_graph.json
     graph_stats = {
         "totalNodes": len(items),
         "totalEdges": len(edges),
         "topCoupled": [i['name'] for i in sorted(items, key=lambda x: x['metrics']['couplingScore'], reverse=True)[:5]],
         "communities": []
     }
-    graph_data = {
-        "nodes": items,
-        "edges": edges,
-        "graphStats": graph_stats
-    }
+    graph_data = {"nodes": items, "edges": edges, "graphStats": graph_stats}
     with open(GRAPH_JSON, 'w', encoding='utf-8') as f:
         json.dump(graph_data, f, indent=2, ensure_ascii=False)
-    print(f"Phase 2 complete. Updated {GRAPH_JSON}")
 
-def run_phase_3():
-    print("Executing Phase 3: System Architecture Update...")
-    items, edges, all_issues = scan_project()
-    os.makedirs("public", exist_ok=True)
-
+    # system_architecture.json
     stats = {
         "totalViews": len([i for i in items if i["type"] == "view"]),
         "totalComponents": len([i for i in items if i["type"] == "component"]),
@@ -299,44 +350,11 @@ def run_phase_3():
         "totalHooks": len([i for i in items if i["type"] == "hook"]),
         "totalUtilities": len([i for i in items if i["type"] == "utility"])
     }
-    arch_data = {
-        "architecture": items,
-        "stats": stats
-    }
+    arch_data = {"architecture": items, "stats": stats}
     with open(ARCH_JSON, 'w', encoding='utf-8') as f:
         json.dump(arch_data, f, indent=2, ensure_ascii=False)
-    print(f"Phase 3 complete. Updated {ARCH_JSON}")
 
-def run_phase_9():
-    print("Executing Phase 9: System Health Evaluation...")
-    items, edges, all_issues = scan_project()
-    os.makedirs("public", exist_ok=True)
-
-    avg_health = round(sum(i["health"] for i in items) / len(items), 1) if items else 0
-    stats = {
-        "totalViews": len([i for i in items if i["type"] == "view"])
-    }
-
-    health_data = {
-        "systemHealth": avg_health,
-        "status": "healthy" if avg_health >= 8.0 else "warning" if avg_health >= 6.0 else "critical",
-        "trend": "stable",
-        "viewsAudited": stats['totalViews'],
-        "newViews": 0,
-        "criticalIssues": len([i for i in items if i["health"] < 6.0]),
-        "warnings": len([i for i in items if 6.0 <= i["health"] < 8.0]),
-        "lastAudit": datetime.date.today().isoformat()
-    }
-    with open(HEALTH_JSON, 'w', encoding='utf-8') as f:
-        json.dump(health_data, f, indent=2, ensure_ascii=False)
-    print(f"Phase 9 complete. Updated {HEALTH_JSON}. System Health: {avg_health}")
-
-def run_phase_10():
-    print("Executing Phase 10: Maintenance Log...")
-    items, edges, all_issues = scan_project()
-    os.makedirs("logs", exist_ok=True)
-    os.makedirs("public", exist_ok=True)
-
+    # logs/audit_log.json (Restore logic)
     avg_health = round(sum(i["health"] for i in items) / len(items), 1) if items else 0
 
     stats = {
@@ -380,6 +398,21 @@ def run_phase_10():
     with open(AUDIT_LOG, 'w', encoding='utf-8') as f:
         json.dump(logs[:365], f, indent=2, ensure_ascii=False)
 
+    # system_health.json
+    health_data = {
+        "systemHealth": avg_health,
+        "status": "healthy" if avg_health >= 8.0 else "warning" if avg_health >= 6.0 else "critical",
+        "trend": "stable",
+        "viewsAudited": stats['totalViews'],
+        "newViews": 0,
+        "criticalIssues": len([i for i in items if i["health"] < 6.0]),
+        "warnings": len([i for i in items if 6.0 <= i["health"] < 8.0]),
+        "lastAudit": datetime.date.today().isoformat()
+    }
+    with open(HEALTH_JSON, 'w', encoding='utf-8') as f:
+        json.dump(health_data, f, indent=2, ensure_ascii=False)
+
+    # health_timeline.json (Restore logic)
     timeline = []
     if os.path.exists(TIMELINE_JSON):
         try:
@@ -393,8 +426,8 @@ def run_phase_10():
         "score": avg_health,
         "status": get_status_label(avg_health),
         "actionsPerformed": [
-            "Actualización del registro de mantenimiento (Fase 10)",
-            "Sincronización de línea de tiempo de salud"
+            "Actualización del mapa arquitectónico (Fase 1)",
+            "Auditoría de acoplamiento y complejidad"
         ]
     }
     if not timeline or timeline[0]['date'] != new_event['date']:
@@ -404,7 +437,6 @@ def run_phase_10():
 
     with open(TIMELINE_JSON, 'w', encoding='utf-8') as f:
         json.dump({"timeline": timeline[:10]}, f, indent=2, ensure_ascii=False)
-    print(f"Phase 10 complete. Updated {AUDIT_LOG} and {TIMELINE_JSON}")
 
 def main():
     parser = argparse.ArgumentParser(description="CostPro Audit Agent - Multi-phase Pipeline")
@@ -413,23 +445,11 @@ def main():
 
     if args.phase == 1:
         run_phase_1()
-    elif args.phase == 2:
-        run_phase_2()
-    elif args.phase == 3:
-        run_phase_3()
-    elif args.phase == 9:
-        run_phase_9()
-    elif args.phase == 10:
-        run_phase_10()
     elif args.phase:
-        print(f"Phase {args.phase} logic not yet implemented in this script version.")
+        print(f"Phase {args.phase} logic not yet implemented in this version.")
     else:
-        print("No phase specified. Running full audit (Legacy mode)...")
+        # Default behavior: run all as Phase 1 + Output updates
         run_phase_1()
-        run_phase_2()
-        run_phase_3()
-        run_phase_9()
-        run_phase_10()
 
 if __name__ == "__main__":
     main()
