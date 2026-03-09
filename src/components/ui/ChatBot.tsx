@@ -111,7 +111,10 @@ export function ChatBot() {
         }),
       });
 
-      if (!response.ok) throw new Error('Error al conectar con Darian');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Error al conectar con Darian');
+      }
 
       const data = await response.json();
       setMessages([...newMessages, { role: 'assistant', content: data.text }]);
@@ -127,7 +130,15 @@ export function ChatBot() {
       }
 
       const errorMsg = error.message || '';
-      if (errorMsg.includes('Límite de IA alcanzado') || errorMsg.includes('Balance') || errorMsg.includes('Quota')) {
+      const isFallbackError = errorMsg.includes('Todos los proveedores fallaron') ||
+                             errorMsg.includes('No hay proveedores configurados');
+
+      if (isFallbackError) {
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: '⚠️ La cuota global de la Inteligencia Artificial está agotada o los proveedores no responden. Por favor, ingresa tu clave API personal en los ajustes (icono de engranaje arriba) para continuar chateando sin límites.'
+        }]);
+      } else if (errorMsg.includes('Límite de IA alcanzado') || errorMsg.includes('Balance') || errorMsg.includes('Quota')) {
         setMessages(prev => [...prev, {
           role: 'assistant',
           content: '⚠️ ' + errorMsg + ' Puedes cambiar a otro proveedor o ingresar tu propia clave en los ajustes (icono de engranaje arriba).'
