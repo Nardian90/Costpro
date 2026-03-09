@@ -3,6 +3,7 @@ import re
 import json
 import datetime
 import hashlib
+import argparse
 
 # Configuration
 BASE_PATHS = ["src/app", "src/components", "src/lib"]
@@ -63,7 +64,6 @@ def extract_dependencies(content, current_file_path):
 
 def calculate_complexity(content):
     # Basic estimation of cyclomatic complexity
-    # Keywords that increase complexity
     keywords = [r'\bif\b', r'\bfor\b', r'\bwhile\b', r'\bcase\b', r'\b&&\b', r'\b\|\|\b', r'\?']
     complexity = 1
     for kw in keywords:
@@ -130,9 +130,33 @@ def get_md_health_status(score):
     if score >= 6.0: return "Advertencia"
     return "Crítico"
 
+def load_existing_architecture():
+    if os.path.exists(ARCH_JSON):
+        try:
+            with open(ARCH_JSON, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return {item['id']: item for item in data.get('architecture', [])}
+        except: return {}
+    return {}
+
+def get_logic_for_component(node_id, path, existing_item):
+    if existing_item and existing_item.get('is_documented'):
+        return (existing_item.get('business_logic'),
+                True,
+                existing_item.get('documentation_quality', 10),
+                existing_item.get('openQuestions', []))
+
+    # Default logic for undocumented components
+    itype = get_type(path)
+    parts = path.split('/')
+    module = parts[4] if len(parts) > 4 else parts[1] if len(parts) > 1 else "root"
+    logic = f"[No definido en el manual] Componente técnico {node_id} encargado de soportar la funcionalidad operativa del módulo {module}."
+    return logic, False, 3.0, []
+
 def scan_project():
     nodes = {}
     edges = []
+    existing_arch = load_existing_architecture()
 
     # First pass: identify all nodes
     for base in BASE_PATHS:
@@ -200,6 +224,8 @@ def scan_project():
 
         score, issues = calculate_score(path, node['content'], metrics)
 
+        logic, is_doc, quality, open_questions = get_logic_for_component(node_id, path, existing_arch.get(node_id))
+
         item = {
             "id": node_id,
             "name": node_id,
@@ -208,22 +234,44 @@ def scan_project():
             "health": score,
             "status": get_status_label(score),
             "lastAudit": datetime.date.today().isoformat(),
+            "business_logic": logic,
+            "is_documented": is_doc,
+            "documentation_quality": quality,
             "metrics": metrics,
             "dependencies": [nodes[d]['id'] for d in node['dependencies'] if d in nodes]
         }
+        if open_questions:
+            item["openQuestions"] = open_questions
+
         items.append(item)
         for issue in issues:
             all_issues.append({"component": node_id, "issue": issue})
 
     return items, edges, all_issues
 
-def update_files(items, edges, all_issues):
-    # Ensure directories exist
-    os.makedirs("public", exist_ok=True)
+def run_phase_1():
+    print("Executing Phase 1: Codebase Scan...")
+    items, edges, all_issues = scan_project()
     os.makedirs("docs", exist_ok=True)
-    os.makedirs("logs", exist_ok=True)
 
-    # 1. architecture_graph.json
+    header = "| Nombre | Ruta | Tipo | Estado Salud | Dependencias | Última Auditoría |\n"
+    separator = "| ------ | ---- | ---- | ------------ | ------------ | ---------------- |\n"
+    rows = ""
+    sorted_items = sorted(items, key=lambda x: (x['type'], x['name']))
+    for item in sorted_items:
+        health_str = get_md_health_status(item['health'])
+        rows += f"| {item['name']} | {item['path']} | {item['type']} | {health_str} | {', '.join(item['dependencies'])} | {item['lastAudit']} |\n"
+
+    with open(DOCS_MAP, 'w', encoding='utf-8') as f:
+        f.write("# Mapa Arquitectónico Vivo\n\n")
+        f.write(header + separator + rows)
+    print(f"Phase 1 complete. Updated {DOCS_MAP}")
+
+def run_phase_2():
+    print("Executing Phase 2: Dependency Graph Generation...")
+    items, edges, all_issues = scan_project()
+    os.makedirs("public", exist_ok=True)
+
     graph_stats = {
         "totalNodes": len(items),
         "totalEdges": len(edges),
@@ -235,10 +283,15 @@ def update_files(items, edges, all_issues):
         "edges": edges,
         "graphStats": graph_stats
     }
-    with open(GRAPH_JSON, 'w') as f:
-        json.dump(graph_data, f, indent=2)
+    with open(GRAPH_JSON, 'w', encoding='utf-8') as f:
+        json.dump(graph_data, f, indent=2, ensure_ascii=False)
+    print(f"Phase 2 complete. Updated {GRAPH_JSON}")
 
-    # 2. system_architecture.json
+def run_phase_3():
+    print("Executing Phase 3: System Architecture Update...")
+    items, edges, all_issues = scan_project()
+    os.makedirs("public", exist_ok=True)
+
     stats = {
         "totalViews": len([i for i in items if i["type"] == "view"]),
         "totalComponents": len([i for i in items if i["type"] == "component"]),
@@ -250,24 +303,52 @@ def update_files(items, edges, all_issues):
         "architecture": items,
         "stats": stats
     }
-    with open(ARCH_JSON, 'w') as f:
-        json.dump(arch_data, f, indent=2)
+    with open(ARCH_JSON, 'w', encoding='utf-8') as f:
+        json.dump(arch_data, f, indent=2, ensure_ascii=False)
+    print(f"Phase 3 complete. Updated {ARCH_JSON}")
 
-    # 3. docs/mapa_vistas.md
-    header = "| Nombre | Ruta | Tipo | Estado Salud | Dependencias | Última Auditoría |\n"
-    separator = "| ------ | ---- | ---- | ------------ | ------------ | ---------------- |\n"
-    rows = ""
-    sorted_items = sorted(items, key=lambda x: (x['type'], x['name']))
-    for item in sorted_items:
-        health_str = get_md_health_status(item['health'])
-        rows += f"| {item['name']} | {item['path']} | {item['type']} | {health_str} | {', '.join(item['dependencies'])} | {item['lastAudit']} |\n"
+def run_phase_9():
+    print("Executing Phase 9: System Health Evaluation...")
+    items, edges, all_issues = scan_project()
+    os.makedirs("public", exist_ok=True)
 
-    with open(DOCS_MAP, 'w') as f:
-        f.write("# Mapa Arquitectónico Vivo\n\n")
-        f.write(header + separator + rows)
-
-    # 4. logs/audit_log.json
     avg_health = round(sum(i["health"] for i in items) / len(items), 1) if items else 0
+    stats = {
+        "totalViews": len([i for i in items if i["type"] == "view"])
+    }
+
+    health_data = {
+        "systemHealth": avg_health,
+        "status": "healthy" if avg_health >= 8.0 else "warning" if avg_health >= 6.0 else "critical",
+        "trend": "stable",
+        "viewsAudited": stats['totalViews'],
+        "newViews": 0,
+        "criticalIssues": len([i for i in items if i["health"] < 6.0]),
+        "warnings": len([i for i in items if 6.0 <= i["health"] < 8.0]),
+        "lastAudit": datetime.date.today().isoformat()
+    }
+    with open(HEALTH_JSON, 'w', encoding='utf-8') as f:
+        json.dump(health_data, f, indent=2, ensure_ascii=False)
+    print(f"Phase 9 complete. Updated {HEALTH_JSON}. System Health: {avg_health}")
+
+def run_phase_10():
+    print("Executing Phase 10: Maintenance Log...")
+    items, edges, all_issues = scan_project()
+    os.makedirs("logs", exist_ok=True)
+    os.makedirs("public", exist_ok=True)
+
+    avg_health = round(sum(i["health"] for i in items) / len(items), 1) if items else 0
+
+    stats = {
+        "totalViews": len([i for i in items if i["type"] == "view"]),
+        "totalComponents": len([i for i in items if i["type"] == "component"]),
+        "totalServices": len([i for i in items if i["type"] == "service"]),
+        "totalHooks": len([i for i in items if i["type"] == "hook"]),
+        "totalUtilities": len([i for i in items if i["type"] == "utility"])
+    }
+
+    arch_data = {"architecture": items, "stats": stats}
+
     refactor_suggestions = []
     for i in sorted(items, key=lambda x: x['metrics']['couplingScore'], reverse=True)[:5]:
         if i['metrics']['couplingScore'] >= 8.0:
@@ -291,34 +372,20 @@ def update_files(items, edges, all_issues):
     logs = []
     if os.path.exists(AUDIT_LOG):
         try:
-            with open(AUDIT_LOG, 'r') as f:
+            with open(AUDIT_LOG, 'r', encoding='utf-8') as f:
                 logs = json.load(f)
                 if not isinstance(logs, list): logs = [logs]
         except: pass
     logs.insert(0, new_log)
-    with open(AUDIT_LOG, 'w') as f:
-        json.dump(logs[:365], f, indent=2)
+    with open(AUDIT_LOG, 'w', encoding='utf-8') as f:
+        json.dump(logs[:365], f, indent=2, ensure_ascii=False)
 
-    # 5. system_health.json
-    health_data = {
-        "systemHealth": avg_health,
-        "status": "healthy" if avg_health >= 8.0 else "warning" if avg_health >= 6.0 else "critical",
-        "trend": "stable",
-        "viewsAudited": stats['totalViews'],
-        "newViews": 0,
-        "criticalIssues": len([i for i in items if i["health"] < 6.0]),
-        "warnings": len([i for i in items if 6.0 <= i["health"] < 8.0]),
-        "lastAudit": datetime.date.today().isoformat()
-    }
-    with open(HEALTH_JSON, 'w') as f:
-        json.dump(health_data, f, indent=2)
-
-    # 6. health_timeline.json
     timeline = []
     if os.path.exists(TIMELINE_JSON):
         try:
-            with open(TIMELINE_JSON, 'r') as f:
-                timeline = json.load(f).get("timeline", [])
+            with open(TIMELINE_JSON, 'r', encoding='utf-8') as f:
+                timeline_data = json.load(f)
+                timeline = timeline_data.get("timeline", [])
         except: pass
 
     new_event = {
@@ -326,9 +393,8 @@ def update_files(items, edges, all_issues):
         "score": avg_health,
         "status": get_status_label(avg_health),
         "actionsPerformed": [
-            "Actualización del mapa arquitectónico",
-            "Generación de architecture_graph.json",
-            "Auditoría de acoplamiento y complejidad"
+            "Actualización del registro de mantenimiento (Fase 10)",
+            "Sincronización de línea de tiempo de salud"
         ]
     }
     if not timeline or timeline[0]['date'] != new_event['date']:
@@ -336,14 +402,34 @@ def update_files(items, edges, all_issues):
     else:
         timeline[0] = new_event
 
-    with open(TIMELINE_JSON, 'w') as f:
-        json.dump({"timeline": timeline[:5]}, f, indent=2)
+    with open(TIMELINE_JSON, 'w', encoding='utf-8') as f:
+        json.dump({"timeline": timeline[:10]}, f, indent=2, ensure_ascii=False)
+    print(f"Phase 10 complete. Updated {AUDIT_LOG} and {TIMELINE_JSON}")
 
 def main():
-    items, edges, all_issues = scan_project()
-    update_files(items, edges, all_issues)
-    avg_health = round(sum(i["health"] for i in items) / len(items), 1) if items else 0
-    print(f"Audit completed. System Health: {avg_health}")
+    parser = argparse.ArgumentParser(description="CostPro Audit Agent - Multi-phase Pipeline")
+    parser.add_argument("--phase", type=int, choices=range(1, 11), help="Pipeline phase to execute")
+    args = parser.parse_args()
+
+    if args.phase == 1:
+        run_phase_1()
+    elif args.phase == 2:
+        run_phase_2()
+    elif args.phase == 3:
+        run_phase_3()
+    elif args.phase == 9:
+        run_phase_9()
+    elif args.phase == 10:
+        run_phase_10()
+    elif args.phase:
+        print(f"Phase {args.phase} logic not yet implemented in this script version.")
+    else:
+        print("No phase specified. Running full audit (Legacy mode)...")
+        run_phase_1()
+        run_phase_2()
+        run_phase_3()
+        run_phase_9()
+        run_phase_10()
 
 if __name__ == "__main__":
     main()
