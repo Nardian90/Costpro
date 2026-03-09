@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, Send, X, Bot, Loader2, Sparkles, Settings, Key, Check } from 'lucide-react';
 import { useAuthStore, useUIStore } from '@/store';
@@ -30,12 +30,27 @@ export function ChatBot() {
   const [isSaving, setIsSaving] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [abortController, setAbortController] = useState<AbortController | null>(null);
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, isLoading]);
+
+  // ✅ ESC KEY HANDLER - NUEVO
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isOpen) {
+        setIsOpen(false);
+      }
+    };
+    
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isOpen, setIsOpen]);
 
   const handleAction = (action: any) => {
     console.log('[AI Controller] Action received:', action);
@@ -68,15 +83,18 @@ export function ChatBot() {
     if (!input.trim() || isLoading || !user) return;
 
     const userMessage: Message = { role: 'user', content: input };
-    // Mantener solo los últimos 10 mensajes en el historial para optimizar tokens
     const newMessages = [...messages, userMessage].slice(-10);
     setMessages(newMessages);
     setInput('');
     setIsLoading(true);
 
+    const controller = new AbortController();
+    setAbortController(controller);
+
     try {
       const response = await fetch('/api/bot/chat', {
         method: 'POST',
+        signal: controller.signal,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -103,6 +121,11 @@ export function ChatBot() {
       }
 
     } catch (error: any) {
+      if (error.name === 'AbortError') {
+        console.log('[Chat] Request cancelled by user');
+        return;
+      }
+
       const errorMsg = error.message || '';
       if (errorMsg.includes('Límite de IA alcanzado') || errorMsg.includes('Balance') || errorMsg.includes('Quota')) {
         setMessages(prev => [...prev, {
@@ -114,6 +137,7 @@ export function ChatBot() {
       }
     } finally {
       setIsLoading(false);
+      setAbortController(null);
     }
   };
 
@@ -136,6 +160,21 @@ export function ChatBot() {
       setIsSaving(false);
     }
   };
+
+  // ✅ HANDLER CLOSE MEJORADO
+  const handleCloseChat = useCallback((e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (abortController) {
+      abortController.abort();
+    }
+    setMessages([]);
+    setInput('');
+    setIsLoading(false);
+    setIsOpen(false);
+  }, [abortController, setIsOpen]);
 
   const isConfigured = !!user?.aiProvider && (!!user?.aiApiKey || user.aiProvider === 'qwen');
 
@@ -171,8 +210,9 @@ export function ChatBot() {
 
               <button
                 onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-                className="w-11 h-11 flex items-center justify-center hover:bg-white/10 rounded-xl transition-colors"
+                className="w-11 h-11 flex items-center justify-center hover:bg-white/10 rounded-xl transition-colors active:scale-95"
                 title="Configuración de IA"
+                type="button"
               >
                 <Settings className={`w-4 h-4 ${isSettingsOpen ? 'animate-spin-slow' : ''}`} />
               </button>
@@ -190,9 +230,13 @@ export function ChatBot() {
                 </div>
               </div>
 
+              {/* ✅ CLOSE BUTTON FIXED */}
               <button
-                onClick={() => setIsOpen(false)}
-                className="w-11 h-11 flex items-center justify-center hover:bg-white/10 rounded-xl transition-colors"
+                onClick={handleCloseChat}
+                className="w-11 h-11 flex items-center justify-center hover:bg-white/10 rounded-xl transition-colors active:scale-95 relative z-50"
+                title="Cerrar chat (ESC)"
+                type="button"
+                aria-label="Cerrar chat"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -222,6 +266,7 @@ export function ChatBot() {
                                 ? 'border-primary bg-primary/5 text-primary'
                                 : 'border-border bg-background text-muted-foreground'
                               }`}
+                              type="button"
                             >
                               {p}
                             </button>
@@ -254,6 +299,7 @@ export function ChatBot() {
                         onClick={handleSaveSettings}
                         disabled={isSaving || (tempProvider === user?.aiProvider && !tempApiKey)}
                         className="w-full h-14 bg-primary text-primary-foreground rounded-xl text-xs font-black uppercase tracking-widest shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
+                        type="button"
                       >
                         {isSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
                         {isSaving ? 'Guardando...' : 'Actualizar Configuración'}
@@ -283,6 +329,7 @@ export function ChatBot() {
                                <button
                                  onClick={() => setIsSettingsOpen(true)}
                                  className="w-full h-11 bg-warning/10 text-warning rounded-lg text-xs font-black uppercase"
+                                 type="button"
                                >
                                  Configurar Darian
                                </button>
@@ -335,6 +382,7 @@ export function ChatBot() {
                     disabled={!input.trim() || isLoading || !isConfigured}
                     onClick={handleSend}
                     className="w-11 h-11 rounded-xl bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 disabled:opacity-50 transition-all shadow-md active:scale-95 shrink-0"
+                    type="button"
                   >
                     <Send className="w-4 h-4" />
                   </button>
