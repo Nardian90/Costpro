@@ -1,51 +1,129 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { botService } from '@/services/bot-service';
 import { getServerSession } from '@/lib/auth';
-import { getSupabaseAuthClient } from '@/lib/supabaseClient';
-import { getLLMProviderWithUserKey } from '@/lib/ai/orchestrator';
+import { DeepSeekAdapter } from '@/lib/ai/adapters/deepseek-adapter';
+import { GeminiAdapter } from '@/lib/ai/adapters/gemini-adapter';
+import { GPTAdapter } from '@/lib/ai/adapters/gpt-adapter';
+
+export const runtime = 'nodejs';
+export const maxDuration = 30;
 
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(req);
     if (!session) {
-      return NextResponse.json({ error: 'No autorizado. Debes iniciar sesión.' }, { status: 401 });
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    const body = await req.json();
-    const { messages, storeId, aiProvider, aiApiKey, botContext } = body;
-
-    if (!messages || !Array.isArray(messages) || !storeId) {
-      return NextResponse.json({ error: 'Faltan parámetros requeridos (messages, storeId)' }, { status: 400 });
-    }
-
-    const authSupabase = getSupabaseAuthClient(session.token);
-
+    let body;
     try {
-      const provider = await getLLMProviderWithUserKey(session.user.id, aiProvider, aiApiKey);
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'JSON inválido' }, { status: 400 });
+    }
 
-      const response = await botService.handleChat(
-        authSupabase,
-        session.user.id,
-        session.user.role || "vendedor",
-        storeId,
-        messages,
-        provider,
-        aiApiKey,
-        botContext
-      );
-      return NextResponse.json(response);
-    } catch (botError: any) {
-      console.error('[BotAPI] Logic Error:', botError);
+    const { messages, aiProvider, aiApiKey } = body;
+
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return NextResponse.json({ error: 'Messages vacío' }, { status: 400 });
+    }
+
+    const providers: Array<{ name: string; instance: any }> = [];
+
+    // PRIMERO: Usuario
+    if (aiProvider && aiApiKey) {
+      const userProvider = getProviderInstance(aiProvider, aiApiKey);
+      if (userProvider) {
+        providers.push({ name: aiProvider, instance: userProvider });
+      }
+    }
+
+    // SEGUNDO: DeepSeek
+    if (process.env.DEEPSEEK_API_KEY) {
+      providers.push({
+        name: 'deepseek',
+        instance: new DeepSeekAdapter(process.env.DEEPSEEK_API_KEY, 'deepseek-chat')
+      });
+    }
+
+    // TERCERO: Gemini
+    if (process.env.GOOGLE_API_KEY) {
+      providers.push({
+        name: 'gemini',
+        instance: new GeminiAdapter(process.env.GOOGLE_API_KEY, 'gemini-2.0-flash')
+      });
+    }
+
+    // CUARTO: GPT
+    if (process.env.OPENAI_API_KEY) {
+      providers.push({
+        name: 'gpt',
+        instance: new GPTAdapter(process.env.OPENAI_API_KEY, 'gpt-4o')
+      });
+    }
+
+    if (providers.length === 0) {
       return NextResponse.json({
-        error: botError.message || 'Error al procesar la respuesta de Darian',
-        details: botError.message
+        error: 'No hay proveedores configurados'
       }, { status: 502 });
     }
-  } catch (error: any) {
-    console.error('[BotAPI] Route Error:', error);
+
+    let lastError: Error | null = null;
+
+    for (let i = 0; i < providers.length; i++) {
+      const { name, instance } = providers[i];
+
+      try {
+        console.log(`[Chat] Intento ${i + 1}/${providers.length}: ${name}`);
+
+        const response = await instance.getResponse(messages, {
+          temperature: 0.7,
+          maxTokens: 1000
+        });
+
+        if (!response?.text || typeof response.text !== 'string') {
+          throw new Error('Respuesta vacía');
+        }
+
+        console.log(`[Chat] ✅ Éxito con ${name}`);
+        return NextResponse.json({
+          text: response.text,
+          metadata: { provider: name },
+          timestamp: new Date().toISOString()
+        });
+
+      } catch (error: any) {
+        lastError = error;
+        console.log(`[Chat] ❌ ${name} falló: ${error.message.substring(0, 80)}`);
+        continue;
+      }
+    }
+
+    console.error('[Chat] ❌ Todos fallaron:', lastError?.message);
     return NextResponse.json({
-      error: 'Error de conexión con el bot',
+      error: 'Todos los proveedores fallaron',
+      details: lastError?.message
+    }, { status: 502 });
+
+  } catch (error: any) {
+    console.error('[Chat] ERROR:', error);
+    return NextResponse.json({
+      error: 'Error interno',
       details: error.message
     }, { status: 500 });
+  }
+}
+
+function getProviderInstance(type: string, apiKey: string): any | null {
+  if (!apiKey) return null;
+  const providerType = (type || '').toLowerCase();
+  switch (providerType) {
+    case 'deepseek':
+      return new DeepSeekAdapter(apiKey, 'deepseek-chat');
+    case 'gemini':
+      return new GeminiAdapter(apiKey, 'gemini-2.0-flash');
+    case 'gpt':
+      return new GPTAdapter(apiKey, 'gpt-4o');
+    default:
+      return null;
   }
 }
