@@ -2,6 +2,12 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { type UserContract } from '@/contracts/user';
 
+// Re-export stores
+export { useCartStore } from './cart';
+export { useCostSheetStore } from './cost-sheet-store';
+export { useSessionStore } from './session-store';
+export { useAcademyStore } from './useAcademyStore';
+
 export type ViewType = 'dashboard' | 'wallet' | 'pos' | 'inventory' | 'recepcion' | 'reception_list' | 'transferencias' | 'sales' | 'inventory_count' | 'cost-sheets' | 'reports' | 'catalog' | 'history' | 'inventory_adjustments' | 'audit' | 'cash' | 'users' | 'roles' | 'stores' | 'settings' | 'help' | 'wiki' | 'news' | 'rss_management' | 'ipv' | 'support_doc' | 'academy' | 'legal' | 'health';
 
 interface UIState {

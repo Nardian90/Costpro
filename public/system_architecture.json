@@ -19,8 +19,8 @@
         "couplingScore": 2.0
       },
       "dependencies": [
-        "utils",
-        "dropdown-menu"
+        "dropdown-menu",
+        "utils"
       ],
       "openQuestions": [
         "¿Se sincroniza el tema visual con las preferencias del sistema operativo por defecto?"
@@ -185,14 +185,14 @@
         "couplingScore": 5.6
       },
       "dependencies": [
-        "MobileSafeContainer",
+        "utils",
+        "Sidebar",
+        "FloatingCalculator",
         "CreateProductModal",
         "ChatBot",
-        "FloatingCalculator",
-        "CostProLoader",
-        "Sidebar",
-        "utils",
-        "Header"
+        "MobileSafeContainer",
+        "Header",
+        "CostProLoader"
       ],
       "openQuestions": [
         "¿Cómo se maneja la persistencia de la vista activa tras una recarga del navegador?"
@@ -243,12 +243,12 @@
         "couplingScore": 3.8
       },
       "dependencies": [
-        "ThemeToggle",
-        "dropdown-menu",
-        "SyncStatusBadge",
-        "SyncConflictModal",
+        "popover",
         "utils",
-        "popover"
+        "ThemeToggle",
+        "SyncConflictModal",
+        "dropdown-menu",
+        "SyncStatusBadge"
       ],
       "openQuestions": [
         "¿Se bloquean las acciones del header durante procesos críticos de guardado en las vistas?"
@@ -273,9 +273,9 @@
         "couplingScore": 2.5
       },
       "dependencies": [
-        "SearchBar",
         "utils",
         "ActionMenu",
+        "SearchBar",
         "QueryInspector"
       ],
       "openQuestions": [
@@ -302,11 +302,11 @@
       },
       "dependencies": [
         "card",
-        "types",
         "utils",
-        "badge",
         "button",
-        "parser"
+        "badge",
+        "parser",
+        "types"
       ]
     },
     {
@@ -354,11 +354,11 @@
         "couplingScore": 2.2
       },
       "dependencies": [
-        "SearchBar",
-        "useStoresView",
         "StoreModals",
         "utils",
-        "ActionMenu"
+        "useStoresView",
+        "ActionMenu",
+        "SearchBar"
       ],
       "openQuestions": [
         "¿Cómo se maneja la transferencia de usuarios entre diferentes tiendas de la misma organización?"
@@ -405,12 +405,12 @@
         "couplingScore": 3.9
       },
       "dependencies": [
-        "supabaseClient",
         "label",
-        "input",
         "useStoresView",
+        "BaseModal",
         "button",
-        "BaseModal"
+        "input",
+        "supabaseClient"
       ],
       "openQuestions": [
         "¿Se permite la edición masiva de miembros de la tienda desde estos modales?"
@@ -435,9 +435,9 @@
         "couplingScore": 2.0
       },
       "dependencies": [
-        "supabaseClient",
+        "progress",
         "card",
-        "progress"
+        "supabaseClient"
       ],
       "openQuestions": [
         "¿Cuáles son los criterios exactos para ganar la insignia de 'Experto en Costos'?"
@@ -462,10 +462,10 @@
         "couplingScore": 2.4
       },
       "dependencies": [
-        "button",
-        "CostProLoader",
         "MasteryDashboard",
-        "Flashcard"
+        "Flashcard",
+        "button",
+        "CostProLoader"
       ],
       "openQuestions": [
         "¿Se sincroniza el progreso del usuario con su perfil de permisos del sistema?"
@@ -490,9 +490,9 @@
         "couplingScore": 1.8
       },
       "dependencies": [
-        "button",
+        "card",
         "utils",
-        "card"
+        "button"
       ],
       "openQuestions": [
         "¿Se pueden crear sets de tarjetas personalizados por los administradores de cada tienda?"
@@ -517,25 +517,25 @@
         "couplingScore": 8.3
       },
       "dependencies": [
-        "button",
-        "MobilePosDiagram",
         "SecurityFlowDiagram",
-        "StickyCartFlowDiagram",
-        "OfflineSyncDiagram",
-        "InventoryFlowDiagram",
-        "utils",
-        "QuickModeMassiveDiagram",
-        "KidsOnboarding",
         "ThemeToggle",
+        "StickyCartFlowDiagram",
         "accordion",
-        "RolesDiagram",
-        "DarianDiagram",
-        "SalesFlowDiagram",
-        "InventoryAdjustmentFlowDiagram",
-        "StoreSkuDiagram",
+        "QuickModeMassiveDiagram",
         "badge",
+        "KidsOnboarding",
+        "StoreSkuDiagram",
+        "InventoryAdjustmentFlowDiagram",
+        "InventoryFlowDiagram",
+        "SalesFlowDiagram",
+        "OfflineSyncDiagram",
         "IpvFlowDiagram",
-        "CostFlowDiagram"
+        "RolesDiagram",
+        "MobilePosDiagram",
+        "DarianDiagram",
+        "utils",
+        "CostFlowDiagram",
+        "button"
       ],
       "openQuestions": [
         "¿El contenido de ayuda se descarga para su uso offline mediante Service Workers?"
@@ -970,12 +970,12 @@
         "couplingScore": 3.3
       },
       "dependencies": [
-        "SearchBar",
-        "StateRenderer",
-        "utils",
-        "useSalesHistoryView",
         "TransactionDetailsModal",
+        "useSalesHistoryView",
+        "utils",
         "TaxCalculationModal",
+        "StateRenderer",
+        "SearchBar",
         "skeleton"
       ],
       "openQuestions": [
@@ -1001,11 +1001,11 @@
         "couplingScore": 3.4
       },
       "dependencies": [
-        "supabaseClient",
         "utils",
+        "BaseModal",
         "table",
         "badge",
-        "BaseModal"
+        "supabaseClient"
       ],
       "openQuestions": [
         "¿Se registran los cambios de estado (ej. de Pagada a Anulada) en el log de auditoría?"
@@ -1055,24 +1055,24 @@
         "couplingScore": 7.7
       },
       "dependencies": [
-        "SpeedDial",
-        "SearchBar",
-        "drawer",
-        "PriceSelectorModal",
-        "BaseModal",
-        "skeleton",
+        "QueryInspector",
         "BarcodeScanner",
-        "utils",
-        "usePOSView",
-        "POSCart",
-        "ActionMenu",
-        "index",
-        "StickyCartSummary",
-        "StateRenderer",
         "ViewSwitcher",
+        "POSCart",
+        "index",
+        "ActionMenu",
+        "BaseModal",
+        "StateRenderer",
+        "SpeedDial",
+        "PriceSelectorModal",
         "Portal",
+        "StickyCartSummary",
+        "skeleton",
+        "utils",
+        "SearchBar",
         "POSTableView",
-        "QueryInspector"
+        "usePOSView",
+        "drawer"
       ],
       "openQuestions": [
         "¿Se maneja la reserva de stock en el momento de añadir un ítem al carrito?"
@@ -1097,8 +1097,8 @@
         "couplingScore": 1.1
       },
       "dependencies": [
-        "utils",
-        "ProductImage"
+        "ProductImage",
+        "utils"
       ],
       "openQuestions": [
         "¿Se actualizan los indicadores de stock en la tabla en tiempo real mediante Supabase Realtime?"
@@ -1124,10 +1124,10 @@
       },
       "dependencies": [
         "ProductImage",
-        "CostProLoader",
         "utils",
         "index",
-        "BaseModal"
+        "BaseModal",
+        "CostProLoader"
       ],
       "openQuestions": [
         "¿Soporta el carrito la gestión de productos con precios variables (ej. por peso)?"
@@ -1152,8 +1152,8 @@
         "couplingScore": 2.6
       },
       "dependencies": [
-        "logger",
-        "utils"
+        "utils",
+        "logger"
       ],
       "openQuestions": [
         "¿Cómo se maneja la concurrencia si dos terminales venden el último ítem en stock simultáneamente?"
@@ -1178,12 +1178,12 @@
         "couplingScore": 5.2
       },
       "dependencies": [
-        "supabaseClient",
-        "ActionMenu",
         "utils",
+        "index",
+        "ActionMenu",
         "BaseModal",
-        "SecurityScrollContainer",
-        "index"
+        "supabaseClient",
+        "SecurityScrollContainer"
       ],
       "openQuestions": [
         "¿Se validan los precios de compra contra órdenes de compra previas?"
@@ -1208,9 +1208,9 @@
         "couplingScore": 2.0
       },
       "dependencies": [
+        "CostProLoader",
         "utils",
-        "ProductImage",
-        "CostProLoader"
+        "ProductImage"
       ],
       "openQuestions": [
         "¿Cómo se maneja la concurrencia cuando varios usuarios ajustan stock simultáneamente?"
@@ -1235,16 +1235,16 @@
         "couplingScore": 5.1
       },
       "dependencies": [
-        "SearchBar",
-        "InventoryAdjustmentModal",
-        "StateRenderer",
-        "InventoryCardView",
-        "ActionMenu",
-        "ProductReceptionView",
-        "utils",
         "InventoryTableView",
-        "QueryInspector",
+        "InventoryCardView",
+        "utils",
+        "InventoryAdjustmentModal",
         "index",
+        "ActionMenu",
+        "StateRenderer",
+        "SearchBar",
+        "ProductReceptionView",
+        "QueryInspector",
         "skeleton"
       ]
     },
@@ -1267,9 +1267,9 @@
         "couplingScore": 2.9
       },
       "dependencies": [
+        "utils",
         "inventory-logic",
-        "drawer",
-        "utils"
+        "drawer"
       ]
     },
     {
@@ -1291,9 +1291,9 @@
         "couplingScore": 2.5
       },
       "dependencies": [
-        "SearchBar",
         "utils",
         "ActionMenu",
+        "SearchBar",
         "QueryInspector"
       ],
       "openQuestions": [
@@ -1319,9 +1319,9 @@
         "couplingScore": 1.8
       },
       "dependencies": [
-        "utils",
+        "index",
         "CostProLoader",
-        "index"
+        "utils"
       ]
     },
     {
@@ -1343,14 +1343,14 @@
         "couplingScore": 3.8
       },
       "dependencies": [
-        "input",
         "engine",
         "utils",
-        "dexie",
-        "table",
-        "badge",
         "utils",
-        "button"
+        "table",
+        "button",
+        "input",
+        "badge",
+        "dexie"
       ]
     },
     {
@@ -1422,9 +1422,9 @@
       "dependencies": [
         "card",
         "utils",
-        "dexie",
         "table",
-        "button"
+        "button",
+        "dexie"
       ],
       "openQuestions": [
         "¿Qué porcentaje de transacciones se concilian automáticamente actualmente?"
@@ -1449,11 +1449,11 @@
         "couplingScore": 2.5
       },
       "dependencies": [
-        "tooltip",
         "dialog",
         "scroll-area",
-        "badge",
-        "button"
+        "tooltip",
+        "button",
+        "badge"
       ]
     },
     {
@@ -1475,36 +1475,36 @@
         "couplingScore": 10
       },
       "dependencies": [
-        "IPVReportsDropdown",
+        "engine",
+        "backup",
         "TransactionTable",
-        "card",
-        "BankIngestion",
-        "PivotStatementView",
-        "IPVControlPanel",
-        "button",
-        "ManualReconciliationView",
+        "IncomeReceiptSection",
+        "LoadingOverlay",
         "tooltip",
-        "TransferQRReportView",
+        "IPVHelpDialog",
+        "badge",
+        "IPVInstitutionalDashboard",
+        "ManualReconciliationView",
+        "BankIngestion",
+        "card",
+        "IPVControlPanel",
+        "ActionMenu",
+        "MatchingSimulation",
+        "CatalogTable",
+        "PivotStatementView",
         "IPVRightSidebar",
+        "IPVReportsDropdown",
+        "IngestionErrorsTable",
+        "utils",
         "IPVReportView",
+        "TransactionBreakdown",
+        "tabs",
+        "TransferQRReportView",
         "dexie",
         "utils",
-        "IncomeReceiptSection",
-        "ActionMenu",
-        "TransactionBreakdown",
-        "IPVHelpDialog",
-        "CatalogTable",
-        "backup",
-        "engine",
-        "utils",
-        "MatchingRulesEditor",
-        "MatchingSimulation",
         "HorizontalScroll",
-        "LoadingOverlay",
-        "tabs",
-        "IPVInstitutionalDashboard",
-        "badge",
-        "IngestionErrorsTable"
+        "MatchingRulesEditor",
+        "button"
       ],
       "openQuestions": [
         "¿Permite el sistema reabrir periodos cerrados para correcciones excepcionales autorizadas?"
@@ -1529,14 +1529,14 @@
         "couplingScore": 4.7
       },
       "dependencies": [
-        "card",
-        "input",
         "engine",
-        "dexie",
-        "badge",
-        "table",
+        "card",
         "utils",
-        "button"
+        "table",
+        "button",
+        "input",
+        "badge",
+        "dexie"
       ]
     },
     {
@@ -1558,14 +1558,14 @@
         "couplingScore": 6.3
       },
       "dependencies": [
-        "scroll-area",
-        "input",
         "engine",
         "utils",
         "utils",
-        "dexie",
+        "scroll-area",
+        "button",
         "badge",
-        "button"
+        "input",
+        "dexie"
       ],
       "openQuestions": [
         "¿Se requiere una nota explicativa obligatoria para cada conciliación manual realizada?"
@@ -1592,13 +1592,13 @@
       "dependencies": [
         "dialog",
         "label",
-        "scroll-area",
         "utils",
+        "scroll-area",
         "table",
-        "badge",
-        "dexie",
         "button",
-        "checkbox"
+        "badge",
+        "checkbox",
+        "dexie"
       ]
     },
     {
@@ -1620,12 +1620,12 @@
         "couplingScore": 4.1
       },
       "dependencies": [
-        "card",
         "label",
-        "input",
-        "dexie",
+        "card",
         "switch",
-        "button"
+        "button",
+        "input",
+        "dexie"
       ]
     },
     {
@@ -1648,12 +1648,12 @@
       },
       "dependencies": [
         "dialog",
-        "input",
-        "dexie",
-        "table",
-        "badge",
         "utils",
-        "button"
+        "table",
+        "button",
+        "input",
+        "badge",
+        "dexie"
       ]
     },
     {
@@ -1675,15 +1675,15 @@
         "couplingScore": 5.0
       },
       "dependencies": [
-        "supabaseClient",
-        "button",
-        "card",
         "label",
-        "input",
-        "dexie",
+        "card",
+        "utils",
         "table",
+        "button",
         "badge",
-        "utils"
+        "input",
+        "supabaseClient",
+        "dexie"
       ]
     },
     {
@@ -1705,13 +1705,13 @@
         "couplingScore": 3.4
       },
       "dependencies": [
-        "dialog",
-        "select",
-        "label",
-        "input",
         "engine",
-        "dexie",
-        "button"
+        "dialog",
+        "label",
+        "button",
+        "input",
+        "select",
+        "dexie"
       ]
     },
     {
@@ -1733,16 +1733,16 @@
         "couplingScore": 7.1
       },
       "dependencies": [
-        "LoadingOverlay",
-        "tooltip",
-        "input",
-        "dexie",
-        "table",
-        "badge",
-        "utils",
-        "button",
         "IPVPreviewModal",
-        "BaseModal"
+        "utils",
+        "LoadingOverlay",
+        "BaseModal",
+        "tooltip",
+        "table",
+        "button",
+        "badge",
+        "input",
+        "dexie"
       ]
     },
     {
@@ -1764,12 +1764,12 @@
         "couplingScore": 3.4
       },
       "dependencies": [
-        "tooltip",
-        "card",
         "backup",
-        "dexie",
+        "card",
+        "tooltip",
+        "button",
         "badge",
-        "button"
+        "dexie"
       ],
       "openQuestions": [
         "¿Se actualizan las alertas de depósitos pendientes mediante Realtime de Supabase?"
@@ -1794,21 +1794,21 @@
         "couplingScore": 10
       },
       "dependencies": [
-        "supabaseClient",
-        "tooltip",
-        "card",
         "label",
-        "input",
+        "card",
         "utils",
-        "dexie",
-        "table",
-        "badge",
         "utils",
+        "BaseModal",
         "switch",
-        "button",
+        "table",
         "roles",
+        "tooltip",
+        "button",
+        "badge",
+        "input",
         "intelligence",
-        "BaseModal"
+        "supabaseClient",
+        "dexie"
       ]
     },
     {
@@ -1830,23 +1830,23 @@
         "couplingScore": 9.0
       },
       "dependencies": [
-        "tooltip",
-        "dialog",
-        "AddTransactionModal",
-        "card",
-        "input",
-        "scroll-area",
         "engine",
         "label",
-        "dexie",
-        "table",
-        "badge",
-        "switch",
-        "utils",
-        "button",
+        "dialog",
+        "card",
         "popover",
+        "utils",
+        "scroll-area",
+        "BaseModal",
+        "switch",
+        "table",
+        "tooltip",
+        "button",
+        "badge",
+        "input",
         "checkbox",
-        "BaseModal"
+        "AddTransactionModal",
+        "dexie"
       ],
       "openQuestions": [
         "¿Se auditan las anulaciones de transacciones indicando el usuario y motivo del cambio?"
@@ -1873,10 +1873,10 @@
       "dependencies": [
         "card",
         "utils",
-        "dexie",
-        "badge",
+        "calculations",
         "button",
-        "calculations"
+        "badge",
+        "dexie"
       ],
       "openQuestions": [
         "¿Cómo se maneja el filtrado por región o unidad de negocio en el dashboard institucional?"
@@ -1901,9 +1901,9 @@
         "couplingScore": 1.6
       },
       "dependencies": [
+        "dropdown-menu",
         "button",
-        "utils",
-        "dropdown-menu"
+        "utils"
       ]
     },
     {
@@ -1926,11 +1926,11 @@
       },
       "dependencies": [
         "engine",
-        "bandecParser",
         "utils",
-        "dexie",
+        "BaseModal",
+        "bandecParser",
         "button",
-        "BaseModal"
+        "dexie"
       ],
       "openQuestions": [
         "¿Cómo se maneja la seguridad de los archivos temporales subidos para ingesta?"
@@ -1955,13 +1955,13 @@
         "couplingScore": 4.5
       },
       "dependencies": [
-        "IncomeReceiptPreview",
-        "card",
         "label",
-        "input",
-        "dexie",
+        "card",
+        "LegalPdfExporter",
         "button",
-        "LegalPdfExporter"
+        "input",
+        "IncomeReceiptPreview",
+        "dexie"
       ]
     },
     {
@@ -1983,8 +1983,8 @@
         "couplingScore": 1.9
       },
       "dependencies": [
-        "button",
         "select",
+        "button",
         "input"
       ],
       "openQuestions": [
@@ -2010,10 +2010,10 @@
         "couplingScore": 3.7
       },
       "dependencies": [
+        "scroll-area",
         "tabs",
         "utils",
-        "HorizontalScroll",
-        "scroll-area"
+        "HorizontalScroll"
       ],
       "openQuestions": [
         "¿Cómo se maneja el versionado de fórmulas cuando cambian los precios de insumos?"
@@ -2086,10 +2086,10 @@
         "couplingScore": 2.8
       },
       "dependencies": [
-        "card",
         "label",
-        "input",
-        "utils"
+        "card",
+        "utils",
+        "input"
       ]
     },
     {
@@ -2111,12 +2111,12 @@
         "couplingScore": 2.7
       },
       "dependencies": [
-        "SearchBar",
         "utils",
-        "table",
-        "skeleton",
         "index",
-        "BaseModal"
+        "BaseModal",
+        "table",
+        "SearchBar",
+        "skeleton"
       ]
     },
     {
@@ -2138,11 +2138,11 @@
         "couplingScore": 3.3
       },
       "dependencies": [
-        "FormulaBuilder",
         "dialog",
+        "popover",
         "utils",
-        "badge",
-        "popover"
+        "FormulaBuilder",
+        "badge"
       ],
       "openQuestions": [
         "¿Cómo se auditan los cambios históricos en las fórmulas de costos?"
@@ -2214,16 +2214,16 @@
         "couplingScore": 9.7
       },
       "dependencies": [
-        "CostSheetSectionActionsPanel",
-        "select",
-        "LazyRender",
-        "FormulaEditor",
-        "input",
-        "utils",
-        "table",
         "popover",
+        "utils",
         "costpro-reinicio",
-        "button"
+        "table",
+        "FormulaEditor",
+        "CostSheetSectionActionsPanel",
+        "button",
+        "input",
+        "select",
+        "LazyRender"
       ],
       "openQuestions": [
         "¿Soporta la tabla la edición concurrente por múltiples usuarios con bloqueo de fila?"
@@ -2248,12 +2248,12 @@
         "couplingScore": 7.3
       },
       "dependencies": [
-        "input",
+        "ViewSwitcher",
         "ProductInventoryPicker",
         "utils",
         "table",
         "button",
-        "ViewSwitcher"
+        "input"
       ],
       "openQuestions": [
         "¿Se heredan las unidades de medida automáticamente del catálogo en el anexo?"
@@ -2278,23 +2278,23 @@
         "couplingScore": 8.2
       },
       "dependencies": [
-        "supabaseClient",
-        "template-consultancy",
-        "template-icecream",
-        "template-industrial",
-        "template-pastry",
-        "template-repair",
+        "costpro-ejemplo",
         "template-pizza",
+        "utils",
+        "template-consultancy",
+        "template-lavar",
+        "template-industrial",
+        "template-furniture",
+        "costpro-reinicio",
+        "template-pastry",
+        "button",
         "input",
         "template-juice",
-        "template-shoes",
-        "utils",
+        "supabaseClient",
+        "template-icecream",
         "template-logistics",
-        "costpro-ejemplo",
-        "costpro-reinicio",
-        "button",
-        "template-lavar",
-        "template-furniture"
+        "template-shoes",
+        "template-repair"
       ]
     },
     {
@@ -2317,12 +2317,12 @@
       },
       "dependencies": [
         "CostSheetFCDropdown",
-        "CostSheetOptionsDropdown",
         "utils",
         "CostSheetGenerateDropdown",
-        "ActionMenu",
+        "CostSheetHelpDropdown",
         "CostSheetModeDropdown",
-        "CostSheetHelpDropdown"
+        "ActionMenu",
+        "CostSheetOptionsDropdown"
       ]
     },
     {
@@ -2344,10 +2344,10 @@
         "couplingScore": 4.6
       },
       "dependencies": [
-        "slider",
+        "HealthBattery",
         "utils",
         "CostSheetMasterRing",
-        "HealthBattery"
+        "slider"
       ],
       "openQuestions": [
         "¿Se desglosan los costos indirectos de fabricación (CIF) de forma independiente en el resumen?"
@@ -2394,12 +2394,12 @@
         "couplingScore": 3.0
       },
       "dependencies": [
-        "CostSheetAuditLog",
         "card",
-        "scroll-area",
         "utils",
+        "scroll-area",
+        "validations",
         "badge",
-        "validations"
+        "CostSheetAuditLog"
       ],
       "openQuestions": [
         "¿Se guardan las justificaciones de aprobación en el log histórico?"
@@ -2447,10 +2447,10 @@
       },
       "dependencies": [
         "label",
-        "input",
         "utils",
         "table",
-        "button"
+        "button",
+        "input"
       ],
       "openQuestions": [
         "¿Se validan las unidades de medida contra el catálogo en el momento de la entrada?"
@@ -2475,19 +2475,19 @@
         "couplingScore": 10
       },
       "dependencies": [
-        "tabs",
-        "progress",
-        "types",
-        "dialog",
-        "checkbox",
-        "index",
-        "CostProLoader",
-        "label",
         "CostSheetExportModal",
+        "dialog",
+        "label",
         "utils",
-        "table",
+        "index",
+        "progress",
         "switch",
-        "button"
+        "table",
+        "button",
+        "tabs",
+        "CostProLoader",
+        "checkbox",
+        "types"
       ],
       "openQuestions": [
         "¿Cuál es el límite técnico de fichas que se pueden generar en una sola operación asíncrona?"
@@ -2534,9 +2534,9 @@
         "couplingScore": 3.6
       },
       "dependencies": [
-        "utils",
+        "DarianEditor",
         "CostSheetCalculator",
-        "DarianEditor"
+        "utils"
       ]
     },
     {
@@ -2658,8 +2658,8 @@
         "couplingScore": 1.9
       },
       "dependencies": [
-        "button",
         "sheet",
+        "button",
         "utils"
       ]
     },
@@ -2756,8 +2756,8 @@
         "couplingScore": 1.1
       },
       "dependencies": [
-        "utils",
-        "CostSheetFormulaGuide"
+        "CostSheetFormulaGuide",
+        "utils"
       ]
     },
     {
@@ -2823,37 +2823,37 @@
         "couplingScore": 10
       },
       "dependencies": [
-        "CostSheetSignatureEditor",
-        "SpeedDial",
-        "CostSheetFormulaGuide",
-        "DarianEditor",
-        "button",
-        "BaseModal",
-        "skeleton",
-        "CostSheetAnnexEditor",
-        "LazyRender",
-        "CostSheetTemplateExplorer",
-        "CostSheetSidebarNav",
-        "utils",
-        "ActionMenu",
-        "CostSheetSummary",
-        "CostSheetNav",
-        "CostSheetAuditView",
-        "CostSheetHeaderEditor",
-        "CostSheetNarrative",
-        "ViewSwitcher",
         "CostSheetWizard",
-        "CostSheetHelpPanel",
+        "CostSheetNarrative",
+        "CostSheetModeDropdown",
+        "UpgradeModal",
+        "CostSheetAnnexEditor",
         "CostSheetMassiveGenerator",
+        "LazyRender",
+        "ViewSwitcher",
+        "CostSheetHeaderEditor",
+        "CostSheetFormulaGuide",
+        "CostSheetSummary",
+        "ActionMenu",
+        "BaseModal",
+        "CostSheetBottomNav",
+        "SpeedDial",
+        "CostSheetHelpPanel",
+        "CostSheetTemplateExplorer",
         "CostSheetExportModal",
         "CostSheetInteractiveTable",
-        "CostSheetBottomNav",
-        "CostSheetActionsPanel",
         "CostSheetQuickMode",
-        "CostSheetPreview",
-        "UpgradeModal",
         "CostSheetCardView",
-        "CostSheetModeDropdown"
+        "CostSheetActionsPanel",
+        "skeleton",
+        "CostSheetSignatureEditor",
+        "DarianEditor",
+        "CostSheetPreview",
+        "CostSheetNav",
+        "utils",
+        "CostSheetSidebarNav",
+        "CostSheetAuditView",
+        "button"
       ],
       "openQuestions": [
         "¿Soporta la vista la comparación simultánea de múltiples fichas de costo lado a lado?"
@@ -2901,10 +2901,10 @@
       },
       "dependencies": [
         "CostSheetHeader",
-        "CostSheetAnnexes",
-        "SecurityScrollContainer",
+        "CostSheetBody",
         "CostSheetSignature",
-        "CostSheetBody"
+        "SecurityScrollContainer",
+        "CostSheetAnnexes"
       ]
     },
     {
@@ -2926,9 +2926,9 @@
         "couplingScore": 2.5
       },
       "dependencies": [
-        "button",
+        "sheet",
         "utils",
-        "sheet"
+        "button"
       ],
       "openQuestions": [
         "¿Es el sidebar colapsable para maximizar el área de trabajo en pantallas pequeñas?"
@@ -2953,13 +2953,13 @@
         "couplingScore": 3.6
       },
       "dependencies": [
-        "CostSheetSignatureEditor",
-        "CostSheetAnnexEditor",
-        "CostSheetInteractiveTable",
-        "progress",
         "CostSheetHeaderEditor",
+        "CostSheetInteractiveTable",
         "CostSheetSidebarNav",
-        "button"
+        "progress",
+        "CostSheetAnnexEditor",
+        "button",
+        "CostSheetSignatureEditor"
       ]
     },
     {
@@ -2981,10 +2981,10 @@
         "couplingScore": 4.1
       },
       "dependencies": [
-        "button",
         "ViewSwitcher",
-        "utils",
-        "CostSheetModeDropdown"
+        "button",
+        "CostSheetModeDropdown",
+        "utils"
       ],
       "openQuestions": [
         "¿Se filtran las acciones de aprobación basándose estrictamente en el rol de Auditor?"
@@ -3009,8 +3009,8 @@
         "couplingScore": 2.0
       },
       "dependencies": [
-        "utils",
-        "dropdown-menu"
+        "dropdown-menu",
+        "utils"
       ]
     },
     {
@@ -3032,8 +3032,8 @@
         "couplingScore": 2.1
       },
       "dependencies": [
-        "utils",
-        "slider"
+        "slider",
+        "utils"
       ],
       "openQuestions": [
         "¿Son los colores del anillo consistentes con la importancia de cada centro de costo?"
@@ -3058,8 +3058,8 @@
         "couplingScore": 1.4
       },
       "dependencies": [
-        "utils",
-        "dropdown-menu"
+        "dropdown-menu",
+        "utils"
       ],
       "openQuestions": [
         "¿Existe validación para evitar factores de conversión nulos o negativos?"
@@ -3084,11 +3084,11 @@
         "couplingScore": 2.4
       },
       "dependencies": [
-        "types",
         "card",
-        "scroll-area",
         "utils",
-        "badge"
+        "scroll-area",
+        "badge",
+        "types"
       ],
       "openQuestions": [
         "¿Se guardan los metadatos de quién autorizó un precio fuera de rango?"
@@ -3113,14 +3113,14 @@
         "couplingScore": 6.7
       },
       "dependencies": [
-        "CostSheetSectionActionsPanel",
-        "LazyRender",
-        "FormulaEditor",
-        "input",
-        "utils",
         "popover",
+        "utils",
+        "CircularProgress",
+        "FormulaEditor",
+        "CostSheetSectionActionsPanel",
         "button",
-        "CircularProgress"
+        "input",
+        "LazyRender"
       ],
       "openQuestions": [
         "¿Se actualizan los datos de la tarjeta en tiempo real cuando cambia el catálogo maestro?"
@@ -3145,10 +3145,10 @@
         "couplingScore": 1.9
       },
       "dependencies": [
-        "StateRenderer",
         "dialog",
-        "skeleton",
-        "AuditTimeline"
+        "AuditTimeline",
+        "StateRenderer",
+        "skeleton"
       ]
     },
     {
@@ -3170,13 +3170,13 @@
         "couplingScore": 3.7
       },
       "dependencies": [
-        "ReportConfigPanel",
-        "card",
-        "CostProLoader",
-        "ActionMenu",
         "ReportPreview",
+        "card",
+        "ReportConfigPanel",
+        "ActionMenu",
         "button",
-        "AuditLogsModal"
+        "AuditLogsModal",
+        "CostProLoader"
       ],
       "openQuestions": [
         "¿Se pueden guardar 'Plantillas de Reporte' personalizadas por cada usuario?"
@@ -3201,15 +3201,15 @@
         "couplingScore": 4.9
       },
       "dependencies": [
-        "select",
-        "button",
-        "card",
         "label",
-        "input",
-        "utils",
+        "command",
+        "card",
         "popover",
+        "utils",
+        "input",
+        "button",
         "checkbox",
-        "command"
+        "select"
       ]
     },
     {
@@ -3277,8 +3277,8 @@
         "couplingScore": 3.6
       },
       "dependencies": [
-        "supabaseClient",
         "UserForm",
+        "supabaseClient",
         "roles"
       ],
       "openQuestions": [
@@ -3354,14 +3354,14 @@
         "couplingScore": 3.9
       },
       "dependencies": [
-        "UserFormModal",
-        "SearchBar",
+        "utils",
+        "ActionMenu",
+        "switch",
         "useUsersView",
+        "SearchBar",
         "button",
         "select",
-        "utils",
-        "switch",
-        "ActionMenu"
+        "UserFormModal"
       ],
       "openQuestions": [
         "¿Soporta el sistema la definición de permisos granulares por acción individual?"
@@ -3386,11 +3386,11 @@
         "couplingScore": 2.6
       },
       "dependencies": [
-        "RoleForm",
-        "SearchBar",
         "utils",
         "ActionMenu",
-        "BaseModal"
+        "BaseModal",
+        "SearchBar",
+        "RoleForm"
       ],
       "openQuestions": [
         "¿Se auditan las modificaciones de la matriz de permisos en el log general?"
@@ -3415,10 +3415,10 @@
         "couplingScore": 1.7
       },
       "dependencies": [
-        "supabaseClient",
+        "LegalModelForm",
         "LegalConsultant",
         "utils",
-        "LegalModelForm"
+        "supabaseClient"
       ],
       "openQuestions": [
         "¿Se guarda un historial de las versiones anteriores de las leyes para consultas retroactivas?"
@@ -3491,10 +3491,10 @@
         "couplingScore": 3.0
       },
       "dependencies": [
-        "number-to-words-es",
-        "supabaseClient",
+        "LegalPdfExporter",
         "utils",
-        "LegalPdfExporter"
+        "number-to-words-es",
+        "supabaseClient"
       ],
       "openQuestions": [
         "¿Se validan las dependencias de datos (ej. si el modelo requiere SKU) antes de guardar la configuración?"
@@ -3542,13 +3542,13 @@
         "couplingScore": 5.6
       },
       "dependencies": [
-        "SearchBar",
         "InventoryCountCardView",
-        "ActionMenu",
         "utils",
-        "InventoryCountTableView",
+        "ActionMenu",
+        "SearchBar",
+        "QueryInspector",
         "SecurityScrollContainer",
-        "QueryInspector"
+        "InventoryCountTableView"
       ],
       "openQuestions": [
         "¿Permite el sistema realizar conteos parciales por zonas o categorías de productos?"
@@ -3619,20 +3619,20 @@
         "couplingScore": 6.1
       },
       "dependencies": [
-        "ReleaseGateStatus",
-        "ArchitectureAuditTable",
-        "ApplicationMetrics",
-        "dropdown-menu",
-        "SecurityMetrics",
-        "HealthAgentLogs",
-        "CostProLoader",
-        "accordion",
-        "AuditSummary",
-        "utils",
         "InfrastructureMetrics",
-        "HealthStatusHeader",
         "ViewNavigator",
-        "ReleaseGatePdfExporter"
+        "ArchitectureAuditTable",
+        "utils",
+        "ReleaseGateStatus",
+        "ReleaseGatePdfExporter",
+        "dropdown-menu",
+        "accordion",
+        "ApplicationMetrics",
+        "AuditSummary",
+        "HealthAgentLogs",
+        "HealthStatusHeader",
+        "CostProLoader",
+        "SecurityMetrics"
       ],
       "openQuestions": [
         "¿Cómo se ponderan las métricas técnicas vs las métricas de negocio para el cálculo del SHI?"
@@ -3657,8 +3657,8 @@
         "couplingScore": 1.2
       },
       "dependencies": [
-        "utils",
-        "progress"
+        "progress",
+        "utils"
       ],
       "openQuestions": [
         "¿Se guardan logs históricos de las métricas de infraestructura para análisis de post-mortem?"
@@ -3775,11 +3775,11 @@
         "couplingScore": 4.4
       },
       "dependencies": [
-        "input",
+        "sheet",
         "utils",
-        "badge",
         "table",
-        "sheet"
+        "input",
+        "badge"
       ],
       "openQuestions": [
         "¿Quién es el responsable de responder a las 'Preguntas Críticas' registradas en la tabla?"
@@ -3804,8 +3804,8 @@
         "couplingScore": 2.0
       },
       "dependencies": [
-        "utils",
-        "badge"
+        "badge",
+        "utils"
       ]
     },
     {
@@ -3847,11 +3847,11 @@
         "couplingScore": 2.8
       },
       "dependencies": [
-        "supabaseClient",
         "system-health",
         "card",
         "utils",
-        "badge"
+        "badge",
+        "supabaseClient"
       ],
       "openQuestions": [
         "¿Se ejecutan estos procesos de auditoría en un entorno aislado para no afectar producción?"
@@ -4000,11 +4000,11 @@
       },
       "dependencies": [
         "useDashboardView",
-        "StateRenderer",
-        "calendar",
-        "toggle-group",
+        "popover",
         "utils",
-        "popover"
+        "StateRenderer",
+        "toggle-group",
+        "calendar"
       ],
       "openQuestions": [
         "¿Se actualizan los KPIs automáticamente mediante Realtime al detectar cambios en ventas?"
@@ -4057,14 +4057,14 @@
         "couplingScore": 4.9
       },
       "dependencies": [
-        "CostProLoader",
+        "CatalogModals",
         "ProductImage",
         "ViewSwitcher",
-        "ActionMenu",
         "utils",
-        "QueryInspector",
         "index",
-        "CatalogModals"
+        "ActionMenu",
+        "QueryInspector",
+        "CostProLoader"
       ],
       "openQuestions": [
         "¿Cómo se maneja la herencia de atributos en productos con múltiples variantes?"
@@ -4089,8 +4089,8 @@
         "couplingScore": 2.7
       },
       "dependencies": [
-        "supabaseClient",
-        "utils"
+        "utils",
+        "supabaseClient"
       ],
       "openQuestions": [
         "¿Se requieren permisos de SuperAdmin para modificar los parámetros de la API de IA?"
@@ -4115,11 +4115,11 @@
         "couplingScore": 2.8
       },
       "dependencies": [
-        "input",
-        "types",
         "utils",
+        "button",
+        "input",
         "badge",
-        "button"
+        "types"
       ]
     },
     {
@@ -4141,11 +4141,11 @@
         "couplingScore": 2.5
       },
       "dependencies": [
-        "scroll-area",
-        "types",
         "utils",
+        "scroll-area",
+        "button",
         "badge",
-        "button"
+        "types"
       ]
     },
     {
@@ -4167,18 +4167,18 @@
         "couplingScore": 4.8
       },
       "dependencies": [
-        "CuentasModule",
-        "AsientosModule",
+        "WikiSearch",
+        "utils",
         "ClasificadorModule",
         "scroll-area",
-        "types",
-        "input",
-        "utils",
         "data-loader",
-        "button",
+        "AsientosModule",
         "WikiSidebar",
-        "WikiSearch",
-        "WikiBreadcrumbs"
+        "WikiBreadcrumbs",
+        "button",
+        "input",
+        "CuentasModule",
+        "types"
       ]
     },
     {
@@ -4200,8 +4200,8 @@
         "couplingScore": 1.1
       },
       "dependencies": [
-        "types",
-        "utils"
+        "utils",
+        "types"
       ]
     },
     {
@@ -4268,9 +4268,9 @@
         "couplingScore": 1.7
       },
       "dependencies": [
-        "types",
+        "accordion",
         "utils",
-        "accordion"
+        "types"
       ]
     },
     {
@@ -4337,13 +4337,13 @@
         "couplingScore": 3.2
       },
       "dependencies": [
-        "SearchBar",
-        "ReceptionDetailsModal",
-        "StateRenderer",
         "utils",
+        "StateRenderer",
+        "SearchBar",
         "useReceptionsHistoryView",
         "QueryInspector",
-        "skeleton"
+        "skeleton",
+        "ReceptionDetailsModal"
       ]
     },
     {
@@ -4365,9 +4365,9 @@
         "couplingScore": 2.4
       },
       "dependencies": [
+        "skeleton",
         "utils",
-        "BaseModal",
-        "skeleton"
+        "BaseModal"
       ]
     },
     {
@@ -4409,8 +4409,8 @@
         "couplingScore": 1.7
       },
       "dependencies": [
-        "StateRenderer",
-        "utils"
+        "utils",
+        "StateRenderer"
       ],
       "openQuestions": [
         "¿Se filtran las noticias según el perfil del usuario (ej. solo noticias contables para auditores)?"
@@ -4435,8 +4435,8 @@
         "couplingScore": 1.6
       },
       "dependencies": [
-        "StateRenderer",
-        "utils"
+        "utils",
+        "StateRenderer"
       ],
       "openQuestions": [
         "¿Cuál es la frecuencia de actualización automática de los feeds RSS suscritos?"
@@ -4555,8 +4555,8 @@
         "couplingScore": 1.4
       },
       "dependencies": [
-        "AuditEventIcon",
-        "utils"
+        "utils",
+        "AuditEventIcon"
       ],
       "openQuestions": [
         "¿Cómo se maneja el renderizado de metadatos complejos al expandir las filas de la tabla?"
@@ -4601,16 +4601,16 @@
         "couplingScore": 4.5
       },
       "dependencies": [
-        "tabs",
+        "AuditTimeline",
         "StateRenderer",
-        "button",
-        "AuditFilters",
-        "pdf-export",
-        "useAuditLogsView",
-        "AuditEventIcon",
         "AuditTableView",
+        "button",
+        "AuditEventIcon",
+        "tabs",
+        "pdf-export",
         "skeleton",
-        "AuditTimeline"
+        "useAuditLogsView",
+        "AuditFilters"
       ],
       "openQuestions": [
         "¿Se guardan los valores 'antes' y 'después' de cada cambio en el JSON de metadatos del log?"
@@ -4684,9 +4684,9 @@
         "couplingScore": 2.2
       },
       "dependencies": [
-        "StateRenderer",
         "utils",
-        "BaseModal"
+        "BaseModal",
+        "StateRenderer"
       ]
     },
     {
@@ -4708,10 +4708,10 @@
         "couplingScore": 2.9
       },
       "dependencies": [
-        "CreateTransferModal",
-        "StateRenderer",
-        "ActionMenu",
         "utils",
+        "ActionMenu",
+        "StateRenderer",
+        "CreateTransferModal",
         "TransferDetailsModal"
       ]
     },
@@ -4734,13 +4734,13 @@
         "couplingScore": 3.9
       },
       "dependencies": [
-        "progress",
-        "card",
         "demo-products",
-        "CostProLoader",
+        "card",
         "utils",
+        "progress",
+        "button",
         "badge",
-        "button"
+        "CostProLoader"
       ],
       "openQuestions": [
         "¿Se desactivan las mutaciones reales a la base de datos durante el modo demo?"
@@ -4811,10 +4811,10 @@
         "couplingScore": 2.9
       },
       "dependencies": [
-        "supabaseClient",
         "navigation",
         "input",
         "RegisterForm",
+        "supabaseClient",
         "logger"
       ],
       "openQuestions": [
@@ -4840,9 +4840,9 @@
         "couplingScore": 1.9
       },
       "dependencies": [
-        "supabaseClient",
+        "input",
         "logger",
-        "input"
+        "supabaseClient"
       ],
       "openQuestions": [
         "¿Se validan los dominios de correo permitidos para el registro corporativo?"
@@ -4867,12 +4867,12 @@
         "couplingScore": 3.3
       },
       "dependencies": [
-        "ThemeToggle",
-        "AutomationWorkflowDiagram",
-        "CostProLogo",
         "PWAInstallModal",
         "SpeedScaleDiagram",
-        "utils"
+        "ThemeToggle",
+        "utils",
+        "CostProLogo",
+        "AutomationWorkflowDiagram"
       ],
       "openQuestions": [
         "¿Es la landing page totalmente accesible para lectores de pantalla (A11y)?"
@@ -4969,9 +4969,9 @@
         "couplingScore": 1.6
       },
       "dependencies": [
-        "utils",
         "index",
-        "BaseModal"
+        "BaseModal",
+        "utils"
       ],
       "openQuestions": [
         "¿Se registra el motivo y la autorización para precios que se alejan del sugerido por el sistema?"
@@ -5048,10 +5048,10 @@
         "couplingScore": 2.3
       },
       "dependencies": [
-        "SyncProvider",
         "index",
         "BaseModal",
-        "offline-storage"
+        "offline-storage",
+        "SyncProvider"
       ],
       "openQuestions": [
         "¿Se guardan logs de las decisiones tomadas durante la resolución de conflictos?"
@@ -5347,8 +5347,8 @@
         "couplingScore": 1.4
       },
       "dependencies": [
-        "utils",
-        "label"
+        "label",
+        "utils"
       ],
       "openQuestions": [
         "¿Soporta el componente formularios dinámicos con campos añadidos en tiempo de ejecución?"
@@ -5646,8 +5646,8 @@
         "couplingScore": 1.8
       },
       "dependencies": [
-        "utils",
-        "Portal"
+        "Portal",
+        "utils"
       ],
       "openQuestions": [
         "¿Se filtran las opciones del SpeedDial dinámicamente según el módulo en el que se encuentre el usuario?"
@@ -5672,12 +5672,12 @@
         "couplingScore": 5.6
       },
       "dependencies": [
+        "sheet",
+        "separator",
+        "utils",
         "tooltip",
         "input",
-        "utils",
-        "separator",
         "button",
-        "sheet",
         "skeleton"
       ],
       "openQuestions": [
@@ -6803,9 +6803,9 @@
         "couplingScore": 7.5
       },
       "dependencies": [
-        "utils",
+        "HorizontalScroll",
         "ProductImage",
-        "HorizontalScroll"
+        "utils"
       ]
     },
     {
@@ -7561,8 +7561,8 @@
         "couplingScore": 0.9
       },
       "dependencies": [
-        "supabaseClient",
-        "health-engine"
+        "health-engine",
+        "supabaseClient"
       ]
     },
     {
@@ -7607,8 +7607,8 @@
       },
       "dependencies": [
         "engine",
-        "dexie",
-        "utils"
+        "utils",
+        "dexie"
       ]
     },
     {
@@ -7670,8 +7670,8 @@
         "couplingScore": 1.7
       },
       "dependencies": [
-        "parser",
-        "dexie"
+        "dexie",
+        "parser"
       ],
       "openQuestions": [
         "¿Se manejan redondeos específicos requeridos por la normativa contable local (ej. redondeo al peso más cercano)?"
@@ -7802,8 +7802,8 @@
         "couplingScore": 10
       },
       "dependencies": [
-        "types",
-        "formula-utils"
+        "formula-utils",
+        "types"
       ]
     },
     {
@@ -7868,13 +7868,13 @@
         "couplingScore": 3.7
       },
       "dependencies": [
-        "deepseek-adapter",
         "gpt-adapter",
-        "qwen-adapter",
-        "fallback-adapter",
-        "types",
         "gemini-adapter",
-        "kimi-adapter"
+        "kimi-adapter",
+        "qwen-adapter",
+        "types",
+        "fallback-adapter",
+        "deepseek-adapter"
       ],
       "openQuestions": [
         "¿Cómo se maneja la seguridad de las API keys en el orquestador?"
