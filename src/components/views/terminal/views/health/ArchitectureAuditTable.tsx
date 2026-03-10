@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import * as XLSX from 'xlsx';
 import {
   Search,
   FileCode,
@@ -13,7 +14,8 @@ import {
   ChevronRight,
   BookOpen,
   HelpCircle,
-  X
+  X,
+  FileSpreadsheet
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -48,20 +50,12 @@ export function ArchitectureAuditTable() {
     async function fetchData() {
       try {
         const response = await fetch('/architecture_graph.json');
-        const json = await response.json();
-        // Convert the map from graph nodes to array
-        const nodes = Object.values(json.nodes || {});
-        setData(nodes);
-      } catch (error) {
-        console.error("Error loading architecture data:", error);
-        // Fallback to system_architecture.json if graph fails
-        try {
-          const fallbackResponse = await fetch('/system_architecture.json');
-          const fallbackJson = await fallbackResponse.json();
-          setData(fallbackJson.architecture || []);
-        } catch (e) {
-          console.error("Critical error loading architecture maps:", e);
+        const jsonData = await response.json();
+        if (jsonData.nodes) {
+          setData(jsonData.nodes);
         }
+      } catch (error) {
+        console.error('Error loading architecture data:', error);
       } finally {
         setLoading(false);
       }
@@ -69,15 +63,22 @@ export function ArchitectureAuditTable() {
     fetchData();
   }, []);
 
+  const getHealthStyle = (score: number) => {
+    if (score >= 9) return { color: 'text-emerald-500', bg: 'bg-emerald-500/10', label: 'Óptimo' };
+    if (score >= 7.5) return { color: 'text-blue-500', bg: 'bg-blue-500/10', label: 'Bueno' };
+    if (score >= 6) return { color: 'text-amber-500', bg: 'bg-amber-500/10', label: 'Advertencia' };
+    return { color: 'text-red-500', bg: 'bg-red-500/10', label: 'Crítico' };
+  };
+
   const filteredData = data.filter(item => {
-    const matchesSearch = item.name?.toLowerCase().includes(globalSearch.toLowerCase()) ||
-                         item.path?.toLowerCase().includes(globalSearch.toLowerCase());
+    const matchesSearch =
+      item.name.toLowerCase().includes(globalSearch.toLowerCase()) ||
+      item.path.toLowerCase().includes(globalSearch.toLowerCase());
+
     const matchesType = typeFilter === 'all' || item.type === typeFilter;
 
-    let matchesHealth = true;
-    if (healthFilter === 'optimal') matchesHealth = item.health >= 9.5;
-    else if (healthFilter === 'warning') matchesHealth = item.health >= 6.0 && item.health < 9.5;
-    else if (healthFilter === 'critical') matchesHealth = item.health < 6.0;
+    const itemHealthLabel = getHealthStyle(item.health).label.toLowerCase();
+    const matchesHealth = healthFilter === 'all' || itemHealthLabel === healthFilter.toLowerCase();
 
     return matchesSearch && matchesType && matchesHealth;
   });
@@ -88,139 +89,138 @@ export function ArchitectureAuditTable() {
     currentPage * itemsPerPage
   );
 
-  const getHealthStyle = (score: number) => {
-    if (score >= 9.5) return {
-      color: 'text-emerald-500',
-      bg: 'bg-emerald-500/10',
-      icon: <CheckCircle2 className="w-3.5 h-3.5" />,
-      label: 'Óptimo'
-    };
-    if (score >= 6.0) return {
-      color: 'text-amber-500',
-      bg: 'bg-amber-500/10',
-      icon: <AlertTriangle className="w-3.5 h-3.5" />,
-      label: 'Advertencia'
-    };
-    return {
-      color: 'text-rose-500',
-      bg: 'bg-rose-500/10',
-      icon: <ShieldAlert className="w-3.5 h-3.5" />,
-      label: 'Crítico'
-    };
+  const exportToExcel = () => {
+    const exportData = filteredData.map(item => ({
+      Nombre: item.name,
+      Ruta: item.path,
+      Tipo: item.type,
+      Salud: item.health?.toFixed(1) || '0.0',
+      Acoplamiento: item.metrics?.couplingScore || 0,
+      Complejidad: item.metrics?.cyclomaticComplexity || 0,
+      Lineas: item.metrics?.lines || 0,
+      Documentado: item.is_documented ? 'SÍ' : 'NO',
+      CalidadDoc: item.documentation_quality || 0,
+      UltimaAuditoria: item.lastAudit || '-'
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Auditoria Arquitectónica");
+    XLSX.writeFile(wb, `Auditoria_Arquitectonica_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
+
+  if (loading) {
+    return (
+      <div className="w-full h-64 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Header with Search and Filters */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card/30 p-4 rounded-2xl border border-border/50">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
             <FileCode className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <h3 className="text-sm font-black uppercase tracking-tighter">Auditoría Arquitectónica: Mapa de Vistas</h3>
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Estado de salud pro-activo generado por Audit Agent</p>
+            <h3 className="text-xs font-black uppercase tracking-tighter">Auditoría Arquitectónica: Mapa de Vistas</h3>
+            <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Estado de salud pro-activo generado por Audit Agent</p>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+        <div className="flex items-center gap-3">
+          <div className="relative group">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground group-focus-within:text-primary transition-colors" />
             <Input
-              type="text"
               placeholder="BUSCAR EN EL MAPA..."
               value={globalSearch}
-              onChange={(e) => {
-                setGlobalSearch(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="bg-background/50 border-border/50 rounded-xl pl-9 pr-4 py-2 text-[10px] font-black uppercase tracking-widest h-10 w-64 focus-visible:ring-primary/30"
+              onChange={(e) => setGlobalSearch(e.target.value)}
+              className="pl-9 h-10 w-64 bg-background/50 border-border/50 text-[10px] font-bold uppercase tracking-widest focus:ring-primary/20 transition-all rounded-xl"
             />
           </div>
 
-          <select
-            value={typeFilter}
-            onChange={(e) => {
-              setTypeFilter(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="bg-background/50 border border-border/50 rounded-xl px-4 py-2 text-[10px] font-black uppercase tracking-widest h-10 focus:outline-none focus:border-primary/50"
+          <button
+            onClick={exportToExcel}
+            className="h-10 px-4 rounded-xl bg-primary/10 border border-primary/20 flex items-center gap-2 hover:bg-primary/20 transition-all text-primary group"
+            title="Exportar a Excel"
           >
-            <option value="all">TODOS LOS TIPOS</option>
-            <option value="view">VISTAS</option>
-            <option value="component">COMPONENTES</option>
-            <option value="hook">HOOKS</option>
-            <option value="service">SERVICIOS</option>
-            <option value="utility">UTILIDADES</option>
-          </select>
+            <FileSpreadsheet className="w-4 h-4 group-hover:scale-110 transition-transform" />
+            <span className="text-[10px] font-black uppercase tracking-widest">Exportar</span>
+          </button>
 
-          <select
-            value={healthFilter}
-            onChange={(e) => {
-              setHealthFilter(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="bg-background/50 border border-border/50 rounded-xl px-4 py-2 text-[10px] font-black uppercase tracking-widest h-10 focus:outline-none focus:border-primary/50"
-          >
-            <option value="all">TODOS LOS ESTADOS</option>
-            <option value="optimal">ÓPTIMO (&gt;9.5)</option>
-            <option value="warning">ADVERTENCIA (6.0-9.4)</option>
-            <option value="critical">CRÍTICO (&lt;6.0)</option>
-          </select>
+          <div className="flex items-center gap-1.5 p-1 bg-background/50 rounded-xl border border-border/50">
+            {['all', 'component', 'view', 'hook'].map((type) => (
+              <button
+                key={type}
+                onClick={() => setTypeFilter(type)}
+                className={cn(
+                  "px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all",
+                  typeFilter === type ? "bg-primary text-primary-foreground shadow-lg" : "hover:bg-primary/5 text-muted-foreground"
+                )}
+              >
+                {type}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
-      <div className="rounded-[28px] border border-border/50 overflow-hidden bg-background/20">
+      {/* Audit Table */}
+      <div className="rounded-2xl border border-border/50 bg-card/20 overflow-hidden">
         <Table>
-          <TableHeader className="bg-card/50">
-            <TableRow className="hover:bg-transparent border-border/50">
-              <TableHead className="text-[10px] font-black uppercase tracking-widest h-12">Nombre & Ruta</TableHead>
-              <TableHead className="text-[10px] font-black uppercase tracking-widest h-12">Tipo</TableHead>
-              <TableHead className="text-[10px] font-black uppercase tracking-widest h-12">Estado Salud</TableHead>
-              <TableHead className="text-[10px] font-black uppercase tracking-widest h-12 text-center">Acoplamiento</TableHead>
-              <TableHead className="text-[10px] font-black uppercase tracking-widest h-12">Pregunta Crítica</TableHead>
-              <TableHead className="text-[10px] font-black uppercase tracking-widest h-12">Acción</TableHead>
+          <TableHeader>
+            <TableRow className="bg-muted/30 hover:bg-muted/30 border-b border-border/50">
+              <TableHead className="text-[9px] font-black uppercase tracking-widest">Nombre & Ruta</TableHead>
+              <TableHead className="text-[9px] font-black uppercase tracking-widest">Tipo</TableHead>
+              <TableHead className="text-[9px] font-black uppercase tracking-widest">Estado Salud</TableHead>
+              <TableHead className="text-[9px] font-black uppercase tracking-widest">Acoplamiento</TableHead>
+              <TableHead className="text-[9px] font-black uppercase tracking-widest">Pregunta Crítica</TableHead>
+              <TableHead className="text-[9px] font-black uppercase tracking-widest">Lógica</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedData.length > 0 ? paginatedData.map((item: any, idx: number) => {
+            {paginatedData.length > 0 ? paginatedData.map((item, idx) => {
               const health = getHealthStyle(item.health);
-              const couplingScore = item.metrics ? item.metrics.couplingScore : 0;
-              const criticalQuestion = item.openQuestions && item.openQuestions.length > 0 ? item.openQuestions[0] : null;
+              const couplingScore = item.metrics?.couplingScore || 0;
+              const criticalQuestion = item.openQuestions?.[0];
+
               return (
                 <motion.tr
-                  key={item.id || idx}
-                  initial={{ opacity: 0, y: 5 }}
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.01 }}
-                  className="group hover:bg-primary/5 border-border/30 transition-colors cursor-pointer"
+                  transition={{ delay: idx * 0.05 }}
+                  key={item.path}
                   onClick={() => setSelectedComponent(item)}
+                  className="group cursor-pointer hover:bg-primary/[0.02] border-b border-border/30 transition-colors"
                 >
-                  <TableCell className="py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-xl bg-background border border-border/50 flex items-center justify-center shrink-0 group-hover:border-primary/30 transition-colors">
-                        <FileCode className="w-4 h-4 text-primary opacity-50" />
-                      </div>
-                      <div className="flex flex-col min-w-0">
-                        <span className="text-[11px] font-black uppercase tracking-tight truncate">{item.name}</span>
-                        <span className="text-[9px] font-mono text-muted-foreground truncate opacity-60">{item.path}</span>
-                      </div>
+                  <TableCell>
+                    <div className="flex flex-col">
+                      <span className="text-[11px] font-black uppercase tracking-tight group-hover:text-primary transition-colors">
+                        {item.name}
+                      </span>
+                      <span className="text-[8px] font-mono text-muted-foreground opacity-60 truncate max-w-[200px]">
+                        {item.path}
+                      </span>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className="text-[9px] font-black uppercase border-primary/20 bg-primary/5 text-primary/70">
+                    <Badge variant="outline" className="text-[8px] font-black uppercase border-primary/20 bg-primary/5 text-primary py-0">
                       {item.type}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <div className={cn("flex items-center gap-2 text-[10px] font-black uppercase px-3 py-1.5 rounded-full border border-current/20 w-fit", health.color, health.bg)}>
-                      {health.icon}
-                      {health.label} ({item.health.toFixed(1)})
+                    <div className={cn("inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border", health.bg, health.color.replace('text-', 'border-').replace('500', '500/20'))}>
+                      {item.health >= 7.5 ? <CheckCircle2 className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
+                      <span className="text-[9px] font-black uppercase tracking-widest">{health.label} ({(item.health || 0).toFixed(1)})</span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-center">
-                    <div className="flex flex-col items-center">
-                      <span className="text-xs font-black text-foreground">{couplingScore}</span>
-                      <div className="w-12 h-1 bg-muted rounded-full mt-1 overflow-hidden">
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black w-6">{couplingScore.toFixed(1)}</span>
+                      <div className="w-16 h-1 bg-muted rounded-full overflow-hidden">
                         <div
                           className="h-full bg-primary rounded-full"
                           style={{ width: couplingScore * 10 + '%' }}
@@ -341,9 +341,28 @@ export function ArchitectureAuditTable() {
                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                    <FileCode className="w-12 h-12" />
                 </div>
-                <p className="text-sm font-bold leading-relaxed text-foreground/90 relative z-10">
-                  {selectedComponent?.business_logic || "No hay descripción de lógica de negocio disponible para este componente."}
-                </p>
+                <div className="space-y-6 relative z-10">
+                  <p className="text-sm font-bold leading-relaxed text-foreground/90">
+                    {selectedComponent?.business_logic || "No hay descripción de lógica de negocio disponible para este componente."}
+                  </p>
+
+                  {selectedComponent?.openQuestions && selectedComponent.openQuestions.length > 0 && (
+                    <div className="pt-6 border-t border-primary/10">
+                      <h5 className="text-[10px] font-black uppercase tracking-widest text-primary mb-3 flex items-center gap-2">
+                        <HelpCircle className="w-3 h-3" />
+                        Preguntas Pendientes
+                      </h5>
+                      <ul className="space-y-2">
+                        {selectedComponent.openQuestions.map((q: string, i: number) => (
+                          <li key={i} className="text-[11px] font-medium text-foreground/70 flex items-start gap-2 italic">
+                            <span className="text-primary mt-1">•</span>
+                            {q}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
               </div>
             </section>
 
@@ -400,7 +419,11 @@ export function ArchitectureAuditTable() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {selectedComponent.dependencies.map((dep: string, i: number) => (
-                    <Badge key={i} variant="secondary" className="bg-muted/50 text-[10px] font-bold py-1 px-3 rounded-lg">
+                    <Badge
+                      key={i}
+                      variant="outline"
+                      className="bg-muted/10 border-border/50 text-foreground/80 text-[10px] font-bold py-1 px-3 rounded-lg"
+                    >
                       {dep}
                     </Badge>
                   ))}
