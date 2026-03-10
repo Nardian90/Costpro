@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     if (process.env.GOOGLE_API_KEY) {
       providers.push({
         name: 'gemini',
-        instance: new GeminiAdapter(process.env.GOOGLE_API_KEY, 'gemini-2.0-flash')
+        instance: new GeminiAdapter(process.env.GOOGLE_API_KEY, 'gemini-1.5-flash')
       });
     }
 
@@ -120,7 +120,7 @@ function getProviderInstance(type: string, apiKey: string): any | null {
     case 'deepseek':
       return new DeepSeekAdapter(apiKey, 'deepseek-chat');
     case 'gemini':
-      return new GeminiAdapter(apiKey, 'gemini-2.0-flash');
+      return new GeminiAdapter(apiKey, 'gemini-1.5-flash');
     case 'gpt':
       return new GPTAdapter(apiKey, 'gpt-4o');
     default:
