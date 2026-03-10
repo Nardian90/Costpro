@@ -791,6 +791,27 @@
     outline-offset: 2px;
   }
 
+  /* Mobile-First Maintenance Optimizations (SECCION_02_HERO) */
+  @media (max-width: 380px) {
+    /* Hero Landing Header Optimization */
+    .max-w-5xl.mx-auto h1 {
+      font-size: clamp(16px, 4vw, 24px) !important;
+    }
+
+    /* Internal Dashboard Header Optimization */
+    .max-w-4xl.mx-auto h2,
+    h2.text-3xl {
+      font-size: clamp(16px, 4vw, 24px) !important;
+    }
+
+    /* Touch Target Optimization for Hero elements */
+    .max-w-4xl.mx-auto .inline-flex,
+    .max-w-4xl.mx-auto button,
+    .max-w-5xl.mx-auto button {
+      min-height: 44px !important;
+    }
+  }
+
   /* Reduced motion */
   @media (prefers-reduced-motion: reduce) {
     *,
