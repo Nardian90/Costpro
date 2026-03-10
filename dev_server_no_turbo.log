@@ -1,0 +1,5 @@
+
+> nextjs_tailwind_shadcn_ts@5.8.0 dev
+> next dev -p 3000 --turbo=false
+
+error: unknown option '--turbo=false'
