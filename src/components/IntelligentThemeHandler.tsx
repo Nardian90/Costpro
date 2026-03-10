@@ -28,9 +28,9 @@ export default function IntelligentThemeHandler() {
       // 2. Time check
       const hour = new Date().getHours();
       if (hour >= 19 || hour < 7) {
-        return 'dark';
+        return 'fast-dark';
       }
-      return 'light';
+      return 'fast-light';
     };
 
     const updateTheme = () => {
