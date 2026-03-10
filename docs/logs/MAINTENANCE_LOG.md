@@ -2,8 +2,8 @@
 
 ## ESTADO DEL PIPELINE
 
-Última ejecución: 2026-03-09
-Siguiente objetivo: SECCION_02_HERO
+Última ejecución: 2026-03-10
+Siguiente objetivo: SECCION_03_PRODUCTO
 Modo: AUTOMATICO
 Ciclo actual: 1
 Agente responsable: Jules Mobile UI Scheduler
@@ -38,7 +38,7 @@ Nav principal
 Logo
 Menú hamburguesa
 
-[ ] SECCION_02_HERO
+[x] SECCION_02_HERO
 Banner principal
 Títulos H1
 CTAs superiores
