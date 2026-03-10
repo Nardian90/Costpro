@@ -1,5 +1,6 @@
-import { v4 as uuidv4 } from 'uuid';
 import { WalletTransaction, WalletTransactionType, WalletAnalytics, WalletSummary } from './types';
+
+const generateId = () => Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
 
 const PATTERNS = {
   BALANCE: /Saldo Disponible:\s*CR\s*([\d.]+)\s*CUP/,
@@ -19,6 +20,7 @@ const PATTERNS = {
 };
 
 export function parseSmsText(text: string): WalletTransaction[] {
+  if (!text) return [];
   const lines = text.split('\n');
   const transactions: WalletTransaction[] = [];
 
@@ -28,16 +30,16 @@ export function parseSmsText(text: string): WalletTransaction[] {
 
     const type = classify(trimmed);
     const dateMatch = trimmed.match(PATTERNS.DATE);
-    const date = formatDate(dateMatch ? dateMatch[1] : new Date().toLocaleDateString());
+    const date = formatDate(dateMatch ? dateMatch[1] : "");
     const transIdMatch = trimmed.match(PATTERNS.TRANS_ID);
-    const transId = transIdMatch ? transIdMatch[1] : uuidv4();
+    const transId = transIdMatch ? transIdMatch[1] : generateId();
     const genBalanceMatch = trimmed.match(PATTERNS.GENERIC_BALANCE);
     const balance_after = genBalanceMatch ? parseFloat(genBalanceMatch[1]) : undefined;
 
     const baseTx = {
-      id: uuidv4(),
-      date,
-      bank: 'BANDEC', // Default
+      id: generateId(),
+      date: date || new Date().toISOString().split('T')[0],
+      bank: 'BANDEC',
       transaction_id: transId,
       description: trimmed,
       source: 'SMS' as const,
@@ -48,14 +50,7 @@ export function parseSmsText(text: string): WalletTransaction[] {
     if (type === 'BALANCE_QUERY') {
       const match = trimmed.match(PATTERNS.BALANCE);
       if (match) {
-        transactions.push({
-          ...baseTx,
-          type: 'BALANCE_QUERY',
-          direction: 'IN',
-          amount: 0,
-          counterparty: 'Consulta de Saldo',
-          status: 'SUCCESS'
-        });
+        transactions.push({ ...baseTx, type: 'BALANCE_QUERY', direction: 'IN', amount: 0, counterparty: 'Consulta de Saldo', status: 'SUCCESS' });
         continue;
       }
     }
@@ -63,14 +58,7 @@ export function parseSmsText(text: string): WalletTransaction[] {
     if (type === 'TRANSFER_IN') {
       const match = trimmed.match(PATTERNS.TRANSFER_IN);
       if (match) {
-        transactions.push({
-          ...baseTx,
-          type: 'TRANSFER_IN',
-          direction: 'IN',
-          amount: parseFloat(match[3]),
-          counterparty: match[1],
-          status: 'SUCCESS'
-        });
+        transactions.push({ ...baseTx, type: 'TRANSFER_IN', direction: 'IN', amount: parseFloat(match[3]), counterparty: match[1], status: 'SUCCESS' });
         continue;
       }
     }
@@ -78,14 +66,7 @@ export function parseSmsText(text: string): WalletTransaction[] {
     if (type === 'TRANSFER_OUT') {
       const match = trimmed.match(PATTERNS.TRANSFER_OUT);
       if (match) {
-        transactions.push({
-          ...baseTx,
-          type: 'TRANSFER_OUT',
-          direction: 'OUT',
-          amount: parseFloat(match[2]),
-          counterparty: match[1],
-          status: 'SUCCESS'
-        });
+        transactions.push({ ...baseTx, type: 'TRANSFER_OUT', direction: 'OUT', amount: parseFloat(match[2]), counterparty: match[1], status: 'SUCCESS' });
         continue;
       }
     }
@@ -93,16 +74,7 @@ export function parseSmsText(text: string): WalletTransaction[] {
     if (type === 'PAYMENT_SERVICE') {
       const elecMatch = trimmed.match(PATTERNS.ELECTRICITY);
       if (elecMatch) {
-        transactions.push({
-          ...baseTx,
-          type: 'PAYMENT_SERVICE',
-          direction: 'OUT',
-          amount: 0,
-          counterparty: 'UNE (Electricidad)',
-          service_category: 'ELECTRICITY',
-          extra_data: { consumption_kwh: parseInt(elecMatch[1]), period: elecMatch[2] },
-          status: 'SUCCESS'
-        });
+        transactions.push({ ...baseTx, type: 'PAYMENT_SERVICE', direction: 'OUT', amount: 0, counterparty: 'UNE (Electricidad)', service_category: 'ELECTRICITY', extra_data: { consumption_kwh: parseInt(elecMatch[1]), period: elecMatch[2] }, status: 'SUCCESS' });
         continue;
       }
     }
@@ -110,15 +82,7 @@ export function parseSmsText(text: string): WalletTransaction[] {
     if (type === 'PHONE_RECHARGE') {
       const match = trimmed.match(PATTERNS.RECHARGE);
       if (match) {
-        transactions.push({
-          ...baseTx,
-          type: 'PHONE_RECHARGE',
-          direction: 'OUT',
-          amount: parseFloat(match[2]),
-          counterparty: match[1],
-          service_category: 'RECHARGE',
-          status: 'SUCCESS'
-        });
+        transactions.push({ ...baseTx, type: 'PHONE_RECHARGE', direction: 'OUT', amount: parseFloat(match[2]), counterparty: match[1], service_category: 'RECHARGE', status: 'SUCCESS' });
         continue;
       }
     }
@@ -126,15 +90,7 @@ export function parseSmsText(text: string): WalletTransaction[] {
     if (type === 'FAILED_OPERATION') {
       const match = trimmed.match(PATTERNS.FAILED);
       if (match) {
-        transactions.push({
-          ...baseTx,
-          type: 'FAILED_OPERATION',
-          direction: 'OUT',
-          amount: 0,
-          counterparty: 'Operación Fallida',
-          status: 'FAILED',
-          extra_data: { reason: match[1].trim().replace(/^[^a-zA-Z0-9]+/, '').replace(/\.\s*$/, '') }
-        });
+        transactions.push({ ...baseTx, type: 'FAILED_OPERATION', direction: 'OUT', amount: 0, counterparty: 'Operación Fallida', status: 'FAILED', extra_data: { reason: match[1].trim().replace(/^[^a-zA-Z0-9]+/, '').replace(/\.\s*$/, '') } });
         continue;
       }
     }
@@ -142,14 +98,7 @@ export function parseSmsText(text: string): WalletTransaction[] {
     if (type === 'LIMIT_CHANGE') {
       const match = trimmed.match(PATTERNS.LIMIT_CHANGE);
       if (match) {
-        transactions.push({
-          ...baseTx,
-          type: 'LIMIT_CHANGE',
-          direction: 'OUT',
-          amount: 0,
-          counterparty: 'Cambio de Límite',
-          extra_data: { atm: match[1], pos: match[2], total: match[3].replace(/\.\s*$/, '') }
-        });
+        transactions.push({ ...baseTx, type: 'LIMIT_CHANGE', direction: 'OUT', amount: 0, counterparty: 'Cambio de Límite', extra_data: { atm: match[1], pos: match[2], total: match[3].replace(/\.\s*$/, '') } });
         continue;
       }
     }
@@ -157,14 +106,7 @@ export function parseSmsText(text: string): WalletTransaction[] {
     if (type === 'CASH_ATM') {
       const match = trimmed.match(PATTERNS.CASH_ATM);
       if (match) {
-        transactions.push({
-          ...baseTx,
-          type: 'CASH_ATM',
-          direction: 'OUT',
-          amount: parseFloat(match[2]),
-          counterparty: 'ATM: ' + match[1],
-          status: 'SUCCESS'
-        });
+        transactions.push({ ...baseTx, type: 'CASH_ATM', direction: 'OUT', amount: parseFloat(match[2]), counterparty: 'ATM: ' + match[1], status: 'SUCCESS' });
         continue;
       }
     }
@@ -172,14 +114,7 @@ export function parseSmsText(text: string): WalletTransaction[] {
     if (type === 'CASH_EXTRA') {
       const match = trimmed.match(PATTERNS.CASH_EXTRA);
       if (match) {
-        transactions.push({
-          ...baseTx,
-          type: 'CASH_EXTRA',
-          direction: 'OUT',
-          amount: parseFloat(match[2]),
-          counterparty: 'Caja Extra: ' + match[1],
-          status: 'SUCCESS'
-        });
+        transactions.push({ ...baseTx, type: 'CASH_EXTRA', direction: 'OUT', amount: parseFloat(match[2]), counterparty: 'Caja Extra: ' + match[1], status: 'SUCCESS' });
         continue;
       }
     }
@@ -187,15 +122,7 @@ export function parseSmsText(text: string): WalletTransaction[] {
     if (type === 'MITURNO') {
       const match = trimmed.match(PATTERNS.MITURNO);
       if (match) {
-        transactions.push({
-          ...baseTx,
-          type: 'MITURNO',
-          direction: 'IN',
-          amount: 0,
-          counterparty: 'MiTurno: ' + match[1],
-          extra_data: { turn_number: match[2] },
-          status: 'SUCCESS'
-        });
+        transactions.push({ ...baseTx, type: 'MITURNO', direction: 'IN', amount: 0, counterparty: 'MiTurno: ' + match[1], extra_data: { turn_number: match[2] }, status: 'SUCCESS' });
         continue;
       }
     }
@@ -203,35 +130,26 @@ export function parseSmsText(text: string): WalletTransaction[] {
     if (type === 'SECURITY_EVENT') {
       const match = trimmed.match(PATTERNS.SECURITY);
       if (match) {
-        transactions.push({
-          ...baseTx,
-          type: 'SECURITY_EVENT',
-          direction: 'IN',
-          amount: 0,
-          counterparty: 'Evento de Seguridad',
-          extra_data: { event: match[0] },
-          status: 'SUCCESS'
-        });
+        transactions.push({ ...baseTx, type: 'SECURITY_EVENT', direction: 'IN', amount: 0, counterparty: 'Evento de Seguridad', extra_data: { event: match[0] }, status: 'SUCCESS' });
         continue;
       }
     }
 
-    // Tabular format fallback
     if (trimmed.includes(';')) {
       const parts = trimmed.split(';');
       if (parts.length >= 5) {
         const amount = parseFloat(parts[3]);
         if (!isNaN(amount)) {
           transactions.push({
-            id: uuidv4(),
-            date: formatDate(parts[0]),
+            id: generateId(),
+            date: formatDate(parts[0]) || new Date().toISOString().split('T')[0],
             bank: 'BANDEC',
             type: parts[2] === 'Cr' ? 'TRANSFER_IN' : 'TRANSFER_OUT',
             direction: parts[2] === 'Cr' ? 'IN' : 'OUT',
             amount,
             currency: parts[4] || 'CUP',
             counterparty: parts[1] || 'Bank Statement',
-            transaction_id: parts[5] || uuidv4(),
+            transaction_id: parts[5] || generateId(),
             description: trimmed,
             source: 'BANK_LOG' as const
           });
@@ -261,6 +179,7 @@ function classify(text: string): WalletTransactionType {
 }
 
 function formatDate(dateStr: string): string {
+  if (!dateStr) return "";
   const parts = dateStr.split('/');
   if (parts.length === 3) {
     const day = parts[0].padStart(2, '0');
@@ -274,8 +193,8 @@ function formatDate(dateStr: string): string {
 export function calculateAnalytics(transactions: WalletTransaction[]): WalletAnalytics {
   const summary: WalletSummary = { total_income: 0, total_expenses: 0, balance: 0 };
   const banks: Record<string, { income: number; expenses: number; current_balance: number }> = {};
-  const monthly: Record<string, { income: number; expenses: number }> = {};
   const categories: Record<string, number> = {};
+  const monthly: Record<string, { income: number; expenses: number }> = {};
 
   const sorted = [...transactions].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
