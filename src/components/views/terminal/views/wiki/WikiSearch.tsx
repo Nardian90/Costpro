@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Search, Loader2 } from 'lucide-react';
+import { Search, Loader2, BookOpen, FileText, Hash } from 'lucide-react';
 import {
   Command,
   CommandDialog,
@@ -16,7 +16,10 @@ import {
   AsientosData,
   CuentasData,
   ClasificadorData,
-  WikiModule
+  WikiModule,
+  Asiento,
+  AsientoLinea,
+  Cuenta
 } from './types';
 
 interface WikiSearchProps {
@@ -30,6 +33,7 @@ interface WikiSearchProps {
 
 export const WikiSearch: React.FC<WikiSearchProps> = ({ data, onSelect }) => {
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -43,17 +47,20 @@ export const WikiSearch: React.FC<WikiSearchProps> = ({ data, onSelect }) => {
   }, []);
 
   const asientosList = useMemo(() => {
-    return Object.entries(data.asientos.asientos).map(([id, asiento]) => ({
+    return Object.entries(data.asientos.asientos).map(([id, asiento]: [string, Asiento]) => ({
       id,
       titulo: asiento.titulo,
+      descripcion: asiento.descripcion || '',
+      contenido: asiento.lineas.map((l: AsientoLinea) => l.Descrip).join(' '),
       module: 'asientos' as WikiModule
     }));
   }, [data.asientos]);
 
   const cuentasList = useMemo(() => {
-    return data.cuentas.cuentas.map((cuenta) => ({
+    return data.cuentas.cuentas.map((cuenta: Cuenta) => ({
       id: cuenta.codigo,
       titulo: `${cuenta.codigo} - ${cuenta.nombre}`,
+      descripcion: cuenta.descripcion || '',
       module: 'cuentas' as WikiModule
     }));
   }, [data.cuentas]);
@@ -72,20 +79,35 @@ export const WikiSearch: React.FC<WikiSearchProps> = ({ data, onSelect }) => {
       </button>
 
       <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput placeholder="BUSCAR ASIENTOS, CUENTAS O CLASIFICACIÓN..." />
-        <CommandList>
+        <CommandInput
+          placeholder="BUSCAR POR ASIENTO, USO, CONTENIDO..."
+          value={search}
+          onValueChange={setSearch}
+        />
+        <CommandList className="max-h-[400px]">
           <CommandEmpty>No se encontraron resultados.</CommandEmpty>
 
           <CommandGroup heading="ASIENTOS CONTABLES">
             {asientosList.map((item) => (
               <CommandItem
                 key={item.id}
+                value={`${item.titulo} ${item.descripcion} ${item.contenido}`}
                 onSelect={() => {
                   onSelect(item.module, item.id);
                   setOpen(false);
+                  setSearch('');
                 }}
+                className="flex flex-col items-start gap-1 py-3"
               >
-                {item.titulo}
+                <div className="flex items-center gap-2 w-full">
+                  <Hash className="h-3.5 w-3.5 text-primary opacity-70" />
+                  <span className="font-bold uppercase text-[11px] tracking-tight">{item.titulo}</span>
+                </div>
+                {item.descripcion && (
+                  <p className="text-[10px] text-muted-foreground line-clamp-1 pl-5 uppercase tracking-tighter opacity-60">
+                    {item.descripcion}
+                  </p>
+                )}
               </CommandItem>
             ))}
           </CommandGroup>
@@ -96,12 +118,23 @@ export const WikiSearch: React.FC<WikiSearchProps> = ({ data, onSelect }) => {
             {cuentasList.map((item) => (
               <CommandItem
                 key={item.id}
+                value={`${item.titulo} ${item.descripcion}`}
                 onSelect={() => {
                   onSelect(item.module, item.id);
                   setOpen(false);
+                  setSearch('');
                 }}
+                className="flex flex-col items-start gap-1 py-3"
               >
-                {item.titulo}
+                <div className="flex items-center gap-2 w-full">
+                  <BookOpen className="h-3.5 w-3.5 text-primary opacity-70" />
+                  <span className="font-bold uppercase text-[11px] tracking-tight">{item.titulo}</span>
+                </div>
+                {item.descripcion && (
+                  <p className="text-[10px] text-muted-foreground line-clamp-1 pl-5 uppercase tracking-tighter opacity-60">
+                    {item.descripcion}
+                  </p>
+                )}
               </CommandItem>
             ))}
           </CommandGroup>
