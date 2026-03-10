@@ -27,6 +27,7 @@ import { toast } from 'sonner';
 
 // Lazy load views
 const DashboardView = lazy(() => import('./terminal/views/dashboard/DashboardView'));
+const WalletView = lazy(() => import('./terminal/views/wallet/WalletView'));
 const POSView = lazy(() => import('./terminal/views/pos/POSView'));
 const SalesHistoryView = lazy(() => import('./terminal/views/sales/SalesHistoryView'));
 const UsersManagementView = lazy(() => import('./terminal/views/users/UsersManagementView'));
@@ -42,7 +43,6 @@ const CatalogView = lazy(() => import('./terminal/views/catalog/CatalogView'));
 const InventoryCountView = lazy(() => import('./terminal/views/inventory_count/InventoryCountView'));
 const CostSheetView = lazy(() => import('./terminal/views/cost_sheet/CostSheetView'));
 const ReceptionsHistoryView = lazy(() => import('./terminal/views/receptions/ReceptionsHistoryView'));
-const SettingsView = lazy(() => import('./terminal/views/settings/SettingsView'));
 const HelpView = lazy(() => import('./terminal/views/help/HelpView'));
 const TransferenciasView = lazy(() => import('./terminal/views/transfers/TransferenciasView'));
 const ProductReceptionView = lazy(() => import('./terminal/views/inventory/ProductReceptionView'));
@@ -53,6 +53,7 @@ const InventoryAdjustmentsView = lazy(() => import('./terminal/views/inventory/I
 const LegalView = lazy(() => import('./terminal/views/legal/LegalView'));
 const SystemHealthView = lazy(() => import('./terminal/views/health/SystemHealthView'));
 const WikiView = lazy(() => import('./terminal/views/wiki/WikiView'));
+const SettingsView = lazy(() => import("./terminal/views/settings/SettingsView"));
 
 
 export default function TerminalShell() {
@@ -158,6 +159,7 @@ export default function TerminalShell() {
   const renderView = (view: ViewType) => {
     switch (view) {
         case 'dashboard': return <DashboardView />;
+        case 'wallet': return <WalletView />;
         case 'pos': return <POSView />;
         case 'sales': return <SalesHistoryView />;
         case 'users': return <UsersManagementView />;

@@ -63,7 +63,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         id: 'estrategico',
         label: 'MÓDULO ESTRATÉGICO',
         isDirect: true,
-        items: ['dashboard', 'cost-sheets', 'ipv']
+        items: ['dashboard', 'wallet', 'cost-sheets', 'ipv']
       },
       {
         id: 'punto_venta',
@@ -151,21 +151,38 @@ export const Sidebar: React.FC<SidebarProps> = ({
         onClick={() => onViewChange(item.id as ViewType)}
         onMouseEnter={() => onPrefetchView?.(item.id as ViewType)}
         className={cn(
-          "w-full flex items-center gap-4 p-3.5 rounded-xl transition-all group active:scale-95 mb-1",
+          "w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-300 group relative overflow-hidden",
           isActive
-            ? "bg-primary text-white shadow-lg shadow-primary/20 font-black"
-            : "hover:bg-primary/5 text-sidebar-foreground/70 font-bold"
+            ? "bg-primary text-primary-foreground shadow-[0_8px_20px_-4px_rgba(var(--primary),0.3)]"
+            : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-primary/5"
         )}
       >
-        <item.icon className={cn("w-4.5 h-4.5", isActive ? "text-white" : "group-hover:text-primary transition-colors")} />
-        <span className="text-xs uppercase tracking-wider">{item.label}</span>
+        <item.icon className={cn(
+          "w-4.5 h-4.5 transition-transform duration-300 group-hover:scale-110",
+          isActive ? "text-primary-foreground" : "text-muted-foreground/50 group-hover:text-primary"
+        )} />
+        <span className={cn(
+          "text-[10px] font-black uppercase tracking-[0.2em] truncate transition-all duration-300",
+          isActive ? "translate-x-1" : "group-hover:translate-x-1"
+        )}>
+          {item.label}
+        </span>
+        {isActive && (
+          <motion.div
+            layoutId="active-indicator"
+            className="absolute left-0 w-1 h-6 bg-primary-foreground rounded-r-full"
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          />
+        )}
       </button>
     );
   };
 
+  const navRefInternal = React.useRef<HTMLDivElement>(null);
+
   return (
     <aside className={cn(
-      "fixed lg:sticky top-0 h-screen z-50 transition-all duration-300 ease-in-out border-r border-sidebar-border shadow-2xl overflow-hidden",
+      "fixed inset-y-0 left-0 z-40 bg-sidebar transition-all duration-300 ease-in-out border-r border-sidebar-border shadow-2xl overflow-hidden",
       sidebarOpen ? "w-64 lg:w-72 translate-x-0" : "w-0 -translate-x-full border-r-0"
     )}>
       <div className="bg-sidebar/90 backdrop-blur-2xl h-full flex flex-col overflow-hidden w-64 lg:w-72">
