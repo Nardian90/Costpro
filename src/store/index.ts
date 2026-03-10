@@ -12,24 +12,55 @@ export type ViewType = 'dashboard' | 'wallet' | 'pos' | 'inventory' | 'recepcion
 
 interface UIState {
   currentView: ViewType;
+  previousView: ViewType | null;
   sidebarOpen: boolean;
   isCalculatorOpen: boolean;
+  themePreference: 'light' | 'dark' | 'auto' | 'fast-dark' | 'fast-light';
+  viewQueries: Record<string, string>;
+  showQueries: boolean;
+  isCreateProductModalOpen: boolean;
+  initialProductName: string;
+  isChatBotOpen: boolean;
   setCurrentView: (view: ViewType) => void;
   setSidebarOpen: (open: boolean) => void;
   toggleSidebar: () => void;
   setIsCalculatorOpen: (open: boolean) => void;
+  setThemePreference: (pref: 'light' | 'dark' | 'auto' | 'fast-dark' | 'fast-light') => void;
+  setLastQuery: (sql: string, view?: string) => void;
+  setShowQueries: (show: boolean) => void;
+  setIsCreateProductModalOpen: (open: boolean) => void;
+  setInitialProductName: (name: string) => void;
+  setIsChatBotOpen: (open: boolean) => void;
 }
 
 export const useUIStore = create<UIState>()(
   persist(
     (set) => ({
       currentView: 'dashboard',
+      previousView: null,
       sidebarOpen: true,
       isCalculatorOpen: false,
-      setCurrentView: (view) => set({ currentView: view }),
+      themePreference: 'auto',
+      viewQueries: {},
+      showQueries: false,
+      isCreateProductModalOpen: false,
+      initialProductName: '',
+      isChatBotOpen: false,
+      setCurrentView: (view) => set((state) => ({
+        previousView: state.currentView,
+        currentView: view
+      })),
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
       toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
       setIsCalculatorOpen: (open) => set({ isCalculatorOpen: open }),
+      setThemePreference: (themePreference) => set({ themePreference }),
+      setLastQuery: (sql, view) => set((state) => ({
+        viewQueries: { ...state.viewQueries, [view || state.currentView]: sql }
+      })),
+      setShowQueries: (showQueries) => set({ showQueries }),
+      setIsCreateProductModalOpen: (isCreateProductModalOpen) => set({ isCreateProductModalOpen }),
+      setInitialProductName: (initialProductName) => set({ initialProductName }),
+      setIsChatBotOpen: (isChatBotOpen) => set({ isChatBotOpen }),
     }),
     {
       name: 'costpro-ui-storage',
@@ -39,24 +70,34 @@ export const useUIStore = create<UIState>()(
 
 interface AuthState {
   user: UserContract | null;
+  token: string | null;
   loading: boolean;
-  status: 'loading' | 'unauthenticated' | 'authenticated_no_store' | 'authenticated_valid';
+  isMocked: boolean;
+  status: 'loading' | 'unauthenticated' | 'authenticated_no_store' | 'authenticated_valid' | 'authenticated_invalid_profile';
   setUser: (user: UserContract | null) => void;
+  setToken: (token: string | null) => void;
   setLoading: (loading: boolean) => void;
-  setStatus: (status: 'loading' | 'unauthenticated' | 'authenticated_no_store' | 'authenticated_valid') => void;
+  setStatus: (status: any) => void;
+  setIsMocked: (isMocked: boolean) => void;
   updateUser: (data: Partial<UserContract>) => void;
+  login: (user: UserContract, token: string, status?: any) => void;
   logout: () => void;
 }
 
 export const useAuthStore = create<AuthState>()((set) => ({
   user: null,
+  token: null,
   loading: true,
+  isMocked: false,
   status: 'loading',
   setUser: (user) => set({ user }),
+  setToken: (token) => set({ token }),
   setLoading: (loading) => set({ loading }),
   setStatus: (status) => set({ status }),
+  setIsMocked: (isMocked) => set({ isMocked }),
   updateUser: (data) => set((state) => ({
     user: state.user ? { ...state.user, ...data } : null
   })),
-  logout: () => set({ user: null, status: 'unauthenticated' }),
+  login: (user, token, status = 'authenticated_valid') => set({ user, token, status, loading: false }),
+  logout: () => set({ user: null, token: null, status: 'unauthenticated', isMocked: false }),
 }));

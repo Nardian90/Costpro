@@ -41,7 +41,6 @@ Objetivo: Extraer eventos financieros, normalizar el formato, clasificar el tipo
 export default function WalletView() {
     const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
     const [isImporting, setIsImporting] = useState(false);
-    const [showPrompt, setShowPrompt] = useState(false);
     const [importText, setImportText] = useState('');
     const [sidebarSearch, setSidebarSearch] = useState('');
 
@@ -65,7 +64,7 @@ export default function WalletView() {
     const chartData = useMemo(() => {
         return Object.entries(analytics.monthly)
             .sort(([a], [b]) => a.localeCompare(b))
-            .map(([month, data]) => ({
+            .map(([month, data]: [string, any]) => ({
                 name: month,
                 ingresos: data.income,
                 gastos: data.expenses
@@ -278,7 +277,7 @@ export default function WalletView() {
                     </CardHeader>
                     <CardContent className="p-8">
                         <div className="space-y-6">
-                            {Object.entries(analytics.banks).map(([bank, data]) => (
+                            {Object.entries(analytics.banks).map(([bank, data]: [string, any]) => (
                                 <div key={bank} className="space-y-2">
                                     <div className="flex items-center justify-between">
                                         <span className="text-xs font-black uppercase tracking-widest">{bank}</span>

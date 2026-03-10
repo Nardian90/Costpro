@@ -53,6 +53,7 @@ const InventoryAdjustmentsView = lazy(() => import('./terminal/views/inventory/I
 const LegalView = lazy(() => import('./terminal/views/legal/LegalView'));
 const SystemHealthView = lazy(() => import('./terminal/views/health/SystemHealthView'));
 const WikiView = lazy(() => import('./terminal/views/wiki/WikiView'));
+const SettingsView = lazy(() => import("./terminal/views/settings/SettingsView"));
 
 
 export default function TerminalShell() {
