@@ -146,7 +146,7 @@ export default function WikiView() {
           </div>
 
           <WikiSearch
-            data={data}
+            data={data as any}
             onSelect={(module, id) => navigateTo(module, id)}
           />
         </header>
@@ -169,21 +169,21 @@ export default function WikiView() {
             >
               {state.activeModule === 'asientos' && (
                 <AsientosModule
-                  data={data.asientos}
+                  data={data.asientos as any}
                   selectedId={state.selectedId}
                   onNavigate={navigateTo}
                 />
               )}
               {state.activeModule === 'cuentas' && (
                 <CuentasModule
-                  data={data.cuentas}
+                  data={data.cuentas as any}
                   selectedId={state.selectedId}
                   onNavigate={navigateTo}
                 />
               )}
               {state.activeModule === 'clasificador' && (
                 <ClasificadorModule
-                  data={data.clasificador}
+                  data={data.clasificador as any}
                   selectedId={state.selectedId}
                   onNavigate={navigateTo}
                 />
