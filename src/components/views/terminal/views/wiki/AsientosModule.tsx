@@ -25,15 +25,20 @@ export const AsientosModule: React.FC<AsientosModuleProps> = ({ data, selectedId
   const [searchTerm, setSearchTerm] = useState('');
   const [displayCount, setDisplayCount] = useState(ITEMS_PER_PAGE);
 
-  const allAsientos = useMemo(() => Object.values(data.asientos.asientos), [data.asientos]);
+  const allAsientos = useMemo(() => {
+    return Object.entries(data.asientos).map(([id, asiento]) => ({
+      ...(asiento as any),
+      id
+    })) as Asiento[];
+  }, [data.asientos]);
 
   const filteredAsientos = useMemo(() => {
     if (!searchTerm) return allAsientos;
     const term = searchTerm.toLowerCase();
-    return allAsientos.filter(a =>
+    return allAsientos.filter((a: Asiento) =>
       a.titulo.toLowerCase().includes(term) ||
       (a.descripcion && a.descripcion.toLowerCase().includes(term)) ||
-      a.lineas.some(l => l.Descrip.toLowerCase().includes(term))
+      a.lineas.some((l: AsientoLinea) => l.Descrip.toLowerCase().includes(term))
     );
   }, [allAsientos, searchTerm]);
 
@@ -47,7 +52,9 @@ export const AsientosModule: React.FC<AsientosModuleProps> = ({ data, selectedId
 
   const selectedAsiento = useMemo(() => {
     if (!selectedId) return null;
-    return data.asientos.asientos[selectedId] || null;
+    const asiento = data.asientos[selectedId];
+    if (!asiento) return null;
+    return { ...(asiento as any), id: selectedId } as Asiento;
   }, [data.asientos, selectedId]);
 
   if (selectedAsiento) {
@@ -88,7 +95,7 @@ export const AsientosModule: React.FC<AsientosModuleProps> = ({ data, selectedId
                     </tr>
                   </thead>
                   <tbody className="divide-y border-b last:border-0">
-                    {selectedAsiento.lineas.map((linea, idx) => (
+                    {selectedAsiento.lineas.map((linea: AsientoLinea, idx: number) => (
                       <tr key={idx} className="hover:bg-primary/[0.02] transition-colors group">
                         <td className="px-4 py-4 font-medium">
                           <div className="flex flex-col gap-1">
@@ -152,7 +159,7 @@ export const AsientosModule: React.FC<AsientosModuleProps> = ({ data, selectedId
                   <h3 className="text-xs font-black uppercase tracking-widest">Cuentas Relacionadas</h3>
                 </div>
                 <div className="flex flex-col gap-2">
-                   {Array.from(new Set(selectedAsiento.lineas.map(l => l.Codigo).filter(Boolean))).map((codigo: string) => (
+                   {Array.from(new Set(selectedAsiento.lineas.map((l: AsientoLinea) => l.Codigo).filter(Boolean))).map((codigo: string) => (
                      <button
                        key={codigo}
                        onClick={() => onNavigate('cuentas', codigo)}
@@ -186,13 +193,13 @@ export const AsientosModule: React.FC<AsientosModuleProps> = ({ data, selectedId
             placeholder="FILTRAR POR TÍTULO O CONTENIDO..."
             className="pl-10 h-11 rounded-2xl border-muted bg-muted/20 font-black text-[10px] uppercase tracking-widest"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
           />
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {visibleAsientos.map((asiento) => (
+        {visibleAsientos.map((asiento: Asiento) => (
           <button
             key={asiento.id}
             onClick={() => onNavigate('asientos', asiento.id)}
@@ -204,7 +211,7 @@ export const AsientosModule: React.FC<AsientosModuleProps> = ({ data, selectedId
             <div className="flex-1">
               <h3 className="font-bold text-sm uppercase tracking-tight mb-2 group-hover:text-primary transition-colors line-clamp-2 leading-tight">{asiento.titulo}</h3>
               <p className="text-[10px] text-muted-foreground line-clamp-2 leading-snug uppercase tracking-tighter opacity-70 font-medium">
-                {asiento.lineas.map(l => l.Descrip.replace(/^-+\s*/, '')).filter(Boolean).slice(0, 4).join(' • ')}
+                {asiento.lineas.map((l: AsientoLinea) => l.Descrip.replace(/^-+\s*/, '')).filter(Boolean).slice(0, 4).join(' • ')}
               </p>
             </div>
             <div className="mt-auto w-full pt-4 border-t border-muted/50 flex items-center justify-between">
