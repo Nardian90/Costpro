@@ -82,56 +82,33 @@ def calculate_complexity(content):
     return complexity
 
 def load_existing_architecture():
-    if not os.path.exists(ARCH_JSON):
-        return {}
-    try:
-        with open(ARCH_JSON, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-            # Return a map of ID -> item
-            return {item['id']: item for item in data.get('architecture', [])}
-    except:
-        return {}
+    if os.path.exists(ARCH_JSON):
+        try:
+            with open(ARCH_JSON, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return {item['id']: item for item in data.get('architecture', [])}
+        except: return {}
+    return {}
 
-def get_logic_for_component(name, path, existing_item):
-    # 1. Preserve existing manual high-quality documentation if it exists
+def get_logic_for_component(node_id, path, existing_item):
     if existing_item and existing_item.get('is_documented'):
-        # Only preserve if it looks like manual (not inferred)
-        # Inferred descriptions usually start with "[No definido en el manual]"
+        # Preserve manual high-quality documentation
         if not str(existing_item.get('business_logic', '')).startswith("[No definido"):
-            return existing_item.get('business_logic'), True, existing_item.get('documentation_quality', 7.0), existing_item.get('openQuestions', [])
+             return (existing_item.get('business_logic'),
+                    True,
+                    existing_item.get('documentation_quality', 10),
+                    existing_item.get('openQuestions', []))
 
-    # 2. Check explicit mapping
-    if name in MANUAL_MAPPING:
-        return MANUAL_MAPPING[name], True, 10.0, existing_item.get('openQuestions', []) if existing_item else []
+    # Check explicit mapping
+    if node_id in MANUAL_MAPPING:
+        return MANUAL_MAPPING[node_id], True, 10.0, existing_item.get('openQuestions', []) if existing_item else []
 
-    # 3. Check path-based inference
-    description = ""
-    is_documented = False
-    quality = 0.0
-
-    if "features/ipv" in path or "views/ipv" in path:
-        description = "[No definido en el manual] Componente del módulo IPV (Ingresos, Pagos y Ventas). Se encarga de la gestión de transacciones bancarias y conciliación contable."
-        quality = 6.0
-    elif "features/inventory" in path or "views/inventory" in path:
-        description = "[No definido en el manual] Componente del módulo de Inventario. Soporta el control de existencias y trazabilidad de productos."
-        quality = 6.0
-    elif "features/pos" in path or "views/pos" in path:
-        description = "[No definido en el manual] Componente del Punto de Venta. Facilita la operación comercial y facturación al cliente final."
-        quality = 6.0
-    elif "features/cost-sheets" in path or "views/cost_sheet" in path:
-        description = "[No definido en el manual] Componente del motor de fichas de costo. Participa en el cálculo de formación de precios y márgenes comerciales."
-        quality = 6.0
-    elif "features/auth" in path or "roles" in path or "auth" in path.lower():
-        description = "[No definido en el manual] Componente de Seguridad y Gobernanza. Gestiona permisos, roles y sesiones de usuario."
-        quality = 5.0
-    elif "components/ui" in path:
-        description = "[No definido en el manual] Componente de interfaz de usuario de bajo nivel. Proporciona elementos visuales estandarizados (Shadcn UI)."
-        quality = 4.0
-    else:
-        description = f"[No definido en el manual] Componente técnico {name} encargado de soportar la funcionalidad operativa del módulo {os.path.basename(os.path.dirname(path))}."
-        quality = 3.0
-
-    return description, False, quality, existing_item.get('openQuestions', []) if existing_item else []
+    # Default logic for undocumented components
+    itype = get_type(path)
+    parts = path.split('/')
+    module = parts[4] if len(parts) > 4 else parts[1] if len(parts) > 1 else "root"
+    logic = f"[No definido en el manual] Componente técnico {node_id} encargado de soportar la funcionalidad operativa del módulo {module}."
+    return logic, False, 3.0, existing_item.get('openQuestions', []) if existing_item else []
 
 def calculate_score(path, content, metrics):
     score_arch = 10.0
@@ -188,29 +165,6 @@ def get_md_health_status(score):
     if score >= 9.5: return "Óptimo"
     if score >= 6.0: return "Advertencia"
     return "Crítico"
-
-def load_existing_architecture():
-    if os.path.exists(ARCH_JSON):
-        try:
-            with open(ARCH_JSON, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                return {item['id']: item for item in data.get('architecture', [])}
-        except: return {}
-    return {}
-
-def get_logic_for_component(node_id, path, existing_item):
-    if existing_item and existing_item.get('is_documented'):
-        return (existing_item.get('business_logic'),
-                True,
-                existing_item.get('documentation_quality', 10),
-                existing_item.get('openQuestions', []))
-
-    # Default logic for undocumented components
-    itype = get_type(path)
-    parts = path.split('/')
-    module = parts[4] if len(parts) > 4 else parts[1] if len(parts) > 1 else "root"
-    logic = f"[No definido en el manual] Componente técnico {node_id} encargado de soportar la funcionalidad operativa del módulo {module}."
-    return logic, False, 3.0, []
 
 def scan_project():
     nodes = {}
@@ -280,8 +234,6 @@ def scan_project():
         score, issues = calculate_score(path, node['content'], metrics)
         logic, is_doc, quality, open_questions = get_logic_for_component(node_id, path, existing_arch.get(node_id))
 
-        logic, is_doc, quality, open_questions = get_logic_for_component(node_id, path, existing_arch.get(node_id))
-
         item = {
             "id": node_id,
             "name": node_id,
@@ -307,10 +259,9 @@ def scan_project():
 
 def run_phase_1():
     print("Executing Phase 1: Codebase Scan...")
-    items, edges, all_issues = scan_project()
+    items, _, _ = scan_project()
     os.makedirs("docs", exist_ok=True)
 
-    # 1. Update docs/mapa_vistas.md
     header = "| Nombre | Ruta | Tipo | Estado Salud | Dependencias | Última Auditoría |\n"
     separator = "| ------ | ---- | ---- | ------------ | ------------ | ---------------- |\n"
     rows = ""
@@ -322,16 +273,13 @@ def run_phase_1():
     with open(DOCS_MAP, 'w', encoding='utf-8') as f:
         f.write("# Mapa Arquitectónico Vivo\n\n")
         f.write(header + separator + rows)
+    print(f"Phase 1 complete. Updated {DOCS_MAP}.")
 
-    # 2. Update JSONs and Logs
-    update_all_outputs(items, edges, all_issues)
-    print(f"Phase 1 complete. Updated {DOCS_MAP}, JSONs and Logs.")
-
-def update_all_outputs(items, edges, all_issues):
+def run_phase_2():
+    print("Executing Phase 2: Dependency Graph Generation...")
+    items, edges, _ = scan_project()
     os.makedirs("public", exist_ok=True)
-    os.makedirs("logs", exist_ok=True)
 
-    # architecture_graph.json
     graph_stats = {
         "totalNodes": len(items),
         "totalEdges": len(edges),
@@ -341,8 +289,13 @@ def update_all_outputs(items, edges, all_issues):
     graph_data = {"nodes": items, "edges": edges, "graphStats": graph_stats}
     with open(GRAPH_JSON, 'w', encoding='utf-8') as f:
         json.dump(graph_data, f, indent=2, ensure_ascii=False)
+    print(f"Phase 2 complete. Generated {GRAPH_JSON}.")
 
-    # system_architecture.json
+def run_phase_3():
+    print("Executing Phase 3: System Architecture Update...")
+    items, _, _ = scan_project()
+    os.makedirs("public", exist_ok=True)
+
     stats = {
         "totalViews": len([i for i in items if i["type"] == "view"]),
         "totalComponents": len([i for i in items if i["type"] == "component"]),
@@ -353,8 +306,34 @@ def update_all_outputs(items, edges, all_issues):
     arch_data = {"architecture": items, "stats": stats}
     with open(ARCH_JSON, 'w', encoding='utf-8') as f:
         json.dump(arch_data, f, indent=2, ensure_ascii=False)
+    print(f"Phase 3 complete. Updated {ARCH_JSON}.")
 
-    # logs/audit_log.json (Restore logic)
+def run_phase_9():
+    print("Executing Phase 9: System Health Evaluation...")
+    items, _, _ = scan_project()
+    os.makedirs("public", exist_ok=True)
+
+    avg_health = round(sum(i["health"] for i in items) / len(items), 1) if items else 0
+    health_data = {
+        "systemHealth": avg_health,
+        "status": "healthy" if avg_health >= 8.0 else "warning" if avg_health >= 6.0 else "critical",
+        "trend": "stable",
+        "viewsAudited": len([i for i in items if i["type"] == "view"]),
+        "newViews": 0,
+        "criticalIssues": len([i for i in items if i["health"] < 6.0]),
+        "warnings": len([i for i in items if 6.0 <= i["health"] < 8.0]),
+        "lastAudit": datetime.date.today().isoformat()
+    }
+    with open(HEALTH_JSON, 'w', encoding='utf-8') as f:
+        json.dump(health_data, f, indent=2, ensure_ascii=False)
+    print(f"Phase 9 complete. Updated {HEALTH_JSON}.")
+
+def run_phase_10():
+    print("Executing Phase 10: Maintenance Log...")
+    items, edges, all_issues = scan_project()
+    os.makedirs("logs", exist_ok=True)
+    os.makedirs("public", exist_ok=True)
+
     avg_health = round(sum(i["health"] for i in items) / len(items), 1) if items else 0
 
     stats = {
@@ -364,8 +343,6 @@ def update_all_outputs(items, edges, all_issues):
         "totalHooks": len([i for i in items if i["type"] == "hook"]),
         "totalUtilities": len([i for i in items if i["type"] == "utility"])
     }
-
-    arch_data = {"architecture": items, "stats": stats}
 
     refactor_suggestions = []
     for i in sorted(items, key=lambda x: x['metrics']['couplingScore'], reverse=True)[:5]:
@@ -380,7 +357,7 @@ def update_all_outputs(items, edges, all_issues):
 
     new_log = {
         "date": datetime.date.today().isoformat(),
-        "hash": hashlib.sha256(json.dumps(arch_data, sort_keys=True).encode()).hexdigest(),
+        "hash": hashlib.sha256(json.dumps(items, sort_keys=True, default=str).encode()).hexdigest(),
         "health_score": avg_health,
         "issues_detected": all_issues[:20],
         "refactor_suggestions": refactor_suggestions,
@@ -398,21 +375,6 @@ def update_all_outputs(items, edges, all_issues):
     with open(AUDIT_LOG, 'w', encoding='utf-8') as f:
         json.dump(logs[:365], f, indent=2, ensure_ascii=False)
 
-    # system_health.json
-    health_data = {
-        "systemHealth": avg_health,
-        "status": "healthy" if avg_health >= 8.0 else "warning" if avg_health >= 6.0 else "critical",
-        "trend": "stable",
-        "viewsAudited": stats['totalViews'],
-        "newViews": 0,
-        "criticalIssues": len([i for i in items if i["health"] < 6.0]),
-        "warnings": len([i for i in items if 6.0 <= i["health"] < 8.0]),
-        "lastAudit": datetime.date.today().isoformat()
-    }
-    with open(HEALTH_JSON, 'w', encoding='utf-8') as f:
-        json.dump(health_data, f, indent=2, ensure_ascii=False)
-
-    # health_timeline.json (Restore logic)
     timeline = []
     if os.path.exists(TIMELINE_JSON):
         try:
@@ -426,7 +388,7 @@ def update_all_outputs(items, edges, all_issues):
         "score": avg_health,
         "status": get_status_label(avg_health),
         "actionsPerformed": [
-            "Actualización del mapa arquitectónico (Fase 1)",
+            "Ciclo de mantenimiento completado",
             "Auditoría de acoplamiento y complejidad"
         ]
     }
@@ -437,6 +399,7 @@ def update_all_outputs(items, edges, all_issues):
 
     with open(TIMELINE_JSON, 'w', encoding='utf-8') as f:
         json.dump({"timeline": timeline[:10]}, f, indent=2, ensure_ascii=False)
+    print(f"Phase 10 complete. Updated {AUDIT_LOG} and {TIMELINE_JSON}.")
 
 def main():
     parser = argparse.ArgumentParser(description="CostPro Audit Agent - Multi-phase Pipeline")
@@ -445,10 +408,18 @@ def main():
 
     if args.phase == 1:
         run_phase_1()
+    elif args.phase == 2:
+        run_phase_2()
+    elif args.phase == 3:
+        run_phase_3()
+    elif args.phase == 9:
+        run_phase_9()
+    elif args.phase == 10:
+        run_phase_10()
     elif args.phase:
         print(f"Phase {args.phase} logic not yet implemented in this version.")
     else:
-        # Default behavior: run all as Phase 1 + Output updates
+        # Default behavior: run all as Phase 1
         run_phase_1()
 
 if __name__ == "__main__":
