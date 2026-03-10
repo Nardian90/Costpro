@@ -1,5 +1,0 @@
-Changes in Wallet module to support advanced analysis of PAGOxMOVIL SMS:
-1. Updated WalletTransaction interface in src/lib/wallet/types.ts with new fields (status, service_category, balance_after, etc.).
-2. Refactored src/lib/wallet/parser.ts with comprehensive regex patterns and a classify function.
-3. Added support for Balance Queries, Service Payments (Electricity), Phone Recharges, Failed Operations, and Limit Changes.
-4. Updated tests in src/lib/wallet/__tests__/parser.test.ts.
