@@ -66,8 +66,9 @@ export async function getLLMProviderWithUserKey(userId: string, type?: string, f
     }
   }
 
-  // 3. System Fallback: If no user keys, try to find a global system key in DB
+  // 3. If no user keys, try fallback options
   if (providers.length === 0) {
+    // A. System Fallback: Global system key in DB
     const supabase = getSupabaseServer();
     if (supabase) {
       const { data } = await supabase
@@ -82,10 +83,26 @@ export async function getLLMProviderWithUserKey(userId: string, type?: string, f
         providers.push(getLLMProvider(data.provider, data.api_key));
       }
     }
+
+    // B. Infrastructure Fallback: Environment Variables (Vercel/Hosting)
+    if (process.env.GOOGLE_API_KEY) {
+      providers.push(getLLMProvider('gemini', process.env.GOOGLE_API_KEY));
+    }
+    if (process.env.OPENAI_API_KEY) {
+      providers.push(getLLMProvider('gpt', process.env.OPENAI_API_KEY));
+    }
+    if (process.env.DEEPSEEK_API_KEY) {
+      providers.push(getLLMProvider('deepseek', process.env.DEEPSEEK_API_KEY));
+    }
+
+    // C. Emergency Last Resort: Emergency Environment Variable
+    if (process.env.EMERGENCY_GOOGLE_API_KEY) {
+      providers.push(getLLMProvider('gemini', process.env.EMERGENCY_GOOGLE_API_KEY));
+    }
   }
 
+  // If still no keys, return the main provider (will use env defaults or throw)
   if (providers.length === 0) {
-    // If still no keys, return a provider that will throw a descriptive error when used
     return mainProvider;
   }
 
