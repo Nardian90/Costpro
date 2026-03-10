@@ -16,7 +16,10 @@ import {
   AsientosData,
   CuentasData,
   ClasificadorData,
-  WikiModule
+  WikiModule,
+  Asiento,
+  AsientoLinea,
+  Cuenta
 } from './types';
 
 interface WikiSearchProps {
@@ -44,17 +47,17 @@ export const WikiSearch: React.FC<WikiSearchProps> = ({ data, onSelect }) => {
   }, []);
 
   const asientosList = useMemo(() => {
-    return Object.entries(data.asientos.asientos).map(([id, asiento]) => ({
+    return Object.entries(data.asientos.asientos).map(([id, asiento]: [string, Asiento]) => ({
       id,
       titulo: asiento.titulo,
       descripcion: asiento.descripcion || '',
-      contenido: asiento.lineas.map(l => l.Descrip).join(' '),
+      contenido: asiento.lineas.map((l: AsientoLinea) => l.Descrip).join(' '),
       module: 'asientos' as WikiModule
     }));
   }, [data.asientos]);
 
   const cuentasList = useMemo(() => {
-    return data.cuentas.cuentas.map((cuenta) => ({
+    return data.cuentas.cuentas.map((cuenta: Cuenta) => ({
       id: cuenta.codigo,
       titulo: `${cuenta.codigo} - ${cuenta.nombre}`,
       descripcion: cuenta.descripcion || '',
