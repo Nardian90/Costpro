@@ -1,0 +1,5 @@
+
+> nextjs_tailwind_shadcn_ts@5.8.0 prebuild
+> prisma generate
+
+sh: 1: prisma: not found

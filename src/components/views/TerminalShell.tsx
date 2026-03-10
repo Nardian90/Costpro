@@ -52,6 +52,7 @@ const AcademyView = lazy(() => import('./terminal/views/academy/AcademyView'));
 const InventoryAdjustmentsView = lazy(() => import('./terminal/views/inventory/InventoryAdjustmentsView'));
 const LegalView = lazy(() => import('./terminal/views/legal/LegalView'));
 const SystemHealthView = lazy(() => import('./terminal/views/health/SystemHealthView'));
+const WikiView = lazy(() => import('./terminal/views/wiki/WikiView'));
 
 
 export default function TerminalShell() {
@@ -179,6 +180,7 @@ export default function TerminalShell() {
         case 'support_doc': return <HelpView />;
         case 'settings': return <SettingsView />;
         case 'help': return <HelpView />;
+        case 'wiki': return <WikiView />;
         case 'recepcion': return <ProductReceptionView onCancel={() => setCurrentView('inventory')} />;
         case 'reception_list': return <ReceptionsHistoryView />;
         case 'transferencias': return <TransferenciasView />;
