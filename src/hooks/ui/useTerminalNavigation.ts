@@ -1,7 +1,7 @@
 import { useMemo, useCallback, useRef } from 'react';
 import { useMotionValue, useTransform } from 'framer-motion';
 import {
-  BarChart3, ShoppingCart, Package, Warehouse, Receipt,
+  BarChart3, ShoppingCart, Book, Package, Warehouse, Receipt,
   ClipboardList, FileText, History, Shield, DollarSign,
   Users, Building, Settings, HelpCircle, ArrowLeftRight, GraduationCap,
   Newspaper, Rss, TrendingUp, ShieldCheck, RefreshCcw, Scale, HeartPulse
@@ -57,6 +57,7 @@ export function useTerminalNavigation(user: UserContract | null, sidebarSearch: 
       { id: 'legal', icon: Scale, label: 'Legal', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'LEGAL' },
       { id: 'support_doc', icon: FileText, label: 'Manual', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'LEGAL' },
       { id: 'help', icon: HelpCircle, label: 'Ayuda', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'LEGAL' },
+      { id: 'wiki', icon: Book, label: 'Wiki Contable', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'LEGAL' },
       { id: 'academy', icon: GraduationCap, label: 'Academia', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado', 'costo'], category: 'LEGAL' },
     ];
 
