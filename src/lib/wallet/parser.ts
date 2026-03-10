@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { WalletTransaction, WalletTransactionType } from './types';
+import { WalletTransaction, WalletTransactionType, WalletAnalytics, WalletSummary } from './types';
 
 export function parseSmsText(text: string): WalletTransaction[] {
   const lines = text.split('\n');
