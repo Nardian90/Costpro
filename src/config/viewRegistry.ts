@@ -13,6 +13,12 @@ export const VIEW_REGISTRY: ViewRegistryItem[] = [
     actions: ["view_kpis", "refresh_data"]
   },
   {
+    id: "wallet",
+    route: "/terminal?view=wallet",
+    description: "Billetera digital para el control de finanzas personales y empresariales, con importación de SMS.",
+    actions: ["import_sms", "view_analytics", "export_backup"]
+  },
+  {
     id: "cost-sheets",
     route: "/terminal?view=cost-sheets",
     description: "Gestión de fichas de costo para productos procesados y servicios.",
