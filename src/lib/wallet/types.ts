@@ -8,6 +8,10 @@ export type WalletTransactionType =
   | 'FAILED_OPERATION'
   | 'BANK_STATEMENT'
   | 'LIMIT_CHANGE'
+  | 'CASH_ATM'
+  | 'CASH_EXTRA'
+  | 'MITURNO'
+  | 'SECURITY_EVENT'
   | 'OTHER';
 
 export interface WalletTransaction {
@@ -40,7 +44,8 @@ export interface WalletSummary {
 
 export interface WalletAnalytics {
   summary: WalletSummary;
-  banks: Record<string, { income: number; expenses: number }>;
+  banks: Record<string, { income: number; expenses: number; current_balance: number }>;
   monthly: Record<string, { income: number; expenses: number }>;
+  categories: Record<string, number>;
   transactions: WalletTransaction[];
 }
