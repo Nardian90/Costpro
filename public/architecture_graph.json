@@ -180,19 +180,19 @@
       "metrics": {
         "inDegree": 0,
         "outDegree": 8,
-        "lines": 315,
-        "cyclomaticComplexity": 53,
-        "couplingScore": 5.5
+        "lines": 316,
+        "cyclomaticComplexity": 54,
+        "couplingScore": 5.6
       },
       "dependencies": [
-        "ChatBot",
-        "utils",
-        "MobileSafeContainer",
-        "Sidebar",
         "Header",
-        "CostProLoader",
+        "ChatBot",
         "FloatingCalculator",
-        "CreateProductModal"
+        "utils",
+        "CreateProductModal",
+        "Sidebar",
+        "CostProLoader",
+        "MobileSafeContainer"
       ],
       "openQuestions": [
         "¿Cómo se maneja la persistencia de la vista activa tras una recarga del navegador?"
@@ -212,9 +212,9 @@
       "metrics": {
         "inDegree": 1,
         "outDegree": 2,
-        "lines": 361,
-        "cyclomaticComplexity": 26,
-        "couplingScore": 2.7
+        "lines": 378,
+        "cyclomaticComplexity": 27,
+        "couplingScore": 2.8
       },
       "dependencies": [
         "utils",
@@ -243,12 +243,12 @@
         "couplingScore": 3.8
       },
       "dependencies": [
-        "utils",
         "ThemeToggle",
-        "dropdown-menu",
-        "popover",
         "SyncStatusBadge",
-        "SyncConflictModal"
+        "utils",
+        "dropdown-menu",
+        "SyncConflictModal",
+        "popover"
       ],
       "openQuestions": [
         "¿Se bloquean las acciones del header durante procesos críticos de guardado en las vistas?"
@@ -273,13 +273,40 @@
         "couplingScore": 2.5
       },
       "dependencies": [
-        "utils",
         "SearchBar",
+        "utils",
         "QueryInspector",
         "ActionMenu"
       ],
       "openQuestions": [
         "¿Se registra el costo unitario del producto en cada movimiento de stock para valorización histórica?"
+      ]
+    },
+    {
+      "id": "WalletView",
+      "name": "WalletView",
+      "type": "view",
+      "path": "src/components/views/terminal/views/wallet/WalletView.tsx",
+      "health": 10.0,
+      "status": "Óptimo",
+      "lastAudit": "2026-03-10",
+      "business_logic": "[No definido en el manual] Componente técnico WalletView encargado de soportar la funcionalidad operativa del módulo views.",
+      "is_documented": false,
+      "documentation_quality": 3.0,
+      "metrics": {
+        "inDegree": 0,
+        "outDegree": 6,
+        "lines": 453,
+        "cyclomaticComplexity": 13,
+        "couplingScore": 3.5
+      },
+      "dependencies": [
+        "badge",
+        "card",
+        "utils",
+        "types",
+        "parser",
+        "button"
       ]
     },
     {
@@ -327,10 +354,10 @@
         "couplingScore": 2.2
       },
       "dependencies": [
-        "utils",
-        "useStoresView",
-        "SearchBar",
         "StoreModals",
+        "SearchBar",
+        "useStoresView",
+        "utils",
         "ActionMenu"
       ],
       "openQuestions": [
@@ -378,12 +405,12 @@
         "couplingScore": 3.9
       },
       "dependencies": [
-        "input",
         "useStoresView",
-        "BaseModal",
-        "button",
         "supabaseClient",
-        "label"
+        "BaseModal",
+        "label",
+        "input",
+        "button"
       ],
       "openQuestions": [
         "¿Se permite la edición masiva de miembros de la tienda desde estos modales?"
@@ -409,8 +436,8 @@
       },
       "dependencies": [
         "progress",
-        "supabaseClient",
-        "card"
+        "card",
+        "supabaseClient"
       ],
       "openQuestions": [
         "¿Cuáles son los criterios exactos para ganar la insignia de 'Experto en Costos'?"
@@ -435,10 +462,10 @@
         "couplingScore": 2.4
       },
       "dependencies": [
+        "Flashcard",
         "MasteryDashboard",
         "CostProLoader",
-        "button",
-        "Flashcard"
+        "button"
       ],
       "openQuestions": [
         "¿Se sincroniza el progreso del usuario con su perfil de permisos del sistema?"
@@ -463,9 +490,9 @@
         "couplingScore": 1.8
       },
       "dependencies": [
-        "utils",
         "button",
-        "card"
+        "card",
+        "utils"
       ],
       "openQuestions": [
         "¿Se pueden crear sets de tarjetas personalizados por los administradores de cada tienda?"
@@ -490,25 +517,25 @@
         "couplingScore": 8.3
       },
       "dependencies": [
-        "accordion",
-        "SalesFlowDiagram",
-        "utils",
-        "DarianDiagram",
-        "SecurityFlowDiagram",
-        "RolesDiagram",
-        "OfflineSyncDiagram",
-        "button",
-        "KidsOnboarding",
-        "ThemeToggle",
-        "InventoryFlowDiagram",
         "MobilePosDiagram",
-        "QuickModeMassiveDiagram",
-        "CostFlowDiagram",
-        "StoreSkuDiagram",
-        "InventoryAdjustmentFlowDiagram",
+        "SalesFlowDiagram",
         "badge",
+        "QuickModeMassiveDiagram",
+        "SecurityFlowDiagram",
         "IpvFlowDiagram",
-        "StickyCartFlowDiagram"
+        "OfflineSyncDiagram",
+        "CostFlowDiagram",
+        "InventoryFlowDiagram",
+        "InventoryAdjustmentFlowDiagram",
+        "utils",
+        "ThemeToggle",
+        "KidsOnboarding",
+        "button",
+        "RolesDiagram",
+        "StoreSkuDiagram",
+        "DarianDiagram",
+        "StickyCartFlowDiagram",
+        "accordion"
       ],
       "openQuestions": [
         "¿El contenido de ayuda se descarga para su uso offline mediante Service Workers?"
@@ -943,13 +970,13 @@
         "couplingScore": 3.3
       },
       "dependencies": [
-        "useSalesHistoryView",
-        "utils",
         "StateRenderer",
-        "TaxCalculationModal",
         "SearchBar",
+        "utils",
+        "TransactionDetailsModal",
+        "useSalesHistoryView",
         "skeleton",
-        "TransactionDetailsModal"
+        "TaxCalculationModal"
       ],
       "openQuestions": [
         "¿Existe un límite temporal para realizar devoluciones automáticas desde el historial?"
@@ -974,11 +1001,11 @@
         "couplingScore": 3.4
       },
       "dependencies": [
-        "table",
+        "supabaseClient",
+        "badge",
         "utils",
         "BaseModal",
-        "supabaseClient",
-        "badge"
+        "table"
       ],
       "openQuestions": [
         "¿Se registran los cambios de estado (ej. de Pagada a Anulada) en el log de auditoría?"
@@ -1028,24 +1055,24 @@
         "couplingScore": 7.7
       },
       "dependencies": [
-        "ViewSwitcher",
-        "BaseModal",
-        "QueryInspector",
-        "POSTableView",
-        "utils",
         "usePOSView",
-        "ActionMenu",
+        "ViewSwitcher",
+        "StickyCartSummary",
         "index",
-        "drawer",
-        "PriceSelectorModal",
-        "SearchBar",
         "BarcodeScanner",
-        "SpeedDial",
         "Portal",
-        "StateRenderer",
+        "PriceSelectorModal",
+        "drawer",
+        "BaseModal",
         "POSCart",
+        "StateRenderer",
+        "utils",
+        "QueryInspector",
         "skeleton",
-        "StickyCartSummary"
+        "SearchBar",
+        "POSTableView",
+        "ActionMenu",
+        "SpeedDial"
       ],
       "openQuestions": [
         "¿Se maneja la reserva de stock en el momento de añadir un ítem al carrito?"
@@ -1070,8 +1097,8 @@
         "couplingScore": 1.1
       },
       "dependencies": [
-        "ProductImage",
-        "utils"
+        "utils",
+        "ProductImage"
       ],
       "openQuestions": [
         "¿Se actualizan los indicadores de stock en la tabla en tiempo real mediante Supabase Realtime?"
@@ -1096,10 +1123,10 @@
         "couplingScore": 7.3
       },
       "dependencies": [
-        "utils",
         "index",
-        "CostProLoader",
+        "utils",
         "BaseModal",
+        "CostProLoader",
         "ProductImage"
       ],
       "openQuestions": [
@@ -1151,11 +1178,11 @@
         "couplingScore": 5.2
       },
       "dependencies": [
-        "utils",
-        "index",
         "SecurityScrollContainer",
-        "BaseModal",
+        "index",
         "supabaseClient",
+        "utils",
+        "BaseModal",
         "ActionMenu"
       ],
       "openQuestions": [
@@ -1181,8 +1208,8 @@
         "couplingScore": 2.0
       },
       "dependencies": [
-        "ProductImage",
         "utils",
+        "ProductImage",
         "CostProLoader"
       ],
       "openQuestions": [
@@ -1208,17 +1235,17 @@
         "couplingScore": 5.1
       },
       "dependencies": [
-        "utils",
-        "index",
-        "ProductReceptionView",
-        "StateRenderer",
         "SearchBar",
+        "index",
+        "StateRenderer",
         "InventoryTableView",
-        "QueryInspector",
-        "skeleton",
-        "InventoryCardView",
+        "utils",
         "InventoryAdjustmentModal",
-        "ActionMenu"
+        "QueryInspector",
+        "InventoryCardView",
+        "ActionMenu",
+        "ProductReceptionView",
+        "skeleton"
       ]
     },
     {
@@ -1264,8 +1291,8 @@
         "couplingScore": 2.5
       },
       "dependencies": [
-        "utils",
         "SearchBar",
+        "utils",
         "QueryInspector",
         "ActionMenu"
       ],
@@ -1316,14 +1343,14 @@
         "couplingScore": 3.8
       },
       "dependencies": [
-        "table",
+        "badge",
+        "utils",
+        "engine",
         "utils",
         "input",
-        "utils",
-        "button",
-        "engine",
         "dexie",
-        "badge"
+        "button",
+        "table"
       ]
     },
     {
@@ -1367,8 +1394,8 @@
         "couplingScore": 1.2
       },
       "dependencies": [
-        "tooltip",
-        "button"
+        "button",
+        "tooltip"
       ],
       "openQuestions": [
         "¿Se personalizan las métricas del sidebar según el rol (ej. cajero vs supervisor)?"
@@ -1393,11 +1420,11 @@
         "couplingScore": 3.6
       },
       "dependencies": [
-        "table",
-        "utils",
         "card",
+        "utils",
+        "dexie",
         "button",
-        "dexie"
+        "table"
       ],
       "openQuestions": [
         "¿Qué porcentaje de transacciones se concilian automáticamente actualmente?"
@@ -1422,11 +1449,11 @@
         "couplingScore": 2.5
       },
       "dependencies": [
-        "dialog",
-        "button",
-        "tooltip",
+        "scroll-area",
         "badge",
-        "scroll-area"
+        "tooltip",
+        "dialog",
+        "button"
       ]
     },
     {
@@ -1448,36 +1475,36 @@
         "couplingScore": 10
       },
       "dependencies": [
+        "MatchingRulesEditor",
+        "IPVHelpDialog",
+        "TransactionTable",
+        "badge",
+        "IncomeReceiptSection",
+        "LoadingOverlay",
+        "TransactionBreakdown",
         "CatalogTable",
-        "IPVRightSidebar",
+        "MatchingSimulation",
+        "IPVReportsDropdown",
+        "IPVInstitutionalDashboard",
+        "PivotStatementView",
+        "tooltip",
+        "TransferQRReportView",
+        "dexie",
         "IngestionErrorsTable",
         "HorizontalScroll",
-        "backup",
-        "utils",
-        "IPVReportView",
-        "IncomeReceiptSection",
-        "utils",
-        "BankIngestion",
-        "IPVInstitutionalDashboard",
-        "card",
-        "MatchingSimulation",
-        "IPVControlPanel",
-        "button",
-        "ManualReconciliationView",
-        "LoadingOverlay",
-        "dexie",
         "tabs",
-        "ActionMenu",
-        "IPVHelpDialog",
-        "MatchingRulesEditor",
-        "TransactionTable",
+        "card",
+        "utils",
+        "button",
+        "BankIngestion",
+        "IPVReportView",
+        "ManualReconciliationView",
+        "IPVControlPanel",
+        "backup",
         "engine",
-        "PivotStatementView",
-        "TransferQRReportView",
-        "tooltip",
-        "IPVReportsDropdown",
-        "badge",
-        "TransactionBreakdown"
+        "utils",
+        "ActionMenu",
+        "IPVRightSidebar"
       ],
       "openQuestions": [
         "¿Permite el sistema reabrir periodos cerrados para correcciones excepcionales autorizadas?"
@@ -1502,14 +1529,14 @@
         "couplingScore": 4.7
       },
       "dependencies": [
-        "table",
-        "utils",
-        "input",
         "card",
-        "button",
+        "badge",
+        "utils",
         "engine",
+        "input",
         "dexie",
-        "badge"
+        "button",
+        "table"
       ]
     },
     {
@@ -1531,14 +1558,14 @@
         "couplingScore": 6.3
       },
       "dependencies": [
+        "scroll-area",
+        "badge",
+        "utils",
+        "engine",
         "utils",
         "input",
-        "utils",
-        "button",
-        "engine",
         "dexie",
-        "badge",
-        "scroll-area"
+        "button"
       ],
       "openQuestions": [
         "¿Se requiere una nota explicativa obligatoria para cada conciliación manual realizada?"
@@ -1563,15 +1590,15 @@
         "couplingScore": 3.9
       },
       "dependencies": [
-        "table",
+        "scroll-area",
+        "badge",
         "utils",
+        "label",
+        "dexie",
         "dialog",
         "button",
-        "label",
-        "checkbox",
-        "dexie",
-        "badge",
-        "scroll-area"
+        "table",
+        "checkbox"
       ]
     },
     {
@@ -1593,12 +1620,12 @@
         "couplingScore": 4.1
       },
       "dependencies": [
-        "switch",
-        "input",
         "card",
-        "button",
         "label",
-        "dexie"
+        "input",
+        "dexie",
+        "button",
+        "switch"
       ]
     },
     {
@@ -1620,13 +1647,13 @@
         "couplingScore": 5.7
       },
       "dependencies": [
-        "table",
+        "badge",
         "utils",
         "input",
+        "dexie",
         "dialog",
         "button",
-        "dexie",
-        "badge"
+        "table"
       ]
     },
     {
@@ -1648,15 +1675,15 @@
         "couplingScore": 5.0
       },
       "dependencies": [
-        "table",
-        "utils",
-        "input",
-        "card",
         "supabaseClient",
-        "button",
+        "card",
+        "badge",
+        "utils",
         "label",
+        "input",
         "dexie",
-        "badge"
+        "button",
+        "table"
       ]
     },
     {
@@ -1679,12 +1706,12 @@
       },
       "dependencies": [
         "select",
-        "input",
-        "dialog",
-        "button",
         "label",
         "engine",
-        "dexie"
+        "input",
+        "dexie",
+        "dialog",
+        "button"
       ]
     },
     {
@@ -1706,16 +1733,16 @@
         "couplingScore": 7.1
       },
       "dependencies": [
-        "table",
-        "utils",
-        "input",
-        "BaseModal",
         "IPVPreviewModal",
-        "button",
+        "badge",
+        "utils",
         "LoadingOverlay",
+        "BaseModal",
+        "input",
         "tooltip",
         "dexie",
-        "badge"
+        "button",
+        "table"
       ]
     },
     {
@@ -1737,12 +1764,12 @@
         "couplingScore": 3.4
       },
       "dependencies": [
-        "card",
         "backup",
-        "button",
+        "badge",
+        "card",
         "tooltip",
         "dexie",
-        "badge"
+        "button"
       ],
       "openQuestions": [
         "¿Se actualizan las alertas de depósitos pendientes mediante Realtime de Supabase?"
@@ -1767,21 +1794,21 @@
         "couplingScore": 10
       },
       "dependencies": [
-        "table",
-        "switch",
-        "utils",
-        "input",
-        "roles",
-        "BaseModal",
+        "supabaseClient",
+        "badge",
         "card",
         "utils",
-        "button",
-        "supabaseClient",
+        "BaseModal",
         "label",
-        "tooltip",
+        "input",
+        "intelligence",
         "dexie",
-        "badge",
-        "intelligence"
+        "utils",
+        "roles",
+        "tooltip",
+        "button",
+        "table",
+        "switch"
       ]
     },
     {
@@ -1803,23 +1830,23 @@
         "couplingScore": 9.0
       },
       "dependencies": [
-        "table",
-        "switch",
-        "utils",
-        "input",
+        "scroll-area",
         "popover",
-        "BaseModal",
+        "badge",
         "card",
-        "dialog",
-        "button",
-        "tooltip",
-        "AddTransactionModal",
-        "checkbox",
+        "utils",
+        "BaseModal",
         "engine",
         "label",
+        "input",
+        "tooltip",
         "dexie",
-        "badge",
-        "scroll-area"
+        "dialog",
+        "AddTransactionModal",
+        "table",
+        "button",
+        "checkbox",
+        "switch"
       ],
       "openQuestions": [
         "¿Se auditan las anulaciones de transacciones indicando el usuario y motivo del cambio?"
@@ -1844,12 +1871,12 @@
         "couplingScore": 3.4
       },
       "dependencies": [
-        "utils",
-        "calculations",
         "card",
-        "button",
+        "utils",
+        "badge",
+        "calculations",
         "dexie",
-        "badge"
+        "button"
       ],
       "openQuestions": [
         "¿Cómo se maneja el filtrado por región o unidad de negocio en el dashboard institucional?"
@@ -1874,9 +1901,9 @@
         "couplingScore": 1.6
       },
       "dependencies": [
+        "button",
         "utils",
-        "dropdown-menu",
-        "button"
+        "dropdown-menu"
       ]
     },
     {
@@ -1898,12 +1925,12 @@
         "couplingScore": 4.3
       },
       "dependencies": [
-        "bandecParser",
         "BaseModal",
-        "utils",
-        "button",
         "engine",
-        "dexie"
+        "utils",
+        "dexie",
+        "button",
+        "bandecParser"
       ],
       "openQuestions": [
         "¿Cómo se maneja la seguridad de los archivos temporales subidos para ingesta?"
@@ -1928,13 +1955,13 @@
         "couplingScore": 4.5
       },
       "dependencies": [
+        "card",
+        "label",
         "LegalPdfExporter",
         "input",
-        "IncomeReceiptPreview",
-        "card",
+        "dexie",
         "button",
-        "label",
-        "dexie"
+        "IncomeReceiptPreview"
       ]
     },
     {
@@ -1983,10 +2010,10 @@
         "couplingScore": 3.7
       },
       "dependencies": [
-        "utils",
         "scroll-area",
-        "tabs",
-        "HorizontalScroll"
+        "HorizontalScroll",
+        "utils",
+        "tabs"
       ],
       "openQuestions": [
         "¿Cómo se maneja el versionado de fórmulas cuando cambian los precios de insumos?"
@@ -2059,10 +2086,10 @@
         "couplingScore": 2.8
       },
       "dependencies": [
-        "utils",
-        "input",
         "card",
-        "label"
+        "utils",
+        "label",
+        "input"
       ]
     },
     {
@@ -2084,12 +2111,12 @@
         "couplingScore": 2.7
       },
       "dependencies": [
-        "table",
-        "utils",
-        "index",
         "SearchBar",
+        "index",
+        "utils",
+        "skeleton",
         "BaseModal",
-        "skeleton"
+        "table"
       ]
     },
     {
@@ -2111,11 +2138,11 @@
         "couplingScore": 3.3
       },
       "dependencies": [
+        "badge",
         "utils",
-        "popover",
         "dialog",
-        "FormulaBuilder",
-        "badge"
+        "popover",
+        "FormulaBuilder"
       ],
       "openQuestions": [
         "¿Cómo se auditan los cambios históricos en las fórmulas de costos?"
@@ -2187,16 +2214,16 @@
         "couplingScore": 9.7
       },
       "dependencies": [
-        "table",
         "FormulaEditor",
-        "select",
-        "utils",
-        "input",
+        "costpro-reinicio",
         "CostSheetSectionActionsPanel",
-        "LazyRender",
-        "popover",
+        "utils",
+        "select",
+        "input",
         "button",
-        "costpro-reinicio"
+        "table",
+        "popover",
+        "LazyRender"
       ],
       "openQuestions": [
         "¿Soporta la tabla la edición concurrente por múltiples usuarios con bloqueo de fila?"
@@ -2221,12 +2248,12 @@
         "couplingScore": 7.3
       },
       "dependencies": [
-        "table",
-        "ProductInventoryPicker",
+        "ViewSwitcher",
         "utils",
         "input",
-        "ViewSwitcher",
-        "button"
+        "ProductInventoryPicker",
+        "button",
+        "table"
       ],
       "openQuestions": [
         "¿Se heredan las unidades de medida automáticamente del catálogo en el anexo?"
@@ -2251,23 +2278,23 @@
         "couplingScore": 8.2
       },
       "dependencies": [
-        "template-pizza",
-        "utils",
-        "template-furniture",
-        "input",
-        "template-icecream",
-        "template-shoes",
-        "template-industrial",
-        "template-logistics",
-        "template-lavar",
-        "costpro-ejemplo",
-        "template-juice",
         "template-pastry",
-        "supabaseClient",
-        "button",
-        "template-repair",
+        "template-furniture",
+        "template-lavar",
+        "template-pizza",
         "costpro-reinicio",
-        "template-consultancy"
+        "costpro-ejemplo",
+        "supabaseClient",
+        "template-industrial",
+        "utils",
+        "template-juice",
+        "input",
+        "template-consultancy",
+        "template-repair",
+        "button",
+        "template-logistics",
+        "template-icecream",
+        "template-shoes"
       ]
     },
     {
@@ -2289,13 +2316,13 @@
         "couplingScore": 3.6
       },
       "dependencies": [
-        "CostSheetOptionsDropdown",
+        "CostSheetHelpDropdown",
         "CostSheetGenerateDropdown",
         "utils",
         "CostSheetFCDropdown",
-        "CostSheetHelpDropdown",
-        "CostSheetModeDropdown",
-        "ActionMenu"
+        "ActionMenu",
+        "CostSheetOptionsDropdown",
+        "CostSheetModeDropdown"
       ]
     },
     {
@@ -2317,9 +2344,9 @@
         "couplingScore": 4.6
       },
       "dependencies": [
-        "utils",
         "slider",
         "CostSheetMasterRing",
+        "utils",
         "HealthBattery"
       ],
       "openQuestions": [
@@ -2367,12 +2394,12 @@
         "couplingScore": 3.0
       },
       "dependencies": [
-        "utils",
-        "validations",
-        "card",
+        "scroll-area",
         "CostSheetAuditLog",
+        "validations",
         "badge",
-        "scroll-area"
+        "card",
+        "utils"
       ],
       "openQuestions": [
         "¿Se guardan las justificaciones de aprobación en el log histórico?"
@@ -2419,11 +2446,11 @@
         "couplingScore": 4.9
       },
       "dependencies": [
-        "table",
         "utils",
+        "label",
         "input",
         "button",
-        "label"
+        "table"
       ],
       "openQuestions": [
         "¿Se validan las unidades de medida contra el catálogo en el momento de la entrada?"
@@ -2448,19 +2475,19 @@
         "couplingScore": 10
       },
       "dependencies": [
-        "table",
-        "switch",
-        "progress",
-        "utils",
         "types",
-        "CostSheetExportModal",
-        "dialog",
-        "CostProLoader",
-        "button",
-        "index",
+        "tabs",
+        "utils",
         "label",
+        "CostSheetExportModal",
+        "CostProLoader",
+        "dialog",
+        "button",
+        "table",
+        "progress",
+        "index",
         "checkbox",
-        "tabs"
+        "switch"
       ],
       "openQuestions": [
         "¿Cuál es el límite técnico de fichas que se pueden generar en una sola operación asíncrona?"
@@ -2508,8 +2535,8 @@
       },
       "dependencies": [
         "utils",
-        "CostSheetCalculator",
-        "DarianEditor"
+        "DarianEditor",
+        "CostSheetCalculator"
       ]
     },
     {
@@ -2531,8 +2558,8 @@
         "couplingScore": 1.4
       },
       "dependencies": [
-        "dropdown-menu",
-        "utils"
+        "utils",
+        "dropdown-menu"
       ]
     },
     {
@@ -2601,12 +2628,12 @@
         "couplingScore": 3.6
       },
       "dependencies": [
-        "switch",
+        "scroll-area",
+        "label",
         "dialog",
         "button",
-        "label",
         "checkbox",
-        "scroll-area"
+        "switch"
       ],
       "openQuestions": [
         "¿Se registra en la bitácora cada vez que se genera una exportación oficial de una ficha?"
@@ -2631,9 +2658,9 @@
         "couplingScore": 1.9
       },
       "dependencies": [
-        "utils",
+        "button",
         "sheet",
-        "button"
+        "utils"
       ]
     },
     {
@@ -2702,9 +2729,9 @@
         "couplingScore": 1.3
       },
       "dependencies": [
-        "button",
+        "ThemeToggle",
         "CostSheetModeDropdown",
-        "ThemeToggle"
+        "button"
       ],
       "openQuestions": [
         "¿Se personalizan los mensajes del banner según los permisos específicos del usuario?"
@@ -2797,36 +2824,36 @@
       },
       "dependencies": [
         "ViewSwitcher",
-        "LazyRender",
-        "CostSheetQuickMode",
-        "BaseModal",
-        "CostSheetSidebarNav",
-        "CostSheetMassiveGenerator",
-        "CostSheetTemplateExplorer",
-        "CostSheetBottomNav",
-        "CostSheetWizard",
-        "CostSheetSummary",
-        "CostSheetSignatureEditor",
-        "utils",
-        "CostSheetPreview",
-        "button",
-        "CostSheetHelpPanel",
-        "CostSheetModeDropdown",
-        "CostSheetNarrative",
-        "ActionMenu",
         "CostSheetActionsPanel",
-        "CostSheetCardView",
-        "CostSheetExportModal",
-        "CostSheetFormulaGuide",
-        "CostSheetAnnexEditor",
-        "CostSheetAuditView",
-        "DarianEditor",
         "CostSheetInteractiveTable",
-        "SpeedDial",
+        "CostSheetSignatureEditor",
+        "CostSheetTemplateExplorer",
+        "CostSheetSummary",
+        "CostSheetModeDropdown",
         "UpgradeModal",
+        "CostSheetNav",
+        "LazyRender",
+        "CostSheetExportModal",
+        "CostSheetHelpPanel",
+        "CostSheetMassiveGenerator",
+        "CostSheetAuditView",
+        "BaseModal",
+        "CostSheetFormulaGuide",
+        "CostSheetPreview",
+        "utils",
+        "button",
         "skeleton",
+        "DarianEditor",
+        "CostSheetQuickMode",
+        "CostSheetWizard",
+        "CostSheetSidebarNav",
+        "CostSheetCardView",
+        "CostSheetAnnexEditor",
         "CostSheetHeaderEditor",
-        "CostSheetNav"
+        "ActionMenu",
+        "SpeedDial",
+        "CostSheetNarrative",
+        "CostSheetBottomNav"
       ],
       "openQuestions": [
         "¿Soporta la vista la comparación simultánea de múltiples fichas de costo lado a lado?"
@@ -2874,9 +2901,9 @@
       },
       "dependencies": [
         "CostSheetSignature",
+        "SecurityScrollContainer",
         "CostSheetHeader",
         "CostSheetAnnexes",
-        "SecurityScrollContainer",
         "CostSheetBody"
       ]
     },
@@ -2899,8 +2926,8 @@
         "couplingScore": 2.5
       },
       "dependencies": [
-        "utils",
         "sheet",
+        "utils",
         "button"
       ],
       "openQuestions": [
@@ -2926,13 +2953,13 @@
         "couplingScore": 3.6
       },
       "dependencies": [
-        "progress",
         "CostSheetInteractiveTable",
         "CostSheetSidebarNav",
-        "button",
-        "CostSheetAnnexEditor",
+        "CostSheetSignatureEditor",
         "CostSheetHeaderEditor",
-        "CostSheetSignatureEditor"
+        "CostSheetAnnexEditor",
+        "button",
+        "progress"
       ]
     },
     {
@@ -2954,10 +2981,10 @@
         "couplingScore": 4.1
       },
       "dependencies": [
-        "ViewSwitcher",
-        "utils",
+        "button",
         "CostSheetModeDropdown",
-        "button"
+        "ViewSwitcher",
+        "utils"
       ],
       "openQuestions": [
         "¿Se filtran las acciones de aprobación basándose estrictamente en el rol de Auditor?"
@@ -2982,8 +3009,8 @@
         "couplingScore": 2.0
       },
       "dependencies": [
-        "dropdown-menu",
-        "utils"
+        "utils",
+        "dropdown-menu"
       ]
     },
     {
@@ -3005,8 +3032,8 @@
         "couplingScore": 2.1
       },
       "dependencies": [
-        "utils",
-        "slider"
+        "slider",
+        "utils"
       ],
       "openQuestions": [
         "¿Son los colores del anillo consistentes con la importancia de cada centro de costo?"
@@ -3031,8 +3058,8 @@
         "couplingScore": 1.4
       },
       "dependencies": [
-        "dropdown-menu",
-        "utils"
+        "utils",
+        "dropdown-menu"
       ],
       "openQuestions": [
         "¿Existe validación para evitar factores de conversión nulos o negativos?"
@@ -3057,11 +3084,11 @@
         "couplingScore": 2.4
       },
       "dependencies": [
-        "utils",
         "types",
-        "card",
+        "scroll-area",
         "badge",
-        "scroll-area"
+        "card",
+        "utils"
       ],
       "openQuestions": [
         "¿Se guardan los metadatos de quién autorizó un precio fuera de rango?"
@@ -3086,14 +3113,14 @@
         "couplingScore": 6.7
       },
       "dependencies": [
-        "FormulaEditor",
+        "popover",
+        "CircularProgress",
+        "CostSheetSectionActionsPanel",
         "utils",
         "input",
-        "CostSheetSectionActionsPanel",
-        "LazyRender",
-        "popover",
         "button",
-        "CircularProgress"
+        "FormulaEditor",
+        "LazyRender"
       ],
       "openQuestions": [
         "¿Se actualizan los datos de la tarjeta en tiempo real cuando cambia el catálogo maestro?"
@@ -3119,8 +3146,8 @@
       },
       "dependencies": [
         "StateRenderer",
-        "dialog",
         "AuditTimeline",
+        "dialog",
         "skeleton"
       ]
     },
@@ -3143,13 +3170,13 @@
         "couplingScore": 3.7
       },
       "dependencies": [
-        "card",
-        "CostProLoader",
-        "ReportConfigPanel",
-        "button",
-        "ReportPreview",
         "AuditLogsModal",
-        "ActionMenu"
+        "ReportConfigPanel",
+        "card",
+        "ReportPreview",
+        "CostProLoader",
+        "ActionMenu",
+        "button"
       ],
       "openQuestions": [
         "¿Se pueden guardar 'Plantillas de Reporte' personalizadas por cada usuario?"
@@ -3174,15 +3201,15 @@
         "couplingScore": 4.9
       },
       "dependencies": [
+        "card",
         "select",
         "utils",
-        "input",
-        "popover",
-        "card",
-        "button",
         "label",
-        "checkbox",
-        "command"
+        "input",
+        "command",
+        "button",
+        "popover",
+        "checkbox"
       ]
     },
     {
@@ -3204,8 +3231,8 @@
         "couplingScore": 2.0
       },
       "dependencies": [
-        "CostProLoader",
-        "card"
+        "card",
+        "CostProLoader"
       ]
     },
     {
@@ -3250,9 +3277,9 @@
         "couplingScore": 3.6
       },
       "dependencies": [
-        "roles",
         "UserForm",
-        "supabaseClient"
+        "supabaseClient",
+        "roles"
       ],
       "openQuestions": [
         "¿Cómo se maneja la consistencia de la caché de usuarios tras una edición masiva de roles?"
@@ -3327,14 +3354,14 @@
         "couplingScore": 3.9
       },
       "dependencies": [
-        "switch",
+        "SearchBar",
+        "useUsersView",
         "utils",
         "select",
         "UserFormModal",
-        "SearchBar",
+        "ActionMenu",
         "button",
-        "useUsersView",
-        "ActionMenu"
+        "switch"
       ],
       "openQuestions": [
         "¿Soporta el sistema la definición de permisos granulares por acción individual?"
@@ -3359,10 +3386,10 @@
         "couplingScore": 2.6
       },
       "dependencies": [
-        "utils",
         "SearchBar",
-        "BaseModal",
         "RoleForm",
+        "utils",
+        "BaseModal",
         "ActionMenu"
       ],
       "openQuestions": [
@@ -3388,9 +3415,9 @@
         "couplingScore": 1.7
       },
       "dependencies": [
-        "LegalConsultant",
-        "utils",
         "LegalModelForm",
+        "utils",
+        "LegalConsultant",
         "supabaseClient"
       ],
       "openQuestions": [
@@ -3464,10 +3491,10 @@
         "couplingScore": 3.0
       },
       "dependencies": [
-        "LegalPdfExporter",
+        "supabaseClient",
         "utils",
-        "number-to-words-es",
-        "supabaseClient"
+        "LegalPdfExporter",
+        "number-to-words-es"
       ],
       "openQuestions": [
         "¿Se validan las dependencias de datos (ej. si el modelo requiere SKU) antes de guardar la configuración?"
@@ -3515,12 +3542,12 @@
         "couplingScore": 5.6
       },
       "dependencies": [
-        "utils",
-        "InventoryCountCardView",
         "SearchBar",
         "SecurityScrollContainer",
-        "QueryInspector",
+        "InventoryCountCardView",
+        "utils",
         "InventoryCountTableView",
+        "QueryInspector",
         "ActionMenu"
       ],
       "openQuestions": [
@@ -3592,20 +3619,20 @@
         "couplingScore": 6.1
       },
       "dependencies": [
-        "utils",
-        "AuditSummary",
-        "HealthAgentLogs",
-        "ArchitectureAuditTable",
-        "accordion",
-        "HealthStatusHeader",
-        "dropdown-menu",
         "ViewNavigator",
-        "CostProLoader",
-        "ApplicationMetrics",
-        "InfrastructureMetrics",
+        "ReleaseGatePdfExporter",
+        "accordion",
+        "HealthAgentLogs",
         "SecurityMetrics",
+        "utils",
+        "ArchitectureAuditTable",
         "ReleaseGateStatus",
-        "ReleaseGatePdfExporter"
+        "HealthStatusHeader",
+        "ApplicationMetrics",
+        "CostProLoader",
+        "dropdown-menu",
+        "AuditSummary",
+        "InfrastructureMetrics"
       ],
       "openQuestions": [
         "¿Cómo se ponderan las métricas técnicas vs las métricas de negocio para el cálculo del SHI?"
@@ -3748,11 +3775,11 @@
         "couplingScore": 4.4
       },
       "dependencies": [
-        "table",
-        "utils",
         "sheet",
+        "badge",
+        "utils",
         "input",
-        "badge"
+        "table"
       ],
       "openQuestions": [
         "¿Quién es el responsable de responder a las 'Preguntas Críticas' registradas en la tabla?"
@@ -3777,8 +3804,8 @@
         "couplingScore": 2.0
       },
       "dependencies": [
-        "utils",
-        "badge"
+        "badge",
+        "utils"
       ]
     },
     {
@@ -3820,11 +3847,11 @@
         "couplingScore": 2.8
       },
       "dependencies": [
-        "utils",
-        "card",
+        "system-health",
         "supabaseClient",
         "badge",
-        "system-health"
+        "card",
+        "utils"
       ],
       "openQuestions": [
         "¿Se ejecutan estos procesos de auditoría en un entorno aislado para no afectar producción?"
@@ -3972,12 +3999,12 @@
         "couplingScore": 3.1
       },
       "dependencies": [
-        "utils",
         "StateRenderer",
-        "popover",
+        "toggle-group",
+        "utils",
         "useDashboardView",
         "calendar",
-        "toggle-group"
+        "popover"
       ],
       "openQuestions": [
         "¿Se actualizan los KPIs automáticamente mediante Realtime al detectar cambios en ventas?"
@@ -4002,8 +4029,8 @@
         "couplingScore": 3.9
       },
       "dependencies": [
-        "utils",
         "index",
+        "utils",
         "BaseModal",
         "ProductImage"
       ],
@@ -4030,14 +4057,14 @@
         "couplingScore": 4.9
       },
       "dependencies": [
-        "utils",
-        "index",
         "ViewSwitcher",
-        "CatalogModals",
+        "index",
+        "utils",
+        "QueryInspector",
+        "ActionMenu",
         "CostProLoader",
         "ProductImage",
-        "QueryInspector",
-        "ActionMenu"
+        "CatalogModals"
       ],
       "openQuestions": [
         "¿Cómo se maneja la herencia de atributos en productos con múltiples variantes?"
@@ -4088,11 +4115,11 @@
         "couplingScore": 2.8
       },
       "dependencies": [
+        "badge",
         "utils",
-        "input",
         "types",
-        "button",
-        "badge"
+        "input",
+        "button"
       ]
     },
     {
@@ -4114,11 +4141,11 @@
         "couplingScore": 2.5
       },
       "dependencies": [
+        "scroll-area",
+        "badge",
         "utils",
         "types",
-        "button",
-        "badge",
-        "scroll-area"
+        "button"
       ]
     },
     {
@@ -4140,18 +4167,18 @@
         "couplingScore": 4.8
       },
       "dependencies": [
+        "scroll-area",
         "WikiSearch",
-        "AsientosModule",
-        "ClasificadorModule",
         "utils",
-        "WikiBreadcrumbs",
-        "input",
+        "WikiSidebar",
         "types",
-        "CuentasModule",
+        "input",
+        "ClasificadorModule",
+        "WikiBreadcrumbs",
+        "AsientosModule",
         "button",
         "data-loader",
-        "scroll-area",
-        "WikiSidebar"
+        "CuentasModule"
       ]
     },
     {
@@ -4173,8 +4200,8 @@
         "couplingScore": 1.1
       },
       "dependencies": [
-        "utils",
-        "types"
+        "types",
+        "utils"
       ]
     },
     {
@@ -4218,8 +4245,8 @@
         "couplingScore": 1.3
       },
       "dependencies": [
-        "command",
-        "types"
+        "types",
+        "command"
       ]
     },
     {
@@ -4242,8 +4269,8 @@
       },
       "dependencies": [
         "accordion",
-        "utils",
-        "types"
+        "types",
+        "utils"
       ]
     },
     {
@@ -4258,11 +4285,11 @@
       "is_documented": true,
       "documentation_quality": 7.0,
       "metrics": {
-        "inDegree": 17,
+        "inDegree": 19,
         "outDegree": 0,
         "lines": 59,
         "cyclomaticComplexity": 4,
-        "couplingScore": 4.5
+        "couplingScore": 5.0
       },
       "dependencies": [],
       "openQuestions": [
@@ -4310,13 +4337,13 @@
         "couplingScore": 3.2
       },
       "dependencies": [
-        "utils",
         "StateRenderer",
-        "useReceptionsHistoryView",
         "SearchBar",
+        "useReceptionsHistoryView",
+        "utils",
         "QueryInspector",
-        "skeleton",
-        "ReceptionDetailsModal"
+        "ReceptionDetailsModal",
+        "skeleton"
       ]
     },
     {
@@ -4338,8 +4365,8 @@
         "couplingScore": 2.4
       },
       "dependencies": [
-        "utils",
         "skeleton",
+        "utils",
         "BaseModal"
       ]
     },
@@ -4478,8 +4505,8 @@
         "couplingScore": 1.6
       },
       "dependencies": [
-        "utils",
-        "AuditEventCard"
+        "AuditEventCard",
+        "utils"
       ],
       "openQuestions": [
         "¿Soporta la línea de tiempo el scroll infinito para visualizar meses de historial?"
@@ -4504,8 +4531,8 @@
         "couplingScore": 3.1
       },
       "dependencies": [
-        "AuditEventMeta",
         "utils",
+        "AuditEventMeta",
         "AuditEventIcon"
       ]
     },
@@ -4574,16 +4601,16 @@
         "couplingScore": 4.5
       },
       "dependencies": [
-        "AuditTableView",
-        "StateRenderer",
-        "useAuditLogsView",
-        "AuditEventIcon",
-        "AuditTimeline",
-        "skeleton",
-        "button",
         "pdf-export",
         "AuditFilters",
-        "tabs"
+        "StateRenderer",
+        "tabs",
+        "AuditTimeline",
+        "useAuditLogsView",
+        "AuditEventIcon",
+        "button",
+        "AuditTableView",
+        "skeleton"
       ],
       "openQuestions": [
         "¿Se guardan los valores 'antes' y 'después' de cada cambio en el JSON de metadatos del log?"
@@ -4657,8 +4684,8 @@
         "couplingScore": 2.2
       },
       "dependencies": [
-        "utils",
         "StateRenderer",
+        "utils",
         "BaseModal"
       ]
     },
@@ -4681,11 +4708,11 @@
         "couplingScore": 2.9
       },
       "dependencies": [
-        "CreateTransferModal",
+        "StateRenderer",
         "utils",
         "TransferDetailsModal",
-        "StateRenderer",
-        "ActionMenu"
+        "ActionMenu",
+        "CreateTransferModal"
       ]
     },
     {
@@ -4707,13 +4734,13 @@
         "couplingScore": 3.9
       },
       "dependencies": [
-        "progress",
-        "utils",
-        "demo-products",
         "card",
+        "badge",
+        "utils",
         "CostProLoader",
         "button",
-        "badge"
+        "demo-products",
+        "progress"
       ],
       "openQuestions": [
         "¿Se desactivan las mutaciones reales a la base de datos durante el modo demo?"
@@ -4784,10 +4811,10 @@
         "couplingScore": 2.9
       },
       "dependencies": [
-        "input",
         "supabaseClient",
-        "logger",
+        "input",
         "RegisterForm",
+        "logger",
         "navigation"
       ],
       "openQuestions": [
@@ -4813,8 +4840,8 @@
         "couplingScore": 1.9
       },
       "dependencies": [
-        "supabaseClient",
         "input",
+        "supabaseClient",
         "logger"
       ],
       "openQuestions": [
@@ -4840,12 +4867,12 @@
         "couplingScore": 3.3
       },
       "dependencies": [
-        "SpeedScaleDiagram",
-        "utils",
         "ThemeToggle",
+        "utils",
         "PWAInstallModal",
         "AutomationWorkflowDiagram",
-        "CostProLogo"
+        "CostProLogo",
+        "SpeedScaleDiagram"
       ],
       "openQuestions": [
         "¿Es la landing page totalmente accesible para lectores de pantalla (A11y)?"
@@ -5021,10 +5048,10 @@
         "couplingScore": 2.3
       },
       "dependencies": [
+        "offline-storage",
         "index",
         "SyncProvider",
-        "BaseModal",
-        "offline-storage"
+        "BaseModal"
       ],
       "openQuestions": [
         "¿Se guardan logs de las decisiones tomadas durante la resolución de conflictos?"
@@ -5089,7 +5116,7 @@
       "is_documented": true,
       "documentation_quality": 7.5,
       "metrics": {
-        "inDegree": 52,
+        "inDegree": 53,
         "outDegree": 1,
         "lines": 59,
         "cyclomaticComplexity": 3,
@@ -5121,8 +5148,8 @@
         "couplingScore": 1.1
       },
       "dependencies": [
-        "utils",
-        "button"
+        "button",
+        "utils"
       ],
       "openQuestions": [
         "¿Se puede personalizar el color del botón de acción según la gravedad (peligro vs info)?"
@@ -5320,8 +5347,8 @@
         "couplingScore": 1.4
       },
       "dependencies": [
-        "utils",
-        "label"
+        "label",
+        "utils"
       ],
       "openQuestions": [
         "¿Soporta el componente formularios dinámicos con campos añadidos en tiempo de ejecución?"
@@ -5619,8 +5646,8 @@
         "couplingScore": 1.8
       },
       "dependencies": [
-        "Portal",
-        "utils"
+        "utils",
+        "Portal"
       ],
       "openQuestions": [
         "¿Se filtran las opciones del SpeedDial dinámicamente según el módulo en el que se encuentre el usuario?"
@@ -5645,13 +5672,13 @@
         "couplingScore": 5.6
       },
       "dependencies": [
-        "utils",
         "sheet",
+        "utils",
         "input",
-        "separator",
+        "tooltip",
         "button",
         "skeleton",
-        "tooltip"
+        "separator"
       ],
       "openQuestions": [
         "¿Cómo se maneja el enfoque del teclado al navegar por los ítems del sidebar?"
@@ -5719,11 +5746,11 @@
       "is_documented": true,
       "documentation_quality": 7.0,
       "metrics": {
-        "inDegree": 24,
+        "inDegree": 25,
         "outDegree": 1,
         "lines": 46,
         "cyclomaticComplexity": 3,
-        "couplingScore": 6.6
+        "couplingScore": 6.8
       },
       "dependencies": [
         "utils"
@@ -5821,8 +5848,8 @@
         "couplingScore": 1.1
       },
       "dependencies": [
-        "utils",
-        "button"
+        "button",
+        "utils"
       ],
       "openQuestions": [
         "¿Soporta la paginación el salto rápido a una página específica mediante input de texto?"
@@ -5895,8 +5922,8 @@
         "couplingScore": 2.0
       },
       "dependencies": [
-        "utils",
-        "button"
+        "button",
+        "utils"
       ],
       "openQuestions": [
         "¿Soporta el carrusel el uso de diferentes alturas de contenido de forma dinámica?"
@@ -6044,8 +6071,8 @@
         "couplingScore": 1.7
       },
       "dependencies": [
-        "utils",
-        "button"
+        "button",
+        "utils"
       ],
       "openQuestions": [
         "¿Es el calendario totalmente accesible mediante navegación por teclado?"
@@ -6579,11 +6606,11 @@
       "is_documented": true,
       "documentation_quality": 7.0,
       "metrics": {
-        "inDegree": 20,
+        "inDegree": 21,
         "outDegree": 1,
         "lines": 92,
         "cyclomaticComplexity": 1,
-        "couplingScore": 5.6
+        "couplingScore": 5.8
       },
       "dependencies": [
         "utils"
@@ -7017,7 +7044,7 @@
       "is_documented": false,
       "documentation_quality": 3.0,
       "metrics": {
-        "inDegree": 184,
+        "inDegree": 185,
         "outDegree": 2,
         "lines": 149,
         "cyclomaticComplexity": 16,
@@ -7328,6 +7355,51 @@
       "dependencies": []
     },
     {
+      "id": "parser",
+      "name": "parser",
+      "type": "utility",
+      "path": "src/lib/wallet/parser.ts",
+      "health": 9.6,
+      "status": "Óptimo",
+      "lastAudit": "2026-03-10",
+      "business_logic": "[No definido en el manual] Componente técnico parser encargado de soportar la funcionalidad operativa del módulo lib.",
+      "is_documented": false,
+      "documentation_quality": 3.0,
+      "metrics": {
+        "inDegree": 2,
+        "outDegree": 1,
+        "lines": 140,
+        "cyclomaticComplexity": 26,
+        "couplingScore": 2.2
+      },
+      "dependencies": [
+        "types"
+      ]
+    },
+    {
+      "id": "types",
+      "name": "types",
+      "type": "utility",
+      "path": "src/lib/wallet/types.ts",
+      "health": 10.0,
+      "status": "Óptimo",
+      "lastAudit": "2026-03-10",
+      "business_logic": "1. Descripción: Definiciones de tipos y contratos para la capa de IA.\n2. Propósito: Proveer una base de tipos unificada (Interfaces de proveedores, Mensajes, Herramientas) que asegure la integridad del código.\n3. Flujo: Utilizado transversalmente por orquestadores, adaptadores y componentes UI (ChatBot).\n4. Dependencias: TypeScript standard types.\n5. Impacto: Facilita el mantenimiento y escalabilidad al añadir nuevos proveedores o capacidades inteligentes.\n6. Riesgos: Inconsistencias si los tipos no reflejan fielmente las estructuras cambiantes de las APIs de IA externas.\n7. Mejoras: Implementar validación de runtime (Type guards) basada en estos tipos para datos provenientes de la IA.",
+      "is_documented": true,
+      "documentation_quality": 7.0,
+      "metrics": {
+        "inDegree": 19,
+        "outDegree": 0,
+        "lines": 37,
+        "cyclomaticComplexity": 1,
+        "couplingScore": 4.9
+      },
+      "dependencies": [],
+      "openQuestions": [
+        "¿Se mantienen los tipos sincronizados con las especificaciones de OpenAI/Google más recientes?"
+      ]
+    },
+    {
       "id": "sm2",
       "name": "sm2",
       "type": "utility",
@@ -7489,8 +7561,8 @@
         "couplingScore": 0.9
       },
       "dependencies": [
-        "supabaseClient",
-        "health-engine"
+        "health-engine",
+        "supabaseClient"
       ]
     },
     {
@@ -7534,9 +7606,9 @@
         "couplingScore": 2.1
       },
       "dependencies": [
+        "engine",
         "utils",
-        "dexie",
-        "engine"
+        "dexie"
       ]
     },
     {
@@ -7551,11 +7623,11 @@
       "is_documented": false,
       "documentation_quality": 3.0,
       "metrics": {
-        "inDegree": 1,
-        "outDegree": 0,
+        "inDegree": 2,
+        "outDegree": 1,
         "lines": 69,
         "cyclomaticComplexity": 19,
-        "couplingScore": 1.1
+        "couplingScore": 1.7
       },
       "dependencies": []
     },
@@ -7598,8 +7670,8 @@
         "couplingScore": 1.7
       },
       "dependencies": [
-        "dexie",
-        "parser"
+        "parser",
+        "dexie"
       ],
       "openQuestions": [
         "¿Se manejan redondeos específicos requeridos por la normativa contable local (ej. redondeo al peso más cercano)?"
@@ -7639,7 +7711,7 @@
       "is_documented": false,
       "documentation_quality": 3.0,
       "metrics": {
-        "inDegree": 184,
+        "inDegree": 185,
         "outDegree": 2,
         "lines": 132,
         "cyclomaticComplexity": 29,
@@ -7766,11 +7838,11 @@
       "is_documented": true,
       "documentation_quality": 7.0,
       "metrics": {
-        "inDegree": 17,
+        "inDegree": 19,
         "outDegree": 0,
         "lines": 103,
         "cyclomaticComplexity": 35,
-        "couplingScore": 5.9
+        "couplingScore": 6.4
       },
       "dependencies": [],
       "openQuestions": [
@@ -7796,13 +7868,13 @@
         "couplingScore": 3.7
       },
       "dependencies": [
-        "gpt-adapter",
-        "gemini-adapter",
-        "qwen-adapter",
-        "types",
         "kimi-adapter",
+        "gpt-adapter",
+        "fallback-adapter",
+        "types",
+        "qwen-adapter",
         "deepseek-adapter",
-        "fallback-adapter"
+        "gemini-adapter"
       ],
       "openQuestions": [
         "¿Cómo se maneja la seguridad de las API keys en el orquestador?"
@@ -7820,11 +7892,11 @@
       "is_documented": true,
       "documentation_quality": 7.0,
       "metrics": {
-        "inDegree": 17,
+        "inDegree": 19,
         "outDegree": 0,
         "lines": 60,
         "cyclomaticComplexity": 18,
-        "couplingScore": 5.1
+        "couplingScore": 5.6
       },
       "dependencies": [],
       "openQuestions": [
@@ -8081,27 +8153,11 @@
     },
     {
       "from": "TerminalShell",
-      "to": "ChatBot"
-    },
-    {
-      "from": "TerminalShell",
-      "to": "utils"
-    },
-    {
-      "from": "TerminalShell",
-      "to": "MobileSafeContainer"
-    },
-    {
-      "from": "TerminalShell",
-      "to": "Sidebar"
-    },
-    {
-      "from": "TerminalShell",
       "to": "Header"
     },
     {
       "from": "TerminalShell",
-      "to": "CostProLoader"
+      "to": "ChatBot"
     },
     {
       "from": "TerminalShell",
@@ -8109,7 +8165,23 @@
     },
     {
       "from": "TerminalShell",
+      "to": "utils"
+    },
+    {
+      "from": "TerminalShell",
       "to": "CreateProductModal"
+    },
+    {
+      "from": "TerminalShell",
+      "to": "Sidebar"
+    },
+    {
+      "from": "TerminalShell",
+      "to": "CostProLoader"
+    },
+    {
+      "from": "TerminalShell",
+      "to": "MobileSafeContainer"
     },
     {
       "from": "Sidebar",
@@ -8121,19 +8193,7 @@
     },
     {
       "from": "Header",
-      "to": "utils"
-    },
-    {
-      "from": "Header",
       "to": "ThemeToggle"
-    },
-    {
-      "from": "Header",
-      "to": "dropdown-menu"
-    },
-    {
-      "from": "Header",
-      "to": "popover"
     },
     {
       "from": "Header",
@@ -8141,15 +8201,27 @@
     },
     {
       "from": "Header",
+      "to": "utils"
+    },
+    {
+      "from": "Header",
+      "to": "dropdown-menu"
+    },
+    {
+      "from": "Header",
       "to": "SyncConflictModal"
     },
     {
-      "from": "StockHistoryView",
-      "to": "utils"
+      "from": "Header",
+      "to": "popover"
     },
     {
       "from": "StockHistoryView",
       "to": "SearchBar"
+    },
+    {
+      "from": "StockHistoryView",
+      "to": "utils"
     },
     {
       "from": "StockHistoryView",
@@ -8160,6 +8232,30 @@
       "to": "ActionMenu"
     },
     {
+      "from": "WalletView",
+      "to": "badge"
+    },
+    {
+      "from": "WalletView",
+      "to": "card"
+    },
+    {
+      "from": "WalletView",
+      "to": "utils"
+    },
+    {
+      "from": "WalletView",
+      "to": "types"
+    },
+    {
+      "from": "WalletView",
+      "to": "parser"
+    },
+    {
+      "from": "WalletView",
+      "to": "button"
+    },
+    {
       "from": "CashClosureView",
       "to": "utils"
     },
@@ -8169,11 +8265,7 @@
     },
     {
       "from": "StoresManagementView",
-      "to": "utils"
-    },
-    {
-      "from": "StoresManagementView",
-      "to": "useStoresView"
+      "to": "StoreModals"
     },
     {
       "from": "StoresManagementView",
@@ -8181,7 +8273,11 @@
     },
     {
       "from": "StoresManagementView",
-      "to": "StoreModals"
+      "to": "useStoresView"
+    },
+    {
+      "from": "StoresManagementView",
+      "to": "utils"
     },
     {
       "from": "StoresManagementView",
@@ -8193,11 +8289,11 @@
     },
     {
       "from": "StoreModals",
-      "to": "input"
+      "to": "useStoresView"
     },
     {
       "from": "StoreModals",
-      "to": "useStoresView"
+      "to": "supabaseClient"
     },
     {
       "from": "StoreModals",
@@ -8205,15 +8301,15 @@
     },
     {
       "from": "StoreModals",
-      "to": "button"
-    },
-    {
-      "from": "StoreModals",
-      "to": "supabaseClient"
-    },
-    {
-      "from": "StoreModals",
       "to": "label"
+    },
+    {
+      "from": "StoreModals",
+      "to": "input"
+    },
+    {
+      "from": "StoreModals",
+      "to": "button"
     },
     {
       "from": "MasteryDashboard",
@@ -8221,11 +8317,15 @@
     },
     {
       "from": "MasteryDashboard",
-      "to": "supabaseClient"
+      "to": "card"
     },
     {
       "from": "MasteryDashboard",
-      "to": "card"
+      "to": "supabaseClient"
+    },
+    {
+      "from": "AcademyView",
+      "to": "Flashcard"
     },
     {
       "from": "AcademyView",
@@ -8240,14 +8340,6 @@
       "to": "button"
     },
     {
-      "from": "AcademyView",
-      "to": "Flashcard"
-    },
-    {
-      "from": "Flashcard",
-      "to": "utils"
-    },
-    {
       "from": "Flashcard",
       "to": "button"
     },
@@ -8256,48 +8348,8 @@
       "to": "card"
     },
     {
-      "from": "HelpView",
-      "to": "accordion"
-    },
-    {
-      "from": "HelpView",
-      "to": "SalesFlowDiagram"
-    },
-    {
-      "from": "HelpView",
+      "from": "Flashcard",
       "to": "utils"
-    },
-    {
-      "from": "HelpView",
-      "to": "DarianDiagram"
-    },
-    {
-      "from": "HelpView",
-      "to": "SecurityFlowDiagram"
-    },
-    {
-      "from": "HelpView",
-      "to": "RolesDiagram"
-    },
-    {
-      "from": "HelpView",
-      "to": "OfflineSyncDiagram"
-    },
-    {
-      "from": "HelpView",
-      "to": "button"
-    },
-    {
-      "from": "HelpView",
-      "to": "KidsOnboarding"
-    },
-    {
-      "from": "HelpView",
-      "to": "ThemeToggle"
-    },
-    {
-      "from": "HelpView",
-      "to": "InventoryFlowDiagram"
     },
     {
       "from": "HelpView",
@@ -8305,19 +8357,7 @@
     },
     {
       "from": "HelpView",
-      "to": "QuickModeMassiveDiagram"
-    },
-    {
-      "from": "HelpView",
-      "to": "CostFlowDiagram"
-    },
-    {
-      "from": "HelpView",
-      "to": "StoreSkuDiagram"
-    },
-    {
-      "from": "HelpView",
-      "to": "InventoryAdjustmentFlowDiagram"
+      "to": "SalesFlowDiagram"
     },
     {
       "from": "HelpView",
@@ -8325,11 +8365,67 @@
     },
     {
       "from": "HelpView",
+      "to": "QuickModeMassiveDiagram"
+    },
+    {
+      "from": "HelpView",
+      "to": "SecurityFlowDiagram"
+    },
+    {
+      "from": "HelpView",
       "to": "IpvFlowDiagram"
     },
     {
       "from": "HelpView",
+      "to": "OfflineSyncDiagram"
+    },
+    {
+      "from": "HelpView",
+      "to": "CostFlowDiagram"
+    },
+    {
+      "from": "HelpView",
+      "to": "InventoryFlowDiagram"
+    },
+    {
+      "from": "HelpView",
+      "to": "InventoryAdjustmentFlowDiagram"
+    },
+    {
+      "from": "HelpView",
+      "to": "utils"
+    },
+    {
+      "from": "HelpView",
+      "to": "ThemeToggle"
+    },
+    {
+      "from": "HelpView",
+      "to": "KidsOnboarding"
+    },
+    {
+      "from": "HelpView",
+      "to": "button"
+    },
+    {
+      "from": "HelpView",
+      "to": "RolesDiagram"
+    },
+    {
+      "from": "HelpView",
+      "to": "StoreSkuDiagram"
+    },
+    {
+      "from": "HelpView",
+      "to": "DarianDiagram"
+    },
+    {
+      "from": "HelpView",
       "to": "StickyCartFlowDiagram"
+    },
+    {
+      "from": "HelpView",
+      "to": "accordion"
     },
     {
       "from": "TaxCalculationModal",
@@ -8341,19 +8437,7 @@
     },
     {
       "from": "SalesHistoryView",
-      "to": "useSalesHistoryView"
-    },
-    {
-      "from": "SalesHistoryView",
-      "to": "utils"
-    },
-    {
-      "from": "SalesHistoryView",
       "to": "StateRenderer"
-    },
-    {
-      "from": "SalesHistoryView",
-      "to": "TaxCalculationModal"
     },
     {
       "from": "SalesHistoryView",
@@ -8361,23 +8445,23 @@
     },
     {
       "from": "SalesHistoryView",
-      "to": "skeleton"
+      "to": "utils"
     },
     {
       "from": "SalesHistoryView",
       "to": "TransactionDetailsModal"
     },
     {
-      "from": "TransactionDetailsModal",
-      "to": "table"
+      "from": "SalesHistoryView",
+      "to": "useSalesHistoryView"
     },
     {
-      "from": "TransactionDetailsModal",
-      "to": "utils"
+      "from": "SalesHistoryView",
+      "to": "skeleton"
     },
     {
-      "from": "TransactionDetailsModal",
-      "to": "BaseModal"
+      "from": "SalesHistoryView",
+      "to": "TaxCalculationModal"
     },
     {
       "from": "TransactionDetailsModal",
@@ -8388,27 +8472,19 @@
       "to": "badge"
     },
     {
-      "from": "StickyCartSummary",
+      "from": "TransactionDetailsModal",
       "to": "utils"
     },
     {
-      "from": "POSView",
-      "to": "ViewSwitcher"
-    },
-    {
-      "from": "POSView",
+      "from": "TransactionDetailsModal",
       "to": "BaseModal"
     },
     {
-      "from": "POSView",
-      "to": "QueryInspector"
+      "from": "TransactionDetailsModal",
+      "to": "table"
     },
     {
-      "from": "POSView",
-      "to": "POSTableView"
-    },
-    {
-      "from": "POSView",
+      "from": "StickyCartSummary",
       "to": "utils"
     },
     {
@@ -8417,23 +8493,15 @@
     },
     {
       "from": "POSView",
-      "to": "ActionMenu"
+      "to": "ViewSwitcher"
+    },
+    {
+      "from": "POSView",
+      "to": "StickyCartSummary"
     },
     {
       "from": "POSView",
       "to": "index"
-    },
-    {
-      "from": "POSView",
-      "to": "drawer"
-    },
-    {
-      "from": "POSView",
-      "to": "PriceSelectorModal"
-    },
-    {
-      "from": "POSView",
-      "to": "SearchBar"
     },
     {
       "from": "POSView",
@@ -8441,15 +8509,19 @@
     },
     {
       "from": "POSView",
-      "to": "SpeedDial"
-    },
-    {
-      "from": "POSView",
       "to": "Portal"
     },
     {
       "from": "POSView",
-      "to": "StateRenderer"
+      "to": "PriceSelectorModal"
+    },
+    {
+      "from": "POSView",
+      "to": "drawer"
+    },
+    {
+      "from": "POSView",
+      "to": "BaseModal"
     },
     {
       "from": "POSView",
@@ -8457,23 +8529,43 @@
     },
     {
       "from": "POSView",
+      "to": "StateRenderer"
+    },
+    {
+      "from": "POSView",
+      "to": "utils"
+    },
+    {
+      "from": "POSView",
+      "to": "QueryInspector"
+    },
+    {
+      "from": "POSView",
       "to": "skeleton"
     },
     {
       "from": "POSView",
-      "to": "StickyCartSummary"
+      "to": "SearchBar"
+    },
+    {
+      "from": "POSView",
+      "to": "POSTableView"
+    },
+    {
+      "from": "POSView",
+      "to": "ActionMenu"
+    },
+    {
+      "from": "POSView",
+      "to": "SpeedDial"
+    },
+    {
+      "from": "POSTableView",
+      "to": "utils"
     },
     {
       "from": "POSTableView",
       "to": "ProductImage"
-    },
-    {
-      "from": "POSTableView",
-      "to": "utils"
-    },
-    {
-      "from": "POSCart",
-      "to": "utils"
     },
     {
       "from": "POSCart",
@@ -8481,11 +8573,15 @@
     },
     {
       "from": "POSCart",
-      "to": "CostProLoader"
+      "to": "utils"
     },
     {
       "from": "POSCart",
       "to": "BaseModal"
+    },
+    {
+      "from": "POSCart",
+      "to": "CostProLoader"
     },
     {
       "from": "POSCart",
@@ -8501,19 +8597,11 @@
     },
     {
       "from": "ProductReceptionView",
-      "to": "utils"
-    },
-    {
-      "from": "ProductReceptionView",
-      "to": "index"
-    },
-    {
-      "from": "ProductReceptionView",
       "to": "SecurityScrollContainer"
     },
     {
       "from": "ProductReceptionView",
-      "to": "BaseModal"
+      "to": "index"
     },
     {
       "from": "ProductReceptionView",
@@ -8521,7 +8609,19 @@
     },
     {
       "from": "ProductReceptionView",
+      "to": "utils"
+    },
+    {
+      "from": "ProductReceptionView",
+      "to": "BaseModal"
+    },
+    {
+      "from": "ProductReceptionView",
       "to": "ActionMenu"
+    },
+    {
+      "from": "InventoryTableView",
+      "to": "utils"
     },
     {
       "from": "InventoryTableView",
@@ -8529,27 +8629,7 @@
     },
     {
       "from": "InventoryTableView",
-      "to": "utils"
-    },
-    {
-      "from": "InventoryTableView",
       "to": "CostProLoader"
-    },
-    {
-      "from": "InventoryView",
-      "to": "utils"
-    },
-    {
-      "from": "InventoryView",
-      "to": "index"
-    },
-    {
-      "from": "InventoryView",
-      "to": "ProductReceptionView"
-    },
-    {
-      "from": "InventoryView",
-      "to": "StateRenderer"
     },
     {
       "from": "InventoryView",
@@ -8557,19 +8637,19 @@
     },
     {
       "from": "InventoryView",
+      "to": "index"
+    },
+    {
+      "from": "InventoryView",
+      "to": "StateRenderer"
+    },
+    {
+      "from": "InventoryView",
       "to": "InventoryTableView"
     },
     {
       "from": "InventoryView",
-      "to": "QueryInspector"
-    },
-    {
-      "from": "InventoryView",
-      "to": "skeleton"
-    },
-    {
-      "from": "InventoryView",
-      "to": "InventoryCardView"
+      "to": "utils"
     },
     {
       "from": "InventoryView",
@@ -8577,7 +8657,23 @@
     },
     {
       "from": "InventoryView",
+      "to": "QueryInspector"
+    },
+    {
+      "from": "InventoryView",
+      "to": "InventoryCardView"
+    },
+    {
+      "from": "InventoryView",
       "to": "ActionMenu"
+    },
+    {
+      "from": "InventoryView",
+      "to": "ProductReceptionView"
+    },
+    {
+      "from": "InventoryView",
+      "to": "skeleton"
     },
     {
       "from": "InventoryAdjustmentModal",
@@ -8593,11 +8689,11 @@
     },
     {
       "from": "InventoryAdjustmentsView",
-      "to": "utils"
+      "to": "SearchBar"
     },
     {
       "from": "InventoryAdjustmentsView",
-      "to": "SearchBar"
+      "to": "utils"
     },
     {
       "from": "InventoryAdjustmentsView",
@@ -8621,7 +8717,15 @@
     },
     {
       "from": "IngestionErrorsTable",
-      "to": "table"
+      "to": "badge"
+    },
+    {
+      "from": "IngestionErrorsTable",
+      "to": "utils"
+    },
+    {
+      "from": "IngestionErrorsTable",
+      "to": "engine"
     },
     {
       "from": "IngestionErrorsTable",
@@ -8633,7 +8737,7 @@
     },
     {
       "from": "IngestionErrorsTable",
-      "to": "utils"
+      "to": "dexie"
     },
     {
       "from": "IngestionErrorsTable",
@@ -8641,15 +8745,7 @@
     },
     {
       "from": "IngestionErrorsTable",
-      "to": "engine"
-    },
-    {
-      "from": "IngestionErrorsTable",
-      "to": "dexie"
-    },
-    {
-      "from": "IngestionErrorsTable",
-      "to": "badge"
+      "to": "table"
     },
     {
       "from": "IncomeReceiptPreview",
@@ -8657,19 +8753,11 @@
     },
     {
       "from": "IPVRightSidebar",
-      "to": "tooltip"
-    },
-    {
-      "from": "IPVRightSidebar",
       "to": "button"
     },
     {
-      "from": "PivotStatementView",
-      "to": "table"
-    },
-    {
-      "from": "PivotStatementView",
-      "to": "utils"
+      "from": "IPVRightSidebar",
+      "to": "tooltip"
     },
     {
       "from": "PivotStatementView",
@@ -8677,11 +8765,31 @@
     },
     {
       "from": "PivotStatementView",
-      "to": "button"
+      "to": "utils"
     },
     {
       "from": "PivotStatementView",
       "to": "dexie"
+    },
+    {
+      "from": "PivotStatementView",
+      "to": "button"
+    },
+    {
+      "from": "PivotStatementView",
+      "to": "table"
+    },
+    {
+      "from": "IPVHelpDialog",
+      "to": "scroll-area"
+    },
+    {
+      "from": "IPVHelpDialog",
+      "to": "badge"
+    },
+    {
+      "from": "IPVHelpDialog",
+      "to": "tooltip"
     },
     {
       "from": "IPVHelpDialog",
@@ -8692,16 +8800,32 @@
       "to": "button"
     },
     {
-      "from": "IPVHelpDialog",
-      "to": "tooltip"
+      "from": "IPVView",
+      "to": "MatchingRulesEditor"
     },
     {
-      "from": "IPVHelpDialog",
+      "from": "IPVView",
+      "to": "IPVHelpDialog"
+    },
+    {
+      "from": "IPVView",
+      "to": "TransactionTable"
+    },
+    {
+      "from": "IPVView",
       "to": "badge"
     },
     {
-      "from": "IPVHelpDialog",
-      "to": "scroll-area"
+      "from": "IPVView",
+      "to": "IncomeReceiptSection"
+    },
+    {
+      "from": "IPVView",
+      "to": "LoadingOverlay"
+    },
+    {
+      "from": "IPVView",
+      "to": "TransactionBreakdown"
     },
     {
       "from": "IPVView",
@@ -8709,7 +8833,31 @@
     },
     {
       "from": "IPVView",
-      "to": "IPVRightSidebar"
+      "to": "MatchingSimulation"
+    },
+    {
+      "from": "IPVView",
+      "to": "IPVReportsDropdown"
+    },
+    {
+      "from": "IPVView",
+      "to": "IPVInstitutionalDashboard"
+    },
+    {
+      "from": "IPVView",
+      "to": "PivotStatementView"
+    },
+    {
+      "from": "IPVView",
+      "to": "tooltip"
+    },
+    {
+      "from": "IPVView",
+      "to": "TransferQRReportView"
+    },
+    {
+      "from": "IPVView",
+      "to": "dexie"
     },
     {
       "from": "IPVView",
@@ -8721,7 +8869,11 @@
     },
     {
       "from": "IPVView",
-      "to": "backup"
+      "to": "tabs"
+    },
+    {
+      "from": "IPVView",
+      "to": "card"
     },
     {
       "from": "IPVView",
@@ -8729,15 +8881,7 @@
     },
     {
       "from": "IPVView",
-      "to": "IPVReportView"
-    },
-    {
-      "from": "IPVView",
-      "to": "IncomeReceiptSection"
-    },
-    {
-      "from": "IPVView",
-      "to": "utils"
+      "to": "button"
     },
     {
       "from": "IPVView",
@@ -8745,23 +8889,7 @@
     },
     {
       "from": "IPVView",
-      "to": "IPVInstitutionalDashboard"
-    },
-    {
-      "from": "IPVView",
-      "to": "card"
-    },
-    {
-      "from": "IPVView",
-      "to": "MatchingSimulation"
-    },
-    {
-      "from": "IPVView",
-      "to": "IPVControlPanel"
-    },
-    {
-      "from": "IPVView",
-      "to": "button"
+      "to": "IPVReportView"
     },
     {
       "from": "IPVView",
@@ -8769,15 +8897,19 @@
     },
     {
       "from": "IPVView",
-      "to": "LoadingOverlay"
+      "to": "IPVControlPanel"
     },
     {
       "from": "IPVView",
-      "to": "dexie"
+      "to": "backup"
     },
     {
       "from": "IPVView",
-      "to": "tabs"
+      "to": "engine"
+    },
+    {
+      "from": "IPVView",
+      "to": "utils"
     },
     {
       "from": "IPVView",
@@ -8785,55 +8917,7 @@
     },
     {
       "from": "IPVView",
-      "to": "IPVHelpDialog"
-    },
-    {
-      "from": "IPVView",
-      "to": "MatchingRulesEditor"
-    },
-    {
-      "from": "IPVView",
-      "to": "TransactionTable"
-    },
-    {
-      "from": "IPVView",
-      "to": "engine"
-    },
-    {
-      "from": "IPVView",
-      "to": "PivotStatementView"
-    },
-    {
-      "from": "IPVView",
-      "to": "TransferQRReportView"
-    },
-    {
-      "from": "IPVView",
-      "to": "tooltip"
-    },
-    {
-      "from": "IPVView",
-      "to": "IPVReportsDropdown"
-    },
-    {
-      "from": "IPVView",
-      "to": "badge"
-    },
-    {
-      "from": "IPVView",
-      "to": "TransactionBreakdown"
-    },
-    {
-      "from": "MatchingSimulation",
-      "to": "table"
-    },
-    {
-      "from": "MatchingSimulation",
-      "to": "utils"
-    },
-    {
-      "from": "MatchingSimulation",
-      "to": "input"
+      "to": "IPVRightSidebar"
     },
     {
       "from": "MatchingSimulation",
@@ -8841,7 +8925,11 @@
     },
     {
       "from": "MatchingSimulation",
-      "to": "button"
+      "to": "badge"
+    },
+    {
+      "from": "MatchingSimulation",
+      "to": "utils"
     },
     {
       "from": "MatchingSimulation",
@@ -8849,11 +8937,35 @@
     },
     {
       "from": "MatchingSimulation",
+      "to": "input"
+    },
+    {
+      "from": "MatchingSimulation",
       "to": "dexie"
     },
     {
       "from": "MatchingSimulation",
+      "to": "button"
+    },
+    {
+      "from": "MatchingSimulation",
+      "to": "table"
+    },
+    {
+      "from": "ManualReconciliationView",
+      "to": "scroll-area"
+    },
+    {
+      "from": "ManualReconciliationView",
       "to": "badge"
+    },
+    {
+      "from": "ManualReconciliationView",
+      "to": "utils"
+    },
+    {
+      "from": "ManualReconciliationView",
+      "to": "engine"
     },
     {
       "from": "ManualReconciliationView",
@@ -8865,35 +8977,31 @@
     },
     {
       "from": "ManualReconciliationView",
-      "to": "utils"
+      "to": "dexie"
     },
     {
       "from": "ManualReconciliationView",
       "to": "button"
     },
     {
-      "from": "ManualReconciliationView",
-      "to": "engine"
-    },
-    {
-      "from": "ManualReconciliationView",
-      "to": "dexie"
-    },
-    {
-      "from": "ManualReconciliationView",
-      "to": "badge"
-    },
-    {
-      "from": "ManualReconciliationView",
+      "from": "IPVPreviewModal",
       "to": "scroll-area"
     },
     {
       "from": "IPVPreviewModal",
-      "to": "table"
+      "to": "badge"
     },
     {
       "from": "IPVPreviewModal",
       "to": "utils"
+    },
+    {
+      "from": "IPVPreviewModal",
+      "to": "label"
+    },
+    {
+      "from": "IPVPreviewModal",
+      "to": "dexie"
     },
     {
       "from": "IPVPreviewModal",
@@ -8905,39 +9013,15 @@
     },
     {
       "from": "IPVPreviewModal",
-      "to": "label"
+      "to": "table"
     },
     {
       "from": "IPVPreviewModal",
       "to": "checkbox"
     },
     {
-      "from": "IPVPreviewModal",
-      "to": "dexie"
-    },
-    {
-      "from": "IPVPreviewModal",
-      "to": "badge"
-    },
-    {
-      "from": "IPVPreviewModal",
-      "to": "scroll-area"
-    },
-    {
-      "from": "MatchingRulesEditor",
-      "to": "switch"
-    },
-    {
-      "from": "MatchingRulesEditor",
-      "to": "input"
-    },
-    {
       "from": "MatchingRulesEditor",
       "to": "card"
-    },
-    {
-      "from": "MatchingRulesEditor",
-      "to": "button"
     },
     {
       "from": "MatchingRulesEditor",
@@ -8945,11 +9029,23 @@
     },
     {
       "from": "MatchingRulesEditor",
+      "to": "input"
+    },
+    {
+      "from": "MatchingRulesEditor",
       "to": "dexie"
     },
     {
+      "from": "MatchingRulesEditor",
+      "to": "button"
+    },
+    {
+      "from": "MatchingRulesEditor",
+      "to": "switch"
+    },
+    {
       "from": "TransactionBreakdown",
-      "to": "table"
+      "to": "badge"
     },
     {
       "from": "TransactionBreakdown",
@@ -8958,6 +9054,10 @@
     {
       "from": "TransactionBreakdown",
       "to": "input"
+    },
+    {
+      "from": "TransactionBreakdown",
+      "to": "dexie"
     },
     {
       "from": "TransactionBreakdown",
@@ -8969,27 +9069,7 @@
     },
     {
       "from": "TransactionBreakdown",
-      "to": "dexie"
-    },
-    {
-      "from": "TransactionBreakdown",
-      "to": "badge"
-    },
-    {
-      "from": "TransferQRReportView",
       "to": "table"
-    },
-    {
-      "from": "TransferQRReportView",
-      "to": "utils"
-    },
-    {
-      "from": "TransferQRReportView",
-      "to": "input"
-    },
-    {
-      "from": "TransferQRReportView",
-      "to": "card"
     },
     {
       "from": "TransferQRReportView",
@@ -8997,7 +9077,15 @@
     },
     {
       "from": "TransferQRReportView",
-      "to": "button"
+      "to": "card"
+    },
+    {
+      "from": "TransferQRReportView",
+      "to": "badge"
+    },
+    {
+      "from": "TransferQRReportView",
+      "to": "utils"
     },
     {
       "from": "TransferQRReportView",
@@ -9005,11 +9093,19 @@
     },
     {
       "from": "TransferQRReportView",
+      "to": "input"
+    },
+    {
+      "from": "TransferQRReportView",
       "to": "dexie"
     },
     {
       "from": "TransferQRReportView",
-      "to": "badge"
+      "to": "button"
+    },
+    {
+      "from": "TransferQRReportView",
+      "to": "table"
     },
     {
       "from": "AddTransactionModal",
@@ -9017,7 +9113,19 @@
     },
     {
       "from": "AddTransactionModal",
+      "to": "label"
+    },
+    {
+      "from": "AddTransactionModal",
+      "to": "engine"
+    },
+    {
+      "from": "AddTransactionModal",
       "to": "input"
+    },
+    {
+      "from": "AddTransactionModal",
+      "to": "dexie"
     },
     {
       "from": "AddTransactionModal",
@@ -9028,40 +9136,16 @@
       "to": "button"
     },
     {
-      "from": "AddTransactionModal",
-      "to": "label"
-    },
-    {
-      "from": "AddTransactionModal",
-      "to": "engine"
-    },
-    {
-      "from": "AddTransactionModal",
-      "to": "dexie"
-    },
-    {
-      "from": "IPVReportView",
-      "to": "table"
-    },
-    {
-      "from": "IPVReportView",
-      "to": "utils"
-    },
-    {
-      "from": "IPVReportView",
-      "to": "input"
-    },
-    {
-      "from": "IPVReportView",
-      "to": "BaseModal"
-    },
-    {
       "from": "IPVReportView",
       "to": "IPVPreviewModal"
     },
     {
       "from": "IPVReportView",
-      "to": "button"
+      "to": "badge"
+    },
+    {
+      "from": "IPVReportView",
+      "to": "utils"
     },
     {
       "from": "IPVReportView",
@@ -9069,6 +9153,14 @@
     },
     {
       "from": "IPVReportView",
+      "to": "BaseModal"
+    },
+    {
+      "from": "IPVReportView",
+      "to": "input"
+    },
+    {
+      "from": "IPVReportView",
       "to": "tooltip"
     },
     {
@@ -9077,11 +9169,11 @@
     },
     {
       "from": "IPVReportView",
-      "to": "badge"
+      "to": "button"
     },
     {
-      "from": "IPVControlPanel",
-      "to": "card"
+      "from": "IPVReportView",
+      "to": "table"
     },
     {
       "from": "IPVControlPanel",
@@ -9089,7 +9181,11 @@
     },
     {
       "from": "IPVControlPanel",
-      "to": "button"
+      "to": "badge"
+    },
+    {
+      "from": "IPVControlPanel",
+      "to": "card"
     },
     {
       "from": "IPVControlPanel",
@@ -9101,42 +9197,6 @@
     },
     {
       "from": "IPVControlPanel",
-      "to": "badge"
-    },
-    {
-      "from": "CatalogTable",
-      "to": "table"
-    },
-    {
-      "from": "CatalogTable",
-      "to": "switch"
-    },
-    {
-      "from": "CatalogTable",
-      "to": "utils"
-    },
-    {
-      "from": "CatalogTable",
-      "to": "input"
-    },
-    {
-      "from": "CatalogTable",
-      "to": "roles"
-    },
-    {
-      "from": "CatalogTable",
-      "to": "BaseModal"
-    },
-    {
-      "from": "CatalogTable",
-      "to": "card"
-    },
-    {
-      "from": "CatalogTable",
-      "to": "utils"
-    },
-    {
-      "from": "CatalogTable",
       "to": "button"
     },
     {
@@ -9145,11 +9205,31 @@
     },
     {
       "from": "CatalogTable",
+      "to": "badge"
+    },
+    {
+      "from": "CatalogTable",
+      "to": "card"
+    },
+    {
+      "from": "CatalogTable",
+      "to": "utils"
+    },
+    {
+      "from": "CatalogTable",
+      "to": "BaseModal"
+    },
+    {
+      "from": "CatalogTable",
       "to": "label"
     },
     {
       "from": "CatalogTable",
-      "to": "tooltip"
+      "to": "input"
+    },
+    {
+      "from": "CatalogTable",
+      "to": "intelligence"
     },
     {
       "from": "CatalogTable",
@@ -9157,27 +9237,31 @@
     },
     {
       "from": "CatalogTable",
-      "to": "badge"
+      "to": "utils"
     },
     {
       "from": "CatalogTable",
-      "to": "intelligence"
+      "to": "roles"
     },
     {
-      "from": "TransactionTable",
+      "from": "CatalogTable",
+      "to": "tooltip"
+    },
+    {
+      "from": "CatalogTable",
+      "to": "button"
+    },
+    {
+      "from": "CatalogTable",
       "to": "table"
     },
     {
-      "from": "TransactionTable",
+      "from": "CatalogTable",
       "to": "switch"
     },
     {
       "from": "TransactionTable",
-      "to": "utils"
-    },
-    {
-      "from": "TransactionTable",
-      "to": "input"
+      "to": "scroll-area"
     },
     {
       "from": "TransactionTable",
@@ -9185,7 +9269,7 @@
     },
     {
       "from": "TransactionTable",
-      "to": "BaseModal"
+      "to": "badge"
     },
     {
       "from": "TransactionTable",
@@ -9193,23 +9277,11 @@
     },
     {
       "from": "TransactionTable",
-      "to": "dialog"
+      "to": "utils"
     },
     {
       "from": "TransactionTable",
-      "to": "button"
-    },
-    {
-      "from": "TransactionTable",
-      "to": "tooltip"
-    },
-    {
-      "from": "TransactionTable",
-      "to": "AddTransactionModal"
-    },
-    {
-      "from": "TransactionTable",
-      "to": "checkbox"
+      "to": "BaseModal"
     },
     {
       "from": "TransactionTable",
@@ -9221,23 +9293,39 @@
     },
     {
       "from": "TransactionTable",
+      "to": "input"
+    },
+    {
+      "from": "TransactionTable",
+      "to": "tooltip"
+    },
+    {
+      "from": "TransactionTable",
       "to": "dexie"
     },
     {
       "from": "TransactionTable",
-      "to": "badge"
+      "to": "dialog"
     },
     {
       "from": "TransactionTable",
-      "to": "scroll-area"
+      "to": "AddTransactionModal"
     },
     {
-      "from": "IPVInstitutionalDashboard",
-      "to": "utils"
+      "from": "TransactionTable",
+      "to": "table"
     },
     {
-      "from": "IPVInstitutionalDashboard",
-      "to": "calculations"
+      "from": "TransactionTable",
+      "to": "button"
+    },
+    {
+      "from": "TransactionTable",
+      "to": "checkbox"
+    },
+    {
+      "from": "TransactionTable",
+      "to": "switch"
     },
     {
       "from": "IPVInstitutionalDashboard",
@@ -9245,7 +9333,15 @@
     },
     {
       "from": "IPVInstitutionalDashboard",
-      "to": "button"
+      "to": "utils"
+    },
+    {
+      "from": "IPVInstitutionalDashboard",
+      "to": "badge"
+    },
+    {
+      "from": "IPVInstitutionalDashboard",
+      "to": "calculations"
     },
     {
       "from": "IPVInstitutionalDashboard",
@@ -9253,7 +9349,11 @@
     },
     {
       "from": "IPVInstitutionalDashboard",
-      "to": "badge"
+      "to": "button"
+    },
+    {
+      "from": "IPVReportsDropdown",
+      "to": "button"
     },
     {
       "from": "IPVReportsDropdown",
@@ -9264,24 +9364,8 @@
       "to": "dropdown-menu"
     },
     {
-      "from": "IPVReportsDropdown",
-      "to": "button"
-    },
-    {
-      "from": "BankIngestion",
-      "to": "bandecParser"
-    },
-    {
       "from": "BankIngestion",
       "to": "BaseModal"
-    },
-    {
-      "from": "BankIngestion",
-      "to": "utils"
-    },
-    {
-      "from": "BankIngestion",
-      "to": "button"
     },
     {
       "from": "BankIngestion",
@@ -9289,7 +9373,27 @@
     },
     {
       "from": "BankIngestion",
+      "to": "utils"
+    },
+    {
+      "from": "BankIngestion",
       "to": "dexie"
+    },
+    {
+      "from": "BankIngestion",
+      "to": "button"
+    },
+    {
+      "from": "BankIngestion",
+      "to": "bandecParser"
+    },
+    {
+      "from": "IncomeReceiptSection",
+      "to": "card"
+    },
+    {
+      "from": "IncomeReceiptSection",
+      "to": "label"
     },
     {
       "from": "IncomeReceiptSection",
@@ -9301,11 +9405,7 @@
     },
     {
       "from": "IncomeReceiptSection",
-      "to": "IncomeReceiptPreview"
-    },
-    {
-      "from": "IncomeReceiptSection",
-      "to": "card"
+      "to": "dexie"
     },
     {
       "from": "IncomeReceiptSection",
@@ -9313,11 +9413,7 @@
     },
     {
       "from": "IncomeReceiptSection",
-      "to": "label"
-    },
-    {
-      "from": "IncomeReceiptSection",
-      "to": "dexie"
+      "to": "IncomeReceiptPreview"
     },
     {
       "from": "CostSheetQuickMode",
@@ -9333,19 +9429,19 @@
     },
     {
       "from": "FormulaBuilder",
-      "to": "utils"
-    },
-    {
-      "from": "FormulaBuilder",
       "to": "scroll-area"
     },
     {
       "from": "FormulaBuilder",
-      "to": "tabs"
+      "to": "HorizontalScroll"
     },
     {
       "from": "FormulaBuilder",
-      "to": "HorizontalScroll"
+      "to": "utils"
+    },
+    {
+      "from": "FormulaBuilder",
+      "to": "tabs"
     },
     {
       "from": "CostSheetCalculator",
@@ -9353,31 +9449,19 @@
     },
     {
       "from": "CostSheetHeaderEditor",
-      "to": "utils"
-    },
-    {
-      "from": "CostSheetHeaderEditor",
-      "to": "input"
-    },
-    {
-      "from": "CostSheetHeaderEditor",
       "to": "card"
+    },
+    {
+      "from": "CostSheetHeaderEditor",
+      "to": "utils"
     },
     {
       "from": "CostSheetHeaderEditor",
       "to": "label"
     },
     {
-      "from": "ProductInventoryPicker",
-      "to": "table"
-    },
-    {
-      "from": "ProductInventoryPicker",
-      "to": "utils"
-    },
-    {
-      "from": "ProductInventoryPicker",
-      "to": "index"
+      "from": "CostSheetHeaderEditor",
+      "to": "input"
     },
     {
       "from": "ProductInventoryPicker",
@@ -9385,11 +9469,27 @@
     },
     {
       "from": "ProductInventoryPicker",
-      "to": "BaseModal"
+      "to": "index"
+    },
+    {
+      "from": "ProductInventoryPicker",
+      "to": "utils"
     },
     {
       "from": "ProductInventoryPicker",
       "to": "skeleton"
+    },
+    {
+      "from": "ProductInventoryPicker",
+      "to": "BaseModal"
+    },
+    {
+      "from": "ProductInventoryPicker",
+      "to": "table"
+    },
+    {
+      "from": "FormulaEditor",
+      "to": "badge"
     },
     {
       "from": "FormulaEditor",
@@ -9397,19 +9497,15 @@
     },
     {
       "from": "FormulaEditor",
-      "to": "popover"
-    },
-    {
-      "from": "FormulaEditor",
       "to": "dialog"
     },
     {
       "from": "FormulaEditor",
-      "to": "FormulaBuilder"
+      "to": "popover"
     },
     {
       "from": "FormulaEditor",
-      "to": "badge"
+      "to": "FormulaBuilder"
     },
     {
       "from": "CostSheetBody",
@@ -9421,23 +9517,11 @@
     },
     {
       "from": "CostSheetInteractiveTable",
-      "to": "table"
-    },
-    {
-      "from": "CostSheetInteractiveTable",
       "to": "FormulaEditor"
     },
     {
       "from": "CostSheetInteractiveTable",
-      "to": "select"
-    },
-    {
-      "from": "CostSheetInteractiveTable",
-      "to": "utils"
-    },
-    {
-      "from": "CostSheetInteractiveTable",
-      "to": "input"
+      "to": "costpro-reinicio"
     },
     {
       "from": "CostSheetInteractiveTable",
@@ -9445,7 +9529,23 @@
     },
     {
       "from": "CostSheetInteractiveTable",
-      "to": "LazyRender"
+      "to": "utils"
+    },
+    {
+      "from": "CostSheetInteractiveTable",
+      "to": "select"
+    },
+    {
+      "from": "CostSheetInteractiveTable",
+      "to": "input"
+    },
+    {
+      "from": "CostSheetInteractiveTable",
+      "to": "button"
+    },
+    {
+      "from": "CostSheetInteractiveTable",
+      "to": "table"
     },
     {
       "from": "CostSheetInteractiveTable",
@@ -9453,27 +9553,7 @@
     },
     {
       "from": "CostSheetInteractiveTable",
-      "to": "button"
-    },
-    {
-      "from": "CostSheetInteractiveTable",
-      "to": "costpro-reinicio"
-    },
-    {
-      "from": "CostSheetAnnexEditor",
-      "to": "table"
-    },
-    {
-      "from": "CostSheetAnnexEditor",
-      "to": "ProductInventoryPicker"
-    },
-    {
-      "from": "CostSheetAnnexEditor",
-      "to": "utils"
-    },
-    {
-      "from": "CostSheetAnnexEditor",
-      "to": "input"
+      "to": "LazyRender"
     },
     {
       "from": "CostSheetAnnexEditor",
@@ -9481,15 +9561,27 @@
     },
     {
       "from": "CostSheetAnnexEditor",
+      "to": "utils"
+    },
+    {
+      "from": "CostSheetAnnexEditor",
+      "to": "input"
+    },
+    {
+      "from": "CostSheetAnnexEditor",
+      "to": "ProductInventoryPicker"
+    },
+    {
+      "from": "CostSheetAnnexEditor",
       "to": "button"
     },
     {
-      "from": "CostSheetTemplateExplorer",
-      "to": "template-pizza"
+      "from": "CostSheetAnnexEditor",
+      "to": "table"
     },
     {
       "from": "CostSheetTemplateExplorer",
-      "to": "utils"
+      "to": "template-pastry"
     },
     {
       "from": "CostSheetTemplateExplorer",
@@ -9497,7 +9589,55 @@
     },
     {
       "from": "CostSheetTemplateExplorer",
+      "to": "template-lavar"
+    },
+    {
+      "from": "CostSheetTemplateExplorer",
+      "to": "template-pizza"
+    },
+    {
+      "from": "CostSheetTemplateExplorer",
+      "to": "costpro-reinicio"
+    },
+    {
+      "from": "CostSheetTemplateExplorer",
+      "to": "costpro-ejemplo"
+    },
+    {
+      "from": "CostSheetTemplateExplorer",
+      "to": "supabaseClient"
+    },
+    {
+      "from": "CostSheetTemplateExplorer",
+      "to": "template-industrial"
+    },
+    {
+      "from": "CostSheetTemplateExplorer",
+      "to": "utils"
+    },
+    {
+      "from": "CostSheetTemplateExplorer",
+      "to": "template-juice"
+    },
+    {
+      "from": "CostSheetTemplateExplorer",
       "to": "input"
+    },
+    {
+      "from": "CostSheetTemplateExplorer",
+      "to": "template-consultancy"
+    },
+    {
+      "from": "CostSheetTemplateExplorer",
+      "to": "template-repair"
+    },
+    {
+      "from": "CostSheetTemplateExplorer",
+      "to": "button"
+    },
+    {
+      "from": "CostSheetTemplateExplorer",
+      "to": "template-logistics"
     },
     {
       "from": "CostSheetTemplateExplorer",
@@ -9508,52 +9648,8 @@
       "to": "template-shoes"
     },
     {
-      "from": "CostSheetTemplateExplorer",
-      "to": "template-industrial"
-    },
-    {
-      "from": "CostSheetTemplateExplorer",
-      "to": "template-logistics"
-    },
-    {
-      "from": "CostSheetTemplateExplorer",
-      "to": "template-lavar"
-    },
-    {
-      "from": "CostSheetTemplateExplorer",
-      "to": "costpro-ejemplo"
-    },
-    {
-      "from": "CostSheetTemplateExplorer",
-      "to": "template-juice"
-    },
-    {
-      "from": "CostSheetTemplateExplorer",
-      "to": "template-pastry"
-    },
-    {
-      "from": "CostSheetTemplateExplorer",
-      "to": "supabaseClient"
-    },
-    {
-      "from": "CostSheetTemplateExplorer",
-      "to": "button"
-    },
-    {
-      "from": "CostSheetTemplateExplorer",
-      "to": "template-repair"
-    },
-    {
-      "from": "CostSheetTemplateExplorer",
-      "to": "costpro-reinicio"
-    },
-    {
-      "from": "CostSheetTemplateExplorer",
-      "to": "template-consultancy"
-    },
-    {
       "from": "CostSheetNav",
-      "to": "CostSheetOptionsDropdown"
+      "to": "CostSheetHelpDropdown"
     },
     {
       "from": "CostSheetNav",
@@ -9569,19 +9665,15 @@
     },
     {
       "from": "CostSheetNav",
-      "to": "CostSheetHelpDropdown"
+      "to": "ActionMenu"
+    },
+    {
+      "from": "CostSheetNav",
+      "to": "CostSheetOptionsDropdown"
     },
     {
       "from": "CostSheetNav",
       "to": "CostSheetModeDropdown"
-    },
-    {
-      "from": "CostSheetNav",
-      "to": "ActionMenu"
-    },
-    {
-      "from": "CostSheetSummary",
-      "to": "utils"
     },
     {
       "from": "CostSheetSummary",
@@ -9593,6 +9685,10 @@
     },
     {
       "from": "CostSheetSummary",
+      "to": "utils"
+    },
+    {
+      "from": "CostSheetSummary",
       "to": "HealthBattery"
     },
     {
@@ -9601,15 +9697,7 @@
     },
     {
       "from": "CostSheetAuditView",
-      "to": "utils"
-    },
-    {
-      "from": "CostSheetAuditView",
-      "to": "validations"
-    },
-    {
-      "from": "CostSheetAuditView",
-      "to": "card"
+      "to": "scroll-area"
     },
     {
       "from": "CostSheetAuditView",
@@ -9617,11 +9705,19 @@
     },
     {
       "from": "CostSheetAuditView",
+      "to": "validations"
+    },
+    {
+      "from": "CostSheetAuditView",
       "to": "badge"
     },
     {
       "from": "CostSheetAuditView",
-      "to": "scroll-area"
+      "to": "card"
+    },
+    {
+      "from": "CostSheetAuditView",
+      "to": "utils"
     },
     {
       "from": "CostSheetHelpDropdown",
@@ -9629,11 +9725,11 @@
     },
     {
       "from": "CostSheetForm",
-      "to": "table"
+      "to": "utils"
     },
     {
       "from": "CostSheetForm",
-      "to": "utils"
+      "to": "label"
     },
     {
       "from": "CostSheetForm",
@@ -9645,23 +9741,7 @@
     },
     {
       "from": "CostSheetForm",
-      "to": "label"
-    },
-    {
-      "from": "CostSheetMassiveGenerator",
       "to": "table"
-    },
-    {
-      "from": "CostSheetMassiveGenerator",
-      "to": "switch"
-    },
-    {
-      "from": "CostSheetMassiveGenerator",
-      "to": "progress"
-    },
-    {
-      "from": "CostSheetMassiveGenerator",
-      "to": "utils"
     },
     {
       "from": "CostSheetMassiveGenerator",
@@ -9669,23 +9749,11 @@
     },
     {
       "from": "CostSheetMassiveGenerator",
-      "to": "CostSheetExportModal"
+      "to": "tabs"
     },
     {
       "from": "CostSheetMassiveGenerator",
-      "to": "dialog"
-    },
-    {
-      "from": "CostSheetMassiveGenerator",
-      "to": "CostProLoader"
-    },
-    {
-      "from": "CostSheetMassiveGenerator",
-      "to": "button"
-    },
-    {
-      "from": "CostSheetMassiveGenerator",
-      "to": "index"
+      "to": "utils"
     },
     {
       "from": "CostSheetMassiveGenerator",
@@ -9693,11 +9761,39 @@
     },
     {
       "from": "CostSheetMassiveGenerator",
+      "to": "CostSheetExportModal"
+    },
+    {
+      "from": "CostSheetMassiveGenerator",
+      "to": "CostProLoader"
+    },
+    {
+      "from": "CostSheetMassiveGenerator",
+      "to": "dialog"
+    },
+    {
+      "from": "CostSheetMassiveGenerator",
+      "to": "button"
+    },
+    {
+      "from": "CostSheetMassiveGenerator",
+      "to": "table"
+    },
+    {
+      "from": "CostSheetMassiveGenerator",
+      "to": "progress"
+    },
+    {
+      "from": "CostSheetMassiveGenerator",
+      "to": "index"
+    },
+    {
+      "from": "CostSheetMassiveGenerator",
       "to": "checkbox"
     },
     {
       "from": "CostSheetMassiveGenerator",
-      "to": "tabs"
+      "to": "switch"
     },
     {
       "from": "DarianEditor",
@@ -9709,19 +9805,19 @@
     },
     {
       "from": "CostSheetSidePanel",
-      "to": "CostSheetCalculator"
-    },
-    {
-      "from": "CostSheetSidePanel",
       "to": "DarianEditor"
     },
     {
-      "from": "CostSheetBottomNav",
-      "to": "dropdown-menu"
+      "from": "CostSheetSidePanel",
+      "to": "CostSheetCalculator"
     },
     {
       "from": "CostSheetBottomNav",
       "to": "utils"
+    },
+    {
+      "from": "CostSheetBottomNav",
+      "to": "dropdown-menu"
     },
     {
       "from": "CostSheetAnnexes",
@@ -9733,7 +9829,11 @@
     },
     {
       "from": "CostSheetExportModal",
-      "to": "switch"
+      "to": "scroll-area"
+    },
+    {
+      "from": "CostSheetExportModal",
+      "to": "label"
     },
     {
       "from": "CostSheetExportModal",
@@ -9745,19 +9845,15 @@
     },
     {
       "from": "CostSheetExportModal",
-      "to": "label"
-    },
-    {
-      "from": "CostSheetExportModal",
       "to": "checkbox"
     },
     {
       "from": "CostSheetExportModal",
-      "to": "scroll-area"
+      "to": "switch"
     },
     {
       "from": "CostSheetSectionActionsPanel",
-      "to": "utils"
+      "to": "button"
     },
     {
       "from": "CostSheetSectionActionsPanel",
@@ -9765,7 +9861,7 @@
     },
     {
       "from": "CostSheetSectionActionsPanel",
-      "to": "button"
+      "to": "utils"
     },
     {
       "from": "CostSheetFormulaGuide",
@@ -9777,7 +9873,7 @@
     },
     {
       "from": "CostSheetBanner",
-      "to": "button"
+      "to": "ThemeToggle"
     },
     {
       "from": "CostSheetBanner",
@@ -9785,7 +9881,7 @@
     },
     {
       "from": "CostSheetBanner",
-      "to": "ThemeToggle"
+      "to": "button"
     },
     {
       "from": "CostSheetHelpPanel",
@@ -9809,99 +9905,7 @@
     },
     {
       "from": "CostSheetView",
-      "to": "LazyRender"
-    },
-    {
-      "from": "CostSheetView",
-      "to": "CostSheetQuickMode"
-    },
-    {
-      "from": "CostSheetView",
-      "to": "BaseModal"
-    },
-    {
-      "from": "CostSheetView",
-      "to": "CostSheetSidebarNav"
-    },
-    {
-      "from": "CostSheetView",
-      "to": "CostSheetMassiveGenerator"
-    },
-    {
-      "from": "CostSheetView",
-      "to": "CostSheetTemplateExplorer"
-    },
-    {
-      "from": "CostSheetView",
-      "to": "CostSheetBottomNav"
-    },
-    {
-      "from": "CostSheetView",
-      "to": "CostSheetWizard"
-    },
-    {
-      "from": "CostSheetView",
-      "to": "CostSheetSummary"
-    },
-    {
-      "from": "CostSheetView",
-      "to": "CostSheetSignatureEditor"
-    },
-    {
-      "from": "CostSheetView",
-      "to": "utils"
-    },
-    {
-      "from": "CostSheetView",
-      "to": "CostSheetPreview"
-    },
-    {
-      "from": "CostSheetView",
-      "to": "button"
-    },
-    {
-      "from": "CostSheetView",
-      "to": "CostSheetHelpPanel"
-    },
-    {
-      "from": "CostSheetView",
-      "to": "CostSheetModeDropdown"
-    },
-    {
-      "from": "CostSheetView",
-      "to": "CostSheetNarrative"
-    },
-    {
-      "from": "CostSheetView",
-      "to": "ActionMenu"
-    },
-    {
-      "from": "CostSheetView",
       "to": "CostSheetActionsPanel"
-    },
-    {
-      "from": "CostSheetView",
-      "to": "CostSheetCardView"
-    },
-    {
-      "from": "CostSheetView",
-      "to": "CostSheetExportModal"
-    },
-    {
-      "from": "CostSheetView",
-      "to": "CostSheetFormulaGuide"
-    },
-    {
-      "from": "CostSheetView",
-      "to": "CostSheetAnnexEditor"
-    },
-    {
-      "from": "CostSheetView",
-      "to": "CostSheetAuditView"
-    },
-    {
-      "from": "CostSheetView",
-      "to": "DarianEditor"
     },
     {
       "from": "CostSheetView",
@@ -9909,7 +9913,19 @@
     },
     {
       "from": "CostSheetView",
-      "to": "SpeedDial"
+      "to": "CostSheetSignatureEditor"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "CostSheetTemplateExplorer"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "CostSheetSummary"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "CostSheetModeDropdown"
     },
     {
       "from": "CostSheetView",
@@ -9917,7 +9933,75 @@
     },
     {
       "from": "CostSheetView",
+      "to": "CostSheetNav"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "LazyRender"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "CostSheetExportModal"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "CostSheetHelpPanel"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "CostSheetMassiveGenerator"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "CostSheetAuditView"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "BaseModal"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "CostSheetFormulaGuide"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "CostSheetPreview"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "utils"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "button"
+    },
+    {
+      "from": "CostSheetView",
       "to": "skeleton"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "DarianEditor"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "CostSheetQuickMode"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "CostSheetWizard"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "CostSheetSidebarNav"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "CostSheetCardView"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "CostSheetAnnexEditor"
     },
     {
       "from": "CostSheetView",
@@ -9925,7 +10009,19 @@
     },
     {
       "from": "CostSheetView",
-      "to": "CostSheetNav"
+      "to": "ActionMenu"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "SpeedDial"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "CostSheetNarrative"
+    },
+    {
+      "from": "CostSheetView",
+      "to": "CostSheetBottomNav"
     },
     {
       "from": "CircularProgress",
@@ -9937,6 +10033,10 @@
     },
     {
       "from": "CostSheetPreview",
+      "to": "SecurityScrollContainer"
+    },
+    {
+      "from": "CostSheetPreview",
       "to": "CostSheetHeader"
     },
     {
@@ -9945,15 +10045,7 @@
     },
     {
       "from": "CostSheetPreview",
-      "to": "SecurityScrollContainer"
-    },
-    {
-      "from": "CostSheetPreview",
       "to": "CostSheetBody"
-    },
-    {
-      "from": "CostSheetSidebarNav",
-      "to": "utils"
     },
     {
       "from": "CostSheetSidebarNav",
@@ -9961,11 +10053,11 @@
     },
     {
       "from": "CostSheetSidebarNav",
-      "to": "button"
+      "to": "utils"
     },
     {
-      "from": "CostSheetWizard",
-      "to": "progress"
+      "from": "CostSheetSidebarNav",
+      "to": "button"
     },
     {
       "from": "CostSheetWizard",
@@ -9977,11 +10069,7 @@
     },
     {
       "from": "CostSheetWizard",
-      "to": "button"
-    },
-    {
-      "from": "CostSheetWizard",
-      "to": "CostSheetAnnexEditor"
+      "to": "CostSheetSignatureEditor"
     },
     {
       "from": "CostSheetWizard",
@@ -9989,7 +10077,23 @@
     },
     {
       "from": "CostSheetWizard",
-      "to": "CostSheetSignatureEditor"
+      "to": "CostSheetAnnexEditor"
+    },
+    {
+      "from": "CostSheetWizard",
+      "to": "button"
+    },
+    {
+      "from": "CostSheetWizard",
+      "to": "progress"
+    },
+    {
+      "from": "CostSheetActionsPanel",
+      "to": "button"
+    },
+    {
+      "from": "CostSheetActionsPanel",
+      "to": "CostSheetModeDropdown"
     },
     {
       "from": "CostSheetActionsPanel",
@@ -10000,40 +10104,28 @@
       "to": "utils"
     },
     {
-      "from": "CostSheetActionsPanel",
-      "to": "CostSheetModeDropdown"
-    },
-    {
-      "from": "CostSheetActionsPanel",
-      "to": "button"
+      "from": "CostSheetModeDropdown",
+      "to": "utils"
     },
     {
       "from": "CostSheetModeDropdown",
       "to": "dropdown-menu"
-    },
-    {
-      "from": "CostSheetModeDropdown",
-      "to": "utils"
-    },
-    {
-      "from": "CostSheetMasterRing",
-      "to": "utils"
     },
     {
       "from": "CostSheetMasterRing",
       "to": "slider"
     },
     {
+      "from": "CostSheetMasterRing",
+      "to": "utils"
+    },
+    {
+      "from": "CostSheetFCDropdown",
+      "to": "utils"
+    },
+    {
       "from": "CostSheetFCDropdown",
       "to": "dropdown-menu"
-    },
-    {
-      "from": "CostSheetFCDropdown",
-      "to": "utils"
-    },
-    {
-      "from": "CostSheetAuditLog",
-      "to": "utils"
     },
     {
       "from": "CostSheetAuditLog",
@@ -10041,7 +10133,7 @@
     },
     {
       "from": "CostSheetAuditLog",
-      "to": "card"
+      "to": "scroll-area"
     },
     {
       "from": "CostSheetAuditLog",
@@ -10049,11 +10141,23 @@
     },
     {
       "from": "CostSheetAuditLog",
-      "to": "scroll-area"
+      "to": "card"
+    },
+    {
+      "from": "CostSheetAuditLog",
+      "to": "utils"
     },
     {
       "from": "CostSheetCardView",
-      "to": "FormulaEditor"
+      "to": "popover"
+    },
+    {
+      "from": "CostSheetCardView",
+      "to": "CircularProgress"
+    },
+    {
+      "from": "CostSheetCardView",
+      "to": "CostSheetSectionActionsPanel"
     },
     {
       "from": "CostSheetCardView",
@@ -10065,23 +10169,15 @@
     },
     {
       "from": "CostSheetCardView",
-      "to": "CostSheetSectionActionsPanel"
-    },
-    {
-      "from": "CostSheetCardView",
-      "to": "LazyRender"
-    },
-    {
-      "from": "CostSheetCardView",
-      "to": "popover"
-    },
-    {
-      "from": "CostSheetCardView",
       "to": "button"
     },
     {
       "from": "CostSheetCardView",
-      "to": "CircularProgress"
+      "to": "FormulaEditor"
+    },
+    {
+      "from": "CostSheetCardView",
+      "to": "LazyRender"
     },
     {
       "from": "AuditLogsModal",
@@ -10089,11 +10185,11 @@
     },
     {
       "from": "AuditLogsModal",
-      "to": "dialog"
+      "to": "AuditTimeline"
     },
     {
       "from": "AuditLogsModal",
-      "to": "AuditTimeline"
+      "to": "dialog"
     },
     {
       "from": "AuditLogsModal",
@@ -10101,11 +10197,7 @@
     },
     {
       "from": "ReportsView",
-      "to": "card"
-    },
-    {
-      "from": "ReportsView",
-      "to": "CostProLoader"
+      "to": "AuditLogsModal"
     },
     {
       "from": "ReportsView",
@@ -10113,7 +10205,7 @@
     },
     {
       "from": "ReportsView",
-      "to": "button"
+      "to": "card"
     },
     {
       "from": "ReportsView",
@@ -10121,11 +10213,19 @@
     },
     {
       "from": "ReportsView",
-      "to": "AuditLogsModal"
+      "to": "CostProLoader"
     },
     {
       "from": "ReportsView",
       "to": "ActionMenu"
+    },
+    {
+      "from": "ReportsView",
+      "to": "button"
+    },
+    {
+      "from": "ReportConfigPanel",
+      "to": "card"
     },
     {
       "from": "ReportConfigPanel",
@@ -10137,15 +10237,15 @@
     },
     {
       "from": "ReportConfigPanel",
+      "to": "label"
+    },
+    {
+      "from": "ReportConfigPanel",
       "to": "input"
     },
     {
       "from": "ReportConfigPanel",
-      "to": "popover"
-    },
-    {
-      "from": "ReportConfigPanel",
-      "to": "card"
+      "to": "command"
     },
     {
       "from": "ReportConfigPanel",
@@ -10153,23 +10253,19 @@
     },
     {
       "from": "ReportConfigPanel",
-      "to": "label"
+      "to": "popover"
     },
     {
       "from": "ReportConfigPanel",
       "to": "checkbox"
     },
     {
-      "from": "ReportConfigPanel",
-      "to": "command"
+      "from": "ReportPreview",
+      "to": "card"
     },
     {
       "from": "ReportPreview",
       "to": "CostProLoader"
-    },
-    {
-      "from": "ReportPreview",
-      "to": "card"
     },
     {
       "from": "UserFormModal",
@@ -10181,15 +10277,15 @@
     },
     {
       "from": "useUsersView",
-      "to": "roles"
-    },
-    {
-      "from": "useUsersView",
       "to": "UserForm"
     },
     {
       "from": "useUsersView",
       "to": "supabaseClient"
+    },
+    {
+      "from": "useUsersView",
+      "to": "roles"
     },
     {
       "from": "UserForm",
@@ -10201,7 +10297,11 @@
     },
     {
       "from": "UsersManagementView",
-      "to": "switch"
+      "to": "SearchBar"
+    },
+    {
+      "from": "UsersManagementView",
+      "to": "useUsersView"
     },
     {
       "from": "UsersManagementView",
@@ -10217,7 +10317,7 @@
     },
     {
       "from": "UsersManagementView",
-      "to": "SearchBar"
+      "to": "ActionMenu"
     },
     {
       "from": "UsersManagementView",
@@ -10225,15 +10325,7 @@
     },
     {
       "from": "UsersManagementView",
-      "to": "useUsersView"
-    },
-    {
-      "from": "UsersManagementView",
-      "to": "ActionMenu"
-    },
-    {
-      "from": "RolesManagementView",
-      "to": "utils"
+      "to": "switch"
     },
     {
       "from": "RolesManagementView",
@@ -10241,11 +10333,15 @@
     },
     {
       "from": "RolesManagementView",
-      "to": "BaseModal"
+      "to": "RoleForm"
     },
     {
       "from": "RolesManagementView",
-      "to": "RoleForm"
+      "to": "utils"
+    },
+    {
+      "from": "RolesManagementView",
+      "to": "BaseModal"
     },
     {
       "from": "RolesManagementView",
@@ -10253,7 +10349,7 @@
     },
     {
       "from": "LegalView",
-      "to": "LegalConsultant"
+      "to": "LegalModelForm"
     },
     {
       "from": "LegalView",
@@ -10261,7 +10357,7 @@
     },
     {
       "from": "LegalView",
-      "to": "LegalModelForm"
+      "to": "LegalConsultant"
     },
     {
       "from": "LegalView",
@@ -10273,7 +10369,7 @@
     },
     {
       "from": "LegalModelForm",
-      "to": "LegalPdfExporter"
+      "to": "supabaseClient"
     },
     {
       "from": "LegalModelForm",
@@ -10281,11 +10377,11 @@
     },
     {
       "from": "LegalModelForm",
-      "to": "number-to-words-es"
+      "to": "LegalPdfExporter"
     },
     {
       "from": "LegalModelForm",
-      "to": "supabaseClient"
+      "to": "number-to-words-es"
     },
     {
       "from": "InventoryCountTableView",
@@ -10297,14 +10393,6 @@
     },
     {
       "from": "InventoryCountView",
-      "to": "utils"
-    },
-    {
-      "from": "InventoryCountView",
-      "to": "InventoryCountCardView"
-    },
-    {
-      "from": "InventoryCountView",
       "to": "SearchBar"
     },
     {
@@ -10313,11 +10401,19 @@
     },
     {
       "from": "InventoryCountView",
-      "to": "QueryInspector"
+      "to": "InventoryCountCardView"
+    },
+    {
+      "from": "InventoryCountView",
+      "to": "utils"
     },
     {
       "from": "InventoryCountView",
       "to": "InventoryCountTableView"
+    },
+    {
+      "from": "InventoryCountView",
+      "to": "QueryInspector"
     },
     {
       "from": "InventoryCountView",
@@ -10333,19 +10429,11 @@
     },
     {
       "from": "SystemHealthView",
-      "to": "utils"
+      "to": "ViewNavigator"
     },
     {
       "from": "SystemHealthView",
-      "to": "AuditSummary"
-    },
-    {
-      "from": "SystemHealthView",
-      "to": "HealthAgentLogs"
-    },
-    {
-      "from": "SystemHealthView",
-      "to": "ArchitectureAuditTable"
+      "to": "ReleaseGatePdfExporter"
     },
     {
       "from": "SystemHealthView",
@@ -10353,27 +10441,7 @@
     },
     {
       "from": "SystemHealthView",
-      "to": "HealthStatusHeader"
-    },
-    {
-      "from": "SystemHealthView",
-      "to": "dropdown-menu"
-    },
-    {
-      "from": "SystemHealthView",
-      "to": "ViewNavigator"
-    },
-    {
-      "from": "SystemHealthView",
-      "to": "CostProLoader"
-    },
-    {
-      "from": "SystemHealthView",
-      "to": "ApplicationMetrics"
-    },
-    {
-      "from": "SystemHealthView",
-      "to": "InfrastructureMetrics"
+      "to": "HealthAgentLogs"
     },
     {
       "from": "SystemHealthView",
@@ -10381,11 +10449,39 @@
     },
     {
       "from": "SystemHealthView",
+      "to": "utils"
+    },
+    {
+      "from": "SystemHealthView",
+      "to": "ArchitectureAuditTable"
+    },
+    {
+      "from": "SystemHealthView",
       "to": "ReleaseGateStatus"
     },
     {
       "from": "SystemHealthView",
-      "to": "ReleaseGatePdfExporter"
+      "to": "HealthStatusHeader"
+    },
+    {
+      "from": "SystemHealthView",
+      "to": "ApplicationMetrics"
+    },
+    {
+      "from": "SystemHealthView",
+      "to": "CostProLoader"
+    },
+    {
+      "from": "SystemHealthView",
+      "to": "dropdown-menu"
+    },
+    {
+      "from": "SystemHealthView",
+      "to": "AuditSummary"
+    },
+    {
+      "from": "SystemHealthView",
+      "to": "InfrastructureMetrics"
     },
     {
       "from": "InfrastructureMetrics",
@@ -10409,15 +10505,15 @@
     },
     {
       "from": "ArchitectureAuditTable",
-      "to": "table"
+      "to": "sheet"
+    },
+    {
+      "from": "ArchitectureAuditTable",
+      "to": "badge"
     },
     {
       "from": "ArchitectureAuditTable",
       "to": "utils"
-    },
-    {
-      "from": "ArchitectureAuditTable",
-      "to": "sheet"
     },
     {
       "from": "ArchitectureAuditTable",
@@ -10425,6 +10521,10 @@
     },
     {
       "from": "ArchitectureAuditTable",
+      "to": "table"
+    },
+    {
+      "from": "DetailedRelationshipGraph",
       "to": "badge"
     },
     {
@@ -10432,16 +10532,8 @@
       "to": "utils"
     },
     {
-      "from": "DetailedRelationshipGraph",
-      "to": "badge"
-    },
-    {
       "from": "HealthAgentLogs",
-      "to": "utils"
-    },
-    {
-      "from": "HealthAgentLogs",
-      "to": "card"
+      "to": "system-health"
     },
     {
       "from": "HealthAgentLogs",
@@ -10453,7 +10545,11 @@
     },
     {
       "from": "HealthAgentLogs",
-      "to": "system-health"
+      "to": "card"
+    },
+    {
+      "from": "HealthAgentLogs",
+      "to": "utils"
     },
     {
       "from": "ApplicationMetrics",
@@ -10473,15 +10569,15 @@
     },
     {
       "from": "DashboardView",
-      "to": "utils"
-    },
-    {
-      "from": "DashboardView",
       "to": "StateRenderer"
     },
     {
       "from": "DashboardView",
-      "to": "popover"
+      "to": "toggle-group"
+    },
+    {
+      "from": "DashboardView",
+      "to": "utils"
     },
     {
       "from": "DashboardView",
@@ -10493,15 +10589,15 @@
     },
     {
       "from": "DashboardView",
-      "to": "toggle-group"
-    },
-    {
-      "from": "CatalogModals",
-      "to": "utils"
+      "to": "popover"
     },
     {
       "from": "CatalogModals",
       "to": "index"
+    },
+    {
+      "from": "CatalogModals",
+      "to": "utils"
     },
     {
       "from": "CatalogModals",
@@ -10513,7 +10609,7 @@
     },
     {
       "from": "CatalogView",
-      "to": "utils"
+      "to": "ViewSwitcher"
     },
     {
       "from": "CatalogView",
@@ -10521,11 +10617,15 @@
     },
     {
       "from": "CatalogView",
-      "to": "ViewSwitcher"
+      "to": "utils"
     },
     {
       "from": "CatalogView",
-      "to": "CatalogModals"
+      "to": "QueryInspector"
+    },
+    {
+      "from": "CatalogView",
+      "to": "ActionMenu"
     },
     {
       "from": "CatalogView",
@@ -10537,11 +10637,7 @@
     },
     {
       "from": "CatalogView",
-      "to": "QueryInspector"
-    },
-    {
-      "from": "CatalogView",
-      "to": "ActionMenu"
+      "to": "CatalogModals"
     },
     {
       "from": "SettingsView",
@@ -10553,7 +10649,15 @@
     },
     {
       "from": "AsientosModule",
+      "to": "badge"
+    },
+    {
+      "from": "AsientosModule",
       "to": "utils"
+    },
+    {
+      "from": "AsientosModule",
+      "to": "types"
     },
     {
       "from": "AsientosModule",
@@ -10561,14 +10665,14 @@
     },
     {
       "from": "AsientosModule",
-      "to": "types"
-    },
-    {
-      "from": "AsientosModule",
       "to": "button"
     },
     {
-      "from": "AsientosModule",
+      "from": "CuentasModule",
+      "to": "scroll-area"
+    },
+    {
+      "from": "CuentasModule",
       "to": "badge"
     },
     {
@@ -10584,11 +10688,7 @@
       "to": "button"
     },
     {
-      "from": "CuentasModule",
-      "to": "badge"
-    },
-    {
-      "from": "CuentasModule",
+      "from": "WikiView",
       "to": "scroll-area"
     },
     {
@@ -10597,23 +10697,11 @@
     },
     {
       "from": "WikiView",
-      "to": "AsientosModule"
-    },
-    {
-      "from": "WikiView",
-      "to": "ClasificadorModule"
-    },
-    {
-      "from": "WikiView",
       "to": "utils"
     },
     {
       "from": "WikiView",
-      "to": "WikiBreadcrumbs"
-    },
-    {
-      "from": "WikiView",
-      "to": "input"
+      "to": "WikiSidebar"
     },
     {
       "from": "WikiView",
@@ -10621,7 +10709,19 @@
     },
     {
       "from": "WikiView",
-      "to": "CuentasModule"
+      "to": "input"
+    },
+    {
+      "from": "WikiView",
+      "to": "ClasificadorModule"
+    },
+    {
+      "from": "WikiView",
+      "to": "WikiBreadcrumbs"
+    },
+    {
+      "from": "WikiView",
+      "to": "AsientosModule"
     },
     {
       "from": "WikiView",
@@ -10633,19 +10733,15 @@
     },
     {
       "from": "WikiView",
-      "to": "scroll-area"
-    },
-    {
-      "from": "WikiView",
-      "to": "WikiSidebar"
-    },
-    {
-      "from": "WikiSidebar",
-      "to": "utils"
+      "to": "CuentasModule"
     },
     {
       "from": "WikiSidebar",
       "to": "types"
+    },
+    {
+      "from": "WikiSidebar",
+      "to": "utils"
     },
     {
       "from": "WikiBreadcrumbs",
@@ -10653,11 +10749,11 @@
     },
     {
       "from": "WikiSearch",
-      "to": "command"
+      "to": "types"
     },
     {
       "from": "WikiSearch",
-      "to": "types"
+      "to": "command"
     },
     {
       "from": "ClasificadorModule",
@@ -10665,11 +10761,11 @@
     },
     {
       "from": "ClasificadorModule",
-      "to": "utils"
+      "to": "types"
     },
     {
       "from": "ClasificadorModule",
-      "to": "types"
+      "to": "utils"
     },
     {
       "from": "data-loader",
@@ -10677,15 +10773,7 @@
     },
     {
       "from": "ReceptionsHistoryView",
-      "to": "utils"
-    },
-    {
-      "from": "ReceptionsHistoryView",
       "to": "StateRenderer"
-    },
-    {
-      "from": "ReceptionsHistoryView",
-      "to": "useReceptionsHistoryView"
     },
     {
       "from": "ReceptionsHistoryView",
@@ -10693,23 +10781,31 @@
     },
     {
       "from": "ReceptionsHistoryView",
-      "to": "QueryInspector"
+      "to": "useReceptionsHistoryView"
     },
     {
       "from": "ReceptionsHistoryView",
-      "to": "skeleton"
+      "to": "utils"
+    },
+    {
+      "from": "ReceptionsHistoryView",
+      "to": "QueryInspector"
     },
     {
       "from": "ReceptionsHistoryView",
       "to": "ReceptionDetailsModal"
     },
     {
-      "from": "ReceptionDetailsModal",
-      "to": "utils"
+      "from": "ReceptionsHistoryView",
+      "to": "skeleton"
     },
     {
       "from": "ReceptionDetailsModal",
       "to": "skeleton"
+    },
+    {
+      "from": "ReceptionDetailsModal",
+      "to": "utils"
     },
     {
       "from": "ReceptionDetailsModal",
@@ -10741,11 +10837,15 @@
     },
     {
       "from": "AuditTimeline",
-      "to": "utils"
+      "to": "AuditEventCard"
     },
     {
       "from": "AuditTimeline",
-      "to": "AuditEventCard"
+      "to": "utils"
+    },
+    {
+      "from": "AuditEventCard",
+      "to": "utils"
     },
     {
       "from": "AuditEventCard",
@@ -10753,10 +10853,6 @@
     },
     {
       "from": "AuditEventCard",
-      "to": "utils"
-    },
-    {
-      "from": "AuditEventCard",
       "to": "AuditEventIcon"
     },
     {
@@ -10766,34 +10862,6 @@
     {
       "from": "AuditTableView",
       "to": "AuditEventIcon"
-    },
-    {
-      "from": "AuditLogsView",
-      "to": "AuditTableView"
-    },
-    {
-      "from": "AuditLogsView",
-      "to": "StateRenderer"
-    },
-    {
-      "from": "AuditLogsView",
-      "to": "useAuditLogsView"
-    },
-    {
-      "from": "AuditLogsView",
-      "to": "AuditEventIcon"
-    },
-    {
-      "from": "AuditLogsView",
-      "to": "AuditTimeline"
-    },
-    {
-      "from": "AuditLogsView",
-      "to": "skeleton"
-    },
-    {
-      "from": "AuditLogsView",
-      "to": "button"
     },
     {
       "from": "AuditLogsView",
@@ -10805,7 +10873,35 @@
     },
     {
       "from": "AuditLogsView",
+      "to": "StateRenderer"
+    },
+    {
+      "from": "AuditLogsView",
       "to": "tabs"
+    },
+    {
+      "from": "AuditLogsView",
+      "to": "AuditTimeline"
+    },
+    {
+      "from": "AuditLogsView",
+      "to": "useAuditLogsView"
+    },
+    {
+      "from": "AuditLogsView",
+      "to": "AuditEventIcon"
+    },
+    {
+      "from": "AuditLogsView",
+      "to": "button"
+    },
+    {
+      "from": "AuditLogsView",
+      "to": "AuditTableView"
+    },
+    {
+      "from": "AuditLogsView",
+      "to": "skeleton"
     },
     {
       "from": "AuditFilters",
@@ -10825,11 +10921,11 @@
     },
     {
       "from": "TransferDetailsModal",
-      "to": "utils"
+      "to": "StateRenderer"
     },
     {
       "from": "TransferDetailsModal",
-      "to": "StateRenderer"
+      "to": "utils"
     },
     {
       "from": "TransferDetailsModal",
@@ -10837,7 +10933,7 @@
     },
     {
       "from": "TransferenciasView",
-      "to": "CreateTransferModal"
+      "to": "StateRenderer"
     },
     {
       "from": "TransferenciasView",
@@ -10849,27 +10945,23 @@
     },
     {
       "from": "TransferenciasView",
-      "to": "StateRenderer"
-    },
-    {
-      "from": "TransferenciasView",
       "to": "ActionMenu"
     },
     {
-      "from": "ExecutiveDemoView",
-      "to": "progress"
-    },
-    {
-      "from": "ExecutiveDemoView",
-      "to": "utils"
-    },
-    {
-      "from": "ExecutiveDemoView",
-      "to": "demo-products"
+      "from": "TransferenciasView",
+      "to": "CreateTransferModal"
     },
     {
       "from": "ExecutiveDemoView",
       "to": "card"
+    },
+    {
+      "from": "ExecutiveDemoView",
+      "to": "badge"
+    },
+    {
+      "from": "ExecutiveDemoView",
+      "to": "utils"
     },
     {
       "from": "ExecutiveDemoView",
@@ -10881,11 +10973,11 @@
     },
     {
       "from": "ExecutiveDemoView",
-      "to": "badge"
+      "to": "demo-products"
     },
     {
-      "from": "LoginForm",
-      "to": "input"
+      "from": "ExecutiveDemoView",
+      "to": "progress"
     },
     {
       "from": "LoginForm",
@@ -10893,7 +10985,7 @@
     },
     {
       "from": "LoginForm",
-      "to": "logger"
+      "to": "input"
     },
     {
       "from": "LoginForm",
@@ -10901,11 +10993,11 @@
     },
     {
       "from": "LoginForm",
-      "to": "navigation"
+      "to": "logger"
     },
     {
-      "from": "RegisterForm",
-      "to": "supabaseClient"
+      "from": "LoginForm",
+      "to": "navigation"
     },
     {
       "from": "RegisterForm",
@@ -10913,19 +11005,19 @@
     },
     {
       "from": "RegisterForm",
+      "to": "supabaseClient"
+    },
+    {
+      "from": "RegisterForm",
       "to": "logger"
     },
     {
       "from": "WelcomeLandingView",
-      "to": "SpeedScaleDiagram"
+      "to": "ThemeToggle"
     },
     {
       "from": "WelcomeLandingView",
       "to": "utils"
-    },
-    {
-      "from": "WelcomeLandingView",
-      "to": "ThemeToggle"
     },
     {
       "from": "WelcomeLandingView",
@@ -10940,6 +11032,10 @@
       "to": "CostProLogo"
     },
     {
+      "from": "WelcomeLandingView",
+      "to": "SpeedScaleDiagram"
+    },
+    {
       "from": "BarcodeScanner",
       "to": "index"
     },
@@ -10977,6 +11073,10 @@
     },
     {
       "from": "SyncConflictModal",
+      "to": "offline-storage"
+    },
+    {
+      "from": "SyncConflictModal",
       "to": "index"
     },
     {
@@ -10986,10 +11086,6 @@
     {
       "from": "SyncConflictModal",
       "to": "BaseModal"
-    },
-    {
-      "from": "SyncConflictModal",
-      "to": "offline-storage"
     },
     {
       "from": "navigation-menu",
@@ -11005,11 +11101,11 @@
     },
     {
       "from": "alert-dialog",
-      "to": "utils"
+      "to": "button"
     },
     {
       "from": "alert-dialog",
-      "to": "button"
+      "to": "utils"
     },
     {
       "from": "textarea",
@@ -11037,11 +11133,11 @@
     },
     {
       "from": "form",
-      "to": "utils"
+      "to": "label"
     },
     {
       "from": "form",
-      "to": "label"
+      "to": "utils"
     },
     {
       "from": "label",
@@ -11093,15 +11189,11 @@
     },
     {
       "from": "SpeedDial",
-      "to": "Portal"
+      "to": "utils"
     },
     {
       "from": "SpeedDial",
-      "to": "utils"
-    },
-    {
-      "from": "sidebar",
-      "to": "utils"
+      "to": "Portal"
     },
     {
       "from": "sidebar",
@@ -11109,11 +11201,15 @@
     },
     {
       "from": "sidebar",
+      "to": "utils"
+    },
+    {
+      "from": "sidebar",
       "to": "input"
     },
     {
       "from": "sidebar",
-      "to": "separator"
+      "to": "tooltip"
     },
     {
       "from": "sidebar",
@@ -11125,7 +11221,7 @@
     },
     {
       "from": "sidebar",
-      "to": "tooltip"
+      "to": "separator"
     },
     {
       "from": "tabs",
@@ -11149,11 +11245,11 @@
     },
     {
       "from": "pagination",
-      "to": "utils"
+      "to": "button"
     },
     {
       "from": "pagination",
-      "to": "button"
+      "to": "utils"
     },
     {
       "from": "ScrollToTop",
@@ -11161,11 +11257,11 @@
     },
     {
       "from": "carousel",
-      "to": "utils"
+      "to": "button"
     },
     {
       "from": "carousel",
-      "to": "button"
+      "to": "utils"
     },
     {
       "from": "CostProLoader",
@@ -11185,11 +11281,11 @@
     },
     {
       "from": "calendar",
-      "to": "utils"
+      "to": "button"
     },
     {
       "from": "calendar",
-      "to": "button"
+      "to": "utils"
     },
     {
       "from": "PWAInstallModal",
@@ -11340,16 +11436,24 @@
       "to": "supabaseClient"
     },
     {
-      "from": "health-alerts",
-      "to": "supabaseClient"
+      "from": "parser",
+      "to": "types"
     },
     {
       "from": "health-alerts",
       "to": "health-engine"
     },
     {
+      "from": "health-alerts",
+      "to": "supabaseClient"
+    },
+    {
       "from": "intelligence",
       "to": "dexie"
+    },
+    {
+      "from": "bandecParser",
+      "to": "engine"
     },
     {
       "from": "bandecParser",
@@ -11360,16 +11464,12 @@
       "to": "dexie"
     },
     {
-      "from": "bandecParser",
-      "to": "engine"
+      "from": "calculations",
+      "to": "parser"
     },
     {
       "from": "calculations",
       "to": "dexie"
-    },
-    {
-      "from": "calculations",
-      "to": "parser"
     },
     {
       "from": "engine",
@@ -11393,15 +11493,15 @@
     },
     {
       "from": "orchestrator",
+      "to": "kimi-adapter"
+    },
+    {
+      "from": "orchestrator",
       "to": "gpt-adapter"
     },
     {
       "from": "orchestrator",
-      "to": "gemini-adapter"
-    },
-    {
-      "from": "orchestrator",
-      "to": "qwen-adapter"
+      "to": "fallback-adapter"
     },
     {
       "from": "orchestrator",
@@ -11409,7 +11509,7 @@
     },
     {
       "from": "orchestrator",
-      "to": "kimi-adapter"
+      "to": "qwen-adapter"
     },
     {
       "from": "orchestrator",
@@ -11417,7 +11517,7 @@
     },
     {
       "from": "orchestrator",
-      "to": "fallback-adapter"
+      "to": "gemini-adapter"
     },
     {
       "from": "gemini-adapter",
@@ -11461,8 +11561,8 @@
     }
   ],
   "graphStats": {
-    "totalNodes": 321,
-    "totalEdges": 848,
+    "totalNodes": 324,
+    "totalEdges": 855,
     "topCoupled": [
       "IPVView",
       "CatalogTable",

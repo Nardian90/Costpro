@@ -4,7 +4,7 @@ import {
   BarChart3, ShoppingCart, Book, Package, Warehouse, Receipt,
   ClipboardList, FileText, History, Shield, DollarSign,
   Users, Building, Settings, HelpCircle, ArrowLeftRight, GraduationCap,
-  Newspaper, Rss, TrendingUp, ShieldCheck, RefreshCcw, Scale, HeartPulse
+  Newspaper, Rss, TrendingUp, ShieldCheck, RefreshCcw, Scale, HeartPulse, Wallet
 } from 'lucide-react';
 import { type UserRole } from '@/types';
 import { UserContract } from '@/contracts/user';
@@ -29,6 +29,7 @@ export function useTerminalNavigation(user: UserContract | null, sidebarSearch: 
     if (!user) return [];
     const all: NavigationItem[] = [
       { id: 'dashboard', icon: TrendingUp, label: 'KPI', roles: ['admin', 'manager', 'clerk', 'encargado'], category: 'OPERACIONES' },
+      { id: 'wallet', icon: Wallet, label: 'Billetera', roles: ['admin', 'manager', 'encargado', 'costo'], category: 'OPERACIONES' },
       { id: 'news', icon: Newspaper, label: 'Noticias', roles: ['admin', 'manager', 'clerk', 'warehouse', 'encargado'], category: 'OPERACIONES' },
       { id: 'pos', icon: ShoppingCart, label: 'Vender', roles: ['clerk', 'manager', 'admin', 'encargado'], category: 'OPERACIONES' },
       { id: 'sales', icon: Receipt, label: 'Ventas', roles: ['clerk', 'manager', 'encargado'], category: 'OPERACIONES' },
