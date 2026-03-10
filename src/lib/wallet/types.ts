@@ -7,6 +7,11 @@ export type WalletTransactionType =
   | 'AUTH_EVENT'
   | 'FAILED_OPERATION'
   | 'BANK_STATEMENT'
+  | 'LIMIT_CHANGE'
+  | 'CASH_ATM'
+  | 'CASH_EXTRA'
+  | 'MITURNO'
+  | 'SECURITY_EVENT'
   | 'OTHER';
 
 export interface WalletTransaction {
@@ -21,6 +26,14 @@ export interface WalletTransaction {
   transaction_id: string;
   description: string;
   source: 'SMS' | 'BANK_LOG' | 'MANUAL';
+
+  // New fields for advanced analysis
+  status?: 'SUCCESS' | 'FAILED' | 'PENDING';
+  service_category?: 'ELECTRICITY' | 'ONAT' | 'MERCHANT' | 'RECHARGE' | 'WATER' | 'TELEPHONE';
+  balance_after?: number;
+  discount_amount?: number;
+  merchant_name?: string;
+  extra_data?: Record<string, any>;
 }
 
 export interface WalletSummary {
@@ -31,7 +44,8 @@ export interface WalletSummary {
 
 export interface WalletAnalytics {
   summary: WalletSummary;
-  banks: Record<string, { income: number; expenses: number }>;
+  banks: Record<string, { income: number; expenses: number; current_balance: number }>;
   monthly: Record<string, { income: number; expenses: number }>;
+  categories: Record<string, number>;
   transactions: WalletTransaction[];
 }
