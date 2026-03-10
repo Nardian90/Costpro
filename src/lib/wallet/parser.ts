@@ -9,8 +9,13 @@ const PATTERNS = {
   RECHARGE: /Telefono:\s*(\d+).*?Monto Pagado:\s*([\d.]+).*?Saldo acreditado:\s*(\d+)/i,
   FAILED: /Fallo(.*?)(?:\. Fecha:|$)/i,
   LIMIT_CHANGE: /ATM:\s*([\d.]+);\s*POS:\s*([\d.]+);\s*TOTAL:\s*([\d.]+)/i,
+  CASH_ATM: /Retiro de efectivo completado.*?Cajero:\s*(.*?)\.\s*Monto:\s*([\d.]+)/i,
+  CASH_EXTRA: /Retiro en Caja Extra completado.*?Negocio:\s*(.*?)\.\s*Monto:\s*([\d.]+)/i,
+  MITURNO: /Turno solicitado con exito.*?Servicio:\s*(.*?)\.\s*Numero:\s*(\d+)/i,
+  SECURITY: /(Autenticacion exitosa|Fallo de autenticacion)/i,
   DATE: /Fecha:\s*(\d+\/\d+\/\d+)/,
-  TRANS_ID: /Nro\. Transaccion\s+([A-Z0-9]+)/
+  TRANS_ID: /Nro\. Transaccion\s+([A-Z0-9]+)/,
+  GENERIC_BALANCE: /Saldo Disponible:\s*CR\s*([\d.]+)/
 };
 
 export function parseSmsText(text: string): WalletTransaction[] {
@@ -26,23 +31,29 @@ export function parseSmsText(text: string): WalletTransaction[] {
     const date = formatDate(dateMatch ? dateMatch[1] : new Date().toLocaleDateString());
     const transIdMatch = trimmed.match(PATTERNS.TRANS_ID);
     const transId = transIdMatch ? transIdMatch[1] : uuidv4();
+    const genBalanceMatch = trimmed.match(PATTERNS.GENERIC_BALANCE);
+    const balance_after = genBalanceMatch ? parseFloat(genBalanceMatch[1]) : undefined;
+
+    const baseTx = {
+      id: uuidv4(),
+      date,
+      bank: 'BANDEC', // Default
+      transaction_id: transId,
+      description: trimmed,
+      source: 'SMS' as const,
+      balance_after,
+      currency: 'CUP'
+    };
 
     if (type === 'BALANCE_QUERY') {
       const match = trimmed.match(PATTERNS.BALANCE);
       if (match) {
         transactions.push({
-          id: uuidv4(),
-          date,
-          bank: 'BANDEC',
+          ...baseTx,
           type: 'BALANCE_QUERY',
           direction: 'IN',
           amount: 0,
-          currency: 'CUP',
           counterparty: 'Consulta de Saldo',
-          transaction_id: transId,
-          description: trimmed,
-          source: 'SMS',
-          balance_after: parseFloat(match[1]),
           status: 'SUCCESS'
         });
         continue;
@@ -53,17 +64,11 @@ export function parseSmsText(text: string): WalletTransaction[] {
       const match = trimmed.match(PATTERNS.TRANSFER_IN);
       if (match) {
         transactions.push({
-          id: uuidv4(),
-          date,
-          bank: 'BANDEC',
+          ...baseTx,
           type: 'TRANSFER_IN',
           direction: 'IN',
           amount: parseFloat(match[3]),
-          currency: 'CUP',
           counterparty: match[1],
-          transaction_id: transId,
-          description: trimmed,
-          source: 'SMS',
           status: 'SUCCESS'
         });
         continue;
@@ -74,17 +79,11 @@ export function parseSmsText(text: string): WalletTransaction[] {
       const match = trimmed.match(PATTERNS.TRANSFER_OUT);
       if (match) {
         transactions.push({
-          id: uuidv4(),
-          date,
-          bank: 'BANDEC',
+          ...baseTx,
           type: 'TRANSFER_OUT',
           direction: 'OUT',
           amount: parseFloat(match[2]),
-          currency: 'CUP',
           counterparty: match[1],
-          transaction_id: transId,
-          description: trimmed,
-          source: 'SMS',
           status: 'SUCCESS'
         });
         continue;
@@ -95,17 +94,11 @@ export function parseSmsText(text: string): WalletTransaction[] {
       const elecMatch = trimmed.match(PATTERNS.ELECTRICITY);
       if (elecMatch) {
         transactions.push({
-          id: uuidv4(),
-          date,
-          bank: 'BANDEC',
+          ...baseTx,
           type: 'PAYMENT_SERVICE',
           direction: 'OUT',
-          amount: 0, // Should extract amount if present in full SMS
-          currency: 'CUP',
+          amount: 0,
           counterparty: 'UNE (Electricidad)',
-          transaction_id: transId,
-          description: trimmed,
-          source: 'SMS',
           service_category: 'ELECTRICITY',
           extra_data: { consumption_kwh: parseInt(elecMatch[1]), period: elecMatch[2] },
           status: 'SUCCESS'
@@ -118,17 +111,11 @@ export function parseSmsText(text: string): WalletTransaction[] {
       const match = trimmed.match(PATTERNS.RECHARGE);
       if (match) {
         transactions.push({
-          id: uuidv4(),
-          date,
-          bank: 'BANDEC',
+          ...baseTx,
           type: 'PHONE_RECHARGE',
           direction: 'OUT',
           amount: parseFloat(match[2]),
-          currency: 'CUP',
           counterparty: match[1],
-          transaction_id: transId,
-          description: trimmed,
-          source: 'SMS',
           service_category: 'RECHARGE',
           status: 'SUCCESS'
         });
@@ -140,17 +127,11 @@ export function parseSmsText(text: string): WalletTransaction[] {
       const match = trimmed.match(PATTERNS.FAILED);
       if (match) {
         transactions.push({
-          id: uuidv4(),
-          date,
-          bank: 'BANDEC',
+          ...baseTx,
           type: 'FAILED_OPERATION',
           direction: 'OUT',
           amount: 0,
-          currency: 'CUP',
           counterparty: 'Operación Fallida',
-          transaction_id: transId,
-          description: trimmed,
-          source: 'SMS',
           status: 'FAILED',
           extra_data: { reason: match[1].trim().replace(/^[^a-zA-Z0-9]+/, '').replace(/\.\s*$/, '') }
         });
@@ -162,18 +143,74 @@ export function parseSmsText(text: string): WalletTransaction[] {
       const match = trimmed.match(PATTERNS.LIMIT_CHANGE);
       if (match) {
         transactions.push({
-          id: uuidv4(),
-          date,
-          bank: 'BANDEC',
+          ...baseTx,
           type: 'LIMIT_CHANGE',
           direction: 'OUT',
           amount: 0,
-          currency: 'CUP',
           counterparty: 'Cambio de Límite',
-          transaction_id: transId,
-          description: trimmed,
-          source: 'SMS',
           extra_data: { atm: match[1], pos: match[2], total: match[3].replace(/\.\s*$/, '') }
+        });
+        continue;
+      }
+    }
+
+    if (type === 'CASH_ATM') {
+      const match = trimmed.match(PATTERNS.CASH_ATM);
+      if (match) {
+        transactions.push({
+          ...baseTx,
+          type: 'CASH_ATM',
+          direction: 'OUT',
+          amount: parseFloat(match[2]),
+          counterparty: 'ATM: ' + match[1],
+          status: 'SUCCESS'
+        });
+        continue;
+      }
+    }
+
+    if (type === 'CASH_EXTRA') {
+      const match = trimmed.match(PATTERNS.CASH_EXTRA);
+      if (match) {
+        transactions.push({
+          ...baseTx,
+          type: 'CASH_EXTRA',
+          direction: 'OUT',
+          amount: parseFloat(match[2]),
+          counterparty: 'Caja Extra: ' + match[1],
+          status: 'SUCCESS'
+        });
+        continue;
+      }
+    }
+
+    if (type === 'MITURNO') {
+      const match = trimmed.match(PATTERNS.MITURNO);
+      if (match) {
+        transactions.push({
+          ...baseTx,
+          type: 'MITURNO',
+          direction: 'IN',
+          amount: 0,
+          counterparty: 'MiTurno: ' + match[1],
+          extra_data: { turn_number: match[2] },
+          status: 'SUCCESS'
+        });
+        continue;
+      }
+    }
+
+    if (type === 'SECURITY_EVENT') {
+      const match = trimmed.match(PATTERNS.SECURITY);
+      if (match) {
+        transactions.push({
+          ...baseTx,
+          type: 'SECURITY_EVENT',
+          direction: 'IN',
+          amount: 0,
+          counterparty: 'Evento de Seguridad',
+          extra_data: { event: match[0] },
+          status: 'SUCCESS'
         });
         continue;
       }
@@ -196,7 +233,7 @@ export function parseSmsText(text: string): WalletTransaction[] {
             counterparty: parts[1] || 'Bank Statement',
             transaction_id: parts[5] || uuidv4(),
             description: trimmed,
-            source: 'BANK_LOG'
+            source: 'BANK_LOG' as const
           });
           continue;
         }
@@ -216,6 +253,10 @@ function classify(text: string): WalletTransactionType {
   if (low.includes('recarga') && low.includes('exito')) return 'PHONE_RECHARGE';
   if (low.includes('fallo') || low.includes('falló')) return 'FAILED_OPERATION';
   if (low.includes('cambio de limite')) return 'LIMIT_CHANGE';
+  if (low.includes('retiro de efectivo') && low.includes('cajero')) return 'CASH_ATM';
+  if (low.includes('retiro en caja extra')) return 'CASH_EXTRA';
+  if (low.includes('turno solicitado')) return 'MITURNO';
+  if (low.includes('autenticacion') || low.includes('login')) return 'SECURITY_EVENT';
   return 'OTHER';
 }
 
@@ -232,23 +273,33 @@ function formatDate(dateStr: string): string {
 
 export function calculateAnalytics(transactions: WalletTransaction[]): WalletAnalytics {
   const summary: WalletSummary = { total_income: 0, total_expenses: 0, balance: 0 };
-  const banks: Record<string, { income: number; expenses: number }> = {};
+  const banks: Record<string, { income: number; expenses: number; current_balance: number }> = {};
   const monthly: Record<string, { income: number; expenses: number }> = {};
+  const categories: Record<string, number> = {};
 
-  transactions.forEach(tx => {
+  const sorted = [...transactions].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  sorted.forEach(tx => {
     if (tx.direction === 'IN') summary.total_income += tx.amount;
     else summary.total_expenses += tx.amount;
 
-    if (!banks[tx.bank]) banks[tx.bank] = { income: 0, expenses: 0 };
+    if (!banks[tx.bank]) banks[tx.bank] = { income: 0, expenses: 0, current_balance: 0 };
     if (tx.direction === 'IN') banks[tx.bank].income += tx.amount;
     else banks[tx.bank].expenses += tx.amount;
+
+    if (tx.balance_after !== undefined) {
+      banks[tx.bank].current_balance = tx.balance_after;
+    }
 
     const month = tx.date.substring(0, 7);
     if (!monthly[month]) monthly[month] = { income: 0, expenses: 0 };
     if (tx.direction === 'IN') monthly[month].income += tx.amount;
     else monthly[month].expenses += tx.amount;
+
+    const category = tx.service_category || tx.type;
+    categories[category] = (categories[category] || 0) + tx.amount;
   });
 
   summary.balance = summary.total_income - summary.total_expenses;
-  return { summary, banks, monthly, transactions };
+  return { summary, banks, monthly, categories, transactions: sorted };
 }
