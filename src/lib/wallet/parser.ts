@@ -1,4 +1,4 @@
-import { WalletTransaction, WalletTransactionType, WalletAnalytics, WalletSummary } from './types';
+import { WalletTransaction, WalletTransactionType, WalletAnalytics, WalletSummary, RawImportMessage } from './types';
 
 const generateId = () => Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
 
@@ -18,6 +18,53 @@ const PATTERNS = {
   TRANS_ID: /Nro\. Transaccion\s+([A-Z0-9]+)/,
   GENERIC_BALANCE: /Saldo Disponible:\s*CR\s*([\d.]+)/
 };
+
+export function parseRawMessages(text: string): RawImportMessage[] {
+  if (!text) return [];
+
+  // Split by "Recibido" followed by a space or newline
+  const blocks = text.split(/(?=Recibido\s)/);
+  const rawMessages: RawImportMessage[] = [];
+
+  blocks.forEach(block => {
+    const lines = block.trim().split('\n').map(l => l.trim()).filter(l => l);
+    if (lines.length < 2) return;
+
+    let type = "Recibido";
+
+    // Find the line that marks the beginning of the "Content" (CSV table)
+    const contentStartIndex = lines.findIndex(l => l.includes('Fecha;') || l.includes('Servicio;') || l.includes('Operacion;'));
+
+    if (contentStartIndex !== -1) {
+       const nameNumber = contentStartIndex > 0 ? lines[contentStartIndex - 1] : "Desconocido";
+       // Everything before nameNumber and after "Recibido" is the date
+       const dateLines = lines.slice(0, Math.max(0, contentStartIndex - 1));
+       const dateStr = dateLines.join(" ").replace(/^Recibido\s*/, "").trim();
+       const content = lines.slice(contentStartIndex).join("\n");
+
+       rawMessages.push({
+         id: generateId(),
+         type,
+         date: dateStr || "Sin fecha",
+         nameNumber,
+         content
+       });
+    } else {
+       // Fallback for other formats: Type is "Recibido", everything else is Content?
+       // Let's try to extract date from the first line
+       const firstLine = lines[0].replace(/^Recibido\s*/, "").trim();
+       rawMessages.push({
+         id: generateId(),
+         type,
+         date: firstLine || "Sin fecha",
+         nameNumber: lines.length > 1 ? lines[1] : "Desconocido",
+         content: lines.slice(2).join("\n") || lines.join("\n")
+       });
+    }
+  });
+
+  return rawMessages;
+}
 
 export function parseSmsText(text: string): WalletTransaction[] {
   if (!text) return [];
