@@ -426,9 +426,12 @@ export class MatchingEngine {
     const targetProduct = this.products.find(p => p.cod === targetProductCod);
     if (!targetProduct || !targetProduct.id_grupo) return false;
 
-    // Buscar "ancestros" (mismo id_grupo, mayor precio)
-    const ancestors = this.products
-      .filter(p => p.id_grupo === targetProduct.id_grupo && p.precio_cents > targetProduct.precio_cents)
+    // 1. Buscar si hay algún ancestro que tenga explícitamente este producto como hijo
+    let explicitAncestor = this.products.find(p => p.id_grupo === targetProduct.id_grupo && p.cod_hijo === targetProduct.cod);
+
+    // 2. Si no hay explícito, buscar el ancestro por jerarquía de precios (el inmediatamente superior)
+    const ancestors = explicitAncestor ? [explicitAncestor] : this.products
+      .filter(p => p.id_grupo === targetProduct.id_grupo && p.precio_cents > targetProduct.precio_cents && (!p.cod_hijo || p.cod_hijo === targetProduct.cod))
       .sort((a, b) => a.precio_cents - b.precio_cents); // Del más cercano hacia arriba (más barato a más caro)
 
     for (const ancestor of ancestors) {
@@ -527,17 +530,22 @@ export class MatchingEngine {
     groupProducts.forEach(p => currentStock.set(p.cod, this.stockMap.get(p.cod) || 0));
 
     // Bajamos el stock en cascada para ver cuánto "virtual" llegaría al producto destino
+    // Respetando cod_hijo si está definido, sino el siguiente por precio
     for (let i = 0; i < groupProducts.length - 1; i++) {
         const parent = groupProducts[i];
-        const child = groupProducts[i+1];
+        let child;
+        if (parent.cod_hijo) {
+            child = groupProducts.find(p => p.cod === parent.cod_hijo);
+        }
+        if (!child) {
+            child = groupProducts[i+1];
+        }
+
         const parentStock = currentStock.get(parent.cod) || 0;
         const conversion = parent.contenido_paquete || 1;
 
         const currentChildStock = currentStock.get(child.cod) || 0;
         currentStock.set(child.cod, currentChildStock + (parentStock * conversion));
-
-        // Si ya procesamos el padre del producto que buscamos, podemos parar si el hijo es nuestro target
-        // Pero para ser robustos, seguimos hasta el final del grupo
     }
 
     return currentStock.get(product.cod) || 0;

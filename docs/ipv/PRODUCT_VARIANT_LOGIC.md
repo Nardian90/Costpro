@@ -35,3 +35,14 @@ Si entra una transferencia por 45 cts y el stock de BOMBON es 0, el sistema:
 ## Beneficios
 - **Mayor % de Cuadre**: Permite satisfacer ventas de productos menores usando stock de formatos mayores.
 - **Trazabilidad**: Todos los cambios automáticos de inventario quedan registrados en la pestaña "Movimientos".
+
+## Jerarquía Explícita (cod_hijo)
+Además de la jerarquía automática basada en precios, el sistema permite definir explícitamente cuál es el producto "hijo" de cada variante mediante el campo `cod_hijo`.
+
+### Reglas de Prioridad:
+1.  **Explícita**: Si el producto tiene definido un `cod_hijo`, el sistema siempre usará ese código para la descomposición.
+2.  **Automática**: Si `cod_hijo` está vacío, el sistema buscará el siguiente producto con el mismo `id_grupo` que tenga un precio inmediatamente inferior.
+
+### Beneficios del cod_hijo:
+- **Claridad**: Al exportar el catálogo, el campo `cod_hijo` vendrá relleno con la clasificación inteligente que hizo el sistema, permitiendo al usuario validarla o ajustarla.
+- **Flexibilidad**: Permite manejar casos excepcionales donde el orden de precios no refleje la jerarquía real de descomposición.
