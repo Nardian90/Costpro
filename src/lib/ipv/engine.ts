@@ -30,11 +30,13 @@ export class MatchingEngine {
   private rules: MatchingRule[];
   private stockMap: Map<string, number> = new Map();
   private useStockLimit: boolean = false;
+  private pendingMovements: any[] = [];
 
   constructor(products: Product[], rules: MatchingRule[]) {
     this.products = products.filter(p => p.activo);
     this.rules = rules.filter(r => r.activo).sort((a, b) => a.prioridad - b.prioridad);
     this.useStockLimit = this.rules.some(r => r.tipo === 'STOCK_LIMIT');
+    this.pendingMovements = [];
 
     // Inicializar mapa de inventario virtual para la sesión de matching
     for (const p of this.products) {
@@ -183,7 +185,7 @@ export class MatchingEngine {
                 let qty = Math.floor(remaining_cents / p.precio_cents);
 
                 if (this.useStockLimit) {
-                    const available = this.stockMap.get(p.cod) || 0;
+                    const available = this.getVirtualStock(p.cod);
                     qty = Math.min(qty, available);
                 }
 
@@ -260,7 +262,7 @@ export class MatchingEngine {
             let qty = Math.floor(remaining_cents / p.precio_cents);
 
             if (this.useStockLimit) {
-                const available = this.stockMap.get(p.cod) || 0;
+                const available = this.getVirtualStock(p.cod);
                 qty = Math.min(qty, available);
             }
 
@@ -408,6 +410,56 @@ export class MatchingEngine {
     return lines;
   }
 
+
+  /**
+   * Intenta descomponer un producto de mayor valor en uno de menor valor dentro del mismo id_grupo.
+   * Retorna true si logró obtener stock mediante descomposición.
+   */
+
+
+
+  /**
+   * Intenta descomponer un producto de mayor valor en uno de menor valor dentro del mismo id_grupo.
+   * Retorna true si logró obtener stock mediante descomposición.
+   */
+  private async attemptDecomposition(targetProductCod: string): Promise<boolean> {
+    const targetProduct = this.products.find(p => p.cod === targetProductCod);
+    if (!targetProduct || !targetProduct.id_grupo) return false;
+
+    // Buscar "ancestros" (mismo id_grupo, mayor precio)
+    const ancestors = this.products
+      .filter(p => p.id_grupo === targetProduct.id_grupo && p.precio_cents > targetProduct.precio_cents)
+      .sort((a, b) => a.precio_cents - b.precio_cents); // Del más cercano hacia arriba (más barato a más caro)
+
+    for (const ancestor of ancestors) {
+      const availableAncestorStock = this.stockMap.get(ancestor.cod) || 0;
+      if (availableAncestorStock > 0) {
+        // Descomponer 1 unidad del ancestro
+        const conversionFactor = ancestor.contenido_paquete || 1;
+
+        this.stockMap.set(ancestor.cod, availableAncestorStock - 1);
+        const currentTargetStock = this.stockMap.get(targetProduct.cod) || 0;
+        this.stockMap.set(targetProduct.cod, currentTargetStock + conversionFactor);
+
+        // Registrar movimiento pendiente
+        this.pendingMovements.push({
+          id: uuidv4(),
+          fecha: new Date().toISOString(),
+          producto_origen_cod: ancestor.cod,
+          producto_destino_cod: targetProduct.cod,
+          cantidad_origen: 1,
+          cantidad_destino: conversionFactor,
+          tipo: 'DECOMPOSITION',
+          created_at: new Date().toISOString()
+        });
+
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   private async createLine(
     transaction: BankTransaction,
     product: Product,
@@ -415,15 +467,19 @@ export class MatchingEngine {
     origen: 'AUTO_MATCH' | 'MANUAL_USER' | 'CASH_FILLER',
     clasificacion: 'Transferencia' | 'Efectivo' | 'QR'
   ): Promise<ReconciliationLine> {
-    // Business Rule: Never match with zero stock if STOCK_LIMIT is active
-    if (this.useStockLimit && (this.stockMap.get(product.cod) || 0) <= 0) {
-        throw new Error(`Business Rule Violation: Product ${product.cod} has no stock but matching was attempted.`);
+    if (this.useStockLimit && (this.stockMap.get(product.cod) || 0) < qty) {
+        // Intentar descomponer para obtener el stock faltante
+        let currentStock = this.stockMap.get(product.cod) || 0;
+        while (currentStock < qty) {
+            const decomposed = await this.attemptDecomposition(product.cod);
+            if (!decomposed) break;
+            currentStock = this.stockMap.get(product.cod) || 0;
+        }
     }
 
     const importe = product.precio_cents * qty;
 
     // Descontar del inventario virtual de la sesión si aplica.
-    // Esto asegura que distribuciones globales respeten y consuman el stock disponible.
     if (this.useStockLimit) {
         const current = this.stockMap.get(product.cod) || 0;
         this.stockMap.set(product.cod, Math.max(0, current - qty));
@@ -433,7 +489,7 @@ export class MatchingEngine {
       id: uuidv4(),
       transaction_ref: transaction.referencia_origen,
       fecha_operacion: transaction.fecha,
-      ingreso_banco_cents: transaction.importe_cents, // Simplificación: asociamos el ingreso original
+      ingreso_banco_cents: transaction.importe_cents,
       venta_real_calculada_cents: importe,
       comision_banco_cents: 0,
       product_cod: product.cod,
@@ -453,6 +509,40 @@ export class MatchingEngine {
    * Busca una combinación exacta de productos que sumen el monto.
    * Considera la prioridad dinámica/manual de los productos.
    */
+
+  /**
+   * Calcula el stock virtual disponible incluyendo posibles descomposiciones.
+   */
+  private getVirtualStock(productCod: string): number {
+    const product = this.products.find(p => p.cod === productCod);
+    if (!product || !product.id_grupo) return this.stockMap.get(productCod) || 0;
+
+    // Obtenemos todos los productos del grupo ordenados por precio descendente
+    const groupProducts = this.products
+      .filter(p => p.id_grupo === product.id_grupo)
+      .sort((a, b) => b.precio_cents - a.precio_cents);
+
+    // Mapeamos el stock actual a un objeto de trabajo
+    const currentStock = new Map<string, number>();
+    groupProducts.forEach(p => currentStock.set(p.cod, this.stockMap.get(p.cod) || 0));
+
+    // Bajamos el stock en cascada para ver cuánto "virtual" llegaría al producto destino
+    for (let i = 0; i < groupProducts.length - 1; i++) {
+        const parent = groupProducts[i];
+        const child = groupProducts[i+1];
+        const parentStock = currentStock.get(parent.cod) || 0;
+        const conversion = parent.contenido_paquete || 1;
+
+        const currentChildStock = currentStock.get(child.cod) || 0;
+        currentStock.set(child.cod, currentChildStock + (parentStock * conversion));
+
+        // Si ya procesamos el padre del producto que buscamos, podemos parar si el hijo es nuestro target
+        // Pero para ser robustos, seguimos hasta el final del grupo
+    }
+
+    return currentStock.get(product.cod) || 0;
+  }
+
   private findExactCombination(target: number, options?: { prioritizeLowStock?: boolean }): { product: Product, qty: number }[] {
     const sortedProducts = [...this.products].sort((a, b) => {
         // Si se pide priorizar poco stock, este criterio va primero (pero solo si tienen stock > 0)
@@ -503,7 +593,7 @@ export class MatchingEngine {
       // Ajuste por Stock Limit
       let actualMaxQty = maxQty;
       if (this.useStockLimit) {
-          const available = this.stockMap.get(p.cod) || 0;
+          const available = this.getVirtualStock(p.cod);
           actualMaxQty = Math.min(maxQty, available);
       }
 
@@ -556,6 +646,14 @@ export class MatchingEngine {
                 status: res.status,
                 lines: res.lines
             });
+        if (this.pendingMovements.length > 0) {
+            await db.product_movements.bulkPut(this.pendingMovements.map(m => ({
+                ...m,
+                referencia_transaccion: results[results.length - 1]?.transactionId
+            })));
+            this.pendingMovements = [];
+        }
+
         } catch (error) {
             console.error(`[MatchingEngine] Error processing transaction ${tx.referencia_origen}:`, error);
             results.push({
@@ -564,6 +662,14 @@ export class MatchingEngine {
                 lines: []
             });
         }
+        if (this.pendingMovements.length > 0) {
+            await db.product_movements.bulkPut(this.pendingMovements.map(m => ({
+                ...m,
+                referencia_transaccion: results[results.length - 1]?.transactionId
+            })));
+            this.pendingMovements = [];
+        }
+
 
         if (onProgress) {
             // Optimización: Solo notificar progreso cada 5% o cada 20 transacciones para no saturar el hilo principal

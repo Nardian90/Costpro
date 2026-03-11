@@ -46,6 +46,19 @@ export interface Product {
   priorityMode?: 'manual' | 'auto' | 'hybrid';
   ventas_qty_historico?: number;
   ventas_valor_historico?: number;
+  id_grupo?: string;           // Agrupador de variantes (ej: "BIG_BON")
+}
+
+export interface ProductMovement {
+  id: string;
+  fecha: string;               // ISO Date
+  producto_origen_cod: string;
+  producto_destino_cod: string;
+  cantidad_origen: number;
+  cantidad_destino: number;
+  tipo: 'DECOMPOSITION' | 'MANUAL';
+  referencia_transaccion?: string; // Si viene de un matching automático
+  created_at: string;
 }
 
 export interface MatchingRule {
@@ -168,6 +181,7 @@ export class IPVDatabase extends Dexie {
   products!: Table<Product>;
   matching_rules!: Table<MatchingRule>;
   reconciliation_lines!: Table<ReconciliationLine>;
+  product_movements!: Table<ProductMovement>;
   ipv_reports!: Table<DailyIPVReport>;
   cash_adjustments!: Table<CashAdjustment>;
   daily_aggregates!: Table<DailyAggregate>;
@@ -177,11 +191,12 @@ export class IPVDatabase extends Dexie {
 
   constructor() {
     super('IPVDB');
-    this.version(9).stores({
+    this.version(10).stores({
       bank_statements: '&referencia_origen, fecha, importe_cents, ingestion_hash',
-      products: '&cod, descripcion, precio_cents, prioridad_algoritmo, activo, stock_inicial_manual, isWildcardCandidate',
+      products: '&cod, descripcion, precio_cents, prioridad_algoritmo, activo, stock_inicial_manual, isWildcardCandidate, id_grupo',
       matching_rules: '&id, tipo, prioridad',
       reconciliation_lines: '&id, transaction_ref, reconciliation_hash, fecha_operacion, clasificacion, origen_dato',
+      product_movements: '&id, fecha, producto_origen_cod, producto_destino_cod, tipo, referencia_transaccion',
       ipv_reports: '&id, fecha_reporte, estado',
       cash_adjustments: '&id, fecha',
       daily_aggregates: '&fecha',
