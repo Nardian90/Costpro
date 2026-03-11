@@ -22,44 +22,83 @@ const PATTERNS = {
 export function parseRawMessages(text: string): RawImportMessage[] {
   if (!text) return [];
 
-  // Split by "Recibido" followed by a space or newline
   const blocks = text.split(/(?=Recibido\s)/);
   const rawMessages: RawImportMessage[] = [];
 
   blocks.forEach(block => {
     const lines = block.trim().split('\n').map(l => l.trim()).filter(l => l);
-    if (lines.length < 2) return;
+    if (lines.length < 1) return;
 
     let type = "Recibido";
 
-    // Find the line that marks the beginning of the "Content" (CSV table)
-    const contentStartIndex = lines.findIndex(l => l.includes('Fecha;') || l.includes('Servicio;') || l.includes('Operacion;'));
+    // Improved sender detection: search for known senders in any line
+    const knownSenders = ['PAGOxMOVIL', 'BANDEC', 'BPA', 'Metropolitano', 'Banco Popular de Ahorro'];
+    let senderIndex = -1;
+    let senderName = "Desconocido";
 
-    if (contentStartIndex !== -1) {
-       const nameNumber = contentStartIndex > 0 ? lines[contentStartIndex - 1] : "Desconocido";
-       // Everything before nameNumber and after "Recibido" is the date
-       const dateLines = lines.slice(0, Math.max(0, contentStartIndex - 1));
-       const dateStr = dateLines.join(" ").replace(/^Recibido\s*/, "").trim();
-       const content = lines.slice(contentStartIndex).join("\n");
+    for (let i = 0; i < lines.length; i++) {
+        const found = knownSenders.find(s => lines[i].includes(s));
+        if (found) {
+            senderIndex = i;
+            // Extract the sender name exactly as found in the line
+            senderName = found;
+            break;
+        }
+    }
 
-       rawMessages.push({
-         id: generateId(),
-         type,
-         date: dateStr || "Sin fecha",
-         nameNumber,
-         content
-       });
+    // If no known sender, look for generic nameNumber indicator or just use line 1/2
+    if (senderIndex === -1) {
+      senderIndex = lines.length > 2 ? 2 : (lines.length > 1 ? 1 : 0);
+      senderName = lines[senderIndex] || "Desconocido";
+    }
+
+    // Date is everything from the start up to the sender line (excluding sender name if it's on the same line)
+    // Actually, usually date is before the sender.
+    const datePartLines = lines.slice(0, senderIndex);
+    let dateStr = datePartLines.join(" ").replace(/^Recibido\s*/, "").trim();
+
+    // If the sender line also contains "Recibido", it might be a malformed split
+    if (lines[senderIndex].startsWith("Recibido")) {
+        dateStr = lines[senderIndex].replace(/^Recibido\s*/, "").trim();
+    }
+
+    const remainingLines = lines.slice(senderIndex);
+    // Remove the sender name from the first remaining line to get content
+    let firstContentLine = remainingLines[0].replace(senderName, "").trim();
+    // Clean up colon if it was "PAGOxMOVIL: content"
+    if (firstContentLine.startsWith(":")) firstContentLine = firstContentLine.substring(1).trim();
+
+    const contentLines = [firstContentLine, ...remainingLines.slice(1)].filter(l => l);
+
+    // Check if it's a multi-line report (contains ;)
+    const isTable = contentLines.some(l => l.includes(';'));
+
+    if (isTable) {
+      const tableHeaderIndex = contentLines.findIndex(l => l.includes('Fecha;') || l.includes('Servicio;') || l.includes('Operacion;'));
+      const dataStart = tableHeaderIndex !== -1 ? tableHeaderIndex + 1 : 0;
+
+      const dataLines = contentLines.slice(dataStart);
+
+      dataLines.forEach(line => {
+        const cleanLine = line.replace(/\|$/, '').trim();
+        if (!cleanLine || !cleanLine.includes(';')) return;
+
+        rawMessages.push({
+          id: generateId(),
+          type,
+          date: dateStr || "Sin fecha",
+          nameNumber: senderName,
+          content: cleanLine
+        });
+      });
     } else {
-       // Fallback for other formats: Type is "Recibido", everything else is Content?
-       // Let's try to extract date from the first line
-       const firstLine = lines[0].replace(/^Recibido\s*/, "").trim();
-       rawMessages.push({
-         id: generateId(),
-         type,
-         date: firstLine || "Sin fecha",
-         nameNumber: lines.length > 1 ? lines[1] : "Desconocido",
-         content: lines.slice(2).join("\n") || lines.join("\n")
-       });
+      rawMessages.push({
+        id: generateId(),
+        type,
+        date: dateStr || "Sin fecha",
+        nameNumber: senderName,
+        content: contentLines.join("\n")
+      });
     }
   });
 
