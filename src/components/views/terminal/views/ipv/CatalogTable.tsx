@@ -32,7 +32,7 @@ import {
     calculateDynamicPriority
 } from '@/lib/ipv/intelligence';
 import { recalculateIPVReportsChain } from '@/lib/ipv/utils';
-import Papa from 'papaparse';
+import * as XLSX from 'xlsx';
 import {
   Tooltip,
   TooltipContent,
@@ -385,52 +385,52 @@ export function CatalogTable() {
         }
     });
   };
+
   const handleExportCatalog = () => {
     const exportData = (products && products.length > 0)
         ? products.map(p => ({
-            cod: p.cod,
-            descripcion: p.descripcion,
-            um: p.um,
-            precio_cents: p.precio_cents,
-            prioridad_algoritmo: p.prioridad_algoritmo,
-            stock_inicial_manual: p.stock_inicial_manual,
-            es_paquete: p.es_paquete ? 'S' : 'N',
-            contenido_paquete: p.contenido_paquete
+            'Código': p.cod,
+            'Descripción': p.descripcion,
+            'UM': p.um,
+            'Precio ($)': p.precio_cents,
+            'Prioridad': p.prioridad_algoritmo,
+            'Stock Inicial': p.stock_inicial_manual,
+            'Es Paquete (S/N)': p.es_paquete ? 'S' : 'N',
+            'Contenido Paquete': p.contenido_paquete
           }))
         : [{
-            cod: 'EJEMPLO-001',
-            descripcion: 'Producto de Ejemplo',
-            um: 'UNIDADES',
-            precio_cents: 100.00,
-            prioridad_algoritmo: 3,
-            stock_inicial_manual: 10,
-            es_paquete: 'N',
-            contenido_paquete: 1
+            'Código': 'SKU-001',
+            'Descripción': 'Producto de Ejemplo',
+            'UM': 'UNIDADES',
+            'Precio ($)': 100.00,
+            'Prioridad': 3,
+            'Stock Inicial': 10,
+            'Es Paquete (S/N)': 'N',
+            'Contenido Paquete': 1
           }];
 
-    const csv = Papa.unparse(exportData);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `catalogo_ipv_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success(products && products.length > 0 ? 'Catálogo exportado' : 'Plantilla de catálogo exportada');
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Catalogo");
+
+    XLSX.writeFile(wb, `catalogo_ipv_${new Date().toISOString().split('T')[0]}.xlsx`);
+    toast.success(products && products.length > 0 ? 'Catálogo exportado (Excel)' : 'Plantilla de catálogo exportada (Excel)');
   };
 
   const handleImportCatalog = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    Papa.parse(file, {
-        header: true,
-        skipEmptyLines: true,
-        complete: async (results) => {
-            const data = results.data as any[];
-            if (!data || data.length === 0) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const data = new Uint8Array(e.target?.result as ArrayBuffer);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
+
+            if (!jsonData || jsonData.length === 0) {
                 toast.error('El archivo está vacío');
                 return;
             }
@@ -438,18 +438,22 @@ export function CatalogTable() {
             const validProducts: Product[] = [];
             const now = new Date().toISOString();
 
-            for (const row of data) {
-                if (!row.cod || !row.descripcion) continue;
+            for (const row of jsonData) {
+                // Map from Spanish headers or generic headers
+                const cod = row['Código'] || row['cod'] || row['CODIGO'];
+                const descripcion = row['Descripción'] || row['descripcion'] || row['DESCRIPCION'];
+
+                if (!cod || !descripcion) continue;
 
                 validProducts.push({
-                    cod: String(row.cod).toUpperCase(),
-                    descripcion: String(row.descripcion),
-                    um: String(row.um || 'UNIDADES').toUpperCase(),
-                    precio_cents: parseFloat(row.precio_cents) || 0,
-                    prioridad_algoritmo: parseInt(row.prioridad_algoritmo) || 3,
-                    stock_inicial_manual: parseFloat(row.stock_inicial_manual) || 0,
-                    es_paquete: String(row.es_paquete).toUpperCase() === 'S',
-                    contenido_paquete: parseInt(row.contenido_paquete) || 1,
+                    cod: String(cod).toUpperCase(),
+                    descripcion: String(descripcion),
+                    um: String(row['UM'] || row['um'] || 'UNIDADES').toUpperCase(),
+                    precio_cents: parseFloat(row['Precio ($)'] || row['precio_cents'] || row['PRECIO'] || 0),
+                    prioridad_algoritmo: parseInt(row['Prioridad'] || row['prioridad_algoritmo'] || 3),
+                    stock_inicial_manual: parseFloat(row['Stock Inicial'] || row['stock_inicial_manual'] || 0),
+                    es_paquete: String(row['Es Paquete (S/N)'] || row['es_paquete'] || '').toUpperCase() === 'S',
+                    contenido_paquete: parseInt(row['Contenido Paquete'] || row['contenido_paquete'] || 1),
                     activo: true,
                     created_at: now,
                     priorityMode: 'manual',
@@ -458,25 +462,23 @@ export function CatalogTable() {
             }
 
             if (validProducts.length > 0) {
-                try {
-                    await db.products.bulkPut(validProducts);
+                db.products.bulkPut(validProducts).then(() => {
                     toast.success(`Se importaron ${validProducts.length} productos correctamente`);
-                    // Reset input
                     event.target.value = '';
-                } catch (error) {
-                    toast.error('Error al guardar los productos en la base de datos');
-                }
+                }).catch(err => {
+                    toast.error('Error al guardar los productos');
+                    console.error(err);
+                });
             } else {
-                toast.error('No se encontraron productos válidos en el archivo. Verifique que tengan código y descripción.');
+                toast.error('No se encontraron productos válidos. Verifique las columnas Código y Descripción.');
             }
-        },
-        error: (error) => {
-            toast.error('Error al procesar el archivo CSV');
+        } catch (error) {
+            toast.error('Error al procesar el archivo Excel');
             console.error(error);
         }
-    });
+    };
+    reader.readAsArrayBuffer(file);
   };
-
 
   return (
     <>
@@ -509,7 +511,7 @@ export function CatalogTable() {
               <Button variant="outline" size="sm" onClick={handleRecalculateIntelligence} disabled={isSyncing} className="h-12 sm:h-10 text-xs uppercase font-black tracking-widest gap-2 text-purple-500 border-purple-200 hover:bg-purple-50 flex-1 sm:flex-none"><Brain className={`w-4 h-4 ${isSyncing ? 'animate-pulse' : ''}`} />Inteligencia</Button>
               <Button variant="outline" size="sm" onClick={handleExportCatalog} className="h-12 sm:h-10 text-xs uppercase font-black tracking-widest gap-2 flex-1 sm:flex-none"><Download className="w-4 h-4" /> Exportar</Button>
               <div className="relative flex-1 sm:flex-none">
-                  <input type="file" accept=".csv" onChange={handleImportCatalog} className="hidden" id="catalog-import-input" />
+                  <input type="file" accept=".xlsx, .xls" onChange={handleImportCatalog} className="hidden" id="catalog-import-input" />
                   <Button variant="outline" size="sm" onClick={() => document.getElementById('catalog-import-input')?.click()} className="h-12 sm:h-10 text-xs uppercase font-black tracking-widest gap-2 w-full"><Upload className="w-4 h-4" /> Importar</Button>
               </div>
 
