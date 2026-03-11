@@ -430,24 +430,26 @@ export function CatalogTable() {
 const handleExportCatalog = () => {
     const exportData = (products && products.length > 0)
         ? products.map(p => ({
-            'Código': p.cod,
-            'Descripción': p.descripcion,
-            'UM': p.um,
-            'Precio ($)': p.precio_cents,
-            'Prioridad': p.prioridad_algoritmo,
-            'Stock Inicial': p.stock_inicial_manual,
-            'Es Paquete (S/N)': p.es_paquete ? 'S' : 'N',
-            'Contenido Paquete': p.contenido_paquete
+            'cod': p.cod,
+            'descripcion': p.descripcion,
+            'um': p.um,
+            'precio_cents': p.precio_cents,
+            'prioridad_alg': p.prioridad_algoritmo,
+            'activo': p.activo ? 'VERDADERO' : 'FALSO',
+            'es_paquete': p.es_paquete ? 'VERDADERO' : 'FALSO',
+            'contenido_paquete': p.contenido_paquete,
+            'stock_inicial_manual': p.stock_inicial_manual
           }))
         : [{
-            'Código': 'SKU-001',
-            'Descripción': 'Producto de Ejemplo',
-            'UM': 'UNIDADES',
-            'Precio ($)': 100.00,
-            'Prioridad': 3,
-            'Stock Inicial': 10,
-            'Es Paquete (S/N)': 'N',
-            'Contenido Paquete': 1
+            'cod': 'SKU-001',
+            'descripcion': 'Producto de Ejemplo',
+            'um': 'UNIDADES',
+            'precio_cents': 100.00,
+            'prioridad_alg': 3,
+            'activo': 'VERDADERO',
+            'es_paquete': 'FALSO',
+            'contenido_paquete': 1,
+            'stock_inicial_manual': 10
           }];
 
     const ws = XLSX.utils.json_to_sheet(exportData);
@@ -483,18 +485,25 @@ const handleExportCatalog = () => {
                 // Map from Spanish headers or generic headers
                 const cod = row['Código'] || row['cod'] || row['CODIGO'];
                 const descripcion = row['Descripción'] || row['descripcion'] || row['DESCRIPCION'];
+                const um = row['UM'] || row['um'] || 'UNIDADES';
+                const precio = row['Precio ($)'] || row['precio_cents'] || row['PRECIO'] || 0;
+                const prioridad = row['Prioridad'] || row['prioridad_alg'] || row['prioridad_algoritmo'] || 3;
+                const stock = row['Stock Inicial'] || row['stock_inicial_manual'] || 0;
+                const es_pqt = row['Es Paquete (S/N)'] || row['es_paquete'] || '';
+                const activo_val = row['activo'] || row['Activo'] || 'VERDADERO';
+                const cont_pqt = row['Contenido Paquete'] || row['contenido_paquete'] || 1;
 
                 if (!cod || !descripcion) continue;
 
                 validProducts.push({
                     cod: String(cod).toUpperCase(),
                     descripcion: String(descripcion),
-                    um: String(row['UM'] || row['um'] || 'UNIDADES').toUpperCase(),
-                    precio_cents: parseFloat(String(row['Precio ($)'] || row['precio_cents'] || row['PRECIO'] || 0).replace(',', '.')),
-                    prioridad_algoritmo: parseInt(row['Prioridad'] || row['prioridad_algoritmo'] || 3),
-                    stock_inicial_manual: parseFloat(String(row['Stock Inicial'] || row['stock_inicial_manual'] || 0).replace(',', '.')),
-                    es_paquete: String(row['Es Paquete (S/N)'] || row['es_paquete'] || '').toUpperCase() === 'S',
-                    contenido_paquete: parseInt(row['Contenido Paquete'] || row['contenido_paquete'] || 1),
+                    um: String(um).toUpperCase(),
+                    precio_cents: typeof precio === 'number' ? precio : parseFloat(String(precio).replace(',', '.')),
+                    prioridad_algoritmo: parseInt(String(prioridad)),
+                    stock_inicial_manual: typeof stock === 'number' ? stock : parseFloat(String(stock).replace(',', '.')),
+                    es_paquete: String(es_pqt).toUpperCase() === 'S' || String(es_pqt).toUpperCase() === 'VERDADERO' || es_pqt === true,
+                    contenido_paquete: parseInt(String(cont_pqt)),
                     activo: true,
                     created_at: now,
                     priorityMode: 'manual',
@@ -537,7 +546,7 @@ const handleExportCatalog = () => {
       <div className="space-y-4">
         <ActionMenu
             actions={catalogActions}
-            sticky={true}
+            sticky={false}
             topOffset="sticky top-[60px] sm:top-[92px]"
             className="mb-2 !-mx-4 px-4 py-2"
         />
