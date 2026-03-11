@@ -86,17 +86,17 @@ export function IPVControlPanel({ onSelect, onExportBackup, onImportBackup, hasT
 
     const mainActions = [
         {
-            id: 'analytics',
-            title: 'Dashboard',
-            description: 'Cuadro de mando institucional con KPIs financieros y liquidez.',
-            icon: <TrendingUp />,
-            variant: 'primary'
-        },
-        {
             id: 'dashboard',
             title: 'Flujo',
             description: 'Panel de control con acceso directo a todos los módulos del sistema.',
             icon: <Workflow />,
+            variant: 'primary'
+        },
+        {
+            id: 'analytics',
+            title: 'Dashboard',
+            description: 'Cuadro de mando institucional con KPIs financieros y liquidez.',
+            icon: <TrendingUp />,
             variant: 'dark'
         },
         {
