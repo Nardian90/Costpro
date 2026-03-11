@@ -47,6 +47,7 @@ export interface Product {
   ventas_qty_historico?: number;
   ventas_valor_historico?: number;
   id_grupo?: string;           // Agrupador de variantes (ej: "BIG_BON")
+  cod_hijo?: string;           // Código del producto inferior en la jerarquía
 }
 
 export interface ProductMovement {
@@ -191,9 +192,9 @@ export class IPVDatabase extends Dexie {
 
   constructor() {
     super('IPVDB');
-    this.version(10).stores({
+    this.version(11).stores({
       bank_statements: '&referencia_origen, fecha, importe_cents, ingestion_hash',
-      products: '&cod, descripcion, precio_cents, prioridad_algoritmo, activo, stock_inicial_manual, isWildcardCandidate, id_grupo',
+      products: '&cod, descripcion, precio_cents, prioridad_algoritmo, activo, stock_inicial_manual, isWildcardCandidate, id_grupo, cod_hijo',
       matching_rules: '&id, tipo, prioridad',
       reconciliation_lines: '&id, transaction_ref, reconciliation_hash, fecha_operacion, clasificacion, origen_dato',
       product_movements: '&id, fecha, producto_origen_cod, producto_destino_cod, tipo, referencia_transaccion',

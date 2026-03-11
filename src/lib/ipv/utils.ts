@@ -130,3 +130,43 @@ export async function recalculateIPVReportsChain(db: any) {
         allReports[i].filas = updatedFilas;
     }
 }
+
+/**
+ * Automáticamente asigna el cod_hijo para todos los productos de un grupo
+ * basándose en el orden de precios (de mayor a menor).
+ */
+export function classifyGroupHierarchy(products: Product[]): Product[] {
+    const groups = new Map<string, Product[]>();
+
+    // Agrupar por id_grupo
+    products.forEach(p => {
+        if (p.id_grupo) {
+            if (!groups.has(p.id_grupo)) groups.set(p.id_grupo, []);
+            groups.get(p.id_grupo)!.push(p);
+        }
+    });
+
+    // Para cada grupo, ordenar por precio descendente y asignar cod_hijo
+    const updatedProducts = [...products];
+
+    groups.forEach((members) => {
+        const sorted = [...members].sort((a, b) => b.precio_cents - a.precio_cents);
+        for (let i = 0; i < sorted.length; i++) {
+            const current = sorted[i];
+            const next = sorted[i + 1];
+
+            // Si ya tiene un cod_hijo manual que existe en el grupo, respetarlo?
+            // El usuario pidió que el sistema clasifique inteligentemente.
+            // Vamos a asignar el siguiente si el cod_hijo actual está vacío.
+
+            const productInOriginalArray = updatedProducts.find(p => p.cod === current.cod);
+            if (productInOriginalArray) {
+                if (!productInOriginalArray.cod_hijo || productInOriginalArray.cod_hijo === '') {
+                    productInOriginalArray.cod_hijo = next ? next.cod : undefined;
+                }
+            }
+        }
+    });
+
+    return updatedProducts;
+}
