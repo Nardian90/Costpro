@@ -1,4 +1,5 @@
 'use client';
+import { Card } from '@/components/ui/card';
 
 import React, { useState, useCallback } from 'react';
 import { BaseModal } from "@/components/ui/BaseModal";
@@ -8,13 +9,31 @@ import { generateHash } from '@/lib/ipv/engine';
 import { parseBandecTxt } from '@/lib/ipv/bandecParser';
 import { extractCommission, standardizeDate } from '@/lib/ipv/utils';
 import { Button } from '@/components/ui/button';
-import { Upload, RotateCcw, FileUp, Download, Info, FileSpreadsheet, FileText, HelpCircle, Trash2, RefreshCw, Plus } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Upload, RotateCcw, FileUp, Download, Info, FileSpreadsheet, FileText, HelpCircle, Trash2, RefreshCw, Plus, Database } from 'lucide-react';
 import { toast } from 'sonner';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 import { v4 as uuidv4 } from 'uuid';
+import { exportFullBackup, importFullBackup } from '@/lib/ipv/backup';
 
 export function BankIngestion() {
+  const fileBackupRef = React.useRef<HTMLInputElement>(null);
+  const handleBackupImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const loadingToast = toast.loading("Restaurando base de datos...");
+      try {
+        await importFullBackup(db, file);
+        toast.success("Base de datos restaurada correctamente", { id: loadingToast });
+        setTimeout(() => window.location.reload(), 1500);
+      } catch (error) {
+        console.error("Error importing backup:", error);
+        toast.error("Error al restaurar la base de datos", { id: loadingToast });
+      }
+      if (event.target) event.target.value = "";
+    }
+  };
   const [confirmation, setConfirmation] = useState<{
     open: boolean;
     title: string;
@@ -292,8 +311,64 @@ export function BankIngestion() {
               </div>
           </div>
         </div>
+
+        <Card className="p-8 bg-gradient-to-br from-primary/10 via-background to-transparent border-2 border-primary/5 rounded-[3rem] flex flex-col xl:flex-row items-center justify-between gap-8 overflow-hidden relative">
+            <div className="absolute -left-10 top-0 bottom-0 w-40 bg-primary/5 blur-[100px] rounded-full" />
+            <div className="space-y-3 relative z-10 flex-1 text-center xl:text-left">
+                <div className="flex items-center justify-center xl:justify-start gap-4">
+                    <div className="p-3 bg-primary/10 rounded-2xl text-primary">
+                        <Database className="w-7 h-7" />
+                    </div>
+                    <h3 className="text-xl font-black uppercase tracking-tight">Base de Datos Local</h3>
+                </div>
+                <p className="text-xs text-muted-foreground font-medium max-w-xl mx-auto xl:mx-0">
+                    Toda la información reside exclusivamente en su navegador bajo el motor DexieDB. Se recomienda realizar respaldos periódicos si planea limpiar su caché de navegación o cambiar de dispositivo.
+                </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center gap-8 relative z-10">
+                <div className="flex gap-6">
+                    <div className="text-center">
+                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-2 opacity-60">Caché</p>
+                        <Badge variant="outline" className="font-black text-primary border-primary/30 px-3 py-1 bg-primary/5">ACTIVA</Badge>
+                    </div>
+                    <div className="text-center">
+                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-2 opacity-60">Seguridad</p>
+                        <Badge variant="outline" className="font-black text-blue-500 border-blue-500/30 px-3 py-1 bg-blue-500/5">CIFRADO LOCAL</Badge>
+                    </div>
+                </div>
+
+                <div className="flex gap-3">
+                    <Button
+                        variant="outline"
+                        onClick={() => exportFullBackup(db)}
+                        className="h-12 px-6 text-[10px] font-black uppercase tracking-widest gap-2 bg-background/50 shadow-sm hover:bg-primary hover:text-white transition-all border-2 rounded-2xl"
+                    >
+                        <Download className="w-4 h-4" />
+                        Respaldar
+                    </Button>
+
+                    <Button
+                        variant="outline"
+                        onClick={() => fileBackupRef.current?.click()}
+                        className="h-12 px-6 text-[10px] font-black uppercase tracking-widest gap-2 bg-background/50 shadow-sm hover:bg-emerald-500 hover:text-white transition-all border-2 border-emerald-500/20 rounded-2xl"
+                    >
+                        <Upload className="w-4 h-4" />
+                        Importar
+                    </Button>
+                    <input
+                        type="file"
+                        ref={fileBackupRef}
+                        onChange={handleBackupImport}
+                        accept=".json"
+                        className="hidden"
+                    />
+                </div>
+            </div>
+        </Card>
+
         <div className="p-6 bg-destructive/5 rounded-3xl border border-destructive/20 space-y-4">
-            <Button variant="destructive" className="w-full" onClick={resetEverything}>REINICIO TOTAL</Button>
+            <Button variant="destructive" className="w-full text-white font-black bg-red-600 hover:bg-red-700 shadow-lg" onClick={resetEverything}>REINICIO TOTAL</Button>
             <Button variant="outline" className="w-full text-destructive" onClick={resetCatalog}>VACIAR CATÁLOGO</Button>
         </div>
       </div>
