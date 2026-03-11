@@ -810,6 +810,47 @@
     .max-w-5xl.mx-auto button {
       min-height: 44px !important;
     }
+
+    /* Product Section (SECCION_03_PRODUCTO) Maintenance */
+    .grid-cols-1.sm\:grid-cols-2.md\:grid-cols-3 {
+      gap: 1rem !important;
+    }
+
+    .neu-card.\!p-4 {
+      padding: 0.75rem !important;
+    }
+
+    .neu-card h3.text-base {
+      font-size: clamp(14px, 4vw, 16px) !important;
+    }
+
+    /* Adjust cost/price grid for 320px */
+    .grid-cols-2.gap-2.sm\:gap-3.mb-4 {
+      gap: 0.5rem !important;
+      margin-bottom: 0.75rem !important;
+    }
+
+    /* Ensure touch targets for product buttons */
+    .neu-card button.neu-btn,
+    .neu-card button.neu-btn-primary {
+      min-height: 44px !important;
+      padding: 0.5rem !important;
+    }
+
+    /* Inventory View Sticky Header Optimization */
+    .sticky.top-\[76px\].z-40.bg-background\/95 {
+      top: 60px !important; /* Adjust for smaller header */
+      padding-left: 0.5rem !important;
+      padding-right: 0.5rem !important;
+      margin-left: -0.5rem !important;
+      margin-right: -0.5rem !important;
+    }
+
+    /* Inventory Adjustment Modal Inputs */
+    .neu-input.w-full.\!pl-14.\!pr-4.font-black.text-lg.h-12 {
+      height: 44px !important;
+      font-size: 1rem !important;
+    }
   }
 
   /* Reduced motion */
