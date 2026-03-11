@@ -235,6 +235,7 @@ export default function TerminalShell() {
           logoOpacity={nav.logoOpacity}
           logoScale={nav.logoScale}
           navRef={nav.navRef}
+          onClose={() => setSidebarOpen(false)}
         />
       )}
 
@@ -304,7 +305,7 @@ export default function TerminalShell() {
 
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 lg:hidden"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30"
           onClick={toggleSidebar}
         />
       )}
