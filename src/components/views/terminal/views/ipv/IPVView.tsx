@@ -59,7 +59,7 @@ import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/comp
 import { IPVHelpDialog } from './IPVHelpDialog';
 
 export default function IPVView() {
-  const [activeTab, setActiveTab] = useState('analytics');
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [isMatching, setIsMatching] = useState(false);
   const [matchMessage, setMatchMessage] = useState('');
   const [matchProgress, setMatchProgress] = useState(0);
