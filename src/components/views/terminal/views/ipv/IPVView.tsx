@@ -357,8 +357,8 @@ export default function IPVView() {
   ], [handleGlobalRecalculate, handleRunMatching]);
 
   const menuActions: Action[] = useMemo(() => [
-    { id: 'analytics', label: 'Dashboard', icon: TrendingUp, onClick: () => setActiveTab('analytics'), active: activeTab === 'analytics' },
     { id: 'dashboard', label: 'Flujo', icon: Workflow, onClick: () => setActiveTab('dashboard'), active: activeTab === 'dashboard' },
+    { id: 'analytics', label: 'Dashboard', icon: TrendingUp, onClick: () => setActiveTab('analytics'), active: activeTab === 'analytics' },
     { id: 'ingestion', label: 'Extracto', icon: Database, onClick: () => setActiveTab('ingestion'), active: activeTab === 'ingestion' },
     { id: 'catalog', label: 'Catálogo', icon: PackageSearch, onClick: () => setActiveTab('catalog'), active: activeTab === 'catalog' },
     { id: 'transactions', label: 'Transacciones', icon: Table2, onClick: () => setActiveTab('transactions'), active: activeTab === 'transactions' },
