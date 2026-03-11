@@ -611,6 +611,12 @@ export default function IPVView() {
             </div>
           )}
 
+          {activeTab === 'movements' && (
+            <div className="m-0 animate-in fade-in duration-500">
+                <MovementsView />
+            </div>
+          )}
+
           {activeTab === 'ingestion' && (
             <div className="m-0 p-6 animate-in fade-in duration-500">
                 <BankIngestion />
