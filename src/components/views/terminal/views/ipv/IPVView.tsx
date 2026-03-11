@@ -34,6 +34,7 @@ import {
 import { BankIngestion } from './BankIngestion';
 import { TransactionTable } from './TransactionTable';
 import { CatalogTable } from './CatalogTable';
+import MovementsView from './MovementsView';
 import { MatchingSimulation } from './MatchingSimulation';
 import { TransactionBreakdown } from './TransactionBreakdown';
 import { IPVReportView } from './IPVReportView';
