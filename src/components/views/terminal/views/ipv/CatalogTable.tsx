@@ -32,6 +32,7 @@ import {
     calculateDynamicPriority
 } from '@/lib/ipv/intelligence';
 import { recalculateIPVReportsChain } from '@/lib/ipv/utils';
+import ActionMenu, { Action } from "@/components/ui/ActionMenu";
 import * as XLSX from 'xlsx';
 import {
   Tooltip,
@@ -85,17 +86,25 @@ export function CatalogTable() {
   const inventoryStats = React.useMemo(() => {
     if (!products || !reports || !reconciliationLines) return {};
     const stats: Record<string, { initial: number; sales: number; final: number }> = {};
-    const lastClosedReport = reports.find(r => r.estado === 'CERRADO');
+
+    // 1. Encontrar el primer reporte IPV para el saldo inicial global
+    const firstReport = reports.length > 0 ? reports[reports.length - 1] : null;
+
     products.forEach(p => {
+        // Saldo Inicial: Si hay reportes, el inicial es el del primer reporte.
+        // Si no hay reportes, es el stock_inicial_manual del catálogo.
         let initial = p.stock_inicial_manual || 0;
-        if (lastClosedReport) {
-            const reportRow = lastClosedReport.filas.find(f => f.cod === p.cod);
-            if (reportRow) initial = reportRow.existencia_final_qty;
+        if (firstReport) {
+            const firstRow = firstReport.filas.find(f => f.cod === p.cod);
+            if (firstRow) initial = firstRow.saldo_inicial_qty;
         }
-        const reportDate = lastClosedReport ? lastClosedReport.fecha_reporte : '0000-00-00';
+
+        // Ventas: Todas las líneas de reconciliación desde el inicio
         const sales = reconciliationLines
-            .filter(l => l.product_cod === p.cod && l.fecha_operacion > reportDate)
-            .reduce((sum, l) => sum + l.cantidad, 0);
+            .filter(l => l.product_cod === p.cod)
+            .reduce((sum, l) => sum + (l.cantidad || 0), 0);
+
+        // Saldo Final: Inicial - Ventas
         stats[p.cod] = { initial, sales, final: initial - sales };
     });
     return stats;
@@ -376,12 +385,21 @@ export function CatalogTable() {
   };
 
   const handleRecalculateReportsChain = async () => {
-    askConfirmation('Recalcular IPVs', '¿Recalcular toda la cadena de reportes IPV?', async () => {
+    askConfirmation('Actualizar Datos', '¿Sincronizar existencias del catálogo con el primer reporte IPV y recalcular cadena?', async () => {
         try {
+            const allReports = await db.ipv_reports.orderBy('fecha_reporte').toArray();
+            if (allReports.length > 0) {
+                const firstReport = allReports[0];
+                // Sincronizar stock inicial del catálogo con el saldo inicial del primer reporte
+                for (const fila of firstReport.filas) {
+                    await db.products.update(fila.cod, { stock_inicial_manual: fila.saldo_inicial_qty });
+                }
+            }
             await recalculateIPVReportsChain(db);
-            toast.success('Cadena de reportes recalculada exitosamente');
+            toast.success('Sincronización y recalculo completado');
         } catch (error) {
-            toast.error('Error al recalcular los reportes');
+            console.error(error);
+            toast.error('Error al actualizar los datos');
         }
     });
   };
@@ -480,9 +498,27 @@ export function CatalogTable() {
     reader.readAsArrayBuffer(file);
   };
 
+  const catalogActions: Action[] = React.useMemo(() => [
+    { id: "add", label: "Nuevo", icon: Plus, onClick: handleAddNew },
+    { id: "update", label: "Actualizar", icon: RefreshCw, onClick: handleRecalculateReportsChain, variant: "primary" },
+    { id: "sync-real", label: "Catálogo Real", icon: LayoutGrid, onClick: syncWithSystemCatalog, disabled: isSyncing },
+    { id: "intel", label: "Inteligencia", icon: Brain, onClick: handleRecalculateIntelligence, disabled: isSyncing, variant: "outline", className: "text-purple-500" },
+    { id: "normalize", label: "Normalizar", icon: AlertTriangle, onClick: handleNormalizeNegatives, variant: "danger" },
+    { id: "export", label: "Exportar", icon: Download, onClick: handleExportCatalog },
+    { id: "import", label: "Importar", icon: Upload, onClick: () => document.getElementById("catalog-import-input")?.click() },
+    { id: "clear", label: "Vaciar", icon: Trash2, onClick: clearCatalog, variant: "danger" }
+  ], [isSyncing, handleAddNew, syncWithSystemCatalog, handleRecalculateReportsChain, handleRecalculateIntelligence, handleNormalizeNegatives, handleExportCatalog, clearCatalog]);
+
   return (
     <>
       <div className="space-y-4">
+        <ActionMenu
+            actions={catalogActions}
+            sticky={true}
+            topOffset="sticky top-[60px] sm:top-[92px]"
+            className="mb-2 !-mx-4 px-4 py-2"
+        />
+
         <div className="p-3 sm:p-4 flex flex-col lg:flex-row gap-4 bg-background/50 border-b items-center justify-between">
           <div className="flex flex-col sm:flex-row gap-4 flex-1 w-full lg:max-w-3xl items-center">
               <div className="relative w-full sm:w-64">
@@ -504,20 +540,9 @@ export function CatalogTable() {
                   <TooltipTrigger asChild><Button variant="outline" size="icon" className="rounded-full h-10 w-10"><HelpCircle className="w-4 h-4" /></Button></TooltipTrigger>
                   <TooltipContent className="max-w-xs p-4 bg-popover text-popover-foreground border shadow-xl"><p className="font-bold text-primary mb-2">Ayuda de Columnas:</p><ul className="text-xs space-y-1 list-disc pl-4 uppercase font-bold"><li><strong>cod:</strong> Identificador único.</li><li><strong>Precio:</strong> Valor unitario en centavos.</li><li><strong>Prioridad:</strong> 1-5.</li><li><strong>Stock Inicial:</strong> Punto de partida.</li></ul></TooltipContent>
               </Tooltip>
-              <Button variant="outline" size="sm" onClick={handleNormalizeNegatives} className="h-12 sm:h-10 text-xs uppercase font-black tracking-widest gap-2 text-red-500 border-red-200 hover:bg-red-50 flex-1 sm:flex-none"><AlertTriangle className="w-4 h-4" />Normalizar</Button>
-              <Button variant="outline" size="sm" onClick={syncWithSystemCatalog} disabled={isSyncing} className="h-12 sm:h-10 text-xs uppercase font-black tracking-widest gap-2 text-primary border-primary/20 flex-1 sm:flex-none"><RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />Catálogo Real</Button>
-              <Button variant="outline" size="sm" onClick={handleAddNew} className="h-12 sm:h-10 text-xs uppercase font-black tracking-widest gap-2 flex-1 sm:flex-none"><Plus className="w-4 h-4" />Nuevo</Button>
-              <Button variant="outline" size="sm" onClick={handleRecalculateReportsChain} className="h-12 sm:h-10 text-xs uppercase font-black tracking-widest gap-2 text-primary border-primary/20 flex-1 sm:flex-none"><RefreshCw className="w-4 h-4" />Recalcular IPVs</Button>
-              <Button variant="outline" size="sm" onClick={handleRecalculateIntelligence} disabled={isSyncing} className="h-12 sm:h-10 text-xs uppercase font-black tracking-widest gap-2 text-purple-500 border-purple-200 hover:bg-purple-50 flex-1 sm:flex-none"><Brain className={`w-4 h-4 ${isSyncing ? 'animate-pulse' : ''}`} />Inteligencia</Button>
-              <Button variant="outline" size="sm" onClick={handleExportCatalog} className="h-12 sm:h-10 text-xs uppercase font-black tracking-widest gap-2 flex-1 sm:flex-none"><Download className="w-4 h-4" /> Exportar</Button>
-              <div className="relative flex-1 sm:flex-none">
-                  <input type="file" accept=".xlsx, .xls" onChange={handleImportCatalog} className="hidden" id="catalog-import-input" />
-                  <Button variant="outline" size="sm" onClick={() => document.getElementById('catalog-import-input')?.click()} className="h-12 sm:h-10 text-xs uppercase font-black tracking-widest gap-2 w-full"><Upload className="w-4 h-4" /> Importar</Button>
-              </div>
-
+              <input type="file" accept=".xlsx, .xls" onChange={handleImportCatalog} className="hidden" id="catalog-import-input" />
           </div>
         </div>
-
         {layoutMode === 'table' ? (
           <div className="table-scroll-wrapper">
               <Table className="data-table">

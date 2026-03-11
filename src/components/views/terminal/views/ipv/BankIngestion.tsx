@@ -111,21 +111,37 @@ export function BankIngestion() {
   const processCatalogData = async (data: any[]) => {
     try {
         let imported = 0;
+        const now = new Date().toISOString();
         for (const row of data) {
-            const cod = String(row.cod || row.COD || '').trim();
+            const cod = String(row["Código"] || row.cod || row.COD || "").trim();
             if (!cod) continue;
-            const precio = parseFloat(String(row.precio_cents || row.precio || 0).replace(',', '.'));
+
+            const precio = parseFloat(String(row["Precio ($)"] || row.precio_cents || row.precio || 0).replace(",", "."));
+            const stock = parseFloat(String(row["Stock Inicial"] || row.stock_inicial_manual || row.stock || 0).replace(",", "."));
+
             const product = {
-                cod, descripcion: String(row.descripcion || row.desc || ''), um: String(row.um || 'Unidades'),
-                precio_cents: precio, prioridad_algoritmo: Number(row.prioridad || 1), activo: true,
-                es_paquete: false, contenido_paquete: 1, stock_inicial_manual: Number(row.stock || 0),
-                created_at: new Date().toISOString(), updated_at: new Date().toISOString()
+                cod: cod.toUpperCase(),
+                descripcion: String(row["Descripción"] || row.descripcion || row.desc || ""),
+                um: String(row["UM"] || row.um || "Unidades").toUpperCase(),
+                precio_cents: precio,
+                prioridad_algoritmo: Number(row["Prioridad"] || row.prioridad_algoritmo || row.prioridad || 1),
+                activo: true,
+                es_paquete: String(row["Es Paquete (S/N)"] || row.es_paquete || "").toUpperCase() === "S",
+                contenido_paquete: Number(row["Contenido Paquete"] || row.contenido_paquete || 1),
+                stock_inicial_manual: stock,
+                created_at: now,
+                updated_at: now,
+                priorityMode: "manual",
+                isWildcardCandidate: false
             };
-            await db.products.put(product);
+            await db.products.put(product as any);
             imported++;
         }
         toast.success(`${imported} productos procesados`);
-    } catch (error) { toast.error('Error catálogo'); }
+    } catch (error) {
+        console.error(error);
+        toast.error("Error al procesar catálogo");
+    }
   };
 
   const processBankData = async (data: any[]) => {
