@@ -202,7 +202,7 @@ export function CatalogTable() {
 
   const handleAddNew = () => {
       const newProd: Product = {
-          cod: '', descripcion: '', um: 'Unidades', es_paquete: false, contenido_paquete: 1, precio_cents: 0, prioridad_algoritmo: 3, activo: true, stock_inicial_manual: 0, created_at: new Date().toISOString(), priorityMode: 'manual', isWildcardCandidate: false
+          cod: '', id_grupo: '', descripcion: '', um: 'Unidades', es_paquete: false, contenido_paquete: 1, precio_cents: 0, prioridad_algoritmo: 3, activo: true, stock_inicial_manual: 0, created_at: new Date().toISOString(), priorityMode: 'manual', isWildcardCandidate: false
       };
       setEditingId('NEW');
       setEditForm(newProd);
@@ -431,6 +431,7 @@ const handleExportCatalog = () => {
     const exportData = (products && products.length > 0)
         ? products.map(p => ({
             'cod': p.cod,
+            'id_grupo': p.id_grupo || '',
             'descripcion': p.descripcion,
             'um': p.um,
             'precio_cents': p.precio_cents,
@@ -442,6 +443,7 @@ const handleExportCatalog = () => {
           }))
         : [{
             'cod': 'SKU-001',
+            'id_grupo': 'GRUPO-001',
             'descripcion': 'Producto de Ejemplo',
             'um': 'UNIDADES',
             'precio_cents': 100.00,
@@ -484,6 +486,7 @@ const handleExportCatalog = () => {
             for (const row of jsonData) {
                 // Map from Spanish headers or generic headers
                 const cod = row['Código'] || row['cod'] || row['CODIGO'];
+                const id_grupo = row['id_grupo'] || row['ID_GRUPO'] || row['Grupo'] || '';
                 const descripcion = row['Descripción'] || row['descripcion'] || row['DESCRIPCION'];
                 const um = row['UM'] || row['um'] || 'UNIDADES';
                 const precio = row['Precio ($)'] || row['precio_cents'] || row['PRECIO'] || 0;
@@ -497,6 +500,7 @@ const handleExportCatalog = () => {
 
                 validProducts.push({
                     cod: String(cod).toUpperCase(),
+                    id_grupo: id_grupo ? String(id_grupo).toUpperCase() : '',
                     descripcion: String(descripcion),
                     um: String(um).toUpperCase(),
                     precio_cents: typeof precio === 'number' ? precio : parseFloat(String(precio).replace(',', '.')),
@@ -602,7 +606,7 @@ const handleExportCatalog = () => {
                   <>
                   {editingId === 'NEW' && (
                       <TableRow className="bg-primary/10">
-                          <TableCell className="sticky-column-1"><Input value={editForm.cod} onChange={e => setEditForm({...editForm, cod: e.target.value})} placeholder="CÓDIGO" className="h-8 w-24 text-xs font-bold" /></TableCell>
+                          <TableCell className="sticky-column-1"><div className="flex flex-col gap-1"><Input value={editForm.cod} onChange={e => setEditForm({...editForm, cod: e.target.value})} placeholder="CÓDIGO" className="h-8 w-24 text-xs font-bold" /><Input value={editForm.id_grupo || ""} onChange={e => setEditForm({...editForm, id_grupo: e.target.value})} placeholder="GRUPO" className="h-6 w-24 text-[10px] font-bold" /></div></TableCell>
                           <TableCell><Input value={editForm.descripcion} onChange={e => setEditForm({...editForm, descripcion: e.target.value})} placeholder="Descripción..." className="h-8 text-xs min-w-[200px]" /></TableCell>
                           <TableCell><Input value={editForm.um} onChange={e => setEditForm({...editForm, um: e.target.value})} className="h-8 w-24 text-xs uppercase" /></TableCell>
                           <TableCell className="text-center"><Switch checked={editForm.es_paquete} onCheckedChange={checked => setEditForm({...editForm, es_paquete: checked})} /></TableCell>
@@ -621,7 +625,12 @@ const handleExportCatalog = () => {
                       return (
                       <TableRow key={p.cod} className={`${isEditing ? "bg-primary/5" : ""} ${isSelected ? "bg-purple-50" : ""}`}>
                           <TableCell><input type="checkbox" checked={isSelected} onChange={(e) => { if (e.target.checked) setSelectedProductIds([...selectedProductIds, p.cod]); else setSelectedProductIds(selectedProductIds.filter(id => id !== p.cod)); }} /></TableCell>
-                          <TableCell className="sticky-column-1 font-mono text-xs font-bold text-primary">{p.cod}</TableCell>
+                          <TableCell className="sticky-column-1 font-mono text-xs font-bold text-primary">
+                              <div className="flex flex-col">
+                                  <span>{p.cod}</span>
+                                  {p.id_grupo && <span className="text-[10px] text-muted-foreground opacity-70">G: {p.id_grupo}</span>}
+                              </div>
+                          </TableCell>
                           <TableCell>{isEditing ? (<div className="space-y-2"><Input value={editForm.descripcion} onChange={e => setEditForm({...editForm, descripcion: e.target.value})} className="h-8 text-xs min-w-[200px]" /><Input placeholder="Categoría" value={editForm.categoria || ''} onChange={e => setEditForm({...editForm, categoria: e.target.value})} className="h-7 text-xs w-full" /></div>) : (<div><div className="text-xs font-bold">{p.descripcion}</div>{p.categoria && <Badge variant="secondary" className="text-xs h-3 px-1 mt-1 opacity-70 uppercase">{p.categoria}</Badge>}</div>)}</TableCell>
                           <TableCell>{!isEditing && p.priceEffectivenessScore !== undefined && (<div className="flex items-center gap-2"><div className="w-12 h-1.5 bg-muted rounded-full overflow-hidden"><div className={`h-full ${p.priceEffectivenessScore > 70 ? 'bg-green-500' : p.priceEffectivenessScore > 40 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{ width: `${p.priceEffectivenessScore}%` }} /></div><span className="text-xs font-black">{p.priceEffectivenessScore}</span></div>)}</TableCell>
                           <TableCell>{!isEditing && p.suggestedPrice && (<Tooltip><TooltipTrigger asChild><Badge className="bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 border-purple-500/20 gap-1 cursor-help"><Sparkles className="w-3 h-3" />{p.suggestedPrice}</Badge></TooltipTrigger><TooltipContent className="bg-popover text-popover-foreground border shadow-xl"><p className="text-xs max-w-xs">{p.suggestionReason}</p></TooltipContent></Tooltip>)}</TableCell>
@@ -678,7 +687,7 @@ function ProductCard({ product, stats, isEditing, editForm, setEditForm, onSave,
         <Card className={`p-4 space-y-4 border-none shadow-md bg-card/50 backdrop-blur-sm relative overflow-hidden ${isEditing ? 'ring-2 ring-primary' : ''}`}>
             {product.isWildcardCandidate && (<div className="absolute top-0 right-0 p-1"><Star className="w-4 h-4 text-yellow-500 fill-yellow-500" /></div>)}
             <div className="flex justify-between items-start">
-                <div><div className="flex items-center gap-2"><p className="text-xs font-black text-primary uppercase tracking-widest">{product.cod}</p>{product.priceEffectivenessScore !== undefined && (<Badge variant="outline" className="text-xs h-3 px-1 border-primary/20 bg-primary/5">Eff: {product.priceEffectivenessScore}%</Badge>)}</div>{isEditing ? (<Input value={editForm.descripcion} onChange={e => setEditForm({...editForm, descripcion: e.target.value})} className="h-8 mt-1 text-xs font-bold" />) : (<h4 className="font-bold text-sm leading-tight">{product.descripcion}</h4>)}</div>
+                <div><div className="flex items-center gap-2"><p className="text-xs font-black text-primary uppercase tracking-widest">{product.cod}</p>{product.id_grupo && <Badge variant="secondary" className="text-[10px] h-4 px-1 opacity-70">G: {product.id_grupo}</Badge>}{product.priceEffectivenessScore !== undefined && (<Badge variant="outline" className="text-xs h-3 px-1 border-primary/20 bg-primary/5">Eff: {product.priceEffectivenessScore}%</Badge>)}</div>{isEditing ? (<Input value={editForm.descripcion} onChange={e => setEditForm({...editForm, descripcion: e.target.value})} className="h-8 mt-1 text-xs font-bold" />) : (<h4 className="font-bold text-sm leading-tight">{product.descripcion}</h4>)}</div>
                 <div className="flex flex-col items-end gap-1">{isEditing ? (<div className="flex flex-col items-end gap-1"><Input value={editForm.um} onChange={e => setEditForm({...editForm, um: e.target.value})} className="h-7 w-20 text-xs uppercase text-right" placeholder="UM" /><select value={editForm.prioridad_algoritmo} onChange={e => setEditForm({...editForm, prioridad_algoritmo: Number(e.target.value)})} className="h-7 rounded-md border border-input bg-background px-1 text-xs">{[1, 2, 3, 4, 5].map(v => <option key={v} value={v}>Prio {v}</option>)}</select></div>) : (<><Badge variant="outline" className="text-xs uppercase font-black">{product.um}</Badge><span className="text-xs font-bold text-muted-foreground uppercase opacity-50">Prio {product.prioridad_algoritmo}</span></>)}</div>
             </div>
             <div className="grid grid-cols-3 gap-2 py-3 border-y border-border/50">
@@ -698,7 +707,7 @@ function ProductCard({ product, stats, isEditing, editForm, setEditForm, onSave,
 function NewProductCard({ editForm, setEditForm, onSave, onCancel }: any) {
     return (
         <Card className="p-4 space-y-4 border-2 border-dashed border-primary/50 bg-primary/5 relative">
-            <div className="grid grid-cols-2 gap-3"><div className="space-y-1"><Label className="text-xs uppercase font-black">Código</Label><Input value={editForm.cod} onChange={e => setEditForm({...editForm, cod: e.target.value})} className="h-8 text-xs font-bold uppercase" placeholder="SKU-123" /></div><div className="space-y-1"><Label className="text-xs uppercase font-black">UM</Label><Input value={editForm.um} onChange={e => setEditForm({...editForm, um: e.target.value})} className="h-8 text-xs uppercase" placeholder="UNIDADES" /></div></div>
+            <div className="grid grid-cols-3 gap-3"><div className="space-y-1"><Label className="text-xs uppercase font-black">Código</Label><Input value={editForm.cod} onChange={e => setEditForm({...editForm, cod: e.target.value})} className="h-8 text-xs font-bold uppercase" placeholder="SKU-123" /></div><div className="space-y-1"><Label className="text-xs uppercase font-black">ID Grupo</Label><Input value={editForm.id_grupo || ""} onChange={e => setEditForm({...editForm, id_grupo: e.target.value})} className="h-8 text-xs font-bold uppercase" placeholder="OPCIONAL" /></div><div className="space-y-1"><Label className="text-xs uppercase font-black">UM</Label><Input value={editForm.um} onChange={e => setEditForm({...editForm, um: e.target.value})} className="h-8 text-xs uppercase" placeholder="UNIDADES" /></div></div>
             <div className="space-y-1"><Label className="text-xs uppercase font-black">Descripción</Label><Input value={editForm.descripcion} onChange={e => setEditForm({...editForm, descripcion: e.target.value})} className="h-8 text-xs" placeholder="Nombre del producto..." /></div>
             <div className="grid grid-cols-2 gap-3"><div className="space-y-1"><Label className="text-xs uppercase font-black">Precio de Venta</Label><Input type="number" step="0.01" value={editForm.precio_cents || 0} onChange={e => setEditForm({...editForm, precio_cents: parseFloat(e.target.value) || 0})} className="h-8 text-xs font-black" /></div><div className="space-y-1"><Label className="text-xs uppercase font-black">Prioridad</Label><select value={editForm.prioridad_algoritmo} onChange={e => setEditForm({...editForm, prioridad_algoritmo: Number(e.target.value)})} className="w-full h-8 rounded-md border border-input bg-background px-3 py-1 text-xs">{[1, 2, 3, 4, 5].map(v => <option key={v} value={v}>Prioridad {v}</option>)}</select></div></div>
             <div className="grid grid-cols-2 gap-3"><div className="space-y-1"><Label className="text-xs uppercase font-black">Stock Inicial</Label><Input type="number" min="0" value={editForm.stock_inicial_manual} onChange={e => setEditForm({...editForm, stock_inicial_manual: Math.max(0, Number(e.target.value))})} className="h-8 text-xs" /></div><div className="space-y-1 flex flex-col justify-end"><div className="flex items-center gap-2 pb-1"><Switch checked={editForm.es_paquete} onCheckedChange={checked => setEditForm({...editForm, es_paquete: checked})} /><Label className="text-xs uppercase font-black">¿Es Paquete?</Label></div>{editForm.es_paquete && (<Input type="number" placeholder="Contenido..." value={editForm.contenido_paquete} onChange={e => setEditForm({...editForm, contenido_paquete: Number(e.target.value)})} className="h-7 text-xs" />)}</div></div>

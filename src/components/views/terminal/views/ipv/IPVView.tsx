@@ -34,6 +34,7 @@ import {
 import { BankIngestion } from './BankIngestion';
 import { TransactionTable } from './TransactionTable';
 import { CatalogTable } from './CatalogTable';
+import MovementsView from './MovementsView';
 import { MatchingSimulation } from './MatchingSimulation';
 import { TransactionBreakdown } from './TransactionBreakdown';
 import { IPVReportView } from './IPVReportView';
@@ -608,6 +609,12 @@ export default function IPVView() {
           {activeTab === 'catalog' && (
             <div className="m-0 animate-in fade-in duration-500">
                 <CatalogTable />
+            </div>
+          )}
+
+          {activeTab === 'movements' && (
+            <div className="m-0 animate-in fade-in duration-500">
+                <MovementsView />
             </div>
           )}
 
