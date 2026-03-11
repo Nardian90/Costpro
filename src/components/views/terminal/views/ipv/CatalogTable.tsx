@@ -384,27 +384,50 @@ export function CatalogTable() {
     });
   };
 
-  const handleRecalculateReportsChain = async () => {
-    askConfirmation('Actualizar Datos', '¿Sincronizar existencias del catálogo con el primer reporte IPV y recalcular cadena?', async () => {
+    const handleRecalculateReportsChain = async () => {
+    askConfirmation('Actualizar Datos', '¿Sincronizar existencias del catálogo con los datos de trabajo y reportes?', async () => {
+        const loadingToast = toast.loading('Sincronizando datos...');
         try {
+            // 1. Recalcular cadena de reportes IPV
+            await recalculateIPVReportsChain(db);
+
+            // 2. Obtener reportes actualizados
             const allReports = await db.ipv_reports.orderBy('fecha_reporte').toArray();
+
+            // 3. Si hay reportes, sincronizar el stock inicial del catálogo con el primer reporte
             if (allReports.length > 0) {
                 const firstReport = allReports[0];
-                // Sincronizar stock inicial del catálogo con el saldo inicial del primer reporte
                 for (const fila of firstReport.filas) {
-                    await db.products.update(fila.cod, { stock_inicial_manual: fila.saldo_inicial_qty });
+                    await db.products.update(fila.cod, {
+                        stock_inicial_manual: fila.saldo_inicial_qty
+                    });
                 }
             }
-            await recalculateIPVReportsChain(db);
-            toast.success('Sincronización y recalculo completado');
+
+            // 4. Actualizar estadísticas de ventas en la tabla de productos para Inteligencia
+            const products = await db.products.toArray();
+            const lines = await db.reconciliation_lines.toArray();
+
+            for (const p of products) {
+                const sales = lines
+                    .filter(l => l.product_cod === p.cod)
+                    .reduce((sum, l) => sum + (l.cantidad || 0), 0);
+
+                await db.products.update(p.cod, {
+                    ventas_qty_historico: sales,
+                    ventas_valor_historico: sales * p.precio_cents,
+                    updated_at: new Date().toISOString()
+                });
+            }
+
+            toast.success('Sincronización completa: Catálogo, Conciliaciones e IPV alineados.', { id: loadingToast });
         } catch (error) {
             console.error(error);
-            toast.error('Error al actualizar los datos');
+            toast.error('Error al actualizar los datos', { id: loadingToast });
         }
     });
   };
-
-  const handleExportCatalog = () => {
+const handleExportCatalog = () => {
     const exportData = (products && products.length > 0)
         ? products.map(p => ({
             'Código': p.cod,
@@ -467,9 +490,9 @@ export function CatalogTable() {
                     cod: String(cod).toUpperCase(),
                     descripcion: String(descripcion),
                     um: String(row['UM'] || row['um'] || 'UNIDADES').toUpperCase(),
-                    precio_cents: parseFloat(row['Precio ($)'] || row['precio_cents'] || row['PRECIO'] || 0),
+                    precio_cents: parseFloat(String(row['Precio ($)'] || row['precio_cents'] || row['PRECIO'] || 0).replace(',', '.')),
                     prioridad_algoritmo: parseInt(row['Prioridad'] || row['prioridad_algoritmo'] || 3),
-                    stock_inicial_manual: parseFloat(row['Stock Inicial'] || row['stock_inicial_manual'] || 0),
+                    stock_inicial_manual: parseFloat(String(row['Stock Inicial'] || row['stock_inicial_manual'] || 0).replace(',', '.')),
                     es_paquete: String(row['Es Paquete (S/N)'] || row['es_paquete'] || '').toUpperCase() === 'S',
                     contenido_paquete: parseInt(row['Contenido Paquete'] || row['contenido_paquete'] || 1),
                     activo: true,
