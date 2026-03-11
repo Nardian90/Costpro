@@ -4,8 +4,8 @@
   "description": "Sistema de Gestión Integral Costpro",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#e8ebf0",
-  "theme_color": "#6366f1",
+  "background_color": "#f8fafc",
+  "theme_color": "#16a34a",
   "orientation": "portrait",
   "icons": [
     {
