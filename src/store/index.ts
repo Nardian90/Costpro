@@ -40,7 +40,7 @@ export const useUIStore = create<UIState>()(
       previousView: null,
       sidebarOpen: true,
       isCalculatorOpen: false,
-      themePreference: 'auto',
+      themePreference: 'fast-light',
       viewQueries: {},
       showQueries: false,
       isCreateProductModalOpen: false,
@@ -98,7 +98,6 @@ export const useAuthStore = create<AuthState>()((set) => ({
   updateUser: (data) => set((state) => ({
     user: state.user ? { ...state.user, ...data } : null
   })),
-  login: (user, token, status = 'authenticated_valid', mocked = false) =>
-    set({ user, token, status, isMocked: mocked, loading: false }),
-  logout: () => set({ user: null, token: null, status: 'unauthenticated', isMocked: false, loading: false }),
+  login: (user, token, status = 'authenticated_valid', isMocked = false) => set({ user, token, status, loading: false, isMocked }),
+  logout: () => set({ user: null, token: null, status: 'unauthenticated', isMocked: false }),
 }));
