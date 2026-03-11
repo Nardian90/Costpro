@@ -8,11 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
     Wallet, ArrowUpRight, ArrowDownRight,
-    Search, Filter, Plus, List, PieChart, Banknote
+    Search, Filter, Plus, List, PieChart, Banknote, Database, Trash2
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
-import { parseSmsText, calculateAnalytics } from "@/lib/wallet/parser";
-import { WalletTransaction } from "@/lib/wallet/types";
+import { parseSmsText, calculateAnalytics, parseRawMessages } from "@/lib/wallet/parser";
+import { WalletTransaction, RawImportMessage } from "@/lib/wallet/types";
 import { toast } from "sonner";
 
 const AnalyticsDashboard = dynamic(
@@ -30,17 +30,21 @@ const AnalyticsDashboard = dynamic(
 
 export default function WalletView() {
     const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
+    const [rawMessages, setRawMessages] = useState<RawImportMessage[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [isImporting, setIsImporting] = useState(false);
     const [importText, setImportText] = useState('');
-    const [viewMode, setViewMode] = useState<'list' | 'analytics'>('list');
+    const [viewMode, setViewMode] = useState<'bd' | 'list' | 'analytics'>('bd');
     const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
         setIsMounted(true);
         try {
-            const saved = localStorage.getItem('wallet_transactions');
-            if (saved) setTransactions(JSON.parse(saved));
+            const savedTxs = localStorage.getItem('wallet_transactions');
+            if (savedTxs) setTransactions(JSON.parse(savedTxs));
+
+            const savedRaw = localStorage.getItem('wallet_raw_messages');
+            if (savedRaw) setRawMessages(JSON.parse(savedRaw));
         } catch (e) { console.error('Storage error', e); }
     }, []);
 
@@ -49,21 +53,50 @@ export default function WalletView() {
         if (typeof window !== 'undefined') localStorage.setItem('wallet_transactions', JSON.stringify(newTxs));
     };
 
+    const saveRawMessages = (newRaw: RawImportMessage[]) => {
+        setRawMessages(newRaw);
+        if (typeof window !== 'undefined') localStorage.setItem('wallet_raw_messages', JSON.stringify(newRaw));
+    };
+
     const handleImport = () => {
         if (!importText.trim()) return;
         try {
+            // Process for BD (Raw Messages)
+            const newRaw = parseRawMessages(importText);
+            if (newRaw.length > 0) {
+                const updatedRaw = [...newRaw, ...rawMessages];
+                saveRawMessages(updatedRaw);
+            }
+
+            // Process for List (Transactions)
             const parsed = parseSmsText(importText);
-            if (parsed.length === 0) { toast.error('Sin datos válidos'); return; }
-            const existingIds = new Set(transactions.map(tx => tx.transaction_id));
-            const uniqueNew = parsed.filter(tx => !existingIds.has(tx.transaction_id));
-            saveTransactions([...uniqueNew, ...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-            toast.success(`Procesadas ${uniqueNew.length} transacciones`);
+            if (parsed.length > 0) {
+                const existingIds = new Set(transactions.map(tx => tx.transaction_id));
+                const uniqueNew = parsed.filter(tx => !existingIds.has(tx.transaction_id));
+                saveTransactions([...uniqueNew, ...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+                toast.success(`Procesadas ${uniqueNew.length} transacciones y ${newRaw.length} mensajes base`);
+            } else if (newRaw.length > 0) {
+                toast.success(`Procesados ${newRaw.length} mensajes base`);
+            } else {
+                toast.error('Sin datos válidos');
+                return;
+            }
+
             setImportText(''); setIsImporting(false);
         } catch (e) { toast.error('Error al procesar'); }
     };
 
+    const clearBD = () => {
+        if (confirm('¿Eliminar todos los mensajes base?')) {
+            saveRawMessages([]);
+            toast.success('BD limpiada');
+        }
+    };
+
     const analytics = useMemo(() => calculateAnalytics(transactions), [transactions]);
-    const filtered = transactions.filter(tx => tx.counterparty.toLowerCase().includes(searchQuery.toLowerCase()) || tx.description.toLowerCase().includes(searchQuery.toLowerCase()));
+    const filteredTxs = transactions.filter(tx => tx.counterparty.toLowerCase().includes(searchQuery.toLowerCase()) || tx.description.toLowerCase().includes(searchQuery.toLowerCase()));
+    const filteredRaw = rawMessages.filter(m => m.nameNumber.toLowerCase().includes(searchQuery.toLowerCase()) || m.content.toLowerCase().includes(searchQuery.toLowerCase()) || m.date.toLowerCase().includes(searchQuery.toLowerCase()));
+
     const formatCurrency = (val: number) => new Intl.NumberFormat('es-CU', { style: 'currency', currency: 'CUP' }).format(val);
 
     if (!isMounted) return null;
@@ -76,6 +109,7 @@ export default function WalletView() {
                     <div><h1 className="text-xl font-black uppercase tracking-tight">Billetera</h1><p className="text-[10px] font-black uppercase tracking-widest opacity-50">Control de SMS Bancarios</p></div>
                 </div>
                 <div className="flex items-center gap-2 bg-secondary/30 p-1 rounded-xl">
+                    <Button variant={viewMode === 'bd' ? 'default' : 'ghost'} size="sm" onClick={() => setViewMode('bd')} className="rounded-lg h-9 px-4 text-[10px] font-black uppercase tracking-widest"><Database className="w-4 h-4 mr-2" /> BD</Button>
                     <Button variant={viewMode === 'list' ? 'default' : 'ghost'} size="sm" onClick={() => setViewMode('list')} className="rounded-lg h-9 px-4 text-[10px] font-black uppercase tracking-widest"><List className="w-4 h-4 mr-2" /> Lista</Button>
                     <Button variant={viewMode === 'analytics' ? 'default' : 'ghost'} size="sm" onClick={() => setViewMode('analytics')} className="rounded-lg h-9 px-4 text-[10px] font-black uppercase tracking-widest"><PieChart className="w-4 h-4 mr-2" /> Análisis</Button>
                 </div>
@@ -84,22 +118,64 @@ export default function WalletView() {
             <div className="flex-1 overflow-y-auto no-scrollbar pb-32">
                 {viewMode === 'analytics' ? <AnalyticsDashboard analytics={analytics} /> : (
                     <div className="px-6 md:px-8 pt-8 space-y-8">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                            <Card className="rounded-3xl border-none shadow-xl bg-green-500/10"><CardContent className="p-8"><p className="text-[10px] font-black uppercase tracking-widest opacity-50">Ingresos</p><h3 className="text-2xl font-black mt-2 text-green-500">{formatCurrency(analytics.summary.total_income)}</h3></CardContent></Card>
-                            <Card className="rounded-3xl border-none shadow-xl bg-red-500/10"><CardContent className="p-8"><p className="text-[10px] font-black uppercase tracking-widest opacity-50">Gastos</p><h3 className="text-2xl font-black mt-2 text-red-500">{formatCurrency(analytics.summary.total_expenses)}</h3></CardContent></Card>
-                            <Card className="rounded-3xl border-none shadow-xl bg-primary text-primary-foreground"><CardContent className="p-8"><p className="text-[10px] font-black uppercase tracking-widest opacity-60">Balance</p><h3 className="text-2xl font-black mt-2">{formatCurrency(analytics.summary.balance)}</h3></CardContent></Card>
-                        </div>
+                        {viewMode === 'list' && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <Card className="rounded-3xl border-none shadow-xl bg-green-500/10"><CardContent className="p-8"><p className="text-[10px] font-black uppercase tracking-widest opacity-50">Ingresos</p><h3 className="text-2xl font-black mt-2 text-green-500">{formatCurrency(analytics.summary.total_income)}</h3></CardContent></Card>
+                                <Card className="rounded-3xl border-none shadow-xl bg-red-500/10"><CardContent className="p-8"><p className="text-[10px] font-black uppercase tracking-widest opacity-50">Gastos</p><h3 className="text-2xl font-black mt-2 text-red-500">{formatCurrency(analytics.summary.total_expenses)}</h3></CardContent></Card>
+                                <Card className="rounded-3xl border-none shadow-xl bg-primary text-primary-foreground"><CardContent className="p-8"><p className="text-[10px] font-black uppercase tracking-widest opacity-60">Balance</p><h3 className="text-2xl font-black mt-2">{formatCurrency(analytics.summary.balance)}</h3></CardContent></Card>
+                            </div>
+                        )}
+
                         <div className="bg-card rounded-[2.5rem] border border-secondary/20 overflow-hidden">
-                            <div className="p-6 border-b border-secondary/10 flex justify-between items-center"><h2 className="text-[10px] font-black uppercase tracking-[0.2em]">Movimientos</h2><div className="relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 opacity-50" /><Input placeholder="Buscar..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-9 h-9 bg-secondary/20 border-none rounded-lg text-[9px] font-bold uppercase w-40" /></div></div>
-                            <div className="overflow-x-auto"><table className="w-full"><tbody className="divide-y divide-secondary/10">
-                                {filtered.map(tx => (
-                                    <tr key={tx.id} className="hover:bg-primary/5 transition-colors">
-                                        <td className="px-6 py-4"><p className="text-[10px] font-black">{tx.date}</p><p className="text-[8px] font-bold opacity-40 uppercase">{tx.bank}</p></td>
-                                        <td className="px-6 py-4"><p className="text-[10px] font-black uppercase truncate max-w-[150px]">{tx.counterparty}</p><p className="text-[8px] font-medium opacity-50 truncate max-w-[150px]">{tx.description}</p></td>
-                                        <td className={cn("px-6 py-4 text-right text-[10px] font-black", tx.direction === 'IN' ? "text-green-500" : "text-red-500")}>{tx.direction === 'IN' ? '+' : '-'}{formatCurrency(tx.amount)}</td>
-                                    </tr>
-                                ))}
-                            </tbody></table></div>
+                            <div className="p-6 border-b border-secondary/10 flex justify-between items-center">
+                                <h2 className="text-[10px] font-black uppercase tracking-[0.2em]">{viewMode === 'bd' ? 'Mensajes Importados' : 'Movimientos'}</h2>
+                                <div className="flex items-center gap-4">
+                                    {viewMode === 'bd' && rawMessages.length > 0 && (
+                                        <Button variant="ghost" size="sm" onClick={clearBD} className="text-red-500 hover:text-red-600 h-9 px-3 rounded-lg"><Trash2 className="w-4 h-4" /></Button>
+                                    )}
+                                    <div className="relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 opacity-50" /><Input placeholder="Buscar..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-9 h-9 bg-secondary/20 border-none rounded-lg text-[9px] font-bold uppercase w-40" /></div>
+                                </div>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    {viewMode === 'bd' ? (
+                                        <>
+                                            <thead>
+                                                <tr className="border-b border-secondary/10 bg-secondary/5">
+                                                    <th className="px-6 py-4 text-left text-[9px] font-black uppercase tracking-widest opacity-50">Type</th>
+                                                    <th className="px-6 py-4 text-left text-[9px] font-black uppercase tracking-widest opacity-50">Date</th>
+                                                    <th className="px-6 py-4 text-left text-[9px] font-black uppercase tracking-widest opacity-50">Nombre/Número</th>
+                                                    <th className="px-6 py-4 text-left text-[9px] font-black uppercase tracking-widest opacity-50">Content</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-secondary/10">
+                                                {filteredRaw.length === 0 ? (
+                                                    <tr><td colSpan={4} className="px-6 py-20 text-center text-[10px] font-black uppercase opacity-20 tracking-widest">Sin mensajes importados</td></tr>
+                                                ) : filteredRaw.map(msg => (
+                                                    <tr key={msg.id} className="hover:bg-primary/5 transition-colors align-top">
+                                                        <td className="px-6 py-4"><Badge variant="outline" className="text-[8px] font-black uppercase border-primary/20 bg-primary/5">{msg.type}</Badge></td>
+                                                        <td className="px-6 py-4 text-[10px] font-bold whitespace-nowrap">{msg.date}</td>
+                                                        <td className="px-6 py-4 text-[10px] font-black uppercase max-w-[200px] break-words">{msg.nameNumber}</td>
+                                                        <td className="px-6 py-4"><pre className="text-[9px] font-mono leading-relaxed opacity-70 whitespace-pre-wrap max-h-40 overflow-y-auto no-scrollbar">{msg.content}</pre></td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </>
+                                    ) : (
+                                        <tbody className="divide-y divide-secondary/10">
+                                            {filteredTxs.length === 0 ? (
+                                                <tr><td colSpan={3} className="px-6 py-20 text-center text-[10px] font-black uppercase opacity-20 tracking-widest">Sin transacciones</td></tr>
+                                            ) : filteredTxs.map(tx => (
+                                                <tr key={tx.id} className="hover:bg-primary/5 transition-colors">
+                                                    <td className="px-6 py-4"><p className="text-[10px] font-black">{tx.date}</p><p className="text-[8px] font-bold opacity-40 uppercase">{tx.bank}</p></td>
+                                                    <td className="px-6 py-4"><p className="text-[10px] font-black uppercase truncate max-w-[150px]">{tx.counterparty}</p><p className="text-[8px] font-medium opacity-50 truncate max-w-[150px]">{tx.description}</p></td>
+                                                    <td className={cn("px-6 py-4 text-right text-[10px] font-black", tx.direction === 'IN' ? "text-green-500" : "text-red-500")}>{tx.direction === 'IN' ? '+' : '-'}{formatCurrency(tx.amount)}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    )}
+                                </table>
+                            </div>
                         </div>
                     </div>
                 )}
