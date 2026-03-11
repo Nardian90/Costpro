@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, LogOut, Zap, ChevronDown, Calculator } from 'lucide-react';
+import { Search, LogOut, Zap, ChevronDown, Calculator, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import CostProLogo from '@/components/CostProLogo';
 import { ViewType, useUIStore, useAuthStore } from '@/store';
@@ -18,6 +18,7 @@ interface SidebarProps {
   onViewChange: (view: ViewType) => void;
   onPrefetchView?: (view: ViewType) => void;
   onLogout: () => void;
+  onClose?: () => void;
   logoHeight: any;
   logoOpacity: any;
   logoScale: any;
@@ -33,6 +34,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onViewChange,
   onPrefetchView,
   onLogout,
+  onClose,
   logoHeight,
   logoOpacity,
   logoScale,
@@ -185,7 +187,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
       "fixed inset-y-0 left-0 z-40 bg-sidebar transition-all duration-300 ease-in-out border-r border-sidebar-border shadow-2xl overflow-hidden",
       sidebarOpen ? "w-64 lg:w-72 translate-x-0" : "w-0 -translate-x-full border-r-0"
     )}>
-      <div className="bg-sidebar/90 backdrop-blur-2xl h-full flex flex-col overflow-hidden w-64 lg:w-72">
+      <div className="relative bg-sidebar/90 backdrop-blur-2xl h-full flex flex-col overflow-hidden w-64 lg:w-72">
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 z-50 p-2 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-all active:scale-95"
+            aria-label="Cerrar menú"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
         <motion.div
           id="sidebar-logo-container"
           style={{
