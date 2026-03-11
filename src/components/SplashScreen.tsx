@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import CostProLogo from './CostProLogo';
 
@@ -10,17 +10,28 @@ interface SplashScreenProps {
 
 const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
   const [isVisible, setIsVisible] = useState(true);
+  const finishedRef = useRef(false);
+
+  const handleFinish = React.useCallback(() => {
+    if (finishedRef.current) return;
+    finishedRef.current = true;
+    setIsVisible(false);
+    // Give time for exit animation
+    setTimeout(onFinish, 400);
+  }, [onFinish]);
 
   useEffect(() => {
     // Optimized timing: 1.2s for logo + brief pause
-    const timer = setTimeout(() => {
-      setIsVisible(false);
-      // Wait for the exit animation to finish before calling onFinish
-      setTimeout(onFinish, 400);
-    }, 1200);
+    const timer = setTimeout(handleFinish, 1200);
 
-    return () => clearTimeout(timer);
-  }, [onFinish]);
+    // Failsafe for mobile/low-end devices: ensure splash closes after 3s max
+    const failsafe = setTimeout(handleFinish, 3000);
+
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(failsafe);
+    };
+  }, [handleFinish]);
 
   return (
     <AnimatePresence>
