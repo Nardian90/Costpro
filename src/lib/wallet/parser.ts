@@ -1,4 +1,4 @@
-import { WalletTransaction, WalletTransactionType, WalletAnalytics, WalletSummary } from './types';
+import { WalletTransaction, WalletTransactionType, WalletAnalytics, WalletSummary, RawImportMessage } from './types';
 
 const generateId = () => Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
 
@@ -18,6 +18,92 @@ const PATTERNS = {
   TRANS_ID: /Nro\. Transaccion\s+([A-Z0-9]+)/,
   GENERIC_BALANCE: /Saldo Disponible:\s*CR\s*([\d.]+)/
 };
+
+export function parseRawMessages(text: string): RawImportMessage[] {
+  if (!text) return [];
+
+  const blocks = text.split(/(?=Recibido\s)/);
+  const rawMessages: RawImportMessage[] = [];
+
+  blocks.forEach(block => {
+    const lines = block.trim().split('\n').map(l => l.trim()).filter(l => l);
+    if (lines.length < 1) return;
+
+    let type = "Recibido";
+
+    // Improved sender detection: search for known senders in any line
+    const knownSenders = ['PAGOxMOVIL', 'BANDEC', 'BPA', 'Metropolitano', 'Banco Popular de Ahorro'];
+    let senderIndex = -1;
+    let senderName = "Desconocido";
+
+    for (let i = 0; i < lines.length; i++) {
+        const found = knownSenders.find(s => lines[i].includes(s));
+        if (found) {
+            senderIndex = i;
+            // Extract the sender name exactly as found in the line
+            senderName = found;
+            break;
+        }
+    }
+
+    // If no known sender, look for generic nameNumber indicator or just use line 1/2
+    if (senderIndex === -1) {
+      senderIndex = lines.length > 2 ? 2 : (lines.length > 1 ? 1 : 0);
+      senderName = lines[senderIndex] || "Desconocido";
+    }
+
+    // Date is everything from the start up to the sender line (excluding sender name if it's on the same line)
+    // Actually, usually date is before the sender.
+    const datePartLines = lines.slice(0, senderIndex);
+    let dateStr = datePartLines.join(" ").replace(/^Recibido\s*/, "").trim();
+
+    // If the sender line also contains "Recibido", it might be a malformed split
+    if (lines[senderIndex].startsWith("Recibido")) {
+        dateStr = lines[senderIndex].replace(/^Recibido\s*/, "").trim();
+    }
+
+    const remainingLines = lines.slice(senderIndex);
+    // Remove the sender name from the first remaining line to get content
+    let firstContentLine = remainingLines[0].replace(senderName, "").trim();
+    // Clean up colon if it was "PAGOxMOVIL: content"
+    if (firstContentLine.startsWith(":")) firstContentLine = firstContentLine.substring(1).trim();
+
+    const contentLines = [firstContentLine, ...remainingLines.slice(1)].filter(l => l);
+
+    // Check if it's a multi-line report (contains ;)
+    const isTable = contentLines.some(l => l.includes(';'));
+
+    if (isTable) {
+      const tableHeaderIndex = contentLines.findIndex(l => l.includes('Fecha;') || l.includes('Servicio;') || l.includes('Operacion;'));
+      const dataStart = tableHeaderIndex !== -1 ? tableHeaderIndex + 1 : 0;
+
+      const dataLines = contentLines.slice(dataStart);
+
+      dataLines.forEach(line => {
+        const cleanLine = line.replace(/\|$/, '').trim();
+        if (!cleanLine || !cleanLine.includes(';')) return;
+
+        rawMessages.push({
+          id: generateId(),
+          type,
+          date: dateStr || "Sin fecha",
+          nameNumber: senderName,
+          content: cleanLine
+        });
+      });
+    } else {
+      rawMessages.push({
+        id: generateId(),
+        type,
+        date: dateStr || "Sin fecha",
+        nameNumber: senderName,
+        content: contentLines.join("\n")
+      });
+    }
+  });
+
+  return rawMessages;
+}
 
 export function parseSmsText(text: string): WalletTransaction[] {
   if (!text) return [];
