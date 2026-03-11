@@ -80,7 +80,7 @@ interface AuthState {
   setStatus: (status: any) => void;
   setIsMocked: (isMocked: boolean) => void;
   updateUser: (data: Partial<UserContract>) => void;
-  login: (user: UserContract, token: string, status?: any) => void;
+  login: (user: UserContract, token: string, status?: any, isMocked?: boolean) => void;
   logout: () => void;
 }
 
@@ -98,6 +98,7 @@ export const useAuthStore = create<AuthState>()((set) => ({
   updateUser: (data) => set((state) => ({
     user: state.user ? { ...state.user, ...data } : null
   })),
-  login: (user, token, status = 'authenticated_valid') => set({ user, token, status, loading: false }),
-  logout: () => set({ user: null, token: null, status: 'unauthenticated', isMocked: false }),
+  login: (user, token, status = 'authenticated_valid', mocked = false) =>
+    set({ user, token, status, isMocked: mocked, loading: false }),
+  logout: () => set({ user: null, token: null, status: 'unauthenticated', isMocked: false, loading: false }),
 }));

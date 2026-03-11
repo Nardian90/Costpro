@@ -14,6 +14,7 @@ describe('useAuthStore', () => {
 
   it('should set isMocked to true when login is called with isMocked true', () => {
     const mockUser = UserFactory.create({ id: 'test-id' });
+    // Updated to match 4-argument signature: (user, token, status, isMocked)
     useAuthStore.getState().login(mockUser, 'test-token', 'authenticated_valid', true);
 
     const state = useAuthStore.getState();
@@ -27,6 +28,8 @@ describe('useAuthStore', () => {
     expect(useAuthStore.getState().isMocked).toBe(true);
 
     useAuthStore.getState().logout();
-    expect(useAuthStore.getState().isMocked).toBe(false);
+    const state = useAuthStore.getState();
+    expect(state.isMocked).toBe(false);
+    expect(state.loading).toBe(false);
   });
 });

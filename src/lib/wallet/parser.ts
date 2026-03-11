@@ -30,7 +30,8 @@ export function parseSmsText(text: string): WalletTransaction[] {
 
     const type = classify(trimmed);
     const dateMatch = trimmed.match(PATTERNS.DATE);
-    const date = formatDate(dateMatch ? dateMatch[1] : "");
+    const dateStr = dateMatch ? dateMatch[1] : "";
+    const date = formatDate(dateStr) || new Date().toISOString().split('T')[0];
     const transIdMatch = trimmed.match(PATTERNS.TRANS_ID);
     const transId = transIdMatch ? transIdMatch[1] : generateId();
     const genBalanceMatch = trimmed.match(PATTERNS.GENERIC_BALANCE);
@@ -38,7 +39,7 @@ export function parseSmsText(text: string): WalletTransaction[] {
 
     const baseTx = {
       id: generateId(),
-      date: date || new Date().toISOString().split('T')[0],
+      date,
       bank: 'BANDEC',
       transaction_id: transId,
       description: trimmed,
