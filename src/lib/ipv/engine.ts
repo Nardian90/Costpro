@@ -630,7 +630,7 @@ export class MatchingEngine {
     onProgress?: (percentage: number) => void,
     customStockMap?: Map<string, number>
   ): Promise<any[]> {
-    const results = [];
+    const results: any[] = [];
     const total = transactions.length;
 
     if (customStockMap) {
