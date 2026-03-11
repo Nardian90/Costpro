@@ -13,6 +13,7 @@ GRAPH_JSON = "public/architecture_graph.json"
 AUDIT_LOG = "logs/audit_log.json"
 HEALTH_JSON = "public/system_health.json"
 TIMELINE_JSON = "public/health_timeline.json"
+DOCS_QUALITY_REPORT = "docs/reports/DOCUMENTATION_QUALITY_AUDIT.md"
 
 MANUAL_MAPPING = {
     "CostSheetWizard": "Facilita la creación estandarizada de fichas de costo. Automatiza la aplicación de la Resolución 12/2007 para asegurar que todos los cálculos de precios cumplan con la normativa legal vigente.",
@@ -308,6 +309,63 @@ def run_phase_3():
         json.dump(arch_data, f, indent=2, ensure_ascii=False)
     print(f"Phase 3 complete. Updated {ARCH_JSON}.")
 
+def run_phase_4():
+    print("Executing Phase 4: Documentation Quality Audit...")
+    items, _, _ = scan_project()
+    os.makedirs(os.path.dirname(DOCS_QUALITY_REPORT), exist_ok=True)
+
+    total = len(items)
+    documented = len([i for i in items if i.get('is_documented')])
+    avg_quality = round(sum(i.get('documentation_quality', 0) for i in items) / total, 2) if total else 0
+    coverage = round((documented / total) * 100, 1) if total else 0
+
+    modules = {}
+    for i in items:
+        parts = i['path'].split('/')
+        module = parts[4] if len(parts) > 4 else parts[1] if len(parts) > 1 else "root"
+        if module not in modules:
+            modules[module] = {"total": 0, "documented": 0, "quality_sum": 0}
+        modules[module]["total"] += 1
+        if i.get('is_documented'):
+            modules[module]["documented"] += 1
+        modules[module]["quality_sum"] += i.get('documentation_quality', 0)
+
+    module_stats = []
+    for name, stats in sorted(modules.items()):
+        m_avg = round(stats["quality_sum"] / stats["total"], 2)
+        status = "Alcanzado" if m_avg >= 7.0 else "En progreso"
+        module_stats.append(f"| **{name.capitalize()}** | **{m_avg}** | 7.0-8.0 | {status} |")
+
+    report = f"""# Auditoría de Calidad de Documentación - Ejecución Automática
+
+## 1. Resumen Ejecutivo
+**Fecha:** {datetime.date.today().isoformat()}
+**Promedio Global de Calidad:** **{avg_quality}**
+**Cobertura de Documentación:** {documented} / {total} ({coverage}%)
+
+---
+
+## 2. Desglose por Módulo
+| Módulo | Calidad Actual | Meta | Estado |
+| :--- | :---: | :---: | :--- |
+{chr(10).join(module_stats)}
+
+---
+
+## 3. Conclusión
+El sistema mantiene un nivel de documentación de {avg_quality}/10.
+Se requiere atención en los componentes con puntuación inferior a 7.0 para asegurar la transferencia de conocimiento y sostenibilidad del software.
+
+---
+
+## 4. Próximos Pasos
+- Identificar utilidades críticas con documentación base (3.0) para mejora inmediata.
+- Sincronizar descripciones de lógica de negocio en componentes de UI recientemente agregados.
+"""
+    with open(DOCS_QUALITY_REPORT, 'w', encoding='utf-8') as f:
+        f.write(report)
+    print(f"Phase 4 complete. Updated {DOCS_QUALITY_REPORT}.")
+
 def run_phase_9():
     print("Executing Phase 9: System Health Evaluation...")
     items, _, _ = scan_project()
@@ -412,6 +470,8 @@ def main():
         run_phase_2()
     elif args.phase == 3:
         run_phase_3()
+    elif args.phase == 4:
+        run_phase_4()
     elif args.phase == 9:
         run_phase_9()
     elif args.phase == 10:
