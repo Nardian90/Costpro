@@ -33,7 +33,8 @@ export function useSessionManager() {
 
         // Prevent check if offline, another check is in progress, or within throttle period (unless forced)
         if (!isOnline || isCheckingSession || (!force && now - lastChecked < SESSION_CHECK_THROTTLE)) {
-            if (!user && !isCheckingSession) {
+            // ESSENTIAL: If we're not checking and loading is stuck, clear it.
+            if (!isCheckingSession) {
                 setLoading(false);
             }
             return;
@@ -62,6 +63,7 @@ export function useSessionManager() {
                 } catch (err: any) {
                     console.error('[SessionManager] Critical error fetching profile:', err);
                     setAuthStatus('authenticated_invalid_profile');
+                    setLoading(false);
                     return;
                 }
 
@@ -73,25 +75,29 @@ export function useSessionManager() {
                         login(userContractData, session.access_token, 'authenticated_valid');
                     } else {
                         setAuthStatus('authenticated_valid');
+                        setLoading(false);
                     }
                     setStatus('stable');
                 } else {
                     // User inactive or not found - force logout
                     await supabase.auth.signOut();
                     logout();
+                    setLoading(false);
                 }
             } else {
                 // No session - set status to unauthenticated
                 setAuthStatus('unauthenticated');
+                setLoading(false);
             }
         } catch (error: any) {
             console.warn(`Session check failed: ${error.message}`);
             setAuthStatus(useAuthStore.getState().user ? 'authenticated_valid' : 'unauthenticated');
+            setLoading(false);
             setStatus('error');
         } finally {
             setSessionStatus(false);
         }
-    }, [isOnline, isCheckingSession, lastChecked, login, logout, setAuthStatus, setSessionStatus, setStatus, user]);
+    }, [isOnline, isCheckingSession, lastChecked, login, logout, setAuthStatus, setSessionStatus, setStatus, user, setLoading]);
 
     // Effect for online/offline listeners
     useEffect(() => {
@@ -126,6 +132,7 @@ export function useSessionManager() {
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
             if (event === 'SIGNED_OUT') {
                 logout();
+                setLoading(false);
                 safeNavigate.push(router, '/login');
             } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
                 if(session?.access_token && user) {
@@ -139,10 +146,22 @@ export function useSessionManager() {
         });
 
         return () => subscription.unsubscribe();
-    }, [login, logout, router, user, checkSession]);
+    }, [login, logout, router, user, checkSession, setLoading]);
 
     // Initial check on mount
     useEffect(() => {
         checkSession(true);
     }, [checkSession]);
+
+    // Fallback safety: If loading is still true after 5 seconds, clear it.
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            const { loading, setLoading } = useAuthStore.getState();
+            if (loading) {
+                console.warn('[SessionManager] Emergency loading clear triggered.');
+                setLoading(false);
+            }
+        }, 5000);
+        return () => clearTimeout(timer);
+    }, []);
 }

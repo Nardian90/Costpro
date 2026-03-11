@@ -1,21 +1,29 @@
 import { describe, it, expect } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useCostSheetCalculator } from '../logic/useCostSheetCalculator';
-import { CostSheetData } from '@/contracts';
+import { CostSheetDataContract, CostSheetDataFactory } from '@/contracts';
 
-const baseTemplate: CostSheetData = {
+const baseTemplate: CostSheetDataContract = CostSheetDataFactory.create({
     header: {
-        name: 'Test',
         code: 'T-001',
-        product_code: 'P-001',
-        unit: 'u',
+        name: 'Test',
+        date: '2024-01-01',
         quantity: 100,
+        currency: 'CUP',
+        category: '',
+        type: '',
+        unit: 'u',
+        product_code: 'P-001',
+        company: '',
+        organism: '',
+        union: '',
+        destination: '',
         production_level: 100,
-        currency: 'CUP'
-    },
-    sections: [],
-    annexes: []
-};
+        capacity_utilization: 100,
+        sale_price: 0,
+        client: ''
+    }
+});
 
 describe('useCostSheetCalculator', () => {
   it('should handle empty sections without errors', () => {
@@ -24,7 +32,7 @@ describe('useCostSheetCalculator', () => {
   });
 
   it('should calculate ValorFijo correctly', () => {
-    const template: CostSheetData = {
+    const template: CostSheetDataContract = {
         ...baseTemplate,
         sections: [{
             id: 's1',
@@ -37,7 +45,7 @@ describe('useCostSheetCalculator', () => {
   });
 
   it('should calculate health validations and percent correctly', () => {
-    const template: CostSheetData = {
+    const template: CostSheetDataContract = {
         ...baseTemplate,
         sections: [{
             id: 's1',
@@ -53,7 +61,6 @@ describe('useCostSheetCalculator', () => {
 
     const { result } = renderHook(() => useCostSheetCalculator(template));
     expect(result.current.validations.length).toBeGreaterThan(0);
-    // Success rate depends on the validation engine rules
     expect(result.current.validations.some(v => v.type === 'SUCCESS')).toBe(true);
   });
 });
