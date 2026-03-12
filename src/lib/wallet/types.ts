@@ -42,6 +42,7 @@ export interface RawImportMessage {
   date: string;
   nameNumber: string;
   content: string;
+  bank?: string;
 }
 
 export interface WalletSummary {
