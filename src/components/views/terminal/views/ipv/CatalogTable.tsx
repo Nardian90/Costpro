@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type Product } from '@/lib/dexie';
+import { MatchingEngine } from '@/lib/ipv/engine';
 import {
   Table,
   TableBody,
@@ -563,33 +564,125 @@ const handleExportCatalog = () => {
   const catalogActions: Action[] = React.useMemo(() => [
     { id: "add", label: "Nuevo", icon: Plus, onClick: handleAddNew },
     { id: "seed", label: "BIG BON Simulation", icon: Sparkles, onClick: async () => {
+        // 1. Reset Total
+        await db.bank_statements.clear();
+        await db.products.clear();
+        await db.matching_rules.clear();
+        await db.reconciliation_lines.clear();
+        await db.product_movements.clear();
+
+        // 2. Seed Big Bon Hierarchy
         const products = [
-            { cod: "2", descripcion: "BIG BON CAJA", id_grupo: "BIGBON", cod_hijo: "3", um: "CAJA", precio_cents: 13825, prioridad_algoritmo: 1, activo: true, es_paquete: true, contenido_paquete: 8, stock_inicial_manual: 15, created_at: new Date().toISOString(), priorityMode: "manual", isWildcardCandidate: false },
-            { cod: "3", descripcion: "BIG BON PQT", id_grupo: "BIGBON", cod_hijo: "4", um: "PAQUETE", precio_cents: 1730, prioridad_algoritmo: 1, activo: true, es_paquete: true, contenido_paquete: 40, stock_inicial_manual: 1, created_at: new Date().toISOString(), priorityMode: "manual", isWildcardCandidate: false },
-            { cod: "4", descripcion: "BOMBON", id_grupo: "BIGBON", um: "UNIDADES", precio_cents: 45, prioridad_algoritmo: 1, activo: true, es_paquete: false, contenido_paquete: 1, stock_inicial_manual: 2, created_at: new Date().toISOString(), priorityMode: "manual", isWildcardCandidate: false }
+            {
+                cod: "2",
+                descripcion: "BIG BON CAJA",
+                id_grupo: "BIGBON",
+                cod_hijo: "3",
+                um: "CAJA",
+                precio_cents: 13825,
+                prioridad_algoritmo: 1,
+                activo: true,
+                es_paquete: true,
+                contenido_paquete: 8,
+                stock_inicial_manual: 5, // 5 Cajas iniciales
+                created_at: new Date().toISOString(),
+                priorityMode: "manual",
+                isWildcardCandidate: false
+            },
+            {
+                cod: "3",
+                descripcion: "BIG BON PQT",
+                id_grupo: "BIGBON",
+                cod_hijo: "4",
+                um: "PAQUETE",
+                precio_cents: 1730,
+                prioridad_algoritmo: 1,
+                activo: true,
+                es_paquete: true,
+                contenido_paquete: 40,
+                stock_inicial_manual: 0,
+                created_at: new Date().toISOString(),
+                priorityMode: "manual",
+                isWildcardCandidate: false
+            },
+            {
+                cod: "4",
+                descripcion: "BOMBON",
+                id_grupo: "BIGBON",
+                um: "UNIDADES",
+                precio_cents: 45,
+                prioridad_algoritmo: 1,
+                activo: true,
+                es_paquete: false,
+                contenido_paquete: 1,
+                stock_inicial_manual: 0,
+                created_at: new Date().toISOString(),
+                priorityMode: "manual",
+                isWildcardCandidate: false
+            }
         ];
         await db.products.bulkPut(products as any);
-        // Add a mock reconciliation line to trigger a decomposition
-        await db.reconciliation_lines.add({
-            id: crypto.randomUUID(),
-            transaction_ref: "SIM-REF-001",
-            fecha_operacion: new Date().toISOString(),
-            ingreso_banco_cents: 45000,
-            venta_real_calculada_cents: 45000,
-            comision_banco_cents: 0,
-            product_cod: "4",
-            product_um: "UNIDADES",
-            cantidad: 10,
-            precio_unitario_cents: 4500,
-            importe_linea_cents: 45000,
-            cuadre_cents: 0,
-            clasificacion: "Transferencia",
-            origen_dato: "AUTO_MATCH",
-            reconciliation_hash: "SIM-HASH-001",
-            created_at: new Date().toISOString()
-        });
-        toast.success("Simulation seeded: Sale of 10 BOMBON added (Stock: 2). Run Update to trigger decomposition.");
-    }, variant: "outline", className: "text-amber-500" },
+
+        // 3. Seed Matching Rules
+        await db.matching_rules.bulkPut([
+            { id: 'rule-exact', tipo: 'EXACT_SUM', prioridad: 1, activo: true },
+            { id: 'rule-stock', tipo: 'STOCK_LIMIT', prioridad: 0, activo: true }
+        ]);
+
+        // 4. Generate Pending Transactions that require decomposition
+        // Venta de 50 Bombones (necesita 1 PQT + 10 unidades, o 2 PQTs)
+        // Venta de 200 Bombones (necesita 5 PQTs)
+        const txs = [
+            {
+                referencia_origen: "TX-BIGBON-001",
+                fecha: new Date().toISOString().split('T')[0],
+                referencia_corta: "VENTA 50",
+                observaciones: "VENTA BOMBON X50",
+                importe_cents: 2250, // 50 * 45
+                tipo: 'Cr',
+                estado_conciliacion: 'PENDIENTE',
+                created_at: new Date().toISOString(),
+                ingestion_hash: 'hash1'
+            },
+            {
+                referencia_origen: "TX-BIGBON-002",
+                fecha: new Date().toISOString().split('T')[0],
+                referencia_corta: "VENTA 200",
+                observaciones: "VENTA BOMBON X200",
+                importe_cents: 9000, // 200 * 45
+                tipo: 'Cr',
+                estado_conciliacion: 'PENDIENTE',
+                created_at: new Date().toISOString(),
+                ingestion_hash: 'hash2'
+            }
+        ];
+        await db.bank_statements.bulkPut(txs as any);
+
+        // 5. Run Matching Engine
+        const engine = new MatchingEngine(products as any, [
+            { id: 'rule-exact', tipo: 'EXACT_SUM', prioridad: 1, activo: true },
+            { id: 'rule-stock', tipo: 'STOCK_LIMIT', prioridad: 0, activo: true }
+        ] as any);
+
+        const results = await engine.reconcileAll(txs as any);
+
+        // 6. Persist results
+        for (const res of results) {
+            if (res.status === 'COMPLETO' || res.status === 'PARCIAL') {
+                if (res.lines.length > 0) {
+                    await db.reconciliation_lines.bulkPut(res.lines);
+                }
+                if (res.movements && res.movements.length > 0) {
+                    await db.product_movements.bulkPut(res.movements);
+                }
+                await db.bank_statements.update(res.transactionId, {
+                    estado_conciliacion: res.status
+                });
+            }
+        }
+
+        toast.success("Simulación Big Bon completada: Datos reseteados, jerarquía creada y ventas procesadas con descomposiciones.");
+        }, variant: "outline", className: "text-amber-500" },
     { id: "update", label: "Actualizar", icon: RefreshCw, onClick: handleRecalculateReportsChain, variant: "primary" },
     { id: "sync-real", label: "Catálogo Real", icon: LayoutGrid, onClick: syncWithSystemCatalog, disabled: isSyncing },
     { id: "classify", label: "Clasificar", icon: Workflow, onClick: handleAutoClassifyHierarchy, variant: "outline", className: "text-blue-500" },
