@@ -36,6 +36,15 @@ export interface WalletTransaction {
   extra_data?: Record<string, any>;
 }
 
+export interface RawImportMessage {
+  id: string;
+  type: string;
+  date: string;
+  nameNumber: string;
+  content: string;
+  bank?: string;
+}
+
 export interface WalletSummary {
   total_income: number;
   total_expenses: number;

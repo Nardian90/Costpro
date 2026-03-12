@@ -19,38 +19,40 @@ interface AnalyticsDashboardProps {
   analytics: WalletAnalytics;
 }
 
-export function AnalyticsDashboard({ analytics }: AnalyticsDashboardProps) {
+export default function AnalyticsDashboard({ analytics }: AnalyticsDashboardProps) {
+  const { summary, banks, monthly, categories, transactions } = analytics;
   const [isMounted, setIsMounted] = useState(false);
-  const { summary, banks, categories, transactions } = analytics;
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
   const balanceData = useMemo(() => {
-    return transactions
-      .filter(tx => tx.balance_after !== undefined)
-      .map(tx => ({
-        date: tx.date,
-        balance: tx.balance_after
-      }));
+    let current = 0;
+    return transactions.map(tx => {
+      if (tx.direction === 'IN') current += tx.amount;
+      else current -= tx.amount;
+      return { date: tx.date, balance: current };
+    });
   }, [transactions]);
 
   const transferStats = useMemo(() => {
-    const beneficiaries: Record<string, { total: number, count: number, last: string }> = {};
-    transactions.filter(tx => tx.type === 'TRANSFER_OUT').forEach(tx => {
-      if (!beneficiaries[tx.counterparty]) {
-        beneficiaries[tx.counterparty] = { total: 0, count: 0, last: tx.date };
-      }
-      beneficiaries[tx.counterparty].total += tx.amount;
-      beneficiaries[tx.counterparty].count += 1;
-      if (new Date(tx.date) > new Date(beneficiaries[tx.counterparty].last)) {
-          beneficiaries[tx.counterparty].last = tx.date;
-      }
-    });
-    return Object.entries(beneficiaries)
+    const recipients: Record<string, { total: number; count: number; last: string }> = {};
+    transactions
+      .filter(tx => tx.type === 'TRANSFER_OUT')
+      .forEach(tx => {
+        if (!recipients[tx.counterparty]) {
+          recipients[tx.counterparty] = { total: 0, count: 0, last: tx.date };
+        }
+        recipients[tx.counterparty].total += tx.amount;
+        recipients[tx.counterparty].count += 1;
+        if (tx.date > recipients[tx.counterparty].last) recipients[tx.counterparty].last = tx.date;
+      });
+
+    return Object.entries(recipients)
       .map(([id, stats]) => ({ id, ...stats }))
-      .sort((a, b) => b.total - a.total).slice(0, 10);
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 10);
   }, [transactions]);
 
   const failedOpsData = useMemo(() => {
