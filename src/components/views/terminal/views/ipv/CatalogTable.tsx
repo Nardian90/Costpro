@@ -564,13 +564,20 @@ const handleExportCatalog = () => {
         // Add a mock reconciliation line to trigger a decomposition
         await db.reconciliation_lines.add({
             id: crypto.randomUUID(),
-            cod: "4",
-            descripcion: "BOMBON",
-            cantidad_fisica: 0,
-            ventas_registradas: 10, // More than the 2 in stock
-            precio_unitario: 45,
-            importe_total: 450,
-            report_id: "sim-report-001",
+            transaction_ref: "SIM-REF-001",
+            fecha_operacion: new Date().toISOString(),
+            ingreso_banco_cents: 45000,
+            venta_real_calculada_cents: 45000,
+            comision_banco_cents: 0,
+            product_cod: "4",
+            product_um: "UNIDADES",
+            cantidad: 10,
+            precio_unitario_cents: 4500,
+            importe_linea_cents: 45000,
+            cuadre_cents: 0,
+            clasificacion: "Transferencia",
+            origen_dato: "AUTO_MATCH",
+            reconciliation_hash: "SIM-HASH-001",
             created_at: new Date().toISOString()
         });
         toast.success("Simulation seeded: Sale of 10 BOMBON added (Stock: 2). Run Update to trigger decomposition.");
