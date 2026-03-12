@@ -23,6 +23,8 @@ export interface MatchingResult {
   lines: ReconciliationLine[];
   status: 'COMPLETO' | 'PARCIAL' | 'PENDIENTE';
   logs: string[];
+  failReason?: string;
+  movements: any[];
 }
 
 export class MatchingEngine {
@@ -666,7 +668,7 @@ export class MatchingEngine {
                 transactionId: tx.referencia_origen,
                 status: res.status,
                 lines: res.lines,
-                fail_reason: res.failReason,
+                failReason: res.failReason,
                 movements: res.movements
             });
         } catch (error) {
