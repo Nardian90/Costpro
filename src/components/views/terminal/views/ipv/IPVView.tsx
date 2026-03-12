@@ -261,9 +261,17 @@ export default function IPVView() {
             await db.reconciliation_lines.bulkAdd(res.lines);
           }
 
+          if (res.movements && res.movements.length > 0) {
+              await db.product_movements.bulkAdd(res.movements.map((m: any) => ({
+                  ...m,
+                  referencia_transaccion: res.transactionId
+              })));
+          }
+
           // Actualizamos estado independientemente de si hay líneas (ej: comisiones auto-completadas)
           await db.bank_statements.update(res.transactionId, {
-            estado_conciliacion: res.status
+            estado_conciliacion: res.status,
+            fail_reason: res.failReason
           });
         }
 
@@ -297,8 +305,16 @@ export default function IPVView() {
             await db.reconciliation_lines.bulkAdd(result.lines);
         }
 
+        if (result.movements && result.movements.length > 0) {
+            await db.product_movements.bulkAdd(result.movements.map(m => ({
+                ...m,
+                referencia_transaccion: tx.referencia_origen
+            })));
+        }
+
         await db.bank_statements.update(tx.referencia_origen, {
-            estado_conciliacion: result.status
+            estado_conciliacion: result.status,
+            fail_reason: result.failReason
         });
 
         if (result.status === 'COMPLETO') {
@@ -368,6 +384,7 @@ export default function IPVView() {
     { id: 'breakdown', label: 'Desglose', icon: BarChart4, onClick: () => setActiveTab('breakdown'), active: activeTab === 'breakdown' },
     { id: 'pivot', label: 'Consolidado', icon: FileSearch, onClick: () => setActiveTab('pivot'), active: activeTab === 'pivot' },
     { id: 'errors', label: 'Errores', icon: AlertCircle, onClick: () => setActiveTab('errors'), active: activeTab === 'errors' },
+    { id: 'movements', label: 'Trazabilidad', icon: Workflow, onClick: () => setActiveTab('movements'), active: activeTab === 'movements' },
     {
         id: 'reports-dropdown',
         label: '',
