@@ -5,7 +5,7 @@ import {
   type ReconciliationLine,
   db
 } from '../dexie';
-import { v4 as uuidv4 } from 'uuid';
+// uuid replaced by crypto.randomUUID
 
 /**
  * Genera un hash simple para idempotencia (SHA-256 es preferible, pero esto es síncrono y portable)
@@ -302,11 +302,21 @@ export class MatchingEngine {
     }
 
     const status = Math.abs(remaining_cents) < 0.001 ? 'COMPLETO' : (lines.length > 0 ? 'PARCIAL' : 'PENDIENTE');
+    let failReason = undefined;
+
+    if (status !== 'COMPLETO') {
+        if (this.useStockLimit) {
+            failReason = 'FALTA STOCK VIRTUAL: No se encontró combinación con stock disponible o descomposiciones.';
+        } else {
+            failReason = 'SIN COINCIDENCIA: No hay productos o combinaciones que sumen el importe exacto.';
+        }
+    }
 
     return {
       lines,
       status,
-      logs
+      logs,
+      failReason
     };
   }
 
@@ -397,7 +407,7 @@ export class MatchingEngine {
             'CASH_FILLER',
             'Efectivo'
           );
-          line.id = uuidv4();
+          line.id = crypto.randomUUID();
           line.cuadre_cents = 0; // Obligatorio: Sin propinas ni descuentos
           line.importe_linea_cents = p.precio_cents * qtyToPick;
 
@@ -435,7 +445,16 @@ export class MatchingEngine {
       .sort((a, b) => a.precio_cents - b.precio_cents); // Del más cercano hacia arriba (más barato a más caro)
 
     for (const ancestor of ancestors) {
-      const availableAncestorStock = this.stockMap.get(ancestor.cod) || 0;
+      let availableAncestorStock = this.stockMap.get(ancestor.cod) || 0;
+
+      // RECURSION: Si el ancestro no tiene stock, intentamos descomponerlo a él primero
+      if (availableAncestorStock <= 0) {
+          const success = await this.attemptDecomposition(ancestor.cod);
+          if (success) {
+              availableAncestorStock = this.stockMap.get(ancestor.cod) || 0;
+          }
+      }
+
       if (availableAncestorStock > 0) {
         // Descomponer 1 unidad del ancestro
         const conversionFactor = ancestor.contenido_paquete || 1;
@@ -446,7 +465,7 @@ export class MatchingEngine {
 
         // Registrar movimiento pendiente
         this.pendingMovements.push({
-          id: uuidv4(),
+          id: crypto.randomUUID(),
           fecha: new Date().toISOString(),
           producto_origen_cod: ancestor.cod,
           producto_destino_cod: targetProduct.cod,
@@ -489,7 +508,7 @@ export class MatchingEngine {
     }
 
     return {
-      id: uuidv4(),
+      id: crypto.randomUUID(),
       transaction_ref: transaction.referencia_origen,
       fecha_operacion: transaction.fecha,
       ingreso_banco_cents: transaction.importe_cents,
@@ -520,35 +539,29 @@ export class MatchingEngine {
     const product = this.products.find(p => p.cod === productCod);
     if (!product || !product.id_grupo) return this.stockMap.get(productCod) || 0;
 
-    // Obtenemos todos los productos del grupo ordenados por precio descendente
-    const groupProducts = this.products
-      .filter(p => p.id_grupo === product.id_grupo)
-      .sort((a, b) => b.precio_cents - a.precio_cents);
+    // Obtenemos todos los productos del grupo
+    const groupProducts = this.products.filter(p => p.id_grupo === product.id_grupo);
 
     // Mapeamos el stock actual a un objeto de trabajo
     const currentStock = new Map<string, number>();
     groupProducts.forEach(p => currentStock.set(p.cod, this.stockMap.get(p.cod) || 0));
 
-    // Bajamos el stock en cascada para ver cuánto "virtual" llegaría al producto destino
-    // Respetando cod_hijo si está definido, sino el siguiente por precio
-    for (let i = 0; i < groupProducts.length - 1; i++) {
-        const parent = groupProducts[i];
-        let child;
-        if (parent.cod_hijo) {
-            child = groupProducts.find(p => p.cod === parent.cod_hijo);
+    // Función recursiva para calcular stock virtual acumulado desde ancestros
+    const calculateRecursiveStock = (targetCod: string): number => {
+        let total = currentStock.get(targetCod) || 0;
+
+        // Buscar todos los posibles padres (que tengan a este como cod_hijo)
+        const parents = groupProducts.filter(p => p.cod_hijo === targetCod);
+
+        for (const parent of parents) {
+            const parentVirtualStock = calculateRecursiveStock(parent.cod);
+            total += parentVirtualStock * (parent.contenido_paquete || 1);
         }
-        if (!child) {
-            child = groupProducts[i+1];
-        }
 
-        const parentStock = currentStock.get(parent.cod) || 0;
-        const conversion = parent.contenido_paquete || 1;
+        return total;
+    };
 
-        const currentChildStock = currentStock.get(child.cod) || 0;
-        currentStock.set(child.cod, currentChildStock + (parentStock * conversion));
-    }
-
-    return currentStock.get(product.cod) || 0;
+    return calculateRecursiveStock(productCod);
   }
 
   private findExactCombination(target: number, options?: { prioritizeLowStock?: boolean }): { product: Product, qty: number }[] {
@@ -652,30 +665,18 @@ export class MatchingEngine {
             results.push({
                 transactionId: tx.referencia_origen,
                 status: res.status,
-                lines: res.lines
+                lines: res.lines,
+                fail_reason: res.failReason,
+                movements: res.movements
             });
-        if (this.pendingMovements.length > 0) {
-            await db.product_movements.bulkPut(this.pendingMovements.map(m => ({
-                ...m,
-                referencia_transaccion: results[results.length - 1]?.transactionId
-            })));
-            this.pendingMovements = [];
-        }
-
         } catch (error) {
             console.error(`[MatchingEngine] Error processing transaction ${tx.referencia_origen}:`, error);
             results.push({
                 transactionId: tx.referencia_origen,
                 status: 'PENDIENTE',
-                lines: []
+                lines: [],
+                movements: []
             });
-        }
-        if (this.pendingMovements.length > 0) {
-            await db.product_movements.bulkPut(this.pendingMovements.map(m => ({
-                ...m,
-                referencia_transaccion: results[results.length - 1]?.transactionId
-            })));
-            this.pendingMovements = [];
         }
 
 

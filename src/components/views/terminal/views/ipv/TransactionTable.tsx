@@ -333,7 +333,14 @@ const TransactionRow = React.memo(({ tx, matchedTotal, onView, onReset, onDelete
           <TableCell className="text-center"><Checkbox checked={!tx.excluido} onCheckedChange={onToggleExclusion} className="translate-y-0.5" /></TableCell>
           <TableCell className="sticky-column-1 font-medium whitespace-nowrap text-xs">{formatDate(tx.fecha)}</TableCell>
           <TableCell className="font-mono text-xs max-w-[120px] truncate">{tx.referencia_origen}</TableCell>
-          <TableCell className="text-xs max-w-[150px]"><div className="truncate" title={tx.observaciones}>{tx.observaciones}</div></TableCell>
+          <TableCell className="text-xs max-w-[150px]">
+    <div className="truncate font-medium" title={tx.observaciones}>{tx.observaciones}</div>
+    {tx.fail_reason && tx.estado_conciliacion !== 'COMPLETO' && (
+        <div className="text-[10px] text-red-500 font-bold uppercase mt-1 leading-tight animate-pulse">
+            ⚠️ {tx.fail_reason}
+        </div>
+    )}
+</TableCell>
           <TableCell className="text-right font-bold text-xs text-muted-foreground">{formatCurrency(tx.importe_cents)}</TableCell>
           <TableCell className="text-right font-bold text-xs text-red-500">{formatCurrency(tx.comision_cents || 0)}</TableCell>
           <TableCell className="text-right font-black text-sm text-primary">{formatCurrency(tx.importe_venta_cents || tx.importe_cents)}</TableCell>

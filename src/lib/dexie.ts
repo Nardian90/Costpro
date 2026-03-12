@@ -13,6 +13,7 @@ export interface BankTransaction {
   importe_venta_cents?: number; // importe_cents + comision_cents
   tipo: 'Cr' | 'Db';
   estado_conciliacion: 'PENDIENTE' | 'PARCIAL' | 'COMPLETO' | 'NO_PROCESAR';
+  fail_reason?: string;
   ipv_id?: string;             // FK ipv_reports.id
   excluido?: boolean;          // Excluir del matching
   created_at: string;

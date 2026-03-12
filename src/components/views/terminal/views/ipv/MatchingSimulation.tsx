@@ -1,48 +1,75 @@
 'use client';
 
 import React, { useState } from 'react';
-import { type Product, type MatchingRule, type ReconciliationLine, db } from '@/lib/dexie';
-import { MatchingEngine } from '@/lib/ipv/engine';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { db, type Product, type MatchingRule, type ReconciliationLine } from '@/lib/dexie';
+import { MatchingEngine, type MatchingResult } from '@/lib/ipv/engine';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Play, RotateCcw, Target, Sparkles, TrendingUp, Calendar, Save } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Target,
+  Play,
+  RotateCcw,
+  TrendingUp,
+  Sparkles,
+  Calendar,
+  Save,
+  Workflow,
+  ArrowRight,
+  AlertTriangle
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
+import { useLiveQuery } from 'dexie-react-hooks';
 
 export function MatchingSimulation({ products, rules }: { products: Product[], rules: MatchingRule[] }) {
   const [target, setTarget] = useState<number>(0);
-  const [result, setResult] = useState<{ lines: ReconciliationLine[], logs: string[] } | null>(null);
+  const [result, setResult] = useState<MatchingResult | null>(null);
   const [isSimulating, setIsSimulating] = useState(false);
 
-  // Global Goal State
+  // Objetivo Global (Mes)
   const [globalTarget, setGlobalTarget] = useState<number>(0);
   const [isDistributing, setIsDistributing] = useState(false);
 
+  const reconciliationLines = useLiveQuery(() => db.reconciliation_lines.toArray());
+
   const handleSimulate = async () => {
     if (target <= 0) {
-      toast.error('Ingrese un objetivo válido');
-      return;
+        toast.error('Monto inválido');
+        return;
     }
 
     setIsSimulating(true);
     try {
-      const engine = new MatchingEngine(products, rules);
-      const sim = await engine.matchSimulation(target);
-      setResult(sim);
-      toast.success('Simulación completada');
+        const engine = new MatchingEngine(products, rules);
+        const res = await engine.matchSimulation(target);
+        setResult(res);
+        if (res.status === 'COMPLETO') {
+            toast.success('¡Coincidencia exacta encontrada!');
+        } else if (res.status === 'PARCIAL') {
+            toast.info('Coincidencia parcial');
+        } else {
+            toast.error('No se encontró ninguna coincidencia');
+        }
     } catch (error) {
-      toast.error('Error en la simulación');
+        toast.error('Error en simulación');
     } finally {
-      setIsSimulating(false);
+        setIsSimulating(false);
     }
   };
 
   const handleGlobalGoal = async () => {
     if (globalTarget <= 0) {
-        toast.error('Ingrese un objetivo global válido');
+        toast.error('Monto objetivo inválido');
         return;
     }
 
@@ -50,51 +77,27 @@ export function MatchingSimulation({ products, rules }: { products: Product[], r
     try {
         const engine = new MatchingEngine(products, rules);
 
-        // Obtener fechas con movimientos y calcular Venta Total KPI (Transferencias + Efectivo)
-        const txs = await db.bank_statements.toArray();
-        const reconLines = await db.reconciliation_lines.toArray();
-        const dates = Array.from(new Set(txs.map(t => t.fecha))).sort();
+        // Calcular total actual reconciliado (en pesos)
+        const currentKpiTotal = reconciliationLines?.reduce((sum, l) => sum + (l.importe_linea_cents || 0), 0) || 0;
 
-        let totalTransferencias = 0;
-        let totalEfectivo = 0;
-        const checkedTxRefs = new Set<string>();
-        const dayVolumes: Record<string, number> = {};
-
-        for (const t of txs) {
-            if (t.excluido || t.estado_conciliacion === 'NO_PROCESAR') continue;
-            checkedTxRefs.add(t.referencia_origen);
-            if (t.tipo === 'Cr') {
-                const vol = (t.importe_venta_cents || t.importe_cents);
-                totalTransferencias += vol;
-                dayVolumes[t.fecha] = (dayVolumes[t.fecha] || 0) + vol;
-            }
-        }
-
-        for (const l of reconLines) {
-            if (!checkedTxRefs.has(l.transaction_ref)) {
-                if (l.importe_linea_cents > 0) totalEfectivo += l.importe_linea_cents;
-            } else {
-                if (l.clasificacion === 'Efectivo') {
-                    totalEfectivo += l.importe_linea_cents;
-                    totalTransferencias -= l.importe_linea_cents;
-                }
-            }
-        }
-
-        const currentKpiTotal = totalTransferencias + totalEfectivo;
-
-        // Nota: currentKpiTotal está en Pesos (decimal), al igual que globalTarget.
-        if (globalTarget <= currentKpiTotal) {
-            toast.info(`El objetivo global debe ser mayor a la Venta Total actual (${formatCurrency(currentKpiTotal)})`);
-            setIsDistributing(false);
+        if (currentKpiTotal >= globalTarget) {
+            toast.info('El objetivo ya se ha alcanzado');
             return;
         }
 
-        // El diferencial a repartir es Meta - Venta Total (Transferencias/etc)
-        const extraLines = await engine.distributeGlobalGoal(globalTarget, currentKpiTotal, dates, { dayVolumes });
+        // Obtener todas las fechas con transacciones
+        const allTransactions = await db.bank_statements.toArray();
+        const dates = Array.from(new Set(allTransactions.map(tx => tx.fecha))).sort();
+
+        if (dates.length === 0) {
+            toast.error('No hay transacciones cargadas para definir el rango de fechas');
+            return;
+        }
+
+        const extraLines = await engine.distributeGlobalGoal(globalTarget, currentKpiTotal, dates);
 
         if (extraLines.length === 0) {
-            toast.info('No se pudieron generar líneas de ajuste o el objetivo ya se alcanzó');
+            toast.warning('No se generaron nuevas líneas de ajuste o el objetivo ya se alcanzó');
             return;
         }
 
@@ -216,6 +219,37 @@ export function MatchingSimulation({ products, rules }: { products: Product[], r
                   </p>
                 </Card>
               </div>
+
+              {result.status !== 'COMPLETO' && result.failReason && (
+                  <div className="p-4 bg-red-500/10 border-2 border-red-500/20 rounded-2xl flex items-center gap-4 animate-in slide-in-from-top-2">
+                      <AlertTriangle className="w-8 h-8 text-red-500" />
+                      <div>
+                          <p className="text-xs font-black text-red-600 uppercase tracking-widest">Motivo de Descuadre</p>
+                          <p className="text-sm font-bold text-red-500">{result.failReason}</p>
+                      </div>
+                  </div>
+              )}
+
+              {result.movements && result.movements.length > 0 && (
+                  <Card className="p-4 border-orange-200 bg-orange-50/30">
+                      <h4 className="text-xs font-black uppercase text-orange-600 mb-3 flex items-center gap-2">
+                          <Workflow className="w-4 h-4" />
+                          Descomposiciones Automáticas Requeridas
+                      </h4>
+                      <div className="space-y-2">
+                          {result.movements.map((m, i) => (
+                              <div key={i} className="flex items-center gap-3 bg-white/60 p-2 rounded-xl border border-orange-100 shadow-sm">
+                                  <Badge variant="outline" className="font-black text-orange-600 border-orange-200">{m.producto_origen_cod}</Badge>
+                                  <ArrowRight className="w-3 h-3 text-orange-400" />
+                                  <span className="text-xs font-bold text-muted-foreground uppercase">-{m.cantidad_origen}</span>
+                                  <ArrowRight className="w-4 h-4 text-orange-500" />
+                                  <Badge className="bg-orange-500 text-white font-black">{m.producto_destino_cod}</Badge>
+                                  <span className="text-xs font-bold text-orange-600 uppercase">+{m.cantidad_destino}</span>
+                              </div>
+                          ))}
+                      </div>
+                  </Card>
+              )}
 
               <Card className="overflow-hidden border-none shadow-md">
                 <Table>
