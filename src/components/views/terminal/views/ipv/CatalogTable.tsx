@@ -552,9 +552,36 @@ const handleExportCatalog = () => {
     };
     reader.readAsArrayBuffer(file);
   };
-
   const catalogActions: Action[] = React.useMemo(() => [
     { id: "add", label: "Nuevo", icon: Plus, onClick: handleAddNew },
+    { id: "seed", label: "BIG BON Simulation", icon: Sparkles, onClick: async () => {
+        const products = [
+            { cod: "2", descripcion: "BIG BON CAJA", id_grupo: "BIGBON", cod_hijo: "3", um: "CAJA", precio_cents: 13825, prioridad_algoritmo: 1, activo: true, es_paquete: true, contenido_paquete: 8, stock_inicial_manual: 15, created_at: new Date().toISOString(), priorityMode: "manual", isWildcardCandidate: false },
+            { cod: "3", descripcion: "BIG BON PQT", id_grupo: "BIGBON", cod_hijo: "4", um: "PAQUETE", precio_cents: 1730, prioridad_algoritmo: 1, activo: true, es_paquete: true, contenido_paquete: 40, stock_inicial_manual: 1, created_at: new Date().toISOString(), priorityMode: "manual", isWildcardCandidate: false },
+            { cod: "4", descripcion: "BOMBON", id_grupo: "BIGBON", um: "UNIDADES", precio_cents: 45, prioridad_algoritmo: 1, activo: true, es_paquete: false, contenido_paquete: 1, stock_inicial_manual: 2, created_at: new Date().toISOString(), priorityMode: "manual", isWildcardCandidate: false }
+        ];
+        await db.products.bulkPut(products as any);
+        // Add a mock reconciliation line to trigger a decomposition
+        await db.reconciliation_lines.add({
+            id: crypto.randomUUID(),
+            transaction_ref: "SIM-REF-001",
+            fecha_operacion: new Date().toISOString(),
+            ingreso_banco_cents: 45000,
+            venta_real_calculada_cents: 45000,
+            comision_banco_cents: 0,
+            product_cod: "4",
+            product_um: "UNIDADES",
+            cantidad: 10,
+            precio_unitario_cents: 4500,
+            importe_linea_cents: 45000,
+            cuadre_cents: 0,
+            clasificacion: "Transferencia",
+            origen_dato: "AUTO_MATCH",
+            reconciliation_hash: "SIM-HASH-001",
+            created_at: new Date().toISOString()
+        });
+        toast.success("Simulation seeded: Sale of 10 BOMBON added (Stock: 2). Run Update to trigger decomposition.");
+    }, variant: "outline", className: "text-amber-500" },
     { id: "update", label: "Actualizar", icon: RefreshCw, onClick: handleRecalculateReportsChain, variant: "primary" },
     { id: "sync-real", label: "Catálogo Real", icon: LayoutGrid, onClick: syncWithSystemCatalog, disabled: isSyncing },
     { id: "classify", label: "Clasificar", icon: Workflow, onClick: handleAutoClassifyHierarchy, variant: "outline", className: "text-blue-500" },
