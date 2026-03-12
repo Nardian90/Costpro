@@ -271,7 +271,7 @@ export default function IPVView() {
           // Actualizamos estado independientemente de si hay líneas (ej: comisiones auto-completadas)
           await db.bank_statements.update(res.transactionId, {
             estado_conciliacion: res.status,
-            fail_reason: res.fail_reason
+            fail_reason: res.failReason
           });
         }
 
