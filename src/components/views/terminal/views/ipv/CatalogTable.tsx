@@ -27,6 +27,7 @@ import { useAuthStore } from '@/store';
 import { hasRole } from '@/lib/roles';
 import {
     calculatePriceEffectiveness,
+import { Sparkles } from "lucide-react";
     suggestAlternativePrice,
     checkWildcardCandidate,
     calculateDynamicPriority
@@ -47,6 +48,14 @@ export function CatalogTable() {
   const [layoutMode, setLayoutMode] = useState<'table' | 'cards'>('table');
   const [isSyncing, setIsSyncing] = useState(false);
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+    const products = [
+        { cod: "2", descripcion: "BIG BON CAJA", id_grupo: "BIGBON", cod_hijo: "3", um: "CAJA", precio_cents: 13825, prioridad_algoritmo: 1, activo: true, es_paquete: true, contenido_paquete: 8, stock_inicial_manual: 15, created_at: new Date().toISOString() },
+        { cod: "3", descripcion: "BIG BON PQT", id_grupo: "BIGBON", cod_hijo: "4", um: "PAQUETE", precio_cents: 1730, prioridad_algoritmo: 1, activo: true, es_paquete: true, contenido_paquete: 40, stock_inicial_manual: 1, created_at: new Date().toISOString() },
+        { cod: "4", descripcion: "BOMBON", id_grupo: "BIGBON", um: "UNIDADES", precio_cents: 45, prioridad_algoritmo: 1, activo: true, es_paquete: false, contenido_paquete: 1, stock_inicial_manual: 2, created_at: new Date().toISOString() }
+    ];
+    await db.products.bulkPut(products);
+    toast.success("Simulación BIG BON cargada");
+}, variant: "outline", className: "text-amber-500" }, selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const [stockFilter, setStockFilter] = useState<'all' | 'with_stock' | 'without_stock'>('all');
 
@@ -552,9 +561,29 @@ const handleExportCatalog = () => {
     };
     reader.readAsArrayBuffer(file);
   };
-
   const catalogActions: Action[] = React.useMemo(() => [
     { id: "add", label: "Nuevo", icon: Plus, onClick: handleAddNew },
+    { id: "seed", label: "BIG BON Simulation", icon: Sparkles, onClick: async () => {
+        const products = [
+            { cod: "2", descripcion: "BIG BON CAJA", id_grupo: "BIGBON", cod_hijo: "3", um: "CAJA", precio_cents: 13825, prioridad_algoritmo: 1, activo: true, es_paquete: true, contenido_paquete: 8, stock_inicial_manual: 15, created_at: new Date().toISOString(), priorityMode: "manual", isWildcardCandidate: false },
+            { cod: "3", descripcion: "BIG BON PQT", id_grupo: "BIGBON", cod_hijo: "4", um: "PAQUETE", precio_cents: 1730, prioridad_algoritmo: 1, activo: true, es_paquete: true, contenido_paquete: 40, stock_inicial_manual: 1, created_at: new Date().toISOString(), priorityMode: "manual", isWildcardCandidate: false },
+            { cod: "4", descripcion: "BOMBON", id_grupo: "BIGBON", um: "UNIDADES", precio_cents: 45, prioridad_algoritmo: 1, activo: true, es_paquete: false, contenido_paquete: 1, stock_inicial_manual: 2, created_at: new Date().toISOString(), priorityMode: "manual", isWildcardCandidate: false }
+        ];
+        await db.products.bulkPut(products as any);
+        // Add a mock reconciliation line to trigger a decomposition
+        await db.reconciliation_lines.add({
+            id: crypto.randomUUID(),
+            cod: "4",
+            descripcion: "BOMBON",
+            cantidad_fisica: 0,
+            ventas_registradas: 10, // More than the 2 in stock
+            precio_unitario: 45,
+            importe_total: 450,
+            report_id: "sim-report-001",
+            created_at: new Date().toISOString()
+        });
+        toast.success("Simulation seeded: Sale of 10 BOMBON added (Stock: 2). Run Update to trigger decomposition.");
+    }, variant: "outline", className: "text-amber-500" },
     { id: "update", label: "Actualizar", icon: RefreshCw, onClick: handleRecalculateReportsChain, variant: "primary" },
     { id: "sync-real", label: "Catálogo Real", icon: LayoutGrid, onClick: syncWithSystemCatalog, disabled: isSyncing },
     { id: "classify", label: "Clasificar", icon: Workflow, onClick: handleAutoClassifyHierarchy, variant: "outline", className: "text-blue-500" },
