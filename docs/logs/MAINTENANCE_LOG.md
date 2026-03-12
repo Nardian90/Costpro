@@ -3,7 +3,7 @@
 ## ESTADO DEL PIPELINE
 
 Última ejecución: 2026-03-11
-Siguiente objetivo: SECCION_04_CONTENIDO
+Siguiente objetivo: SECCION_05_MEDIA
 Modo: AUTOMATICO
 Ciclo actual: 1
 Agente responsable: Jules Mobile UI Scheduler
@@ -48,7 +48,7 @@ Grids de productos
 Cards
 Precios
 
-[ ] SECCION_04_CONTENIDO
+[x] SECCION_04_CONTENIDO
 Artículos
 Texto largo
 Tablas
