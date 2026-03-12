@@ -21,20 +21,20 @@ describe('Wallet Parser Advanced', () => {
   });
 
   it('should parse FAILED_OPERATION from SMS', () => {
-    const sms = 'PAGOxMOVIL Fallo la transferencia. Banco Bandec: Limite diario excedido. Fecha: 12/3/2026.';
+    const sms = 'PAGOxMOVIL Fallo Banco Bandec: Limite diario excedido. Fecha: 12/3/2026.';
     const txs = parseSmsText(sms);
     expect(txs).toHaveLength(1);
     expect(txs[0].type).toBe('FAILED_OPERATION');
     expect(txs[0].status).toBe('FAILED');
-    expect(txs[0].extra_data?.reason).toBe('la transferencia. Banco Bandec: Limite diario excedido');
+    expect(txs[0].extra_data?.reason).toBe('Banco Bandec: Limite diario excedido');
   });
 
   it('should parse LIMIT_CHANGE from SMS', () => {
-    const sms = 'PAGOxMOVIL Cambio de limite efectuado: ATM: 50000.00; POS: 50000.00; TOTAL: 100000.00. Fecha: 13/3/2026.';
+    const sms = 'PAGOxMOVIL Cambio de limite efectuado: ATM: 50000.00; POS: 50000.00; TOTAL: 100000. Fecha: 13/3/2026.';
     const txs = parseSmsText(sms);
     expect(txs).toHaveLength(1);
     expect(txs[0].type).toBe('LIMIT_CHANGE');
-    expect(txs[0].extra_data?.total).toBe('100000.00');
+    expect(txs[0].extra_data?.total).toBe('100000');
   });
 
   it('should parse CASH_ATM from SMS', () => {

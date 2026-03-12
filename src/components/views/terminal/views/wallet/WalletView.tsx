@@ -22,7 +22,7 @@ import { useDropzone } from 'react-dropzone';
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { WalletTransaction, RawImportMessage } from '@/lib/wallet/types';
-import { parseSmsText, parseRawMessages, calculateAnalytics } from '@/lib/wallet/parser';
+import { parseSmsText, extractRawMessages, calculateAnalytics } from '@/lib/wallet/parser';
 import AnalyticsDashboard from './components/AnalyticsDashboard';
 
 const STORAGE_KEY_RAW = 'wallet_raw_messages';
@@ -36,6 +36,7 @@ export default function WalletView() {
     const [importText, setImportText] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const [isProcessingFile, setIsProcessingFile] = useState(false);
+    const [hideDuplicates, setHideDuplicates] = useState(false);
 
     // Persistence
     useEffect(() => {
@@ -55,7 +56,7 @@ export default function WalletView() {
     const handleImport = () => {
         if (!importText.trim()) return;
 
-        const newRaw = parseRawMessages(importText);
+        const newRaw = extractRawMessages(importText);
         const newTxs = parseSmsText(importText);
 
         setRawMessages(prev => [...newRaw, ...prev]);
@@ -83,7 +84,7 @@ export default function WalletView() {
 
                     const { text } = await response.json();
                     if (text) {
-                        const newRaw = parseRawMessages(text);
+                        const newRaw = extractRawMessages(text);
                         const newTxs = parseSmsText(text);
                         setRawMessages(prev => [...newRaw, ...prev]);
                         setTransactions(prev => [...newTxs, ...prev]);
@@ -92,7 +93,7 @@ export default function WalletView() {
                 } else {
                     // Handle text files
                     const text = await file.text();
-                    const newRaw = parseRawMessages(text);
+                    const newRaw = extractRawMessages(text);
                     const newTxs = parseSmsText(text);
                     setRawMessages(prev => [...newRaw, ...prev]);
                     setTransactions(prev => [...newTxs, ...prev]);
@@ -130,7 +131,26 @@ export default function WalletView() {
         return new Intl.NumberFormat('es-CU', { style: 'currency', currency: 'CUP' }).format(amount);
     };
 
-    const filteredRaw = rawMessages.filter(msg =>
+    const processedRaw = useMemo(() => {
+        if (!hideDuplicates) return rawMessages;
+
+        const groups: Record<string, RawImportMessage> = {};
+        rawMessages.forEach(msg => {
+            // Extract transaction ID if present
+            const idMatch = msg.content.match(/No\.\s*Transaccion:\s*([A-Z0-9]+)/i) ||
+                          msg.content.match(/NoTransaccion\s*\n\s*([A-Z0-9]+)/i) ||
+                          msg.content.match(/;([A-Z0-9]+)(\s*\||$)/);
+
+            const txId = idMatch ? idMatch[1] : msg.id;
+
+            if (!groups[txId] || msg.content.length > groups[txId].content.length) {
+                groups[txId] = msg;
+            }
+        });
+        return Object.values(groups);
+    }, [rawMessages, hideDuplicates]);
+
+    const filteredRaw = processedRaw.filter(msg =>
         msg.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
         msg.nameNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
         msg.date.toLowerCase().includes(searchQuery.toLowerCase())
@@ -204,6 +224,15 @@ export default function WalletView() {
                                             <Trash2 className="w-4 h-4" />
                                         </Button>
                                     )}
+                                                            {viewMode === "bd" && (<Button
+                            variant={hideDuplicates ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setHideDuplicates(!hideDuplicates)}
+                            className="rounded-lg font-bold text-[9px] uppercase h-9 gap-2 shrink-0"
+                        >
+                            <Database className="w-3.5 h-3.5" />
+                            {hideDuplicates ? "Duplicados Ocultos" : "Ocultar Duplicados"}
+                        </Button>)}
                                     <div className="relative flex-1 sm:w-64">
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 opacity-50" />
                                         <Input
@@ -224,12 +253,13 @@ export default function WalletView() {
                                                     <th className="px-6 py-4 text-left text-[9px] font-black uppercase tracking-widest opacity-50">Type</th>
                                                     <th className="px-6 py-4 text-left text-[9px] font-black uppercase tracking-widest opacity-50">Date</th>
                                                     <th className="px-6 py-4 text-left text-[9px] font-black uppercase tracking-widest opacity-50">Nombre/Número</th>
+                                                    <th className="px-6 py-4 text-left text-[9px] font-black uppercase tracking-widest opacity-50">Banco</th>
                                                     <th className="px-6 py-4 text-left text-[9px] font-black uppercase tracking-widest opacity-50">Content</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-secondary/10">
                                                 {filteredRaw.length === 0 ? (
-                                                    <tr><td colSpan={4} className="px-6 py-20 text-center text-[10px] font-black uppercase opacity-20 tracking-widest">Sin mensajes importados</td></tr>
+                                                    <tr><td colSpan={5} className="px-6 py-20 text-center text-[10px] font-black uppercase opacity-20 tracking-widest">Sin mensajes importados</td></tr>
                                                 ) : filteredRaw.map(msg => (
                                                     <tr key={msg.id} className="hover:bg-primary/5 transition-colors align-top">
                                                         <td className="px-6 py-4">
@@ -244,6 +274,11 @@ export default function WalletView() {
                                                             <div className="text-[10px] font-black uppercase max-w-[150px] break-words">
                                                                 {msg.nameNumber}
                                                             </div>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <Badge variant="outline" className="text-[8px] font-black uppercase border-primary/20 bg-primary/10 whitespace-nowrap">
+                                                                {msg.bank || "BPA"}
+                                                            </Badge>
                                                         </td>
                                                         <td className="px-6 py-4">
                                                             <div className="bg-secondary/10 p-3 rounded-xl">

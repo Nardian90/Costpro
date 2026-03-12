@@ -1,103 +1,97 @@
-import { WalletTransaction, WalletTransactionType, WalletAnalytics, WalletSummary, RawImportMessage } from './types';
+import { WalletTransaction, WalletTransactionType, RawImportMessage, WalletAnalytics, WalletSummary } from './types';
 
-const generateId = () => Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
+const generateId = () => Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
 
 const PATTERNS = {
-  BALANCE: /Saldo Disponible:\s*CR\s*([\d.]+)\s*CUP/,
-  TRANSFER_OUT: /Beneficiario:\s*(\d+X*)\s+.*Monto:\s*([\d.]+)\s*CUP/,
-  TRANSFER_IN: /telefono\s+(\d+)\s+le ha realizado.*?cuenta\s+(\d+)\s+de\s+([\d.]+)\s+CUP/,
-  ELECTRICITY: /factura de electricidad.*?Consumo mensual:\s*(\d+)\s*KW.*?Periodo Pagado:\s*(\d{2}\/\d{4})/i,
-  RECHARGE: /Telefono:\s*(\d+).*?Monto Pagado:\s*([\d.]+).*?Saldo acreditado:\s*(\d+)/i,
-  FAILED: /Fallo(.*?)(?:\. Fecha:|$)/i,
-  LIMIT_CHANGE: /ATM:\s*([\d.]+);\s*POS:\s*([\d.]+);\s*TOTAL:\s*([\d.]+)/i,
-  CASH_ATM: /Retiro de efectivo completado.*?Cajero:\s*(.*?)\.\s*Monto:\s*([\d.]+)/i,
-  CASH_EXTRA: /Retiro en Caja Extra completado.*?Negocio:\s*(.*?)\.\s*Monto:\s*([\d.]+)/i,
-  MITURNO: /Turno solicitado con exito.*?Servicio:\s*(.*?)\.\s*Numero:\s*(\d+)/i,
-  SECURITY: /(Autenticacion exitosa|Fallo de autenticacion)/i,
-  DATE: /Fecha:\s*(\d+\/\d+\/\d+)/,
-  TRANS_ID: /Nro\. Transaccion\s+([A-Z0-9]+)/,
-  GENERIC_BALANCE: /Saldo Disponible:\s*CR\s*([\d.]+)/
+  DATE: /(\d{1,2}\/\d{1,2}\/\d{2,4})/,
+  TRANS_ID: /No\.\s*Transaccion:\s*([A-Z0-9]+)/i,
+  BALANCE: /Saldo(?: [Dd]isponible)?:?\s*[A-Z]+\s*([\d.]+)/i,
+  TRANSFER_IN: /le ha realizado una transferencia por\s*([\d.]+)\s*CUP.*desde la cuenta\s*([\d*]+)/i,
+  TRANSFER_OUT: /transferencia fue completada.*monto:\s*([\d.]+)\s*CUP/i,
+  ELECTRICITY: /factura de electricidad.*consumo(?: mensual)?:\s*(\d+)\s*kW.*periodo(?: [Pp]agado)?:\s*([^. ]+)/i,
+  RECHARGE: /Recarga de saldo.*monto:\s*([\d.]+)\s*CUP/i,
+  FAILED: /Fallo(?:\s+(?:la\s+operacion|la\s+transferencia))?[:.\s]+([^.]+)/i,
+  LIMIT_CHANGE: /Cambio de limite.*ATM:\s*([\d,.]+?)(?:;|\.|$)\s*POS:\s*([\d,.]+?)(?:;|\.|$)\s*TOTAL:\s*([\d,.]+?)(?:;|\.|$)/i,
+  CASH_ATM: /Retiro de efectivo.*cajero:?\s*([^.]+)\.?\s*monto:\s*([\d.]+)\s*CUP/i,
+  CASH_EXTRA: /Retiro en [Cc]aja [Ee]xtra.*(?:negocio:?|Id Negocio:?)\s*([^.]+)\.?\s*monto:\s*([\d.]+)\s*CUP/i,
+  MITURNO: /Turno solicitado.*(?:servicio:?|Id:?)\s*([^.]+)\.?\s*(?:numero:?|Id:?)\s*(\d+)/i,
+  SECURITY: /((?:Evento de seguridad:?|Autenticacion)\s+[^.]+)/i,
+  GENERIC_BALANCE: /Saldo(?: [Dd]isponible)?:?\s*[A-Z]+\s*([\d.]+)/i
 };
 
-export function parseRawMessages(text: string): RawImportMessage[] {
+function detectBank(content: string): string {
+  const low = content.toLowerCase();
+  if (low.includes('banco popular de ahorro') || low.includes(' bpa ') || low.includes('bpa:')) return 'BPA';
+  if (low.includes('bandec')) return 'BANDEC';
+  if (low.includes('metropolitano')) return 'METRO';
+  return 'OTROS';
+}
+
+export function extractRawMessages(text: string): RawImportMessage[] {
   if (!text) return [];
 
-  const blocks = text.split(/(?=Recibido\s)/);
   const rawMessages: RawImportMessage[] = [];
+  const entries = text.split(/(?=Recibido\s+\d)/g).filter(e => e.trim());
 
-  blocks.forEach(block => {
-    const lines = block.trim().split('\n').map(l => l.trim()).filter(l => l);
+  entries.forEach(entry => {
+    const lines = entry.trim().split('\n').map(l => l.trim()).filter(l => l);
     if (lines.length < 1) return;
 
-    let type = "Recibido";
+    const type = lines[0].startsWith('Recibido') ? 'RECIBIDO' : 'OTRO';
 
-    // Improved sender detection: search for known senders in any line
-    const knownSenders = ['PAGOxMOVIL', 'BANDEC', 'BPA', 'Metropolitano', 'Banco Popular de Ahorro'];
     let senderIndex = -1;
-    let senderName = "Desconocido";
+    for (let i = 1; i < lines.length; i++) {
+        const l = lines[i];
+        if (/^\d{4}$/.test(l)) continue;
+        if (/^\d{1,2}:\d{2}(?::\d{2})?$/i.test(l)) continue;
+        if (/^[ap]\.?\s*m\.?$/i.test(l)) continue;
+        if (/^(?:ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)\.?$/i.test(l)) continue;
+        if (/^\d+$/.test(l)) continue;
 
-    for (let i = 0; i < lines.length; i++) {
-        const found = knownSenders.find(s => lines[i].includes(s));
-        if (found) {
-            senderIndex = i;
-            // Extract the sender name exactly as found in the line
-            senderName = found;
-            break;
-        }
+        senderIndex = i;
+        break;
     }
 
-    // If no known sender, look for generic nameNumber indicator or just use line 1/2
-    if (senderIndex === -1) {
-      senderIndex = lines.length > 2 ? 2 : (lines.length > 1 ? 1 : 0);
-      senderName = lines[senderIndex] || "Desconocido";
-    }
+    if (senderIndex === -1) senderIndex = 1;
 
-    // Date is everything from the start up to the sender line (excluding sender name if it's on the same line)
-    // Actually, usually date is before the sender.
     const datePartLines = lines.slice(0, senderIndex);
-    let dateStr = datePartLines.join(" ").replace(/^Recibido\s*/, "").trim();
+    const dateStr = datePartLines.join(" ").replace(/^Recibido\s*/, "").trim();
 
-    // If the sender line also contains "Recibido", it might be a malformed split
-    if (lines[senderIndex].startsWith("Recibido")) {
-        dateStr = lines[senderIndex].replace(/^Recibido\s*/, "").trim();
-    }
+    const contentLines = lines.slice(senderIndex);
+    const senderLine = contentLines[0] || "DESCONOCIDO";
+    const senderName = senderLine.split(' ')[0].replace(':', '');
 
-    const remainingLines = lines.slice(senderIndex);
-    // Remove the sender name from the first remaining line to get content
-    let firstContentLine = remainingLines[0].replace(senderName, "").trim();
-    // Clean up colon if it was "PAGOxMOVIL: content"
-    if (firstContentLine.startsWith(":")) firstContentLine = firstContentLine.substring(1).trim();
-
-    const contentLines = [firstContentLine, ...remainingLines.slice(1)].filter(l => l);
-
-    // Check if it's a multi-line report (contains ;)
     const isTable = contentLines.some(l => l.includes(';'));
 
     if (isTable) {
       const tableHeaderIndex = contentLines.findIndex(l => l.includes('Fecha;') || l.includes('Servicio;') || l.includes('Operacion;'));
+      const reportHeader = contentLines.slice(0, tableHeaderIndex !== -1 ? tableHeaderIndex : 0).join("\n");
+      const columnHeader = tableHeaderIndex !== -1 ? contentLines[tableHeaderIndex] : "";
       const dataStart = tableHeaderIndex !== -1 ? tableHeaderIndex + 1 : 0;
-
       const dataLines = contentLines.slice(dataStart);
 
       dataLines.forEach(line => {
         const cleanLine = line.replace(/\|$/, '').trim();
         if (!cleanLine || !cleanLine.includes(';')) return;
-
+        const fullContent = [reportHeader, columnHeader, cleanLine].filter(l => l).join("\n");
         rawMessages.push({
           id: generateId(),
           type,
           date: dateStr || "Sin fecha",
           nameNumber: senderName,
-          content: cleanLine
+          content: fullContent,
+          bank: detectBank(fullContent)
         });
       });
     } else {
+      const fullContent = contentLines.join("\n");
       rawMessages.push({
         id: generateId(),
         type,
         date: dateStr || "Sin fecha",
         nameNumber: senderName,
-        content: contentLines.join("\n")
+        content: fullContent,
+        bank: detectBank(fullContent)
       });
     }
   });
@@ -123,15 +117,21 @@ export function parseSmsText(text: string): WalletTransaction[] {
     const genBalanceMatch = trimmed.match(PATTERNS.GENERIC_BALANCE);
     const balance_after = genBalanceMatch ? parseFloat(genBalanceMatch[1]) : undefined;
 
-    const baseTx = {
+    const bank = detectBank(trimmed);
+
+    const baseTx: WalletTransaction = {
       id: generateId(),
       date,
-      bank: 'BANDEC',
+      bank: bank === 'OTROS' ? 'BANDEC' : bank,
       transaction_id: transId,
       description: trimmed,
       source: 'SMS' as const,
       balance_after,
-      currency: 'CUP'
+      currency: 'CUP',
+      type: 'OTHER',
+      direction: 'OUT',
+      counterparty: 'Desconocido',
+      amount: 0
     };
 
     if (type === 'BALANCE_QUERY') {
@@ -145,7 +145,7 @@ export function parseSmsText(text: string): WalletTransaction[] {
     if (type === 'TRANSFER_IN') {
       const match = trimmed.match(PATTERNS.TRANSFER_IN);
       if (match) {
-        transactions.push({ ...baseTx, type: 'TRANSFER_IN', direction: 'IN', amount: parseFloat(match[3]), counterparty: match[1], status: 'SUCCESS' });
+        transactions.push({ ...baseTx, type: 'TRANSFER_IN', direction: 'IN', amount: parseFloat(match[1]), counterparty: match[2], status: 'SUCCESS' });
         continue;
       }
     }
@@ -153,7 +153,7 @@ export function parseSmsText(text: string): WalletTransaction[] {
     if (type === 'TRANSFER_OUT') {
       const match = trimmed.match(PATTERNS.TRANSFER_OUT);
       if (match) {
-        transactions.push({ ...baseTx, type: 'TRANSFER_OUT', direction: 'OUT', amount: parseFloat(match[2]), counterparty: match[1], status: 'SUCCESS' });
+        transactions.push({ ...baseTx, type: 'TRANSFER_OUT', direction: 'OUT', amount: parseFloat(match[1]), counterparty: 'Transferencia Enviada', status: 'SUCCESS' });
         continue;
       }
     }
@@ -169,7 +169,7 @@ export function parseSmsText(text: string): WalletTransaction[] {
     if (type === 'PHONE_RECHARGE') {
       const match = trimmed.match(PATTERNS.RECHARGE);
       if (match) {
-        transactions.push({ ...baseTx, type: 'PHONE_RECHARGE', direction: 'OUT', amount: parseFloat(match[2]), counterparty: match[1], service_category: 'RECHARGE', status: 'SUCCESS' });
+        transactions.push({ ...baseTx, type: 'PHONE_RECHARGE', direction: 'OUT', amount: parseFloat(match[1]), counterparty: 'Recarga ETECSA', service_category: 'RECHARGE', status: 'SUCCESS' });
         continue;
       }
     }
@@ -177,7 +177,7 @@ export function parseSmsText(text: string): WalletTransaction[] {
     if (type === 'FAILED_OPERATION') {
       const match = trimmed.match(PATTERNS.FAILED);
       if (match) {
-        transactions.push({ ...baseTx, type: 'FAILED_OPERATION', direction: 'OUT', amount: 0, counterparty: 'Operación Fallida', status: 'FAILED', extra_data: { reason: match[1].trim().replace(/^[^a-zA-Z0-9]+/, '').replace(/\.\s*$/, '') } });
+        transactions.push({ ...baseTx, type: 'FAILED_OPERATION', direction: 'OUT', amount: 0, counterparty: 'Operación Fallida', status: 'FAILED', extra_data: { reason: match[1].trim() } });
         continue;
       }
     }
@@ -185,7 +185,7 @@ export function parseSmsText(text: string): WalletTransaction[] {
     if (type === 'LIMIT_CHANGE') {
       const match = trimmed.match(PATTERNS.LIMIT_CHANGE);
       if (match) {
-        transactions.push({ ...baseTx, type: 'LIMIT_CHANGE', direction: 'OUT', amount: 0, counterparty: 'Cambio de Límite', extra_data: { atm: match[1], pos: match[2], total: match[3].replace(/\.\s*$/, '') } });
+        transactions.push({ ...baseTx, type: 'LIMIT_CHANGE', direction: 'OUT', amount: 0, counterparty: 'Cambio de Límite', extra_data: { atm: match[1], pos: match[2], total: match[3] } });
         continue;
       }
     }
@@ -193,7 +193,7 @@ export function parseSmsText(text: string): WalletTransaction[] {
     if (type === 'CASH_ATM') {
       const match = trimmed.match(PATTERNS.CASH_ATM);
       if (match) {
-        transactions.push({ ...baseTx, type: 'CASH_ATM', direction: 'OUT', amount: parseFloat(match[2]), counterparty: 'ATM: ' + match[1], status: 'SUCCESS' });
+        transactions.push({ ...baseTx, type: 'CASH_ATM', direction: 'OUT', amount: parseFloat(match[2]), counterparty: 'ATM: ' + match[1].trim(), status: 'SUCCESS' });
         continue;
       }
     }
@@ -201,7 +201,7 @@ export function parseSmsText(text: string): WalletTransaction[] {
     if (type === 'CASH_EXTRA') {
       const match = trimmed.match(PATTERNS.CASH_EXTRA);
       if (match) {
-        transactions.push({ ...baseTx, type: 'CASH_EXTRA', direction: 'OUT', amount: parseFloat(match[2]), counterparty: 'Caja Extra: ' + match[1], status: 'SUCCESS' });
+        transactions.push({ ...baseTx, type: 'CASH_EXTRA', direction: 'OUT', amount: parseFloat(match[2]), counterparty: 'Caja Extra: ' + match[1].trim(), status: 'SUCCESS' });
         continue;
       }
     }
@@ -209,7 +209,7 @@ export function parseSmsText(text: string): WalletTransaction[] {
     if (type === 'MITURNO') {
       const match = trimmed.match(PATTERNS.MITURNO);
       if (match) {
-        transactions.push({ ...baseTx, type: 'MITURNO', direction: 'IN', amount: 0, counterparty: 'MiTurno: ' + match[1], extra_data: { turn_number: match[2] }, status: 'SUCCESS' });
+        transactions.push({ ...baseTx, type: 'MITURNO', direction: 'IN', amount: 0, counterparty: 'MiTurno: ' + match[1].trim(), extra_data: { turn_number: match[2] }, status: 'SUCCESS' });
         continue;
       }
     }
@@ -217,7 +217,7 @@ export function parseSmsText(text: string): WalletTransaction[] {
     if (type === 'SECURITY_EVENT') {
       const match = trimmed.match(PATTERNS.SECURITY);
       if (match) {
-        transactions.push({ ...baseTx, type: 'SECURITY_EVENT', direction: 'IN', amount: 0, counterparty: 'Evento de Seguridad', extra_data: { event: match[0] }, status: 'SUCCESS' });
+        transactions.push({ ...baseTx, type: 'SECURITY_EVENT', direction: 'IN', amount: 0, counterparty: 'Evento de Seguridad', extra_data: { event: match[1].trim() }, status: 'SUCCESS' });
         continue;
       }
     }
@@ -230,7 +230,7 @@ export function parseSmsText(text: string): WalletTransaction[] {
           transactions.push({
             id: generateId(),
             date: formatDate(parts[0]) || new Date().toISOString().split('T')[0],
-            bank: 'BANDEC',
+            bank: detectBank(trimmed) || 'BANDEC',
             type: parts[2] === 'Cr' ? 'TRANSFER_IN' : 'TRANSFER_OUT',
             direction: parts[2] === 'Cr' ? 'IN' : 'OUT',
             amount,
@@ -258,10 +258,10 @@ function classify(text: string): WalletTransactionType {
   if (low.includes('recarga') && low.includes('exito')) return 'PHONE_RECHARGE';
   if (low.includes('fallo') || low.includes('falló')) return 'FAILED_OPERATION';
   if (low.includes('cambio de limite')) return 'LIMIT_CHANGE';
-  if (low.includes('retiro de efectivo') && low.includes('cajero')) return 'CASH_ATM';
+  if (low.includes('retiro de efectivo')) return 'CASH_ATM';
   if (low.includes('retiro en caja extra')) return 'CASH_EXTRA';
   if (low.includes('turno solicitado')) return 'MITURNO';
-  if (low.includes('autenticacion') || low.includes('login')) return 'SECURITY_EVENT';
+  if (low.includes('autenticacion') || low.includes('login') || low.includes('evento de seguridad')) return 'SECURITY_EVENT';
   return 'OTHER';
 }
 
