@@ -27,7 +27,6 @@ import { useAuthStore } from '@/store';
 import { hasRole } from '@/lib/roles';
 import {
     calculatePriceEffectiveness,
-import { Sparkles } from "lucide-react";
     suggestAlternativePrice,
     checkWildcardCandidate,
     calculateDynamicPriority
@@ -48,14 +47,6 @@ export function CatalogTable() {
   const [layoutMode, setLayoutMode] = useState<'table' | 'cards'>('table');
   const [isSyncing, setIsSyncing] = useState(false);
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
-    const products = [
-        { cod: "2", descripcion: "BIG BON CAJA", id_grupo: "BIGBON", cod_hijo: "3", um: "CAJA", precio_cents: 13825, prioridad_algoritmo: 1, activo: true, es_paquete: true, contenido_paquete: 8, stock_inicial_manual: 15, created_at: new Date().toISOString() },
-        { cod: "3", descripcion: "BIG BON PQT", id_grupo: "BIGBON", cod_hijo: "4", um: "PAQUETE", precio_cents: 1730, prioridad_algoritmo: 1, activo: true, es_paquete: true, contenido_paquete: 40, stock_inicial_manual: 1, created_at: new Date().toISOString() },
-        { cod: "4", descripcion: "BOMBON", id_grupo: "BIGBON", um: "UNIDADES", precio_cents: 45, prioridad_algoritmo: 1, activo: true, es_paquete: false, contenido_paquete: 1, stock_inicial_manual: 2, created_at: new Date().toISOString() }
-    ];
-    await db.products.bulkPut(products);
-    toast.success("Simulación BIG BON cargada");
-}, variant: "outline", className: "text-amber-500" }, selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const [stockFilter, setStockFilter] = useState<'all' | 'with_stock' | 'without_stock'>('all');
 
