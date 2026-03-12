@@ -60,7 +60,8 @@ export class MatchingEngine {
       return {
           lines: [],
           status: 'COMPLETO',
-          logs
+          logs,
+          movements: []
       };
     }
 
@@ -78,7 +79,7 @@ export class MatchingEngine {
         }
       }
       if (Math.abs(remaining_cents) < 0.001) {
-        return { lines, status: 'COMPLETO', logs };
+        return { lines, status: 'COMPLETO', logs, movements: [] };
       }
     }
 
@@ -314,11 +315,15 @@ export class MatchingEngine {
         }
     }
 
+    const resultMovements = [...this.pendingMovements];
+    this.pendingMovements = [];
+
     return {
       lines,
       status,
       logs,
-      failReason
+      failReason,
+      movements: resultMovements
     };
   }
 
