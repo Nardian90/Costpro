@@ -9,28 +9,6 @@ import { createClient } from '@supabase/supabase-js';
 
 export type ProviderType = 'gemini' | 'gpt' | 'qwen' | 'deepseek' | 'kimi';
 
-/**
- * Normaliza una API Key. Si no empieza con prefijos estándar, intenta revertirla.
- * Esto implementa la lógica de "protección por reversión" solicitada.
- */
-function normalizeApiKey(key: string | undefined): string {
-  if (!key) return '';
-  const trimmed = key.trim();
-
-  // Prefijos conocidos
-  if (trimmed.startsWith('AIza') || trimmed.startsWith('sk-')) {
-    return trimmed;
-  }
-
-  // Intentar reversión
-  const reversed = trimmed.split('').reverse().join('');
-  if (reversed.startsWith('AIza') || reversed.startsWith('sk-')) {
-    return reversed;
-  }
-
-  return trimmed;
-}
-
 // Create a minimal client to fetch keys if needed
 // This should only be used on the server side
 const getSupabaseServer = () => {
@@ -45,7 +23,7 @@ export async function getLLMProviderWithUserKey(userId: string, type?: string, f
   const providers: LLMProvider[] = [];
 
   // 1. Add requested provider (forced key or DB key)
-  let initialKey = normalizeApiKey(forcedApiKey);
+  let initialKey = forcedApiKey;
   if (!initialKey && userId) {
     const supabase = getSupabaseServer();
     if (supabase) {
@@ -59,7 +37,7 @@ export async function getLLMProviderWithUserKey(userId: string, type?: string, f
         .maybeSingle();
 
       if (data?.api_key) {
-        initialKey = normalizeApiKey(data.api_key);
+        initialKey = data.api_key;
       }
     }
   }
@@ -82,7 +60,7 @@ export async function getLLMProviderWithUserKey(userId: string, type?: string, f
 
       if (data) {
         data.forEach(k => {
-          providers.push(getLLMProvider(k.provider, normalizeApiKey(k.api_key)));
+          providers.push(getLLMProvider(k.provider, k.api_key));
         });
       }
     }
@@ -98,29 +76,28 @@ export async function getLLMProviderWithUserKey(userId: string, type?: string, f
         .select('provider, api_key')
         .is('user_id', null)
         .eq('is_active', true)
-        .limit(2); // Try to get at least 2 if available
+        .limit(1)
+        .maybeSingle();
 
       if (data) {
-        data.forEach(d => {
-           providers.push(getLLMProvider(d.provider, normalizeApiKey(d.api_key)));
-        });
+        providers.push(getLLMProvider(data.provider, data.api_key));
       }
     }
 
     // B. Infrastructure Fallback: Environment Variables (Vercel/Hosting)
-    if (process.env.DEEPSEEK_API_KEY) {
-      providers.push(getLLMProvider('deepseek', normalizeApiKey(process.env.DEEPSEEK_API_KEY)));
-    }
     if (process.env.GOOGLE_API_KEY) {
-      providers.push(getLLMProvider('gemini', normalizeApiKey(process.env.GOOGLE_API_KEY)));
+      providers.push(getLLMProvider('gemini', process.env.GOOGLE_API_KEY));
     }
     if (process.env.OPENAI_API_KEY) {
-      providers.push(getLLMProvider('gpt', normalizeApiKey(process.env.OPENAI_API_KEY)));
+      providers.push(getLLMProvider('gpt', process.env.OPENAI_API_KEY));
+    }
+    if (process.env.DEEPSEEK_API_KEY) {
+      providers.push(getLLMProvider('deepseek', process.env.DEEPSEEK_API_KEY));
     }
 
     // C. Emergency Last Resort: Emergency Environment Variable
     if (process.env.EMERGENCY_GOOGLE_API_KEY) {
-      providers.push(getLLMProvider('gemini', normalizeApiKey(process.env.EMERGENCY_GOOGLE_API_KEY)));
+      providers.push(getLLMProvider('gemini', process.env.EMERGENCY_GOOGLE_API_KEY));
     }
   }
 
@@ -134,34 +111,33 @@ export async function getLLMProviderWithUserKey(userId: string, type?: string, f
 
 export function getLLMProvider(type?: string, apiKey?: string): LLMProvider {
   const providerType = (type || process.env.LLM_PROVIDER || 'gemini').toLowerCase();
-  const normalizedKey = normalizeApiKey(apiKey);
 
   switch (providerType) {
     case 'gpt':
       return new GPTAdapter(
-        normalizedKey,
+        apiKey || '',
         process.env.OPENAI_MODEL || 'gpt-4o'
       );
     case 'qwen':
       return new QwenAdapter(
-        normalizedKey,
+        apiKey || '',
         process.env.QWEN_MODEL || 'qwen-turbo'
       );
     case 'deepseek':
       return new DeepSeekAdapter(
-        normalizedKey,
+        apiKey || '',
         process.env.DEEPSEEK_MODEL || 'deepseek-chat'
       );
     case 'kimi':
       return new KimiAdapter(
-        normalizedKey,
+        apiKey || '',
         process.env.KIMI_MODEL || 'moonshot-v1-8k'
       );
     case 'gemini':
     default:
       return new GeminiAdapter(
-        normalizedKey,
-        process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+        apiKey || '',
+        process.env.GEMINI_MODEL || 'gemini-1.5-flash'
       );
   }
 }
