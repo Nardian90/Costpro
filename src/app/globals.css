@@ -851,6 +851,56 @@
       height: 44px !important;
       font-size: 1rem !important;
     }
+
+    /* Content Section (SECCION_04_CONTENIDO) Maintenance */
+
+    /* Ensure body safety */
+    html, body {
+      overflow-x: hidden !important;
+      width: 100% !important;
+      position: relative !important;
+    }
+
+    /* Adaptive Typography for Content Headers */
+    .text-3xl.font-black.uppercase.tracking-tight,
+    .text-2xl.font-black.uppercase.tracking-tight,
+    .space-y-12 h2,
+    .space-y-4 h2,
+    .text-3xl.font-black.uppercase.tracking-tighter {
+      font-size: clamp(18px, 4vw, 24px) !important;
+    }
+
+    /* Gain space by reducing large container padding */
+    .p-6.md\:p-12,
+    .p-8.md\:p-12,
+    .lg\:p-10,
+    .p-12 {
+      padding: 1rem !important;
+    }
+
+    /* Touch targets for help/wiki navigations */
+    .flex.overflow-x-auto.p-4.border-b.bg-muted\/5.gap-2.no-scrollbar button,
+    .flex.flex-col.gap-2 button {
+      min-height: 44px !important;
+    }
+
+    /* Flex wrapping for Wiki items to avoid overflow */
+    .grid.grid-cols-1.md\:grid-cols-2.lg\:grid-cols-3.gap-4 {
+      display: flex !important;
+      flex-wrap: wrap !important;
+    }
+
+    .grid.grid-cols-1.md\:grid-cols-2.lg\:grid-cols-3.gap-4 > button,
+    .grid.grid-cols-1.md\:grid-cols-2.lg\:grid-cols-3.gap-4 > div {
+      flex: 1 1 100% !important;
+      min-width: 0 !important;
+    }
+
+    /* Table horizontal scrolling */
+    .overflow-x-auto {
+      overflow-x: auto !important;
+      -webkit-overflow-scrolling: touch !important;
+    }
   }
 
   /* Reduced motion */
