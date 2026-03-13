@@ -2,9 +2,9 @@ import { LLMProvider, Message, LLMResponse, ToolCall } from '../types';
 
 export class GeminiAdapter implements LLMProvider {
   private apiKey: string;
-  private modelName: string;
+  public modelName: string;
 
-  constructor(apiKey: string, model: string = 'gemini-2.5-flash-preview-09-2025') {
+  constructor(apiKey: string, model: string = 'gemini-2.0-flash') {
     this.apiKey = apiKey;
     this.modelName = model;
   }
@@ -58,13 +58,17 @@ export class GeminiAdapter implements LLMProvider {
             throw new Error("Límite de cuota excedido para Gemini.");
           }
 
-          throw new Error(`Error de comunicación con Gemini: ${errorMessage}`);
+          throw new Error(`Error de comunicación con Gemini (${response.status}): ${errorMessage}`);
       }
 
       const data = await response.json();
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
       if (!text) {
+        // Log the response for debugging in case candidates is empty but 200 OK
+        if (data.promptFeedback?.blockReason) {
+           throw new Error(`Gemini bloqueó la respuesta por seguridad: ${data.promptFeedback.blockReason}`);
+        }
         throw new Error("No se recibió texto en la respuesta de Gemini.");
       }
 
