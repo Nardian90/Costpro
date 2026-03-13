@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'JSON inválido' }, { status: 400 });
     }
 
-    const { messages, aiProvider, aiApiKey } = body;
+    const { messages, history, aiProvider, aiApiKey } = body;
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json({ error: 'Messages vacío' }, { status: 400 });
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     if (process.env.GOOGLE_API_KEY) {
       providers.push({
         name: 'gemini',
-        instance: new GeminiAdapter(process.env.GOOGLE_API_KEY, 'gemini-1.5-flash')
+        instance: new GeminiAdapter(process.env.GOOGLE_API_KEY, 'gemini-2.5-flash-preview-09-2025')
       });
     }
 
@@ -76,6 +76,7 @@ export async function POST(req: NextRequest) {
         console.log(`[Chat] Intento ${i + 1}/${providers.length}: ${name}`);
 
         const response = await instance.getResponse(messages, {
+          history,
           temperature: 0.7,
           maxTokens: 1000
         });
@@ -120,7 +121,7 @@ function getProviderInstance(type: string, apiKey: string): any | null {
     case 'deepseek':
       return new DeepSeekAdapter(apiKey, 'deepseek-chat');
     case 'gemini':
-      return new GeminiAdapter(apiKey, 'gemini-1.5-flash');
+      return new GeminiAdapter(apiKey, 'gemini-2.5-flash-preview-09-2025');
     case 'gpt':
       return new GPTAdapter(apiKey, 'gpt-4o');
     default:

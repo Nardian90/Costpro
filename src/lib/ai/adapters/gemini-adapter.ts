@@ -5,7 +5,7 @@ export class GeminiAdapter implements LLMProvider {
   private apiKey: string;
   private modelName: string;
 
-  constructor(apiKey: string, model: string = 'gemini-1.5-flash') {
+  constructor(apiKey: string, model: string = 'gemini-2.5-flash-preview-09-2025') {
     this.apiKey = apiKey;
     this.modelName = model;
   }
@@ -15,6 +15,10 @@ export class GeminiAdapter implements LLMProvider {
       throw new Error("No se ha configurado la API Key de Gemini. Por favor, ve a configuración.");
     }
 
+    if (options?.history && Array.isArray(options.history) && options.history.length > 0) {
+      return this.fetchGeminiResponse(messages[messages.length - 1].content, options.history);
+    }
+
     try {
       const genAI = new GoogleGenerativeAI(this.apiKey);
 
@@ -22,9 +26,7 @@ export class GeminiAdapter implements LLMProvider {
       const chatMessages = messages.filter(m => m.role !== 'system');
 
       const modelConfig: any = { model: this.modelName };
-      if (systemMessage) {
-        modelConfig.systemInstruction = systemMessage.content;
-      }
+      modelConfig.systemInstruction = systemMessage?.content || "Eres un asistente de IA útil, creativo y conciso. Responde siempre en el idioma que el usuario utilice.";
 
       if (options?.tools && options.tools.length > 0) {
         modelConfig.tools = [{
@@ -154,5 +156,38 @@ export class GeminiAdapter implements LLMProvider {
 
       throw new Error(`Error de AI (${this.modelName}): ${error.message}`);
     }
+  }
+
+  private async fetchGeminiResponse(userQuery: string, chatHistory: any[]): Promise<LLMResponse> {
+    const systemPrompt = "Eres un asistente de IA útil, creativo y conciso. Responde siempre en el idioma que el usuario utilice.";
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.modelName}:generateContent?key=${this.apiKey}`;
+
+    const contents = chatHistory.map(msg => ({
+        role: msg.role === 'user' ? 'user' : 'model',
+        parts: [{ text: msg.text }]
+    }));
+    contents.push({ role: 'user', parts: [{ text: userQuery }] });
+
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            contents: contents,
+            systemInstruction: { parts: [{ text: systemPrompt }] }
+        })
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error?.message || 'Network response was not ok');
+    }
+
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+    return {
+        text,
+        metadata: { model: this.modelName }
+    };
   }
 }

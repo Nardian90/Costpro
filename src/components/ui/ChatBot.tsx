@@ -2,12 +2,13 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, Send, X, Bot, Loader2, Sparkles, Settings, Key, Check } from 'lucide-react';
+import { MessageSquare, Send, X, Bot, Loader2, Sparkles, Settings, Key, Check, Trash2 } from 'lucide-react';
 import { useAuthStore, useUIStore } from '@/store';
 import { cn } from '@/lib/utils';
 import { userService } from '@/services/user-service';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import ReactMarkdown from 'react-markdown';
 
 interface Message {
   role: 'user' | 'assistant' | 'system' | 'tool';
@@ -22,6 +23,7 @@ export function ChatBot() {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [chatHistory, setChatHistory] = useState<any[]>([]);
 
   // Settings state
   const { user, token, updateUser } = useAuthStore();
@@ -38,7 +40,7 @@ export function ChatBot() {
     }
   }, [messages, isLoading]);
 
-  // ✅ ESC KEY HANDLER - NUEVO
+  // ✅ ESC KEY HANDLER
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && isOpen) {
@@ -48,16 +50,14 @@ export function ChatBot() {
     
     if (isOpen) {
       window.addEventListener('keydown', handleKeyDown);
-      return () => window.removeEventListener('keydown', handleKeyDown);
     }
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, setIsOpen]);
 
   const handleAction = (action: any) => {
-    console.log('[AI Controller] Action received:', action);
-
     switch (action.type) {
       case 'navigation':
-        toast.info(`Navegando a ${action.payload.viewId}...`);
+        toast.info(`Navegando a ${action.payload.route}...`);
         router.push(action.payload.route);
         break;
 
@@ -82,8 +82,10 @@ export function ChatBot() {
   const handleSend = async () => {
     if (!input.trim() || isLoading || !user) return;
 
-    const userMessage: Message = { role: 'user', content: input };
+    const currentInput = input.trim();
+    const userMessage: Message = { role: 'user', content: currentInput };
     const newMessages = [...messages, userMessage].slice(-10);
+
     setMessages(newMessages);
     setInput('');
     setIsLoading(true);
@@ -101,6 +103,7 @@ export function ChatBot() {
         },
         body: JSON.stringify({
           messages: newMessages,
+          history: chatHistory,
           storeId: user.activeStoreId,
           aiProvider: user.aiProvider,
           aiApiKey: user.aiApiKey,
@@ -117,6 +120,15 @@ export function ChatBot() {
       }
 
       const data = await response.json();
+
+      // Update local history
+      const newHistory = [
+        ...chatHistory,
+        { role: 'user', text: currentInput },
+        { role: 'assistant', text: data.text }
+      ];
+      setChatHistory(newHistory.slice(-20)); // Keep last 20 for history
+
       setMessages([...newMessages, { role: 'assistant', content: data.text }]);
 
       if (data.metadata?.actions) {
@@ -152,6 +164,12 @@ export function ChatBot() {
     }
   };
 
+  const handleClearHistory = () => {
+    setMessages([]);
+    setChatHistory([]);
+    toast.success('Historial de chat borrado');
+  };
+
   const handleSaveSettings = async () => {
     if (!user) return;
     setIsSaving(true);
@@ -181,7 +199,7 @@ export function ChatBot() {
     if (abortController) {
       abortController.abort();
     }
-    setMessages([]);
+
     setInput('');
     setIsLoading(false);
     setIsOpen(false);
@@ -241,16 +259,27 @@ export function ChatBot() {
                 </div>
               </div>
 
-              {/* ✅ CLOSE BUTTON FIXED */}
-              <button
-                onClick={handleCloseChat}
-                className="w-11 h-11 flex items-center justify-center hover:bg-white/10 rounded-xl transition-colors active:scale-95 relative z-50"
-                title="Cerrar chat (ESC)"
-                type="button"
-                aria-label="Cerrar chat"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-1">
+                {messages.length > 0 && !isSettingsOpen && (
+                  <button
+                    onClick={handleClearHistory}
+                    className="w-11 h-11 flex items-center justify-center hover:bg-white/10 rounded-xl transition-colors active:scale-95"
+                    title="Limpiar chat"
+                    type="button"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+                <button
+                  onClick={handleCloseChat}
+                  className="w-11 h-11 flex items-center justify-center hover:bg-white/10 rounded-xl transition-colors active:scale-95 relative z-50"
+                  title="Cerrar chat (ESC)"
+                  type="button"
+                  aria-label="Cerrar chat"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             {/* Messages or Settings */}
@@ -360,7 +389,13 @@ export function ChatBot() {
                           ? 'bg-primary text-primary-foreground rounded-tr-none'
                           : 'bg-background border border-border rounded-tl-none'
                         }`}>
-                          {msg.content}
+                          {msg.role === 'assistant' ? (
+                            <ReactMarkdown className="prose prose-xs dark:prose-invert max-w-none">
+                              {msg.content}
+                            </ReactMarkdown>
+                          ) : (
+                            <p className="whitespace-pre-wrap">{msg.content}</p>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -368,7 +403,7 @@ export function ChatBot() {
                       <div className="flex justify-start">
                         <div className="bg-background border border-border p-3 rounded-2xl rounded-tl-none flex items-center gap-2 shadow-sm">
                           <Loader2 className="w-3 h-3 animate-spin text-primary" />
-                          <span className="text-xs font-black text-muted-foreground uppercase tracking-widest">Ejecutando...</span>
+                          <span className="text-xs font-black text-muted-foreground uppercase tracking-widest">La IA está pensando...</span>
                         </div>
                       </div>
                     )}
@@ -380,14 +415,29 @@ export function ChatBot() {
             {/* Input */}
             {!isSettingsOpen && (
               <div className="p-4 bg-background border-t border-border">
-                <div className={`flex gap-2 bg-muted/40 p-1.5 rounded-2xl border border-border ${!isConfigured ? 'opacity-50 pointer-events-none' : ''}`}>
-                  <input
+                <div className={cn(
+                  "flex items-end gap-2 bg-muted/40 p-2 rounded-2xl border border-border transition-all focus-within:border-primary/50 focus-within:ring-4 focus-within:ring-primary/5",
+                  !isConfigured && "opacity-50 pointer-events-none"
+                )}>
+                  <textarea
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSend();
+                      }
+                    }}
                     disabled={!isConfigured}
                     placeholder={isConfigured ? "Navega, crea, busca..." : "Configura tu IA para comenzar"}
-                    className="flex-1 bg-transparent border-none px-3 py-1.5 text-xs font-medium focus:outline-none placeholder:text-muted-foreground/50 h-11"
+                    rows={1}
+                    className="flex-1 bg-transparent border-none px-3 py-2 text-xs font-medium focus:outline-none placeholder:text-muted-foreground/50 resize-none max-h-32 min-h-[44px]"
+                    style={{ height: 'auto' }}
+                    onInput={(e) => {
+                      const target = e.target as HTMLTextAreaElement;
+                      target.style.height = 'auto';
+                      target.style.height = `${target.scrollHeight}px`;
+                    }}
                   />
                   <button
                     disabled={!input.trim() || isLoading || !isConfigured}
@@ -398,6 +448,7 @@ export function ChatBot() {
                     <Send className="w-4 h-4" />
                   </button>
                 </div>
+                <p className="text-[8px] text-center text-muted-foreground/40 mt-2 uppercase tracking-widest font-black">Desarrollado con la API de Gemini 2.5 Flash</p>
               </div>
             )}
           </motion.div>
